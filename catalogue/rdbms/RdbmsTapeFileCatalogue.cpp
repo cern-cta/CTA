@@ -116,7 +116,7 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dat
   std::list<InsertFileRecycleLog> insertedFilesRecycleLog
     = fileRecycleLogCatalogue->insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn,tapeFile,archiveFileId);
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO TAPE_FILE(
       VID,
@@ -148,10 +148,10 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dat
 
   for(auto& fileRecycleLog: insertedFilesRecycleLog){
     const char* const sql2 = R"SQL(
-      DELETE FROM 
-        TAPE_FILE 
-      WHERE 
-        VID=:VID AND 
+      DELETE FROM
+        TAPE_FILE
+      WHERE
+        VID=:VID AND
         FSEQ=:FSEQ
     )SQL";
     auto stmt2 = conn.createStmt(sql2);
@@ -165,8 +165,8 @@ void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
   const common::dataStructures::DeleteArchiveRequest& request) const {
   //Delete the tape files after.
   const char* const deleteTapeFilesSql = R"SQL(
-    DELETE FROM 
-      TAPE_FILE 
+    DELETE FROM
+      TAPE_FILE
     WHERE TAPE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
 
@@ -181,10 +181,10 @@ void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
 
     //Delete the tape file.
     const char* const deleteTapeFilesSql = R"SQL(
-      DELETE FROM 
-        TAPE_FILE 
-      WHERE 
-        TAPE_FILE.VID = :VID AND 
+      DELETE FROM
+        TAPE_FILE
+      WHERE
+        TAPE_FILE.VID = :VID AND
         TAPE_FILE.FSEQ = :FSEQ
     )SQL";
 

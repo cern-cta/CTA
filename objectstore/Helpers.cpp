@@ -380,7 +380,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
   try {
     for(auto& v : candidateVids) {
       // throw std::out_of_range() if cache item not found or if it is stale
-      auto timeSinceLastUpdate = time(nullptr) - g_tapeStatuses.at(v).updateTime;
+      auto timeSinceLastUpdate = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - g_tapeStatuses.at(v).updateTime;
       if(timeSinceLastUpdate >= g_tapeCacheMaxAge) {
         throw std::out_of_range("");
       }
@@ -388,7 +388,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
   } catch (std::out_of_range&) {
     // Remove stale cache entries
     for(auto it = g_tapeStatuses.cbegin(); it != g_tapeStatuses.cend(); ) {
-      auto timeSinceLastUpdate = time(nullptr) - it->second.updateTime;
+      auto timeSinceLastUpdate = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - it->second.updateTime;
       if(timeSinceLastUpdate >= g_tapeCacheMaxAge) {
         it = g_tapeStatuses.erase(it);
       } else {
@@ -399,7 +399,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
     auto tapeStatuses = catalogue.Tape()->getTapesByVid(candidateVids);
     for(auto& ts : tapeStatuses) {
       g_tapeStatuses[ts.first].tapeStatus = ts.second;
-      g_tapeStatuses[ts.first].updateTime = time(nullptr);
+      g_tapeStatuses[ts.first].updateTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     }
   }
   // Find the vids to be fetched (if any)
@@ -426,7 +426,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
         }
       } else {
         // We have a cache hit, check it's not stale.
-        time_t timeSinceLastUpdate = time(nullptr) - g_retrieveQueueStatistics.at(v).updateTime;
+        time_t timeSinceLastUpdate = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - g_retrieveQueueStatistics.at(v).updateTime;
         if (timeSinceLastUpdate >= g_retrieveQueueCacheMaxAge) {
           if (g_retrieveQueueCacheMaxAge) {
             logUpdateCacheIfNeeded(false,g_retrieveQueueStatistics.at(v),lc,"timeSinceLastUpdate (" + std::to_string(timeSinceLastUpdate) + ")> g_retrieveQueueCacheMaxAge ("
@@ -461,7 +461,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
           throw cta::exception::Exception("In Helpers::selectBestRetrieveQueue(): candidate vid not found in the TAPE table.");
         }
         g_tapeStatuses[v].tapeStatus = tapeStatuses.begin()->second;
-        g_tapeStatuses[v].updateTime = time(nullptr);
+        g_tapeStatuses[v].updateTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
       }
       common::dataStructures::Tape tapeStatus = g_tapeStatuses.at(v).tapeStatus;
       // Give other threads a chance to access the cache for other vids.
@@ -484,7 +484,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
         throw cta::exception::Exception("In Helpers::selectBestRetrieveQueue(): unexpected vid in queueStats.");
       g_retrieveQueueStatistics[v].stats = queuesStats.front();
       g_retrieveQueueStatistics[v].tapeStatus = tapeStatus;
-      g_retrieveQueueStatistics[v].updateTime = time(nullptr);
+      g_retrieveQueueStatistics[v].updateTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
       logUpdateCacheIfNeeded(true,g_retrieveQueueStatistics[v],lc);
       // Signal to potential waiters
       updatePromise.set_value();
@@ -519,7 +519,7 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
   // There are several equivalent entries, choose one among them based on the number of days since epoch
   std::vector<std::string> shortListVids(shortSetVids.begin(), shortSetVids.end());
   std::sort(shortListVids.begin(), shortListVids.end());
-  const time_t secondsSinceEpoch = time(nullptr);
+  const time_t secondsSinceEpoch = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const uint64_t daysSinceEpoch = secondsSinceEpoch / (60*60*24);
   return shortListVids[daysSinceEpoch % shortListVids.size()];
 }
@@ -545,7 +545,7 @@ void Helpers::updateRetrieveQueueStatisticsCache(const std::string& vid, uint64_
     g_retrieveQueueStatistics[vid].stats.currentPriority=priority;
     g_retrieveQueueStatistics[vid].stats.vid=vid;
     g_retrieveQueueStatistics[vid].updating = false;
-    g_retrieveQueueStatistics[vid].updateTime = time(nullptr);
+    g_retrieveQueueStatistics[vid].updateTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     try {
       // Use the cached tape status if we have it, otherwise fake it
       g_retrieveQueueStatistics[vid].tapeStatus = g_tapeStatuses.at(vid).tapeStatus;

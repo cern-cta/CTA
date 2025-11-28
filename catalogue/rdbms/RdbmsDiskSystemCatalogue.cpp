@@ -64,7 +64,7 @@ void RdbmsDiskSystemCatalogue::createDiskSystem(const common::dataStructures::Se
       " because a disk system with the same name identifier already exists");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO DISK_SYSTEM(
       DISK_SYSTEM_NAME,
@@ -125,10 +125,10 @@ void RdbmsDiskSystemCatalogue::createDiskSystem(const common::dataStructures::Se
 
 void RdbmsDiskSystemCatalogue::deleteDiskSystem(const std::string &name) {
   const char* const delete_sql = R"SQL(
-    DELETE 
-    FROM 
-      DISK_SYSTEM 
-    WHERE 
+    DELETE
+    FROM
+      DISK_SYSTEM
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -150,7 +150,7 @@ void RdbmsDiskSystemCatalogue::deleteDiskSystem(const std::string &name) {
 disk::DiskSystemList RdbmsDiskSystemCatalogue::getAllDiskSystems() const {
   disk::DiskSystemList diskSystemList;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       DISK_SYSTEM.DISK_SYSTEM_NAME AS DISK_SYSTEM_NAME,
       DISK_SYSTEM.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       DISK_SYSTEM.DISK_INSTANCE_SPACE_NAME AS DISK_INSTANCE_SPACE_NAME,
@@ -171,12 +171,12 @@ disk::DiskSystemList RdbmsDiskSystemCatalogue::getAllDiskSystems() const {
       DISK_INSTANCE_SPACE.FREE_SPACE_QUERY_URL AS FREE_SPACE_QUERY_URL,
       DISK_INSTANCE_SPACE.REFRESH_INTERVAL AS REFRESH_INTERVAL,
       DISK_INSTANCE_SPACE.LAST_REFRESH_TIME AS LAST_REFRESH_TIME,
-      DISK_INSTANCE_SPACE.FREE_SPACE AS FREE_SPACE 
-    FROM 
-      DISK_SYSTEM 
-    INNER JOIN DISK_INSTANCE_SPACE ON 
-      DISK_SYSTEM.DISK_INSTANCE_NAME = DISK_INSTANCE_SPACE.DISK_INSTANCE_NAME 
-    AND 
+      DISK_INSTANCE_SPACE.FREE_SPACE AS FREE_SPACE
+    FROM
+      DISK_SYSTEM
+    INNER JOIN DISK_INSTANCE_SPACE ON
+      DISK_SYSTEM.DISK_INSTANCE_NAME = DISK_INSTANCE_SPACE.DISK_INSTANCE_NAME
+    AND
       DISK_SYSTEM.DISK_INSTANCE_SPACE_NAME = DISK_INSTANCE_SPACE.DISK_INSTANCE_SPACE_NAME
   )SQL";
 
@@ -219,14 +219,14 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemFileRegexp(const common::dataStru
       "because the new fileRegexp is an empty string");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       FILE_REGEXP = :FILE_REGEXP,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -254,14 +254,14 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemTargetedFreeSpace(const common::d
       "because the new targeted free space has zero value");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       TARGETED_FREE_SPACE = :TARGETED_FREE_SPACE,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -290,14 +290,14 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemComment(const common::dataStructu
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -325,14 +325,14 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemSleepTime(const common::dataStruc
       "because the new sleep time is zero");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       SLEEP_TIME = :SLEEP_TIME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -360,14 +360,14 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemDiskInstanceName(const common::da
       "because the new comment is an empty string");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -396,14 +396,14 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemDiskInstanceSpaceName(
       "because the new comment is an empty string");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_SYSTEM SET 
+    UPDATE DISK_SYSTEM SET
       DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       DISK_SYSTEM_NAME = :DISK_SYSTEM_NAME
   )SQL";
   auto conn = m_connPool->getConn();

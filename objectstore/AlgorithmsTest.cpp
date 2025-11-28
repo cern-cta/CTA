@@ -70,15 +70,15 @@ void fillRetrieveRequests(
       tf.blockId = 0;
       tf.fileSize = 1;
       tf.copyNb = 1;
-      tf.creationTime = time(nullptr);
+      tf.creationTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
       tf.fSeq = startFseq;
       tf.vid = "Tape0";
       rqc.archiveFile.tapeFiles.push_back(tf);
     }
     rqc.mountPolicy.archiveMinRequestAge = 1;
     rqc.mountPolicy.archivePriority = 1;
-    rqc.mountPolicy.creationLog.time = time(nullptr);
-    rqc.mountPolicy.lastModificationLog.time = time(nullptr);
+    rqc.mountPolicy.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    rqc.mountPolicy.lastModificationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     requestPtrs.emplace_back(new cta::objectstore::RetrieveRequest(rrAddr, be));
@@ -90,7 +90,7 @@ void fillRetrieveRequests(
     rr.setRetrieveFileQueueCriteria(rqc);
     cta::common::dataStructures::RetrieveRequest sReq;
     sReq.archiveFileID = rqc.archiveFile.archiveFileID;
-    sReq.creationLog.time = time(nullptr);
+    sReq.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     rr.setSchedulerRequest(sReq);
     rr.addJob(1, 1, 1, 1);
     rr.setOwner(agentRef.getAgentAddress());
@@ -139,7 +139,7 @@ void fillArchiveRequests(typename cta::objectstore::ContainerAlgorithms<cta::obj
     ar.setArchiveErrorReportURL("");
     ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");
-    ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     ar.insert();
   }
 }
@@ -166,7 +166,7 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithms) {
   re.insert();
   // Create the agent register
   EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -202,7 +202,7 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithms) {
     ar.setArchiveErrorReportURL("");
     ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");
-    ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     ar.insert();
   }
   ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
@@ -248,7 +248,7 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
   re.insert();
   // Create the agent register
   EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -284,7 +284,7 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsWithDeletedJobsInQueue) {
     ar.setArchiveErrorReportURL("");
     ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");
-    ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     ar.insert();
   }
   ContainerAlgorithms<ArchiveQueue,ArchiveQueueToTransferForUser> archiveAlgos(be, agentRef);
@@ -365,7 +365,7 @@ TEST_F(ObjectStore, RetrieveQueueAlgorithms) {
   re.initialize();
   re.insert();
   // Create the agent register
-  EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
+  EntryLogSerDeser el("user0", "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef2, el, lc);
@@ -455,7 +455,7 @@ TEST_F(ObjectStore, RetrieveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   re.initialize();
   re.insert();
   // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -544,7 +544,7 @@ TEST_F(ObjectStore, ArchiveQueueAlgorithmsUpdatesOldestJobQueueTime) {
   re.initialize();
   re.insert();
   // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();

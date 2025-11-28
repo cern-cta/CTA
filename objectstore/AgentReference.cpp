@@ -34,7 +34,7 @@ AgentReference::AgentReference(const std::string & clientType, log::Logger &logg
   m_nextId(0), m_logger(logger) {
   std::stringstream aid;
   // Get time
-  time_t now = time(nullptr);
+  time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   struct tm localNow;
   localtime_r(&now, &localNow);
   // Get hostname

@@ -379,7 +379,7 @@ TEST_P(cta_catalogue_DriveStateTest, setTapeDriveStatistics) {
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
 
   cta::ReportDriveStatsInputs inputs;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.bytesTransferred = 123456789;
   inputs.filesTransferred = 987654321;
   cta::common::dataStructures::DriveInfo driveInfo;
@@ -406,7 +406,7 @@ TEST_P(cta_catalogue_DriveStateTest, setTapeDriveStatisticsInNoTransferingStatus
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Down;
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
   cta::ReportDriveStatsInputs inputs;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.bytesTransferred = 123456789;
   inputs.filesTransferred = 987654321;
   cta::common::dataStructures::DriveInfo driveInfo;
@@ -435,7 +435,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusSameAsPrevious) {
   inputs.status = tapeDrive.driveStatus;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 0;
   inputs.byteTransferred = 123456;
   inputs.filesTransferred = 987654;
@@ -474,7 +474,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusSameTransferingAsPrevi
   const std::string tapeDriveName = "VDSTK11";
   auto tapeDrive = getTapeDriveWithMandatoryElements(tapeDriveName);
   tapeDrive.driveStatus = cta::common::dataStructures::DriveStatus::Transferring;
-  tapeDrive.sessionStartTime = time(nullptr);
+  tapeDrive.sessionStartTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   m_catalogue->DriveState()->createTapeDrive(tapeDrive);
   const auto test = m_catalogue->DriveState()->getTapeDrive(tapeDrive.driveName);
   ASSERT_EQ(tapeDrive.sessionStartTime, test.value().sessionStartTime.value());
@@ -531,7 +531,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusDown) {
   inputs.status = cta::common::dataStructures::DriveStatus::Down;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::NoMount;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 0;
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
@@ -590,7 +590,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUp) {
   inputs.status = cta::common::dataStructures::DriveStatus::Up;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::NoMount;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 0;
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
@@ -646,7 +646,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUpButDesiredIsDown) {
   inputs.status = cta::common::dataStructures::DriveStatus::Up;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::NoMount;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 0;
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
@@ -683,7 +683,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUpCleanSpaceReservatio
   inputs.status = cta::common::dataStructures::DriveStatus::Up;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::NoMount;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 0;
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
@@ -721,7 +721,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUpDontCleanSpaceReserv
   inputs.status = cta::common::dataStructures::DriveStatus::Up;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::NoMount;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 0;
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
@@ -756,7 +756,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusProbing) {
   inputs.status = cta::common::dataStructures::DriveStatus::Probing;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::NoMount;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 0;
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
@@ -810,7 +810,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusStarting) {
   inputs.status = cta::common::dataStructures::DriveStatus::Starting;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 123456;
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
@@ -865,7 +865,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusMounting) {
   inputs.status = cta::common::dataStructures::DriveStatus::Mounting;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 123456;
   inputs.byteTransferred = 0;
   inputs.filesTransferred = 0;
@@ -921,7 +921,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusTransfering) {
   inputs.status = cta::common::dataStructures::DriveStatus::Transferring;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 123456;
   inputs.byteTransferred = 987654;
   inputs.filesTransferred = 456;
@@ -977,7 +977,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUnloading) {
   inputs.status = cta::common::dataStructures::DriveStatus::Unloading;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 123456;
   inputs.byteTransferred = 987654;
   inputs.filesTransferred = 456;
@@ -1033,7 +1033,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusUnmounting) {
   inputs.status = cta::common::dataStructures::DriveStatus::Unmounting;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 123456;
   inputs.byteTransferred = 987654;
   inputs.filesTransferred = 456;
@@ -1088,7 +1088,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusDrainingToDisk) {
   inputs.status = cta::common::dataStructures::DriveStatus::DrainingToDisk;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 123456;
   inputs.byteTransferred = 987654;
   inputs.filesTransferred = 456;
@@ -1143,7 +1143,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusCleaningUp) {
   inputs.status = cta::common::dataStructures::DriveStatus::CleaningUp;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 123456;
   inputs.byteTransferred = 987654;
   inputs.filesTransferred = 456;
@@ -1198,7 +1198,7 @@ TEST_P(cta_catalogue_DriveStateTest, updateTapeDriveStatusShutdown) {
   inputs.status = cta::common::dataStructures::DriveStatus::Shutdown;
   // We use a different MountType to check it doesn't update this value in the database
   inputs.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.mountSessionId = 123456;
   inputs.byteTransferred = 987654;
   inputs.filesTransferred = 456;

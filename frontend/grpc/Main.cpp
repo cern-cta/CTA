@@ -89,7 +89,7 @@ void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
       threadLc.log(log::INFO, "JwkCache no longer exists, exiting JWKS cache refresh thread");
       break;  // Cache destroyed
     }
-    time_t now = time(nullptr);
+    time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     threadLc.log(log::INFO, "Updating the JWKS cache");
     cache->updateCache(now);
   }
@@ -169,7 +169,7 @@ int main(const int argc, char *const *const argv) {
 
     // get number of threads
     int threads = svc.getFrontendService().getThreads().value_or(8 * std::thread::hardware_concurrency());
-    
+
 
     if (useTLS) {
         lc.log(log::INFO, "Using gRPC over TLS");

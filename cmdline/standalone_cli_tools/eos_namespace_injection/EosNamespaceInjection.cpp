@@ -336,7 +336,7 @@ uint64_t EosNamespaceInjection::createFileInEos(const MetaDataObject &metaDataFr
   file.set_flags(filemode);
 
   // Timestamps
-  auto time = ::time(nullptr);
+  auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   file.mutable_ctime()->set_sec(time);
   file.mutable_mtime()->set_sec(time);
   // we don't care about file.stime (sync time, used for CERNBox)
@@ -513,7 +513,7 @@ void EosNamespaceInjection::checkExistingPathHasInvalidMetadata(const uint64_t &
 // writeSkippedArchiveIdsToFile
 //------------------------------------------------------------------------------
 void EosNamespaceInjection::createTxtFileWithSkippedMetadata() const {
-  auto unix_epoch_time = std::time(nullptr);
+  auto unix_epoch_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const std::string currentTime = std::to_string(unix_epoch_time);
   const std::filesystem::path filePath = "/tmp/skippedMetadataEosInjection" + currentTime + ".txt";
   std::ofstream archiveIdFile(filePath);

@@ -36,15 +36,15 @@ RdbmsRequesterGroupMountRuleCatalogue::RdbmsRequesterGroupMountRuleCatalogue(log
 void RdbmsRequesterGroupMountRuleCatalogue::modifyRequesterGroupMountRulePolicy(
   const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
   const std::string &requesterGroupName, const std::string &mountPolicy) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE REQUESTER_GROUP_MOUNT_RULE SET 
+    UPDATE REQUESTER_GROUP_MOUNT_RULE SET
       MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
       REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -67,15 +67,15 @@ void RdbmsRequesterGroupMountRuleCatalogue::modifyRequesterGroupMountRuleComment
   const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
   const std::string &requesterGroupName, const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE REQUESTER_GROUP_MOUNT_RULE SET 
+    UPDATE REQUESTER_GROUP_MOUNT_RULE SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
       REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -102,17 +102,17 @@ void RdbmsRequesterGroupMountRuleCatalogue::createRequesterGroupMountRule(
   const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   auto conn = m_connPool->getConn();
-  
+
   const auto group = Group(diskInstanceName, requesterGroupName);
   const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
-  
+
   if (const auto mountPolicy = mountPolicyCatalogue->getRequesterGroupMountPolicy(conn, group); mountPolicy) {
     throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
                                 " to requester-group " + diskInstanceName + ":" + requesterGroupName +
                                 " because a rule already exists assigning the requester-group to mount-policy " +
                                 mountPolicy->name);
   }
-  
+
   if(!RdbmsCatalogueUtils::mountPolicyExists(conn, mountPolicyName)) {
     throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
       diskInstanceName + ":" + requesterGroupName + " because mount-policy " + mountPolicyName + " does not exist");
@@ -122,7 +122,7 @@ void RdbmsRequesterGroupMountRuleCatalogue::createRequesterGroupMountRule(
       diskInstanceName + ":" + requesterGroupName + " because disk-instance " + diskInstanceName + " does not exist");
   }
 
-  const uint64_t now = time(nullptr);
+  const uint64_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO REQUESTER_GROUP_MOUNT_RULE(
       DISK_INSTANCE_NAME,
@@ -178,7 +178,7 @@ std::list<common::dataStructures::RequesterGroupMountRule>
   RdbmsRequesterGroupMountRuleCatalogue::getRequesterGroupMountRules() const {
   std::list<common::dataStructures::RequesterGroupMountRule> rules;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       REQUESTER_GROUP_NAME AS REQUESTER_GROUP_NAME,
       MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
@@ -191,10 +191,10 @@ std::list<common::dataStructures::RequesterGroupMountRule>
 
       LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      REQUESTER_GROUP_MOUNT_RULE 
-    ORDER BY 
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      REQUESTER_GROUP_MOUNT_RULE
+    ORDER BY
       DISK_INSTANCE_NAME, REQUESTER_GROUP_NAME, MOUNT_POLICY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -224,10 +224,10 @@ std::list<common::dataStructures::RequesterGroupMountRule>
 void RdbmsRequesterGroupMountRuleCatalogue::deleteRequesterGroupMountRule(const std::string &diskInstanceName,
   const std::string &requesterGroupName) {
   const char* const sql = R"SQL(
-    DELETE FROM 
-      REQUESTER_GROUP_MOUNT_RULE 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+    DELETE FROM
+      REQUESTER_GROUP_MOUNT_RULE
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
       REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME
   )SQL";
   auto conn = m_connPool->getConn();

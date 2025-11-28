@@ -30,7 +30,7 @@ BackendPopulator::BackendPopulator(cta::objectstore::Backend & be,
     m_lc(lc) {
   cta::objectstore::RootEntry re(m_backend);
   re.fetchNoLock();
-  cta::objectstore::EntryLogSerDeser cl("user0", "systemhost", time(nullptr));
+  cta::objectstore::EntryLogSerDeser cl("user0", "systemhost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   // We might have to create the agent register (but this is unlikely)
   log::LogContext lc2(lc);
   try {

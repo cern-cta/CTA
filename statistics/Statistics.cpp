@@ -17,6 +17,8 @@
 
 #include "Statistics.hpp"
 
+#include <chrono>
+
 namespace cta::statistics {
 
 void Statistics::insertPerVOStatistics(const std::string& vo, const FileStatistics& fileStatistics) {
@@ -77,7 +79,7 @@ std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset* rset) {
     ret->insertPerVOStatistics(vo, fileStatistics);
   }
   // Set the statistics update time to now
-  ret->m_updateTime = time(nullptr);
+  ret->m_updateTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   return ret;
 }
 

@@ -129,7 +129,7 @@ void RepackRequest::setStatus(common::dataStructures::RepackInfo::Status repackS
   // common::dataStructures::RepackInfo::Status and serializers::RepackRequestStatus are defined using the same values,
   // hence the cast.
   if(repackStatus == common::dataStructures::RepackInfo::Status::Complete || repackStatus == common::dataStructures::RepackInfo::Status::Failed){
-      m_payload.set_repack_finished_time(time(nullptr));
+      m_payload.set_repack_finished_time(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   }
   m_payload.set_status((serializers::RepackRequestStatus)repackStatus);
 }
@@ -327,11 +327,11 @@ void RepackRequest::setStatus(){
         //We reached the end
         if (m_payload.failedtoretrievefiles() || m_payload.failedtoarchivefiles()) {
           //At least one retrieve or archive has failed
-          m_payload.set_repack_finished_time(time(nullptr));
+          m_payload.set_repack_finished_time(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
           setStatus(common::dataStructures::RepackInfo::Status::Failed);
         } else {
           //No Failure, we are status Complete
-          m_payload.set_repack_finished_time(time(nullptr));
+          m_payload.set_repack_finished_time(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
           setStatus(common::dataStructures::RepackInfo::Status::Complete);
         }
         removeFromOwnerAgentOwnership();

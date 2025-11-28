@@ -130,7 +130,7 @@ void RdbmsFileRecycleLogCatalogue::copyTapeFilesToFileRecycleLog(rdbms::Conn & c
       fileRecycleLog.diskFilePath = archiveFile.diskFileInfo.path;
     }
     fileRecycleLog.reasonLog = "(Deleted using cta-admin tf rm) " + reason;
-    fileRecycleLog.recycleLogTime = time(nullptr);
+    fileRecycleLog.recycleLogTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     insertFileInFileRecycleLog(conn, fileRecycleLog);
   }
 }
@@ -142,9 +142,9 @@ void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(const std::string& 
 
 void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(rdbms::Conn & conn, const std::string& vid, log::LogContext& lc) const {
   const char* const deleteFilesFromRecycleLogSql = R"SQL(
-    DELETE FROM 
-      FILE_RECYCLE_LOG 
-    WHERE 
+    DELETE FROM
+      FILE_RECYCLE_LOG
+    WHERE
       VID=:VID
   )SQL";
 
@@ -171,11 +171,11 @@ void RdbmsFileRecycleLogCatalogue::deleteFilesFromRecycleLog(rdbms::Conn & conn,
 void RdbmsFileRecycleLogCatalogue::deleteTapeFileCopyFromRecycleBin(cta::rdbms::Conn & conn,
   const common::dataStructures::FileRecycleLog& fileRecycleLog) const {
   const char* const deleteTapeFilesSql = R"SQL(
-    DELETE FROM 
-      FILE_RECYCLE_LOG 
-    WHERE 
-      FILE_RECYCLE_LOG.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND FILE_RECYCLE_LOG.VID = :VID AND 
-      FILE_RECYCLE_LOG.FSEQ = :FSEQ AND FILE_RECYCLE_LOG.COPY_NB = :COPY_NB AND 
+    DELETE FROM
+      FILE_RECYCLE_LOG
+    WHERE
+      FILE_RECYCLE_LOG.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID AND FILE_RECYCLE_LOG.VID = :VID AND
+      FILE_RECYCLE_LOG.FSEQ = :FSEQ AND FILE_RECYCLE_LOG.COPY_NB = :COPY_NB AND
       FILE_RECYCLE_LOG.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
   )SQL";
 
@@ -216,7 +216,7 @@ void RdbmsFileRecycleLogCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn,
       DISK_FILE_PATH,
       REASON_LOG,
       RECYCLE_LOG_TIME
-    ) SELECT 
+    ) SELECT
       :FILE_RECYCLE_LOG_ID,
       :VID,
       :FSEQ,
@@ -238,10 +238,10 @@ void RdbmsFileRecycleLogCatalogue::insertFileInFileRecycleLog(rdbms::Conn& conn,
       ARCHIVE_FILE.COLLOCATION_HINT AS COLLOCATION_HINT,
       :DISK_FILE_PATH,
       :REASON_LOG,
-      :RECYCLE_LOG_TIME 
-    FROM 
-      ARCHIVE_FILE 
-    WHERE 
+      :RECYCLE_LOG_TIME
+    FROM
+      ARCHIVE_FILE
+    WHERE
       ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID_2
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -280,7 +280,7 @@ void RdbmsFileRecycleLogCatalogue::copyArchiveFileToFileRecycleLog(rdbms::Conn &
     fileRecycleLog.archiveFileId = archiveFile.archiveFileID;
     fileRecycleLog.diskFilePath = request.diskFilePath;
     fileRecycleLog.reasonLog = InsertFileRecycleLog::getDeletionReasonLog(request.requester.name,request.diskInstance);
-    fileRecycleLog.recycleLogTime = time(nullptr);
+    fileRecycleLog.recycleLogTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     insertFileInFileRecycleLog(conn,fileRecycleLog);
   }
 }
@@ -290,16 +290,16 @@ std::list<InsertFileRecycleLog> RdbmsFileRecycleLogCatalogue::insertOldCopiesOfF
   std::list<InsertFileRecycleLog> fileRecycleLogsToInsert;
   //First, get the file to insert on the FILE_RECYCLE_LOG table
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       TAPE_FILE.VID AS VID,
       TAPE_FILE.FSEQ AS FSEQ,
       TAPE_FILE.BLOCK_ID AS BLOCK_ID,
       TAPE_FILE.COPY_NB AS COPY_NB,
       TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,
-      TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID 
-    FROM 
-      TAPE_FILE 
-    WHERE 
+      TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID
+    FROM
+      TAPE_FILE
+    WHERE
       TAPE_FILE.COPY_NB=:COPY_NB AND TAPE_FILE.ARCHIVE_FILE_ID=:ARCHIVE_FILE_ID AND (TAPE_FILE.VID<>:VID OR TAPE_FILE.FSEQ<>:FSEQ)
   )SQL";
 
@@ -319,7 +319,7 @@ std::list<InsertFileRecycleLog> RdbmsFileRecycleLogCatalogue::insertOldCopiesOfF
     fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
     fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
     fileRecycleLog.reasonLog = InsertFileRecycleLog::getRepackReasonLog();
-    fileRecycleLog.recycleLogTime = time(nullptr);
+    fileRecycleLog.recycleLogTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     fileRecycleLogsToInsert.push_back(fileRecycleLog);
   }
 

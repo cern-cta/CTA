@@ -356,7 +356,7 @@ cta::ArchiveMount::~ArchiveMount() noexcept = default;
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status,
                                        const std::optional<std::string>& reason) {
-  m_dbMount->setDriveStatus(status, getMountType(), time(nullptr), reason);
+  m_dbMount->setDriveStatus(status, getMountType(), std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), reason);
 }
 
 //------------------------------------------------------------------------------

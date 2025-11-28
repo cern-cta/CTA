@@ -221,7 +221,7 @@ TEST_P(QueueCleanupRunnerTest, CleanupRunnerParameterizedTest) {
   cta::objectstore::Agent agentForCleanup(agentForCleanupRef.getAgentAddress(), be);
 
   // Create the root entry
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.fetch();

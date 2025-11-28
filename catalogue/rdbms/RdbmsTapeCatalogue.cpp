@@ -131,7 +131,7 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
     throw exception::UserError(std::string("Cannot create tape ") + vid + " because media type " +
       mediaTypeName + " does not exist");
   }
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO TAPE(
       VID,
@@ -538,7 +538,7 @@ void RdbmsTapeCatalogue::modifyTapeMediaType(const common::dataStructures::Secur
   if(!RdbmsCatalogueUtils::mediaTypeExists(conn, mediaType)){
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the media type " + mediaType + " does not exist");
   }
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       MEDIA_TYPE_ID = (SELECT MEDIA_TYPE_ID FROM MEDIA_TYPE WHERE MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE),
@@ -573,7 +573,7 @@ void RdbmsTapeCatalogue::modifyTapeMediaType(const common::dataStructures::Secur
 
 void RdbmsTapeCatalogue::modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
   const std::string &vendor) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       VENDOR = :VENDOR,
@@ -608,7 +608,7 @@ void RdbmsTapeCatalogue::modifyTapeVendor(const common::dataStructures::Security
 
 void RdbmsTapeCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &logicalLibraryName) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       LOGICAL_LIBRARY_ID =
@@ -648,7 +648,7 @@ void RdbmsTapeCatalogue::modifyTapeLogicalLibraryName(const common::dataStructur
 
 void RdbmsTapeCatalogue::modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &tapePoolName) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       TAPE_POOL_ID = (SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME),
@@ -692,7 +692,7 @@ void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructure
     optionalEncryptionKeyName = encryptionKeyName;
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       ENCRYPTION_KEY_NAME = :ENCRYPTION_KEY_NAME,
@@ -732,7 +732,7 @@ void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::Secur
     optionalPurchaseOrder = purchaseOrder;
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       PURCHASE_ORDER = :PURCHASE_ORDER,
@@ -767,7 +767,7 @@ void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::Secur
 
 void RdbmsTapeCatalogue::modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::string &verificationStatus) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       VERIFICATION_STATUS = :VERIFICATION_STATUS,
@@ -809,7 +809,7 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
   const std::optional<common::dataStructures::Tape::State> & prev_state,
   const std::optional<std::string> & stateReason) {
   using namespace common::dataStructures;
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(stateReason, &m_log);
 
@@ -896,7 +896,7 @@ bool RdbmsTapeCatalogue::tapeExists(const std::string &vid) const {
 
 void RdbmsTapeCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
   const bool fullValue) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       IS_FULL = :IS_FULL,
@@ -931,7 +931,7 @@ void RdbmsTapeCatalogue::setTapeFull(const common::dataStructures::SecurityIdent
 
 void RdbmsTapeCatalogue::setTapeDirty(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
   const bool dirtyValue) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       DIRTY = :DIRTY,
@@ -1102,7 +1102,7 @@ void RdbmsTapeCatalogue::setTapeDirty(const std::string & vid) {
 void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &vid, const std::optional<std::string> &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       USER_COMMENT = :USER_COMMENT,
@@ -1137,7 +1137,7 @@ void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::Securit
 }
 
 void RdbmsTapeCatalogue::tapeLabelled(const std::string &vid, const std::string &drive) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       LABEL_DRIVE = :LABEL_DRIVE,
@@ -1160,7 +1160,7 @@ void RdbmsTapeCatalogue::tapeLabelled(const std::string &vid, const std::string 
 }
 
 void RdbmsTapeCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       LAST_WRITE_DRIVE = :LAST_WRITE_DRIVE,
@@ -1189,7 +1189,7 @@ void RdbmsTapeCatalogue::tapeMountedForArchive(const std::string &vid, const std
 }
 
 void RdbmsTapeCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::string &drive) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       LAST_READ_DRIVE = :LAST_READ_DRIVE,
@@ -1498,7 +1498,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       + cta::common::dataStructures::Tape::getAllPossibleStates());
   }
   if (searchCriteria.checkMissingFileCopies.value_or(false)) {
-    uint64_t max_creation_time = time(nullptr);
+    uint64_t max_creation_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     max_creation_time -= searchCriteria.missingFileCopiesMinAgeSecs;
     stmt.bindUint64(":MAX_CREATION_TIME", max_creation_time);
   }
@@ -1627,7 +1627,7 @@ uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::stri
 
 void RdbmsTapeCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStructures::SecurityIdentity& admin,
   const std::string& vid) const {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       DATA_IN_BYTES = 0,

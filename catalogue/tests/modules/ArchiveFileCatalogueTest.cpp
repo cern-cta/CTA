@@ -574,7 +574,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
-  
+
   const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
@@ -3117,7 +3117,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_file_recycle_log_dele
     deletedArchiveReq.diskInstance = diskInstance;
     deletedArchiveReq.archiveFileID = archiveFileId;
     deletedArchiveReq.diskFileId = file1Written.diskFileId;
-    deletedArchiveReq.recycleTime = time(nullptr);
+    deletedArchiveReq.recycleTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     deletedArchiveReq.requester = cta::common::dataStructures::RequesterIdentity(m_admin.username,"group");
     deletedArchiveReq.diskFilePath = "/path/";
     m_catalogue->ArchiveFile()->moveArchiveFileToRecycleLog(deletedArchiveReq,dummyLc);

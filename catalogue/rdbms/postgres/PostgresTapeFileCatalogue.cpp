@@ -163,7 +163,7 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   auto firstEventItor = events.begin();
   const auto &firstEvent = **firstEventItor;
   checkTapeItemWrittenFieldsAreSet(__FUNCTION__, firstEvent);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   auto conn = m_connPool->getConn();
   rdbms::AutoRollback autoRollback(conn);
 
@@ -282,7 +282,7 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   }
 
   const char* const sql = R"SQL(
-    CREATE TEMPORARY TABLE TEMP_TAPE_FILE_INSERTION_BATCH (LIKE TAPE_FILE) 
+    CREATE TEMPORARY TABLE TEMP_TAPE_FILE_INSERTION_BATCH (LIKE TAPE_FILE)
     ON COMMIT DROP;
     COPY TEMP_TAPE_FILE_INSERTION_BATCH(
       VID,
@@ -291,7 +291,7 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
       LOGICAL_SIZE_IN_BYTES,
       COPY_NB,
       CREATION_TIME,
-      ARCHIVE_FILE_ID) 
+      ARCHIVE_FILE_ID)
     FROM STDIN
     /* :VID,
        :FSEQ,
@@ -319,11 +319,11 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
   //Insert the tapefiles from the TEMP_TAPE_FILE_INSERTION_BATCH
   const char* const insertTapeFileSql = R"SQL(
     INSERT INTO TAPE_FILE (
-      VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, 
-      COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID) 
-    SELECT  
-      VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID 
-    FROM 
+      VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES,
+      COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID)
+    SELECT
+      VID, FSEQ, BLOCK_ID, LOGICAL_SIZE_IN_BYTES, COPY_NB, CREATION_TIME, ARCHIVE_FILE_ID
+    FROM
       TEMP_TAPE_FILE_INSERTION_BATCH
   )SQL";
   conn.executeNonQuery(insertTapeFileSql);
@@ -347,20 +347,20 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresTapeFileCatalogue::inser
   std::list<cta::catalogue::InsertFileRecycleLog> fileRecycleLogsToInsert;
   //Get the TAPE_FILE entry to put on the file recycle log
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       TAPE_FILE.VID AS VID,
       TAPE_FILE.FSEQ AS FSEQ,
       TAPE_FILE.BLOCK_ID AS BLOCK_ID,
       TAPE_FILE.COPY_NB AS COPY_NB,
       TAPE_FILE.CREATION_TIME AS TAPE_FILE_CREATION_TIME,
-      TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID 
-    FROM 
-      TAPE_FILE 
-    JOIN 
-      TEMP_TAPE_FILE_INSERTION_BATCH 
-    ON 
-      TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB 
-    WHERE 
+      TAPE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID
+    FROM
+      TAPE_FILE
+    JOIN
+      TEMP_TAPE_FILE_INSERTION_BATCH
+    ON
+      TEMP_TAPE_FILE_INSERTION_BATCH.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID AND TEMP_TAPE_FILE_INSERTION_BATCH.COPY_NB = TAPE_FILE.COPY_NB
+    WHERE
       TAPE_FILE.VID != TEMP_TAPE_FILE_INSERTION_BATCH.VID OR TAPE_FILE.FSEQ != TEMP_TAPE_FILE_INSERTION_BATCH.FSEQ
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -374,7 +374,7 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresTapeFileCatalogue::inser
     fileRecycleLog.tapeFileCreationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
     fileRecycleLog.archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
     fileRecycleLog.reasonLog = InsertFileRecycleLog::getRepackReasonLog();
-    fileRecycleLog.recycleLogTime = time(nullptr);
+    fileRecycleLog.recycleLogTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     fileRecycleLogsToInsert.push_back(fileRecycleLog);
   }
 
@@ -388,12 +388,12 @@ std::list<cta::catalogue::InsertFileRecycleLog> PostgresTapeFileCatalogue::inser
 
 uint64_t PostgresTapeFileCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn &conn, const std::string &vid) const {
   const char* const sql = R"SQL(
-    SELECT 
-      LAST_FSEQ AS LAST_FSEQ 
-    FROM 
-      TAPE 
-    WHERE 
-      VID = :VID 
+    SELECT
+      LAST_FSEQ AS LAST_FSEQ
+    FROM
+      TAPE
+    WHERE
+      VID = :VID
     FOR UPDATE
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -428,7 +428,7 @@ void PostgresTapeFileCatalogue::beginCreateTemporarySetDeferred(rdbms::Conn &con
 void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &conn,
   const std::set<TapeFileWritten> &events) const {
   ArchiveFileBatch archiveFileBatch(events.size());
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   // Store the value of each field
   uint32_t i = 0;
@@ -468,7 +468,7 @@ void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &c
       CHECKSUM_ADLER32,
       STORAGE_CLASS_NAME,
       CREATION_TIME,
-      RECONCILIATION_TIME) 
+      RECONCILIATION_TIME)
     FROM STDIN /*
       :ARCHIVE_FILE_ID,
       :DISK_INSTANCE_NAME,
@@ -512,8 +512,8 @@ void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &c
       CHECKSUM_ADLER32,
       STORAGE_CLASS_ID,
       CREATION_TIME,
-      RECONCILIATION_TIME) 
-    SELECT 
+      RECONCILIATION_TIME)
+    SELECT
       A.ARCHIVE_FILE_ID,
       A.DISK_INSTANCE_NAME,
       A.DISK_FILE_ID,
@@ -524,10 +524,10 @@ void PostgresTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn &c
       A.CHECKSUM_ADLER32,
       S.STORAGE_CLASS_ID,
       A.CREATION_TIME,
-      A.RECONCILIATION_TIME 
-    FROM TEMP_ARCHIVE_FILE_BATCH AS A, STORAGE_CLASS AS S 
-    WHERE A.STORAGE_CLASS_NAME = S.STORAGE_CLASS_NAME 
-    ORDER BY A.ARCHIVE_FILE_ID 
+      A.RECONCILIATION_TIME
+    FROM TEMP_ARCHIVE_FILE_BATCH AS A, STORAGE_CLASS AS S
+    WHERE A.STORAGE_CLASS_NAME = S.STORAGE_CLASS_NAME
+    ORDER BY A.ARCHIVE_FILE_ID
     ON CONFLICT (ARCHIVE_FILE_ID) DO NOTHING
   )SQL";
 
@@ -552,7 +552,7 @@ void PostgresTapeFileCatalogue::insertTapeFileBatchIntoTempTable(rdbms::Conn &co
 
   const char* const sql = R"SQL(
     COPY TEMP_TAPE_FILE_BATCH(
-      ARCHIVE_FILE_ID) 
+      ARCHIVE_FILE_ID)
     FROM STDIN
       /* :ARCHIVE_FILE_ID */
   )SQL";

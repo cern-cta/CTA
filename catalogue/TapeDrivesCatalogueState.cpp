@@ -484,7 +484,7 @@ common::dataStructures::TapeDrive TapeDrivesCatalogueState::setTapeDriveStatus(
   const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
   const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
   const common::dataStructures::SecurityIdentity& identity) const {
-  const time_t reportTime = time(nullptr);
+  const time_t reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   common::dataStructures::TapeDrive tapeDriveStatus;
   tapeDriveStatus.driveName = driveInfo.driveName;
   tapeDriveStatus.host = driveInfo.host;

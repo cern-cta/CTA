@@ -250,7 +250,7 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
   auto brokenOStore = OStoreDBWithAgentBroken(oKOStore.getBackend(), agentForCleanupFailRef, catalogue, dl);
 
   // Create the root entry
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::RootEntry re(be);
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.fetch();
@@ -350,7 +350,7 @@ TEST_P(QueueCleanupRunnerConcurrentTest, CleanupRunnerParameterizedTest) {
     cta::objectstore::QueueCleanupRunner qCleanupRunnerBroken(agentForCleanupRef, brokenOStore, catalogue, GetParam().cleanupTimeout);
     cta::objectstore::QueueCleanupRunner qCleanupRunnerOk(agentForCleanupRef, oKOStore, catalogue, GetParam().cleanupTimeout);
 
-    // We now run the GarbageCollector to clear the CleanupInfo 
+    // We now run the GarbageCollector to clear the CleanupInfo
     cta::objectstore::GarbageCollector gc(be, agentForCleanupRef, catalogue);
     ASSERT_NO_THROW(gc.runOnePass(lc));
 

@@ -162,8 +162,8 @@ cta::xrd::Data DriveLsResponseStream::next() {
   driveItem->set_files_transferred_in_session(dr.filesTransferedInSession.value_or(0));
   driveItem->set_bytes_transferred_in_session(dr.bytesTransferedInSession.value_or(0));
   driveItem->set_session_id(dr.sessionId.value_or(0));
-  const auto lastUpdateTime = dr.lastModificationLog.has_value() ? dr.lastModificationLog.value().time : time(nullptr);
-  driveItem->set_time_since_last_update(time(nullptr) - lastUpdateTime);
+  const auto lastUpdateTime = dr.lastModificationLog.has_value() ? dr.lastModificationLog.value().time : std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  driveItem->set_time_since_last_update(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - lastUpdateTime);
   driveItem->set_current_priority(dr.currentPriority.value_or(0));
   driveItem->set_current_activity(dr.currentActivity.value_or(""));
   driveItem->set_dev_file_name(dr.devFileName.value_or(""));
@@ -189,7 +189,7 @@ cta::xrd::Data DriveLsResponseStream::next() {
   }
 
   // set the time spent in the current state
-  uint64_t drive_time = time(nullptr);
+  uint64_t drive_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   switch (dr.driveStatus) {
     using cta::common::dataStructures::DriveStatus;

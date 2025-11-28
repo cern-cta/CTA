@@ -92,7 +92,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   }
 
   const uint64_t tapePoolId = getNextTapePoolId(conn);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO TAPE_POOL(
       TAPE_POOL_ID,
@@ -557,7 +557,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolVo(const common::dataStructures::Secu
     throw UserSpecifiedAnEmptyStringVo("Cannot modify tape pool because the new VO is an empty string");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE_POOL SET
       VIRTUAL_ORGANIZATION_ID = (SELECT VIRTUAL_ORGANIZATION_ID FROM VIRTUAL_ORGANIZATION WHERE VIRTUAL_ORGANIZATION_NAME=:VO),
@@ -595,7 +595,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolNbPartialTapes(const common::dataStru
       " string");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE_POOL SET
       NB_PARTIAL_TAPES = :NB_PARTIAL_TAPES,
@@ -631,7 +631,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures:
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE_POOL SET
       USER_COMMENT = :USER_COMMENT,
@@ -658,7 +658,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures:
 void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin,
                                                    const std::string &name, const std::string &encryptionKeyName) {
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   std::optional<std::string> encryptionKeyNameOpt;
   if (!encryptionKeyName.empty()) {
     encryptionKeyNameOpt = encryptionKeyName;
@@ -740,7 +740,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
   std::optional<std::string> optionalSupplyString =
     supply_list.empty() ? std::optional<std::string>() : cta::utils::listToCommaSeparatedString(supply_list);
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE_POOL SET
       SUPPLY = :SUPPLY,
@@ -776,7 +776,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::Se
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the new name is an empty string");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE_POOL SET
       TAPE_POOL_NAME = :NEW_TAPE_POOL_NAME,

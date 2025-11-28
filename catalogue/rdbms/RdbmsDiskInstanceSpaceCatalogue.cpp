@@ -36,12 +36,12 @@ RdbmsDiskInstanceSpaceCatalogue::RdbmsDiskInstanceSpaceCatalogue(log::Logger &lo
 void RdbmsDiskInstanceSpaceCatalogue::deleteDiskInstanceSpace(const std::string &name,
   const std::string &diskInstance) {
   const char* const delete_sql = R"SQL(
-    DELETE 
-    FROM 
-      DISK_INSTANCE_SPACE 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
-    AND 
+    DELETE
+    FROM
+      DISK_INSTANCE_SPACE
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+    AND
       DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -57,7 +57,7 @@ void RdbmsDiskInstanceSpaceCatalogue::deleteDiskInstanceSpace(const std::string 
       throw UserSpecifiedANonEmptyDiskInstanceSpaceAfterDelete(std::string("Cannot delete disk instance space")
         + name + " for unknown reason");
     } else {
-      throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot delete disk instance space ") 
+      throw UserSpecifiedANonExistentDiskInstanceSpace(std::string("Cannot delete disk instance space ")
         + name + " because it does not exist");
     }
   }
@@ -93,7 +93,7 @@ void RdbmsDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::data
       " because a disk instance space with the same name and disk instance already exists");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO DISK_INSTANCE_SPACE(
       DISK_INSTANCE_NAME,
@@ -155,7 +155,7 @@ void RdbmsDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::data
 std::list<common::dataStructures::DiskInstanceSpace> RdbmsDiskInstanceSpaceCatalogue::getAllDiskInstanceSpaces() const {
   std::list<common::dataStructures::DiskInstanceSpace> diskInstanceSpaceList;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       DISK_INSTANCE_SPACE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
       DISK_INSTANCE_SPACE.DISK_INSTANCE_SPACE_NAME AS DISK_INSTANCE_SPACE_NAME,
       DISK_INSTANCE_SPACE.FREE_SPACE_QUERY_URL AS FREE_SPACE_QUERY_URL,
@@ -171,8 +171,8 @@ std::list<common::dataStructures::DiskInstanceSpace> RdbmsDiskInstanceSpaceCatal
 
       DISK_INSTANCE_SPACE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       DISK_INSTANCE_SPACE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      DISK_INSTANCE_SPACE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
+      DISK_INSTANCE_SPACE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
       DISK_INSTANCE_SPACE
   )SQL";
 
@@ -209,16 +209,16 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceComment(
       "because the new comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_INSTANCE_SPACE SET 
+    UPDATE DISK_INSTANCE_SPACE SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
-    AND 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+    AND
       DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -244,16 +244,16 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceRefreshInterval(
     throw UserSpecifiedAZeroRefreshInterval("Cannot modify disk instance space "
       "because the new refreshInterval is zero");
   }
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_INSTANCE_SPACE SET 
+    UPDATE DISK_INSTANCE_SPACE SET
       REFRESH_INTERVAL = :REFRESH_INTERVAL,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
-    AND 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+    AND
       DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -274,14 +274,14 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceRefreshInterval(
 
 void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceFreeSpace(const std::string &name,
   const std::string &diskInstance, const uint64_t freeSpace) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_INSTANCE_SPACE SET 
+    UPDATE DISK_INSTANCE_SPACE SET
       FREE_SPACE = :FREE_SPACE,
-      LAST_REFRESH_TIME = :LAST_REFRESH_TIME 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
-    AND 
+      LAST_REFRESH_TIME = :LAST_REFRESH_TIME
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+    AND
       DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -306,16 +306,16 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceQueryURL(
       "because the new freeSpaceQueryURL is an empty string");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE DISK_INSTANCE_SPACE SET 
+    UPDATE DISK_INSTANCE_SPACE SET
       FREE_SPACE_QUERY_URL = :FREE_SPACE_QUERY_URL,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
-    AND 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+    AND
       DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -337,13 +337,13 @@ void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceQueryURL(
 bool RdbmsDiskInstanceSpaceCatalogue::diskInstanceSpaceExists(rdbms::Conn &conn, const std::string &name,
   const std::string &diskInstance) const {
   const char* const sql = R"SQL(
-    SELECT 
-      DISK_INSTANCE_SPACE_NAME AS DISK_INSTANCE_SPACE_NAME 
-    FROM 
-      DISK_INSTANCE_SPACE 
-    WHERE 
-      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME 
-     AND 
+    SELECT
+      DISK_INSTANCE_SPACE_NAME AS DISK_INSTANCE_SPACE_NAME
+    FROM
+      DISK_INSTANCE_SPACE
+    WHERE
+      DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME
+     AND
       DISK_INSTANCE_SPACE_NAME = :DISK_INSTANCE_SPACE_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);

@@ -45,7 +45,7 @@ void RdbmsMountPolicyCatalogue::createMountPolicy(const common::dataStructures::
     throw exception::UserError(std::string("Cannot create mount policy ") + name +
       " because a mount policy with the same name already exists");
   }
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO MOUNT_POLICY(
       MOUNT_POLICY_NAME,
@@ -137,7 +137,7 @@ std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMou
 std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMountPolicies(rdbms::Conn & conn) const {
   std::list<common::dataStructures::MountPolicy> policies;
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
 
       ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,
@@ -154,10 +154,10 @@ std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMou
 
       LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      MOUNT_POLICY 
-    ORDER BY 
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      MOUNT_POLICY
+    ORDER BY
       MOUNT_POLICY_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -195,7 +195,7 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
 
 std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMountPolicy(rdbms::Conn &conn, const std::string &mountPolicyName) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
 
       ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,
@@ -212,15 +212,15 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
 
       LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      MOUNT_POLICY 
-    WHERE 
+      LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      MOUNT_POLICY
+    WHERE
       MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":MOUNT_POLICY_NAME", mountPolicyName);
-  
+
   if (auto rset = stmt.executeQuery(); rset.next()) {
     common::dataStructures::MountPolicy policy;
 
@@ -257,14 +257,14 @@ std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getCac
 
 void RdbmsMountPolicyCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t archivePriority) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MOUNT_POLICY SET 
+    UPDATE MOUNT_POLICY SET
       ARCHIVE_PRIORITY = :ARCHIVE_PRIORITY,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -287,14 +287,14 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyArchivePriority(const common::d
 
 void RdbmsMountPolicyCatalogue::modifyMountPolicyArchiveMinRequestAge(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t minArchiveRequestAge) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MOUNT_POLICY SET 
+    UPDATE MOUNT_POLICY SET
       ARCHIVE_MIN_REQUEST_AGE = :ARCHIVE_MIN_REQUEST_AGE,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -317,14 +317,14 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyArchiveMinRequestAge(const comm
 
 void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t retrievePriority) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MOUNT_POLICY SET 
+    UPDATE MOUNT_POLICY SET
       RETRIEVE_PRIORITY = :RETRIEVE_PRIORITY,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -347,14 +347,14 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrievePriority(const common::
 
 void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrieveMinRequestAge(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const uint64_t minRetrieveRequestAge) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MOUNT_POLICY SET 
+    UPDATE MOUNT_POLICY SET
       RETRIEVE_MIN_REQUEST_AGE = :RETRIEVE_MIN_REQUEST_AGE,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -378,14 +378,14 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyRetrieveMinRequestAge(const com
 void RdbmsMountPolicyCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
-    UPDATE MOUNT_POLICY SET 
+    UPDATE MOUNT_POLICY SET
       USER_COMMENT = :USER_COMMENT,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
-      LAST_UPDATE_TIME = :LAST_UPDATE_TIME 
-    WHERE 
+      LAST_UPDATE_TIME = :LAST_UPDATE_TIME
+    WHERE
       MOUNT_POLICY_NAME = :MOUNT_POLICY_NAME
   )SQL";
   auto conn = m_connPool->getConn();
@@ -412,7 +412,7 @@ void RdbmsMountPolicyCatalogue::modifyMountPolicyComment(const common::dataStruc
 std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getRequesterGroupMountPolicy(
   rdbms::Conn &conn, const Group &group) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
 
       MOUNT_POLICY.ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,
@@ -429,15 +429,15 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
 
       MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      MOUNT_POLICY 
-    INNER JOIN 
-      REQUESTER_GROUP_MOUNT_RULE 
-    ON 
-      MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME 
-    WHERE 
-      REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      MOUNT_POLICY
+    INNER JOIN
+      REQUESTER_GROUP_MOUNT_RULE
+    ON
+      MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME
+    WHERE
+      REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
       REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -472,7 +472,7 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
 std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getRequesterMountPolicy(rdbms::Conn &conn,
   const User &user) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       MOUNT_POLICY.MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
 
       MOUNT_POLICY.ARCHIVE_PRIORITY AS ARCHIVE_PRIORITY,
@@ -489,15 +489,15 @@ std::optional<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::ge
 
       MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      MOUNT_POLICY 
-    INNER JOIN 
-      REQUESTER_MOUNT_RULE 
-    ON 
-      MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME 
-    WHERE 
-      REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND 
+      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      MOUNT_POLICY
+    INNER JOIN
+      REQUESTER_MOUNT_RULE
+    ON
+      MOUNT_POLICY.MOUNT_POLICY_NAME = REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME
+    WHERE
+      REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME AND
       REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
@@ -539,7 +539,7 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
   const std::string &requesterGroupName,
   const std::string &activity) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       'ACTIVITY' AS RULE_TYPE,
       REQUESTER_ACTIVITY_MOUNT_RULE.REQUESTER_NAME AS ASSIGNEE,
       REQUESTER_ACTIVITY_MOUNT_RULE.ACTIVITY_REGEX AS ACTIVITY_REGEX,
@@ -555,18 +555,18 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
       MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,
       MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      REQUESTER_ACTIVITY_MOUNT_RULE 
-    INNER JOIN 
-      MOUNT_POLICY 
-    ON 
-      REQUESTER_ACTIVITY_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME 
-    WHERE 
-      REQUESTER_ACTIVITY_MOUNT_RULE.DISK_INSTANCE_NAME = :ACTIVITY_DISK_INSTANCE_NAME AND 
-      REQUESTER_ACTIVITY_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_ACTIVITY_NAME 
-    UNION 
-    SELECT 
+      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      REQUESTER_ACTIVITY_MOUNT_RULE
+    INNER JOIN
+      MOUNT_POLICY
+    ON
+      REQUESTER_ACTIVITY_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME
+    WHERE
+      REQUESTER_ACTIVITY_MOUNT_RULE.DISK_INSTANCE_NAME = :ACTIVITY_DISK_INSTANCE_NAME AND
+      REQUESTER_ACTIVITY_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_ACTIVITY_NAME
+    UNION
+    SELECT
       'REQUESTER' AS RULE_TYPE,
       REQUESTER_MOUNT_RULE.REQUESTER_NAME AS ASSIGNEE,
       '' AS ACTIVITY_REGEX,
@@ -582,18 +582,18 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
       MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,
       MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      REQUESTER_MOUNT_RULE 
-    INNER JOIN 
-      MOUNT_POLICY 
-    ON 
-      REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME 
-    WHERE 
-      REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :REQUESTER_DISK_INSTANCE_NAME AND 
-      REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME 
-    UNION 
-    SELECT 
+      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      REQUESTER_MOUNT_RULE
+    INNER JOIN
+      MOUNT_POLICY
+    ON
+      REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME
+    WHERE
+      REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :REQUESTER_DISK_INSTANCE_NAME AND
+      REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME
+    UNION
+    SELECT
       'REQUESTER_GROUP' AS RULE_TYPE,
       REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME AS ASSIGNEE,
       '' AS ACTIVITY_REGEX,
@@ -609,15 +609,15 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
       MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,
       MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      REQUESTER_GROUP_MOUNT_RULE 
-    INNER JOIN 
-      MOUNT_POLICY 
-    ON 
-      REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME 
-    WHERE 
-      REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :GROUP_DISK_INSTANCE_NAME AND 
+      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      REQUESTER_GROUP_MOUNT_RULE
+    INNER JOIN
+      MOUNT_POLICY
+    ON
+      REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME
+    WHERE
+      REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :GROUP_DISK_INSTANCE_NAME AND
       REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME
   )SQL";
 
@@ -669,7 +669,7 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
   const std::string &requesterName,
   const std::string &requesterGroupName) const {
   const char* const sql = R"SQL(
-    SELECT 
+    SELECT
       'REQUESTER' AS RULE_TYPE,
       REQUESTER_MOUNT_RULE.REQUESTER_NAME AS ASSIGNEE,
 
@@ -684,18 +684,18 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
       MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,
       MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      REQUESTER_MOUNT_RULE 
-    INNER JOIN 
-      MOUNT_POLICY 
-    ON 
-      REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME 
-    WHERE 
-      REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :REQUESTER_DISK_INSTANCE_NAME AND 
-      REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME 
-    UNION 
-    SELECT 
+      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      REQUESTER_MOUNT_RULE
+    INNER JOIN
+      MOUNT_POLICY
+    ON
+      REQUESTER_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME
+    WHERE
+      REQUESTER_MOUNT_RULE.DISK_INSTANCE_NAME = :REQUESTER_DISK_INSTANCE_NAME AND
+      REQUESTER_MOUNT_RULE.REQUESTER_NAME = :REQUESTER_NAME
+    UNION
+    SELECT
       'REQUESTER_GROUP' AS RULE_TYPE,
       REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME AS ASSIGNEE,
 
@@ -710,15 +710,15 @@ RequesterAndGroupMountPolicies RdbmsMountPolicyCatalogue::getMountPolicies(
       MOUNT_POLICY.CREATION_LOG_TIME AS CREATION_LOG_TIME,
       MOUNT_POLICY.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
       MOUNT_POLICY.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME 
-    FROM 
-      REQUESTER_GROUP_MOUNT_RULE 
-    INNER JOIN 
-      MOUNT_POLICY 
-    ON 
-      REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME 
-    WHERE 
-      REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :GROUP_DISK_INSTANCE_NAME AND 
+      MOUNT_POLICY.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      REQUESTER_GROUP_MOUNT_RULE
+    INNER JOIN
+      MOUNT_POLICY
+    ON
+      REQUESTER_GROUP_MOUNT_RULE.MOUNT_POLICY_NAME = MOUNT_POLICY.MOUNT_POLICY_NAME
+    WHERE
+      REQUESTER_GROUP_MOUNT_RULE.DISK_INSTANCE_NAME = :GROUP_DISK_INSTANCE_NAME AND
       REQUESTER_GROUP_MOUNT_RULE.REQUESTER_GROUP_NAME = :REQUESTER_GROUP_NAME
   )SQL";
 

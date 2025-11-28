@@ -71,7 +71,7 @@ void fillRetrieveRequestsForCleanupRunner(
       tf.blockId = 0;
       tf.fileSize = 1;
       tf.copyNb = currentCopyNb;
-      tf.creationTime = time(nullptr);
+      tf.creationTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
       tf.fSeq = startFseq;
       tf.vid = tapeName;
       rqc.archiveFile.tapeFiles.push_back(tf);
@@ -83,8 +83,8 @@ void fillRetrieveRequestsForCleanupRunner(
     }
     rqc.mountPolicy.archiveMinRequestAge = 1;
     rqc.mountPolicy.archivePriority = 1;
-    rqc.mountPolicy.creationLog.time = time(nullptr);
-    rqc.mountPolicy.lastModificationLog.time = time(nullptr);
+    rqc.mountPolicy.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    rqc.mountPolicy.lastModificationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     requestPtrs.emplace_back(new cta::objectstore::RetrieveRequest(rrAddr, be));
@@ -96,7 +96,7 @@ void fillRetrieveRequestsForCleanupRunner(
     rr.setRetrieveFileQueueCriteria(rqc);
     cta::common::dataStructures::RetrieveRequest sReq;
     sReq.archiveFileID = rqc.archiveFile.archiveFileID;
-    sReq.creationLog.time = time(nullptr);
+    sReq.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     rr.setSchedulerRequest(sReq);
     rr.addJob(activeCopyNr, 1, 1, 1);
     rr.setOwner(agentRef.getAgentAddress());

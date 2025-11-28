@@ -403,7 +403,7 @@ uint64_t RestoreFilesCmd::addContainerEos(const std::string &diskInstance, const
   filemode &= ~(S_ISUID | S_ISGID | S_ISVTX);
   dir.set_mode(filemode);
 
-  auto time = ::time(nullptr);
+  auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   // Timestamps
   dir.mutable_ctime()->set_sec(time);
   dir.mutable_mtime()->set_sec(time);
@@ -599,7 +599,7 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
   file.set_flags(filemode);
 
   // Timestamps
-  auto time = ::time(nullptr);
+  auto time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   file.mutable_ctime()->set_sec(time);
   file.mutable_mtime()->set_sec(time);
   // we don't care about file.stime (sync time, used for CERNBox)

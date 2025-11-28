@@ -149,7 +149,7 @@ void ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::T
   driveInfo.host = mountInfo.host;
 
   ReportDriveStatsInputs inputs;
-  inputs.reportTime = time(nullptr);
+  inputs.reportTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   inputs.bytesTransferred = stats.dataVolume;
   inputs.filesTransferred = stats.filesCount;
 

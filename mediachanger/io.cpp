@@ -290,7 +290,7 @@ int acceptConnection(const int listenSocketFd,
     throw ex;
   }
 
-  const time_t startTime = time(nullptr);
+  const time_t startTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   pollfd pollFd;
   pollFd.fd = listenSocketFd;
@@ -312,7 +312,7 @@ int acceptConnection(const int listenSocketFd,
   case -1: // poll() encountered an error
     // If poll() was interrupted
     if(pollErrno == EINTR) {
-      const time_t remainingTime = timeout - (time(nullptr) - startTime);
+      const time_t remainingTime = timeout - (std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - startTime);
 
       cta::exception::AcceptConnectionInterrupted ex(remainingTime);
 

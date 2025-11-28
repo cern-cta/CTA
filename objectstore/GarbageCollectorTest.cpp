@@ -66,7 +66,7 @@ TEST_F(ObjectStore, GarbageCollectorBasicFuctionnality) {
   re.insert();
   // Create the agent register
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -122,7 +122,7 @@ TEST_F(ObjectStore, GarbageCollectorRegister) {
   re.insert();
   // Create the agent register
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -186,7 +186,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveQueue) {
   re.insert();
   // Create the agent register
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -250,7 +250,7 @@ TEST_F(ObjectStore, GarbageCollectorDriveRegister) {
   re.insert();
   // Create the agent register
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
@@ -312,7 +312,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
   re.initialize();
   re.insert();
   // Create the agent register
-  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", time(nullptr));
+  cta::objectstore::EntryLogSerDeser el("user0", "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -380,7 +380,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
     ar.setArchiveErrorReportURL("");
     ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
     ar.setSrcURL("root://eoseos/myFile");
-    ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+    ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     ar.insert();
     cta::objectstore::ScopedExclusiveLock atfrl(ar);
     if (pass < 2) { pass++; continue; }
@@ -399,7 +399,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
-      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, time(nullptr)});
+      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000U+pass, policy, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())});
       aq.addJobsAndCommit(jta, agentRef, lc);
       ar.setJobOwner(1, aq.getAddressIfSet());
       ar.commit();
@@ -419,7 +419,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
       policy.archiveMinRequestAge = 0;
       policy.archivePriority = 1;
       std::list <cta::objectstore::ArchiveQueue::JobToAdd> jta;
-      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, time(nullptr)});
+      jta.push_back({jd, ar.getAddressIfSet(), ar.getArchiveFile().archiveFileID, 1000+pass, policy, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())});
       aq.addJobsAndCommit(jta, agentRef, lc);
       ar.setJobOwner(2, aq.getAddressIfSet());
       ar.commit();
@@ -502,7 +502,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -566,7 +566,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
       tf.blockId=0;
       tf.fileSize=1;
       tf.copyNb=1;
-      tf.creationTime=time(nullptr);
+      tf.creationTime=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
       tf.fSeq=pass;
       tf.vid="Tape0";
       rqc.archiveFile.tapeFiles.push_back(tf);
@@ -576,21 +576,21 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
       tf.blockId=0;
       tf.fileSize=1;
       tf.copyNb=2;
-      tf.creationTime=time(nullptr);
+      tf.creationTime=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
       tf.fSeq=pass;
       tf.vid="Tape1";
       rqc.archiveFile.tapeFiles.push_back(tf);
     }
     rqc.mountPolicy.archiveMinRequestAge = 1;
     rqc.mountPolicy.archivePriority = 1;
-    rqc.mountPolicy.creationLog.time = time(nullptr);
-    rqc.mountPolicy.lastModificationLog.time = time(nullptr);
+    rqc.mountPolicy.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    rqc.mountPolicy.lastModificationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     rqc.mountPolicy.retrieveMinRequestAge = 1;
     rqc.mountPolicy.retrievePriority = 1;
     rr.setRetrieveFileQueueCriteria(rqc);
     cta::common::dataStructures::RetrieveRequest sReq;
     sReq.archiveFileID = rqc.archiveFile.archiveFileID;
-    sReq.creationLog.time=time(nullptr);
+    sReq.creationLog.time=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     rr.setSchedulerRequest(sReq);
     rr.addJob(1, 1, 1, 1);
     rr.addJob(2, 1, 1, 1);
@@ -690,7 +690,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -724,7 +724,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
     repackRequest.setBufferURL("test/buffer/url");
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
-    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
+    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     repackRequest.insert();
   }
   {
@@ -772,7 +772,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestToExpand) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -806,7 +806,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestToExpand) {
     repackRequest.setBufferURL("test/buffer/url");
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
-    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
+    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     repackRequest.insert();
   }
   {
@@ -853,7 +853,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -888,7 +888,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setExpandFinished(false);
     repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
-    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
+    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     repackRequest.insert();
   }
   {
@@ -936,7 +936,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -972,7 +972,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setExpandFinished(true);
     repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
-    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
+    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     repackRequest.insert();
   }
   cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);
@@ -1045,7 +1045,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestStarting) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -1080,7 +1080,7 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestStarting) {
     repackRequest.setOwner(agentReferenceRepackRequest.getAgentAddress());
     repackRequest.setExpandFinished(true);
     repackRequest.setMountPolicy(cta::common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack);
-    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",time(nullptr)));
+    repackRequest.setCreationLog(cta::common::dataStructures::EntryLog("test","test",std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
     repackRequest.insert();
   }
   cta::log::StringLogger strLogger("dummy", "dummy", cta::log::DEBUG);
@@ -1124,7 +1124,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -1164,21 +1164,21 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     tf.blockId=0;
     tf.fileSize=1;
     tf.copyNb=2;
-    tf.creationTime=time(nullptr);
+    tf.creationTime=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     tf.fSeq=1;
     tf.vid="Tape0";
     rqc.archiveFile.tapeFiles.push_back(tf);
   }
   rqc.mountPolicy.archiveMinRequestAge = 1;
   rqc.mountPolicy.archivePriority = 1;
-  rqc.mountPolicy.creationLog.time = time(nullptr);
-  rqc.mountPolicy.lastModificationLog.time = time(nullptr);
+  rqc.mountPolicy.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  rqc.mountPolicy.lastModificationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   rqc.mountPolicy.retrieveMinRequestAge = 1;
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);
   cta::common::dataStructures::RetrieveRequest sReq;
   sReq.archiveFileID = rqc.archiveFile.archiveFileID;
-  sReq.creationLog.time=time(nullptr);
+  sReq.creationLog.time=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   rr.setSchedulerRequest(sReq);
   rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransfer);
   rr.setOwner(agentToTransferForUser.getAddressIfSet());
@@ -1593,7 +1593,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -1633,21 +1633,21 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
     tf.blockId=0;
     tf.fileSize=1;
     tf.copyNb=2;
-    tf.creationTime=time(nullptr);
+    tf.creationTime=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     tf.fSeq=1;
     tf.vid="Tape0";
     rqc.archiveFile.tapeFiles.push_back(tf);
   }
   rqc.mountPolicy.archiveMinRequestAge = 1;
   rqc.mountPolicy.archivePriority = 1;
-  rqc.mountPolicy.creationLog.time = time(nullptr);
-  rqc.mountPolicy.lastModificationLog.time = time(nullptr);
+  rqc.mountPolicy.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  rqc.mountPolicy.lastModificationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   rqc.mountPolicy.retrieveMinRequestAge = 1;
   rqc.mountPolicy.retrievePriority = 1;
   rr.setRetrieveFileQueueCriteria(rqc);
   cta::common::dataStructures::RetrieveRequest sReq;
   sReq.archiveFileID = rqc.archiveFile.archiveFileID;
-  sReq.creationLog.time=time(nullptr);
+  sReq.creationLog.time=std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   rr.setSchedulerRequest(sReq);
   rr.setJobStatus(2,cta::objectstore::serializers::RetrieveJobStatus::RJS_ToTransfer);
   rr.setOwner(agentToTransferForUser.getAddressIfSet());
@@ -1753,7 +1753,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   re.insert();
   // Create the agent register
   cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", time(nullptr));
+      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::objectstore::ScopedExclusiveLock rel(re);
   // Create the agent for objects creation
   cta::objectstore::AgentReference agentRef("unitTestCreateEnv", dl);
@@ -1798,7 +1798,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   ar.setArchiveErrorReportURL("");
   ar.setRequester(cta::common::dataStructures::RequesterIdentity("user0", "group0"));
   ar.setSrcURL("root://eoseos/myFile");
-  ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", time(nullptr)));
+  ar.setEntryLog(cta::common::dataStructures::EntryLog("user0", "host0", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())));
   ar.insert();
 
   // Create the garbage collector and run it once.

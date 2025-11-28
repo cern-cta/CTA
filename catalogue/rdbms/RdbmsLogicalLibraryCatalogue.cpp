@@ -55,7 +55,7 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
     }
   }
   const uint64_t logicalLibraryId = getNextLogicalLibraryId(conn);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     INSERT INTO LOGICAL_LIBRARY(
       LOGICAL_LIBRARY_ID,
@@ -200,7 +200,7 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryName(const common::dataSt
       "Cannot modify logical library because the new name is an empty string");
   }
 
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE LOGICAL_LIBRARY SET
       LOGICAL_LIBRARY_NAME = :NEW_LOGICAL_LIBRARY_NAME,
@@ -228,7 +228,7 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryName(const common::dataSt
 void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const std::string &comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE LOGICAL_LIBRARY SET
       USER_COMMENT = :USER_COMMENT,
@@ -266,7 +266,7 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const com
   } else {
     physicalLibraryId = std::nullopt;
   }
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE LOGICAL_LIBRARY SET
       PHYSICAL_LIBRARY_ID = :PHYSICAL_LIBRARY_ID,
@@ -292,7 +292,7 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const com
 void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
   const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &disabledReason) {
   const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(disabledReason, &m_log);
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE LOGICAL_LIBRARY SET
       DISABLED_REASON = :DISABLED_REASON,
@@ -318,7 +318,7 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
 
 void RdbmsLogicalLibraryCatalogue::setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin,
   const std::string &name, const bool disabledValue) {
-  const time_t now = time(nullptr);
+  const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE LOGICAL_LIBRARY SET
       IS_DISABLED = :IS_DISABLED,
