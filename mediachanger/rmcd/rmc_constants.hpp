@@ -17,55 +17,56 @@
 
 #pragma once
 
-#define RMC_CHECKI   5  //!< max interval to check for work to be done
-#define RMC_PRTBUFSZ 180
-#define RMC_REPBUFSZ 524288  //!< must be >= max media changer server reply size
-#define RMC_REQBUFSZ 256     //!< must be >= max media changer server request size
-#define RMC_MAGIC    0x120D0301
-#define RMC_TIMEOUT  5  //!< netread timeout while receiving a request
-#define RMC_RETRYI   60
-#define RMC_LOGBUFSZ 1024
+//! maximum length for a VID
+constexpr int CA_MAXVIDLEN = 6;
 
-#define REQ_DATA_SIZE (RMC_REQBUFSZ - 3 * LONGSIZE)  //!< Size of buffer pointed to by rqst_context.req_data
+enum RMCConstant {
+  RMC_CHECKI    = 5,             //!< max interval to check for work to be done
+  RMC_PRTBUFSZ  = 180,
+  RMC_REPBUFSZ  = 524288,        //!< must be >= max media changer server reply size
+  RMC_REQBUFSZ  = 256,           //!< must be >= max media changer server request size
+  RMC_MAGIC     = 0x120D0301,
+  RMC_TIMEOUT   = 5,             //!< netread timeout while receiving a request
+  RMC_RETRYI    = 60,
+  RMC_LOGBUFSZ  = 1024,
+  RMC_PORT      = 5014
+};
 
-#define RMC_PORT 5014
+#define REQ_DATA_SIZE (RMC_REQBUFSZ - 3 * LONGSIZE)   //!< Size of buffer pointed to by rqst_context.req_data
 
-#define RMC_MAXRQSTATTEMPTS 10  //!< Maximum number of attempts a retriable RMC request should be issued
+enum SMCExitCode {
+  USERR   = 1,    //!< user error
+  SYERR   = 2,    //!< system error 
+  CONFERR = 4     //!< configuration error
+};
 
-// SCSI media changer utilities exit codes
+enum RMCRequestType {
+  RMC_GETGEOM        = 1,    //!< Get robot geometry
+  RMC_FINDCART       = 2,    //!< Find cartridge(s)
+  RMC_READELEM       = 3,    //!< Read element status
+  RMC_MOUNT          = 4,    //!< Mount request
+  RMC_UNMOUNT        = 5,    //!< Unmount request
+  RMC_EXPORT         = 6,    //!< Export tape request
+  RMC_IMPORT         = 7,    //!< Import tape request
+  RMC_GENERICMOUNT   = 8,    //!< Generic (SCSI or ACS) mount request
+  RMC_GENERICUNMOUNT = 9     //!< Generic (SCSI or ACS) mount request
+};
 
-#define USERR   1  //!< user error
-#define SYERR   2  //!< system error
-#define CONFERR 4  //!< configuration error
+enum SMCReplyType {
+  MSG_ERR  = 1,
+  MSG_DATA = 2,
+  RMC_RC   = 3
+};
 
-// Request types
-
-#define RMC_GETGEOM        1  //!< Get robot geometry
-#define RMC_FINDCART       2  //!< Find cartridge(s)
-#define RMC_READELEM       3  //!< Read element status
-#define RMC_MOUNT          4  //!< Mount request
-#define RMC_UNMOUNT        5  //!< Unmount request
-#define RMC_EXPORT         6  //!< Export tape request
-#define RMC_IMPORT         7  //!< Import tape request
-#define RMC_GENERICMOUNT   8  //!< Generic (SCSI or ACS) mount request
-#define RMC_GENERICUNMOUNT 9  //!< Generic (SCSI or ACS) mount request
-
-// SCSI media changer server reply types
-
-#define MSG_ERR  1
-#define MSG_DATA 2
-#define RMC_RC   3
-
-// SCSI media changer server messages
-
-#define RMC00 "RMC00 - SCSI media changer server not available on %s\n"
-#define RMC01 "RMC01 - robot parameter is mandatory\n"
-#define RMC02 "RMC02 - %s error : %s\n"
-#define RMC03 "RMC03 - illegal function %d\n"
-#define RMC04 "RMC04 - error getting request, netread = %d\n"
-#define RMC05 "RMC05 - cannot allocate enough memory\n"
-#define RMC06 "RMC06 - invalid value for %s\n"
-#define RMC09 "RMC09 - fatal configuration error: %s %s\n"
-#define RMC46 "RMC46 - request too large (max. %d)\n"
-#define RMC92 "RMC92 - %s request by %d,%d from %s\n"
-#define RMC98 "RMC98 - %s\n"
+//! SCSI media changer server messages
+constexpr const char* RMC00 = "RMC00 - SCSI media changer server not available on %s\n";
+constexpr const char* RMC01 = "RMC01 - robot parameter is mandatory\n";
+constexpr const char* RMC02 = "RMC02 - %s error : %s\n";
+constexpr const char* RMC03 = "RMC03 - illegal function %d\n";
+constexpr const char* RMC04 = "RMC04 - error getting request, netread = %d\n";
+constexpr const char* RMC05 = "RMC05 - cannot allocate enough memory\n";
+constexpr const char* RMC06 = "RMC06 - invalid value for %s\n";
+constexpr const char* RMC09 = "RMC09 - fatal configuration error: %s %s\n";
+constexpr const char* RMC46 = "RMC46 - request too large (max. %d)\n";
+constexpr const char* RMC92 = "RMC92 - %s request by %d,%d from %s\n";
+constexpr const char* RMC98 = "RMC98 - %s\n";

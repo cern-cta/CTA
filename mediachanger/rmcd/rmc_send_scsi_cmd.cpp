@@ -15,16 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-/*	rmc_send_scsi_cmd - Send a SCSI command to a device */
-/*	return	-5	if not supported on this platform (serrno = SEOPNOTSUP)
- *		-4	if SCSI error (serrno = EIO)
- *		-3	if CAM error (serrno = EIO)
- *		-2	if ioctl fails with errno (serrno = errno)
- *		-1	if open/stat fails with errno (message fully formatted)
- *		 0	if successful with no data transfer
- *		>0	number of bytes transferred
- */
-
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <stdio.h>
@@ -44,10 +34,10 @@
 #include "scsictl.hpp"
 #include "rmc_send_scsi_cmd.hpp"
 
-#define RMC_ERR_MSG_BUFSZ 132
-#define ST_DEV_BUFSZ      64
-#define SYSPATH_BUFSZ     256
-#define SGPATH_BUFSZ      80
+constexpr int RMC_ERR_MSG_BUFSZ = 132;
+constexpr int ST_DEV_BUFSZ      = 64;
+constexpr int SYSPATH_BUFSZ     = 256;
+constexpr int SGPATH_BUFSZ      = 80;
 
 static char rmc_err_msgbuf[RMC_ERR_MSG_BUFSZ];
 static const char* sk_msg[] = {
@@ -70,18 +60,6 @@ static const char* sk_msg[] = {
 };
 
 static void find_sgpath(char* const sgpath, const int maj, const int min) {
-  /*
-          Find the sg device for a pair of major and minor device IDs
-          of a tape device. The match is done by
-
-          . identifying the tape's st device node
-          . getting the device's unique ID from sysfs
-          . searching the sg device with the same ID (in sysfs)
-
-          If no match is found, the returned sg path will be an empty
-          string.
-        */
-
   char systape[] = "/sys/class/scsi_tape";
   char sysgen[] = "/sys/class/scsi_generic";
   char syspath[SYSPATH_BUFSZ];
@@ -224,7 +202,7 @@ int rmc_send_scsi_cmd(const int tapefd,
              sg_big_buff_val - sizeof(struct sg_header) - cdblen);
     *msgaddr = rmc_err_msgbuf;
     serrno = EINVAL;
-    return -1;
+    return RMC_SEND_SCSI_ERR_OPEN;
   }
   if ((int) sizeof(struct sg_header) + cdblen + buflen > sg_bufsiz) {
     if (sg_bufsiz > 0) {
@@ -234,7 +212,7 @@ int rmc_send_scsi_cmd(const int tapefd,
       serrno = errno;
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "cannot get memory");
       *msgaddr = rmc_err_msgbuf;
-      return -1;
+      return RMC_SEND_SCSI_ERR_OPEN;
     }
     sg_bufsiz = sizeof(struct sg_header) + cdblen + buflen;
   }
@@ -246,7 +224,7 @@ int rmc_send_scsi_cmd(const int tapefd,
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "path exceeds maximum length");
       *msgaddr = rmc_err_msgbuf;
       serrno = ENOBUFS;
-      return -1;
+      return RMC_SEND_SCSI_ERR_OPEN;
     }
   } else {
     struct stat sbufa;
@@ -257,7 +235,7 @@ int rmc_send_scsi_cmd(const int tapefd,
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : stat error : %s\n", path, strerror(errno));
       rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
       *msgaddr = rmc_err_msgbuf;
-      return -1;
+      return RMC_SEND_SCSI_ERR_OPEN;
     }
     /* Find the first available sg device and use its major number for comparison
            with the provided major number. If they are the same we can use the sgpath provided directly */
@@ -290,7 +268,7 @@ int rmc_send_scsi_cmd(const int tapefd,
         snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "path exceeds maximum length");
         *msgaddr = rmc_err_msgbuf;
         serrno = ENOBUFS;
-        return -1;
+        return RMC_SEND_SCSI_ERR_OPEN;
       }
     } else {
       /* Otherwise, look up the path using the (major,minor) device ID. If no match is found,
@@ -303,14 +281,14 @@ int rmc_send_scsi_cmd(const int tapefd,
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : open error : %s\n", sgpath, strerror(errno));
       rmc_err_msgbuf[RMC_ERR_MSG_BUFSZ - 1] = '\0';
       *msgaddr = rmc_err_msgbuf;
-      return -1;
+      return RMC_SEND_SCSI_ERR_OPEN;
     }
   }
   if (sg_buffer == nullptr) {
     serrno = EFAULT;
     snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "sg_buffer points to NULL");
     *msgaddr = rmc_err_msgbuf;
-    return -1;
+    return RMC_SEND_SCSI_ERR_OPEN;
   }
 
   /* set the sg timeout (in jiffies) */
@@ -336,7 +314,7 @@ int rmc_send_scsi_cmd(const int tapefd,
     if (!do_not_open) {
       close(fd);
     }
-    return -2;
+    return RMC_SEND_SCSI_ERR_IOCTL;
   }
   if ((n = read(fd, sg_buffer, sizeof(struct sg_header) + ((flags & SCSI_IN) ? buflen : 0))) < 0) {
     *msgaddr = (char*) strerror(errno);
@@ -347,7 +325,7 @@ int rmc_send_scsi_cmd(const int tapefd,
     if (!do_not_open) {
       close(fd);
     }
-    return -2;
+    return RMC_SEND_SCSI_ERR_IOCTL;
   }
   if (!do_not_open) {
     close(fd);
@@ -374,14 +352,14 @@ int rmc_send_scsi_cmd(const int tapefd,
     snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : scsi error : %s\n", sgpath, tmp_msgbuf);
     rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
     *msgaddr = rmc_err_msgbuf;
-    return -4;
+    return RMC_SEND_SCSI_ERR_SCSI;
   } else if (sg_hd->result) {
     *msgaddr = (char*) strerror(sg_hd->result);
     serrno = sg_hd->result;
     snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : read error : %s\n", sgpath, *msgaddr);
     rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
     *msgaddr = rmc_err_msgbuf;
-    return -2;
+    return RMC_SEND_SCSI_ERR_IOCTL;
   }
   if (n) {
     n -= sizeof(struct sg_header) + resid;

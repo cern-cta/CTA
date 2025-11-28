@@ -17,8 +17,10 @@
 
 #pragma once
 
-#include "osdep.hpp"
 #include <netdb.h>
+
+//! Maximum length for a hostname
+constexpr int CA_MAXHOSTNAMELEN = 63;
 
 struct hostent* Cgethostbyname(const char*);
 struct hostent* Cgethostbyaddr(const void*, size_t, int);

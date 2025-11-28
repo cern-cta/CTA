@@ -17,5 +17,4 @@
 
 #pragma once
 
-char* getconfent(const char*, const char*, int);
-char* getconfent_fromfile(const char*, const char*, const char*, int);
+char* getconfent_fromfile(const char* category, const char* name, int flags);

@@ -53,8 +53,8 @@ int rmc_mount(const char* const server, const char* const vid, const int side, c
   marshall_LONG(sbp, gid);
   marshall_STRING(sbp, ""); /* loader field is no longer used */
   marshall_STRING(sbp, vid);
-  marshall_WORD(sbp, side);
-  marshall_WORD(sbp, drvord);
+  marshall_SHORT(sbp, side);
+  marshall_SHORT(sbp, drvord);
 
   msglen = sbp - sendbuf;
   marshall_LONG(q, msglen); /* update length field */

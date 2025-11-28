@@ -25,7 +25,6 @@
 #include <signal.h>
 #include <errno.h>
 #include <string.h>
-#include "osdep.hpp"
 #include "serrno.hpp"
 
 int Cinitdaemon(const char* const name, void (*const wait4child)(int)) {

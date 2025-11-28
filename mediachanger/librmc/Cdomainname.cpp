@@ -1,4 +1,4 @@
-/*
+/**
  * @project      The CERN Tape Archive (CTA)
  * @copyright    Copyright © 2002-2025 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
@@ -24,12 +24,9 @@
 #include <netdb.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
-#include "Castor_limits.hpp"
 #include "Cnetdb.hpp"
 #include "serrno.hpp"
 #include "Cdomainname.hpp"
-
-/* Cdomainname - get domain name */
 
 int Cdomainname(char* name, int namelen) {
   char hostname[CA_MAXHOSTNAMELEN + 1];

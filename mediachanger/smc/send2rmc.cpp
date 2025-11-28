@@ -30,8 +30,6 @@
 #include "mediachanger/librmc/marshall.hpp"
 #include "rmc_api.hpp"
 
-#define PATH_CONF "/etc/cta/cta-rmcd.conf"
-
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
 
 int send2rmc(const char* const host,
@@ -56,7 +54,7 @@ int send2rmc(const char* const host,
   sin.sin_family = AF_INET;
   p = getenv("RMC_PORT");
   if (!p) {
-    p = getconfent_fromfile(PATH_CONF, "RMC", "PORT", 0);
+    p = getconfent_fromfile("RMC", "PORT", 0);
   }
 
   if (p) {
@@ -103,7 +101,7 @@ int send2rmc(const char* const host,
 
   if ((n = netwrite(s, reqp, reql)) <= 0) {
     if (n == 0) {
-      rmc_errmsg(func, RMC02, "send", sys_serrlist[SERRNO]);
+      rmc_errmsg(func, RMC02, "send", sys_serrlist[serrno-SEBASEOFF]);
     } else {
       rmc_errmsg(func, RMC02, "send", neterror());
     }
@@ -122,7 +120,7 @@ int send2rmc(const char* const host,
   while (1) {
     if ((n = netread(s, repbuf, 3 * LONGSIZE)) <= 0) {
       if (n == 0) {
-        rmc_errmsg(func, RMC02, "recv", sys_serrlist[SERRNO]);
+        rmc_errmsg(func, RMC02, "recv", sys_serrlist[serrno-SEBASEOFF]);
       } else {
         rmc_errmsg(func, RMC02, "recv", neterror());
       }
@@ -144,7 +142,7 @@ int send2rmc(const char* const host,
     }
     if ((n = netread(s, repbuf, c)) <= 0) {
       if (n == 0) {
-        rmc_errmsg(func, RMC02, "recv", sys_serrlist[SERRNO]);
+        rmc_errmsg(func, RMC02, "recv", sys_serrlist[serrno-SEBASEOFF]);
       } else {
         rmc_errmsg(func, RMC02, "recv", neterror());
       }
