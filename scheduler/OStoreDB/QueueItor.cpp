@@ -90,7 +90,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
   // Async fetch of the archive jobs from the objectstore
   for(auto &j : jobQueueChunk) {
     requests.push_back(std::make_pair(ArchiveRequest(j.address, m_objectStore), nullptr));
-    requests.back().second.reset(requests.back().first.asyncLockfreeFetch());
+    requests.back().second = requests.back().first.asyncLockfreeFetch();
   }
 
   // Populate the jobs cache from the archive jobs
@@ -195,7 +195,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
   // Async fetch of the retrieve jobs from the objectstore
   for(auto &j : jobQueueChunk) {
     requests.push_back(std::make_pair(RetrieveRequest(j.address, m_objectStore), nullptr));
-    requests.back().second.reset(requests.back().first.asyncLockfreeFetch());
+    requests.back().second = requests.back().first.asyncLockfreeFetch();
   }
 
   // Populate the jobs cache from the retrieve jobs

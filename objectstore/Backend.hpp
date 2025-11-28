@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <list>
 #include <functional>
@@ -134,7 +135,7 @@ class Backend {
    *
    * @return pointer to a newly created AsyncUpdater (for RAII)
    */
-  virtual AsyncCreator * asyncCreate(const std::string & name, const std::string & value) = 0;
+  virtual std::unique_ptr<AsyncCreator> asyncCreate(const std::string & name, const std::string & value) = 0;
 
   /**
    * A base class handling asynchronous sequence of lock exclusive, fetch, call user
@@ -161,7 +162,7 @@ class Backend {
    * parameter and return the updated value for commit.
    * @return pointer to a newly created AsyncUpdater (for RAII)
    */
-  virtual AsyncUpdater * asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) = 0;
+  virtual std::unique_ptr<AsyncUpdater> asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) = 0;
 
 
   /**
@@ -189,7 +190,7 @@ class Backend {
    * @param name The name of the object to be deleted.
    * @return pointer to a newly created AsyncDeleter
    */
-  virtual AsyncDeleter * asyncDelete(const std::string & name) = 0;
+  virtual std::unique_ptr<AsyncDeleter> asyncDelete(const std::string & name) = 0;
 
   /**
    * A base class handling asynchronous fetch (lockfree).
@@ -217,7 +218,7 @@ class Backend {
    * @param name The name of the object to be deleted.
    * @return pointer to a newly created AsyncDeleter
    */
-  virtual AsyncLockfreeFetcher * asyncLockfreeFetch(const std::string & name) = 0;
+  virtual std::unique_ptr<AsyncLockfreeFetcher> asyncLockfreeFetch(const std::string & name) = 0;
 
   /**
    * Base class for the representation of the parameters of the BackendStore.

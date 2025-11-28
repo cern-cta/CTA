@@ -184,7 +184,7 @@ private:
   /**
    * The container for the threads
    */
-  std::vector<RadosWorkerThreadAndContext *> m_threads;
+  std::vector<std::unique_ptr<RadosWorkerThreadAndContext>> m_threads;
 
 public:
   /**
@@ -219,7 +219,7 @@ public:
     std::unique_ptr<cta::utils::Timer> m_retryTimer;
   };
 
-  Backend::AsyncCreator* asyncCreate(const std::string& name, const std::string& value) override;
+  std::unique_ptr<Backend::AsyncCreator> asyncCreate(const std::string& name, const std::string& value) override;
 
   /**
    * A class following up the lock-fetch-update-write-unlock. Constructor implicitly
@@ -267,7 +267,7 @@ public:
     static void unlockCallback(librados::completion_t completion, void *pThis);
   };
 
-  Backend::AsyncUpdater* asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
+  std::unique_ptr<Backend::AsyncUpdater> asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) override;
 
   /**
    * A class following up the check existence-lock-delete.
@@ -295,7 +295,7 @@ public:
     static void deleteCallback(librados::completion_t completion, void *pThis);
   };
 
-  Backend::AsyncDeleter* asyncDelete(const std::string & name) override;
+  std::unique_ptr<Backend::AsyncDeleter> asyncDelete(const std::string & name) override;
 
   /**
    * A class following up the async lockfree fetch.
@@ -330,7 +330,7 @@ public:
     static void fetchCallback(librados::completion_t completion, void *pThis);
   };
 
-  Backend::AsyncLockfreeFetcher* asyncLockfreeFetch(const std::string& name) override;
+  std::unique_ptr<Backend::AsyncLockfreeFetcher> asyncLockfreeFetch(const std::string& name) override;
 
   class Parameters: public Backend::Parameters {
     friend class BackendRados;

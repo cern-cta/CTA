@@ -377,9 +377,9 @@ BackendVFS::AsyncCreator::AsyncCreator(BackendVFS& be, const std::string& name, 
     }))
 {}
 
-Backend::AsyncCreator* BackendVFS::asyncCreate(const std::string& name, const std::string& value) {
+std::unique_ptr<Backend::AsyncCreator> BackendVFS::asyncCreate(const std::string& name, const std::string& value) {
   // Create the object. Done.
-  return new AsyncCreator(*this, name, value);
+  return std::make_unique<AsyncCreator>(*this, name, value);
 }
 
 void BackendVFS::AsyncCreator::wait() {
@@ -446,9 +446,9 @@ BackendVFS::AsyncUpdater::AsyncUpdater(BackendVFS & be, const std::string& name,
     }))
 {}
 
-Backend::AsyncUpdater* BackendVFS::asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) {
+std::unique_ptr<Backend::AsyncUpdater> BackendVFS::asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update) {
   // Create the object. Done.
-  return new AsyncUpdater(*this, name, update);
+  return std::make_unique<AsyncUpdater>(*this, name, update);
 }
 
 void BackendVFS::AsyncUpdater::wait() {
@@ -487,9 +487,9 @@ BackendVFS::AsyncDeleter::AsyncDeleter(BackendVFS & be, const std::string& name)
     }))
 {}
 
-Backend::AsyncDeleter* BackendVFS::asyncDelete(const std::string & name) {
+std::unique_ptr<Backend::AsyncDeleter> BackendVFS::asyncDelete(const std::string & name) {
   // Create the object. Done.
-  return new AsyncDeleter(*this, name);
+  return std::make_unique<AsyncDeleter>(*this, name);
 }
 
 void BackendVFS::AsyncDeleter::wait() {
@@ -512,8 +512,8 @@ void BackendVFS::AsyncLockfreeFetcher::run() {
   }
 }
 
-Backend::AsyncLockfreeFetcher* BackendVFS::asyncLockfreeFetch(const std::string& name) {
-  return new AsyncLockfreeFetcher(*this, name);
+std::unique_ptr<Backend::AsyncLockfreeFetcher> BackendVFS::asyncLockfreeFetch(const std::string& name) {
+  return std::make_unique<AsyncLockfreeFetcher>(*this, name);
 }
 
 std::string BackendVFS::AsyncLockfreeFetcher::wait() {

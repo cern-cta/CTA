@@ -840,7 +840,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
       if (newStatus) oh.set_payload(payload.SerializeAsString());
       return oh.SerializeAsString();
     };
-  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  ret->m_backendUpdater = m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback);
   return ret.release();
 }
 

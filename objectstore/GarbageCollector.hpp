@@ -41,7 +41,7 @@ class RetrieveRequest;
 class GarbageCollector {
 public:
   GarbageCollector(Backend & os, AgentReference & agentReference, catalogue::Catalogue & catalogue);
-  ~GarbageCollector();
+  ~GarbageCollector() = default;
   void runOnePass(log::LogContext & lc);
 
   void acquireTargets(log::LogContext & lc);
@@ -92,7 +92,7 @@ private:
   catalogue::Catalogue & m_catalogue;
   AgentReference & m_ourAgentReference;
   AgentRegister m_agentRegister;
-  std::map<std::string, AgentWatchdog * > m_watchedAgents;
+  std::map<std::string, std::unique_ptr<AgentWatchdog>> m_watchedAgents;
 };
 
 } // namespace cta::objectstore

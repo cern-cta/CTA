@@ -42,14 +42,6 @@ GarbageCollector::GarbageCollector(Backend & os, AgentReference & agentReference
   m_agentRegister.fetch();
 }
 
-GarbageCollector::~GarbageCollector(){
-  //Normally, the Garbage collector is never destroyed in production
-  //this destructor is here to avoid memory leaks on unit tests
-  for(auto &kv : m_watchedAgents){
-    delete kv.second;
-  }
-}
-
 void GarbageCollector::runOnePass(log::LogContext & lc) {
   trimGoneTargets(lc);
   acquireTargets(lc);
@@ -61,11 +53,8 @@ void GarbageCollector::trimGoneTargets(log::LogContext & lc) {
   std::list<std::string> agentList = m_agentRegister.getAgents();
   // Find the agents we knew about and are not listed anymore.
   // We will just stop looking for them.
-  for (std::map<std::string, AgentWatchdog * >::iterator wa
-        = m_watchedAgents.begin();
-      wa != m_watchedAgents.end();) {
+  for (auto wa = m_watchedAgents.begin(); wa != m_watchedAgents.end();) {
     if (agentList.end() == std::find(agentList.begin(), agentList.end(), wa->first)) {
-      delete wa->second;
       log::ScopedParamContainer params(lc);
       params.add("agentAddress", wa->first);
       m_watchedAgents.erase(wa++);
@@ -113,7 +102,7 @@ void GarbageCollector::acquireTargets(log::LogContext & lc) {
       double timeout=ag.getTimeout();
       // The creation of the watchdog could fail as well (if agent gets deleted in the meantime).
       try {
-        m_watchedAgents[c] = new AgentWatchdog(c, m_objectStore);
+        m_watchedAgents[c] = std::make_unique<AgentWatchdog>(c, m_objectStore);
         m_watchedAgents[c]->setTimeout(timeout);
       } catch (...) {
         if (m_objectStore.exists(c)) throw;
@@ -127,13 +116,12 @@ void GarbageCollector::acquireTargets(log::LogContext & lc) {
 void GarbageCollector::checkHeartbeats(log::LogContext & lc) {
   // Check the heartbeats of the watched agents
   // We can still fail on many steps
-  for (std::map<std::string, AgentWatchdog * >::iterator wa = m_watchedAgents.begin();
+  for (auto wa = m_watchedAgents.begin();
       wa != m_watchedAgents.end();) {
     // Get the heartbeat. Clean dead agents and remove references to them
     try {
       if (!wa->second->checkAlive()) {
         cleanupDeadAgent(wa->first, wa->second->getDeadAgentDetails(), lc);
-        delete wa->second;
         m_watchedAgents.erase(wa++);
       } else {
         ++wa;
@@ -223,7 +211,7 @@ void GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(Agent& agent, std::l
     // Fetch generic objects
     ownedObjects.emplace_back(new GenericObject(obj, objectStore));
     try {
-      ownedObjectsFetchers[ownedObjects.back().get()].reset(ownedObjects.back()->asyncLockfreeFetch());
+      ownedObjectsFetchers[ownedObjects.back().get()] = ownedObjects.back()->asyncLockfreeFetch();
     } catch (cta::exception::Exception & ex) {
       // We failed to lauch the fetch. This is unepected (absence of object will come later). We will not be able
       // to garbage collect this object.
