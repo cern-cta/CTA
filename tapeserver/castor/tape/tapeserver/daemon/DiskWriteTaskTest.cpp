@@ -170,17 +170,17 @@ TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock) {
   fileToRecall->archiveFile.tapeFiles.push_back(tf);
   DiskWriteTask t(fileToRecall.release(), mm);
   for (int i = 0; i < 6; ++i) {
-    MemBlock* mb = mm.getFreeBlock();
+    auto mb = mm.getFreeBlock();
     mb->m_fileid = 0;
     mb->m_fileBlock = i;
     if (5 == i) {
       mb->markAsFailed("Test error");
     }
-    t.pushDataBlock(mb);
+    t.pushDataBlock(std::move(mb));
   }
-  MemBlock* mb = mm.getFreeBlock();
+  auto mb = mm.getFreeBlock();
 
-  t.pushDataBlock(mb);
+  t.pushDataBlock(std::move(mb));
   t.pushDataBlock(nullptr);
   ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
   cta::TapeMountDummy tmd;

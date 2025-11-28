@@ -66,7 +66,7 @@ public:
    * Takes back a block which has been released by one of the clients
    * @param mb: the pointer to the block
    */
-  void releaseBlock(MemBlock* mb);
+  void releaseBlock(std::unique_ptr<MemBlock> mb) ;
 
   /**
    * Function used to specify that there are no more clients for this memory manager.
@@ -110,7 +110,7 @@ private:
   /**
    * Container for the free blocks
    */
-  cta::threading::BlockingQueue<MemBlock*> m_freeBlocks;
+  cta::threading::BlockingQueue<std::unique_ptr<MemBlock>> m_freeBlocks;
 
   /**
    * The client queue: we will feed them as soon as blocks

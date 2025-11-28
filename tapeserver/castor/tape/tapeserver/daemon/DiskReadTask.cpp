@@ -44,7 +44,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
   cta::utils::Timer totalTime(localTime);
   size_t blockId = 0;
   size_t migratingFileSize = m_archiveJob->archiveFile.fileSize;
-  MemBlock* mb = nullptr;
+  std::unique_ptr<MemBlock> mb;
   // This out-of-try-catch variables allows us to record the stage of the
   // process we're in, and to count the error if it occurs.
   // We will not record errors for an empty string. This will allow us to
@@ -107,7 +107,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
         // Mark the block as failed
         mb->markAsFailed(erroMsg);
         // Transmit to the tape write task, which will finish the session
-        m_nextTask.pushDataBlock(mb);
+        m_nextTask.pushDataBlock(std::move(mb));
         // Fail the disk side.
         throw cta::exception::Exception(erroMsg);
       }
@@ -115,7 +115,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
       m_stats.checkingErrorTime += localTime.secs(cta::utils::Timer::resetCounter);
 
       // We are done with the block, push it to the write task
-      m_nextTask.pushDataBlock(mb);
+      m_nextTask.pushDataBlock(std::move(mb));
       mb = nullptr;
 
     }  //end of while(migratingFileSize>0)
@@ -137,11 +137,11 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
         {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk   }
     });
-  } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
-    lc.log(cta::log::DEBUG,
-           "DiskReadTask: a previous file has failed for migration "
-           "Do nothing except circulating blocks");
-    circulateAllBlocks(blockId, mb);
+  }
+  catch(const castor::tape::tapeserver::daemon::ErrorFlag&){
+    lc.log(cta::log::DEBUG,"DiskReadTask: a previous file has failed for migration "
+    "Do nothing except circulating blocks");
+    circulateAllBlocks(blockId, std::move(mb));
   } catch (const cta::exception::Exception& e) {
     cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
       1,
@@ -168,7 +168,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
       ++blockId;
     }
     mb->markAsFailed(e.getMessageValue());
-    m_nextTask.pushDataBlock(mb);
+    m_nextTask.pushDataBlock(std::move(mb));
     mb = nullptr;
 
     cta::log::ScopedParamContainer spc(lc);
@@ -179,7 +179,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
     lc.log(cta::log::ERR, "Exception while reading a file");
 
     //deal here the number of mem block
-    circulateAllBlocks(blockId, mb);
+    circulateAllBlocks(blockId, std::move(mb));
   }  //end of catch
   watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long) threadID));
 }
@@ -187,7 +187,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
 //------------------------------------------------------------------------------
 // DiskReadTask::circulateAllBlocks
 //------------------------------------------------------------------------------
-void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock* mb) {
+void DiskReadTask::circulateAllBlocks(size_t fromBlockId, std::unique_ptr<MemBlock> mb) {
   size_t blockId = fromBlockId;
   while (blockId < m_numberOfBlock) {
     if (!mb) {
@@ -196,7 +196,7 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId, MemBlock* mb) {
     }
     mb->m_fileid = m_archiveJob->archiveFile.archiveFileID;
     mb->markAsCancelled();
-    m_nextTask.pushDataBlock(mb);
+    m_nextTask.pushDataBlock(std::move(mb));
     mb = nullptr;
   }  //end of while
 }

@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <memory>
+
 namespace castor::tape::tapeserver::daemon {
 
 class MemBlock;
@@ -20,14 +22,13 @@ public:
    * Returns used (consumed) memory blocks.
    * @return the memory block to be reclaimed
    */
-  virtual MemBlock* getFreeBlock() = 0;
-
+  virtual std::unique_ptr<MemBlock> getFreeBlock() = 0;
   /**
    * Inserts a new memory block in the consumers fifo.
    * @param mb memory block to be inserted in the consumer fifo and consumed
    */
-  virtual void pushDataBlock(MemBlock* mb) = 0;
-
+  virtual void pushDataBlock(std::unique_ptr<MemBlock> mb) = 0;
+  
   /**
    * Destructor
    */

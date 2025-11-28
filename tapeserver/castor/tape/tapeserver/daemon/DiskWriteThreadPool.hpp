@@ -150,7 +150,7 @@ private:
   void logWithStat(int level, const std::string& message);
 
   /** The actual container for the thread objects */
-  std::vector<DiskWriteWorkerThread*> m_threads;
+  std::vector<std::unique_ptr<DiskWriteWorkerThread>> m_threads;
   /** Mutex protecting the pushers of new tasks from having the object deleted
    * under their feet. */
   cta::threading::Mutex m_pusherProtection;

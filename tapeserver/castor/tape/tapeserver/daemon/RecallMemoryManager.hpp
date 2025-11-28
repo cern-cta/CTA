@@ -47,13 +47,13 @@ public:
    * Takes back a block which has been released by one of the clients
    * @param mb: the pointer to the block
    */
-  void releaseBlock(MemBlock* mb);
+  void releaseBlock(std::unique_ptr<MemBlock> mb);
 
   /**
    * Pop a free block from the free block queue of the memory manager
    * @return pointer to a free block
    */
-  MemBlock* getFreeBlock();
+  std::unique_ptr<MemBlock> getFreeBlock();
 
   /**
    * Get the total number of bytes allocated.
@@ -86,7 +86,7 @@ private:
   /**
    * Container for the free blocks
    */
-  cta::threading::BlockingQueue<MemBlock*> m_freeBlocks;
+  cta::threading::BlockingQueue<std::unique_ptr<MemBlock>> m_freeBlocks;
 
   /**
    * Logging. The class is not threaded, so it can be shared with its parent

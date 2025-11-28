@@ -55,17 +55,17 @@ struct MockMigrationReportPacker : public MigrationReportPacker {
 };
 
 class FakeTapeWriteTask : public DataConsumer {
-  cta::threading::BlockingQueue<MemBlock*> fifo;
+  cta::threading::BlockingQueue<std::unique_ptr<MemBlock>> fifo;
   unsigned long m_checksum;
 
 public:
   FakeTapeWriteTask() : m_checksum(Payload::zeroAdler32()) {}
 
-  virtual MemBlock* getFreeBlock() { return fifo.pop(); }
+  virtual std::unique_ptr<MemBlock> getFreeBlock() { return fifo.pop(); }
 
-  virtual void pushDataBlock(MemBlock* mb) {
-    m_checksum = mb->m_payload.adler32(m_checksum);
-    fifo.push(mb);
+  virtual void pushDataBlock(std::unique_ptr<MemBlock> mb) {
+      m_checksum = mb->m_payload.adler32(m_checksum);
+      fifo.push(std::move(mb));
   }
 
   unsigned long getChecksum() { return m_checksum; }
@@ -125,7 +125,7 @@ TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest) {
   ASSERT_EQ(value, blockNeeded);
 
   FakeTapeWriteTask ftwt;
-  ftwt.pushDataBlock(new MemBlock(1, blockSize));
+  ftwt.pushDataBlock(std::make_unique<MemBlock>(1, blockSize));
   castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt, &file, blockNeeded, flag);
   DiskFileFactory fileFactory(0);
 
@@ -134,7 +134,7 @@ TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest) {
   MockMigrationWatchDog mmwd(1.0, 1.0, tspd, tmd, "", lc);
   drt.execute(lc, fileFactory, mmwd, 0);
 
-  ASSERT_EQ(original_checksum, ftwt.getChecksum());
-  delete ftwt.getFreeBlock();
+    ASSERT_EQ(original_checksum,ftwt.getChecksum());
+  }
 }
 }  // namespace unitTests

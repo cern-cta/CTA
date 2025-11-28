@@ -58,9 +58,9 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
     int blockId = 0;
     unsigned long checksum = Payload::zeroAdler32();
     while (true) {
-      if (MemBlock* const mb = m_fifo.pop()) {
-        m_stats.waitDataTime += localTime.secs(cta::utils::Timer::resetCounter);
-        AutoReleaseBlock<RecallMemoryManager> releaser(mb, m_memManager);
+      AutoReleaseBlock<RecallMemoryManager> releaser(m_fifo.pop(),m_memManager);
+      if(auto mb = releaser.getBlockPtr()) {
+        m_stats.waitDataTime+=localTime.secs(cta::utils::Timer::resetCounter);
         if (mb->isVerifyOnly()) {
           // For verifyOnly, there is no disk file to write. Ignore the memory block and continue.
           isVerifyOnly = true;
@@ -190,16 +190,16 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
 //------------------------------------------------------------------------------
 // DiskWriteTask::getFreeBlock
 //------------------------------------------------------------------------------
-MemBlock* DiskWriteTask::getFreeBlock() {
+std::unique_ptr<MemBlock> DiskWriteTask::getFreeBlock() {
   throw cta::exception::Exception("DiskWriteTask::getFreeBlock should mot be called");
 }
 
 //------------------------------------------------------------------------------
 // DiskWriteTask::pushDataBlock
 //------------------------------------------------------------------------------
-void DiskWriteTask::pushDataBlock(MemBlock* mb) {
+void DiskWriteTask::pushDataBlock(std::unique_ptr<MemBlock> mb) {
   cta::threading::MutexLocker ml(m_producerProtection);
-  m_fifo.push(mb);
+  m_fifo.push(std::move(mb));
 }
 
 //------------------------------------------------------------------------------
@@ -212,11 +212,10 @@ DiskWriteTask::~DiskWriteTask() {
 //------------------------------------------------------------------------------
 // DiskWriteTask::releaseAllBlock
 //------------------------------------------------------------------------------
-void DiskWriteTask::releaseAllBlock() {
-  while (1) {
-    if (MemBlock* mb = m_fifo.pop()) {
-      AutoReleaseBlock<RecallMemoryManager> release(mb, m_memManager);
-    } else {
+void DiskWriteTask::releaseAllBlock(){
+  while(1) {
+    AutoReleaseBlock<RecallMemoryManager> release(m_fifo.pop(),m_memManager);
+    if(!release.getBlockPtr()) {
       break;
     }
   }

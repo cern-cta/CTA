@@ -82,13 +82,13 @@ public:
    * Used to reclaim used memory blocks
    * @return the recyclable memory block
    */
-  MemBlock* getFreeBlock() override;
+  std::unique_ptr<MemBlock> getFreeBlock() override;
 
   /**
    * This is to enqueue one memory block full of data to be written on tape
    * @param mb: the memory block in question
    */
-  void pushDataBlock(MemBlock* mb) override;
+  void pushDataBlock(std::unique_ptr<MemBlock> mb) override;
 
   /**
    * Destructor

@@ -25,7 +25,7 @@ class AutoReleaseBlock {
   /**
     * The block to release
     */
-  MemBlock* const m_block;
+  std::unique_ptr<MemBlock> m_block;
 
   /**
     * To whom it should be given back
@@ -38,10 +38,15 @@ public:
      * @param mb he block to release
      * @param mm To whom it should be given back
      */
-  AutoReleaseBlock(MemBlock* const mb, MemManagerT& mm) : m_block(mb), memManager(mm) {}
+  AutoReleaseBlock(std::unique_ptr<MemBlock> mb, MemManagerT& mm) : m_block(std::move(mb)), memManager(mm) {}
 
   //let the magic begin
-  ~AutoReleaseBlock() { memManager.releaseBlock(m_block); }
+  ~AutoReleaseBlock() { memManager.releaseBlock(std::move(m_block));
+    }
+
+    //
+    MemBlock * getBlockPtr() const {
+      return m_block.get(); }
 };
 
 }  // namespace castor::tape::tapeserver::daemon

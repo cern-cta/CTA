@@ -64,7 +64,7 @@ private:
    * @param fromBlockId the number of already processed
    * @param mb pointer to a possible already popped free block (nullptr otherwise)
    */
-  void circulateAllBlocks(size_t fromBlockId, MemBlock* mb);
+  void circulateAllBlocks(size_t fromBlockId, std::unique_ptr<MemBlock> mb);
   /**
    * The task (a TapeWriteTask) that will handle the read blocks
    */

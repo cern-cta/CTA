@@ -180,10 +180,10 @@ TEST(castor_tape_tapeserver_daemon, DiskWriteThreadPoolTest) {
     fileToRecall->archiveFile.tapeFiles.push_back(tf);
     fileToRecall->selectedTapeFile().blockId = 1;
     DiskWriteTask* t = new DiskWriteTask(fileToRecall.release(), mm);
-    MemBlock* mb = mm.getFreeBlock();
+    auto mb = mm.getFreeBlock();
     mb->m_fileid = i + 1;
     mb->m_fileBlock = 0;
-    t->pushDataBlock(mb);
+    t->pushDataBlock(std::move(mb));
     t->pushDataBlock(nullptr);
     dwtp.push(t);
   }

@@ -50,7 +50,7 @@ MigrationMemoryManager::MigrationMemoryManager(const uint32_t numberOfBlocks,
     : m_blockCapacity(blockSize),
       m_lc(lc) {
   for (uint32_t i = 0; i < numberOfBlocks; i++) {
-    m_freeBlocks.push(new MemBlock(i, m_blockCapacity));
+    m_freeBlocks.push(std::make_unique<MemBlock>(i, m_blockCapacity));
     m_totalNumberOfBlocks++;
     m_totalMemoryAllocated += m_blockCapacity;
   }
@@ -68,11 +68,13 @@ MigrationMemoryManager::~MigrationMemoryManager() noexcept {
   // castor::server::Thread::wait();
   // we expect to be called after all users are finished. Just "free"
   // the memory blocks we still have.
-  cta::threading::BlockingQueue<MemBlock*>::valueRemainingPair ret;
-  do {
-    ret = m_freeBlocks.popGetSize();
-    delete ret.value;
-  } while (ret.remaining > 0);
+  {
+    decltype(m_freeBlocks.popGetSize()) ret;
+    do {
+      // Due to RAII, popping and overwriting 'ret' will automatically delete the blocks
+      ret = m_freeBlocks.popGetSize();
+    } while (ret.remaining > 0);
+  }
 
   m_lc.log(cta::log::INFO, "MigrationMemoryManager destruction : all memory blocks have been deleted");
   cta::telemetry::metrics::ctaTapedBufferUsage->RemoveCallback(ObserveMigrationMemoryUsage, this);
@@ -125,9 +127,9 @@ void MigrationMemoryManager::finish() {
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::releaseBlock
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::releaseBlock(MemBlock* mb) {
+void MigrationMemoryManager::releaseBlock(std::unique_ptr<MemBlock> mb) {
   mb->reset();
-  m_freeBlocks.push(mb);
+  m_freeBlocks.push(std::move(mb));
 }
 
 //------------------------------------------------------------------------------

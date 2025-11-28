@@ -169,7 +169,7 @@ private:
   };
 
   /** Container for the threads */
-  std::vector<DiskReadWorkerThread*> m_threads;
+  std::vector<std::unique_ptr<DiskReadWorkerThread>> m_threads;
 
   /** The queue of pointer to tasks to be executed. We own the tasks (they are
    * deleted by the threads after execution) */

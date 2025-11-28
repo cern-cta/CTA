@@ -28,8 +28,7 @@ DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
       m_lc(lc) {
   m_lc.push(cta::log::Param("threadCount", nbThread));
   for (int i = 0; i < nbThread; i++) {
-    auto* thr = new DiskWriteWorkerThread(*this);
-    m_threads.push_back(thr);
+    m_threads.push_back(std::make_unique<DiskWriteWorkerThread>(*this));
   }
   m_lc.log(cta::log::DEBUG, "Created threads in DiskWriteThreadPool::DiskWriteThreadPool");
 }
@@ -42,7 +41,6 @@ DiskWriteThreadPool::~DiskWriteThreadPool() {
   // returned yet from the push or finish function.
   cta::threading::MutexLocker ml(m_pusherProtection);
   while (!m_threads.empty()) {
-    delete m_threads.back();
     m_threads.pop_back();
   }
   m_lc.log(cta::log::DEBUG, "Deleted threads in DiskWriteThreadPool::~DiskWriteThreadPool");

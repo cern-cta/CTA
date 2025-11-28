@@ -47,13 +47,12 @@ public:
    * Allows client code to return a reusable memory block. Should not been called
    * @return the pointer to the memory block that can be reused
    */
-  MemBlock* getFreeBlock() final;
-
+  virtual std::unique_ptr<MemBlock> getFreeBlock() final;
   /**
    * Function used to enqueue a new memory block holding data to be written to disk
    * @param mb: corresponding memory block
    */
-  void pushDataBlock(MemBlock* mb) final;
+  void pushDataBlock(std::unique_ptr<MemBlock> mb) final;
 
   /**
    * Destructor (also waiting for the end of the write operation)
@@ -91,7 +90,7 @@ private:
   /**
    * The fifo containing the memory blocks holding data to be written to disk
    */
-  cta::threading::BlockingQueue<MemBlock*> m_fifo;
+  cta::threading::BlockingQueue<std::unique_ptr<MemBlock>> m_fifo;
 
   /**
    * All we need to know about the file we are currently recalling

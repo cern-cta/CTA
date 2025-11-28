@@ -98,9 +98,9 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     currentErrorToCount = "";
     bool firstBlock = true;
     while (!m_fifo.finished()) {
-      MemBlock* const mb = m_fifo.popDataBlock();
       m_taskStats.waitDataTime += timer.secs(cta::utils::Timer::resetCounter);
-      AutoReleaseBlock<MigrationMemoryManager> releaser(mb, m_memManager);
+      AutoReleaseBlock<MigrationMemoryManager> releaser(m_fifo.popDataBlock(), m_memManager);
+      auto mb = releaser.getBlockPtr();
 
       // Special treatment for 1st block. If disk failed to provide anything, we can skip the file
       // by leaving a placeholder on the tape (at minimal tape space cost), so we can continue
@@ -304,7 +304,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
 //------------------------------------------------------------------------------
 // getFreeBlock
 //------------------------------------------------------------------------------
-MemBlock* TapeWriteTask::getFreeBlock() {
+std::unique_ptr<MemBlock> TapeWriteTask::getFreeBlock() {
   return m_fifo.getFreeBlock();
 }
 
@@ -346,9 +346,9 @@ void TapeWriteTask::checkErrors(MemBlock* mb, uint64_t memBlockId, cta::log::Log
 //------------------------------------------------------------------------------
 // pushDataBlock
 //------------------------------------------------------------------------------
-void TapeWriteTask::pushDataBlock(MemBlock* mb) {
+void TapeWriteTask::pushDataBlock(std::unique_ptr<MemBlock> mb) {
   cta::threading::MutexLocker ml(m_producerProtection);
-  m_fifo.pushDataBlock(mb);
+  m_fifo.pushDataBlock(std::move(mb));
 }
 
 //------------------------------------------------------------------------------
