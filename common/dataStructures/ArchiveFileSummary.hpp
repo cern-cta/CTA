@@ -26,7 +26,7 @@
 namespace cta::common::dataStructures {
 
 /**
- * This struct is used to hold stats of a list of files (when listing them) 
+ * This struct is used to hold stats of a list of files (when listing them)
  */
 struct ArchiveFileSummary {
 
@@ -36,8 +36,8 @@ struct ArchiveFileSummary {
 
   bool operator!=(const ArchiveFileSummary &rhs) const;
 
-  uint64_t totalBytes;
-  uint64_t totalFiles;
+  uint64_t totalBytes = 0;
+  uint64_t totalFiles = 0;
 
 }; // struct ArchiveFileSummary
 

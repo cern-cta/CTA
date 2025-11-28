@@ -26,8 +26,7 @@ namespace cta {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ImmutableFileTestCmdLineArgs::ImmutableFileTestCmdLineArgs(const int argc, char *const *const argv):
-  help(false) {
+ImmutableFileTestCmdLineArgs::ImmutableFileTestCmdLineArgs(const int argc, char *const *const argv) {
 
   static struct option longopts[] = {
     {"help", no_argument, nullptr, 'h'},

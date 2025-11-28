@@ -38,7 +38,7 @@ struct TapeLog {
   bool operator!=(const TapeLog &rhs) const;
 
   std::string drive;
-  time_t time;
+  time_t time = 0;
 
 }; // struct TapeLog
 

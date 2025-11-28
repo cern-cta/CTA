@@ -52,8 +52,8 @@ struct ContainerTraits<RepackQueue,C>
   };
   struct PoppedElementsSummary;
   struct PopCriteria {
-    uint64_t requests;
-    PopCriteria() : requests(1) {}
+    uint64_t requests = 1;
+    PopCriteria() = default;
     PopCriteria& operator-=(const PoppedElementsSummary&);
   };
   struct PoppedElementsSummary {

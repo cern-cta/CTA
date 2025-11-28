@@ -45,12 +45,9 @@ struct DeviceInfo {
   class DeviceFile {
    public:
     /* We avoid being hit by the macros major() and minor() by using a longer syntax */
-    DeviceFile() {
-      major = 0;
-      minor = 0;
-    }
-    unsigned int major;
-    unsigned int minor;
+    DeviceFile() = default;
+    unsigned int major = 0;
+    unsigned int minor = 0;
 
     bool operator !=(const DeviceFile& b) const {
       return major != b.major || minor != b.minor;

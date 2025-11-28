@@ -72,7 +72,7 @@ private:
   /**
    * True if debug mode is on.
    */
-  bool m_debug;
+  bool m_debug = false;
 
   /**
    * The output stream to which each debug message-line togther with its
@@ -83,7 +83,7 @@ private:
   /**
    * True is a preamble should be written.
    */
-  bool m_writePreamble;
+  bool m_writePreamble = true;
 
 }; // class DebugBuf
 

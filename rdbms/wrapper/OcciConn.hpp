@@ -244,7 +244,7 @@ private:
   /**
    * The autocommit mode of the connection.
    */
-  AutocommitMode m_autocommitMode;
+  AutocommitMode m_autocommitMode = AutocommitMode::AUTOCOMMIT_ON;
 
   /**
    * Closes the specified OCCI statement.

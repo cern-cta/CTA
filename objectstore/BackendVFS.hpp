@@ -83,16 +83,16 @@ class BackendVFS: public Backend {
     void release() override;
     ~ScopedLock() override { ScopedLock::release(); }
   private:
-    ScopedLock() : m_fdSet(false), m_fd(0) {}
+    ScopedLock() = default;
 
     void set(int fd, std::string_view path) {
       m_fd = fd;
       m_fdSet = true;
       m_path = path;
     }
-    bool m_fdSet;
+    bool m_fdSet = false;
     std::string m_path;
-    int m_fd;
+    int m_fd = 0;
   };
 
   ScopedLock * lockExclusive(const std::string& name, uint64_t timeout_us = 0) override;

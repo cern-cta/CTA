@@ -26,8 +26,8 @@
 namespace cta::common::dataStructures {
 
 /**
- * The archive job contains the original request, and all data needed to queue 
- * the request in the system 
+ * The archive job contains the original request, and all data needed to queue
+ * the request in the system
  */
 struct ArchiveJob {
 
@@ -40,8 +40,8 @@ struct ArchiveJob {
   ArchiveRequest request;
   std::string tapePool;
   std::string instanceName;
-  uint32_t copyNumber;
-  uint64_t archiveFileID;
+  uint32_t copyNumber = 0;
+  uint64_t archiveFileID = 0;
   std::string objectId; //!< Objectstore address, provided when reporting a failed job
   std::list<std::string> failurelogs;
   std::list<std::string> reportfailurelogs;

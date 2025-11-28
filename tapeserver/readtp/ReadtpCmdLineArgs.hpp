@@ -32,8 +32,8 @@ struct ReadtpCmdLineArgs {
   /**
    * True if the usage message should be printed.
    */
-  bool help;
-  
+  bool help = false;
+
   /**
    * The tape VID to read.
    */
@@ -48,10 +48,10 @@ struct ReadtpCmdLineArgs {
    * Sequence of file fSeqs to read.
    */
   TapeFseqRangeList m_fSeqRangeList;
-    
+
   /**
    * The destination file list url.
-   */  
+   */
   std::string m_destinationFileListURL;
 
   /**

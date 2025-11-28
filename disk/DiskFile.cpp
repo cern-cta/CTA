@@ -27,11 +27,7 @@
 
 namespace cta::disk {
 
-DiskFileFactory::DiskFileFactory(uint16_t xrootTimeout)
-    : m_NoURLLocalFile("^(localhost:|)(/.*)$"),
-      m_URLLocalFile("^file://(.*)$"),
-      m_URLXrootFile("^(root://.*)$"),
-      m_xrootTimeout(xrootTimeout) {}
+DiskFileFactory::DiskFileFactory(uint16_t xrootTimeout) : m_xrootTimeout(xrootTimeout) {}
 
 ReadFile* DiskFileFactory::createReadFile(const std::string& path) {
   std::vector<std::string> regexResult;
@@ -111,7 +107,7 @@ LocalReadFile::~LocalReadFile() noexcept {
 //==============================================================================
 // LOCAL WRITE FILE
 //==============================================================================
-LocalWriteFile::LocalWriteFile(const std::string& path) : m_closeTried(false) {
+LocalWriteFile::LocalWriteFile(const std::string& path) {
   // For local files, we truncate the file like for RFIO
   m_fd = ::open64((char*) path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
   m_URL = "file://";
@@ -222,9 +218,7 @@ XrootBaseWriteFile::~XrootBaseWriteFile() noexcept {
 //==============================================================================
 // AsyncDiskFileRemover FACTORY
 //==============================================================================
-AsyncDiskFileRemoverFactory::AsyncDiskFileRemoverFactory()
-    : m_URLLocalFile("^file://(.*)$"),
-      m_URLXrootdFile("^(root://.*)$") {}
+AsyncDiskFileRemoverFactory::AsyncDiskFileRemoverFactory() {}
 
 AsyncDiskFileRemover* AsyncDiskFileRemoverFactory::createAsyncDiskFileRemover(const std::string& path) {
   // URL path parsing
@@ -319,7 +313,7 @@ void AsyncLocalDiskFileRemover::wait() {
 //==============================================================================
 // DIRECTORY FACTORY
 //==============================================================================
-DirectoryFactory::DirectoryFactory() : m_URLLocalDirectory("^file://(.*)$"), m_URLXrootDirectory("^(root://.*)$") {}
+DirectoryFactory::DirectoryFactory() {}
 
 Directory* DirectoryFactory::createDirectory(const std::string& path) {
   // URL path parsing

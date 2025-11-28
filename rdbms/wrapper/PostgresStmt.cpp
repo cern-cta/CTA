@@ -39,9 +39,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 PostgresStmt::PostgresStmt(PostgresConn& conn, const std::string& sql)
     : StmtWrapper(sql),
-      m_conn(conn),
-      m_nParams(0),
-      m_nbAffectedRows(0) {
+      m_conn(conn) {
   // connection is rd locked
 
   CountAndReformatSqlBinds(sql, m_pgsql, m_nParams);

@@ -190,12 +190,12 @@ private:
   /**
    * The prepared statement.
    */
-  sqlite3_stmt *m_stmt;
+  sqlite3_stmt *m_stmt = nullptr;
 
   /**
    * The number of rows affected by the last execution of this statement.
    */
-  uint64_t m_nbAffectedRows;
+  uint64_t m_nbAffectedRows = 0;
 
   /**
    * @param autocommitMode The autocommit mode of the statement.

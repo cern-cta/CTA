@@ -29,9 +29,7 @@
 // constructor
 //------------------------------------------------------------------------------
 cta::server::Daemon::Daemon(cta::log::Logger &log) noexcept :
-  m_log(log),
-  m_foreground(false),
-  m_commandLineHasBeenParsed(false) {
+  m_log(log) {
 }
 
 //------------------------------------------------------------------------------

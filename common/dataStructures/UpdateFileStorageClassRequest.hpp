@@ -28,8 +28,8 @@
 namespace cta::common::dataStructures {
 
 /**
- * This struct holds all the command line parameters of a CTA 
- * UpdateFileStorageClass command 
+ * This struct holds all the command line parameters of a CTA
+ * UpdateFileStorageClass command
  */
 struct UpdateFileStorageClassRequest {
 
@@ -40,7 +40,7 @@ struct UpdateFileStorageClassRequest {
   bool operator!=(const UpdateFileStorageClassRequest &rhs) const;
 
   RequesterIdentity requester;
-  uint64_t archiveFileID;
+  uint64_t archiveFileID = 0;
   std::string storageClass;
   DiskFileInfo diskFileInfo;
 

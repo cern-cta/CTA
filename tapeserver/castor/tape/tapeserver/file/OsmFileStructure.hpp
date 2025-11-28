@@ -93,10 +93,10 @@ protected:
   char m_tcVersion[LIMITS::LABELVERSIONLEN];
   char m_tcName[LIMITS::VOLNAMELEN+1];
   char m_tcRawLabel[2 * LIMITS::MAXMRECSIZE];
-  uint64_t m_ulCreateTime;
-  uint64_t m_ulExpireTime;
-  uint64_t m_ulRecSize;
-  uint64_t m_ulVolId;
+  uint64_t m_ulCreateTime = 0;
+  uint64_t m_ulExpireTime = 0;
+  uint64_t m_ulRecSize = 0;
+  uint64_t m_ulVolId = 0;
 };
 
 } // namespace castor::tape::tapeFile::osm

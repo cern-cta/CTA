@@ -35,11 +35,7 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 RecallReportPacker::RecallReportPacker(cta::RetrieveMount *retrieveMount, cta::log::LogContext& lc) :
   ReportPackerInterface<detail::Recall>(lc),
-  m_workerThread(*this), m_errorHappened(false), m_retrieveMount(retrieveMount),
-  m_tapeThreadComplete(false), m_diskThreadComplete(false)
-{
-
-}
+  m_workerThread(*this), m_retrieveMount(retrieveMount)  {}
 
 //------------------------------------------------------------------------------
 //Destructor
@@ -62,7 +58,7 @@ void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> su
 
 //------------------------------------------------------------------------------
 //reportFailedJob
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob, const cta::exception::Exception& ex,
                                          cta::log::LogContext& lc) {
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() +

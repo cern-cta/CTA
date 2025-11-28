@@ -168,12 +168,12 @@ private:
    * It should be const, but it cant
    * (because there is no mutable function member in c++)
    */
-  uint64_t m_lastFseq;
+  uint64_t m_lastFseq = 0;
 
   /**
    * Should the compression be enabled ? This is currently hard coded to true
    */
-  const bool m_compress;
+  const bool m_compress = false;
 
   /**
    * The boolean variable describing to use on not to use Logical

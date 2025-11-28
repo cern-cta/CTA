@@ -25,7 +25,7 @@
 namespace castor::tape::tapeFile {
 
     /**
-     * Helper template to fill with space a structure. 
+     * Helper template to fill with space a structure.
      * @param s pointer the struct/class.
      */
     template <typename C>
@@ -35,9 +35,9 @@ namespace castor::tape::tapeFile {
 
     template <size_t n>
     /**
-     * Templated helper function to get std::string from the char array 
+     * Templated helper function to get std::string from the char array
      * not terminated by '\0'.
-     * 
+     *
      * @param t   array pointer to the char array.
      * @return    std::string for the char array
      */
@@ -54,8 +54,8 @@ namespace castor::tape::tapeFile {
         spaceStruct(this);
       }
     protected:
-      char m_label[4];         // The characters VOL1. 
-      char m_VSN[6];           // The Volume Serial Number. 
+      char m_label[4];         // The characters VOL1.
+      char m_VSN[6];           // The Volume Serial Number.
       char m_accessibility[1]; // A space indicates that the volume is authorized.
       char m_reserved1[13];    // Reserved.
       char m_implID[13];       // The Implementation Identifier - spaces.
@@ -66,7 +66,7 @@ namespace castor::tape::tapeFile {
                                // standard. It contains 2 spaces or '00'. Otherwise, contains
                                // the ASCII representation of the hexadecimal value of the
                                // Logical block protection method, as defined in the SSC-5 (latest drafts)
-                               // In practice we intend to use "  " (double space) or "00" 
+                               // In practice we intend to use "  " (double space) or "00"
                                // for no LBP, "02" for CRC32C where possible (enterprise drives)
                                // and "01" for ECMA-319 Reed-Solomon where not (LTO drives).
       char m_lblStandard[1];   // The label standard level - ASCII 3 for the CASTOR
@@ -84,7 +84,7 @@ namespace castor::tape::tapeFile {
       inline std::string getVSN() const {
         return toString(m_VSN);
       }
-      
+
       /**
        * @return the logic block protection method as parsed from the header
        */
@@ -124,9 +124,9 @@ namespace castor::tape::tapeFile {
 
     class VOL1withCrc : public VOL1 {
     public:
-      VOL1withCrc(): VOL1() { m_crc = 0; }
+      VOL1withCrc(): VOL1() {}
     protected:
-      uint32_t m_crc;          // 32bit crc addition for VOL1
+      uint32_t m_crc = 0;          // 32bit crc addition for VOL1
     };
 
     // The common part of the HDR1, EOF1 and PRELEBEL HDR1 labels
@@ -138,7 +138,7 @@ namespace castor::tape::tapeFile {
         spaceStruct(this);
       }
     protected:
-      char m_label[4];         // The characters HDR1. 
+      char m_label[4];         // The characters HDR1.
       char m_fileId[17];       // The CASTOR NS file Id in ACSII hex or PRELABEL
       char m_VSN[6];           // The Volume Serial Number.
       char m_fSec[4];          // The file section number - '0001'.
@@ -152,9 +152,9 @@ namespace castor::tape::tapeFile {
       char m_sysCode[13];      // The system ID code - 'CASTOR '+CASTORBASEVERSION
       char m_reserved[7];      // Reserved
       /**
-       * Fills up all common fields of the HDR1, EOF1 and PRELABEL HDR1 
+       * Fills up all common fields of the HDR1, EOF1 and PRELABEL HDR1
        * structures with proper values and data provided.
-       * 
+       *
        * @param fileId       The CASTOR NS file Id in ACSII hex.
        * @param VSN          The tape serial number.
        * @param fSeq         The file sequence number on the tape.
@@ -188,7 +188,7 @@ namespace castor::tape::tapeFile {
       inline std::string getfSeq() const {
         return toString(m_fSeq);
       }
-      
+
       /**
        * @return The number of block written on tape per file (only valid in trailer, fairly useless)
        */
@@ -200,9 +200,9 @@ namespace castor::tape::tapeFile {
     class HDR1 : public HDR1EOF1 {
     public:
       /**
-       * Fills up only a few fields of the HDR1 structure with proper values 
+       * Fills up only a few fields of the HDR1 structure with proper values
        * and data provided.
-       * 
+       *
        * @param fileId       The CASTOR NS file Id in ACSII hex.
        * @param VSN          The tape serial number.
        * @param fSeq         The file sequence number on the tape.
@@ -218,9 +218,9 @@ namespace castor::tape::tapeFile {
     class EOF1 : public HDR1EOF1 {
     public:
       /**
-       * Fills up only a few fields of the EOF1 structure with proper values 
+       * Fills up only a few fields of the EOF1 structure with proper values
        * and data provided.
-       * 
+       *
        * @param fileId       The CASTOR NS file Id in ACSII hex.
        * @param VSN          The tape serial number.
        * @param fSeq         The file sequence number on the tape.
@@ -235,13 +235,13 @@ namespace castor::tape::tapeFile {
        */
       void verify(const bool skipFSecCheck = false) const ;
     };
-    
+
     class HDR1PRELABEL : public HDR1EOF1 {
     public:
       /**
-       * Fills up only a few fields of the HDR1 structure with proper values 
+       * Fills up only a few fields of the HDR1 structure with proper values
        * and data provided.
-       * 
+       *
        * @param VSN          The tape serial number.
        */
       void fill(std::string VSN);
@@ -261,25 +261,25 @@ namespace castor::tape::tapeFile {
         spaceStruct(this);
       }
     protected:
-      char m_label[4];        // The characters HDR2. 
-      char m_recordFormat[1]; // The record format is 'F' for the CASTOR AUL. 
+      char m_label[4];        // The characters HDR2.
+      char m_recordFormat[1]; // The record format is 'F' for the CASTOR AUL.
       char m_blockLength[5];  // If it is greater than 100000 it set as '00000'.
       char m_recordLength[5]; // If it is greater than 100000 it set as '00000'.
       char m_tapeDensity[1];  // The tape density code. Not used or verified.
       char m_reserved1[18];   // Reserved
-      char m_recTechnique[2]; // The tape recording technique. 'P ' for xxxGC 
+      char m_recTechnique[2]; // The tape recording technique. 'P ' for xxxGC
                               // drives (only on the real tapes on we do not see
                               // it with MHVTL setup).
       char m_reserved2[14];   // Reserved
       char m_aulId[2];        // CASTOR specific for the AUL format - '00'.
-      char m_reserved3[28];   // Reserved  
+      char m_reserved3[28];   // Reserved
       /**
        * Fills up all common fields of the HDR2 and EOF2 structures
        * with proper values and data provided.
-       * 
+       *
        * @param blockLength          The CASTOR block size.
-       * @param driveHasCompression  The boolean to set If the drive is 
-       *                             configured to use compression or not.            
+       * @param driveHasCompression  The boolean to set If the drive is
+       *                             configured to use compression or not.
        */
       void fillCommon(int blockLength, bool driveHasCompression);
 
@@ -289,7 +289,7 @@ namespace castor::tape::tapeFile {
       void verifyCommon(const char *const formatCharacter = "F") const ;
     public:
       /**
-       * @return    The block length 
+       * @return    The block length
        */
       inline std::string getBlockLength() const {
         return toString(m_blockLength);
@@ -301,9 +301,9 @@ namespace castor::tape::tapeFile {
       /**
        * Fills up a few specific fields fields of the HDR2 structure
        * with proper values and data provided.
-       * 
+       *
        * @param blockLength  The CASTOR block size.
-       * @param driveHasCompression  The boolean to set If the drive is 
+       * @param driveHasCompression  The boolean to set If the drive is
        *                             configured to use compression or not.
        *                             By default it is true.
        */
@@ -320,10 +320,10 @@ namespace castor::tape::tapeFile {
       /**
        * Fills up only a few specific fields of the HDR2 structure
        * with proper values and data provided.
-       * 
+       *
        * @param blockLength          The CASTOR block size.
-       * @param driveHasCompression  The boolean to set If the drive is 
-       *                             configured to use compression or not. 
+       * @param driveHasCompression  The boolean to set If the drive is
+       *                             configured to use compression or not.
        *                             By default it si true.
        */
       void fill(int blockLength,  bool compression = true);
@@ -343,8 +343,8 @@ namespace castor::tape::tapeFile {
         spaceStruct(this);
       }
     protected:
-      char m_label[4];              // The characters UHL1. 
-      char m_actualfSeq[10];        // The actual file sequence number. 
+      char m_label[4];              // The characters UHL1.
+      char m_actualfSeq[10];        // The actual file sequence number.
       char m_actualBlockSize[10];   // The actual block size.
       char m_actualRecordLength[10];// The actual record length.
       char m_site[8];               // The domain name uppercase without level 1.
@@ -355,7 +355,7 @@ namespace castor::tape::tapeFile {
       /**
        * Fills up all common fields of the UHL1 and UTL1 structure with proper
        * values and data provided.
-       * 
+       *
        * @param fSeq           The file sequence number.
        * @param blockSize      The block size.
        * @param siteName       The domain name uppercase without level 1 (.ch)
@@ -391,9 +391,9 @@ namespace castor::tape::tapeFile {
     class UHL1 : public UHL1UTL1 {
     public:
       /**
-       * Fills up only specific fields of the UHL1 structure with proper values 
+       * Fills up only specific fields of the UHL1 structure with proper values
        * and data provided.
-       * 
+       *
        * @param fSeq           The file sequence number.
        * @param blockSize      The block size.
        * @param siteName       The domain name uppercase without level 1 (.ch)
@@ -414,9 +414,9 @@ namespace castor::tape::tapeFile {
     class UTL1 : public UHL1UTL1 {
     public:
       /**
-       * Fills up only specific fields of the UTL1 structure with proper values 
+       * Fills up only specific fields of the UTL1 structure with proper values
        * and data provided.
-       * 
+       *
        * @param fSeq           The file sequence number.
        * @param blockSize      The block size.
        * @param siteName       The domain name uppercase without level 1 (.ch)
@@ -462,11 +462,11 @@ namespace castor::tape::tapeFile {
 
       memcpy(t, buf, n);
     }
-    
+
     template <size_t n>
     /**
      * Templated helper function to compare a string with space padded string.
-     *  
+     *
      * @return   Returns an integer equal to zero if strings match
      */
     int cmpString(const char(& t)[n], const std::string & s) {

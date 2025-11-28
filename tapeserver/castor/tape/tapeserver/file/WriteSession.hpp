@@ -179,19 +179,19 @@ private:
   /**
     * set to true in case the write operations do (or try to do) something illegal
     */
-  bool m_corrupted;
+  bool m_corrupted = false;
 
   /**
     * Session lock to be sure that a read session is owned by maximum one WriteFile object
     */
-  bool m_locked;
+  bool m_locked = false;
 
   const tapeserver::daemon::VolumeInfo m_volInfo;
 
   /**
   * The boolean variable indicates that the tape has VOL1 with enabled LBP
   */
-  bool m_detectedLbp;
+  bool m_detectedLbp = false;
 
   const uint16_t MAX_UNIX_HOSTNAME_LENGTH = 256;  // 255 + 1 terminating character
 };

@@ -23,15 +23,14 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::ArchiveMount::ArchiveMount(catalogue::Catalogue& catalogue) : m_catalogue(catalogue), m_sessionRunning(false) {}
+cta::ArchiveMount::ArchiveMount(catalogue::Catalogue& catalogue) : m_catalogue(catalogue) {}
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 cta::ArchiveMount::ArchiveMount(catalogue::Catalogue& catalogue,
                                 std::unique_ptr<SchedulerDatabase::ArchiveMount> dbMount)
-    : m_catalogue(catalogue),
-      m_sessionRunning(false) {
+    : m_catalogue(catalogue) {
   m_dbMount.reset(dynamic_cast<SchedulerDatabase::ArchiveMount*>(dbMount.release()));
   if (!m_dbMount) {
     throw WrongMountType("Could not cast mount to SchedulerDatabase::ArchiveMount");

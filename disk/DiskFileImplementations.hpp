@@ -28,10 +28,10 @@ namespace cta::disk {
     /**
      * Namespace managing the reading and writing of files to and from disk.
      */
-      
+
       //Forward declarations
       class XRootdDiskFileRemover;
-      
+
       //==============================================================================
       // LOCAL FILES
       //==============================================================================
@@ -44,7 +44,7 @@ namespace cta::disk {
       private:
         int m_fd;
       };
-     
+
       class LocalWriteFile: public WriteFile {
       public:
         explicit LocalWriteFile(const std::string& path);
@@ -53,12 +53,12 @@ namespace cta::disk {
         ~LocalWriteFile() noexcept final;
       private:
         int m_fd;
-        bool m_closeTried;
+        bool m_closeTried = false;
       };
-      
+
       //==============================================================================
       // XROOT FILES
-      //==============================================================================  
+      //==============================================================================
       class XrootBaseReadFile: public ReadFile {
       public:
         explicit XrootBaseReadFile(uint16_t timeout) : m_timeout(timeout) {}
@@ -73,15 +73,15 @@ namespace cta::disk {
         mutable uint64_t m_readPosition;
         const uint16_t m_timeout;
       };
-      
+
       class XrootReadFile: public XrootBaseReadFile {
       public:
         XrootReadFile(const std::string &xrootUrl, uint16_t timeout = 0);
       };
-      
+
       class XrootBaseWriteFile: public WriteFile {
       public:
-        explicit XrootBaseWriteFile(uint16_t timeout) : m_writePosition(0), m_timeout(timeout), m_closeTried(false) {}
+        explicit XrootBaseWriteFile(uint16_t timeout) : m_timeout(timeout) {}
         void write(const void *data, const size_t size) final;
         void close() final;
         ~XrootBaseWriteFile() noexcept override;
@@ -89,11 +89,11 @@ namespace cta::disk {
         // Access to parent's protected member...
         void setURL(const std::string & v) { m_URL = v; }
         XrdCl::File m_xrootFile;
-        uint64_t m_writePosition;
+        uint64_t m_writePosition = 0;
         const uint16_t m_timeout;
-        bool m_closeTried;      
+        bool m_closeTried = false;
       };
-      
+
       class XrootWriteFile: public XrootBaseWriteFile {
       public:
         XrootWriteFile(const std::string &xrootUrl, uint16_t timeout = 0);
@@ -102,7 +102,7 @@ namespace cta::disk {
       //==============================================================================
       // LocalDisk Removers
       //==============================================================================
-      
+
       /**
        * This class allows to delete a file from a local disk
        */
@@ -191,10 +191,10 @@ namespace cta::disk {
 	void mkdir() override;
 	bool exist() override;
 	std::set<std::string> getFilesName() override;
-	void rmdir() override; 
-      private: 
+	void rmdir() override;
+      private:
 	XrdCl::FileSystem m_xrootFileSystem;
 	std::string m_truncatedDirectoryURL; // root://.../ part of the path is removed
-	const uint16_t c_xrootTimeout = 15; 
+	const uint16_t c_xrootTimeout = 15;
       };
 } // namespace cta::disk

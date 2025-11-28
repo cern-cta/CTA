@@ -28,8 +28,7 @@ namespace cta::statistics {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *const *const argv):
-  help(false) {
+StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *const *const argv)  {
   static struct option longopts[] = {
     {"help", no_argument, nullptr, 'h'},
     {nullptr  ,           0, nullptr,   0}

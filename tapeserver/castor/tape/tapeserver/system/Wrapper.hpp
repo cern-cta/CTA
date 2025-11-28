@@ -34,7 +34,7 @@
 
 namespace castor::tape {
 
-/** 
+/**
  * Forward declaration for pointer type in virutalWrapper.
  */
 namespace tapeserver::drive {
@@ -47,7 +47,7 @@ namespace System {
    * Interface class definition, allowing common ancestor between
    * realWrapper, mockWrapper and fakeWrapper
    */
-  
+
   class virtualWrapper {
   public:
     virtual DIR* opendir(const char *name) = 0;
@@ -72,7 +72,7 @@ namespace System {
       getDriveByPath(const std::string & path) = 0;
   };
 
-  
+
   /**
    * Wrapper class the all system calls used, allowing writing of test harnesses
    * for unit testing. For simplicity, the members are virtual functions, and
@@ -102,20 +102,19 @@ namespace System {
     virtual ssize_t write(int fd, const void *buf, size_t nbytes) { return ::write(fd, buf, nbytes); }
     virtual int close(int fd) { return ::close(fd); }
     virtual int stat(const char * path, struct stat *buf) { return ::stat(path, buf); }
-    virtual castor::tape::tapeserver::drive::DriveInterface * 
+    virtual castor::tape::tapeserver::drive::DriveInterface *
       getDriveByPath(const std::string &) { return nullptr; }
   };
-  
+
   /**
    * Fake class for system wrapper. Allows recording of pre-cooked filesystem elements,
    * once for each call separately.
-   * Each test can then delegate (from mock) and configure 
+   * Each test can then delegate (from mock) and configure
    */
   class fakeWrapper : public virtualWrapper {
   public:
 
-    fakeWrapper() : m_nextFD(0) {
-    };
+    fakeWrapper() {};
     virtual DIR* opendir(const char *name);
     virtual struct dirent * readdir(DIR* dirp);
     virtual int closedir(DIR* dirp);
@@ -129,7 +128,7 @@ namespace System {
     virtual ssize_t write(int fd, const void *buf, size_t nbytes);
     virtual int close(int fd);
     virtual int stat(const char * path, struct stat *buf);
-    virtual castor::tape::tapeserver::drive::DriveInterface * 
+    virtual castor::tape::tapeserver::drive::DriveInterface *
       getDriveByPath(const std::string & path);
     std::map<std::string, std::vector<std::string> > m_directories;
     std::map<std::string, std::string> m_links;
@@ -154,7 +153,7 @@ namespace System {
       std::string dent_name;
     };
     std::map<int, vfsFile *> m_openFiles;
-    int m_nextFD;
+    int m_nextFD = 0;
   };
 
   /**

@@ -39,7 +39,7 @@ public:
    * @param tapeserverProxy
    * @param driveConfig The configuration of the tape drive we are using.
    * @param hostname The host name of the computer
-   * @param lc 
+   * @param lc
    */
   TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy, const cta::tape::daemon::DriveConfigEntry& driveConfig,
     std::string_view hostname, const cta::log::LogContext& lc);
@@ -71,12 +71,12 @@ public:
   void waitThreads();
 
 private:
-  bool m_threadRunning;
+  bool m_threadRunning = false;
 
   /*
-  This internal mechanism could (should ?) be easily changed to a queue 
+  This internal mechanism could (should ?) be easily changed to a queue
    * of {std/boost}::function coupled with bind. For instance, tapeMountedForWrite
-   * should look like 
+   * should look like
    *   m_fifo.push(bind(m_tapeserverProxy,&tapeMountedForWrite,args...))
    * and execute
    *  while(1)
@@ -104,18 +104,18 @@ private:
   };
 
   /**
-   * Inherited from Thread, it will do the job : pop a request, execute it 
+   * Inherited from Thread, it will do the job : pop a request, execute it
    * and delete it
    */
   void run() override;
 
-  /** 
+  /**
    * m_fifo is holding all the report waiting to be processed
    */
   cta::threading::BlockingQueue<Report *> m_fifo;
 
   /**
-   A bunch of references to proxies to send messages to the 
+   A bunch of references to proxies to send messages to the
    * outside world when we have to
    */
   cta::tape::daemon::TapedProxy& m_tapeserverProxy;
@@ -129,7 +129,7 @@ private:
   const std::string m_unitName;
   const std::string m_logicalLibrary;
   castor::tape::tapeserver::daemon::VolumeInfo m_volume;
-  const pid_t m_sessionPid;
+  const pid_t m_sessionPid = getpid();
 };
 
 } // namespace castor::tape::tapeserver::daemon

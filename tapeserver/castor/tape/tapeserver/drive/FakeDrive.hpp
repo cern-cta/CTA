@@ -36,9 +36,9 @@ class FakeDrive : public DriveInterface {
     uint64_t remainingSpaceAfter;
   };
   std::vector<tapeBlock> m_tape;
-  uint32_t m_currentPosition;
+  uint32_t m_currentPosition = 0;
   uint64_t m_tapeCapacity;
-  int m_beginOfCompressStats;
+  int m_beginOfCompressStats = 0;
   uint64_t getRemaingSpace(uint32_t currentPosition);
 
  public:
@@ -46,7 +46,7 @@ class FakeDrive : public DriveInterface {
 
  private:
   const enum FailureMoment m_failureMoment;
-  bool m_tapeOverflow;
+  bool m_tapeOverflow = false;
   bool m_failToMount;
   lbpToUse m_lbpToUse;
 

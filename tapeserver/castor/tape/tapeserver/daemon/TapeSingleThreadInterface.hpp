@@ -77,7 +77,7 @@ protected:
   /**
    * Integer to notify the tapeserver if the drive has to be put down or not.
    */
-  Session::EndOfSessionAction m_hardwareStatus;
+  Session::EndOfSessionAction m_hardwareStatus = Session::MARK_DRIVE_AS_UP;
 
   /** Session statistics */
   TapeSessionStats m_stats;
@@ -292,7 +292,7 @@ public:
                             const bool useEncryption,
                             const std::string& externalEncryptionKeyScript, const uint32_t tapeLoadTimeout)
     : m_drive(drive), m_mediaChanger(mc), m_reporter(tsr), m_vid(volInfo.vid), m_logContext(lc),
-      m_volInfo(volInfo), m_hardwareStatus(Session::MARK_DRIVE_AS_UP),
+      m_volInfo(volInfo),
       m_encryptionControl(useEncryption, externalEncryptionKeyScript), m_tapeLoadTimeout(tapeLoadTimeout) {}
 }; // class TapeSingleThreadInterface
 

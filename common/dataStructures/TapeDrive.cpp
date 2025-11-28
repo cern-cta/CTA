@@ -25,11 +25,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeDrive::TapeDrive():
-  driveStatus(DriveStatus::Unknown),
-  desiredUp(false),
-  desiredForceDown(false),
-  nextMountType(MountType::NoMount) {}
+TapeDrive::TapeDrive() {}
 
 const std::map<DriveStatus, std::string> TapeDrive::STATE_TO_STRING_MAP = {
   {DriveStatus::Unknown, "UNKNOWN"},

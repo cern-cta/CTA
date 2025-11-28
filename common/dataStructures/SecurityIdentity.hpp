@@ -25,12 +25,12 @@
 namespace cta::common::dataStructures {
 
 /**
- * This struct holds the information about who issued the CTA command and from which host 
+ * This struct holds the information about who issued the CTA command and from which host
  */
 struct SecurityIdentity {
 
   SecurityIdentity();
-  
+
   SecurityIdentity(const std::string& username, const std::string& host);
 
   SecurityIdentity(const std::string& username, const std::string& host, const std::string& clientHost, const std::string& auth);
@@ -52,7 +52,7 @@ struct SecurityIdentity {
   std::string username;
   std::string host;
   std::string clientHost;
-  Protocol authProtocol;
+  Protocol authProtocol = Protocol::NONE;
 }; // struct SecurityIdentity
 
 std::ostream &operator<<(std::ostream &os, const SecurityIdentity &obj);

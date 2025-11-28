@@ -25,7 +25,7 @@ public:
   void OnDone() override;
   virtual void NextWrite();  // this needs to be virtual for the Version command only
 protected:                   // so that the child classes can access those as if they were theirs
-  bool m_isHeaderSent;       // or could be a static variable in the function NextWrite()
+  bool m_isHeaderSent = false;       // or could be a static variable in the function NextWrite()
   cta::xrd::StreamResponse m_response;
   std::optional<std::string> m_schedulerBackendName;
   std::string m_instanceName;

@@ -242,10 +242,9 @@ public:
     }  // if (ok)
   }
 
-  CtaAdminClientReadReactor(cta::xrd::CtaRpcStream::Stub* client_stub, const cta::admin::CtaAdminParsedCmd& parsedCmd) {
+  CtaAdminClientReadReactor(cta::xrd::CtaRpcStream::Stub* client_stub, const cta::admin::CtaAdminParsedCmd& parsedCmd) : m_isJson(parsedCmd.isJson())  {
     const auto& request = parsedCmd.getRequest();
     client_stub->async()->GenericAdminStream(&m_context, &request, this);
-    m_isJson = parsedCmd.isJson();
     StartRead(&m_response);  // where to store the received response?
     StartCall();             // activate the RPC!
   }

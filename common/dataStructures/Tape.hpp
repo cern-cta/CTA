@@ -83,14 +83,14 @@ struct Tape {
   std::string vid;
   std::string mediaType;
   std::string vendor;
-  uint64_t lastFSeq;
+  uint64_t lastFSeq = 0;
   std::string logicalLibraryName;
   std::string tapePoolName;
   std::string vo;
-  uint64_t capacityInBytes;
-  uint64_t dataOnTapeInBytes;
-  uint64_t nbMasterFiles;
-  uint64_t masterDataInBytes;
+  uint64_t capacityInBytes = 0;
+  uint64_t dataOnTapeInBytes = 0;
+  uint64_t nbMasterFiles = 0;
+  uint64_t masterDataInBytes = 0;
 
   cta::common::dataStructures::Label::Format  labelFormat;
 
@@ -102,10 +102,9 @@ struct Tape {
    */
   std::optional<std::string> encryptionKeyName;
 
-  bool full;
-  bool disabled;
-  bool isFromCastor;
-  bool dirty;
+  bool full = false;
+  bool isFromCastor = false;
+  bool dirty = false;
   uint64_t readMountCount;
   uint64_t writeMountCount;
   EntryLog creationLog;
@@ -117,7 +116,7 @@ struct Tape {
   std::optional<std::string> purchaseOrder;
   std::optional<std::string> physicalLibraryName;
 
-  State state;
+  State state = Tape::State::ACTIVE;
   std::optional<std::string> stateReason;
   std::string stateModifiedBy;
   time_t stateUpdateTime;

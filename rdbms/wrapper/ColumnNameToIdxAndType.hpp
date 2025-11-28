@@ -36,19 +36,13 @@ public:
     /**
      * The index of the column.
      */
-    int colIdx;
+    int colIdx = 0;
 
     /**
      * The type of the column as return by the sqlite3_column_type() function
      * before any type conversion has taken place.
      */
-    int colType;
-
-    /**
-     * Constructor.  Set both member-variables to 0.
-     */
-    IdxAndType(): colIdx(0), colType(0) {
-    }
+    int colType = 0;
   };
 
   /**

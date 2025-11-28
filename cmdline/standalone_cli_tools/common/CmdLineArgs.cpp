@@ -98,7 +98,7 @@ std::map<StandaloneCliTool, const char*> shortopts = {
 // constructor
 //------------------------------------------------------------------------------
 CmdLineArgs::CmdLineArgs(const int &argc, char *const *const &argv, const StandaloneCliTool &standaloneCliTool):
-m_help(false), m_debug(false), m_standaloneCliTool{standaloneCliTool} {
+m_standaloneCliTool{standaloneCliTool} {
 
   opterr = 0;
   int opt = 0;

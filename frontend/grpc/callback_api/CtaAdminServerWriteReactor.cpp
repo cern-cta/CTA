@@ -52,8 +52,7 @@ CtaAdminServerWriteReactor::CtaAdminServerWriteReactor(cta::catalogue::Catalogue
                                                        const std::string& instanceName,
                                                        std::unique_ptr<CtaAdminResponseStream> stream,
                                                        cta::admin::HeaderType headerType)
-    : m_isHeaderSent(false),
-      m_schedulerBackendName(scheduler.getSchedulerBackendName()),
+    : m_schedulerBackendName(scheduler.getSchedulerBackendName()),
       m_instanceName(instanceName),
       m_stream(std::move(stream)),
       m_headerType(headerType) {

@@ -34,9 +34,7 @@ namespace cta::rdbms::wrapper {
 PostgresRset::PostgresRset(PostgresConn& conn, PostgresStmt& stmt, std::unique_ptr<Postgres::ResultItr> resItr)
     : m_conn(conn),
       m_stmt(stmt),
-      m_resItr(std::move(resItr)),
-      m_asyncCleared(false),
-      m_nfetched(0) {
+      m_resItr(std::move(resItr)) {
   // assumes statement and connection locks have already been taken
   if (!m_conn.isAsyncInProgress()) {
     throw exception::Exception("Async flag not set");

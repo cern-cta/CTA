@@ -24,9 +24,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ArchiveFileSummary::ArchiveFileSummary():
-  totalBytes(0),
-  totalFiles(0) {}
+ArchiveFileSummary::ArchiveFileSummary() {}
 
 //------------------------------------------------------------------------------
 // operator==

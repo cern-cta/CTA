@@ -28,9 +28,9 @@
 namespace cta::common::dataStructures {
 
 /**
- * This struct specifies the number of copies that a file tagged with it should 
- * have. it may also indicate the VO owning the file and what kind of data the 
- * file contains 
+ * This struct specifies the number of copies that a file tagged with it should
+ * have. it may also indicate the VO owning the file and what kind of data the
+ * file contains
  */
 struct StorageClass {
 
@@ -79,8 +79,8 @@ struct StorageClass {
   /**
    * The number of copies on tape.
    */
-  uint64_t nbCopies;
-  
+  uint64_t nbCopies = 0;
+
   /**
    * The virtual organization to which this storage class belongs
    */

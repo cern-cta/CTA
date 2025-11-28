@@ -24,10 +24,7 @@ namespace cta::rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-AutoRollback::AutoRollback(Conn &conn):
-  m_cancelled(false),
-  m_conn(conn) {
-}
+AutoRollback::AutoRollback(Conn &conn) : m_conn(conn) {}
 
 //------------------------------------------------------------------------------
 // destructor

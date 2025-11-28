@@ -24,8 +24,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StorageClass::StorageClass():
-  nbCopies(0) {}
+StorageClass::StorageClass() {}
 
 //------------------------------------------------------------------------------
 // operator==
@@ -47,7 +46,7 @@ bool StorageClass::operator!=(const StorageClass &rhs) const {
 std::ostream &operator<<(std::ostream &os, const StorageClass &obj) {
   os << "(name=" << obj.name
      << " nbCopies=" << obj.nbCopies
-     << " vo=" << obj.vo.name     
+     << " vo=" << obj.vo.name
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment << ")";

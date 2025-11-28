@@ -359,12 +359,12 @@ private:
    * Indicates we have cleared the async in progress flag of the conneciton.
    * This is to make sure we don't clear it more than once
    */
-  bool m_asyncCleared;
+  bool m_asyncCleared = false;
 
   /**
    * Number fetched, used for setting the number of affected rows of the statement.
    */
-  uint64_t m_nfetched;
+  uint64_t m_nfetched = 0;
 
 };  // class PostgresRset
 

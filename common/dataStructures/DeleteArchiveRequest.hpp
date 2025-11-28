@@ -42,7 +42,7 @@ struct DeleteArchiveRequest {
   bool operator!=(const DeleteArchiveRequest &rhs) const;
 
   RequesterIdentity requester;
-  uint64_t archiveFileID;
+  uint64_t archiveFileID = 0;
   std::optional<std::string> address;
   std::string diskFilePath;
   std::string diskFileId;

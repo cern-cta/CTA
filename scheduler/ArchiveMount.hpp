@@ -248,7 +248,7 @@ protected:
   /**
    * Internal tracking of the session completion
    */
-  std::atomic<bool> m_sessionRunning;
+  std::atomic<bool> m_sessionRunning = 0;
 
 private:
   /** An initialized-once factory for archive reports (indirectly used by ArchiveJobs)*/

@@ -31,7 +31,7 @@ namespace cta::objectstore {
 std::atomic <uint64_t> AgentReference::g_nextAgentId(0);
 
 AgentReference::AgentReference(const std::string & clientType, log::Logger &logger) :
-  m_nextId(0), m_logger(logger) {
+  m_logger(logger) {
   std::stringstream aid;
   // Get time
   time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());

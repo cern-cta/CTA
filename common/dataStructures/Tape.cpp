@@ -25,15 +25,7 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Tape::Tape():
-  lastFSeq(0),
-  capacityInBytes(0), 
-  dataOnTapeInBytes(0),
-  nbMasterFiles(0),
-  masterDataInBytes(0),
-  full(false),
-  state(Tape::State::ACTIVE)
-  {}
+Tape::Tape() {}
 
 const std::map<Tape::State,std::string> Tape::STATE_TO_STRING_MAP = {
   {Tape::State::ACTIVE,"ACTIVE"},
@@ -170,7 +162,7 @@ std::ostream &operator<<(std::ostream &os, const Tape &obj) {
      << " capacityInBytes=" << obj.capacityInBytes
      << " dataOnTapeInBytes=" << obj.dataOnTapeInBytes
      << " encryptionKeyName=" << (obj.encryptionKeyName ? obj.encryptionKeyName.value() : "null")
-     << " full=" << obj.full 
+     << " full=" << obj.full
      << " creationLog=" << obj.creationLog
      << " lastModificationLog=" << obj.lastModificationLog
      << " comment=" << obj.comment

@@ -102,17 +102,17 @@ private:
   /**
     * set to true whenever the constructor is called and to false when close() is called
     */
-  bool m_open;
+  bool m_open = false;
 
   /**
     * set to false initially, set to true after at least one successful nonzero writeBlock operation
     */
-  bool m_nonzeroFileWritten;
+  bool m_nonzeroFileWritten = false;
 
   /**
     * number of blocks written for the current file
     */
-  int m_numberOfBlocks;
+  int m_numberOfBlocks = 0;
 
   /**
     * BlockId of the file (tape block id of the first header block).

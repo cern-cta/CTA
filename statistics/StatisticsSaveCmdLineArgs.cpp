@@ -27,8 +27,7 @@ namespace cta::statistics {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const *const argv):
-  help(false) {
+StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const *const argv) {
   static struct option longopts[] = {
     {"catalogueconf",  required_argument, nullptr, 'c'},
     {"help",  no_argument, nullptr, 'h'},

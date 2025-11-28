@@ -83,7 +83,7 @@ private:
   /**
    * Cached version of isAdmin() results.
    */
-  mutable TimeBasedCache<common::dataStructures::SecurityIdentity, bool> m_isAdminCache;
+  mutable TimeBasedCache<common::dataStructures::SecurityIdentity, bool> m_isAdminCache{10};
 };
 
 }} // namespace cta::catalogue

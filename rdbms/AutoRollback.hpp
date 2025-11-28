@@ -63,9 +63,9 @@ public:
 private:
 
   /**
-   * True if the automatica rollback has been cancelled.
+   * True if the automatic rollback has been cancelled.
    */
-  bool m_cancelled;
+  bool m_cancelled = false;
 
   /**
    * The database connection or nullptr if no rollback should take place.

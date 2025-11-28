@@ -30,8 +30,7 @@ namespace cta::tapeserver::tapelabel {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const argv):
-  help(false), m_debug(false), m_force(false) {
+TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const argv) {
 
   static struct option longopts[] = {
     {"vid", required_argument, nullptr, 'v'},
@@ -43,7 +42,7 @@ TapeLabelCmdLineArgs::TapeLabelCmdLineArgs(const int argc, char *const *const ar
     {"help", no_argument, nullptr, 'h'},
     {nullptr,          0, nullptr,   0}
   };
- 
+
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
   opterr = 0;
@@ -162,7 +161,7 @@ void TapeLabelCmdLineArgs::printUsage(std::ostream &os) {
     "  -u, --drive         The unit name of the drive used (if absent, the first drive configuration file found is used)" << std::endl <<
     "  -h, --help          Print this help message and exit" << std::endl <<
     "  -d, --debug         Print more logs for label operations" << std::endl <<
-    "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;  
+    "  -f, --force         Force labeling for not-blank tapes for testing purpose and without label checks. Must only be used manually." << std::endl;
 }
 
 } // namespace cta::tapeserver::tapelabel

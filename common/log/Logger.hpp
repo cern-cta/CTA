@@ -229,7 +229,7 @@ protected:
  /**
    * Map from syslog integer priority to textual representation
    */
-  const std::map<int, std::string> m_priorityToText;
+  const std::map<int, std::string> m_priorityToText = generatePriorityToTextMap();
 
   /**
    * Map from the possible string values of the LogMask parameters and their equivalent syslog priorities

@@ -76,13 +76,13 @@ public:
   public:
     ~ScopedLock() override;
   private:
-    explicit ScopedLock(librados::IoCtx& ioCtx) : m_lockSet(false), m_context(ioCtx), m_lockType(LockType::Shared) {}
+    explicit ScopedLock(librados::IoCtx& ioCtx) : m_context(ioCtx) {}
     void set(const std::string & oid, const std::string& clientId, LockType lockType);
-    bool m_lockSet;
+    bool m_lockSet = false;
     librados::IoCtx & m_context;
     std::string m_clientId;
     std::string m_oid;
-    LockType m_lockType;
+    LockType m_lockType = LockType::Shared;
   };
 
   static const size_t c_maxBackoff;

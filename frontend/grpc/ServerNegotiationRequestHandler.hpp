@@ -62,8 +62,8 @@ private:
   cta::xrd::Negotiation::AsyncService& m_ctaNegotiationSvc;
   std::string m_strKeytab;
   const std::string m_strService;
-  StreamState m_streamState;
-  gss_ctx_id_t m_gssCtx;
+  StreamState m_streamState = StreamState::NEW;
+  gss_ctx_id_t m_gssCtx = GSS_C_NO_CONTEXT;
   gss_cred_id_t m_serverCreds = {GSS_C_NO_CREDENTIAL};
   /*
    * Context for the rpc, allowing to tweak aspects of it such as the use

@@ -98,10 +98,10 @@ private:
   };
 
   std::vector<EnqueueingWorkerThread*> m_enqueueingWorkerThreads;
-  std::atomic<uint64_t> m_taskQueueSize;  // < This counter ensures destruction happens after the last thread completed.
+  std::atomic<uint64_t> m_taskQueueSize = 0;  // < This counter ensures destruction happens after the last thread completed.
   /// Delay introduced before posting to the task queue when it becomes too long.
   void delayIfNecessary(log::LogContext& lc);
-  cta::threading::Semaphore m_taskPostingSemaphore;
+  cta::threading::Semaphore m_taskPostingSemaphore{5};
 
 public:
   void waitSubthreadsComplete() override;
@@ -263,8 +263,8 @@ public:
 
   private:
     ArchiveJob(const std::string& jobAddress, OStoreDB& oStoreDB);
-    bool m_jobOwned;
-    uint64_t m_mountId;
+    bool m_jobOwned = false;
+    uint64_t m_mountId = 0;
     std::string m_tapePool;
     OStoreDB& m_oStoreDB;
     objectstore::ArchiveRequest m_archiveRequest;
@@ -365,17 +365,15 @@ public:
   private:
     // Can be instantiated from a mount (queue to transfer) or a report queue
     RetrieveJob(const std::string& jobAddress, OStoreDB& oStoreDB, RetrieveMount* rm)
-        : m_jobOwned(false),
-          m_mountId(0),
-          m_oStoreDB(oStoreDB),
+        : m_oStoreDB(oStoreDB),
           m_retrieveRequest(jobAddress, m_oStoreDB.m_objectStore),
           m_retrieveMount(rm) {}
     void asyncDeleteJob();
     void waitAsyncDelete();
 
   private:
-    bool m_jobOwned;
-    uint64_t m_mountId;
+    bool m_jobOwned = false;
+    uint64_t m_mountId = 0;
     OStoreDB& m_oStoreDB;
     objectstore::RetrieveRequest m_retrieveRequest;
     OStoreDB::RetrieveMount* m_retrieveMount;

@@ -293,7 +293,7 @@ private:
   /**
    * The parameter count of prepared statement.
    */
-  int m_nParams;
+  int m_nParams = 0;
 
   /**
    * Used as an array of characeter pointers to C-string needed by libpq
@@ -320,7 +320,7 @@ private:
   /**
    * The number of rows affected by the last execution of this statement.
    */
-  uint64_t m_nbAffectedRows;
+  uint64_t m_nbAffectedRows = 0;
 
   /**
    * Templated bind of an optional number.

@@ -101,9 +101,7 @@ std::string drive::getSerialNumber(const int& fd, System::virtualWrapper& sw) {
 
 drive::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw)
     : m_SCSIInfo(di),
-      m_tapeFD(-1),
-      m_sysWrapper(sw),
-      m_lbpToUse(lbpToUse::disabled) {
+      m_sysWrapper(sw) {
   /* Open the device files */
   /* We open the tape device file non-blocking as blocking open on rewind tapes (at least)
    * will fail after a long timeout when no tape is present (at least with mhvtl)
