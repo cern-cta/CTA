@@ -73,7 +73,7 @@ public:
 
         return upType;
 
-      } catch (const std::bad_variant_access& e) {
+      } catch (const std::bad_variant_access&) {
         throw std::logic_error("Invalid plugin interface.");
       }
     });

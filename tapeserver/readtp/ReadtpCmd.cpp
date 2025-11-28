@@ -604,7 +604,7 @@ void ReadtpCmd::disableEncryption(castor::tape::tapeserver::drive::DriveInterfac
     if (m_encryptionControl->disable(drive)) {
       m_log(cta::log::INFO, "Turned encryption off before unmounting");
     }
-  } catch (cta::exception::Exception& ex) {
+  } catch (cta::exception::Exception&) {
     m_log(cta::log::ERR, "Failed to turn off encryption before unmounting");
   }
 }

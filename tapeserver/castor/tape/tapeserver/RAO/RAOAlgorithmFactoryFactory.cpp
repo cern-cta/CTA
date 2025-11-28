@@ -38,7 +38,7 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
     RAOParams::RAOAlgorithmType raoAlgoType;
     try {
       raoAlgoType = raoParams.getAlgorithmType();
-    } catch (const cta::exception::Exception & ex) {
+    } catch (const cta::exception::Exception&) {
       //We failed to determine the RAOAlgorithmType, we use the linear algorithm by default
       //log a warning
       std::string msg = "In RAOAlgorithmFactoryFactory::createAlgorithmFactory(), unable to determine the RAO algorithm to use, the algorithm name provided"

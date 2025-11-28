@@ -90,7 +90,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("capabilities",
                                              cta::server::ProcessCap::getProcText()));
     lc.log(cta::log::INFO, "DataTransferSession made effective raw I/O capabilty to the tape");
-  } catch (const cta::exception::Exception &ex) {
+  } catch (const cta::exception::Exception&) {
     lc.log(cta::log::ERR, "DataTransferSession failed to make effective raw I/O capabilty to use tape");
   }
 
@@ -172,7 +172,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
         tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc,
                                              m_dataTransferConfig.wdGetNextMountMaxSecs * 1000000);
       }
-    } catch (cta::exception::TimeoutException &e) {
+    } catch (cta::exception::TimeoutException&) {
       // Print warning and try again, after refreshing the tape drive states
       cta::log::ScopedParamContainer params(lc);
       params.add("totalScheduleMountTime", std::to_string(t.secs()));
@@ -576,11 +576,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(cta::log::LogCo
   castor::tape::SCSI::DeviceInfo driveInfo;
   try {
     driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
-  } catch (castor::tape::SCSI::DeviceVector::NotFound& e) {
+  } catch (castor::tape::SCSI::DeviceVector::NotFound&) {
     // We could not find this drive in the system's SCSI devices
     putDriveDown("Drive not found on this path", mount, logContext);
     return nullptr;
-  } catch (cta::exception::Exception& e) {
+  } catch (cta::exception::Exception&) {
     // We could not find this drive in the system's SCSI devices
     putDriveDown("Error looking for path to tape drive", mount, logContext);
     return nullptr;
@@ -594,7 +594,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(cta::log::LogCo
     drive.reset(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
     if (drive) { drive->config = m_driveConfig; }
     return drive.release();
-  } catch (cta::exception::Exception& e) {
+  } catch (cta::exception::Exception&) {
     // We could not find this drive in the system's SCSI devices
     putDriveDown("Error opening tape drive", mount, logContext);
     return nullptr;

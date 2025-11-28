@@ -67,7 +67,7 @@ ssize_t System::regularFile::read(void* buf, size_t nbytes)
     ret = m_content.copy((char *) buf, nbytes, m_read_pointer);
     m_read_pointer += ret;
     return ret;
-  } catch (std::out_of_range & e) {
+  } catch (std::out_of_range&) {
     return 0;
   }
 }
@@ -77,9 +77,9 @@ ssize_t System::regularFile::write(const void *buf, size_t nbytes)
   try {
     m_content.assign((const char *) buf, nbytes);
     return nbytes;
-  } catch (std::length_error & e) {
+  } catch (std::length_error&) {
     return -1;
-  } catch (std::bad_alloc & e) {
+  } catch (std::bad_alloc&) {
     return -1;
   }
 }
@@ -95,7 +95,6 @@ System::stDeviceFile::stDeviceFile()
   m_mtStat.mt_dsreg = (((256 * 0x400) & MT_ST_BLKSIZE_MASK) << MT_ST_BLKSIZE_SHIFT)
       | ((1 & MT_ST_DENSITY_MASK) << MT_ST_DENSITY_SHIFT);
   m_mtStat.mt_gstat = GMT_EOT(~0) | GMT_BOT(~0);
-
 }
 
 int System::stDeviceFile::ioctl(unsigned long int request, struct mtop * mt_cmd)

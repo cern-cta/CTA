@@ -376,7 +376,7 @@ void cta::ArchiveMount::setTapeMounted(cta::log::LogContext& logContext) const {
     auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
     spc.add("catalogueTime", catalogueTime);
     logContext.log(log::INFO, "In ArchiveMount::setTapeMounted(): success.");
-  } catch (cta::exception::Exception& ex) {
+  } catch (cta::exception::Exception&) {
     auto catalogueTimeFailed = t.secs(cta::utils::Timer::resetCounter);
     spc.add("catalogueTime", catalogueTimeFailed);
     logContext.log(cta::log::WARNING, "Failed to update catalogue for the tape mounted for archive.");

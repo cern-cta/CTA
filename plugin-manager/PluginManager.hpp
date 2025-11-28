@@ -191,7 +191,7 @@ private:
   Loader& loader() {
     try {
       return m_umapLoaders.at(m_strActiveLoader);
-    } catch(const std::out_of_range& oor) {
+    } catch(const std::out_of_range&) {
       throw std::runtime_error("Loader " + m_strActiveLoader + " does not exists.");
     }
   }

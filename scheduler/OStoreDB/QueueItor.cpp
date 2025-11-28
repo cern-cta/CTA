@@ -96,7 +96,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
   for(auto &osar : requests) {
     try {
       osar.second->wait();
-    } catch(cta::exception::NoSuchObject &ex) {
+    } catch(cta::exception::NoSuchObject&) {
       // Skip non-existent objects
       continue;
     }
@@ -201,7 +201,7 @@ getQueueJobs(const jobQueue_t &jobQueueChunk)
   for(auto &osrr : requests) {
     try {
       osrr.second->wait();
-    } catch (cta::exception::NoSuchObject &ex) {
+    } catch (cta::exception::NoSuchObject&) {
       // Skip non-existent objects
       continue;
     }

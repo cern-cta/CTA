@@ -261,7 +261,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
     contLock.lock(cont);
     cont.fetch();
     //lockFetchQueueTime += localLockFetchQueueTime = t.secs(utils::Timer::resetCounter);
-  } catch (cta::exception::NoSuchObject & ex) {
+  } catch (cta::exception::NoSuchObject&) {
     // The queue is now absent. We can remove its reference in the root entry.
     // A new queue could have been added in the mean time, and be non-empty.
     // We will then fail to remove from the RootEntry (non-fatal).

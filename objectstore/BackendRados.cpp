@@ -501,12 +501,12 @@ void BackendRados::lockBackoff(const std::string& name, uint64_t timeout_us, Loc
   while (true) {
     nbTriesToLock++;
     if (lockType==LockType::Shared) {
-      throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &radosLockExpirationTime, &t, &timeoutTimer]() {
+      throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &radosLockExpirationTime]() {
         rc = radosCtx.lock_shared(name, "lock", clientId, "", "", &radosLockExpirationTime, 0);
         return 0;
       }, "In BackendRados::lockBackoff(): failed radosCtx.lock_shared()");
     } else {
-      throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &radosLockExpirationTime, &t, &timeoutTimer]() {
+      throwOnReturnedErrnoOrThrownStdException([&rc, &radosCtx, &name, &clientId, &radosLockExpirationTime]() {
         rc = radosCtx.lock_exclusive(name, "lock", clientId, "", &radosLockExpirationTime, 0);
         return 0;
       }, "In BackendRados::lockBackoff(): failed radosCtx.lock_exclusive()");
@@ -827,7 +827,7 @@ void BackendRados::AsyncUpdater::UpdateJob::execute() {
     try {
       // Execute the user's callback.
       value=au.m_update(value);
-    } catch (AsyncUpdateWithDelete & ex) {
+    } catch (AsyncUpdateWithDelete&) {
       updateWithDelete = true;
     } catch (...) {
       // Let exceptions fly through. User knows his own exceptions.

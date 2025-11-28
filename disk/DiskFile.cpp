@@ -265,7 +265,7 @@ void XRootdDiskFileRemover::removeAsync(AsyncXRootdDiskFileRemover::XRootdFileRe
   XrdCl::XRootDStatus statusRm = m_xrootFileSystem.Rm(m_truncatedFileURL, &responseHandler, c_xrootTimeout);
   try {
     exception::XrdClException::throwOnError(statusRm, "In XRootdDiskFileRemover::remove(), fail to remove file.");
-  } catch (const cta::exception::Exception& e) {
+  } catch (const cta::exception::Exception&) {
     responseHandler.m_deletionPromise.set_exception(std::current_exception());
   }
 }
@@ -290,7 +290,7 @@ void AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler::HandleRespons
   try {
     exception::XrdClException::throwOnError(*status, "In XRootdDiskFileRemover::remove(), fail to remove file.");
     m_deletionPromise.set_value();
-  } catch (const cta::exception::Exception& e) {
+  } catch (const cta::exception::Exception&) {
     m_deletionPromise.set_exception(std::current_exception());
   }
 }

@@ -261,7 +261,7 @@ void ChangeStorageClass::updateStorageClassInCatalogue(const std::string& archiv
   // Validate the Protocol Buffer
   try {
     cta::admin::validateCmd(*admincmd);
-  } catch(std::runtime_error &ex) {
+  } catch(std::runtime_error&) {
     throw std::runtime_error("Error: Protocol Buffer validation");
   }
 

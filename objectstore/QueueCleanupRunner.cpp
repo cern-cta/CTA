@@ -208,7 +208,7 @@ void QueueCleanupRunner::runOnePass(log::LogContext &logContext) {
                            "change it to its corresponding final state.");
             break;
         }
-      } catch (const catalogue::UserSpecifiedAWrongPrevState& ex) {
+      } catch (const catalogue::UserSpecifiedAWrongPrevState&) {
         using common::dataStructures::Tape;
         auto tapeDataRefreshedUpdated = m_catalogue.Tape()->getTapesByVid(queueVid).at(queueVid);
         log::ScopedParamContainer paramsWarnMsg(logContext);

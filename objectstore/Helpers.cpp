@@ -66,7 +66,7 @@ void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQue
       rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
       try {
         archiveQueue.setAddress(re.getArchiveQueueAddress(tapePool.value(), queueType));
-      } catch (cta::exception::Exception & ex) {
+      } catch (cta::exception::Exception&) {
         ScopedExclusiveLock rexl(re);
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
@@ -183,7 +183,7 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
       rootFetchNoLockTime = t.secs(utils::Timer::resetCounter);
       try {
         retrieveQueue.setAddress(re.getRetrieveQueueAddress(vid.value(), queueType));
-      } catch (cta::exception::Exception & ex) {
+      } catch (cta::exception::Exception&) {
         ScopedExclusiveLock rexl(re);
         rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
         re.fetch();
@@ -290,7 +290,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue, ScopedExclusive
       timings.insertAndReset("rootFetchNoLockTime", t);
       try {
         queue.setAddress(re.getRepackQueueAddress(queueType));
-      } catch (cta::exception::Exception & ex) {
+      } catch (cta::exception::Exception&) {
         ScopedExclusiveLock rexl(re);
         timings.insertAndReset("rootRelockExclusiveTime", t);
         re.fetch();

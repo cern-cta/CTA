@@ -222,7 +222,7 @@ uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string
     std::string logMessage = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(), freeSpace returned from the script is: " + std::to_string(jsonFreeSpace.m_freeSpace);
     lc.log(log::DEBUG,logMessage);
     return jsonFreeSpace.m_freeSpace;
-  } catch(const cta::exception::JSONObjectException &ex){
+  } catch(const cta::exception::JSONObjectException&){
     std::string errMsg = "In DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(): the json received from the script "+ scriptPath +
             " json=" + stdoutScript + " could not be used to get the FreeSpace, the json to receive from the script should have the following format: " +
             jsonFreeSpace.getExpectedJSONToBuildObject() + ".";

@@ -775,7 +775,7 @@ void RepackRequest::garbageCollect(const std::string& presumedOwner, AgentRefere
           .add("requestsBefore",requestsBefore)
           .add("requestsAfter",requestsAfter);
     lc.log(log::INFO,"In RepackRequest::garbageCollect() succesfully requeued the RepackRequest.");
-  } catch(const cta::exception::Exception &e){
+  } catch(const cta::exception::Exception&){
     lc.log(log::INFO,"In RepackRequest::garbageCollect() failed to requeue the RepackRequest. Leaving it as it is.");
   }
   commit();
@@ -789,7 +789,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater* RepackRequest::asyncUpdateOwnerAndSta
   std::unique_ptr<AsyncOwnerAndStatusUpdater> ret(new AsyncOwnerAndStatusUpdater);
   auto & retRef = *ret;
   ret->m_updaterCallback=
-    [this, owner, previousOwner, &retRef, newStatus](const std::string &in)->std::string {
+    [owner, previousOwner, &retRef, newStatus](const std::string &in)->std::string {
       // We have a locked and fetched object, so we just need to work on its representation.
       retRef.m_timingReport.insertAndReset("lockFetchTime", retRef.m_timer);
       serializers::ObjectHeader oh;

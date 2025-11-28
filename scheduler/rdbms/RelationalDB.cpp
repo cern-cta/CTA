@@ -564,7 +564,7 @@ std::list<common::dataStructures::RepackInfo> RelationalDB::fetchRepackInfo(cons
        destInfo.files = rset.columnUint64NoOpt("DESTINATION_ARCHIVED_FILES");
        destInfo.bytes = rset.columnUint64NoOpt("DESTINATION_ARCHIVED_BYTES");
        repackInfo.destinationInfos.emplace_back(std::move(destInfo));
-      } catch (cta::rdbms::NullDbValue& ex) { // pass, the string was Null as there is no destination info
+      } catch (cta::rdbms::NullDbValue&) { // pass, the string was Null as there is no destination info
       }
     }
     for (auto& kv : repackMap) {
@@ -1059,7 +1059,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
           .add("bufferURL", bufferURL)
           .log(log::INFO,
                "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): deleted the repack buffer directory");
-      } catch (const cta::exception::Exception& ex) {
+      } catch (const cta::exception::Exception&) {
         log::ScopedParamContainer(lc)
           .add("bufferURL", bufferURL)
           .log(log::WARNING,

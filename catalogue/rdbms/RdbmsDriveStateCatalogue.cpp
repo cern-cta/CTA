@@ -276,7 +276,7 @@ void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   setOptionalString(":NEXT_VO", tapeDrive.nextVo);
   setOptionalString(":USER_COMMENT", tapeDrive.userComment);
 
-  auto setEntryLog = [stmt, setOptionalString, setOptionalTime](const std::string &field,
+  auto setEntryLog = [setOptionalString, setOptionalTime](const std::string &field,
     const std::optional<std::string> &username, const std::optional<std::string> &host, const std::optional<time_t> &time) {
       setOptionalString(field + "_USER_NAME", username);
       setOptionalString(field + "_HOST_NAME", host);

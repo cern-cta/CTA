@@ -49,7 +49,7 @@ EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface &drive,
   // Tapes should have label character 0, but if they were recycled from EnstoreLarge tapes, it could be 3
   try {
     vol1.verify("0");
-  } catch (std::exception& e) {
+  } catch (std::exception&) {
     try {
       vol1.verify("3");
     } catch (std::exception& e) {

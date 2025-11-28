@@ -289,7 +289,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
     cont.fetch();
     tl.insertAndReset("queueFetchTime",t);
     //lockFetchQueueTime += localLockFetchQueueTime = t.secs(utils::Timer::resetCounter);
-  } catch (cta::exception::Exception & ex) {
+  } catch (cta::exception::Exception&) {
     // The queue is now absent. We can remove its reference in the root entry.
     // A new queue could have been added in the mean time, and be non-empty.
     // We will then fail to remove from the RootEntry (non-fatal).
@@ -312,7 +312,7 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
             .add("exceptionMessage", ex.getMessageValue());
       tl.addToLog(params);
       lc.log(log::INFO, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry");
-    } catch (RootEntry::NoSuchArchiveQueue & ex) {
+    } catch (RootEntry::NoSuchArchiveQueue&) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)

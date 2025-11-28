@@ -163,9 +163,9 @@ public:
   bool contains(ChecksumType type, const std::string& value) const {
     try {
       validate(type, value);
-    } catch (exception::ChecksumTypeMismatch& ex) {
+    } catch (exception::ChecksumTypeMismatch&) {
       return false;
-    } catch (exception::ChecksumValueMismatch& ex) {
+    } catch (exception::ChecksumValueMismatch&) {
       return false;
     }
     return true;
@@ -177,11 +177,11 @@ public:
   bool operator==(const ChecksumBlob& blob) const {
     try {
       validate(blob);
-    } catch (exception::ChecksumBlobSizeMismatch& ex) {
+    } catch (exception::ChecksumBlobSizeMismatch&) {
       return false;
-    } catch (exception::ChecksumTypeMismatch& ex) {
+    } catch (exception::ChecksumTypeMismatch&) {
       return false;
-    } catch (exception::ChecksumValueMismatch& ex) {
+    } catch (exception::ChecksumValueMismatch&) {
       return false;
     }
     return true;

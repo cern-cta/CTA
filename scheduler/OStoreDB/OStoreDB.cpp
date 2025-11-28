@@ -545,7 +545,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfo
   tmdi.m_schedulerGlobalLock.reset(new SchedulerGlobalLock(re.getSchedulerGlobalLock(), m_objectStore));
   try {
     tmdi.m_lockOnSchedulerGlobalLock.lock(*tmdi.m_schedulerGlobalLock, timeout_us);
-  } catch (cta::exception::TimeoutException& e) {
+  } catch (cta::exception::TimeoutException&) {
     auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
     log::ScopedParamContainer(logContext)
       .add("rootFetchNoLockTime", rootFetchNoLockTime)
@@ -1048,7 +1048,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
       auto& j = *completeJobsToDeleteItor;
       try {
         j->asyncDeleteRequest();
-      } catch (const cta::exception::NoSuchObject& ex) {
+      } catch (const cta::exception::NoSuchObject&) {
         log::ScopedParamContainer(lc)
           .add("fileId", j->archiveFile.archiveFileID)
           .log(log::WARNING,
@@ -1064,7 +1064,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
       try {
         try {
           j->waitAsyncDelete();
-        } catch (const cta::exception::NoSuchObject& ex) {
+        } catch (const cta::exception::NoSuchObject&) {
           //No need to delete from the completeJobsToDelete list
           //as it is not used later
           log::ScopedParamContainer(lc)
@@ -1117,7 +1117,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
       for (auto& failedAR : failure.failedElements) {
         try {
           std::rethrow_exception(failedAR.failure);
-        } catch (const cta::exception::NoSuchObject& ex) {
+        } catch (const cta::exception::NoSuchObject&) {
           log::ScopedParamContainer(lc)
             .add("fileId", failedAR.element->archiveFile.archiveFileID)
             .log(log::WARNING,
@@ -1161,7 +1161,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
       auto &j = *jobsToDeleteItor;
       try {
         j->asyncDeleteJob();
-      } catch (const cta::exception::NoSuchObject& ex) {
+      } catch (const cta::exception::NoSuchObject&) {
         log::ScopedParamContainer(lc)
             .add("fileId", j->archiveFile.archiveFileID)
             .log(log::WARNING, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to asyncDeleteJob because it does not exist in the objectstore.");
@@ -1177,7 +1177,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
       try {
         try {
           j->waitAsyncDelete();
-        } catch (const cta::exception::NoSuchObject& ex) {
+        } catch (const cta::exception::NoSuchObject&) {
           log::ScopedParamContainer(lc)
             .add("fileId", j->archiveFile.archiveFileID)
             .add("objectAddress", j->m_retrieveRequest.getAddressIfSet())
@@ -1946,7 +1946,7 @@ std::string OStoreDB::blockRetrieveQueueForCleanup(const std::string& vid) {
     throw RetrieveQueueNotFound("In OStoreDB::blockRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
   } catch (cta::exception::NoSuchObject& ex) {
     throw RetrieveQueueNotFound("In OStoreDB::blockRetrieveQueueForCleanup(): Retrieve queue of vid " + vid + " not found. " + ex.getMessageValue());
-  } catch (cta::exception::Exception& ex) {
+  } catch (cta::exception::Exception&) {
     throw;
   }
 
@@ -2203,7 +2203,7 @@ void OStoreDB::setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log
     try {
       qAddress = re.getRetrieveQueueAddress(vid, common::dataStructures::JobQueueType::JobsToTransferForUser);
       rqueue.setAddress(qAddress);
-    } catch (cta::exception::Exception& ex) {
+    } catch (cta::exception::Exception&) {
       ScopedExclusiveLock rexl(re);
       rootRelockExclusiveTime = t.secs(utils::Timer::resetCounter);
       re.fetch();
@@ -3123,7 +3123,7 @@ copyNbFound:;
         try {
           std::shared_ptr<objectstore::RetrieveRequest::AsyncInserter> rrai(rr->asyncInsert());
           asyncInsertionInfoList.emplace_back(AsyncInsertionInfo {rsr, rr, rrai, bestVid, activeCopyNumber});
-        } catch (cta::objectstore::ObjectOpsBase::NotNewObject& objExists) {
+        } catch (cta::objectstore::ObjectOpsBase::NotNewObject&) {
           //The retrieve subrequest already exists in the objectstore and is not deleted, we log and don't do anything
           log::ScopedParamContainer(lc)
             .add("copyNb", activeCopyNumber)
@@ -3324,7 +3324,7 @@ void OStoreDB::cancelRepack(const std::string& vid, log::LogContext& lc) {
           //In the case the owner is not a Repack queue,
           //the owner is an agent. We remove it from its ownership
           rr.removeFromOwnerAgentOwnership();
-        } catch (const cta::exception::Exception& ex) {
+        } catch (const cta::exception::Exception&) {
           //The owner is a queue, so continue
         }
         // We now need to dereference, from a queue if needed and from the index for sure.
@@ -4122,7 +4122,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
         int priority = log::ERR;
         try {
           std::rethrow_exception(fe.failure);
-        } catch (cta::exception::NoSuchObject& ex) {
+        } catch (cta::exception::NoSuchObject&) {
           priority = log::WARNING;
           logMessage = "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for "
                        "user, job does not exist in the objectstore.";

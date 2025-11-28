@@ -51,7 +51,7 @@ ReadSession(drive, volInfo, useLbp) {
   // Tapes should have label character 3, but if they were recycled from CPIO tapes, it could be 0
   try {
     vol1.verify("3");
-  } catch (std::exception& e) {
+  } catch (std::exception&) {
     try {
       vol1.verify("0");
     } catch (std::exception& e) {
