@@ -82,8 +82,7 @@ lc.log(log::DEBUG, "BackendRados::BackendRados() namespace set. About to test ac
     }
     // Create the thread pool. One thread per CPU hardware thread.
     for (size_t i=0; i<std::thread::hardware_concurrency(); i++) {
-      RadosWorkerThreadAndContext * rwtac = new RadosWorkerThreadAndContext(*this, i, logger);
-      m_threads.push_back(rwtac);
+      m_threads.push_back(std::make_unique<RadosWorkerThreadAndContext>(*this, i, logger));
       m_threads.back()->start();
     }
     log::ScopedParamContainer params(lc);
@@ -93,7 +92,7 @@ lc.log(log::DEBUG, "BackendRados::BackendRados() namespace set. About to test ac
     for (size_t i=0; i<m_threads.size(); i++) m_jobQueue.push(nullptr);
     for (auto &t: m_threads) {
       if (t) t->wait();
-      delete t;
+      t.reset();
     }
     for(auto & c:m_radosCtxPool) {
       c.close();
@@ -596,8 +595,8 @@ void BackendRados::RadosWorkerThreadAndContext::run() {
   }
 }
 
-Backend::AsyncCreator* BackendRados::asyncCreate(const std::string& name, const std::string& value) {
-  return new AsyncCreator(*this, name, value);
+std::unique_ptr<Backend::AsyncCreator> BackendRados::asyncCreate(const std::string& name, const std::string& value) {
+  return std::make_unique<AsyncCreator>(*this, name, value);
 }
 
 BackendRados::AsyncCreator::AsyncCreator(BackendRados& be, const std::string& name, const std::string& value):
@@ -726,9 +725,9 @@ void BackendRados::AsyncCreator::wait() {
   ANNOTATE_HAPPENS_BEFORE_FORGET_ALL(&m_job);
 }
 
-Backend::AsyncUpdater* BackendRados::asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update)
+std::unique_ptr<Backend::AsyncUpdater> BackendRados::asyncUpdate(const std::string & name, std::function <std::string(const std::string &)> & update)
 {
-  return new AsyncUpdater(*this, name, update);
+  return std::make_unique<AsyncUpdater>(*this, name, update);
 }
 
 BackendRados::AsyncUpdater::AsyncUpdater(BackendRados& be, const std::string& name, std::function<std::string(const std::string&)>& update):
@@ -930,9 +929,9 @@ void BackendRados::AsyncUpdater::wait() {
 }
 
 
-Backend::AsyncDeleter* BackendRados::asyncDelete(const std::string & name)
+std::unique_ptr<Backend::AsyncDeleter> BackendRados::asyncDelete(const std::string & name)
 {
-  return new AsyncDeleter(*this, name);
+  return std::make_unique<AsyncDeleter>(*this, name);
 }
 
 BackendRados::AsyncDeleter::AsyncDeleter(BackendRados& be, const std::string& name):
@@ -990,8 +989,8 @@ void BackendRados::AsyncDeleter::deleteCallback(librados::completion_t completio
   }
 }
 
-Backend::AsyncLockfreeFetcher* BackendRados::asyncLockfreeFetch(const std::string& name) {
-  return new AsyncLockfreeFetcher(*this, name);
+std::unique_ptr<Backend::AsyncLockfreeFetcher> BackendRados::asyncLockfreeFetch(const std::string& name) {
+  return std::make_unique<AsyncLockfreeFetcher>(*this, name);
 }
 
 void BackendRados::AsyncDeleter::wait() {

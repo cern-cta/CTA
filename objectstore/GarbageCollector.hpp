@@ -41,7 +41,7 @@ public:
                    Backend& os,
                    AgentReference& agentReference,
                    cta::catalogue::Catalogue& catalogue);
-  ~GarbageCollector();
+  ~GarbageCollector() = default;
   void runOnePass();
 
   void acquireTargets();
@@ -121,7 +121,7 @@ private:
   cta::catalogue::Catalogue& m_catalogue;
   AgentReference& m_ourAgentReference;
   AgentRegister m_agentRegister;
-  std::map<std::string, AgentWatchdog*, std::less<>> m_watchedAgents;
+  std::map<std::string, std::unique_ptr<AgentWatchdog>, std::less<>> m_watchedAgents;
 };
 
 }  // namespace cta::objectstore

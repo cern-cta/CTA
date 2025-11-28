@@ -623,7 +623,7 @@ ArchiveRequest::AsyncJobOwnerUpdater* ArchiveRequest::asyncUpdateJobOwner(uint32
         // If we do not find the copy, return not owned as well...
         throw Backend::WrongPreviousOwner("In ArchiveRequest::asyncUpdateJobOwner()::lambda(): copyNb not found.");
       };
-  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  ret->m_backendUpdater = m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback);
   return ret.release();
 }
 
@@ -756,7 +756,7 @@ ArchiveRequest::AsyncTransferSuccessfulUpdater * ArchiveRequest::asyncUpdateTran
       err << "In ArchiveRequest::asyncUpdateJobSuccessful()::lambda(): copyNb not found";
       throw cta::exception::Exception(err.str());
     };
-  ret->m_backendUpdater.reset(m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback));
+  ret->m_backendUpdater = m_objectStore.asyncUpdate(getAddressIfSet(), ret->m_updaterCallback);
   return ret.release();
 }
 
@@ -772,7 +772,7 @@ void ArchiveRequest::AsyncTransferSuccessfulUpdater::wait() {
 //------------------------------------------------------------------------------
 ArchiveRequest::AsyncRequestDeleter* ArchiveRequest::asyncDeleteRequest() {
   std::unique_ptr<AsyncRequestDeleter> ret(new AsyncRequestDeleter);
-  ret->m_backendDeleter.reset(m_objectStore.asyncDelete(getAddressIfSet()));
+  ret->m_backendDeleter = m_objectStore.asyncDelete(getAddressIfSet());
   return ret.release();
 }
 
