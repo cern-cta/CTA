@@ -42,6 +42,8 @@ danger-review-gate:
       optional: true
     - job: lint-shellcheck
       optional: true
+    - job: lint-ruff
+      optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
