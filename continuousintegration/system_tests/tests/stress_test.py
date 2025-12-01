@@ -46,8 +46,8 @@ def test_hosts_present(env):
     # Need at least a disk instance and a client
     assert len(env.disk_instance) > 0
     assert len(env.disk_client) > 0
-    assert len(env.ctafrontend) > 0
-    assert len(env.ctataped) > 0
+    assert len(env.cta_frontend) > 0
+    assert len(env.cta_taped) > 0
 
 
 def test_generate_and_copy_files(env, stress_params):
