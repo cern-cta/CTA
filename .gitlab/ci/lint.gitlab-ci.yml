@@ -32,7 +32,6 @@ lint-cppcheck:
       codequality: cppcheck.json
 
 lint-shellcheck:
-  allow_failure: true # Until we have fixed the errors, let this fail
   stage: lint
   image:
     name: $IMAGE_LINT
@@ -47,7 +46,7 @@ lint-shellcheck:
   script:
     - all_shell_scripts=( **/*.sh )
     - if [ ${#all_shell_scripts[@]} -eq 0 ]; then echo "No shell scripts"; exit 0; fi
-    - shellcheck "${all_shell_scripts[@]}" --format json | tee shellcheck.json | jq -C
+    - shellcheck "${all_shell_scripts[@]}" --format json --severity warning | tee shellcheck.json | jq -C
   artifacts:
     expire_in: 7 days
     reports:

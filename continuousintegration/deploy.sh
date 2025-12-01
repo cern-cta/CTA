@@ -145,7 +145,8 @@ deploy() {
   fi
 
   # Navigate to root directory
-  local project_root=$(git rev-parse --show-toplevel)
+  local project_root
+  project_root=$(git rev-parse --show-toplevel)
   cd "$project_root"
 
   print_header "DELETING OLD CTA INSTANCES"
@@ -175,13 +176,14 @@ deploy() {
 
   echo "Deploying CTA instance"
   cd continuousintegration/orchestration
+   # shellcheck disable=SC2086
   ./create_instance.sh --namespace ${deploy_namespace} \
                       --cta-image-tag "${cta_image_tag}" \
                       --catalogue-config "${catalogue_config}" \
                       --scheduler-config "${scheduler_config}" \
                       --reset-catalogue \
                       --reset-scheduler \
-                      "${extra_spawn_options}"
+                      ${extra_spawn_options}
 
 }
 

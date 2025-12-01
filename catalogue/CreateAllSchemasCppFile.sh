@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # @project      The CERN Tape Archive (CTA)
 # @copyright    Copyright © 2022 CERN
@@ -38,7 +38,7 @@
 #
 die() {
   echo "$@" 1>&2
-  test -z "$TAILPID" || kill "${TAILPID}" &> /dev/null
+  test -z "$TAILPID" || kill "$TAILPID" >/dev/null 2>&1
   exit 1
 }
 
@@ -49,25 +49,23 @@ buffFile="./temp"
 tempFilePath="../TMPAllCatalogueSchema.hpp"
 finalFilePath="../AllCatalogueSchema.hpp"
 
-trap "rm -f $buffFile" EXIT
+trap '"rm -f $buffFile"' EXIT
 
 schemaVersionsDirectories=$(find . -type d -regex '^./[0-9]+\.[0-9]+$' | sort)
 
 mapSchemaCode='
 {
 '
-for schemaVersionDir in $schemaVersionsDirectories
-do
+for schemaVersionDir in $schemaVersionsDirectories; do
   #extract schema version
   schemaVersion=${schemaVersionDir#"./"}
   mapSchemaCode+="  {\"$schemaVersion\",
     {
     "
-  for databaseType in ${databaseTypes[@]}
-  do
+  for databaseType in "${databaseTypes[@]}"; do
     schemaSqlFilePath="$schemaVersionDir/$databaseType$schemaPostfix"
-    notTranslatedSchemaSQL=$(cat "$schemaSqlFilePath") || die "Unable to open file $schemaSqlFilePath"
-    schemaSql=$(cat "$schemaVersionDir"/"$databaseType"$schemaPostfix | sed 's/^/\ \ \"/' | sed 's/$/\"/')
+    [ -r "$schemaSqlFilePath" ] || die "Unable to open file $schemaSqlFilePath"
+    schemaSql=$(cat "$schemaSqlFilePath" | sed 's/^/\ \ \"/' | sed 's/$/\"/')
     mapSchemaCode+="  {\"$databaseType\",$schemaSql
       },
 "
