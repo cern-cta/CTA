@@ -4,7 +4,7 @@ from collections import Counter
 
 
 def test_no_coredumps(env):
-    hosts = env.eos_client + env.ctacli + env.ctafrontend + env.ctataped + env.ctarmcd
+    hosts = env.eos_client + env.cta_cli + env.cta_frontend + env.cta_taped + env.cta_rmcd
     total_core_dumps_found = 0
     for host in hosts:
         core_dump_files = host.execWithOutput("find /var/log/tmp/ -type f -name '*.core' 2>/dev/null").splitlines()
@@ -20,7 +20,7 @@ def test_no_coredumps(env):
 # Only if this can be executed fast enough...
 # Something to test at some point
 def test_no_uncaught_exceptions(env, error_whitelist):
-    hosts = env.ctafrontend + env.ctataped + env.ctarmcd
+    hosts = env.cta_frontend + env.cta_taped + env.cta_rmcd
     error_messages = []  # for summaries
     for host in hosts:
         # collect logs
