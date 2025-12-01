@@ -12,7 +12,7 @@ from itertools import cycle
 
 
 def test_copy_scripts_to_ctacli(env):
-    for ctacli in env.ctacli:
+    for ctacli in env.cta_cli:
         ctacli.copyTo("tests/remote_scripts/ctacli/", "/test/", permissions="+x")
 
 
@@ -23,8 +23,10 @@ def test_copy_scripts_to_ctacli(env):
 
 def test_kinit_clients(env, krb5_realm):
     # TODO: do we want to init the rest of the users here as well?
-    env.ctacli[0].exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
-    env.eos_client[0].exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
+    for ctacli in env.cta_cli:
+        ctacli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
+    for eosclient in env.eosclient:
+        eosclient.exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
 
 
 #####################################################################################################################
@@ -33,36 +35,36 @@ def test_kinit_clients(env, krb5_realm):
 
 
 def test_verify_catalogue(env):
-    env.ctafrontend[0].exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
+    env.cta_frontend[0].exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
 
 
 def test_add_admins(env):
-    env.ctafrontend[0].exec(
+    env.cta_frontend[0].exec(
         "cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 --comment ctaadmin1"
     )
     print("Adding user ctaadmin2 as CTA admin")
     # TODO: we should explicitly specify the user we are executing admin commands (should we?)
-    env.ctacli[0].exec("cta-admin admin add --username ctaadmin2 --comment ctaadmin2")
+    env.cta_cli[0].exec("cta-admin admin add --username ctaadmin2 --comment ctaadmin2")
 
 
 def test_version_info(env):
     print("Versions:")
-    env.ctacli[0].exec("cta-admin --json version | jq")
-    env.eosmgm[0].exec("eos version")
+    env.cta_cli[0].exec("cta-admin --json version | jq")
+    env.eos_mgm[0].exec("eos version")
 
 
 def test_populate_catalogue(env, disk_instance):
     print("Populating catalogue")
-    env.ctacli[0].exec(f"./test/populate_catalogue.sh {disk_instance}")
+    env.cta_cli[0].exec(f"./test/populate_catalogue.sh {disk_instance}")
 
 
 def test_populate_catalogue_tapes(env):
-    tape_drives_in_use: list[str] = [taped.drive_name for taped in env.ctataped]
+    tape_drives_in_use: list[str] = [taped.drive_name for taped in env.cta_taped]
     print("Using drives:")
     for drive in tape_drives_in_use:
         print(f"  - {drive}")
 
-    libraries_in_use: list[str] = [rmcd.library_device for rmcd in env.ctarmcd]
+    libraries_in_use: list[str] = [rmcd.library_device for rmcd in env.cta_rmcd]
     print("Using libraries:")
     for lib in libraries_in_use:
         print(f"  - {lib}")
@@ -74,9 +76,9 @@ def test_populate_catalogue_tapes(env):
                                 --name {drive} \
                                 --comment "ctasystest library mapped to drive {drive}"'
         )
-        env.ctacli[0].exec(add_ll_cmd)
+        env.cta_cli[0].exec(add_ll_cmd)
 
-    tapes: list[str] = CtaRmcdHost.list_all_tapes_in_libraries(env.ctarmcd)
+    tapes: list[str] = CtaRmcdHost.list_all_tapes_in_libraries(env.cta_rmcd)
     print("Using tapes:")
     for tape in tapes:
         print(f"  - {tape}")
@@ -96,7 +98,7 @@ def test_populate_catalogue_tapes(env):
                                 --full false \
                                 --comment ctasystest"
         )
-        env.ctacli[0].exec(add_tape_cmd)
+        env.cta_cli[0].exec(add_tape_cmd)
 
 
 #####################################################################################################################
@@ -105,23 +107,23 @@ def test_populate_catalogue_tapes(env):
 
 
 def test_reset_tapes(env):
-    for ctarmcd in env.ctarmcd:
+    for ctarmcd in env.cta_rmcd:
         ctarmcd.unload_tapes()
 
 
 def test_reset_drive_devices(env):
-    for ctataped in env.ctataped:
+    for ctataped in env.cta_taped:
         ctataped.exec(f"sg_turs {ctataped.drive_device} 2>&1 > /dev/null || true")
 
 
 def test_label_tapes(env):
-    tapes: list[str] = CtaRmcdHost.list_all_tapes_in_libraries(env.ctarmcd)
-    max_workers = len(env.ctataped)
+    tapes: list[str] = CtaRmcdHost.list_all_tapes_in_libraries(env.cta_rmcd)
+    max_workers = len(env.cta_taped)
 
     # Run labeling on every drive
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         futures = []
-        for tape, taped in zip(tapes, cycle(env.ctataped)):
+        for tape, taped in zip(tapes, cycle(env.cta_taped)):
             futures.append(pool.submit(taped.label_tape, tape))
 
         # force errors to surface
@@ -130,4 +132,4 @@ def test_label_tapes(env):
 
 
 def test_set_all_drives_up(env):
-    env.ctacli[0].set_all_drives_up()
+    env.cta_cli[0].set_all_drives_up()
