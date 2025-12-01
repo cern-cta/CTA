@@ -74,7 +74,7 @@ def run_cmd(cmd: str):
         cmd_call = subprocess.run(
             cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True, timeout=120
         )
-    except subprocess.TimeoutExpired as e:
+    except subprocess.TimeoutExpired:
         sys.exit(f"ERROR: Timeout reached for command: {cmd}")
     except subprocess.CalledProcessError as e:
         sys.exit(f"ERROR: Command failed: {e.stderr}")
@@ -135,7 +135,7 @@ def validate_regr_against_cta_main(ci_input_vars):
         and not env_var_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
     ):
         sys.exit(
-            f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION, CUSTOM_EOS_IMAGE_TAG] must be provided when running a regression test."
+            "ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION, CUSTOM_EOS_IMAGE_TAG] must be provided when running a regression test."
         )
 
 
@@ -151,7 +151,7 @@ def validate_regr_against_cta_version(ci_input_vars):
         and not env_var_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
     ):
         sys.exit(
-            f"ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION, CUSTOM_EOS_IMAGE_TAG] must be provided when running a regression test."
+            "ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION, CUSTOM_EOS_IMAGE_TAG] must be provided when running a regression test."
         )
 
 

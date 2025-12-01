@@ -54,7 +54,6 @@ lint-shellcheck:
       codequality: shellcheck.json
 
 lint-ruff:
-  allow_failure: true # Until we have fixed the errors, let this fail
   stage: lint
   image:
     name: $IMAGE_LINT

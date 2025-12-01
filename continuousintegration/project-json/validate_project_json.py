@@ -22,7 +22,7 @@ import jsonschema
 
 
 def validate_schema(project_json, schema_json):
-    print(f"Validating project.json using schema.json schema...")
+    print("Validating project.json using schema.json schema...")
 
     try:
         jsonschema.validate(instance=project_json, schema=schema_json)
@@ -30,7 +30,7 @@ def validate_schema(project_json, schema_json):
         sys.exit(0)
     except jsonschema.ValidationError as e:
         path = ".".join([str(p) for p in e.path]) or "<root>"
-        print(f"Schema validation of project.json failed:")
+        print("Schema validation of project.json failed:")
         print(f"  * Path: {path}")
         print(f"  * Error: {e.message}")
         print(f"  * Expected: {e.schema.get('type')}")
