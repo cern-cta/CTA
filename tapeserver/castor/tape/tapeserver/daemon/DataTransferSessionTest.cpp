@@ -533,7 +533,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    bool doSleep = true;
+    bool doSleep = false; // set to true to debug entrypoint with gdb
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     for (int fseq = 1; fseq <= 10; fseq++) {
@@ -585,6 +585,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       rReq.dstURL = remoteFilePaths.back();
       rReq.diskFileInfo.path = "path/to/file";
       rReq.isVerifyOnly = false;
+      // Populate creationLog (required for PostgreSQL scheduler)
+      rReq.creationLog.username = s_userName;
+      rReq.creationLog.host = "test-host";
+      rReq.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+      // Populate errorReportURL (required for PostgreSQL scheduler - cannot be empty)
+      rReq.errorReportURL = "test://error-report-url";
       std::list<std::string> archiveFilePaths;
       // add a sleep here so I can have enough time to attach to the test!!
       while (doSleep) {
@@ -788,6 +794,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
       rReq.dstURL = remoteFilePaths.back();
       rReq.diskFileInfo.path = "path/to/file";
       rReq.isVerifyOnly = false;
+      // Populate creationLog (required for PostgreSQL scheduler)
+      rReq.creationLog.username = s_userName;
+      rReq.creationLog.host = "test-host";
+      rReq.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+      // Populate errorReportURL (required for PostgreSQL scheduler - cannot be empty)
+      rReq.errorReportURL = "test://error-report-url";
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -1207,6 +1219,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
       rReq.isVerifyOnly = false;
+      // Populate creationLog (required for PostgreSQL scheduler)
+      rReq.creationLog.username = s_userName;
+      rReq.creationLog.host = "test-host";
+      rReq.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+      // Populate errorReportURL (required for PostgreSQL scheduler - cannot be empty)
+      rReq.errorReportURL = "test://error-report-url";
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -1409,6 +1427,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
       rReq.isVerifyOnly = false;
+      // Populate creationLog (required for PostgreSQL scheduler)
+      rReq.creationLog.username = s_userName;
+      rReq.creationLog.host = "test-host";
+      rReq.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+      // Populate errorReportURL (required for PostgreSQL scheduler - cannot be empty)
+      rReq.errorReportURL = "test://error-report-url";
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -1608,6 +1632,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
       rReq.isVerifyOnly = false;
+      // Populate creationLog (required for PostgreSQL scheduler)
+      rReq.creationLog.username = s_userName;
+      rReq.creationLog.host = "test-host";
+      rReq.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+      // Populate errorReportURL (required for PostgreSQL scheduler - cannot be empty)
+      rReq.errorReportURL = "test://error-report-url";
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
@@ -1812,6 +1842,12 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
       rReq.requester.group = "someGroup";
       rReq.dstURL = remoteFilePaths.back();
       rReq.isVerifyOnly = false;
+      // Populate creationLog (required for PostgreSQL scheduler)
+      rReq.creationLog.username = s_userName;
+      rReq.creationLog.host = "test-host";
+      rReq.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+      // Populate errorReportURL (required for PostgreSQL scheduler - cannot be empty)
+      rReq.errorReportURL = "test://error-report-url";
       std::list<std::string> archiveFilePaths;
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
