@@ -50,9 +50,9 @@ runuser -u postgres -- ${POSTGRES_BIN}/createdb cta
 runuser -u postgres -- ${POSTGRES_BIN}/createuser -E cta
 )
 CTA_CATALOGUE_CONF=$(mktemp)
-echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
-echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
-./catalogue/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
-./tests/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+echo CTA_CATALOGUE_CONF="${CTA_CATALOGUE_CONF}"
+echo 'postgresql:postgresql://cta@localhost/cta' > "${CTA_CATALOGUE_CONF}"
+./catalogue/cta-catalogue-schema-create "${CTA_CATALOGUE_CONF}"
+./tests/cta-rdbmsUnitTests "${CTA_CATALOGUE_CONF}"
 (cd / ; runuser -u postgres -- ${POSTGRES_BIN}/pg_ctl stop -D ${POSTGRESQL_DATA_DIR})
 rm -rf ${POSTGRESQL_DATA_DIR}

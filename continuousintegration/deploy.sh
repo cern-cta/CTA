@@ -176,12 +176,12 @@ deploy() {
   echo "Deploying CTA instance"
   cd continuousintegration/orchestration
   ./create_instance.sh --namespace ${deploy_namespace} \
-                      --cta-image-tag ${cta_image_tag} \
-                      --catalogue-config ${catalogue_config} \
-                      --scheduler-config ${scheduler_config} \
+                      --cta-image-tag "${cta_image_tag}" \
+                      --catalogue-config "${catalogue_config}" \
+                      --scheduler-config "${scheduler_config}" \
                       --reset-catalogue \
                       --reset-scheduler \
-                      ${extra_spawn_options}
+                      "${extra_spawn_options}"
 
 }
 
