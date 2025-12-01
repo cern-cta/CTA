@@ -1,9 +1,8 @@
-def test_cleanup_eos_directories(env):
-    # Right now the teardown is part of the tests, but the creation should probably also be part of the tests eventually...
-    # The goal I guess should be to have no more setup/ directory
-    env.eos_mgm[0].exec("eos rm -rF --no-confirmation /eos/ctaeos/cta/* 2>/dev/null || true")
-    env.eos_mgm[0].exec("eos rm -rF --no-confirmation /eos/ctaeos/preprod/* 2>/dev/null || true")
+import pytest
 
+#####################################################################################################################
+# CTA Teardown
+#####################################################################################################################
 
 def test_cleanup_catalogue(env):
     schema_version = env.cta_frontend[0].get_schema_version()
@@ -22,7 +21,19 @@ def test_restart_cta_taped(env):
 
 def test_delete_test_scripts(env):
     # Don't need to do this for taped as these already restarted
-    env.eos_client[0].exec("rm -rf /test/ 2>/dev/null || true")
-    env.cta_cli[0].exec("rm -rf /test/ 2>/dev/null || true")
-    env.cta_frontend[0].exec("rm -rf /test/ 2>/dev/null || true")
-    env.eos_mgm[0].exec("rm -rf /test/ 2>/dev/null || true")
+    hosts = env.disk_client + env.cta_cli + env.cta_frontend + env.disk_instance
+    for host in hosts:
+        host.exec("rm -rf /test/ 2>/dev/null || true")
+
+
+#####################################################################################################################
+# Disk Instance Teardown
+#####################################################################################################################
+
+@pytest.mark.eos
+def test_cleanup_eos_directories(env):
+    # Right now the teardown is part of the tests, but the creation should probably also be part of the tests eventually...
+    # The goal I guess should be to have no more setup/ directory
+    env.eos_mgm[0].force_remove_directory("/eos/ctaeos/cta/*")
+    env.eos_mgm[0].force_remove_directory("/eos/ctaeos/preprod/*")
+

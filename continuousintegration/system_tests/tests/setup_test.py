@@ -1,19 +1,31 @@
+import pytest
 from ..helpers.hosts.cta.cta_rmcd_host import CtaRmcdHost
 from concurrent.futures import ThreadPoolExecutor
 from itertools import cycle
+
+
+#####################################################################################################################
+# Prerequisites
+#####################################################################################################################
+
+
+def test_hosts_present_setup(env):
+    # Need at least a disk instance and a client
+    assert len(env.disk_instance) > 0
+    assert len(env.disk_client) > 0
+    assert len(env.cta_frontend) > 0
+    assert len(env.cta_taped) > 0
+    assert len(env.cta_cli) > 0
+
 
 #####################################################################################################################
 # Script copying
 #####################################################################################################################
 
-# def test_copy_scripts_to_eos_client(env):
-#     for client in env.eos_client:
-#         client.copyTo("tests/remote_scripts/eos_client/", "/test/", permissions="+x")
-
 
 def test_copy_scripts_to_ctacli(env):
-    for ctacli in env.cta_cli:
-        ctacli.copyTo("tests/remote_scripts/ctacli/", "/test/", permissions="+x")
+    for cta_cli in env.cta_cli:
+        cta_cli.copyTo("tests/remote_scripts/cta_cli/", "/test/", permissions="+x")
 
 
 #####################################################################################################################
@@ -25,8 +37,6 @@ def test_kinit_clients(env, krb5_realm):
     # TODO: do we want to init the rest of the users here as well?
     for ctacli in env.cta_cli:
         ctacli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
-    for eosclient in env.eosclient:
-        eosclient.exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
 
 
 #####################################################################################################################
@@ -50,7 +60,6 @@ def test_add_admins(env):
 def test_version_info(env):
     print("Versions:")
     env.cta_cli[0].exec("cta-admin --json version | jq")
-    env.eos_mgm[0].exec("eos version")
 
 
 def test_populate_catalogue(env, disk_instance):
@@ -133,3 +142,15 @@ def test_label_tapes(env):
 
 def test_set_all_drives_up(env):
     env.cta_cli[0].set_all_drives_up()
+
+
+#####################################################################################################################
+# Disk Instance initialisation
+#####################################################################################################################
+
+
+@pytest.mark.eos
+def test_setup_eos(env, krb5_realm):
+    for eosclient in env.eosclient:
+        eosclient.exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
+    env.eos_mgm[0].exec("eos version")
