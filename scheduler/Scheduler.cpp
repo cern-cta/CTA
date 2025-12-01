@@ -1032,9 +1032,7 @@ bool Scheduler::checkDriveCanBeCreated(const cta::common::dataStructures::DriveI
 //------------------------------------------------------------------------------
 // removeDrive
 //------------------------------------------------------------------------------
-void Scheduler::removeDrive(const common::dataStructures::SecurityIdentity& cliIdentity,
-                            const std::string& driveName,
-                            log::LogContext& lc) {
+void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) {
   utils::Timer t;
   m_tapeDrivesState->removeDrive(driveName, lc);
   auto schedulerDbTime = t.secs();
@@ -1167,8 +1165,7 @@ std::optional<cta::common::dataStructures::TapeDrive> Scheduler::getDriveState(c
 //------------------------------------------------------------------------------
 // getDriveStates
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::TapeDrive>
-Scheduler::getDriveStates(const common::dataStructures::SecurityIdentity& cliIdentity, log::LogContext& lc) const {
+std::list<common::dataStructures::TapeDrive> Scheduler::getDriveStates(log::LogContext& lc) const {
   utils::Timer t;
   const auto ret = m_catalogue.DriveState()->getTapeDrives();
   auto schedulerDbTime = t.secs();

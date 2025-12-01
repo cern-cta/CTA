@@ -241,12 +241,9 @@ public:
   /**
    * Remove drive from the drive register.
    *
-   * @param cliIdentity The identity of the user requesting the drive removal.
    * @param driveName The drive name
    */
-  void removeDrive(const cta::common::dataStructures::SecurityIdentity& cliIdentity,
-                   const std::string& driveName,
-                   log::LogContext& lc);
+  void removeDrive(const std::string& driveName, log::LogContext& lc);
 
   /**
    * Reports the state of the drive to the object store. This information is then reported
@@ -298,11 +295,9 @@ public:
 
   /**
    * Dumps the states of all drives for display
-   * @param cliIdentity
    * @return A list of drive state structures.
    */
-  std::list<cta::common::dataStructures::TapeDrive>
-  getDriveStates(const cta::common::dataStructures::SecurityIdentity& cliIdentity, log::LogContext& lc) const;
+  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext& lc) const;
 
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:

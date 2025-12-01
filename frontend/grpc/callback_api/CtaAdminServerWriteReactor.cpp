@@ -47,8 +47,7 @@ void CtaAdminServerWriteReactor::NextWrite() {
   }
 }
 
-CtaAdminServerWriteReactor::CtaAdminServerWriteReactor(cta::catalogue::Catalogue& catalogue,
-                                                       cta::Scheduler& scheduler,
+CtaAdminServerWriteReactor::CtaAdminServerWriteReactor(cta::Scheduler& scheduler,
                                                        const std::string& instanceName,
                                                        std::unique_ptr<CtaAdminResponseStream> stream,
                                                        cta::admin::HeaderType headerType)

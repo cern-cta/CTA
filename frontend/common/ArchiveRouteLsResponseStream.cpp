@@ -22,8 +22,7 @@ namespace cta::frontend {
 
 ArchiveRouteLsResponseStream::ArchiveRouteLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                                            cta::Scheduler& scheduler,
-                                                           const std::string& instanceName,
-                                                           const admin::AdminCmd& adminCmd)
+                                                           const std::string& instanceName)
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_archiveRoutes(catalogue.ArchiveRoute()->getArchiveRoutes()) {}
 

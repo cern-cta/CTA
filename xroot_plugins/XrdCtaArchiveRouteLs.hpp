@@ -39,8 +39,7 @@ inline ArchiveRouteLsStream::ArchiveRouteLsStream(const frontend::AdminCmdStream
                    scheduler,
                    std::make_unique<cta::frontend::ArchiveRouteLsResponseStream>(catalogue,
                                                                                  scheduler,
-                                                                                 requestMsg.getInstanceName(),
-                                                                                 requestMsg.getAdminCmd())) {
+                                                                                 requestMsg.getInstanceName())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

@@ -413,7 +413,7 @@ int smc_find_cartridge(const int fd,
                        const int start,
                        const int nbelem,
                        struct smc_element_info element_info[],
-                       struct robot_info* const robot_info) {
+                       [[maybe_unused]] struct robot_info* const robot_info) {
   unsigned char cdb[12];
   const char* msgaddr;
   int nb_sense_ret;

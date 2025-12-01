@@ -39,8 +39,7 @@ inline PhysicalLibraryLsStream::PhysicalLibraryLsStream(const frontend::AdminCmd
                    scheduler,
                    std::make_unique<cta::frontend::PhysicalLibraryLsResponseStream>(catalogue,
                                                                                     scheduler,
-                                                                                    requestMsg.getInstanceName(),
-                                                                                    requestMsg.getAdminCmd())) {
+                                                                                    requestMsg.getInstanceName())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

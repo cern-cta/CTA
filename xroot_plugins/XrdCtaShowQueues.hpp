@@ -50,7 +50,6 @@ inline ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& reques
                    std::make_unique<cta::frontend::ShowQueuesResponseStream>(catalogue,
                                                                              scheduler,
                                                                              requestMsg.getInstanceName(),
-                                                                             requestMsg.getAdminCmd(),
                                                                              lc)) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }

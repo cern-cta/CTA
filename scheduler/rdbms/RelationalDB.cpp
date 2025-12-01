@@ -1331,7 +1331,7 @@ RelationalDB::getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& l
 }
 
 void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
-                                  SchedulerDatabase::PurposeGetMountInfo purpose,
+                                  [[maybe_unused]] SchedulerDatabase::PurposeGetMountInfo purpose,
                                   log::LogContext& lc) {
   utils::Timer t;
   utils::Timer ttotal;

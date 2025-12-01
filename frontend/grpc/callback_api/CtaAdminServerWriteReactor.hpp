@@ -16,8 +16,7 @@ namespace cta::frontend::grpc {
 class CtaAdminServerWriteReactor
     : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> /* CtaAdminServerWriteReactor */ {
 public:
-  CtaAdminServerWriteReactor(cta::catalogue::Catalogue& catalogue,
-                             cta::Scheduler& scheduler,
+  CtaAdminServerWriteReactor(cta::Scheduler& scheduler,
                              const std::string& instanceName,
                              std::unique_ptr<CtaAdminResponseStream> stream,
                              cta::admin::HeaderType headerType);

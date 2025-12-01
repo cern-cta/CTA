@@ -332,7 +332,8 @@ void TapeLabelCmd::writeLabelToTape(
 //------------------------------------------------------------------------------
 // unloadTape
 //------------------------------------------------------------------------------
-void TapeLabelCmd::unloadTape(const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive) {
+void TapeLabelCmd::unloadTape([[maybe_unused]] const std::string& vid,
+                              castor::tape::tapeserver::drive::DriveInterface& drive) {
   std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
   librarySlotPtr.reset(
     cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));

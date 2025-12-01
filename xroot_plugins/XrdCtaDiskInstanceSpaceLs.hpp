@@ -39,8 +39,7 @@ inline DiskInstanceSpaceLsStream::DiskInstanceSpaceLsStream(const frontend::Admi
                    scheduler,
                    std::make_unique<cta::frontend::DiskInstanceSpaceLsResponseStream>(catalogue,
                                                                                       scheduler,
-                                                                                      requestMsg.getInstanceName(),
-                                                                                      requestMsg.getAdminCmd())) {
+                                                                                      requestMsg.getInstanceName())) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 

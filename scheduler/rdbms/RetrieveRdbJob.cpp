@@ -151,10 +151,9 @@ void RetrieveRdbJob::reset() {
   reportType = ReportType::NoReportRequired;
 }
 
-
 void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
-                                             log::LogContext& lc,
-                                             const std::string& reason) {
+                                              log::LogContext& lc,
+                                              [[maybe_unused]] const std::string& reason) {
   if (m_jobRow.status != RetrieveJobStatus::RJS_ToTransfer) {
     lc.log(log::WARNING,
            std::string("RetrieveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status) +
@@ -179,7 +178,8 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
 
 void RetrieveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
                                        log::LogContext& lc,
-                                       const std::string& reason, bool keepMountId) {
+                                       [[maybe_unused]] const std::string& reason,
+                                       bool keepMountId) {
   std::string log_msg = "In RetrieveRdbJob::requeueJobToMount(): requeueFailedJob() to same mount";
   if (!keepMountId) {
     log_msg = "In RetrieveRdbJob::requeueJobToMount(): requeueFailedJob() to new mount";

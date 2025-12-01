@@ -121,9 +121,11 @@ public:
   * @param lc The logging context for structured logging.
   * @param reason The textual explanation for the failure.
   */
-  void handleExceedTotalRetries(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason);
+  void handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
+                                log::LogContext& lc,
+                                [[maybe_unused]] const std::string& reason);
 
- /**
+  /**
   * Requeues the job to a same/new (keepMountId) mount after a failure.
   * Resets mount-related retry counters and updates the job in the DB.
   *
@@ -132,8 +134,10 @@ public:
   * @param reason The textual explanation for the failure.
   * @param keepMountId If false, the job will be requeues with NULL Mount ID, otherwise same Mount ID will be used
   */
-  void requeueJobToMount(cta::schedulerdb::Transaction& txn, log::LogContext& lc, const std::string& reason, bool keepMountId);
-
+  void requeueJobToMount(cta::schedulerdb::Transaction& txn,
+                         log::LogContext& lc,
+                         [[maybe_unused]] const std::string& reason,
+                         bool keepMountId);
 
   postgres::ArchiveJobQueueRow m_jobRow;  // Job data is encapsulated in this member
   bool m_jobOwned = false;

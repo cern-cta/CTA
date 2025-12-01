@@ -46,24 +46,24 @@
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(const std::string& hostname,
-                                                                           cta::log::Logger& log,
-                                                                           System::virtualWrapper& sysWrapper,
-                                                                           const cta::tape::daemon::DriveConfigEntry& driveConfig,
-                                                                           cta::mediachanger::MediaChangerFacade& mc,
-                                                                           cta::tape::daemon::TapedProxy& initialProcess,
+castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
+  [[maybe_unused]] const std::string& hostname,
+  cta::log::Logger& log,
+  System::virtualWrapper& sysWrapper,
+  const cta::tape::daemon::DriveConfigEntry& driveConfig,
+  cta::mediachanger::MediaChangerFacade& mc,
+  cta::tape::daemon::TapedProxy& initialProcess,
 
-                                                                           const DataTransferConfig& dataTransferConfig,
-                                                                           cta::Scheduler& scheduler) :
-  m_log(log),
-  m_sysWrapper(sysWrapper),
-  m_driveConfig(driveConfig),
-  m_dataTransferConfig(dataTransferConfig),
-  m_driveInfo({driveConfig.unitName, cta::utils::getShortHostname(), driveConfig.logicalLibrary}),
-  m_mediaChanger(mc),
-  m_initialProcess(initialProcess),
-  m_scheduler(scheduler) {
-}
+  const DataTransferConfig& dataTransferConfig,
+  cta::Scheduler& scheduler)
+    : m_log(log),
+      m_sysWrapper(sysWrapper),
+      m_driveConfig(driveConfig),
+      m_dataTransferConfig(dataTransferConfig),
+      m_driveInfo({driveConfig.unitName, cta::utils::getShortHostname(), driveConfig.logicalLibrary}),
+      m_mediaChanger(mc),
+      m_initialProcess(initialProcess),
+      m_scheduler(scheduler) {}
 
 //------------------------------------------------------------------------------
 //DataTransferSession::execute
@@ -542,12 +542,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
 //DataTransferSession::executeLabel
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(cta::log::LogContext& logContext,
-                                                                    cta::LabelMount *labelMount) {
+castor::tape::tapeserver::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::LogContext& logContext,
+                                                                    [[maybe_unused]] cta::LabelMount* labelMount) {
   throw cta::exception::NotImplementedException();
   // TODO
 }
-
 
 //------------------------------------------------------------------------------
 //DataTransferSession::findDrive

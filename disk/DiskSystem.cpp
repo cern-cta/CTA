@@ -160,7 +160,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
       }
       regexResult = constantFreeSpaceDiskSystem.exec(freeSpaceQueryUrl);
       if (regexResult.size()) {
-        freeSpace = fetchConstantFreeSpace(regexResult.at(1), lc);
+        freeSpace = fetchConstantFreeSpace(regexResult.at(1));
         updateFreeSpaceEntry(ds, freeSpace, catalogue, updateCatalogue);
       }
       else {
@@ -181,7 +181,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
-uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& instanceAddress, log::LogContext & lc) {
+uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& instanceAddress) {
   return utils::toUint64(instanceAddress);
 }
 
