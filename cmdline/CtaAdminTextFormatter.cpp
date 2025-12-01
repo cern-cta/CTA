@@ -278,8 +278,6 @@ void TextFormatter::printDriveLsHeader() {
 }
 
 void TextFormatter::print(const DriveLsItem& drls_item) {
-  //using namespace cta::common::dataStructures;
-
   std::string driveStatusSince;
   std::string driveSchedulerBackendName = drls_item.scheduler_backend_name();
   std::string instanceName = drls_item.instance_name();

@@ -114,17 +114,6 @@ bool TapeDrive::operator==(const TapeDrive &rhs) const {
       && checkOptionalString(physicalLibraryName) == checkOptionalString(rhs.physicalLibraryName)
       && reservedBytes == rhs.reservedBytes
       && reservationSessionId == rhs.reservationSessionId
-
-      //
-      // && devFileName==rhs.devFileName
-      // && rawLibrarySlot==rhs.rawLibrarySlot
-      //
-      // && currentVo==rhs.currentVo
-      // && nextVo==rhs.nextVo
-      //
-      // && userComment==rhs.userComment
-      // && creationLog==rhs.creationLog
-      // && lastModificationLog==rhs.lastModificationLog
       ;
 }
 
