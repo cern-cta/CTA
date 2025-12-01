@@ -420,8 +420,7 @@ trimContainerIfNeeded(Container &cont, ScopedExclusiveLock &contLock,
     const ContainerIdentifier &cId, log::LogContext &lc)
 {
   if(!cont.isEmpty()) {
-    auto si = cont.getJobsSummary().sleepInfo;
-    if (si) {
+    if (auto si = cont.getJobsSummary().sleepInfo; si) {
       log::ScopedParamContainer params(lc);
       params.add("tapeVid", cId)
             .add("queueObject", cont.getAddressIfSet())

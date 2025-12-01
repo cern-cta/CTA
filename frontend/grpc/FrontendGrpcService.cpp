@@ -176,8 +176,7 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
   sp.add("remoteHost", context->peer());
   sp.add("request", "archive");
   // check validate request args
-  const std::string storageClass = request->notification().file().storage_class();
-  if (storageClass.empty()) {
+  if (const std::string storageClass = request->notification().file().storage_class(); storageClass.empty()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt("Storage class is not set.");
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, "Storage class is not set.");

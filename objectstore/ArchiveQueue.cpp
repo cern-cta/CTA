@@ -87,20 +87,22 @@ bool ArchiveQueue::checkMapsAndShardsCoherency() {
     jobsExpectedFromShardsPointers += aqs.shardjobscount();
   }
   uint64_t totalBytes = m_payload.archivejobstotalsize();
-  uint64_t totalJobs = m_payload.archivejobscount();
   // The sum of shards should be equal to the summary
-  if (totalBytes != bytesFromShardPointers ||
+  if (uint64_t totalJobs = m_payload.archivejobscount();
+      totalBytes != bytesFromShardPointers ||
       totalJobs != jobsExpectedFromShardsPointers)
     return false;
   // Check that we have coherent queue summaries
-  ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
-  ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
-  ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
-  if (priorityMap.total() != m_payload.archivejobscount() ||
-      minArchiveRequestAgeMap.total() != m_payload.archivejobscount() ||
-      mountPolicyNameMap.total() != m_payload.archivejobscount()
-    )
-    return false;
+  {
+    ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
+    ValueCountMapUint64 minArchiveRequestAgeMap(m_payload.mutable_minarchiverequestagemap());
+    ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
+    if (priorityMap.total() != m_payload.archivejobscount() ||
+        minArchiveRequestAgeMap.total() != m_payload.archivejobscount() ||
+        mountPolicyNameMap.total() != m_payload.archivejobscount()
+      )
+      return false;
+  }
   return true;
 }
 
@@ -339,8 +341,8 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
     ArchiveQueueShard aqs(m_objectStore);
     serializers::ArchiveQueueShardPointer * aqsp = nullptr;
     bool newShard=false;
-    uint64_t shardCount = m_payload.archivequeueshards_size();
-    if (shardCount && m_payload.archivequeueshards(shardCount - 1).shardjobscount() < c_maxShardSize) {
+    if (uint64_t shardCount = m_payload.archivequeueshards_size();
+        shardCount && m_payload.archivequeueshards(shardCount - 1).shardjobscount() < c_maxShardSize) {
       auto & shardPointer=m_payload.archivequeueshards(shardCount - 1);
       aqs.setAddress(shardPointer.address());
       // include-locking does not check existence of the object in the object store.
@@ -360,8 +362,8 @@ void ArchiveQueue::addJobsAndCommit(std::list<JobToAdd> & jobsToAdd, AgentRefere
       }
       // Validate that the shard is as expected from the pointer. If not we need to
       // rebuild the queue and restart the shard selection.
-      auto shardSummary = aqs.getJobsSummary();
-      if (shardPointer.shardbytescount() != shardSummary.bytes ||
+      if (auto shardSummary = aqs.getJobsSummary();
+          shardPointer.shardbytescount() != shardSummary.bytes ||
           shardPointer.shardjobscount() != shardSummary.jobs) {
         log::ScopedParamContainer params(lc);
         params.add("archiveQueueObject", getAddressIfSet())

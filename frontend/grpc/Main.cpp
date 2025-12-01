@@ -193,8 +193,7 @@ int main(const int argc, char *const *const argv) {
             lc.log(log::INFO, "TLS service certificate file: " + cert_file);
             cert.cert_chain = cta::utils::file2string(cert_file);
 
-            auto ca_chain = svc.getFrontendService().getTlsChain();
-            if (ca_chain.has_value()) {
+            if (auto ca_chain = svc.getFrontendService().getTlsChain(); ca_chain.has_value()) {
                 lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
                 tls_options.pem_root_certs = cta::utils::file2string(ca_chain.value());
             } else {

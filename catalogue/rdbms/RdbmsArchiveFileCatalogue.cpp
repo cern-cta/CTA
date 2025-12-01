@@ -360,13 +360,10 @@ common::dataStructures::ArchiveFileSummary RdbmsArchiveFileCatalogue::getTapeFil
       TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
   )SQL";
 
-  const bool thereIsAtLeastOneSearchCriteria =
-    searchCriteria.archiveFileId  ||
-    searchCriteria.diskInstance   ||
-    searchCriteria.vid            ||
-    searchCriteria.diskFileIds;
-
-  if(thereIsAtLeastOneSearchCriteria) {
+  if(searchCriteria.archiveFileId  ||
+     searchCriteria.diskInstance   ||
+     searchCriteria.vid            ||
+     searchCriteria.diskFileIds) {
     sql += R"SQL( WHERE )SQL";
   }
 
@@ -636,8 +633,8 @@ common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getTapeCopy
     const auto copyNb = static_cast<uint32_t>(rset.columnUint64("COPY_NB"));
     const std::string tapePoolName = rset.columnString("TAPE_POOL_NAME");
     auto archiveRouteTypeStr = rset.columnString("ARCHIVE_ROUTE_TYPE");
-    auto archiveRouteType = common::dataStructures::strToArchiveRouteType(archiveRouteTypeStr);
-    if (archiveRouteType == common::dataStructures::ArchiveRouteType::DEFAULT && copyToPoolMap.contains(copyNb)) {
+    if (auto archiveRouteType = common::dataStructures::strToArchiveRouteType(archiveRouteTypeStr);
+        archiveRouteType == common::dataStructures::ArchiveRouteType::DEFAULT && copyToPoolMap.contains(copyNb)) {
       // A DEFAULT archive route type should not override a previously found value
       continue;
     }
@@ -950,10 +947,9 @@ std::unique_ptr<ArchiveFileRow> RdbmsArchiveFileCatalogue::getArchiveFileRowById
   )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":ARCHIVE_FILE_ID", id);
-  auto rset = stmt.executeQuery();
 
   std::unique_ptr<ArchiveFileRow> row;
-  if (rset.next()) {
+  if (auto rset = stmt.executeQuery(); rset.next()) {
     row = std::make_unique<ArchiveFileRow>();
 
     row->archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");

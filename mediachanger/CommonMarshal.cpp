@@ -54,10 +54,8 @@ size_t marshal(char *const dst, const size_t dstLen, const MessageHeader &src) {
   marshalUint32(src.lenOrStatus, p);
 
   // Calculate the number of bytes actually marshalled
-  const size_t nbBytesMarshalled = p - dst;
-
   // Check that the number of bytes marshalled was what was expected
-  if(totalLen != nbBytesMarshalled) {
+  if(const size_t nbBytesMarshalled = p - dst; totalLen != nbBytesMarshalled) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to marshal MessageHeader"
       ": Mismatch between expected total length and actual"

@@ -585,9 +585,8 @@ std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTa
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DRIVE_NAME", tapeDriveName);
-  auto rset = stmt.executeQuery();
 
-  if (rset.next()) {
+  if (auto rset = stmt.executeQuery(); rset.next()) {
     return gettingSqlTapeDriveValues(&rset);
   }
   return std::nullopt;

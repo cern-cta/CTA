@@ -55,8 +55,7 @@ TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
   }
 
   // Handle state option
-  auto stateOpt = request.getOptional(OptionString::STATE, &has_any);
-  if (stateOpt) {
+  if (auto stateOpt = request.getOptional(OptionString::STATE, &has_any); stateOpt) {
     m_searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value(), true);
   }
 

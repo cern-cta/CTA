@@ -190,8 +190,7 @@ bool PostgresRset::columnExists(const std::string& colName) const {
   if (auto it = m_columnPQindexCache.find(colName); it != m_columnPQindexCache.end()) {
     return true;
   }
-  int idx = PQfnumber(m_resItr->get(), colName.c_str());
-  if (idx < 0) {
+  if (int idx = PQfnumber(m_resItr->get(), colName.c_str()); idx < 0) {
     return false;
   }
   return true;
@@ -364,8 +363,7 @@ bool PostgresRset::next() {
     // as a Rset is intended for an executeQuery only.
 
     if (PGRES_TUPLES_OK == m_resItr->rcode() && 0 == PQntuples(m_resItr->get())) {
-      const std::string stringValue = PQcmdTuples(m_resItr->get());
-      if (!stringValue.empty()) {
+      if (const std::string stringValue = PQcmdTuples(m_resItr->get()); !stringValue.empty()) {
         m_stmt.setAffectedRows(utils::toUint64(stringValue));
       }
       m_resItr->clear();

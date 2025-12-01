@@ -61,12 +61,12 @@
     return ::grpc::Status::OK;
   }
   // Skip Kerberos auth for the physics workflow events, because these will be checked inside the rpc implementation for credentials
-  std::unordered_set<std::string> allowed {"/cta.xrd.CtaRpc/Create",
-                                           "/cta.xrd.CtaRpc/Archive",
-                                           "/cta.xrd.CtaRpc/Retrieve",
-                                           "/cta.xrd.CtaRpc/Delete",
-                                           "/cta.xrd.CtaRpc/CancelRetrieve"};
-  if (allowed.contains(strAuthMetadataValue)) {
+  if (std::unordered_set<std::string> allowed {"/cta.xrd.CtaRpc/Create",
+                                               "/cta.xrd.CtaRpc/Archive",
+                                               "/cta.xrd.CtaRpc/Retrieve",
+                                               "/cta.xrd.CtaRpc/Delete",
+                                               "/cta.xrd.CtaRpc/CancelRetrieve"};
+      allowed.contains(strAuthMetadataValue)) {
     return ::grpc::Status::OK;
   }
   /*

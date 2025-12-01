@@ -109,14 +109,11 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
   )SQL";
 
-  const bool thereIsAtLeastOneSearchCriteria =
-    searchCriteria.archiveFileId.has_value()  ||
-    searchCriteria.diskInstance.has_value()   ||
-    searchCriteria.vid.has_value()            ||
-    searchCriteria.diskFileIds.has_value()    ||
-    searchCriteria.fSeq.has_value();
-
-  if(thereIsAtLeastOneSearchCriteria) {
+  if(searchCriteria.archiveFileId.has_value()  ||
+     searchCriteria.diskInstance.has_value()   ||
+     searchCriteria.vid.has_value()            ||
+     searchCriteria.diskFileIds.has_value()    ||
+     searchCriteria.fSeq.has_value()) {
     sql += R"SQL( WHERE )SQL";
   }
 

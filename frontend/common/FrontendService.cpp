@@ -339,14 +339,13 @@ FrontendService::FrontendService(const std::string& configFilename) {
     m_repackBufferURL = repackBufferURLConf.value();
   }
 
-  auto repackMaxFilesToSelectConf = config.getOptionValueUInt("cta.repack.repack_max_files_to_select");
-  if (repackMaxFilesToSelectConf.has_value()) {
+
+  if (auto repackMaxFilesToSelectConf = config.getOptionValueUInt("cta.repack.repack_max_files_to_select"); repackMaxFilesToSelectConf.has_value()) {
     m_repackMaxFilesToSelect = repackMaxFilesToSelectConf.value();
   }
 
   // Get the verification mount policy
-  const auto verificationMountPolicy = config.getOptionValueStr("cta.verification.mount_policy");
-  if (verificationMountPolicy.has_value()) {
+  if (const auto verificationMountPolicy = config.getOptionValueStr("cta.verification.mount_policy"); verificationMountPolicy.has_value()) {
     m_verificationMountPolicy = verificationMountPolicy.value();
   }
 
@@ -426,32 +425,25 @@ FrontendService::FrontendService(const std::string& configFilename) {
   // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
   std::optional<bool> tls = config.getOptionValueBool("grpc.tls.enabled");
   m_tls = tls.value_or(false);  // default value is false
-  auto TlsKey = config.getOptionValueStr("grpc.tls.server_key_path");
-  if (TlsKey.has_value()) {
+  if (auto TlsKey = config.getOptionValueStr("grpc.tls.server_key_path"); TlsKey.has_value()) {
     m_tlsKey = TlsKey.value();
   }
-  auto TlsCert = config.getOptionValueStr("grpc.tls.server_cert_path");
-  if (TlsCert.has_value()) {
+  if (auto TlsCert = config.getOptionValueStr("grpc.tls.server_cert_path"); TlsCert.has_value()) {
     m_tlsCert = TlsCert.value();
   }
-  auto TlsChain = config.getOptionValueStr("grpc.tls.chain_cert_path");
-  if (TlsChain.has_value()) {
+  if (auto TlsChain = config.getOptionValueStr("grpc.tls.chain_cert_path"); TlsChain.has_value()) {
     m_tlsChain = TlsChain.value();
   }
-  auto keytab = config.getOptionValueStr("grpc.keytab");
-  if (keytab.has_value()) {
+  if (auto keytab = config.getOptionValueStr("grpc.keytab"); keytab.has_value()) {
     m_keytab = keytab.value();
   }
-  auto servicePrincipal = config.getOptionValueStr("grpc.service_principal");
-  if (servicePrincipal.has_value()) {
+  if (auto servicePrincipal = config.getOptionValueStr("grpc.service_principal"); servicePrincipal.has_value()) {
     m_servicePrincipal = servicePrincipal.value();
   }
-  auto port = config.getOptionValueStr("grpc.port");
-  if (port.has_value()) {
+  if (auto port = config.getOptionValueStr("grpc.port"); port.has_value()) {
     m_port = port.value();
   }
-  auto threads = config.getOptionValueInt("grpc.numberofthreads");
-  if (threads.has_value()) {
+  if (auto threads = config.getOptionValueInt("grpc.numberofthreads"); threads.has_value()) {
     if (threads.value() < 1) {
       throw exception::UserError("value of grpc.numberofthreads must be at least 1");
     }

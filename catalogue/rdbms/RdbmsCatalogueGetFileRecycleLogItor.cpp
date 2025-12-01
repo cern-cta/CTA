@@ -66,17 +66,14 @@ RdbmsCatalogueGetFileRecycleLogItor::RdbmsCatalogueGetFileRecycleLogItor(
       VIRTUAL_ORGANIZATION ON VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID = STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID
   )SQL";
 
-  const bool thereIsAtLeastOneSearchCriteria =
-          searchCriteria.vid.has_value() ||
-          searchCriteria.diskFileIds.has_value() ||
-          searchCriteria.archiveFileId.has_value() ||
-          searchCriteria.copynb.has_value() ||
-          searchCriteria.diskInstance.has_value() ||
-          searchCriteria.recycleLogTimeMin.has_value() ||
-          searchCriteria.recycleLogTimeMax.has_value() ||
-          searchCriteria.vo.has_value();
-
-  if(thereIsAtLeastOneSearchCriteria) {
+  if (searchCriteria.vid.has_value() ||
+      searchCriteria.diskFileIds.has_value() ||
+      searchCriteria.archiveFileId.has_value() ||
+      searchCriteria.copynb.has_value() ||
+      searchCriteria.diskInstance.has_value() ||
+      searchCriteria.recycleLogTimeMin.has_value() ||
+      searchCriteria.recycleLogTimeMax.has_value() ||
+      searchCriteria.vo.has_value()) {
     sql += R"SQL( WHERE )SQL";
   }
 

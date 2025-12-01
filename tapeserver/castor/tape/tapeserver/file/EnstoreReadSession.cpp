@@ -38,8 +38,8 @@ EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface &drive,
   // Throw away the end and validate the beggining as a normal VOL1
   size_t blockSize = 256 * 1024;
   char* data = new char[blockSize + 1];
-  size_t bytes_read = m_drive.readBlock(data, blockSize);
-  if (bytes_read < sizeof(vol1)) {
+  if (size_t bytes_read = m_drive.readBlock(data, blockSize);
+      bytes_read < sizeof(vol1)) {
     delete[] data;
     throw cta::exception::Exception("Too few bytes read from label");
   }

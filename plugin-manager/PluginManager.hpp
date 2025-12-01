@@ -70,8 +70,7 @@ public:
 
     dlerror(); // to clear any old error conditions
     m_pFun = dlsym(m_pHandler, strEntryPointName.c_str());
-    char* pcError = dlerror();
-    if (pcError) {
+    if (char* pcError = dlerror(); pcError) {
       throw std::runtime_error(pcError);
     }
     return *this;

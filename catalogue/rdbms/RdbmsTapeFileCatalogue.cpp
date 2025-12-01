@@ -212,18 +212,21 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
         ex.getMessage() << "File with archive file ID " << archiveFileId << " does not exist in CTA namespace";
         throw ex;
       }
-      const auto nonBrokenState = std::find_if(std::begin(tapeFileStateList), std::end(tapeFileStateList),
-        [](const std::pair<std::string, std::string>& state) {
-          return (state.second != "BROKEN")
-                  && (state.second != "BROKEN_PENDING")
-                  && (state.second != "EXPORTED")
-                  && (state.second != "EXPORTED_PENDING");
-        });
-
-      if (nonBrokenState != std::end(tapeFileStateList)) {
-        ex.getMessage() << "WARNING: The requested file is on tape " << nonBrokenState->first
-                        << ", which is temporarily unavailable (" << nonBrokenState->second << "). Please retry later.";
-        throw ex;
+      {
+        const auto nonBrokenState = std::find_if(
+                std::begin(tapeFileStateList), std::end(tapeFileStateList),
+                [](const std::pair <std::string, std::string> &state) {
+                  return (state.second != "BROKEN")
+                         && (state.second != "BROKEN_PENDING")
+                         && (state.second != "EXPORTED")
+                         && (state.second != "EXPORTED_PENDING");
+                });
+        if (nonBrokenState != std::end(tapeFileStateList)) {
+          ex.getMessage() << "WARNING: The requested file is on tape " << nonBrokenState->first
+                          << ", which is temporarily unavailable (" << nonBrokenState->second
+                          << "). Please retry later.";
+          throw ex;
+        }
       }
       const auto& [brokenTape, brokenState] = tapeFileStateList.front();
       //All tape files are on broken tapes, just generate an error about the first

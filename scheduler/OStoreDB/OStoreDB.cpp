@@ -313,23 +313,25 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
     }
     // If there are files queued, we create an entry for this tape pool in the
     // mount candidates list.
-    cta::objectstore::ArchiveQueue::JobsSummary aqueueJobsSummary = aqueue.getJobsSummary();
-    if (aqueueJobsSummary.jobs) {
-      tmdi.potentialMounts.emplace_back();
-      auto& m = tmdi.potentialMounts.back();
-      m.tapePool = aqp.tapePool;
-      m.type = cta::common::dataStructures::MountType::ArchiveForUser;
-      m.bytesQueued = aqueueJobsSummary.bytes;
-      m.filesQueued = aqueueJobsSummary.jobs;
-      m.oldestJobStartTime = aqueueJobsSummary.oldestJobStartTime;
-      m.youngestJobStartTime = aqueueJobsSummary.youngestJobStartTime;
-      //By default, we get the mountPolicies from the objectstore's queue counters
-      m.priority = aqueueJobsSummary.priority;
-      m.minRequestAge = aqueueJobsSummary.minArchiveRequestAge;
-      m.mountPolicyCountMap = aqueueJobsSummary.mountPolicyCountMap;
-      m.logicalLibrary = "";
-    } else {
-      tmdi.queueTrimRequired = true;
+    {
+      cta::objectstore::ArchiveQueue::JobsSummary aqueueJobsSummary = aqueue.getJobsSummary();
+      if (aqueueJobsSummary.jobs) {
+        tmdi.potentialMounts.emplace_back();
+        auto &m = tmdi.potentialMounts.back();
+        m.tapePool = aqp.tapePool;
+        m.type = cta::common::dataStructures::MountType::ArchiveForUser;
+        m.bytesQueued = aqueueJobsSummary.bytes;
+        m.filesQueued = aqueueJobsSummary.jobs;
+        m.oldestJobStartTime = aqueueJobsSummary.oldestJobStartTime;
+        m.youngestJobStartTime = aqueueJobsSummary.youngestJobStartTime;
+        //By default, we get the mountPolicies from the objectstore's queue counters
+        m.priority = aqueueJobsSummary.priority;
+        m.minRequestAge = aqueueJobsSummary.minArchiveRequestAge;
+        m.mountPolicyCountMap = aqueueJobsSummary.mountPolicyCountMap;
+        m.logicalLibrary = "";
+      } else {
+        tmdi.queueTrimRequired = true;
+      }
     }
 
     if (queueLockTime > 1 || queueFetchTime > 1) {
@@ -369,22 +371,24 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
     }
     // If there are files queued, we create an entry for this tape pool in the
     // mount candidates list.
-    cta::objectstore::ArchiveQueue::JobsSummary aqueueRepackJobsSummary = aqueue.getJobsSummary();
-    if (aqueueRepackJobsSummary.jobs) {
-      tmdi.potentialMounts.emplace_back();
-      auto& m = tmdi.potentialMounts.back();
-      m.tapePool = aqp.tapePool;
-      m.type = cta::common::dataStructures::MountType::ArchiveForRepack;
-      m.bytesQueued = aqueueRepackJobsSummary.bytes;
-      m.filesQueued = aqueueRepackJobsSummary.jobs;
-      m.oldestJobStartTime = aqueueRepackJobsSummary.oldestJobStartTime;
-      m.youngestJobStartTime = aqueueRepackJobsSummary.youngestJobStartTime;
-      m.priority = aqueueRepackJobsSummary.priority;
-      m.minRequestAge = aqueueRepackJobsSummary.minArchiveRequestAge;
-      m.mountPolicyCountMap = aqueueRepackJobsSummary.mountPolicyCountMap;
-      m.logicalLibrary = "";
-    } else {
-      tmdi.queueTrimRequired = true;
+    {
+      cta::objectstore::ArchiveQueue::JobsSummary aqueueRepackJobsSummary = aqueue.getJobsSummary();
+      if (aqueueRepackJobsSummary.jobs) {
+        tmdi.potentialMounts.emplace_back();
+        auto &m = tmdi.potentialMounts.back();
+        m.tapePool = aqp.tapePool;
+        m.type = cta::common::dataStructures::MountType::ArchiveForRepack;
+        m.bytesQueued = aqueueRepackJobsSummary.bytes;
+        m.filesQueued = aqueueRepackJobsSummary.jobs;
+        m.oldestJobStartTime = aqueueRepackJobsSummary.oldestJobStartTime;
+        m.youngestJobStartTime = aqueueRepackJobsSummary.youngestJobStartTime;
+        m.priority = aqueueRepackJobsSummary.priority;
+        m.minRequestAge = aqueueRepackJobsSummary.minArchiveRequestAge;
+        m.mountPolicyCountMap = aqueueRepackJobsSummary.mountPolicyCountMap;
+        m.logicalLibrary = "";
+      } else {
+        tmdi.queueTrimRequired = true;
+      }
     }
 
     if (queueLockTime > 1 || queueFetchTime > 1) {
@@ -425,8 +429,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
     }
     // If there are files queued, we create an entry for this retrieve queue in the
     // mount candidates list.
-    auto rqSummary = rqueue.getJobsSummary();
-    if (rqSummary.jobs) {
+    if (auto rqSummary = rqueue.getJobsSummary(); rqSummary.jobs) {
       //Getting the default mountPolicies parameters from the queue summary
       uint64_t minRetrieveRequestAge = rqSummary.minRetrieveRequestAge;
       uint64_t priority = rqSummary.priority;
@@ -4248,8 +4251,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(
   while (jobsBatchItor != jobsBatch.end()) {
     try {
       castFromSchedDBJob(jobsBatchItor->get())->waitAsyncSucceed();
-      auto repackInfo = castFromSchedDBJob(jobsBatchItor->get())->getRepackInfoAfterAsyncSuccess();
-      if (repackInfo.isRepack) {
+      if (auto repackInfo = castFromSchedDBJob(jobsBatchItor->get())->getRepackInfoAfterAsyncSuccess(); repackInfo.isRepack) {
         jobsToQueueForReportingToRepack.insert(castFromSchedDBJob(jobsBatchItor->get()));
       } else {
         if (castFromSchedDBJob(jobsBatchItor->get())->isLastAfterAsyncSuccess()) {

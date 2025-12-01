@@ -499,8 +499,8 @@ void PostgresStmt::CountAndReformatSqlBinds(const std::string& common_sql, std::
   std::ostringstream oss;
   while (std::regex_search(searchStart, common_sql.cend(), match, pattern)) {
     // skip all matches which have a second colon in front e.g. ::name (reserved for type casting in postgres)
-    auto matchPos = std::distance(common_sql.cbegin(), searchStart) + match.position();
-    if (matchPos > 0 && ':' == *(common_sql.cbegin() + matchPos - 1)) {
+    if (auto matchPos = std::distance(common_sql.cbegin(), searchStart) + match.position();
+        matchPos > 0 && ':' == *(common_sql.cbegin() + matchPos - 1)) {
       oss << match.prefix();
       oss << match.str();
       searchStart = match.suffix().first;

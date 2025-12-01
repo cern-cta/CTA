@@ -324,9 +324,9 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRep
 
 void RetrieveJobQueueRow::updateJobRowFailureLog(const std::string& reason, bool is_report_log) {
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + reason;
-  auto& logField = is_report_log ? reportFailureLogs : failureLogs;
 
-  if (logField.has_value()) {
+  if (auto& logField = is_report_log ? reportFailureLogs : failureLogs;
+      logField.has_value()) {
     logField.value() += failureLog;
   } else {
     logField.emplace(failureLog);

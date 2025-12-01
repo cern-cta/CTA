@@ -343,8 +343,8 @@ std::set<std::string, std::less<>> Sorter::getCandidateVidsToTransfer(RetrieveRe
 }
 
 std::string Sorter::getContainerID(RetrieveRequestInfosAccessorInterface& requestAccessor, const std::string& vid, const uint32_t copyNb){
-  serializers::RetrieveJobStatus rjs = requestAccessor.getJobStatus(copyNb);
-  if(rjs == serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess || rjs == serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure)
+  if(serializers::RetrieveJobStatus rjs = requestAccessor.getJobStatus(copyNb);
+     rjs == serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess || rjs == serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure)
     return requestAccessor.getRepackAddress();
   return vid;
 }

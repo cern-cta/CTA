@@ -978,8 +978,7 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
            "In Scheduler::getDesiredDriveState(): checking driveName: " + driveName +
              " against existing: " + driveState.driveName);
     if (driveState.driveName == driveName) {
-      const auto schedulerDbTime = t.secs();
-      if (schedulerDbTime > 1) {
+      if (const auto schedulerDbTime = t.secs(); schedulerDbTime > 1) {
         log::ScopedParamContainer spc(lc);
         spc.add("drive", driveName).add("schedulerDbTime", schedulerDbTime);
         lc.log(log::DEBUG, "In Scheduler::getDesiredDriveState(): success.");
@@ -2048,9 +2047,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
   double catalogueTime = 0;
   double checkLogicalAndPhysicalLibrariesTime = 0;
 
-  bool validForMount =
-    checkLogicalAndPhysicalLibraryValidForMount(logicalLibraryName, checkLogicalAndPhysicalLibrariesTime, lc);
-  if (!validForMount) {
+  if (!checkLogicalAndPhysicalLibraryValidForMount(logicalLibraryName, checkLogicalAndPhysicalLibrariesTime, lc)) {
     return false;
   }
 
@@ -2226,9 +2223,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   double checkLogicalAndPhysicalLibrariesTime = 0;
   double catalogueTime = 0;
 
-  bool validForMount =
-    checkLogicalAndPhysicalLibraryValidForMount(logicalLibraryName, checkLogicalAndPhysicalLibrariesTime, lc);
-  if (!validForMount) {
+  if (!checkLogicalAndPhysicalLibraryValidForMount(logicalLibraryName, checkLogicalAndPhysicalLibrariesTime, lc)) {
     return std::unique_ptr<TapeMount>();
   }
 

@@ -66,9 +66,7 @@ void fillNotification(cta::eos::Notification &notification, int argc, const char
 
    if(argc < 2) throw Usage;
 
-   const std::string wf_command(argv[1]);
-
-   if(wf_command == "archive")
+   if(const std::string wf_command = argv[1]; wf_command == "archive")
    {
       notification.mutable_wf()->set_event(cta::eos::Workflow::CLOSEW);
    }

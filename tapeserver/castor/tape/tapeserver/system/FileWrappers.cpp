@@ -205,9 +205,9 @@ int System::stDeviceFile::ioctlRequestSense(sg_io_hdr_t* sgio_h) {
     errno = EINVAL;
     return -1;
   }
-  SCSI::Structures::requestSenseData_t &requestSenseData =
-    *reinterpret_cast<SCSI::Structures::requestSenseData_t*>(sgio_h->dxferp);
-  if(sizeof(requestSenseData) > sgio_h->dxfer_len) {
+  if(SCSI::Structures::requestSenseData_t &requestSenseData =
+     *reinterpret_cast<SCSI::Structures::requestSenseData_t*>(sgio_h->dxferp);
+     sizeof(requestSenseData) > sgio_h->dxfer_len) {
     errno = EINVAL;
     return -1;
   }
@@ -220,9 +220,9 @@ int System::stDeviceFile::ioctlLogSelect(sg_io_hdr_t * sgio_h) {
     return -1;
   }
   /* we check CDB structure only and do not need to replay */
-  SCSI::Structures::logSelectCDB_t & cdb =
+  if (SCSI::Structures::logSelectCDB_t & cdb =
           *(SCSI::Structures::logSelectCDB_t *) sgio_h->cmdp;
-  if (1 != cdb.PCR || 0x3 != cdb.PC) {
+      1 != cdb.PCR || 0x3 != cdb.PC) {
     errno = EINVAL;
     return -1;
   }
@@ -953,23 +953,24 @@ int System::stDeviceFile::ioctlModSense6(sg_io_hdr_t * sgio_h) {
     errno = EINVAL;
     return -1;
   }
-  SCSI::Structures::modeSense6CDB_t & cdb =
-          *(SCSI::Structures::modeSense6CDB_t *) sgio_h->cmdp;
-
-  switch (cdb.pageCode) {
-    case SCSI::modeSensePages::deviceConfiguration:
-      return modeSenseDeviceConfiguration(sgio_h);
-    case SCSI::modeSensePages::controlDataProtection:
-      return modeSenseControlDataProtection(sgio_h);
+  {
+    SCSI::Structures::modeSense6CDB_t &cdb =
+            *(SCSI::Structures::modeSense6CDB_t *) sgio_h->cmdp;
+    switch (cdb.pageCode) {
+      case SCSI::modeSensePages::deviceConfiguration:
+        return modeSenseDeviceConfiguration(sgio_h);
+      case SCSI::modeSensePages::controlDataProtection:
+        return modeSenseControlDataProtection(sgio_h);
+    }
   }
   errno = EINVAL;
   return -1;
 }
 
 int System::stDeviceFile::modeSenseDeviceConfiguration(sg_io_hdr_t * sgio_h) {
-  SCSI::Structures::modeSense6CDB_t & cdb =
-          *(SCSI::Structures::modeSense6CDB_t *) sgio_h->cmdp;
-  if (SCSI::modeSensePages::deviceConfiguration != cdb.pageCode) {
+  if (SCSI::Structures::modeSense6CDB_t & cdb =
+      *(SCSI::Structures::modeSense6CDB_t *) sgio_h->cmdp;
+      SCSI::modeSensePages::deviceConfiguration != cdb.pageCode) {
     errno = EINVAL;
     return -1;
   }
@@ -1037,14 +1038,14 @@ int System::stDeviceFile::ioctlModSelect6(sg_io_hdr_t * sgio_h) {
 
   SCSI::Structures::modeParameterBlockDecriptor_t & blockDescriptor =
     *(SCSI::Structures::modeParameterBlockDecriptor_t *) (data+sizeof(header));
-
-  unsigned char * modeSelectBlock = data+sizeof(header)+sizeof(blockDescriptor);
-
-  switch (modeSelectBlock[0]&0x3F) {  // only 6bits are the page code
-    case SCSI::modeSensePages::deviceConfiguration:
-      return modeSelectDeviceConfiguration(sgio_h);
-    case SCSI::modeSensePages::controlDataProtection:
-      return modeSelectControlDataProtection(sgio_h);
+  {
+    unsigned char *modeSelectBlock = data + sizeof(header) + sizeof(blockDescriptor);
+    switch (modeSelectBlock[0] & 0x3F) {  // only 6bits are the page code
+      case SCSI::modeSensePages::deviceConfiguration:
+        return modeSelectDeviceConfiguration(sgio_h);
+      case SCSI::modeSensePages::controlDataProtection:
+        return modeSelectControlDataProtection(sgio_h);
+    }
   }
   errno = EINVAL;
   return -1;
@@ -1116,10 +1117,10 @@ int System::stOracleT10000Device::ioctlInquiry(sg_io_hdr_t * sgio_h) {
     errno = EINVAL;
     return -1;
   }
-  SCSI::Structures::inquiryCDB_t & cdb =
-          *(SCSI::Structures::inquiryCDB_t *) sgio_h->cmdp;
 
-  if (0 == cdb.EVPD && 0 == cdb.pageCode) {
+  if (SCSI::Structures::inquiryCDB_t & cdb =
+          *(SCSI::Structures::inquiryCDB_t *) sgio_h->cmdp;
+      0 == cdb.EVPD && 0 == cdb.pageCode) {
     /* the Standard Inquiry Data is returned*/
     SCSI::Structures::inquiryData_t & inqData =
             *(SCSI::Structures::inquiryData_t *) sgio_h->dxferp;
@@ -1168,10 +1169,10 @@ int System::stIBM3592DeviceFile::ioctlInquiry(sg_io_hdr_t * sgio_h) {
     errno = EINVAL;
     return -1;
   }
-  SCSI::Structures::inquiryCDB_t & cdb =
-    *(SCSI::Structures::inquiryCDB_t *) sgio_h->cmdp;
 
-  if (0 == cdb.EVPD && 0 == cdb.pageCode) {
+  if (SCSI::Structures::inquiryCDB_t & cdb =
+      *(SCSI::Structures::inquiryCDB_t *) sgio_h->cmdp;
+      0 == cdb.EVPD && 0 == cdb.pageCode) {
     /* the Standard Inquiry Data is returned*/
     SCSI::Structures::inquiryData_t & inqData =
       *(SCSI::Structures::inquiryData_t *) sgio_h->dxferp;

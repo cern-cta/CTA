@@ -47,8 +47,7 @@ std::map<std::string, uint64_t, std::less<>> SchedulerSchema::getSchemaVersion()
     "  ([[:digit:]]+),"
     "  ([[:digit:]]+)\\);"
   );
-  auto version = schemaVersionRegex.exec(sql);
-  if (3 == version.size()) {
+  if (auto version = schemaVersionRegex.exec(sql); 3 == version.size()) {
     schemaVersion.insert(std::make_pair("SCHEMA_VERSION_MAJOR", cta::utils::toUint64(version[1].c_str())));
     schemaVersion.insert(std::make_pair("SCHEMA_VERSION_MINOR", cta::utils::toUint64(version[2].c_str())));
   } else {

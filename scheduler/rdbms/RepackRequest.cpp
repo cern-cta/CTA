@@ -115,10 +115,9 @@ namespace cta::schedulerdb {
       std::vector <std::unique_ptr<postgres::RetrieveJobQueueRow>> rrRowBatchToTransfer;
       std::vector <std::unique_ptr<postgres::RetrieveJobQueueRow>> rrRowBatchNoRecall;
       while (subReqItor != repackSubrequests.end() && nbSubReqProcessed < 500) {
-        auto &rsr = *subReqItor;
 
         // Requests marked as deleted are guaranteed to have already been created => we will not re-attempt.
-        if (!srmap.at(rsr.fSeq)->isSubreqDeleted) {
+        if (auto &rsr = *subReqItor; !srmap.at(rsr.fSeq)->isSubreqDeleted) {
           try {
             auto conn = m_connPool.getConn();
             RetrieveRequest rr(conn, lc);
@@ -467,23 +466,21 @@ namespace cta::schedulerdb {
   }
 
   common::dataStructures::RepackInfo::Status RepackRequest::getCurrentStatus() const {
-    bool finishedExpansion = repackInfo.isExpandFinished;
-
-    bool allRetrieveDone =
-            (repackInfo.retrievedFiles + repackInfo.failedFilesToRetrieve) >= repackInfo.totalFilesToRetrieve;
-
-    bool allArchiveDone =
-            (repackInfo.archivedFiles + repackInfo.failedFilesToArchive + m_failedToCreateArchiveReq) >=
-            repackInfo.totalFilesToArchive;
-
-    if (finishedExpansion && allRetrieveDone && allArchiveDone) {
-      if (repackInfo.failedFilesToRetrieve > 0 || repackInfo.failedFilesToArchive > 0) {
-        return common::dataStructures::RepackInfo::Status::Failed;
-      } else {
-        return common::dataStructures::RepackInfo::Status::Complete;
+    {
+      bool finishedExpansion = repackInfo.isExpandFinished;
+      bool allRetrieveDone =
+              (repackInfo.retrievedFiles + repackInfo.failedFilesToRetrieve) >= repackInfo.totalFilesToRetrieve;
+      bool allArchiveDone =
+              (repackInfo.archivedFiles + repackInfo.failedFilesToArchive + m_failedToCreateArchiveReq) >=
+              repackInfo.totalFilesToArchive;
+      if (finishedExpansion && allRetrieveDone && allArchiveDone) {
+        if (repackInfo.failedFilesToRetrieve > 0 || repackInfo.failedFilesToArchive > 0) {
+          return common::dataStructures::RepackInfo::Status::Failed;
+        } else {
+          return common::dataStructures::RepackInfo::Status::Complete;
+        }
       }
     }
-
     if (repackInfo.retrievedFiles > 0 || repackInfo.failedFilesToRetrieve > 0 ||
         repackInfo.archivedFiles > 0 || repackInfo.failedFilesToArchive > 0) {
       return common::dataStructures::RepackInfo::Status::Running;

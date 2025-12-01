@@ -35,8 +35,7 @@ std::unique_ptr<::eos::client::EndpointMap> ConnConfiguration::setNamespaceMap(c
   std::string line;
   for(int lineno = 1; std::getline(file, line); ++lineno) {
     // Strip out comments
-    auto pos = line.find('#');
-    if(pos != std::string::npos) {
+    if(auto pos = line.find('#'); pos != std::string::npos) {
       line.resize(pos);
     }
 

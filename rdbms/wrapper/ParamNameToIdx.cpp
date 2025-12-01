@@ -34,8 +34,8 @@ ParamNameToIdx::ParamNameToIdx(const std::string &sql) {
   std::smatch match;
   std::string::const_iterator searchStart(sql.cbegin());
   while (std::regex_search(searchStart, sql.cend(), match, pattern)) {
-    auto matchPos = std::distance(sql.cbegin(), searchStart) + match.position();
-    if (matchPos > 0 && ':' == *(sql.cbegin() + matchPos -1)){
+    if (auto matchPos = std::distance(sql.cbegin(), searchStart) + match.position();
+        matchPos > 0 && ':' == *(sql.cbegin() + matchPos -1)){
       searchStart = match.suffix().first;
       continue;
     }

@@ -2101,8 +2101,7 @@ std::map<std::string, float> drive::DriveIBM3592::getQualityStats() {
 
       while (logParameter < endPage) {
         SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
-        const int val = logPageParam.getU64Value();
-        if (val != 0) {
+        if (const int val = logPageParam.getU64Value(); val != 0) {
           switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
             case SCSI::performanceCharacteristicsQualitySummaryPage::driveEfficiency:
               qualityStats["lifetimeDriveEfficiencyPrct"] = 100 - (val - 1) * 100 / 254.0;
@@ -2154,8 +2153,7 @@ std::map<std::string, float> drive::DriveIBM3592::getQualityStats() {
 
       while (logParameter < endPage) {
         SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
-        const int val = logPageParam.getU64Value();
-        if (val != 0) {
+        if (const int val = logPageParam.getU64Value(); val != 0) {
           switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
             case SCSI::performanceCharacteristicsQualitySummaryPage::driveEfficiency:
               qualityStats["mountDriveEfficiencyPrct"] = 100 - (float) (val - 1) * 100 / 254.0;
@@ -2301,8 +2299,7 @@ std::map<std::string, float> drive::DriveLTO::getQualityStats() {
 
       while (logParameter < endPage) {
         SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
-        const int val = logPageParam.getU64Value();
-        if (val != 0) {
+        if (const int val = logPageParam.getU64Value(); val != 0) {
           switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
             case SCSI::performanceCharacteristicsQualitySummaryPage::driveEfficiency:
               qualityStats["lifetimeDriveEfficiencyPrct"] = 100 - (val - 1) * 100 / 254.0;
@@ -2353,8 +2350,7 @@ std::map<std::string, float> drive::DriveLTO::getQualityStats() {
 
       while (logParameter < endPage) {
         SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
-        const int val = logPageParam.getU64Value();
-        if (val != 0) {
+        if (const int val = logPageParam.getU64Value(); val != 0) {
           switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
             case SCSI::performanceCharacteristicsQualitySummaryPage::driveEfficiency:
               qualityStats["mountDriveEfficiencyPrct"] = 100 - (float) (val - 1) * 100 / 254.0;

@@ -67,21 +67,25 @@ bool RetrieveQueue::checkMapsAndShardsCoherency() {
     bytesFromShardPointers += aqs.shardbytescount();
     jobsExpectedFromShardsPointers += aqs.shardjobscount();
   }
-  uint64_t totalBytes = m_payload.retrievejobstotalsize();
-  uint64_t totalJobs = m_payload.retrievejobscount();
   // The sum of shards should be equal to the summary
-  if (totalBytes != bytesFromShardPointers ||
-      totalJobs != jobsExpectedFromShardsPointers)
-    return false;
+  {
+    uint64_t totalBytes = m_payload.retrievejobstotalsize();
+    uint64_t totalJobs = m_payload.retrievejobscount();
+    if (totalBytes != bytesFromShardPointers ||
+        totalJobs != jobsExpectedFromShardsPointers)
+      return false;
+  }
   // Check that we have coherent queue summaries
-  ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
-  ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
-  ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
-  if (priorityMap.total() != m_payload.retrievejobscount() ||
-      minRetrieveRequestAgeMap.total() != m_payload.retrievejobscount() ||
-      mountPolicyNameMap.total() != m_payload.retrievejobscount()
-    )
-    return false;
+  {
+    ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
+    ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
+    ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
+    if (priorityMap.total() != m_payload.retrievejobscount() ||
+        minRetrieveRequestAgeMap.total() != m_payload.retrievejobscount() ||
+        mountPolicyNameMap.total() != m_payload.retrievejobscount()
+            )
+      return false;
+  }
   return true;
 }
 

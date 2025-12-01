@@ -225,8 +225,8 @@ void castor::tape::tapeserver::daemon::CleanerSession::cleanDrive(drive::DriveIn
 void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterface &drive) noexcept {
   std::string errorMessage;
   try {
-    std::vector<uint16_t> tapeAlertCodes = drive.getTapeAlertCodes();
-    if (!tapeAlertCodes.empty()) {
+    if (std::vector<uint16_t> tapeAlertCodes = drive.getTapeAlertCodes();
+        !tapeAlertCodes.empty()) {
       size_t alertNumber = 0;
       // Log tape alerts in the logs.
       std::vector<std::string> tapeAlerts = drive.getTapeAlerts(tapeAlertCodes);
