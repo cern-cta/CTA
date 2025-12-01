@@ -423,12 +423,9 @@ public:
     stmt.bindString(":ALTERNATE_FSEQS", alternateFSeq);
     stmt.bindString(":ALTERNATE_BLOCK_IDS", alternateBlockId);
     stmt.bindUint64(":START_TIME", startTime);
-    if (!retrieveReportURL.empty()) {
+    if (!retrieveErrorReportURL.empty()) {
       stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", retrieveErrorReportURL);
     } else {
-      // Requires an empty string in order to still have a null reporter created by
-      // DiskReporterFactory::createDiskReporter() later ! Since empty string is not
-      // permitted in the current implementation of bindString and columnString, we pass a dummy value
       stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", "NOT_PROVIDED");
     }
     // stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", retrieveErrorReportURL); // this is empty for the tests and throws an exception
@@ -446,8 +443,8 @@ public:
     stmt.bindBool(":IS_REPORTING", isReporting);
     stmt.bindString(":VID", vid);
     stmt.bindString(":ALTERNATE_VIDS", alternateVids);
-    stmt.bindString(":SRR_USERNAME", srrUsername);
-    stmt.bindString(":SRR_HOST", srrHost);
+    stmt.bindString(":SRR_USERNAME", srrUsername); // this also seems to be empty and causing a problem
+    stmt.bindString(":SRR_HOST", srrHost); // this would be a problem too I suppose
     stmt.bindUint64(":SRR_TIME", srrTime);
     stmt.bindString(":SRR_MOUNT_POLICY", srrMountPolicy);
     stmt.bindUint64(":LIFECYCLE_CREATION_TIME", lifecycleTimings_creation_time);
