@@ -20,7 +20,7 @@ const SchedulerDatabase::RetrieveMount::MountInfo& RetrieveMount::getMountInfo()
   return mountInfo;
 }
 
-void RetrieveMount::setIsRepack(std::string_view defaultRepackVO, log::LogContext& lc) {
+void RetrieveMount::setIsRepack(std::string_view defaultRepackVO, log::LogContext& lc) { // it seems the logContext here is empty
   m_isRepack = false;
   if (defaultRepackVO.empty()) {
     lc.log(cta::log::WARNING,
