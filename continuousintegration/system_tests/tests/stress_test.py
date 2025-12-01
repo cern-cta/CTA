@@ -42,7 +42,7 @@ def stress_params(request):
 # Ideally we have a way to clearly communicate what side effects a test is supposed to produce so that the next test can verify some of these side effects (if it depends on them)
 
 
-def test_hosts_present(env):
+def test_hosts_present_stress(env):
     # Need at least a disk instance and a client
     assert len(env.disk_instance) > 0
     assert len(env.disk_client) > 0
