@@ -423,6 +423,15 @@ public:
     stmt.bindString(":ALTERNATE_FSEQS", alternateFSeq);
     stmt.bindString(":ALTERNATE_BLOCK_IDS", alternateBlockId);
     stmt.bindUint64(":START_TIME", startTime);
+    if (!retrieveReportURL.empty()) {
+      stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", retrieveErrorReportURL);
+    } else {
+      // Requires an empty string in order to still have a null reporter created by
+      // DiskReporterFactory::createDiskReporter() later ! Since empty string is not
+      // permitted in the current implementation of bindString and columnString, we pass a dummy value
+      stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", "NOT_PROVIDED");
+    }
+    // stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", retrieveErrorReportURL); // this is empty for the tests and throws an exception
     stmt.bindString(":REQUESTER_NAME", requesterName);
     stmt.bindString(":REQUESTER_GROUP", requesterGroup);
     stmt.bindString(":DST_URL", dstURL);
