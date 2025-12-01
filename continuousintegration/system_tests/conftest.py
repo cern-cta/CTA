@@ -86,7 +86,7 @@ def pytest_addoption(parser):
     parser.addoption(
         "--krb5-realm", type=str, default="TEST.CTA", help="Kerberos realm to use for cta-admin/eos commands"
     )
-    parser.addoption("--disk-instance", type=str, default="ctaeos", help="Name of the disk instance")
+    parser.addoption("--disk-instance", type=str, default="eos", help="Name of the disk instance")
     parser.addoption("--stress-num-dirs", type=int, default=10, help="Number of directories to use for the stress test")
     parser.addoption(
         "--stress-num-files-per-dir",
@@ -147,3 +147,11 @@ def pytest_collection_modifyitems(config, items):
     # Useful when rerunning the tests multiple times on the same instance and it wasn't properly cleaned up
     if config.getoption("--clean-start"):
         add_test_into_existing_collection(teardown_script, items, prepend=True, allow_duplicate=True)
+
+    # Skip EOS/dCache-specific tests depending on which disk instance was chosen
+    disk_instance_options: list[str] = ["eos", "dcache"]
+    chosen_disk_instance = config.getoption("--disk-instance")
+    skip_marks = list(disk_instance_options - {chosen_disk_instance})
+    for item in items:
+        if any(mark in item.keywords for mark in skip_marks):
+            item.add_marker(pytest.mark.skip(reason="Skipping test because it has a disabled mark"))

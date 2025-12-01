@@ -102,6 +102,7 @@ cta-admin requestermountrule add \
     --mountpolicy ctasystest --comment "ctasystest"
 
 
+# TODO: this should not be called eosusers
 # This rule exists to allow users from eosusers group to migrate files to tapes
 cta-admin groupmountrule add \
     --instance "${DISK_INSTANCE_NAME}" \
