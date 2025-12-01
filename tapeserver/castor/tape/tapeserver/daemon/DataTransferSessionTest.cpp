@@ -533,6 +533,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
+    bool doSleep = true;
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     for (int fseq = 1; fseq <= 10; fseq++) {
@@ -585,6 +586,10 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       rReq.diskFileInfo.path = "path/to/file";
       rReq.isVerifyOnly = false;
       std::list<std::string> archiveFilePaths;
+      // add a sleep here so I can have enough time to attach to the test!!
+      while (doSleep) {
+        sleep(5);
+      }
       scheduler.queueRetrieve(diskInstance, rReq, logContext);
     }
   }
