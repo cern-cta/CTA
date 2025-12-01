@@ -1,7 +1,6 @@
 from jwcrypto import jwk
 import jwt
 import requests
-import sys
 import argparse
 
 # on client pod

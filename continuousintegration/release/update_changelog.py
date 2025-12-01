@@ -15,11 +15,9 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-from datetime import datetime
 import sys
 from typing import Any, Optional
 import argparse
-import base64
 from gitlabapi import GitLabAPI
 import textwrap
 import time
@@ -61,7 +59,7 @@ def update_changelog(api: GitLabAPI, release_version: str, from_commit: str, to_
         print("Changelog update pushed successfully")
         return True
     else:
-        print(f"Failed to update changelog")
+        print("Failed to update changelog")
         return False
 
 
@@ -105,7 +103,7 @@ def create_merge_request(
         print(f"Merge request is ready for review. Please visit: {result['web_url']}")
         return result["iid"]
     else:
-        print(f"Failed to create merge request")
+        print("Failed to create merge request")
         return None
 
 
@@ -151,7 +149,7 @@ def add_mr_review_comment(
         print("Comment added successfully")
         return True
     else:
-        print(f"Failed to add review comments")
+        print("Failed to add review comments")
         return False
 
 
@@ -278,4 +276,4 @@ if __name__ == "__main__":
     if mr_id is None:
         sys.exit(1)
 
-    print(f"Script completed successfully.")
+    print("Script completed successfully.")

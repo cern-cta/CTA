@@ -20,7 +20,6 @@ from datetime import datetime
 import argparse
 from gitlabapi import GitLabAPI, Commit
 from typing import Optional
-import re
 
 
 class ColorCodes:
@@ -188,7 +187,7 @@ def commit_range_summary(api: GitLabAPI, from_commit_sha: str, to_commit_sha: st
         print(f"Failure: {to_commit_sha} is not a valid commit")
         sys.exit(1)
     if datetime.fromisoformat(from_commit["authored_date"]) > datetime.fromisoformat(to_commit["authored_date"]):
-        print(f"Failure: to-commit cannot be before from-commit")
+        print("Failure: to-commit cannot be before from-commit")
         sys.exit(1)
     res = f"Start commit (exclusive): ({from_commit['short_id']}) {from_commit['title']}\n\n"
     res += f"End commit   (inclusive): ({to_commit['short_id']}) {to_commit['title']}\n"
