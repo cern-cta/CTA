@@ -249,13 +249,13 @@ stress-test:
   script:
     - |
       EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_FILE} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
-      if [ $PUBLISH_TELEMETRY_METRICS == "TRUE" ]; then
+      if [[ $PUBLISH_TELEMETRY_METRICS == "TRUE" ]]; then
         EXTRA_SPAWN_ARGS+=" --publish-telemetry"
       fi
       extra_args=($EXTRA_ARGS)
       if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
       EXTRA_STRESS_TEST_OPTIONS=""
-      if [ "${SCHEDULER_TYPE}" == "pgsched" ]; then
+      if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
         EXTRA_STRESS_TEST_OPTIONS+=" -Q"
       fi
