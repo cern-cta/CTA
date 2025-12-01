@@ -46,7 +46,7 @@ public:
                          const std::string &schemaName = "public") :
       SchedulerDatabaseDecorator(m_RelationalDB),
       m_logger(std::move(logger)), m_catalogue(catalogue),
-      m_RelationalDB(ownerId, *logger, catalogue, login, nbConns),
+      m_RelationalDB(ownerId, *m_logger, catalogue, login, nbConns),
       m_schemaName(schemaName)
    {
      // empty

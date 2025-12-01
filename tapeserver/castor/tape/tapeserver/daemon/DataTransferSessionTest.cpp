@@ -533,7 +533,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    bool doSleep = false; // set to true to debug entrypoint with gdb
+    bool doSleep = true; // set to true to debug entrypoint with gdb
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     for (int fseq = 1; fseq <= 10; fseq++) {
