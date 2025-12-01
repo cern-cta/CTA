@@ -49,7 +49,7 @@ buffFile="./temp"
 tempFilePath="../TMPAllCatalogueSchema.hpp"
 finalFilePath="../AllCatalogueSchema.hpp"
 
-trap '"rm -f $buffFile"' EXIT
+trap 'rm -f "$buffFile"' EXIT
 
 schemaVersionsDirectories=$(find . -type d -regex '^./[0-9]+\.[0-9]+$' | sort)
 
