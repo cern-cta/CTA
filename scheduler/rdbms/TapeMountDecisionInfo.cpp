@@ -164,7 +164,7 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
   if (defaultRepackVO.has_value()) {
     defaultRepackVoName = defaultRepackVO->name;
   }
-  log::LogContext lc(m_logger);
+  log::LogContext lc(m_logger); // it seems that m_logger is NULL
   rm.setIsRepack(defaultRepackVoName, lc);
 
   // Return the mount session object to the user
