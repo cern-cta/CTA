@@ -54,8 +54,6 @@
       when: never
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
-    - if: $SCHEDULER_TYPE == "pgsched"
-      when: manual
     - when: on_success
   variables:
     TEST_SCRIPT:
