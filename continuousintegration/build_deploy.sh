@@ -74,13 +74,15 @@ build_deploy() {
 
   local project_root=$(git rev-parse --show-toplevel)
   # Defaults
-  local num_jobs=$(nproc --ignore=2)
+  local num_jobs
+  num_jobs=$(nproc --ignore=2)
   local restarted=false
   local deploy_namespace="dev"
   # These versions don't affect anything functionality wise
   local cta_version="5"
   local vcs_version="dev"
-  local xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
+  local xrootd_ssi_version
+  xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
 
   # Input args
   local clean_build_dir=false
@@ -96,7 +98,8 @@ build_deploy() {
   local local_telemetry=false
   local publish_telemetry=false
   local build_generator="Ninja"
-  local cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
+  local cmake_build_type
+  cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
   local scheduler_type="objectstore"
   local oracle_support="TRUE"
   local enable_ccache=true
@@ -108,7 +111,8 @@ build_deploy() {
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
   local eos_image_tag=""
   local container_runtime="podman"
-  local platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
+  local platform
+  platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
   local use_internal_repos=true
   local eos_enabled=true
   local dcache_enabled=false
@@ -325,6 +329,7 @@ build_deploy() {
         build_srpm_flags+=" --clean-build-dir"
       fi
 
+      # shellcheck disable=SC2086
       ${container_runtime} exec -it "${build_container_name}" \
         ./shared/CTA/continuousintegration/build/build_srpm.sh \
         --build-dir /shared/CTA/build_srpm \
@@ -336,7 +341,7 @@ build_deploy() {
         --oracle-support "${oracle_support}" \
         --cmake-build-type "${cmake_build_type}" \
         --jobs "${num_jobs}" \
-        "${build_srpm_flags}"
+        ${build_srpm_flags}
     fi
 
     echo "Compiling the CTA project from source directory"
@@ -418,7 +423,8 @@ build_deploy() {
         echo "Failed to find $build_iteration_file to retrieve build iteration."
         exit 1
       fi
-      local current_build_id=$(cat "$build_iteration_file")
+      local current_build_id
+      current_build_id=$(cat "$build_iteration_file")
       new_build_id=$((current_build_id + 1))
       image_tag="dev-$new_build_id"
       echo $new_build_id >$build_iteration_file
@@ -460,7 +466,8 @@ build_deploy() {
       if [[ "$skip_image_reload" == "false" ]]; then
         upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
       fi
-      ./upgrade_cta_instance.sh --namespace "${deploy_namespace}" "${upgrade_options}" "${extra_spawn_options}"
+       # shellcheck disable=SC2086
+      ./upgrade_cta_instance.sh --namespace "${deploy_namespace}" "${upgrade_options}" ${extra_spawn_options}
     elif [[ "$upgrade_eos" = true ]]; then
       print_header "UPGRADING EOS INSTANCE"
       cd continuousintegration/orchestration
@@ -503,6 +510,7 @@ build_deploy() {
 
       echo "Deploying CTA instance"
       cd continuousintegration/orchestration
+       # shellcheck disable=SC2086
       ./create_instance.sh --namespace "${deploy_namespace}" \
         --cta-image-repository localhost/ctageneric \
         --cta-image-tag "${image_tag}" \
@@ -512,7 +520,7 @@ build_deploy() {
         --reset-scheduler \
         --eos-enabled ${eos_enabled} \
         --dcache-enabled ${dcache_enabled} \
-        "${extra_spawn_options}"
+        ${extra_spawn_options}
     fi
   fi
   print_header "DONE"
