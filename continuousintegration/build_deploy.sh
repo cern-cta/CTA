@@ -40,7 +40,7 @@ usage() {
   echo "      --cmake-build-type <type>:        Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
   echo "      --disable-oracle-support:         Disables support for oracle."
   echo "      --disable-ccache:                 Disables ccache for the building of the rpms."
-  echo "      --address-sanitizer:              Compile with address sanitizer enabled."
+  echo "      --enable-address-sanitizer:       Compile with address sanitizer enabled."
   echo "      --force-install:                  Adds the --install-srpm flag to the build_rpm step, regardless of whether the container was reset or not."
   echo "      --skip-build:                     Skips the build step."
   echo "      --skip-deploy:                    Skips the deploy step."
