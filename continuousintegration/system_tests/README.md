@@ -97,7 +97,7 @@ system_tests/
     - The exception to this is the initial catalogue state
 - Each test case should clean up after itself if this is not too expensive
     - If the cleanup is too expensive, ensure the teardown cleans it up
-- Use the `env.ctacli` to execute `cta-admin` commands
+- Use the `env.cta_cli` to execute `cta-admin` commands
 - Use `env.eos_client` to execute `eos` commands
     - In exceptional situations, the mgm can be used to execute eos commands
     - If possible, do not execute `cta-admin` commands on the client. The idea would be to make this an EOS client only (eventually).
