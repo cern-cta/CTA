@@ -28,7 +28,7 @@ error()
 
 usage()
 {
-  echo "Usage: $(basename $0) /eos/path [/eos/path...]" >&2
+  echo "Usage: $(basename "$0") /eos/path [/eos/path...]" >&2
   exit 2
 }
 
@@ -37,7 +37,7 @@ usage()
 
 for FILENAME in $*
 do
-  FILEMD=$(eos --json fileinfo ${FILENAME})
-  [ "$(echo "$FILEMD" | jq .retc)" == "null" ] || error "$(basename $0): Cannot open ${FILENAME} for reading"
-  echo ${FILEMD} | jq '' | ${CTA_SEND_EVENT} ${CTA_EVENT}
+  FILEMD=$(eos --json fileinfo "${FILENAME}")
+  [ "$(echo "$FILEMD" | jq .retc)" == "null" ] || error "$(basename "$0"): Cannot open ${FILENAME} for reading"
+  echo "${FILEMD}" | jq '' | ${CTA_SEND_EVENT} ${CTA_EVENT}
 done

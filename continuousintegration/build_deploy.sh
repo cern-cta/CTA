@@ -302,7 +302,7 @@ build_deploy() {
     if [[ "${reset}" = true ]]; then
       echo "Shutting down existing build container..."
       ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
-      podman rmi ${build_image_name} > /dev/null 2>&1 || true
+      podman rmi "${build_image_name}" > /dev/null 2>&1 || true
     fi
 
     # Start container if not already running
@@ -312,7 +312,7 @@ build_deploy() {
       print_header "SETTING UP BUILD CONTAINER"
       restarted=true
       echo "Rebuilding build container image"
-      ${container_runtime} build --no-cache -t "${build_image_name}" -f continuousintegration/docker/${platform}/build.Dockerfile .
+      ${container_runtime} build --no-cache -t "${build_image_name}" -f continuousintegration/docker/"${platform}"/build.Dockerfile .
       echo "Starting new build container: ${build_container_name}"
       ${container_runtime} run -dit --rm --name "${build_container_name}" \
         -v "${project_root}:/shared/CTA:z" \
@@ -336,7 +336,7 @@ build_deploy() {
         --oracle-support "${oracle_support}" \
         --cmake-build-type "${cmake_build_type}" \
         --jobs "${num_jobs}" \
-        ${build_srpm_flags}
+        "${build_srpm_flags}"
     fi
 
     echo "Compiling the CTA project from source directory"
@@ -382,13 +382,13 @@ build_deploy() {
       --srpm-dir /shared/CTA/build_srpm/RPM/SRPMS \
       --cta-version ${cta_version} \
       --vcs-version ${vcs_version} \
-      --xrootd-ssi-version ${xrootd_ssi_version} \
-      --scheduler-type ${scheduler_type} \
+      --xrootd-ssi-version "${xrootd_ssi_version}" \
+      --scheduler-type "${scheduler_type}" \
       --oracle-support ${oracle_support} \
       --cmake-build-type "${cmake_build_type}" \
-      --jobs ${num_jobs} \
-      --platform ${platform} \
-      ${build_rpm_flags}
+      --jobs "${num_jobs}" \
+      --platform "${platform}" \
+      "${build_rpm_flags}"
 
     echo "Build successful"
   fi
@@ -434,7 +434,7 @@ build_deploy() {
       --rpm-version "${cta_version}-${vcs_version}" \
       --container-runtime "${container_runtime}" \
       --load-into-minikube \
-      ${extra_image_build_options}
+      "${extra_image_build_options}"
     if [[ ${image_cleanup} = true ]]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
       podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true
@@ -460,16 +460,16 @@ build_deploy() {
       if [[ "$skip_image_reload" == "false" ]]; then
         upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
       fi
-      ./upgrade_cta_instance.sh --namespace ${deploy_namespace} ${upgrade_options} ${extra_spawn_options}
+      ./upgrade_cta_instance.sh --namespace "${deploy_namespace}" "${upgrade_options}" "${extra_spawn_options}"
     elif [[ "$upgrade_eos" = true ]]; then
       print_header "UPGRADING EOS INSTANCE"
       cd continuousintegration/orchestration
-      ./deploy_eos_instance.sh --namespace ${deploy_namespace} --eos-image-tag ${eos_image_tag}
+      ./deploy_eos_instance.sh --namespace "${deploy_namespace}" --eos-image-tag "${eos_image_tag}"
     else
       print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development
       # and polutes the dev machine
-      ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace} --discard-logs
+      ./continuousintegration/orchestration/delete_instance.sh -n "${deploy_namespace}" --discard-logs
       print_header "DEPLOYING CTA INSTANCE"
       if [[ -n "${tapeservers_config}" ]]; then
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
@@ -503,16 +503,16 @@ build_deploy() {
 
       echo "Deploying CTA instance"
       cd continuousintegration/orchestration
-      ./create_instance.sh --namespace ${deploy_namespace} \
+      ./create_instance.sh --namespace "${deploy_namespace}" \
         --cta-image-repository localhost/ctageneric \
-        --cta-image-tag ${image_tag} \
-        --catalogue-config ${catalogue_config} \
-        --scheduler-config ${scheduler_config} \
+        --cta-image-tag "${image_tag}" \
+        --catalogue-config "${catalogue_config}" \
+        --scheduler-config "${scheduler_config}" \
         --reset-catalogue \
         --reset-scheduler \
         --eos-enabled ${eos_enabled} \
         --dcache-enabled ${dcache_enabled} \
-        ${extra_spawn_options}
+        "${extra_spawn_options}"
     fi
   fi
   print_header "DONE"

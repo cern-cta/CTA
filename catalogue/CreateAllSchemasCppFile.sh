@@ -38,13 +38,13 @@
 #
 die() {
   echo "$@" 1>&2
-  test -z $TAILPID || kill ${TAILPID} &> /dev/null
+  test -z "$TAILPID" || kill "${TAILPID}" &> /dev/null
   exit 1
 }
 
 databaseTypes=('oracle' 'sqlite' 'postgres')
 schemaPostfix='_catalogue_schema.sql'
-cd $1/cta-catalogue-schema
+cd "$1"/cta-catalogue-schema || exit
 buffFile="./temp"
 tempFilePath="../TMPAllCatalogueSchema.hpp"
 finalFilePath="../AllCatalogueSchema.hpp"
@@ -66,8 +66,8 @@ do
   for databaseType in ${databaseTypes[@]}
   do
     schemaSqlFilePath="$schemaVersionDir/$databaseType$schemaPostfix"
-    notTranslatedSchemaSQL=$(cat $schemaSqlFilePath) || die "Unable to open file $schemaSqlFilePath"
-    schemaSql=$(cat $schemaVersionDir/$databaseType$schemaPostfix | sed 's/^/\ \ \"/' | sed 's/$/\"/')
+    notTranslatedSchemaSQL=$(cat "$schemaSqlFilePath") || die "Unable to open file $schemaSqlFilePath"
+    schemaSql=$(cat "$schemaVersionDir"/"$databaseType"$schemaPostfix | sed 's/^/\ \ \"/' | sed 's/$/\"/')
     mapSchemaCode+="  {\"$databaseType\",$schemaSql
       },
 "
