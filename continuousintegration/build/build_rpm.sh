@@ -38,6 +38,7 @@ usage() {
   echo "      --clean-build-dir:                        Empties the build directory, ensuring a fresh build from scratch."
   echo "      --create-build-dir                        Creates the build directory if it does not exist."
   echo "      --enable-ccache:                          Enables ccache."
+  echo "      --enable-address-sanitizer:               Compile with address sanitizer enabled."
   echo "      --skip-cmake                              Skips the cmake step. Can be used if this script is executed multiple times in succession."
   echo "      --skip-debug-packages                     Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
@@ -70,6 +71,7 @@ build_rpm() {
   local skip_debug_packages=false
   local oracle_support=true
   local use_internal_repos=false
+  local enable_address_sanitizer=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -110,6 +112,7 @@ build_rpm() {
       ;;
     --clean-build-dir) clean_build_dir=true ;;
     --create-build-dir) create_build_dir=true ;;
+    --enable-address-sanitizer) enable_address_sanitizer=true ;;
     --enable-ccache) enable_ccache=true ;;
     --cta-version)
       if [[ $# -gt 1 ]]; then
@@ -326,6 +329,15 @@ build_rpm() {
     else
       # the else clause is necessary to prevent cmake from caching this variable
       cmake_options+=" -D ENABLE_CCACHE:STRING=0"
+    fi
+
+    # Address Sanitizer
+    if [[ ${enable_address_sanitizer} = true ]]; then
+      echo "Enabling Address Sanitizer"
+      cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=TRUE"
+    else
+      # the else clause is necessary to prevent cmake from caching this variable
+      cmake_options+=" -D ENABLE_ADDRESS_SANITIZER:BOOL=FALSE"
     fi
 
     # Scheduler type
