@@ -49,7 +49,7 @@ public:
 protected:
   virtual void run () = 0;
 private:
-  pthread_t m_thread;
+  pthread_t m_thread = pthread_t();
   bool m_hadException = false;
   std::string m_what;
   std::string m_type;
