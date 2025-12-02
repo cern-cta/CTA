@@ -31,9 +31,8 @@ def test_copy_scripts_to_ctacli(env):
 
 
 def test_kinit_clients(env, krb5_realm):
-    # TODO: do we want to init the rest of the users here as well?
-    for ctacli in env.cta_cli:
-        ctacli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
+    for cta_cli in env.cta_cli:
+        cta_cli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
 
 
 #####################################################################################################################

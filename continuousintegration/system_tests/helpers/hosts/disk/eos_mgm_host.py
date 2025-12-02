@@ -7,7 +7,7 @@ class EosMgmHost(DiskInstanceHost):
         super().__init__(conn)
 
     @cached_property
-    def implementation_name(self) -> str:
+    def implementation(self) -> str:
         return DiskInstanceImplementation.EOS
 
     @cached_property

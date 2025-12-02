@@ -404,7 +404,7 @@ create_instance() {
     exit 0
   fi
 
-  if [[ $setup_enabled == "true"]]; then
+  if [[ "$setup_enabled" == "true" ]]; then
     ./setup/reset_tapes.sh -n "${namespace}"
     ./setup/kinit_clients.sh -n "${namespace}"
   fi

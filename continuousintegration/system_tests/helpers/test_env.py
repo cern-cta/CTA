@@ -80,7 +80,7 @@ class TestEnv:
             # Our "cta-client" should actually be an eos-client. However, the current test suite mixes these concepts
             # Something to be changed once we move them over....
             eos_client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
-            cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"),
+            cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"), # TODO: bug here (as cta-cli matches cta-client as well)
             cta_frontend_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-frontend"
             ),

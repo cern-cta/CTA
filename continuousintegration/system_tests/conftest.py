@@ -156,10 +156,11 @@ def pytest_collection_modifyitems(config, items):
     # Now figure out which disk instance are present in the test setup, so that we can skip
     # any marked tests for disk instances not in our environment
     test_env = get_test_env(config)
-    present_disk_instances: list[str] = [di.implementation.label for di in test_env.disk_instance]
-    all_disk_instances: list[str] = [e.label for e in DiskInstanceImplementation]
-    skip_marks: list[str] = list(all_disk_instances - {present_disk_instances})
-    # Skip all tests specific to disk instances not present
-    for item in items:
-        if any(mark in item.keywords for mark in skip_marks):
-            item.add_marker(pytest.mark.skip(reason="Skipping test because it has a disabled mark"))
+    if test_env.disk_instance:
+        present_disk_instances: list[str] = [di.implementation.label for di in test_env.disk_instance]
+        all_disk_instances: list[str] = [e.label for e in DiskInstanceImplementation]
+        skip_marks: list[str] = list(set(all_disk_instances) - set(present_disk_instances))
+        # Skip all tests specific to disk instances not present
+        for item in items:
+            if any(mark in item.keywords for mark in skip_marks):
+                item.add_marker(pytest.mark.skip(reason="Skipping test because it has a disabled mark"))
