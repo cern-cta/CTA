@@ -71,6 +71,18 @@ PostgresConn::PostgresConn(const rdbms::Login& login) : m_dbNamespace(login.dbNa
   }
 
   PQsetNoticeProcessor(m_pgsqlConn, PostgresConn::noticeProcessor, nullptr);
+
+  // Set search_path to the specified schema for test isolation
+  if (!m_dbNamespace.empty() && m_dbNamespace != "public") {
+    std::string setSearchPathSQL = "SET search_path TO " + m_dbNamespace + ", public";
+    Postgres::Result res(PQexec(m_pgsqlConn, setSearchPathSQL.c_str()));
+    if (PQresultStatus(res.get()) != PGRES_COMMAND_OK) {
+      const std::string pqmsgstr = PQerrorMessage(m_pgsqlConn);
+      PQfinish(m_pgsqlConn);
+      m_pgsqlConn = nullptr;
+      throw exception::Exception("Failed to set search_path to " + m_dbNamespace + ": " + pqmsgstr);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
