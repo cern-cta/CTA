@@ -206,14 +206,6 @@ ArchiveJobQueueRow::updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus
       return stmt2.getNbAffectedRows();
     }
   }
-  /* the following is here for debugging purposes (row deletion gets disabled)
-   * if (status == ArchiveJobStatus::AJS_Complete) {
-   *   status = ArchiveJobStatus::ReadyForDeletion;
-   *  } else if (status == ArchiveJobStatus::AJS_Failed) {
-   *   status = ArchiveJobStatus::ReadyForDeletion;
-   *   ArchiveJobQueueRow::copyToFailedJobTable(txn, jobIDs);
-   *  }
-   */
   std::string table_name = repack_table_name_prefix + "ARCHIVE_ACTIVE_QUEUE";
   std::string sql = "";
   if (!isRepack || (isRepack && newStatus != ArchiveJobStatus::AJS_ToReportToRepackForSuccess)){
@@ -295,7 +287,6 @@ rdbms::Rset ArchiveJobQueueRow::getNextSuccessfulArchiveRepackReportBatch(Transa
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS",
                     to_string(ArchiveJobStatus::ReadyForDeletion));
-  //                to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
   stmt.bindUint32(":LIMIT", static_cast<uint32_t>(limit));
   auto rset = stmt.executeQuery();
   return rset;

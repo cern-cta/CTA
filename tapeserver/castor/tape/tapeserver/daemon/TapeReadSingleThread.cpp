@@ -235,8 +235,6 @@ std::unique_ptr<castor::tape::tapeFile::ReadSession>
 castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
   try {
     auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, m_useLbp);
-    // m_logContext.log(cta::log::DEBUG, "Created tapeFile::ReadSession with success");
-
     return readSession;
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);

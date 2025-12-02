@@ -83,9 +83,6 @@ struct ArchiveJobQueueRow {
   std::string host = "";
   std::string mount_type = "";
   std::string logical_library = "";
-
-  //common::dataStructures::ArchiveFile archiveFile;
-
   uint64_t archiveFileID = 0;
   std::string diskFileId = "";
   std::string diskInstance = "";

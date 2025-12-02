@@ -187,9 +187,7 @@ size_t OsmFileReader::readNextDataBlock(void *data, const size_t size) {
       if(uiBytesRead < (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize)) {
         uiBytesRead = 0;
       } else {
-        // size_t uiOldSize = uiBytesRead;
         uiBytesRead = uiBytesRead - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
-        // m_ui64CPIODataSize += uiBytesRead - uiOldSize;
       }
     }
   }

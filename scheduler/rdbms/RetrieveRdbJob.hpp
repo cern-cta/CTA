@@ -133,7 +133,6 @@ public:
   uint64_t m_mountId = 0;
   std::string m_tapePool="";
   rdbms::ConnPool& m_connPool;
-  //std::shared_ptr<rdbms::Conn> m_conn;
 
   void abort(const std::string& abortReason, log::LogContext& lc) override;
   void asyncSetSuccessful() override;

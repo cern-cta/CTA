@@ -447,9 +447,6 @@ public:
     stmt.bindBool(":IS_REPORTING", isReporting);
     stmt.bindString(":VID", vid);
     stmt.bindString(":ALTERNATE_VIDS", alternateVids);
-    // stmt.bindString(":DRIVE", drive);
-    // stmt.bindString(":HOST", host);
-    // stmt.bindString(":LOGICAL_LIBRARY", logical_library);
     stmt.bindString(":SRR_USERNAME", srrUsername);
     stmt.bindString(":SRR_HOST", srrHost);
     stmt.bindUint64(":SRR_TIME", srrTime);
@@ -460,7 +457,6 @@ public:
     if (diskSystemName.has_value()) {
       stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName.value());
     }
-    //stmt.bindBool(":IS_FAILED", isFailed);
     if (!retrieveReportURL.empty()) {
       stmt.bindString(":RETRIEVE_REPORT_URL", retrieveReportURL);
     } else {
@@ -524,18 +520,15 @@ public:
 
     params.add("retrieveErrorReportURL", retrieveErrorReportURL);
     params.add("failureLogs", failureLogs.value_or(""));
-    //params.add("isRepack", isRepack);
-    //params.add("repackReqId", repackReqId);
 
     /* Columns to be replaced by other DB columns than protobuf filled columns
-    * params.add("retrieveJobsProtoBuf", retrieveJobsProtoBuf);
-    * params.add("repackInfoProtoBuf", repackInfoProtoBuf);
-    */
+     * params.add("retrieveJobsProtoBuf", retrieveJobsProtoBuf);
+     * params.add("repackInfoProtoBuf", repackInfoProtoBuf);
+     */
     params.add("lifecycleTimings.creation_time", lifecycleTimings_creation_time);
     params.add("lifecycleTimings.first_selected_time", lifecycleTimings_first_selected_time);
     params.add("lifecycleTimings.completed_time", lifecycleTimings_completed_time);
     params.add("diskSystemName", diskSystemName.value_or(""));
-    //params.add("isFailed", isFailed);
   }
 
 static void insertBatch(rdbms::Conn &conn,

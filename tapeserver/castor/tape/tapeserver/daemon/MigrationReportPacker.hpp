@@ -18,8 +18,6 @@
 #pragma once
 
 #include "common/threading/BlockingQueue.hpp"
-/*#include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"*/
 #include "tapeserver/castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "scheduler/ArchiveMount.hpp"

@@ -57,26 +57,6 @@ StringsArchiveJobStatus = {"AJS_ToTransferForUser",
                            "ReadyForDeletion",
                            "Cancelled"};
 
-// ================================ Job Queue Type =============================
-
-//enum class JobQueueType : uint8_t {
-//  JobsToTransferForUser,
-//  FailedJobs,
-//  JobsToReportToUser,
-//  JobsToReportToRepackForSuccess,
-//  JobsToReportToRepackForFailure,
-//  JobsToTransferForRepack
-//};
-
-//constexpr const char* const StringsJobQueueType[] = {
-//  "JobsToTransfer",
-//  "FailedJobs",
-//  "JobsToReportToUser",
-//  "JobsToReportToRepackForSuccess",
-//  "JobsToReportToRepackForFailure",
-//  "JobsToTransferForRepack"
-//};
-
 // ================================ Retrieve Job Status ========================
 
 enum class RetrieveJobStatus : uint8_t {

@@ -69,7 +69,6 @@ void Transaction::takeNamedLock(std::string_view tapePoolString) {
   auto hash64 = static_cast<uint64_t>(lock_id);
   auto hash32 = static_cast<uint32_t>(hash64 ^ (hash64 >> 32));
 
-  // debug: std::cout << "Hash value (64-bit): " << hash64 << std::endl;
   std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:HASH32::bigint)";
   auto stmt = m_conn->createStmt(sql);
   stmt.bindUint64(":HASH32", hash32);

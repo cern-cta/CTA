@@ -82,9 +82,7 @@ public:
    * @return the logical block protection method
    */
   uint8_t getLBPMethod() const {
-    // SCSI::logicBlockProtectionMethod::DoNotUse
-    // SCSI::logicBlockProtectionMethod::ReedSolomon
-    // SCSI::logicBlockProtectionMethod::CRC32C
+    // Possibilities are DoNotUse, ReedSolomon, CRC32C
     return SCSI::logicBlockProtectionMethod::CRC32C;
   }
 

@@ -66,18 +66,6 @@ class DatabaseStatisticsService: public StatisticsService {
    * The database connection of the database that will be used by the service
    */
   cta::rdbms::Conn & m_conn;
-
-  /**
-   * Saves the total file statistics in the database used by this service
-   * @param statistics the statistics to save
-   */
-  // virtual void saveFileStatistics(const cta::statistics::Statistics & statistics);
-
-  /**
-   * Saves the per-VO statistics in the database used by this service
-   * @param statistics the statistics to save
-   */
-  // virtual void saveStatisticsPerVo(const cta::statistics::Statistics & statistics);
 };
 
 } // namespace cta::statistics

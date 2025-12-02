@@ -395,7 +395,6 @@ TapeWriteTask::openFileWriter(const std::unique_ptr<tape::tapeFile::WriteSession
 void TapeWriteTask::circulateMemBlocks() {
   while (!m_fifo.finished()) {
     m_memManager.releaseBlock(m_fifo.popDataBlock());
-    // watchdog.notify();
   }
 }
 

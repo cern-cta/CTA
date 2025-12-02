@@ -33,7 +33,6 @@ public:
   static const size_t MAXHEADERSIZE = HEADER + PATHLEN;
 
   const std::string ASCIIMAGIC = "070707";
-  // const std::string ASCIITRAILER = "TRAILER!!!"; // not used
 
   std::string m_strMagic = "";
   uint32_t m_uiDev = 0;

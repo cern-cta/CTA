@@ -35,7 +35,7 @@ castor::tape::tapeFile::osm::LABEL::LABEL() {
 void castor::tape::tapeFile::osm::LABEL::decode() {
   xdr::Record record;
   xdr::VolLabel volLabel, *pVolLabel;
-  XDR xdr;// xdr handle;
+  XDR xdr; // XDR handle
 
   xdrmem_create(&xdr, rawLabel(), LIMITS::MAXMRECSIZE, XDR_DECODE);
   if(!record.decode(&xdr)) {
@@ -104,9 +104,8 @@ void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t 
   volLabel.m_ulMagic = LIMITS::MVOLMAGIC;
   volLabel.m_ulCreateTime = ulCreateTime;
   volLabel.m_ulExpireTime = ulExpireTime;
-  volLabel.m_ulRecSize = ulRecSize;// LIMITS::MAXMRECSIZE;
+  volLabel.m_ulRecSize = ulRecSize; // LIMITS::MAXMRECSIZE
   volLabel.m_ulVolId = ulVolId;
-  // NSR_LENGTH = 64
   volLabel.m_pcVolName = new char[64];
   strncpy(volLabel.m_pcVolName, strVolName.c_str(), LIMITS::VOLNAMELEN+1);
 
@@ -122,7 +121,7 @@ void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t 
   record.m_RChunk.m_pChunk->m_ulSsid = 0;
   record.m_RChunk.m_pChunk->mc_ulLow = 0;
   record.m_RChunk.m_pChunk->m_data.m_uiDataLen = uiDataLen;
-  record.m_RChunk.m_pChunk->m_data.m_pcDataVal = pcVolLabel;//new char[LIMITS::MMAXCHK];
+  record.m_RChunk.m_pChunk->m_data.m_pcDataVal = pcVolLabel; // LIMITS::MMAXCHK
 
   memset(record.m_tcHandler, 0x20, sizeof(record.m_tcHandler));
   record.m_ulVolid = volLabel.m_ulVolId;

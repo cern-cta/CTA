@@ -1459,41 +1459,6 @@ std::list<RetrieveRequestDump> OStoreDB::getRetrieveRequestsByRequester(const st
 //------------------------------------------------------------------------------
 std::map<std::string, std::list<RetrieveRequestDump>> OStoreDB::getRetrieveRequests() const {
   throw exception::NotImplementedException();
-  //  std::map<cta::Tape, std::list<RetrieveRequestDump> > ret;
-  //  // Get list of tape pools and then tapes
-  //  objectstore::RootEntry re(m_objectStore);
-  //  objectstore::ScopedSharedLock rel(re);
-  //  re.fetch();
-  //  auto tpl=re.dumpTapePools();
-  //  rel.release();
-  //  for (auto tpp = tpl.begin(); tpp != tpl.end(); tpp++) {
-  //    // Get the list of tapes for the tape pool
-  //    objectstore::TapePool tp(tpp->address, m_objectStore);
-  //    objectstore::ScopedSharedLock tplock(tp);
-  //    tp.fetch();
-  //    auto tl = tp.dumpTapes();
-  //    for (auto tptr = tl.begin(); tptr!= tl.end(); tptr++) {
-  //      // Get the list of retrieve requests for the tape.
-  //      objectstore::Tape t(tptr->address, m_objectStore);
-  //      objectstore::ScopedSharedLock tlock(t);
-  //      t.fetch();
-  //      auto jobs = t.dumpAndFetchRetrieveRequests();
-  //      // If the list is not empty, add to the map.
-  //      if (jobs.size()) {
-  //        cta::Tape tkey;
-  //        // TODO tkey.capacityInBytes;
-  //        tkey.creationLog = t.getCreationLog();
-  //        // TODO tkey.dataOnTapeInBytes;
-  //        tkey.logicalLibraryName = t.getLogicalLibrary();
-  //        tkey.nbFiles = t.getLastFseq();
-  //        // TODO tkey.status
-  //        tkey.tapePoolName = tp.getName();
-  //        tkey.vid = t.getVid();
-  //        ret[tkey] = std::move(jobs);
-  //      }
-  //    }
-  //  }
-  //  return ret;
 }
 
 //------------------------------------------------------------------------------
@@ -4678,7 +4643,6 @@ void OStoreDB::ArchiveJob::failReport(const std::string& failureReason, log::Log
 //------------------------------------------------------------------------------
 void OStoreDB::ArchiveJob::bumpUpTapeFileCount(uint64_t newFileCount) {
   throw exception::NotImplementedException();
-  //  m_archiveMount.setTapeMaxFileCount(newFileCount);
 }
 
 //------------------------------------------------------------------------------
