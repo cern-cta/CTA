@@ -73,7 +73,6 @@ usage() {
 build_deploy() {
 
   local project_root=$(git rev-parse --show-toplevel)
-  local build_container_name="cta-build${project_root//\//-}"
   # Defaults
   local num_jobs=$(nproc --ignore=2)
   local restarted=false
@@ -297,7 +296,9 @@ build_deploy() {
   #####################################################################################################################
   if [[ "${skip_build}" = false ]]; then
     build_image_name="cta-build-image-${platform}"
+    build_container_name="cta-build${project_root//\//-}-${platform}"
     # Stop and remove existing container if reset is requested
+    echo "Total CTA build containers found: $(podman ps | grep -c cta-build)"
     if [[ "${reset}" = true ]]; then
       echo "Shutting down existing build container..."
       ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
