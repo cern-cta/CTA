@@ -335,6 +335,7 @@ stress-test-python:
     - ./create_instance.sh --namespace ${NAMESPACE}
                            --reset-catalogue
                            --reset-scheduler
+                           --no-setup
                            --cta-image-tag ${IMAGE_TAG}
                            --cta-config ${STRESS_CTA_VALUES_FILE}
                            --eos-config ${STRESS_EOS_VALUES_FILE}
