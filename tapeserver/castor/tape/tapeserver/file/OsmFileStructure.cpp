@@ -92,6 +92,7 @@ void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t 
     throw cta::exception::Exception(std::string("The size of the Version is greater than LIMITS::LABELVERSIONLEN"));
   }
 
+  constexpr int NSR_LENGTH = 64;
   unsigned int uiDataLen = 0;
   xdr::Chunk chunk;
   xdr::Record record;
@@ -106,7 +107,7 @@ void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime, uint64_t 
   volLabel.m_ulExpireTime = ulExpireTime;
   volLabel.m_ulRecSize = ulRecSize; // LIMITS::MAXMRECSIZE
   volLabel.m_ulVolId = ulVolId;
-  volLabel.m_pcVolName = new char[64];
+  volLabel.m_pcVolName = new char[NSR_LENGTH];
   strncpy(volLabel.m_pcVolName, strVolName.c_str(), LIMITS::VOLNAMELEN+1);
 
   if(!volLabel.decode(&xdr)) {
