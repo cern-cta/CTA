@@ -148,7 +148,6 @@ cta::xrd::Data DriveLsResponseStream::next() {
   cta::xrd::Data data;
   auto driveItem = data.mutable_drls_item();
 
-  // fillDriveItem(dr, driveItem, m_instanceName, driveSchedulerBackendName, driveConfigs);
   driveItem->set_instance_name(m_instanceName);
   driveItem->set_cta_version(dr.ctaVersion.value_or(""));
   driveItem->set_logical_library(dr.logicalLibrary);

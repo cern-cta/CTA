@@ -37,10 +37,9 @@
 #include "rmc_marshall_element.hpp"
 #include "rmc_procreq.hpp"
 
-/* set in rmc_serv.c */
+// set in rmc_serv.c
 extern struct extended_robot_info g_extended_robot_info;
 
-/* rmc_srv_export - export/eject a cartridge from the robot */
 int rmc_srv_export(const struct rmc_srv_rqst_context* const rqst_context) {
   int c;
   gid_t gid;
@@ -55,7 +54,7 @@ int rmc_srv_export(const struct rmc_srv_rqst_context* const rqst_context) {
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
   rmc_logit(func, RMC92, "export", uid, gid, rqst_context->clienthost);
-  /* Unmarshall and ignore the loader field as it is no longer used */
+  // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
     if (unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN + 1)) {
@@ -84,8 +83,6 @@ int rmc_srv_export(const struct rmc_srv_rqst_context* const rqst_context) {
   return c;
 }
 
-/*	rmc_srv_findcart - find cartridge(s) */
-
 int rmc_srv_findcart(const struct rmc_srv_rqst_context* const rqst_context) {
   int c;
   struct smc_element_info* element_info;
@@ -110,7 +107,7 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context* const rqst_context) {
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
   rmc_logit(func, RMC92, "findcart", uid, gid, rqst_context->clienthost);
-  /* Unmarshall and ignore the loader fiel as it is no longer used */
+  // Unmarshall and ignore the loader fiel as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
     if (unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN + 1)) {
@@ -174,8 +171,6 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context* const rqst_context) {
   return 0;
 }
 
-/*	rmc_srv_getgeom - get the robot geometry */
-
 int rmc_srv_getgeom(const struct rmc_srv_rqst_context* const rqst_context) {
   gid_t gid;
   char logbuf[8];
@@ -190,7 +185,7 @@ int rmc_srv_getgeom(const struct rmc_srv_rqst_context* const rqst_context) {
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
   rmc_logit(func, RMC92, "getgeom", uid, gid, rqst_context->clienthost);
-  /* Unmarshall and ignore the loader field as it is no longer used */
+  // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
     if (unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN + 1)) {
@@ -217,8 +212,6 @@ int rmc_srv_getgeom(const struct rmc_srv_rqst_context* const rqst_context) {
   return 0;
 }
 
-/*	rmc_srv_import - import/inject a cartridge into the robot */
-
 int rmc_srv_import(const struct rmc_srv_rqst_context* const rqst_context) {
   int c;
   gid_t gid;
@@ -233,7 +226,7 @@ int rmc_srv_import(const struct rmc_srv_rqst_context* const rqst_context) {
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
   rmc_logit(func, RMC92, "import", uid, gid, rqst_context->clienthost);
-  /* Unmarshall and ignore the loader field as it is no longer used */
+  // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
     if (unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN + 1)) {
@@ -262,8 +255,6 @@ int rmc_srv_import(const struct rmc_srv_rqst_context* const rqst_context) {
   return c;
 }
 
-/*	rmc_srv_mount - mount a cartridge on a drive */
-
 int rmc_srv_mount(const struct rmc_srv_rqst_context* const rqst_context) {
   int c;
   int drvord;
@@ -280,7 +271,7 @@ int rmc_srv_mount(const struct rmc_srv_rqst_context* const rqst_context) {
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
   rmc_logit(func, RMC92, "mount", uid, gid, rqst_context->clienthost);
-  /* Unmarshall and ignore the loader field as it is no longer used */
+  // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
     if (unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN + 1)) {
@@ -313,8 +304,6 @@ int rmc_srv_mount(const struct rmc_srv_rqst_context* const rqst_context) {
   return c;
 }
 
-/*	rmc_srv_readelem - read element status */
-
 int rmc_srv_readelem(const struct rmc_srv_rqst_context* const rqst_context) {
   int c;
   struct smc_element_info* element_info;
@@ -338,7 +327,7 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context* const rqst_context) {
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
   rmc_logit(func, RMC92, "readelem", uid, gid, rqst_context->clienthost);
-  /* Unmarshall and ignore the loader field as it is no longer used */
+  // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
     if (unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN + 1)) {
@@ -399,8 +388,6 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context* const rqst_context) {
   return 0;
 }
 
-/*	rmc_srv_unmount - dismount a cartridge from a drive */
-
 int rmc_srv_unmount(const struct rmc_srv_rqst_context* const rqst_context) {
   int c;
   int drvord;
@@ -417,7 +404,7 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context* const rqst_context) {
   unmarshall_LONG(rbp, uid);
   unmarshall_LONG(rbp, gid);
   rmc_logit(func, RMC92, "unmount", uid, gid, rqst_context->clienthost);
-  /* Unmarshall and ignore the loader field as it is no longer used */
+  // Unmarshall and ignore the loader field as it is no longer used
   {
     char smc_ldr[CA_MAXRBTNAMELEN + 1];
     if (unmarshall_STRINGN(&rbp, req_data_end, smc_ldr, CA_MAXRBTNAMELEN + 1)) {

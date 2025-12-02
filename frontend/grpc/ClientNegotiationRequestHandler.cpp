@@ -122,7 +122,6 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
     }
     m_streamState = StreamState::FINISH;
     m_uprwNegotiation->Finish(&m_grpcStatus, m_tag);
-    // return bNext;
     return true;
   }
   // else everything is OK

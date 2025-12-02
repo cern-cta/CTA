@@ -241,7 +241,6 @@ trimContainerIfNeeded(Container& cont, ScopedExclusiveLock & contLock,
     tl.addToLog(params);
     lc.log(log::INFO, "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
   }
-  //queueRemovalTime += localQueueRemovalTime = t.secs(utils::Timer::resetCounter);
   return true;
 }
 
@@ -277,7 +276,6 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
   if (!aqAddress.size()) throw NoSuchContainer("In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): no such archive queue");
   // try and lock the archive queue. Any failure from here on means the end of the getting jobs.
   cont.setAddress(aqAddress);
-  //findQueueTime += localFindQueueTime = t.secs(utils::Timer::resetCounter);
   try {
     if (contLock.isLocked()) {
       contLock.release();
@@ -288,7 +286,6 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
     tl.insertAndReset("queueLockTime",t);
     cont.fetch();
     tl.insertAndReset("queueFetchTime",t);
-    //lockFetchQueueTime += localLockFetchQueueTime = t.secs(utils::Timer::resetCounter);
   } catch (cta::exception::Exception&) {
     // The queue is now absent. We can remove its reference in the root entry.
     // A new queue could have been added in the mean time, and be non-empty.
@@ -320,7 +317,6 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
       tl.addToLog(params);
       lc.log(log::DEBUG, "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry: already done.");
     }
-    //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
     attemptCount++;
     // Unlock and reset the address so we can reuse the in-memory object with potentially ane address.
     if (contLock.isLocked()) contLock.release();

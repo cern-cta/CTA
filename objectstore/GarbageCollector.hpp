@@ -60,7 +60,6 @@ public:
     //tuple[0] = containerIdentifier (vid or Repack Request's address), tuple[1]=jobQueueType, tuple[2]=vidOfTheJob
     std::map<std::tuple<std::string, common::dataStructures::JobQueueType, std::string>, std::list<std::shared_ptr <RetrieveRequest>>> retrieveQueuesAndRequests;
     std::list<std::shared_ptr<GenericObject>> otherObjects;
-    //Sorter m_sorter;
     /// Fill up the fetchedObjects with objects of interest.
     void fetchOwnedObjects(Agent & agent, std::list<std::shared_ptr<GenericObject>> & fetchedObjects, Backend & objectStore,
         log::LogContext & lc);
@@ -71,10 +70,9 @@ public:
     void lockFetchAndUpdateArchiveJobs(Agent & agent, AgentReference & agentReference, Backend & objectStore, log::LogContext & lc);
     /// Lock, fetch and update retrieve jobs
     void lockFetchAndUpdateRetrieveJobs(Agent & agent, AgentReference & agentReference, Backend & objectStore, log::LogContext & lc);
-    // Lock, fetch and update other objects
+    /// Lock, fetch and update other objects
     void lockFetchAndUpdateOtherObjects(Agent & agent, AgentReference & agentReference, Backend & objectStore,
         cta::catalogue::Catalogue & catalogue, log::LogContext & lc);
-    //Sorter& getSorter();
 
   private:
     std::string dispatchArchiveAlgorithms(std::list<std::shared_ptr<ArchiveRequest>> &jobs,const common::dataStructures::JobQueueType& jobQueueType, const std::string& containerIdentifier,

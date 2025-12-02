@@ -53,35 +53,6 @@ public:
   NegotiationService(NegotiationService&&) = delete;
   NegotiationService& operator=(NegotiationService&&) = delete;
 
-  // /**
-  //  * Register handler
-  //  * can throw
-  //  */
-  // template<class HANDLER, class... ARGS> cta::frontend::grpc::request::IHandler& registerHandler(ARGS&... args) {
-  //   std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-  //   std::unique_ptr<cta::frontend::grpc::request::IHandler> upHandler = std::make_unique<HANDLER>(m_log, *this, args...);
-  //   // Handler initialisation
-  //   upHandler->init();// can throw
-  //   // Store address
-  //   uintptr_t tag = reinterpret_cast<std::uintptr_t>(upHandler.get());
-  //   // Move ownership & store under the Tag
-  //   m_umapHandlers[upHandler.get()] = std::move(upHandler);
-  //   // Retrun IHandler
-  //   return *m_umapHandlers[reinterpret_cast<cta::frontend::grpc::request::Tag>(tag)];
-  // }
-  // /**
-  //  * Register handler
-  //  * can throw
-  //  */
-  // template<class HANDLER, class SERVICE, class... ARGS> void registerHandler(ARGS&... args) {
-  //   std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-  //   std::unique_ptr<cta::frontend::grpc::request::IHandler> upHandler = std::make_unique<HANDLER>(m_log, *this, service<SERVICE>(), args...);
-  //   // Handler initialisation
-  //   upHandler->init();// can throw
-  //   // Move ownership & store under the Tag
-  //   m_umapHandlers[upHandler.get()] = std::move(upHandler);
-  // }
-
   NegotiationRequestHandler& registerHandler() {
     m_lc.log(cta::log::INFO, "In NegotiationService::registerHandler");
     std::lock_guard<std::mutex> lck(m_mtxLockHandler);

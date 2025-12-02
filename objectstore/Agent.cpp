@@ -185,21 +185,6 @@ void cta::objectstore::Agent::garbageCollect(const std::string& presumedOwner, A
   }
 }
 
-
-
-/*void cta::objectstore::Agent::create() {
-  if (!m_setupDone)
-    throw SetupNotDone("In Agent::create(): setup() not yet done");
-  RootEntry re(m_objectStore);
-  AgentRegister ar(re.allocateOrGetAgentRegister(*this), m_objectStore);
-  ar.addIntendedElement(selfName(), *this);
-  serializers::Agent as;
-  as.set_heartbeat(0);
-  writeChild(selfName(), as);
-  ar.upgradeIntendedElementToActual(selfName(), *this);
-  m_creationDone = true;
-}*/
-
 void cta::objectstore::Agent::addToOwnership(const std::string& name) {
   checkPayloadWritable();
   std::string * owned = m_payload.mutable_ownedobjects()->Add();
