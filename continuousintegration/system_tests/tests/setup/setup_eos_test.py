@@ -44,25 +44,28 @@ def test_general_settings(env):
 
 @pytest.mark.eos
 def test_add_users(env):
-    env.eos_mgm[0]("groupadd --gid 1100 eosusers")
-    env.eos_mgm[0]("groupadd --gid 1200 powerusers")
-    env.eos_mgm[0]("groupadd --gid 1300 ctaadmins")
-    env.eos_mgm[0]("groupadd --gid 1400 eosadmins")
-    env.eos_mgm[0]("useradd --uid 11001 --gid 1100 user1")
-    env.eos_mgm[0]("useradd --uid 11002 --gid 1100 user2")
-    env.eos_mgm[0]("useradd --uid 12001 --gid 1200 poweruser1")
-    env.eos_mgm[0]("useradd --uid 12002 --gid 1200 poweruser2")
-    env.eos_mgm[0]("useradd --uid 13001 --gid 1300 ctaadmin1")
-    env.eos_mgm[0]("useradd --uid 13002 --gid 1300 ctaadmin2")
-    env.eos_mgm[0]("useradd --uid 14001 --gid 1400 eosadmin1")
-    env.eos_mgm[0]("useradd --uid 14002 --gid 1400 eosadmin2")
-    env.eos_mgm[0]('eos vid set membership "$(id -u eosadmin1)" +sudo')
-    env.eos_mgm[0]('eos vid set membership "$(id -u eosadmin2)" +sudo')
+    # We don't really care if these already exist
+    env.eos_mgm[0].exec("groupadd --gid 1100 eosusers", throw_on_failure=False)
+    env.eos_mgm[0].exec("groupadd --gid 1200 powerusers", throw_on_failure=False)
+    env.eos_mgm[0].exec("groupadd --gid 1300 ctaadmins", throw_on_failure=False)
+    env.eos_mgm[0].exec("groupadd --gid 1400 eosadmins", throw_on_failure=False)
+    env.eos_mgm[0].exec("useradd --uid 11001 --gid 1100 user1", throw_on_failure=False)
+    env.eos_mgm[0].exec("useradd --uid 11002 --gid 1100 user2", throw_on_failure=False)
+    env.eos_mgm[0].exec("useradd --uid 12001 --gid 1200 poweruser1", throw_on_failure=False)
+    env.eos_mgm[0].exec("useradd --uid 12002 --gid 1200 poweruser2", throw_on_failure=False)
+    env.eos_mgm[0].exec("useradd --uid 13001 --gid 1300 ctaadmin1", throw_on_failure=False)
+    env.eos_mgm[0].exec("useradd --uid 13002 --gid 1300 ctaadmin2", throw_on_failure=False)
+    env.eos_mgm[0].exec("useradd --uid 14001 --gid 1400 eosadmin1", throw_on_failure=False)
+    env.eos_mgm[0].exec("useradd --uid 14002 --gid 1400 eosadmin2", throw_on_failure=False)
+    eosadmin1_id = env.eos_mgm[0].execWithOutput("id -u eosadmin1")
+    eosadmin2_id = env.eos_mgm[0].execWithOutput("id -u eosadmin2")
+    env.eos_mgm[0].exec(f"eos vid set membership {eosadmin1_id} +sudo")
+    env.eos_mgm[0].exec(f"eos vid set membership {eosadmin2_id} +sudo")
 
 
 @pytest.mark.eos
 def test_create_wf_directory(env):
-    base_dir: str = env.eos_mgm[0].base_dir
+    base_dir: str = env.eos_mgm[0].base_dir_path
     workflow_dir: str = f"${base_dir}/proc/cta/workflow"
     env.eos_mgm[0].exec(f"eos mkdir -p {workflow_dir}")
     env.eos_mgm[0].exec(f'eos attr set sys.workflow.sync::create.default="proto" {workflow_dir}')
@@ -79,7 +82,7 @@ def test_create_wf_directory(env):
 
 @pytest.mark.eos
 def test_create_archive_directory(env) -> None:
-    base_dir: str = env.eos_mgm[0].base_dir
+    base_dir: str = env.eos_mgm[0].base_dir_path
     archive_dir: str = f"${base_dir}/cta"
     # TODO: can we somehow pass values from one test to the next?
     # Ideally I don't want to redefine this all over the place
@@ -100,5 +103,5 @@ def test_create_archive_directory(env) -> None:
 
 @pytest.mark.eos
 def test_kinit_eos_client(env, krb5_realm):
-    for eosclient in env.eosclient:
-        eosclient.exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
+    for eos_client in env.eos_client:
+        eos_client.exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
