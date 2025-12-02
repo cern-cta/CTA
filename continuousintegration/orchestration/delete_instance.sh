@@ -46,6 +46,8 @@ save_logs() {
 
   # Temporary directory for logs
   tmpdir=$(mktemp --tmpdir="${log_dir}" -d -t "${namespace}-deletion-logs-XXXX")
+  # Ensure tmp dir is always cleaned up
+  add_trap 'rm -rf -- "$tmpdir"' EXIT
   mkdir -p "${tmpdir}/varlogs"
   echo "Collecting logs to ${tmpdir}"
 
@@ -69,6 +71,8 @@ save_logs() {
       # Name of the (sub)directory to output logs to
       output_dir="${pod}"
       [ "${num_containers}" -gt 1 ] && output_dir="${pod}-${container}"
+
+      # Don't collect logs if the output is huge for some reason. F
 
       # Collect stdout logs
       kubectl --namespace "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
@@ -110,8 +114,6 @@ save_logs() {
     cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
     local CLIENT_POD="cta-client-0"
     kubectl -n "${namespace}" cp ${CLIENT_POD}:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" -c client || echo "Failed to copy trackerdb.db"
-    # Prevent polluting the runner by cleaning up the original dir in /tmp
-    rm -rf ${tmpdir}
   fi
 }
 

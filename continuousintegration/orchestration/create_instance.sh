@@ -70,7 +70,7 @@ update_local_cta_chart_dependencies() {
   # This is a hack to ensure we don't waste 30 seconds updating local dependencies
   # Once helm dependency update gets some performance improvements this can be removed
   TEMP_HELM_HOME=$(mktemp -d)
-  trap 'rm -rf "$TEMP_HELM_HOME"' EXIT
+  add_trap 'rm -rf "$TEMP_HELM_HOME"' EXIT
   export HELM_CONFIG_HOME="$TEMP_HELM_HOME"
 
   echo "Updating chart dependencies"
