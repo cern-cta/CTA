@@ -1,4 +1,3 @@
-import pytest
 from ...helpers.hosts.cta.cta_rmcd_host import CtaRmcdHost
 from concurrent.futures import ThreadPoolExecutor
 from itertools import cycle
