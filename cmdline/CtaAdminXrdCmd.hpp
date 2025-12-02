@@ -31,6 +31,7 @@ public:
 private:
    const std::string StreamBufferSize      = "1024";                  //!< Buffer size for Data/Stream Responses
    const std::string DefaultRequestTimeout = "10";                    //!< Default Request Timeout. Can be overridden by
+                                                                      //!< XRD_REQUESTTIMEOUT environment variable.
 
    static constexpr const char* const LOG_SUFFIX  = "CtaAdminXrdCmd";    //!< Identifier for log messages
 };
