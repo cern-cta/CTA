@@ -46,6 +46,8 @@ save_logs() {
 
   # Temporary directory for logs
   tmpdir=$(mktemp --tmpdir="${log_dir}" -d -t "${namespace}-deletion-logs-XXXX")
+  # Ensure tmp dir is always cleaned up
+  add_trap 'rm -rf -- "$tmpdir"' EXIT
   mkdir -p "${tmpdir}/varlogs"
   echo "Collecting logs to ${tmpdir}"
 
@@ -70,6 +72,20 @@ save_logs() {
       output_dir="${pod}"
       [ "${num_containers}" -gt 1 ] && output_dir="${pod}-${container}"
 
+      max_allowed_size=$((2 * 1024 * 1024 * 1024)) # 2 GB
+      var_log_size=$(
+        kubectl --namespace "$namespace" exec "$pod" -c "$container" -- \
+          du -sb /var/log 2>/dev/null | awk '{print $1}'
+      )
+
+      if (( var_log_size > max_allowed_size )); then
+        echo "Contents of /var/log are too big: ${var_log_size} bytes" >&2
+        kubectl --namespace "$namespace" exec "$pod" -c "$container" -- du -h /var/log >&2
+        echo "Failed to collect /var/log from pod ${pod}, container ${container}" >&2
+        continue
+      fi
+
+
       # Collect stdout logs
       kubectl --namespace "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
 
@@ -89,7 +105,7 @@ save_logs() {
           tar --warning=no-file-removed --ignore-failed-read -C /var/log \
               -cf - ${existing_dirs} \
           | tar -C "${tmpdir}/varlogs/${output_dir}" -xf - \
-          || echo "Failed to collect /var/log from pod ${pod}, container ${container}"
+          || echo "Failed to collect /var/log from pod ${pod}, container ${container}" >&2
         # Remove empty files and directories to prevent polluting the output logs
         find "${tmpdir}/varlogs/${output_dir}" -type d -empty -delete -o -type f -empty -delete
       fi
@@ -110,8 +126,6 @@ save_logs() {
     cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
     local CLIENT_POD="cta-client-0"
     kubectl -n "${namespace}" cp ${CLIENT_POD}:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" -c client || echo "Failed to copy trackerdb.db"
-    # Prevent polluting the runner by cleaning up the original dir in /tmp
-    rm -rf ${tmpdir}
   fi
 }
 

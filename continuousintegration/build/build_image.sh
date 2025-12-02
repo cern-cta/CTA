@@ -169,7 +169,7 @@ buildImage() {
 
   if [[ "$load_into_minikube" == "true" ]]; then
     # This step is necessary because atm the container runtime and minikube don't share the same docker runtime and local registry
-    tmpfile=$(mktemp) && trap 'rm -f $tmpfile' EXIT
+    tmpfile=$(mktemp) && add_trap 'rm -f $tmpfile' EXIT
     ${container_runtime} save -o $tmpfile localhost/${image_name}:${image_tag} >/dev/null 2>&1
     echo "Loading new image into minikube"
     minikube image load $tmpfile --overwrite

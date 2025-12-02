@@ -18,6 +18,24 @@
 # This script can be sourced in any other script and will prepend ALL output of stdout and stderror with the corresponding log prefix
 # This will only happen if the BASH_LOGGING_ENABLED environment variable is explicitly set to true
 
+# By default trap overwrites whatever existing traps there are
+# This means this breaks traps in other scripts
+add_trap() {
+  local new_cmd="$1"
+  local sig="$2"
+
+  # Get existing trap command (if any)
+  local existing
+  existing=$(trap -p "$sig" | awk -F"'" '{print $2}')
+
+  if [[ -z "$existing" ]]; then
+    trap "$new_cmd" "$sig"
+  else
+    trap "$existing; $new_cmd" "$sig"
+  fi
+}
+
+
 
 # Note that these functions are not meant to be used directly outside of this script; just use echo (and redirect to stderr if necessary)
 # The reason is twofold: first the existing file descriptor redirection will cause it two prepend twice.
@@ -49,7 +67,7 @@ __log_start() {
   # Redirect stdout and stderr to the pipes
   exec 1> /tmp/stdout_pipe_$$ 2> /tmp/stderr_pipe_$$
 
-  trap __log_end EXIT
+  add_trap __log_end EXIT
 
   start_time=$(date +%s%N)
   echo "Starting: $current_script $*"
