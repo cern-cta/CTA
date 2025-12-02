@@ -56,14 +56,14 @@ def test_generate_and_copy_files(env, stress_params):
     eos_client.exec(f"eos root://{disk_instance_name} mkdir {archive_directory}")
 
     # Create a local directory that we will copy a bunch of times to EOS
-    print(f"Using the following parameters:")
+    print("Using the following parameters:")
     print(f"\tNumber of directories: {stress_params.num_dirs}")
     print(f"\tFiles per directory: {stress_params.num_files_per_dir}")
     print(f"\tFile size: {stress_params.file_size}")
 
     # For performance reasons, we should probably stick with the old stress script (just make it a lot smaller and focused)
     # For now I'll keep this
-    print(f"Creating a single directory locally")
+    print("Creating a single directory locally")
     local_buffer_dir = "/dev/shm/_buffer"
     eos_client.exec(f"rm -rf {local_buffer_dir}")
     eos_client.exec(f"mkdir {local_buffer_dir}")
@@ -73,7 +73,7 @@ def test_generate_and_copy_files(env, stress_params):
     )
 
     # Copy this directory a bunch of times to EOS
-    print(f"Creating multiple directory copies on EOS")
+    print("Creating multiple directory copies on EOS")
     timer_start = time.time()
     for i in range(0, stress_params.num_dirs):
         destination_dir = f"{archive_directory}/dir_{i}"
@@ -97,7 +97,7 @@ def test_generate_and_copy_files(env, stress_params):
     total_megabytes = total_file_count * stress_params.file_size / 1e6
     avg_mbps = total_megabytes / duration_seconds
     avg_fps = total_file_count / duration_seconds
-    print(f"Copy complete:")
+    print("Copy complete:")
     print(f"\tTotal Files: {total_file_count}")
     print(f"\tTotal MB:    {total_megabytes}")
     print(f"\tFiles/s:     {avg_fps:.2f}")

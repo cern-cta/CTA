@@ -8,6 +8,7 @@ import shutil
 # General/common fixtures
 #####################################################################################################################
 
+
 def get_test_env(config):
     namespace = config.getoption("--namespace", default=None)
     connection_config = config.getoption("--connection-config", default=None)
@@ -111,7 +112,7 @@ def is_test_in_items(test_path: str, items):
 
 def add_test_into_existing_collection(test_path: str, items, prepend: bool = False, allow_duplicate: bool = False):
     if not items:
-        raise RuntimeError(f"No tests found")
+        raise RuntimeError("No tests found")
     resolved_test_path = Path(test_path).resolve()
     if not resolved_test_path.exists():
         raise FileNotFoundError(f"Required test suite '{resolved_test_path}' not found!")
@@ -143,9 +144,13 @@ def pytest_collection_modifyitems(config, items):
     # Do the reset before the tests start.
     # Useful when rerunning the tests multiple times on the same instance and it wasn't properly cleaned up
     if config.getoption("--clean-start"):
-        add_test_into_existing_collection("tests/teardown/cleanup_cta_test.py", items, prepend=True, allow_duplicate=True)
+        add_test_into_existing_collection(
+            "tests/teardown/cleanup_cta_test.py", items, prepend=True, allow_duplicate=True
+        )
         # If EOS is not the used disk system, these will be filtered out later
-        add_test_into_existing_collection("tests/teardown/cleanup_eos_test.py", items, prepend=True, allow_duplicate=True)
+        add_test_into_existing_collection(
+            "tests/teardown/cleanup_eos_test.py", items, prepend=True, allow_duplicate=True
+        )
         # add_test_into_existing_collection("tests/teardown/cleanup_dcache_test.py", items, prepend=True)
 
     # Now figure out which disk instance are present in the test setup, so that we can skip
@@ -156,5 +161,5 @@ def pytest_collection_modifyitems(config, items):
     skip_marks: list[str] = list(all_disk_instances - {present_disk_instances})
     # Skip all tests specific to disk instances not present
     for item in items:
-      if any(mark in item.keywords for mark in skip_marks):
-          item.add_marker(pytest.mark.skip(reason="Skipping test because it has a disabled mark"))
+        if any(mark in item.keywords for mark in skip_marks):
+            item.add_marker(pytest.mark.skip(reason="Skipping test because it has a disabled mark"))

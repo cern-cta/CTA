@@ -8,7 +8,7 @@ class CtaFrontendHost(RemoteHost):
 
     @cached_property
     def log_file_location(self) -> str:
-        return f"/var/log/cta/cta-frontend.log"
+        return "/var/log/cta/cta-frontend.log"
 
     def get_schema_version(self) -> str:
         return self.execWithOutput(

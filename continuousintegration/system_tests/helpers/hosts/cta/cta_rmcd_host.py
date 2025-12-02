@@ -10,7 +10,7 @@ class CtaRmcdHost(RemoteHost):
 
     @cached_property
     def log_file_location(self) -> str:
-        return f"/var/log/cta/cta-rmcd.log"
+        return "/var/log/cta/cta-rmcd.log"
 
     @cached_property
     def library_device(self) -> str:
