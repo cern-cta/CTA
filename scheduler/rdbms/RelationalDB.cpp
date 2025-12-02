@@ -1586,7 +1586,7 @@ std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getA
   std::vector<std::string> expiredDiskSystems;
   auto it = diskSystemSleepMap.begin();
   while (it != diskSystemSleepMap.end()) {
-    const std::string& diskName = it->first;
+    const std::string diskName = it->first;
     const RelationalDB::DiskSleepEntry& entry = it->second;
     cta::log::ScopedParamContainer(logContext)
               .add("currentTime", currentTime)
