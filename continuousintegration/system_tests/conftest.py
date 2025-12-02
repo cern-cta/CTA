@@ -1,18 +1,16 @@
 import pytest
 from pathlib import Path
 from .helpers.test_env import TestEnv
+from .helpers.hosts.disk.disk_instance_host import DiskInstanceImplementation
 import shutil
 
 #####################################################################################################################
 # General/common fixtures
 #####################################################################################################################
 
-
-# This is how all the tests get access to the different hosts (cli, frontend, taped, etc)
-@pytest.fixture(scope="session", autouse=True)
-def env(request):
-    namespace = request.config.getoption("--namespace", default=None)
-    connection_config = request.config.getoption("--connection-config", default=None)
+def get_test_env(config):
+    namespace = config.getoption("--namespace", default=None)
+    connection_config = config.getoption("--connection-config", default=None)
 
     if namespace and connection_config:
         pytest.exit("ERROR: Only one of --namespace or --connection-config can be provided, not both.", returncode=1)
@@ -28,6 +26,12 @@ def env(request):
         return TestEnv.fromNamespace(namespace)
     else:
         return TestEnv.fromConfig(connection_config)
+
+
+# This is how all the tests get access to the different hosts (cli, frontend, taped, etc)
+@pytest.fixture(scope="session", autouse=True)
+def env(request):
+    return get_test_env(request.config)
 
 
 # The only purpose of this fixture is to make the test output easier to read
@@ -61,11 +65,6 @@ def krb5_realm(request):
     return request.config.getoption("--krb5-realm")
 
 
-@pytest.fixture()
-def disk_instance(request):
-    return request.config.getoption("--disk-instance")
-
-
 #####################################################################################################################
 # Commandline options
 #####################################################################################################################
@@ -86,7 +85,6 @@ def pytest_addoption(parser):
     parser.addoption(
         "--krb5-realm", type=str, default="TEST.CTA", help="Kerberos realm to use for cta-admin/eos commands"
     )
-    parser.addoption("--disk-instance", type=str, default="eos", help="Name of the disk instance")
     parser.addoption("--stress-num-dirs", type=int, default=10, help="Number of directories to use for the stress test")
     parser.addoption(
         "--stress-num-files-per-dir",
@@ -127,31 +125,36 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
 
 
 def pytest_collection_modifyitems(config, items):
-    """Automatically include some tests every time pytest runs. These tests can be skipped"""
-    setup_script: str = "tests/setup_test.py"
-    error_script: str = "tests/error_test.py"
-    teardown_script: str = "tests/teardown_test.py"
-
     # Always check for errors after the run
-    add_test_into_existing_collection(error_script, items, prepend=False)
+    add_test_into_existing_collection("tests/teardown/error_test.py", items, prepend=False)
 
-    # Always do a setup of CTA before the tests start (unless skipped)
-    if not is_test_in_items(setup_script, items) and not config.getoption("--no-setup"):
-        add_test_into_existing_collection(setup_script, items, prepend=True)
+    if not config.getoption("--no-setup"):
+        add_test_into_existing_collection("tests/setup/setup_cta_test.py", items, prepend=True)
+        # If EOS is not the used disk system, these will be filtered out later
+        add_test_into_existing_collection("tests/setup/setup_eos_test.py", items, prepend=True)
+        # add_test_into_existing_collection("tests/setup/setup_dcache_test.py", items, prepend=True)
 
-    # Always do a teardown of CTA after the tests finish (unless skipped)
-    if not is_test_in_items(teardown_script, items) and not config.getoption("--no-teardown"):
-        add_test_into_existing_collection(teardown_script, items, prepend=False)
+    if not config.getoption("--no-teardown"):
+        add_test_into_existing_collection("tests/teardown/cleanup_cta_test.py", items, prepend=False)
+        # If EOS is not the used disk system, these will be filtered out later
+        add_test_into_existing_collection("tests/teardown/cleanup_eos_test.py", items, prepend=False)
+        # add_test_into_existing_collection("tests/teardown/cleanup_dcache_test.py", items, prepend=True)
 
     # Do the reset before the tests start.
     # Useful when rerunning the tests multiple times on the same instance and it wasn't properly cleaned up
     if config.getoption("--clean-start"):
-        add_test_into_existing_collection(teardown_script, items, prepend=True, allow_duplicate=True)
+        add_test_into_existing_collection("tests/teardown/cleanup_cta_test.py", items, prepend=True, allow_duplicate=True)
+        # If EOS is not the used disk system, these will be filtered out later
+        add_test_into_existing_collection("tests/teardown/cleanup_eos_test.py", items, prepend=True, allow_duplicate=True)
+        # add_test_into_existing_collection("tests/teardown/cleanup_dcache_test.py", items, prepend=True)
 
-    # Skip EOS/dCache-specific tests depending on which disk instance was chosen
-    disk_instance_options: list[str] = ["eos", "dcache"]
-    chosen_disk_instance = config.getoption("--disk-instance")
-    skip_marks = list(disk_instance_options - {chosen_disk_instance})
+    # Now figure out which disk instance are present in the test setup, so that we can skip
+    # any marked tests for disk instances not in our environment
+    test_env = get_test_env(config)
+    present_disk_instances: list[str] = [di.implementation.label for di in test_env.disk_instance]
+    all_disk_instances: list[str] = [e.label for e in DiskInstanceImplementation]
+    skip_marks: list[str] = list(all_disk_instances - {present_disk_instances})
+    # Skip all tests specific to disk instances not present
     for item in items:
-        if any(mark in item.keywords for mark in skip_marks):
-            item.add_marker(pytest.mark.skip(reason="Skipping test because it has a disabled mark"))
+      if any(mark in item.keywords for mark in skip_marks):
+          item.add_marker(pytest.mark.skip(reason="Skipping test because it has a disabled mark"))

@@ -1,5 +1,5 @@
 import pytest
-from ..helpers.hosts.cta.cta_rmcd_host import CtaRmcdHost
+from ...helpers.hosts.cta.cta_rmcd_host import CtaRmcdHost
 from concurrent.futures import ThreadPoolExecutor
 from itertools import cycle
 
@@ -9,10 +9,8 @@ from itertools import cycle
 #####################################################################################################################
 
 
-def test_hosts_present_setup(env):
-    # Need at least a disk instance and a client
+def test_hosts_present_cta_setup(env):
     assert len(env.disk_instance) > 0
-    assert len(env.disk_client) > 0
     assert len(env.cta_frontend) > 0
     assert len(env.cta_taped) > 0
     assert len(env.cta_cli) > 0
@@ -62,9 +60,9 @@ def test_version_info(env):
     env.cta_cli[0].exec("cta-admin --json version | jq")
 
 
-def test_populate_catalogue(env, disk_instance):
+def test_populate_catalogue(env):
     print("Populating catalogue")
-    env.cta_cli[0].exec(f"./test/populate_catalogue.sh {disk_instance}")
+    env.cta_cli[0].exec(f"./test/populate_catalogue.sh {env.disk_instance[0].instance_name}")
 
 
 def test_populate_catalogue_tapes(env):
@@ -142,15 +140,3 @@ def test_label_tapes(env):
 
 def test_set_all_drives_up(env):
     env.cta_cli[0].set_all_drives_up()
-
-
-#####################################################################################################################
-# Disk Instance initialisation
-#####################################################################################################################
-
-
-@pytest.mark.eos
-def test_setup_eos(env, krb5_realm):
-    for eosclient in env.eosclient:
-        eosclient.exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
-    env.eos_mgm[0].exec("eos version")

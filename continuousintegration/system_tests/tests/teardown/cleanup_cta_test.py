@@ -1,5 +1,3 @@
-import pytest
-
 #####################################################################################################################
 # CTA Teardown
 #####################################################################################################################
@@ -24,16 +22,4 @@ def test_delete_test_scripts(env):
     hosts = env.disk_client + env.cta_cli + env.cta_frontend + env.disk_instance
     for host in hosts:
         host.exec("rm -rf /test/ 2>/dev/null || true")
-
-
-#####################################################################################################################
-# Disk Instance Teardown
-#####################################################################################################################
-
-@pytest.mark.eos
-def test_cleanup_eos_directories(env):
-    # Right now the teardown is part of the tests, but the creation should probably also be part of the tests eventually...
-    # The goal I guess should be to have no more setup/ directory
-    env.eos_mgm[0].force_remove_directory("/eos/ctaeos/cta/*")
-    env.eos_mgm[0].force_remove_directory("/eos/ctaeos/preprod/*")
 

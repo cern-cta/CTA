@@ -35,6 +35,7 @@ class TestEnv:
         self.disk_instance: list[DiskInstanceHost] = self.eos_mgm  # + self.dcache
         self.disk_client: list[DiskClientHost] = self.eos_client  # + self.dcache_client
 
+
     # Mostly a convenience function that is arguably not very clean, but that is for later
     @staticmethod
     def execLocal(command: str, capture_output=False, throw_on_failure=True):

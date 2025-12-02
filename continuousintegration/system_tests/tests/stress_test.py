@@ -25,9 +25,6 @@ def stress_params(request):
         num_files_per_dir=request.config.getoption("--stress-num-files-per-dir"),
         file_size=request.config.getoption("--stress-file-size"),
         io_threads=8,
-        # TODO: don't hardcode the directory here; what if dcache is used?
-        # Can we figure out this automatically somehow
-        archive_directory="/eos/ctaeos/cta/stress",
     )
 
 
@@ -36,31 +33,27 @@ def stress_params(request):
 #####################################################################################################################
 
 
-# TODO: find a clean way to communicate side-effects between tests? Ideally the system tests are some sort of pipeline:
-# - A test produces some side effect (e.g. some files on EOS)
-# - The next test depends on this side effect
-# Ideally we have a way to clearly communicate what side effects a test is supposed to produce so that the next test can verify some of these side effects (if it depends on them)
-
-
 def test_hosts_present_stress(env):
     # Need at least a disk instance and a client
-    assert len(env.disk_instance) > 0
-    assert len(env.disk_client) > 0
+    assert len(env.eos_mgm) > 0
+    assert len(env.eos_client) > 0
     assert len(env.cta_frontend) > 0
     assert len(env.cta_taped) > 0
 
 
+@pytest.mark.eos
 def test_generate_and_copy_files(env, stress_params):
     disk_instance: DiskInstanceHost = env.disk_instance[0]
-    # For now this is an eos client
+    archive_directory = env.disk_instance[0].base_dir + "/cta/stress"
+    # For now this is an eos client (hence we mark all methods here as such)
     # We should factor out all the exec() into dedicated methods for disk_client_host.py
     eos_client: EosClientHost = env.eos_client[0]
     disk_instance_name = disk_instance.instance_name
 
     # Create an archive directory on eos
-    print(f"Cleaning up previous archive directory: {stress_params.archive_directory}")
-    disk_instance.force_remove_directory(stress_params.archive_directory)
-    eos_client.exec(f"eos root://{disk_instance_name} mkdir {stress_params.archive_directory}")
+    print(f"Cleaning up previous archive directory: {archive_directory}")
+    disk_instance.force_remove_directory(archive_directory)
+    eos_client.exec(f"eos root://{disk_instance_name} mkdir {archive_directory}")
 
     # Create a local directory that we will copy a bunch of times to EOS
     print(f"Using the following parameters:")
@@ -83,7 +76,7 @@ def test_generate_and_copy_files(env, stress_params):
     print(f"Creating multiple directory copies on EOS")
     timer_start = time.time()
     for i in range(0, stress_params.num_dirs):
-        destination_dir = f"{stress_params.archive_directory}/dir_{i}"
+        destination_dir = f"{archive_directory}/dir_{i}"
         eos_client.exec(f"eos root://{disk_instance_name} mkdir {destination_dir}")
         # now copy that buffer to a bunch of different files
         eos_client.exec(
@@ -115,12 +108,14 @@ def test_generate_and_copy_files(env, stress_params):
 
 # After everything has been moved, wait for the archival to complete
 # We execute this directly on the mgm to bypass some networking between pods (should be negligible though)
-def test_wait_for_archival(env, stress_params):
+@pytest.mark.eos
+def test_wait_for_archival(env):
+    archive_directory = env.disk_instance[0].base_dir + "/cta/stress"
     timeout_secs = 300
     disk_instance: DiskInstanceHost = env.disk_instance[0]
 
     disk_instance.wait_for_archival_in_directory(
-        archive_dir_path=stress_params.archive_directory,
+        archive_dir_path=archive_directory,
         timeout_secs=timeout_secs,
         strict=False,
     )
