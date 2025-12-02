@@ -112,6 +112,16 @@ public:
   void SetUp() override {
     std::cout << "\n=== TemporaryPostgresEnvironment Setup ===" << std::endl;
     std::cout << "Creating temporary PostgreSQL instance..." << std::endl;
+
+    // Clean up any leftovers from previous failed tests BEFORE creating new temp dir
+    std::cout << "Cleaning up leftovers from previous tests..." << std::endl;
+    system("pkill -9 -f \"postgres.*cta-pg-test\" 2>/dev/null || true");
+    if (m_useShm) {
+      system("rm -rf /dev/shm/cta-pg-test-* 2>/dev/null || true");
+    } else {
+      system("rm -rf /tmp/cta-pg-test-* 2>/dev/null || true");
+    }
+
     std::cout << "Data directory: " << m_dataDir;
     if (m_useShm) {
       std::cout << " (in-memory tmpfs)";
