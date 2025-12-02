@@ -4,6 +4,7 @@ from collections import deque
 from enum import Enum
 from ...utils.timeout import Timeout
 
+
 class DiskInstanceImplementation(Enum):
     EOS = ("eos",)
     DCACHE = ("dcache",)

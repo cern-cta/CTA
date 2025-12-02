@@ -4,7 +4,7 @@ import pytest
 # EOS Teardown
 #####################################################################################################################
 
+
 @pytest.mark.eos
 def test_cleanup_eos_directories(env):
     env.eos_mgm[0].force_remove_directory("/eos/ctaeos/cta/*")
-
