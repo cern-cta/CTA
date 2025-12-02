@@ -1497,8 +1497,8 @@ namespace castor::tape::SCSI {
 
        class udsLimits {
        public:
-         uint16_t maxSupported;
-         uint16_t maxSize;
+         uint16_t maxSupported = 0;
+         uint16_t maxSize = 0;
        };
 
        /**
