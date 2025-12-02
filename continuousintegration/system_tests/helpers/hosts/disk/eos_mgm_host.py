@@ -1,4 +1,4 @@
-from .disk_instance_host import DiskInstanceHost
+from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
 from functools import cached_property
 
 
@@ -6,9 +6,23 @@ class EosMgmHost(DiskInstanceHost):
     def __init__(self, conn):
         super().__init__(conn)
 
+
+    @cached_property
+    def implementation_name(self) -> str:
+        return DiskInstanceImplementation.EOS
+
     @cached_property
     def instance_name(self) -> str:
         return self.execWithOutput("eos --json version | jq -r '.version[0].EOS_INSTANCE'")
+
+    @cached_property
+    def base_dir_path(self) -> str:
+        return f"/eos/{self.instance_name}"
+
+    @cached_property
+    def workflow_dir(self) -> str:
+        return f"{self.base_dir}/proc/cta/workflow"
+
 
     def force_remove_directory(self, directory: str) -> str:
         self.exec(f"eos rm -rF --no-confirmation {directory} 2>/dev/null || true")

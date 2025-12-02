@@ -1,14 +1,31 @@
 from ..remote_host import RemoteHost
 import time
 from collections import deque
-
+from enum import Enum
 from ...utils.timeout import Timeout
+
+class DiskInstanceImplementation(Enum):
+    EOS = ("eos",)
+    DCACHE = ("dcache",)
+
+    def __str__(self):
+        return self.value[0]
+
+    @property
+    def label(self) -> str:
+        return self.value[0]
 
 
 class DiskInstanceHost(RemoteHost):
 
     @property
+    def implementation(self) -> DiskInstanceImplementation: ...
+
+    @property
     def instance_name(self) -> str: ...
+
+    @property
+    def base_dir_path(self) -> str: ...
 
     def force_remove_directory(self, directory: str) -> str: ...
 
