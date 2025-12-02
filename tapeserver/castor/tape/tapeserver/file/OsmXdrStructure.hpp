@@ -132,7 +132,7 @@ public:
     if(!xdr_u_long(xdrs, &objp->m_ulVolId)) {
       return (FALSE);
     }
-    // #define NSR_LENGTH = 64
+    // NSR_LENGTH = 64
     if((objp->bFree && objp->m_pcVolName == nullptr) || !xdr_string(xdrs, &objp->m_pcVolName, 64)) {
       return (FALSE);
     }

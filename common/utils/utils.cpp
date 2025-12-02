@@ -143,7 +143,6 @@ void assertAbsolutePathSyntax(const std::string& path) {
   try {
     assertPathStartsWithASlash(path);
     assertPathContainsValidChars(path);
-    //assertPathDoesContainConsecutiveSlashes(path);
   } catch (std::exception& ex) {
     std::ostringstream message;
     message << "Absolute path \"" << path << "\" contains a syntax error: " << ex.what();

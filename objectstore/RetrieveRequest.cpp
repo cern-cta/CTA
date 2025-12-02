@@ -1302,7 +1302,6 @@ std::string RetrieveRequest::asyncReportSucceedForRepackCallback(const std::stri
     throw cta::exception::Exception(std::string("In RetrieveRequest::asyncReportSucceedForRepackCallback: could not parse payload: ")+
       payload.InitializationErrorString());
   }
-  //payload.set_status(osdbJob->selectedCopyNb,serializers::RetrieveJobStatus::RJS_Succeeded);
   auto retrieveJobs = payload.mutable_jobs();
   for(auto& job : *retrieveJobs){
     if(job.copynb() == ui32CopyNb)

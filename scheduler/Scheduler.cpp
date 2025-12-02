@@ -959,9 +959,7 @@ Scheduler::RepackReportBatch Scheduler::getNextFailedArchiveRepackReportBatch(lo
 // Scheduler::RepackReportBatch::report
 //------------------------------------------------------------------------------
 void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
-  if (nullptr == m_DbBatch) {
-    // lc.log(log::DEBUG, "In Scheduler::RepackReportBatch::report(): empty batch.");
-  } else {
+  if (m_DbBatch != nullptr) {
     m_DbBatch->report(lc);
   }
 }
@@ -2586,8 +2584,6 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         if (em.currentMount) {
           summary->currentMounts++;
         }
-        /*else
-        summary->nextMounts++;*/
         summary->currentBytes += em.bytesTransferred;
         summary->currentFiles += em.filesTransferred;
         summary->averageBandwidth = em.averageBandwidth;

@@ -721,7 +721,6 @@ auto RelationalDB::getRepackStatisticsNoLock()
   lc.log(log::INFO,
          "RelationalDB::getRepackStatisticsNoLock(): calling populateRepackRequestsStatistics() select call to the DB.");
 
-  //auto typedRet = std::make_unique<RelationalDB::RepackRequestPromotionStatisticsNoLock>();
   auto ret = std::make_unique<RelationalDB::RepackRequestPromotionStatistics>(*this);
   populateRepackRequestsStatistics(*ret);
   return ret;
@@ -951,7 +950,6 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
   log::TimingList timings;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
   schedulerdb::Transaction txn(m_connPool);
-  //txn.takeNamedLock("getNextSuccessfulArchiveRepackReportBatch");
   std::vector<std::string> jobIDs;
   std::unordered_set<std::string> jobSrcUrls;
   try {
@@ -1049,7 +1047,6 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
   for(auto& bufferURL: repackBufferUrlsToDelete){
       //Repack Request is complete, delete the directory in the buffer
       cta::disk::DirectoryFactory directoryFactory;
-      // std::string directoryPath = cta::utils::getEnclosingPath(bufferURL);
       std::unique_ptr<cta::disk::Directory> directory;
       try {
         directory.reset(directoryFactory.createDirectory(bufferURL));

@@ -27,10 +27,9 @@
 namespace cta::common::dataStructures {
 
 /**
- * This is the repack information for a given tape
+ * Repack information for a given tape
  */
 struct RepackInfo {
-
   struct RepackDestinationInfo {
     std::string vid;
     uint64_t files = 0;
@@ -47,7 +46,7 @@ struct RepackInfo {
     Undefined
   } type;
   enum class Status {
-    // Those values are matching the cta.proto values
+    // Values matching the cta.proto values
     Pending = 1,
     ToExpand = 2,
     Starting = 3,
@@ -81,18 +80,8 @@ struct RepackInfo {
   time_t repackFinishedTime = 0;
   RepackDestinationInfo::List destinationInfos;
   std::string mountPolicy;
-//  std::string tag;
-//  uint64_t totalFiles;
-//  uint64_t totalSize;
-//  uint64_t filesToRetrieve;
-//  uint64_t filesToArchive;
-//  uint64_t filesFailed;
-//  uint64_t filesArchived;
-//  RepackType repackType;
-//  std::string repackStatus;
-//  std::map<uint64_t,std::string> errors;
-//  EntryLog creationLog;
-RepackQueueType getQueueType();
+
+  RepackQueueType getQueueType();
 }; // struct RepackInfo
 
 std::string toString(RepackInfo::Type type);

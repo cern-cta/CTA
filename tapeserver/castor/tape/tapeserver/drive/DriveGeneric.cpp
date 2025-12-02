@@ -302,7 +302,6 @@ void drive::DriveGeneric::positionToLogicalObject(uint32_t blockId) {
   sgh.setCDB(&cdb);
   sgh.setSenseBuffer(&senseBuff);
   sgh.dxfer_direction = SG_DXFER_NONE;
-  //sgh.timeout = defaultTimeout; // set globally by SCSI::Structures.hpp (defaultTimeout)
 
   /* Manage both system error and SCSI errors. */
   cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),

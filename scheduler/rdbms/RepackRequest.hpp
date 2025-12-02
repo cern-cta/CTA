@@ -81,16 +81,13 @@ public:
 
   void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
 
-  void
-  reportRetrieveCreationFailures(const uint64_t failedToRetrieveFiles,
-                                 const uint64_t failedToRetrieveBytes,
-                                 const uint64_t failedArchiveReq);
+  void reportRetrieveCreationFailures(const uint64_t failedToRetrieveFiles, const uint64_t failedToRetrieveBytes,
+    const uint64_t failedArchiveReq);
 
-  //void commit();
   void insert();
-  //void update() const;
 
   void assignJobStatusToRepackInfoStatus(const RepackJobStatus& dbStatus);
+
   RepackJobStatus mapRepackInfoStatusToJobStatus(const common::dataStructures::RepackInfo::Status& infoStatus);
 
   common::dataStructures::MountPolicy m_mountPolicy;

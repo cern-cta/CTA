@@ -255,12 +255,10 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
   }
   // try and lock the repack queue. Any failure from here on means the end of the getting jobs.
   cont.setAddress(rpkQAddress);
-  //findQueueTime += localFindQueueTime = t.secs(utils::Timer::resetCounter);
   try {
     if (contLock.isLocked()) contLock.release();
     contLock.lock(cont);
     cont.fetch();
-    //lockFetchQueueTime += localLockFetchQueueTime = t.secs(utils::Timer::resetCounter);
   } catch (cta::exception::NoSuchObject&) {
     // The queue is now absent. We can remove its reference in the root entry.
     // A new queue could have been added in the mean time, and be non-empty.
@@ -286,7 +284,6 @@ getLockedAndFetchedNoCreate(Container& cont, ScopedExclusiveLock& contLock, cons
       lc.log(log::DEBUG,
           "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue from root entry: already done.");
     }
-    //emptyQueueCleanupTime += localEmptyCleanupQueueTime = t.secs(utils::Timer::resetCounter);
     attemptCount++;
     // Unlock and reset the address so we can reuse the in-memory object with potentially ane address.
     if (contLock.isLocked()) contLock.release();

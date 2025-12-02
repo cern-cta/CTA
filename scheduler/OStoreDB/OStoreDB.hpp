@@ -273,7 +273,6 @@ public:
     std::unique_ptr<objectstore::ArchiveRequest::AsyncRequestDeleter> m_requestDeleter;
   };
 
-  // friend class ArchiveJob;
   static ArchiveJob* castFromSchedDBJob(SchedulerDatabase::ArchiveJob* job);
 
   /* === Retrieve Mount handling ============================================ */
@@ -482,8 +481,6 @@ public:
 
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> getRetrieveJobs() const override;
 
-  // using RetrieveQueueItor_t = QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQueue>;
-
   class RetrieveJobQueueItor : public IRetrieveJobQueueItor {
   public:
     RetrieveJobQueueItor(objectstore::Backend* objectStore,
@@ -503,9 +500,6 @@ public:
 
   std::unique_ptr<IRetrieveJobQueueItor>
   getRetrieveJobQueueItor(const std::string& vid, common::dataStructures::JobQueueType queueType) const override;
-
-  // RetrieveQueueItor_t* getRetrieveJobItorPtr(const std::string& vid,
-  //   common::dataStructures::JobQueueType queueType = common::dataStructures::JobQueueType::JobsToTransferForUser) const;
 
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
   getNextRetrieveJobsToTransferBatch(const std::string& vid,

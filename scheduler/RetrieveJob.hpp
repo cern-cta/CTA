@@ -146,11 +146,6 @@ public:
   const common::dataStructures::TapeFile & selectedTapeFile() const;
   
   /**
-   * The mount to which the job belongs.
-   */
-  //RetrieveMount &mount;  
-  
-  /**
    * The NS archive file information
    */
   common::dataStructures::RetrieveRequest retrieveRequest;

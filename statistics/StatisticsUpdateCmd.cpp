@@ -32,7 +32,6 @@ namespace cta::statistics {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
-  // using namespace cta::catalogue;
   const StatisticsUpdateCmdLineArgs cmdLineArgs(argc, argv);
 
   if (cmdLineArgs.help) {

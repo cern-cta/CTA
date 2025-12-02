@@ -118,8 +118,6 @@ MemBlock* RecallMemoryManager::getFreeBlock() {
 // RecallMemoryManager::releaseBlock
 //------------------------------------------------------------------------------
 void RecallMemoryManager::releaseBlock(MemBlock* mb) {
-  //m_lc.pushOrReplace(cta::log::Param("blockId", mb->m_memoryBlockId));
-  //m_lc.log(cta::log::DEBUG, "RecallMemoryManager A block has been released");
   mb->reset();
   m_freeBlocks.push(mb);
 }

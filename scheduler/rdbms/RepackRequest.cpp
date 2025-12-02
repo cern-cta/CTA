@@ -133,7 +133,6 @@ namespace cta::schedulerdb {
                     .log(log::DEBUG, "In RepackRequest::addSubrequestsAndUpdateStats(): diskFileInfo.path ?");
             schedReq.diskFileInfo = rsr.archiveFile.diskFileInfo;
             rr.setSchedulerRequest(schedReq);
-            // rr.setIsVerifyOnly(rsr.isVerifyOnly); // rsr.isVerifyOnly does not exist
 
             // Disk system
             try {
@@ -551,10 +550,6 @@ namespace cta::schedulerdb {
   void RepackRequest::setMaxFilesToSelect(const uint64_t maxFilesToSelect) {
     m_maxFilesToSelect = maxFilesToSelect;
   }
-
-//void RepackRequest::update() const {
-//  throw cta::exception::NotImplementedException();
-//}
 
   void RepackRequest::insert() {
     log::ScopedParamContainer params(m_lc);

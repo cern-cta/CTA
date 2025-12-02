@@ -285,7 +285,6 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
           logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_delete_sec_context() minor status", gssMinStat, GSS_C_GSS_CODE);
         }
       }
-      // gss_release_buffer(&gssMinStat, &gssSendToken);
       bNext = false;
       break;
     default:

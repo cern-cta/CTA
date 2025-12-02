@@ -31,7 +31,6 @@ struct RetrieveJobSummaryRow {
   std::string vid;
   std::optional<std::string> activity;
   uint64_t priority;
-  //schedulerdb::RetrieveJobStatus status;
   std::string mountPolicy;
   uint64_t minRetrieveRequestAge;
   std::optional<std::string> diskSystemName;
@@ -47,7 +46,6 @@ struct RetrieveJobSummaryRow {
 
   RetrieveJobSummaryRow& operator=(const rdbms::Rset& rset) {
     vid = rset.columnString("VID");
-    //status = from_string<schedulerdb::RetrieveJobStatus>(rset.columnString("STATUS"));
     activity = rset.columnOptionalString("ACTIVITY");
     diskSystemName = rset.columnOptionalString("DISK_SYSTEM_NAME");
     jobsCount = rset.columnUint64("JOBS_COUNT");
@@ -97,35 +95,9 @@ struct RetrieveJobSummaryRow {
       FROM RETRIEVE_QUEUE_SUMMARY WHERE
         VID = :VID
     )SQL";
-    /*
-    std::string statusStr;
-    switch (type) {
-      case common::dataStructures::JobQueueType::JobsToTransferForUser:
-        statusStr = to_string(schedulerdb::RetrieveJobStatus::RJS_ToTransfer);
-        break;
-      case common::dataStructures::JobQueueType::JobsToReportToUser:
-        statusStr = to_string(schedulerdb::RetrieveJobStatus::RJS_ToReportToUserForFailure);
-        break;
-      case common::dataStructures::JobQueueType::JobsToReportToRepackForSuccess:
-        statusStr = to_string(schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForSuccess);
-        break;
-      case common::dataStructures::JobQueueType::JobsToReportToRepackForFailure:
-        statusStr = to_string(schedulerdb::RetrieveJobStatus::RJS_ToReportToRepackForFailure);
-        break;
-      case common::dataStructures::JobQueueType::JobsToTransferForRepack:
-        // not used for Retrieve
-        throw cta::exception::Exception(
-          "Did not expect queue type JobsToTransferForRepack in RetrieveJobSummaryRow::selectVid");
-        break;
-      case common::dataStructures::JobQueueType::FailedJobs:
-        statusStr = to_string(schedulerdb::RetrieveJobStatus::RJS_Failed);
-        break;
-    }
-     */
 
     auto stmt = conn.createStmt(sql);
     stmt.bindString(":VID", vid);
-    //stmt.bindString(":STATUS", statusStr);
     return stmt.executeQuery();
   }
   /**
