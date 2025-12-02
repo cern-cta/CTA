@@ -1586,7 +1586,6 @@ std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getA
   std::vector<std::string> expiredDiskSystems;
   auto it = diskSystemSleepMap.begin();
   while (it != diskSystemSleepMap.end()) {
-    const std::string diskName = it->first;
     const RelationalDB::DiskSleepEntry& entry = it->second;
     cta::log::ScopedParamContainer(logContext)
               .add("currentTime", currentTime)
@@ -1596,9 +1595,10 @@ std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getA
               .log(cta::log::DEBUG,
                    "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Checking sleeping disk systems.");
     if (currentTime - entry.timestamp > entry.sleepTime) {
+      const std::string diskName = it->first;
+      expiredDiskSystems.push_back(diskName);
       // erase; iterator is invalidated, but the next one is returned
       it = diskSystemSleepMap.erase(it);
-      expiredDiskSystems.push_back(diskName);
     } else {
       ++it;
     }
