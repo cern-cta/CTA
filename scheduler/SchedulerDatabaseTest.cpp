@@ -161,51 +161,48 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
 #ifdef LOOPING_TEST
   do {
 #endif
-    for (size_t i = 0; i < filesToDo; i++) {
-      lambdas.emplace_back([i, &db, &lc]() {
-        cta::common::dataStructures::ArchiveRequest ar;
-        cta::log::LogContext locallc = lc;
-        cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
-        afqc.copyToPoolMap.insert({1, "tapePool"});
-        afqc.fileId = 0;
-        afqc.mountPolicy.name = "mountPolicy";
-        afqc.mountPolicy.archivePriority = 1;
-        afqc.mountPolicy.archiveMinRequestAge = 0;
-        afqc.mountPolicy.retrievePriority = 1;
-        afqc.mountPolicy.retrieveMinRequestAge = 0;
-        afqc.mountPolicy.creationLog = {"u",
-                                        "h",
-                                        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-        afqc.mountPolicy.lastModificationLog = {"u",
-                                                "h",
-                                                std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-        afqc.mountPolicy.comment = "comment";
-        afqc.fileId = i;
-        ar.archiveReportURL = "";
-        ar.checksumBlob.insert(cta::checksum::NONE, "");
-        ar.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-        uuid_t fileUUID;
-        uuid_generate(fileUUID);
-        char fileUUIDStr[37];
-        uuid_unparse(fileUUID, fileUUIDStr);
-        ar.diskFileID = fileUUIDStr;
-        ar.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
-        ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-        ar.diskFileInfo.gid = DISK_FILE_GID;
-        ar.fileSize = 1000;
-        ar.requester = {"user", "group"};
-        ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
-        ar.storageClass = "storageClass";
-        db.queueArchive("eosInstance", ar, afqc, locallc);
-      });
-      jobInsertions.emplace_back(std::async(std::launch::async, lambdas.back()));
-    }
-    for (auto& j : jobInsertions) {
-      j.get();
-    }
-    jobInsertions.clear();
-    lambdas.clear();
-    db.waitSubthreadsComplete();
+  for (size_t i=0; i<filesToDo; i++) {
+    lambdas.emplace_back(
+    [i,&db,&lc](){
+      cta::common::dataStructures::ArchiveRequest ar;
+      cta::log::LogContext locallc=lc;
+      cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
+      afqc.copyToPoolMap.insert({1, "tapePool"});
+      afqc.fileId = 0;
+      afqc.mountPolicy.name = "mountPolicy";
+      afqc.mountPolicy.archivePriority = 1;
+      afqc.mountPolicy.archiveMinRequestAge = 0;
+      afqc.mountPolicy.retrievePriority = 1;
+      afqc.mountPolicy.retrieveMinRequestAge = 0;
+      afqc.mountPolicy.creationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      afqc.mountPolicy.lastModificationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      afqc.mountPolicy.comment = "comment";
+      afqc.fileId = i;
+      // ar.archiveReportURL=""; // this cannot be an empty string for the PG scheduler... check with Jaro if this can be changed
+      ar.archiveReportURL = "test://archive-report-url";
+      ar.archiveErrorReportURL = "test://error-report-url";
+      ar.checksumBlob.insert(cta::checksum::NONE, "");
+      ar.creationLog = { "user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      uuid_t fileUUID;
+      uuid_generate(fileUUID);
+      char fileUUIDStr[37];
+      uuid_unparse(fileUUID, fileUUIDStr);
+      ar.diskFileID = fileUUIDStr;
+      ar.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
+      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      ar.diskFileInfo.gid = DISK_FILE_GID;
+      ar.fileSize = 1000;
+      ar.requester = { "user", "group" };
+      ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
+      ar.storageClass = "storageClass";
+      db.queueArchive("eosInstance", ar, afqc, locallc);
+    });
+    jobInsertions.emplace_back(std::async(std::launch::async,lambdas.back()));
+  }
+  for (auto &j: jobInsertions) { j.get(); }
+  jobInsertions.clear();
+  lambdas.clear();
+  db.waitSubthreadsComplete();
 
     // Then load all archive jobs into memory
     // Create mount.
@@ -280,6 +277,8 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
       ar.requester = {"user", "group"};
       ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
       ar.storageClass = "storageClass";
+      ar.archiveReportURL = "test://archive-report-url";
+      ar.archiveErrorReportURL = "test://error-report-url";
       db.queueArchive("eosInstance", ar, afqc, locallc);
     });
     jobInsertions.emplace_back(std::async(std::launch::async, lambdas.back()));
@@ -390,6 +389,8 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
     rr.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
     rr.requester = {"user", "group"};
     rr.dstURL = std::string("root://") + "a" + ".disk.system/" + std::to_string(0);
+      // Populate errorReportURL (required for PostgreSQL scheduler - cannot be empty)
+      rr.errorReportURL = "test://error-report-url";
     std::string dsName = "ds-A";
     db.queueRetrieve(rr, rfqc, dsName, locallc);
   };
@@ -554,7 +555,9 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
                                               std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       afqc.mountPolicy.comment = "comment";
       afqc.fileId = id;
-      ar.archiveReportURL = "";
+      // ar.archiveReportURL="";
+      ar.archiveReportURL = "test://archive-report-url";
+      ar.archiveErrorReportURL = "test://error-report-url";
       ar.checksumBlob.insert(cta::checksum::NONE, "");
       ar.creationLog = {"user", "host", creationTime};
       uuid_t fileUUID;
