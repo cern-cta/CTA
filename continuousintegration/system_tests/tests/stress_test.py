@@ -13,8 +13,6 @@ class StressParams:
     num_files_per_dir: int
     # File size in bytes
     file_size: int
-    # Path to an archive directory on EOS
-    archive_directory: str
     io_threads: int
 
 
@@ -44,7 +42,7 @@ def test_hosts_present_stress(env):
 @pytest.mark.eos
 def test_generate_and_copy_files(env, stress_params):
     disk_instance: DiskInstanceHost = env.disk_instance[0]
-    archive_directory = env.disk_instance[0].base_dir + "/cta/stress"
+    archive_directory = env.disk_instance[0].base_dir_path + "/cta/stress"
     # For now this is an eos client (hence we mark all methods here as such)
     # We should factor out all the exec() into dedicated methods for disk_client_host.py
     eos_client: EosClientHost = env.eos_client[0]
@@ -110,7 +108,7 @@ def test_generate_and_copy_files(env, stress_params):
 # We execute this directly on the mgm to bypass some networking between pods (should be negligible though)
 @pytest.mark.eos
 def test_wait_for_archival(env):
-    archive_directory = env.disk_instance[0].base_dir + "/cta/stress"
+    archive_directory = env.disk_instance[0].base_dir_path + "/cta/stress"
     timeout_secs = 300
     disk_instance: DiskInstanceHost = env.disk_instance[0]
 

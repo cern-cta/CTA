@@ -47,7 +47,7 @@ class TestEnv:
         return result
 
     @staticmethod
-    def get_k8s_connections_by_label(namespace: str, label_key: str, label_value: str, container_value: str = ""):
+    def get_k8s_connections_by_label(namespace: str, label_key: str, label_value: str, container_value: str = "", allow_partial_label_value_match: bool = False):
         """
         Returns a list of K8sConnection objects.
         label_value and container_value can be exact matches or partial matches.
@@ -61,9 +61,14 @@ class TestEnv:
         for pod in pods.get("items", []):
             labels = pod.get("metadata", {}).get("labels", {})
             v = labels.get(label_key)
-
-            if not v or label_value not in v:
+            if not v:
                 continue
+            if allow_partial_label_value_match:
+                if label_value not in v:
+                    continue
+            else:
+                if v != label_value:
+                    continue
 
             containers = pod.get("spec", {}).get("containers", [])
             for c in containers:
@@ -77,7 +82,7 @@ class TestEnv:
     @staticmethod
     def fromNamespace(namespace: str):
         return TestEnv(
-            # Our "cta-client" should actually be an eos-client. However, the current test suite mixes these concepts
+            # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these concepts
             # Something to be changed once we move them over....
             eos_client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
             cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"), # TODO: bug here (as cta-cli matches cta-client as well)
@@ -88,7 +93,7 @@ class TestEnv:
                 namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-rmcd"
             ),
             cta_taped_conns=TestEnv.get_k8s_connections_by_label(
-                namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-taped"
+                namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-taped", allow_partial_label_value_match=True
             ),
             eos_mgm_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "mgm", "mgm"),
         )
