@@ -2290,6 +2290,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
       ar.diskFileInfo.gid = DISK_FILE_GID;
+      // Populate archiveReportURL (required for PostgreSQL scheduler - cannot be empty)
+      ar.archiveReportURL = "test://archive-report-url";
+      ar.archiveErrorReportURL = "test://error-report-url";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, ar, logContext);
@@ -2443,6 +2446,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
       ar.diskFileInfo.gid = DISK_FILE_GID;
+      // Populate archiveReportURL (required for PostgreSQL scheduler - cannot be empty)
+      ar.archiveReportURL = "test://archive-report-url";
+      ar.archiveErrorReportURL = "test://error-report-url";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -2608,6 +2614,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
       ar.diskFileInfo.gid = DISK_FILE_GID;
+      // Populate archiveReportURL (required for PostgreSQL scheduler - cannot be empty)
+      ar.archiveReportURL = "test://archive-report-url";
+      ar.archiveErrorReportURL = "test://error-report-url";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -2775,6 +2784,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
       ar.diskFileInfo.gid = DISK_FILE_GID;
+      // Populate archiveReportURL (required for PostgreSQL scheduler - cannot be empty)
+      ar.archiveReportURL = "test://archive-report-url";
+      ar.archiveErrorReportURL = "test://error-report-url";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId,s_diskInstance,ar,logContext);
@@ -2936,6 +2948,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
       ar.diskFileInfo.gid = DISK_FILE_GID;
+      // Populate archiveReportURL (required for PostgreSQL scheduler - cannot be empty)
+      ar.archiveReportURL = "test://archive-report-url";
+      ar.archiveErrorReportURL = "test://error-report-url";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, ar, logContext);
@@ -3103,6 +3118,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
       ar.diskFileInfo.gid = DISK_FILE_GID;
+      // Populate archiveReportURL (required for PostgreSQL scheduler - cannot be empty)
+      ar.archiveReportURL = "test://archive-report-url";
+      ar.archiveErrorReportURL = "test://error-report-url";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, ar, logContext);
@@ -3275,6 +3293,9 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
       ar.diskFileInfo.path = "y";
       ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
       ar.diskFileInfo.gid = DISK_FILE_GID;
+      // Populate archiveReportURL (required for PostgreSQL scheduler - cannot be empty)
+      ar.archiveReportURL = "test://archive-report-url";
+      ar.archiveErrorReportURL = "test://error-report-url";
       const auto archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, ar.storageClass, ar.requester, logContext);
       archiveFileIds.push_back(archiveFileId);
       scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, ar, logContext);
