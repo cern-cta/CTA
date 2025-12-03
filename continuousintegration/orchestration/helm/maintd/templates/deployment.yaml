@@ -113,6 +113,10 @@ spec:
           mountPath: /etc/cta/otlp-basic-auth-pwd.conf
           subPath: otlp-basic-auth-pwd.conf
         {{- end }}
+      {{- if eq $schedulerConfig.backend "vfs" }}
+        - name: vfs-storage-volume
+          mountPath: /objectstore
+      {{- end }}
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -135,6 +139,11 @@ spec:
       - name: cta-ceph-volume
         configMap:
           name: ceph-conf
+      {{- end }}
+      {{- if eq $schedulerConfig.backend "vfs" }}
+      - name: vfs-storage-volume
+        persistentVolumeClaim:
+          claimName: scheduler-vfs-pvc
       {{- end }}
       - name: cta-maintd-config
         configMap:
