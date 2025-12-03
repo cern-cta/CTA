@@ -102,7 +102,8 @@ int main(int argc, char ** argv) {
     try {
       dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
     } catch (std::bad_cast &){}
-    std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
+    auto params = be->getParams();
+    std::cout << "Object store path: " << params->toURL() << std::endl;
     // Open the root entry RW
     cta::objectstore::RootEntry re(*be);
     cta::objectstore::ScopedExclusiveLock rel(re);

@@ -102,7 +102,8 @@ int main(int argc, char ** argv) {
     } catch (std::bad_cast &){}
     cta::objectstore::GenericObject ge(objectName, *be);
     ge.fetchNoLock();
-    std::string objectStorePath = be->getParams()->toURL();
+    auto params = be->getParams();
+    std::string objectStorePath = params->toURL();
     if (dump_object_body_only) {
       cta::utils::json::object::JSONCObject jObject;
       jObject.buildFromJSON(ge.dump().second);
@@ -120,7 +121,7 @@ int main(int argc, char ** argv) {
         jObject.buildFromJSON(oss.str());
         std::cout << jObject.getJSONPretty() << std::endl;
       } else {
-        std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
+        std::cout << "Object store path: " << params->toURL() << std::endl;
         std::cout << "Object name: " << objectName << std::endl;
         std::cout << "Header dump:" << std::endl;
         std::cout << headerDump;

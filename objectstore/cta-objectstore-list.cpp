@@ -50,7 +50,8 @@ int main(int argc, char ** argv) {
       dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
     } catch (std::bad_cast &){}
     // If not, nevermind.
-    std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
+    auto params = be->getParams();
+    std::cout << "Object store path: " << params->toURL() << std::endl;
     auto l = be->list();
     for (auto o=l.begin(); o!=l.end(); o++) {
       std::cout << *o << std::endl;

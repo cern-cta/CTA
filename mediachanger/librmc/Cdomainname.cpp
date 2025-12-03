@@ -51,9 +51,14 @@ int Cdomainname(char* name, int namelen) {
         if (*p != '\0') {
           *(p + strlen(p) - 1) = '\0';
         }
-        name[namelen] = '\0';
-        strncpy(name, p, namelen + 1);
-        if (name[namelen] != '\0') {
+        if (namelen == 0) {
+          serrno = EINVAL;
+          return -1;
+        }
+        size_t maxcopy = namelen - 1;
+        name[maxcopy] = '\0';
+        strncpy(name, p, maxcopy);
+        if (name[maxcopy] != '\0') {
           serrno = EINVAL;
           return -1;
         }

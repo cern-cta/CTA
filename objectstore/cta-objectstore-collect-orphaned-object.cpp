@@ -77,7 +77,8 @@ int main(int argc, char ** argv) {
     try {
       dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
     } catch (std::bad_cast &){}
-    std::cout << "Object store path: " << be->getParams()->toURL() << std::endl;
+    auto params = be->getParams();
+    std::cout << "Object store path: " << params->toURL() << std::endl;
     // Try and open the object.
     cta::objectstore::GenericObject go(objectName, *be);
     cta::objectstore::ScopedExclusiveLock gol(go);

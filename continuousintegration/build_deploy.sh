@@ -370,7 +370,7 @@ build_deploy() {
     fi
 
     if [[ ${enable_address_sanitizer} = true ]]; then
-      build_rpm_flags+=" --address-sanitizer"
+      build_rpm_flags+=" --enable-address-sanitizer"
     fi
 
     print_header "BUILDING RPMS"

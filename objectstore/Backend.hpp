@@ -20,6 +20,7 @@
 #include <string>
 #include <list>
 #include <functional>
+#include <memory>
 
 #include "common/exception/Exception.hpp"
 
@@ -246,7 +247,7 @@ class Backend {
    * Returns a type specific representation of the parameters
    * @return pointer to the newly created representation.
    */
-  virtual Parameters * getParams() = 0;
+  virtual std::unique_ptr<Backend::Parameters> getParams() = 0;
 
   /**
    * Return the name of the class. Mostly usefull in tests

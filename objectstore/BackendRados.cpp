@@ -1087,12 +1087,12 @@ std::string BackendRados::Parameters::toURL() {
 }
 
 
-BackendRados::Parameters* BackendRados::getParams() {
-  std::unique_ptr<Parameters> ret(new Parameters);
+std::unique_ptr<Backend::Parameters> BackendRados::getParams() {
+  auto ret = std::make_unique<BackendRados::Parameters>();
   ret->m_pool = m_pool;
   ret->m_userId = m_user;
   ret->m_namespace = m_namespace;
-  return ret.release();
+  return ret;
 }
 
 } // namespace cta::objectstore
