@@ -228,10 +228,10 @@ std::list<std::string> BackendVFS::list() {
   return ret;
 }
 
-BackendVFS::Parameters* BackendVFS::getParams() {
-  std::unique_ptr<Parameters> ret(new Parameters);
+std::unique_ptr<Backend::Parameters> BackendVFS::getParams() {
+  auto ret = std::make_unique<BackendVFS::Parameters>();
   ret->m_path = m_root;
-  return ret.release();
+  return ret;
 }
 
 void BackendVFS::ScopedLock::release() {

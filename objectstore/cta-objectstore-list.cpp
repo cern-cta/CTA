@@ -51,7 +51,6 @@ int main(int argc, char ** argv) {
     } catch (std::bad_cast &){}
     // If not, nevermind.
     auto params = be->getParams();
-    [[maybe_unused]] std::unique_ptr<cta::objectstore::Backend::Parameters> paramsCleanupPtr(params); // Ensures the params pointer is always cleaned up correctly
     std::cout << "Object store path: " << params->toURL() << std::endl;
     auto l = be->list();
     for (auto o=l.begin(); o!=l.end(); o++) {

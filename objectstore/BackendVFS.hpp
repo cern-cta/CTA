@@ -200,7 +200,7 @@ class BackendVFS: public Backend {
     std::string m_path;
   };
 
-  Parameters * getParams() override;
+  std::unique_ptr<Backend::Parameters> getParams() override;
 
 
   std::string typeName() override {

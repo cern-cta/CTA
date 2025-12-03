@@ -347,7 +347,7 @@ public:
     std::string m_namespace;
   };
 
-  Parameters * getParams() override;
+  std::unique_ptr<Backend::Parameters> getParams() override;
 
   std::string typeName() override {
     return "cta::objectstore::BackendRados";

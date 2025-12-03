@@ -103,7 +103,6 @@ int main(int argc, char ** argv) {
     cta::objectstore::GenericObject ge(objectName, *be);
     ge.fetchNoLock();
     auto params = be->getParams();
-    [[maybe_unused]] std::unique_ptr<cta::objectstore::Backend::Parameters> paramsCleanupPtr(params); // Ensures the params pointer is always cleaned up correctly
     std::string objectStorePath = params->toURL();
     if (dump_object_body_only) {
       cta::utils::json::object::JSONCObject jObject;
