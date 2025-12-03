@@ -82,7 +82,7 @@ public:
       m_username("cta_test"),
       m_database("cta_scheduler"),
       m_namespace("public"),
-      m_useShm(true)  // Use /dev/shm (tmpfs) for speed
+      m_useShm(false)  // Use /tmp instead of /dev/shm (containers often have small shm)
   {
     // Generate unique temp directory name
     char tmpTemplate[] = "/tmp/cta-pg-test-XXXXXX";
