@@ -709,6 +709,7 @@ RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, const size_t l
         WHERE STATUS = :RETRIEVESTATUS
         ORDER BY JOB_ID
         LIMIT :LIMIT
+        FOR UPDATE SKIP LOCKED
     )
     RETURNING rraq.*,
               COALESCE(
