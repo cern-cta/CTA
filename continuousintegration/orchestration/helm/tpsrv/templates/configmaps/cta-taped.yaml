@@ -11,7 +11,7 @@ metadata:
   labels:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
-  cta-taped-{{ $drive.name }}.conf: |-
+  cta-taped.conf: |-
     # cta-taped setup
     taped BufferSizeBytes {{ $.Values.conf.taped.bufferSizeBytes }}
     taped BufferCount {{ $.Values.conf.taped.bufferCount }}
@@ -20,7 +20,7 @@ data:
     taped UseEncryption {{ $.Values.conf.taped.useEncryption }}
     taped DriveName {{ $drive.name }}
     taped DriveLogicalLibrary {{ $drive.name }}
-    taped DriveDevice /dev/{{ $drive.device }}
+    taped DriveDevice {{ $drive.device }}
     taped DriveControlPath smc{{ $driveSlot }}
     taped LogMask {{ $.Values.conf.taped.logMask }}
     # Decrease schedulerDB cache timeout for tests

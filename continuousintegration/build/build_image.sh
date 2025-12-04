@@ -165,7 +165,7 @@ buildImage() {
       --build-arg USE_INTERNAL_REPOS=${use_internal_repos}
   )
   # Clean up again
-  rm -rf "${rpm_default_src}"
+  # rm -rf "${rpm_default_src}"
 
   if [[ "$load_into_minikube" == "true" ]]; then
     # This step is necessary because atm the container runtime and minikube don't share the same docker runtime and local registry

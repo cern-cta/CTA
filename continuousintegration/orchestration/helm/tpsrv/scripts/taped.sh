@@ -29,5 +29,5 @@ fi
 # the setresgid(-1, 1474, -1) and setresuid(-1, 14029, -1) system calls from
 # working correctly
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Ready"
-tail -F "/var/log/cta/cta-taped-${DRIVE_NAME}.log" &
-runuser -c "/usr/bin/cta-taped -c /etc/cta/cta-taped-${DRIVE_NAME}.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped-${DRIVE_NAME}.log"
+tail -F "/var/log/cta/cta-taped.log" &
+runuser -c "/usr/bin/cta-taped -c /etc/cta/cta-taped.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped.log"

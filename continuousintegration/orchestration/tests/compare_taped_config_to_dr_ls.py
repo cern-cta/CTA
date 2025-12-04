@@ -25,7 +25,7 @@ def main():
     ns = args.namespace
 
     taped_config = run(
-        f"kubectl -n {ns} exec {CTA_TPSRV_POD} -c cta-taped-0 -- " "bash -c 'cat /etc/cta/cta-taped*.conf'"
+        f"kubectl -n {ns} exec {CTA_TPSRV_POD} -c cta-taped-0 -- " "bash -c 'cat /etc/cta/cta-taped.conf'"
     )
 
     drive_name = run(f"kubectl -n {ns} exec {CTA_TPSRV_POD} -c cta-taped-0 -- printenv DRIVE_NAME").strip()
