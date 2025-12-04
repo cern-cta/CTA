@@ -54,10 +54,10 @@ devices=$(kubectl get all --namespace $namespace -l cta/library-device -o jsonpa
 
 for library_device in $devices; do
   echo "Unloading tapes that could be remaining in the drives from previous runs for library device: $library_device"
-  mtx -f /dev/${library_device} status
-  for unload in $(mtx -f /dev/${library_device}  status | grep '^Data Transfer Element' | grep -vi ':empty' | sed -e 's/Data Transfer Element /drive/;s/:.*Storage Element /-slot/;s/ .*//'); do
+  mtx -f ${library_device} status
+  for unload in $(mtx -f ${library_device}  status | grep '^Data Transfer Element' | grep -vi ':empty' | sed -e 's/Data Transfer Element /drive/;s/:.*Storage Element /-slot/;s/ .*//'); do
     # normally, there is no need to rewind with virtual tapes...
-    mtx -f /dev/${library_device} unload $(echo ${unload} | sed -e 's/^.*-slot//') $(echo ${unload} | sed -e 's/drive//;s/-.*//') || echo "COULD NOT UNLOAD TAPE"
+    mtx -f ${library_device} unload $(echo ${unload} | sed -e 's/^.*-slot//') $(echo ${unload} | sed -e 's/drive//;s/-.*//') || echo "COULD NOT UNLOAD TAPE"
   done
 done
 

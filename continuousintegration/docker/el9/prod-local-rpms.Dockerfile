@@ -50,58 +50,47 @@ priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
     dnf clean all --enablerepo=\* && \
     rm -rf /etc/rc.d/rc.local
 
-# Optional override repos
-COPY /etc/yum.repos.d-internal/* /etc/yum.repos.d/
-
 
 ###############################################
-# SERVICE 1: cta-frontend-grpc
+# SERVICE cta-frontend-grpc
 ###############################################
 FROM base AS cta-frontend-grpc
 
 RUN dnf install -y \
       cta-frontend-grpc \
-      cta-catalogueutils \
       cta-debuginfo \
+      cta-frontend-grpc-debuginfo \
       cta-debugsource && \
-    if [[ "$SCHEDULER_BACKEND" == "ceph" ]]; then \
-        dnf config-manager --enable ceph && \
-        dnf install -y ceph-common; \
-    fi && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
-RUN rm "${CTAREPODIR}"
+RUN rm -rf "${CTAREPODIR}"
 
 USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log"]
 
 
 ###############################################
-# SERVICE 2: cta-frontend-xrd
+# SERVICE cta-frontend-xrd
 ###############################################
 FROM base AS cta-frontend-xrd
 
 RUN dnf install -y \
       cta-frontend \
-      cta-catalogueutils \
       cta-debuginfo \
+      cta-frontend-debuginfo \
       cta-debugsource && \
-    if [[ "$SCHEDULER_BACKEND" == "ceph" ]]; then \
-        dnf config-manager --enable ceph && \
-        dnf install -y ceph-common; \
-    fi && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
-RUN rm "${CTAREPODIR}"
+RUN rm -rf "${CTAREPODIR}"
 
 USER cta
 CMD ["/bin/bash", "-c", "cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4"]
 
 
 ###############################################
-# SERVICE 3: cta-taped
+# SERVICE cta-taped
 ###############################################
 FROM base AS cta-taped
 
@@ -113,14 +102,55 @@ RUN dnf install -y \
       cta-tape-label \
       cta-eosdf \
       cta-debuginfo \
+      cta-taped-debuginfo \
       cta-debugsource && \
-    if [[ "$SCHEDULER_BACKEND" == "ceph" ]]; then \
-        dnf config-manager --enable ceph && \
-        dnf install -y ceph-common; \
-    fi && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
-RUN rm "${CTAREPODIR}"
+RUN rm -rf "${CTAREPODIR}"
 
 CMD ["/bin/bash", "-c", "runuser -c \"/usr/bin/cta-taped -c /etc/cta/cta-taped.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped.log\""]
+
+
+###############################################
+# SERVICE cta-rmcd
+###############################################
+FROM base AS cta-rmcd
+
+RUN dnf install -y \
+      mt-st \
+      mtx \
+      lsscsi \
+      sg3_utils \
+      cta-rmcd \
+      cta-smc \
+      cta-debuginfo \
+      cta-rmcd-debuginfo \
+      cta-debugsource && \
+    dnf clean all
+
+# Remove the local RPMs to reduce size
+RUN rm -rf "${CTAREPODIR}"
+
+CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
+
+###############################################
+# TOOLS cta-tools
+###############################################
+FROM base AS cta-tools
+
+RUN dnf install -y \
+      cta-catalogue-utils \
+      cta-admin \
+      cta-debuginfo \
+      cta-objectstore-tools \
+      cta-scheduler-utils \
+      cta-cli \
+      cta-admin-grpc \
+      cta-debugsource && \
+    dnf clean all
+
+# Remove the local RPMs to reduce size
+RUN rm -rf "${CTAREPODIR}"
+
+ENTRYPOINT ["sleep", "infinity"]
