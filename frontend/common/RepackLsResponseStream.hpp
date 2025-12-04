@@ -37,6 +37,7 @@ public:
 private:
   std::list<cta::xrd::Data> m_repackItems;
   void collectRepacks(const std::optional<std::string>& vid);
+  std::optional<std::string> m_schedulerBackendName;
 };
 
 }  // namespace cta::frontend
