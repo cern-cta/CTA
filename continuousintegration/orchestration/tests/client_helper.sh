@@ -175,17 +175,22 @@ wait_for_tape_state() {
   SECONDS_PASSED=0
   WAIT_FOR_EVICTED_FILE_TIMEOUT=90
   echo "$(date +%s) Waiting for tape $1 state to change to $2: Seconds passed = ${SECONDS_PASSED}"
-  while test $2 != $(admin_cta --json tape ls --vid $1 | jq -r '.[] | .state'); do
-    sleep 1
-    let SECONDS_PASSED=SECONDS_PASSED+1
-    echo "$(date +%s) Waiting for tape $1 state to change to $2: Seconds passed = ${SECONDS_PASSED}"
+  while :; do
+    CURRENT="$(admin_cta --json tape ls --vid "$1" | jq -r '.[] | .state')"
 
-    if test ${SECONDS_PASSED} == ${WAIT_FOR_EVICTED_FILE_TIMEOUT}; then
-      echo "$(date +%s) ERROR: Timed out after ${WAIT_FOR_EVICTED_FILE_TIMEOUT} seconds waiting for tape $1 state to change to $2"
-      exit 1
+    if [ "$CURRENT" = "$2" ]; then
+      echo "$(date +%s) Tape $1 reached state $2"
+      return 0
+    fi
+    sleep 1
+    SECONDS_PASSED=$((SECONDS_PASSED + 1))
+    echo "$(date +%s) Waiting... ($SECONDS_PASSED seconds)  current=$CURRENT target=$2"
+
+    if [ "$SECONDS_PASSED" -ge "$WAIT_FOR_EVICTED_FILE_TIMEOUT" ]; then
+      echo "$(date +%s) ERROR: Timed out after $WAIT_FOR_EVICTED_FILE_TIMEOUT seconds waiting for tape $1 → $2"
+      return 1
     fi
   done
-
 }
 
 # Pass "UP" or "DOWN" as argument
