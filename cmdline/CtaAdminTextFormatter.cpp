@@ -628,6 +628,7 @@ void TextFormatter::printRepackLsHeader() {
             "filesToArchive",
             "failed",
             "status",
+            "scheduler",
             "instance");
 }
 
@@ -650,6 +651,7 @@ void TextFormatter::print(const RepackLsItem& rels_item) {
     rels_item.files_left_to_archive(),                        //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3845829
     rels_item.total_failed_files(),                           //https://gitlab.cern.ch/cta/CTA/-/issues/680#note_3849927
     rels_item.status(),
+    rels_item.scheduler_backend_name(),
     rels_item.instance_name());
 }
 

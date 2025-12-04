@@ -37,6 +37,9 @@ RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue& catalo
   bool has_any = false;
   auto vid = request.getOptional(OptionString::VID, &has_any);
 
+  // Get scheduler backend name
+  m_schedulerBackendName = m_scheduler.getSchedulerBackendName();
+
   collectRepacks(vid);
 }
 
@@ -75,7 +78,7 @@ void RepackLsResponseStream::collectRepacks(const std::optional<std::string>& vi
     uint64_t filesLeftToArchive = repackRequest.totalFilesToArchive - repackRequest.archivedFiles;
     uint64_t totalFilesToRetrieve = repackRequest.totalFilesToRetrieve;
     uint64_t totalFilesToArchive = repackRequest.totalFilesToArchive;
-
+    repackRequestItem->set_scheduler_backend_name(m_schedulerBackendName);
     repackRequestItem->set_instance_name(m_instanceName);
     repackRequestItem->set_vid(repackRequest.vid);
     repackRequestItem->set_tapepool(tapeVidMap[repackRequest.vid].tapePoolName);
