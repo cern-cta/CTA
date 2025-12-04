@@ -374,8 +374,10 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
 
     // Get the best vid from the cache
     std::set<std::string, std::less<>> candidateVids;
+    std::string tfvids = "";
     for (auto& tf : criteria.archiveFile.tapeFiles) {
       candidateVids.insert(tf.vid);
+      tfvids += std::string(tf.vid);
     }
     logContext.log(cta::log::INFO, "In RelationalDB::queueRetrieve(): before sqlconn selection. ");
 
@@ -417,8 +419,12 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
       .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
     return ret;
   } catch (exception::Exception& ex) {
-    logContext.log(cta::log::ERR,
-                   "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve." + ex.getMessageValue());
+    log::ScopedParamContainer(logContext)
+            .add("tfvids", tfvids)
+            .add("ret.selectedVid", ret.selectedVid)
+            .add("totalTime", timeTotal.secs())
+            .log(cta::log::ERR,
+                 "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve." + ex.getMessageValue());
     return ret;
   }
 }
