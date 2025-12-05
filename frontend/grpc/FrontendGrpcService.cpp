@@ -41,7 +41,7 @@ constexpr const char* CLIENT_IDENTITY_NOT_SET_ERROR = "clientIdentity not set in
 namespace cta::frontend::grpc {
 
 std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
-CtaRpcImpl::checkGrpcRequestAuthMetadata(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::log::LogContext& lc){
+CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::log::LogContext& lc){
   // Retrieve metadata from the incoming request
   auto metadata = context->client_metadata();
 
@@ -112,7 +112,7 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  auto [status, clientIdentity] = checkGrpcRequestAuthMetadata(context, request, lc);
+  auto [status, clientIdentity] = checkWFERequestAuthMetadata(context, request, lc);
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(status.error_message());
@@ -142,7 +142,7 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  auto [status, clientIdentity] = checkGrpcRequestAuthMetadata(context, request, lc);
+  auto [status, clientIdentity] = checkWFERequestAuthMetadata(context, request, lc);
 
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
@@ -180,7 +180,7 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  auto [status, clientIdentity] = checkGrpcRequestAuthMetadata(context, request, lc);
+  auto [status, clientIdentity] = checkWFERequestAuthMetadata(context, request, lc);
 
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
@@ -221,7 +221,7 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  auto [status, clientIdentity] = checkGrpcRequestAuthMetadata(context, request, lc);
+  auto [status, clientIdentity] = checkWFERequestAuthMetadata(context, request, lc);
 
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
@@ -278,7 +278,7 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   cta::log::LogContext lc(m_frontendService->getLogContext());
   cta::log::ScopedParamContainer sp(lc);
 
-  auto [status, clientIdentity] = checkGrpcRequestAuthMetadata(context, request, lc);
+  auto [status, clientIdentity] = checkWFERequestAuthMetadata(context, request, lc);
 
   if (!status.ok()) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
