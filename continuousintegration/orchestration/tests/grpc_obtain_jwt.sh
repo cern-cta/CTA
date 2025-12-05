@@ -32,11 +32,11 @@ die() {
   exit 1
 }
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [grpc_obtain_jwt] Fetching JWT token from Keycloak for testing..."
+echo "Fetching JWT token from Keycloak for testing..."
 
 # Install jq if not already present
 if ! command -v jq &> /dev/null; then
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [grpc_obtain_jwt] Installing jq for JSON parsing..."
+  echo "Installing jq for JSON parsing..."
   dnf install -y jq || die "Failed to install jq"
 fi
 
@@ -52,7 +52,7 @@ response=$(curl -s -X POST "${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-conn
 access_token=$(echo "${response}" | jq -r .access_token)
 
 if [ -z "$access_token" ] || [ "$access_token" = "null" ]; then
-  echo "$(date '+%Y-%m-%d %H:%M:%S') [grpc_obtain_jwt] Keycloak response:"
+  echo "Keycloak response:"
   echo "${response}"
   die "Failed to extract access token from Keycloak response"
 fi
@@ -63,5 +63,4 @@ mkdir -p "$(dirname "$TOKEN_FILE")" || die "Failed to create directory for token
 # Write token to file
 printf "%s" "$access_token" > "$TOKEN_FILE" || die "Failed to write token to $TOKEN_FILE"
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [grpc_obtain_jwt] JWT token successfully saved to $TOKEN_FILE"
-echo "$(date '+%Y-%m-%d %H:%M:%S') [grpc_obtain_jwt] Token will be used for GRPC authentication in tests"
+echo "JWT token successfully saved to $TOKEN_FILE"

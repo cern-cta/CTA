@@ -78,16 +78,16 @@ fi
 kubectl --namespace ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 -m "docker cli"
 
 # If using GRPC with JWT authentication, obtain JWT token in cli and client pod
-if kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- sh -c '[ -f /etc/cta/cta-cli.conf ] && grep -q grpc /etc/cta/cta-cli.conf' 2>/dev/null; then
-  echo "Detected GRPC, obtaining JWT for cli pod..."
+if kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- printenv GRPC_SETUP_JWT 2>/dev/null | grep -q true; then
+  echo "Detected GRPC JWT authentication for cli pod, obtaining JWT..."
   kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- /root/grpc_obtain_jwt.sh || {
     echo "ERROR: Failed to obtain JWT token for GRPC authentication in cli pod"
     exit 1
   }
 fi
 
-if kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- sh -c '[ -f /etc/cta/cta-cli.conf ] && grep -q grpc /etc/cta/cta-cli.conf' 2>/dev/null; then
-  echo "Detected GRPC, obtaining JWT for client pod..."
+if kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- printenv GRPC_SETUP_JWT 2>/dev/null | grep -q true; then
+  echo "Detected GRPC JWT authentication for client pod, obtaining JWT..."
   kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -c client -- /root/grpc_obtain_jwt.sh || {
     echo "ERROR: Failed to obtain JWT token for GRPC authentication in client pod"
     exit 1

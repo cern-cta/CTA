@@ -39,10 +39,12 @@ cli:
           chain_cert_path: /etc/grpc-certs/ca.crt
           enabled: true
 
-  # JWT token fetching moved to main container startup script (ctacli-grpc.sh)
-  # This eliminates the need for an init container
   initContainer:
     enabled: false
+
+  extraEnv:
+    - name: GRPC_SETUP_JWT
+      value: "true"
 
   extraVolumes:
     volumeMounts:
@@ -71,10 +73,12 @@ client:
           chain_cert_path: /etc/grpc-certs/ca.crt
           enabled: true
 
-  # JWT token fetching moved to main container startup script (ctacli-grpc.sh)
-  # This eliminates the need for an init container and allows token refresh
   initContainer:
     enabled: false
+
+  extraEnv:
+    - name: GRPC_SETUP_JWT
+      value: "true"
 
   extraVolumes:
     volumeMounts:
