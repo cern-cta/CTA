@@ -66,7 +66,7 @@ def test_add_users(env):
 @pytest.mark.eos
 def test_create_wf_directory(env):
     base_dir: str = env.eos_mgm[0].base_dir_path
-    workflow_dir: str = f"${base_dir}/proc/cta/workflow"
+    workflow_dir: str = f"{base_dir}/proc/cta/workflow"
     env.eos_mgm[0].exec(f"eos mkdir -p {workflow_dir}")
     env.eos_mgm[0].exec(f'eos attr set sys.workflow.sync::create.default="proto" {workflow_dir}')
     env.eos_mgm[0].exec(f'eos attr set sys.workflow.sync::closew.default="proto" {workflow_dir}')
@@ -83,10 +83,10 @@ def test_create_wf_directory(env):
 @pytest.mark.eos
 def test_create_archive_directory(env) -> None:
     base_dir: str = env.eos_mgm[0].base_dir_path
-    archive_dir: str = f"${base_dir}/cta"
+    archive_dir: str = f"{base_dir}/cta"
     # TODO: can we somehow pass values from one test to the next?
     # Ideally I don't want to redefine this all over the place
-    workflow_dir: str = f"${base_dir}/proc/cta/workflow"
+    workflow_dir: str = f"{base_dir}/proc/cta/workflow"
     env.eos_mgm[0].exec(f"eos mkdir -p {archive_dir}")
     # Must be writable by eosusers and powerusers
     # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members
