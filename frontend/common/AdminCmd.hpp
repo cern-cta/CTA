@@ -30,8 +30,7 @@ class AdminCmd : public AdminCmdOptions {
 public:
   AdminCmd(const frontend::FrontendService& frontendService,
            const common::dataStructures::SecurityIdentity& clientIdentity,
-           const admin::AdminCmd& adminCmd,
-           const bool bypassAdminCheck = false);
+           const admin::AdminCmd& adminCmd);
 
   ~AdminCmd() override = default;
 

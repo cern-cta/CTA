@@ -181,11 +181,6 @@ public:
   bool getJwtAuth() const { return m_jwtAuth; }
 
   /*
-   * Get the experimental grpc disable admin auth check value
-   */
-  bool getexperimentalGrpcBypassAdminAuthCheck() const { return m_experimentalGrpcBypassAdminAuthCheck; }
-
-  /*
    * Get the feature flag to disable CTA admin commands
    */
   bool getenableCtaAdminCommands() const { return m_enableCtaAdminCommands; }
@@ -232,7 +227,6 @@ private:
   std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
   std::optional<int>                            m_pubkeyTimeout;        //!< The number of seconds after which to update the cache entry for a cached key
   bool                                          m_jwtAuth;                      //!< Feature flag to guard JWT auth when TLS is enabled
-  bool                                          m_experimentalGrpcBypassAdminAuthCheck; //!< Experimental feature flag to disable admin auth check for gRPC calls
   bool                                          m_enableCtaAdminCommands;      //!< Feature flag to disable CTA admin commands
   // clang-format on
 };
