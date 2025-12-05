@@ -41,7 +41,9 @@ constexpr const char* CLIENT_IDENTITY_NOT_SET_ERROR = "clientIdentity not set in
 namespace cta::frontend::grpc {
 
 std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
-CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::log::LogContext& lc){
+CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
+                                        const cta::xrd::Request* request,
+                                        cta::log::LogContext& lc) {
   // Retrieve metadata from the incoming request
   auto metadata = context->client_metadata();
 
@@ -51,15 +53,16 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context, const ct
     cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(), context->peer());
     return {::grpc::Status::OK, clientIdentity};
   } else {
-    auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                              m_frontendService->getJwtAuth(),
-                                                              m_pubkeyCache,
-                                                              m_tokenStorage,
-                                                              request->notification().wf().instance().name(),
-                                                              context->peer(),
-                                                              lc);
+    auto [status, clientIdentity] =
+      cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
+                                                                m_frontendService->getJwtAuth(),
+                                                                m_pubkeyCache,
+                                                                m_tokenStorage,
+                                                                request->notification().wf().instance().name(),
+                                                                context->peer(),
+                                                                lc);
     return std::make_pair(status, clientIdentity);
-  } 
+  }
 }
 
 Status CtaRpcImpl::processGrpcRequest(const cta::xrd::Request* request,
@@ -324,7 +327,6 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   return processGrpcRequest(request, response, lc, clientIdentity.value());
 }
 
-
 Status
 CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
   if (!m_frontendService->getenableCtaAdminCommands()) {
@@ -411,7 +413,8 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
  * and makes the rpc calls available through this class
  */
 CtaRpcImpl::CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService,
-                       std::shared_ptr<JwkCache> pubkeyCache, server::TokenStorage& tokenStorage)
+                       std::shared_ptr<JwkCache> pubkeyCache,
+                       server::TokenStorage& tokenStorage)
     : m_frontendService(frontendService),
       m_pubkeyCache(pubkeyCache),
       m_tokenStorage(tokenStorage) {}

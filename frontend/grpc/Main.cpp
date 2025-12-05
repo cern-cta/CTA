@@ -130,11 +130,10 @@ int main(const int argc, char *const *const argv) {
 
     // Build the shared JWK cache here even if JWT is disabled, in this case it will never be populated
     CurlJwksFetcher jwksFetcher;
-    std::shared_ptr<JwkCache> jwkCache =
-        std::make_shared<JwkCache>(jwksFetcher,
-                                   frontendService->getJwksUri().value_or(""),
-                                   frontendService->getPubkeyTimeout().value_or(0),
-                                   frontendService->getLogContext());
+    std::shared_ptr<JwkCache> jwkCache = std::make_shared<JwkCache>(jwksFetcher,
+                                                                    frontendService->getJwksUri().value_or(""),
+                                                                    frontendService->getPubkeyTimeout().value_or(0),
+                                                                    frontendService->getLogContext());
     // Setup TokenStorage for Kerberos authentication
     cta::frontend::grpc::server::TokenStorage tokenStorage;
 
@@ -247,7 +246,6 @@ int main(const int argc, char *const *const argv) {
 
     // Register negotiation service on main builder
     builder.RegisterService(&negotiationService->getService());
-
 
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.

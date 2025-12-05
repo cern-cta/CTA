@@ -47,6 +47,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
                              const std::string& peer,
                              cta::log::LogContext& lc);
 
-std::pair<::grpc::Status, std::string> validateKrb5Token(const std::string& token, server::TokenStorage& tokenStorage, cta::log::LogContext& lc);
+std::pair<::grpc::Status, std::string>
+validateKrb5Token(const std::string& token, server::TokenStorage& tokenStorage, cta::log::LogContext& lc);
 
 }  // namespace cta::frontend::grpc::common

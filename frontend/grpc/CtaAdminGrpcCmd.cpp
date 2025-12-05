@@ -39,11 +39,10 @@ void CtaAdminGrpcCmd::setupJwtAuthenticatedAdminCall(grpc::ClientContext& contex
   context.AddMetadata("authorization", "Bearer " + token_contents);
 }
 
-void
-CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
-                                                 grpc::ClientContext& context,
-                                                 const std::string& GSS_SPN,
-                                                 cta::log::FileLogger& log) {
+void CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
+                                                      grpc::ClientContext& context,
+                                                      const std::string& GSS_SPN,
+                                                      cta::log::FileLogger& log) {
   // First do a negotiation call to obtain a kerberos token, which will be attached to the call metadata
   // Storage for the KRB token
   std::string strToken {""};
@@ -78,8 +77,7 @@ CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> 
 }
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
-                           const std::string& config_file) {
+void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string& config_file) {
   cta::common::Config config(config_file);
   const auto& request = parsedCmd.getRequest();
   // Validate the Protocol Buffer
@@ -157,7 +155,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd,
     } else {
       throw cta::exception::UserError("Unrecognized authentication method '" + auth_method + "' specified");
     }
-  } // do not attach call credentials if using unencrypted connection
+  }  // do not attach call credentials if using unencrypted connection
 
   if (!isStreamCmd(request.admincmd())) {
     cta::xrd::Response response;

@@ -57,7 +57,6 @@ public:
 private:
   std::unordered_map<std::string, std::string> m_umapTokens;
   mutable std::shared_mutex m_mtxLockStorage;
-
 };
 
 } // namespace cta::frontend::grpc::server

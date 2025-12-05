@@ -21,7 +21,7 @@
 #include "common/utils/Base64.hpp"
 
 void cta::frontend::grpc::server::TokenStorage::store(const std::string& strToken,
-                                                       const std::string& strClientPrincipal) {
+                                                      const std::string& strClientPrincipal) {
   std::unique_lock<std::shared_mutex> lck(m_mtxLockStorage);
   m_umapTokens[strToken] = strClientPrincipal;
 }

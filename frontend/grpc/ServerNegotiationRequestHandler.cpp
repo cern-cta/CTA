@@ -247,15 +247,21 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
 
             std::string clientPrincipal;
             if (gssLocalNameMajStat == GSS_S_COMPLETE) {
-              clientPrincipal = std::string(reinterpret_cast<const char*>(gssLocalNameBuf.value), gssLocalNameBuf.length);
+              clientPrincipal =
+                std::string(reinterpret_cast<const char*>(gssLocalNameBuf.value), gssLocalNameBuf.length);
               gss_release_buffer(&gssMinStat, &gssLocalNameBuf);
             } else {
-              logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_localname() major status.", gssLocalNameMajStat, GSS_C_GSS_CODE);
-              logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_localname() minor status.", gssLocalNameMinStat, GSS_C_MECH_CODE);
+              logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_localname() major status.",
+                           gssLocalNameMajStat,
+                           GSS_C_GSS_CODE);
+              logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_localname() minor status.",
+                           gssLocalNameMinStat,
+                           GSS_C_MECH_CODE);
               m_streamState = StreamState::ERROR;
               m_response.set_is_complete(false);
               m_response.set_token("");
-              m_response.set_error_msg("Negotiation request failed: could not extract the local username from the GSS context");
+              m_response.set_error_msg(
+                "Negotiation request failed: could not extract the local username from the GSS context");
               gss_release_buffer(&gssMinStat, &gssSendToken);
               m_rwNegotiation.Write(m_response, m_tag);
               break;
@@ -264,7 +270,7 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
             // Store token with both client principal (username) and service principal
             m_negotiationService.tokenStorage().store(
               std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length),
-              clientPrincipal);                        // Client principal (authenticated user)
+              clientPrincipal);  // Client principal (authenticated user)
 
             m_rwNegotiation.Write(m_response, m_tag);
             break;

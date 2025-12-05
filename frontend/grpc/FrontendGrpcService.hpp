@@ -36,10 +36,12 @@ private:
   std::shared_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
   std::shared_ptr<JwkCache> m_pubkeyCache;
-  server::TokenStorage& m_tokenStorage; // required for the Admin rpc for Kerberos token validation
+  server::TokenStorage& m_tokenStorage;  // required for the Admin rpc for Kerberos token validation
 
 public:
-  CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService, std::shared_ptr<JwkCache> pubkeyCache, server::TokenStorage& tokenStorage);
+  CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService,
+             std::shared_ptr<JwkCache> pubkeyCache,
+             server::TokenStorage& tokenStorage);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }
   // Archive/Retrieve interface
@@ -53,7 +55,9 @@ public:
 
 private:
   std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
-  checkWFERequestAuthMetadata(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::log::LogContext& lc);
+  checkWFERequestAuthMetadata(::grpc::ServerContext* context,
+                              const cta::xrd::Request* request,
+                              cta::log::LogContext& lc);
 
   Status processGrpcRequest(const cta::xrd::Request* request,
                             cta::xrd::Response* response,

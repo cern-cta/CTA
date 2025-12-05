@@ -118,7 +118,7 @@ private:
   bool m_enableCtaAdminCommands;           //!< Feature flag to disable CTA admin commands
   bool m_jwtAuthEnabled;                   //!< Whether JWT authentication is enabled
   std::shared_ptr<JwkCache> m_pubkeyCache;  //!< Shared JWK cache for token validation
-  server::TokenStorage& m_tokenStorage;    //!< Required for Kerberos token validation
+  server::TokenStorage& m_tokenStorage;     //!< Required for Kerberos token validation
 };
 
 // request object will be filled in by the Parser of the command on the client-side.

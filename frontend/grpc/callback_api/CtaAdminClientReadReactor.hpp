@@ -245,7 +245,8 @@ public:
   CtaAdminClientReadReactor(::grpc::ClientContext& context,
                             cta::xrd::CtaRpcStream::Stub* client_stub,
                             const cta::admin::CtaAdminParsedCmd& parsedCmd)
-      : m_context(context), m_isJson(parsedCmd.isJson())  {
+      : m_context(context),
+        m_isJson(parsedCmd.isJson()) {
     const auto& request = parsedCmd.getRequest();
     client_stub->async()->GenericAdminStream(&m_context, &request, this);
     StartRead(&m_response);  // where to store the received response?
