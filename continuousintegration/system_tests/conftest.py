@@ -82,10 +82,10 @@ def pytest_addoption(parser):
     parser.addoption(
         "--connection-config", action="store", help="A yaml connection file specifying how to connect to each host"
     )
-    parser.addoption("--no-setup", action="store_true", help="Skip the execution of setup_test")
-    parser.addoption("--no-teardown", action="store_true", help="Skip the execution of teardown_test")
+    parser.addoption("--no-setup", action="store_true", help="Skip the execution of the setup tests")
+    parser.addoption("--no-cleanup", action="store_true", help="Skip the execution of the cleanup tests")
     parser.addoption(
-        "--clean-start", action="store_true", help="Run the teardown before starting the tests to ensure a clean start"
+        "--cleanup-first", action="store_true", help="Run the cleanup before starting the tests to ensure a clean start"
     )
     parser.addoption(
         "--test-config",
@@ -136,7 +136,7 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
 # Pytest hook that allows us to dynamically modify the set of tests being run
 def pytest_collection_modifyitems(config, items):
     # Always check for errors after the run
-    add_test_into_existing_collection("tests/teardown/error_test.py", items, prepend=False)
+    add_test_into_existing_collection("tests/cleanup/error_test.py", items, prepend=False)
 
     # Now figure out which disk instance are present in the test setup, so that we can skip
     # any marked tests for disk instances not in our environment
@@ -149,23 +149,15 @@ def pytest_collection_modifyitems(config, items):
         if DiskInstanceImplementation.DCACHE in present_disk_instances:
             add_test_into_existing_collection("tests/setup/setup_dcache_test.py", items, prepend=True)
 
-    if not config.getoption("--no-teardown"):
-        add_test_into_existing_collection("tests/teardown/cleanup_cta_test.py", items, prepend=False)
+    if not config.getoption("--no-cleanup"):
+        # Do the reset before the tests start.
+        # Useful when rerunning the tests multiple times on the same instance and it wasn't properly cleaned up
+        prepend = bool(config.getoption("--cleanup-first"))
+        add_test_into_existing_collection("tests/cleanup/cleanup_cta_test.py", items, prepend=prepend)
         if DiskInstanceImplementation.EOS in present_disk_instances:
-            add_test_into_existing_collection("tests/teardown/cleanup_eos_test.py", items, prepend=True)
+            add_test_into_existing_collection("tests/cleanup/cleanup_eos_test.py", items, prepend=prepend)
         if DiskInstanceImplementation.DCACHE in present_disk_instances:
-            add_test_into_existing_collection("tests/teardown/cleanup_dcache_test.py", items, prepend=True)
-
-    # Do the reset before the tests start.
-    # Useful when rerunning the tests multiple times on the same instance and it wasn't properly cleaned up
-    if config.getoption("--clean-start"):
-        add_test_into_existing_collection(
-            "tests/teardown/cleanup_cta_test.py", items, prepend=True, allow_duplicate=True
-        )
-        if DiskInstanceImplementation.EOS in present_disk_instances:
-            add_test_into_existing_collection("tests/teardown/cleanup_eos_test.py", items, prepend=True)
-        if DiskInstanceImplementation.DCACHE in present_disk_instances:
-            add_test_into_existing_collection("tests/teardown/cleanup_dcache_test.py", items, prepend=True)
+            add_test_into_existing_collection("tests/cleanup/cleanup_dcache_test.py", items, prepend=prepend)
 
     all_disk_instances: list[DiskInstanceImplementation] = [e for e in DiskInstanceImplementation]
     skip_marks: list[str] = [e.label for e in (set(all_disk_instances) - set(present_disk_instances))]

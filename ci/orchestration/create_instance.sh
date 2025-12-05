@@ -355,7 +355,8 @@ create_instance() {
     ./deploy_eos.sh --namespace "${namespace}" \
                     --eos-config "${eos_config}" \
                     --eos-image-repository "${eos_image_repository}" \
-                    --eos-image-tag "${eos_image_tag}" &
+                    --eos-image-tag "${eos_image_tag}" \
+                    --setup-enabled "${setup_enabled}" &
     eos_pid=$!
   fi
 

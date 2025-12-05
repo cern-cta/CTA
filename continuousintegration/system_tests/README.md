@@ -77,7 +77,9 @@ system_tests/
 │ ├── hosts/                    # Contains the definitions for the different hosts in cta (frontend, taped, etc) and the functions that these hosts can do.
 │ └──test_env.py                # Contains the definition of the test environment. A test environment is just a collection of remote hosts.
 ├── tests/
+│ ├── cleanup/                  # Tests that clean up the instance after tests have been run.
 │ ├── remote_scripts/           # Scripts meant to be executed on the hosts themselves (taped, frontend, etc)
+│ ├── setup/                  # Tests that set up the instance before the tests run.
 │ ├── <test_suite1>_test.py
 │ ├── <test_suite2>_test.py
 │ ├── ...
