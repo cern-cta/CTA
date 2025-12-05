@@ -33,8 +33,7 @@ namespace cta::frontend {
 
 AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
                    const common::dataStructures::SecurityIdentity& clientIdentity,
-                   const admin::AdminCmd& adminCmd,
-                   const bool bypassAdminCheck)
+                   const admin::AdminCmd& adminCmd)
     : AdminCmdOptions(adminCmd),
       m_adminCmd(adminCmd),
       m_catalogue(frontendService.getCatalogue()),
@@ -48,10 +47,7 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
-  // Check that the user is authorized
-  if (!bypassAdminCheck) {
-    m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
-  }
+  m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
 }
 
 xrd::Response AdminCmd::process() {

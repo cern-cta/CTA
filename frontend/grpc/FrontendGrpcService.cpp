@@ -377,8 +377,7 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
   try {
     cta::frontend::AdminCmd adminCmd(*m_frontendService,
                                      clientIdentity.value(),
-                                     request->admincmd(),
-                                     m_frontendService->getexperimentalGrpcBypassAdminAuthCheck());
+                                     request->admincmd());
     *response = adminCmd.process();  // success response code will be set in here if processing goes well
   } catch (cta::exception::PbException& ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());

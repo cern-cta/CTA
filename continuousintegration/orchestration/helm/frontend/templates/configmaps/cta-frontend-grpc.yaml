@@ -76,7 +76,6 @@ data:
     grpc.jwt.enabled {{ .Values.grpc.conf.jwtAuth.enabled }}
 
     # for the admin commands
-    cta.experimental.grpc.bypass_admin_auth_check.enabled {{ .Values.grpc.conf.experimental.bypassAdminAuthCheck.enabled }}
     cta.experimental.grpc.cta_admin_commands.enabled {{ .Values.grpc.conf.experimental.ctaAdminCommands.enabled }}
 
     # Telemetry

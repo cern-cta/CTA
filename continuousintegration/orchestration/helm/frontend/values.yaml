@@ -41,10 +41,8 @@ grpc:
       jwksUri: http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
 
     experimental:
-        bypassAdminAuthCheck:
-          enabled: false
-        ctaAdminCommands:
-          enabled: true
+      ctaAdminCommands:
+        enabled: true
 
     telemetry:
       enabled: false
