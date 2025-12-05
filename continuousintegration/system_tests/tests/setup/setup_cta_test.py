@@ -8,11 +8,11 @@ from itertools import cycle
 #####################################################################################################################
 
 
-def test_hosts_present_cta_setup(env):
-    assert len(env.disk_instance) > 0
-    assert len(env.cta_frontend) > 0
-    assert len(env.cta_taped) > 0
-    assert len(env.cta_cli) > 0
+def test_hosts_present_cta_setup(krb5_realm, env):
+    assert len(env.disk_instance) > 0, "To setup CTA, there must be at least one disk instance"
+    assert len(env.cta_frontend) > 0, "To setup CTA, there must be at least one cta-frontend instance"
+    assert len(env.cta_taped) > 0, "To setup CTA, there must be at least one cta-taped instance"
+    assert len(env.cta_cli) > 0, "To setup CTA, there must be at least one cta-cli instance"
 
 
 #####################################################################################################################

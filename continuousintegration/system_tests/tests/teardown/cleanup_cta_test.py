@@ -20,6 +20,7 @@ def test_restart_cta_taped(env):
 
 def test_delete_test_scripts(env):
     # Don't need to do this for taped as these already restarted
+    # Once we get the immutable images, we can just restart all CTA pods, as that should be quick enough and more robust
     hosts = env.disk_client + env.cta_cli + env.cta_frontend + env.disk_instance
     for host in hosts:
         host.exec("rm -rf /test/ 2>/dev/null || true")

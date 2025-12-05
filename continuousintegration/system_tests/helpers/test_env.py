@@ -47,7 +47,13 @@ class TestEnv:
         return result
 
     @staticmethod
-    def get_k8s_connections_by_label(namespace: str, label_key: str, label_value: str, container_value: str = "", allow_partial_label_value_match: bool = False):
+    def get_k8s_connections_by_label(
+        namespace: str,
+        label_key: str,
+        label_value: str,
+        container_value: str = "",
+        allow_partial_label_value_match: bool = False,
+    ):
         """
         Returns a list of K8sConnection objects.
         label_value and container_value can be exact matches or partial matches.
@@ -85,7 +91,9 @@ class TestEnv:
             # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these concepts
             # Something to be changed once we move them over....
             eos_client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
-            cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"), # TODO: bug here (as cta-cli matches cta-client as well)
+            cta_cli_conns=TestEnv.get_k8s_connections_by_label(
+                namespace, "app.kubernetes.io/name", "cta-cli"
+            ),  # TODO: bug here (as cta-cli matches cta-client as well)
             cta_frontend_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-frontend"
             ),

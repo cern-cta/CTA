@@ -4,35 +4,14 @@ from .helpers.test_env import TestEnv
 from .helpers.hosts.disk.disk_instance_host import DiskInstanceImplementation
 import shutil
 
+try:
+    import tomllib  # Python 3.11+
+except ModuleNotFoundError:
+    import tomli as tomllib  # Python <3.11
+
 #####################################################################################################################
 # General/common fixtures
 #####################################################################################################################
-
-
-def get_test_env(config):
-    namespace = config.getoption("--namespace", default=None)
-    connection_config = config.getoption("--connection-config", default=None)
-
-    if namespace and connection_config:
-        pytest.exit("ERROR: Only one of --namespace or --connection-config can be provided, not both.", returncode=1)
-
-    if namespace is None and connection_config is None:
-        pytest.exit(
-            "ERROR: Missing mandatory argument: one of --namespace or --connection-config must be provided",
-            returncode=1,
-        )
-
-    if connection_config is None:
-        # No connection configuration provided, so assume everything is running in a cluster
-        return TestEnv.fromNamespace(namespace)
-    else:
-        return TestEnv.fromConfig(connection_config)
-
-
-# This is how all the tests get access to the different hosts (cli, frontend, taped, etc)
-@pytest.fixture(scope="session", autouse=True)
-def env(request):
-    return get_test_env(request.config)
 
 
 # The only purpose of this fixture is to make the test output easier to read
@@ -54,6 +33,12 @@ def make_tests_look_pretty(request):
     terminal_writer.write(f"\n\n{separator}", cyan=True)
 
 
+# This is how all the tests get access to the different hosts (cli, frontend, taped, etc)
+@pytest.fixture(scope="session", autouse=True)
+def env(request):
+    return request.config.env
+
+
 # Mutable whitelist that individual test cases can add errors to
 @pytest.fixture(scope="session")
 def error_whitelist(request):
@@ -61,9 +46,10 @@ def error_whitelist(request):
     return whitelist
 
 
+# Kerberos realm used in the tests
 @pytest.fixture()
 def krb5_realm(request):
-    return request.config.getoption("--krb5-realm")
+    return request.config.test_config["tests"]["krb5_realm"]
 
 
 #####################################################################################################################
@@ -71,6 +57,24 @@ def krb5_realm(request):
 #####################################################################################################################
 
 
+def create_test_env_from_commandline_options(config):
+    namespace = config.getoption("--namespace", default=None)
+    connection_config = config.getoption("--connection-config", default=None)
+
+    if namespace and connection_config:
+        raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")
+
+    if namespace is None and connection_config is None:
+        raise pytest.UsageError("Missing mandatory argument: one of --namespace or --connection-config must be provided")
+
+    if connection_config is None:
+        # No connection configuration provided, so assume everything is running in a cluster
+        return TestEnv.fromNamespace(namespace)
+    else:
+        return TestEnv.fromConfig(connection_config)
+
+
+# Pytest hook that allows for adding custom commandline arguments
 def pytest_addoption(parser):
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption(
@@ -81,21 +85,23 @@ def pytest_addoption(parser):
     parser.addoption(
         "--clean-start", action="store_true", help="Run the teardown before starting the tests to ensure a clean start"
     )
+    parser.addoption(
+        "--test-config",
+        type=str,
+        default="config/test_params.toml",
+        help="Path to the config file containing all test parameters",
+    )
 
-    # Test specific options
-    parser.addoption(
-        "--krb5-realm", type=str, default="TEST.CTA", help="Kerberos realm to use for cta-admin/eos commands"
-    )
-    parser.addoption("--stress-num-dirs", type=int, default=10, help="Number of directories to use for the stress test")
-    parser.addoption(
-        "--stress-num-files-per-dir",
-        type=int,
-        default=1000,
-        help="Number of files to put in each directory for the stress test",
-    )
-    parser.addoption(
-        "--stress-file-size", type=int, default=512, help="Size of the files in bytes to use for the stress test"
-    )
+# Pytest hook that allows us to augment the config object with additional info after commandline parsing
+def pytest_configure(config):
+    config_path: str = config.getoption("--test-config")
+    try:
+        with open(config_path, "rb") as f:
+            config.test_config = tomllib.load(f)
+    except FileNotFoundError:
+        raise pytest.UsageError(f"--test-config file not found: {config_path}")
+    config.env = create_test_env_from_commandline_options(config)
+
 
 
 #####################################################################################################################
@@ -125,21 +131,28 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
         items[index:index] = tests
 
 
+# Pytest hook that allows us to dynamically modify the set of tests being run
 def pytest_collection_modifyitems(config, items):
     # Always check for errors after the run
     add_test_into_existing_collection("tests/teardown/error_test.py", items, prepend=False)
 
+    # Now figure out which disk instance are present in the test setup, so that we can skip
+    # any marked tests for disk instances not in our environment
+    present_disk_instances: list[DiskInstanceImplementation] = [di.implementation for di in config.env.disk_instance]
+
     if not config.getoption("--no-setup"):
         add_test_into_existing_collection("tests/setup/setup_cta_test.py", items, prepend=True)
-        # If EOS is not the used disk system, these will be filtered out later
-        add_test_into_existing_collection("tests/setup/setup_eos_test.py", items, prepend=True)
-        # add_test_into_existing_collection("tests/setup/setup_dcache_test.py", items, prepend=True)
+        if DiskInstanceImplementation.EOS in present_disk_instances:
+            add_test_into_existing_collection("tests/setup/setup_eos_test.py", items, prepend=True)
+        if DiskInstanceImplementation.DCACHE in present_disk_instances:
+            add_test_into_existing_collection("tests/setup/setup_dcache_test.py", items, prepend=True)
 
     if not config.getoption("--no-teardown"):
         add_test_into_existing_collection("tests/teardown/cleanup_cta_test.py", items, prepend=False)
-        # If EOS is not the used disk system, these will be filtered out later
-        add_test_into_existing_collection("tests/teardown/cleanup_eos_test.py", items, prepend=False)
-        # add_test_into_existing_collection("tests/teardown/cleanup_dcache_test.py", items, prepend=True)
+        if DiskInstanceImplementation.EOS in present_disk_instances:
+            add_test_into_existing_collection("tests/teardown/cleanup_eos_test.py", items, prepend=True)
+        if DiskInstanceImplementation.DCACHE in present_disk_instances:
+            add_test_into_existing_collection("tests/teardown/cleanup_dcache_test.py", items, prepend=True)
 
     # Do the reset before the tests start.
     # Useful when rerunning the tests multiple times on the same instance and it wasn't properly cleaned up
@@ -147,20 +160,16 @@ def pytest_collection_modifyitems(config, items):
         add_test_into_existing_collection(
             "tests/teardown/cleanup_cta_test.py", items, prepend=True, allow_duplicate=True
         )
-        # If EOS is not the used disk system, these will be filtered out later
-        add_test_into_existing_collection(
-            "tests/teardown/cleanup_eos_test.py", items, prepend=True, allow_duplicate=True
-        )
-        # add_test_into_existing_collection("tests/teardown/cleanup_dcache_test.py", items, prepend=True)
+        if DiskInstanceImplementation.EOS in present_disk_instances:
+            add_test_into_existing_collection("tests/teardown/cleanup_eos_test.py", items, prepend=True)
+        if DiskInstanceImplementation.DCACHE in present_disk_instances:
+            add_test_into_existing_collection("tests/teardown/cleanup_dcache_test.py", items, prepend=True)
 
-    # Now figure out which disk instance are present in the test setup, so that we can skip
-    # any marked tests for disk instances not in our environment
-    test_env = get_test_env(config)
-    if test_env.disk_instance:
-        present_disk_instances: list[str] = [di.implementation.label for di in test_env.disk_instance]
-        all_disk_instances: list[str] = [e.label for e in DiskInstanceImplementation]
-        skip_marks: list[str] = list(set(all_disk_instances) - set(present_disk_instances))
-        # Skip all tests specific to disk instances not present
-        for item in items:
-            if any(mark in item.keywords for mark in skip_marks):
-                item.add_marker(pytest.mark.skip(reason="Skipping test because it has a disabled mark"))
+    all_disk_instances: list[DiskInstanceImplementation] = [e for e in DiskInstanceImplementation]
+    skip_marks: list[str] = [e.label for e in (set(all_disk_instances) - set(present_disk_instances))]
+    # Skip all tests specific to disk instances not present
+    for item in items:
+        if any(mark in item.keywords for mark in skip_marks):
+            item.add_marker(
+                pytest.mark.skip(reason="Skipping test because the disk instance required for this test is not present")
+            )

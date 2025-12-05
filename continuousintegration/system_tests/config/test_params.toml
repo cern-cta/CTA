@@ -1,0 +1,10 @@
+[tests]
+
+krb5_realm = "TEST.CTA"
+
+[tests.stress]
+
+num_dirs = 10
+num_files_per_dir = 1000
+file_size = 512
+io_threads = 8

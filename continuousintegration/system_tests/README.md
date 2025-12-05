@@ -82,7 +82,7 @@ system_tests/
 │ ├── <test_suite2>_test.py
 │ ├── ...
 │ └── <test_suiteN>_test.py
-├── conftest.py                 # Test fixture for the test environment and logic for adding custom commandline options to pytest
+├── conftest.py                 # Test fixtures for the test environment and logic for adding custom commandline options to pytest
 ├── pytest.ini                  # Generic pytest configuration options
 ```
 

@@ -9,8 +9,8 @@ import pytest
 @pytest.mark.eos
 def test_hosts_present_eos_setup(env):
     # Need at least a disk instance and a client
-    assert len(env.eos_client) > 0
-    assert len(env.eos_mgm) > 0
+    assert len(env.eos_client) > 0, "To setup EOS, there must be at least one EOS client"
+    assert len(env.eos_mgm) > 0, "To setup EOS, there must be at least one EOS MGM"
 
 
 #####################################################################################################################

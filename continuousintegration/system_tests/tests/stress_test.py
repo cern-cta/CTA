@@ -19,10 +19,10 @@ class StressParams:
 @pytest.fixture
 def stress_params(request):
     return StressParams(
-        num_dirs=request.config.getoption("--stress-num-dirs"),
-        num_files_per_dir=request.config.getoption("--stress-num-files-per-dir"),
-        file_size=request.config.getoption("--stress-file-size"),
-        io_threads=8,
+        num_dirs=request.config.test_config["tests"]["stress"]["num_dirs"],
+        num_files_per_dir=request.config.test_config["tests"]["stress"]["num_files_per_dir"],
+        file_size=request.config.test_config["tests"]["stress"]["file_size"],
+        io_threads=request.config.test_config["tests"]["stress"]["io_threads"],
     )
 
 
@@ -32,7 +32,6 @@ def stress_params(request):
 
 
 def test_hosts_present_stress(env):
-    # Need at least a disk instance and a client
     assert len(env.eos_mgm) > 0
     assert len(env.eos_client) > 0
     assert len(env.cta_frontend) > 0
