@@ -82,7 +82,7 @@ cta.log.url file:/var/log/cta/cta-frontend.log
 ####################################
 #  TLS related variables. Only used when TLS is true
 ####################################
-# Use TLS (previously the command-line option --tls)
+# Use TLS (previously the command-line option --tls), defaults to true
 #grpc.tls.enabled true/false
 #  TLS service key file
 #grpc.tls.server_key_path /path/to/key

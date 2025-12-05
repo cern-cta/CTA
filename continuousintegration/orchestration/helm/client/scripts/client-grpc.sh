@@ -14,6 +14,9 @@
 #               In applying this licence, CERN does not waive the privileges and immunities
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
+
+echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
+
 # Install missing RPMs
 dnf install -y cta-admin-grpc cta-immutable-file-test xrootd-client eos-client
 # Rename cta-admin-grpc to cta-admin, overwriting the xrootd/ssi cta-admin if it exists

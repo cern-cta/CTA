@@ -33,9 +33,33 @@ cli:
     cta:
       endpoint: cta-frontend-grpc:10956
       grpc:
+        cta_admin_auth_method: jwt
+        jwt_token_path: /etc/grid-security/jwt-token-grpc
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt
           enabled: true
+
+  initContainer:
+    enabled: false
+
+  extraEnv:
+    - name: GRPC_SETUP_JWT
+      value: "true"
+
+  extraVolumes:
+    volumeMounts:
+    - name: grid-security
+      mountPath: /etc/grid-security
+      readOnly: false # will place the token there so cannot be readOnly
+    - name: grpc-certs
+      mountPath: /etc/grpc-certs
+      readOnly: true
+    volumes:
+    - name: grid-security
+      emptyDir: {}
+    - name: grpc-certs
+      secret:
+        secretName: ca-crt
 
 client:
   useGrpc: true
@@ -43,6 +67,30 @@ client:
     cta:
       endpoint: cta-frontend-grpc:10956
       grpc:
+        cta_admin_auth_method: jwt
+        jwt_token_path: /etc/grid-security/jwt-token-grpc
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt
           enabled: true
+
+  initContainer:
+    enabled: false
+
+  extraEnv:
+    - name: GRPC_SETUP_JWT
+      value: "true"
+
+  extraVolumes:
+    volumeMounts:
+    - name: grid-security
+      mountPath: /etc/grid-security
+      readOnly: false
+    - name: grpc-certs
+      mountPath: /etc/grpc-certs
+      readOnly: true
+    volumes:
+    - name: grid-security
+      emptyDir: {}
+    - name: grpc-certs
+      secret:
+        secretName: ca-crt

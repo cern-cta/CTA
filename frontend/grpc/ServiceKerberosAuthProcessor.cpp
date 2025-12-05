@@ -19,7 +19,6 @@
 #include "ServiceKerberosAuthProcessor.hpp"
 
 #include "common/exception/Exception.hpp"
-#include <unordered_set>
 
 ::grpc::Status cta::frontend::grpc::server::ServiceKerberosAuthProcessor::Process(
   const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata, ::grpc::AuthContext* pAuthCtx,
@@ -56,19 +55,6 @@
   if (strAuthMetadataValue == "/cta.xrd.Negotiation/Negotiate") {
     return ::grpc::Status::OK;
   }
-  // Skip authentication for gRPC health checks
-  if (strAuthMetadataValue == "/grpc.health.v1.Health/Check") {
-    return ::grpc::Status::OK;
-  }
-  // Skip Kerberos auth for the physics workflow events, because these will be checked inside the rpc implementation for credentials
-  if (std::unordered_set<std::string> allowed {"/cta.xrd.CtaRpc/Create",
-                                               "/cta.xrd.CtaRpc/Archive",
-                                               "/cta.xrd.CtaRpc/Retrieve",
-                                               "/cta.xrd.CtaRpc/Delete",
-                                               "/cta.xrd.CtaRpc/CancelRetrieve"};
-      allowed.contains(strAuthMetadataValue)) {
-    return ::grpc::Status::OK;
-  }
   /*
    * Checking the presence of the token.
    */
@@ -86,7 +72,6 @@
   if(m_tokenStorage.validate(strAuthMetadataValue)) {
     // If ok consume
     pConsumedAuthMetadata->insert(std::make_pair(TOKEN_AUTH_METADATA_KEY, strAuthMetadataValue));
-    m_tokenStorage.remove(strAuthMetadataValue);
     return ::grpc::Status::OK;
   }
   // else UNAUTHENTICATED

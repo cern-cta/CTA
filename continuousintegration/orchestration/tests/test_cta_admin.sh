@@ -43,17 +43,19 @@ if [[ -n "${error}" ]]; then
     exit 1
 fi
 
+CLIENT_POD="cta-client-0"
+CTA_CLI_POD="cta-cli-0"
+echo
+echo "Copying test scripts to pods..."
+kubectl -n "${NAMESPACE}" cp . ${CLIENT_POD}:/root/ -c client || exit 1
+kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CTA_CLI_POD}:/root/ -c cta-cli || exit 1
+
 echo "Preparing namespace for the tests"
   . prepare_tests.sh -n "${NAMESPACE}"
 if [[ $? -ne 0 ]]; then
   echo "ERROR: failed to prepare namespace for the tests"
   exit 1
 fi
-
-CLIENT_POD="cta-client-0"
-echo
-echo "Copying test scripts to pods..."
-kubectl -n "${NAMESPACE}" cp . ${CLIENT_POD}:/root/ -c client || exit 1
 
 # Wait for script to rm the drive and restore it.
 # TODO: This is not working correctly on CI but it works for buildtree. Not needed at the moment but when grpc frontend is ready we will need to restart restart tpsrv01-0 pod.

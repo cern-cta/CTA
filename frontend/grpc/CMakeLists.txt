@@ -28,10 +28,10 @@ add_executable(cta-frontend-grpc
   Main.cpp
   ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
   FrontendGrpcService.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/grpc/common/GrpcAuthUtils.cpp
   callback_api/CtaAdminServerWriteReactor.cpp
   NegotiationService.cpp
   ServerNegotiationRequestHandler.cpp
-  ServiceKerberosAuthProcessor.cpp
   TokenStorage.cpp
   utils.cpp)
 # target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)

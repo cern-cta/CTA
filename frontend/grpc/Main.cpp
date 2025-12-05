@@ -37,7 +37,6 @@
 #include "callback_api/CtaAdminServer.hpp"
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include "TokenStorage.hpp"
-#include "ServiceKerberosAuthProcessor.hpp"
 #include "NegotiationService.hpp"
 #include "common/utils/utils.hpp"
 
@@ -47,7 +46,8 @@
 using namespace cta;
 using namespace cta::common;
 using namespace cta::frontend::grpc;
-using cta::frontend::grpc::server::ServiceKerberosAuthProcessor;
+
+constexpr std::string_view defaultPort = "17017";
 
 std::string help =
     "Usage: cta-frontend-grpc [options]\n"
@@ -122,23 +122,35 @@ int main(const int argc, char *const *const argv) {
         }
     }
 
-    // Initialize catalogue, scheduler, logContext
-    frontend::grpc::CtaRpcImpl svc(config_file);
+    // Initialize frontend service first to get configuration
+    auto frontendService = std::make_shared<cta::frontend::FrontendService>(config_file);
+
     // get the log context
-    log::LogContext lc = svc.getFrontendService().getLogContext();
-    auto jwkCache = svc.getPubkeyCache();
+    log::LogContext lc = frontendService->getLogContext();
+
+    // Build the shared JWK cache here even if JWT is disabled, in this case it will never be populated
+    CurlJwksFetcher jwksFetcher;
+    std::shared_ptr<JwkCache> jwkCache = std::make_shared<JwkCache>(jwksFetcher,
+                                                                    frontendService->getJwksUri().value_or(""),
+                                                                    frontendService->getPubkeyTimeout().value_or(0),
+                                                                    frontendService->getLogContext());
+    // Setup TokenStorage for Kerberos authentication
+    cta::frontend::grpc::server::TokenStorage tokenStorage;
+
+    // Initialize RPC service with shared frontend service and cache
+    frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache, tokenStorage);
     std::weak_ptr<JwkCache> weakCache = jwkCache;
     std::promise<void> shouldStopThreadPromise;
     std::future<void> shouldStopThreadFuture = shouldStopThreadPromise.get_future();
     std::thread cacheRefreshThread;
     // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
-    if (svc.getFrontendService().getJwtAuth()) {
-        lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
-        cacheRefreshThread = std::thread(JwksCacheRefreshLoop,
-                                         weakCache,
-                                         std::move(shouldStopThreadFuture),
-                                         svc.getFrontendService().getCacheRefreshInterval().value_or(600),
-                                         std::cref(lc));
+    if (frontendService->getJwtAuth()) {
+      lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
+      cacheRefreshThread = std::thread(JwksCacheRefreshLoop,
+                                       weakCache,
+                                       std::move(shouldStopThreadFuture),
+                                       frontendService->getCacheRefreshInterval().value_or(600),
+                                       std::cref(lc));
     }
 
     // use castor config to avoid dependency on xroot-ssi
@@ -147,12 +159,10 @@ int main(const int argc, char *const *const argv) {
     lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
     // try to update port from config
-    if (svc.getFrontendService().getPort().has_value())
-        port = svc.getFrontendService().getPort().value();
-    else
-    {
-        port = "17017";
-        // also set the member value
+    if (frontendService->getPort().has_value()) {
+      port = frontendService->getPort().value();
+    } else {
+      port = defaultPort;
     }
 
     std::string server_address("0.0.0.0:" + port);
@@ -164,44 +174,39 @@ int main(const int argc, char *const *const argv) {
     std::shared_ptr<grpc::ServerCredentials> creds;
 
     // read TLS value from config
-    useTLS = svc.getFrontendService().getTls();
+    useTLS = frontendService->getTls();
 
     // get number of threads
-    int threads = svc.getFrontendService().getThreads().value_or(8 * std::thread::hardware_concurrency());
-
+    int threads = frontendService->getThreads().value_or(8 * std::thread::hardware_concurrency());
 
     if (useTLS) {
         lc.log(log::INFO, "Using gRPC over TLS");
         grpc::SslServerCredentialsOptions tls_options(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
         grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
-        if (!svc.getFrontendService().getTlsKey().has_value()) {
-            lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
-            creds = grpc::InsecureServerCredentials();
-        }
-        else if (!svc.getFrontendService().getTlsCert().has_value()) {
-            lc.log(log::WARNING, "TLS specified but TLS key is not defined. Using gRPC over plaintext socket instead");
-            creds = grpc::InsecureServerCredentials();
-        }
-        else {
-            auto key_file = svc.getFrontendService().getTlsKey().value();
-            lc.log(log::INFO, "TLS service key file: " + key_file);
-            cert.private_key = cta::utils::file2string(key_file);
+        if (!frontendService->getTlsKey().has_value()) {
+          throw exception::UserError("TLS specified but TLS key is not defined");
+        } else if (!frontendService->getTlsCert().has_value()) {
+          throw exception::UserError("TLS specified but TLS cert is not defined.");
+        } else {
+          auto key_file = frontendService->getTlsKey().value();
+          lc.log(log::INFO, "TLS service key file: " + key_file);
+          cert.private_key = cta::utils::file2string(key_file);
 
-            auto cert_file = svc.getFrontendService().getTlsCert().value();
-            lc.log(log::INFO, "TLS service certificate file: " + cert_file);
-            cert.cert_chain = cta::utils::file2string(cert_file);
+          auto cert_file = frontendService->getTlsCert().value();
+          lc.log(log::INFO, "TLS service certificate file: " + cert_file);
+          cert.cert_chain = cta::utils::file2string(cert_file);
 
-            if (auto ca_chain = svc.getFrontendService().getTlsChain(); ca_chain.has_value()) {
-                lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
-                tls_options.pem_root_certs = cta::utils::file2string(ca_chain.value());
-            } else {
-                lc.log(log::INFO, "TLS CA chain file not defined ...");
-                tls_options.pem_root_certs = "";
-            }
-            tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
+          if (auto ca_chain = frontendService->getTlsChain(); ca_chain.has_value()) {
+            lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
+            tls_options.pem_root_certs = cta::utils::file2string(ca_chain.value());
+          } else {
+            lc.log(log::INFO, "TLS CA chain file not defined ...");
+            tls_options.pem_root_certs = "";
+          }
+          tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
 
-            creds = grpc::SslServerCredentials(tls_options);
+          creds = grpc::SslServerCredentials(tls_options);
         }
     } else {
         lc.log(log::INFO, "Using gRPC over plaintext socket");
@@ -221,12 +226,9 @@ int main(const int argc, char *const *const argv) {
     lc.log(log::INFO, "Using " + std::to_string(threads) + " request processing threads");
     builder.SetResourceQuota(quota);
 
-    // Setup TokenStorage for Kerberos authentication
-    cta::frontend::grpc::server::TokenStorage tokenStorage;
-
     // Get Kerberos configuration
-    std::string strKeytab = svc.getFrontendService().getKeytab().value_or("/etc/cta/cta-frontend.keytab");
-    std::string strService = svc.getFrontendService().getServicePrincipal().value_or("cta/" + shortHostName);
+    std::string strKeytab = frontendService->getKeytab().value_or("/etc/cta/cta-frontend.keytab");
+    std::string strService = frontendService->getServicePrincipal().value_or("cta/" + shortHostName);
 
     lc.log(log::INFO, "Using keytab: " + strKeytab);
     lc.log(log::INFO, "Using service principal: " + strService);
@@ -245,25 +247,21 @@ int main(const int argc, char *const *const argv) {
     // Register negotiation service on main builder
     builder.RegisterService(&negotiationService->getService());
 
-    // Setup main service authentication processor
-    std::shared_ptr<ServiceKerberosAuthProcessor> kerberosAuthProcessor =
-      std::make_shared<ServiceKerberosAuthProcessor>(tokenStorage);
-    creds->SetAuthMetadataProcessor(kerberosAuthProcessor);
-    // Kerberos authenticates all admin commands - non-streaming commands that are made through the Admin rpc
-    // and streaming commands made through GenericAdminStream
-
     // Register "service" as the instance through which we'll communicate with
     // clients. In this case it corresponds to an *synchronous* service.
     builder.RegisterService(&svc);
 
-    frontend::grpc::CtaRpcStreamImpl streamSvc(svc.getFrontendService().getCatalogue(),
-                                               svc.getFrontendService().getScheduler(),
-                                               svc.getFrontendService().getSchedDb(),
-                                               svc.getFrontendService().getInstanceName(),
-                                               svc.getFrontendService().getCatalogueConnString(),
-                                               svc.getFrontendService().getMissingFileCopiesMinAgeSecs(),
-                                               svc.getFrontendService().getenableCtaAdminCommands(),
-                                               svc.getFrontendService().getLogContext());
+    frontend::grpc::CtaRpcStreamImpl streamSvc(frontendService->getCatalogue(),
+                                               frontendService->getScheduler(),
+                                               frontendService->getSchedDb(),
+                                               frontendService->getInstanceName(),
+                                               frontendService->getCatalogueConnString(),
+                                               frontendService->getMissingFileCopiesMinAgeSecs(),
+                                               frontendService->getenableCtaAdminCommands(),
+                                               frontendService->getLogContext(),
+                                               frontendService->getJwtAuth(),
+                                               jwkCache,
+                                               tokenStorage);
     builder.RegisterService(&streamSvc);
 
     // add reflection

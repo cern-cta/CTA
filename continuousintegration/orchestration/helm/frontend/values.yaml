@@ -37,12 +37,12 @@ grpc:
       caCert: ""
 
     jwtAuth:
-      enabled: false
+      enabled: true
       jwksUri: http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
 
     experimental:
         bypassAdminAuthCheck:
-          enabled: true
+          enabled: false
         ctaAdminCommands:
           enabled: true
 
