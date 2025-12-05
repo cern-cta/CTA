@@ -65,7 +65,9 @@ def create_test_env_from_commandline_options(config):
         raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")
 
     if namespace is None and connection_config is None:
-        raise pytest.UsageError("Missing mandatory argument: one of --namespace or --connection-config must be provided")
+        raise pytest.UsageError(
+            "Missing mandatory argument: one of --namespace or --connection-config must be provided"
+        )
 
     if connection_config is None:
         # No connection configuration provided, so assume everything is running in a cluster
@@ -92,6 +94,7 @@ def pytest_addoption(parser):
         help="Path to the config file containing all test parameters",
     )
 
+
 # Pytest hook that allows us to augment the config object with additional info after commandline parsing
 def pytest_configure(config):
     config_path: str = config.getoption("--test-config")
@@ -101,7 +104,6 @@ def pytest_configure(config):
     except FileNotFoundError:
         raise pytest.UsageError(f"--test-config file not found: {config_path}")
     config.env = create_test_env_from_commandline_options(config)
-
 
 
 #####################################################################################################################
