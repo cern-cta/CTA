@@ -182,10 +182,6 @@ fst:
   persistence:
     enabled: true
     storageClass: "fast-ssd"
-    # This is a temporary work-around until the bug is fixed in the EOS charts
-    # https://gitlab.cern.ch/eos/eos-charts/-/issues/113
-    pvc:
-      storageClass: "fast-ssd"
     annotations: {}
     accessModes:
       - ReadWriteOnce
@@ -317,9 +313,6 @@ qdb:
   persistence:
     enabled: true
     storageClass: "fast-ssd"
-    # This is a temporary work-around until the bug is fixed in the EOS charts
-    pvc:
-      storageClass: "fast-ssd"
     annotations: {}
     accessModes:
       - ReadWriteOnce

@@ -15,7 +15,7 @@
     "ctaImageRepository": "gitlab-registry.cern.ch/cta/ctageneric",
     "eosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
     "eosImageTag": "5.3.23.el9",
-    "eosServerChartVersion": "0.5.1",
+    "eosServerChartVersion": "0.9.8",
     "dCacheChartVersion": "0.1.0",
     "dCacheImageTag": "94471db7"
   },
