@@ -23,7 +23,7 @@ global:
         name: {{ include "mgm.instancename" . }}
       spec:
         type: ExternalName
-        externalName: {{ include "utils.mgm_fqdn" . }}
+        externalName: {{ include "utils.mgm_address" . }}
 
 
 mgm:
@@ -116,7 +116,7 @@ fst:
 
   xrd:
     extraConfig: |
-      xrootd.redirect {{ include "utils.mgm_fqdn" . }}:1094 chksum
+      xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
       fstofs.protowfendpoint cta-frontend:10955
       fstofs.protowfresource /ctafrontend
       fstofs.protowfusegrpc false
