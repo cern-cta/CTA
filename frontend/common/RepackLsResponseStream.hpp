@@ -37,7 +37,7 @@ namespace cta::frontend {
 
   private:
     std::list <cta::xrd::Data> m_repackItems;
-    std::string &m_schedulerBackendName;
+    std::string m_schedulerBackendName;
 
     void collectRepacks(const std::optional <std::string> &vid);
   };
