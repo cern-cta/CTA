@@ -53,7 +53,7 @@ namespace cta::schedulerdb {
     repackInfo.failedBytesToRetrieve += failedToRetrieveBytes;
     auto newStatus = getCurrentStatus();
     repackInfo.status = newStatus;
-    cta::schedulerdb::Transaction txn(m_connPool);
+    cta::schedulerdb::Transaction txn(m_connPool, m_lc);
     try {
 
       uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequestFailures(txn,
@@ -345,7 +345,7 @@ namespace cta::schedulerdb {
       }
     }
     setLastExpandedFSeq(fSeq);
-    cta::schedulerdb::Transaction txn(m_connPool);
+    cta::schedulerdb::Transaction txn(m_connPool, m_lc);
     try {
       uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequest(txn,
                                                                                repackInfo.repackReqId,
@@ -374,7 +374,7 @@ namespace cta::schedulerdb {
   }
 
   void RepackRequest::fail() {
-    cta::schedulerdb::Transaction txn(m_connPool);
+    cta::schedulerdb::Transaction txn(m_connPool, m_lc);
     try {
       repackInfo.status = common::dataStructures::RepackInfo::Status::Failed;
       uint64_t nrows =
@@ -416,7 +416,7 @@ namespace cta::schedulerdb {
     auto newStatus = getCurrentStatus();
     repackInfo.status = newStatus;
 
-    cta::schedulerdb::Transaction txn(m_connPool);
+    cta::schedulerdb::Transaction txn(m_connPool, m_lc);
 
     try {
       if (newStatus == common::dataStructures::RepackInfo::Status::Complete ||

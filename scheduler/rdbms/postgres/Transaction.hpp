@@ -18,6 +18,7 @@
 #pragma once
 
 #include "rdbms/ConnPool.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace cta::schedulerdb {
 
@@ -26,14 +27,13 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
 
   // Constructors
-  explicit Transaction(std::unique_ptr<cta::rdbms::Conn> conn, bool ownConnection = false);
-  explicit Transaction(cta::rdbms::ConnPool& connPool);
+  explicit Transaction(cta::rdbms::ConnPool& connPool, log::LogContext& logContext);
 
   // Move constructor
   Transaction(Transaction&& other) noexcept;
 
-  // Move assignment operator
-  Transaction& operator=(Transaction&& other) noexcept;
+  // Prohibit move assignment
+  Transaction& operator=(Transaction&& other) = delete;
 
   /**
    * Prohibit copy construction
@@ -99,9 +99,9 @@ public:
   void resetConn(cta::rdbms::ConnPool& connPool);
 
 private:
-  std::unique_ptr<cta::rdbms::Conn> m_conn;
-  bool m_ownConnection;
   bool m_begin = false;
+  std::unique_ptr<cta::rdbms::Conn> m_conn;
+  log::LogContext& m_lc;
 };
 
 }  // namespace cta::schedulerdb

@@ -50,7 +50,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   RetrieveJobStatus queriedJobStatus = RetrieveJobStatus::RJS_ToTransfer;
 
   // start a new transaction
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, logContext);
   // require VID named lock in order to minimise tapePool fragmentation of the rows
   txn.takeNamedLock(mountInfo.vid);
 
@@ -121,7 +121,7 @@ uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList
                                         cta::log::LogContext& logContext) const {
   // here we will do ALMOST the same as for RetrieveRdbJob::failTransfer for a bunch of jobs,
   // but it will not update the statistics on the number of retries as `failTransfer` does!
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, logContext);
   uint64_t nrows = 0;
   try {
     nrows = postgres::RetrieveJobQueueRow::requeueJobBatch(txn, RetrieveJobStatus::RJS_ToTransfer, jobIDsList, m_isRepack);
@@ -213,7 +213,7 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
 void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string>& jobIDs,
                                                    cta::schedulerdb::RetrieveJobStatus newStatus,
                                                    log::LogContext& lc) {
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
     cta::utils::Timer t;
 
@@ -303,7 +303,7 @@ void RetrieveMount::putQueueToSleep(const std::string &diskSystemName,
   if (!diskSystemName.empty()) {
     RelationalDB::DiskSleepEntry dse(sleepTime, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
     cta::threading::MutexLocker ml(m_RelationalDB.m_diskSystemSleepMutex);
-    cta::schedulerdb::Transaction txn(m_connPool);
+    cta::schedulerdb::Transaction txn(m_connPool, logContext);
     try {
       m_RelationalDB.insertOrUpdateDiskSleepEntry(txn, diskSystemName, dse);
       txn.commit();

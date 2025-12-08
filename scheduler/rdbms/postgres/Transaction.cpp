@@ -19,68 +19,65 @@
 
 namespace cta::schedulerdb {
 
-Transaction::Transaction(std::unique_ptr<cta::rdbms::Conn> conn, bool ownConnection)
-    : m_conn(std::move(conn)),
-      m_ownConnection(ownConnection) {
-  start();
-}
-
-Transaction::Transaction(cta::rdbms::ConnPool& connPool)
-    : m_conn(std::make_unique<cta::rdbms::Conn>(connPool.getConn())),
-      m_ownConnection(true) {
+Transaction::Transaction(cta::rdbms::ConnPool& connPool, log::LogContext& logContext)
+    : m_begin(false), m_conn(std::make_unique<cta::rdbms::Conn>(connPool.getConn())), m_lc(logContext) {
   start();
 }
 
 Transaction::Transaction(Transaction&& other) noexcept
-    : m_conn(std::move(other.m_conn)),
-      m_ownConnection(other.m_ownConnection) {
+    : m_begin(other.m_begin),
+      m_conn(std::move(other.m_conn)),
+      m_lc(other.m_lc){
+  other.m_begin = false;
   start();
 }
 
-Transaction& Transaction::operator=(Transaction&& other) noexcept {
-  if (this != &other) {
-    m_conn = std::move(other.m_conn);
-    m_ownConnection = other.m_ownConnection;
-  }
-  return *this;
-}
-
 Transaction::~Transaction() {
-  if (m_begin) {
-    m_conn->rollback();
-    m_conn.reset();
+  if (m_begin && m_conn) {
+    try {
+      m_conn->rollback();
+      m_conn.reset();
+    } catch (const cta::exception::Exception &e) {
+      log::ScopedParamContainer errorParams(m_lc);
+      errorParams.add("exceptionMessage", e.getMessageValue());
+      m_lc.log(cta::log::ERR, "In Transaction::~Transaction(): Failed to rollback.");
+    }
   }
-  m_conn.reset();  // Release the connection
 }
 
 void Transaction::lockGlobal() {
   // a global access lock to the whole database
   // for anyone trying to acquire the same lock
-  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:LOCK_ID::bigint)";
-  auto stmt = m_conn->createStmt(sql);
-  stmt.bindUint64(":LOCK_ID", 0);
-  stmt.executeQuery();
+  try {
+    std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:LOCK_ID::bigint)";
+    auto stmt = m_conn->createStmt(sql);
+    stmt.bindUint64(":LOCK_ID", 0);
+    stmt.executeQuery();
+  } catch (const cta::exception::Exception &e) {
+    log::ScopedParamContainer errorParams(m_lc);
+    errorParams.add("exceptionMessage", e.getMessageValue());
+    m_lc.log(cta::log::ERR, "In Transaction::lockGlobal(): Failed to take a global advisory lock.");
+  }
 }
 
 void Transaction::takeNamedLock(std::string_view tapePoolString) {
-  std::hash<std::string_view> lock_id_hasher;
-  std::size_t lock_id = lock_id_hasher(tapePoolString);
-  // Convert to 64-bit integer
-  auto hash64 = static_cast<uint64_t>(lock_id);
-  auto hash32 = static_cast<uint32_t>(hash64 ^ (hash64 >> 32));
+  try {
+    std::hash <std::string_view> lock_id_hasher;
+    std::size_t lock_id = lock_id_hasher(tapePoolString);
+    // Convert to 64-bit integer
+    auto hash64 = static_cast<uint64_t>(lock_id);
+    auto hash32 = static_cast<uint32_t>(hash64 ^ (hash64 >> 32));
 
-  std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:HASH32::bigint)";
-  auto stmt = m_conn->createStmt(sql);
-  stmt.bindUint64(":HASH32", hash32);
-  stmt.executeQuery();
-}
-
-void Transaction::resetConn(cta::rdbms::ConnPool& connPool) {
-  // Reset the old connection only if we own it
-  m_conn.reset();
-  // Obtain a new connection from the pool
-  m_conn = std::make_unique<cta::rdbms::Conn>(connPool.getConn());
-  m_ownConnection = true;
+    std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:HASH32::bigint)";
+    auto stmt = m_conn->createStmt(sql);
+    stmt.bindUint64(":HASH32", hash32);
+    stmt.executeQuery();
+  } catch (const cta::exception::Exception &e) {
+    log::ScopedParamContainer errorParams(m_lc);
+    errorParams.add("exceptionMessage", e.getMessageValue());
+    errorParams.add("pgLockString", tapePoolString);
+    m_lc.log(cta::log::ERR, "In Transaction::takeNamedLock(): Failed to take an advisory lock.");
+  }
 }
 
 cta::rdbms::Conn& Transaction::getConn() const {
@@ -88,9 +85,15 @@ cta::rdbms::Conn& Transaction::getConn() const {
 }
 
 void Transaction::start() {
-  if (!m_begin) {
-    m_conn->executeNonQuery(R"SQL(BEGIN)SQL");
-    m_begin = true;
+  try {
+    if (!m_begin) {
+      m_conn->executeNonQuery(R"SQL(BEGIN)SQL");
+      m_begin = true;
+    }
+  } catch (const cta::exception::Exception &e) {
+    log::ScopedParamContainer errorParams(m_lc);
+    errorParams.add("exceptionMessage", e.getMessageValue());
+    m_lc.log(cta::log::ERR, "Transaction::start(): Failed to start a new DB transaction.");
   }
 }
 
@@ -100,8 +103,15 @@ void Transaction::commit() {
 }
 
 void Transaction::abort() {
-  m_conn->rollback();
-  m_begin = false;
+  try {
+    m_conn->rollback();
+    m_begin = false;
+  } catch (const cta::exception::Exception &e) {
+    log::ScopedParamContainer errorParams(m_lc);
+    errorParams.add("exceptionMessage", e.getMessageValue());
+    m_lc.log(cta::log::ERR, "Transaction::abort(): Failed to abort rollback.");
+
+  }
 }
 
 }  // namespace cta::schedulerdb
