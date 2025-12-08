@@ -23,7 +23,7 @@ global:
         name: {{ include "mgm.instancename" . }}
       spec:
         type: ExternalName
-        externalName: {{ include "utils.mgm_fqdn" . }}
+        externalName: {{ include "utils.mgm_address" . }}
 
 
 mgm:
@@ -182,10 +182,6 @@ fst:
   persistence:
     enabled: true
     storageClass: "fast-ssd"
-    # This is a temporary work-around until the bug is fixed in the EOS charts
-    # https://gitlab.cern.ch/eos/eos-charts/-/issues/113
-    pvc:
-      storageClass: "fast-ssd"
     annotations: {}
     accessModes:
       - ReadWriteOnce
@@ -197,7 +193,7 @@ fst:
 
   xrd:
     extraConfig: |
-      xrootd.redirect {{ include "utils.mgm_fqdn" . }}:1094 chksum
+      xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
       fstofs.protowfendpoint cta-frontend-grpc:10956
       fstofs.protowfresource /ctafrontend
       fstofs.filemd_handler  attr
@@ -317,9 +313,6 @@ qdb:
   persistence:
     enabled: true
     storageClass: "fast-ssd"
-    # This is a temporary work-around until the bug is fixed in the EOS charts
-    pvc:
-      storageClass: "fast-ssd"
     annotations: {}
     accessModes:
       - ReadWriteOnce
