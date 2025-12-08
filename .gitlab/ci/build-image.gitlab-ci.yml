@@ -85,7 +85,9 @@ build-ctageneric-from-remote-rpms:
       when: never
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
-    - !reference [.build-image, rules]
+    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
+      when: never
+    - when: manual
   variables:
     TARGET_NAME:
     DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod-local-rpms.Dockerfile
@@ -136,4 +138,4 @@ build-cta-tools-grpc:
   extends:
     - .build-immutable-image-from-local-rpms
   variables:
-    TARGET_NAME: cta-tools-xrd
+    TARGET_NAME: cta-tools-grpc
