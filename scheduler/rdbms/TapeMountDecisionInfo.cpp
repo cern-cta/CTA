@@ -28,11 +28,11 @@ namespace cta::schedulerdb {
 TapeMountDecisionInfo::TapeMountDecisionInfo(RelationalDB& pdb,
                                              const std::string& ownerId,
                                              TapeDrivesCatalogueState* drivesState,
-                                             log::Logger& logger)
+                                             log::LogContext& logContext)
     : m_RelationalDB(pdb),
-      m_txn(std::make_unique<schedulerdb::Transaction>(pdb.m_connPool)),
+      m_lc(logContext),
+      m_txn(std::make_unique<schedulerdb::Transaction>(pdb.m_connPool, m_lc)),
       m_ownerId(ownerId),
-      m_logger(logger),
       m_tapeDrivesState(drivesState) {}
 
 std::unique_ptr<SchedulerDatabase::ArchiveMount>
@@ -87,8 +87,7 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
     am.mountInfo.vendor = tape.vendor;
     am.mountInfo.capacityInBytes = tape.capacityInBytes;
     am.mountInfo.encryptionKeyName = tape.encryptionKeyName;
-    log::LogContext lc(m_logger);
-    am.setIsRepack(lc);
+    am.setIsRepack(m_lc);
 
     // release the named lock on the DB,
     // so that other tape servers can query the job summary
@@ -97,8 +96,7 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
     std::unique_ptr<SchedulerDatabase::ArchiveMount> ret(privateRet.release());
     return ret;
   } catch (exception::Exception& ex) {
-    log::LogContext lc(m_logger);
-    lc.log(cta::log::ERR,
+    m_lc.log(cta::log::ERR,
            "In TapeMountDecisionInfo::createArchiveMount: failed to commit the new archive mount to the "
            "DB and release the named DB lock on the logical library." +
              ex.getMessageValue());
@@ -128,8 +126,7 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
   try {
     commit();
   } catch (exception::Exception& ex) {
-    log::LogContext lc(m_logger);
-    lc.log(cta::log::ERR,
+    m_lc.log(cta::log::ERR,
            "In TapeMountDecisionInfo::createRetrieveMount: failed to commit the new retrieve mount to "
            "the DB and release the named DB lock on the logical library." +
              ex.getMessageValue());
@@ -164,8 +161,7 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
   if (defaultRepackVO.has_value()) {
     defaultRepackVoName = defaultRepackVO->name;
   }
-  log::LogContext lc(m_logger);
-  rm.setIsRepack(defaultRepackVoName, lc);
+  rm.setIsRepack(defaultRepackVoName, m_lc);
 
   // Return the mount session object to the user
   std::unique_ptr<SchedulerDatabase::RetrieveMount> ret(privateRet.release());

@@ -17,10 +17,11 @@
 
 #pragma once
 
-#include "scheduler/rdbms/RelationalDB.hpp"
+#include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/dataStructures/MountType.hpp"
-#include "catalogue/TapeDrivesCatalogueState.hpp"
+#include "common/log/LogContext.hpp"
+#include "scheduler/rdbms/RelationalDB.hpp"
 
 #include <memory>
 #include <optional>
@@ -43,7 +44,7 @@ public:
   explicit TapeMountDecisionInfo(RelationalDB& pdb,
                                  const std::string& ownerId,
                                  TapeDrivesCatalogueState* drivesState,
-                                 log::Logger& logger);
+                                 log::LogContext& logContext);
 
   std::unique_ptr<SchedulerDatabase::ArchiveMount>
   createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount,
@@ -65,10 +66,10 @@ private:
   void commit();
 
   cta::RelationalDB& m_RelationalDB;
+  log::LogContext& m_lc;
   std::unique_ptr<schedulerdb::Transaction> m_txn;
   std::string m_ownerId;
   bool m_lockTaken = false;
-  log::Logger& m_logger;
   TapeDrivesCatalogueState* m_tapeDrivesState = nullptr;
 };
 

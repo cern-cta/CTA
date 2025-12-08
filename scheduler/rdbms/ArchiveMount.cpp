@@ -50,7 +50,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
                                         ArchiveJobStatus::AJS_ToTransferForUser :
                                         ArchiveJobStatus::AJS_ToTransferForRepack;
   // start a new transaction
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, logContext);
   // require tapePool named lock in order to minimise tapePool fragmentation of the rows
   txn.takeNamedLock(mountInfo.tapePool);
   cta::log::TimingList timings;
@@ -161,7 +161,7 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
                                        cta::log::LogContext& logContext) const {
   // here we will do ALMOST the same as for ArchiveRdbJob::failTransfer for a bunch of jobs,
   // but it will not update the statistics on the number of retries as `failTransfer` does!
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, logContext);
   uint64_t nrows = 0;
   auto status = m_isRepack ? ArchiveJobStatus::AJS_ToTransferForRepack : ArchiveJobStatus::AJS_ToTransferForUser;
 
@@ -210,7 +210,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
   // if they do AND if they do not have already the status AJS_ToReportToRepackForSuccess
   // we will update only the status of the job passed, if all the copies are in state of AJS_ToReportToRepackForSuccess,
   // we will return them all back for deletion from disk and eventually from the queue.
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
     // all jobs for which setJobBatchTransferred is called shall be reported as successful
     uint64_t nrows = 0;
