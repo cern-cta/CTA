@@ -51,9 +51,6 @@ priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
     dnf install -y cta-release && \
     cta-versionlock apply
 
-RUN dnf config-manager --enable ceph
-RUN dnf install -y ceph-common
-
 
 ###############################################
 # SERVICE cta-taped
@@ -147,7 +144,7 @@ FROM base AS cta-tools-grpc
 RUN dnf install -y \
       cta-admin-grpc \
       cta-catalogueutils \
-      cta-objectstore-tools \
+      cta-scheduler-utils \
       cta-debuginfo \
       cta-debugsource && \
     dnf clean all
@@ -165,7 +162,7 @@ FROM base AS cta-tools-xrd
 RUN dnf install -y \
       cta-cli \
       cta-catalogueutils \
-      cta-objectstore-tools \
+      cta-scheduler-utils \
       cta-debuginfo \
       cta-debugsource && \
     dnf clean all
