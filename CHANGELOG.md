@@ -10,6 +10,41 @@
 - [taped] Fix segmentation fault on archive job report URL function (cta/CTA!1080)
 - [Misc] Handle log exception in SharedQueueLock destructor (cta/CTA!1084)
 
+## 5.11.14.0-1 (2025-12-08)
+
+### New Features
+
+- [Tools] Add Scheduler backend name to repack ls output (cta/CTA!1168)
+
+- [frontend] Implement JWT authentication for scripts in cta-admin-grpc (cta/CTA!1065)
+
+- [taped] Add additional OTEL resource attributes for taped (cta/CTA!1105)
+
+
+### Changes
+
+- [Misc] Reduce logging cardinality of OTLP logger output (cta/CTA!1104)
+
+- [Misc] Update various OpenTelemetry config options (cta/CTA!1106)
+
+- [Misc] Failing to instantiate telemetry should not stop process from starting (cta/CTA!1107)
+
+
+### Bug Fixes
+
+- [Misc] Fix unintentional truncation of milliseconds in metric recordings (cta/CTA!1167)
+
+- Fix deadlock PG backend for repack (cta/CTA!1165)
+
+- [taped] Add missing drive config items to catalogue (cta/CTA!1102)
+
+- [Misc] Respect CTA gRPC frontend configuration options to block user and/or...
+
+
+### Removals
+
+- [Misc] Remove `experimental.bypassAdminAuthCheck` option (cta/CTA!1171)
+
 ## 5.11.13.0-1
 
 ### New Features
