@@ -226,10 +226,9 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
       m_jobRow.isReporting = false;
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
       if (nrows != 1) {
-        lc.log(
-          log::WARNING,
-          "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): requeue reporting did not succeed, "
-          "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
+        lc.log(log::WARNING,
+               "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): requeue reporting did not succeed, "
+               "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
       }
     }
     txn.commit();
@@ -243,7 +242,7 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     lc.log(cta::log::WARNING,
            "In schedulerdb::ArchiveRdbJob::failReport(): failed to update job status for failed "
            "report case. Aborting the transaction." +
-             ex.getMessageValue());
+           ex.getMessageValue());
     txn.abort();
   }
   return;
