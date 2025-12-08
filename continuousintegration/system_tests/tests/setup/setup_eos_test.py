@@ -82,6 +82,8 @@ def test_create_wf_directory(env):
 
 @pytest.mark.eos
 def test_create_archive_directory(env) -> None:
+    # For now storage class is hardcoded
+    cta_storage_class: str = "ctaStorageClass"
     base_dir: str = env.eos_mgm[0].base_dir_path
     archive_dir: str = f"{base_dir}/cta"
     # TODO: can we somehow pass values from one test to the next?
@@ -96,8 +98,7 @@ def test_create_archive_directory(env) -> None:
     env.eos_mgm[0].exec(
         f"eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d {archive_dir}"
     )
-    # For now storage class is hardcoded
-    env.eos_mgm[0].exec(f"eos attr set sys.archive.storage_class=ctaStorageClass {archive_dir}")
+    env.eos_mgm[0].exec(f"eos attr set sys.archive.storage_class={cta_storage_class} {archive_dir}")
     env.eos_mgm[0].exec(f"eos attr link {workflow_dir} {archive_dir}")
 
 
