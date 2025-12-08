@@ -24,21 +24,19 @@
 
 namespace cta::frontend {
 
-RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue& catalogue,
-                                               cta::Scheduler& scheduler,
-                                               const std::string& instanceName,
-                                               const admin::AdminCmd& adminCmd)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {
-  using namespace cta::admin;
+  RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue &catalogue,
+                                                 cta::Scheduler &scheduler,
+                                                 const std::string &instanceName,
+                                                 const admin::AdminCmd &adminCmd)
+          : CtaAdminResponseStream(catalogue, scheduler, instanceName),
+            m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
+    using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request(adminCmd);
 
   // Get optional VID parameter
   bool has_any = false;
   auto vid = request.getOptional(OptionString::VID, &has_any);
-
-  // Get scheduler backend name
-  m_schedulerBackendName = m_scheduler.getSchedulerBackendName();
 
   collectRepacks(vid);
 }
