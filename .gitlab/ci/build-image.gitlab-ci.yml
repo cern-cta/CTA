@@ -73,7 +73,7 @@ build-ctageneric-from-remote-rpms:
 # Immutable images
 ###############################################
 
-.build-immutable-image-from-local-rpms:
+build-immutable-image-from-local-rpms:
   extends:
     - .build-image
   needs:
@@ -101,41 +101,6 @@ build-ctageneric-from-remote-rpms:
     # to a reachable place from the build context.
     - mkdir -p image_rpms
     - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
-
-# For now everything is posted to the ctageneric repo
-# Once we clean up our repos, this can be updated
-build-cta-taped:
-  extends:
-    - .build-immutable-image-from-local-rpms
-  variables:
-    TARGET_NAME: cta-taped
-
-build-cta-rmcd:
-  extends:
-    - .build-immutable-image-from-local-rpms
-  variables:
-    TARGET_NAME: cta-rmcd
-
-build-cta-frontend-xrd:
-  extends:
-    - .build-immutable-image-from-local-rpms
-  variables:
-    TARGET_NAME: cta-frontend-xrd
-
-build-cta-frontend-grpc:
-  extends:
-    - .build-immutable-image-from-local-rpms
-  variables:
-    TARGET_NAME: cta-frontend-grpc
-
-build-cta-tools-xrd:
-  extends:
-    - .build-immutable-image-from-local-rpms
-  variables:
-    TARGET_NAME: cta-tools-xrd
-
-build-cta-tools-grpc:
-  extends:
-    - .build-immutable-image-from-local-rpms
-  variables:
-    TARGET_NAME: cta-tools-grpc
+  parallel:
+    matrix:
+      - TARGET_NAME: [cta-taped, cta-rmcd, cta-frontend-xrd, cta-frontend-grpc, cta-tools-xrd, cta-tools-grpc]
