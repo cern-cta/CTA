@@ -205,6 +205,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
     const auto archiveFileCatalogue = static_cast<RdbmsArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
     auto archiveFile = archiveFileCatalogue->getArchiveFileToRetrieveByArchiveFileId(conn, archiveFileId);
     const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
+    // if the archive file was not found on tape in state ACTIVE or DISABLED, check if it is temporarily unavailable
     if(nullptr == archiveFile.get()) {
       exception::UserError ex;
       auto tapeFileStateList = archiveFileCatalogue->getTapeFileStateListForArchiveFileId(conn, archiveFileId);

@@ -180,7 +180,7 @@ void ArchiveRdbJob::failTransfer(const std::string& failureReason, log::LogConte
   // not sure if this is necessary
   //m_jobRow.failureLogs.emplace_back(failureReason);
   //cta::rdbms::Conn txn_conn = m_connPool.getConn();
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   // here we either decide if we report the failure to user or requeue the job
   if (m_jobRow.totalRetries >= m_jobRow.maxTotalRetries) {
     handleExceedTotalRetries(txn, lc, failureReason);
@@ -207,7 +207,7 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""));
   lc.log(log::INFO, "In schedulerdb::ArchiveRdbJob::failReport(): reporting failed.");
   m_jobRow.updateJobRowFailureLog(failureReason, true);
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
     cta::utils::Timer t;
     uint64_t deletionCount = 0;
