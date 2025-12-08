@@ -87,13 +87,17 @@ class TestEnv:
 
     @staticmethod
     def fromNamespace(namespace: str):
+        try:
+          TestEnv.execLocal(f"kubectl get ns {namespace} > /dev/null")
+        except RuntimeError:
+          raise RuntimeError(f"Namespace {namespace} does not exist")
         return TestEnv(
             # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these concepts
             # Something to be changed once we move them over....
             eos_client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
             cta_cli_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-cli"
-            ),  # TODO: bug here (as cta-cli matches cta-client as well)
+            ),
             cta_frontend_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-frontend"
             ),
@@ -127,7 +131,6 @@ class TestEnv:
             raise RuntimeError("Install pyyaml to use TestEnv.fromConfig()")
         with open(path, "r") as f:
             config = yaml.safe_load(f)
-
         def create_connections(config: Any, host: str) -> list:
             """Creates a list of RemoteConnection objects for a given host."""
             if host not in config:

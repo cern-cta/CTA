@@ -103,7 +103,11 @@ def pytest_configure(config):
             config.test_config = tomllib.load(f)
     except FileNotFoundError:
         raise pytest.UsageError(f"--test-config file not found: {config_path}")
-    config.env = create_test_env_from_commandline_options(config)
+    try:
+        config.env = create_test_env_from_commandline_options(config)
+    except Exception as e:
+        raise pytest.UsageError(f"Failed to create test environment: {e}")
+
 
 
 #####################################################################################################################
