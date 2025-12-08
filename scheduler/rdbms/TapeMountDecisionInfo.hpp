@@ -44,7 +44,7 @@ public:
   explicit TapeMountDecisionInfo(RelationalDB& pdb,
                                  const std::string& ownerId,
                                  TapeDrivesCatalogueState* drivesState,
-                                 log::LogContext& logContext);
+                                 log::LogContext& lc);
 
   std::unique_ptr<SchedulerDatabase::ArchiveMount>
   createArchiveMount(const cta::SchedulerDatabase::PotentialMount& mount,
