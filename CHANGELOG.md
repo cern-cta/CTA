@@ -11,7 +11,7 @@
 - [Misc] Reduce logging cardinality of OTLP logger output (cta/CTA!1104)
 - [Misc] Update various OpenTelemetry config options (cta/CTA!1106)
 - [Misc] Failing to instantiate telemetry should not stop process from starting (cta/CTA!1107)
-- [Misc] Various code quality improvements based on issued identified by SonarCloud (cta/CTA&16)
+- [Misc] Various code quality improvements based on issued identified by SonarCloud (&16)
 
 ### Bug Fixes
 
