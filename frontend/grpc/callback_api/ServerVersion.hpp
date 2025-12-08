@@ -75,7 +75,7 @@ void VersionWriteReactor::NextWrite() {
     version->set_catalogue_connection_string(m_catalogue_conn_string);
     version->set_catalogue_version(m_catalogue_version);
     version->set_is_upgrading(m_is_upgrading);
-    version->set_scheduler_backend_name(m_schedulerBackendName.value());
+    version->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
     version->set_instance_name(m_instanceName);
 
     m_isVersionSent = true;

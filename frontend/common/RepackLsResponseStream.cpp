@@ -24,12 +24,13 @@
 
 namespace cta::frontend {
 
-RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue& catalogue,
-                                               cta::Scheduler& scheduler,
-                                               const std::string& instanceName,
-                                               const admin::AdminCmd& adminCmd)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {
-  using namespace cta::admin;
+  RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue &catalogue,
+                                                 cta::Scheduler &scheduler,
+                                                 const std::string &instanceName,
+                                                 const admin::AdminCmd &adminCmd)
+          : CtaAdminResponseStream(catalogue, scheduler, instanceName),
+            m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
+    using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request(adminCmd);
 
@@ -75,7 +76,7 @@ void RepackLsResponseStream::collectRepacks(const std::optional<std::string>& vi
     uint64_t filesLeftToArchive = repackRequest.totalFilesToArchive - repackRequest.archivedFiles;
     uint64_t totalFilesToRetrieve = repackRequest.totalFilesToRetrieve;
     uint64_t totalFilesToArchive = repackRequest.totalFilesToArchive;
-
+    repackRequestItem->set_scheduler_backend_name(m_schedulerBackendName);
     repackRequestItem->set_instance_name(m_instanceName);
     repackRequestItem->set_vid(repackRequest.vid);
     repackRequestItem->set_tapepool(tapeVidMap[repackRequest.vid].tapePoolName);
