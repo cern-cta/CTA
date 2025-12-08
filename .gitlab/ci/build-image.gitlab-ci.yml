@@ -88,8 +88,11 @@ build-ctageneric-from-remote-rpms:
     - !reference [.build-image, rules]
   variables:
     TARGET_NAME:
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod-local-rpms.Dockerfile
     EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --target ${TARGET_NAME}"
-    IMAGE_NAME: $TARGET_NAME
+    # Note that this ctageneric is important here: it ensures the images end up in a private registry
+    # These images must absolutely not end up in a public registry, as they contain Oracle RPMs (which we cannot distribute)
+    IMAGE_NAME: ctageneric/$TARGET_NAME
   before_script:
     # The RPMs come from the artifacts which come as a symbolic link
     # that points outside of the build context. We need to copy them
@@ -103,40 +106,34 @@ build-cta-taped:
   extends:
     - .build-immutable-image-from-local-rpms
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod-local-rpms.Dockerfile
-    TARGET_NAME: ctageneric/cta-taped
+    TARGET_NAME: cta-taped
 
 build-cta-rmcd:
   extends:
     - .build-immutable-image-from-local-rpms
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod-local-rpms.Dockerfile
-    TARGET_NAME: ctageneric/cta-rmcd
+    TARGET_NAME: cta-rmcd
 
 build-cta-frontend-xrd:
   extends:
     - .build-immutable-image-from-local-rpms
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod-local-rpms.Dockerfile
-    TARGET_NAME: ctageneric/cta-frontend-xrd
+    TARGET_NAME: cta-frontend-xrd
 
 build-cta-frontend-grpc:
   extends:
     - .build-immutable-image-from-local-rpms
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod-local-rpms.Dockerfile
-    TARGET_NAME: ctageneric/cta-frontend-grpc
+    TARGET_NAME: cta-frontend-grpc
 
 build-cta-tools-xrd:
   extends:
     - .build-immutable-image-from-local-rpms
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod-local-rpms.Dockerfile
-    TARGET_NAME: ctageneric/cta-tools-xrd
+    TARGET_NAME: cta-tools-xrd
 
 build-cta-tools-grpc:
   extends:
     - .build-immutable-image-from-local-rpms
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod-local-rpms.Dockerfile
-    TARGET_NAME: ctageneric/cta-tools-xrd
+    TARGET_NAME: cta-tools-xrd
