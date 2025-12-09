@@ -17,7 +17,7 @@
 
 STRACE_SLEEP_SECS=2
 
-log_file="/var/log/cta-taped.log"
+log_file="/var/log/cta/cta-taped.log"
 
 # Install dependencies required for testing log rotation inside the tape server"
 dnf -y install strace lsof
