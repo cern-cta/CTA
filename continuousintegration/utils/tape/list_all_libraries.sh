@@ -17,4 +17,4 @@
 
 set -e
 
-lsscsi -g | grep mediumx | awk {'print $7'} | sort
+lsscsi -g | grep mediumx | awk {'print $7'} | sed -e 's%/dev/%%' | sort

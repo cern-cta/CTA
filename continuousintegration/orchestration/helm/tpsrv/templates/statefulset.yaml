@@ -178,7 +178,7 @@ spec:
       volumes:
       - name: smcdev
         hostPath:
-          path: {{ $libraryDevice | quote }}
+          path: /dev/{{ $libraryDevice | quote }}
           type: CharDevice
       - name: scripts-volume
         configMap:
