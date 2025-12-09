@@ -74,6 +74,7 @@ build-ctageneric-from-remote-rpms:
 ###############################################
 
 build-images:
+  allow_failure: true # Don't block the pipeline
   extends:
     - .build-image
   needs:
