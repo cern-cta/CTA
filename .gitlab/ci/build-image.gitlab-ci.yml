@@ -73,7 +73,7 @@ build-ctageneric-from-remote-rpms:
 # Immutable images
 ###############################################
 
-.build-images:
+build-images:
   extends:
     - .build-image
   needs:
