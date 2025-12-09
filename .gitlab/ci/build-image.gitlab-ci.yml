@@ -73,7 +73,7 @@ build-ctageneric-from-remote-rpms:
 # Immutable images
 ###############################################
 
-build-images:
+.build-images:
   extends:
     - .build-image
   needs:
@@ -90,17 +90,31 @@ build-images:
     - when: manual
   variables:
     TARGET_NAME:
+    IMAGE_NAME_SUFFIX:
     DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod-local-rpms.Dockerfile
     EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --target ${TARGET_NAME}"
     # Note that this ctageneric is important here: it ensures the images end up in a private registry
     # These images must absolutely not end up in a public registry, as they contain Oracle RPMs (which we cannot distribute)
-    IMAGE_NAME: ctageneric/$TARGET_NAME
+    IMAGE_NAME: ctageneric/${TARGET_NAME}${IMAGE_NAME_SUFFIX}
   before_script:
     # The RPMs come from the artifacts which come as a symbolic link
     # that points outside of the build context. We need to copy them
     # to a reachable place from the build context.
     - mkdir -p image_rpms
     - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
+
+build-images:
+  extends:
+    - .build-images
+  parallel:
+    matrix:
+      - TARGET_NAME: [cta-taped, cta-rmcd, cta-frontend-xrd, cta-frontend-grpc, cta-tools-xrd, cta-tools-grpc]
+
+build-images-pg:
+  extends:
+    - .build-images
+  variables:
+    IMAGE_NAME_SUFFIX: "-pg"
   parallel:
     matrix:
       - TARGET_NAME: [cta-taped, cta-rmcd, cta-frontend-xrd, cta-frontend-grpc, cta-tools-xrd, cta-tools-grpc]
