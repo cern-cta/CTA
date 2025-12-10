@@ -488,7 +488,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>();
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -522,7 +522,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -669,7 +669,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>();
 
   // 4) Create the scheduler
   auto & catalogue = getCatalogue();
@@ -703,7 +703,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -870,7 +870,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>();
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -904,7 +904,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -1065,7 +1065,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>();
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -1103,7 +1103,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -1256,7 +1256,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeNonRAODrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeNonRAODrive>();
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -1293,7 +1293,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -1444,7 +1444,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeNonRAODrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeNonRAODrive>();
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -1481,7 +1481,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -1636,7 +1636,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeNonRAODrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeNonRAODrive>();
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -1673,7 +1673,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -1829,7 +1829,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>();
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -1863,7 +1863,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -1980,7 +1980,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   //pointer with ownership will be passed to the application,
   //which will do the delete
   const bool failOnMount = true;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(failOnMount);
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>(failOnMount);
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -2014,7 +2014,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
     castor::tape::tapeserver::daemon::VolumeInfo volInfo;
@@ -2182,7 +2182,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>();
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -2190,7 +2190,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2334,7 +2334,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>();
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -2342,7 +2342,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2493,7 +2493,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>();
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -2502,7 +2502,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   const uint64_t problematicFileId = 5;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2666,7 +2666,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>();
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -2675,7 +2675,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   const uint64_t problematicFseq = 5;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2827,7 +2827,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>();
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -2835,7 +2835,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2995,7 +2995,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   //pointer with ownership will be passed to the application,
   //which will do the delete
   const uint64_t tapeSize = 5000;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(tapeSize);
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>(tapeSize);
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -3003,7 +3003,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -3166,8 +3166,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   //pointer with ownership will be passed to the application,
   //which will do the delete
   const uint64_t tapeSize = 5000;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(tapeSize,
-                                                                                           castor::tape::tapeserver::drive::FakeDrive::OnFlush);
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>(tapeSize, drive::FakeDrive::OnFlush);
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -3175,7 +3174,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"].get(), s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -3333,8 +3332,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   //pointer with ownership will be passed to the application,
   //which will do the delete
   const uint64_t tapeSize = 5000;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(tapeSize,
-                                                                                           castor::tape::tapeserver::drive::FakeDrive::OnFlush);
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = std::make_unique<drive::FakeDrive>(tapeSize, drive::FakeDrive::OnFlush);
 
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");

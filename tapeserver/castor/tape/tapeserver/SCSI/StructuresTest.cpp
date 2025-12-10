@@ -20,7 +20,6 @@
 #include "Device.hpp"
 #include "Structures.hpp"
 #include "../system/Wrapper.hpp"
-#include "Exception.hpp"
 
 using ::testing::AtLeast;
 using ::testing::Return;
