@@ -205,6 +205,8 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(scheduler)
   add_subdirectory(tapeserver)
 
+  add_subdirectory(maintd)
+
   add_subdirectory(statistics)
 
   add_subdirectory(cta-release)

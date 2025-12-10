@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: scripts-maintd
+data:
+  maintd.sh: |
+    {{ .Files.Get "scripts/maintd.sh" | nindent 4 }}
+  pre_run.sh: {{ .Values.preRun.script | toYaml | nindent 4 }}
+  post_run.sh: {{ .Values.postRun.script | toYaml | nindent 4 }}

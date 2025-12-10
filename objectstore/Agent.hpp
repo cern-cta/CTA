@@ -27,7 +27,6 @@ namespace cta::objectstore {
 
 class GenericObject;
 class AgentReference;
-class GarbageCollector;
 class Sorter;
 
 /**
@@ -41,7 +40,6 @@ class Sorter;
 
 class Agent: public ObjectOps<serializers::Agent, serializers::Agent_t> {
   friend class AgentReference;
-  friend class GarbageCollector;
   friend class AgentWrapper;
   friend class Sorter;
 public:
@@ -68,7 +66,6 @@ public:
   void garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
     cta::catalogue::Catalogue & catalogue) override;
 
-private:
   void addToOwnership(const std::string& name);
 
   void removeFromOwnership(const std::string &name);

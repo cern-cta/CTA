@@ -71,6 +71,7 @@ update_local_cta_chart_dependencies() {
     "cli"
     "frontend"
     "tpsrv"
+    "maintd"
     "cta"
   )
   for chart in "${charts[@]}"; do

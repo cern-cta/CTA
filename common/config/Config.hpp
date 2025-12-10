@@ -22,6 +22,8 @@
 #include <sstream>
 #include <vector>
 
+#include "common/log/Logger.hpp"
+
 namespace cta::common {
 
 /*!
@@ -32,7 +34,7 @@ public:
   /*!
    * Construct from a configuration file
    */
-  explicit Config(const std::string& filename);
+  explicit Config(const std::string& filename, cta::log::Logger *log = nullptr);
 
   /*!
    * Get a option string list vector from config
@@ -64,14 +66,14 @@ public:
   */
   std::optional<bool> getOptionValueBool(const std::string& key) const;
 
-private:
-  //! Configuration option list type
-  using optionlist_t = std::vector<std::string>;
-
   /*!
    * Parse config file
    */
-  void parse(std::ifstream& file);
+  void parse(log::Logger &log);
+  
+private:
+  //! Configuration option list type
+  using optionlist_t = std::vector<std::string>;
 
   /*!
    * Get option list from config
@@ -95,6 +97,8 @@ private:
   // Member variables
   const optionlist_t m_nulloptionlist;                  //!< Empty option list returned when key not found
   std::map<std::string, optionlist_t> m_configuration;  //!< Parsed configuration options
+  const std::string m_configFileName;
+
 };
 
 }  // namespace cta::common

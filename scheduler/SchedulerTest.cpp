@@ -41,9 +41,9 @@
 #include "common/Timer.hpp"
 #include "objectstore/Algorithms.hpp"
 #include "objectstore/BackendRadosTestSwitch.hpp"
-#include "objectstore/GarbageCollector.hpp"
 #include "objectstore/RepackIndex.hpp"
 #include "objectstore/RootEntry.hpp"
+#include "objectstore/GarbageCollector.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
@@ -1918,8 +1918,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
       gcAgent.initialize();
       gcAgent.insertAndRegisterSelf(lc);
       {
-        cta::objectstore::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
-        gc.runOnePass(lc);
+        cta::objectstore::GarbageCollector gc(lc, getSchedulerDB().getBackend(), gcAgentRef, catalogue);
+        gc.runOnePass();
       }
       // Assign a new agent to replace the stale agent reference in the DB
       getSchedulerDB().replaceAgent(new objectstore::AgentReference("OStoreDBFactory2", dl));
@@ -2174,8 +2174,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
       gcAgent.initialize();
       gcAgent.insertAndRegisterSelf(lc);
       {
-        cta::objectstore::GarbageCollector gc(getSchedulerDB().getBackend(), gcAgentRef, catalogue);
-        gc.runOnePass(lc);
+        cta::objectstore::GarbageCollector gc(lc, getSchedulerDB().getBackend(), gcAgentRef, catalogue);
+        gc.runOnePass();
       }
       // Assign a new agent to replace the stale agent reference in the DB
       getSchedulerDB().replaceAgent(new objectstore::AgentReference("OStoreDBFactory2", dl));
@@ -7073,8 +7073,8 @@ TEST_P(SchedulerTest, toTransfereRetrieveQueueMissingReservationInfo)
     retrieveQueue1.commit();
   }
   // Garbage collect the first agent
-  GarbageCollector gc(backend, agentReference, catalogue);
-  gc.runOnePass(lc);
+  cta::objectstore::GarbageCollector gc(lc, backend, agentReference, catalogue);
+  gc.runOnePass();
 
   // Check that the queue cleanup information has not been cleared.
   cta::objectstore::ScopedExclusiveLock sel(retrieveQueue1);

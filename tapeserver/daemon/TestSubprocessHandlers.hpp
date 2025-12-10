@@ -18,7 +18,7 @@
 #pragma once
 
 #include "SubprocessHandler.hpp"
-#include "common/threading/SocketPair.hpp"
+#include "common/process/threading/SocketPair.hpp"
 #include "common/exception/Errnum.hpp"
 #include <chrono>
 #include <string>

@@ -2752,6 +2752,11 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
       sorter.insertArchiveRequest(sts.sorterArchiveRequest, *m_oStoreDb.m_agentReference, lc);
     }
     sorter.flushAll(lc);
+    cta::telemetry::metrics::ctaSchedulerRepackReportCount->Add(
+      successfullyTransformedSubrequests.size(),
+      {
+        {cta::semconv::attr::kCtaRepackReportType, cta::semconv::attr::CtaRepackReportTypeValues::kRetrieveSuccess}
+    });
   }
   timingList.insertAndReset("archiveRequestsQueueingTime", t);
   log::ScopedParamContainer params(lc);
@@ -2837,6 +2842,11 @@ void OStoreDB::RepackRetrieveFailureReportBatch::report(log::LogContext& lc) {
       }
     }
 
+    cta::telemetry::metrics::ctaSchedulerRepackReportCount->Add(
+      retrieveRequestsToUnown.size(),
+      {
+        {cta::semconv::attr::kCtaRepackReportType, cta::semconv::attr::CtaRepackReportTypeValues::kRetrieveFailed}
+    });
     timingList.insertAndReset("asyncDeleteRetrieveLaunchTime", t);
     for (auto& adar : asyncDeleterAndReqs) {
       try {
@@ -5025,12 +5035,18 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
     jobsToUnown.emplace_back(sri.subrequest->getAddressIfSet());
   }
   m_oStoreDb.m_agentReference->removeBatchFromOwnership(jobsToUnown, m_oStoreDb.m_objectStore);
+  const auto repackReportType = (newStatus == cta::objectstore::serializers::ArchiveJobStatus::AJS_Complete) ?
+                                  cta::semconv::attr::CtaRepackReportTypeValues::kArchiveSuccess :
+                                  cta::semconv::attr::CtaRepackReportTypeValues::kArchiveFailed;
+  cta::telemetry::metrics::ctaSchedulerRepackReportCount->Add(
+    m_subrequestList.size(),
+    {
+      {cta::semconv::attr::kCtaRepackReportType, repackReportType}
+  });
   log::ScopedParamContainer params(lc);
   timingList.insertAndReset("ownershipRemovalTime", t);
   timingList.addToLog(params);
-  params.add("archiveReportType",
-             (newStatus == cta::objectstore::serializers::ArchiveJobStatus::AJS_Complete) ? "ArchiveSuccesses" :
-                                                                                            "ArchiveFailures");
+  params.add("archiveReportType", repackReportType);
   lc.log(log::INFO, "In OStoreDB::RepackArchiveReportBatch::report(): reported a batch of jobs.");
 }
 

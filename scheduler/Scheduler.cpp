@@ -50,7 +50,6 @@
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
 #include "scheduler/ArchiveMount.hpp"
-#include "scheduler/DiskReportRunner.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/Scheduler.hpp"
@@ -859,7 +858,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
                                                                                        diskSystemList,
                                                                                        lc);
     lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after addSubrequestsAndUpdateStats().");
-
+    cta::telemetry::metrics::ctaSchedulerRepackExpandCount->Add(nbRetrieveSubrequestsQueued);
   } catch (const cta::ExpandRepackRequestException&) {
     deleteRepackBuffer(std::move(dir), lc);
     throw;
@@ -3034,7 +3033,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
   for (auto& j : reportedJobs) {
     log::ScopedParamContainer params(lc);
     params.add("fileId", j->archiveFile.archiveFileID).add("reportType", j->reportType());
-    lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): report successful.");
+    lc.log(log::DEBUG, "In Scheduler::reportArchiveJobsBatch(): report successful.");
   }
   log::ScopedParamContainer params(lc);
   params.add("totalReports", archiveJobsBatch.size())
@@ -3042,6 +3041,17 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
     .add("successfulReports", reportedJobs.size());
   timingList.addToLog(params);
   lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): reported a batch of archive jobs.");
+  cta::telemetry::metrics::ctaSchedulerDiskReportCount->Add(
+    reportedJobs.size(),
+    {
+      {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive}
+  });
+  cta::telemetry::metrics::ctaSchedulerDiskReportCount->Add(
+    archiveJobsBatch.size() - reportedJobs.size(),
+    {
+      {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive},
+      {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+  });
 }
 
 //------------------------------------------------------------------------------
@@ -3116,6 +3126,17 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
     .add("successfulReports", reportedJobs.size());
   timingList.addToLog(params);
   lc.log(log::INFO, "In Scheduler::reportRetrieveJobsBatch(): reported a batch of retrieve jobs.");
+  cta::telemetry::metrics::ctaSchedulerDiskReportCount->Add(
+    reportedJobs.size(),
+    {
+      {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve}
+  });
+  cta::telemetry::metrics::ctaSchedulerDiskReportCount->Add(
+    retrieveJobsBatch.size() - reportedJobs.size(),
+    {
+      {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve},
+      {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+  });
 }
 
 cta::catalogue::Catalogue& Scheduler::getCatalogue() {

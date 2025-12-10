@@ -45,19 +45,28 @@ static constexpr const char* kDbNamespace = "db.namespace";
 static constexpr const char* kSchedulerNamespace = "cta.scheduler.namespace";  // schedulerBackendName but better
 static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.name";
 static constexpr const char* kFrontendRequesterName = "cta.frontend.requester.name";
+static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";
 static constexpr const char* kCtaIoDirection = "cta.io.direction";  // similar to disk.io.direction
 static constexpr const char* kCtaIoMedium = "cta.io.medium";
 static constexpr const char* kCtaTapedDriveState = "cta.taped.drive.state";
 static constexpr const char* kCtaTapedMountType = "cta.taped.mount.type";
 static constexpr const char* kTapeDriveName = "tape.drive.name";
 static constexpr const char* kTapeLibraryLogicalName = "tape.library.logical.name";
+static constexpr const char* kCtaRoutineName = "cta.routine.name";
+static constexpr const char* kCtaRepackReportType = "cta.repack.report.type";
 
 // -------------------- Attribute Values --------------------
 
 namespace ServiceNameValues {
 static constexpr const char* kCtaFrontend = "cta.frontend";
 static constexpr const char* kCtaTaped = "cta.taped";
+static constexpr const char* kCtaMaintd = "cta.maintd";
 }  // namespace ServiceNameValues
+
+namespace CtaTransferDirectionValues {
+static constexpr const char* kArchive = "archive";
+static constexpr const char* kRetrieve = "retrieve";
+}  // namespace CtaTransferDirectionValues
 
 namespace CtaIoDirectionValues {
 static constexpr const char* kRead = "read";
@@ -68,6 +77,13 @@ namespace CtaIoMediumValues {
 static constexpr const char* kTape = "tape";
 static constexpr const char* kDisk = "disk";
 }  // namespace CtaIoMediumValues
+
+namespace CtaRepackReportTypeValues {
+static constexpr const char* kArchiveSuccess = "ArchiveSuccess";
+static constexpr const char* kArchiveFailed = "ArchiveFailed";
+static constexpr const char* kRetrieveSuccess = "RetrieveSuccess";
+static constexpr const char* kRetrieveFailed = "RetrieveFailed";
+}  // namespace CtaRepackReportTypeValues
 
 namespace ErrorTypeValues {
 static constexpr const char* kUserError = "user_error";

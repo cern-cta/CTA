@@ -21,8 +21,6 @@
 #include <objectstore/BackendFactory.hpp>
 #include <objectstore/AgentHeartbeatThread.hpp>
 #include <objectstore/BackendVFS.hpp>
-#include <objectstore/GarbageCollector.hpp>
-#include <objectstore/QueueCleanupRunner.hpp>
 #include <scheduler/OStoreDB/OStoreDBWithAgent.hpp>
 
 namespace cta {
@@ -57,12 +55,12 @@ public:
     return std::make_unique<OStoreDBWithAgent>(*m_backend, m_backendPopulator->getAgentReference(), catalogue, log);
   }
 
-  objectstore::GarbageCollector getGarbageCollector(catalogue::Catalogue& catalogue) {
-    return objectstore::GarbageCollector(*m_backend, m_backendPopulator->getAgentReference(), catalogue);
+  cta::objectstore::AgentReference & getAgentReference() {
+    return m_backendPopulator->getAgentReference();
   }
 
-  objectstore::QueueCleanupRunner getQueueCleanupRunner(catalogue::Catalogue& catalogue, SchedulerDatabase& oStoreDb) {
-    return objectstore::QueueCleanupRunner(m_backendPopulator->getAgentReference(), oStoreDb, catalogue);
+  objectstore::Backend & getBackend() {
+    return *m_backend;
   }
 
 private:

@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "common/threading/RWLock.hpp"
-#include "common/threading/RWLockWrLocker.hpp"
+#include "common/process/threading/RWLock.hpp"
+#include "common/process/threading/RWLockWrLocker.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
 #include "rdbms/wrapper/Postgres.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"

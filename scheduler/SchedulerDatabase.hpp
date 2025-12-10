@@ -314,7 +314,7 @@ public:
   /**
    * A representation of the cleanup request status of a retrieve queue.
    */
-  struct RetrieveQueueCleanupInfo { 
+  struct RetrieveQueueCleanupInfo {
     std::string queueAddress;
     std::string vid;
     bool doCleanup;
@@ -936,7 +936,7 @@ public:
   virtual void trimEmptyQueues(log::LogContext& lc) = 0;
 
   /* Attempt to trim a ToReport queue. This is a dedicated function called by the
-   * QueueCleanupRunner to delete the ToReportQueue in case we did not fail any requests.
+   * QueueCleanup to delete the ToReportQueue in case we did not fail any requests.
    */
   virtual bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) = 0;
 

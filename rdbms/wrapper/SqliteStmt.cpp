@@ -17,7 +17,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/NullPtrException.hpp"
-#include "common/threading/MutexLocker.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/ConstraintError.hpp"

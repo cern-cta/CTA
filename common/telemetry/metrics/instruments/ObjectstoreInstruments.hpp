@@ -26,4 +26,24 @@ namespace cta::telemetry::metrics {
  */
 extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaObjectstoreLockAcquireDuration;
 
+/**
+ * Number of garbage collected agents.
+ */
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaObjectstoreGcAgentCount;
+
+/**
+ * Number of garbage collected objects as a result of agent cleanup.
+ */
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaObjectstoreGcObjectCount;
+
+/**
+ * Number of queues cleaned up.
+ */
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaObjectstoreCleanupQueueCount;
+
+/**
+ * Number of files moved as a result of queue cleanup.
+ */
+extern std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaObjectstoreCleanupFileCount;
+
 }  // namespace cta::telemetry::metrics

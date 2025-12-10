@@ -1,0 +1,131 @@
+# @project      The CERN Tape Archive (CTA)
+# @copyright    Copyright © 2015-2025 CERN
+# @license      This program is free software, distributed under the terms of the GNU General Public
+#               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
+#               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
+#               option) any later version.
+#
+#               This program is distributed in the hope that it will be useful, but WITHOUT ANY
+#               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+#               PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+#               In applying this licence, CERN does not waive the privileges and immunities
+#               granted to it by virtue of its status as an Intergovernmental Organization or
+#               submit itself to any jurisdiction.
+
+####################################################################################################
+#
+# CTA Maintd Service Configuration
+#
+####################################################################################################
+
+#
+# Experimental feature flags
+#
+cta.experimental.telemetry.enabled false
+
+#
+# MAINTD SERVICE CONFIGURATION OPTIONS
+#
+
+#
+# GENERAL OPTIONS
+# This options will be included in every log line of the maintd process to enhance log identification.
+#
+# Unique string to identify CTA's instance the maintd process is serving (i.e: production, preproduction).
+# Each of these instances should be associated with a specific CTA catalogue instance.
+cta.instance_name production
+
+# The unique string to identify the backend scheduler resources. As an example, it can be structured as:
+# "[ceph|postgres|vfs][User|Repack]".
+cta.scheduler_backend_name cephUser
+
+# The expected user of the cta-maintd daemon process. In the process user does not match the process will exit.
+cta.daemon_user cta
+#
+# The expected group of the cta-maintd daemon process. If the process groups does not match the process will exit.
+cta.daemon_group tape
+
+# Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
+# CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
+cta.log.level INFO
+
+# Log format. Possible values are unstructured, json.
+cta.log.format json
+
+# Path to the CTA Catalogue configuration file
+cta.catalogue.config_file /etc/cta/cta-catalogue.conf
+
+# URL of the objectstore (CTA Scheduler Database). Usually this will be the URL of a Ceph RADOS
+# objectstore. For testing or small installations, a file-based objectstore can be used instead.
+cta.objectstore.backendpath rados://cta@tapecta:cta
+
+
+#
+# CACHE TIMEOUT OPTIONS
+#
+# Defaults to 600 seconds if not set.
+cta.schedulerdb.tape_cache_max_age_secs 600
+#
+# Defaults to 10 seconds if not set.
+cta.schedulerdb.retrieve_queue_cache_max_age_secs 10
+
+# The sleep interval for the main maintd loop (ms)
+cta.maintd.sleep_interval 1000
+
+#
+# MAINTD ROUTINE CONFIGURATION OPTIONS
+#
+
+# Enable Disk Reporting to report the state (fail or success) of archive jobs.
+cta.routines.disk_report_archive.enabled true
+cta.routines.disk_report_archive.batch_size 500
+cta.routines.disk_report_archive.soft_timeout 30
+
+# Enable Disk Reporting to report the state (fail or success) of retrieve jobs.
+cta.routines.disk_report_retrieve.enabled true
+cta.routines.disk_report_retrieve.batch_size 500
+cta.routines.disk_report_retrieve.soft_timeout 30
+
+# Run the Garbage Collector for garbage collection of the objectstore's dead agents
+cta.routines.garbage_collect.enabled true
+
+# Run the Queue Cleanup to remove queues marked for cleanup
+cta.routines.queue_cleanup.enabled true
+cta.routines.queue_cleanup.batch_size 500
+
+# Enable Repack Expansion
+cta.routines.repack_expand.enabled true
+cta.routines.repack_expand.max_to_toexpand 2
+
+# Enable Repack Reporting
+cta.routines.repack_report.enabled true
+cta.routines.repack_report.soft_timeout 30
+
+
+####################################
+# Telemetry
+####################################
+# Used to control cardinality.
+# If set to false, each restart of a process will generate a new unique ID for the `service.instance.id`.
+# If set to true, `service.instance.id` remains constant across restarts.
+cta.telemetry.retain_instance_id_on_restart false
+
+# Metrics backend to use. Possible options are NOOP, OTLP_HTTP, OTLP_GRPC, STDOUT, FILE
+# Default is NOOP, meaning no metrics are collected/exported
+cta.telemetry.metrics.backend NOOP
+
+# Amount of time in milliseconds between exports
+cta.telemetry.metrics.export.interval 15000
+# timeout for a single export
+cta.telemetry.metrics.export.timeout 3000
+
+# Service location of the OTLP collector in case the OTLP backend is used
+# cta.telemetry.metrics.export.otlp.endpoint endpoint:port
+
+# File location containing "username:password" (not base64 encoded) to set up basic auth for push metrics over HTTP
+# Adds the header "authorization: Basic <base64(username:password)>"
+# cta.telemetry.metrics.export.otlp.basic_auth_file /path/to/base64/encoded/username/password
+
+# File location to write to in case the FILE backend is used
+# cta.telemetry.metrics.export.file.endpoint path

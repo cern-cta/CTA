@@ -1,0 +1,15 @@
+
+[Unit]
+Description=CERN Tape Archive (CTA) maintd service
+After=network-online.target
+
+[Service]
+EnvironmentFile=-/etc/sysconfig/cta-maintd
+ExecStart=/usr/bin/cta-maintd ${CTA_MAINTD_OPTIONS}
+LimitCORE=infinity
+OOMScoreAdjust=-1000
+Restart=yes
+TimeoutSec=60
+
+[Install]
+WantedBy=default.target

@@ -22,14 +22,11 @@ add_subdirectory(rdbms/schema)
 set (CTA_SCHEDULER_SRC_FILES
   ArchiveJob.cpp
   ArchiveMount.cpp
-  DiskReportRunner.cpp
   LabelMount.cpp
   MountType.cpp
   MountType.cpp
   PositioningMethod.cpp
-  RepackReportThread.cpp
   RepackRequest.cpp
-  RepackRequestManager.cpp
   RetrieveJob.cpp
   RetrieveMount.cpp
   Scheduler.cpp

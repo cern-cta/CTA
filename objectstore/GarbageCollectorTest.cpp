@@ -18,12 +18,12 @@
 
 #include <gtest/gtest.h>
 
-#include "Agent.hpp"
-#include "AgentReference.hpp"
-#include "AgentRegister.hpp"
-#include "ArchiveQueue.hpp"
-#include "ArchiveRequest.hpp"
-#include "BackendVFS.hpp"
+#include "objectstore/Agent.hpp"
+#include "objectstore/AgentReference.hpp"
+#include "objectstore/AgentRegister.hpp"
+#include "objectstore/ArchiveQueue.hpp"
+#include "objectstore/ArchiveRequest.hpp"
+#include "objectstore/BackendVFS.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
@@ -34,19 +34,19 @@
 #include "common/log/StdoutLogger.hpp"
 #endif
 #include "common/log/StringLogger.hpp"
-#include "DriveRegister.hpp"
-#include "EntryLogSerDeser.hpp"
-#include "GarbageCollector.hpp"
-#include "RetrieveQueue.hpp"
-#include "RetrieveRequest.hpp"
-#include "RootEntry.hpp"
+#include "objectstore/DriveRegister.hpp"
+#include "objectstore/EntryLogSerDeser.hpp"
+#include "objectstore/GarbageCollector.hpp"
+#include "objectstore/RetrieveQueue.hpp"
+#include "objectstore/RetrieveRequest.hpp"
+#include "objectstore/RootEntry.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 
-#include "ObjectStoreFixture.hpp"
+#include "objectstore/ObjectStoreFixture.hpp"
 
 namespace unitTests {
 
-TEST_F(ObjectStore, GarbageCollectorBasicFuctionnality) {
+TEST_F(ObjectStore, GarbageCollectorBasicFunctionality) {
   // We will need a log object
 #ifdef STDOUT_LOGGING
   cta::log::StdoutLogger dl("dummy", "unitTest");
@@ -71,7 +71,7 @@ TEST_F(ObjectStore, GarbageCollectorBasicFuctionnality) {
   re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
   rel.release();
   // Create 2 agents, A and B and register them
-  // The agents are set with a timeout of 0, so they will be delclared
+  // The agents are set with a timeout of 0, so they will be declared
   // dead immediately.
   cta::objectstore::AgentReference agrA("unitTestAgentA", dl), agrB("unitTestAgentB", dl);
   cta::objectstore::Agent agA(agrA.getAgentAddress(), be), agB(agrB.getAgentAddress(), be);
@@ -81,16 +81,16 @@ TEST_F(ObjectStore, GarbageCollectorBasicFuctionnality) {
   agB.initialize();
   agB.setTimeout_us(0);
   agB.insertAndRegisterSelf(lc);
-  // Create the garbage colletor and run it twice.
+  // Create the garbage collector and run it twice.
   cta::objectstore::AgentReference gcAgentRef("unitTestGarbageCollector", dl);
   cta::objectstore::Agent gcAgent(gcAgentRef.getAgentAddress(), be);
   gcAgent.initialize();
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+    gc.runOnePass();
+    gc.runOnePass();
   }
   // Unregister gc's agent
   cta::objectstore::ScopedExclusiveLock gcal(gcAgent);
@@ -150,9 +150,9 @@ TEST_F(ObjectStore, GarbageCollectorRegister) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+    gc.runOnePass();
+    gc.runOnePass();
   }
   ASSERT_FALSE(be.exists(arName));
   // Unregister gc's agent
@@ -214,9 +214,9 @@ TEST_F(ObjectStore, GarbageCollectorArchiveQueue) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+    gc.runOnePass();
+    gc.runOnePass();
   }
   ASSERT_FALSE(be.exists(tpName));
   // Unregister gc's agent
@@ -278,9 +278,9 @@ TEST_F(ObjectStore, GarbageCollectorDriveRegister) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+    gc.runOnePass();
+    gc.runOnePass();
   }
   ASSERT_FALSE(be.exists(tpName));
   // Unregister gc's agent
@@ -435,9 +435,9 @@ TEST_F(ObjectStore, GarbageCollectorArchiveRequest) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+    gc.runOnePass();
+    gc.runOnePass();
   }
   // All 4 requests should be linked in both tape pools
   {
@@ -629,9 +629,9 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequest) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
   {
-    cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-    gc.runOnePass(lc);
-    gc.runOnePass(lc);
+    cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+    gc.runOnePass();
+    gc.runOnePass();
   }
   // All 4 requests should be linked in the first tape queue
   {
@@ -737,8 +737,8 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestPending) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-      gc.runOnePass(lc);
+      cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+      gc.runOnePass();
     }
   }
   //The repack request should have been requeued in the RepackQueuePending
@@ -819,8 +819,8 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestToExpand) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-      gc.runOnePass(lc);
+      cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+      gc.runOnePass();
     }
   }
   {
@@ -901,8 +901,8 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandNotFinished) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-      gc.runOnePass(lc);
+      cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+      gc.runOnePass();
     }
   }
   {
@@ -989,8 +989,8 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestRunningExpandFinished) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc2);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-      gc.runOnePass(lc2);
+      cta::objectstore::GarbageCollector gc(lc2, be, gcAgentRef, catalogue);
+      gc.runOnePass();
     }
   }
   {
@@ -1095,8 +1095,8 @@ TEST_F(ObjectStore, GarbageCollectorRepackRequestStarting) {
     gcAgent.setTimeout_us(0);
     gcAgent.insertAndRegisterSelf(lc2);
     {
-      cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-      gc.runOnePass(lc2);
+      cta::objectstore::GarbageCollector gc(lc2, be, gcAgentRef, catalogue);
+      gc.runOnePass();
     }
   }
   //Check the logs contains the failed to requeue message
@@ -1192,8 +1192,8 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
 
-  cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-  gc.runOnePass(lc);
+  cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+  gc.runOnePass();
 
   {
     //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
@@ -1265,7 +1265,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
     agentRefToReportToUser.addToOwnership(rr.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass();
 
     //The Retrieve Request should be queued in the RetrieveQueueToReportToUser
     re.fetchNoLock();
@@ -1345,7 +1345,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     }
     agentRefFailedJob.addToOwnership(rr.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass();
 
     //The Retrieve Request should be queued in the RetrieveQueueFailed
     re.fetchNoLock();
@@ -1435,7 +1435,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
     }
     agentRefToReportToRepackForSuccess.addToOwnership(rr.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass();
 
     //The Retrieve Request should be queued in the RetrieveQueueToReportToRepackForSuccess
     re.fetchNoLock();
@@ -1516,7 +1516,7 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveAllStatusesAndQueues) {
 
     agentRefToReportToRepackForFailure.addToOwnership(rr.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass();
 
     //The Retrieve Request should be queued in the RetrieveQueueToReportToRepackForFailure
     re.fetchNoLock();
@@ -1671,8 +1671,8 @@ TEST_F(ObjectStore, GarbageCollectorRetrieveRequestRepackRepackingTape) {
 
   static_cast<cta::catalogue::DummyTapeCatalogue*>(catalogue.Tape().get())->addRepackingTape("Tape0");
 
-  cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-  gc.runOnePass(lc);
+  cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+  gc.runOnePass();
 
   {
     //The Retrieve Request should now be queued in the RetrieveQueueToTransferForUser
@@ -1808,8 +1808,8 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
   gcAgent.setTimeout_us(0);
   gcAgent.insertAndRegisterSelf(lc);
 
-  cta::objectstore::GarbageCollector gc(be, gcAgentRef, catalogue);
-  gc.runOnePass(lc);
+  cta::objectstore::GarbageCollector gc(lc, be, gcAgentRef, catalogue);
+  gc.runOnePass();
 
   {
     //The Archive Request should now be queued in the ArchiveQueueToTransferForUser
@@ -1892,7 +1892,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
     agentRefToReportToUserForFailure.addToOwnership(ar.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass();
 
     //The Archive Request should be queued in the ArchiveQueueToReportForUser
     {
@@ -1976,7 +1976,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
     agentRefToReportToUserForTransfer.addToOwnership(ar.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass();
 
     //The Archive Request should be queued in the ArchiveQueueToReportForUser
     {
@@ -2058,7 +2058,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
     agentRefFailed.addToOwnership(ar.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass();
 
     //The Archive Request should be queued in the ArchiveQueueFailed
     {
@@ -2157,7 +2157,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
     agentRefToReportToRepackForSuccess.addToOwnership(ar.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass();
 
     //The Archive Request should be queued in the ArchiveQueueToReportToRepackForSuccess
     {
@@ -2241,7 +2241,7 @@ TEST_F(ObjectStore, GarbageCollectorArchiveAllStatusesAndQueues) {
 
     agentRefToReportToRepackForFailure.addToOwnership(ar.getAddressIfSet(),be);
 
-    gc.runOnePass(lc);
+    gc.runOnePass();
 
     //The Archive Request should be queued in the ArchiveQueueToReportToRepackForFailure
     {
