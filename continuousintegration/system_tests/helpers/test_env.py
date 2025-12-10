@@ -6,6 +6,7 @@ from .hosts.cta.cta_cli_host import CtaCliHost
 from .hosts.cta.cta_frontend_host import CtaFrontendHost
 from .hosts.cta.cta_rmcd_host import CtaRmcdHost
 from .hosts.cta.cta_taped_host import CtaTapedHost
+from .hosts.cta.cta_maintd_host import CtaMaintdHost
 from .hosts.disk.eos_client_host import EosClientHost
 from .hosts.disk.eos_mgm_host import EosMgmHost
 from .hosts.disk.disk_instance_host import DiskInstanceHost
@@ -22,12 +23,14 @@ class TestEnv:
         cta_frontend_conns: list[RemoteConnection] = [],
         cta_rmcd_conns: list[RemoteConnection] = [],
         cta_taped_conns: list[RemoteConnection] = [],
+        cta_maintd_conns: list[RemoteConnection] = [],
         eos_client_conns: list[RemoteConnection] = [],
         eos_mgm_conns: list[RemoteConnection] = [],
     ):
         self.cta_cli: list[CtaCliHost] = [CtaCliHost(conn) for conn in cta_cli_conns]
         self.cta_frontend: list[CtaFrontendHost] = [CtaFrontendHost(conn) for conn in cta_frontend_conns]
         self.cta_rmcd: list[CtaRmcdHost] = [CtaRmcdHost(conn) for conn in cta_rmcd_conns]
+        self.cta_maintd: list[CtaMaintdHost] = [CtaMaintdHost(conn) for conn in cta_maintd_conns]
         self.cta_taped: list[CtaTapedHost] = [CtaTapedHost(conn) for conn in cta_taped_conns]
         self.eos_mgm: list[EosMgmHost] = [EosMgmHost(conn) for conn in eos_mgm_conns]
         self.eos_client: list[EosClientHost] = [EosClientHost(conn) for conn in eos_client_conns]
@@ -103,6 +106,9 @@ class TestEnv:
             ),
             cta_rmcd_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-rmcd"
+            ),
+            cta_maintd_conns=TestEnv.get_k8s_connections_by_label(
+                namespace, "app.kubernetes.io/name", "cta-maintd", "cta-taped"
             ),
             cta_taped_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-taped", allow_partial_label_value_match=True
