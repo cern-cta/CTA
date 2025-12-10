@@ -15,6 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/Argcv.hpp"
 #include "common/exception/Exception.hpp"
 #include "catalogue/PollDatabaseCmdLineArgs.hpp"
 
@@ -26,26 +27,6 @@ namespace unitTests {
 class cta_catalogue_PollDatabaseCmdLineArgsTest : public ::testing::Test {
 protected:
 
-  struct Argcv {
-    int argc;
-    char **argv;
-    Argcv(): argc(0), argv(nullptr) {
-    }
-  };
-  using ArgcvList = std::list<Argcv*>;
-  ArgcvList m_argsList;
-
-  /**
-   * Creates a duplicate string using the new operator.
-   */
-  char *dupString(const std::string &str) {
-    const int len = str.size();
-    char *copy = new char[len + 1];
-    std::copy(str.begin(), str.end(), copy);
-    copy[len] = '\0';
-    return copy;
-  }
-
   void SetUp() override {
     // Allow getopt_long to be called again
     optind = 0;
@@ -54,29 +35,13 @@ protected:
   void TearDown() override {
     // Allow getopt_long to be called again
     optind = 0;
-
-    for(ArgcvList::const_iterator itor = m_argsList.begin();
-      itor != m_argsList.end(); itor++) {
-      for(int i=0; i < (*itor)->argc; i++) {
-        delete[] (*itor)->argv[i];
-      }
-      delete[] (*itor)->argv;
-      delete *itor;
-    }
   }
 };
 
 TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, help_short) {
   using namespace cta::catalogue;
 
-  Argcv *args = new Argcv();
-  m_argsList.push_back(args);
-  args->argc = 2;
-  args->argv = new char *[3];
-  args->argv[0] = dupString("cta-database-poll");
-  args->argv[1] = dupString("-h");
-  args->argv[2] = nullptr;
-
+  auto args = std::make_unique<Argcv>("cta-database-poll", "-h");
   PollDatabaseCmdLineArgs cmdLine(args->argc, args->argv);
 
   ASSERT_TRUE(cmdLine.help);
@@ -87,14 +52,7 @@ TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, help_short) {
 TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, help_long) {
   using namespace cta::catalogue;
 
-  Argcv *args = new Argcv();
-  m_argsList.push_back(args);
-  args->argc = 2;
-  args->argv = new char *[3];
-  args->argv[0] = dupString("cta-database-poll");
-  args->argv[1] = dupString("--help");
-  args->argv[2] = nullptr;
-
+  auto args = std::make_unique<Argcv>("cta-database-poll", "--help");
   PollDatabaseCmdLineArgs cmdLine(args->argc, args->argv);
 
   ASSERT_TRUE(cmdLine.help);
@@ -105,15 +63,7 @@ TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, help_long) {
 TEST_F(cta_catalogue_PollDatabaseCmdLineArgsTest, all_args) {
   using namespace cta::catalogue;
 
-  Argcv *args = new Argcv();
-  m_argsList.push_back(args);
-  args->argc = 3;
-  args->argv = new char *[4];
-  args->argv[0] = dupString("cta-database-poll");
-  args->argv[1] = dupString("dbConfigPath");
-  args->argv[2] = dupString("1234");
-  args->argv[3] = nullptr;
-
+  auto args = std::make_unique<Argcv>("cta-database-poll", "dbConfigPath", "1234");
   PollDatabaseCmdLineArgs cmdLine(args->argc, args->argv);
 
   ASSERT_FALSE(cmdLine.help);
