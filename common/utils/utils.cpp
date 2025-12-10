@@ -413,7 +413,7 @@ std::string getXattr(const std::string& path, const std::string& name) {
     return "";
   }
 
-  std::unique_ptr<char[]> value(new char[sizeOfValue + 1]);
+  auto value = std::make_unique<char[]>(sizeOfValue + 1);
   bzero(value.get(), sizeOfValue + 1);
 
   if (0 > getxattr(path.c_str(), name.c_str(), (void*) value.get(), sizeOfValue)) {

@@ -870,7 +870,7 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
   SCSI::Structures::senseData_t<127> senseBuff;
 
   int udSize = std::min(static_cast<int>(files.size()), maxSupported);
-  std::unique_ptr<SCSI::Structures::RAO::udsDescriptor_t[]> ud(new SCSI::Structures::RAO::udsDescriptor_t[udSize]());
+  auto ud = std::make_unique<SCSI::Structures::RAO::udsDescriptor_t[]>(udSize);
 
   auto it = files.begin();
   for (int i = 0; i < udSize; ++i) {
@@ -885,7 +885,7 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
 
   SCSI::Structures::RAO::generateRAOParams_t params;
   int real_params_len = sizeof(params) + (udSize - 1) * sizeof(SCSI::Structures::RAO::udsDescriptor_t);
-  std::unique_ptr<unsigned char[]> dataBuff(new unsigned char[real_params_len]());
+  auto dataBuff = std::make_unique<unsigned char[]>(real_params_len);
 
   cdb.serviceAction = 0x1d;
 
@@ -914,7 +914,7 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
   int udSize = files.size();
   int real_params_len =
     sizeof(SCSI::Structures::RAO::raoList_t) + (udSize - 1) * sizeof(SCSI::Structures::RAO::udsDescriptor_t);
-  std::unique_ptr<unsigned char[]> dataBuff(new unsigned char[real_params_len]());
+  auto dataBuff = std::make_unique<unsigned char[]>(real_params_len);
   memset(dataBuff.get(), 0, real_params_len);
 
   cdb.udsLimits = 0;

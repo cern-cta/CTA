@@ -261,9 +261,7 @@ void XRootdDiskFileRemover::removeAsync(AsyncXRootdDiskFileRemover::XRootdFileRe
 //==============================================================================
 // AsyncXrootdDiskFileRemover
 //==============================================================================
-AsyncXRootdDiskFileRemover::AsyncXRootdDiskFileRemover(const std::string& path) {
-  m_diskFileRemover.reset(new XRootdDiskFileRemover(path));
-}
+AsyncXRootdDiskFileRemover::AsyncXRootdDiskFileRemover(const std::string& path) : m_diskFileRemover(std::make_unique<XRootdDiskFileRemover>(path)) {}
 
 void AsyncXRootdDiskFileRemover::asyncDelete() {
   m_diskFileRemover->removeAsync(m_responseHandler);
@@ -286,9 +284,7 @@ void AsyncXRootdDiskFileRemover::XRootdFileRemoverResponseHandler::HandleRespons
 //==============================================================================
 // AsyncLocalDiskFileRemover
 //==============================================================================
-AsyncLocalDiskFileRemover::AsyncLocalDiskFileRemover(const std::string& path) {
-  m_diskFileRemover.reset(new LocalDiskFileRemover(path));
-}
+AsyncLocalDiskFileRemover::AsyncLocalDiskFileRemover(const std::string& path) : m_diskFileRemover(std::make_unique<LocalDiskFileRemover>(path)) {}
 
 void AsyncLocalDiskFileRemover::asyncDelete() {
   m_futureDeletion = std::async(std::launch::async, [this]() { m_diskFileRemover->remove(); });
