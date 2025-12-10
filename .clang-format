@@ -1,7 +1,7 @@
 ---
 # General configuration that applies to all files
 BasedOnStyle: LLVM
-BreakBeforeBinaryOperators: None
+BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeTernaryOperators: false
 BreakStringLiterals: true
 ColumnLimit: 120
@@ -73,7 +73,7 @@ DisableFormat: false
 EmptyLineAfterAccessModifier: Never
 EmptyLineBeforeAccessModifier: LogicalBlock
 FixNamespaceComments: true
-IncludeBlocks: Preserve
+IncludeBlocks: Regroup
 IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentExternBlock: AfterExternBlock
@@ -90,7 +90,7 @@ QualifierAlignment: Left
 ReferenceAlignment: Left
 ReflowComments: false
 SeparateDefinitionBlocks: Always
-SortIncludes: Never
+SortIncludes: true
 SpaceAfterCStyleCast: true
 SpaceAfterLogicalNot: false
 SpaceAfterTemplateKeyword: false
