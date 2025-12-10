@@ -256,20 +256,30 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
                                               utils::Timer& t,
                                               log::LogContext& lc) {
   // This method is not being used for repack which has a separate workflow !
-  // If job is done we will delete it (if the full request was served) - to be implemented !
-  std::vector<std::string> jobIDsList_success;
-  std::vector<std::string> jobIDsList_failure;
+  // If job is done we will delete it (if the full request was served)
+  std::vector<std::string> jobIDsList_single_copy_success;
+  std::vector<std::string> jobIDsList_single_copy_failure;
+  std::unordered_set<std::string> archiveIDsSet_multi_copy_success;
+  std::unordered_set<std::string> archiveIDsSet_multi_failure_set;
   // reserving space to avoid multiple re-allocations during emplace_back
-  jobIDsList_success.reserve(jobsBatch.size());
-  jobIDsList_failure.reserve(jobsBatch.size());
+  jobIDsList_single_copy_success.reserve(jobsBatch.size());
+  jobIDsList_single_copy_failure.reserve(jobsBatch.size());
   auto jobsBatchItor = jobsBatch.begin();
   while (jobsBatchItor != jobsBatch.end()) {
     switch ((*jobsBatchItor)->reportType) {
       case SchedulerDatabase::ArchiveJob::ReportType::CompletionReport:
-        jobIDsList_success.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+        if ((*jobsBatchItor)->requestJobCount == 1){
+          jobIDsList_single_copy_success.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+        } else {
+          archiveIDsSet_multi_copy_success.insert(std::to_string((*jobsBatchItor)->archiveRequestId));
+        }
         break;
       case SchedulerDatabase::ArchiveJob::ReportType::FailureReport:
-        jobIDsList_failure.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+        if ((*jobsBatchItor)->requestJobCount == 1){
+          jobIDsList_single_copy_failure.emplace_back(std::to_string((*jobsBatchItor)->jobID));
+        } else {
+          archiveIDsSet_multi_copy_failure.insert(std::to_string((*jobsBatchItor)->archiveRequestId));
+        }
         break;
       default:
         log::ScopedParamContainer(lc)
@@ -283,6 +293,8 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
     }
     log::ScopedParamContainer(lc)
       .add("jobID", (*jobsBatchItor)->jobID)
+      .add("archiveRequestId", (*jobsBatchItor)->archiveRequestId)
+      .add("requestJobCount", (*jobsBatchItor)->requestJobCount)
       .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
       .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
       .log(log::INFO,
@@ -295,34 +307,47 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
     cta::utils::Timer t2;
     uint64_t deletionCount = 0;
     // false in the updateJobStatus calls below =  this is not repack workflow
-    if (!jobIDsList_success.empty()) {
+    if (!jobIDsList_single_copy_success.empty()) {
       uint64_t nrows =
         schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn,
                                                                    cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion, false,
-                                                                   jobIDsList_success);
+                                                                   jobIDsList_single_copy_success);
       deletionCount += nrows;
-      if (nrows != jobIDsList_success.size()) {
+      if (nrows != jobIDsList_single_copy_success.size()) {
         log::ScopedParamContainer(lc)
           .add("updatedRows", nrows)
-          .add("jobListSize", jobIDsList_success.size())
+          .add("jobListSize", jobIDsList_single_copy_success.size())
           .log(log::ERR,
-               "In RelationalDB::setArchiveJobBatchReported: Failed to ArchiveJobQueueRow::updateJobStatus() "
-               "for entire job list provided.");
+               "In RelationalDB::setArchiveJobBatchReported(): Failed to ArchiveJobQueueRow::updateJobStatus() "
+               "for successful single copy job list provided.");
       }
     }
-    if (!jobIDsList_failure.empty()) {
+    if (!archiveIDsSet_multi_copy_success.empty()) {
+      uint64_t nrows =
+        schedulerdb::postgres::ArchiveJobQueueRow::updateMultiCopyJobStatus(txn,
+                                                                            cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion,
+                                                                            archiveIDsSet_multi_copy_success);
+      deletionCount += nrows;
+    }
+    if (!jobIDsList_single_copy_failure.empty()) {
       uint64_t nrows =
         schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn,
                                                                    cta::schedulerdb::ArchiveJobStatus::AJS_Failed, false,
-                                                                   jobIDsList_failure);
+                                                                   jobIDsList_single_copy_failure);
       if (nrows != jobIDsList_failure.size()) {
         log::ScopedParamContainer(lc)
           .add("updatedRows", nrows)
-          .add("jobListSize", jobIDsList_failure.size())
+          .add("jobListSize", jobIDsList_single_copy_failure.size())
           .log(log::ERR,
                "In RelationalDB::setArchiveJobBatchReported: Failed to ArchiveJobQueueRow::updateJobStatus() "
-               "for entire job list provided.");
+               "for failed single copy job list provided.");
       }
+    }
+    if (!archiveIDsSet_multi_copy_failure.empty()) {
+      uint64_t nrows =
+        schedulerdb::postgres::ArchiveJobQueueRow::updateMultiCopyJobStatus(txn,
+                                                                            cta::schedulerdb::ArchiveJobStatus::AJS_Failed,
+                                                                            archiveIDsSet_multi_copy_failure);
     }
     txn.commit();
     log::ScopedParamContainer(lc)
@@ -379,7 +404,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
       candidateVids.insert(tf.vid);
       tfvids += std::string(tf.vid);
     }
-    lc.log(cta::log::INFO, "In RelationalDB::queueRetrieve(): before sqlconn selection. ");
+    lc.log(cta::log::DEBUG, "In RelationalDB::queueRetrieve(): starting. ");
 
     auto sqlconn = m_connPool.getConn();
     /* The current selectBestVid4Retrieve implementation makes

@@ -229,12 +229,18 @@ public:
     retrieveReportURL = rset.columnStringNoOpt("RETRIEVE_REPORT_URL");
     // The following is necessary value translation as the current rdbms API
     // does not allow to bind and save an empty string [""], only nullptr or value are allowed.
+    // The disk reporter factory requires at minimum empty string or a "null:" as a string,
+    // since that is being used in unit tests
+    // We therefore translate this to an empty string.
     // In addition, NULL is throwing an error in columnString() recall, so we can not use NULL either.
     // For this particular field we do need [""] as the start DiskReporterFactory::createDiskReporter() later depends on it.
     if (retrieveReportURL == "NOT_PROVIDED"){
       retrieveReportURL = "";
     }
     retrieveErrorReportURL = rset.columnStringNoOpt("RETRIEVE_ERROR_REPORT_URL");
+    if (retrieveErrorReportURL == "NOT_PROVIDED"){
+      retrieveErrorReportURL = "";
+    }
     requesterName = rset.columnStringNoOpt("REQUESTER_NAME");
     requesterGroup = rset.columnStringNoOpt("REQUESTER_GROUP");
     dstURL = rset.columnStringNoOpt("DST_URL");
@@ -432,7 +438,6 @@ public:
     stmt.bindString(":ALTERNATE_FSEQS", alternateFSeq);
     stmt.bindString(":ALTERNATE_BLOCK_IDS", alternateBlockId);
     stmt.bindUint64(":START_TIME", startTime);
-    stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", retrieveErrorReportURL);
     stmt.bindString(":REQUESTER_NAME", requesterName);
     stmt.bindString(":REQUESTER_GROUP", requesterGroup);
     stmt.bindString(":DST_URL", dstURL);
@@ -464,6 +469,11 @@ public:
       // DiskReporterFactory::createDiskReporter() later ! Since empty string is not
       // permitted in the current implementation of bindString and columnString, we pass a dummy value
       stmt.bindString(":RETRIEVE_REPORT_URL", "NOT_PROVIDED");
+    }
+    if (!retrieveErrorReportURL.empty()) {
+      stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", retrieveReportURL);
+    } else {
+      stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", "NOT_PROVIDED");
     }
     if (activity.has_value()) {
       stmt.bindString(":ACTIVITY", activity.value());

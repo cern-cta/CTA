@@ -36,7 +36,7 @@ Transaction::~Transaction() {
   if (m_begin && m_conn) {
     try {
       m_conn->rollback();
-      m_conn.reset();
+      m_conn->reset();
     } catch (const cta::exception::Exception &e) {
       log::ScopedParamContainer errorParams(m_lc);
       errorParams.add("exceptionMessage", e.getMessageValue());
