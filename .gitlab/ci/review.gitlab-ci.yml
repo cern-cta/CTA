@@ -38,11 +38,13 @@ danger-review-gate:
       optional: true
     - job: format-report
       optional: true
-    - job: lint-cppcheck
+    - job: lint-cpp
       optional: true
-    - job: lint-shellcheck
+    - job: lint-python
       optional: true
-    - job: lint-ruff
+    - job: lint-bash
+      optional: true
+    - job: lint-licenses
       optional: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
