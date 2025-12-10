@@ -45,6 +45,11 @@ PostgresConn::PostgresConn(const rdbms::Login& login) : m_dbNamespace(login.dbNa
     if (!login.password.empty()) {
       connStr << " password=" << login.password;
     }
+    // Set search_path via connection string for reliability with prepared statements
+    // This ensures the search_path is set at PostgreSQL session level before any statements are prepared
+    if (!m_dbNamespace.empty() && m_dbNamespace != "public") {
+      connStr << " options='-c search_path=" << m_dbNamespace << ",public'";
+    }
     connectionString = connStr.str();
   } else {
     // Use login.database as connection string (for backward compatibility)
