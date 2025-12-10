@@ -192,6 +192,7 @@ variables:
   IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-12-09-13553555.el9
   IMAGE_DANGER: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2025-12-09-13553555.el9
   IMAGE_DOCKER_IMAGE_BUILDER: registry.cern.ch/gcr.io/kaniko-project/executor:debug
+  IMAGE_LICENSE_CHECK: registry.cern.ch/docker.io/fsfe/reuse:6.2
 
 default:
   image: $IMAGE_DEFAULT

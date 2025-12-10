@@ -1,0 +1,42 @@
+version = 1
+
+# All files in assets/
+[[annotations]]
+path = "assets/*"
+SPDX-FileCopyrightText = "2025 CERN"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# All json files
+[[annotations]]
+path = "**/*.json"
+SPDX-FileCopyrightText = "2025 CERN"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# All markdown files
+[[annotations]]
+path = "**/*.md"
+SPDX-FileCopyrightText = "2025 CERN"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Test-related files
+[[annotations]]
+path = "continuousintegration/orchestration/tests/error_whitelists/*.txt"
+SPDX-FileCopyrightText = "2025 CERN"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
+# Misc files that are tedious to attach copyright to
+[[annotations]]
+path = [
+    ".gitignore",
+    ".gitmodules",
+    ".git-blame-ignore-revs",
+    "catalogue/cta_catalogue_class_diagram.png",
+    "catalogue/rdbms_classes.pdf",
+    "catalogue/rdbms_classes.pptx",
+    "rdbms/cta_rdbms_class_diagram.svg",
+    "tapeserver/castor/tape/tapeserver/AUTHORS",
+    "tests/parallelTestsMakefile.in",
+    "tests/parallelTestsMakefile.local.in"
+]
+SPDX-FileCopyrightText = "2025 CERN"
+SPDX-License-Identifier = "GPL-3.0-or-later"
