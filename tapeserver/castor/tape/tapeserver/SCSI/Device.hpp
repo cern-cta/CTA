@@ -16,6 +16,12 @@
 #include <sys/sysmacros.h>
 #include <sys/types.h>
 #include <vector>
+#include <string>
+
+#include "../system/RealWrapper.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/utils/Regex.hpp"
+#include "Constants.hpp"
 
 namespace castor::tape::SCSI {
 

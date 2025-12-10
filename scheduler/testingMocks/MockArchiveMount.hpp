@@ -34,24 +34,23 @@ public:
   }
 
   void
-  reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
+  reportJobsBatchTransferred(std::queue<std::shared_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
                              std::queue<cta::catalogue::TapeItemWritten>& skippedFiles,
                              std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs,
                              cta::log::LogContext& logContext) override {
     bool catalogue_updated = false;
     try {
       std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
-      std::list<std::unique_ptr<cta::ArchiveJob>> validatedSuccessfulArchiveJobs;
+      std::list<std::shared_ptr<cta::ArchiveJob>> validatedSuccessfulArchiveJobs;
       while (!successfulArchiveJobs.empty()) {
         // Get the next job to report and make sure we will not attempt to process it twice.
-        std::unique_ptr<cta::ArchiveJob> job = std::move(successfulArchiveJobs.front());
+        auto job = successfulArchiveJobs.front();
         successfulArchiveJobs.pop();
         if (!job) {
           continue;
         }
         tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten());
-        validatedSuccessfulArchiveJobs.emplace_back(std::move(job));
-        job.reset(nullptr);
+        validatedSuccessfulArchiveJobs.emplace_back(job);
       }
       while (!skippedFiles.empty()) {
         auto tiwup = std::make_unique<cta::catalogue::TapeItemWritten>();

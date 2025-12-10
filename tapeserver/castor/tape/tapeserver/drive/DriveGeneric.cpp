@@ -18,7 +18,7 @@
 
 namespace castor::tape::tapeserver {
 
-drive::DriveInterface* drive::createDrive(SCSI::DeviceInfo di, System::virtualWrapper& sw) {
+std::unique_ptr<drive::DriveInterface> drive::createDrive(SCSI::DeviceInfo di, System::virtualWrapper& sw) {
   // For now we need this code as we can only determine that the drive
   // is an mhVTL drive from the serial number and that information is
   // not available in the sysfs of the device.
@@ -40,21 +40,20 @@ drive::DriveInterface* drive::createDrive(SCSI::DeviceInfo di, System::virtualWr
   }
 
   if (std::string::npos != di.product.find("MHVTL") || std::string::npos != serialNumber.find("MHVTL")) {
-    return new DriveMHVTL(di, sw);
+    return std::make_unique<DriveMHVTL>(di, sw);
   } else if (std::string::npos != di.product.find("T10000")) {
-    return new DriveT10000(di, sw);
+    return std::make_unique<DriveT10000>(di, sw);
   } else if (std::string::npos != di.product.find("ULT") || std::string::npos != di.product.find("Ultrium")) {
-    return new DriveLTO(di, sw);
+    return std::make_unique<DriveLTO>(di, sw);
   } else if (std::string::npos != di.product.find("03592")) {
-    return new DriveIBM3592(di, sw);
+    return std::make_unique<DriveIBM3592>(di, sw);
   } else if (std::string::npos != di.product.find("VIRTUAL")) {
     /* In case of a VIRTUAL drive, it could have been pre-allocated
      * for testing purposes (with "pre-cooked" contents). */
-    drive::DriveInterface* ret = sw.getDriveByPath(di.nst_dev);
-    if (ret) {
+    if (auto ret = std::unique_ptr<drive::DriveInterface>(sw.getDriveByPath(di.nst_dev))) {
       return ret;
     } else {
-      return new FakeDrive();
+      return std::make_unique<FakeDrive>();
     }
   } else {
     throw cta::exception::Exception(std::string("Unsupported drive type: ") + di.product);

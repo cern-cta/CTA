@@ -179,14 +179,11 @@ int System::fakeWrapper::stat(const char* path, struct stat* buf) {
 }
 
 castor::tape::tapeserver::drive::DriveInterface* System::fakeWrapper::getDriveByPath(const std::string& path) {
-  std::map<std::string, castor::tape::tapeserver::drive::DriveInterface*>::iterator drive = m_pathToDrive.find(path);
-  if (m_pathToDrive.end() == drive) {
+  if (!m_pathToDrive.contains(path)) {
     return nullptr;
   } else {
     /* The drive will be deleted by the user, so we remove references to it */
-    castor::tape::tapeserver::drive::DriveInterface* ret = drive->second;
-    m_pathToDrive.erase(drive);
-    return ret;
+    return m_pathToDrive.extract(path).mapped().release();
   }
 }
 
@@ -207,12 +204,7 @@ void System::fakeWrapper::referenceFiles() {
  * Destructor: delete leftover drive and device objects
  */
 System::fakeWrapper::~fakeWrapper() {
-  for (auto& d : m_pathToDrive) {
-    delete d.second;
-    d.second = nullptr;
-  }
-
-  for (const auto& m_stFile : m_stFiles) {
+  for (const auto & m_stFile : m_stFiles){
     delete m_stFiles[m_stFile.first];
   }
 }

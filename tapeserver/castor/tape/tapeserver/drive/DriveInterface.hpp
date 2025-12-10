@@ -12,7 +12,7 @@
 #include "tapeserver/castor/tape/tapeserver/SCSI/Exception.hpp"
 #include "tapeserver/castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/mtio_add.hpp"
-#include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/VirtualWrapper.hpp"
 #include "tapeserver/daemon/DriveConfigEntry.hpp"
 
 #include <list>
@@ -262,7 +262,7 @@ public:
  * @return pointer to the newly allocated drive object
  */
 
-DriveInterface* createDrive(SCSI::DeviceInfo di, System::virtualWrapper& sw);
+std::unique_ptr<DriveInterface> createDrive(SCSI::DeviceInfo di, System::virtualWrapper& sw);
 
 std::string getSerialNumber(const int& fd, System::virtualWrapper& sw);
 

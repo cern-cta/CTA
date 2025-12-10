@@ -69,7 +69,7 @@ protected:
     // Create drive object and open tape device
     m_dev.product = "ULT3580-TD8";
     m_dev.nst_dev = m_nstDev;
-    m_drive.reset(castor::tape::tapeserver::drive::createDrive(m_dev, m_sWrapper));
+    m_drive = castor::tape::tapeserver::drive::createDrive(m_dev, m_sWrapper);
 
     try {
       /**

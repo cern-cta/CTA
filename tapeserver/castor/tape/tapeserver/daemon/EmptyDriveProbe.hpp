@@ -8,6 +8,8 @@
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/tapeserver/system/RealWrapper.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "common/log/Logger.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"

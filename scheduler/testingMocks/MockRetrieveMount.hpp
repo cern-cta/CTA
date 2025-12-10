@@ -41,7 +41,7 @@ public:
     // Count the attempt to get a file (even if not successful).
     getJobs++;
     while (!m_jobs.empty()) {
-      ret.emplace_back(m_jobs.front().release());
+      ret.emplace_back(std::move(m_jobs.front()));
       m_jobs.pop_front();
       // Count the next attempt to get the file
       if (filesRequested <= 1 || bytesRequested <= ret.back()->archiveFile.fileSize) {
@@ -74,7 +74,7 @@ public:
 
   void setTapeMounted(log::LogContext& logContext) const override {};
 
-  void setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+  void setJobBatchTransferred(std::queue<std::shared_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                               cta::log::LogContext& logContext) override {};
 
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override {

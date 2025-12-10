@@ -344,16 +344,16 @@ void cta::RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
 //------------------------------------------------------------------------------
 // setJobBatchTransferred()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::shared_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                                 cta::log::LogContext& logContext) {
 #ifdef CTA_PGSCHED
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> validatedSuccessfulDBRetrieveJobs;
 #else
   std::list<cta::SchedulerDatabase::RetrieveJob*> validatedSuccessfulDBRetrieveJobs;
 #endif
-  std::list<std::unique_ptr<cta::RetrieveJob>>
+  std::list<std::shared_ptr<cta::RetrieveJob>>
     validatedSuccessfulRetrieveJobs;  //List to ensure the destruction of the retrieve jobs at the end of this method
-  std::unique_ptr<cta::RetrieveJob> job;
+  std::shared_ptr<cta::RetrieveJob> job;
   double waitUpdateCompletionTime = 0;
   double jobBatchFinishingTime = 0;
   double schedulerDbTime = 0;
@@ -363,9 +363,9 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
   log::TimingList tl;
   try {
     while (!successfulRetrieveJobs.empty()) {
-      job = std::move(successfulRetrieveJobs.front());
+      job = successfulRetrieveJobs.front();
       successfulRetrieveJobs.pop();
-      if (!job.get()) {
+      if (!job) {
         continue;
       }
       files++;
@@ -375,8 +375,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
 #else
       validatedSuccessfulDBRetrieveJobs.emplace_back(job->m_dbJob.get());
 #endif
-      validatedSuccessfulRetrieveJobs.emplace_back(std::move(job));
-      job.reset();
+      validatedSuccessfulRetrieveJobs.emplace_back(job);
     }
     waitUpdateCompletionTime = t.secs(utils::Timer::resetCounter);
     tl.insertAndReset("waitUpdateCompletionTime", t);

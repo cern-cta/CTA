@@ -254,7 +254,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
   // findDrive does not throw exceptions (it catches them to log errors)
   // A nullptr is returned on failure
   retrieveMount->setExternalFreeDiskSpaceScript(m_dataTransferConfig.externalFreeDiskSpaceScript);
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
+  auto drive = findDrive(logContext, retrieveMount);
 
   if (!drive) {
     reporter.bailout();
@@ -442,7 +442,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
   // in order to get the task injector ready to check if we actually have a
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(logContext, archiveMount));
+  auto drive = findDrive(logContext, archiveMount);
   if (!drive) {
     reporter.bailout();
     return MARK_DRIVE_AS_DOWN;
@@ -595,7 +595,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeLabel([[maybe_unus
  * @param logContext For logging purpose
  * @return the drive if found, nullptr otherwise
  */
-castor::tape::tapeserver::drive::DriveInterface*
+std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
 castor::tape::tapeserver::daemon::DataTransferSession::findDrive(cta::log::LogContext& logContext,
                                                                  cta::TapeMount* mount) {
   // Find the drive in the system's SCSI devices
@@ -617,12 +617,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(cta::log::LogCo
     return nullptr;
   }
   try {
-    std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive;
-    drive.reset(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
+    auto drive = castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper);
     if (drive) {
       drive->config = m_driveConfig;
     }
-    return drive.release();
+    return drive;
   } catch (cta::exception::Exception&) {
     // We could not find this drive in the system's SCSI devices
     putDriveDown("Error opening tape drive", mount, logContext);

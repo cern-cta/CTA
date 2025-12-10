@@ -18,6 +18,11 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <vector>
+#include <fstream>
+
+#include "../drive/DriveInterface.hpp"
+#include "VirtualWrapper.hpp"
+#include "FileWrappers.hpp"
 
 namespace castor::tape {
 
@@ -30,75 +35,7 @@ class DriveInterface;
 
 namespace System {
 
-/**
-   * Interface class definition, allowing common ancestor between
-   * realWrapper, mockWrapper and fakeWrapper
-   */
-
-class virtualWrapper {
-public:
-  virtual DIR* opendir(const char* name) = 0;
-  virtual struct dirent* readdir(DIR* dirp) = 0;
-  virtual int closedir(DIR* dirp) = 0;
-  virtual int readlink(const char* path, char* buf, size_t len) = 0;
-  virtual char* realpath(const char* name, char* resolved) = 0;
-  virtual int open(const char* file, int oflag) = 0;
-  virtual ssize_t read(int fd, void* buf, size_t nbytes) = 0;
-  virtual ssize_t write(int fd, const void* buf, size_t nbytes) = 0;
-  /* The ... (variable arguments) notation will not work with GMock.
-     * We have to create one overload for each case we encounter. */
-  virtual int ioctl(int fd, unsigned long int request, struct mtop* mt_cmd) = 0;
-  virtual int ioctl(int fd, unsigned long int request, struct mtget* mt_status) = 0;
-  virtual int ioctl(int fd, unsigned long int request, sg_io_hdr_t* sgh) = 0;
-  virtual int close(int fd) = 0;
-  virtual int stat(const char* path, struct stat* buf) = 0;
-  virtual ~virtualWrapper() = default;
-  /** Hook allowing the pre-allocation of a tape drive in the test environment.
-     * will  */
-  virtual castor::tape::tapeserver::drive::DriveInterface* getDriveByPath(const std::string& path) = 0;
-};
-
-/**
-   * Wrapper class the all system calls used, allowing writing of test harnesses
-   * for unit testing. For simplicity, the members are virtual functions, and
-   * the class implements the same interface as the unit test versions.
-   * This add a virtual table lookup + function call for each system call,
-   * but it is assumed to be affordable.
-   */
-class realWrapper : public virtualWrapper {
-public:
-  virtual DIR* opendir(const char* name) { return ::opendir(name); }
-
-  virtual struct dirent* readdir(DIR* dirp) { return ::readdir(dirp); }
-
-  virtual int closedir(DIR* dirp) { return ::closedir(dirp); }
-
-  virtual int readlink(const char* path, char* buf, size_t len) { return ::readlink(path, buf, len); }
-
-  virtual char* realpath(const char* name, char* resolved) { return ::realpath(name, resolved); }
-
-  virtual int open(const char* file, int oflag) { return ::open(file, oflag); }
-
-  virtual int ioctl(int fd, unsigned long int request, struct mtop* mt_cmd) { return ::ioctl(fd, request, mt_cmd); }
-
-  virtual int ioctl(int fd, unsigned long int request, struct mtget* mt_status) {
-    return ::ioctl(fd, request, mt_status);
-  }
-
-  virtual int ioctl(int fd, unsigned long int request, sg_io_hdr_t* sgh) { return ::ioctl(fd, request, sgh); }
-
-  virtual ssize_t read(int fd, void* buf, size_t nbytes) { return ::read(fd, buf, nbytes); }
-
-  virtual ssize_t write(int fd, const void* buf, size_t nbytes) { return ::write(fd, buf, nbytes); }
-
-  virtual int close(int fd) { return ::close(fd); }
-
-  virtual int stat(const char* path, struct stat* buf) { return ::stat(path, buf); }
-
-  virtual castor::tape::tapeserver::drive::DriveInterface* getDriveByPath(const std::string&) { return nullptr; }
-};
-
-/**
+  /**
    * Fake class for system wrapper. Allows recording of pre-cooked filesystem elements,
    * once for each call separately.
    * Each test can then delegate (from mock) and configure
@@ -127,7 +64,7 @@ public:
   std::map<std::string, struct stat> m_stats;
   std::map<std::string, regularFile> m_regularFiles;
   std::map<std::string, stDeviceFile*> m_stFiles;
-  std::map<std::string, castor::tape::tapeserver::drive::DriveInterface*> m_pathToDrive;
+  std::map<std::string, std::unique_ptr<tapeserver::drive::DriveInterface>> m_pathToDrive;
   void setupSLC5();
   void setupSLC6();
   void setupForVirtualDriveSLC6();

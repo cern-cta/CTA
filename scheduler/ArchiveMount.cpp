@@ -177,14 +177,14 @@ uint64_t cta::ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDs
 // reportJobsBatchTransferred
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::reportJobsBatchTransferred(
-  std::queue<std::unique_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
+  std::queue<std::shared_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
   std::queue<cta::catalogue::TapeItemWritten>& skippedFiles,
   std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs,
   cta::log::LogContext& logContext) {
   std::set<cta::catalogue::TapeItemWrittenPointer> tapeItemsWritten;
-  std::list<std::unique_ptr<cta::ArchiveJob>> validatedSuccessfulArchiveJobs;
+  std::list<std::shared_ptr<cta::ArchiveJob>> validatedSuccessfulArchiveJobs;
   std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> validatedSuccessfulDBArchiveJobs;
-  std::unique_ptr<cta::ArchiveJob> job;
+  std::shared_ptr<cta::ArchiveJob> job;
   std::string failedValidationJobReportURL;
   bool catalogue_updated = false;
   try {
@@ -195,7 +195,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     double clientReportingTime = 0;
     while (!successfulArchiveJobs.empty()) {
       // Get the next job to report and make sure we will not attempt to process it twice.
-      job = std::move(successfulArchiveJobs.front());
+      job = successfulArchiveJobs.front();
       successfulArchiveJobs.pop();
       if (!job) {
         continue;
@@ -217,8 +217,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
       }
       files++;
       bytes += job->archiveFile.fileSize;
-      validatedSuccessfulArchiveJobs.emplace_back(std::move(job));
-      job.reset();
+      validatedSuccessfulArchiveJobs.emplace_back(job);
     }
     while (!skippedFiles.empty()) {
       auto tiwup = std::make_unique<cta::catalogue::TapeItemWritten>();
