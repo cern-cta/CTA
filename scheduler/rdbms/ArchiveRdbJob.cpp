@@ -43,6 +43,8 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   m_tapePool = std::move(m_jobRow.tapePool);
   // Reset copied attributes
   jobID = m_jobRow.jobId;
+  archiveRequestId = m_jobRow.reqId;
+  requestJobCount = m_jobRow.reqJobCount;
   srcURL = std::move(m_jobRow.srcUrl);
   archiveReportURL = std::move(m_jobRow.archiveReportURL);
   errorReportURL = std::move(m_jobRow.archiveErrorReportURL);

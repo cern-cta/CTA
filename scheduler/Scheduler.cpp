@@ -3034,7 +3034,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
   for (auto& j : reportedJobs) {
     log::ScopedParamContainer params(lc);
     params.add("fileId", j->archiveFile.archiveFileID).add("reportType", j->reportType());
-    lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): report successful.");
+    lc.log(log::INFO, "In Scheduler::reportArchiveJobsBatch(): reporting finished.");
   }
   log::ScopedParamContainer params(lc);
   params.add("totalReports", archiveJobsBatch.size())

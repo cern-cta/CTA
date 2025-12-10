@@ -174,6 +174,59 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction &txn,
   return std::make_pair(std::move(result), nrows);
 }
 
+
+uint64_t
+ArchiveJobQueueRow::updateMultiCopyJobStatus(Transaction& txn, ArchiveJobStatus newStatus, const std::unordered_set<std::string>& archiveRequestIDs) {
+  if (archiveRequestIDs.empty()) {
+    return 0;
+  }
+  std::string sqlpart;
+  for (const auto& piece : archiveRequestIDs) {
+    sqlpart += piece + ",";
+  }
+  if (!sqlpart.empty()) {
+    sqlpart.pop_back();
+  }
+  if (newStatus == ArchiveJobStatus::AJS_Complete || newStatus == ArchiveJobStatus::AJS_Failed ||
+          newStatus == ArchiveJobStatus::ReadyForDeletion) {
+    if (newStatus == ArchiveJobStatus::AJS_Failed) {
+      return ArchiveJobQueueRow::moveMultiCopyJobBatchToFailedQueueTable(txn, archiveRequestIDs);
+    } else {
+      std::string sql = R"SQL(
+        WITH REQUESTS_STATS AS (
+          SELECT
+              ARCHIVE_REQUEST_ID,
+              COUNT(*) AS TOTAL_ROWS,
+              COUNT(DISTINCT STATUS) AS DISTINCT_STATUS_COUNT,
+              MAX(REQUEST_JOB_COUNT) AS EXPECTED_COUNT
+          FROM ARCHIVE_ACTIVE_QUEUE
+          WHERE ARCHIVE_REQUEST_ID IN (
+        )SQL";
+      sql += sqlpart + std::string(")");
+      sql += R"SQL(
+            GROUP BY ARCHIVE_REQUEST_ID
+        ),
+      VALID_REQUESTS AS (
+          SELECT ARCHIVE_REQUEST_ID
+          FROM REQUESTS_STATS
+          WHERE
+              DISTINCT_STATUS_COUNT = 1
+              AND EXPECTED_COUNT = TOTAL_ROWS
+      )
+      DELETE FROM ARCHIVE_ACTIVE_QUEUE AS d
+        WHERE d.ARCHIVE_REQUEST_ID IN (SELECT ARCHIVE_REQUEST_ID FROM VALID_REQUESTS)
+      )SQL";
+      auto stmt2 = txn.getConn().createStmt(sql);
+      stmt2.executeNonQuery();
+      return stmt2.getNbAffectedRows();
+    }
+  }
+  std::string sql += "UPDATE ARCHIVE_ACTIVE_QUEUE SET STATUS = :STATUS::ARCHIVE_JOB_STATUS WHERE ARCHIVE_REQUEST_ID IN (" + sqlpart + ")";
+  stmt1.bindString(":STATUS", to_string(newStatus));
+  stmt1.executeNonQuery();
+  return stmt1.getNbAffectedRows();
+}
+
 uint64_t
 ArchiveJobQueueRow::updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack, const std::vector<std::string>& jobIDs) {
   if (jobIDs.empty()) {
@@ -669,6 +722,30 @@ uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, co
     WITH MOVED_ROWS AS (
         DELETE FROM ARCHIVE_ACTIVE_QUEUE
           WHERE JOB_ID IN (
+  )SQL";
+  sql += sqlpart + ")";
+  sql += R"SQL(
+        RETURNING *
+    ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.executeNonQuery();
+  return stmt.getNbAffectedRows();
+  ;
+}
+
+uint64_t ArchiveJobQueueRow::moveMultiCopyJobBatchToFailedQueueTable(Transaction& txn, const std::unordered_set<std::string>& archiveRequestIDs) {
+  std::string sqlpart;
+  for (const auto& piece : archiveRequestIDs) {
+    sqlpart += piece + ",";
+  }
+  if (!sqlpart.empty()) {
+    sqlpart.pop_back();
+  }
+  std::string sql = R"SQL(
+    WITH MOVED_ROWS AS (
+        DELETE FROM ARCHIVE_ACTIVE_QUEUE
+          WHERE ARCHIVE_REQUEST_ID IN (
   )SQL";
   sql += sqlpart + ")";
   sql += R"SQL(
