@@ -118,8 +118,8 @@ void EnstoreLargeFileReader::checkTrailers() {
   // let's read and check the trailers
 
   size_t blockSize = 256 * 1024;
-  char* data = new char[blockSize + 1];
-  size_t bytes_read = m_session.m_drive.readBlock(data, blockSize);
+  auto data = std::make_unique<char[]>(blockSize + 1);
+  size_t bytes_read = m_session.m_drive.readBlock(data.get(), blockSize);
 
   EOF1 eof1;
   EOF2 eof2;
@@ -128,10 +128,9 @@ void EnstoreLargeFileReader::checkTrailers() {
   if (bytes_read < sizeof(eof1) + sizeof(eof2) + sizeof(utl1)) {
     throw cta::exception::Exception("Too few bytes read for headers:" + std::to_string(bytes_read));
   }
-  memcpy(&eof1, data, sizeof(eof1));
-  memcpy(&eof2, data + sizeof(eof1), sizeof(eof2));
-  memcpy(&utl1, data + sizeof(eof1) + sizeof(eof2), sizeof(utl1));
-  delete[] data;
+  memcpy(&eof1, data.get(), sizeof(eof1));
+  memcpy(&eof2, data.get() + sizeof(eof1), sizeof(eof2));
+  memcpy(&utl1, data.get() + sizeof(eof1) + sizeof(eof2), sizeof(utl1));
 
   m_session.m_drive.readFileMark("Reading file mark at the end of file header");
 
@@ -153,8 +152,8 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   m_session.setCurrentFseq(fileToRecall.selectedTapeFile().fSeq);
 
   size_t blockSize = 256 * 1024;
-  char* data = new char[blockSize + 1];
-  size_t bytes_read = m_session.m_drive.readBlock(data, blockSize);
+  auto data = std::make_unique<char[]>(blockSize + 1);
+  size_t bytes_read = m_session.m_drive.readBlock(data.get(), blockSize);
 
   HDR1 hdr1;
   HDR2 hdr2;
@@ -164,11 +163,10 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   if (bytes_read < sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1)) {
     throw cta::exception::Exception("Too few bytes read for headers:" + std::to_string(bytes_read));
   }
-  memcpy(&hdr1, data, sizeof(hdr1));
-  memcpy(&hdr2, data + sizeof(hdr1), sizeof(hdr1));
-  memcpy(&uhl1, data + sizeof(hdr1) + sizeof(hdr2), sizeof(uhl1));
-  memcpy(&uhl2, data + sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1), sizeof(uhl2));
-  delete[] data;
+  memcpy(&hdr1, data.get(), sizeof(hdr1));
+  memcpy(&hdr2, data.get() + sizeof(hdr1), sizeof(hdr1));
+  memcpy(&uhl1, data.get() + sizeof(hdr1) + sizeof(hdr2), sizeof(uhl1));
+  memcpy(&uhl2, data.get() + sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1), sizeof(uhl2));
 
   m_session.m_drive.readFileMark("Reading file mark at the end of file header");
   // after this we should be where we want, i.e. at the beginning of the file

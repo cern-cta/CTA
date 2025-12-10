@@ -133,13 +133,12 @@ std::string WriteSession::getLBPMode() {
 }
 
 void WriteSession::setHostName() {
-  char* hostname_cstr = new char[MAX_UNIX_HOSTNAME_LENGTH];
-  cta::exception::Errnum::throwOnMinusOne(gethostname(hostname_cstr, MAX_UNIX_HOSTNAME_LENGTH),
+  auto hostname_cstr = std::make_unique<char[]>(MAX_UNIX_HOSTNAME_LENGTH);
+  cta::exception::Errnum::throwOnMinusOne(gethostname(hostname_cstr.get(), MAX_UNIX_HOSTNAME_LENGTH),
                                           "Failed gethostname() in WriteFile::setHostName");
-  m_hostName = hostname_cstr;
+  m_hostName = hostname_cstr.get();
   std::transform(m_hostName.begin(), m_hostName.end(), m_hostName.begin(), ::toupper);
   m_hostName = m_hostName.substr(0, m_hostName.find("."));
-  delete[] hostname_cstr;
 }
 
 void WriteSession::setSiteName() {

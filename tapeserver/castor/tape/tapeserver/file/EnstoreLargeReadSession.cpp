@@ -28,13 +28,11 @@ EnstoreLargeReadSession::EnstoreLargeReadSession(tapeserver::drive::DriveInterfa
   // VOL1 on the EnstoreLarge tapes is longer than the existing ones.
   // Throw away the end and validate the beggining as a normal VOL1
   size_t blockSize = 256 * 1024;
-  char* data = new char[blockSize + 1];
-  if (size_t bytes_read = m_drive.readBlock(data, blockSize); bytes_read < sizeof(vol1)) {
-    delete[] data;
+  auto data = std::make_unique<char[]>(blockSize + 1);
+  if (size_t bytes_read = m_drive.readBlock(data.get(), blockSize); bytes_read < sizeof(vol1)) {
     throw cta::exception::Exception("Too few bytes read from label");
   }
-  memcpy(&vol1, data, sizeof(vol1));
-  delete[] data;
+  memcpy(&vol1, data.get(), sizeof(vol1));
 
   // Tapes should have label character 3, but if they were recycled from CPIO tapes, it could be 0
   try {
