@@ -144,6 +144,7 @@ const cta::common::dataStructures::SecurityIdentity
 const cta::common::dataStructures::SecurityIdentity
   SchedulerDatabaseTest::s_userOnUserHost(SchedulerDatabaseTest::s_user, SchedulerDatabaseTest::s_userHost);
 
+// this test fails with a wrong result: filesToDo: 100 should be equal to count: 0
 TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
@@ -161,6 +162,10 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
 #ifdef LOOPING_TEST
   do {
 #endif
+  bool doSleep = true;
+  while (doSleep) {
+    sleep(2);
+  }
   for (size_t i=0; i<filesToDo; i++) {
     lambdas.emplace_back(
     [i,&db,&lc](){
@@ -215,7 +220,9 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
     bool done = false;
     size_t count = 0;
     while (!done) {
-      auto aj = am->getNextJobBatch(1, 1, lc);
+      auto aj = am->getNextJobBatch(1, 1, lc); // with the total size here being 1 byte we do not get the files moved
+    // size in bytes of each of those files is 1000
+    // I am surprised this even works for the objectstore! does it mean the bytes requested argument gets ignored?
       if (!aj.empty()) {
         std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> jobBatch;
         jobBatch.emplace_back(std::move(aj.front()));
