@@ -168,7 +168,7 @@ TEST_P(castorTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
     m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
     const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
-    auto data = std::make_unique<char[]>(blockSize + 1;
+    auto data = std::make_unique<char[]>(blockSize + 1);
     // block size needs to be the same provided by the headers
     ASSERT_THROW(reader->readNextDataBlock(data.get(), 1), castor::tape::tapeFile::WrongBlockSize);
     // it is normal to reach end of file after a loop of reads
