@@ -52,7 +52,10 @@ priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
     cta-versionlock apply
 
 RUN dnf config-manager --enable ceph
-RUN dnf install -y ceph-common
+RUN dnf install -y \
+      ceph-common
+      cta-debuginfo \
+      cta-debugsource
 
 
 ###############################################
@@ -60,6 +63,8 @@ RUN dnf install -y ceph-common
 ###############################################
 FROM base AS cta-taped
 
+# Ideally cta-tape-label should not be here
+# Something for later..
 RUN dnf install -y \
       mt-st \
       lsscsi \
@@ -67,14 +72,13 @@ RUN dnf install -y \
       cta-taped \
       cta-tape-label \
       cta-eosdf \
-      cta-debuginfo \
-      cta-taped-debuginfo \
-      cta-debugsource && \
+      cta-taped-debuginfo && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
 RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
 
+# TODO: can this run as non-root?
 CMD ["/bin/bash", "-c", "runuser -c \"/usr/bin/cta-taped -c /etc/cta/cta-taped.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped.log\""]
 
 
@@ -90,16 +94,30 @@ RUN dnf install -y \
       sg3_utils \
       cta-rmcd \
       cta-smc \
-      cta-debuginfo \
-      cta-rmcd-debuginfo \
-      cta-debugsource && \
+      cta-rmcd-debuginfo && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
 RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
 
+# TODO: can this can run as non-root?
 CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
 
+###############################################
+# SERVICE cta-maintd
+###############################################
+FROM base AS cta-maintd
+
+RUN dnf install -y \
+      cta-maintd \
+      cta-maintd-debuginfo && \
+    dnf clean all
+
+# Remove the local RPMs to reduce size
+RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
+
+USER cta
+CMD ["/usr/bin/cta-maintd", "--foreground", "--log-to-file=/var/log/cta/cta-maintd.log", "--log-format json", "--config /etc/cta/cta-maintd.conf"]
 
 ###############################################
 # SERVICE cta-frontend-grpc
@@ -108,9 +126,7 @@ FROM base AS cta-frontend-grpc
 
 RUN dnf install -y \
       cta-frontend-grpc \
-      cta-debuginfo \
-      cta-frontend-grpc-debuginfo \
-      cta-debugsource && \
+      cta-frontend-grpc-debuginfo && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
@@ -127,9 +143,7 @@ FROM base AS cta-frontend-xrd
 
 RUN dnf install -y \
       cta-frontend \
-      cta-debuginfo \
-      cta-frontend-debuginfo \
-      cta-debugsource && \
+      cta-frontend-debuginfo && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
@@ -147,9 +161,7 @@ FROM base AS cta-tools-grpc
 RUN dnf install -y \
       cta-admin-grpc \
       cta-catalogueutils \
-      cta-objectstore-tools \
-      cta-debuginfo \
-      cta-debugsource && \
+      cta-objectstore-tools && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
@@ -165,9 +177,7 @@ FROM base AS cta-tools-xrd
 RUN dnf install -y \
       cta-cli \
       cta-catalogueutils \
-      cta-objectstore-tools \
-      cta-debuginfo \
-      cta-debugsource && \
+      cta-objectstore-tools && \
     dnf clean all
 
 # Remove the local RPMs to reduce size

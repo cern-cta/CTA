@@ -110,4 +110,4 @@ build-images:
     - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
   parallel:
     matrix:
-      - TARGET_NAME: [cta-taped, cta-rmcd, cta-frontend-xrd, cta-frontend-grpc, cta-tools-xrd, cta-tools-grpc]
+      - TARGET_NAME: [cta-taped, cta-rmcd, cta-maintd, cta-frontend-xrd, cta-frontend-grpc, cta-tools-xrd, cta-tools-grpc]
