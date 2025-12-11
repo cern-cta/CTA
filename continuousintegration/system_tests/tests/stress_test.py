@@ -31,12 +31,20 @@ def stress_params(request):
 #####################################################################################################################
 
 
+@pytest.mark.eos
 def test_hosts_present_stress(env):
     assert len(env.eos_mgm) > 0
     assert len(env.eos_client) > 0
     assert len(env.cta_frontend) > 0
     assert len(env.cta_taped) > 0
 
+
+@pytest.mark.eos
+def test_update_setup_for_max_powerrrr(env):
+    num_drives: int = len(env.cta_taped)
+    env.cta_cli[0].exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
+    env.cta_cli[0].exec(f"cta-admin mp ch --name ctasystest --minarchiverequestage 100 --minretrieverequestage 100 --comment \"Longer min ages\"")
+    env.eos_mgm[0].exec("eos fs config 1 scaninterval=0")
 
 @pytest.mark.eos
 def test_generate_and_copy_files(env, stress_params):
