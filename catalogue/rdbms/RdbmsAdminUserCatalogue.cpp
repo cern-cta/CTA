@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include <string>
+#include <utility>
 #include "catalogue/rdbms/RdbmsAdminUserCatalogue.hpp"
 
 #include "catalogue/rdbms/CommonExceptions.hpp"

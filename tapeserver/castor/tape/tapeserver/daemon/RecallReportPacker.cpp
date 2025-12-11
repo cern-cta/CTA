@@ -59,7 +59,7 @@ void RecallReportPacker::reportFailedJob(std::shared_ptr<cta::RetrieveJob> faile
   params.add("type", "ReportError");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportFailedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(std::make_unique<ReportError>(failedRetrieveJob, failureLog));
+  m_fifo.push(std::move(rep));
 }
 
 //------------------------------------------------------------------------------

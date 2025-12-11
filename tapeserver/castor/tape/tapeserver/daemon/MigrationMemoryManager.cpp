@@ -127,9 +127,12 @@ void MigrationMemoryManager::finish() {
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::releaseBlock
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::releaseBlock(std::unique_ptr<MemBlock> mb) {
-  mb->reset();
-  m_freeBlocks.push(std::move(mb));
+void MigrationMemoryManager::releaseBlock(std::unique_ptr<MemBlock> mb)
+{
+  if (mb) {
+    mb->reset();
+    m_freeBlocks.push(std::move(mb));
+  }
 }
 
 //------------------------------------------------------------------------------

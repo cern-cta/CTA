@@ -41,8 +41,8 @@ RdbmsFileRecycleLogCatalogue::getFileRecycleLogItor(const RecycleTapeFileSearchC
   checkRecycleTapeFileSearchCriteria(conn, searchCriteria);
   const auto tempDiskFxidsTableName =
     m_rdbmsCatalogue->createAndPopulateTempTableFxid(conn, searchCriteria.diskFileIds);
-  auto impl = std::make_unique<RdbmsCatalogueGetFileRecycleLogItor>(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
-  return FileRecycleLogItor(std::move(impl));
+  return FileRecycleLogItor(
+    std::make_unique<RdbmsCatalogueGetFileRecycleLogItor>(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName));
 }
 
 void RdbmsFileRecycleLogCatalogue::restoreFileInRecycleLog(const RecycleTapeFileSearchCriteria& searchCriteria,

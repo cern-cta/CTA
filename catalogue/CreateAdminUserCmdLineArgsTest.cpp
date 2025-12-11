@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "common/Argcv.hpp"
 #include "catalogue/CreateAdminUserCmdLineArgs.hpp"
-#include "Argcv.hpp"
 
 #include <gtest/gtest.h>
 #include <list>

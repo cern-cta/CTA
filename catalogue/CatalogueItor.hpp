@@ -34,11 +34,7 @@ public:
    *
    * @param impl The object actually implementing this iterator.
    */
-  explicit CatalogueItor(std::unique_ptr<Impl> impl) : m_impl(std::move(impl)) {
-    if (nullptr == impl) {
-      throw exception::NullPtrException();
-    }
-  }
+  explicit CatalogueItor(std::unique_ptr<Impl> impl) : m_impl(std::move(impl)) {}
 
   /**
    * Destructor.

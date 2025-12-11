@@ -32,7 +32,7 @@ TapeWriteTask::TapeWriteTask(uint64_t blockCount,
                              std::shared_ptr<cta::ArchiveJob> archiveJob,
                              MigrationMemoryManager& mm,
                              cta::threading::AtomicFlag& errorFlag)
-    : m_archiveJob(std::move(archiveJob)),
+    : m_archiveJob(archiveJob),
       m_memManager(mm),
       m_fifo(blockCount),
       m_blockCount(blockCount),

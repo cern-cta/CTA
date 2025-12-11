@@ -107,8 +107,10 @@ std::unique_ptr<MemBlock> RecallMemoryManager::getFreeBlock() {
 // RecallMemoryManager::releaseBlock
 //------------------------------------------------------------------------------
 void RecallMemoryManager::releaseBlock(std::unique_ptr<MemBlock> mb) {
-  mb->reset();
-  m_freeBlocks.push(std::move(mb));
+  if (mb) {
+    mb->reset();
+    m_freeBlocks.push(std::move(mb));
+  }
 }
 
 //------------------------------------------------------------------------------
