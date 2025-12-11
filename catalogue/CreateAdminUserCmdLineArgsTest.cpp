@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/Argcv.hpp"
 #include "catalogue/CreateAdminUserCmdLineArgs.hpp"
-#include "Argcv.hpp"
 
 #include <gtest/gtest.h>
 #include <list>

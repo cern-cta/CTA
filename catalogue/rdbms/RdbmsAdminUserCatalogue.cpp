@@ -16,6 +16,7 @@
  */
 
 #include <string>
+#include <utility>
 
 #include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsAdminUserCatalogue.hpp"
