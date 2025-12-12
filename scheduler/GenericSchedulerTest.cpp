@@ -529,7 +529,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
-    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<std::shared_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
     std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
@@ -616,7 +616,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     retrieveJob.reset(jobBatch.front().release());
     ASSERT_NE(nullptr, retrieveJob.get());
     retrieveJob->asyncSetSuccessful();
-    std::queue<std::unique_ptr<cta::RetrieveJob> > jobQueue;
+    std::queue<std::shared_ptr<cta::RetrieveJob> > jobQueue;
     jobQueue.push(std::move(retrieveJob));
     retrieveMount->setJobBatchTransferred(jobQueue, lc);
     jobBatch = retrieveMount->getNextJobBatch(1,1,lc);
@@ -735,7 +735,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
-    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<std::shared_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
     std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
@@ -1079,7 +1079,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
-    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<std::shared_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
     std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
@@ -1151,7 +1151,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 2;
     archiveJob->validate();
-    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<std::shared_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
     std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
@@ -1385,7 +1385,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
-    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<std::shared_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
     std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
@@ -1619,7 +1619,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
-    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<std::shared_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
@@ -2566,7 +2566,7 @@ TEST_P(SchedulerTest, DISABLED_archiveReportMultipleAndQueueRetrievesWithActivit
       archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
       archiveJob->tapeFile.copyNb = 1;
       archiveJob->validate();
-      std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+      std::queue<std::shared_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
       std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
       std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
       sDBarchiveJobBatch.emplace(std::move(archiveJob));
@@ -2798,7 +2798,7 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
     archiveJob->tapeFile.fileSize = archiveJob->archiveFile.fileSize;
     archiveJob->tapeFile.copyNb = 1;
     archiveJob->validate();
-    std::queue<std::unique_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
+    std::queue<std::shared_ptr <cta::ArchiveJob >> sDBarchiveJobBatch;
     std::queue<cta::catalogue::TapeItemWritten> sTapeItems;
     std::queue<std::unique_ptr <cta::SchedulerDatabase::ArchiveJob >> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
