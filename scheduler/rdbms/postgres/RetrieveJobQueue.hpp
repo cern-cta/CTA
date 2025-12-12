@@ -471,7 +471,7 @@ public:
       stmt.bindString(":RETRIEVE_REPORT_URL", "NOT_PROVIDED");
     }
     if (!retrieveErrorReportURL.empty()) {
-      stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", retrieveReportURL);
+      stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", retrieveErrorReportURL);
     } else {
       stmt.bindString(":RETRIEVE_ERROR_REPORT_URL", "NOT_PROVIDED");
     }
