@@ -219,8 +219,7 @@ ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const std::vecto
       FROM target_success_multicopy tsm
           LEFT JOIN ready_for_reporting_to_disk rfr
               ON rfr.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
-      WHERE aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
-           AND aj2.JOB_ID = tsm.JOB_ID;
+      WHERE aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID;
   )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":STATUS_READY_FOR_REPORTING", to_string(newStatus));
@@ -327,8 +326,7 @@ ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std::vector<s
   FROM target_success_multicopy tsm
         LEFT JOIN ready_for_deletion rfd
             ON rfd.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
-  WHERE aj2.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
-        AND aj2.JOB_ID = tsm.JOB_ID;
+  WHERE aj2.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID;
   )SQL";
   auto stmt1 = txn.getConn().createStmt(sql);
   stmt1.bindString(":STATUS_COND_SIBLINGS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
