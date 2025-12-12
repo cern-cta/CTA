@@ -91,7 +91,7 @@ build-images:
     - when: manual
   variables:
     TARGET_NAME:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/cta.Dockerfile
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod.Dockerfile
     EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --target ${TARGET_NAME}"
     # Note that this ctageneric is important here: it ensures the images end up in a private registry
     # These images must absolutely not end up in a public registry, as they contain Oracle RPMs (which we cannot distribute)
@@ -100,7 +100,7 @@ build-images:
     # For the Postgres scheduler, choose a different Dockerfile and add the "-pg" suffix to the image
     - |
       if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
-        DOCKERFILE="continuousintegration/docker/${PLATFORM}/cta-pg.Dockerfile"
+        DOCKERFILE="continuousintegration/docker/${PLATFORM}/prod-pg.Dockerfile"
         IMAGE_NAME="${IMAGE_NAME}-pg"
       fi
     # The RPMs come from the artifacts which come as a symbolic link
