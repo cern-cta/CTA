@@ -380,6 +380,7 @@ build_deploy() {
     fi
 
     print_header "BUILDING RPMS"
+    # shellcheck disable=SC2086
     ${container_runtime} exec -it "${build_container_name}" \
       ./shared/CTA/continuousintegration/build/build_rpm.sh \
       --build-dir /shared/CTA/build_rpm \
@@ -394,7 +395,7 @@ build_deploy() {
       --cmake-build-type "${cmake_build_type}" \
       --jobs "${num_jobs}" \
       --platform "${platform}" \
-      "${build_rpm_flags}"
+      ${build_rpm_flags}
 
     echo "Build successful"
   fi
