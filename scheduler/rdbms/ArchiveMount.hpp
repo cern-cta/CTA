@@ -97,6 +97,8 @@ public:
    */
   void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                               log::LogContext& lc) override;
+
+
   /**
     * Re-queue batch of jobs
     * Serves PGSCHED purpose only
@@ -118,6 +120,17 @@ private:
   bool m_isRepack = false;
 
   void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch, log::LogContext& lc);
+  /*
+   * Setting a batch of REPACK mount jobs to state which informs
+   * the Scheduler that they are ready for reporting
+   *
+   * @param jobsBatch  The list of SchedulerDatabase::ArchiveJob objects
+   * @param lc         The log context
+   *
+   * @return void
+   */
+  void setRepackJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
+                                    log::LogContext& lc);
 };
 
 }  // namespace cta::schedulerdb

@@ -1,5 +1,6 @@
 CREATE TYPE ARCHIVE_JOB_STATUS AS ENUM (
   'AJS_ToTransferForUser',
+  'AJS_WaitSiblingsBeforeSuccessReport'
   'AJS_ToReportToUserForSuccess',
   'AJS_Complete',
   'AJS_ToReportToUserForFailure',

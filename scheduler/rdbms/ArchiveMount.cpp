@@ -186,8 +186,87 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
 
 void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                           log::LogContext& lc) {
+  if(m_isRepack){
+    // For Repack workflow: We know that as soon as the recall of a file is done,
+    // the row will get moved to the archive pending table and any additional
+    // copies needed will be recorded as a separate row in this table as well.
+    // This means that as soon as there is a request for one successful job to be updated/deleted
+    // the second on will have its state in the table already as well
+    // we need to check in the query if any rows with the same archive ID exist.
+    // if they do AND if they do not have already the status AJS_ToReportToRepackForSuccess
+    // we will update only the status of the job passed, if all the copies are in state of AJS_ToReportToRepackForSuccess,
+    // we will return them all back for deletion from disk and eventually from the queue.
+    setRepackJobBatchTransferred(jobsBatch, lc);
+    return;
+  }
+  std::vector<std::string> jobIDsList_single_copy;
+  std::vector<std::string> jobIDsList_multi_copy;
+  jobIDsList_single_copy.reserve(jobsBatch.size());
+  jobIDsList_multi_copy.reserve(jobsBatch.size());
+  auto jobsBatchItor = jobsBatch.begin();
+  while (jobsBatchItor != jobsBatch.end()) {
+    const auto& job = *jobsBatchItor;
+    if (job->requestJobCount == 1){
+      jobIDsList_single_copy.emplace_back(std::to_string(job->jobID));
+    } else {
+      jobIDsList_multi_copy.emplace_back(std::to_string(job->jobID));
+    }
+    log::ScopedParamContainer(lc)
+      .add("jobID", job->jobID)
+      .add("tapeVid", job->tapeFile.vid)
+      .add("archiveFileID", job->archiveFile.archiveFileID)
+      .add("diskInstance", job->archiveFile.diskInstance)
+      .add("archiveRequestId", job->archiveRequestId)
+      .add("requestJobCount", job->requestJobCount)
+      .log(log::INFO,
+           "In schedulerdb::ArchiveMount::setJobBatchTransferred(): received a job to send to report queue.");
+    jobsBatchItor++;
+  }
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    // all jobs for which setJobBatchTransferred is called shall be reported as successful
+    auto status = ArchiveJobStatus::AJS_ToReportToUserForSuccess;
+    if (!jobIDsList_single_copy.empty()) {
+      uint64_t nrows = 0;
+      nrows = postgres::ArchiveJobQueueRow::updateJobStatus(txn, status, jobIDsList_single_copy);
+      if (!m_isRepack && nrows != jobIDsList_single_copy.size()) {
+        log::ScopedParamContainer(lc)
+                .add("updatedRows", nrows)
+                .add("jobListSize", jobIDsList_single_copy.size())
+                .log(log::ERR,
+                     "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for "
+                     "entire job list provided.");
+      }
+    }
+    if (!jobIDsList_multi_copy.empty()) {
+      uint64_t nrows = 0;
+      nrows = postgres::ArchiveJobQueueRow::updateMultiCopyJobSuccess(txn, jobIDsList_multi_copy);
+      if (!m_isRepack && nrows != jobIDsList_multi_copy.size()) {
+        log::ScopedParamContainer(lc)
+                .add("updatedRows", nrows)
+                .add("jobListSize", jobIDsList_multi_copy.size())
+                .log(log::ERR,
+                     "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for "
+                     "entire job list provided.");
+      }
+    }
+    txn.commit();
+    // After processing, return the job object to the job pool for re-use
+    recycleTransferredJobs(jobsBatch, lc);
+  } catch (exception::Exception& ex) {
+    txn.abort();
+    throw exception::Exception(
+           "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to update job status for "
+           "reporting. Aborting the transaction." + ex.getMessageValue());
+  }
+}
+
+void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
+                                                log::LogContext& lc) {
+  if(!m_isRepack){
+     throw exception::Exception("In ArchiveMount::setRepackJobBatchTransferred(): This method must not be used for Archive mounts which are not repack.");
+  }
   std::vector<std::string> jobIDsList;
-  jobIDsList.reserve(jobsBatch.size());
   auto jobsBatchItor = jobsBatch.begin();
   while (jobsBatchItor != jobsBatch.end()) {
     jobIDsList.emplace_back(std::to_string((*jobsBatchItor)->jobID));
@@ -196,6 +275,8 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
       .add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
       .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
       .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
+      .add("archiveRequestId", (*jobsBatchItor)->archiveRequestId)
+      .add("requestJobCount", (*jobsBatchItor)->requestJobCount)
       .log(log::INFO,
            "In schedulerdb::ArchiveMount::setJobBatchTransferred(): received a job to send to report queue.");
     jobsBatchItor++;
@@ -211,28 +292,23 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
   // we will return them all back for deletion from disk and eventually from the queue.
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
-    // all jobs for which setJobBatchTransferred is called shall be reported as successful
+    // all jobs for which setRepackJobBatchTransferred is called shall be reported as successful
     uint64_t nrows = 0;
-    auto status = m_isRepack ? ArchiveJobStatus::AJS_ToReportToRepackForSuccess : ArchiveJobStatus::AJS_ToReportToUserForSuccess;
-    nrows = postgres::ArchiveJobQueueRow::updateJobStatus(txn, status, m_isRepack, jobIDsList);
-    if (!m_isRepack && nrows != jobIDsList.size()) {
-      log::ScopedParamContainer(lc)
-              .add("updatedRows", nrows)
-              .add("jobListSize", jobIDsList.size())
-              .log(log::ERR,
-                   "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for "
-                   "entire job list provided.");
+    if (!jobIDsList.empty()) {
+      nrows = postgres::ArchiveJobQueueRow::updateRepackJobStatus(txn, ArchiveJobStatus::AJS_ToReportToRepackForSuccess, jobIDsList);
     }
+    log::ScopedParamContainer(lc)
+        .add("updatedRows", nrows)
+        .add("jobListSize", jobIDsList.size())
+        .log(log::INFO, "In ArchiveMount::updateRepackJobStatus(): Finished DB report for job list provided.");
     txn.commit();
     // After processing, return the job object to the job pool for re-use
     recycleTransferredJobs(jobsBatch, lc);
   } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-           "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to update job status for "
-           "reporting. Aborting the transaction." +
-           ex.getMessageValue());
     txn.abort();
-    return;
+    throw exception::Exception(
+           "In schedulerdb::ArchiveMount::updateRepackJobStatus(): Failed to update job status for "
+           "reporting. Aborting the transaction." + ex.getMessageValue());
   }
 }
 
