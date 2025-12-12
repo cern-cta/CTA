@@ -72,7 +72,8 @@ usage() {
 
 build_deploy() {
 
-  local project_root=$(git rev-parse --show-toplevel)
+  local project_root
+  project_root=$(git rev-parse --show-toplevel)
   # Defaults
   local num_jobs
   num_jobs=$(nproc --ignore=2)
