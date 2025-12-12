@@ -218,7 +218,7 @@ ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const std::vecto
       END
       FROM target_success_multicopy tsm
           LEFT JOIN ready_for_reporting_to_disk rfr
-              ON rfr.ARCHIVE_REQUEST_ID = aj2.ARCHIVE_REQUEST_ID
+              ON rfr.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
       WHERE aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
            AND aj2.JOB_ID = tsm.JOB_ID;
   )SQL";
@@ -320,13 +320,13 @@ ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std::vector<s
    )
   UPDATE REPACK_ARCHIVE_ACTIVE_QUEUE aj2
   SET STATUS = CASE
-      WHEN aj2.ARCHIVE_FILE_ID IS NOT NULL
+      WHEN rfd.ARCHIVE_FILE_ID IS NOT NULL
         THEN :STATUS_READY_FOR_DELETION2::ARCHIVE_JOB_STATUS
       ELSE :STATUS_SUCCESS::ARCHIVE_JOB_STATUS
   END
   FROM target_success_multicopy tsm
         LEFT JOIN ready_for_deletion rfd
-            ON rfd.ARCHIVE_FILE_ID = aj2.ARCHIVE_FILE_ID
+            ON rfd.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
   WHERE aj2.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
         AND aj2.JOB_ID = tsm.JOB_ID;
   )SQL";
