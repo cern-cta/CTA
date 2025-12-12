@@ -44,7 +44,7 @@ die() {
 
 databaseTypes=('oracle' 'sqlite' 'postgres')
 schemaPostfix='_catalogue_schema.sql'
-cd "$1"/cta-catalogue-schema || exit
+cd "$1/cta-catalogue-schema" || exit
 buffFile="./temp"
 tempFilePath="../TMPAllCatalogueSchema.hpp"
 finalFilePath="../AllCatalogueSchema.hpp"
