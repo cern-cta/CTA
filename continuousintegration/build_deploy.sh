@@ -380,6 +380,7 @@ build_deploy() {
     fi
 
     print_header "BUILDING RPMS"
+    # shellcheck disable=SC2086
     ${container_runtime} exec -it "${build_container_name}" \
       ./shared/CTA/continuousintegration/build/build_rpm.sh \
       --build-dir /shared/CTA/build_rpm \
@@ -394,7 +395,7 @@ build_deploy() {
       --cmake-build-type "${cmake_build_type}" \
       --jobs "${num_jobs}" \
       --platform "${platform}" \
-      "${build_rpm_flags}"
+      ${build_rpm_flags}
 
     echo "Build successful"
   fi
@@ -436,12 +437,13 @@ build_deploy() {
     ## Create and load the new image
     local rpm_src=build_rpm/RPM/RPMS/x86_64
     echo "Building image from ${rpm_src}"
+    # shellcheck disable=SC2086
     ./continuousintegration/build/build_image.sh --tag ${image_tag} \
       --rpm-src "${rpm_src}" \
       --rpm-version "${cta_version}-${vcs_version}" \
       --container-runtime "${container_runtime}" \
       --load-into-minikube \
-      "${extra_image_build_options}"
+      ${extra_image_build_options}
     if [[ ${image_cleanup} = true ]]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
       podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true
