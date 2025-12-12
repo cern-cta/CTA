@@ -72,15 +72,18 @@ usage() {
 
 build_deploy() {
 
-  local project_root=$(git rev-parse --show-toplevel)
+  local project_root
+  project_root=$(git rev-parse --show-toplevel)
   # Defaults
-  local num_jobs=$(nproc --ignore=2)
+  local num_jobs
+  num_jobs=$(nproc --ignore=2)
   local restarted=false
   local deploy_namespace="dev"
   # These versions don't affect anything functionality wise
   local cta_version="5"
   local vcs_version="dev"
-  local xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
+  local xrootd_ssi_version
+  xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
 
   # Input args
   local clean_build_dir=false
@@ -96,7 +99,8 @@ build_deploy() {
   local local_telemetry=false
   local publish_telemetry=false
   local build_generator="Ninja"
-  local cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
+  local cmake_build_type
+  cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
   local scheduler_type="objectstore"
   local oracle_support="TRUE"
   local enable_ccache=true
@@ -108,7 +112,8 @@ build_deploy() {
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
   local eos_image_tag=""
   local container_runtime="podman"
-  local platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
+  local platform
+  platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
   local use_internal_repos=true
   local eos_enabled=true
   local dcache_enabled=false
@@ -302,7 +307,7 @@ build_deploy() {
     if [[ "${reset}" = true ]]; then
       echo "Shutting down existing build container..."
       ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
-      podman rmi ${build_image_name} > /dev/null 2>&1 || true
+      podman rmi "${build_image_name}" > /dev/null 2>&1 || true
     fi
 
     # Start container if not already running
@@ -312,7 +317,7 @@ build_deploy() {
       print_header "SETTING UP BUILD CONTAINER"
       restarted=true
       echo "Rebuilding build container image"
-      ${container_runtime} build --no-cache -t "${build_image_name}" -f continuousintegration/docker/${platform}/build.Dockerfile .
+      ${container_runtime} build --no-cache -t "${build_image_name}" -f continuousintegration/docker/"${platform}"/build.Dockerfile .
       echo "Starting new build container: ${build_container_name}"
       ${container_runtime} run -dit --rm --name "${build_container_name}" \
         -v "${project_root}:/shared/CTA:z" \
@@ -325,6 +330,7 @@ build_deploy() {
         build_srpm_flags+=" --clean-build-dir"
       fi
 
+      # shellcheck disable=SC2086
       ${container_runtime} exec -it "${build_container_name}" \
         ./shared/CTA/continuousintegration/build/build_srpm.sh \
         --build-dir /shared/CTA/build_srpm \
@@ -382,13 +388,13 @@ build_deploy() {
       --srpm-dir /shared/CTA/build_srpm/RPM/SRPMS \
       --cta-version ${cta_version} \
       --vcs-version ${vcs_version} \
-      --xrootd-ssi-version ${xrootd_ssi_version} \
-      --scheduler-type ${scheduler_type} \
+      --xrootd-ssi-version "${xrootd_ssi_version}" \
+      --scheduler-type "${scheduler_type}" \
       --oracle-support ${oracle_support} \
       --cmake-build-type "${cmake_build_type}" \
-      --jobs ${num_jobs} \
-      --platform ${platform} \
-      ${build_rpm_flags}
+      --jobs "${num_jobs}" \
+      --platform "${platform}" \
+      "${build_rpm_flags}"
 
     echo "Build successful"
   fi
@@ -418,7 +424,8 @@ build_deploy() {
         echo "Failed to find $build_iteration_file to retrieve build iteration."
         exit 1
       fi
-      local current_build_id=$(cat "$build_iteration_file")
+      local current_build_id
+      current_build_id=$(cat "$build_iteration_file")
       new_build_id=$((current_build_id + 1))
       image_tag="dev-$new_build_id"
       echo $new_build_id >$build_iteration_file
@@ -434,7 +441,7 @@ build_deploy() {
       --rpm-version "${cta_version}-${vcs_version}" \
       --container-runtime "${container_runtime}" \
       --load-into-minikube \
-      ${extra_image_build_options}
+      "${extra_image_build_options}"
     if [[ ${image_cleanup} = true ]]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
       podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true
@@ -460,16 +467,17 @@ build_deploy() {
       if [[ "$skip_image_reload" == "false" ]]; then
         upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
       fi
-      ./upgrade_cta_instance.sh --namespace ${deploy_namespace} ${upgrade_options} ${extra_spawn_options}
+       # shellcheck disable=SC2086
+      ./upgrade_cta_instance.sh --namespace "${deploy_namespace}" "${upgrade_options}" ${extra_spawn_options}
     elif [[ "$upgrade_eos" = true ]]; then
       print_header "UPGRADING EOS INSTANCE"
       cd continuousintegration/orchestration
-      ./deploy_eos_instance.sh --namespace ${deploy_namespace} --eos-image-tag ${eos_image_tag}
+      ./deploy_eos_instance.sh --namespace "${deploy_namespace}" --eos-image-tag "${eos_image_tag}"
     else
       print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development
       # and polutes the dev machine
-      ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace} --discard-logs
+      ./continuousintegration/orchestration/delete_instance.sh -n "${deploy_namespace}" --discard-logs
       print_header "DEPLOYING CTA INSTANCE"
       if [[ -n "${tapeservers_config}" ]]; then
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
@@ -503,11 +511,12 @@ build_deploy() {
 
       echo "Deploying CTA instance"
       cd continuousintegration/orchestration
-      ./create_instance.sh --namespace ${deploy_namespace} \
+       # shellcheck disable=SC2086
+      ./create_instance.sh --namespace "${deploy_namespace}" \
         --cta-image-repository localhost/ctageneric \
-        --cta-image-tag ${image_tag} \
-        --catalogue-config ${catalogue_config} \
-        --scheduler-config ${scheduler_config} \
+        --cta-image-tag "${image_tag}" \
+        --catalogue-config "${catalogue_config}" \
+        --scheduler-config "${scheduler_config}" \
         --reset-catalogue \
         --reset-scheduler \
         --eos-enabled ${eos_enabled} \
