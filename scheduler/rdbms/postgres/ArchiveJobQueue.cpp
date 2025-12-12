@@ -223,8 +223,8 @@ ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const std::vecto
   )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":STATUS_READY_FOR_REPORTING", to_string(newStatus));
-    stmt.bindString(":STATUS_COND_SIBLINGS", to_string(ArchiveJobStatus::AJS_WaitSiblingsBeforeSuccessReport));
-    stmt.bindString(":STATUS_WAIT_FOR_ALL_BEFORE_REPORT", to_string(ArchiveJobStatus::AJS_WaitSiblingsBeforeSuccessReport));
+    stmt.bindString(":STATUS_COND_SIBLINGS", to_string(ArchiveJobStatus::AJS_WaitSiblingsBeforeReportingSuccessToDisk));
+    stmt.bindString(":STATUS_WAIT_FOR_ALL_BEFORE_REPORT", to_string(ArchiveJobStatus::AJS_WaitSiblingsBeforeReportingSuccessToDisk));
     stmt.executeNonQuery();
     return stmt.getNbAffectedRows();
 }
