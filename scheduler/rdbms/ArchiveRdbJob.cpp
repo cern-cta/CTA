@@ -109,10 +109,10 @@ void ArchiveRdbJob::reset() {
 void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
                                              log::LogContext& lc,
                                              [[maybe_unused]] const std::string& reason) {
-  if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser) {
+  if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser || m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForRepack) {
     lc.log(log::WARNING,
            std::string("ArchiveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status) +
-           std::string(". Assuming ToTransfer anyway and changing status to AJS_ToReportToUserForFailure."));
+           std::string(". Assuming ToTransfer anyway and changing status to AJS_ToReportToUserForFailure or AJS_ToReportToRepackForFailure."));
   }
 
   try {

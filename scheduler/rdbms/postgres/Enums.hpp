@@ -33,6 +33,7 @@ namespace cta::schedulerdb {
 enum class ArchiveJobStatus : uint8_t {
   AJS_ToTransferForUser,
   AJS_ToReportToUserForSuccess,
+  AJS_WaitSiblingsBeforeSuccessReport,
   AJS_Complete,
   AJS_ToReportToUserForFailure,
   AJS_Failed,
@@ -44,9 +45,10 @@ enum class ArchiveJobStatus : uint8_t {
   Cancelled
 };
 
-constexpr std::array<const char *, 11>
+constexpr std::array<const char *, 12>
 StringsArchiveJobStatus = {"AJS_ToTransferForUser",
                            "AJS_ToReportToUserForSuccess",
+                           "AJS_WaitSiblingsBeforeSuccessReport",
                            "AJS_Complete",
                            "AJS_ToReportToUserForFailure",
                            "AJS_Failed",
