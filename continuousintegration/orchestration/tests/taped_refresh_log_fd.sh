@@ -15,15 +15,9 @@
 #               granted to it by virtue of its status as an Intergovernmental Organization or
 #               submit itself to any jurisdiction.
 
-log_dir="/var/log/cta/"
 STRACE_SLEEP_SECS=2
 
-if [[ "$(find ${log_dir} -type f | wc -l)" -ne 1 ]]; then
-  echo "ERROR: More than one log file found at ${log_dir}."
-  exit 1
-fi
-
-log_file=$(find ${log_dir} -type f)
+log_file="/var/log/cta/cta-taped.log"
 
 # Install dependencies required for testing log rotation inside the tape server"
 dnf -y install strace lsof

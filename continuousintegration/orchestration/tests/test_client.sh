@@ -141,7 +141,7 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} 
 # Set the TAPES and DRIVE_NAME based on the config in CTA_TPSRV_POD
 echo "Reading library configuration from ${CTA_TPSRV_POD}"
 DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c cta-taped-0 -- printenv DRIVE_NAME)
-CTA_TAPED_LOG=/var/log/cta/cta-taped-${DRIVE_NAME}.log
+CTA_TAPED_LOG=/var/log/cta/cta-taped.log
 
 if kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0 -- bash -c "grep -q 'unable to get the free disk space with the script' ${CTA_TAPED_LOG}"; then
   echo "Script unexpectedly failed to get free disk space"

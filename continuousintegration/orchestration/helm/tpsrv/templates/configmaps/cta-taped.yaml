@@ -11,7 +11,7 @@ metadata:
   labels:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
-  cta-taped-{{ $drive.name }}.conf: |-
+  cta-taped.conf: |-
     # cta-taped setup
     taped BufferSizeBytes {{ $.Values.conf.taped.bufferSizeBytes }}
     taped BufferCount {{ $.Values.conf.taped.bufferCount }}

@@ -1,4 +1,4 @@
-.build-ctageneric:
+.build-image:
   stage: build:image
   retry: 1
   rules:
@@ -14,12 +14,23 @@
   image:
     name: $IMAGE_DOCKER_IMAGE_BUILDER
     entrypoint: [""]
-  before_script:
+  variables:
+    DOCKERFILE:
+    IMAGE_NAME:
+    EXTRA_BUILD_ARGS:
+  script:
+    - echo "Authenticating against repo"
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
+    - echo "Building ${DOCKERFILE} and pushing resulting image to ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}"
+    - /kaniko/executor --context $CI_PROJECT_DIR
+                       --dockerfile $DOCKERFILE
+                       --destination ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}
+                       ${EXTRA_BUILD_ARGS}
+    - echo "Image pushed successfully to ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}"
 
 build-ctageneric-from-local-rpms:
   extends:
-    - .build-ctageneric
+    - .build-image
   needs:
     - job: build-cta-rpm
     - job: modify-project-json
@@ -29,26 +40,21 @@ build-ctageneric-from-local-rpms:
       when: never
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
-    - !reference [.build-ctageneric, rules]
+    - !reference [.build-image, rules]
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/local-rpms.Dockerfile
-  script:
-    - echo "Building image for tag $CTA_BUILD_ID"
-    - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/dev-local-rpms.Dockerfile
+    IMAGE_NAME: ctageneric
+    EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}"
+  before_script:
     # The RPMs come from the artifacts which come as a symbolic link
-    # that poitns outside of the build context. We need to copy them
+    # that points outside of the build context. We need to copy them
     # to a reachable place from the build context.
     - mkdir -p image_rpms
     - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
-    - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile $DOCKERFILE
-                       --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
-                       --build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}
-    - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
 
 build-ctageneric-from-remote-rpms:
   extends:
-    - .build-ctageneric
+    - .build-image
   needs:
     - job: validate-pipeline-variables
     - job: modify-project-json
@@ -57,20 +63,51 @@ build-ctageneric-from-remote-rpms:
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
     - when: never
-    - !reference [.build-ctageneric, rules]
+    - !reference [.build-image, rules]
   variables:
-    DOCKERFILE: continuousintegration/docker/${PLATFORM}/remote-rpms.Dockerfile
-  script:
-    # If .$PLATFORM (e.g. .el9) was not specified, attach it here
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/dev-remote-rpms.Dockerfile
+    IMAGE_NAME: ctageneric
+    EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --build-arg PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}.${PLATFORM}"
+
+###############################################
+# Immutable images
+###############################################
+
+build-images:
+  allow_failure: true # Don't block the pipeline
+  extends:
+    - .build-image
+  needs:
+    - job: build-cta-rpm
+    - job: modify-project-json
+      optional: true
+  rules:
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+      when: never
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
+      when: never
+    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
+      when: never
+    - when: manual
+  variables:
+    TARGET_NAME:
+    DOCKERFILE: continuousintegration/docker/${PLATFORM}/prod.Dockerfile
+    EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --target ${TARGET_NAME}"
+    # Note that this ctageneric is important here: it ensures the images end up in a private registry
+    # These images must absolutely not end up in a public registry, as they contain Oracle RPMs (which we cannot distribute)
+    IMAGE_NAME: ctageneric/${TARGET_NAME}
+  before_script:
+    # For the Postgres scheduler, choose a different Dockerfile and add the "-pg" suffix to the image
     - |
-      if [[ "$CUSTOM_CTA_VERSION" != *.${PLATFORM} ]]; then
-        CUSTOM_CTA_VERSION="${CUSTOM_CTA_VERSION}.${PLATFORM}"
+      if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
+        DOCKERFILE="continuousintegration/docker/${PLATFORM}/prod-pg.Dockerfile"
+        IMAGE_NAME="${IMAGE_NAME}-pg"
       fi
-    - echo "Building image with CTA ${CUSTOM_CTA_VERSION} RPMs"
-    - echo "Image tag ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
-    - /kaniko/executor --context $CI_PROJECT_DIR
-                       --dockerfile $DOCKERFILE
-                       --destination ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}
-                       --build-arg "PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"
-                       --build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}
-    - echo "Image pushed successfully to ${CI_REGISTRY}/cta/ctageneric:${CTA_BUILD_ID}"
+    # The RPMs come from the artifacts which come as a symbolic link
+    # that points outside of the build context. We need to copy them
+    # to a reachable place from the build context.
+    - mkdir -p image_rpms
+    - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
+  parallel:
+    matrix:
+      - TARGET_NAME: [cta-taped, cta-rmcd, cta-maintd, cta-frontend-xrd, cta-frontend-grpc, cta-tools-xrd, cta-tools-grpc]

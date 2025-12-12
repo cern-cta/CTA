@@ -22,7 +22,7 @@ spec:
       labels:
         app.kubernetes.io/name: {{ $tpsrvName }}
         {{- include "common.labels.withoutname" $ | nindent 8 }}
-        cta/library-device: {{ .libraryDevice }}
+        cta/library-device: {{ .libraryDevice | quote }}
     spec:
       imagePullSecrets:
       {{- include "tpsrv.imagePullSecrets" $ | nindent 6 }}
@@ -86,6 +86,8 @@ spec:
         volumeMounts:
         - name: scripts-volume
           mountPath: /scripts
+        - name: smcdev
+          mountPath: /dev/smc
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       # For each drive, spawn a separate taped container
       {{- range $index, $drive := .drives }}
@@ -137,8 +139,8 @@ spec:
         - name: scripts-volume
           mountPath: /scripts
         - name: cta-taped-config
-          mountPath: /etc/cta/cta-taped-{{ $drive.name }}.conf
-          subPath: cta-taped-{{ $drive.name }}.conf
+          mountPath: /etc/cta/cta-taped.conf
+          subPath: cta-taped.conf
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
@@ -174,6 +176,10 @@ spec:
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       {{- end }} # End of containers loop
       volumes:
+      - name: smcdev
+        hostPath:
+          path: /dev/{{ $libraryDevice }}
+          type: CharDevice
       - name: scripts-volume
         configMap:
           name: scripts-tpsrv
