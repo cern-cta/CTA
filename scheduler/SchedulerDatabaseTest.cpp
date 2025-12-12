@@ -209,18 +209,19 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   lambdas.clear();
   db.waitSubthreadsComplete();
 
-    // Then load all archive jobs into memory
-    // Create mount.
-    auto mountInfo = db.getMountInfo(lc);
-    cta::catalogue::TapeForWriting tfw;
-    tfw.tapePool = "tapePool";
-    tfw.vid = "vid";
-    ASSERT_EQ(1, mountInfo->potentialMounts.size());
-    auto am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw, "drive", "library", "host");
-    bool done = false;
-    size_t count = 0;
-    while (!done) {
-      auto aj = am->getNextJobBatch(1, 1, lc); // with the total size here being 1 byte we do not get the files moved
+  // Then load all archive jobs into memory
+  // Create mount.
+  auto mountInfo = db.getMountInfo(lc);
+  cta::catalogue::TapeForWriting tfw;
+  tfw.tapePool = "tapePool";
+  tfw.vid = "vid";
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  auto am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw,
+                                         "drive", "library", "host");
+  bool done = false;
+  size_t count = 0;
+  while (!done) {
+    auto aj = am->getNextJobBatch(1,1000,lc); // with the total size here being 1 byte we do not get the files moved
     // size in bytes of each of those files is 1000
     // I am surprised this even works for the objectstore! does it mean the bytes requested argument gets ignored?
       if (!aj.empty()) {
