@@ -813,3 +813,7 @@ repackTapeRepairNoRecall 8
 
 # Keep this test for last - it adds new tapepools and archive routes
 # repackMoveAndAddCopies 9
+schedulerBackendName=$(kubectl -n "${NAMESPACE}" exec "${CTA_CLI_POD}" -c cta-cli -- cta-admin --json version | jq -r '.[].schedulerBackendName')
+if [[ "$schedulerBackendName" == "postgres" ]]; then
+  repackMoveAndAddCopies 9
+fi
