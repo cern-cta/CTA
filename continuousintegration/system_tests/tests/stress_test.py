@@ -43,7 +43,7 @@ def test_hosts_present_stress(env):
 def test_update_setup_for_max_powerrrr(env):
     num_drives: int = len(env.cta_taped)
     env.cta_cli[0].exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
-    env.cta_cli[0].exec(f"cta-admin mp ch --name ctasystest --minarchiverequestage 100 --minretrieverequestage 100 --comment \"Longer min ages\"")
+    env.cta_cli[0].exec("cta-admin mp ch --name ctasystest --minarchiverequestage 100 --minretrieverequestage 100 --comment \"Longer min ages\"")
     env.eos_mgm[0].exec("eos fs config 1 scaninterval=0")
 
 @pytest.mark.eos
