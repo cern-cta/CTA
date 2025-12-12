@@ -255,7 +255,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
                                               log::TimingList& timingList,
                                               utils::Timer& t,
                                               log::LogContext& lc) {
-  // This method is not being used for repack which has a separate workflow !
+  // This method is NOT being used for repack which has a separate workflow !
   // If job from a single copy archive request is done, we will delete it
   // For multi-copy we will proceed the same as it would not be in the list unless second copy succeeded
   // (which is ensured by the ArchiveMount when updating successfully transferred jobs)
