@@ -295,19 +295,19 @@ void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<Schedu
     // all jobs for which setRepackJobBatchTransferred is called shall be reported as successful
     uint64_t nrows = 0;
     if (!jobIDsList.empty()) {
-      nrows = postgres::ArchiveJobQueueRow::updateRepackJobStatus(txn, ArchiveJobStatus::AJS_ToReportToRepackForSuccess, jobIDsList);
+      nrows = postgres::ArchiveJobQueueRow::updateRepackJobSuccess(txn, jobIDsList);
     }
     log::ScopedParamContainer(lc)
         .add("updatedRows", nrows)
         .add("jobListSize", jobIDsList.size())
-        .log(log::INFO, "In ArchiveMount::updateRepackJobStatus(): Finished DB report for job list provided.");
+        .log(log::INFO, "In ArchiveMount::updateRepackJobSuccess(): Finished DB report for job list provided.");
     txn.commit();
     // After processing, return the job object to the job pool for re-use
     recycleTransferredJobs(jobsBatch, lc);
   } catch (exception::Exception& ex) {
     txn.abort();
     throw exception::Exception(
-           "In schedulerdb::ArchiveMount::updateRepackJobStatus(): Failed to update job status for "
+           "In schedulerdb::ArchiveMount::updateRepackJobSuccess(): Failed to update job status for "
            "reporting. Aborting the transaction." + ex.getMessageValue());
   }
 }
