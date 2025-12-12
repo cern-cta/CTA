@@ -334,19 +334,6 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         cta::log::INFO,
         "In MigrationReportPacker::ReportFlush::execute(): successfully reported batch of archive jobs to disk.");
     } catch (const cta::ArchiveMount::FailedReportCatalogueUpdate& ex) {
-//#ifdef CTA_PGSCHED
-//      try {
-//        reportPacker.m_archiveMount->failJobsBatch(failedToReportArchiveJobs, reportPacker.m_lc);
-//      } catch (const cta::exception::Exception&) {
-//        //If the failReport method fails, we can't do anything about it
-//        cta::log::ScopedParamContainer params(reportPacker.m_lc);
-//        params.add("failedReportCount", failedToReportArchiveJobs.size())
-//          .add("exceptionMSG", ex.getMessageValue());
-//        reportPacker.m_lc.log(cta::log::WARNING,
-//                              "In MigrationReportPacker::ReportFlush::execute(): failed to failJobsBatch for the "
-//                              "archive job because of CTA exception.");
-//      }
-//#elif
       while (!failedToReportArchiveJobs.empty()) {
         auto archiveJob = std::move(failedToReportArchiveJobs.front());
         try {
@@ -372,21 +359,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         failedToReportArchiveJobs.pop();
       }
       throw;
-//#endif
     } catch (const cta::ArchiveMount::FailedReportMoveToQueue& ex) {
-//#ifdef CTA_PGSCHED
-//      try {
-//        reportPacker.m_archiveMount->reportJobsBatchReportFailed(failedToReportArchiveJobs, reportPacker.m_lc);
-//      } catch (const cta::exception::Exception&) {
-//        //If the failReport method fails, we can't do anything about it
-//        cta::log::ScopedParamContainer params(reportPacker.m_lc);
-//        params.add("failedReportCount", failedToReportArchiveJobs.size())
-//          .add("exceptionMSG", ex.getMessageValue());
-//        reportPacker.m_lc.log(cta::log::WARNING,
-//                              "In MigrationReportPacker::ReportFlush::execute(): failed to reportJobsBatchReportFailed for the "
-//                              "archive job because of CTA exception.");
-//      }
-//#elif
       while (!failedToReportArchiveJobs.empty()) {
           auto archiveJob = std::move(failedToReportArchiveJobs.front());
         try {
@@ -411,7 +384,6 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
         }
         failedToReportArchiveJobs.pop();
       }
-//#endif
       throw;
     }
   } else {
