@@ -86,7 +86,7 @@ cta::rdbms::Conn& Transaction::getConn() const {
 
 void Transaction::start() {
   try {
-    if (!m_begin) {
+    if (!m_begin && m_conn) {
       m_conn->executeNonQuery(R"SQL(BEGIN)SQL");
       m_begin = true;
     }
@@ -110,7 +110,6 @@ void Transaction::abort() {
     log::ScopedParamContainer errorParams(m_lc);
     errorParams.add("exceptionMessage", e.getMessageValue());
     m_lc.log(cta::log::ERR, "Transaction::abort(): Failed to abort rollback.");
-
   }
 }
 

@@ -98,6 +98,9 @@ public:
    */
   void resetConn(cta::rdbms::ConnPool& connPool);
 
+  bool isDead(){
+    return !m_begin;
+  }
 private:
   bool m_begin = false;
   std::unique_ptr<cta::rdbms::Conn> m_conn;
