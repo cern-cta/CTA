@@ -49,13 +49,13 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   ArchiveJobStatus queriedJobStatus = (m_queueType == queueType::JobsToTransferForUser) ?
                                         ArchiveJobStatus::AJS_ToTransferForUser :
                                         ArchiveJobStatus::AJS_ToTransferForRepack;
+  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   // start a new transaction
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   // require tapePool named lock in order to minimise tapePool fragmentation of the rows
   txn.takeNamedLock(mountInfo.tapePool);
   cta::log::TimingList timings;
   cta::utils::Timer t;
-  std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
   // using vector instead of list, since we can preallocate the size,
   // better cache locality for search/loop, faster insertion (less pointer manipulations)
   std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;

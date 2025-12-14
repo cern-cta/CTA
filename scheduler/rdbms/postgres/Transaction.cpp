@@ -16,12 +16,13 @@
  */
 
 #include "scheduler/rdbms/postgres/Transaction.hpp"
+#include <random>
 
 namespace cta::schedulerdb {
 
 Transaction::Transaction(cta::rdbms::ConnPool& connPool, log::LogContext& logContext)
     : m_begin(false), m_conn(std::make_unique<cta::rdbms::Conn>(connPool.getConn())), m_lc(logContext) {
-  start();
+  startWithRetry(connPool);
 }
 
 Transaction::Transaction(Transaction&& other) noexcept
@@ -29,7 +30,6 @@ Transaction::Transaction(Transaction&& other) noexcept
       m_conn(std::move(other.m_conn)),
       m_lc(other.m_lc){
   other.m_begin = false;
-  start();
 }
 
 Transaction::~Transaction() {
@@ -84,16 +84,36 @@ cta::rdbms::Conn& Transaction::getConn() const {
   return *m_conn;
 }
 
-void Transaction::start() {
-  try {
-    if (!m_begin && m_conn) {
-      m_conn->executeNonQuery(R"SQL(BEGIN)SQL");
+void Transaction::startWithRetry(cta::rdbms::ConnPool& connPool) {
+  for (int attempt = 1; attempt <= MAX_TXN_START_RETRIES; ++attempt) {
+    try {
+      if(nullptr == m_conn){
+        m_conn = std::make_unique<cta::rdbms::Conn>(connPool.getConn());
+      }
+      m_conn->executeNonQuery("BEGIN");
       m_begin = true;
+      return;
+    } catch (const cta::exception::Exception& e) {
+      log::ScopedParamContainer params(m_lc);
+      params.add("attempt", attempt);
+      params.add("maxAttempts", MAX_TXN_START_RETRIES);
+      params.add("exceptionMessage", e.getMessageValue());
+
+      m_lc.log(cta::log::ERR,
+        "Transaction::startWithRetry(): Failed to start DB transaction, retrying.");
+
+      // Cleanup before retry
+      m_conn.reset();
+      m_begin = false;
+
+      if (attempt == MAX_TXN_START_RETRIES) {
+        throw;
+      }
+
+      auto backoff = BASE_BACKOFF * std::pow(2, attempt - 1);
+      backoff += std::chrono::milliseconds(rand() % 50);
+      std::this_thread::sleep_for(backoff);
     }
-  } catch (const cta::exception::Exception &e) {
-    log::ScopedParamContainer errorParams(m_lc);
-    errorParams.add("exceptionMessage", e.getMessageValue());
-    m_lc.log(cta::log::ERR, "Transaction::start(): Failed to start a new DB transaction.");
   }
 }
 

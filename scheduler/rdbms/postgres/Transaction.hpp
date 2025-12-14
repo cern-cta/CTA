@@ -20,11 +20,16 @@
 #include "rdbms/ConnPool.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <thread>
+#include <chrono>
+
 namespace cta::schedulerdb {
 
 class Transaction {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
+  static constexpr int MAX_TXN_START_RETRIES = 3;
+  static constexpr std::chrono::milliseconds BASE_BACKOFF{1000};
 
   // Constructors
   explicit Transaction(cta::rdbms::ConnPool& connPool, log::LogContext& logContext);
@@ -71,7 +76,7 @@ public:
   /**
    * Start new transaction unless it has started already
    */
-  void start();
+  void startWithRetry(cta::rdbms::ConnPool& connPool);
 
   /**
    * Abort and roll back the transaction
