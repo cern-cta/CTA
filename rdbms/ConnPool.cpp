@@ -98,8 +98,8 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
       threading::MutexLocker locker(m_connsAndStmtsMutex);
       while (!m_connsAndStmts.empty()) {
         m_connsAndStmts.pop_front();
-        removeNbConnsOnLoan(1);
       }
+      removeNbConnsOnLoan(1);
       m_connsAndStmtsCv.signal();
       return;
     }
@@ -122,8 +122,8 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
     threading::MutexLocker locker(m_connsAndStmtsMutex);
     while (!m_connsAndStmts.empty()) {
       m_connsAndStmts.pop_front();
-      removeNbConnsOnLoan(1);
     }
+    removeNbConnsOnLoan(1);
     m_connsAndStmtsCv.signal();
   }
 }
