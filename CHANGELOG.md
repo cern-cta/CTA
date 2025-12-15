@@ -1,3 +1,9 @@
+## 5.11.15.0-1 (2025-12-15)
+
+### Changes
+
+- [maintd] Move Maintenance process from taped into a new component: cta-maintd (cta/CTA!764)
+
 ## 5.11.14.0-1
 
 ### New Features
