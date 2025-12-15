@@ -119,8 +119,9 @@ def test_wait_for_archival(env):
     timeout_secs = 300
     disk_instance: DiskInstanceHost = env.disk_instance[0]
 
-    disk_instance.wait_for_archival_in_directory(
+    num_missing_files = disk_instance.wait_for_archival_in_directory(
         archive_dir_path=archive_directory,
         timeout_secs=timeout_secs,
         strict=False,
     )
+
