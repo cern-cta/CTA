@@ -39,7 +39,7 @@ class DiskInstanceHost(RemoteHost):
     def list_files_in_directory(self, directory: str) -> list[str]: ...
 
     # Eventually we should move this method to a more central place
-    def wait_for_archival_in_directory(self, archive_dir_path: str, timeout_secs: int, strict: bool = True):
+    def wait_for_archival_in_directory(self, archive_dir_path: str, timeout_secs: int) -> int:
         # Few problems to solve here:
         # Not all files might be archived for whatever reason (it's a stress test; errors are bound to happen)
         # Additionally, we have no guarantee on the order in which CTA archives the directories
@@ -89,7 +89,7 @@ class DiskInstanceHost(RemoteHost):
         missing_archives: int = 0
 
         if q:
-            print("Timeout reached")
+            print(f"Timeout of {timeout_secs} seconds reached")
             while q:
                 directory = q.popleft()
                 missing_archives_in_dir = self.num_files_on_disk_only(directory)
@@ -100,5 +100,4 @@ class DiskInstanceHost(RemoteHost):
         total_files_to_archive = sum(num_files_total.values())
         print(f"{total_files_to_archive - missing_archives}/{total_files_to_archive} files archived to tape")
 
-        if strict:
-            assert missing_archives == 0, "Not all files were archived to tape"
+        return missing_archives
