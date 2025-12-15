@@ -1,0 +1,40 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: tapelibraryclaims.cern.ch
+spec:
+  group: cta.cern.ch
+  scope: Cluster
+  names:
+    plural: tapelibraryclaims
+    singular: tapelibrarylaim
+    kind: TapeLibraryClaim
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              required:
+                - libraryName
+                - libraryDevice
+                - owner
+              properties:
+                libraryName:
+                  type: string
+                libraryDevice:
+                  type: string
+                owner:
+                  type: object
+                  required:
+                    - namespace
+                    - release
+                  properties:
+                    namespace:
+                      type: string
+                    release:
+                      type: string
