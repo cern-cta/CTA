@@ -225,11 +225,11 @@ create_instance() {
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
   devices_all=$(./../utils/tape/list_all_libraries.sh)
-  devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
-  unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
-  if [[ -z "$unused_devices" ]]; then
-    die "No unused library devices available. All the following libraries are in use: $devices_in_use"
-  fi
+  # devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
+  # unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
+  # if [[ -z "$unused_devices" ]]; then
+  #   die "No unused library devices available. All the following libraries are in use: $devices_in_use"
+  # fi
 
   # Determine the library config to use
   if [[ -z "${tapeservers_config}" ]]; then
@@ -237,19 +237,12 @@ create_instance() {
     # This file is cleaned up again by delete_instance.sh
     tapeservers_config=$(mktemp "/tmp/${namespace}-tapeservers-XXXXXX-values.yaml")
     # Generate a comma separated list of library devices based on the number of library devices the user wants to generate
-    library_devices=$(echo "$unused_devices" | head -n "$num_library_devices" | paste -sd ',' -)
+    library_devices=$(echo "$devices_all" | head -n "$num_library_devices" | paste -sd ',' -)
     ./../utils/tape/generate_tapeservers_config.sh --target-file "${tapeservers_config}" \
                                                         --library-type "mhvtl" \
                                                         --library-devices "${library_devices}" \
                                                         --max-drives-per-tpsrv "${max_drives_per_tpsrv}" \
                                                         --max-tapeservers "${max_tapeservers}"
-  else
-    # Check that all devices in the provided config are available
-    for library_device in $(awk '/libraryDevice:/ {gsub("\"","",$2); print $2}' "$tapeservers_config"); do
-      if ! echo "$unused_devices" | grep -qw "$library_device"; then
-        die "provided library config specifies a device that is already in use: $library_device"
-      fi
-    done
   fi
   echo "---"
   cat "$tapeservers_config"

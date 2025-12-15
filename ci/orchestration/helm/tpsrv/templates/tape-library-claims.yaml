@@ -1,0 +1,19 @@
+{{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
+{{ include "validate.tapeServers" . }}
+{{ range $name,$tapeServerConfig := $tapeServers }}
+apiVersion: cta.cern.ch/v1
+kind: TapeLibraryClaim
+metadata:
+  name: {{ .libraryDevice | quote }}
+  labels:
+    app.kubernetes.io/managed-by: {{ $.Release.Service | quote }}
+  annotations:
+    meta.helm.sh/release-name: {{ $.Release.Name | quote }}
+    meta.helm.sh/release-namespace: {{ $.Release.Namespace | quote }}
+spec:
+  devicePath: {{ .libraryDevice }}
+  owner:
+    namespace: {{ $.Release.Namespace | quote }}
+    release: {{ $.Release.Name | quote }}
+---
+{{- end }}

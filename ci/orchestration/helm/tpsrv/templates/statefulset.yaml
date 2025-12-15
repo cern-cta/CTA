@@ -5,7 +5,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
-{{ include "validate.tapeServers" . }}
 {{ range $name,$tapeServerConfig := $tapeServers }}
 {{- $tpsrvName := printf "%s-%s" $.Release.Name $name | trunc 63 | trimSuffix "-" }}
 {{- $libraryDevice := .libraryDevice -}}
@@ -27,7 +26,6 @@ spec:
       labels:
         app.kubernetes.io/name: {{ $tpsrvName }}
         {{- include "common.labels.withoutname" $ | nindent 8 }}
-        cta/library-device: {{ .libraryDevice | quote }}
     spec:
       imagePullSecrets:
       {{- include "tpsrv.imagePullSecrets" $ | nindent 6 }}
@@ -183,7 +181,7 @@ spec:
       volumes:
       - name: smcdev
         hostPath:
-          path: /dev/{{ $libraryDevice }}
+          path: {{ $libraryDevice }}
           type: CharDevice
       - name: scripts-volume
         configMap:
