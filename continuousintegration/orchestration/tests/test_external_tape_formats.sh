@@ -46,9 +46,9 @@ kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0 -- bash -c "dnf -y 
 
 # Get the device to be used.
 echo "Obtaining drive device and name"
-device_name=$(kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0 -- ls /etc/cta/ | grep 'cta-taped-.*\.conf' | awk 'NR==1')
+device_name=$(kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0 -- ls /etc/cta/ | grep 'cta-taped.conf' | awk 'NR==1')
 device_name="${device_name:10:-5}"
-device=$(kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0 -- cat /etc/cta/cta-taped-${device_name}.conf | grep DriveDevice | awk '{ print $3 }')
+device=$(kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0 -- cat /etc/cta/cta-taped.conf | grep DriveDevice | awk '{ print $3 }')
 echo "Using device: ${device}; name ${device_name}"
 
 # Copy and run the above a script to the rmcd pod to load osm tape
