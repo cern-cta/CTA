@@ -432,7 +432,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
             .add("tfvids", tfvids)
             .add("ret.selectedVid", ret.selectedVid)
             .add("totalTime", timeTotal.secs())
-            .add("exceptionMessage", ex.getMessageValue());
+            .add("exceptionMessage", ex.getMessageValue())
             .log(cta::log::ERR,
                  "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve.");
     return ret;
@@ -931,13 +931,13 @@ bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, 
       if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
         log::ScopedParamContainer(lc)
         .add("jobUrl", jobUrl)
-        .add("exceptionMessage", ex.getMessageValue());
+        .add("exceptionMessage", ex.getMessageValue())
         .log(log::WARNING,
              "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed, file not found.");
       } else {
         log::ScopedParamContainer(lc)
         .add("jobUrl", jobUrl)
-        .add("exceptionMessage", ex.getMessageValue());
+        .add("exceptionMessage", ex.getMessageValue())
         .log(log::ERR,
              "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed.");
         return false;
@@ -983,9 +983,9 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       jobSrcUrls.insert(batch_rset.columnString("SRC_URL"));
     }
   } catch (exception::Exception &ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(cta::log::ERR,
+    cta::log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR,
            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to get jobs.");
     txn.abort();
     return ret;
@@ -1284,10 +1284,11 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
       .log(log::INFO, "RelationalDB::setRetrieveJobBatchReportedToUser(): deleted job.");
 
   } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR,
            "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): failed to update job status. "
-           "Aborting the transaction." +
-             ex.getMessageValue());
+           "Aborting the transaction.");
     txn.abort();
   }
   return;
