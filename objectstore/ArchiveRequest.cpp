@@ -636,13 +636,6 @@ void ArchiveRequest::AsyncJobOwnerUpdater::wait() {
 }
 
 //------------------------------------------------------------------------------
-// ArchiveRequest::AsyncJobOwnerUpdater::getTimeingsReport()
-//------------------------------------------------------------------------------
-ArchiveRequest::AsyncJobOwnerUpdater::TimingsReport ArchiveRequest::AsyncJobOwnerUpdater::getTimeingsReport() {
-  return m_timingReport;
-}
-
-//------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile()
 //------------------------------------------------------------------------------
 const common::dataStructures::ArchiveFile& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
