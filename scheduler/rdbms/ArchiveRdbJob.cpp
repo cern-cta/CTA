@@ -125,10 +125,10 @@ void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
     }
     reportType = ReportType::FailureReport;
   } catch (const exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(cta::log::WARNING,
-           "Failed to update job status for reporting failure. Aborting txn.");
+    cta::log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::WARNING,
+           "Failed to update job status for reporting failure. Aborting transaction.");
     txn.abort();
   }
 }
@@ -154,7 +154,9 @@ void ArchiveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
     // since requeueing, we do not report and we do not
     // set reportType to a particular value here
   } catch (const exception::Exception& ex) {
-    lc.log(log::ERR, log_msg + std::string(" failed. Aborting txn: ") + ex.getMessageValue());
+     cta::log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(log::ERR, log_msg + std::string(" failed. Aborting transaction."));
     txn.abort();
   }
 }
@@ -243,9 +245,9 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
         .log(log::INFO, "ArchiveRdbJob::failReport(): deleted job.");
     }
   } catch (exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(cta::log::WARNING,
+    cta::log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::WARNING,
            "In schedulerdb::ArchiveRdbJob::failReport(): failed to update job status for failed "
            "report case. Aborting the transaction.");
     txn.abort();

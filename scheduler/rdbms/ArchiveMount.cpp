@@ -174,9 +174,9 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
     }
     txn.commit();
   } catch (exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(cta::log::ERR,
+    cta::log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR,
            "In schedulerdb::ArchiveMount::requeueJobBatch(): failed to update job status for failed task queue.");
     txn.abort();
     return 0;
@@ -324,9 +324,9 @@ void ArchiveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDat
       }
     }
   } catch (const exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(cta::log::ERR,
+    cta::log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR,
            "In ArchiveMount::recycleTransferredJobs(): Failed to recycle all job objects for the job pool: ");
   }
   jobsBatch.clear();
