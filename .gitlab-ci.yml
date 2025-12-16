@@ -8,7 +8,7 @@ stages:
   - system-test
   - sbom
   - release
-  - review
+  - gate
 
 variables:
 
