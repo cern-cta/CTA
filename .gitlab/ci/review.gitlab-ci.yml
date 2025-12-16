@@ -26,7 +26,7 @@ danger-review:
 danger-review-gate:
   stage: review
   dependencies:
-    - job: danger-review
+    - danger-review
   # Note that we rely on the stage ordering here instead of job ordering
   # This is because the review stage is last, which ensures that this job is always executed last
   rules:
