@@ -25,25 +25,10 @@ danger-review:
 # But we only do so after the full pipeline has completed
 danger-review-gate:
   stage: review
-  needs:
+  dependencies:
     - job: danger-review
-      artifacts: true
-    - job: test-client
-      optional: true
-    - job: test-client-gfal2
-      optional: true
-    - job: test-repack
-      optional: true
-    - job: test-cta-admin
-      optional: true
-    - job: format-report
-      optional: true
-    - job: lint-cppcheck
-      optional: true
-    - job: lint-shellcheck
-      optional: true
-    - job: lint-ruff
-      optional: true
+  # Note that we rely on the stage ordering here instead of job ordering
+  # This is because the review stage is last, which ensures that this job is always executed last
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
