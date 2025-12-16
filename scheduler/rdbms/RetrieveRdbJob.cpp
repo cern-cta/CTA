@@ -170,8 +170,10 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
     }
     reportType = ReportType::FailureReport;
   } catch (const exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::WARNING,
-           "Failed to update job status for reporting failure. Aborting txn: " + ex.getMessageValue());
+           "Failed to update job status for reporting failure. Aborting transaction.");
     txn.abort();
   }
 }
@@ -222,7 +224,7 @@ void RetrieveRdbJob::failTransfer(const std::string& failureReason, log::LogCont
   m_jobRow.updateJobRowFailureLog(failureReason);
   m_jobRow.updateRetryCounts(m_mountId);
 
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   // here we either decide if we report the failure to user or requeue the job
   if (m_jobRow.totalRetries >= m_jobRow.maxTotalRetries) {
     handleExceedTotalRetries(txn, lc, failureReason);
@@ -246,7 +248,7 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
     .add("tapePool", m_tapePool)
     .add("reportFailureReason", m_jobRow.reportFailureLogs.value_or(""))
     .log(log::INFO, "In schedulerdb::RetrieveRdbJob::failReport(): reporting failed.");
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
     cta::utils::Timer t;
     uint64_t nrowsdeleted = 0;
@@ -292,10 +294,10 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
         .log(log::INFO, "In schedulerdb::RetrieveJobQueueRow::updateJobStatusForFailedReport(): deleted jobs");
     }
   } catch (exception::Exception& ex) {
+    log::ScopedParamContainer (lc).add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::WARNING,
            "In schedulerdb::RetrieveRdbJob::failReport(): failed to update job status for failed "
-           "report case. Aborting the transaction." +
-             ex.getMessageValue());
+           "report case. Aborting the transaction.");
     txn.abort();
   }
   return;

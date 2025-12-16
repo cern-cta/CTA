@@ -245,6 +245,8 @@ public:
 
   public:
     uint64_t jobID = 0;  // for schedulerdb model
+    uint64_t archiveRequestId = 0; // for schedulerdb model
+    uint64_t requestJobCount = 0; // for schedulerdb model
     std::string srcURL;
     std::string archiveReportURL;
     std::string errorReportURL;

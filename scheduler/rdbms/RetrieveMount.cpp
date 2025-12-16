@@ -31,26 +31,26 @@ const SchedulerDatabase::RetrieveMount::MountInfo& RetrieveMount::getMountInfo()
   return mountInfo;
 }
 
-  void RetrieveMount::setIsRepack(std::string_view defaultRepackVO, log::LogContext &logContext) {
+  void RetrieveMount::setIsRepack(std::string_view defaultRepackVO, log::LogContext &lc) {
     m_isRepack = false;
     if (defaultRepackVO.empty()) {
-      logContext.log(cta::log::WARNING,
-                     "In RetrieveMount::setIsRepack(): no default repack VO found, no repack jobs will get picked up !");
+      lc.log(cta::log::WARNING,
+             "In RetrieveMount::setIsRepack(): no default repack VO found, no repack jobs will get picked up !");
     }
     if (mountInfo.vo == defaultRepackVO) {
-      logContext.log(cta::log::INFO,
-                     "In RetrieveMount::setIsRepack(): Marked RetrieveMount for repack.");
+      lc.log(cta::log::INFO,
+             "In RetrieveMount::setIsRepack(): Marked RetrieveMount for repack.");
       m_isRepack = true;
     }
   }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
-RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& logContext) {
-  logContext.log(cta::log::DEBUG, "Entering RetrieveMount::getNextJobBatch()");
+RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& lc) {
+  lc.log(cta::log::DEBUG, "Entering RetrieveMount::getNextJobBatch()");
   RetrieveJobStatus queriedJobStatus = RetrieveJobStatus::RJS_ToTransfer;
 
   // start a new transaction
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   // require VID named lock in order to minimise tapePool fragmentation of the rows
   txn.takeNamedLock(mountInfo.vid);
 
@@ -58,9 +58,9 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   cta::utils::Timer t;
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   std::vector<std::unique_ptr<SchedulerDatabase::RetrieveJob>> retVector;
-  cta::log::ScopedParamContainer params(logContext);
+  cta::log::ScopedParamContainer params(lc);
   try {
-    auto noSpaceDiskSystemNamesMap = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter(logContext);
+    auto noSpaceDiskSystemNamesMap = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter(lc);
     std::vector<std::string> noSpaceDiskSystemNames;
     noSpaceDiskSystemNames.reserve(noSpaceDiskSystemNamesMap.size());
     for (const auto &pair : noSpaceDiskSystemNamesMap) {
@@ -76,9 +76,8 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
     timings.insertAndReset("mountUpdateBatchTime", t);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
-    logContext.log(
-      cta::log::INFO,
-      "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully assigned Mount ID to DB jobs.");
+    lc.log(cta::log::INFO,
+           "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully assigned Mount ID to DB jobs.");
     retVector.reserve(nrows);
     // Fetch job info only in case there were jobs found and updated
     if (!queuedJobs.isEmpty()) {
@@ -93,47 +92,46 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       txn.commit();
       params.add("queuedJobCount", retVector.size());
       timings.insertAndReset("mountJobInitBatchTime", t);
-      logContext.log(cta::log::INFO,
-                     "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
+      lc.log(cta::log::INFO,
+             "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
     } else {
-      logContext.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
+      lc.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
       txn.commit();
       return ret;
     }
   } catch (exception::Exception& ex) {
     params.add("exceptionMessage", ex.getMessageValue());
-    logContext.log(
-      cta::log::ERR,
-      "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs. Aborting the transaction.");
+    lc.log(cta::log::ERR,
+           "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs. Aborting the transaction.");
     txn.abort();
     throw;
   }
   // Convert vector to list (which is expected as return type)
   ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
-  cta::log::ScopedParamContainer logParams(logContext);
+  cta::log::ScopedParamContainer logParams(lc);
   timings.insertAndReset("mountTransformBatchTime", t);
   timings.addToLog(logParams);
-  logContext.log(cta::log::INFO, "In RetrieveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
+  lc.log(cta::log::INFO, "In RetrieveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
   return ret;
 }
 
 uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
-                                        cta::log::LogContext& logContext) const {
+                                        cta::log::LogContext& lc) const {
   // here we will do ALMOST the same as for RetrieveRdbJob::failTransfer for a bunch of jobs,
   // but it will not update the statistics on the number of retries as `failTransfer` does!
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   uint64_t nrows = 0;
   try {
     nrows = postgres::RetrieveJobQueueRow::requeueJobBatch(txn, RetrieveJobStatus::RJS_ToTransfer, jobIDsList, m_isRepack);
     if (nrows != jobIDsList.size()) {
-      cta::log::ScopedParamContainer params(logContext);
+      cta::log::ScopedParamContainer params(lc);
       params.add("jobsToRequeue", jobIDsList.size());
       params.add("jobsRequeued", nrows);
-      logContext.log(cta::log::ERR, "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to requeue all jobs !");
+      lc.log(cta::log::ERR, "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to requeue all jobs !");
     }
     txn.commit();
   } catch (exception::Exception& ex) {
-    logContext.log(
+    lc.log(
       cta::log::ERR,
       "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to update job status for failed task queue." +
         ex.getMessageValue());
@@ -144,12 +142,12 @@ uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList
 }
 
 void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>& jobBatch,
-                                    cta::log::LogContext& logContext) {
+                                    cta::log::LogContext& lc) {
   std::list<std::string> jobIDsList;
   for (const auto& job : jobBatch) {
     jobIDsList.push_back(std::to_string(job->jobID));
   }
-  uint64_t njobs = RetrieveMount::requeueJobBatch(jobIDsList, logContext);
+  uint64_t njobs = RetrieveMount::requeueJobBatch(jobIDsList, lc);
   if (njobs != jobIDsList.size()) {
     // handle the case of failed bunch update of the jobs !
     std::string jobIDsString;
@@ -159,7 +157,7 @@ void RetrieveMount::requeueJobBatch(std::list<std::unique_ptr<SchedulerDatabase:
     if (!jobIDsString.empty()) {
       jobIDsString.pop_back();
     }
-    logContext.log(cta::log::ERR,
+    lc.log(cta::log::ERR,
                    std::string("In RetrieveMount::requeueJobBatch(): Did not requeue all task jobs of "
                                "the queue, there was no space on disk, job IDs attempting to update were: ") +
                      jobIDsString);
@@ -213,7 +211,7 @@ void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::
 void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string>& jobIDs,
                                                    cta::schedulerdb::RetrieveJobStatus newStatus,
                                                    log::LogContext& lc) {
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
     cta::utils::Timer t;
 
@@ -299,17 +297,17 @@ void RetrieveMount::addDiskSystemToSkip(const DiskSystemToSkip& diskSystemToSkip
 
 void RetrieveMount::putQueueToSleep(const std::string &diskSystemName,
                                     const uint64_t sleepTime,
-                                    log::LogContext &logContext) {
+                                    log::LogContext &lc) {
   if (!diskSystemName.empty()) {
     RelationalDB::DiskSleepEntry dse(sleepTime, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
     cta::threading::MutexLocker ml(m_RelationalDB.m_diskSystemSleepMutex);
-    cta::schedulerdb::Transaction txn(m_connPool);
+    cta::schedulerdb::Transaction txn(m_connPool, lc);
     try {
       m_RelationalDB.insertOrUpdateDiskSleepEntry(txn, diskSystemName, dse);
       txn.commit();
 
     } catch (const exception::Exception &ex) {
-      logContext.log(cta::log::ERR,
+      lc.log(cta::log::ERR,
              "In RetrieveMount::putQueueToSleep(): Exception while updating job status. Aborting "
              "transaction. " +
              ex.getMessageValue());

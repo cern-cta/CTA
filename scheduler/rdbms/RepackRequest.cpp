@@ -53,7 +53,7 @@ namespace cta::schedulerdb {
     repackInfo.failedBytesToRetrieve += failedToRetrieveBytes;
     auto newStatus = getCurrentStatus();
     repackInfo.status = newStatus;
-    cta::schedulerdb::Transaction txn(m_connPool);
+    cta::schedulerdb::Transaction txn(m_connPool, m_lc);
     try {
 
       uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequestFailures(txn,
@@ -283,7 +283,9 @@ namespace cta::schedulerdb {
             failedCreationStats.files++;
             failedCreationStats.bytes += rsr.archiveFile.fileSize;
             failedArchiveReq += rsr.copyNbsToRearchive.size();
-            m_lc.log(log::ERR, "Failed to create subrequest: " + ex.getMessageValue());
+            cta::log::ScopedParamContainer params(m_lc);
+            params.add("exceptionMessage", ex.getMessageValue());
+            m_lc.log(log::ERR, "Failed to create subrequest.");
           }
         }
         ++subReqItor;
@@ -345,7 +347,7 @@ namespace cta::schedulerdb {
       }
     }
     setLastExpandedFSeq(fSeq);
-    cta::schedulerdb::Transaction txn(m_connPool);
+    cta::schedulerdb::Transaction txn(m_connPool, m_lc);
     try {
       uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequest(txn,
                                                                                repackInfo.repackReqId,
@@ -374,7 +376,7 @@ namespace cta::schedulerdb {
   }
 
   void RepackRequest::fail() {
-    cta::schedulerdb::Transaction txn(m_connPool);
+    cta::schedulerdb::Transaction txn(m_connPool, m_lc);
     try {
       repackInfo.status = common::dataStructures::RepackInfo::Status::Failed;
       uint64_t nrows =
@@ -416,7 +418,7 @@ namespace cta::schedulerdb {
     auto newStatus = getCurrentStatus();
     repackInfo.status = newStatus;
 
-    cta::schedulerdb::Transaction txn(m_connPool);
+    cta::schedulerdb::Transaction txn(m_connPool, m_lc);
 
     try {
       if (newStatus == common::dataStructures::RepackInfo::Status::Complete ||

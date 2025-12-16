@@ -335,8 +335,8 @@ public:
 
 
   static void insertBatch(rdbms::Conn &conn,
-                              const std::vector<std::unique_ptr<ArchiveJobQueueRow>> &rows,
-                              bool isRepack) {
+                          const std::vector <std::unique_ptr<ArchiveJobQueueRow>> &rows,
+                          bool isRepack) {
   if (rows.empty()) return;
 
   std::string prefix = isRepack ? "REPACK_" : "";
@@ -544,14 +544,31 @@ public:
                           uint64_t limit, bool isRepack);
 
   /**
-   * Update job status
+   * Update job status for jobs from single-copy user request
    *
    * @param txn        Transaction to use for this query
    * @param newStatus  Archive Job Status to select on
    * @param jobIDs     List of jobID strings to select
    * @return           Number of updated rows
    */
-  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack, const std::vector<std::string>& jobIDs);
+  static uint64_t updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, const std::vector<std::string>& jobIDs);
+
+  /**
+   * Update job status for repack jobs to success
+   *
+   * @param txn        Transaction to use for this query
+   * @param jobIDs     List of jobID strings to select
+   * @return           Number of updated rows
+   */
+  static uint64_t updateRepackJobSuccess(Transaction& txn, const std::vector<std::string>& jobIDs);
+  /**
+   * Update successful job status for jobs from multi-copy user request
+   *
+   * @param txn                       Transaction to use for this query
+   * @param jobIDs                    List of jobIDs
+   * @return                          Number of updated rows
+   */
+  static uint64_t updateMultiCopyJobSuccess(Transaction& txn, const std::vector<std::string>& jobIDs);
 
   /**
    * Update failed job status
@@ -613,12 +630,14 @@ public:
   uint64_t moveJobToFailedQueueTable(Transaction& txn);
 
   /**
-   * Move the job rows to the ARCHIVE FAILED JOB TABLE (static alternative for multiple jobs)
+   * Move the job rows to the ARCHIVE FAILED JOB TABLE
    *
    * @param txn                  Transaction to use for this query
+   * @param jobIDs               List of job IDs as strings for the query
    * @return nrows               The number of rows moved.
    */
   static uint64_t moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs);
+
   static rdbms::Rset moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit);
   /**
    * Increment Archive Request ID and return the new value

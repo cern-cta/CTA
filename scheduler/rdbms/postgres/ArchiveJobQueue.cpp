@@ -175,11 +175,65 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction &txn,
 }
 
 uint64_t
-ArchiveJobQueueRow::updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack, const std::vector<std::string>& jobIDs) {
+ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const std::vector<std::string>& jobIDs) {
   if (jobIDs.empty()) {
     return 0;
   }
-  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
+  ArchiveJobStatus newStatus = ArchiveJobStatus::AJS_ToReportToUserForSuccess;
+  std::string jobids_sqlpart;
+  for (const auto& piece : jobIDs) {
+      if (!jobids_sqlpart.empty()) jobids_sqlpart += ",";
+      jobids_sqlpart += piece;
+  }
+  std::string sql = R"SQL(
+      WITH target_success_multicopy AS (
+        SELECT JOB_ID, ARCHIVE_REQUEST_ID, STATUS, REQUEST_JOB_COUNT
+        FROM ARCHIVE_ACTIVE_QUEUE scj
+        WHERE scj.JOB_ID IN (
+      )SQL";
+  sql += jobids_sqlpart;
+  sql +=  R"SQL( )
+      ),
+      ready_for_reporting_to_disk AS (
+        SELECT combined.ARCHIVE_REQUEST_ID
+        FROM (
+          SELECT t.JOB_ID, t.ARCHIVE_REQUEST_ID, t.STATUS, t.REQUEST_JOB_COUNT
+          FROM target_success_multicopy t
+
+          UNION ALL
+
+          SELECT aj.JOB_ID, aj.ARCHIVE_REQUEST_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
+          FROM ARCHIVE_ACTIVE_QUEUE aj
+          JOIN target_success_multicopy t USING (ARCHIVE_REQUEST_ID)
+          WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_REPLICAS::ARCHIVE_JOB_STATUS
+        ) AS combined
+        GROUP BY combined.ARCHIVE_REQUEST_ID
+        HAVING COUNT(*) = MAX(combined.REQUEST_JOB_COUNT)
+      )
+      UPDATE ARCHIVE_ACTIVE_QUEUE aj2
+      SET STATUS = CASE
+          WHEN rfr.ARCHIVE_REQUEST_ID IS NOT NULL
+            THEN :STATUS_READY_FOR_REPORTING::ARCHIVE_JOB_STATUS
+          ELSE :STATUS_WAIT_FOR_ALL_BEFORE_REPORT::ARCHIVE_JOB_STATUS
+      END
+      FROM target_success_multicopy tsm
+          LEFT JOIN ready_for_reporting_to_disk rfr
+              ON rfr.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID
+      WHERE aj2.ARCHIVE_REQUEST_ID = tsm.ARCHIVE_REQUEST_ID;
+  )SQL";
+    auto stmt = txn.getConn().createStmt(sql);
+    stmt.bindString(":STATUS_READY_FOR_REPORTING", to_string(newStatus));
+    stmt.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
+    stmt.bindString(":STATUS_WAIT_FOR_ALL_BEFORE_REPORT", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
+    stmt.executeNonQuery();
+    return stmt.getNbAffectedRows();
+}
+
+uint64_t
+ArchiveJobQueueRow::updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus, const std::vector<std::string>& jobIDs) {
+  if (jobIDs.empty()) {
+    return 0;
+  }
   std::string sqlpart;
   for (const auto& piece : jobIDs) {
     sqlpart += piece + ",";
@@ -187,90 +241,98 @@ ArchiveJobQueueRow::updateJobStatus(Transaction& txn, ArchiveJobStatus newStatus
   if (!sqlpart.empty()) {
     sqlpart.pop_back();
   }
-  if (newStatus == ArchiveJobStatus::AJS_Complete || newStatus == ArchiveJobStatus::AJS_Failed ||
-          (!isRepack && newStatus == ArchiveJobStatus::ReadyForDeletion)) {
+  if (newStatus == ArchiveJobStatus::AJS_Complete ||
+      newStatus == ArchiveJobStatus::AJS_Failed ||
+      newStatus == ArchiveJobStatus::ReadyForDeletion) {
     if (newStatus == ArchiveJobStatus::AJS_Failed) {
       return ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs);
     } else {
       std::string sql = R"SQL(
-        DELETE FROM
-      )SQL";
-      sql += repack_table_name_prefix + "ARCHIVE_ACTIVE_QUEUE ";
-      sql += R"SQL(
+        DELETE FROM ARCHIVE_ACTIVE_QUEUE
         WHERE
           JOB_ID IN (
         )SQL";
       sql += sqlpart + std::string(")");
-      auto stmt2 = txn.getConn().createStmt(sql);
-      stmt2.executeNonQuery();
-      return stmt2.getNbAffectedRows();
+      auto stmt1 = txn.getConn().createStmt(sql);
+      stmt1.executeNonQuery();
+      return stmt1.getNbAffectedRows();
     }
   }
-  std::string table_name = repack_table_name_prefix + "ARCHIVE_ACTIVE_QUEUE";
-  std::string sql = "";
-  if (!isRepack || (isRepack && newStatus != ArchiveJobStatus::AJS_ToReportToRepackForSuccess)){
-    sql += "UPDATE " + table_name + " SET STATUS = :NEWSTATUS1::ARCHIVE_JOB_STATUS WHERE JOB_ID IN (" + sqlpart + ")";
-  } else {
-    /* For Repack, when we report success this query handles the check of all
-     * other sibling rows/job with the same archive_file_id
-     * which needed to be archived too. If all the rows with the same archive_file_id
-     * are in AJS_ToReportToRepackForSuccess except the one being currently updated,
-     * then update all of them to ReadyForDeletion. This will signal the next step
-     * that the source file can be deleted from disk otherwise it updates the status
-     * just to AJS_ToReportToRepackForSuccess. If the required update status is anything
-     * else than AJS_ToReportToRepackForSuccess it just updates to that status.
-     */
-    sql += R"SQL(
-    WITH updated_single_copy_jobs AS (
-        UPDATE REPACK_ARCHIVE_ACTIVE_QUEUE rscj
-      SET STATUS = :STATUS_READY_FOR_DELETION1::ARCHIVE_JOB_STATUS
-    )SQL";
-    sql += " WHERE rscj.JOB_ID IN (" + sqlpart +
-            ") AND rscj.REQUEST_JOB_COUNT = 1";
-    sql +=  R"SQL(
-    ),
-    target_success_multicopy AS (
-        SELECT JOB_ID, ARCHIVE_FILE_ID, STATUS, REQUEST_JOB_COUNT
-        FROM REPACK_ARCHIVE_ACTIVE_QUEUE rscj2
-        WHERE rscj2.REQUEST_JOB_COUNT > 1 AND rscj2.JOB_ID IN (
-    )SQL";
-    sql += sqlpart;
-    sql +=  R"SQL( )
-    ),
-    ready_for_deletion AS (
-      SELECT combined.ARCHIVE_FILE_ID
-      FROM (
-        SELECT t.JOB_ID, t.ARCHIVE_FILE_ID, t.STATUS, t.REQUEST_JOB_COUNT
-        FROM target_success_multicopy t
+  std::string sql = "UPDATE ARCHIVE_ACTIVE_QUEUE SET STATUS = :NEWSTATUS1::ARCHIVE_JOB_STATUS WHERE JOB_ID IN (" + sqlpart + ")";
+  auto stmt2 = txn.getConn().createStmt(sql);
+  stmt2.bindString(":NEWSTATUS1", to_string(newStatus));
+  stmt2.executeNonQuery();
+  return stmt2.getNbAffectedRows();
+};
 
-        UNION ALL
-
-        SELECT aj.JOB_ID, aj.ARCHIVE_FILE_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
-        FROM REPACK_ARCHIVE_ACTIVE_QUEUE aj
-        JOIN target_success_multicopy t USING (ARCHIVE_FILE_ID)
-        WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_SIBLINGS::ARCHIVE_JOB_STATUS
-      ) AS combined
-      GROUP BY combined.ARCHIVE_FILE_ID
-      HAVING COUNT(*) = MAX(combined.REQUEST_JOB_COUNT)
-    )
-    UPDATE REPACK_ARCHIVE_ACTIVE_QUEUE aj2
-    SET STATUS = CASE
-        WHEN aj2.ARCHIVE_FILE_ID IN (SELECT ARCHIVE_FILE_ID FROM ready_for_deletion)
-          THEN :STATUS_READY_FOR_DELETION2::ARCHIVE_JOB_STATUS
-        ELSE :STATUS_SUCCESS::ARCHIVE_JOB_STATUS
-    END
-    WHERE aj2.ARCHIVE_FILE_ID IN (SELECT ARCHIVE_FILE_ID FROM target_success_multicopy)
-    )SQL";
+uint64_t
+ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std::vector<std::string>& jobIDs) {
+  if (jobIDs.empty()) {
+    return 0;
   }
+  std::string sqlpart;
+  for (const auto &piece: jobIDs) {
+    if (!sqlpart.empty()) { sqlpart += ","; }
+    sqlpart += piece;
+  }
+  /* For Repack, when we report success this query handles the check of all
+   * other replica rows/job with the same archive_file_id
+   * which needed to be archived too. If all the rows with the same archive_file_id
+   * are in AJS_ToReportToRepackForSuccess except the one being currently updated,
+   * then update all of them to ReadyForDeletion. This will signal the next step
+   * that the source file can be deleted from disk otherwise it updates the status
+   * just to AJS_ToReportToRepackForSuccess. If the required update status is anything
+   * else than AJS_ToReportToRepackForSuccess it just updates to that status.
+   */
+  std::string sql = R"SQL(
+  WITH updated_single_copy_jobs AS (
+      UPDATE REPACK_ARCHIVE_ACTIVE_QUEUE rscj
+    SET STATUS = :STATUS_READY_FOR_DELETION1::ARCHIVE_JOB_STATUS
+  )SQL";
+  sql += " WHERE rscj.JOB_ID IN (" + sqlpart +
+          ") AND rscj.REQUEST_JOB_COUNT = 1";
+  sql +=  R"SQL(
+  ),
+  target_success_multicopy AS (
+      SELECT JOB_ID, ARCHIVE_FILE_ID, STATUS, REQUEST_JOB_COUNT
+      FROM REPACK_ARCHIVE_ACTIVE_QUEUE rscj2
+      WHERE rscj2.REQUEST_JOB_COUNT > 1 AND rscj2.JOB_ID IN (
+  )SQL";
+  sql += sqlpart;
+  sql +=  R"SQL( )
+  ),
+  ready_for_deletion AS (
+    SELECT combined.ARCHIVE_FILE_ID
+    FROM (
+      SELECT t.JOB_ID, t.ARCHIVE_FILE_ID, t.STATUS, t.REQUEST_JOB_COUNT
+      FROM target_success_multicopy t
+
+      UNION ALL
+
+      SELECT aj.JOB_ID, aj.ARCHIVE_FILE_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
+       FROM REPACK_ARCHIVE_ACTIVE_QUEUE aj
+       JOIN target_success_multicopy t USING (ARCHIVE_FILE_ID)
+       WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_REPLICAS::ARCHIVE_JOB_STATUS
+     ) AS combined
+     GROUP BY combined.ARCHIVE_FILE_ID
+     HAVING COUNT(*) = MAX(combined.REQUEST_JOB_COUNT)
+   )
+  UPDATE REPACK_ARCHIVE_ACTIVE_QUEUE aj2
+  SET STATUS = CASE
+      WHEN rfd.ARCHIVE_FILE_ID IS NOT NULL
+        THEN :STATUS_READY_FOR_DELETION2::ARCHIVE_JOB_STATUS
+      ELSE :STATUS_SUCCESS::ARCHIVE_JOB_STATUS
+  END
+  FROM target_success_multicopy tsm
+        LEFT JOIN ready_for_deletion rfd
+            ON rfd.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID
+  WHERE aj2.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID;
+  )SQL";
   auto stmt1 = txn.getConn().createStmt(sql);
-  if (!isRepack || (isRepack && newStatus != ArchiveJobStatus::AJS_ToReportToRepackForSuccess)){
-  stmt1.bindString(":NEWSTATUS1", to_string(newStatus));
-  } else {
-    stmt1.bindString(":STATUS_COND_SIBLINGS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
-    stmt1.bindString(":STATUS_SUCCESS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
-    stmt1.bindString(":STATUS_READY_FOR_DELETION1", to_string(ArchiveJobStatus::ReadyForDeletion));
-    stmt1.bindString(":STATUS_READY_FOR_DELETION2", to_string(ArchiveJobStatus::ReadyForDeletion));
-  }
+  stmt1.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
+  stmt1.bindString(":STATUS_SUCCESS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
+  stmt1.bindString(":STATUS_READY_FOR_DELETION1", to_string(ArchiveJobStatus::ReadyForDeletion));
+  stmt1.bindString(":STATUS_READY_FOR_DELETION2", to_string(ArchiveJobStatus::ReadyForDeletion));
   stmt1.executeNonQuery();
   return stmt1.getNbAffectedRows();
 };
@@ -329,30 +391,47 @@ rdbms::Rset ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(Transactio
 
 uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepack) {
   ArchiveJobStatus newStatus;
-  std::string repack_table_name_prefix = "";
+  std::string repack_prefix = "";
   if (isRepack) {
-    repack_table_name_prefix = "REPACK_";
+    repack_prefix = "REPACK_";
     newStatus = ArchiveJobStatus::AJS_ToReportToRepackForFailure;
   } else {
     newStatus = ArchiveJobStatus::AJS_ToReportToUserForFailure;
   }
   std::string sql = R"SQL(
       UPDATE )SQL";
-  sql += repack_table_name_prefix + R"SQL(ARCHIVE_ACTIVE_QUEUE SET
+  sql += repack_prefix + R"SQL(ARCHIVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
         TOTAL_RETRIES = :TOTAL_RETRIES,
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
         LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
         FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG
+  )SQL";
+  // For multi copy requests what we do is that we update all copies irrespectively of their state
+  // if the second job is still in processing on the drive (in ToTransfer state in the DB),
+  // it means that when it will get to reporting from the Mount, it will be refused
+  // because it will either not be found or it will not be found in the ToTransfer state
+  // (which is a condition on the state for successful report)
+  if (reqJobCount > 1 && !isRepack){
+    sql += R"SQL(
+        WHERE ARCHIVE_REQUEST_ID = :ARCHIVE_REQUEST_ID
+    )SQL";
+  } else {
+    sql += R"SQL(
         WHERE JOB_ID = :JOB_ID
     )SQL";
+  }
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
-  stmt.bindUint64(":JOB_ID", jobId);
+  if (reqJobCount > 1){
+   stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
+  } else {
+   stmt.bindUint64(":JOB_ID", jobId);
+  }
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
 };
@@ -388,12 +467,12 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
                                               ArchiveJobStatus newStatus,
                                               bool keepMountId, bool isRepack,
                                               std::optional<std::list<std::string>> jobIDs) {
-  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
+  std::string repack_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
         DELETE FROM
   )SQL";
-  sql += repack_table_name_prefix + "ARCHIVE_ACTIVE_QUEUE ";
+  sql += repack_prefix + "ARCHIVE_ACTIVE_QUEUE ";
   bool userowjid = true;
   if (jobIDs.has_value() && !jobIDs.value().empty()) {
     userowjid = false;
@@ -415,7 +494,7 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
     )
     INSERT INTO
     )SQL";
-  sql += repack_table_name_prefix + "ARCHIVE_PENDING_QUEUE ( ";
+  sql += repack_prefix + "ARCHIVE_PENDING_QUEUE ( ";
   if (isRepack) sql += "REPACK_REQUEST_ID,";
   sql += R"SQL(
     JOB_ID,
@@ -526,12 +605,12 @@ sql += R"SQL(
 
 uint64_t
 ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack, const std::list<std::string>& jobIDs) {
-  std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
+  std::string repack_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
         DELETE FROM
   )SQL";
-  sql += repack_table_name_prefix + "ARCHIVE_ACTIVE_QUEUE ";
+  sql += repack_prefix + "ARCHIVE_ACTIVE_QUEUE ";
   if (!jobIDs.empty()) {
     std::string sqlpart;
     for (const auto& jid : jobIDs) {
@@ -549,7 +628,7 @@ ArchiveJobQueueRow::requeueJobBatch(Transaction& txn, ArchiveJobStatus newStatus
     )
     INSERT INTO
   )SQL";
-  sql += repack_table_name_prefix + "ARCHIVE_PENDING_QUEUE ( ";
+  sql += repack_prefix + "ARCHIVE_PENDING_QUEUE ( ";
   if (isRepack) sql += "REPACK_REQUEST_ID,";
   sql += R"SQL(
     JOB_ID,
@@ -647,38 +726,53 @@ uint64_t ArchiveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
         DELETE FROM ARCHIVE_ACTIVE_QUEUE
-          WHERE JOB_ID = :JOB_ID
+  )SQL";
+  if (reqJobCount > 1){
+    sql += R"SQL(
+        WHERE ARCHIVE_REQUEST_ID = :ARCHIVE_REQUEST_ID
+    )SQL";
+  } else {
+    sql += R"SQL(
+        WHERE JOB_ID = :JOB_ID
+    )SQL";
+  }
+  sql += R"SQL(
         RETURNING *
     ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.bindUint64(":JOB_ID", jobId);
+  if (reqJobCount > 1){
+    stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
+  } else {
+    stmt.bindUint64(":JOB_ID", jobId);
+  }
   stmt.executeQuery();
   return stmt.getNbAffectedRows();
 }
 
 uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs) {
   std::string sqlpart;
-  for (const auto& piece : jobIDs) {
-    sqlpart += piece + ",";
-  }
-  if (!sqlpart.empty()) {
-    sqlpart.pop_back();
+  for (const auto &piece: jobIDs) {
+    if (!sqlpart.empty()) { sqlpart += ","; }
+    sqlpart += piece;
   }
   std::string sql = R"SQL(
-    WITH MOVED_ROWS AS (
+    WITH REQUESTS_TO_MOVE AS (
+        SELECT DISTINCT ARCHIVE_REQUEST_ID
+        FROM ARCHIVE_ACTIVE_QUEUE
+            WHERE job_id IN (
+         )SQL";
+  sql += sqlpart;
+  sql += R"SQL()
+    ),
+    MOVED_ROWS AS (
         DELETE FROM ARCHIVE_ACTIVE_QUEUE
-          WHERE JOB_ID IN (
-  )SQL";
-  sql += sqlpart + ")";
-  sql += R"SQL(
+            WHERE ARCHIVE_REQUEST_ID IN ( SELECT ARCHIVE_REQUEST_ID FROM REQUESTS_TO_MOVE )
         RETURNING *
-    ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
-  )SQL";
+    ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;")SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
-  ;
 }
 
 rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit) {
@@ -706,11 +800,12 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
 }
 
 uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus) {
-  // if this was the final reporting failure,
-  // move the row to failed jobs and delete the entry from the queue
+  /* if this was the final reporting failure,
+   * move the row to failed jobs and delete the entry from the queue
+   * for multi-copy archive requests, all requests will be handled via the moveJobToFailedQueueTable()
+   */
   if (status == ArchiveJobStatus::ReadyForDeletion) {
     return ArchiveJobQueueRow::moveJobToFailedQueueTable(txn);
-    // END OF DISABLING DELETION FOR DEBUGGING
   }
   // otherwise update the statistics and requeue the job
   std::string sql = R"SQL(
@@ -721,7 +816,6 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
         REPORT_FAILURE_LOG = REPORT_FAILURE_LOG || :REPORT_FAILURE_LOG
       WHERE JOB_ID = :JOB_ID
     )SQL";
-
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);

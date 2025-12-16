@@ -91,15 +91,15 @@ std::optional<common::dataStructures::VirtualOrganization> RelationalDB::getDefa
 std::string RelationalDB::queueArchive(const std::string& instanceName,
                                        const cta::common::dataStructures::ArchiveRequest& request,
                                        const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
-                                       log::LogContext& logContext) {
+                                       log::LogContext& lc) {
   // Construct the archive request object
   utils::Timer timeTotal;
   utils::Timer timeGetConn;
   auto sqlconn = m_connPool.getConn();
-  log::ScopedParamContainer params(logContext);
+  log::ScopedParamContainer params(lc);
   params.add("connCountOnLoad", m_connPool.getNbConnsOnLoan());
   params.add("getConnTime", timeGetConn.secs());
-  schedulerdb::ArchiveRequest aReq(sqlconn, logContext);
+  schedulerdb::ArchiveRequest aReq(sqlconn, lc);
 
   // Summarize all as an archiveFile
   common::dataStructures::ArchiveFile aFile;
@@ -148,7 +148,7 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
     .add("diskFileId", aFile.diskFileId)
     .add("insertTime", timeInsert.secs())
     .add("totalTime", timeTotal.secs());
-  logContext.log(log::INFO, "In RelationalDB::queueArchive(): Finished enqueueing request.");
+  lc.log(log::INFO, "In RelationalDB::queueArchive(): Finished enqueueing request.");
   return aReq.getIdStr();
 }
 
@@ -167,13 +167,13 @@ RelationalDB::getArchiveJobQueueItor(const std::string& tapePoolName,
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>
-RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogContext& logContext) {
+RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogContext& lc) {
   // This method is not being used for repack which has a separate workflow !
   log::TimingList timings;
   cta::utils::Timer t;
-  cta::log::ScopedParamContainer logParams(logContext);
+  cta::log::ScopedParamContainer logParams(lc);
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   // retrieve batch up to file limit
   std::list<schedulerdb::ArchiveJobStatus> statusList;
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForSuccess);
@@ -185,7 +185,7 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
     resultSet =
       schedulerdb::postgres::ArchiveJobQueueRow::flagReportingJobsByStatus(txn, statusList, gc_delay, filesRequested);
     if (resultSet.isEmpty()) {
-      logContext.log(cta::log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
+      lc.log(cta::log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
       return ret;
     }
     while (resultSet.next()) {
@@ -195,23 +195,24 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
     txn.commit();
     timings.insertAndReset("fetchedArchiveJobs", t);
     timings.addToLog(logParams);
-    logContext.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
+    lc.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
   } catch (exception::Exception& ex) {
-    logContext.log(cta::log::ERR,
-                   "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
-                     ex.getMessageValue());
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
+    lc.log(cta::log::ERR,
+           "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus.");
     txn.abort();
     return ret;
   }
-  logContext.log(log::INFO,
-                 "In RelationalDB::getNextArchiveJobsToReportBatch(): Finished getting archive jobs for reporting.");
+  lc.log(log::INFO,
+         "In RelationalDB::getNextArchiveJobsToReportBatch(): Finished getting archive jobs for reporting.");
   return ret;
 }
 
-SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(log::LogContext& logContext) {
+SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(log::LogContext& lc) {
   SchedulerDatabase::JobsFailedSummary ret;
   // Get the jobs from DB
-  cta::schedulerdb::Transaction txn(m_connPool);
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
   while (rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow afjsr(rset);
@@ -222,7 +223,7 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
     txn.commit();
   } catch (cta::exception::Exception& e) {
     std::string bt = e.backtrace();
-    logContext.log(log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
+    lc.log(log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): Exception thrown: " + bt);
     txn.abort();
   }
   return ret;
@@ -255,8 +256,11 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
                                               log::TimingList& timingList,
                                               utils::Timer& t,
                                               log::LogContext& lc) {
-  // This method is not being used for repack which has a separate workflow !
-  // If job is done we will delete it (if the full request was served) - to be implemented !
+  // This method is NOT being used for repack which has a separate workflow !
+  // If job from a single copy archive request is done, we will delete it
+  // For multi-copy we will proceed the same as it would not be in the list unless second copy succeeded
+  // (which is ensured by the ArchiveMount when updating successfully transferred jobs)
+
   std::vector<std::string> jobIDsList_success;
   std::vector<std::string> jobIDsList_failure;
   // reserving space to avoid multiple re-allocations during emplace_back
@@ -283,6 +287,8 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
     }
     log::ScopedParamContainer(lc)
       .add("jobID", (*jobsBatchItor)->jobID)
+      .add("archiveRequestId", (*jobsBatchItor)->archiveRequestId)
+      .add("requestJobCount", (*jobsBatchItor)->requestJobCount)
       .add("archiveFileID", (*jobsBatchItor)->archiveFile.archiveFileID)
       .add("diskInstance", (*jobsBatchItor)->archiveFile.diskInstance)
       .log(log::INFO,
@@ -290,15 +296,16 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
            "status change to Failed or Completed.");
     jobsBatchItor++;
   }
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   try {
     cta::utils::Timer t2;
     uint64_t deletionCount = 0;
-    // false in the updateJobStatus calls below =  this is not repack workflow
+    uint64_t failedCount = 0;
+    // false in the updateJobStatus calls below =  this is not repack workflow !!!
     if (!jobIDsList_success.empty()) {
       uint64_t nrows =
         schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn,
-                                                                   cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion, false,
+                                                                   cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion,
                                                                    jobIDsList_success);
       deletionCount += nrows;
       if (nrows != jobIDsList_success.size()) {
@@ -306,29 +313,31 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
           .add("updatedRows", nrows)
           .add("jobListSize", jobIDsList_success.size())
           .log(log::ERR,
-               "In RelationalDB::setArchiveJobBatchReported: Failed to ArchiveJobQueueRow::updateJobStatus() "
-               "for entire job list provided.");
+               "In RelationalDB::setArchiveJobBatchReported(): Failed to ArchiveJobQueueRow::updateJobStatus() "
+               "for successful single copy job list provided.");
       }
     }
     if (!jobIDsList_failure.empty()) {
       uint64_t nrows =
         schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn,
-                                                                   cta::schedulerdb::ArchiveJobStatus::AJS_Failed, false,
+                                                                   cta::schedulerdb::ArchiveJobStatus::AJS_Failed,
                                                                    jobIDsList_failure);
+      failedCount += nrows;
       if (nrows != jobIDsList_failure.size()) {
         log::ScopedParamContainer(lc)
           .add("updatedRows", nrows)
           .add("jobListSize", jobIDsList_failure.size())
           .log(log::ERR,
                "In RelationalDB::setArchiveJobBatchReported: Failed to ArchiveJobQueueRow::updateJobStatus() "
-               "for entire job list provided.");
+               "for failed single copy job list provided.");
       }
     }
     txn.commit();
     log::ScopedParamContainer(lc)
       .add("rowDeletionTime", t2.secs())
       .add("rowDeletionCount", deletionCount)
-      .log(log::INFO, "RelationalDB::setArchiveJobBatchReported(): deleted job.");
+      .add("failedCount", failedCount)
+      .log(log::INFO, "RelationalDB::setArchiveJobBatchReported(): jobs reported to disk were deleted or moved to failed table in the DB.");
 
   } catch (exception::Exception& ex) {
     lc.log(cta::log::ERR,
@@ -363,21 +372,23 @@ SchedulerDatabase::RetrieveRequestInfo
 RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                             const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
                             const std::optional<std::string> diskSystemName,
-                            log::LogContext& logContext) {
+                            log::LogContext& lc) {
   utils::Timer timeTotal;
   auto rreqMutex = std::make_unique<cta::threading::Mutex>();
   cta::threading::MutexLocker rreqMutexLock(*rreqMutex);
   SchedulerDatabase::RetrieveRequestInfo ret;
-  log::ScopedParamContainer(logContext)
+  log::ScopedParamContainer(lc)
       .add("diskSystemName", diskSystemName);
+  std::string tfvids = "";
   try {
 
     // Get the best vid from the cache
     std::set<std::string, std::less<>> candidateVids;
     for (auto& tf : criteria.archiveFile.tapeFiles) {
       candidateVids.insert(tf.vid);
+      tfvids += std::string(tf.vid);
     }
-    logContext.log(cta::log::INFO, "In RelationalDB::queueRetrieve(): before sqlconn selection. ");
+    lc.log(cta::log::DEBUG, "In RelationalDB::queueRetrieve(): starting. ");
 
     auto sqlconn = m_connPool.getConn();
     /* The current selectBestVid4Retrieve implementation makes
@@ -400,7 +411,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     }
 
     // In order to queue the job, construct it first in memory.
-    schedulerdb::RetrieveRequest rReq(sqlconn, logContext);
+    schedulerdb::RetrieveRequest rReq(sqlconn, lc);
     // the order of the following calls in important - we should rewise
     // the whole logic here and metadata object separation
     rReq.setActivityIfNeeded(rqst, criteria);
@@ -412,13 +423,18 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq.setDiskSystemName(diskSystemName);
     rreqMutex.release();
     rReq.insert();
-    log::ScopedParamContainer(logContext)
+    log::ScopedParamContainer(lc)
       .add("totalTime", timeTotal.secs())
       .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
     return ret;
   } catch (exception::Exception& ex) {
-    logContext.log(cta::log::ERR,
-                   "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve." + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+            .add("tfvids", tfvids)
+            .add("ret.selectedVid", ret.selectedVid)
+            .add("totalTime", timeTotal.secs())
+            .add("exceptionMessage", ex.getMessageValue())
+            .log(cta::log::ERR,
+                 "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve.");
     return ret;
   }
 }
@@ -426,7 +442,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
 void RelationalDB::cancelRetrieve(const std::string& instanceName,
                                   const cta::common::dataStructures::CancelRetrieveRequest& request,
                                   log::LogContext& lc) {
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   try {
     uint64_t cancelledJobs = schedulerdb::postgres::RetrieveJobQueueRow::cancelRetrieveJob(txn, request.archiveFileID);
     log::ScopedParamContainer(lc)
@@ -466,7 +482,7 @@ void RelationalDB::deleteRetrieveRequest(const common::dataStructures::SecurityI
 }
 
 void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequest& request, log::LogContext& lc) {
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   try {
     uint64_t cancelledJobs =
       schedulerdb::postgres::ArchiveJobQueueRow::cancelArchiveJob(txn, request.diskInstance, request.archiveFileID);
@@ -481,9 +497,10 @@ void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequ
     }
     txn.commit();
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RelationalDB::cancelArchive(): failed to cancel archive job. Aborting the transaction." +
-             ex.getMessageValue());
+           "In RelationalDB::cancelArchive(): failed to cancel archive job. Aborting the transaction.");
     txn.abort();
     throw;
   }
@@ -509,10 +526,9 @@ RelationalDB::getRetrieveJobQueueItor(const std::string& vid, common::dataStruct
 }
 
 std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackRequest& repackRequest,
-                                      log::LogContext& logContext) {
+                                      log::LogContext& lc) {
 
   cta::utils::Timer t;
-  log::LogContext lc(m_logger);
   auto rr = std::make_unique<cta::schedulerdb::RepackRequest>(m_connPool, m_catalogue, lc);
   rr->setVid(repackRequest.m_vid);
   rr->setType(repackRequest.m_repackType);
@@ -522,7 +538,7 @@ std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackReques
   rr->setCreationLog(repackRequest.m_creationLog);
   rr->setMaxFilesToSelect(repackRequest.m_maxFilesToSelect);
   rr->insert();
-  logContext.log(log::INFO, "RelationalDB::queueRepack() successfully queued request.");
+  lc.log(log::INFO, "RelationalDB::queueRepack() successfully queued request.");
   return rr->getIdStr();
 }
 
@@ -543,7 +559,7 @@ std::list<common::dataStructures::RepackInfo> RelationalDB::getRepackInfo() {
 }
 
 std::list<common::dataStructures::RepackInfo> RelationalDB::fetchRepackInfo(const std::string& vid) {
-    log::LogContext lc(m_logger);
+  log::LogContext lc(m_logger);
   lc.log(log::DEBUG, "In RelationalDB::getRepackInfo().");
   auto sqlconn = m_connPool.getConn();
   std::list<common::dataStructures::RepackInfo> ret;
@@ -591,7 +607,7 @@ common::dataStructures::RepackInfo RelationalDB::getRepackInfo(const std::string
 
 // this method now serve more as a delete repack method deleting all the jobs from queues which do not have active jobs
 void RelationalDB::cancelRepack(const std::string &vid, log::LogContext &lc) {
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   try {
     uint64_t cancelledRepackRequests =
             schedulerdb::postgres::RepackRequestTrackingRow::cancelRepack(txn, vid);
@@ -608,9 +624,10 @@ void RelationalDB::cancelRepack(const std::string &vid, log::LogContext &lc) {
     }
     txn.commit();
   } catch (exception::Exception &ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RelationalDB::cancelRepack(): failed to cancel repack request. Aborting the transaction." +
-           ex.getMessageValue());
+           "In RelationalDB::cancelRepack(): failed to cancel repack request. Aborting the transaction.");
     txn.abort();
     throw;
   } catch (std::exception &ex) {
@@ -647,7 +664,7 @@ RelationalDB::RepackRequestPromotionStatistics::RepackRequestPromotionStatistics
     using Status = common::dataStructures::RepackInfo::Status;
     ret.pendingBefore = at(Status::Pending);
     ret.toExpandBefore = at(Status::ToExpand);
-    schedulerdb::Transaction txn(m_parentdb.m_connPool);
+    schedulerdb::Transaction txn(m_parentdb.m_connPool, lc);
     try {
       txn.takeNamedLock("promotePendingRequestsForExpansion");
       auto nrows = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestForExpansion(txn, requestCount);
@@ -738,7 +755,7 @@ auto RelationalDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::R
    log::LogContext lc(m_logger);
     lc.log(log::INFO,
            "In RelationalDB::getNextRepackJobToExpand(): marking one request as IS_EXPAND_STARTED.");
-    schedulerdb::Transaction txn(m_connPool);
+    schedulerdb::Transaction txn(m_connPool, lc);
     txn.takeNamedLock("getNextRepackJobToExpand");
     cta::schedulerdb::postgres::RepackRequestTrackingRow rrjtr;
     bool found = false;
@@ -755,9 +772,10 @@ auto RelationalDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::R
       }
       txn.commit();
     } catch (exception::Exception &ex) {
+      cta::log::ScopedParamContainer params(lc);
+      params.add("exceptionMessage", ex.getMessageValue());
       lc.log(cta::log::ERR,
-             "In RelationalDB::getNextRepackJobToExpand(): failed to mark IS_EXPAND_STARTED: " +
-             ex.getMessageValue());
+             "In RelationalDB::getNextRepackJobToExpand(): failed to mark IS_EXPAND_STARTED.");
       txn.abort();
       return nullptr;
     }
@@ -773,12 +791,12 @@ auto RelationalDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::R
   }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
-RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext& logContext) {
+RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogContext& lc) {
   log::TimingList timings;
   cta::utils::Timer t;
-  cta::log::ScopedParamContainer logParams(logContext);
+  cta::log::ScopedParamContainer logParams(lc);
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   // retrieve batch up to file limit
   std::list<schedulerdb::RetrieveJobStatus> statusList;
   statusList.emplace_back(schedulerdb::RetrieveJobStatus::RJS_ToReportToUserForSuccess);
@@ -790,7 +808,7 @@ RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::Log
     resultSet =
       schedulerdb::postgres::RetrieveJobQueueRow::flagReportingJobsByStatus(txn, statusList, gc_delay, filesRequested);
     if (resultSet.isEmpty()) {
-      logContext.log(cta::log::INFO, "In RelationalDB::getNextRetrieveJobsToReportBatch(): nothing to report.");
+      lc.log(cta::log::INFO, "In RelationalDB::getNextRetrieveJobsToReportBatch(): nothing to report.");
       return ret;
     }
     while (resultSet.next()) {
@@ -799,21 +817,21 @@ RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::Log
     txn.commit();
     timings.insertAndReset("fetchedRetrieveJobs", t);
     timings.addToLog(logParams);
-    logContext.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
+    lc.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
   } catch (exception::Exception& ex) {
-    logContext.log(cta::log::ERR,
-                   "In RelationalDB::getNextRetrieveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
-                     ex.getMessageValue());
+    lc.log(cta::log::ERR,
+           "In RelationalDB::getNextRetrieveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
+           ex.getMessageValue());
     txn.abort();
     return ret;
   }
-  logContext.log(log::INFO,
-                 "In RelationalDB::getNextRetrieveJobsToReportBatch(): Finished getting retrieve jobs for reporting.");
+  lc.log(log::INFO,
+         "In RelationalDB::getNextRetrieveJobsToReportBatch(): Finished getting retrieve jobs for reporting.");
   return ret;
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
-RelationalDB::getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext& logContext) {
+RelationalDB::getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext& lc) {
   throw cta::exception::NotImplementedException();
 }
 
@@ -829,7 +847,7 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   log::TimingList timings;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
   std::vector <schedulerdb::postgres::RepackRequestProgress> statUpdates;
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   // move all finished REPACK_RETRIEVE_ACTIVE_QUEUE to the REPACK_ARCHIVE_PENDING_QUEUE
   // return back statistics for:
   //   1) all retrieve rows moved to archive table
@@ -861,9 +879,10 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     log::ScopedParamContainer params(lc);
     timings.addToLog(params);
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-                   "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to archive jobs: " +
-                     ex.getMessageValue());
+                   "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to archive jobs: ");
     txn.abort();
   }
   if (statUpdates.empty()) {
@@ -871,7 +890,7 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     // return empty report batch since the rest of the original OStoreDB logic is not needed here
     return ret;
   }
-  schedulerdb::Transaction txn2(m_connPool);
+  schedulerdb::Transaction txn2(m_connPool, lc);
   // report back to the REPACK_REQUEST_TRACKING table
   try {
    auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn2, statUpdates);
@@ -912,15 +931,15 @@ bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, 
       if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
         log::ScopedParamContainer(lc)
         .add("jobUrl", jobUrl)
+        .add("exceptionMessage", ex.getMessageValue())
         .log(log::WARNING,
-             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed, file not found." +
-             ex.getMessageValue());
+             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed, file not found.");
       } else {
         log::ScopedParamContainer(lc)
         .add("jobUrl", jobUrl)
+        .add("exceptionMessage", ex.getMessageValue())
         .log(log::ERR,
-             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed." +
-             ex.getMessageValue());
+             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed.");
         return false;
       }
     }
@@ -931,8 +950,10 @@ bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, 
       lc.log(log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deleted file.");
     } catch (const cta::exception::Exception& ex) {
       if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
+        cta::log::ScopedParamContainer params(lc);
+        params.add("exceptionMessage", ex.getMessageValue());
         lc.log(log::WARNING,
-                     "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not found anymore." + ex.getMessageValue());
+                     "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not found anymore.");
       } else {
         lc.log(log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not deleted. Exception thrown: " +
              ex.getMessageValue());
@@ -950,7 +971,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
   cta::utils::Timer t;
   log::TimingList timings;
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   std::vector<std::string> jobIDs;
   std::unordered_set<std::string> jobSrcUrls;
   try {
@@ -962,9 +983,10 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       jobSrcUrls.insert(batch_rset.columnString("SRC_URL"));
     }
   } catch (exception::Exception &ex) {
-    lc.log(cta::log::ERR,
-           "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to get jobs: " +
-           ex.getMessageValue());
+    cta::log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR,
+           "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to get jobs.");
     txn.abort();
     return ret;
   }
@@ -1011,7 +1033,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     return ret;
   }
 
-  schedulerdb::Transaction txn3(m_connPool);
+  schedulerdb::Transaction txn3(m_connPool, lc);
   // report back to the REPACK_REQUEST_TRACKING table
   uint64_t nrepreq = 0;
   std::vector<std::string> repackBufferUrlsToDelete;
@@ -1039,9 +1061,10 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
    lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Updated Repack progress statistics.");
    txn3.commit();
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to update  Repack progress statistics: " +
-                     ex.getMessageValue());
+                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to update  Repack progress statistics.");
     txn3.abort();
   }
   // check if status is Failed or Complete and delete the disk directory for this repack in such a case
@@ -1070,7 +1093,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
 std::unique_ptr <SchedulerDatabase::RepackReportBatch>
 RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext &lc) {
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   std::vector <uint64_t> rrIDs;
   std::vector <uint64_t> flcnts;
   std::vector <uint64_t> flbytes;
@@ -1101,9 +1124,10 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext &lc) {
             .log(log::INFO,
                  "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): updated repack request statistics.");
   } catch (exception::Exception &ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): Failed to updateRepackRequestFailuresBatch() aborting the entire transaction: " +
-           ex.getMessageValue());
+           "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): Failed to updateRepackRequestFailuresBatch() aborting the entire transaction.");
     txn.abort();
     return ret;
   }
@@ -1113,7 +1137,7 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext &lc) {
 std::unique_ptr<SchedulerDatabase::RepackReportBatch>
 RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
   std::unique_ptr<SchedulerDatabase::RepackReportBatch> ret;
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   std::unordered_map<uint64_t, uint64_t> summaryFlCountMap;
   std::unordered_map<uint64_t, uint64_t> summaryFlBytesMap;
   std::vector <uint64_t> rrIDs;
@@ -1161,9 +1185,10 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
             .log(log::INFO,
                  "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): updated repack request statistics.");
   } catch (exception::Exception &ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RelationalDB::getNextFailedArchiveRepackReportBatch(): Failed to updateRepackRequestFailuresBatch() aborting the entire transaction: " +
-           ex.getMessageValue());
+           "In RelationalDB::getNextFailedArchiveRepackReportBatch(): Failed to updateRepackRequestFailuresBatch() aborting the entire transaction.");
     txn.abort();
     return ret;
   }
@@ -1219,7 +1244,7 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
            "status change to Failed or Completed.");
     jobsBatchItor++;
   }
-  schedulerdb::Transaction txn(m_connPool);
+  schedulerdb::Transaction txn(m_connPool, lc);
   try {
     cta::utils::Timer t2;
     uint64_t deletionCount = 0;
@@ -1259,10 +1284,11 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
       .log(log::INFO, "RelationalDB::setRetrieveJobBatchReportedToUser(): deleted job.");
 
   } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR,
            "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): failed to update job status. "
-           "Aborting the transaction." +
-             ex.getMessageValue());
+           "Aborting the transaction.");
     txn.abort();
   }
   return;
@@ -1272,59 +1298,59 @@ void RelationalDB::trimEmptyQueues(log::LogContext& lc) {
   throw cta::exception::NotImplementedException();
 }
 
-SchedulerDatabase::JobsFailedSummary RelationalDB::getRetrieveJobsFailedSummary(log::LogContext& logContext) {
+SchedulerDatabase::JobsFailedSummary RelationalDB::getRetrieveJobsFailedSummary(log::LogContext& lc) {
   throw cta::exception::NotImplementedException();
 }
 
-std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(log::LogContext& logContext) {
-  return RelationalDB::getMountInfo(logContext, 0);
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(log::LogContext& lc) {
+  return RelationalDB::getMountInfo(lc, 0);
 }
 
-std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(log::LogContext& logContext,
+std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(log::LogContext& lc,
                                                                                      uint64_t timeout_us) {
-  return RelationalDB::getMountInfo("all", logContext, timeout_us);
+  return RelationalDB::getMountInfo("all", lc, timeout_us);
 }
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
-RelationalDB::getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) {
+RelationalDB::getMountInfo(std::string_view logicalLibraryName, log::LogContext& lc, uint64_t timeout_us) {
   utils::Timer t;
   // Allocate the getMountInfostructure to return.
   auto privateRet =
-    std::make_unique<schedulerdb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), m_logger);
+    std::make_unique<schedulerdb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), lc);
   TapeMountDecisionInfo& tmdi = *privateRet;
 
   privateRet->lock(logicalLibraryName);
 
   // Get all the tape pools and tapes with queues (potential mounts)
   auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
-  fetchMountInfo(tmdi, SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, logContext);
+  fetchMountInfo(tmdi, SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, lc);
 
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
-  log::ScopedParamContainer params(logContext);
+  log::ScopedParamContainer params(lc);
   params.add("lockSchedGlobalTime", lockSchedGlobalTime).add("fetchMountInfoTime", fetchMountInfoTime);
-  logContext.log(log::INFO, "In RelationalDB::getMountInfo(): success.");
+  lc.log(log::INFO, "In RelationalDB::getMountInfo(): success.");
 
   return ret;
 }
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
-RelationalDB::getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& logContext) {
+RelationalDB::getMountInfoNoLock(PurposeGetMountInfo purpose, log::LogContext& lc) {
   utils::Timer t;
 
   // Allocate the getMountInfostructure to return
   auto privateRet =
-    std::make_unique<schedulerdb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), m_logger);
+    std::make_unique<schedulerdb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), lc);
   TapeMountDecisionInfo& tmdi = *privateRet;
 
   // Get all the tape pools and tapes with queues (potential mounts)
   auto fetchNoLockTime = t.secs(utils::Timer::resetCounter);
-  fetchMountInfo(tmdi, purpose, logContext);
+  fetchMountInfo(tmdi, purpose, lc);
   auto fetchMountInfoTime = t.secs(utils::Timer::resetCounter);
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> ret(std::move(privateRet));
-  log::ScopedParamContainer params(logContext);
+  log::ScopedParamContainer params(lc);
   params.add("fetchNoLockTime", fetchNoLockTime).add("fetchMountInfoTime", fetchMountInfoTime);
-  logContext.log(log::INFO, "In RelationalDB::getMountInfoNoLock(): success.");
+  lc.log(log::INFO, "In RelationalDB::getMountInfoNoLock(): success.");
   return ret;
 }
 
@@ -1472,16 +1498,16 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
 }
 
 std::list<SchedulerDatabase::RetrieveQueueCleanupInfo>
-RelationalDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
+RelationalDB::getRetrieveQueuesCleanupInfo(log::LogContext& lc) {
   throw cta::exception::NotImplementedException();
 }
 
-void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& logContext) {
-  schedulerdb::Transaction txn(m_connPool);
+void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogContext& lc) {
+  schedulerdb::Transaction txn(m_connPool, lc);
   try {
     uint64_t movedJobsForReporting =
       schedulerdb::postgres::RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(txn, vid);
-    log::ScopedParamContainer(logContext)
+    log::ScopedParamContainer(lc)
       .add("VID", vid)
       .add("movedJobsForReporting", movedJobsForReporting)
       .log(log::INFO,
@@ -1489,11 +1515,11 @@ void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogCont
            "pending queue. If error report URL was available, it moved jobs to the reporting workflow.");
     txn.commit();
   } catch (exception::Exception& ex) {
-    logContext.log(
-      cta::log::ERR,
-      "In RelationalDB::cleanRetrieveQueueForVid(): failed to remove retrieve jobs from the pending queue of the "
-      "specified tape VID. Aborting the transaction." +
-        ex.getMessageValue());
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
+    lc.log(cta::log::ERR,
+           "In RelationalDB::cleanRetrieveQueueForVid(): failed to remove retrieve jobs from the pending queue of the "
+           "specified tape VID. Aborting the transaction.");
     txn.abort();
     throw;
   }
@@ -1570,7 +1596,7 @@ uint64_t RelationalDB::removeDiskSystemSleepEntries(schedulerdb::Transaction &tx
   return stmt.getNbAffectedRows();
 }
 
-std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& logContext) {
+std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& lc) {
   cta::threading::MutexLocker ml(m_diskSystemSleepMutex);
   auto conn = m_connPool.getConn();
   std::unordered_map<std::string, RelationalDB::DiskSleepEntry> diskSystemSleepMap = getDiskSystemSleepStatus(conn);
@@ -1585,7 +1611,7 @@ std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getA
   auto it = diskSystemSleepMap.begin();
   while (it != diskSystemSleepMap.end()) {
     const RelationalDB::DiskSleepEntry& entry = it->second;
-    cta::log::ScopedParamContainer(logContext)
+    cta::log::ScopedParamContainer(lc)
               .add("currentTime", currentTime)
               .add("entry.timestamp", entry.timestamp)
               .add("entry.sleepTime", entry.sleepTime)
@@ -1602,16 +1628,16 @@ std::unordered_map<std::string, RelationalDB::DiskSleepEntry> RelationalDB::getA
     }
   }
   if(!expiredDiskSystems.empty()){
-    schedulerdb::Transaction txn(m_connPool);
+    schedulerdb::Transaction txn(m_connPool, lc);
     try{
       uint64_t nrows = removeDiskSystemSleepEntries(txn, expiredDiskSystems);
       txn.commit();
-      cta::log::ScopedParamContainer(logContext)
+      cta::log::ScopedParamContainer(lc)
               .add("nrows", nrows)
               .log(cta::log::INFO,
                    "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Removed disk system sleep entries from the DB.");
      } catch (const std::exception& ex) {
-      cta::log::ScopedParamContainer(logContext)
+      cta::log::ScopedParamContainer(lc)
           .add("exceptionWhat", ex.what())
           .log(cta::log::ERR, "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Failed to remove disk system sleep entries from DB.");
       txn.abort();
