@@ -1,3 +1,10 @@
+## 5.11.15.0-1
+
+### Changes
+
+- [maintd] Move Maintenance process from taped into a new component: cta-maintd (cta/CTA!764)
+
+
 ## 5.11.14.0-1
 
 ### New Features
@@ -36,6 +43,7 @@
 - [taped] Fix segmentation fault on archive job report URL function (cta/CTA!1080)
 - [Misc] Handle log exception in SharedQueueLock destructor (cta/CTA!1084)
 
+
 ## 5.11.13.0-1
 
 ### New Features
@@ -56,6 +64,7 @@
 - [taped] Preserve session ID value during CleaningUp drive status update (cta/CTA!1071)
 - [scheduler] Move generic parts of fetchMountInfo logic to the Scheduler (cta/CTA!1053)
 - [Tools] Do not link cta-admin-grpc with objectstore when using pgsched (cta/CTA!1076)
+
 
 ## 5.11.12.1-1
 
@@ -85,6 +94,7 @@
 - [Tools] Add cta-objectstore-tools.conf.example to repo and RPMs (cta/CTA!1023)
 - [rmcd] Convert mediachanger code from C to C++ (cta/CTA!1019)
 - [Misc] Upgrade from c++17 to c++20 (cta/CTA!1001)
+
 
 ## 5.11.11.0-1
 
