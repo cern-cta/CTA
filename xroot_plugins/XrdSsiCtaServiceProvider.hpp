@@ -56,8 +56,12 @@ public:
    * This is always called before any other method.
    */
   // This method inherits from an external class to this project, so we cannot modify the interface
-  bool Init(XrdSsiLogger *logP, XrdSsiCluster *clsP, const std::string cfgFn,  // cppcheck-suppress passedByValue
-    const std::string parms, int argc, char **argv) override;  // cppcheck-suppress passedByValue
+    bool Init(XrdSsiLogger* logP,
+            XrdSsiCluster* clsP,
+            const std::string cfgFn, // cppcheck-suppress passedByValue
+            const std::string parms, // cppcheck-suppress passedByValue
+            int argc,
+            char** argv) override;
 
   /*!
    * Instantiate a Service object.
