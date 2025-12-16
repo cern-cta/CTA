@@ -32,7 +32,6 @@ usage() {
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
   echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
   echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
-  echo "      --num-libraries <n>:            If no tapeservers-config is provided, this will specifiy how many different libraries to generate the config for."
   echo "      --max-drives-per-tpsrv <n>:     If no tapeservers-config is provided, this will specifiy how many drives a single tape server (pod) can be responsible for."
   echo "      --max-tapeservers <n>:          If no tapeservers-config is provided, this will specifiy the limit of the number of tape servers (pods)."
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
@@ -98,7 +97,6 @@ create_instance() {
   reset_scheduler=false
   cta_image_repository=$(jq -r .dev.ctaImageRepository ${project_json_path}) # Used for the ctageneric pod image(s)
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
-  num_library_devices=1 # For the auto-generated tapeservers config
   max_drives_per_tpsrv=1
   max_tapeservers=2
   # EOS related
@@ -140,9 +138,6 @@ create_instance() {
         shift ;;
       -c|--catalogue-version)
         catalogue_schema_version="$2"
-        shift ;;
-      --num-libraries)
-        num_library_devices="$2"
         shift ;;
       --max-drives-per-tpsrv)
         max_drives_per_tpsrv="$2"
@@ -224,25 +219,13 @@ create_instance() {
 
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
-  devices_all=$(./../utils/tape/list_all_libraries.sh)
-  # devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
-  # unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
-  # if [[ -z "$unused_devices" ]]; then
-  #   die "No unused library devices available. All the following libraries are in use: $devices_in_use"
-  # fi
-
   # Determine the library config to use
   if [[ -z "${tapeservers_config}" ]]; then
     echo "Library configuration not provided. Auto-generating..."
     # This file is cleaned up again by delete_instance.sh
     tapeservers_config=$(mktemp "/tmp/${namespace}-tapeservers-XXXXXX-values.yaml")
-    # Generate a comma separated list of library devices based on the number of library devices the user wants to generate
-    library_devices=$(echo "$devices_all" | head -n "$num_library_devices" | paste -sd ',' -)
-    ./../utils/tape/generate_tapeservers_config.sh --target-file "${tapeservers_config}" \
-                                                        --library-type "mhvtl" \
-                                                        --library-devices "${library_devices}" \
-                                                        --max-drives-per-tpsrv "${max_drives_per_tpsrv}" \
-                                                        --max-tapeservers "${max_tapeservers}"
+    ./../utils/tape/generate_tapeservers_config.sh  --max-drives-per-tpsrv "${max_drives_per_tpsrv}" \
+                                                    --max-tapeservers "${max_tapeservers}" > "${tapeservers_config}"
   fi
   echo "---"
   cat "$tapeservers_config"

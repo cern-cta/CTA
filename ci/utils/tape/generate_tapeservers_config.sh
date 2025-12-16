@@ -30,114 +30,92 @@ usage() {
   exit 1
 }
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+
 # Global variable to keep track of which tape server we are inserting
 tpsrv_counter=1
 
-generate_tpsrvs_config_for_library() {
-  local library_device="$1"
-  local target_file="$2"
-  local library_type="$3"
-  # This is executed only once to ensure consistency
-  local lsscsi_g="$4"
-  local max_drives="$5"
-  local max_tape_servers="$6"
-
-  # Find the line in lsscsi output corresponding to the current library device
-  local line=$(echo "$lsscsi_g" | grep "mediumx" | grep "${library_device}")
-  if [[ -z "$line" ]]; then
-    echo "Library device $library_device does not exist. Skipping..." 1>&2
-    return
-  fi
-  if [[ $(echo "$line" | wc -l) -gt 1 ]]; then
-    echo "Too many lines matching library device \"$library_device\" found. Ensure you passed the correct library device. Skipping..." 1>&2
-    return
-  fi
-  local scsi_host="$(echo "$line" | sed -e 's/^.//' | cut -d\: -f1)"
-  local scsi_channel="$(echo "$line" | cut -d\: -f2)"
-
-  # Extract library name and drive names
-  local library_name=$(echo "${line}" | awk '{print $4}')
-  mapfile -t driveNames < <(echo "$lsscsi_g" | \
-                            grep "^.${scsi_host}:${scsi_channel}:" | \
-                            grep tape | \
-                            sed -E 's/^\[[0-9]+:[0-9]+:([0-9]+):([0-9]+)\][[:space:]]+tape[[:space:]]+[^\ ]+[[:space:]]+([^\ ]+).*/\3\1\2/')
-
-  mapfile -t driveDevices < <(echo "$lsscsi_g" | \
-                        grep "^.${scsi_host}:${scsi_channel}:" | \
-                        grep tape | \
-                        awk '{print $6}')
-
-  # Split driveNames and driveDevices into chunks of size max_drives
-  for ((i=0; i < ${#driveNames[@]}; i+=max_drives)); do
-    driveNamesChunk=( "${driveNames[@]:i:max_drives}" )
-    driveDevicesChunk=( "${driveDevices[@]:i:max_drives}" )
-
-    # Increment server counter and generate server name
-    local tpsrv_name=$(printf "tpsrv%02d" "$tpsrv_counter")
-
-    # Append configuration to the target file
-    cat <<EOF >> "$target_file"
-${tpsrv_name}:
-  libraryType: "${library_type}"
-  libraryDevice: "${library_device}"
-  libraryName: "${library_name}"
-  drives:
-$(for ((j=0; j < ${#driveNamesChunk[@]}; j++)); do
-  printf "    - name: \"%s\"\n      device: \"%s\"\n" "${driveNamesChunk[j]}" "${driveDevicesChunk[j]}"
-done)
-EOF
-
-    ((tpsrv_counter++))
-    if [[ "$tpsrv_counter" -gt "$max_tape_servers" ]]; then
-      return
-    fi
-  done
-}
-
 generate_tpsrvs_config() {
-  local target_file=""
-  local library_type=""
-  local library_devices=()
-  local max_drives_per_tpsrv=2
+  local max_drives_per_tpsrv=1
   local max_tape_servers=2
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -h|--help) usage ;;
-      -o|--target-file)
-        target_file="$2"
-        shift ;;
-      -t|--library-type)
-        library_type="$2"
-        shift ;;
-      -d|--library-devices)
-        IFS=',' read -r -a library_devices <<< "$2"
-        shift ;;
-      -m| --max-drives-per-tpsrv)
+      -m|--max-drives-per-tpsrv)
         max_drives_per_tpsrv="$2"
         shift ;;
       --max-tapeservers)
         max_tape_servers="$2"
         shift ;;
       *)
-        echo "Unsupported argument: $1"
+        echo "Unsupported argument: $1" >&2
         usage ;;
     esac
     shift
   done
 
-  # Ensure required arguments are provided
-  if [[ -z "$target_file" || -z "$library_type" || ${#library_devices[@]} -eq 0 ]]; then
-    echo "Error: --target-file, --library-type, and --library-devices are required."
-    usage
-  fi
+  local lsscsi_g
+  lsscsi_g="$(lsscsi -g)"
 
-  local lsscsi_g="$(lsscsi -g)"
-  # Loop over each provided library device
-  for library_device in "${library_devices[@]}"; do
-    # TODO: this probably won't yet work properly for multiple library devices as the drives are not directly associated with a library device
-    generate_tpsrvs_config_for_library "$library_device" "$target_file" "$library_type" "$lsscsi_g" "$max_drives_per_tpsrv" "$max_tape_servers"
-  done
+  while read -r obj; do
+    # Hard cap on number of servers
+    [[ "$tpsrv_counter" -gt "$max_tape_servers" ]] && break
+
+    local library_id library_device
+    library_id=$(jq -r '.id' <<<"$obj")
+    library_device=$(jq -r '.device' <<<"$obj")
+
+    # Locate the medium changer line
+    local line
+    line=$(grep "mediumx" <<<"$lsscsi_g" | grep "$library_device") || {
+      echo "Library device $library_device not found, skipping" >&2
+      continue
+    }
+
+    if [[ "$line" == *$'\n'* ]]; then
+      echo "Multiple matches for $library_device, skipping" >&2
+      continue
+    fi
+
+    # Extract SCSI host and channel
+    local scsi_host scsi_channel
+    scsi_host=$(sed -E 's/^\[([0-9]+):.*/\1/' <<<"$line")
+    scsi_channel=$(sed -E 's/^\[[0-9]+:([0-9]+):.*/\1/' <<<"$line")
+
+    # Collect drives (device|name pairs)
+    mapfile -t drives < <(
+      grep "^.${scsi_host}:${scsi_channel}:" <<<"$lsscsi_g" \
+      | grep tape \
+      | awk '{print $6 "|" $3}'
+    )
+
+    # Chunk drives into tape servers
+    for ((i=0; i < ${#drives[@]}; i+=max_drives_per_tpsrv)); do
+      [[ "$tpsrv_counter" -gt "$max_tape_servers" ]] && break
+
+      local tpsrv_name
+      tpsrv_name=$(printf "tpsrv%02d" "$tpsrv_counter")
+
+      echo "${tpsrv_name}:"
+      echo "  libraryId: \"${library_id}\""
+      echo "  libraryDevice: \"${library_device}\""
+      echo "  drives:"
+
+      for ((j=i; j < i + max_drives_per_tpsrv && j < ${#drives[@]}; j++)); do
+        local drive_device drive_name
+        drive_device=${drives[j]%%|*}
+        drive_name=${drives[j]#*|}
+
+        echo "    - name: \"${drive_name}\""
+        echo "      device: \"${drive_device}\""
+      done
+
+      ((tpsrv_counter++))
+    done
+
+  done < <("$SCRIPT_DIR/list_all_libraries.sh" | jq -c '.[]')
 }
+
 
 generate_tpsrvs_config "$@"
