@@ -74,6 +74,8 @@ tpsrv:
       mount --bind ${PV_PATH} /var/log
 
 maintd:
+  replicas: 4
+
   preRun:
     enabled: true
     script: |
@@ -91,9 +93,3 @@ maintd:
       tar -c . | tar -C ${PV_PATH} -xv
       echo "Mounting logs volume ${PV_PATH} in /var/log"
       mount --bind ${PV_PATH} /var/log
-
-  postRun:
-    enabled: true
-    script: |
-      #!/bin/bash
-      sleep infinity
