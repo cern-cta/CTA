@@ -6,7 +6,6 @@
 #include "FailedRequestLsResponseStream.hpp"
 
 #include "common/dataStructures/ArchiveJob.hpp"
-#include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
 
@@ -48,96 +47,98 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
     collectSummaryData(!justretrieve, !justarchive);
   } else {
     if (!justretrieve) {
-      collectArchiveJobs(tapepool);
+      m_archiveJobQueueItorPtr =
+        m_schedDb.getArchiveJobQueueItor(tapepool ? *tapepool : "", common::dataStructures::JobQueueType::FailedJobs);
     }
     if (!justarchive) {
-      collectRetrieveJobs(vid);
+      m_retrieveJobQueueItorPtr =
+        m_schedDb.getRetrieveJobQueueItor(vid ? *vid : "", common::dataStructures::JobQueueType::FailedJobs);
     }
   }
 }
 
-void FailedRequestLsResponseStream::collectArchiveJobs(const std::optional<std::string>& tapepool) {
-  using common::dataStructures::JobQueueType;
-
-  auto archiveQueueItor = m_schedDb.getArchiveJobQueueItor(tapepool ? *tapepool : "", JobQueueType::FailedJobs);
-
-  for (; !archiveQueueItor->end(); ++*archiveQueueItor) {
-    auto& tapePoolName = archiveQueueItor->qid();
-    const auto& item = **archiveQueueItor;
-
-    cta::xrd::Data data;
-    auto fr_item = data.mutable_frls_item();
-
-    fr_item->set_object_id(item.objectId);
-    fr_item->set_request_type(cta::admin::RequestType::ARCHIVE_REQUEST);
-    fr_item->set_tapepool(tapePoolName);
-    fr_item->set_copy_nb(item.copyNumber);
-    fr_item->mutable_requester()->set_username(item.request.requester.name);
-    fr_item->mutable_requester()->set_groupname(item.request.requester.group);
-    fr_item->mutable_af()->set_archive_id(item.archiveFileID);
-    fr_item->mutable_af()->set_disk_instance(item.instanceName);
-    fr_item->mutable_af()->set_disk_id(item.request.diskFileID);
-    fr_item->mutable_af()->set_size(item.request.fileSize);
-    fr_item->mutable_af()->set_storage_class(item.request.storageClass);
-    fr_item->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
-    fr_item->mutable_af()->set_creation_time(item.request.creationLog.time);
-    fr_item->set_totalretries(item.totalRetries);
-    fr_item->set_totalreportretries(item.totalReportRetries);
-    if (m_isLogEntries) {
-      *fr_item->mutable_failurelogs() = {item.failurelogs.begin(), item.failurelogs.end()};
-      *fr_item->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
-    }
-    fr_item->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
-    fr_item->set_instance_name(m_instanceName);
-
-    m_items.emplace_back(std::move(data));
+std::optional<cta::xrd::Data> FailedRequestLsResponseStream::getNextArchiveJobsData() {
+  if (!m_archiveJobQueueItorPtr || m_archiveJobQueueItorPtr->end()) {
+    return std::nullopt;
   }
+
+  auto& tapePoolName = m_archiveJobQueueItorPtr->qid();
+  const auto& item = **m_archiveJobQueueItorPtr;
+
+  cta::xrd::Data data;
+  auto fr_item = data.mutable_frls_item();
+
+  fr_item->set_object_id(item.objectId);
+  fr_item->set_request_type(cta::admin::RequestType::ARCHIVE_REQUEST);
+  fr_item->set_tapepool(tapePoolName);
+  fr_item->set_copy_nb(item.copyNumber);
+  fr_item->mutable_requester()->set_username(item.request.requester.name);
+  fr_item->mutable_requester()->set_groupname(item.request.requester.group);
+  fr_item->mutable_af()->set_archive_id(item.archiveFileID);
+  fr_item->mutable_af()->set_disk_instance(item.instanceName);
+  fr_item->mutable_af()->set_disk_id(item.request.diskFileID);
+  fr_item->mutable_af()->set_size(item.request.fileSize);
+  fr_item->mutable_af()->set_storage_class(item.request.storageClass);
+  fr_item->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
+  fr_item->mutable_af()->set_creation_time(item.request.creationLog.time);
+  fr_item->set_totalretries(item.totalRetries);
+  fr_item->set_totalreportretries(item.totalReportRetries);
+  if (m_isLogEntries) {
+    *fr_item->mutable_failurelogs() = {item.failurelogs.begin(), item.failurelogs.end()};
+    *fr_item->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
+  }
+  fr_item->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+  fr_item->set_instance_name(m_instanceName);
+
+  ++*m_archiveJobQueueItorPtr;
+
+  return data;
 }
 
-void FailedRequestLsResponseStream::collectRetrieveJobs(const std::optional<std::string>& vid) {
-  using common::dataStructures::JobQueueType;
-
-  auto retrieveQueueItor = m_schedDb.getRetrieveJobQueueItor(vid ? *vid : "", JobQueueType::FailedJobs);
-
-  for (; !retrieveQueueItor->end(); ++*retrieveQueueItor) {
-    auto& vid = retrieveQueueItor->qid();
-    const auto& item = **retrieveQueueItor;
-
-    cta::xrd::Data data;
-    auto fr_item = data.mutable_frls_item();
-
-    fr_item->set_object_id(item.objectId);
-    fr_item->set_request_type(cta::admin::RequestType::RETRIEVE_REQUEST);
-    fr_item->set_copy_nb(item.tapeCopies.at(vid).first);
-    fr_item->mutable_requester()->set_username(item.request.requester.name);
-    fr_item->mutable_requester()->set_groupname(item.request.requester.group);
-    fr_item->mutable_af()->set_archive_id(item.request.archiveFileID);
-    fr_item->mutable_af()->set_size(item.fileSize);
-    fr_item->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
-    fr_item->mutable_af()->set_creation_time(item.request.creationLog.time);
-    fr_item->mutable_tf()->set_vid(vid);
-    fr_item->set_totalretries(item.totalRetries);
-    fr_item->set_totalreportretries(item.totalReportRetries);
-
-    // Find the correct tape copy
-    for (auto& tapecopy : item.tapeCopies) {
-      auto& tf = tapecopy.second.second;
-      if (tf.vid == vid) {
-        fr_item->mutable_tf()->set_f_seq(tf.fSeq);
-        fr_item->mutable_tf()->set_block_id(tf.blockId);
-        break;
-      }
-    }
-
-    if (m_isLogEntries) {
-      *fr_item->mutable_failurelogs() = {item.failurelogs.begin(), item.failurelogs.end()};
-      *fr_item->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
-    }
-    fr_item->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
-    fr_item->set_instance_name(m_instanceName);
-
-    m_items.emplace_back(std::move(data));
+std::optional<cta::xrd::Data> FailedRequestLsResponseStream::getNextRetrieveJobsData() {
+  if (!m_retrieveJobQueueItorPtr || m_retrieveJobQueueItorPtr->end()) {
+    return std::nullopt;
   }
+
+  auto& vid = m_retrieveJobQueueItorPtr->qid();
+  const auto& item = **m_retrieveJobQueueItorPtr;
+
+  cta::xrd::Data data;
+  auto fr_item = data.mutable_frls_item();
+
+  fr_item->set_object_id(item.objectId);
+  fr_item->set_request_type(cta::admin::RequestType::RETRIEVE_REQUEST);
+  fr_item->set_copy_nb(item.tapeCopies.at(vid).first);
+  fr_item->mutable_requester()->set_username(item.request.requester.name);
+  fr_item->mutable_requester()->set_groupname(item.request.requester.group);
+  fr_item->mutable_af()->set_archive_id(item.request.archiveFileID);
+  fr_item->mutable_af()->set_size(item.fileSize);
+  fr_item->mutable_af()->mutable_df()->set_path(item.request.diskFileInfo.path);
+  fr_item->mutable_af()->set_creation_time(item.request.creationLog.time);
+  fr_item->mutable_tf()->set_vid(vid);
+  fr_item->set_totalretries(item.totalRetries);
+  fr_item->set_totalreportretries(item.totalReportRetries);
+
+  // Find the correct tape copy
+  for (auto& tapecopy : item.tapeCopies) {
+    auto& tf = tapecopy.second.second;
+    if (tf.vid == vid) {
+      fr_item->mutable_tf()->set_f_seq(tf.fSeq);
+      fr_item->mutable_tf()->set_block_id(tf.blockId);
+      break;
+    }
+  }
+
+  if (m_isLogEntries) {
+    *fr_item->mutable_failurelogs() = {item.failurelogs.begin(), item.failurelogs.end()};
+    *fr_item->mutable_reportfailurelogs() = {item.reportfailurelogs.begin(), item.reportfailurelogs.end()};
+  }
+  fr_item->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
+  fr_item->set_instance_name(m_instanceName);
+
+  ++*m_retrieveJobQueueItorPtr;
+
+  return data;
 }
 
 void FailedRequestLsResponseStream::collectSummaryData(bool hasArchive, bool hasRetrieve) {
@@ -154,7 +155,7 @@ void FailedRequestLsResponseStream::collectSummaryData(bool hasArchive, bool has
     data.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
     data.mutable_frls_summary()->set_instance_name(m_instanceName);
 
-    m_items.emplace_back(std::move(data));
+    m_summaryData.emplace_back(std::move(data));
   }
 
   if (hasRetrieve) {
@@ -167,7 +168,7 @@ void FailedRequestLsResponseStream::collectSummaryData(bool hasArchive, bool has
     data.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
     data.mutable_frls_summary()->set_instance_name(m_instanceName);
 
-    m_items.emplace_back(std::move(data));
+    m_summaryData.emplace_back(std::move(data));
   }
 
   if (hasArchive && hasRetrieve) {
@@ -178,12 +179,12 @@ void FailedRequestLsResponseStream::collectSummaryData(bool hasArchive, bool has
     data.mutable_frls_summary()->set_scheduler_backend_name(m_schedulerBackendName.value_or(""));
     data.mutable_frls_summary()->set_instance_name(m_instanceName);
 
-    m_items.emplace_back(std::move(data));
+    m_summaryData.emplace_back(std::move(data));
   }
 }
 
 bool FailedRequestLsResponseStream::isDone() {
-  return m_items.empty();
+  return m_isSummary ? m_summaryData.empty() : m_archiveJobQueueItorPtr->end() && m_retrieveJobQueueItorPtr->end();
 }
 
 cta::xrd::Data FailedRequestLsResponseStream::next() {
@@ -191,10 +192,25 @@ cta::xrd::Data FailedRequestLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  cta::xrd::Data data = std::move(m_items.front());
-  m_items.pop_front();
+  if (m_isSummary) {
+    cta::xrd::Data data = std::move(m_summaryData.front());
+    m_summaryData.pop_front();
+    return data;
+  }
 
-  return data;
+  if (!m_archiveJobItorExhausted) {
+    if (auto dataOpt = getNextArchiveJobsData(); dataOpt.has_value()) {
+      return dataOpt.value();
+    } else {
+      m_archiveJobItorExhausted = true;
+    }
+  }
+
+  if (auto dataOpt = getNextRetrieveJobsData(); dataOpt.has_value()) {
+    return dataOpt.value();
+  }
+
+  throw std::runtime_error("Stream is exhausted");
 }
 
 }  // namespace cta::frontend
