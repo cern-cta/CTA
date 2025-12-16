@@ -1,17 +1,18 @@
 {{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
 {{ include "validate.tapeServers" . }}
 {{ range $name,$tapeServerConfig := $tapeServers }}
+# TODO: get the unique libraries from the config
 apiVersion: cta.cern.ch/v1
 kind: TapeLibraryClaim
 metadata:
-  name: {{ .libraryDevice | quote }}
+  name: {{ .libraryId | quote }}
   labels:
     app.kubernetes.io/managed-by: {{ $.Release.Service | quote }}
   annotations:
     meta.helm.sh/release-name: {{ $.Release.Name | quote }}
     meta.helm.sh/release-namespace: {{ $.Release.Namespace | quote }}
 spec:
-  devicePath: {{ .libraryDevice }}
+  libraryId: {{ .libraryId }}
   owner:
     namespace: {{ $.Release.Namespace | quote }}
     release: {{ $.Release.Name | quote }}
