@@ -910,7 +910,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksystem) {
     reservationRequest.addRequest(rj->diskSystemName.value(), rj->archiveFile.fileSize);
   }
   auto schedulerRetrieveMount = std::make_unique<TestRetrieveMount>(catalogue, std::move(rm));
-  std::queue<std::shared_ptr<cta::RetrieveJob>> jobQueue;
+  std::queue<std::unique_ptr<cta::RetrieveJob>> jobQueue;
   for (auto& rj : rjb) {
     jobQueue.push(std::make_unique<cta::RetrieveJob>(schedulerRetrieveMount.get(), std::move(rj)));
   }

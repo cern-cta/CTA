@@ -17,7 +17,7 @@ namespace castor::tape::tapeserver::daemon {
 // constructor
 //------------------------------------------------------------------------------
 DiskReadTask::DiskReadTask(DataConsumer& destination,
-                           const std::shared_ptr<cta::ArchiveJob> archiveJob,
+                           cta::ArchiveJob* archiveJob,
                            size_t numberOfBlock,
                            cta::threading::AtomicFlag& errorFlag)
     : m_nextTask(destination),

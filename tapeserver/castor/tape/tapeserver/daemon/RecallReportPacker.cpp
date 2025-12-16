@@ -37,24 +37,24 @@ RecallReportPacker::~RecallReportPacker() {
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportCompletedJob(std::shared_ptr<cta::RetrieveJob> successfulRetrieveJob,
+void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob,
                                             cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportSuccessful");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportCompletedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  m_fifo.push(std::make_unique<ReportSuccessful>(successfulRetrieveJob));
+  m_fifo.push(std::make_unique<ReportSuccessful>(std::move(successfulRetrieveJob)));
 }
 
 //------------------------------------------------------------------------------
 //reportFailedJob
 //------------------------------------------------------------------------------
-void RecallReportPacker::reportFailedJob(std::shared_ptr<cta::RetrieveJob> failedRetrieveJob,
+void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
                                          const cta::exception::Exception& ex,
                                          cta::log::LogContext& lc) {
   std::string failureLog =
     cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + ex.getMessageValue();
-  std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob), failureLog));
+  auto rep = std::make_unique<ReportError>(std::move(failedRetrieveJob), failureLog);
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportError");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportFailedJob(), pushing a report.");
@@ -103,7 +103,7 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string& msg, ct
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent) {
   try {
     m_successfulRetrieveJob->asyncSetSuccessful();
-    parent.m_successfulRetrieveJobs.push(m_successfulRetrieveJob);
+    parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
   } catch (const cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(parent.m_lc);
     params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_successfulRetrieveJob->archiveFile.archiveFileID);

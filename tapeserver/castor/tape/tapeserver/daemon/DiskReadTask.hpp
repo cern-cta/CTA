@@ -24,7 +24,7 @@ public:
    * @param numberOfBlock number of memory block we need read the whole file
    */
   DiskReadTask(DataConsumer & destination,
-          const std::shared_ptr<cta::ArchiveJob> archiveJob,
+          cta::ArchiveJob* archiveJob,
           size_t numberOfBlock,
           cta::threading::AtomicFlag& errorFlag);
   
@@ -72,8 +72,9 @@ private:
 
   /**
    * All we need to know about the file we are migrating
+   * This is a non-owning pointer (archive job is owned by the TapeWriteTask)
    */
-  std::shared_ptr<cta::ArchiveJob> m_archiveJob;
+  cta::ArchiveJob * m_archiveJob;
   
   /**
    * Information about the archive job we will cache as it is needed

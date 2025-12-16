@@ -34,7 +34,7 @@ public:
     * @param successfulRetrieveJob the file successfully retrieved
     * @param lc log context provided by the calling thread.
     */
-  virtual void reportCompletedJob(std::shared_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc);
+  virtual void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc);
 
   /**
    * Create into the RecallReportPacker a report for the failed migration
@@ -43,7 +43,7 @@ public:
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportFailedJob(std::shared_ptr<cta::RetrieveJob> failedRetrieveJob,
+  virtual void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
                                const cta::exception::Exception& ex,
                                cta::log::LogContext& lc);
 
@@ -124,9 +124,9 @@ private:
     /**
      * The successful retrieve job to be reported immediately
      */
-    std::shared_ptr<cta::RetrieveJob> m_successfulRetrieveJob;
+    std::unique_ptr<cta::RetrieveJob> m_successfulRetrieveJob;
   public:
-    explicit ReportSuccessful(std::shared_ptr<cta::RetrieveJob> successfulRetrieveJob)
+    explicit ReportSuccessful(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob)
         : m_successfulRetrieveJob(std::move(successfulRetrieveJob)) {}
 
     void execute(RecallReportPacker& reportPacker) override;
@@ -211,7 +211,7 @@ private:
    * The successful reports that were pre-reported asynchronously.
    * They are collected and completed regularly.
    */
-  std::queue<std::shared_ptr<cta::RetrieveJob>> m_successfulRetrieveJobs;
+  std::queue<std::unique_ptr<cta::RetrieveJob>> m_successfulRetrieveJobs;
 
   /**
    * Tracking of the tape thread end

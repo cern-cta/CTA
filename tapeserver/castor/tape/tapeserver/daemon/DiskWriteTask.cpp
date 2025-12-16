@@ -18,8 +18,8 @@ namespace castor::tape::tapeserver::daemon {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DiskWriteTask::DiskWriteTask(std::shared_ptr<cta::RetrieveJob> retrieveJob, RecallMemoryManager& mm)
-    : m_retrieveJob(retrieveJob),
+DiskWriteTask::DiskWriteTask(std::unique_ptr<cta::RetrieveJob> retrieveJob, RecallMemoryManager& mm)
+    : m_retrieveJob(std::move(retrieveJob)),
       m_memManager(mm) {}
 
 //------------------------------------------------------------------------------
@@ -125,7 +125,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
       cs << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << (uint32_t) checksum;
       m_retrieveJob->transferredChecksumValue = cs.str();
     }
-    reporter.reportCompletedJob(m_retrieveJob, lc);
+    reporter.reportCompletedJob(std::move(m_retrieveJob), lc);
     m_stats.waitReportingTime += localTime.secs(cta::utils::Timer::resetCounter);
     m_stats.transferTime = transferTime.secs();
     m_stats.totalTime = totalTime.secs();

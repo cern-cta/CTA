@@ -140,7 +140,7 @@ public:
    * @param logContext
    */
   virtual void
-  reportJobsBatchTransferred(std::queue<std::shared_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
+  reportJobsBatchTransferred(std::queue<std::unique_ptr<cta::ArchiveJob>>& successfulArchiveJobs,
                              std::queue<cta::catalogue::TapeItemWritten>& skippedFiles,
                              std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& failedToReportArchiveJobs,
                              cta::log::LogContext& logContext);

@@ -37,12 +37,12 @@ protected:
 };  // class castor_tape_tapeserver_daemonTest
 
 struct MockRecallReportPacker : public RecallReportPacker {
-  void reportCompletedJob(std::shared_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
+  void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
     cta::threading::MutexLocker ml(m_mutex);
     completeJobs++;
   }
 
-  void reportFailedJob(std::shared_ptr<cta::RetrieveJob> failedRetrieveJob,
+  void reportFailedJob(std::unique_ptr<cta::RetrieveJob> failedRetrieveJob,
                        const cta::exception::Exception& ex,
                        cta::log::LogContext& lc) override {
     cta::threading::MutexLocker ml(m_mutex);

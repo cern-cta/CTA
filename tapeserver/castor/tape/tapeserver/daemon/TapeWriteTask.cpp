@@ -29,10 +29,10 @@ namespace castor::tape::tapeserver::daemon {
 // Constructor
 //------------------------------------------------------------------------------
 TapeWriteTask::TapeWriteTask(uint64_t blockCount,
-                             std::shared_ptr<cta::ArchiveJob> archiveJob,
+                             std::unique_ptr<cta::ArchiveJob> archiveJob,
                              MigrationMemoryManager& mm,
                              cta::threading::AtomicFlag& errorFlag)
-    : m_archiveJob(archiveJob),
+    : m_archiveJob(std::move(archiveJob)),
       m_memManager(mm),
       m_fifo(blockCount),
       m_blockCount(blockCount),
@@ -162,7 +162,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, ckSum);
     m_archiveJob->tapeFile.fileSize = m_taskStats.dataVolume;
     m_archiveJob->tapeFile.blockId = output->getBlockId();
-    reportPacker.reportCompletedJob(m_archiveJob, lc);
+    reportPacker.reportCompletedJob(std::move(m_archiveJob), lc);
     m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
     m_taskStats.totalTime = localTime.secs();
     // Log the successful transfer
@@ -201,7 +201,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.filesCount++;
     // Record the fSeq in the tape session
     session->reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
-    reportPacker.reportSkippedJob(m_archiveJob, s, lc);
+    reportPacker.reportSkippedJob(std::move(m_archiveJob), s, lc);
     m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
     m_taskStats.totalTime = localTime.secs();
     // Log the successful transfer
@@ -220,7 +220,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
 
     // Record the fSeq in the tape session
     session->reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
-    reportPacker.reportFailedJob(m_archiveJob, e, lc);
+    reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
     lc.log(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.");
     return;
   } catch (const cta::exception::Exception& e) {

@@ -51,9 +51,9 @@ MigrationReportPacker::~MigrationReportPacker() {
 //------------------------------------------------------------------------------
 //reportCompletedJob
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportCompletedJob(std::shared_ptr<cta::ArchiveJob> successfulArchiveJob,
+void MigrationReportPacker::reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob,
                                                cta::log::LogContext& lc) {
-  std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob)));
+  auto rep = std::make_unique<ReportSuccessful>(std::move(successfulArchiveJob));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportSuccessful");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportCompletedJob(), pushing a report.");
@@ -64,11 +64,11 @@ void MigrationReportPacker::reportCompletedJob(std::shared_ptr<cta::ArchiveJob> 
 //------------------------------------------------------------------------------
 //reportSkippedJob
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportSkippedJob(std::shared_ptr<cta::ArchiveJob> skippedArchiveJob,
+void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob,
                                              const std::string& failure,
                                              cta::log::LogContext& lc) {
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + failure;
-  std::unique_ptr<Report> rep(new ReportSkipped(skippedArchiveJob, failureLog));
+  auto rep = std::make_unique<ReportSkipped>(std::move(skippedArchiveJob), failureLog);
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReporSkipped");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportSkippedJob(), pushing a report.");
@@ -79,12 +79,12 @@ void MigrationReportPacker::reportSkippedJob(std::shared_ptr<cta::ArchiveJob> sk
 //------------------------------------------------------------------------------
 //reportFailedJob
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportFailedJob(std::shared_ptr<cta::ArchiveJob> failedArchiveJob,
+void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
                                             const cta::exception::Exception& ex,
                                             cta::log::LogContext& lc) {
   std::string failureLog =
     cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + ex.getMessageValue();
-  std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob), failureLog));
+  auto rep = std::make_unique<ReportError>(std::move(failedArchiveJob), failureLog);
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportError");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFailedJob(), pushing a report.");
@@ -172,7 +172,7 @@ void MigrationReportPacker::reportTestGoingToEnd(cta::log::LogContext& lc) {
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& reportPacker) {
-  reportPacker.m_successfulArchiveJobs.push(m_successfulArchiveJob);
+  reportPacker.m_successfulArchiveJobs.push(std::move(m_successfulArchiveJob));
 }
 
 //------------------------------------------------------------------------------
@@ -253,7 +253,7 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
   std::list<std::string> jobIDsList;
   uint64_t njobstorequeue = reportPacker.m_successfulArchiveJobs.size();
   while (!reportPacker.m_successfulArchiveJobs.empty()) {
-    auto job = reportPacker.m_successfulArchiveJobs.front();
+    auto job = std::move(reportPacker.m_successfulArchiveJobs.front());
     reportPacker.m_successfulArchiveJobs.pop();
     if (!job) {
       continue;

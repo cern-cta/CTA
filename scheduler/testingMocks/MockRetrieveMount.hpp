@@ -74,7 +74,7 @@ public:
 
   void setTapeMounted(log::LogContext& logContext) const override {};
 
-  void setJobBatchTransferred(std::queue<std::shared_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+  void setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                               cta::log::LogContext& logContext) override {};
 
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override {

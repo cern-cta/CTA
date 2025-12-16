@@ -35,13 +35,13 @@ using namespace castor::tape::tapeserver::daemon;
 using namespace cta::disk;
 
 struct MockMigrationReportPacker : public MigrationReportPacker {
-  void reportCompletedJob(std::shared_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext& lc) override {}
+  void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext& lc) override {}
 
-  void reportSkippedJob(std::shared_ptr<cta::ArchiveJob> skippedArchiveJob,
+  void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob,
                         const std::string& failure,
                         cta::log::LogContext& lc) override {}
 
-  void reportFailedJob(std::shared_ptr<cta::ArchiveJob> failedArchiveJob,
+  void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
                        const cta::exception::Exception& ex,
                        cta::log::LogContext& lc) override {}
 
@@ -124,9 +124,9 @@ TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest) {
   int value = std::ceil(1024 * 2000. / blockSize);
   ASSERT_EQ(value, blockNeeded);
 
-  FakeTapeWriteTask ftwt;
-  ftwt.pushDataBlock(std::make_unique<MemBlock>(1, blockSize));
-  castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt, std::move(file), blockNeeded, flag);
+    FakeTapeWriteTask ftwt;
+    ftwt.pushDataBlock(std::make_unique<MemBlock>(1,blockSize));
+    castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt, file.get(), blockNeeded, flag);
   DiskFileFactory fileFactory(0);
 
   ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;

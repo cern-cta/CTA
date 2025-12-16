@@ -242,7 +242,7 @@ public:
     * @param successfulRetrieveJobs the jobs to report
     * @param logContext
     */
-  virtual void setJobBatchTransferred(std::queue<std::shared_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+  virtual void setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                       cta::log::LogContext& logContext);
 
   /**

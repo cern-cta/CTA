@@ -47,12 +47,12 @@ void MigrationTaskInjector::injectBulkMigrations(std::list<std::unique_ptr<cta::
     m_lc.log(cta::log::DEBUG, "MigrationTaskInjector::injectBulkMigrations file size: " + std::to_string(fileSize));
     const uint64_t neededBlock = howManyBlocksNeeded(fileSize, blockCapacity);
 
-    // We give ownership on the archive job to the tape write task (as last user).
-    // disk read task gets a bare pointer.
-    std::shared_ptr<cta::ArchiveJob> archiveJobSharedPtr = std::move(job);
+    // We give ownership on the archive job to the tape write task (it will be the last one using it).
+    // Disk read task gets a pointer.
+    cta::ArchiveJob* archiveJobSharedPtr = job.get();
     TapeWriteTask * twtPtr;
     {
-      auto twt = std::make_unique<TapeWriteTask>(neededBlock, archiveJobSharedPtr, m_memManager, m_errorFlag);
+      auto twt = std::make_unique<TapeWriteTask>(neededBlock, std::move(job), m_memManager, m_errorFlag);
       twtPtr = twt.get();
       m_tapeWriter.push(std::move(twt));
     }
@@ -61,7 +61,6 @@ void MigrationTaskInjector::injectBulkMigrations(std::list<std::unique_ptr<cta::
     // We will skip the disk read task creation for zero-length files. Tape write task will handle the request and mark it as an
     // error.
     if (fileSize) {
-      // TODO: Ensure that *twtPtr exists at any time that the DiskReadTask object is alive
       m_diskReader.push(std::make_unique<DiskReadTask>(*twtPtr, archiveJobSharedPtr, neededBlock, m_errorFlag));
     } else {
       m_lc.log(cta::log::WARNING, "Skipped disk read task creation for zero-length file.");

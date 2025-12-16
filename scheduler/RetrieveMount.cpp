@@ -344,7 +344,7 @@ void cta::RetrieveMount::putQueueToSleep(const std::string& diskSystemName,
 //------------------------------------------------------------------------------
 // setJobBatchTransferred()
 //------------------------------------------------------------------------------
-void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::shared_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
+void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::RetrieveJob>>& successfulRetrieveJobs,
                                                 cta::log::LogContext& logContext) {
 #ifdef CTA_PGSCHED
   std::list<std::unique_ptr<cta::SchedulerDatabase::RetrieveJob>> validatedSuccessfulDBRetrieveJobs;
@@ -363,7 +363,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::shared_ptr<cta::
   log::TimingList tl;
   try {
     while (!successfulRetrieveJobs.empty()) {
-      job = successfulRetrieveJobs.front();
+      job = std::move(successfulRetrieveJobs.front());
       successfulRetrieveJobs.pop();
       if (!job) {
         continue;
@@ -401,7 +401,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::shared_ptr<cta::
   } catch (const cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", ex.getMessageValue());
-    if (job.get()) {
+    if (job) {
       params.add("fileId", job->archiveFile.archiveFileID)
         .add("diskInstance", job->archiveFile.diskInstance)
         .add("diskFileId", job->archiveFile.diskFileId)
@@ -413,7 +413,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::shared_ptr<cta::
   } catch (const cta::exception::Exception& e) {
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionMessageValue", e.getMessageValue());
-    if (job.get()) {
+    if (job) {
       params.add("fileId", job->archiveFile.archiveFileID)
         .add("diskInstance", job->archiveFile.diskInstance)
         .add("diskFileId", job->archiveFile.diskFileId)
@@ -427,7 +427,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::shared_ptr<cta::
   } catch (const std::exception& e) {
     cta::log::ScopedParamContainer params(logContext);
     params.add("exceptionWhat", e.what());
-    if (job.get()) {
+    if (job) {
       params.add("fileId", job->archiveFile.archiveFileID)
         .add("diskInstance", job->archiveFile.diskInstance)
         .add("diskFileId", job->archiveFile.diskFileId)

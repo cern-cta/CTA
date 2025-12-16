@@ -250,11 +250,11 @@ void RecallTaskInjector::injectBulkRecalls() {
     return;
   }
   bool setPromise = (retrieveJobsBatch.size() != 0);
-  for (auto& job_ptr : retrieveJobsBatch) {
-    std::shared_ptr<cta::RetrieveJob> job = std::move(job_ptr);
-    auto dwt = std::make_unique<DiskWriteTask>(job, m_memManager);
-    auto trt = std::make_unique<TapeReadTask>(job, *dwt, m_memManager);
-    recallOrderLog << " " << job->selectedTapeFile().fSeq;
+  for(auto & job : retrieveJobsBatch) {
+    cta::RetrieveJob * job_ptr = job.get();
+    auto dwt = std::make_unique<DiskWriteTask>(std::move(job), m_memManager);
+    auto trt = std::make_unique<TapeReadTask>(job_ptr, *dwt, m_memManager);
+    recallOrderLog << " " << job_ptr->selectedTapeFile().fSeq;
     m_diskWriter.push(std::move(dwt));
     m_tapeReader.push(std::move(trt));
   }

@@ -33,7 +33,7 @@ public:
    * @param migratedFile the file successfully migrated
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportCompletedJob(std::shared_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext& lc);
+  virtual void reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob, cta::log::LogContext& lc);
 
   /**
    * Create into the MigrationReportPacker a report for a skipped file. We left a placeholder on tape, so
@@ -42,7 +42,7 @@ public:
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportSkippedJob(std::shared_ptr<cta::ArchiveJob> skippedArchiveJob,
+  virtual void reportSkippedJob(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob,
                                 const std::string& failure,
                                 cta::log::LogContext& lc);
 
@@ -53,7 +53,7 @@ public:
    * @param ex the reason for the failure
    * @param lc log context provided by the calling thread.
    */
-  virtual void reportFailedJob(std::shared_ptr<cta::ArchiveJob> failedArchiveJob,
+  virtual void reportFailedJob(std::unique_ptr<cta::ArchiveJob> failedArchiveJob,
                                const cta::exception::Exception& ex,
                                cta::log::LogContext& lc);
 
@@ -128,10 +128,10 @@ private:
     /**
      * The successful archive job to be pushed in the report packer queue and reported later
      */
-    std::shared_ptr<cta::ArchiveJob> m_successfulArchiveJob;
+    std::unique_ptr<cta::ArchiveJob> m_successfulArchiveJob;
 
   public:
-    explicit ReportSuccessful(std::shared_ptr<cta::ArchiveJob> successfulArchiveJob)
+    explicit ReportSuccessful(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob)
         : m_successfulArchiveJob(std::move(successfulArchiveJob)) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
@@ -142,10 +142,10 @@ private:
     /**
      * The failed archive job we skipped
      */
-    std::shared_ptr<cta::ArchiveJob> m_skippedArchiveJob;
+    std::unique_ptr<cta::ArchiveJob> m_skippedArchiveJob;
 
   public:
-    ReportSkipped(std::shared_ptr<cta::ArchiveJob> skippedArchiveJob, std::string& failureLog)
+    ReportSkipped(std::unique_ptr<cta::ArchiveJob> skippedArchiveJob, std::string& failureLog)
         : m_failureLog(failureLog),
           m_skippedArchiveJob(std::move(skippedArchiveJob)) {}
 
@@ -203,10 +203,10 @@ private:
     /**
      * The failed archive job to be reported immediately
      */
-    std::shared_ptr<cta::ArchiveJob> m_failedArchiveJob;
+    std::unique_ptr<cta::ArchiveJob> m_failedArchiveJob;
 
   public:
-    ReportError(std::shared_ptr<cta::ArchiveJob> failedArchiveJob, std::string& failureLog)
+    ReportError(std::unique_ptr<cta::ArchiveJob> failedArchiveJob, std::string& failureLog)
         : m_failureLog(failureLog),
           m_failedArchiveJob(std::move(failedArchiveJob)) {}
 
@@ -280,7 +280,7 @@ private:
   /**
    * The successful archive jobs to be reported when flushing
    */
-  std::queue<std::shared_ptr<cta::ArchiveJob>> m_successfulArchiveJobs;
+  std::queue<std::unique_ptr<cta::ArchiveJob>> m_successfulArchiveJobs;
 
   /**
    * The skipped files (or placeholders list)
