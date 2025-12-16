@@ -370,7 +370,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
       goto jobInserted;
     }
     // Find where the job lands in the shards
-    for (auto sfa=shardsForAddition.begin(); sfa != shardsForAddition.end(); sfa++) {
+    for (auto& sfa : shardsForAddition) {
       if (sfa->minFseq > jta.fSeq) {
         // Are we before the current shard? (for example, before first shard)
         addJobToShardAndMaybeSplit(jta, sfa, shardsForAddition);
