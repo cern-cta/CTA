@@ -205,7 +205,7 @@ ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const std::vecto
           SELECT aj.JOB_ID, aj.ARCHIVE_REQUEST_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
           FROM ARCHIVE_ACTIVE_QUEUE aj
           JOIN target_success_multicopy t USING (ARCHIVE_REQUEST_ID)
-          WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_SIBLINGS::ARCHIVE_JOB_STATUS
+          WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_REPLICAS::ARCHIVE_JOB_STATUS
         ) AS combined
         GROUP BY combined.ARCHIVE_REQUEST_ID
         HAVING COUNT(*) = MAX(combined.REQUEST_JOB_COUNT)
@@ -223,8 +223,8 @@ ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const std::vecto
   )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":STATUS_READY_FOR_REPORTING", to_string(newStatus));
-    stmt.bindString(":STATUS_COND_SIBLINGS", to_string(ArchiveJobStatus::AJS_WaitSiblingsBeforeReportingSuccessToDisk));
-    stmt.bindString(":STATUS_WAIT_FOR_ALL_BEFORE_REPORT", to_string(ArchiveJobStatus::AJS_WaitSiblingsBeforeReportingSuccessToDisk));
+    stmt.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
+    stmt.bindString(":STATUS_WAIT_FOR_ALL_BEFORE_REPORT", to_string(ArchiveJobStatus::AJS_WaitReplicasBeforeReportingSuccessToDisk));
     stmt.executeNonQuery();
     return stmt.getNbAffectedRows();
 }
@@ -276,7 +276,7 @@ ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std::vector<s
     sqlpart += piece;
   }
   /* For Repack, when we report success this query handles the check of all
-   * other sibling rows/job with the same archive_file_id
+   * other replica rows/job with the same archive_file_id
    * which needed to be archived too. If all the rows with the same archive_file_id
    * are in AJS_ToReportToRepackForSuccess except the one being currently updated,
    * then update all of them to ReadyForDeletion. This will signal the next step
@@ -312,7 +312,7 @@ ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std::vector<s
       SELECT aj.JOB_ID, aj.ARCHIVE_FILE_ID, aj.STATUS, aj.REQUEST_JOB_COUNT
        FROM REPACK_ARCHIVE_ACTIVE_QUEUE aj
        JOIN target_success_multicopy t USING (ARCHIVE_FILE_ID)
-       WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_SIBLINGS::ARCHIVE_JOB_STATUS
+       WHERE aj.JOB_ID <> t.JOB_ID AND aj.STATUS = :STATUS_COND_REPLICAS::ARCHIVE_JOB_STATUS
      ) AS combined
      GROUP BY combined.ARCHIVE_FILE_ID
      HAVING COUNT(*) = MAX(combined.REQUEST_JOB_COUNT)
@@ -329,7 +329,7 @@ ArchiveJobQueueRow::updateRepackJobSuccess(Transaction& txn, const std::vector<s
   WHERE aj2.ARCHIVE_FILE_ID = tsm.ARCHIVE_FILE_ID;
   )SQL";
   auto stmt1 = txn.getConn().createStmt(sql);
-  stmt1.bindString(":STATUS_COND_SIBLINGS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
+  stmt1.bindString(":STATUS_COND_REPLICAS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
   stmt1.bindString(":STATUS_SUCCESS", to_string(ArchiveJobStatus::AJS_ToReportToRepackForSuccess));
   stmt1.bindString(":STATUS_READY_FOR_DELETION1", to_string(ArchiveJobStatus::ReadyForDeletion));
   stmt1.bindString(":STATUS_READY_FOR_DELETION2", to_string(ArchiveJobStatus::ReadyForDeletion));
@@ -409,7 +409,7 @@ uint64_t ArchiveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepa
   )SQL";
   // For multi copy requests what we do is that we update all copies irrespectively of their state
   // if the second job is still in processing on the drive (in ToTransfer state in the DB),
-  // it means that when it will get to reporting form the Mount, it will be refused
+  // it means that when it will get to reporting from the Mount, it will be refused
   // because it will either not be found or it will not be found in the ToTransfer state
   // (which is a condition on the state for successful report)
   if (reqJobCount > 1 && !isRepack){
@@ -800,9 +800,10 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
 }
 
 uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus) {
-  // if this was the final reporting failure,
-  // move the row to failed jobs and delete the entry from the queue
-  // for multi-copy archive requests this case is handled in moveJobToFailedQueueTable
+  /* if this was the final reporting failure,
+   * move the row to failed jobs and delete the entry from the queue
+   * for multi-copy archive requests, all requests will be handled via the moveJobToFailedQueueTable()
+   */
   if (status == ArchiveJobStatus::ReadyForDeletion) {
     return ArchiveJobQueueRow::moveJobToFailedQueueTable(txn);
   }

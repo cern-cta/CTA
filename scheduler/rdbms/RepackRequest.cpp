@@ -283,7 +283,9 @@ namespace cta::schedulerdb {
             failedCreationStats.files++;
             failedCreationStats.bytes += rsr.archiveFile.fileSize;
             failedArchiveReq += rsr.copyNbsToRearchive.size();
-            m_lc.log(log::ERR, "Failed to create subrequest: " + ex.getMessageValue());
+            cta::log::ScopedParamContainer params(m_lc);
+            params.add("exceptionMessage", ex.getMessageValue());
+            m_lc.log(log::ERR, "Failed to create subrequest.");
           }
         }
         ++subReqItor;

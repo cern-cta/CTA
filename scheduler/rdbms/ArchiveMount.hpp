@@ -98,17 +98,16 @@ public:
   void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                               log::LogContext& lc) override;
 
-
-  /**
-    * Re-queue batch of jobs
-    * Serves PGSCHED purpose only
-    * This method does not update retry job statistics on purpose.
-    * It is used after exception during tape write to requeue last batch for which flush() could not be called.
-    * Second use-case is to clean up the task queue for tasks which no longer can be processed (due to exception thrown)
-    *
-    * @param jobIDsList
-    * @return number of jobs re-queued in the DB
-    */
+  /*
+   * Re-queue batch of jobs
+   * Serves PGSCHED purpose only
+   * This method does not update retry job statistics on purpose.
+   * It is used after exception during tape write to requeue last batch for which flush() could not be called.
+   * Second use-case is to clean up the task queue for tasks which no longer can be processed (due to exception thrown)
+   *
+   * @param jobIDsList
+   * @return number of jobs re-queued in the DB
+   */
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
   void setIsRepack(log::LogContext &logContext);
 private:

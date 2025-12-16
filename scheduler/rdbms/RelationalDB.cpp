@@ -197,9 +197,10 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
     timings.addToLog(logParams);
     lc.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus: " +
-           ex.getMessageValue());
+           "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus.");
     txn.abort();
     return ret;
   }
@@ -431,8 +432,9 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
             .add("tfvids", tfvids)
             .add("ret.selectedVid", ret.selectedVid)
             .add("totalTime", timeTotal.secs())
+            .add("exceptionMessage", ex.getMessageValue());
             .log(cta::log::ERR,
-                 "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve." + ex.getMessageValue());
+                 "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve.");
     return ret;
   }
 }
@@ -495,9 +497,10 @@ void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequ
     }
     txn.commit();
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RelationalDB::cancelArchive(): failed to cancel archive job. Aborting the transaction." +
-             ex.getMessageValue());
+           "In RelationalDB::cancelArchive(): failed to cancel archive job. Aborting the transaction.");
     txn.abort();
     throw;
   }
@@ -621,9 +624,10 @@ void RelationalDB::cancelRepack(const std::string &vid, log::LogContext &lc) {
     }
     txn.commit();
   } catch (exception::Exception &ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RelationalDB::cancelRepack(): failed to cancel repack request. Aborting the transaction." +
-           ex.getMessageValue());
+           "In RelationalDB::cancelRepack(): failed to cancel repack request. Aborting the transaction.");
     txn.abort();
     throw;
   } catch (std::exception &ex) {
@@ -768,9 +772,10 @@ auto RelationalDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::R
       }
       txn.commit();
     } catch (exception::Exception &ex) {
+      cta::log::ScopedParamContainer params(lc);
+      params.add("exceptionMessage", ex.getMessageValue());
       lc.log(cta::log::ERR,
-             "In RelationalDB::getNextRepackJobToExpand(): failed to mark IS_EXPAND_STARTED: " +
-             ex.getMessageValue());
+             "In RelationalDB::getNextRepackJobToExpand(): failed to mark IS_EXPAND_STARTED.");
       txn.abort();
       return nullptr;
     }
@@ -874,9 +879,10 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     log::ScopedParamContainer params(lc);
     timings.addToLog(params);
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-                   "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to archive jobs: " +
-                     ex.getMessageValue());
+                   "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to archive jobs: ");
     txn.abort();
   }
   if (statUpdates.empty()) {
@@ -925,15 +931,15 @@ bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, 
       if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
         log::ScopedParamContainer(lc)
         .add("jobUrl", jobUrl)
+        .add("exceptionMessage", ex.getMessageValue());
         .log(log::WARNING,
-             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed, file not found." +
-             ex.getMessageValue());
+             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed, file not found.");
       } else {
         log::ScopedParamContainer(lc)
         .add("jobUrl", jobUrl)
+        .add("exceptionMessage", ex.getMessageValue());
         .log(log::ERR,
-             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed." +
-             ex.getMessageValue());
+             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed.");
         return false;
       }
     }
@@ -944,8 +950,10 @@ bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, 
       lc.log(log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deleted file.");
     } catch (const cta::exception::Exception& ex) {
       if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
+        cta::log::ScopedParamContainer params(lc);
+        params.add("exceptionMessage", ex.getMessageValue());
         lc.log(log::WARNING,
-                     "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not found anymore." + ex.getMessageValue());
+                     "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not found anymore.");
       } else {
         lc.log(log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not deleted. Exception thrown: " +
              ex.getMessageValue());
@@ -975,9 +983,10 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       jobSrcUrls.insert(batch_rset.columnString("SRC_URL"));
     }
   } catch (exception::Exception &ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to get jobs: " +
-           ex.getMessageValue());
+           "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to get jobs.");
     txn.abort();
     return ret;
   }
@@ -1052,9 +1061,10 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
    lc.log(cta::log::INFO, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Updated Repack progress statistics.");
    txn3.commit();
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to update  Repack progress statistics: " +
-                     ex.getMessageValue());
+                   "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to update  Repack progress statistics.");
     txn3.abort();
   }
   // check if status is Failed or Complete and delete the disk directory for this repack in such a case
@@ -1114,9 +1124,10 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext &lc) {
             .log(log::INFO,
                  "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): updated repack request statistics.");
   } catch (exception::Exception &ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): Failed to updateRepackRequestFailuresBatch() aborting the entire transaction: " +
-           ex.getMessageValue());
+           "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): Failed to updateRepackRequestFailuresBatch() aborting the entire transaction.");
     txn.abort();
     return ret;
   }
@@ -1174,9 +1185,10 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
             .log(log::INFO,
                  "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): updated repack request statistics.");
   } catch (exception::Exception &ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RelationalDB::getNextFailedArchiveRepackReportBatch(): Failed to updateRepackRequestFailuresBatch() aborting the entire transaction: " +
-           ex.getMessageValue());
+           "In RelationalDB::getNextFailedArchiveRepackReportBatch(): Failed to updateRepackRequestFailuresBatch() aborting the entire transaction.");
     txn.abort();
     return ret;
   }
@@ -1502,10 +1514,11 @@ void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogCont
            "pending queue. If error report URL was available, it moved jobs to the reporting workflow.");
     txn.commit();
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
            "In RelationalDB::cleanRetrieveQueueForVid(): failed to remove retrieve jobs from the pending queue of the "
-           "specified tape VID. Aborting the transaction." +
-           ex.getMessageValue());
+           "specified tape VID. Aborting the transaction.");
     txn.abort();
     throw;
   }

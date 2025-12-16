@@ -38,8 +38,7 @@ Transaction::~Transaction() {
       m_conn->rollback();
       m_conn->reset();
     } catch (const cta::exception::Exception &e) {
-      log::ScopedParamContainer errorParams(m_lc);
-      errorParams.add("exceptionMessage", e.getMessageValue());
+      log::ScopedParamContainer (m_lc).add("exceptionMessage", e.getMessageValue());
       m_lc.log(cta::log::ERR, "In Transaction::~Transaction(): Failed to rollback.");
     }
   }

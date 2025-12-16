@@ -361,7 +361,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
       throw;
     } catch (const cta::ArchiveMount::FailedReportMoveToQueue& ex) {
       while (!failedToReportArchiveJobs.empty()) {
-          auto archiveJob = std::move(failedToReportArchiveJobs.front());
+        auto archiveJob = std::move(failedToReportArchiveJobs.front());
         try {
           archiveJob->failReport(ex.getMessageValue(), reportPacker.m_lc);
         } catch (const cta::exception::NoSuchObject&) {

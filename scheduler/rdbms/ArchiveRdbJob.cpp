@@ -125,8 +125,10 @@ void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
     }
     reportType = ReportType::FailureReport;
   } catch (const exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::WARNING,
-           "Failed to update job status for reporting failure. Aborting txn: " + ex.getMessageValue());
+           "Failed to update job status for reporting failure. Aborting txn.");
     txn.abort();
   }
 }
@@ -241,10 +243,11 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
         .log(log::INFO, "ArchiveRdbJob::failReport(): deleted job.");
     }
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::WARNING,
            "In schedulerdb::ArchiveRdbJob::failReport(): failed to update job status for failed "
-           "report case. Aborting the transaction." +
-           ex.getMessageValue());
+           "report case. Aborting the transaction.");
     txn.abort();
   }
   return;
