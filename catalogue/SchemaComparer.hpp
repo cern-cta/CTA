@@ -23,10 +23,10 @@
 
 #pragma once
 
-#include "rdbms/ConnPool.hpp"
-#include "SchemaCheckerResult.hpp"
 #include "DatabaseMetadataGetter.hpp"
+#include "SchemaCheckerResult.hpp"
 #include "SchemaSqlStatementsReader.hpp"
+#include "rdbms/ConnPool.hpp"
 
 namespace cta::catalogue {
 
@@ -40,7 +40,7 @@ public:
    * Constructs a SchemaComparer
    * @param catalogueMetadataGetter the catalogue metadata getter to compare the catalogue schema content
    */
-  SchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &databaseMetadataGetter);
+  SchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter& databaseMetadataGetter);
   /**
    * Destructor
    */
@@ -74,10 +74,10 @@ public:
   void setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader);
 
 protected:
-  const std::string  m_databaseToCheckName;
-  cta::catalogue::DatabaseMetadataGetter & m_databaseMetadataGetter;
+  const std::string m_databaseToCheckName;
+  cta::catalogue::DatabaseMetadataGetter& m_databaseMetadataGetter;
   std::unique_ptr<SchemaSqlStatementsReader> m_schemaSqlStatementsReader;
   bool m_compareTableConstraints = true;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -20,6 +20,6 @@
 namespace cta::objectstore {
 
 template<>
-const std::string ContainerTraits<RetrieveQueue,RetrieveQueueFailed>::c_containerTypeName = "RetrieveQueueFailed";
+const std::string ContainerTraits<RetrieveQueue, RetrieveQueueFailed>::c_containerTypeName = "RetrieveQueueFailed";
 
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

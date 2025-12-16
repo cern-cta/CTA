@@ -17,12 +17,12 @@
 
 #pragma once
 
-#include <map>
+#include "common/log/LogContext.hpp"
 
 #include <common/exception/ChecksumBlobSizeMismatch.hpp>
 #include <common/exception/ChecksumTypeMismatch.hpp>
 #include <common/exception/ChecksumValueMismatch.hpp>
-#include "common/log/LogContext.hpp"
+#include <map>
 
 namespace cta::checksum {
 

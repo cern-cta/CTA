@@ -15,8 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/Exception.hpp"
 #include "rdbms/wrapper/ParamNameToIdx.hpp"
+
+#include "common/exception/Exception.hpp"
 
 #include <regex>
 #include <sstream>
@@ -26,7 +27,7 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ParamNameToIdx::ParamNameToIdx(const std::string &sql) {
+ParamNameToIdx::ParamNameToIdx(const std::string& sql) {
   std::ostringstream paramName;
   uint32_t paramIdx = 0;
   // Match any :name that is not preceded by another colon
@@ -35,20 +36,20 @@ ParamNameToIdx::ParamNameToIdx(const std::string &sql) {
   std::string::const_iterator searchStart(sql.cbegin());
   while (std::regex_search(searchStart, sql.cend(), match, pattern)) {
     if (auto matchPos = std::distance(sql.cbegin(), searchStart) + match.position();
-        matchPos > 0 && ':' == *(sql.cbegin() + matchPos -1)){
+        matchPos > 0 && ':' == *(sql.cbegin() + matchPos - 1)) {
       searchStart = match.suffix().first;
       continue;
     }
     paramName << match.str();
-    if(paramName.str().empty()) {
+    if (paramName.str().empty()) {
       throw exception::Exception("Parse error: Empty SQL parameter name");
     }
-    if(m_nameToIdx.find(paramName.str()) != m_nameToIdx.end()) {
+    if (m_nameToIdx.find(paramName.str()) != m_nameToIdx.end()) {
       throw exception::Exception("Parse error: SQL parameter " + paramName.str() + " is a duplicate");
     }
-    ++paramIdx; // Increment the parameter counter
+    ++paramIdx;  // Increment the parameter counter
     m_nameToIdx[paramName.str()] = paramIdx;
-    paramName.str(std::string()); // Clear the stream
+    paramName.str(std::string());  // Clear the stream
     searchStart = match.suffix().first;
   }
 }
@@ -56,12 +57,12 @@ ParamNameToIdx::ParamNameToIdx(const std::string &sql) {
 //------------------------------------------------------------------------------
 // getIdx
 //------------------------------------------------------------------------------
-uint32_t ParamNameToIdx::getIdx(const std::string &paramName) const {
+uint32_t ParamNameToIdx::getIdx(const std::string& paramName) const {
   auto itor = m_nameToIdx.find(paramName);
-  if(itor == m_nameToIdx.end()) {
+  if (itor == m_nameToIdx.end()) {
     throw exception::Exception("SQL parameter " + paramName + " does not exist");
   }
   return itor->second;
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

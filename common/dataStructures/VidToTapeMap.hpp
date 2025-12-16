@@ -29,4 +29,4 @@ namespace cta::common::dataStructures {
  */
 using VidToTapeMap = std::map<std::string, Tape>;
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

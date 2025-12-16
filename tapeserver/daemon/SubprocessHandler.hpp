@@ -18,8 +18,8 @@
 #pragma once
 
 #include <chrono>
-#include <string>
 #include <optional>
+#include <string>
 
 namespace cta::tape::daemon {
 
@@ -56,24 +56,28 @@ class SubprocessHandler {
 public:
   /** The subprocess handler constructor. It will remember its index, as a helper to the manager */
   explicit SubprocessHandler(const std::string& index) : index(index) {}
-  const std::string index;          ///< The index of the subprocess (as a helper to the manager)
+
+  const std::string index;  ///< The index of the subprocess (as a helper to the manager)
   virtual ~SubprocessHandler() = default;
   /** An enum allowing the description of the environment (child or parent) */
   enum class ForkState { parent, child, notForking };
+
   /** The return type for the functions (getStatus, handleEvent, handleTimeout)
    * that will return a status */
   struct ProcessingStatus {
-    bool shutdownRequested = false;      ///< Does the process handler require to shutdown all processes?
-    bool shutdownComplete = false;       ///< Did this process complete its shutdown?
-    bool killRequested = false;          ///< Does the process handler require killing all processes
-    bool forkRequested = false;          ///< Does the process handler request to fork a new process?
-    bool refreshLoggerRequested = false; ///< Does the process handler request the logger to be refreshed by all subprocesses?
-    bool sigChild = false;               ///< Did the process see a SIGCHLD? Used by signal handler only.
+    bool shutdownRequested = false;  ///< Does the process handler require to shutdown all processes?
+    bool shutdownComplete = false;   ///< Did this process complete its shutdown?
+    bool killRequested = false;      ///< Does the process handler require killing all processes
+    bool forkRequested = false;      ///< Does the process handler request to fork a new process?
+    bool refreshLoggerRequested =
+      false;                ///< Does the process handler request the logger to be refreshed by all subprocesses?
+    bool sigChild = false;  ///< Did the process see a SIGCHLD? Used by signal handler only.
     /// Instant of the next timeout for the process handler. Defaults to end of times.
-    std::chrono::time_point<std::chrono::steady_clock> nextTimeout=decltype(nextTimeout)::max();              
+    std::chrono::time_point<std::chrono::steady_clock> nextTimeout = decltype(nextTimeout)::max();
     /// A extra state variable used in the return value of fork()
-    ForkState forkState = ForkState::notForking; ///< 
+    ForkState forkState = ForkState::notForking;  ///<
   };
+
   /** Noop function returning status. */
   virtual ProcessingStatus getInitialStatus() = 0;
   /** Function called to process events, as the object's address comes out of epoll. */
@@ -102,4 +106,4 @@ public:
   virtual int runChild() = 0;
 };
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon

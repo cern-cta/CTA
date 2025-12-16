@@ -15,12 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
-#include "serrno.hpp"  //!< special error numbers and codes
 #include "Cglobals.hpp"
+#include "serrno.hpp"  //!< special error numbers and codes
 #include "strerror_r_wrapper.hpp"
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
 
 const char* sys_serrlist[SEMAXERR - SEBASEOFF + 2] = {"Error 0",
                                                       "Host not known",

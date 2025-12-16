@@ -16,10 +16,11 @@
  */
 
 #include "DiskReportArchiveRoutine.hpp"
-#include "scheduler/Scheduler.hpp"
+
+#include "common/log/TimingList.hpp"
 #include "scheduler/ArchiveJob.hpp"
 #include "scheduler/RetrieveJob.hpp"
-#include "common/log/TimingList.hpp"
+#include "scheduler/Scheduler.hpp"
 
 namespace cta::maintd {
 

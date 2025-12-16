@@ -17,15 +17,17 @@
 
 #pragma once
 
-#include "rdbms/Login.hpp"
 #include "CatalogueSchema.hpp"
+#include "rdbms/Login.hpp"
 
 namespace cta::catalogue {
 
 class SchemaSqlStatementsReader {
 public:
   SchemaSqlStatementsReader() = default;
-  explicit SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType) : m_dbType(dbType) { }
+
+  explicit SchemaSqlStatementsReader(const cta::rdbms::Login::DbType dbType) : m_dbType(dbType) {}
+
   SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig) = default;
   virtual ~SchemaSqlStatementsReader() = default;
   virtual std::list<std::string> getStatements();
@@ -37,7 +39,7 @@ protected:
   * @param schema the sql statements put all together
   * @return a list containing separated statements from the schema passed in parameter
   */
-  std::list<std::string> getAllStatementsFromSchema(const std::string &schema) const;
+  std::list<std::string> getAllStatementsFromSchema(const std::string& schema) const;
   /**
   * Returns the string corresponding to the database type
   * @return the string corresponding to the database type
@@ -59,12 +61,16 @@ protected:
 * */
 class DirectoryVersionsSqlStatementsReader : public SchemaSqlStatementsReader {
 public:
-  DirectoryVersionsSqlStatementsReader(const rdbms::Login::DbType dbType, const std::string& catalogueVersion, const std::string& allSchemasVersionPath) :
-    SchemaSqlStatementsReader(dbType), m_catalogueVersion(catalogueVersion), m_allSchemasVersionPath(allSchemasVersionPath) { }
+  DirectoryVersionsSqlStatementsReader(const rdbms::Login::DbType dbType,
+                                       const std::string& catalogueVersion,
+                                       const std::string& allSchemasVersionPath)
+      : SchemaSqlStatementsReader(dbType),
+        m_catalogueVersion(catalogueVersion),
+        m_allSchemasVersionPath(allSchemasVersionPath) {}
+
   ~DirectoryVersionsSqlStatementsReader() final = default;
-  std::list<std::string> getStatements() final {
-    return getAllStatementsFromSchema(readSchemaFromFile());
-  }
+
+  std::list<std::string> getStatements() final { return getAllStatementsFromSchema(readSchemaFromFile()); }
 
 private:
   std::string m_catalogueVersion;
@@ -75,6 +81,7 @@ private:
   * @return the string containing the sql statements for the creation of the schema
   */
   std::string readSchemaFromFile() const;
+
   std::string getSchemaFilePath() const {
     const std::string c_catalogueFileNameTrailer = "_catalogue_schema.sql";
     return m_allSchemasVersionPath + m_catalogueVersion + "/" + getDatabaseType() + c_catalogueFileNameTrailer;
@@ -83,21 +90,25 @@ private:
 
 class MapSqlStatementsReader : public SchemaSqlStatementsReader {
 public:
-  MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string &catalogueVersion) :
-    SchemaSqlStatementsReader(dbType), m_catalogueVersion(catalogueVersion) { }
+  MapSqlStatementsReader(const cta::rdbms::Login::DbType dbType, const std::string& catalogueVersion)
+      : SchemaSqlStatementsReader(dbType),
+        m_catalogueVersion(catalogueVersion) {}
+
   MapSqlStatementsReader(const MapSqlStatementsReader& orig) = default;
   ~MapSqlStatementsReader() final = default;
   std::list<std::string> getStatements() final;
+
 private:
   std::string m_catalogueVersion;
 };
 
-class CppSchemaStatementsReader: public SchemaSqlStatementsReader{
+class CppSchemaStatementsReader : public SchemaSqlStatementsReader {
 public:
   explicit CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema);
   std::list<std::string> getStatements() final;
+
 private:
   const cta::catalogue::CatalogueSchema m_schema;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

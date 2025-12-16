@@ -29,7 +29,7 @@ namespace cta::statistics {
  * @return the DatabaseStatisticsService corresponding to the dbType passed in parameter
  */
 std::unique_ptr<StatisticsService> StatisticsServiceFactory::create(cta::rdbms::Conn* connection,
-  cta::rdbms::Login::DbType dbType) {
+                                                                    cta::rdbms::Login::DbType dbType) {
   return DatabaseStatisticsServiceFactory::create(connection, dbType);
 }
 
@@ -42,4 +42,4 @@ std::unique_ptr<StatisticsService> StatisticsServiceFactory::create(std::ostream
   return JsonStatisticsServiceFactory::create(&ostream);
 }
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

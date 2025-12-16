@@ -15,18 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <gtest/gtest.h>
-
-#include <list>
-#include <memory>
-#include <string>
+#include "catalogue/tests/modules/TapePoolCatalogueTest.hpp"
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/MediaType.hpp"
-#include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/TapePool.hpp"
+#include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/tests/CatalogueTestUtils.hpp"
-#include "catalogue/tests/modules/TapePoolCatalogueTest.hpp"
 #include "common/Constants.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
@@ -35,6 +30,11 @@
 #include "common/dataStructures/Tape.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
+
+#include <gtest/gtest.h>
+#include <list>
+#include <memory>
+#include <string>
 
 namespace unitTests {
 
@@ -67,7 +67,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePool_non_existent) {
 
   const auto pool = m_catalogue->TapePool()->getTapePool(tapePoolName);
 
-  ASSERT_FALSE((bool)pool);
+  ASSERT_FALSE((bool) pool);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
@@ -81,8 +81,8 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
 
   ASSERT_TRUE(m_catalogue->TapePool()->tapePoolExists(tapePoolName));
 
@@ -91,7 +91,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -114,7 +114,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
   {
     const auto pool = m_catalogue->TapePool()->getTapePool(tapePoolName);
 
-    ASSERT_TRUE((bool)pool);
+    ASSERT_TRUE((bool) pool);
 
     ASSERT_EQ(tapePoolName, pool->name);
     ASSERT_EQ(m_vo.name, pool->vo.name);
@@ -148,8 +148,8 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_null_supply) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
 
   ASSERT_TRUE(m_catalogue->TapePool()->tapePoolExists(tapePoolName));
 
@@ -157,7 +157,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_null_supply) {
 
   ASSERT_EQ(1, pools.size());
 
-  const auto &pool = pools.front();
+  const auto& pool = pools.front();
   ASSERT_EQ(tapePoolName, pool.name);
   ASSERT_EQ(m_vo.name, pool.vo.name);
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -174,8 +174,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_null_supply) {
   ASSERT_EQ(m_admin.username, creationLog.username);
   ASSERT_EQ(m_admin.host, creationLog.host);
 
-  const cta::common::dataStructures::EntryLog lastModificationLog =
-    pool.lastModificationLog;
+  const cta::common::dataStructures::EntryLog lastModificationLog = pool.lastModificationLog;
   ASSERT_EQ(creationLog, lastModificationLog);
 }
 
@@ -187,10 +186,12 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_same_twice) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
-  ASSERT_THROW(m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes,
-    encryptionKeyName, supply, comment), cta::exception::UserError);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
+  ASSERT_THROW(
+    m_catalogue->TapePool()
+      ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment),
+    cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, createTapePool_vo_does_not_exist) {
@@ -199,12 +200,14 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_vo_does_not_exist) {
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string comment = "Create tape pool";
-  ASSERT_THROW(m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes,
-    encryptionKeyName, supply, comment), cta::exception::UserError);
+  ASSERT_THROW(
+    m_catalogue->TapePool()
+      ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment),
+    cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, createTapePool_tapes_of_mixed_state) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
@@ -212,17 +215,25 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_tapes_of_mixed_state) {
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
-    "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(0, pool.nbTapes);
@@ -313,7 +324,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_tapes_of_mixed_state) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(12, pool.nbTapes);
@@ -328,7 +339,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_tapes_of_mixed_state) {
 
   {
     const auto pool = m_catalogue->TapePool()->getTapePool(m_tape1.tapePoolName);
-    ASSERT_TRUE((bool)pool);
+    ASSERT_TRUE((bool) pool);
 
     ASSERT_EQ(m_tape1.tapePoolName, pool->name);
     ASSERT_EQ(m_vo.name, pool->vo.name);
@@ -351,8 +362,13 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
     const std::list<std::string> supply;
     m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
     m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-    m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, tapePoolNbPartialTapes,
-      encryptionKeyName, supply, tapePoolComment);
+    m_catalogue->TapePool()->createTapePool(m_admin,
+                                            m_tape1.tapePoolName,
+                                            m_vo.name,
+                                            tapePoolNbPartialTapes,
+                                            encryptionKeyName,
+                                            supply,
+                                            tapePoolComment);
   }
 
   {
@@ -360,7 +376,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(tapePoolNbPartialTapes, pool.nbPartialTapes);
@@ -391,11 +407,21 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
     m_catalogue->StorageClass()->createStorageClass(m_admin, m_anotherStorageClass);
     const std::list<std::string> supply;
     m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
-    m_catalogue->TapePool()->createTapePool(m_admin, anotherTapePoolName, m_anotherVo.name, anotherNbPartialTapes,
-      encryptionKeyNull, supply, anotherTapePoolComment);
+    m_catalogue->TapePool()->createTapePool(m_admin,
+                                            anotherTapePoolName,
+                                            m_anotherVo.name,
+                                            anotherNbPartialTapes,
+                                            encryptionKeyNull,
+                                            supply,
+                                            anotherTapePoolComment);
     const uint32_t copyNb = 1;
     const std::string comment = "Create a separate archive route";
-    m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_anotherStorageClass.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, anotherTapePoolName, comment);
+    m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                    m_anotherStorageClass.name,
+                                                    copyNb,
+                                                    cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                    anotherTapePoolName,
+                                                    comment);
   }
 
   {
@@ -407,7 +433,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
       const auto poolMaplet = pools.find(m_tape1.tapePoolName);
       ASSERT_NE(pools.end(), poolMaplet);
 
-      const auto &pool = poolMaplet->second;
+      const auto& pool = poolMaplet->second;
       ASSERT_EQ(m_tape1.tapePoolName, pool.name);
       ASSERT_EQ(m_vo.name, pool.vo.name);
       ASSERT_EQ(tapePoolNbPartialTapes, pool.nbPartialTapes);
@@ -431,7 +457,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
       const auto poolMaplet = pools.find(anotherTapePoolName);
       ASSERT_NE(pools.end(), poolMaplet);
 
-      const auto &pool = poolMaplet->second;
+      const auto& pool = poolMaplet->second;
       ASSERT_EQ(anotherTapePoolName, pool.name);
       ASSERT_EQ(m_anotherVo.name, pool.vo.name);
       ASSERT_EQ(anotherNbPartialTapes, pool.nbPartialTapes);
@@ -458,7 +484,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
 }
 
 TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_notEmpty) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
@@ -466,17 +492,25 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_notEmpty) {
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
-    "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(0, pool.nbTapes);
@@ -502,7 +536,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_notEmpty) {
     ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
     ASSERT_EQ(m_vo.name, tape.vo);
     ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-    ASSERT_EQ(m_tape1.state,tape.state);
+    ASSERT_EQ(m_tape1.state, tape.state);
     ASSERT_EQ(m_tape1.full, tape.full);
     ASSERT_FALSE(tape.isFromCastor);
     ASSERT_EQ(m_tape1.comment, tape.comment);
@@ -522,7 +556,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_notEmpty) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(m_tape1.tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(1, pool.nbTapes);
@@ -532,7 +566,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_notEmpty) {
   }
 
   ASSERT_THROW(m_catalogue->TapePool()->deleteTapePool(m_tape1.tapePoolName),
-    cta::catalogue::UserSpecifiedAnEmptyTapePool);
+               cta::catalogue::UserSpecifiedAnEmptyTapePool);
   ASSERT_THROW(m_catalogue->TapePool()->deleteTapePool(m_tape1.tapePoolName), cta::exception::UserError);
 }
 
@@ -544,8 +578,9 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringTapePoolName) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  ASSERT_THROW(m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName,
-    supply, comment), cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+  ASSERT_THROW(m_catalogue->TapePool()
+                 ->createTapePool(m_admin, tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment),
+               cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringVO) {
@@ -554,8 +589,10 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringVO) {
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   const std::string comment = "Create tape pool";
-  ASSERT_THROW(m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, "", nbPartialTapes, encryptionKeyName,
-    supply, comment), cta::catalogue::UserSpecifiedAnEmptyStringVo);
+  ASSERT_THROW(
+    m_catalogue->TapePool()
+      ->createTapePool(m_admin, m_tape1.tapePoolName, "", nbPartialTapes, encryptionKeyName, supply, comment),
+    cta::catalogue::UserSpecifiedAnEmptyStringVo);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringComment) {
@@ -569,12 +606,14 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringComment) {
   const std::string comment = "";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  ASSERT_THROW(m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes,
-    encryptionKeyName, supply, comment), cta::catalogue::UserSpecifiedAnEmptyStringComment);
+  ASSERT_THROW(
+    m_catalogue->TapePool()
+      ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment),
+    cta::catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_non_existent) {
-    ASSERT_THROW(m_catalogue->TapePool()->deleteTapePool("non_existent_tape_pool"), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->TapePool()->deleteTapePool("non_existent_tape_pool"), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_used_in_an_archive_route) {
@@ -586,12 +625,22 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_used_in_an_archive_route) {
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string comment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, comment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName,
+                                                  comment);
 
   {
     const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
@@ -613,8 +662,8 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_used_in_an_archive_route) {
   }
 
   {
-    const std::list<cta::common::dataStructures::ArchiveRoute> routes
-      = m_catalogue->ArchiveRoute()->getArchiveRoutes(m_storageClassSingleCopy.name, tapePoolName);
+    const std::list<cta::common::dataStructures::ArchiveRoute> routes =
+      m_catalogue->ArchiveRoute()->getArchiveRoutes(m_storageClassSingleCopy.name, tapePoolName);
 
     ASSERT_EQ(1, routes.size());
 
@@ -633,7 +682,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_used_in_an_archive_route) {
   }
 
   ASSERT_THROW(m_catalogue->TapePool()->deleteTapePool(tapePoolName),
-    cta::catalogue::UserSpecifiedTapePoolUsedInAnArchiveRoute);
+               cta::catalogue::UserSpecifiedTapePoolUsedInAnArchiveRoute);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo) {
@@ -645,15 +694,15 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo) {
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
 
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -683,7 +732,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo) {
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(modifiedVo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -705,7 +754,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_emptyStringTapePool) {
   const std::string tapePoolName = "";
   const std::string modifiedVo = "modified_vo";
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolVo(m_admin, tapePoolName, modifiedVo),
-    cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+               cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_emptyStringVo) {
@@ -717,14 +766,14 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_emptyStringVo) {
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -746,7 +795,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_emptyStringVo) {
 
   const std::string modifiedVo = "";
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolVo(m_admin, tapePoolName, modifiedVo),
-    cta::catalogue::UserSpecifiedAnEmptyStringVo);
+               cta::catalogue::UserSpecifiedAnEmptyStringVo);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_VoDoesNotExist) {
@@ -757,14 +806,14 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_VoDoesNotExist) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -785,8 +834,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_VoDoesNotExist) {
   }
 
   const std::string modifiedVo = "DoesNotExists";
-  ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolVo(m_admin, tapePoolName, modifiedVo),
-    cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolVo(m_admin, tapePoolName, modifiedVo), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolNbPartialTapes) {
@@ -797,14 +845,14 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolNbPartialTapes) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -832,7 +880,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolNbPartialTapes) {
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(modifiedNbPartialTapes, pool.nbPartialTapes);
@@ -854,14 +902,14 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolNbPartialTapes_emptyStringTapeP
   const std::string tapePoolName = "";
   const uint64_t modifiedNbPartialTapes = 5;
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolNbPartialTapes(m_admin, tapePoolName, modifiedNbPartialTapes),
-    cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+               cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolNbPartialTapes_nonExistentTapePool) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 5;
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolNbPartialTapes(m_admin, tapePoolName, nbPartialTapes),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment) {
@@ -872,14 +920,14 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -907,7 +955,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment) {
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -926,10 +974,10 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment) {
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment_emptyStringTapePoolName) {
-    const std::string tapePoolName = "";
+  const std::string tapePoolName = "";
   const std::string modifiedComment = "Modified comment";
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolComment(m_admin, tapePoolName, modifiedComment),
-    cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+               cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment_emptyStringComment) {
@@ -940,14 +988,14 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment_emptyStringComment) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -969,14 +1017,14 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment_emptyStringComment) {
 
   const std::string modifiedComment = "";
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolComment(m_admin, tapePoolName, modifiedComment),
-    cta::catalogue::UserSpecifiedAnEmptyStringComment);
+               cta::catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment_nonExistentTapePool) {
-    const std::string tapePoolName = "tape_pool";
+  const std::string tapePoolName = "tape_pool";
   const std::string comment = "Comment";
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolComment(m_admin, tapePoolName, comment),
-    cta::exception::UserError);
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption) {
@@ -987,14 +1035,14 @@ TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -1021,7 +1069,7 @@ TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption) {
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -1041,8 +1089,7 @@ TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption) {
 
 TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption_nonExistentTapePool) {
   const std::string tapePoolName = "tape_pool";
-  ASSERT_THROW(m_catalogue->TapePool()->setTapePoolEncryption(m_admin, tapePoolName, ""),
-    cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->TapePool()->setTapePoolEncryption(m_admin, tapePoolName, ""), cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
@@ -1054,24 +1101,24 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName_1, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName_2, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-                                          comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, tapePoolName_1, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, tapePoolName_2, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(2, pools.size());
 
     // Get reference to tape pool 1
-    const auto &pool_1 = pools.front().name == tapePoolName_1 ? *pools.begin() : *(++pools.begin());
+    const auto& pool_1 = pools.front().name == tapePoolName_1 ? *pools.begin() : *(++pools.begin());
     ASSERT_EQ(tapePoolName_1, pool_1.name);
     ASSERT_EQ(std::nullopt, pool_1.supply);
     ASSERT_TRUE(pool_1.supply_source_set.empty());
     ASSERT_TRUE(pool_1.supply_destination_set.empty());
 
     // Get reference to tape pool 2
-    const auto &pool_2 = pools.front().name == tapePoolName_2 ? *pools.begin() : *(++pools.begin());
+    const auto& pool_2 = pools.front().name == tapePoolName_2 ? *pools.begin() : *(++pools.begin());
     ASSERT_EQ(tapePoolName_2, pool_2.name);
     ASSERT_EQ(std::nullopt, pool_2.supply);
     ASSERT_TRUE(pool_2.supply_source_set.empty());
@@ -1079,24 +1126,24 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
   }
 
   // fails because we want to disallow specifying itself as its supply tapepool
-  const std::list<std::string> modifiedSupply_wrong = { "does_not_exist" };
+  const std::list<std::string> modifiedSupply_wrong = {"does_not_exist"};
   ASSERT_ANY_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName_1, modifiedSupply_wrong));
 
-  const std::list<std::string> modifiedSupply = { tapePoolName_2 };
+  const std::list<std::string> modifiedSupply = {tapePoolName_2};
   m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName_1, modifiedSupply);
 
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     // Get reference to tape pool 1
-    const auto &pool_1 = pools.front().name == tapePoolName_1 ? *pools.begin() : *(++pools.begin());
+    const auto& pool_1 = pools.front().name == tapePoolName_1 ? *pools.begin() : *(++pools.begin());
     ASSERT_EQ(tapePoolName_1, pool_1.name);
     ASSERT_EQ(tapePoolName_2, pool_1.supply.value());
     ASSERT_EQ(1, pool_1.supply_source_set.count(tapePoolName_2));
     ASSERT_TRUE(pool_1.supply_destination_set.empty());
 
     // Get reference to tape pool 2
-    const auto &pool_2 = pools.front().name == tapePoolName_2 ? *pools.begin() : *(++pools.begin());
+    const auto& pool_2 = pools.front().name == tapePoolName_2 ? *pools.begin() : *(++pools.begin());
     ASSERT_EQ(tapePoolName_2, pool_2.name);
     ASSERT_EQ(std::nullopt, pool_2.supply);
     ASSERT_TRUE(pool_2.supply_source_set.empty());
@@ -1105,10 +1152,10 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringTapePoolName) {
-    const std::string tapePoolName = "";
-    const std::list<std::string> modifiedSupply = {"Modified_supply"};
-    ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply),
-                 cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+  const std::string tapePoolName = "";
+  const std::list<std::string> modifiedSupply = {"Modified_supply"};
+  ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply),
+               cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
@@ -1119,14 +1166,14 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -1155,7 +1202,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -1200,11 +1247,20 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
 
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName, m_vo.name, nbFirstPoolPartialTapes,
-    firstPoolEncryptionKeyName, firstPoolSupply, firstPoolComment);
-  m_catalogue->TapePool()->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes,
-    secondPoolEncryptionKeyNull, secondPoolSupply, secondPoolComment);
-
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          tapePoolName,
+                                          m_vo.name,
+                                          nbFirstPoolPartialTapes,
+                                          firstPoolEncryptionKeyName,
+                                          firstPoolSupply,
+                                          firstPoolComment);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          secondTapePoolName,
+                                          m_anotherVo.name,
+                                          nbSecondPoolPartialTapes,
+                                          secondPoolEncryptionKeyNull,
+                                          secondPoolSupply,
+                                          secondPoolComment);
 
   {
     cta::catalogue::TapePoolSearchCriteria criteria;
@@ -1212,7 +1268,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
     const auto pools = m_catalogue->TapePool()->getTapePools(criteria);
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
@@ -1236,7 +1292,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
     const auto pools = m_catalogue->TapePool()->getTapePools(criteria);
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(secondTapePoolName, pool.name);
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
@@ -1289,17 +1345,27 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
 
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName, m_vo.name, nbFirstPoolPartialTapes,
-    firstPoolEncryptionKeyName, firstPoolSupply, firstPoolComment);
-  m_catalogue->TapePool()->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes,
-    secondPoolEncryptionKeyNull, secondPoolSupply, secondPoolComment);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          tapePoolName,
+                                          m_vo.name,
+                                          nbFirstPoolPartialTapes,
+                                          firstPoolEncryptionKeyName,
+                                          firstPoolSupply,
+                                          firstPoolComment);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          secondTapePoolName,
+                                          m_anotherVo.name,
+                                          nbSecondPoolPartialTapes,
+                                          secondPoolEncryptionKeyNull,
+                                          secondPoolSupply,
+                                          secondPoolComment);
   {
     cta::catalogue::TapePoolSearchCriteria criteria;
     criteria.vo = m_vo.name;
     const auto pools = m_catalogue->TapePool()->getTapePools(criteria);
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
@@ -1323,7 +1389,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
     const auto pools = m_catalogue->TapePool()->getTapePools(criteria);
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(secondTapePoolName, pool.name);
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
@@ -1346,7 +1412,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
     criteria.vo = "no vo with such name";
 
     ASSERT_THROW(m_catalogue->TapePool()->getTapePools(criteria),
-      cta::catalogue::UserSpecifiedANonExistentVirtualOrganization);
+                 cta::catalogue::UserSpecifiedANonExistentVirtualOrganization);
   }
 
   {
@@ -1377,11 +1443,20 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
 
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName, m_vo.name, nbFirstPoolPartialTapes,
-    firstPoolEncryptionKeyName, firstPoolSupply, firstPoolComment);
-  m_catalogue->TapePool()->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes,
-    secondPoolEncryptionKeyNull, secondPoolSupply, secondPoolComment);
-
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          tapePoolName,
+                                          m_vo.name,
+                                          nbFirstPoolPartialTapes,
+                                          firstPoolEncryptionKeyName,
+                                          firstPoolSupply,
+                                          firstPoolComment);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          secondTapePoolName,
+                                          m_anotherVo.name,
+                                          nbSecondPoolPartialTapes,
+                                          secondPoolEncryptionKeyNull,
+                                          secondPoolSupply,
+                                          secondPoolComment);
 
   {
     cta::catalogue::TapePoolSearchCriteria criteria;
@@ -1389,7 +1464,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
     const auto pools = m_catalogue->TapePool()->getTapePools(criteria);
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
@@ -1413,7 +1488,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
     const auto pools = m_catalogue->TapePool()->getTapePools(criteria);
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(secondTapePoolName, pool.name);
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
@@ -1452,11 +1527,20 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncryptionKeyName) {
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
 
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName, m_vo.name, nbFirstPoolPartialTapes,
-    firstPoolEncryptionKeyName, firstPoolSupply, firstPoolComment);
-  m_catalogue->TapePool()->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes,
-    secondPoolEncryptionKeyNull, secondPoolSupply, secondPoolComment);
-
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          tapePoolName,
+                                          m_vo.name,
+                                          nbFirstPoolPartialTapes,
+                                          firstPoolEncryptionKeyName,
+                                          firstPoolSupply,
+                                          firstPoolComment);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          secondTapePoolName,
+                                          m_anotherVo.name,
+                                          nbSecondPoolPartialTapes,
+                                          secondPoolEncryptionKeyNull,
+                                          secondPoolSupply,
+                                          secondPoolComment);
 
   {
     cta::catalogue::TapePoolSearchCriteria criteria;
@@ -1464,7 +1548,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncryptionKeyName) {
     const auto pools = m_catalogue->TapePool()->getTapePools(criteria);
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
@@ -1488,7 +1572,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncryptionKeyName) {
     const auto pools = m_catalogue->TapePool()->getTapePools(criteria);
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(secondTapePoolName, pool.name);
     ASSERT_EQ(m_anotherVo.name, pool.vo.name);
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
@@ -1515,15 +1599,15 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName) {
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
 
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -1551,7 +1635,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName) {
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(newTapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -1570,10 +1654,10 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName) {
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName_emptyStringCurrentTapePoolName) {
-    const std::string tapePoolName = "";
+  const std::string tapePoolName = "";
   const std::string newTapePoolName = "new_tape_pool";
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolName(m_admin, tapePoolName, newTapePoolName),
-    cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+               cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName_emptyStringNewTapePoolName) {
@@ -1584,14 +1668,14 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName_emptyStringNewTapePoolName
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    comment);
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, comment);
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(1, pools.size());
 
-    const auto &pool = pools.front();
+    const auto& pool = pools.front();
     ASSERT_EQ(tapePoolName, pool.name);
     ASSERT_EQ(m_vo.name, pool.vo.name);
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
@@ -1613,7 +1697,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName_emptyStringNewTapePoolName
 
   const std::string newTapePoolName = "";
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolName(m_admin, tapePoolName, newTapePoolName),
-    cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
+               cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
 
 // test changes for supply table
@@ -1637,11 +1721,21 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
 
-  m_catalogue->TapePool()->createTapePool(m_admin, firstTapePoolName, m_vo.name, nbFirstPoolPartialTapes,
-                                          firstPoolEncryptionKeyName, firstPoolSupply, firstPoolComment);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          firstTapePoolName,
+                                          m_vo.name,
+                                          nbFirstPoolPartialTapes,
+                                          firstPoolEncryptionKeyName,
+                                          firstPoolSupply,
+                                          firstPoolComment);
 
-  m_catalogue->TapePool()->createTapePool(m_admin, secondTapePoolName, m_anotherVo.name, nbSecondPoolPartialTapes,
-                                          secondPoolEncryptionKeyNull, secondPoolSupply, secondPoolComment);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          secondTapePoolName,
+                                          m_anotherVo.name,
+                                          nbSecondPoolPartialTapes,
+                                          secondPoolEncryptionKeyNull,
+                                          secondPoolSupply,
+                                          secondPoolComment);
 
   auto pools_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
   auto pools = m_catalogue->TapePool()->getTapePools();
@@ -1676,8 +1770,13 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
   const uint64_t nbThirdPoolPartialTapes = 3;
   const std::optional<std::string> thirdPoolEncryptionKeyNull = std::nullopt;
   const std::string thirdPoolComment = "Create third tape pool";
-  m_catalogue->TapePool()->createTapePool(m_admin, thirdTapePoolName, m_anotherVo.name, nbThirdPoolPartialTapes,
-                                          thirdPoolEncryptionKeyNull, thirdTapePoolSupply, thirdPoolComment);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          thirdTapePoolName,
+                                          m_anotherVo.name,
+                                          nbThirdPoolPartialTapes,
+                                          thirdPoolEncryptionKeyNull,
+                                          thirdTapePoolSupply,
+                                          thirdPoolComment);
 
   {
     const auto pools3_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());

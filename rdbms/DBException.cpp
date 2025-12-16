@@ -22,9 +22,9 @@ namespace cta::rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DBException::DBException(const std::string &context, const std::string &dbErrorMessage, const bool embedBacktrace):
-  Exception(context, embedBacktrace), rawDbErrorMessage{dbErrorMessage} {
-}
+DBException::DBException(const std::string& context, const std::string& dbErrorMessage, const bool embedBacktrace)
+    : Exception(context, embedBacktrace),
+      rawDbErrorMessage {dbErrorMessage} {}
 
 //------------------------------------------------------------------------------
 // getDbErrorMessage
@@ -33,4 +33,4 @@ std::string DBException::getDbErrorMessage() const {
   return rawDbErrorMessage;
 }
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/dummy/DummySchemaCatalogue.hpp"
+
 #include "catalogue/SchemaVersion.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
@@ -34,4 +35,4 @@ void DummySchemaCatalogue::ping() {
   throw exception::NotImplementedException();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

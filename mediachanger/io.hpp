@@ -18,28 +18,25 @@
 #pragma once
 
 #include "common/exception/AcceptConnectionInterrupted.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/exception/InvalidArgument.hpp"
 #include "common/exception/NoPortInRange.hpp"
 #include "common/exception/TimeOut.hpp"
-#include "common/exception/Exception.hpp"
 #include "mediachanger/Constants.hpp"
 #include "mediachanger/IpAndPort.hpp"
 
+#include <arpa/inet.h>
 #include <errno.h>
 #include <iostream>
-#include <arpa/inet.h>
+#include <list>
+#include <netdb.h>
 #include <netinet/in.h>
 #include <stdint.h>
-#include <string>
 #include <string.h>
+#include <string>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <time.h>
-
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <list>
 
 namespace cta::mediachanger {
 
@@ -82,11 +79,8 @@ int createListenerSock(const unsigned short port);
  *                   socket to.
  * @return           The socket descriptor.
  */
-int createListenerSock(
-  const unsigned short lowPort,
-  const unsigned short highPort,
-  unsigned short       &chosenPort);
-	
+int createListenerSock(const unsigned short lowPort, const unsigned short highPort, unsigned short& chosenPort);
+
 /**
  * Creates a listener socket with a port number within the specified range.
  *
@@ -107,11 +101,10 @@ int createListenerSock(
  *                   socket to.
  * @return           The socket descriptor.
  */
-int createListenerSock(
-  const std::string    &addr,
-  const unsigned short lowPort,
-  const unsigned short highPort,
-  unsigned short       &chosenPort);
+int createListenerSock(const std::string& addr,
+                       const unsigned short lowPort,
+                       const unsigned short highPort,
+                       unsigned short& chosenPort);
 
 /**
  * Creates a listener socket with a port number within the specified range.
@@ -132,11 +125,10 @@ int createListenerSock(
  *                   socket to.
  * @return           The socket descriptor.
  */
-int createListenerSock(
-  const struct in_addr &addr,
-  const unsigned short lowPort,
-  const unsigned short highPort,
-  unsigned short       &chosenPort);
+int createListenerSock(const struct in_addr& addr,
+                       const unsigned short lowPort,
+                       const unsigned short highPort,
+                       unsigned short& chosenPort);
 
 /**
  * Creates a listener socket with the specified port number that is bound to
@@ -190,9 +182,7 @@ int acceptConnection(const int listenSockFd);
  * @return             The socket descriptor of the newly created and connected
  *                     socket.
  */
-int acceptConnection(
-  const int    listenSockFd,
-  const time_t timeout);
+int acceptConnection(const int listenSockFd, const time_t timeout);
 
 /**
  * Gets the locally-bound IP and port number of the specified socket.
@@ -228,12 +218,11 @@ std::string getSockHostName(const int socketFd);
  *                    should be written to.
  * @param port        The port to be filled.
  */
-void getSockIpHostnamePort(
-  const int      socketFd,
-  unsigned long  &ip,
-  char           *const hostName,
-  const size_t   hostNameLen,
-  unsigned short &port);
+void getSockIpHostnamePort(const int socketFd,
+                           unsigned long& ip,
+                           char* const hostName,
+                           const size_t hostNameLen,
+                           unsigned short& port);
 
 /**
  * Gets the locally-bound IP, host name and port of the specified socket.
@@ -243,12 +232,8 @@ void getSockIpHostnamePort(
  * @param hostName The buffer into which the hostname should written to.
  * @param port     The port to be filled.
  */
-template<int n> static void getSockIpHostnamePort(
-  const int      socketFd,
-  unsigned long  &ip,
-  char           (&hostName)[n],
-  unsigned short &port)
-   {
+template<int n>
+static void getSockIpHostnamePort(const int socketFd, unsigned long& ip, char (&hostName)[n], unsigned short& port) {
   getSockIpHostnamePort(socketFd, ip, hostName, n, port);
 }
 
@@ -268,10 +253,7 @@ std::string getPeerHostName(const int socketFd);
  * @param os The output stream.
  * @param ip The IP address in host byte order.
  */
-void writeIp(
-  std::ostream        &os,
-  const unsigned long ip)
-  noexcept;
+void writeIp(std::ostream& os, const unsigned long ip) noexcept;
 
 /**
  * Writes a textual description of the specified socket to the specified
@@ -281,9 +263,7 @@ void writeIp(
  * @param socketFd The file descriptor of the socket whose textual
  *                 description is to be printed to the stream.
  */
-void writeSockDescription(
-  std::ostream &os,
-  const int socketFd);
+void writeSockDescription(std::ostream& os, const int socketFd);
 
 /**
  * Reads the specified number of bytes from the specified socket and writes
@@ -302,11 +282,7 @@ void writeSockDescription(
  * @param nbBytes  The number of bytes to be read.
  * @param buf      The buffer into which the bytes will be written.
  */
-void readBytes(
-  const int   socketFd,
-  const int   timeout,
-  const int   nbBytes,
-  char *const buf);
+void readBytes(const int socketFd, const int timeout, const int nbBytes, char* const buf);
 
 /**
  * Writes the specified number of bytes from the specified buffer to the
@@ -317,11 +293,7 @@ void readBytes(
  * @param nbBytes  The number of bytes to be written.
  * @param buf      The buffer of bytes to be written to the socket.
  */
-void writeBytes(
-  const int   socketFd,
-  const int   timeout,
-  const int   nbBytes,
-  char *const buf);
+void writeBytes(const int socketFd, const int timeout, const int nbBytes, char* const buf);
 
 /**
  * Creates the specified socket and uses it to connect to the specified
@@ -340,10 +312,7 @@ void writeBytes(
  * @return         A file-descriptor referencing the newly created and
  *                 connected socket.
  */
-int connectWithTimeout(
-  const std::string    &hostName,
-  const unsigned short port,
-  const int            timeout);
+int connectWithTimeout(const std::string& hostName, const unsigned short port, const int timeout);
 
 /**
  * Creates the specified socket and uses it to connect to the specified
@@ -368,13 +337,12 @@ int connectWithTimeout(
  * @return             A file-descriptor referencing the newly created and
  *                     connected socket.
  */
-int connectWithTimeout(
-  const int             sockDomain,
-  const int             sockType,
-  const int             sockProtocol,
-  const struct sockaddr *address,
-  const socklen_t       address_len,
-  const int             timeout);
+int connectWithTimeout(const int sockDomain,
+                       const int sockType,
+                       const int sockProtocol,
+                       const struct sockaddr* address,
+                       const socklen_t address_len,
+                       const int timeout);
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -462,7 +430,7 @@ void marshalString(const std::string& src, char*& dst, size_t& dstSize);
  *               buffer.
  * @param dst    Out parameter: The destination.
  */
-void unmarshalUint8(const char * &src, size_t &srcLen, uint8_t &dst);
+void unmarshalUint8(const char*& src, size_t& srcLen, uint8_t& dst);
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -478,7 +446,7 @@ void unmarshalUint8(const char * &src, size_t &srcLen, uint8_t &dst);
  *               buffer.
  * @param dst    Out parameter: The destination.
  */
-void unmarshalInt16(const char * &src, size_t &srcLen, int16_t &dst);
+void unmarshalInt16(const char*& src, size_t& srcLen, int16_t& dst);
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -494,7 +462,7 @@ void unmarshalInt16(const char * &src, size_t &srcLen, int16_t &dst);
  *               buffer.
  * @param dst    Out parameter: The destination.
  */
-void unmarshalUint16(const char * &src, size_t &srcLen, uint16_t &dst);
+void unmarshalUint16(const char*& src, size_t& srcLen, uint16_t& dst);
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -510,7 +478,7 @@ void unmarshalUint16(const char * &src, size_t &srcLen, uint16_t &dst);
  *               buffer.
  * @param dst    Out parameter: The destination.
  */
-void unmarshalUint32(const char * &src, size_t &srcLen, uint32_t &dst);
+void unmarshalUint32(const char*& src, size_t& srcLen, uint32_t& dst);
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -526,7 +494,7 @@ void unmarshalUint32(const char * &src, size_t &srcLen, uint32_t &dst);
  *               buffer.
  * @param dst    Out parameter: The destination.
  */
-void unmarshalInt32(const char * &src, size_t &srcLen, int32_t &dst);
+void unmarshalInt32(const char*& src, size_t& srcLen, int32_t& dst);
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -542,7 +510,7 @@ void unmarshalInt32(const char * &src, size_t &srcLen, int32_t &dst);
  *               buffer.
  * @param dst    Out parameter: The destination.
  */
-void unmarshalUint64(const char * &src, size_t &srcLen, uint64_t &dst);
+void unmarshalUint64(const char*& src, size_t& srcLen, uint64_t& dst);
 
 /**
  * Unmarshals a string from the specified source buffer into the specified
@@ -562,8 +530,7 @@ void unmarshalUint64(const char * &src, size_t &srcLen, uint64_t &dst);
  * @param dstLen The length of the destination buffer where the string
  * should be unmarshalled to.
  */
-void unmarshalString(const char * &src, size_t &srcLen, char *dst,
-  const size_t dstLen);
+void unmarshalString(const char*& src, size_t& srcLen, char* dst, const size_t dstLen);
 
 /**
  * Unmarshals a string from the specified source buffer into the specified
@@ -581,9 +548,9 @@ void unmarshalString(const char * &src, size_t &srcLen, char *dst,
  * to the byte in the destination buffer immediately after the unmarshalled
  * string.
  */
-template<int n> void unmarshalString(const char * &src,
-  size_t &srcLen, char (&dst)[n])  {
+template<int n>
+void unmarshalString(const char*& src, size_t& srcLen, char (&dst)[n]) {
   unmarshalString(src, srcLen, dst, n);
 }
 
-} // namespace cta::mediachanger
+}  // namespace cta::mediachanger

@@ -19,10 +19,9 @@
 #include "common/log/StringLogger.hpp"
 
 #include <gtest/gtest.h>
-
 #include <memory>
-#include <streambuf>
 #include <regex>
+#include <streambuf>
 
 namespace unitTests {
 

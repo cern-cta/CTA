@@ -16,9 +16,9 @@
  */
 #pragma once
 
-#include <string>
 #include <map>
 #include <memory>
+#include <string>
 
 namespace cta::catalogue {
 
@@ -31,8 +31,10 @@ public:
    * Constructs a DbToSQLiteStatementTransformer
    * @param statement the statement to transform into a SQLite compatible one
    */
-  explicit DbToSQLiteStatementTransformer(const std::string& statement) : m_statement(statement) { }
+  explicit DbToSQLiteStatementTransformer(const std::string& statement) : m_statement(statement) {}
+
   virtual ~DbToSQLiteStatementTransformer() = default;
+
   /**
    * Transform the statement as a SQLite compatible one
    * @return the statement compatible with SQLite
@@ -51,7 +53,7 @@ private:
  * Transform a CREATE GLOBAL TEMPORARY TABLE as a CREATE TABLE statement for SQLite
  * @param statement the CREATE GLOBQL TEMPORARY TABLE statement
  */
-class CreateGlobalTempTableToSQLiteStatementTransformer: public DbToSQLiteStatementTransformer {
+class CreateGlobalTempTableToSQLiteStatementTransformer : public DbToSQLiteStatementTransformer {
 public:
   explicit CreateGlobalTempTableToSQLiteStatementTransformer(const std::string& statement);
   std::string transform() override;
@@ -63,7 +65,7 @@ public:
  *
  * @param statement the CREATE INDEX statement
  */
-class IndexStatementTransformer: public DbToSQLiteStatementTransformer {
+class IndexStatementTransformer : public DbToSQLiteStatementTransformer {
 public:
   explicit IndexStatementTransformer(const std::string& statement);
   std::string transform() override;
@@ -73,7 +75,7 @@ public:
  * Delete the statement passed in parameter
  * @param statement the statement to delete
  */
-class DeleteStatementTransformer :public DbToSQLiteStatementTransformer {
+class DeleteStatementTransformer : public DbToSQLiteStatementTransformer {
 public:
   explicit DeleteStatementTransformer(const std::string& statement);
   std::string transform() override;
@@ -94,26 +96,27 @@ private:
     SKIP /*This statement is deleted*/
   };
 
-  static const std::map<std::string,StatementType,std::less<>> regexToStatementMap;
+  static const std::map<std::string, StatementType, std::less<>> regexToStatementMap;
   /**
    * Initialize a map in order to map a Regex to a StatementType
    * This will allow to know to what StatementType corresponds a statement
    * @return the initialized map<RegexString,StatementType>
    */
-  static std::map<std::string,StatementType,std::less<>> initializeRegexToStatementMap();
+  static std::map<std::string, StatementType, std::less<>> initializeRegexToStatementMap();
   /**
    * Returns the StatementType corresponding to the statement passed in parameter
    * @param statement the statement that we want to know its StatementType
    * @return the StatementType corresponding to the statement passed in parameter
    */
-  static StatementType statementToStatementType(const std::string &statement);
+  static StatementType statementToStatementType(const std::string& statement);
+
 public:
   /**
    * Create a DbToSQLiteStatementTransformer according to the statement passed in parameter
    * @param statement the statement to transform via the DbToSQLiteStatementTransformer
    * @return a DbToSQLiteStatementTransformer instance according to the statement passed in parameter
    */
-  static std::unique_ptr<DbToSQLiteStatementTransformer> create(const std::string &statement);
+  static std::unique_ptr<DbToSQLiteStatementTransformer> create(const std::string& statement);
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -32,13 +32,12 @@ namespace cta::catalogue {
 template<typename T>
 class ArchiveFileBuilder {
 public:
-
   /**
    * Constructor.
    *
    * @param log Object representing the API to the CTA logging system.
    */
-  explicit ArchiveFileBuilder(log::Logger &log);
+  explicit ArchiveFileBuilder(log::Logger& log);
 
   /**
    * Appends the specified tape file to the ArchiveFile object currently
@@ -65,7 +64,7 @@ public:
    * @param tapeFile The tape file to be appended or an archive file with no
    * tape files at all.
    */
-  std::unique_ptr<T> append(const T &tapeFile);
+  std::unique_ptr<T> append(const T& tapeFile);
 
   /**
    * Returns a pointer to the ArchiveFile object currently under construction.
@@ -75,7 +74,7 @@ public:
    * @return The ArchiveFile object currently under construction or nullptr
    * if there isn't one.
    */
-  T *getArchiveFile();
+  T* getArchiveFile();
 
   /**
    * If there is an ArchiveFile under construction then it is forgotten.
@@ -83,45 +82,41 @@ public:
   void clear();
 
 private:
-
   /**
    * Object representing the API to the CTA logging system.
    */
-  log::Logger &m_log;
+  log::Logger& m_log;
 
   /**
    * The Archivefile object currently under construction.
    */
   std::unique_ptr<T> m_archiveFile;
 
-}; // class ArchiveFileBuilder
+};  // class ArchiveFileBuilder
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 template<typename T>
-ArchiveFileBuilder<T>::ArchiveFileBuilder(log::Logger &log):
-  m_log(log) {
-}
+ArchiveFileBuilder<T>::ArchiveFileBuilder(log::Logger& log) : m_log(log) {}
 
 //------------------------------------------------------------------------------
 // append
 //------------------------------------------------------------------------------
 template<typename T>
-std::unique_ptr<T> ArchiveFileBuilder<T>::append(
-  const T &tapeFile) {
-
+std::unique_ptr<T> ArchiveFileBuilder<T>::append(const T& tapeFile) {
   // If there is currently no ArchiveFile object under construction
-  if(nullptr == m_archiveFile.get()) {
+  if (nullptr == m_archiveFile.get()) {
     // If the tape file represents an ArchiveFile object with no tape files
-    if(tapeFile.tapeFiles.empty()) {
+    if (tapeFile.tapeFiles.empty()) {
       // Archive file is already complete
       return std::make_unique<T>(tapeFile);
     }
 
     // If the tape file exists then it must be alone
-    if(tapeFile.tapeFiles.size() != 1) {
-      throw exception::Exception("Expected exactly one tape file to be appended at a time: actual=" + std::to_string(tapeFile.tapeFiles.size()));
+    if (tapeFile.tapeFiles.size() != 1) {
+      throw exception::Exception("Expected exactly one tape file to be appended at a time: actual="
+                                 + std::to_string(tapeFile.tapeFiles.size()));
     }
 
     // Start constructing one
@@ -132,7 +127,7 @@ std::unique_ptr<T> ArchiveFileBuilder<T>::append(
   }
 
   // If the tape file represents an ArchiveFile object with no tape files
-  if(tapeFile.tapeFiles.empty()) {
+  if (tapeFile.tapeFiles.empty()) {
     // The ArchiveFile object under construction is complete,
     // therefore return it and start the construction of the next
     std::unique_ptr<T> tmp;
@@ -143,12 +138,12 @@ std::unique_ptr<T> ArchiveFileBuilder<T>::append(
 
   // If the tape file to be appended belongs to the ArchiveFile object
   // currently under construction
-  if(tapeFile.archiveFileID == m_archiveFile->archiveFileID) {
-
+  if (tapeFile.archiveFileID == m_archiveFile->archiveFileID) {
     // The tape file must exist and must be alone
-    if(tapeFile.tapeFiles.size() != 1) {
-      throw exception::Exception("Expected exactly one tape file to be appended at a time: actual=" +
-                                 std::to_string(tapeFile.tapeFiles.size()) + " archiveFileID=" + std::to_string(tapeFile.archiveFileID));
+    if (tapeFile.tapeFiles.size() != 1) {
+      throw exception::Exception("Expected exactly one tape file to be appended at a time: actual="
+                                 + std::to_string(tapeFile.tapeFiles.size())
+                                 + " archiveFileID=" + std::to_string(tapeFile.archiveFileID));
     }
 
     // Append the tape file
@@ -173,7 +168,7 @@ std::unique_ptr<T> ArchiveFileBuilder<T>::append(
 // getArchiveFile
 //------------------------------------------------------------------------------
 template<typename T>
-T *ArchiveFileBuilder<T>::getArchiveFile() {
+T* ArchiveFileBuilder<T>::getArchiveFile() {
   return m_archiveFile.get();
 }
 
@@ -185,5 +180,4 @@ void ArchiveFileBuilder<T>::clear() {
   m_archiveFile.reset();
 }
 
-
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

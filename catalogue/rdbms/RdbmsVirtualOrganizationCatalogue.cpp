@@ -15,14 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <list>
-#include <memory>
-#include <string>
+#include "catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.hpp"
 
 #include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
-#include "catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
@@ -30,31 +27,40 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <list>
+#include <memory>
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsVirtualOrganizationCatalogue::RdbmsVirtualOrganizationCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue):
-  m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsVirtualOrganizationCatalogue::RdbmsVirtualOrganizationCatalogue(log::Logger& log,
+                                                                     std::shared_ptr<rdbms::ConnPool> connPool,
+                                                                     RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
-void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::dataStructures::SecurityIdentity &admin,
-  const common::dataStructures::VirtualOrganization &vo) {
-  if (vo.name.empty()){
+void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(
+  const common::dataStructures::SecurityIdentity& admin,
+  const common::dataStructures::VirtualOrganization& vo) {
+  if (vo.name.empty()) {
     throw UserSpecifiedAnEmptyStringVo("Cannot create virtual organization because the name is an empty string");
   }
   if (vo.comment.empty()) {
-    throw UserSpecifiedAnEmptyStringComment("Cannot create virtual organization because the comment is an empty string");
+    throw UserSpecifiedAnEmptyStringComment(
+      "Cannot create virtual organization because the comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(vo.comment, &m_log);
   if (vo.diskInstanceName.empty()) {
-    throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create virtual organization because the disk instance is an empty string");
+    throw UserSpecifiedAnEmptyStringDiskInstanceName(
+      "Cannot create virtual organization because the disk instance is an empty string");
   }
 
   auto conn = m_connPool->getConn();
   if (RdbmsCatalogueUtils::virtualOrganizationExists(conn, vo.name)) {
-    throw exception::UserError(std::string("Cannot create vo : ") +
-      vo.name + " because it already exists");
+    throw exception::UserError(std::string("Cannot create vo : ") + vo.name + " because it already exists");
   }
-  if(vo.isRepackVo && RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(conn)) {
+  if (vo.isRepackVo && RdbmsCatalogueUtils::defaultVirtualOrganizationForRepackExists(conn)) {
     throw exception::UserError("There already exists a default VO for repacking");
   }
 
@@ -106,12 +112,13 @@ void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::
   stmt.bindUint64(":VIRTUAL_ORGANIZATION_ID", virtualOrganizationId);
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", vo.name);
 
-  stmt.bindUint64(":READ_MAX_DRIVES",vo.readMaxDrives);
-  stmt.bindUint64(":WRITE_MAX_DRIVES",vo.writeMaxDrives);
+  stmt.bindUint64(":READ_MAX_DRIVES", vo.readMaxDrives);
+  stmt.bindUint64(":WRITE_MAX_DRIVES", vo.writeMaxDrives);
   stmt.bindUint64(":MAX_FILE_SIZE", vo.maxFileSize);
 
   stmt.bindString(":DISK_INSTANCE_NAME", vo.diskInstanceName);
-  stmt.bindBool(":IS_REPACK_VO", vo.isRepackVo ? std::optional<bool>(true) : std::nullopt); // Pass NULL instead of 0 for IS_REPACK_VO
+  stmt.bindBool(":IS_REPACK_VO",
+                vo.isRepackVo ? std::optional<bool>(true) : std::nullopt);  // Pass NULL instead of 0 for IS_REPACK_VO
 
   stmt.bindString(":USER_COMMENT", trimmedComment);
 
@@ -128,17 +135,17 @@ void RdbmsVirtualOrganizationCatalogue::createVirtualOrganization(const common::
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
 }
 
-void RdbmsVirtualOrganizationCatalogue::deleteVirtualOrganization(const std::string &voName) {
+void RdbmsVirtualOrganizationCatalogue::deleteVirtualOrganization(const std::string& voName) {
   auto conn = m_connPool->getConn();
 
-  if(virtualOrganizationIsUsedByStorageClasses(conn, voName)) {
-    throw UserSpecifiedStorageClassUsedByArchiveRoutes(std::string("The Virtual Organization ") + voName +
-      " is being used by one or more storage classes");
+  if (virtualOrganizationIsUsedByStorageClasses(conn, voName)) {
+    throw UserSpecifiedStorageClassUsedByArchiveRoutes(std::string("The Virtual Organization ") + voName
+                                                       + " is being used by one or more storage classes");
   }
 
-  if(virtualOrganizationIsUsedByTapepools(conn, voName)) {
-    throw UserSpecifiedStorageClassUsedByArchiveFiles(std::string("The Virtual Organization ") + voName +
-      " is being used by one or more Tapepools");
+  if (virtualOrganizationIsUsedByTapepools(conn, voName)) {
+    throw UserSpecifiedStorageClassUsedByArchiveFiles(std::string("The Virtual Organization ") + voName
+                                                      + " is being used by one or more Tapepools");
   }
 
   const char* const sql = R"SQL(
@@ -152,14 +159,15 @@ void RdbmsVirtualOrganizationCatalogue::deleteVirtualOrganization(const std::str
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
 
   stmt.executeNonQuery();
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot delete Virtual Organization : ") +
-      voName + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot delete Virtual Organization : ") + voName
+                               + " because it does not exist");
   }
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
 }
 
-std::list<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizationCatalogue::getVirtualOrganizations() const {
+std::list<common::dataStructures::VirtualOrganization>
+RdbmsVirtualOrganizationCatalogue::getVirtualOrganizations() const {
   std::list<common::dataStructures::VirtualOrganization> virtualOrganizations;
   const char* const sql = R"SQL(
     SELECT
@@ -213,14 +221,15 @@ std::list<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizationC
   return virtualOrganizations;
 }
 
-common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::getVirtualOrganizationOfTapepool(
-  const std::string & tapepoolName) const {
+common::dataStructures::VirtualOrganization
+RdbmsVirtualOrganizationCatalogue::getVirtualOrganizationOfTapepool(const std::string& tapepoolName) const {
   auto conn = m_connPool->getConn();
-  return getVirtualOrganizationOfTapepool(conn,tapepoolName);
+  return getVirtualOrganizationOfTapepool(conn, tapepoolName);
 }
 
-common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::getVirtualOrganizationOfTapepool(
-  rdbms::Conn & conn, const std::string & tapepoolName) const {
+common::dataStructures::VirtualOrganization
+RdbmsVirtualOrganizationCatalogue::getVirtualOrganizationOfTapepool(rdbms::Conn& conn,
+                                                                    const std::string& tapepoolName) const {
   const char* const sql = R"SQL(
     SELECT
       VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,
@@ -251,10 +260,12 @@ common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::g
       TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":TAPE_POOL_NAME",tapepoolName);
+  stmt.bindString(":TAPE_POOL_NAME", tapepoolName);
   auto rset = stmt.executeQuery();
-  if(!rset.next()){
-    throw exception::UserError(std::string("In RdbmsCatalogue::getVirtualOrganizationsOfTapepool() unable to find the Virtual Organization of the tapepool ") + tapepoolName + ".");
+  if (!rset.next()) {
+    throw exception::UserError(std::string("In RdbmsCatalogue::getVirtualOrganizationsOfTapepool() unable to find the "
+                                           "Virtual Organization of the tapepool ")
+                               + tapepoolName + ".");
   }
   common::dataStructures::VirtualOrganization virtualOrganization;
 
@@ -274,16 +285,17 @@ common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::g
   return virtualOrganization;
 }
 
-common::dataStructures::VirtualOrganization RdbmsVirtualOrganizationCatalogue::getCachedVirtualOrganizationOfTapepool(
-  const std::string& tapepoolName) const {
-  auto l_getNonCachedValue = [this,&tapepoolName] {
+common::dataStructures::VirtualOrganization
+RdbmsVirtualOrganizationCatalogue::getCachedVirtualOrganizationOfTapepool(const std::string& tapepoolName) const {
+  auto l_getNonCachedValue = [this, &tapepoolName] {
     auto conn = m_connPool->getConn();
-    return getVirtualOrganizationOfTapepool(conn,tapepoolName);
+    return getVirtualOrganizationOfTapepool(conn, tapepoolName);
   };
-  return m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.getCachedValue(tapepoolName,l_getNonCachedValue).value;
+  return m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.getCachedValue(tapepoolName, l_getNonCachedValue).value;
 }
 
-std::optional<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizationCatalogue::getDefaultVirtualOrganizationForRepack() const {
+std::optional<common::dataStructures::VirtualOrganization>
+RdbmsVirtualOrganizationCatalogue::getDefaultVirtualOrganizationForRepack() const {
   auto conn = m_connPool->getConn();
   const char* const sql = R"SQL(
     SELECT
@@ -312,7 +324,7 @@ std::optional<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizat
   )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
-  if(!rset.next()){
+  if (!rset.next()) {
     return std::nullopt;
   }
   common::dataStructures::VirtualOrganization virtualOrganization;
@@ -331,7 +343,7 @@ std::optional<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizat
   virtualOrganization.diskInstanceName = rset.columnString("DISK_INSTANCE_NAME");
   virtualOrganization.isRepackVo = rset.columnOptionalBool("IS_REPACK_VO").value_or(false);
 
-  if(rset.next()){
+  if (rset.next()) {
     throw exception::UserError("Found more that one default Virtual Organization for repack.");
   }
 
@@ -339,8 +351,9 @@ std::optional<common::dataStructures::VirtualOrganization> RdbmsVirtualOrganizat
 }
 
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationName(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &currentVoName,
-  const std::string &newVoName) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& currentVoName,
+  const std::string& newVoName) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE VIRTUAL_ORGANIZATION SET
@@ -352,8 +365,9 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationName(
       VIRTUAL_ORGANIZATION_NAME = :CUR_VIRTUAL_ORGANIZATION_NAME
   )SQL";
   auto conn = m_connPool->getConn();
-  if((newVoName != currentVoName) && RdbmsCatalogueUtils::virtualOrganizationExists(conn,newVoName)){
-    throw exception::UserError(std::string("Cannot modify the virtual organization name ") + currentVoName +". The new name : " + newVoName+" already exists in the database.");
+  if ((newVoName != currentVoName) && RdbmsCatalogueUtils::virtualOrganizationExists(conn, newVoName)) {
+    throw exception::UserError(std::string("Cannot modify the virtual organization name ") + currentVoName
+                               + ". The new name : " + newVoName + " already exists in the database.");
   }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":NEW_VIRTUAL_ORGANIZATION_NAME", newVoName);
@@ -363,16 +377,18 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationName(
   stmt.bindString(":CUR_VIRTUAL_ORGANIZATION_NAME", currentVoName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify virtual organization : ") + currentVoName +
-      " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify virtual organization : ") + currentVoName
+                               + " because it does not exist");
   }
 
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
 }
 
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationReadMaxDrives(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t readMaxDrives) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& voName,
+  const uint64_t readMaxDrives) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE VIRTUAL_ORGANIZATION SET
@@ -393,16 +409,18 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationReadMaxDrives(
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
-      " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName
+                               + " because it does not exist");
   }
 
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
 }
 
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationWriteMaxDrives(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t writeMaxDrives) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& voName,
+  const uint64_t writeMaxDrives) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE VIRTUAL_ORGANIZATION SET
@@ -423,16 +441,18 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationWriteMaxDrives(
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
-      " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName
+                               + " because it does not exist");
   }
 
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
 }
 
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationMaxFileSize(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const uint64_t maxFileSize) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& voName,
+  const uint64_t maxFileSize) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE VIRTUAL_ORGANIZATION SET
@@ -453,16 +473,18 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationMaxFileSize(
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
-      " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName
+                               + " because it does not exist");
   }
 
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
 }
 
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationComment(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &comment) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& voName,
+  const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -484,14 +506,16 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationComment(
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
-      " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName
+                               + " because it does not exist");
   }
 }
 
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationDiskInstanceName(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const std::string &diskInstance) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& voName,
+  const std::string& diskInstance) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE VIRTUAL_ORGANIZATION SET
@@ -512,14 +536,16 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationDiskInstanceNam
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
-      " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName
+                               + " because it does not exist");
   }
 }
 
 void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationIsRepackVo(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &voName, const bool isRepackVo) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& voName,
+  const bool isRepackVo) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE VIRTUAL_ORGANIZATION SET
@@ -540,26 +566,27 @@ void RdbmsVirtualOrganizationCatalogue::modifyVirtualOrganizationIsRepackVo(
     // Nothing to change here
     return;
   }
-  if(isRepackVo && repackVoNameOpt.has_value() && repackVoNameOpt.value() != voName) {
+  if (isRepackVo && repackVoNameOpt.has_value() && repackVoNameOpt.value() != voName) {
     throw exception::UserError("There already exists a default VO for repacking");
   }
 
   auto stmt = conn.createStmt(sql);
-  stmt.bindBool(":IS_REPACK_VO", isRepackVo ? std::optional<bool>(true) : std::nullopt); // Pass NULL instead of 0 for IS_REPACK_VO
+  stmt.bindBool(":IS_REPACK_VO",
+                isRepackVo ? std::optional<bool>(true) : std::nullopt);  // Pass NULL instead of 0 for IS_REPACK_VO
   stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
   stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
   stmt.bindUint64(":LAST_UPDATE_TIME", now);
   stmt.bindString(":VIRTUAL_ORGANIZATION_NAME", voName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName +
-                                " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify virtual organization : ") + voName
+                               + " because it does not exist");
   }
 }
 
-bool RdbmsVirtualOrganizationCatalogue::virtualOrganizationIsUsedByStorageClasses(rdbms::Conn &conn,
-  const std::string &voName) const {
+bool RdbmsVirtualOrganizationCatalogue::virtualOrganizationIsUsedByStorageClasses(rdbms::Conn& conn,
+                                                                                  const std::string& voName) const {
   const char* const sql = R"SQL(
     SELECT
       VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME
@@ -578,8 +605,8 @@ bool RdbmsVirtualOrganizationCatalogue::virtualOrganizationIsUsedByStorageClasse
   return rset.next();
 }
 
-bool RdbmsVirtualOrganizationCatalogue::virtualOrganizationIsUsedByTapepools(rdbms::Conn &conn,
-  const std::string &voName) const {
+bool RdbmsVirtualOrganizationCatalogue::virtualOrganizationIsUsedByTapepools(rdbms::Conn& conn,
+                                                                             const std::string& voName) const {
   const char* const sql = R"SQL(
     SELECT
       VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME
@@ -598,5 +625,4 @@ bool RdbmsVirtualOrganizationCatalogue::virtualOrganizationIsUsedByTapepools(rdb
   return rset.next();
 }
 
-
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

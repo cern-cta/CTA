@@ -15,21 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
-#include <string>
+#include "castor/tape/tapeserver/file/EnstoreLargeReadSession.hpp"
 
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
-#include "castor/tape/tapeserver/file/EnstoreLargeReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "common/exception/Exception.hpp"
+
+#include <memory>
+#include <string>
 
 namespace castor::tape::tapeFile {
 
 EnstoreLargeReadSession::EnstoreLargeReadSession(tapeserver::drive::DriveInterface& drive,
                                                  const tapeserver::daemon::VolumeInfo& volInfo,
-                                                 const bool useLbp) :
-ReadSession(drive, volInfo, useLbp) {
+                                                 const bool useLbp)
+    : ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
   m_detectedLbp = false;
@@ -40,8 +41,7 @@ ReadSession(drive, volInfo, useLbp) {
   // Throw away the end and validate the beggining as a normal VOL1
   size_t blockSize = 256 * 1024;
   char* data = new char[blockSize + 1];
-  if (size_t bytes_read = m_drive.readBlock(data, blockSize);
-      bytes_read < sizeof(vol1)) {
+  if (size_t bytes_read = m_drive.readBlock(data, blockSize); bytes_read < sizeof(vol1)) {
     delete[] data;
     throw cta::exception::Exception("Too few bytes read from label");
   }

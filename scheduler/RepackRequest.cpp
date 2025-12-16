@@ -15,13 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include "RepackRequest.hpp"
 
 namespace cta {
 
-const cta::common::dataStructures::RepackInfo cta::RepackRequest::getRepackInfo() const
-{
+const cta::common::dataStructures::RepackInfo cta::RepackRequest::getRepackInfo() const {
   return m_dbReq->repackInfo;
 }
 
@@ -29,6 +27,4 @@ void RepackRequest::fail() {
   m_dbReq->fail();
 }
 
-
-} // namespace cta
-
+}  // namespace cta

@@ -15,17 +15,19 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once 
+#pragma once
 
 #include "common/exception/Exception.hpp"
+
 #include <string>
 
 namespace cta::exception {
 
-class EndOfFile: public cta::exception::Exception {
+class EndOfFile : public cta::exception::Exception {
 public:
   explicit EndOfFile(const std::string& w) : cta::exception::Exception(w) {}
+
   ~EndOfFile() final = default;
 };
-    
-} // namespace cta::exception
+
+}  // namespace cta::exception

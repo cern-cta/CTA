@@ -15,10 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <iomanip>
-
 #include "ChecksumBlob.hpp"
+
 #include "ChecksumBlobSerDeser.hpp"
+
+#include <iomanip>
 
 namespace cta::checksum {
 
@@ -36,9 +37,9 @@ void ChecksumBlob::insert(ChecksumType type, const std::string& value) {
   }
   // clang-format on
   if (value.length() > expectedLength) {
-    throw exception::ChecksumValueMismatch("Checksum length type=" + ChecksumTypeName.at(type) +
-                                           " expected=" + std::to_string(expectedLength) +
-                                           " actual=" + std::to_string(value.length()));
+    throw exception::ChecksumValueMismatch("Checksum length type=" + ChecksumTypeName.at(type)
+                                           + " expected=" + std::to_string(expectedLength)
+                                           + " actual=" + std::to_string(value.length()));
   }
   // Pad bytearray to expected length with trailing zeros
   m_cs[type] = value + std::string(expectedLength - value.length(), 0);
@@ -68,28 +69,28 @@ void ChecksumBlob::validate(ChecksumType type, const std::string& value) const {
     throw exception::ChecksumTypeMismatch("Checksum type " + ChecksumTypeName.at(type) + " not found");
   }
   if (cs->second != value) {
-    throw exception::ChecksumValueMismatch("Checksum value expected=0x" + ByteArrayToHex(value) + " actual=0x" +
-                                           ByteArrayToHex(cs->second));
+    throw exception::ChecksumValueMismatch("Checksum value expected=0x" + ByteArrayToHex(value) + " actual=0x"
+                                           + ByteArrayToHex(cs->second));
   }
 }
 
 void ChecksumBlob::validate(const ChecksumBlob& blob) const {
   if (m_cs.size() != blob.m_cs.size()) {
-    throw exception::ChecksumBlobSizeMismatch(
-      "Checksum blob size does not match. expected=" + std::to_string(m_cs.size()) +
-      " actual=" + std::to_string(blob.m_cs.size()));
+    throw exception::ChecksumBlobSizeMismatch("Checksum blob size does not match. expected="
+                                              + std::to_string(m_cs.size())
+                                              + " actual=" + std::to_string(blob.m_cs.size()));
   }
 
   auto it1 = m_cs.begin();
   auto it2 = blob.m_cs.begin();
   for (; it1 != m_cs.end(); ++it1, ++it2) {
     if (it1->first != it2->first) {
-      throw exception::ChecksumTypeMismatch("Checksum type expected=" + ChecksumTypeName.at(it1->first) +
-                                            " actual=" + ChecksumTypeName.at(it2->first));
+      throw exception::ChecksumTypeMismatch("Checksum type expected=" + ChecksumTypeName.at(it1->first)
+                                            + " actual=" + ChecksumTypeName.at(it2->first));
     }
     if (it1->second != it2->second) {
-      throw exception::ChecksumValueMismatch("Checksum value expected=0x" + ByteArrayToHex(it1->second) + " actual=0x" +
-                                             ByteArrayToHex(it2->second));
+      throw exception::ChecksumValueMismatch("Checksum value expected=0x" + ByteArrayToHex(it1->second) + " actual=0x"
+                                             + ByteArrayToHex(it2->second));
     }
   }
 }

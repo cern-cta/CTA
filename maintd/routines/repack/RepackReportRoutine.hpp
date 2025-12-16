@@ -27,7 +27,7 @@ class Scheduler;
 
 class RepackReportRoutine : public IRoutine {
 public:
-  RepackReportRoutine(cta::log::LogContext &lc, cta::Scheduler &scheduler, int timeout);
+  RepackReportRoutine(cta::log::LogContext& lc, cta::Scheduler& scheduler, int timeout);
 
   void execute() final;
   std::string getName() const final;
@@ -37,7 +37,7 @@ private:
   void reportBatch(const std::string& reportingType, GetBatchFunc getBatchFunc) const;
 
   cta::log::LogContext& m_lc;
-  cta::Scheduler & m_scheduler;
+  cta::Scheduler& m_scheduler;
   int m_softTimeout;
 };
-} // namespace cta::maintd
+}  // namespace cta::maintd

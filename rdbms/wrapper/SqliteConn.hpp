@@ -18,8 +18,8 @@
 #pragma once
 
 #include "common/process/threading/Mutex.hpp"
-#include "rdbms/wrapper/ConnWrapper.hpp"
 #include "rdbms/Login.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 
 #include <sqlite3.h>
 

@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <string>
-
 #include "catalogue/rdbms/RdbmsStorageClassCatalogue.hpp"
+
+#include <string>
 
 namespace cta::catalogue {
 
@@ -27,12 +27,13 @@ class RdbmsCatalogue;
 
 class SqliteStorageClassCatalogue : public RdbmsStorageClassCatalogue {
 public:
-  SqliteStorageClassCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  SqliteStorageClassCatalogue(log::Logger& log,
+                              std::shared_ptr<rdbms::ConnPool> connPool,
+                              RdbmsCatalogue* rdbmsCatalogue);
   ~SqliteStorageClassCatalogue() override = default;
 
 private:
-  uint64_t getNextStorageClassId(rdbms::Conn &conn) override;
+  uint64_t getNextStorageClassId(rdbms::Conn& conn) override;
 };  // class SqliteStorageClassCatalogue
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

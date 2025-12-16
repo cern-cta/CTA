@@ -51,8 +51,11 @@ public:
    * @param value The value of the parameter.
    * @param source The source from which the parameter was gotten.
    */
-  virtual void createTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
-    const std::string &keyName, const std::string &value, const std::string &source) = 0;
+  virtual void createTapeDriveConfig(const std::string& tapeDriveName,
+                                     const std::string& category,
+                                     const std::string& keyName,
+                                     const std::string& value,
+                                     const std::string& source) = 0;
 
   /**
    * Gets all Drive Configurations of all TapeDrives.
@@ -67,7 +70,8 @@ public:
    * @param schedulerBackendName name of the scheduler backend
    * @return list of drive names
    */
-  virtual std::list<std::string> getTapeDriveNamesForSchedulerBackend(const std::string &schedulerBackendName) const = 0;
+  virtual std::list<std::string>
+  getTapeDriveNamesForSchedulerBackend(const std::string& schedulerBackendName) const = 0;
 
   /**
    * Gets the Key and Names of configurations of all TapeDrives
@@ -83,8 +87,11 @@ public:
    * @param value The value of the parameter.
    * @param source The source from which the parameter was gotten.
    */
-  virtual void modifyTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
-    const std::string &keyName, const std::string &value, const std::string &source) = 0;
+  virtual void modifyTapeDriveConfig(const std::string& tapeDriveName,
+                                     const std::string& category,
+                                     const std::string& keyName,
+                                     const std::string& value,
+                                     const std::string& source) = 0;
 
   /**
    * Gets a specified parameter of the configuration for a certain Tape Drive
@@ -92,14 +99,14 @@ public:
    * @param keyName The key of the parameter.
    * @return Returns the category, value and source of a parameter of the configuarion
    */
-  virtual std::optional<std::tuple<std::string, std::string, std::string>> getTapeDriveConfig(const std::string &tapeDriveName,
-    const std::string &keyName) const = 0;
+  virtual std::optional<std::tuple<std::string, std::string, std::string>>
+  getTapeDriveConfig(const std::string& tapeDriveName, const std::string& keyName) const = 0;
 
   /**
    * Deletes the entry of a Drive Configuration
    * @param tapeDriveName The name of the tape drive.
    */
-  virtual void deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) = 0;
+  virtual void deleteTapeDriveConfig(const std::string& tapeDriveName, const std::string& keyName) = 0;
 };  // class TapeDriveCatalogue
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

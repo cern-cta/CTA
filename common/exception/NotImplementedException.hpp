@@ -19,6 +19,7 @@
 
 // Include Files
 #include "common/exception/Exception.hpp"
+
 #include <source_location>
 
 namespace cta::exception {
@@ -41,4 +42,4 @@ private:
   }
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

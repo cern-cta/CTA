@@ -18,13 +18,13 @@
 #pragma once
 
 #include "cmdline/CtaAdminParsedCmd.hpp"
-#include "version.h"
-#include <grpcpp/grpcpp.h>
-
-#include "cta_frontend.pb.h"
-#include "cta_frontend.grpc.pb.h"
 #include "common/config/Config.hpp"
 #include "common/log/FileLogger.hpp"
+#include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
+#include "version.h"
+
+#include <grpcpp/grpcpp.h>
 
 namespace cta::admin {
 

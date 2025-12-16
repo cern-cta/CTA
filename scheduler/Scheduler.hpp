@@ -17,15 +17,8 @@
 
 #pragma once
 
-#include <list>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <utility>
-
 #include "catalogue/TapeDrivesCatalogueState.hpp"
-
+#include "common/Timer.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
@@ -44,21 +37,24 @@
 #include "common/dataStructures/TestSourceType.hpp"
 #include "common/dataStructures/UpdateFileStorageClassRequest.hpp"
 #include "common/dataStructures/WriteTestResult.hpp"
-#include "common/Timer.hpp"
-
-#include "disk/DiskFile.hpp"
-#include "disk/DiskReporter.hpp"
-#include "disk/DiskReporterFactory.hpp"
-
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/TimingList.hpp"
+#include "disk/DiskFile.hpp"
+#include "disk/DiskReporter.hpp"
+#include "disk/DiskReporterFactory.hpp"
+#include "scheduler/IScheduler.hpp"
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "scheduler/IScheduler.hpp"
-
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
+
+#include <list>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
 
 namespace cta {
 
@@ -365,8 +361,7 @@ private:
   void checkNeededEnvironmentVariables();
 
 public:
-
-    /**
+  /**
    * Return the name of the archive mount policy with highest priority from the mountPolicies passed in parameter
    * The aim is to do the same as ArchiveQueue::getJobsSummary() regarding the priority
    * @param mountPolicies the list of mount policies in order to create the best one.
@@ -409,7 +404,7 @@ public:
    * @return a pair with the max retrieve priority and minimum archive age
    */
   static std::pair<uint64_t, uint64_t>
-  getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
+  getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
 
   /**
    * Given a list of mount policies, it compares all of them to extract both the maximum retrieve priority and the minimum
@@ -418,19 +413,20 @@ public:
    * @return a pair with the max retrieve priority and minimum retrieve age
    */
   static std::pair<uint64_t, uint64_t>
-  getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy> &mountPolicies);
+  getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
 
   /**
    * After TapeMountDecisionInfo is received from the Scheduler Database
    * with Potential Mounts we enrich this with information about Existing and Next Mounts
    */
-  void getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInfo &tmdi, log::LogContext &logContext);
+  void getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi, log::LogContext& logContext);
   /**
    * After TapeMountDecisionInfo is received from the Scheduler Database
    * we iterate the Potential Mounts and compare the Mount Polisies with those in the catalogue to
    * select only eligible Mount Policy Names
    */
-  void fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo &tmdi, log::LogContext &logContext);
+  void fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
+                                              log::LogContext& logContext);
 
   /**
    * An internal helper function to build a list of mount policies with the map of the
@@ -441,9 +437,9 @@ public:
    * @return the list of MountPolicies that are in the map
    */
 
-  std::list <common::dataStructures::MountPolicy>
-  getMountPoliciesInQueue(const std::list <common::dataStructures::MountPolicy> &mountPoliciesInCatalogue,
-                          const std::map <std::string, uint64_t> &queueMountPolicyMap);
+  std::list<common::dataStructures::MountPolicy>
+  getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
+                          const std::map<std::string, uint64_t>& queueMountPolicyMap);
 
   /**
    * Run the mount decision logic lock free, so we have no contention in the

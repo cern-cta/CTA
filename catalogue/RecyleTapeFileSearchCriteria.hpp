@@ -71,8 +71,8 @@ struct RecycleTapeFileSearchCriteria {
   /**
    * The name of the virtual organization
    */
-   std::optional<std::string> vo;
+  std::optional<std::string> vo;
 
-}; // struct TapeFileSearchCriteria
+};  // struct TapeFileSearchCriteria
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

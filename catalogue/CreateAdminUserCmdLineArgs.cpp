@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/CreateAdminUserCmdLineArgs.hpp"
+
 #include "common/exception/CommandLineNotParsed.hpp"
 
 #include <getopt.h>

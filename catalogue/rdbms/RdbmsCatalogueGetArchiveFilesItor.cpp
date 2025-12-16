@@ -15,8 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueGetArchiveFilesItor.hpp"
+
+#include "catalogue/CatalogueItor.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
@@ -25,58 +26,56 @@
 namespace cta::catalogue {
 
 namespace {
-  /**
+/**
    * Populates an ArchiveFile object with the current column values of the
    * specified result set.
    *
    * @param rset The result set to be used to populate the ArchiveFile object.
    * @return The populated ArchiveFile object.
    */
-  common::dataStructures::ArchiveFile populateArchiveFile(const rdbms::Rset &rset) {
-    common::dataStructures::ArchiveFile archiveFile;
+common::dataStructures::ArchiveFile populateArchiveFile(const rdbms::Rset& rset) {
+  common::dataStructures::ArchiveFile archiveFile;
 
-    archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
-    archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
-    archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
-    archiveFile.diskFileInfo.owner_uid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_UID"));
-    archiveFile.diskFileInfo.gid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_GID"));
-    archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-    archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"),
-      static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
-    archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
-    archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
-    archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
+  archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+  archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+  archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
+  archiveFile.diskFileInfo.owner_uid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_UID"));
+  archiveFile.diskFileInfo.gid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_GID"));
+  archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
+  archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"),
+                                                   static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
+  archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
+  archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
+  archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
 
-    // If there is a tape file
-    if (!rset.columnIsNull("VID")) {
-      common::dataStructures::TapeFile tapeFile;
-      tapeFile.vid = rset.columnString("VID");
-      tapeFile.fSeq = rset.columnUint64("FSEQ");
-      tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-      tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
-      tapeFile.copyNb = static_cast<uint8_t>(rset.columnUint64("COPY_NB"));
-      tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
-      archiveFile.tapeFiles.push_back(tapeFile);
-    }
-
-    return archiveFile;
+  // If there is a tape file
+  if (!rset.columnIsNull("VID")) {
+    common::dataStructures::TapeFile tapeFile;
+    tapeFile.vid = rset.columnString("VID");
+    tapeFile.fSeq = rset.columnUint64("FSEQ");
+    tapeFile.blockId = rset.columnUint64("BLOCK_ID");
+    tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+    tapeFile.copyNb = static_cast<uint8_t>(rset.columnUint64("COPY_NB"));
+    tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
+    tapeFile.checksumBlob = archiveFile.checksumBlob;  // Duplicated for convenience
+    archiveFile.tapeFiles.push_back(tapeFile);
   }
-} // anonymous namespace
+
+  return archiveFile;
+}
+}  // anonymous namespace
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
-  log::Logger &log,
-  rdbms::Conn &&conn,
-  const TapeFileSearchCriteria &searchCriteria,
-  const std::string &tempDiskFxidsTableName) :
-  m_log(log),
-  m_searchCriteria(searchCriteria),
-  m_conn(std::move(conn)),
-  m_archiveFileBuilder(log)
-{
+RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(log::Logger& log,
+                                                                     rdbms::Conn&& conn,
+                                                                     const TapeFileSearchCriteria& searchCriteria,
+                                                                     const std::string& tempDiskFxidsTableName)
+    : m_log(log),
+      m_searchCriteria(searchCriteria),
+      m_conn(std::move(conn)),
+      m_archiveFileBuilder(log) {
   std::string sql = R"SQL(
     SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
@@ -109,23 +108,20 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
       TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
   )SQL";
 
-  if(searchCriteria.archiveFileId.has_value()  ||
-     searchCriteria.diskInstance.has_value()   ||
-     searchCriteria.vid.has_value()            ||
-     searchCriteria.diskFileIds.has_value()    ||
-     searchCriteria.fSeq.has_value()) {
+  if (searchCriteria.archiveFileId.has_value() || searchCriteria.diskInstance.has_value()
+      || searchCriteria.vid.has_value() || searchCriteria.diskFileIds.has_value() || searchCriteria.fSeq.has_value()) {
     sql += R"SQL( WHERE )SQL";
   }
 
   bool addedAWhereConstraint = false;
 
-  if(searchCriteria.archiveFileId.has_value()) {
+  if (searchCriteria.archiveFileId.has_value()) {
     sql += R"SQL(
       ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.diskInstance.has_value()) {
+  if (searchCriteria.diskInstance.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -134,7 +130,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.vid.has_value()) {
+  if (searchCriteria.vid.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -152,7 +148,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.diskFileIds.has_value()) {
+  if (searchCriteria.diskFileIds.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -162,7 +158,7 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   // Order by FSEQ if we are listing the contents of a tape,
   // by DISK_FILE_ID if listing the contents of a DISK_INSTANCE
   // else order by archive file ID
-  if(searchCriteria.vid.has_value()) {
+  if (searchCriteria.vid.has_value()) {
     sql += R"SQL(
       ORDER BY FSEQ
     )SQL";
@@ -177,17 +173,17 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   }
 
   m_stmt = m_conn.createStmt(sql);
-  if(searchCriteria.archiveFileId.has_value()) {
+  if (searchCriteria.archiveFileId.has_value()) {
     m_stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
   }
-  if(searchCriteria.diskInstance.has_value()) {
+  if (searchCriteria.diskInstance.has_value()) {
     m_stmt.bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
   }
-  if(searchCriteria.vid.has_value()) {
+  if (searchCriteria.vid.has_value()) {
     m_stmt.bindString(":VID", searchCriteria.vid.value());
   }
 
-  if(searchCriteria.fSeq.has_value()) {
+  if (searchCriteria.fSeq.has_value()) {
     m_stmt.bindUint64(":FSEQ", searchCriteria.fSeq.value());
   }
 
@@ -198,7 +194,9 @@ RdbmsCatalogueGetArchiveFilesItor::RdbmsCatalogueGetArchiveFilesItor(
   }
 
   m_rsetIsEmpty = !m_rset.next();
-  if(m_rsetIsEmpty) releaseDbResources();
+  if (m_rsetIsEmpty) {
+    releaseDbResources();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -223,9 +221,9 @@ void RdbmsCatalogueGetArchiveFilesItor::releaseDbResources() noexcept {
 bool RdbmsCatalogueGetArchiveFilesItor::hasMore() {
   m_hasMoreHasBeenCalled = true;
 
-  if(m_rsetIsEmpty) {
+  if (m_rsetIsEmpty) {
     // If there is an ArchiveFile object under construction
-    if(nullptr != m_archiveFileBuilder.getArchiveFile()) {
+    if (nullptr != m_archiveFileBuilder.getArchiveFile()) {
       return true;
     } else {
       return false;
@@ -239,17 +237,17 @@ bool RdbmsCatalogueGetArchiveFilesItor::hasMore() {
 // next
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesItor::next() {
-  if(!m_hasMoreHasBeenCalled) {
+  if (!m_hasMoreHasBeenCalled) {
     throw exception::Exception("hasMore() must be called before next()");
   }
   m_hasMoreHasBeenCalled = false;
 
   // If there are no more rows in the result set
-  if(m_rsetIsEmpty) {
+  if (m_rsetIsEmpty) {
     // There must be an ArchiveFile object currently under construction
-    if(nullptr == m_archiveFileBuilder.getArchiveFile()) {
+    if (nullptr == m_archiveFileBuilder.getArchiveFile()) {
       throw exception::Exception("next() was called with no more rows in the result set and no ArchiveFile object"
-        " under construction");
+                                 " under construction");
     }
 
     // Return the ArchiveFile object that must now be complete and clear the
@@ -259,26 +257,27 @@ common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesItor::next() {
     return tmp;
   }
 
-  while(true) {
+  while (true) {
     auto archiveFile = populateArchiveFile(m_rset);
 
     auto completeArchiveFile = m_archiveFileBuilder.append(archiveFile);
 
     m_rsetIsEmpty = !m_rset.next();
-    if(m_rsetIsEmpty) releaseDbResources();
+    if (m_rsetIsEmpty) {
+      releaseDbResources();
+    }
 
     // If the ArchiveFile object under construction is complete
     if (nullptr != completeArchiveFile.get()) {
-
       return *completeArchiveFile;
 
-    // The ArchiveFile object under construction is not complete
+      // The ArchiveFile object under construction is not complete
     } else {
-      if(m_rsetIsEmpty) {
+      if (m_rsetIsEmpty) {
         // There must be an ArchiveFile object currently under construction
         if (nullptr == m_archiveFileBuilder.getArchiveFile()) {
           throw exception::Exception("next() was called with no more rows in the result set and no ArchiveFile object"
-            " under construction");
+                                     " under construction");
         }
 
         // Return the ArchiveFile object that must now be complete and clear the
@@ -291,4 +290,4 @@ common::dataStructures::ArchiveFile RdbmsCatalogueGetArchiveFilesItor::next() {
   }
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

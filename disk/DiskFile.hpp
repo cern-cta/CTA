@@ -17,12 +17,14 @@
 
 #pragma once
 
-#include "common/utils/Regex.hpp"
 #include "common/process/threading/Mutex.hpp"
-#include <memory>
-#include <stdint.h>
-#include <set>
+#include "common/utils/Regex.hpp"
+
 #include <future>
+#include <memory>
+#include <set>
+#include <stdint.h>
+
 /*
  * This file only contains the interface declaration of the base classes
  * the real implementation, which depends on many includes is hidden in
@@ -32,189 +34,193 @@
 
 namespace cta::disk {
 
-    /**
+/**
      * Namespace managing the reading and writing of files to and from disk.
      */
 
-      class ReadFile;
-      class WriteFile;
-      class DiskFileRemover;
-      class Directory;
+class ReadFile;
+class WriteFile;
+class DiskFileRemover;
+class Directory;
 
-      /**
+/**
        * Factory class deciding on the type of read/write file type
        * based on the url passed
        */
-      class DiskFileFactory {
-        using Regex = cta::utils::Regex;
-      public:
-        explicit DiskFileFactory(uint16_t xrootTimeout);
-        ReadFile * createReadFile(const std::string & path);
-        WriteFile * createWriteFile(const std::string & path);
-      private:
-        Regex m_NoURLLocalFile{"^(localhost:|)(/.*)$"};
-        Regex m_URLLocalFile{"^file://(.*)$"};
-        Regex m_URLXrootFile{"^(root://.*)$"};
-        const uint16_t m_xrootTimeout;
-      };
+class DiskFileFactory {
+  using Regex = cta::utils::Regex;
 
-      class ReadFile {
-      public:
-        /**
+public:
+  explicit DiskFileFactory(uint16_t xrootTimeout);
+  ReadFile* createReadFile(const std::string& path);
+  WriteFile* createWriteFile(const std::string& path);
+
+private:
+  Regex m_NoURLLocalFile {"^(localhost:|)(/.*)$"};
+  Regex m_URLLocalFile {"^file://(.*)$"};
+  Regex m_URLXrootFile {"^(root://.*)$"};
+  const uint16_t m_xrootTimeout;
+};
+
+class ReadFile {
+public:
+  /**
          * Return the size of the file in byte. Can throw
          * @return
          */
-        virtual size_t size() const = 0;
+  virtual size_t size() const = 0;
 
-        /**
+  /**
          * Reads data from the file.
          * @param data: pointer to the data buffer
          * @param size: size of the buffer
          * @return The amount of data actually copied. Zero at end of file.
          */
-        virtual size_t read(void *data, const size_t size) const = 0;
+  virtual size_t read(void* data, const size_t size) const = 0;
 
-        /**
+  /**
          * Destructor of the ReadFile class. It closes the corresponding file descriptor.
          */
-        virtual ~ReadFile() = default;
+  virtual ~ReadFile() = default;
 
-        /**
+  /**
          * File protocol and path for logging
          */
-        virtual std::string URL() const { return m_URL; }
+  virtual std::string URL() const { return m_URL; }
 
-      protected:
-        /**
+protected:
+  /**
          * Storage for the URL
          */
-        std::string m_URL;
-      };
+  std::string m_URL;
+};
 
-      class WriteFile {
-      public:
-        /**
+class WriteFile {
+public:
+  /**
          * Writes a block of data on disk
          * @param data: buffer to copy the data from
          * @param size: size of the buffer
          */
-        virtual void write(const void *data, const size_t size) = 0;
+  virtual void write(const void* data, const size_t size) = 0;
 
-        /**
+  /**
          * Closes the corresponding file descriptor, which may throw an exception.
          */
-        virtual void close() = 0;
+  virtual void close() = 0;
 
-        /**
+  /**
          * Destructor of the WriteFile class.
          */
-        virtual ~WriteFile() = default;
+  virtual ~WriteFile() = default;
 
-        /**
+  /**
          * File protocol and path for logging
          */
-        virtual std::string URL() const { return m_URL; }
+  virtual std::string URL() const { return m_URL; }
 
-      protected:
-        /**
+protected:
+  /**
          * Storage for the URL
          */
-        std::string m_URL;
-      };
+  std::string m_URL;
+};
 
-      /**
+/**
        * This class is the base class to asynchronously delete
        * Disk Files
        */
-      class AsyncDiskFileRemover{
-      protected:
-	std::future<void> m_futureDeletion;
-      public:
-	virtual void asyncDelete() = 0;
-	virtual void wait() = 0;
-	virtual ~AsyncDiskFileRemover() = default;
-      };
+class AsyncDiskFileRemover {
+protected:
+  std::future<void> m_futureDeletion;
 
-      /**
+public:
+  virtual void asyncDelete() = 0;
+  virtual void wait() = 0;
+  virtual ~AsyncDiskFileRemover() = default;
+};
+
+/**
        * Factory class deciding which async disk file remover
        * to instanciate regarding the format of the path of the disk file
        */
-      class AsyncDiskFileRemoverFactory {
-	using Regex = cta::utils::Regex;
-      public:
-	AsyncDiskFileRemoverFactory();
-	AsyncDiskFileRemover * createAsyncDiskFileRemover(const std::string &path);
-      private:
-	      Regex m_URLLocalFile{"^file://(.*)$"};
-        Regex m_URLXrootdFile{"^(root://.*)$"};
-      };
+class AsyncDiskFileRemoverFactory {
+  using Regex = cta::utils::Regex;
 
-      class DiskFileRemover{
-      public:
-	virtual void remove() = 0;
-	virtual ~DiskFileRemover() = default;
-      protected:
-	std::string m_URL;
-      };
+public:
+  AsyncDiskFileRemoverFactory();
+  AsyncDiskFileRemover* createAsyncDiskFileRemover(const std::string& path);
 
-      /**
+private:
+  Regex m_URLLocalFile {"^file://(.*)$"};
+  Regex m_URLXrootdFile {"^(root://.*)$"};
+};
+
+class DiskFileRemover {
+public:
+  virtual void remove() = 0;
+  virtual ~DiskFileRemover() = default;
+
+protected:
+  std::string m_URL;
+};
+
+/**
        * Factory class deciding what type of Directory subclass
        * to instanciate based on the URL passed
        */
-      class DirectoryFactory{
-	using Regex = cta::utils::Regex;
-      public:
-	DirectoryFactory();
+class DirectoryFactory {
+  using Regex = cta::utils::Regex;
 
-	/**
+public:
+  DirectoryFactory();
+
+  /**
 	 * Returns the correct directory subclass regarding the path passed in parameter
 	 * @param path the path of the directory to manage
 	 * @return the Directory subclass instance regarding the path passed in parameter
 	 * @throws cta::exception if the path provided does not allow to determine which instance of
 	 * Directory will be instanciated.
 	 */
-	Directory * createDirectory(const std::string &path);
+  Directory* createDirectory(const std::string& path);
 
-      private:
-	      Regex m_URLLocalDirectory{"^file://(.*)$"};
-        Regex m_URLXrootDirectory{"^(root://.*)$"};
-      };
+private:
+  Regex m_URLLocalDirectory {"^file://(.*)$"};
+  Regex m_URLXrootDirectory {"^(root://.*)$"};
+};
 
-
-  class Directory {
-  public:
-    /**
+class Directory {
+public:
+  /**
      * Creates a directory
      * @throws an exception if the directory could not have been created
      */
-    virtual void mkdir() = 0;
-    /**
+  virtual void mkdir() = 0;
+  /**
      * Check if the directory exist
      * @return true if the directory exists, false otherwise
      */
-    virtual bool exist() = 0;
-    /**
+  virtual bool exist() = 0;
+  /**
      * Return all the names of the files present in the directory
      * @return
      */
-    virtual std::set<std::string> getFilesName() = 0;
+  virtual std::set<std::string> getFilesName() = 0;
 
-    /**
+  /**
      * Remove the directory located at this->m_URL
      */
-    virtual void rmdir() = 0;
+  virtual void rmdir() = 0;
 
-    std::string getURL() {
-      return m_URL;
-    }
+  std::string getURL() { return m_URL; }
 
-    virtual ~Directory() = default;
+  virtual ~Directory() = default;
 
-  protected:
-    /**
+protected:
+  /**
     * Storage for the URL
     */
-    std::string m_URL;
-  };
+  std::string m_URL;
+};
 
-} // namespace cta::disk
+}  // namespace cta::disk

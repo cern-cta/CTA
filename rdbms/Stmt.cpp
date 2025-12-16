@@ -15,13 +15,14 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/Exception.hpp"
 #include "rdbms/Stmt.hpp"
+
+#include "common/Timer.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/RdbmsInstruments.hpp"
 #include "rdbms/StmtPool.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
-#include "common/telemetry/metrics/instruments/RdbmsInstruments.hpp"
-#include "common/semconv/Attributes.hpp"
-#include "common/Timer.hpp"
 
 #include <opentelemetry/context/runtime_context.h>
 
@@ -30,17 +31,14 @@ namespace cta::rdbms {
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-Stmt::Stmt():
-  m_stmtPool(nullptr) {
-}
+Stmt::Stmt() : m_stmtPool(nullptr) {}
 
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-Stmt::Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool &stmtPool):
-  m_stmt(std::move(stmt)),
-  m_stmtPool(&stmtPool) {
-}
+Stmt::Stmt(std::unique_ptr<wrapper::StmtWrapper> stmt, StmtPool& stmtPool)
+    : m_stmt(std::move(stmt)),
+      m_stmtPool(&stmtPool) {}
 
 //-----------------------------------------------------------------------------
 // constructor
@@ -61,10 +59,10 @@ void Stmt::reset() noexcept {
   try {
     // If this smart prepared statement currently points to a prepared
     // statement then return it back to its pool
-    if(nullptr != m_stmtPool && nullptr != m_stmt) {
+    if (nullptr != m_stmtPool && nullptr != m_stmt) {
       m_stmtPool->returnStmt(std::move(m_stmt));
     }
-  } catch(...) {
+  } catch (...) {
     // Ignore any exceptions
   }
 
@@ -75,7 +73,7 @@ void Stmt::reset() noexcept {
 //-----------------------------------------------------------------------------
 // operator=
 //-----------------------------------------------------------------------------
-Stmt &Stmt::operator=(Stmt &&rhs) noexcept {
+Stmt& Stmt::operator=(Stmt&& rhs) noexcept {
   std::swap(m_stmt, rhs.m_stmt);
   std::swap(m_stmtPool, rhs.m_stmtPool);
   return *this;
@@ -84,8 +82,8 @@ Stmt &Stmt::operator=(Stmt &&rhs) noexcept {
 //-----------------------------------------------------------------------------
 // getSql
 //-----------------------------------------------------------------------------
-const std::string &Stmt::getSql() const {
-  if(nullptr != m_stmt) {
+const std::string& Stmt::getSql() const {
+  if (nullptr != m_stmt) {
     return m_stmt->getSql();
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
@@ -95,8 +93,8 @@ const std::string &Stmt::getSql() const {
 //-----------------------------------------------------------------------------
 // getParamIdx
 //-----------------------------------------------------------------------------
-uint32_t Stmt::getParamIdx(const std::string &paramName) const {
-  if(nullptr != m_stmt) {
+uint32_t Stmt::getParamIdx(const std::string& paramName) const {
+  if (nullptr != m_stmt) {
     return m_stmt->getParamIdx(paramName);
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
@@ -106,8 +104,8 @@ uint32_t Stmt::getParamIdx(const std::string &paramName) const {
 //-----------------------------------------------------------------------------
 // bindUint8
 //-----------------------------------------------------------------------------
-void Stmt::bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) {
-  if(nullptr != m_stmt) {
+void Stmt::bindUint8(const std::string& paramName, const std::optional<uint8_t>& paramValue) {
+  if (nullptr != m_stmt) {
     return m_stmt->bindUint8(paramName, paramValue);
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
@@ -117,8 +115,8 @@ void Stmt::bindUint8(const std::string &paramName, const std::optional<uint8_t> 
 //-----------------------------------------------------------------------------
 // bindUint16
 //-----------------------------------------------------------------------------
-void Stmt::bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) {
-  if(nullptr != m_stmt) {
+void Stmt::bindUint16(const std::string& paramName, const std::optional<uint16_t>& paramValue) {
+  if (nullptr != m_stmt) {
     return m_stmt->bindUint16(paramName, paramValue);
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
@@ -128,8 +126,8 @@ void Stmt::bindUint16(const std::string &paramName, const std::optional<uint16_t
 //-----------------------------------------------------------------------------
 // bindUint32
 //-----------------------------------------------------------------------------
-void Stmt::bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) {
-  if(nullptr != m_stmt) {
+void Stmt::bindUint32(const std::string& paramName, const std::optional<uint32_t>& paramValue) {
+  if (nullptr != m_stmt) {
     return m_stmt->bindUint32(paramName, paramValue);
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
@@ -139,8 +137,8 @@ void Stmt::bindUint32(const std::string &paramName, const std::optional<uint32_t
 //-----------------------------------------------------------------------------
 // bindUint64
 //-----------------------------------------------------------------------------
-void Stmt::bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) {
-  if(nullptr != m_stmt) {
+void Stmt::bindUint64(const std::string& paramName, const std::optional<uint64_t>& paramValue) {
+  if (nullptr != m_stmt) {
     return m_stmt->bindUint64(paramName, paramValue);
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
@@ -150,8 +148,8 @@ void Stmt::bindUint64(const std::string &paramName, const std::optional<uint64_t
 //-----------------------------------------------------------------------------
 // bindDouble
 //-----------------------------------------------------------------------------
-void Stmt::bindDouble(const std::string &paramName, const std::optional<double> &paramValue) {
-  if(nullptr != m_stmt) {
+void Stmt::bindDouble(const std::string& paramName, const std::optional<double>& paramValue) {
+  if (nullptr != m_stmt) {
     return m_stmt->bindDouble(paramName, paramValue);
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
@@ -161,8 +159,8 @@ void Stmt::bindDouble(const std::string &paramName, const std::optional<double> 
 //-----------------------------------------------------------------------------
 // bindBool
 //-----------------------------------------------------------------------------
-void Stmt::bindBool(const std::string &paramName, const std::optional<bool> &paramValue) {
-  if(nullptr != m_stmt) {
+void Stmt::bindBool(const std::string& paramName, const std::optional<bool>& paramValue) {
+  if (nullptr != m_stmt) {
     return m_stmt->bindBool(paramName, paramValue);
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
@@ -172,8 +170,8 @@ void Stmt::bindBool(const std::string &paramName, const std::optional<bool> &par
 //-----------------------------------------------------------------------------
 // bindBlob
 //-----------------------------------------------------------------------------
-void Stmt::bindBlob(const std::string &paramName, const std::string &paramValue) {
-  if(nullptr != m_stmt) {
+void Stmt::bindBlob(const std::string& paramName, const std::string& paramValue) {
+  if (nullptr != m_stmt) {
     return m_stmt->bindBlob(paramName, paramValue);
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
@@ -183,8 +181,8 @@ void Stmt::bindBlob(const std::string &paramName, const std::string &paramValue)
 //-----------------------------------------------------------------------------
 // bindString
 //-----------------------------------------------------------------------------
-void Stmt::bindString(const std::string &paramName, const std::optional<std::string> &paramValue) {
-  if(nullptr != m_stmt) {
+void Stmt::bindString(const std::string& paramName, const std::optional<std::string>& paramValue) {
+  if (nullptr != m_stmt) {
     return m_stmt->bindString(paramName, paramValue);
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
@@ -197,7 +195,7 @@ void Stmt::bindString(const std::string &paramName, const std::optional<std::str
 Rset Stmt::executeQuery() {
   utils::Timer timer;
   try {
-    if(nullptr != m_stmt) {
+    if (nullptr != m_stmt) {
       auto result = Rset(m_stmt->executeQuery());
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
@@ -210,7 +208,7 @@ Rset Stmt::executeQuery() {
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
     }
-  } catch(std::exception&) {
+  } catch (std::exception&) {
     cta::telemetry::metrics::dbClientOperationDuration->Record(
       timer.msecs(),
       {
@@ -229,7 +227,7 @@ Rset Stmt::executeQuery() {
 void Stmt::executeNonQuery() {
   utils::Timer timer;
   try {
-    if(nullptr != m_stmt) {
+    if (nullptr != m_stmt) {
       m_stmt->executeNonQuery();
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
@@ -241,7 +239,7 @@ void Stmt::executeNonQuery() {
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
     }
-  } catch(std::exception&) {
+  } catch (std::exception&) {
     cta::telemetry::metrics::dbClientOperationDuration->Record(
       timer.msecs(),
       {
@@ -258,22 +256,22 @@ void Stmt::executeNonQuery() {
 // getNbAffectedRows
 //-----------------------------------------------------------------------------
 uint64_t Stmt::getNbAffectedRows() const {
-    if(nullptr != m_stmt) {
-      return m_stmt->getNbAffectedRows();
-    } else {
-      throw exception::Exception("Stmt does not contain a cached statement");
-    }
+  if (nullptr != m_stmt) {
+    return m_stmt->getNbAffectedRows();
+  } else {
+    throw exception::Exception("Stmt does not contain a cached statement");
+  }
 }
 
 //-----------------------------------------------------------------------------
 // getStmt
 //-----------------------------------------------------------------------------
-wrapper::StmtWrapper &Stmt::getStmt() {
-  if(nullptr != m_stmt) {
+wrapper::StmtWrapper& Stmt::getStmt() {
+  if (nullptr != m_stmt) {
     return *m_stmt;
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
   }
 }
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

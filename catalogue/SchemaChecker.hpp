@@ -16,11 +16,11 @@
  */
 
 #pragma once
-#include "rdbms/Login.hpp"
-#include "rdbms/Conn.hpp"
-#include "SchemaComparer.hpp"
 #include "CatalogueSchema.hpp"
 #include "SchemaCheckerResult.hpp"
+#include "SchemaComparer.hpp"
+#include "rdbms/Conn.hpp"
+#include "rdbms/Login.hpp"
 
 namespace cta::catalogue {
 
@@ -43,7 +43,7 @@ public:
    * @param dbType the type of the database to check against
    * @param conn the connection of the database to check
    */
-  SchemaChecker(const std::string& databaseToCheckName, rdbms::Login::DbType dbType, cta::rdbms::Conn &conn);
+  SchemaChecker(const std::string& databaseToCheckName, rdbms::Login::DbType dbType, cta::rdbms::Conn& conn);
 
   /**
    * Destructor
@@ -55,7 +55,7 @@ public:
    * @throws Exception if no SchemaComparer has been set.
    * @return a SchemaCheckerResult
    */
-  SchemaCheckerResult displayingCompareSchema(std::ostream & stdout, std::ostream & stderr);
+  SchemaCheckerResult displayingCompareSchema(std::ostream& stdout, std::ostream& stderr);
 
   /**
    * Checks if the catalogue database contains PARALLEL tables
@@ -83,7 +83,8 @@ public:
    * @param columnNames the columnName the tableName is supposed to have
    * @return a SchemaCheckerResult containing the errors
    */
-  SchemaCheckerResult checkTableContainsColumns(const std::string &tableName, const std::list<std::string>& columnNames);
+  SchemaCheckerResult checkTableContainsColumns(const std::string& tableName,
+                                                const std::list<std::string>& columnNames);
 
   /**
    * Checks if there are stored procedures in the database.
@@ -117,16 +118,17 @@ public:
 
   class Builder {
   public:
-    Builder(const std::string& databaseToCheckName, const cta::rdbms::Login::DbType& dbType, cta::rdbms::Conn &conn);
-    Builder & useSQLiteSchemaComparer();
-    Builder & useDirectorySchemaReader(const std::string &allSchemasVersionsDirectory);
-    Builder & useMapStatementsReader();
-    Builder & useCppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema);
+    Builder(const std::string& databaseToCheckName, const cta::rdbms::Login::DbType& dbType, cta::rdbms::Conn& conn);
+    Builder& useSQLiteSchemaComparer();
+    Builder& useDirectorySchemaReader(const std::string& allSchemasVersionsDirectory);
+    Builder& useMapStatementsReader();
+    Builder& useCppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema);
     std::unique_ptr<SchemaChecker> build();
+
   private:
     const std::string m_databaseToCheckName;
     cta::rdbms::Login::DbType m_dbType;
-    cta::rdbms::Conn &m_catalogueConn;
+    cta::rdbms::Conn& m_catalogueConn;
     std::unique_ptr<SchemaComparer> m_schemaComparer;
     std::unique_ptr<DatabaseMetadataGetter> m_databaseMetadataGetter;
     std::unique_ptr<SchemaSqlStatementsReader> m_schemaSqlStatementsReader;
@@ -141,7 +143,7 @@ private:
   /**
    * Catalogue-to-check database connection
    */
-  cta::rdbms::Conn &m_catalogueConn;
+  cta::rdbms::Conn& m_catalogueConn;
   /**
    * SchemaComparer class to compare the database schema
    */
@@ -153,7 +155,7 @@ private:
    */
   std::unique_ptr<DatabaseMetadataGetter> m_databaseMetadataGetter;
 
-  void checkSchemaComparerNotNull(const std::string & methodName);
+  void checkSchemaComparerNotNull(const std::string& methodName);
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -15,23 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <getopt.h>
-
-#include <ostream>
-
 #include "StatisticsUpdateCmdLineArgs.hpp"
+
 #include "common/exception/CommandLineNotParsed.hpp"
 
+#include <getopt.h>
+#include <ostream>
 
 namespace cta::statistics {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *const *const argv)  {
+StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char* const* const argv) {
   static struct option longopts[] = {
-    {"help", no_argument, nullptr, 'h'},
-    {nullptr  ,           0, nullptr,   0}
+    {"help",  no_argument, nullptr, 'h'},
+    {nullptr, 0,           nullptr, 0  }
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
@@ -56,15 +55,13 @@ StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *c
         if (0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
         } else {
-          ex.getMessage() << "Unknown command-line option: -" << static_cast<char>(optopt);        }
+          ex.getMessage() << "Unknown command-line option: -" << static_cast<char>(optopt);
+        }
         throw ex;
       }
-      default:
-      {
+      default: {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() <<
-          "getopt_long returned the following unknown value: 0x" <<
-          std::hex << static_cast<int>(opt);
+        ex.getMessage() << "getopt_long returned the following unknown value: 0x" << std::hex << static_cast<int>(opt);
         throw ex;
       }
     }  // switch(opt)
@@ -89,17 +86,16 @@ StatisticsUpdateCmdLineArgs::StatisticsUpdateCmdLineArgs(const int argc, char *c
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void StatisticsUpdateCmdLineArgs::printUsage(std::ostream &os) {
-  os <<
-    "Usage:" << std::endl <<
-    "    cta-statistics-update databaseConnectionFile [options]" << std::endl <<
-    "Where:" << std::endl <<
-    "    databaseConnectionFile" << std::endl <<
-    "        The path to the file containing the connection details of the CTA" << std::endl <<
-    "        catalogue database" << std::endl <<
-    "Options:" << std::endl <<
-    "    -h,--help" << std::endl <<
-    "        Prints this usage message" << std::endl;
+void StatisticsUpdateCmdLineArgs::printUsage(std::ostream& os) {
+  os << "Usage:" << std::endl
+     << "    cta-statistics-update databaseConnectionFile [options]" << std::endl
+     << "Where:" << std::endl
+     << "    databaseConnectionFile" << std::endl
+     << "        The path to the file containing the connection details of the CTA" << std::endl
+     << "        catalogue database" << std::endl
+     << "Options:" << std::endl
+     << "    -h,--help" << std::endl
+     << "        Prints this usage message" << std::endl;
 }
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

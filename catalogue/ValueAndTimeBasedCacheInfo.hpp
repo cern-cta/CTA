@@ -22,13 +22,12 @@
 
 namespace cta::catalogue {
 
-template <typename Value> struct ValueAndTimeBasedCacheInfo {
+template<typename Value>
+struct ValueAndTimeBasedCacheInfo {
   Value value;
   std::string cacheInfo;
 
-  ValueAndTimeBasedCacheInfo(const Value &v, const std::string &cInfo):
-    value(v), cacheInfo(cInfo) {
-  }
-}; // class ValueAndTimeBasedCacheInfo
+  ValueAndTimeBasedCacheInfo(const Value& v, const std::string& cInfo) : value(v), cacheInfo(cInfo) {}
+};  // class ValueAndTimeBasedCacheInfo
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

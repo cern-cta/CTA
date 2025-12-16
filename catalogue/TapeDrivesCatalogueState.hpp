@@ -17,13 +17,13 @@
 
 #pragma once
 
-#include <limits>
-#include <optional>
-#include <string>
-
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/exception/UserError.hpp"
+
+#include <limits>
+#include <optional>
+#include <string>
 
 namespace cta {
 
@@ -40,7 +40,7 @@ class DesiredDriveState;
 struct DriveInfo;
 struct TapeDrive;
 struct SecurityIdentity;
-}
+}  // namespace common::dataStructures
 
 namespace tape::daemon {
 class DriveConfigEntry;
@@ -68,38 +68,48 @@ struct ReportDriveStatsInputs {
 
 class TapeDrivesCatalogueState {
 public:
-  explicit TapeDrivesCatalogueState(catalogue::Catalogue &catalogue);
+  explicit TapeDrivesCatalogueState(catalogue::Catalogue& catalogue);
   ~TapeDrivesCatalogueState() = default;
   void createTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-    const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-    const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
-    const common::dataStructures::SecurityIdentity& identity, log::LogContext & lc);
+                             const common::dataStructures::DesiredDriveState& desiredState,
+                             const common::dataStructures::MountType& type,
+                             const common::dataStructures::DriveStatus& status,
+                             const tape::daemon::DriveConfigEntry& driveConfigEntry,
+                             const common::dataStructures::SecurityIdentity& identity,
+                             log::LogContext& lc);
   CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistsException);
-  void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo & driveInfo);
-  void removeDrive(const std::string& drive, log::LogContext &lc);
-  void setDesiredDriveState(const std::string& drive, const common::dataStructures::DesiredDriveState & desiredState,
-    log::LogContext &lc);
-  void updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatsInputs& inputs,
-    log::LogContext & lc);
+  void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo);
+  void removeDrive(const std::string& drive, log::LogContext& lc);
+  void setDesiredDriveState(const std::string& drive,
+                            const common::dataStructures::DesiredDriveState& desiredState,
+                            log::LogContext& lc);
+  void updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
+                             const ReportDriveStatsInputs& inputs,
+                             log::LogContext& lc);
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-    cta::common::dataStructures::MountType mountType, common::dataStructures::DriveStatus status,
-    time_t reportTime, log::LogContext & lc,
-    uint64_t mountSessionId = 0,
-    uint64_t byteTransferred = 0,
-    uint64_t filesTransferred = 0,
-    std::string_view vid = "",
-    std::string_view tapepool = "",
-    std::string_view vo = "");
-  void updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo, const ReportDriveStatusInputs& inputs,
-    log::LogContext &lc);
+                         cta::common::dataStructures::MountType mountType,
+                         common::dataStructures::DriveStatus status,
+                         time_t reportTime,
+                         log::LogContext& lc,
+                         uint64_t mountSessionId = 0,
+                         uint64_t byteTransferred = 0,
+                         uint64_t filesTransferred = 0,
+                         std::string_view vid = "",
+                         std::string_view tapepool = "",
+                         std::string_view vo = "");
+  void updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
+                         const ReportDriveStatusInputs& inputs,
+                         log::LogContext& lc);
 
 private:
-  cta::catalogue::Catalogue &m_catalogue;
+  cta::catalogue::Catalogue& m_catalogue;
 
   common::dataStructures::TapeDrive setTapeDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
-    const common::dataStructures::DesiredDriveState & desiredState, const common::dataStructures::MountType& type,
-    const common::dataStructures::DriveStatus& status, const tape::daemon::DriveConfigEntry& driveConfigEntry,
-    const common::dataStructures::SecurityIdentity& identity) const;
+                                                       const common::dataStructures::DesiredDriveState& desiredState,
+                                                       const common::dataStructures::MountType& type,
+                                                       const common::dataStructures::DriveStatus& status,
+                                                       const tape::daemon::DriveConfigEntry& driveConfigEntry,
+                                                       const common::dataStructures::SecurityIdentity& identity) const;
   void setDriveDown(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
   void setDriveUpOrMaybeDown(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& input) const;
   void setDriveProbing(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
@@ -108,9 +118,10 @@ private:
   void setDriveTransfering(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
   void setDriveUnloading(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
   void setDriveUnmounting(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
-  void setDriveDrainingToDisk(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
+  void setDriveDrainingToDisk(common::dataStructures::TapeDrive& driveState,
+                              const ReportDriveStatusInputs& inputs) const;
   void setDriveCleaningUp(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
   void setDriveShutdown(common::dataStructures::TapeDrive& driveState, const ReportDriveStatusInputs& inputs) const;
 };
 
-} // namespace cta
+}  // namespace cta

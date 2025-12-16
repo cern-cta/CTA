@@ -17,17 +17,6 @@
 
 #pragma once
 
-#include <cstdint>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
-#include <tuple>
-#include <vector>
-#include <unordered_map>
-#include <unordered_set>
-#include <mutex>
-
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
@@ -50,6 +39,16 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <set>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace cta {
 
@@ -83,7 +82,6 @@ public:
 
   /*============ Basic IO check: validate Postgres DB store access ===============*/
   void ping() override;
-
 
   /*
    * Insert jobs from ArchiveRequest object to the Scheduler DB backend
@@ -130,7 +128,9 @@ public:
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
   getNextRetrieveJobsToTransferBatch(const std::string& vid, uint64_t filesRequested, log::LogContext& lc) override;
 
-  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, const std::string& toReportQueueAddress, log::LogContext& lc) override;
+  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
+                                  const std::string& toReportQueueAddress,
+                                  log::LogContext& lc) override;
 
   std::string blockRetrieveQueueForCleanup(const std::string& vid) override;
 
@@ -250,13 +250,12 @@ public:
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext) override;
 
-  std::unique_ptr <SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext &logContext,
-                                                                          uint64_t timeout_us) override;
+  std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext,
+                                                                         uint64_t timeout_us) override;
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
   getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
   std::optional<common::dataStructures::VirtualOrganization> getDefaultRepackVo();
-
 
   void trimEmptyQueues(log::LogContext& lc) override;
   bool trimEmptyToReportQueue(const std::string& queueName, log::LogContext& lc) override;
@@ -276,7 +275,9 @@ public:
   struct DiskSleepEntry {
     uint64_t sleepTime;
     uint64_t timestamp;
+
     DiskSleepEntry() : sleepTime(0), timestamp(0) {}
+
     DiskSleepEntry(uint64_t st, uint64_t ts) : sleepTime(st), timestamp(ts) {}
   };
 
@@ -288,16 +289,16 @@ public:
    *
    * @return list of diskSystemName strings
    */
-  std::unordered_map<std::string, RelationalDB::DiskSleepEntry> getActiveSleepDiskSystemNamesToFilter(log::LogContext& logContext);
-  uint64_t insertOrUpdateDiskSleepEntry(
-          schedulerdb::Transaction &txn,
-          const std::string &diskSystemName,
-          const DiskSleepEntry &entry);
+  std::unordered_map<std::string, RelationalDB::DiskSleepEntry>
+  getActiveSleepDiskSystemNamesToFilter(log::LogContext& logContext);
+  uint64_t insertOrUpdateDiskSleepEntry(schedulerdb::Transaction& txn,
+                                        const std::string& diskSystemName,
+                                        const DiskSleepEntry& entry);
 
-  uint64_t removeDiskSystemSleepEntries(schedulerdb::Transaction &txn,
-                                        const std::vector <std::string> &expiredDiskSystemNames);
+  uint64_t removeDiskSystemSleepEntries(schedulerdb::Transaction& txn,
+                                        const std::vector<std::string>& expiredDiskSystemNames);
 
-  std::unordered_map <std::string, DiskSleepEntry> getDiskSystemSleepStatus(rdbms::Conn &conn);
+  std::unordered_map<std::string, DiskSleepEntry> getDiskSystemSleepStatus(rdbms::Conn& conn);
 
 private:
   /*
@@ -324,23 +325,20 @@ private:
 
   void populateRepackRequestsStatistics(SchedulerDatabase::RepackRequestStatistics& stats);
 
-
   /**
   * Candidate for redesign/removal once we start improving Scheduler algorithm
   * A class holding a lock on the pending repack request queue. This is the first
   * container we will have to lock if we decide to pop a/some request(s)
   */
-  class RepackRequestPromotionStatistics
-      : public SchedulerDatabase::RepackRequestStatistics {
+  class RepackRequestPromotionStatistics : public SchedulerDatabase::RepackRequestStatistics {
     friend class RelationalDB;
 
   public:
-    PromotionToToExpandResult promotePendingRequestsForExpansion(
-        size_t requestCount, log::LogContext &lc) override;
-    explicit RepackRequestPromotionStatistics(RelationalDB &parent);
-  private:
+    PromotionToToExpandResult promotePendingRequestsForExpansion(size_t requestCount, log::LogContext& lc) override;
+    explicit RepackRequestPromotionStatistics(RelationalDB& parent);
 
-    RelationalDB &m_parentdb;
+  private:
+    RelationalDB& m_parentdb;
   };
 
   /**

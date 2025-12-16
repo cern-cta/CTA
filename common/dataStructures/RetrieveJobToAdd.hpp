@@ -23,33 +23,39 @@
 #include <string>
 
 namespace cta::common::dataStructures {
-  struct RetrieveJobToAdd {
-    RetrieveJobToAdd() = default;
+struct RetrieveJobToAdd {
+  RetrieveJobToAdd() = default;
 
-    RetrieveJobToAdd(uint32_t cNb, 
-		     uint64_t fS,
-		     std::string rra,
-		     uint64_t filesize,
-		     MountPolicy p,
-		     time_t st,
-		     std::optional<std::string> a,
-		     std::optional<std::string> dsn) :
-	 copyNb(cNb), fSeq(fS), retrieveRequestAddress(rra),
-	 fileSize(filesize), policy(p), startTime(st), activity(a), diskSystemName(dsn) {}
-    	  
-    bool operator==(const RetrieveJobToAdd &rhs) const;
-    bool operator!=(const RetrieveJobToAdd &rhs) const;
-     
-    uint32_t copyNb;
-    uint64_t fSeq;
-    std::string retrieveRequestAddress;
-    uint64_t fileSize;
-    MountPolicy policy;
-    time_t startTime;
-    std::optional<std::string> activity;
-    std::optional<std::string> diskSystemName;
-    };
+  RetrieveJobToAdd(uint32_t cNb,
+                   uint64_t fS,
+                   std::string rra,
+                   uint64_t filesize,
+                   MountPolicy p,
+                   time_t st,
+                   std::optional<std::string> a,
+                   std::optional<std::string> dsn)
+      : copyNb(cNb),
+        fSeq(fS),
+        retrieveRequestAddress(rra),
+        fileSize(filesize),
+        policy(p),
+        startTime(st),
+        activity(a),
+        diskSystemName(dsn) {}
 
-std::ostream &operator<<(std::ostream &os, const RetrieveJobToAdd &obj);
+  bool operator==(const RetrieveJobToAdd& rhs) const;
+  bool operator!=(const RetrieveJobToAdd& rhs) const;
 
-}
+  uint32_t copyNb;
+  uint64_t fSeq;
+  std::string retrieveRequestAddress;
+  uint64_t fileSize;
+  MountPolicy policy;
+  time_t startTime;
+  std::optional<std::string> activity;
+  std::optional<std::string> diskSystemName;
+};
+
+std::ostream& operator<<(std::ostream& os, const RetrieveJobToAdd& obj);
+
+}  // namespace cta::common::dataStructures

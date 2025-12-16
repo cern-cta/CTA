@@ -28,7 +28,6 @@ namespace cta::catalogue {
  * The tape attributes required to create a new tape entry in the CTA catalogue.
  */
 struct CreateTapeAttributes {
-
   /**
    * The volume identifier of the tape.
    */
@@ -85,6 +84,6 @@ struct CreateTapeAttributes {
    * Sets the value of all boolean member-variables to false.
    */
   CreateTapeAttributes() = default;
-}; // struct CreateTapeAttributes
+};  // struct CreateTapeAttributes
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

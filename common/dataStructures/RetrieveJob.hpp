@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/TapeFile.hpp"
+
 #include <list>
 #include <map>
 #include <string>
-
-#include "common/dataStructures/RetrieveRequest.hpp"
-#include "common/dataStructures/TapeFile.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -37,8 +37,8 @@ struct RetrieveJob {
 
   RetrieveRequest request;
   uint64_t fileSize;
-  std::map<std::string,std::pair<uint32_t,TapeFile>> tapeCopies;
-  std::string objectId; //!< Objectstore address, provided when reporting a failed job
+  std::map<std::string, std::pair<uint32_t, TapeFile>> tapeCopies;
+  std::string objectId;  //!< Objectstore address, provided when reporting a failed job
   std::list<std::string> failurelogs;
   std::list<std::string> reportfailurelogs;
   // Elements not needed for queueing
@@ -51,4 +51,4 @@ struct RetrieveJob {
 
 std::ostream& operator<<(std::ostream& os, const RetrieveJob& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

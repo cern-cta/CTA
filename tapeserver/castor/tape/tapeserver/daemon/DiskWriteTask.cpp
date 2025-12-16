@@ -15,14 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
+
+#include "TransferTaskTracker.hpp"
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "common/Timer.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
-#include "TransferTaskTracker.hpp"
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -36,8 +37,11 @@ DiskWriteTask::DiskWriteTask(cta::RetrieveJob* retrieveJob, RecallMemoryManager&
 //------------------------------------------------------------------------------
 // DiskWriteTask::execute
 //------------------------------------------------------------------------------
-bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& lc,
-  cta::disk::DiskFileFactory& fileFactory, RecallWatchDog& watchdog, int threadID) {
+bool DiskWriteTask::execute(RecallReportPacker& reporter,
+                            cta::log::LogContext& lc,
+                            cta::disk::DiskFileFactory& fileFactory,
+                            RecallWatchDog& watchdog,
+                            int threadID) {
   [[maybe_unused]] TransferTaskTracker transferTaskTracer(cta::semconv::attr::CtaIoDirectionValues::kWrite,
                                                           cta::semconv::attr::CtaIoMediumValues::kDisk);
   using cta::log::LogContext;
@@ -46,9 +50,9 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
   cta::utils::Timer totalTime(localTime);
   cta::utils::Timer transferTime(localTime);
   cta::log::ScopedParamContainer URLcontext(lc);
-  URLcontext.add("fileId",m_retrieveJob->retrieveRequest.archiveFileID)
-            .add("dstURL", m_retrieveJob->retrieveRequest.dstURL)
-            .add("fSeq",m_retrieveJob->selectedTapeFile().fSeq);
+  URLcontext.add("fileId", m_retrieveJob->retrieveRequest.archiveFileID)
+    .add("dstURL", m_retrieveJob->retrieveRequest.dstURL)
+    .add("fSeq", m_retrieveJob->selectedTapeFile().fSeq);
   m_stats.dstURL = m_retrieveJob->retrieveRequest.dstURL;
   m_stats.fileId = m_retrieveJob->retrieveRequest.archiveFileID;
   // This out-of-try-catch variables allows us to record the stage of the
@@ -57,23 +61,23 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
   // prevent counting where error happened upstream.
   std::string currentErrorToCount = "";
   bool isVerifyOnly(false);
-  try{
+  try {
     currentErrorToCount = "";
     // Placeholder for the disk file. We will open it only
     // after getting a first correct memory block.
     std::unique_ptr<cta::disk::WriteFile> writeFile;
 
-    int blockId  = 0;
+    int blockId = 0;
     unsigned long checksum = Payload::zeroAdler32();
-    while(true) {
-      if(MemBlock* const mb = m_fifo.pop()) {
-        m_stats.waitDataTime+=localTime.secs(cta::utils::Timer::resetCounter);
-        AutoReleaseBlock<RecallMemoryManager> releaser(mb,m_memManager);
-        if(mb->isVerifyOnly()) {
+    while (true) {
+      if (MemBlock* const mb = m_fifo.pop()) {
+        m_stats.waitDataTime += localTime.secs(cta::utils::Timer::resetCounter);
+        AutoReleaseBlock<RecallMemoryManager> releaser(mb, m_memManager);
+        if (mb->isVerifyOnly()) {
           // For verifyOnly, there is no disk file to write. Ignore the memory block and continue.
           isVerifyOnly = true;
           continue;
-        } else if(mb->isCanceled()) {
+        } else if (mb->isCanceled()) {
           // If the tape side got canceled, we report nothing and count
           // it as a success.
           lc.log(cta::log::DEBUG, "File transfer canceled");
@@ -81,7 +85,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
         }
 
         //will throw (thus exiting the loop) if something is wrong
-        checkErrors(mb,blockId,lc);
+        checkErrors(mb, blockId, lc);
         m_stats.checkingErrorTime += localTime.secs(cta::utils::Timer::resetCounter);
         // If we got that far on the first pass, it's now good enough to open
         // the disk file for writing...
@@ -93,25 +97,26 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
           writeFile.reset(fileFactory.createWriteFile(m_retrieveJob->retrieveRequest.dstURL));
           URLcontext.add("actualURL", writeFile->URL());
           lc.log(cta::log::INFO, "Opened disk file for writing");
-          m_stats.openingTime+=localTime.secs(cta::utils::Timer::resetCounter);
-          watchdog.addParameter(cta::log::Param("stillOpenFileForThread"+
-            std::to_string((long long)threadID), writeFile->URL()));
+          m_stats.openingTime += localTime.secs(cta::utils::Timer::resetCounter);
+          watchdog.addParameter(
+            cta::log::Param("stillOpenFileForThread" + std::to_string((long long) threadID), writeFile->URL()));
         }
 
         // Write the data.
         currentErrorToCount = "Error_diskWrite";
-        m_stats.dataVolume+=mb->m_payload.size();
-        if (mb->m_payload.size())
+        m_stats.dataVolume += mb->m_payload.size();
+        if (mb->m_payload.size()) {
           mb->m_payload.write(*writeFile);
-        m_stats.readWriteTime+=localTime.secs(cta::utils::Timer::resetCounter);
+        }
+        m_stats.readWriteTime += localTime.secs(cta::utils::Timer::resetCounter);
 
         checksum = mb->m_payload.adler32(checksum);
-        m_stats.checksumingTime+=localTime.secs(cta::utils::Timer::resetCounter);
+        m_stats.checksumingTime += localTime.secs(cta::utils::Timer::resetCounter);
         currentErrorToCount = "";
 
         blockId++;
         //end if block non nullptr
-      } else if(isVerifyOnly) {
+      } else if (isVerifyOnly) {
         // No file to close, we are done
         break;
       } else {
@@ -120,24 +125,26 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
         //silent data loss
         currentErrorToCount = "Error_diskCloseAfterWrite";
         writeFile->close();
-        m_stats.closingTime +=localTime.secs(cta::utils::Timer::resetCounter);
+        m_stats.closingTime += localTime.secs(cta::utils::Timer::resetCounter);
         m_stats.filesCount++;
         break;
       }
-    } //end of while(1)
+    }  //end of while(1)
     m_retrieveJob->transferredSize = m_stats.dataVolume;
     m_retrieveJob->transferredChecksumType = "ADLER32";
     {
       std::stringstream cs;
-      cs << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << (uint32_t)checksum;
+      cs << std::hex << std::nouppercase << std::setfill('0') << std::setw(8) << (uint32_t) checksum;
       m_retrieveJob->transferredChecksumValue = cs.str();
     }
     reporter.reportCompletedJob(std::move(m_retrieveJob), lc);
-    m_stats.waitReportingTime+=localTime.secs(cta::utils::Timer::resetCounter);
+    m_stats.waitReportingTime += localTime.secs(cta::utils::Timer::resetCounter);
     m_stats.transferTime = transferTime.secs();
     m_stats.totalTime = totalTime.secs();
-    logWithStat(cta::log::INFO, isVerifyOnly ? "File successfully verified" : "File successfully transfered to disk", lc);
-    watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long)threadID));
+    logWithStat(cta::log::INFO,
+                isVerifyOnly ? "File successfully verified" : "File successfully transfered to disk",
+                lc);
+    watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long) threadID));
     cta::telemetry::metrics::ctaTapedTransferFileCount->Add(
       1,
       {
@@ -152,8 +159,8 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
     });
     //everything went well, return true
     return true;
-  } //end of try
-  catch(const cta::exception::Exception& e){
+  }  //end of try
+  catch (const cta::exception::Exception& e) {
     /*
      *We might end up there because ;
      * -- WriteFile failed
@@ -178,15 +185,14 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter, cta::log::LogContext& 
       watchdog.addToErrorCount(currentErrorToCount);
     }
 
-    m_stats.waitReportingTime+=localTime.secs(cta::utils::Timer::resetCounter);
+    m_stats.waitReportingTime += localTime.secs(cta::utils::Timer::resetCounter);
     cta::log::ScopedParamContainer params(lc);
     params.add("errorMessage", e.getMessageValue());
     logWithStat(cta::log::ERR, isVerifyOnly ? "File verification failed" : "File writing to disk failed", lc);
     lc.logBacktrace(cta::log::INFO, e.backtrace());
     reporter.reportFailedJob(std::move(m_retrieveJob), e, lc);
 
-    watchdog.deleteParameter("stillOpenFileForThread"+
-      std::to_string((long long)threadID));
+    watchdog.deleteParameter("stillOpenFileForThread" + std::to_string((long long) threadID));
 
     //got an exception, return false
     return false;
@@ -203,7 +209,7 @@ MemBlock* DiskWriteTask::getFreeBlock() {
 //------------------------------------------------------------------------------
 // DiskWriteTask::pushDataBlock
 //------------------------------------------------------------------------------
-void DiskWriteTask::pushDataBlock(MemBlock *mb) {
+void DiskWriteTask::pushDataBlock(MemBlock* mb) {
   cta::threading::MutexLocker ml(m_producerProtection);
   m_fifo.push(mb);
 }
@@ -218,11 +224,11 @@ DiskWriteTask::~DiskWriteTask() {
 //------------------------------------------------------------------------------
 // DiskWriteTask::releaseAllBlock
 //------------------------------------------------------------------------------
-void DiskWriteTask::releaseAllBlock(){
-  while(1){
-    if(MemBlock* mb=m_fifo.pop())
-      AutoReleaseBlock<RecallMemoryManager> release(mb,m_memManager);
-    else {
+void DiskWriteTask::releaseAllBlock() {
+  while (1) {
+    if (MemBlock* mb = m_fifo.pop()) {
+      AutoReleaseBlock<RecallMemoryManager> release(mb, m_memManager);
+    } else {
       break;
     }
   }
@@ -233,19 +239,17 @@ void DiskWriteTask::releaseAllBlock(){
 //------------------------------------------------------------------------------
 void DiskWriteTask::checkErrors(MemBlock* mb, uint64_t blockId, cta::log::LogContext& lc) {
   using namespace cta::log;
-  if(m_retrieveJob->retrieveRequest.archiveFileID != mb->m_fileid || blockId != mb->m_fileBlock  || mb->isFailed()) {
-    LogContext::ScopedParam sp[]= {
-      LogContext::ScopedParam(lc, Param("received_archiveFileID", mb->m_fileid)),
-      LogContext::ScopedParam(lc, Param("expected_NSBLOCKId", blockId)),
-      LogContext::ScopedParam(lc, Param("received_NSBLOCKId", mb->m_fileBlock)),
-      LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))
-    };
+  if (m_retrieveJob->retrieveRequest.archiveFileID != mb->m_fileid || blockId != mb->m_fileBlock || mb->isFailed()) {
+    LogContext::ScopedParam sp[] = {LogContext::ScopedParam(lc, Param("received_archiveFileID", mb->m_fileid)),
+                                    LogContext::ScopedParam(lc, Param("expected_NSBLOCKId", blockId)),
+                                    LogContext::ScopedParam(lc, Param("received_NSBLOCKId", mb->m_fileBlock)),
+                                    LogContext::ScopedParam(lc, Param("failed_Status", mb->isFailed()))};
     tape::utils::suppresUnusedVariable(sp);
     std::string errorMsg;
-    if(mb->isFailed()) {
-      errorMsg=mb->errorMsg();
+    if (mb->isFailed()) {
+      errorMsg = mb->errorMsg();
     } else {
-      errorMsg="Mismatch between expected and received fileid or blockid";
+      errorMsg = "Mismatch between expected and received fileid or blockid";
     }
     lc.log(cta::log::ERR, errorMsg);
     throw cta::exception::Exception(errorMsg);
@@ -255,7 +259,7 @@ void DiskWriteTask::checkErrors(MemBlock* mb, uint64_t blockId, cta::log::LogCon
 //------------------------------------------------------------------------------
 // getTiming
 //------------------------------------------------------------------------------
-const DiskStats DiskWriteTask::getTaskStats() const{
+const DiskStats DiskWriteTask::getTaskStats() const {
   return m_stats;
 }
 
@@ -265,21 +269,26 @@ const DiskStats DiskWriteTask::getTaskStats() const{
 void DiskWriteTask::logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) const {
   cta::log::ScopedParamContainer params(lc);
   params.add("readWriteTime", m_stats.readWriteTime)
-        .add("checksumingTime",m_stats.checksumingTime)
-        .add("waitDataTime",m_stats.waitDataTime)
-        .add("waitReportingTime",m_stats.waitReportingTime)
-        .add("checkingErrorTime",m_stats.checkingErrorTime)
-        .add("openingTime",m_stats.openingTime)
-        .add("closingTime",m_stats.closingTime)
-        .add("transferTime", m_stats.transferTime)
-        .add("totalTime", m_stats.totalTime)
-        .add("dataVolume", m_stats.dataVolume)
-        .add("globalPayloadTransferSpeedMBps",    m_stats.totalTime == 0.0 ? 0.0 : 1.0*m_stats.dataVolume/1000/1000/m_stats.totalTime)
-        .add("diskPerformanceMBps",            m_stats.transferTime == 0.0 ? 0.0 : 1.0*m_stats.dataVolume/1000/1000/m_stats.transferTime)
-        .add("openRWCloseToTransferTimeRatio", m_stats.transferTime == 0.0 ? 0.0 : (m_stats.openingTime+m_stats.readWriteTime+m_stats.closingTime)/m_stats.transferTime)
-        .add("fileId",m_stats.fileId)
-        .add("dstURL",m_stats.dstURL);
-  lc.log(level,msg);
+    .add("checksumingTime", m_stats.checksumingTime)
+    .add("waitDataTime", m_stats.waitDataTime)
+    .add("waitReportingTime", m_stats.waitReportingTime)
+    .add("checkingErrorTime", m_stats.checkingErrorTime)
+    .add("openingTime", m_stats.openingTime)
+    .add("closingTime", m_stats.closingTime)
+    .add("transferTime", m_stats.transferTime)
+    .add("totalTime", m_stats.totalTime)
+    .add("dataVolume", m_stats.dataVolume)
+    .add("globalPayloadTransferSpeedMBps",
+         m_stats.totalTime == 0.0 ? 0.0 : 1.0 * m_stats.dataVolume / 1000 / 1000 / m_stats.totalTime)
+    .add("diskPerformanceMBps",
+         m_stats.transferTime == 0.0 ? 0.0 : 1.0 * m_stats.dataVolume / 1000 / 1000 / m_stats.transferTime)
+    .add("openRWCloseToTransferTimeRatio",
+         m_stats.transferTime == 0.0 ?
+           0.0 :
+           (m_stats.openingTime + m_stats.readWriteTime + m_stats.closingTime) / m_stats.transferTime)
+    .add("fileId", m_stats.fileId)
+    .add("dstURL", m_stats.dstURL);
+  lc.log(level, msg);
 }
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

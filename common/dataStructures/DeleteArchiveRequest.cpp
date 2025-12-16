@@ -16,6 +16,7 @@
  */
 
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
+
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -29,31 +30,27 @@ DeleteArchiveRequest::DeleteArchiveRequest() {}
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool DeleteArchiveRequest::operator==(const DeleteArchiveRequest &rhs) const {
-  return requester==rhs.requester
-      && archiveFileID==rhs.archiveFileID && address==rhs.address && diskFileId == rhs.diskFileId
-      && diskFilePath == rhs.diskFilePath && recycleTime == rhs.recycleTime && diskInstance == rhs.diskInstance;
+bool DeleteArchiveRequest::operator==(const DeleteArchiveRequest& rhs) const {
+  return requester == rhs.requester && archiveFileID == rhs.archiveFileID && address == rhs.address
+         && diskFileId == rhs.diskFileId && diskFilePath == rhs.diskFilePath && recycleTime == rhs.recycleTime
+         && diskInstance == rhs.diskInstance;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool DeleteArchiveRequest::operator!=(const DeleteArchiveRequest &rhs) const {
+bool DeleteArchiveRequest::operator!=(const DeleteArchiveRequest& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const DeleteArchiveRequest &obj) {
-  os << "(requester=" << obj.requester
-     << " archiveFileID=" << obj.archiveFileID
-     << " diskFileId=" << obj.diskFileId
-     << " diskFilePath=" << obj.diskFilePath
-     << " recycleTime=" << obj.recycleTime
-     << " instanceName=" << obj.diskInstance
-     << " address=" << (obj.address ? obj.address.value() : "null") <<")";
+std::ostream& operator<<(std::ostream& os, const DeleteArchiveRequest& obj) {
+  os << "(requester=" << obj.requester << " archiveFileID=" << obj.archiveFileID << " diskFileId=" << obj.diskFileId
+     << " diskFilePath=" << obj.diskFilePath << " recycleTime=" << obj.recycleTime
+     << " instanceName=" << obj.diskInstance << " address=" << (obj.address ? obj.address.value() : "null") << ")";
   return os;
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

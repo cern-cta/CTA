@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
+
+#include <memory>
+#include <string>
 
 namespace castor::tape::tapeFile {
 

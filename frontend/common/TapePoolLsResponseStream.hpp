@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include <list>
-#include "cta_admin.pb.h"
-
 #include "CtaAdminResponseStream.hpp"
 #include "catalogue/TapePool.hpp"
+#include "cta_admin.pb.h"
+
+#include <list>
 
 namespace cta::frontend {
 

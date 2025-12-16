@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include <fstream>
-#include <memory>
-
 #include "castor/tape/tapeserver/file/CpioFileHeaderStructure.hpp"
 #include "castor/tape/tapeserver/file/FileReader.hpp"
+
+#include <fstream>
+#include <memory>
 
 namespace castor::tape::tapeFile {
 

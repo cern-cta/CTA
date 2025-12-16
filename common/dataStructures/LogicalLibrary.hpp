@@ -17,13 +17,13 @@
 
 #pragma once
 
+#include "common/dataStructures/EntryLog.hpp"
+
 #include <list>
 #include <map>
 #include <optional>
 #include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/EntryLog.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -32,7 +32,6 @@ namespace cta::common::dataStructures {
  * which tapes can be mounted in which drives
  */
 struct LogicalLibrary {
-
   /**
    * Constructor.
    *
@@ -40,9 +39,9 @@ struct LogicalLibrary {
    */
   LogicalLibrary();
 
-  bool operator==(const LogicalLibrary &rhs) const;
+  bool operator==(const LogicalLibrary& rhs) const;
 
-  bool operator!=(const LogicalLibrary &rhs) const;
+  bool operator!=(const LogicalLibrary& rhs) const;
 
   std::string name;
   bool isDisabled = false;
@@ -52,8 +51,8 @@ struct LogicalLibrary {
   std::optional<std::string> disabledReason;
   std::optional<std::string> physicalLibraryName;
 
-}; // struct LogicalLibrary
+};  // struct LogicalLibrary
 
-std::ostream &operator<<(std::ostream &os, const LogicalLibrary &obj);
+std::ostream& operator<<(std::ostream& os, const LogicalLibrary& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

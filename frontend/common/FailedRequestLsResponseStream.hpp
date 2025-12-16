@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include <list>
+#include "CtaAdminResponseStream.hpp"
 #include "cta_admin.pb.h"
 
-#include "CtaAdminResponseStream.hpp"
+#include <list>
 
 namespace cta::frontend {
 

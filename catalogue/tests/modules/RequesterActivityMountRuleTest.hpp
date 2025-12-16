@@ -17,19 +17,19 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
-
-#include <memory>
-
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/DummyLogger.hpp"
 
+#include <gtest/gtest.h>
+#include <memory>
+
 namespace unitTests {
 
-class cta_catalogue_RequesterActivityMountRuleTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_RequesterActivityMountRuleTest
+    : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_RequesterActivityMountRuleTest();
 

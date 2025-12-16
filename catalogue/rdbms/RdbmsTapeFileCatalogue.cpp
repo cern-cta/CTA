@@ -15,49 +15,54 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <algorithm>
-#include <memory>
-#include <string>
-#include <utility>
+#include "catalogue/rdbms/RdbmsTapeFileCatalogue.hpp"
 
 #include "catalogue/InsertFileRecycleLog.hpp"
+#include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/rdbms/RdbmsArchiveFileCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsMountPolicyCatalogue.hpp"
-#include "catalogue/rdbms/RdbmsTapeFileCatalogue.hpp"
-#include "catalogue/TapeFileWritten.hpp"
+#include "common/Timer.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/Timer.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <utility>
+
 namespace cta::catalogue {
 
-RdbmsTapeFileCatalogue::RdbmsTapeFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-  RdbmsCatalogue *rdbmsCatalogue)
-  : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {
-}
+RdbmsTapeFileCatalogue::RdbmsTapeFileCatalogue(log::Logger& log,
+                                               std::shared_ptr<rdbms::ConnPool> connPool,
+                                               RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
-void RdbmsTapeFileCatalogue::deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) {
+void RdbmsTapeFileCatalogue::deleteTapeFileCopy(common::dataStructures::ArchiveFile& file, const std::string& reason) {
   log::LogContext lc(m_log);
   auto conn = m_connPool->getConn();
   copyTapeFileToFileRecyleLogAndDelete(conn, file, reason, lc);
 }
 
-void RdbmsTapeFileCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & conn,
-  const cta::common::dataStructures::ArchiveFile &file, const std::string &reason, log::LogContext & lc) const {
+void RdbmsTapeFileCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn& conn,
+                                                                  const cta::common::dataStructures::ArchiveFile& file,
+                                                                  const std::string& reason,
+                                                                  log::LogContext& lc) const {
   utils::Timer timer;
   log::TimingList timingList;
   copyTapeFileToFileRecyleLogAndDeleteTransaction(conn, file, reason, &timer, &timingList, lc);
   timingList.insertAndReset("commitTime", timer);
 
-  for(auto &tapeFile: file.tapeFiles) {
+  for (auto& tapeFile : file.tapeFiles) {
     log::ScopedParamContainer spc(lc);
     spc.add("vid", tapeFile.vid);
     spc.add("fSeq", tapeFile.fSeq);
@@ -70,36 +75,64 @@ void RdbmsTapeFileCatalogue::copyTapeFileToFileRecyleLogAndDelete(rdbms::Conn & 
     spc.add("diskFilePath", file.diskFileInfo.path);
     spc.add("diskInstance", file.diskInstance);
     timingList.addToLog(spc);
-    lc.log(log::WARNING, "In RdbmsFileRecycleLogCatalogue::copyTapeFileToFileRecyleLogAndDelete: "
-      "Tape file copy moved to the recycle-bin.");
+    lc.log(log::WARNING,
+           "In RdbmsFileRecycleLogCatalogue::copyTapeFileToFileRecyleLogAndDelete: "
+           "Tape file copy moved to the recycle-bin.");
   }
 }
 
 void RdbmsTapeFileCatalogue::checkTapeItemWrittenFieldsAreSet(const TapeItemWritten& event) const {
   try {
-    if(event.vid.empty()) throw exception::Exception("vid is an empty string");
-    if(0 == event.fSeq) throw exception::Exception("fSeq is 0");
-    if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
-  } catch (exception::Exception &ex) {
+    if (event.vid.empty()) {
+      throw exception::Exception("vid is an empty string");
+    }
+    if (0 == event.fSeq) {
+      throw exception::Exception("fSeq is 0");
+    }
+    if (event.tapeDrive.empty()) {
+      throw exception::Exception("tapeDrive is an empty string");
+    }
+  } catch (exception::Exception& ex) {
     throw exception::Exception("TapeItemWrittenEvent is invalid: " + ex.getMessage().str());
   }
 }
 
-void RdbmsTapeFileCatalogue::checkTapeFileWrittenFieldsAreSet(const TapeFileWritten &event)
-  const {
+void RdbmsTapeFileCatalogue::checkTapeFileWrittenFieldsAreSet(const TapeFileWritten& event) const {
   try {
-    if(event.diskInstance.empty()) throw exception::Exception("diskInstance is an empty string");
-    if(event.diskFileId.empty()) throw exception::Exception("diskFileId is an empty string");
-    if(0 == event.diskFileOwnerUid) throw exception::Exception("diskFileOwnerUid is 0");
-    if(0 == event.size) throw exception::Exception("size is 0");
-    if(event.checksumBlob.empty()) throw exception::Exception("checksumBlob is an empty string");
-    if(event.storageClassName.empty()) throw exception::Exception("storageClassName is an empty string");
-    if(event.vid.empty()) throw exception::Exception("vid is an empty string");
-    if(0 == event.fSeq) throw exception::Exception("fSeq is 0");
-    if(0 == event.blockId && event.fSeq != 1) throw exception::Exception("blockId is 0 and fSeq is not 1");
-    if(0 == event.copyNb) throw exception::Exception("copyNb is 0");
-    if(event.tapeDrive.empty()) throw exception::Exception("tapeDrive is an empty string");
-  } catch (exception::Exception &ex) {
+    if (event.diskInstance.empty()) {
+      throw exception::Exception("diskInstance is an empty string");
+    }
+    if (event.diskFileId.empty()) {
+      throw exception::Exception("diskFileId is an empty string");
+    }
+    if (0 == event.diskFileOwnerUid) {
+      throw exception::Exception("diskFileOwnerUid is 0");
+    }
+    if (0 == event.size) {
+      throw exception::Exception("size is 0");
+    }
+    if (event.checksumBlob.empty()) {
+      throw exception::Exception("checksumBlob is an empty string");
+    }
+    if (event.storageClassName.empty()) {
+      throw exception::Exception("storageClassName is an empty string");
+    }
+    if (event.vid.empty()) {
+      throw exception::Exception("vid is an empty string");
+    }
+    if (0 == event.fSeq) {
+      throw exception::Exception("fSeq is 0");
+    }
+    if (0 == event.blockId && event.fSeq != 1) {
+      throw exception::Exception("blockId is 0 and fSeq is not 1");
+    }
+    if (0 == event.copyNb) {
+      throw exception::Exception("copyNb is 0");
+    }
+    if (event.tapeDrive.empty()) {
+      throw exception::Exception("tapeDrive is an empty string");
+    }
+  } catch (exception::Exception& ex) {
     throw exception::Exception("TapeFileWrittenEvent is invalid: " + ex.getMessage().str());
   }
 }
@@ -107,12 +140,13 @@ void RdbmsTapeFileCatalogue::checkTapeFileWrittenFieldsAreSet(const TapeFileWrit
 //------------------------------------------------------------------------------
 // insertTapeFile
 //------------------------------------------------------------------------------
-void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dataStructures::TapeFile &tapeFile,
-  const uint64_t archiveFileId) {
-  const auto fileRecycleLogCatalogue = static_cast<RdbmsFileRecycleLogCatalogue*>(
-    m_rdbmsCatalogue->FileRecycleLog().get());
-  std::list<InsertFileRecycleLog> insertedFilesRecycleLog
-    = fileRecycleLogCatalogue->insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn,tapeFile,archiveFileId);
+void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn& conn,
+                                            const common::dataStructures::TapeFile& tapeFile,
+                                            const uint64_t archiveFileId) {
+  const auto fileRecycleLogCatalogue =
+    static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
+  std::list<InsertFileRecycleLog> insertedFilesRecycleLog =
+    fileRecycleLogCatalogue->insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn, tapeFile, archiveFileId);
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -144,7 +178,7 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dat
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
   stmt.executeNonQuery();
 
-  for(auto& fileRecycleLog: insertedFilesRecycleLog){
+  for (auto& fileRecycleLog : insertedFilesRecycleLog) {
     const char* const sql2 = R"SQL(
       DELETE FROM
         TAPE_FILE
@@ -153,14 +187,14 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn &conn, const common::dat
         FSEQ=:FSEQ
     )SQL";
     auto stmt2 = conn.createStmt(sql2);
-    stmt2.bindString(":VID",fileRecycleLog.vid);
-    stmt2.bindUint64(":FSEQ",fileRecycleLog.fSeq);
+    stmt2.bindString(":VID", fileRecycleLog.vid);
+    stmt2.bindUint64(":FSEQ", fileRecycleLog.fSeq);
     stmt2.executeNonQuery();
   }
 }
 
-void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
-  const common::dataStructures::DeleteArchiveRequest& request) const {
+void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn& conn,
+                                             const common::dataStructures::DeleteArchiveRequest& request) const {
   //Delete the tape files after.
   const char* const deleteTapeFilesSql = R"SQL(
     DELETE FROM
@@ -169,14 +203,12 @@ void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
   )SQL";
 
   auto deleteTapeFilesStmt = conn.createStmt(deleteTapeFilesSql);
-  deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID",request.archiveFileID);
+  deleteTapeFilesStmt.bindUint64(":ARCHIVE_FILE_ID", request.archiveFileID);
   deleteTapeFilesStmt.executeNonQuery();
 }
 
-void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
-  const common::dataStructures::ArchiveFile& file) const {
-  for(auto &tapeFile: file.tapeFiles) {
-
+void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn& conn, const common::dataStructures::ArchiveFile& file) const {
+  for (auto& tapeFile : file.tapeFiles) {
     //Delete the tape file.
     const char* const deleteTapeFilesSql = R"SQL(
       DELETE FROM
@@ -193,10 +225,13 @@ void RdbmsTapeFileCatalogue::deleteTapeFiles(rdbms::Conn & conn,
   }
 }
 
-common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepareToRetrieveFile(
-  const std::string &diskInstanceName, const uint64_t archiveFileId,
-  const common::dataStructures::RequesterIdentity &user, const std::optional<std::string>& activity,
-  log::LogContext &lc, const std::optional<std::string> &mountPolicyName) {
+common::dataStructures::RetrieveFileQueueCriteria
+RdbmsTapeFileCatalogue::prepareToRetrieveFile(const std::string& diskInstanceName,
+                                              const uint64_t archiveFileId,
+                                              const common::dataStructures::RequesterIdentity& user,
+                                              const std::optional<std::string>& activity,
+                                              log::LogContext& lc,
+                                              const std::optional<std::string>& mountPolicyName) {
   cta::utils::Timer t;
   common::dataStructures::RetrieveFileQueueCriteria criteria;
   {
@@ -206,7 +241,7 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
     auto archiveFile = archiveFileCatalogue->getArchiveFileToRetrieveByArchiveFileId(conn, archiveFileId);
     const auto getArchiveFileTime = t.secs(utils::Timer::resetCounter);
     // if the archive file was not found on tape in state ACTIVE or DISABLED, check if it is temporarily unavailable
-    if(nullptr == archiveFile.get()) {
+    if (nullptr == archiveFile.get()) {
       exception::UserError ex;
       auto tapeFileStateList = archiveFileCatalogue->getTapeFileStateListForArchiveFileId(conn, archiveFileId);
       if (tapeFileStateList.empty()) {
@@ -214,14 +249,13 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
         throw ex;
       }
       {
-        const auto nonBrokenState = std::find_if(
-                std::begin(tapeFileStateList), std::end(tapeFileStateList),
-                [](const std::pair <std::string, std::string> &state) {
-                  return (state.second != "BROKEN")
-                         && (state.second != "BROKEN_PENDING")
-                         && (state.second != "EXPORTED")
-                         && (state.second != "EXPORTED_PENDING");
-                });
+        const auto nonBrokenState =
+          std::find_if(std::begin(tapeFileStateList),
+                       std::end(tapeFileStateList),
+                       [](const std::pair<std::string, std::string>& state) {
+                         return (state.second != "BROKEN") && (state.second != "BROKEN_PENDING")
+                                && (state.second != "EXPORTED") && (state.second != "EXPORTED_PENDING");
+                       });
         if (nonBrokenState != std::end(tapeFileStateList)) {
           ex.getMessage() << "WARNING: The requested file is on tape " << nonBrokenState->first
                           << ", which is temporarily unavailable (" << nonBrokenState->second
@@ -231,30 +265,33 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
       }
       const auto& [brokenTape, brokenState] = tapeFileStateList.front();
       //All tape files are on broken tapes, just generate an error about the first
-      ex.getMessage() << "ERROR: The requested file is on tape " << brokenTape
-                      << ", which is permanently unavailable (" << brokenState << ").";
+      ex.getMessage() << "ERROR: The requested file is on tape " << brokenTape << ", which is permanently unavailable ("
+                      << brokenState << ").";
       throw ex;
     }
     if (mountPolicyName.has_value() && !mountPolicyName.value().empty()) {
-        const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
-        std::optional<common::dataStructures::MountPolicy> mountPolicy = mountPolicyCatalogue->getMountPolicy(conn, mountPolicyName.value());
-        if (mountPolicy) {
-          criteria.archiveFile = *archiveFile;
-          criteria.mountPolicy = mountPolicy.value();
-          return criteria;
-        } else {
-          log::ScopedParamContainer spc(lc);
-          spc.add("mountPolicyName", mountPolicyName.value())
-              .add("archiveFileId", archiveFileId);
-          lc.log(log::WARNING, "Catalogue::prepareToRetrieve Could not find specified mount policy, falling back to querying mount rules");
-        }
+      const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
+      std::optional<common::dataStructures::MountPolicy> mountPolicy =
+        mountPolicyCatalogue->getMountPolicy(conn, mountPolicyName.value());
+      if (mountPolicy) {
+        criteria.archiveFile = *archiveFile;
+        criteria.mountPolicy = mountPolicy.value();
+        return criteria;
+      } else {
+        log::ScopedParamContainer spc(lc);
+        spc.add("mountPolicyName", mountPolicyName.value()).add("archiveFileId", archiveFileId);
+        lc.log(
+          log::WARNING,
+          "Catalogue::prepareToRetrieve Could not find specified mount policy, falling back to querying mount rules");
+      }
     }
 
-    if(diskInstanceName != archiveFile->diskInstance) {
+    if (diskInstanceName != archiveFile->diskInstance) {
       exception::UserError ue;
       ue.getMessage() << "Cannot retrieve file because the disk instance of the request does not match that of the"
-        " archived file: archiveFileId=" << archiveFileId <<
-        " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" << archiveFile->diskInstance;
+                         " archived file: archiveFileId="
+                      << archiveFileId << " requestDiskInstance=" << diskInstanceName
+                      << " archiveFileDiskInstance=" << archiveFile->diskInstance;
       throw ue;
     }
 
@@ -262,7 +299,8 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
     RequesterAndGroupMountPolicies mountPolicies;
     const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
     if (activity) {
-      mountPolicies = mountPolicyCatalogue->getMountPolicies(conn, diskInstanceName, user.name, user.group, activity.value());
+      mountPolicies =
+        mountPolicyCatalogue->getMountPolicies(conn, diskInstanceName, user.name, user.group, activity.value());
     } else {
       mountPolicies = mountPolicyCatalogue->getMountPolicies(conn, diskInstanceName, user.name, user.group);
     }
@@ -271,8 +309,8 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
 
     log::ScopedParamContainer spc(lc);
     spc.add("getConnTime", getConnTime)
-        .add("getArchiveFileTime", getArchiveFileTime)
-        .add("getMountPoliciesTime", getMountPoliciesTime);
+      .add("getArchiveFileTime", getArchiveFileTime)
+      .add("getMountPoliciesTime", getMountPoliciesTime);
     lc.log(log::INFO, "Catalogue::prepareToRetrieve internal timings");
 
     // Requester activity mount policies overrule requester mount policies
@@ -280,19 +318,20 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
     common::dataStructures::MountPolicy mountPolicy;
     if (!mountPolicies.requesterActivityMountPolicies.empty()) {
       //More than one may match the activity, so choose the one with highest retrieve priority
-      mountPolicy = *std::max_element(mountPolicies.requesterActivityMountPolicies.begin(),
+      mountPolicy = *std::max_element(
+        mountPolicies.requesterActivityMountPolicies.begin(),
         mountPolicies.requesterActivityMountPolicies.end(),
-        [](const common::dataStructures::MountPolicy &p1,  const common::dataStructures::MountPolicy &p2) {
+        [](const common::dataStructures::MountPolicy& p1, const common::dataStructures::MountPolicy& p2) {
           return p1.retrievePriority < p2.retrievePriority;
         });
-    } else if(!mountPolicies.requesterMountPolicies.empty()) {
+    } else if (!mountPolicies.requesterMountPolicies.empty()) {
       mountPolicy = mountPolicies.requesterMountPolicies.front();
-    } else if(!mountPolicies.requesterGroupMountPolicies.empty()) {
+    } else if (!mountPolicies.requesterGroupMountPolicies.empty()) {
       mountPolicy = mountPolicies.requesterGroupMountPolicies.front();
     } else {
       mountPolicies = mountPolicyCatalogue->getMountPolicies(conn, diskInstanceName, "default", user.group);
 
-      if(!mountPolicies.requesterMountPolicies.empty()) {
+      if (!mountPolicies.requesterMountPolicies.empty()) {
         mountPolicy = mountPolicies.requesterMountPolicies.front();
       } else {
         exception::UserError ue;
@@ -312,4 +351,4 @@ common::dataStructures::RetrieveFileQueueCriteria RdbmsTapeFileCatalogue::prepar
   return criteria;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

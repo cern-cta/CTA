@@ -17,8 +17,9 @@
 
 #pragma once
 
-#include <string>
 #include "MountType.hpp"
+
+#include <string>
 
 namespace cta::common::dataStructures {
 
@@ -32,5 +33,5 @@ struct DriveNextState {
   std::string vid;
   std::string tapepool;
 };
-  
-} // namespace cta::common::dataStructures
+
+}  // namespace cta::common::dataStructures

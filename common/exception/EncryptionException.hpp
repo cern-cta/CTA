@@ -26,8 +26,8 @@ namespace cta::exception {
  */
 class EncryptionException : public cta::exception::Exception {
 public:
-  explicit EncryptionException(const std::string& context, const bool embedBacktrace = false) :
-    cta::exception::Exception(context, embedBacktrace) {}
+  explicit EncryptionException(const std::string& context, const bool embedBacktrace = false)
+      : cta::exception::Exception(context, embedBacktrace) {}
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

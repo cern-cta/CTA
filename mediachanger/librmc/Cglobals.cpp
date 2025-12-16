@@ -32,8 +32,9 @@
  * Cthread_setspecific() to be passed in a call to Cglobals_init().
  */
 
-#include <stdlib.h>
 #include "Cglobals.hpp"
+
+#include <stdlib.h>
 
 /*
  * Define a structure to maintain global data in a single-threaded
@@ -178,8 +179,8 @@ int Cglobals_get(int* key, void** addr, size_t size) {
       } else if (nb_globals == alloc_size) {
         Cglobals_t** dummy;
 
-        if ((dummy = (Cglobals_t**) realloc(single_thread_globals, sizeof(Cglobals_t*) * (nb_globals + alloc_size))) ==
-            nullptr) {
+        if ((dummy = (Cglobals_t**) realloc(single_thread_globals, sizeof(Cglobals_t*) * (nb_globals + alloc_size)))
+            == nullptr) {
           free(*addr);
           *addr = nullptr;
           return -1;

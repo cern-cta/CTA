@@ -15,30 +15,31 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "castor/tape/tapeserver/file/EnstoreFileReader.hpp"
+
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "castor/tape/tapeserver/file/CtaReadSession.hpp"
+#include "castor/tape/tapeserver/file/HeaderChecker.hpp"
+#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "scheduler/RetrieveJob.hpp"
+
 #include <limits>
 #include <memory>
 #include <sstream>
 #include <string>
 
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/file/CtaReadSession.hpp"
-#include "castor/tape/tapeserver/file/EnstoreFileReader.hpp"
-#include "castor/tape/tapeserver/file/HeaderChecker.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
-#include "scheduler/RetrieveJob.hpp"
-
 namespace castor::tape::tapeFile {
 
-EnstoreFileReader::EnstoreFileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall) :
-  FileReader(rs, fileToRecall) {
+EnstoreFileReader::EnstoreFileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall)
+    : FileReader(rs, fileToRecall) {
   setPositioningMethod(cta::PositioningMethod::ByFSeq);  // Enstore did not store block IDs
 }
 
-void EnstoreFileReader::setPositioningMethod(const cta::PositioningMethod &newMethod) {
+void EnstoreFileReader::setPositioningMethod(const cta::PositioningMethod& newMethod) {
   m_positionCommandCode = newMethod;
 }
 
-void EnstoreFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
+void EnstoreFileReader::positionByFseq(const cta::RetrieveJob& fileToRecall) {
   const auto fSeq = fileToRecall.selectedTapeFile().fSeq;
   if (fSeq < 1) {
     std::stringstream err;
@@ -54,18 +55,19 @@ void EnstoreFileReader::positionByFseq(const cta::RetrieveJob &fileToRecall) {
     m_session.m_drive.rewind();
     m_session.m_drive.spaceFileMarksForward(1);
   } else if (fSeq_delta == 0) {
-      // do nothing we are in the correct place
+    // do nothing we are in the correct place
   } else if (fSeq_delta > 0) {
     m_session.m_drive.spaceFileMarksForward(static_cast<uint32_t>(fSeq_delta));
-  } else { //fSeq_delta < 0
+  } else {  //fSeq_delta < 0
     m_session.m_drive.spaceFileMarksBackwards(static_cast<uint32_t>(abs(fSeq_delta) + 1));
-    m_session.m_drive.readFileMark("[EnstoreFileReader::position] Reading file mark right before the header of the file we want to read");
+    m_session.m_drive.readFileMark(
+      "[EnstoreFileReader::position] Reading file mark right before the header of the file we want to read");
   }
-  m_session.setCurrentFseq(fSeq +1);  // Set CTA fileseq to Enstore + 1
-  setBlockSize(1024*1024);  // Enstore used 1M size blocks for T10K, M8, and LTO-8 tapes
+  m_session.setCurrentFseq(fSeq + 1);  // Set CTA fileseq to Enstore + 1
+  setBlockSize(1024 * 1024);           // Enstore used 1M size blocks for T10K, M8, and LTO-8 tapes
 }
 
-void EnstoreFileReader::positionByBlockID(const cta::RetrieveJob &fileToRecall) {
+void EnstoreFileReader::positionByBlockID(const cta::RetrieveJob& fileToRecall) {
   throw NotImplemented("EnstoreFileReader::positionByBlockID() Cannot be implemented. Enstore did not store block IDs");
 }
 
@@ -78,7 +80,7 @@ void EnstoreFileReader::setBlockSize(size_t uiBlockSize) {
   }
 }
 
-size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
+size_t EnstoreFileReader::readNextDataBlock(void* data, const size_t size) {
   if (size != m_currentBlockSize) {
     throw WrongBlockSize();
   }
@@ -89,7 +91,8 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
    */
   if (size < CPIO::MAXHEADERSIZE) {
     std::ostringstream ex_str;
-    ex_str << "Invalid block size: " << size << " - " << "the block size is smaller then max size of a CPIO header: " << CPIO::MAXHEADERSIZE;
+    ex_str << "Invalid block size: " << size << " - "
+           << "the block size is smaller then max size of a CPIO header: " << CPIO::MAXHEADERSIZE;
     throw TapeFormatError(ex_str.str());
   }
   if (!m_cpioHeader.valid()) {
@@ -121,14 +124,16 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
 
     if (m_ui64CPIODataSize > m_cpioHeader.m_ui64FileSize && bytes_read > 0) {
       // File is ready
-      if(bytes_read < (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize)) {
-	    bytes_read = 0;
+      if (bytes_read < (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize)) {
+        bytes_read = 0;
       } else {
-    	bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
+        bytes_read = bytes_read - (m_ui64CPIODataSize - m_cpioHeader.m_ui64FileSize);
       }
 
-      if (true_bytes_read > 0 && bytes_read == 0) { // We need to finish reading the file mark to get the position correct
-        m_session.m_drive.readFileMark("[EnstoreFileReader::readNextDataBlock] Forcing read of file mark after trailer-only block");
+      if (true_bytes_read > 0
+          && bytes_read == 0) {  // We need to finish reading the file mark to get the position correct
+        m_session.m_drive.readFileMark(
+          "[EnstoreFileReader::readNextDataBlock] Forcing read of file mark after trailer-only block");
       }
     }
   }
@@ -144,4 +149,4 @@ size_t EnstoreFileReader::readNextDataBlock(void *data, const size_t size) {
   return bytes_read;
 }
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

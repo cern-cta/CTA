@@ -15,19 +15,17 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <list>
-#include <iostream>
+#include "catalogue/tests/CatalogueTestUtils.hpp"
 
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
-#include "catalogue/interfaces/FileRecycleLogCatalogue.hpp"
 #include "catalogue/MediaType.hpp"
 #include "catalogue/MediaTypeWithLogs.hpp"
-#include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/TapePool.hpp"
-#include "catalogue/tests/CatalogueTestUtils.hpp"
+#include "catalogue/interfaces/FileRecycleLogCatalogue.hpp"
+#include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
@@ -39,6 +37,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/RequesterActivityMountRule.hpp"
 #include "common/dataStructures/RequesterGroupMountRule.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
@@ -47,15 +46,18 @@
 #include "common/dataStructures/StorageClass.hpp"
 #include "common/dataStructures/Tape.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
-#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "disk/DiskSystem.hpp"
 
+#include <iostream>
+#include <list>
+
 namespace unitTests {
 
-std::unique_ptr<cta::catalogue::Catalogue> CatalogueTestUtils::createCatalogue(
-  cta::catalogue::CatalogueFactory *const *const catalogueFactoryPtrPtr, cta::log::LogContext *lc) {
+std::unique_ptr<cta::catalogue::Catalogue>
+CatalogueTestUtils::createCatalogue(cta::catalogue::CatalogueFactory* const* const catalogueFactoryPtrPtr,
+                                    cta::log::LogContext* lc) {
   if (nullptr == catalogueFactoryPtrPtr) {
     throw cta::exception::Exception("Global pointer to the catalogue factory pointer for unit-tests in null");
   }
@@ -68,27 +70,29 @@ std::unique_ptr<cta::catalogue::Catalogue> CatalogueTestUtils::createCatalogue(
   return catalogue;
 }
 
-void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta::log::LogContext *lc) {
+void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue* catalogue, cta::log::LogContext* lc) {
   const auto adminUsers = catalogue->AdminUser()->getAdminUsers();
-  for(auto &adminUser: adminUsers) {
+  for (auto& adminUser : adminUsers) {
     catalogue->AdminUser()->deleteAdminUser(adminUser.name);
   }
   const auto archiveRoutes = catalogue->ArchiveRoute()->getArchiveRoutes();
-  for(auto &archiveRoute: archiveRoutes) {
+  for (auto& archiveRoute : archiveRoutes) {
     catalogue->ArchiveRoute()->deleteArchiveRoute(archiveRoute.storageClassName,
-      archiveRoute.copyNb, archiveRoute.type);
+                                                  archiveRoute.copyNb,
+                                                  archiveRoute.type);
   }
   const auto amRules = catalogue->RequesterActivityMountRule()->getRequesterActivityMountRules();
-  for(const auto &rule: amRules) {
-    catalogue->RequesterActivityMountRule()->deleteRequesterActivityMountRule(rule.diskInstance, rule.name,
-      rule.activityRegex);
+  for (const auto& rule : amRules) {
+    catalogue->RequesterActivityMountRule()->deleteRequesterActivityMountRule(rule.diskInstance,
+                                                                              rule.name,
+                                                                              rule.activityRegex);
   }
   const auto rmRules = catalogue->RequesterMountRule()->getRequesterMountRules();
-  for(const auto &rule: rmRules) {
+  for (const auto& rule : rmRules) {
     catalogue->RequesterMountRule()->deleteRequesterMountRule(rule.diskInstance, rule.name);
   }
   const auto rgmRules = catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
-  for(const auto &rule: rgmRules) {
+  for (const auto& rule : rgmRules) {
     catalogue->RequesterGroupMountRule()->deleteRequesterGroupMountRule(rule.diskInstance, rule.name);
   }
   // The iterator returned from catalogue->ArchiveFile()->getArchiveFilesItor() will lock
@@ -96,86 +100,87 @@ void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue *catalogue, cta:
   // order to release the lock before moving on to deleting database rows
   auto afItor = catalogue->ArchiveFile()->getArchiveFilesItor();
   std::list<cta::common::dataStructures::ArchiveFile> archiveFiles;
-  while(afItor.hasMore()) {
+  while (afItor.hasMore()) {
     archiveFiles.push_back(afItor.next());
   }
 
-  for(const auto &archiveFile: archiveFiles) {
+  for (const auto& archiveFile : archiveFiles) {
     catalogue->ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(archiveFile.diskInstance,
-      archiveFile.archiveFileID, *lc);
+                                                                      archiveFile.archiveFileID,
+                                                                      *lc);
   }
   //Delete all the entries from the recycle log table
   auto frlItor = catalogue->FileRecycleLog()->getFileRecycleLogItor();
-  while(frlItor.hasMore()){
+  while (frlItor.hasMore()) {
     catalogue->FileRecycleLog()->deleteFilesFromRecycleLog(frlItor.next().vid, *lc);
   }
   const auto tapes = catalogue->Tape()->getTapes();
-  for(const auto &tape: tapes) {
+  for (const auto& tape : tapes) {
     catalogue->Tape()->deleteTape(tape.vid);
   }
   const auto mediaTypes = catalogue->MediaType()->getMediaTypes();
-  for(const auto &mediaType: mediaTypes) {
+  for (const auto& mediaType : mediaTypes) {
     catalogue->MediaType()->deleteMediaType(mediaType.name);
   }
   const auto storageClasses = catalogue->StorageClass()->getStorageClasses();
-  for(const auto &storageClass: storageClasses) {
+  for (const auto& storageClass : storageClasses) {
     catalogue->StorageClass()->deleteStorageClass(storageClass.name);
   }
   // before deleting the tapepools, wipe the supply table
   catalogue->TapePool()->deleteAllTapePoolSupplyEntries();
   const auto tapePools = catalogue->TapePool()->getTapePools();
-  for(const auto &tapePool: tapePools) {
+  for (const auto& tapePool : tapePools) {
     catalogue->TapePool()->deleteTapePool(tapePool.name);
   }
   const auto logicalLibraries = catalogue->LogicalLibrary()->getLogicalLibraries();
-  for(const auto &logicalLibrary: logicalLibraries) {
+  for (const auto& logicalLibrary : logicalLibraries) {
     catalogue->LogicalLibrary()->deleteLogicalLibrary(logicalLibrary.name);
   }
   const auto physicalLibraries = catalogue->PhysicalLibrary()->getPhysicalLibraries();
-  for(const auto &physicalLibrary: physicalLibraries) {
+  for (const auto& physicalLibrary : physicalLibraries) {
     catalogue->PhysicalLibrary()->deletePhysicalLibrary(physicalLibrary.name);
   }
   const auto mountPolicies = catalogue->MountPolicy()->getMountPolicies();
-  for(const auto &mountPolicy: mountPolicies) {
+  for (const auto& mountPolicy : mountPolicies) {
     catalogue->MountPolicy()->deleteMountPolicy(mountPolicy.name);
   }
   const auto diskSystems = catalogue->DiskSystem()->getAllDiskSystems();
-  for(const auto &ds: diskSystems) {
+  for (const auto& ds : diskSystems) {
     catalogue->DiskSystem()->deleteDiskSystem(ds.name);
   }
   const auto diskInstanceSpaces = catalogue->DiskInstanceSpace()->getAllDiskInstanceSpaces();
-  for(const auto &dis: diskInstanceSpaces) {
+  for (const auto& dis : diskInstanceSpaces) {
     catalogue->DiskInstanceSpace()->deleteDiskInstanceSpace(dis.name, dis.diskInstance);
   }
   const auto virtualOrganizations = catalogue->VO()->getVirtualOrganizations();
-  for(const auto &vo: virtualOrganizations) {
+  for (const auto& vo : virtualOrganizations) {
     catalogue->VO()->deleteVirtualOrganization(vo.name);
   }
   const auto diskInstances = catalogue->DiskInstance()->getAllDiskInstances();
-  for(const auto &di: diskInstances) {
+  for (const auto& di : diskInstances) {
     catalogue->DiskInstance()->deleteDiskInstance(di.name);
   }
   checkWipedDatabase(catalogue);
 }
 
-void CatalogueTestUtils::checkWipedDatabase(cta::catalogue::Catalogue *catalogue) {
-  if(!catalogue->AdminUser()->getAdminUsers().empty()) {
+void CatalogueTestUtils::checkWipedDatabase(cta::catalogue::Catalogue* catalogue) {
+  if (!catalogue->AdminUser()->getAdminUsers().empty()) {
     throw cta::exception::Exception("Found one of more admin users after emptying the database");
   }
 
-  if(catalogue->ArchiveFile()->getArchiveFilesItor().hasMore()) {
+  if (catalogue->ArchiveFile()->getArchiveFilesItor().hasMore()) {
     throw cta::exception::Exception("Found one of more archive files after emptying the database");
   }
 
-  if(!catalogue->ArchiveRoute()->getArchiveRoutes().empty()) {
+  if (!catalogue->ArchiveRoute()->getArchiveRoutes().empty()) {
     throw cta::exception::Exception("Found one of more archive routes after emptying the database");
   }
 
-  if(catalogue->FileRecycleLog()->getFileRecycleLogItor().hasMore()){
+  if (catalogue->FileRecycleLog()->getFileRecycleLogItor().hasMore()) {
     throw cta::exception::Exception("Found one or more files in the file recycle log after emptying the database");
   }
 
-  if(!catalogue->DiskSystem()->getAllDiskSystems().empty()) {
+  if (!catalogue->DiskSystem()->getAllDiskSystems().empty()) {
     throw cta::exception::Exception("Found one or more disk systems after emptying the database");
   }
 
@@ -183,47 +188,47 @@ void CatalogueTestUtils::checkWipedDatabase(cta::catalogue::Catalogue *catalogue
     throw cta::exception::Exception("Found one or more disk instances after emptying the database");
   }
 
-  if(!catalogue->LogicalLibrary()->getLogicalLibraries().empty()) {
+  if (!catalogue->LogicalLibrary()->getLogicalLibraries().empty()) {
     throw cta::exception::Exception("Found one or more logical libraries after emptying the database");
   }
 
-  if(!catalogue->PhysicalLibrary()->getPhysicalLibraries().empty()) {
+  if (!catalogue->PhysicalLibrary()->getPhysicalLibraries().empty()) {
     throw cta::exception::Exception("Found one or more physical libraries after emptying the database");
   }
 
-  if(!catalogue->MediaType()->getMediaTypes().empty()) {
+  if (!catalogue->MediaType()->getMediaTypes().empty()) {
     throw cta::exception::Exception("Found one or more media types after emptying the database");
   }
 
-  if(!catalogue->MountPolicy()->getMountPolicies().empty()) {
+  if (!catalogue->MountPolicy()->getMountPolicies().empty()) {
     throw cta::exception::Exception("Found one or more mount policies after emptying the database");
   }
 
-  if(!catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules().empty()) {
+  if (!catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules().empty()) {
     throw cta::exception::Exception("Found one or more requester group mount rules after emptying the database");
   }
 
-  if(!catalogue->RequesterMountRule()->getRequesterMountRules().empty()) {
+  if (!catalogue->RequesterMountRule()->getRequesterMountRules().empty()) {
     throw cta::exception::Exception("Found one or more requester mount rules after emptying the database");
   }
 
-  if(!catalogue->RequesterActivityMountRule()->getRequesterActivityMountRules().empty()) {
+  if (!catalogue->RequesterActivityMountRule()->getRequesterActivityMountRules().empty()) {
     throw cta::exception::Exception("Found one or more requester activity mount rules after emptying the database");
   }
 
-  if(!catalogue->StorageClass()->getStorageClasses().empty()) {
+  if (!catalogue->StorageClass()->getStorageClasses().empty()) {
     throw cta::exception::Exception("Found one or more storage classes after emptying the database");
   }
 
-  if(!catalogue->Tape()->getTapes().empty()) {
+  if (!catalogue->Tape()->getTapes().empty()) {
     throw cta::exception::Exception("Found one or more tapes after emptying the database");
   }
 
-  if(!catalogue->TapePool()->getTapePools().empty()) {
+  if (!catalogue->TapePool()->getTapePools().empty()) {
     throw cta::exception::Exception("Found one or more tape pools after emptying the database");
   }
 
-  if(!catalogue->VO()->getVirtualOrganizations().empty()) {
+  if (!catalogue->VO()->getVirtualOrganizations().empty()) {
     throw cta::exception::Exception("Found one or more virtual organizations after emptying the database");
   }
 }
@@ -325,51 +330,51 @@ cta::common::dataStructures::StorageClass CatalogueTestUtils::getStorageClassTri
 
 cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibrary1() {
   cta::common::dataStructures::PhysicalLibrary pl;
-  pl.name                      = "pl_name_1";
-  pl.manufacturer              = "manufacturer_1";
-  pl.model                     = "model_1";
-  pl.nbPhysicalCartridgeSlots  = 10;
-  pl.nbPhysicalDriveSlots      = 10;
+  pl.name = "pl_name_1";
+  pl.manufacturer = "manufacturer_1";
+  pl.model = "model_1";
+  pl.nbPhysicalCartridgeSlots = 10;
+  pl.nbPhysicalDriveSlots = 10;
   pl.nbAvailableCartridgeSlots = 5;
   return pl;
 }
 
 cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibrary2() {
   cta::common::dataStructures::PhysicalLibrary pl;
-  pl.name                      = "pl_name_2";
-  pl.manufacturer              = "manufacturer_2";
-  pl.model                     = "model_2";
-  pl.nbPhysicalCartridgeSlots  = 10;
-  pl.nbPhysicalDriveSlots      = 10;
-  pl.type                      = "type_2";
-  pl.guiUrl                    = "url_2";
-  pl.webcamUrl                 = "webcam_2";
-  pl.location                  = "location_2";
+  pl.name = "pl_name_2";
+  pl.manufacturer = "manufacturer_2";
+  pl.model = "model_2";
+  pl.nbPhysicalCartridgeSlots = 10;
+  pl.nbPhysicalDriveSlots = 10;
+  pl.type = "type_2";
+  pl.guiUrl = "url_2";
+  pl.webcamUrl = "webcam_2";
+  pl.location = "location_2";
   pl.nbAvailableCartridgeSlots = 5;
-  pl.comment                   = "comment_2";
+  pl.comment = "comment_2";
   return pl;
 }
 
 cta::common::dataStructures::PhysicalLibrary CatalogueTestUtils::getPhysicalLibrary3() {
   cta::common::dataStructures::PhysicalLibrary pl;
-  pl.name                      = "pl_name_3";
-  pl.manufacturer              = "manufacturer_3";
-  pl.model                     = "model_3";
-  pl.nbPhysicalCartridgeSlots  = 15;
-  pl.nbPhysicalDriveSlots      = 15;
-  pl.type                      = "type_3";
-  pl.guiUrl                    = "url_3";
-  pl.webcamUrl                 = "webcam_3";
-  pl.location                  = "location_3";
+  pl.name = "pl_name_3";
+  pl.manufacturer = "manufacturer_3";
+  pl.model = "model_3";
+  pl.nbPhysicalCartridgeSlots = 15;
+  pl.nbPhysicalDriveSlots = 15;
+  pl.type = "type_3";
+  pl.guiUrl = "url_3";
+  pl.webcamUrl = "webcam_3";
+  pl.location = "location_3";
   pl.nbAvailableCartridgeSlots = 10;
-  pl.comment                   = "comment_3";
+  pl.comment = "comment_3";
   return pl;
 }
 
 cta::catalogue::MediaType CatalogueTestUtils::getMediaType() {
   cta::catalogue::MediaType mediaType;
   mediaType.name = "media_type";
-  mediaType.capacityInBytes = (uint64_t)10 * 1000 * 1000 * 1000 * 1000;
+  mediaType.capacityInBytes = (uint64_t) 10 * 1000 * 1000 * 1000 * 1000;
   mediaType.cartridge = "cartridge";
   mediaType.comment = "comment";
   mediaType.maxLPos = 100;
@@ -432,13 +437,13 @@ cta::catalogue::CreateMountPolicyAttributes CatalogueTestUtils::getMountPolicy2(
   return mountPolicy;
 }
 
-std::map<std::string, cta::catalogue::TapePool> CatalogueTestUtils::tapePoolListToMap(
-  const std::list<cta::catalogue::TapePool> &listOfTapePools) {
+std::map<std::string, cta::catalogue::TapePool>
+CatalogueTestUtils::tapePoolListToMap(const std::list<cta::catalogue::TapePool>& listOfTapePools) {
   using namespace cta;
 
   std::map<std::string, cta::catalogue::TapePool> m;
 
-  for(auto &tapePool: listOfTapePools) {
+  for (auto& tapePool : listOfTapePools) {
     if (m.contains(tapePool.name)) {
       exception::Exception ex;
       ex.getMessage() << "Tape pool " << tapePool.name << " is a duplicate";
@@ -450,13 +455,13 @@ std::map<std::string, cta::catalogue::TapePool> CatalogueTestUtils::tapePoolList
   return m;
 }
 
-std::map<std::string, cta::common::dataStructures::Tape> CatalogueTestUtils::tapeListToMap(
-  const std::list<cta::common::dataStructures::Tape> &listOfTapes) {
+std::map<std::string, cta::common::dataStructures::Tape>
+CatalogueTestUtils::tapeListToMap(const std::list<cta::common::dataStructures::Tape>& listOfTapes) {
   using namespace cta;
 
   std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
 
-  for (auto &tape: listOfTapes) {
+  for (auto& tape : listOfTapes) {
     if (vidToTape.contains(tape.vid)) {
       throw exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
     }
@@ -466,12 +471,12 @@ std::map<std::string, cta::common::dataStructures::Tape> CatalogueTestUtils::tap
   return vidToTape;
 }
 
-std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils::archiveFileItorToMap(
-  cta::catalogue::ArchiveFileItor &itor) {
+std::map<uint64_t, cta::common::dataStructures::ArchiveFile>
+CatalogueTestUtils::archiveFileItorToMap(cta::catalogue::ArchiveFileItor& itor) {
   using namespace cta;
 
   std::map<uint64_t, common::dataStructures::ArchiveFile> m;
-  while(itor.hasMore()) {
+  while (itor.hasMore()) {
     const auto archiveFile = itor.next();
     if (m.contains(archiveFile.archiveFileID)) {
       exception::Exception ex;
@@ -484,14 +489,15 @@ std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils:
 }
 
 std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils::archiveFileListToMap(
-  const std::list<cta::common::dataStructures::ArchiveFile> &listOfArchiveFiles) {
+  const std::list<cta::common::dataStructures::ArchiveFile>& listOfArchiveFiles) {
   using namespace cta;
 
   std::map<uint64_t, common::dataStructures::ArchiveFile> archiveIdToArchiveFile;
 
-  for (auto &archiveFile: listOfArchiveFiles) {
+  for (auto& archiveFile : listOfArchiveFiles) {
     if (archiveIdToArchiveFile.contains(archiveFile.archiveFileID)) {
-      throw exception::Exception(std::string("Duplicate archive file ID: value=") + std::to_string(archiveFile.archiveFileID));
+      throw exception::Exception(std::string("Duplicate archive file ID: value=")
+                                 + std::to_string(archiveFile.archiveFileID));
     }
     archiveIdToArchiveFile[archiveFile.archiveFileID] = archiveFile;
   }
@@ -499,13 +505,13 @@ std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils:
   return archiveIdToArchiveFile;
 }
 
-std::map<std::string, cta::common::dataStructures::AdminUser> CatalogueTestUtils::adminUserListToMap(
-  const std::list<cta::common::dataStructures::AdminUser> &listOfAdminUsers) {
+std::map<std::string, cta::common::dataStructures::AdminUser>
+CatalogueTestUtils::adminUserListToMap(const std::list<cta::common::dataStructures::AdminUser>& listOfAdminUsers) {
   using namespace cta;
 
   std::map<std::string, common::dataStructures::AdminUser> m;
 
-  for(auto &adminUser: listOfAdminUsers) {
+  for (auto& adminUser : listOfAdminUsers) {
     if (m.contains(adminUser.name)) {
       exception::Exception ex;
       ex.getMessage() << "Admin user " << adminUser.name << " is a duplicate";

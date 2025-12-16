@@ -17,27 +17,26 @@
 
 #pragma once
 
-#include "scheduler/rdbms/RelationalDB.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
+#include "scheduler/rdbms/RelationalDB.hpp"
 
 #include <string>
 
 namespace cta::schedulerdb {
 
 class ArchiveJobQueueItor : public SchedulerDatabase::IArchiveJobQueueItor {
- friend class cta::RelationalDB;
+  friend class cta::RelationalDB;
 
- public:
-
+public:
   [[noreturn]] ArchiveJobQueueItor();
 
-   const std::string &qid() const override;
+  const std::string& qid() const override;
 
-   bool end() const override;
+  bool end() const override;
 
-   void operator++() override;
+  void operator++() override;
 
-   const common::dataStructures::ArchiveJob &operator*() const override;
+  const common::dataStructures::ArchiveJob& operator*() const override;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

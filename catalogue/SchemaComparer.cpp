@@ -15,20 +15,21 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "SchemaComparer.hpp"
+
 #include <memory>
 #include <string>
 #include <utility>
 
-#include "SchemaComparer.hpp"
-
 namespace cta::catalogue {
 
-SchemaComparer::SchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter &catalogueMetadataGetter)
-  : m_databaseToCheckName(databaseToCheckName),
-    m_databaseMetadataGetter(catalogueMetadataGetter) {}
+SchemaComparer::SchemaComparer(const std::string& databaseToCheckName, DatabaseMetadataGetter& catalogueMetadataGetter)
+    : m_databaseToCheckName(databaseToCheckName),
+      m_databaseMetadataGetter(catalogueMetadataGetter) {}
 
-void SchemaComparer::setSchemaSqlStatementsReader(std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader) {
+void SchemaComparer::setSchemaSqlStatementsReader(
+  std::unique_ptr<SchemaSqlStatementsReader> schemaSqlStatementsReader) {
   m_schemaSqlStatementsReader = std::move(schemaSqlStatementsReader);
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

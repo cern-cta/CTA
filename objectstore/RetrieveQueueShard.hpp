@@ -22,13 +22,13 @@
 
 namespace cta::objectstore {
 
-class RetrieveQueueShard: public ObjectOps<serializers::RetrieveQueueShard, serializers::RetrieveQueueShard_t>  {
+class RetrieveQueueShard : public ObjectOps<serializers::RetrieveQueueShard, serializers::RetrieveQueueShard_t> {
 public:
   // Constructor with undefined address
   explicit RetrieveQueueShard(Backend& os);
 
   // Constructor
-  RetrieveQueueShard(const std::string & address, Backend & os);
+  RetrieveQueueShard(const std::string& address, Backend& os);
 
   // Upgrader form generic object
   explicit RetrieveQueueShard(GenericObject& go);
@@ -37,12 +37,15 @@ public:
   void initialize() override;
 
   // Initializer
-  void initialize(const std::string & owner);
+  void initialize(const std::string& owner);
 
   // dumper
   std::string dump();
 
-  void garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc, cta::catalogue::Catalogue& catalogue) override;
+  void garbageCollect(const std::string& presumedOwner,
+                      AgentReference& agentReference,
+                      log::LogContext& lc,
+                      cta::catalogue::Catalogue& catalogue) override;
 
   struct JobInfo {
     uint64_t size;
@@ -56,6 +59,7 @@ public:
     std::optional<std::string> activity;
     std::optional<std::string> diskSystemName;
   };
+
   std::list<JobInfo> dumpJobs();
 
   /** Variant function allowing shard to shard job transfer (not needed) archives,
@@ -68,35 +72,41 @@ public:
     uint64_t minFseq = 0;
     uint64_t maxFseq = 0;
   };
+
   JobsSummary getJobsSummary();
 
   struct RetrieveQueueJobsToAddLess {
-    constexpr bool operator() (const common::dataStructures::RetrieveJobToAdd& lhs,
-      const common::dataStructures::RetrieveJobToAdd& rhs) const { return lhs.fSeq < rhs.fSeq; }
+    constexpr bool operator()(const common::dataStructures::RetrieveJobToAdd& lhs,
+                              const common::dataStructures::RetrieveJobToAdd& rhs) const {
+      return lhs.fSeq < rhs.fSeq;
+    }
   };
 
   using JobsToAddSet = std::multiset<common::dataStructures::RetrieveJobToAdd, RetrieveQueueJobsToAddLess>;
 
   struct RetrieveQueueSerializedJobsToAddLess {
-    bool operator() (const serializers::RetrieveJobPointer& lhs,
-      const serializers::RetrieveJobPointer& rhs) const { return lhs.fseq() < rhs.fseq(); }
+    bool operator()(const serializers::RetrieveJobPointer& lhs, const serializers::RetrieveJobPointer& rhs) const {
+      return lhs.fseq() < rhs.fseq();
+    }
   };
+
   using SerializedJobsToAddSet = std::multiset<serializers::RetrieveJobPointer, RetrieveQueueSerializedJobsToAddLess>;
+
 private:
   /**
    * adds batch of jobs.
    */
-  void addJobsInPlace(JobsToAddSet & jobsToAdd);
+  void addJobsInPlace(JobsToAddSet& jobsToAdd);
 
-  void addJobsThroughCopy(JobsToAddSet & jobsToAdd);
+  void addJobsThroughCopy(JobsToAddSet& jobsToAdd);
 
 public:
   /**
    * adds job
    */
-  void addJob(const common::dataStructures::RetrieveJobToAdd & jobToAdd);
+  void addJob(const common::dataStructures::RetrieveJobToAdd& jobToAdd);
 
-  void addJobsBatch(JobsToAddSet & jobToAdd);
+  void addJobsBatch(JobsToAddSet& jobToAdd);
 
   struct RemovalResult {
     uint64_t jobsRemoved = 0;
@@ -105,17 +115,19 @@ public:
     uint64_t bytesAfter = 0;
     std::list<JobInfo> removedJobs;
   };
+
   /**
    * Removes jobs from shard (and from the to remove list). Returns list of removed jobs.
    */
-  RemovalResult removeJobs(const std::list<std::string> & jobsToRemove);
+  RemovalResult removeJobs(const std::list<std::string>& jobsToRemove);
 
-  RetrieveQueue::CandidateJobList getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles,
-    const std::set<std::string> & retrieveRequestsToSkip, const std::set<std::string> & diskSystemsToSkip);
+  RetrieveQueue::CandidateJobList getCandidateJobList(uint64_t maxBytes,
+                                                      uint64_t maxFiles,
+                                                      const std::set<std::string>& retrieveRequestsToSkip,
+                                                      const std::set<std::string>& diskSystemsToSkip);
 
   /** Re compute summaries in case they do not match the array content. */
   void rebuild();
-
 };
 
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

@@ -15,27 +15,27 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <getopt.h>
-#include <signal.h>
-#include <string>
-#include <iostream>
-#include <thread>
-#include <memory>
-
-#include "common/exception/Errnum.hpp"
+#include "MaintenanceDaemon.hpp"
 #include "common/CmdLineParams.hpp"
 #include "common/config/Config.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/process/threading/System.hpp"
 #include "common/process/signals/SignalReactor.hpp"
 #include "common/process/signals/SignalReactorBuilder.hpp"
-#include "common/utils/utils.hpp"
+#include "common/process/threading/System.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
-#include "common/semconv/Attributes.hpp"
-#include "MaintenanceDaemon.hpp"
+#include "common/utils/utils.hpp"
 #include "version.h"
+
+#include <getopt.h>
+#include <iostream>
+#include <memory>
+#include <signal.h>
+#include <string>
+#include <thread>
 
 namespace cta::maintd {
 

@@ -15,9 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/wrapper/ConnWrapper.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
-#include "rdbms/wrapper/ConnWrapper.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -26,4 +27,4 @@ namespace cta::rdbms::wrapper {
 //------------------------------------------------------------------------------
 ConnWrapper::~ConnWrapper() = default;
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

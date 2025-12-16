@@ -15,12 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <gtest/gtest.h>
-#include <string>
-#include <sstream>
-
 #include "Config.hpp"
 #include "tests/TempFile.hpp"
+
+#include <gtest/gtest.h>
+#include <sstream>
+#include <string>
 
 namespace unitTests {
 
@@ -41,7 +41,7 @@ TEST(FrontendConfig, HandlesUInt) {
   tf.stringFill(strFile.str());
 
   cta::common::Config config(tf.path());
-  
+
   EXPECT_EQ(1, config.getOptionValueUInt("cta.val.a"));
   EXPECT_THROW(config.getOptionValueUInt("cta.val.b"), std::out_of_range);
   EXPECT_THROW(config.getOptionValueUInt("cta.val.c"), std::invalid_argument);

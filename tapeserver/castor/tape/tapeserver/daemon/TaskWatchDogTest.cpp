@@ -15,34 +15,33 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <castor/tape/tapeserver/daemon/TapeserverProxyMock.hpp>
-
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "common/log/StringLogger.hpp"
 #include "scheduler/TapeMountDummy.hpp"
 
+#include <castor/tape/tapeserver/daemon/TapeserverProxyMock.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
-
 namespace unitTests {
-  using namespace castor::tape;
-  using ::testing::_;
+using namespace castor::tape;
+using ::testing::_;
 
 TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
-  const double reportPeriodSecs = 10; // We wont report in practice
+  const double reportPeriodSecs = 10;  // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
 
-  cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_WatchdogTestStuck", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
   ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
-  tapeserver::daemon::RecallWatchDog watchdog(reportPeriodSecs,
-    stuckPeriod,dummyInitialProcess,dummyTapeMount,"testTapeDrive",lc,pollPeriod);
+  tapeserver::daemon::RecallWatchDog
+    watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
 
   watchdog.startThread();
   usleep(100000);
@@ -53,19 +52,19 @@ TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
 }
 
 TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
-  const double reportPeriodSecs = 10; // We wont report in practice
+  const double reportPeriodSecs = 10;  // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
 
-  cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_WatchdogTestStuck",cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_WatchdogTestStuck", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
   ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
   // We will poll for a
-  tapeserver::daemon::MigrationWatchDog watchdog(reportPeriodSecs,stuckPeriod,
-    dummyInitialProcess, dummyTapeMount, "testTapeDrive",  lc, pollPeriod);
+  tapeserver::daemon::MigrationWatchDog
+    watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
 
   watchdog.startThread();
   watchdog.notifyBeginNewJob(64, 64);
@@ -76,38 +75,36 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
 }
 
 TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndDeleted) {
-  const double reportPeriodSecs = 10; // We wont report in practice
+  const double reportPeriodSecs = 10;  // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
 
-  cta::log::StringLogger log("dummy","castor_tape_tapeserver_daemon_DoNotReportParamsAddedAndDeleted",cta::log::DEBUG);
+  cta::log::StringLogger log("dummy",
+                             "castor_tape_tapeserver_daemon_DoNotReportParamsAddedAndDeleted",
+                             cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
   ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
-  tapeserver::daemon::RecallWatchDog watchdog(reportPeriodSecs,
-    stuckPeriod,dummyInitialProcess,dummyTapeMount,"testTapeDrive",lc,pollPeriod);
+  tapeserver::daemon::RecallWatchDog
+    watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
 
   std::list<cta::log::Param> paramsToAdd {
-      {"param1", 10},
-      {"param1", 11}, // Will override the first param1 entry
-      {"param2", 20},
-      {"param3", 30},
-      {"param3", 31}, // Will override the first param3 entry
-      {"param4", 40}
+    {"param1", 10},
+    {"param1", 11}, // Will override the first param1 entry
+    {"param2", 20},
+    {"param3", 30},
+    {"param3", 31}, // Will override the first param3 entry
+    {"param4", 40}
   };
 
-  std::list<std::string> paramsToDelete {
-        {"param0"},
-        {"param1"},
-        {"param2"}
-  };
+  std::list<std::string> paramsToDelete {{"param0"}, {"param1"}, {"param2"}};
 
-  for (const auto & param : paramsToAdd) {
+  for (const auto& param : paramsToAdd) {
     watchdog.addParameter(param);
   }
-  for (const auto & param : paramsToDelete) {
+  for (const auto& param : paramsToDelete) {
     watchdog.deleteParameter(param);
   }
 
@@ -115,10 +112,8 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   std::list<cta::log::Param> capturedParamsToAdd;
   std::list<std::string> capturedParamsToDelete;
 
-  EXPECT_CALL(dummyInitialProcess, addLogParams(_))
-      .WillOnce(testing::SaveArg<0>(&capturedParamsToAdd));
-  EXPECT_CALL(dummyInitialProcess, deleteLogParams(_))
-      .WillOnce(testing::SaveArg<0>(&capturedParamsToDelete));
+  EXPECT_CALL(dummyInitialProcess, addLogParams(_)).WillOnce(testing::SaveArg<0>(&capturedParamsToAdd));
+  EXPECT_CALL(dummyInitialProcess, deleteLogParams(_)).WillOnce(testing::SaveArg<0>(&capturedParamsToDelete));
 
   watchdog.startThread();
   usleep(100000);
@@ -146,4 +141,4 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   }
 }
 
-}
+}  // namespace unitTests

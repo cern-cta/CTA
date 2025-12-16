@@ -22,47 +22,43 @@
 
 namespace cta::mediachanger {
 
-const size_t HOSTNAMEBUFLEN    = 256;
-const int    LISTENBACKLOG     = 2;
+const size_t HOSTNAMEBUFLEN = 256;
+const int LISTENBACKLOG = 2;
 const size_t SERVICENAMEBUFLEN = 256;
 
 enum RequestType {
-  RMC_GETGEOM  = 1,    // Get robot geometry
-  RMC_FINDCART = 2,    // Find cartridge(s)
-  RMC_READELEM = 3,    // Read element status
-  RMC_MOUNT    = 4,    // Mount request
-  RMC_UNMOUNT  = 5,    // Unmount request
-  RMC_EXPORT   = 6,    // Export tape request
-  RMC_IMPORT   = 7     // Import tape request
+  RMC_GETGEOM = 1,   // Get robot geometry
+  RMC_FINDCART = 2,  // Find cartridge(s)
+  RMC_READELEM = 3,  // Read element status
+  RMC_MOUNT = 4,     // Mount request
+  RMC_UNMOUNT = 5,   // Unmount request
+  RMC_EXPORT = 6,    // Export tape request
+  RMC_IMPORT = 7     // Import tape request
 };
 
 // SCSI media changer server reply types
-enum MediaChangerReplyType {
-  MSG_ERR  = 1,
-  MSG_DATA = 2,
-  RMC_RC   = 3
-};
+enum MediaChangerReplyType { MSG_ERR = 1, MSG_DATA = 2, RMC_RC = 3 };
 
 /*
  *------------------------------------------------------------------------
  * RMC (Remote SCSI media changer server) errors
  *------------------------------------------------------------------------
  */
-constexpr int ERMBASEOFF = 2200;    // RMC error base offset
+constexpr int ERMBASEOFF = 2200;  // RMC error base offset
 
 enum MediaChangerErrorCode {
-  ERMCNACT   = ERMBASEOFF+1,    // Remote SCSI media changer server not active or service being drained
-  ERMCRBTERR = ERMBASEOFF+2,    // Remote SCSI media changer error
-  ERMCUNREC  = ERMCRBTERR+1,    // Remote SCSI media changer unrecoverable error
-  ERMCSLOWR  = ERMCRBTERR+2,    // Remote SCSI media changer error (slow retry)
-  ERMCFASTR  = ERMCRBTERR+3,    // Remote SCSI media changer error (fast retry)
-  ERMCDFORCE = ERMCRBTERR+4,    // Remote SCSI media changer error (demount force)
-  ERMCDDOWN  = ERMCRBTERR+5,    // Remote SCSI media changer error (drive down)
-  ERMCOMSGN  = ERMCRBTERR+6,    // Remote SCSI media changer error (ops message)
-  ERMCOMSGS  = ERMCRBTERR+7,    // Remote SCSI media changer error (ops message + retry)
-  ERMCOMSGR  = ERMCRBTERR+8,    // Remote SCSI media changer error (ops message + wait)
-  ERMCUNLOAD = ERMCRBTERR+9,    // Remote SCSI media changer error (unload + demount)
-  ERMMAXERR  = ERMBASEOFF+11
+  ERMCNACT = ERMBASEOFF + 1,    // Remote SCSI media changer server not active or service being drained
+  ERMCRBTERR = ERMBASEOFF + 2,  // Remote SCSI media changer error
+  ERMCUNREC = ERMCRBTERR + 1,   // Remote SCSI media changer unrecoverable error
+  ERMCSLOWR = ERMCRBTERR + 2,   // Remote SCSI media changer error (slow retry)
+  ERMCFASTR = ERMCRBTERR + 3,   // Remote SCSI media changer error (fast retry)
+  ERMCDFORCE = ERMCRBTERR + 4,  // Remote SCSI media changer error (demount force)
+  ERMCDDOWN = ERMCRBTERR + 5,   // Remote SCSI media changer error (drive down)
+  ERMCOMSGN = ERMCRBTERR + 6,   // Remote SCSI media changer error (ops message)
+  ERMCOMSGS = ERMCRBTERR + 7,   // Remote SCSI media changer error (ops message + retry)
+  ERMCOMSGR = ERMCRBTERR + 8,   // Remote SCSI media changer error (ops message + wait)
+  ERMCUNLOAD = ERMCRBTERR + 9,  // Remote SCSI media changer error (unload + demount)
+  ERMMAXERR = ERMBASEOFF + 11
 };
 
 /**
@@ -75,7 +71,7 @@ const unsigned short RMC_PORT = 5014;
  * The network timeout of rmc communications should be several minutes due
  * to the time it takes to mount and unmount tapes.
  */
-const int RMC_NET_TIMEOUT = 600; // Timeout in seconds
+const int RMC_NET_TIMEOUT = 600;  // Timeout in seconds
 
 /**
  * The maximum number of attempts a retriable RMC request should be issued.
@@ -87,4 +83,4 @@ const int RMC_MAX_RQST_ATTEMPTS = 10;
  */
 const uint32_t RMC_MAGIC = 0x120D0301;
 
-} // namespace cta::mediachanger
+}  // namespace cta::mediachanger

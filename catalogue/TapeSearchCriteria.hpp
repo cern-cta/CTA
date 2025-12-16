@@ -17,11 +17,11 @@
 
 #pragma once
 
+#include "common/dataStructures/Tape.hpp"
+
 #include <optional>
 #include <string>
 #include <vector>
-
-#include "common/dataStructures/Tape.hpp"
 
 namespace cta::catalogue {
 
@@ -111,4 +111,4 @@ struct TapeSearchCriteria {
   std::optional<common::dataStructures::Tape::State> state;
 };  // struct TapeSearchCriteria
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

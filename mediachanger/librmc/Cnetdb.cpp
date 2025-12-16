@@ -19,13 +19,15 @@
  * Cnetdb.c - CASTOR MT-safe wrappers on netdb routines.
  */
 
-#include <sys/types.h>
+#include "Cnetdb.hpp"
+
+#include "Cglobals.hpp"
+
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stddef.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include "Cglobals.hpp"
-#include "Cnetdb.hpp"
+#include <sys/types.h>
 
 struct hostent* Cgethostbyname(const char* name) {
   static int hostent_key = -1;

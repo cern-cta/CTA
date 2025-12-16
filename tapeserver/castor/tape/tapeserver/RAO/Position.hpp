@@ -35,16 +35,19 @@ public:
    * @return the wrap number of this physical position
    */
   uint32_t getWrap() const { return m_wrap; }
+
   /**
    * Get the longitudinal position of this physical position
    * @return the longitudinal position of this physical position
    */
   uint64_t getLPos() const { return m_lpos; }
+
   /**
    * Set the wrap number of this physical position
    * @param wrap this wrap number
    */
   void setWrap(const uint32_t wrap) { m_wrap = wrap; }
+
   /**
    * Set the longitudinal position of this physical position
    * @param lpos this longitudinal position
@@ -56,4 +59,4 @@ private:
   uint64_t m_lpos = 0;
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

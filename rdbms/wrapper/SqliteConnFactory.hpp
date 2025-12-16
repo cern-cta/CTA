@@ -17,15 +17,15 @@
 
 #pragma once
 
-#include "rdbms/wrapper/ConnFactory.hpp"
 #include "rdbms/Login.hpp"
+#include "rdbms/wrapper/ConnFactory.hpp"
 
 namespace cta::rdbms::wrapper {
 
 /**
  * A concrete factory of Conn objects.
  */
-class SqliteConnFactory: public ConnFactory {
+class SqliteConnFactory : public ConnFactory {
 public:
   /**
    * Constructor
@@ -74,6 +74,6 @@ private:
    */
   const rdbms::Login m_login;
 
-}; // class SqliteConnFactory
+};  // class SqliteConnFactory
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

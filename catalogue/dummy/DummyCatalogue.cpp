@@ -15,9 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
 #include "DummyCatalogue.hpp"
 
+#include <memory>
 
 namespace cta::catalogue {
 
@@ -111,4 +111,4 @@ const std::unique_ptr<DriveStateCatalogue>& DummyCatalogue::DriveState() {
   return m_driveState;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

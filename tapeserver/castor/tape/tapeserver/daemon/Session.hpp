@@ -25,7 +25,6 @@ namespace castor::tape::tapeserver::daemon {
  */
 class Session {
 public:
-
   /**
    * Destructor.
    */
@@ -39,11 +38,11 @@ public:
    * termination/return values of child-process sessions.
    */
   enum EndOfSessionAction {
-    MARK_DRIVE_AS_UP   = 0,
+    MARK_DRIVE_AS_UP = 0,
     MARK_DRIVE_AS_DOWN = 1,
-    CLEAN_DRIVE        = 2 // Unload and dismount tape if present
+    CLEAN_DRIVE = 2  // Unload and dismount tape if present
   };
-  
+
   /**
    * Execute the session and return the type of action to be performed
    * immediately after the session has completed.
@@ -65,7 +64,7 @@ public:
    * completed.
    */
   virtual EndOfSessionAction execute() = 0;
-    
-}; // class Session
 
-} // namespace castor::tape::tapeserver::daemon
+};  // class Session
+
+}  // namespace castor::tape::tapeserver::daemon

@@ -16,6 +16,7 @@
  */
 
 #include "DriveConfigEntry.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 
@@ -34,27 +35,27 @@ cta::tape::daemon::DriveConfigEntry::DriveConfigEntry(const std::string& unitNam
       rawLibrarySlot(librarySlot),
       m_librarySlot(mediachanger::LibrarySlotParser::parse(rawLibrarySlot)) {
   if (unitName.size() > maxNameLen) {
-    throw cta::exception::Exception("DriveConfigEntry::DriveConfigEntry - unitName '" + unitName +
-                                    "' exceeds max length of " + std::to_string(maxNameLen) + " (got " +
-                                    std::to_string(unitName.size()) + ")");
+    throw cta::exception::Exception("DriveConfigEntry::DriveConfigEntry - unitName '" + unitName
+                                    + "' exceeds max length of " + std::to_string(maxNameLen) + " (got "
+                                    + std::to_string(unitName.size()) + ")");
   }
 
   if (logicalLibrary.size() > maxNameLen) {
-    throw cta::exception::Exception("DriveConfigEntry::DriveConfigEntry - logicalLibrary '" + logicalLibrary +
-                                    "' exceeds max length of " + std::to_string(maxNameLen) + " (got " +
-                                    std::to_string(logicalLibrary.size()) + ")");
+    throw cta::exception::Exception("DriveConfigEntry::DriveConfigEntry - logicalLibrary '" + logicalLibrary
+                                    + "' exceeds max length of " + std::to_string(maxNameLen) + " (got "
+                                    + std::to_string(logicalLibrary.size()) + ")");
   }
 
   if (devFilename.size() > maxNameLen) {
-    throw cta::exception::Exception("DriveConfigEntry::DriveConfigEntry - devFilename '" + devFilename +
-                                    "' exceeds max length of " + std::to_string(maxNameLen) + " (got " +
-                                    std::to_string(devFilename.size()) + ")");
+    throw cta::exception::Exception("DriveConfigEntry::DriveConfigEntry - devFilename '" + devFilename
+                                    + "' exceeds max length of " + std::to_string(maxNameLen) + " (got "
+                                    + std::to_string(devFilename.size()) + ")");
   }
 
   if (librarySlot.size() > maxNameLen) {
-    throw cta::exception::Exception("DriveConfigEntry::DriveConfigEntry - librarySlot '" + librarySlot +
-                                    "' exceeds max length of " + std::to_string(maxNameLen) + " (got " +
-                                    std::to_string(librarySlot.size()) + ")");
+    throw cta::exception::Exception("DriveConfigEntry::DriveConfigEntry - librarySlot '" + librarySlot
+                                    + "' exceeds max length of " + std::to_string(maxNameLen) + " (got "
+                                    + std::to_string(librarySlot.size()) + ")");
   }
 }
 

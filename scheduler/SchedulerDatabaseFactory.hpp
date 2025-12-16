@@ -17,15 +17,15 @@
 
 #pragma once
 
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+
 #include <list>
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
-
-#include "scheduler/SchedulerDatabase.hpp"
-#include "common/dataStructures/SecurityIdentity.hpp"
-#include "scheduler/RetrieveRequestDump.hpp"
 
 namespace cta {
 
@@ -122,7 +122,9 @@ public:
     return m_SchedDB->getNextRetrieveJobsToTransferBatch(vid, filesRequested, lc);
   }
 
-  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs, const std::string& toReportQueueAddress, log::LogContext& lc) override {
+  void requeueRetrieveRequestJobs(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobs,
+                                  const std::string& toReportQueueAddress,
+                                  log::LogContext& lc) override {
     m_SchedDB->requeueRetrieveRequestJobs(jobs, toReportQueueAddress, lc);
   }
 

@@ -15,35 +15,36 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/StmtPool.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/process/threading/MutexLocker.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
-#include "rdbms/StmtPool.hpp"
 
 namespace cta::rdbms {
 
 //------------------------------------------------------------------------------
 // getStmt
 //------------------------------------------------------------------------------
-Stmt StmtPool::getStmt(wrapper::ConnWrapper &conn, const std::string &sql) {
+Stmt StmtPool::getStmt(wrapper::ConnWrapper& conn, const std::string& sql) {
   threading::MutexLocker locker(m_stmtsMutex);
 
   auto itor = m_stmts.find(sql);
 
   // If there is no prepared statement in the cache
-  if(itor == m_stmts.end()) {
+  if (itor == m_stmts.end()) {
     auto stmt = conn.createStmt(sql);
     return Stmt(std::move(stmt), *this);
   } else {
-    auto &stmtList = itor->second;
-    if(stmtList.empty()) {
+    auto& stmtList = itor->second;
+    if (stmtList.empty()) {
       throw exception::Exception("Unexpected empty list of cached statements");
     }
     auto stmt = std::move(stmtList.front());
     stmtList.pop_front();
 
     // If there are no more cached prepared statements then remove the empty list from the cache
-    if(stmtList.empty()) {
+    if (stmtList.empty()) {
       m_stmts.erase(itor);
     }
 
@@ -58,8 +59,8 @@ uint64_t StmtPool::getNbStmts() const {
   threading::MutexLocker locker(m_stmtsMutex);
 
   uint64_t nbStmts = 0;
-  for(const auto &maplet: m_stmts) {
-    auto &stmtList = maplet.second;
+  for (const auto& maplet : m_stmts) {
+    auto& stmtList = maplet.second;
     nbStmts += stmtList.size();
   }
   return nbStmts;
@@ -83,4 +84,4 @@ void StmtPool::clear() {
   m_stmts.clear();
 }
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

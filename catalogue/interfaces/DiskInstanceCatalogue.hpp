@@ -17,17 +17,17 @@
 
 #pragma once
 
+#include "common/exception/UserError.hpp"
+
 #include <list>
 #include <string>
-
-#include "common/exception/UserError.hpp"
 
 namespace cta {
 
 namespace common::dataStructures {
 struct DiskInstance;
 struct SecurityIdentity;
-}
+}  // namespace common::dataStructures
 
 namespace catalogue {
 
@@ -39,15 +39,18 @@ class DiskInstanceCatalogue {
 public:
   virtual ~DiskInstanceCatalogue() = default;
 
-  virtual void createDiskInstance(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &comment) = 0;
+  virtual void createDiskInstance(const common::dataStructures::SecurityIdentity& admin,
+                                  const std::string& name,
+                                  const std::string& comment) = 0;
 
-  virtual void deleteDiskInstance(const std::string &name) = 0;
+  virtual void deleteDiskInstance(const std::string& name) = 0;
 
-  virtual void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &comment) = 0;
+  virtual void modifyDiskInstanceComment(const common::dataStructures::SecurityIdentity& admin,
+                                         const std::string& name,
+                                         const std::string& comment) = 0;
 
   virtual std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const = 0;
 };
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

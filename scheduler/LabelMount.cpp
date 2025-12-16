@@ -16,11 +16,12 @@
  */
 
 #include "LabelMount.hpp"
+
 #include "common/exception/NotImplementedException.hpp"
 
 namespace cta {
 
-LabelMount::LabelMount(catalogue::Catalogue& catalogue): m_catalogue(catalogue) {
+LabelMount::LabelMount(catalogue::Catalogue& catalogue) : m_catalogue(catalogue) {
   throw exception::NotImplementedException();
 }
 
@@ -48,21 +49,22 @@ std::string LabelMount::getVid() const {
   throw exception::NotImplementedException();
 }
 
-void LabelMount::setDriveStatus(common::dataStructures::DriveStatus status, const std::optional<std::string> & reason) {
+void LabelMount::setDriveStatus(common::dataStructures::DriveStatus status, const std::optional<std::string>& reason) {
   throw exception::NotImplementedException();
 }
 
-void LabelMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats &stats) {
+void LabelMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {
   throw exception::NotImplementedException();
 }
 
-void LabelMount::setTapeMounted(log::LogContext &logContext) const {
+void LabelMount::setTapeMounted(log::LogContext& logContext) const {
   throw exception::NotImplementedException();
 }
 
 LabelMount::LabelMount(catalogue::Catalogue& catalogue,
-  [[maybe_unused]] std::unique_ptr<SchedulerDatabase::LabelMount> dbMount) : m_catalogue(catalogue) {
+                       [[maybe_unused]] std::unique_ptr<SchedulerDatabase::LabelMount> dbMount)
+    : m_catalogue(catalogue) {
   throw exception::NotImplementedException();
 }
 
-} // namespace cta
+}  // namespace cta

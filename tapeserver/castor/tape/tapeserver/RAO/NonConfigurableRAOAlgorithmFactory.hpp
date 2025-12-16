@@ -15,10 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
-#pragma once 
+#pragma once
 
-#include "RAOParams.hpp"
 #include "RAOAlgorithmFactory.hpp"
+#include "RAOParams.hpp"
 
 namespace castor::tape::tapeserver::rao {
 
@@ -34,8 +34,7 @@ public:
    *
    * @param type    used by the createRAOAlgorithm() method to instantiate the correct algorithm for the type
    */
-  explicit NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType& type) :
-    m_type(type) { }
+  explicit NonConfigurableRAOAlgorithmFactory(const RAOParams::RAOAlgorithmType& type) : m_type(type) {}
 
   ~NonConfigurableRAOAlgorithmFactory() final = default;
 
@@ -50,4 +49,4 @@ private:
   RAOParams::RAOAlgorithmType m_type;
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

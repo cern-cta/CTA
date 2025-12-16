@@ -38,11 +38,11 @@ namespace cta::schedulerdb {
  * The purpose of this class is to help IDEs by isolating the "non-compilable"
  * issues into a small cpp file.
  */
-struct PostgresSchedulerSchema: public SchedulerSchema {
+struct PostgresSchedulerSchema : public SchedulerSchema {
   /**
    * Constructor.
    */
   PostgresSchedulerSchema();
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

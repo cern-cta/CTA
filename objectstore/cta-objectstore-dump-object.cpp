@@ -21,30 +21,30 @@
  * the path the backend store and exit
  */
 
-#include "common/config/Config.hpp"
 #include "BackendFactory.hpp"
-#include "common/log/DummyLogger.hpp"
-#include "common/log/LogContext.hpp"
 #include "BackendVFS.hpp"
 #include "GenericObject.hpp"
-#include <iostream>
-#include <stdexcept>
-#include <optional>
-#include <common/exception/NoSuchObject.hpp>
+#include "common/config/Config.hpp"
 #include "common/json/object/JSONCObject.hpp"
-#include <getopt.h>
+#include "common/log/DummyLogger.hpp"
+#include "common/log/LogContext.hpp"
 
-void print_help(const std::string & cmd) {
+#include <common/exception/NoSuchObject.hpp>
+#include <getopt.h>
+#include <iostream>
+#include <optional>
+#include <stdexcept>
+
+void print_help(const std::string& cmd) {
   std::cout << "Usage:" << cmd << " [--json] [--bodydump] [objectstoreURL] objectname" << std::endl;
 }
 
-int main(int argc, char ** argv) {
-
+int main(int argc, char** argv) {
   static struct option longopts[] = {
-    { "help",  no_argument, nullptr, 'h' },
-    { "json",  no_argument, nullptr, 'j' },
-    { "bodydump",  no_argument, nullptr, 'b' },
-    { nullptr,           0, nullptr, 0 }
+    {"help",     no_argument, nullptr, 'h'},
+    {"json",     no_argument, nullptr, 'j'},
+    {"bodydump", no_argument, nullptr, 'b'},
+    {nullptr,    0,           nullptr, 0  }
   };
 
   bool full_json = false;
@@ -54,21 +54,20 @@ int main(int argc, char ** argv) {
   // an option character
   opterr = 0;
 
-  for(int opt = 0; (opt = getopt_long(argc, argv, "", longopts, nullptr)) != -1; ) {
-    switch(opt) {
+  for (int opt = 0; (opt = getopt_long(argc, argv, "", longopts, nullptr)) != -1;) {
+    switch (opt) {
       case 'h':
         print_help(argv[0]);
         return 0;
-      break;
+        break;
       case 'j':
         full_json = true;
-      break;
+        break;
       case 'b':
         dump_object_body_only = true;
-      break;
+        break;
       case '?':
-      default:
-      {
+      default: {
         print_help(argv[0]);
         throw std::runtime_error("Unknown command-line option");
       }
@@ -77,7 +76,7 @@ int main(int argc, char ** argv) {
 
   const int nbArgs = argc - optind;
 
-  if(nbArgs != 1 && nbArgs != 2) {
+  if (nbArgs != 1 && nbArgs != 2) {
     print_help(argv[0]);
     throw std::runtime_error("Wrong number of positional arguments: expected 1 or 2: [objectstoreURL] objectname");
   }
@@ -98,8 +97,8 @@ int main(int argc, char ** argv) {
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
     try {
-      dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
-    } catch (std::bad_cast &){}
+      dynamic_cast<cta::objectstore::BackendVFS&>(*be).noDeleteOnExit();
+    } catch (std::bad_cast&) {}
     cta::objectstore::GenericObject ge(objectName, *be);
     ge.fetchNoLock();
     auto params = be->getParams();
@@ -130,12 +129,12 @@ int main(int argc, char ** argv) {
         std::cout << std::endl;
       }
     }
-  } catch (cta::exception::NoSuchObject &) {
+  } catch (cta::exception::NoSuchObject&) {
     std::cerr << "Object not found in the object store" << std::endl;
   } catch (const std::bad_optional_access&) {
-    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry." << std::endl;
+    std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry."
+              << std::endl;
   } catch (std::exception& e) {
-    std::cerr << "Failed to dump object: "
-        << std::endl << e.what() << std::endl;
+    std::cerr << "Failed to dump object: " << std::endl << e.what() << std::endl;
   }
 }

@@ -15,12 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "XrdSsiCtaServiceProvider.hpp"
+
+#include "cta_frontend.pb.h"
+
 #include <XrdSsiPbAlert.hpp>
 #include <XrdSsiPbConfig.hpp>
 #include <XrdSsiPbService.hpp>
-
-#include "XrdSsiCtaServiceProvider.hpp"
-#include "cta_frontend.pb.h"
 
 /*
  * Global pointer to the Service Provider object.
@@ -29,13 +30,13 @@
  * shared library is loaded, XRootD initialization fails if the appropriate symbol cannot be found (or
  * it is a null pointer).
  */
-XrdSsiProvider *XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
+XrdSsiProvider* XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 
 // This method inherits from an external class to this project, so we cannot modify the interface
 bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger* logP,
                                     XrdSsiCluster* clsP,
-                                    const std::string cfgFn, // cppcheck-suppress passedByValue
-                                    const std::string parms, // cppcheck-suppress passedByValue
+                                    const std::string cfgFn,  // cppcheck-suppress passedByValue
+                                    const std::string parms,  // cppcheck-suppress passedByValue
                                     int argc,
                                     char** argv) {
   try {
@@ -43,8 +44,7 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger* logP,
 
     // Set XRootD SSI Protobuf logging level from config file
     XrdSsiPb::Config config(cfgFn);
-    if(auto loglevel = config.getOptionList("cta.log.ssi");
-       loglevel.empty()) {
+    if (auto loglevel = config.getOptionList("cta.log.ssi"); loglevel.empty()) {
       XrdSsiPb::Log::SetLogLevel("info");
     } else {
       XrdSsiPb::Log::SetLogLevel(loglevel);
@@ -53,13 +53,22 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger* logP,
     // Initialise the Frontend Service object from the config file
     m_frontendService = std::make_unique<cta::frontend::FrontendService>(cfgFn);
     return true;
-  } catch(XrdSsiPb::XrdSsiException &ex) {
-    XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, LOG_SUFFIX, "XrdSsiCtaServiceProvider::Init(): XrdSsiPb::XrdSsiException ", ex.what());
-  } catch(cta::exception::Exception &ex) {
-    XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, LOG_SUFFIX, "XrdSsiCtaServiceProvider::Init(): cta::exception::Exception ", ex.what());
-  } catch(std::exception &ex) {
-    XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, LOG_SUFFIX, "XrdSsiCtaServiceProvider::Init(): std::exception ", ex.what());
-  } catch(...) {
+  } catch (XrdSsiPb::XrdSsiException& ex) {
+    XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR,
+                       LOG_SUFFIX,
+                       "XrdSsiCtaServiceProvider::Init(): XrdSsiPb::XrdSsiException ",
+                       ex.what());
+  } catch (cta::exception::Exception& ex) {
+    XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR,
+                       LOG_SUFFIX,
+                       "XrdSsiCtaServiceProvider::Init(): cta::exception::Exception ",
+                       ex.what());
+  } catch (std::exception& ex) {
+    XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR,
+                       LOG_SUFFIX,
+                       "XrdSsiCtaServiceProvider::Init(): std::exception ",
+                       ex.what());
+  } catch (...) {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR, LOG_SUFFIX, "XrdSsiCtaServiceProvider::Init(): unknown exception");
   }
 
@@ -70,24 +79,26 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger* logP,
   return false;
 }
 
-XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold)
-{
+XrdSsiService* XrdSsiCtaServiceProvider::GetService(XrdSsiErrInfo& eInfo, const std::string& contact, int oHold) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::INFO, LOG_SUFFIX, "Called GetService(", contact, ',', oHold, ')');
 
-  XrdSsiService *ptr = new XrdSsiPb::Service<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>;
+  XrdSsiService* ptr = new XrdSsiPb::Service<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>;
 
   return ptr;
 }
 
-XrdSsiProvider::rStat XrdSsiCtaServiceProvider::QueryResource(const char *rName, const char *contact)
-{
+XrdSsiProvider::rStat XrdSsiCtaServiceProvider::QueryResource(const char* rName, const char* contact) {
   // We only have one resource
 
-  XrdSsiProvider::rStat resourcePresence = (strcmp(rName, "/ctafrontend") == 0) ?
-                                          XrdSsiProvider::isPresent : XrdSsiProvider::notPresent;
+  XrdSsiProvider::rStat resourcePresence =
+    (strcmp(rName, "/ctafrontend") == 0) ? XrdSsiProvider::isPresent : XrdSsiProvider::notPresent;
 
-  XrdSsiPb::Log::Msg(XrdSsiPb::Log::INFO, LOG_SUFFIX, "QueryResource(", rName, "): ",
-                   ((resourcePresence == XrdSsiProvider::isPresent) ? "isPresent" : "notPresent"));
+  XrdSsiPb::Log::Msg(XrdSsiPb::Log::INFO,
+                     LOG_SUFFIX,
+                     "QueryResource(",
+                     rName,
+                     "): ",
+                     ((resourcePresence == XrdSsiProvider::isPresent) ? "isPresent" : "notPresent"));
 
   return resourcePresence;
 }

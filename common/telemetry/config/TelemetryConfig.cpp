@@ -16,12 +16,12 @@
  */
 #include "TelemetryConfig.hpp"
 
-#include <stdexcept>
-#include <fstream>
-#include <string>
-
 #include "common/exception/InvalidArgument.hpp"
 #include "common/utils/Base64.hpp"
+
+#include <fstream>
+#include <stdexcept>
+#include <string>
 
 namespace cta::telemetry {
 
@@ -122,7 +122,8 @@ TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpEndpoint(std::string 
   return *this;
 }
 
-TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpBasicAuth(const std::string& username, const std::string& password) {
+TelemetryConfigBuilder& TelemetryConfigBuilder::metricsOtlpBasicAuth(const std::string& username,
+                                                                     const std::string& password) {
   if (username.empty() || password.empty()) {
     // Ensure we don't add any headers if not configured
     return *this;

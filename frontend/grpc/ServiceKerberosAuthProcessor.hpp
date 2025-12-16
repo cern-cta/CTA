@@ -14,31 +14,29 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
-#pragma once
 
+#pragma once
 
 #include "TokenStorage.hpp"
 
 #include <grpcpp/grpcpp.h>
-
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
 namespace cta::frontend::grpc::server {
 
 class ServiceKerberosAuthProcessor : public ::grpc::AuthMetadataProcessor {
-
 public:
   explicit ServiceKerberosAuthProcessor(const TokenStorage& tokenStorage) : m_tokenStorage(tokenStorage) {}
 
-  ::grpc::Status Process(const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata, ::grpc::AuthContext* pAuthCtx,
-                 ::grpc::AuthMetadataProcessor::OutputMetadata* pConsumedAuthMetadata,
-                 ::grpc::AuthMetadataProcessor::OutputMetadata* pResponseMetadata) override;
-  
+  ::grpc::Status Process(const ::grpc::AuthMetadataProcessor::InputMetadata& authMetadata,
+                         ::grpc::AuthContext* pAuthCtx,
+                         ::grpc::AuthMetadataProcessor::OutputMetadata* pConsumedAuthMetadata,
+                         ::grpc::AuthMetadataProcessor::OutputMetadata* pResponseMetadata) override;
+
 private:
   const std::string TOKEN_AUTH_METADATA_KEY = {"cat-grpc-kerberos-auth-token"};
   const TokenStorage& m_tokenStorage;
 };
 
-} // namespace cta::frontend::grpc::server
+}  // namespace cta::frontend::grpc::server

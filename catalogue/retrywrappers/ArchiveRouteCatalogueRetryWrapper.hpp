@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <memory>
-
 #include "catalogue/interfaces/ArchiveRouteCatalogue.hpp"
+
+#include <memory>
 
 namespace cta {
 
@@ -33,32 +33,42 @@ class Catalogue;
 
 class ArchiveRouteCatalogueRetryWrapper : public ArchiveRouteCatalogue {
 public:
-  ArchiveRouteCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue, log::Logger &m_log,
-    const uint32_t maxTriesToConnect);
+  ArchiveRouteCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+                                    log::Logger& m_log,
+                                    const uint32_t maxTriesToConnect);
   ~ArchiveRouteCatalogueRetryWrapper() override = default;
 
-  void createArchiveRoute(const common::dataStructures::SecurityIdentity &admin, const std::string &storageClassName,
-    const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
-    const std::string &tapePoolName, const std::string &comment) override;
+  void createArchiveRoute(const common::dataStructures::SecurityIdentity& admin,
+                          const std::string& storageClassName,
+                          const uint32_t copyNb,
+                          const common::dataStructures::ArchiveRouteType& archiveRouteType,
+                          const std::string& tapePoolName,
+                          const std::string& comment) override;
 
-  void deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType) override;
+  void deleteArchiveRoute(const std::string& storageClassName,
+                          const uint32_t copyNb,
+                          const common::dataStructures::ArchiveRouteType& archiveRouteType) override;
 
   std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
 
-  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string &storageClassName,
-    const std::string &tapePoolName) const override;
+  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName,
+                                                                   const std::string& tapePoolName) const override;
 
-  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
-    const std::string &tapePoolName) override;
+  void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity& admin,
+                                      const std::string& storageClassName,
+                                      const uint32_t copyNb,
+                                      const common::dataStructures::ArchiveRouteType& archiveRouteType,
+                                      const std::string& tapePoolName) override;
 
-  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
-    const std::string &comment) override;
+  void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity& admin,
+                                 const std::string& storageClassName,
+                                 const uint32_t copyNb,
+                                 const common::dataStructures::ArchiveRouteType& archiveRouteType,
+                                 const std::string& comment) override;
 
 private:
   const std::unique_ptr<Catalogue>& m_catalogue;
-  log::Logger &m_log;
+  log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class SchemaCatalogueRetryWrapper
 

@@ -16,10 +16,11 @@
  */
 
 #include "ServerNegotiationRequestHandler.hpp"
+
 #include "NegotiationService.hpp"
 #include "RequestMessage.hpp"
-#include "common/log/LogContext.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/LogContext.hpp"
 
 cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandler(
   cta::log::Logger& log,
@@ -40,15 +41,21 @@ cta::frontend::grpc::server::NegotiationRequestHandler::~NegotiationRequestHandl
 
   gssMajStat = gss_release_cred(&gssMinStat, &m_serverCreds);
   if (gssMajStat != GSS_S_COMPLETE) {
-    logGSSErrors("In grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler(): gss_release_cred() major status.", gssMajStat, GSS_C_GSS_CODE);
-    logGSSErrors("IN grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler(): gss_release_cred() minor status", gssMinStat, GSS_C_MECH_CODE);
+    logGSSErrors(
+      "In grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler(): gss_release_cred() major status.",
+      gssMajStat,
+      GSS_C_GSS_CODE);
+    logGSSErrors(
+      "IN grpc::server::NegotiationRequestHandler::~NegotiationRequestHandler(): gss_release_cred() minor status",
+      gssMinStat,
+      GSS_C_MECH_CODE);
   }
 }
 
 void cta::frontend::grpc::server::NegotiationRequestHandler::init() {
-    gss_OID mech = GSS_C_NO_OID;
-    registerKeytab(m_strKeytab);
-    acquireCreds(m_strService, mech, &m_serverCreds);
+  gss_OID mech = GSS_C_NO_OID;
+  registerKeytab(m_strKeytab);
+  acquireCreds(m_strService, mech, &m_serverCreds);
 }
 
 void cta::frontend::grpc::server::NegotiationRequestHandler::logGSSErrors(const std::string& strContext,
@@ -69,13 +76,12 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::logGSSErrors(const 
    * it should be invoked as part of a loop.
    */
   do {
-    gss_display_status(&gssMinStat, gssCode, iType, GSS_C_NULL_OID,
-                             &gssMsgCtx, &gssMsg);
-    osMsgScopeParam  << "GSS-API-ERROR:" << gssMsgCtx;
-    params.add(osMsgScopeParam.str(), std::string((char *)gssMsg.value));
-    osMsgScopeParam.str(""); // reset ostringstream
+    gss_display_status(&gssMinStat, gssCode, iType, GSS_C_NULL_OID, &gssMsgCtx, &gssMsg);
+    osMsgScopeParam << "GSS-API-ERROR:" << gssMsgCtx;
+    params.add(osMsgScopeParam.str(), std::string((char*) gssMsg.value));
+    osMsgScopeParam.str("");  // reset ostringstream
     gss_release_buffer(&gssMinStat, &gssMsg);
-  } while(gssMsgCtx);
+  } while (gssMsgCtx);
 
   lc.log(cta::log::ERR, strContext);
 }
@@ -85,12 +91,17 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::registerKeytab(cons
 
   gssMajStat = krb5_gss_register_acceptor_identity(m_strKeytab.c_str());
   if (gssMajStat != GSS_S_COMPLETE) {
-    logGSSErrors("In grpc::server::NegotiationRequestHandler::registerKeytab(): krb5_gss_register_acceptor_identity() major status.", gssMajStat, GSS_C_GSS_CODE);
-    throw cta::exception::Exception("In grpc::server::NegotiationRequestHandler::registerKeytab(): Failed to register keytab: " + strKeytab);
+    logGSSErrors("In grpc::server::NegotiationRequestHandler::registerKeytab(): krb5_gss_register_acceptor_identity() "
+                 "major status.",
+                 gssMajStat,
+                 GSS_C_GSS_CODE);
+    throw cta::exception::Exception(
+      "In grpc::server::NegotiationRequestHandler::registerKeytab(): Failed to register keytab: " + strKeytab);
   }
 }
 
-void cta::frontend::grpc::server::NegotiationRequestHandler::releaseName(const std::string& strContext, gss_name_t* pGssName) {
+void cta::frontend::grpc::server::NegotiationRequestHandler::releaseName(const std::string& strContext,
+                                                                         gss_name_t* pGssName) {
   OM_uint32 gssMajStat, gssMinStat;
 
   gssMajStat = gss_release_name(&gssMinStat, pGssName);
@@ -100,7 +111,9 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::releaseName(const s
   }
 }
 
-void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const std::string& strService, gss_OID gssMech, gss_cred_id_t *pGssServerCreds) {
+void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const std::string& strService,
+                                                                          gss_OID gssMech,
+                                                                          gss_cred_id_t* pGssServerCreds) {
   gss_buffer_desc gssNameBuf;
   gss_name_t gssServerName;
   OM_uint32 gssMajStat, gssMinStat;
@@ -119,7 +132,7 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const 
 #if defined(GSS_KRB5_NT_PRINCIPAL_NAME)
   gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf, (gss_OID) GSS_KRB5_NT_PRINCIPAL_NAME, &gssServerName);
 #else
-    // Fallback: try exact user-style name first (GSS_C_NT_USER_NAME)
+  // Fallback: try exact user-style name first (GSS_C_NT_USER_NAME)
   gssMajStat = gss_import_name(&gssMinStat, &gssNameBuf, (gss_OID) GSS_C_NT_USER_NAME, &gssServerName);
   if (gssMajStat != GSS_S_COMPLETE) {
     // If user name import fails, try hostbased service (old behavior)
@@ -128,8 +141,12 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const 
 #endif
 
   if (gssMajStat != GSS_S_COMPLETE) {
-    logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_import_name() major status.", gssMajStat, GSS_C_GSS_CODE);
-    logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_import_name() minor status.", gssMinStat, GSS_C_MECH_CODE);
+    logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_import_name() major status.",
+                 gssMajStat,
+                 GSS_C_GSS_CODE);
+    logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_import_name() minor status.",
+                 gssMinStat,
+                 GSS_C_MECH_CODE);
     throw cta::exception::Exception(
       "In grpc::server::NegotiationRequestHandler::acquireCreds(): Failed to import service principal: " + strService);
   }
@@ -139,15 +156,20 @@ void cta::frontend::grpc::server::NegotiationRequestHandler::acquireCreds(const 
     gssMechlist.elements = gssMech;
     gssMechs = &gssMechlist;
   }
-  gssMajStat = gss_acquire_cred(&gssMinStat, gssServerName, 0, gssMechs, GSS_C_ACCEPT,
-                              pGssServerCreds, nullptr, nullptr);
+  gssMajStat =
+    gss_acquire_cred(&gssMinStat, gssServerName, 0, gssMechs, GSS_C_ACCEPT, pGssServerCreds, nullptr, nullptr);
 
   releaseName("In grpc::server::NegotiationRequestHandler::acquireCreds():", &gssServerName);
 
   if (gssMajStat != GSS_S_COMPLETE) {
-    logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_acquire_cred() major status.", gssMajStat, GSS_C_GSS_CODE);
-    logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_acquire_cred() minor status.", gssMinStat, GSS_C_MECH_CODE);
-    throw cta::exception::Exception("In grpc::server::NegotiationRequestHandler::acquireCreds(): Failed to get Kerberos credentials.");
+    logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_acquire_cred() major status.",
+                 gssMajStat,
+                 GSS_C_GSS_CODE);
+    logGSSErrors("In grpc::server::NegotiationRequestHandler::acquireCreds(): gss_acquire_cred() minor status.",
+                 gssMinStat,
+                 GSS_C_MECH_CODE);
+    throw cta::exception::Exception(
+      "In grpc::server::NegotiationRequestHandler::acquireCreds(): Failed to get Kerberos credentials.");
   }
 }
 
@@ -156,22 +178,22 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
   log::LogContext lc(m_log);
 
   // Check the state and report an error
-  if(!bOk) {
+  if (!bOk) {
     switch (m_streamState) {
-      case StreamState::PROCESSING:
-        {
-          log::ScopedParamContainer params(lc);
-          params.add("tag", m_tag);
-          lc.log(cta::log::ERR, "In grpc::server::NegotiationRequestHandler::next(): Server has been shut down before receiving a matching request.");
-        }
-        break;
-      default:
-        {
-          log::ScopedParamContainer params(lc);
-          params.add("tag", m_tag);
-          lc.log(cta::log::ERR, "In grpc::server::NegotiationRequestHandler::next(): Request processing aborted: call is cancelled or connection is dropped.");
-        }
-        break;
+      case StreamState::PROCESSING: {
+        log::ScopedParamContainer params(lc);
+        params.add("tag", m_tag);
+        lc.log(cta::log::ERR,
+               "In grpc::server::NegotiationRequestHandler::next(): Server has been shut down before receiving a "
+               "matching request.");
+      } break;
+      default: {
+        log::ScopedParamContainer params(lc);
+        params.add("tag", m_tag);
+        lc.log(cta::log::ERR,
+               "In grpc::server::NegotiationRequestHandler::next(): Request processing aborted: call is cancelled or "
+               "connection is dropped.");
+      } break;
     }
     return bNext;
   }
@@ -189,118 +211,123 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
       break;
     case StreamState::PROCESSING:
       m_negotiationService.registerHandler().next(bOk);
-      m_rwNegotiation.Read(&m_request, m_tag);// read first m_request
+      m_rwNegotiation.Read(&m_request, m_tag);  // read first m_request
       m_streamState = StreamState::WRITE;
       break;
     case StreamState::READ:
       m_rwNegotiation.Read(&m_request, m_tag);
       m_streamState = StreamState::WRITE;
       break;
-    case StreamState::WRITE:
-      {
-        // Accept sec context
-        gss_buffer_desc gssRecvToken {0, GSS_C_NO_BUFFER};// length, value
-        gss_buffer_desc gssSendToken {0, GSS_C_NO_BUFFER};;
-        gss_name_t gssSrcName;
-        gss_OID gssOidMechType;
-        OM_uint32 gssMajStat;
-        OM_uint32 gssAccSecMinStat;
-        OM_uint32 gssMinStat;
-        OM_uint32 gssRetFlags;
+    case StreamState::WRITE: {
+      // Accept sec context
+      gss_buffer_desc gssRecvToken {0, GSS_C_NO_BUFFER};  // length, value
+      gss_buffer_desc gssSendToken {0, GSS_C_NO_BUFFER};
+      ;
+      gss_name_t gssSrcName;
+      gss_OID gssOidMechType;
+      OM_uint32 gssMajStat;
+      OM_uint32 gssAccSecMinStat;
+      OM_uint32 gssMinStat;
+      OM_uint32 gssRetFlags;
 
-        const uint8_t* pChallengeData = reinterpret_cast<const uint8_t*>(m_request.challenge().c_str());
-        gssRecvToken.length = m_request.challenge().size();
-        gssRecvToken.value = const_cast<void*>(reinterpret_cast<const void*>(pChallengeData));
+      const uint8_t* pChallengeData = reinterpret_cast<const uint8_t*>(m_request.challenge().c_str());
+      gssRecvToken.length = m_request.challenge().size();
+      gssRecvToken.value = const_cast<void*>(reinterpret_cast<const void*>(pChallengeData));
 
-        gssMajStat = gss_accept_sec_context(&gssAccSecMinStat, &m_gssCtx,
-                                          m_serverCreds, &gssRecvToken,
+      gssMajStat = gss_accept_sec_context(&gssAccSecMinStat,
+                                          &m_gssCtx,
+                                          m_serverCreds,
+                                          &gssRecvToken,
                                           GSS_C_NO_CHANNEL_BINDINGS,
-                                          &gssSrcName, &gssOidMechType, &gssSendToken,
+                                          &gssSrcName,
+                                          &gssOidMechType,
+                                          &gssSendToken,
                                           &gssRetFlags,
                                           nullptr,  /* time_rec */
                                           nullptr); /* del_cred_handle */
 
-        switch (gssMajStat) {
-          // https://www.ietf.org/archive/id/draft-perez-krb-wg-gss-preauth-03.html
-          case GSS_S_CONTINUE_NEEDED:
-              m_response.set_is_complete(false);
-              m_response.set_challenge(std::string(reinterpret_cast<const char*>(gssSendToken.value), gssSendToken.length));
-              m_response.set_token("");
-              gss_release_buffer(&gssMinStat, &gssSendToken);
-              m_rwNegotiation.Write(m_response, m_tag);
-              m_streamState = StreamState::READ;
-            break;
-          case GSS_S_COMPLETE: {
-            m_streamState = StreamState::FINISH;
-            m_response.set_is_complete(true);
-            m_response.set_challenge("");
-            /*
+      switch (gssMajStat) {
+        // https://www.ietf.org/archive/id/draft-perez-krb-wg-gss-preauth-03.html
+        case GSS_S_CONTINUE_NEEDED:
+          m_response.set_is_complete(false);
+          m_response.set_challenge(std::string(reinterpret_cast<const char*>(gssSendToken.value), gssSendToken.length));
+          m_response.set_token("");
+          gss_release_buffer(&gssMinStat, &gssSendToken);
+          m_rwNegotiation.Write(m_response, m_tag);
+          m_streamState = StreamState::READ;
+          break;
+        case GSS_S_COMPLETE: {
+          m_streamState = StreamState::FINISH;
+          m_response.set_is_complete(true);
+          m_response.set_challenge("");
+          /*
              * The token can be of any type
              * now KRB token is used
              */
-            m_response.set_token(std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length));
+          m_response.set_token(std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length));
 
-            // Extract the local username (without realm) from the GSS context
-            gss_buffer_desc gssLocalNameBuf;
-            OM_uint32 gssLocalNameMajStat, gssLocalNameMinStat;
-            gssLocalNameMajStat = gss_localname(&gssLocalNameMinStat, gssSrcName, GSS_C_NO_OID, &gssLocalNameBuf);
+          // Extract the local username (without realm) from the GSS context
+          gss_buffer_desc gssLocalNameBuf;
+          OM_uint32 gssLocalNameMajStat, gssLocalNameMinStat;
+          gssLocalNameMajStat = gss_localname(&gssLocalNameMinStat, gssSrcName, GSS_C_NO_OID, &gssLocalNameBuf);
 
-            std::string clientPrincipal;
-            if (gssLocalNameMajStat == GSS_S_COMPLETE) {
-              clientPrincipal =
-                std::string(reinterpret_cast<const char*>(gssLocalNameBuf.value), gssLocalNameBuf.length);
-              gss_release_buffer(&gssMinStat, &gssLocalNameBuf);
-            } else {
-              logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_localname() major status.",
-                           gssLocalNameMajStat,
-                           GSS_C_GSS_CODE);
-              logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_localname() minor status.",
-                           gssLocalNameMinStat,
-                           GSS_C_MECH_CODE);
-              m_streamState = StreamState::ERROR;
-              m_response.set_is_complete(false);
-              m_response.set_token("");
-              m_response.set_error_msg(
-                "Negotiation request failed: could not extract the local username from the GSS context");
-              gss_release_buffer(&gssMinStat, &gssSendToken);
-              m_rwNegotiation.Write(m_response, m_tag);
-              break;
-            }
-
-            // Store token with both client principal (username) and service principal
-            m_negotiationService.tokenStorage().store(
-              std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length),
-              clientPrincipal);  // Client principal (authenticated user)
-
-            m_rwNegotiation.Write(m_response, m_tag);
-            break;
-          }
-          case GSS_S_DEFECTIVE_TOKEN:
-          case GSS_S_DEFECTIVE_CREDENTIAL:
-          case GSS_S_NO_CRED:
-          case GSS_S_CREDENTIALS_EXPIRED:
-          case GSS_S_BAD_BINDINGS:
-          case GSS_S_NO_CONTEXT:
-          case GSS_S_BAD_SIG:
-          case GSS_S_OLD_TOKEN:
-          case GSS_S_DUPLICATE_TOKEN:
-          case GSS_S_BAD_MECH:
-          case GSS_S_FAILURE:
+          std::string clientPrincipal;
+          if (gssLocalNameMajStat == GSS_S_COMPLETE) {
+            clientPrincipal = std::string(reinterpret_cast<const char*>(gssLocalNameBuf.value), gssLocalNameBuf.length);
+            gss_release_buffer(&gssMinStat, &gssLocalNameBuf);
+          } else {
+            logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_localname() major status.",
+                         gssLocalNameMajStat,
+                         GSS_C_GSS_CODE);
+            logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_localname() minor status.",
+                         gssLocalNameMinStat,
+                         GSS_C_MECH_CODE);
             m_streamState = StreamState::ERROR;
-            logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_accept_sec_context() major status.", gssMajStat, gssAccSecMinStat);
             m_response.set_is_complete(false);
-            m_response.set_challenge("");
             m_response.set_token("");
-            m_response.set_error_msg("Negotiation request failed");
+            m_response.set_error_msg(
+              "Negotiation request failed: could not extract the local username from the GSS context");
             gss_release_buffer(&gssMinStat, &gssSendToken);
             m_rwNegotiation.Write(m_response, m_tag);
             break;
-          default:
-            // No default
-            break;
-        }
+          }
 
-        releaseName("In grpc::server::NegotiationRequestHandler::next():", &gssSrcName);
+          // Store token with both client principal (username) and service principal
+          m_negotiationService.tokenStorage().store(
+            std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length),
+            clientPrincipal);  // Client principal (authenticated user)
+
+          m_rwNegotiation.Write(m_response, m_tag);
+          break;
+        }
+        case GSS_S_DEFECTIVE_TOKEN:
+        case GSS_S_DEFECTIVE_CREDENTIAL:
+        case GSS_S_NO_CRED:
+        case GSS_S_CREDENTIALS_EXPIRED:
+        case GSS_S_BAD_BINDINGS:
+        case GSS_S_NO_CONTEXT:
+        case GSS_S_BAD_SIG:
+        case GSS_S_OLD_TOKEN:
+        case GSS_S_DUPLICATE_TOKEN:
+        case GSS_S_BAD_MECH:
+        case GSS_S_FAILURE:
+          m_streamState = StreamState::ERROR;
+          logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_accept_sec_context() major status.",
+                       gssMajStat,
+                       gssAccSecMinStat);
+          m_response.set_is_complete(false);
+          m_response.set_challenge("");
+          m_response.set_token("");
+          m_response.set_error_msg("Negotiation request failed");
+          gss_release_buffer(&gssMinStat, &gssSendToken);
+          m_rwNegotiation.Write(m_response, m_tag);
+          break;
+        default:
+          // No default
+          break;
+      }
+
+      releaseName("In grpc::server::NegotiationRequestHandler::next():", &gssSrcName);
     }
 
     break;
@@ -313,7 +340,9 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
         OM_uint32 gssMinStat;
         gss_delete_sec_context(&gssMinStat, &m_gssCtx, GSS_C_NO_BUFFER);
         if (gssMinStat != GSS_S_COMPLETE) {
-          logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_delete_sec_context() minor status", gssMinStat, GSS_C_GSS_CODE);
+          logGSSErrors("In grpc::server::NegotiationRequestHandler::next(): gss_delete_sec_context() minor status",
+                       gssMinStat,
+                       GSS_C_GSS_CODE);
         }
       }
       bNext = false;

@@ -15,36 +15,35 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "Cinit.hpp"
+#include "mediachanger/librmc/Cdomainname.hpp"
+#include "mediachanger/librmc/Cnetdb.hpp"
+#include "mediachanger/librmc/getconfent.hpp"
+#include "mediachanger/librmc/marshall.hpp"
+#include "mediachanger/librmc/net.hpp"
+#include "mediachanger/librmc/serrno.hpp"
+#include "mediachanger/librmc/smc_struct.hpp"
+#include "rmc_constants.hpp"
+#include "rmc_logit.hpp"
+#include "rmc_procreq.hpp"
+#include "rmc_sendrep.hpp"
+#include "rmc_smcsubr.hpp"
+
+#include <arpa/inet.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <poll.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
 #include <unistd.h>
-#include <netdb.h>
-#include <poll.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include "mediachanger/librmc/smc_struct.hpp"
-#include "mediachanger/librmc/Cnetdb.hpp"
-#include "mediachanger/librmc/Cdomainname.hpp"
-#include "mediachanger/librmc/net.hpp"
-#include "mediachanger/librmc/getconfent.hpp"
-#include "mediachanger/librmc/marshall.hpp"
-#include "mediachanger/librmc/serrno.hpp"
-#include "rmc_logit.hpp"
-#include "rmc_constants.hpp"
-#include "rmc_smcsubr.hpp"
-#include "rmc_sendrep.hpp"
-#include "Cinit.hpp"
-#include "rmc_procreq.hpp"
 
 /* Forward declaration */
 static int rmc_getreq(const int s, int* const req_type, char* const req_data, char** const clienthost);
@@ -330,19 +329,20 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
     }
     {
       struct hostent hbuf;
-      struct hostent *hp = nullptr;
+      struct hostent* hp = nullptr;
       char buffer[1024];
       char client_ip[INET6_ADDRSTRLEN];
       int h_err;
-      if (gethostbyaddr_r((void *) (&from.sin_addr),
+      if (gethostbyaddr_r((void*) (&from.sin_addr),
                           sizeof(struct in_addr),
                           from.sin_family,
                           &hbuf,
                           buffer,
                           sizeof(buffer),
                           &hp,
-                          &h_err) != 0 ||
-          hp == nullptr) {
+                          &h_err)
+            != 0
+          || hp == nullptr) {
         if (inet_ntop(AF_INET, &from.sin_addr, client_ip, sizeof(client_ip)) == nullptr) {
           perror("inet_ntop");
           return ERMCUNREC;

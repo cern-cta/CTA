@@ -15,25 +15,26 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "mediachanger/librmc/serrno.hpp"
+#include "mediachanger/librmc/spectra_like_libs.hpp"
+#include "mediachanger/rmcd/rbtsubr_constants.hpp"
+#include "mediachanger/rmcd/rmc_constants.hpp"
+#include "mediachanger/rmcd/smc_constants.hpp"
+#include "rmc_api.hpp"
+
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <getopt.h>
-#include <ctype.h>
-#include "mediachanger/librmc/spectra_like_libs.hpp"
-#include "mediachanger/librmc/serrno.hpp"
-#include "mediachanger/rmcd/rmc_constants.hpp"
-#include "mediachanger/rmcd/rbtsubr_constants.hpp"
-#include "mediachanger/rmcd/smc_constants.hpp"
-#include "rmc_api.hpp"
 
 extern char* optarg;
 
 void printf_red(const char* str) {
-  constexpr const char* TEXT_RED    = "\x1b[31;1m";
+  constexpr const char* TEXT_RED = "\x1b[31;1m";
   constexpr const char* TEXT_NORMAL = "\x1b[0m";
 
   printf("%s%s%s\n", TEXT_RED, str, TEXT_NORMAL);
@@ -143,7 +144,8 @@ static int smc_qdrive(const char* const rmchost,
   } else {
     nbelem = 1;
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info))))
+      == nullptr) {
     fprintf(stderr, SR012);
     return USERR;
   }
@@ -249,14 +251,15 @@ static int smc_qport(const char* const rmchost,
   int nbelem;
 
   nbelem = robot_info->port_count;
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info))))
+      == nullptr) {
     fprintf(stderr, SR012);
     return USERR;
   }
 
   if ((c = rmc_read_elem_status(rmchost, 3, robot_info->port_start, nbelem, element_info)) < 0) {
     free(element_info);
-    return serrno-ERMCRBTERR;
+    return serrno - ERMCRBTERR;
   }
   if (isJsonEnabled) {
     smc_qport_jsonPrint(element_info, c);
@@ -309,14 +312,15 @@ static int smc_qslot(const char* const rmchost,
   if (slotaddr < 0) {
     slotaddr = 0;
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info))))
+      == nullptr) {
     fprintf(stderr, SR012);
     return USERR;
   }
 
   if ((c = rmc_read_elem_status(rmchost, 2, slotaddr, nbelem, element_info)) < 0) {
     free(element_info);
-    return serrno-ERMCRBTERR;
+    return serrno - ERMCRBTERR;
   }
   if (isJsonEnabled) {
     smc_qslot_jsonPrint(element_info, c);
@@ -394,14 +398,15 @@ static int smc_qvid(const char* const rmchost,
       nbelem = 1;
     }
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info))))
+      == nullptr) {
     fprintf(stderr, SR012);
     return USERR;
   }
 
   if ((c = rmc_find_cartridge(rmchost, vid, 0, 0, nbelem, element_info)) < 0) {
     free(element_info);
-    return serrno-ERMCRBTERR;
+    return serrno - ERMCRBTERR;
   }
   if (isJsonEnabled) {
     smc_qvid_jsonPrint(element_info, c);

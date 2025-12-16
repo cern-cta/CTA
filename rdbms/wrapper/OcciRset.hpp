@@ -63,18 +63,15 @@ public:
    */
   class BlobView : public IBlobView {
   public:
-      BlobView() = delete;
+    BlobView() = delete;
 
-      const unsigned char* data() const override {
-          throw std::logic_error("OcciRset::BlobView is not meant to be used");
-      }
+    const unsigned char* data() const override { throw std::logic_error("OcciRset::BlobView is not meant to be used"); }
 
-      std::size_t size() const override {
-          throw std::logic_error("OcciRset::BlobView is not meant to be used");
-      }
+    std::size_t size() const override { throw std::logic_error("OcciRset::BlobView is not meant to be used"); }
 
-      ~BlobView() override = default;
+    ~BlobView() override = default;
   };
+
   /**
    * Returns the SQL statement.
    *
@@ -103,19 +100,31 @@ public:
    * @param colName
    * @return
    */
-  uint8_t columnUint8NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  uint8_t columnUint8NoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
-  uint16_t columnUint16NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  uint16_t columnUint16NoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
-  uint32_t columnUint32NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  uint32_t columnUint32NoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
-  uint64_t columnUint64NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  uint64_t columnUint64NoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
   bool columnExists(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
-  std::string columnStringNoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  std::string columnStringNoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
-  double columnDoubleNoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  double columnDoubleNoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
   bool columnBoolNoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
@@ -152,7 +161,6 @@ public:
   * @throws NullDbValue If the column value is not null but decoding fails.
   */
   std::unique_ptr<rdbms::wrapper::IBlobView> columnBlobView(const std::string& colName) const override;
-
 
   /**
    * Returns the value of the specified column as a string.

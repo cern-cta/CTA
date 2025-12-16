@@ -16,9 +16,10 @@
  */
 
 #include "NegotiationService.hpp"
+
 #include "ServerNegotiationRequestHandler.hpp"
-#include "common/log/LogContext.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace cta::frontend::grpc::server {
 

@@ -22,10 +22,10 @@
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
 
+#include <functional>
+#include <list>
 #include <stdint.h>
 #include <string>
-#include <list>
-#include <functional>
 
 namespace cta::tape::daemon {
 
@@ -35,12 +35,11 @@ namespace cta::tape::daemon {
  */
 class TapedProxy {
 public:
-
   /**
    * Destructor.
    */
-  virtual ~TapedProxy()  = default;
-  
+  virtual ~TapedProxy() = default;
+
   /**
    * Notifies taped of a state change. Taped will validate the transition and
    * kill the process if it is an unexpected transition.
@@ -50,9 +49,9 @@ public:
    * @param vid the vid of the tape involved
    */
   virtual void reportState(const cta::tape::session::SessionState state,
-    const cta::tape::session::SessionType type, 
-    const std::string & vid) = 0;
-  
+                           const cta::tape::session::SessionType type,
+                           const std::string& vid) = 0;
+
   /**
    * Report a heartbeat to taped. The data counters might or might not have changed
    * as the sending of the heartbeat itself is an information.
@@ -61,18 +60,18 @@ public:
    * @param totalDiskBytesMoved cumulated data transfered to/from disk during the session.
    */
   virtual void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) = 0;
-  
+
   /**
    * Sends a new set of parameters, to be logged by the mother process when the
    * transfer session is over.
    * @param params: a vector of log parameters
    */
-  virtual void addLogParams(const std::list<cta::log::Param> &params) = 0;
-  
+  virtual void addLogParams(const std::list<cta::log::Param>& params) = 0;
+
   /**
    * Sends a list of parameters to remove from the end of session logging.
    */
-  virtual void deleteLogParams(const std::list<std::string> &paramNames) = 0;
+  virtual void deleteLogParams(const std::list<std::string>& paramNames) = 0;
 
   /**
    * Sends a list of parameters to remove from the end of session logging.
@@ -86,8 +85,7 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param message The error message.
    */
-  virtual void labelError(const std::string &unitName,
-    const std::string &message) = 0;
+  virtual void labelError(const std::string& unitName, const std::string& message) = 0;
 
   /**
    * Add a callback function to handle the request to refresh the logger.
@@ -96,7 +94,6 @@ public:
    */
   virtual void setRefreshLoggerHandler(std::function<void()> handler) = 0;
 
-}; // class TapeserverProxy
+};  // class TapeserverProxy
 
-} // namespace cta::tape::daemon
-
+}  // namespace cta::tape::daemon

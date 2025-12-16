@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <string>
-
 #include "catalogue/rdbms/RdbmsLogicalLibraryCatalogue.hpp"
+
+#include <string>
 
 namespace cta::catalogue {
 
@@ -27,12 +27,13 @@ class RdbmsCatalogue;
 
 class OracleLogicalLibraryCatalogue : public RdbmsLogicalLibraryCatalogue {
 public:
-  OracleLogicalLibraryCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  OracleLogicalLibraryCatalogue(log::Logger& log,
+                                std::shared_ptr<rdbms::ConnPool> connPool,
+                                RdbmsCatalogue* rdbmsCatalogue);
   ~OracleLogicalLibraryCatalogue() override = default;
 
 private:
-  uint64_t getNextLogicalLibraryId(rdbms::Conn &conn) const override;
+  uint64_t getNextLogicalLibraryId(rdbms::Conn& conn) const override;
 };  // class SqliteFileRecycleLogCatalogue
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

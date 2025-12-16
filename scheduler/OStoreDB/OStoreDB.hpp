@@ -17,18 +17,12 @@
 
 #pragma once
 
-#include <map>
-#include <memory>
-#include <string>
-#include <tuple>
-#include <vector>
-#include <variant>
-
+#include "QueueItor.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
-#include "common/log/Logger.hpp"
 #include "common/exception/NotImplementedException.hpp"
+#include "common/log/Logger.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
 #include "objectstore/Agent.hpp"
@@ -43,9 +37,15 @@
 #include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/RootEntry.hpp"
 #include "objectstore/SchedulerGlobalLock.hpp"
-#include "QueueItor.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/RetrieveJob.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+
+#include <map>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <variant>
+#include <vector>
 
 namespace cta {
 
@@ -99,10 +99,11 @@ private:
   };
 
   std::vector<EnqueueingWorkerThread*> m_enqueueingWorkerThreads;
-  std::atomic<uint64_t> m_taskQueueSize = 0;  // < This counter ensures destruction happens after the last thread completed.
+  std::atomic<uint64_t> m_taskQueueSize =
+    0;  // < This counter ensures destruction happens after the last thread completed.
   /// Delay introduced before posting to the task queue when it becomes too long.
   void delayIfNecessary(log::LogContext& lc);
-  cta::threading::Semaphore m_taskPostingSemaphore{5};
+  cta::threading::Semaphore m_taskPostingSemaphore {5};
 
 public:
   void waitSubthreadsComplete() override;
@@ -230,6 +231,7 @@ public:
       // This implementation, serves only PGSCHED implementation
       throw cta::exception::NotImplementedException();
     }
+
     void setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                 log::LogContext& lc) override;
   };
@@ -247,6 +249,7 @@ public:
     void failReport(const std::string& failureReason, log::LogContext& lc) override;
     // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
     void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) override {};
+
     bool releaseToPool() override { throw exception::NotImplementedException(); };
 
   private:
@@ -352,9 +355,7 @@ public:
     // initialize and releaseToPool methods are here with empty implementation only since it is needed by PGSCHED in the baseclass
     void initialize(const rdbms::Rset& resultSet, bool jobIsRepack) override {};
 
-    bool releaseToPool() override {
-      throw cta::exception::NotImplementedException();
-    };
+    bool releaseToPool() override { throw cta::exception::NotImplementedException(); };
 
     void abort(const std::string& abortReason, log::LogContext& lc) override;
     void fail() override;
@@ -366,6 +367,7 @@ public:
         : m_oStoreDB(oStoreDB),
           m_retrieveRequest(jobAddress, m_oStoreDB.m_objectStore),
           m_retrieveMount(rm) {}
+
     void asyncDeleteJob();
     void waitAsyncDelete();
 
@@ -747,10 +749,14 @@ public:
 
   std::list<std::unique_ptr<SchedulerDatabase::RepackReportBatch>> getRepackReportBatches(log::LogContext& lc) override;
 
-  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) final;
-  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) final;
-  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) final;
-  std::unique_ptr<SchedulerDatabase::RepackReportBatch> getNextFailedArchiveRepackReportBatch(log::LogContext& lc) final;
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch>
+  getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) final;
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch>
+  getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) final;
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch>
+  getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) final;
+  std::unique_ptr<SchedulerDatabase::RepackReportBatch>
+  getNextFailedArchiveRepackReportBatch(log::LogContext& lc) final;
 
 private:
   const size_t c_repackArchiveReportBatchSize = 10000;

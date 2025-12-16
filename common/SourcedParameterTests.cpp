@@ -15,10 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <gtest/gtest.h>
-
 #include "common/SourcedParameter.hpp"
 #include "tapeserver/daemon/common/FetchReportOrFlushLimits.hpp"
+
+#include <gtest/gtest.h>
 
 namespace unitTests {
 

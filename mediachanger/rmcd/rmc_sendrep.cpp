@@ -14,18 +14,20 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
-#include <errno.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <string.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <unistd.h>
+#include "rmc_sendrep.hpp"
+
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/net.hpp"
 #include "rmc_constants.hpp"
 #include "rmc_logit.hpp"
-#include "rmc_sendrep.hpp"
+
+#include <errno.h>
+#include <netinet/in.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 static const char* rep_type_to_str(const int rep_type) {
   switch (rep_type) {

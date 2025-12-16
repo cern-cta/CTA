@@ -42,9 +42,9 @@ struct ArchiveFileQueueCriteria {
    * @param ctpm    The map from tape copy number to tape pool name
    * @param mp      The mount policy
    */
-  ArchiveFileQueueCriteria(const TapeCopyToPoolMap& ctpm, const MountPolicy& mp) :
-    copyToPoolMap(ctpm),
-    mountPolicy(mp) { }
+  ArchiveFileQueueCriteria(const TapeCopyToPoolMap& ctpm, const MountPolicy& mp)
+      : copyToPoolMap(ctpm),
+        mountPolicy(mp) {}
 
   /**
    * The map from tape copy number to tape pool name.
@@ -57,4 +57,4 @@ struct ArchiveFileQueueCriteria {
   MountPolicy mountPolicy;
 };
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

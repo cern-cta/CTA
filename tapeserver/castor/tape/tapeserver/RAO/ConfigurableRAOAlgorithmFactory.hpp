@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include <memory>
-
-#include "tapeserver/castor/tape/tapeserver/RAO/RAOParams.hpp"
-#include "tapeserver/castor/tape/tapeserver/RAO/RAOAlgorithmFactory.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOAlgorithmFactory.hpp"
+#include "tapeserver/castor/tape/tapeserver/RAO/RAOParams.hpp"
+
+#include <memory>
 
 namespace cta::catalogue {
 class Catalogue;
@@ -49,33 +49,34 @@ public:
    */
   class Builder {
   public:
-    explicit Builder(const RAOParams & raoParams);
+    explicit Builder(const RAOParams& raoParams);
     /**
      * If the factory need to talk to the drive before instanciating
      * the RAOAlgorithm, the drive interface should be given by using this method.
      * @param drive the drive interface to talk to the drive if necessary
      */
-    void setDriveInterface(drive::DriveInterface * drive);
+    void setDriveInterface(drive::DriveInterface* drive);
     /**
      * If the factory need to talk to the catalogue before instanciating the RAOAlgorithm,
      * the catalogue should be given by using this method
      * @param catalogue the catalogue to talk to it 
      */
-    void setCatalogue(cta::catalogue::Catalogue * catalogue);
+    void setCatalogue(cta::catalogue::Catalogue* catalogue);
     /**
      * Returns the unique pointer to instance of a ConfigurableRAOAlgorithmFactory
      * @return the unique pointer to instance of a ConfigurableRAOAlgorithmFactory
      */
     std::unique_ptr<ConfigurableRAOAlgorithmFactory> build();
+
   private:
     std::unique_ptr<ConfigurableRAOAlgorithmFactory> m_configurableRAOAlgoFactory;
   };
 
 private:
-  explicit ConfigurableRAOAlgorithmFactory(const RAOParams & raoParams);
-  drive::DriveInterface * m_drive = nullptr;
-  cta::catalogue::Catalogue * m_catalogue = nullptr;
+  explicit ConfigurableRAOAlgorithmFactory(const RAOParams& raoParams);
+  drive::DriveInterface* m_drive = nullptr;
+  cta::catalogue::Catalogue* m_catalogue = nullptr;
   RAOParams m_raoParams;
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

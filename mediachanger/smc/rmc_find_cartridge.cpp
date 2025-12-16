@@ -17,12 +17,13 @@
 
 /*      rmc_find_cartridge - find cartridge(s) in a remote SCSI robot */
 
-#include <stdlib.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/serrno.hpp"
 #include "rmc_api.hpp"
+
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 int rmc_find_cartridge(const char* const server,
                        const char* const pattern,

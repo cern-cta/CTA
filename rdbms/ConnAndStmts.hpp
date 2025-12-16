@@ -44,7 +44,7 @@ struct ConnAndStmts {
    *
    * @param other The other object
    */
-  ConnAndStmts(ConnAndStmts&& other) noexcept : conn(std::move(other.conn)), stmtPool(std::move(other.stmtPool)) { }
+  ConnAndStmts(ConnAndStmts&& other) noexcept : conn(std::move(other.conn)), stmtPool(std::move(other.stmtPool)) {}
 
   /**
    * Equality operator
@@ -52,9 +52,7 @@ struct ConnAndStmts {
    * @param rhs The object on the right hand side of the operator.
    * @return True if equal.
    */
-  bool operator==(const ConnAndStmts& rhs) {
-    return conn.get() == rhs.conn.get();
-  }
+  bool operator==(const ConnAndStmts& rhs) { return conn.get() == rhs.conn.get(); }
 
   /**
    * Inequality operator
@@ -62,9 +60,7 @@ struct ConnAndStmts {
    * @param rhs The object on the right hand side of the operator.
    * @return True if not equal.
    */
-  bool operator!=(const ConnAndStmts& rhs) {
-    return !operator==(rhs);
-  }
+  bool operator!=(const ConnAndStmts& rhs) { return !operator==(rhs); }
 
   /**
    * The database connection.
@@ -85,4 +81,4 @@ struct ConnAndStmts {
   std::unique_ptr<StmtPool> stmtPool;
 };
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

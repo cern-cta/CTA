@@ -15,43 +15,50 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/dummy/DummyRequesterGroupMountRuleCatalogue.hpp"
+
+#include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
+
 #include <list>
 #include <optional>
 #include <string>
 
-#include "catalogue/dummy/DummyRequesterGroupMountRuleCatalogue.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/exception/NotImplementedException.hpp"
-
 namespace cta::catalogue {
 
 void DummyRequesterGroupMountRuleCatalogue::modifyRequesterGroupMountRulePolicy(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterGroupName, const std::string &mountPolicy) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterGroupName,
+  const std::string& mountPolicy) {
   throw exception::NotImplementedException();
 }
 
 void DummyRequesterGroupMountRuleCatalogue::modifyRequesterGroupMountRuleComment(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterGroupName, const std::string &comment) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterGroupName,
+  const std::string& comment) {
   throw exception::NotImplementedException();
 }
 
 void DummyRequesterGroupMountRuleCatalogue::createRequesterGroupMountRule(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &mountPolicyName,
-  const std::string &diskInstanceName, const std::string &requesterGroupName, const std::string &comment) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& mountPolicyName,
+  const std::string& diskInstanceName,
+  const std::string& requesterGroupName,
+  const std::string& comment) {
   throw exception::NotImplementedException();
 }
 
 std::list<common::dataStructures::RequesterGroupMountRule>
-  DummyRequesterGroupMountRuleCatalogue::getRequesterGroupMountRules() const {
+DummyRequesterGroupMountRuleCatalogue::getRequesterGroupMountRules() const {
   throw exception::NotImplementedException();
 }
 
-
-void DummyRequesterGroupMountRuleCatalogue::deleteRequesterGroupMountRule(const std::string &diskInstanceName,
-  const std::string &requesterGroupName) {
+void DummyRequesterGroupMountRuleCatalogue::deleteRequesterGroupMountRule(const std::string& diskInstanceName,
+                                                                          const std::string& requesterGroupName) {
   throw exception::NotImplementedException();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

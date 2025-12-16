@@ -15,31 +15,38 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/dummy/DummyRequesterMountRuleCatalogue.hpp"
+
+#include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
+
 #include <list>
 #include <optional>
 #include <string>
 
-#include "catalogue/dummy/DummyRequesterMountRuleCatalogue.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/exception/NotImplementedException.hpp"
-
 namespace cta::catalogue {
 
 void DummyRequesterMountRuleCatalogue::modifyRequesterMountRulePolicy(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterName, const std::string &mountPolicy) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterName,
+  const std::string& mountPolicy) {
   throw exception::NotImplementedException();
 }
 
 void DummyRequesterMountRuleCatalogue::modifyRequesteMountRuleComment(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterName, const std::string &comment) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterName,
+  const std::string& comment) {
   throw exception::NotImplementedException();
 }
 
-void DummyRequesterMountRuleCatalogue::createRequesterMountRule(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &mountPolicyName, const std::string &diskInstance, const std::string &requesterName,
-  const std::string &comment) {
+void DummyRequesterMountRuleCatalogue::createRequesterMountRule(const common::dataStructures::SecurityIdentity& admin,
+                                                                const std::string& mountPolicyName,
+                                                                const std::string& diskInstance,
+                                                                const std::string& requesterName,
+                                                                const std::string& comment) {
   throw exception::NotImplementedException();
 }
 
@@ -47,9 +54,9 @@ std::list<common::dataStructures::RequesterMountRule> DummyRequesterMountRuleCat
   throw exception::NotImplementedException();
 }
 
-void DummyRequesterMountRuleCatalogue::deleteRequesterMountRule(const std::string &diskInstanceName,
-  const std::string &requesterName) {
+void DummyRequesterMountRuleCatalogue::deleteRequesterMountRule(const std::string& diskInstanceName,
+                                                                const std::string& requesterName) {
   throw exception::NotImplementedException();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

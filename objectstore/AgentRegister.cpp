@@ -16,23 +16,25 @@
  */
 
 #include "AgentRegister.hpp"
-#include "ProtocolBuffersAlgorithms.hpp"
+
 #include "GenericObject.hpp"
+#include "ProtocolBuffersAlgorithms.hpp"
+
 #include <google/protobuf/util/json_util.h>
 
-cta::objectstore::AgentRegister::AgentRegister(Backend & os):
-ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>(os) {}
+cta::objectstore::AgentRegister::AgentRegister(Backend& os)
+    : ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>(os) {}
 
-cta::objectstore::AgentRegister::AgentRegister(GenericObject& go): 
-  ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>(go.objectStore()) {
+cta::objectstore::AgentRegister::AgentRegister(GenericObject& go)
+    : ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
   getPayloadFromHeader();
 }
 
-cta::objectstore::AgentRegister::AgentRegister(const std::string & name, Backend & os):
-ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>(os, name) {}
+cta::objectstore::AgentRegister::AgentRegister(const std::string& name, Backend& os)
+    : ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>(os, name) {}
 
 void cta::objectstore::AgentRegister::initialize() {
   ObjectOps<serializers::AgentRegister, serializers::AgentRegister_t>::initialize();
@@ -40,8 +42,10 @@ void cta::objectstore::AgentRegister::initialize() {
   m_payloadInterpreted = true;
 }
 
-void cta::objectstore::AgentRegister::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) {
+void cta::objectstore::AgentRegister::garbageCollect(const std::string& presumedOwner,
+                                                     AgentReference& agentReference,
+                                                     log::LogContext& lc,
+                                                     cta::catalogue::Catalogue& catalogue) {
   checkPayloadWritable();
   if (!isEmpty()) {
     throw NotEmpty("Trying to garbage collect a non-empty AgentRegister: internal error");
@@ -52,31 +56,30 @@ void cta::objectstore::AgentRegister::garbageCollect(const std::string &presumed
   lc.log(log::INFO, "In AgentRegister::garbageCollect(): Garbage collected and removed agent register object.");
 }
 
-
 bool cta::objectstore::AgentRegister::isEmpty() {
   checkPayloadReadable();
-  if (m_payload.untrackedagents_size())
+  if (m_payload.untrackedagents_size()) {
     return false;
-  if (m_payload.agents_size())
+  }
+  if (m_payload.agents_size()) {
     return false;
+  }
   return true;
 }
 
-
-void cta::objectstore::AgentRegister::addAgent (std::string name) {
+void cta::objectstore::AgentRegister::addAgent(std::string name) {
   checkPayloadWritable();
   m_payload.add_agents(name);
   m_payload.add_untrackedagents(name);
 }
 
-void cta::objectstore::AgentRegister::removeAgent (const std::string  & name) {
+void cta::objectstore::AgentRegister::removeAgent(const std::string& name) {
   checkPayloadReadable();
   serializers::removeString(m_payload.mutable_agents(), name);
   serializers::removeString(m_payload.mutable_untrackedagents(), name);
 }
 
-
-void cta::objectstore::AgentRegister::trackAgent(const std::string &name) {
+void cta::objectstore::AgentRegister::trackAgent(const std::string& name) {
   checkPayloadWritable();
   // Check that the agent is present (next statement throws an exception
   // if the agent is not known)
@@ -93,14 +96,14 @@ void cta::objectstore::AgentRegister::untrackAgent(std::string name) {
   // inserts
   try {
     serializers::findString(m_payload.mutable_untrackedagents(), name);
-  } catch (serializers::NotFound &) {
+  } catch (serializers::NotFound&) {
     m_payload.add_untrackedagents(name);
   }
 }
 
 std::list<std::string> cta::objectstore::AgentRegister::getAgents() {
   std::list<std::string> ret;
-  for (int i=0; i<m_payload.agents_size(); i++) {
+  for (int i = 0; i < m_payload.agents_size(); i++) {
     ret.push_back(m_payload.agents(i));
   }
   return ret;
@@ -108,7 +111,7 @@ std::list<std::string> cta::objectstore::AgentRegister::getAgents() {
 
 std::list<std::string> cta::objectstore::AgentRegister::getUntrackedAgents() {
   std::list<std::string> ret;
-  for (int i=0; i<m_payload.untrackedagents_size(); i++) {
+  for (int i = 0; i < m_payload.untrackedagents_size(); i++) {
     ret.push_back(m_payload.untrackedagents(i));
   }
   return ret;

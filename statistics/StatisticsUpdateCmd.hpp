@@ -17,13 +17,13 @@
 
 #pragma once
 
-#include <string>
-
+#include "StatisticsUpdateCmdLineArgs.hpp"
 #include "catalogue/CatalogueSchema.hpp"
 #include "catalogue/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
-#include "StatisticsUpdateCmdLineArgs.hpp"
+
+#include <string>
 
 namespace cta::statistics {
 
@@ -40,14 +40,14 @@ class StatisticsUpdateCmd : public catalogue::CmdLineTool {
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
+  void printUsage(std::ostream& os) override;
 };
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

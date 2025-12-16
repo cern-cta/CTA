@@ -16,6 +16,7 @@
  */
 
 #include "ArchiveRouteLsResponseStream.hpp"
+
 #include "common/dataStructures/ArchiveRouteTypeSerDeser.hpp"
 
 namespace cta::frontend {

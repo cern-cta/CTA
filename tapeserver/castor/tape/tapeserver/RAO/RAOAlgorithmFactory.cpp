@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include "RAOAlgorithmFactory.hpp"
+
 #include "LinearRAOAlgorithm.hpp"
 
 namespace castor::tape::tapeserver::rao {
@@ -27,4 +27,4 @@ std::unique_ptr<RAOAlgorithm> RAOAlgorithmFactory::createDefaultLinearAlgorithm(
   return ret;
 }
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

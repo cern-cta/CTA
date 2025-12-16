@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "RAOAlgorithm.hpp"
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
+#include "RAOAlgorithm.hpp"
 
 namespace castor::tape::tapeserver::rao {
 
@@ -28,7 +28,7 @@ class NonConfigurableRAOAlgorithmFactory;
  * This RAO Algorithm is a random one. The indexes of the jobs passed in parameter
  * will be organized randomly 
  */
-class RandomRAOAlgorithm : public RAOAlgorithm{
+class RandomRAOAlgorithm : public RAOAlgorithm {
 public:
   friend NonConfigurableRAOAlgorithmFactory;
 
@@ -38,11 +38,12 @@ public:
    * Returns a randomly organized vector of the indexes of the jobs passed in parameter
    * @param jobs the jobs to perform the random RAO on
    */
-  std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob> >& jobs) override;
+  std::vector<uint64_t> performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) override;
+
   std::string getName() const override { return "random"; }
 
 private:
   RandomRAOAlgorithm() = default;
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

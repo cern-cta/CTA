@@ -17,10 +17,11 @@
 
 #pragma once
 
-#include <string>
-#include <stdint.h>
-#include <map>
 #include "common/exception/Exception.hpp"
+
+#include <map>
+#include <stdint.h>
+#include <string>
 
 namespace cta::server {
 
@@ -37,12 +38,7 @@ public:
   /// Destructor: closes the remaining socketpairs
   ~SocketPair();
   /// Enum allowing description of sides (parent, child)
-  enum class Side: uint8_t {
-    parent,
-    child,
-    current,
-    both
-  };
+  enum class Side : uint8_t { parent, child, current, both };
   CTA_GENERATE_EXCEPTION_CLASS(CloseAlreadyCalled);
   /// Close one side (after forking)
   void close(Side sideToClose);
@@ -55,23 +51,23 @@ public:
   /// closing, useful for testing).
   std::string receive(Side source = Side::current);
   /// Used to store socketpairs to be passed to ppoll.
-  using pollMap = std::map<std::string, SocketPair *>;
+  using pollMap = std::map<std::string, SocketPair*>;
   CTA_GENERATE_EXCEPTION_CLASS(Timeout);
   CTA_GENERATE_EXCEPTION_CLASS(Overflow);
   /// Poll the socketpairs listed in the map for reading (optional side
   /// parameter allows use without closing, useful for testing).
-  static void poll(pollMap & socketPairs, time_t timeout,
-    Side sourceToPoll = Side::current);
+  static void poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll = Side::current);
   /// Flag holding the result of a poll for a given socketpair.
   bool pollFlag();
   /// An helper function getting the right file descriptor for
   /// a given source or destination. With checks.
   int getFdForAccess(Side sourceOrDestination);
+
 private:
-  int m_parentFd = -1;               ///< The file descriptor for the
+  int m_parentFd = -1;  ///< The file descriptor for the
   int m_childFd = -1;
   Side m_currentSide = Side::both;
   bool m_pollFlag = false;
 };
 
-} // namespace cta::server
+}  // namespace cta::server

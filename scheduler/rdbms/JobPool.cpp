@@ -16,6 +16,7 @@
  */
 
 #include "JobPool.hpp"
+
 #include "ArchiveRdbJob.hpp"
 #include "RetrieveRdbJob.hpp"
 

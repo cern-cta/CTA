@@ -16,6 +16,7 @@
  */
 
 #include "common/dataStructures/ArchiveFileSummary.hpp"
+
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -29,25 +30,23 @@ ArchiveFileSummary::ArchiveFileSummary() {}
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool ArchiveFileSummary::operator==(const ArchiveFileSummary &rhs) const {
-  return totalBytes==rhs.totalBytes
-      && totalFiles==rhs.totalFiles;
+bool ArchiveFileSummary::operator==(const ArchiveFileSummary& rhs) const {
+  return totalBytes == rhs.totalBytes && totalFiles == rhs.totalFiles;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool ArchiveFileSummary::operator!=(const ArchiveFileSummary &rhs) const {
+bool ArchiveFileSummary::operator!=(const ArchiveFileSummary& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const ArchiveFileSummary &obj) {
-  os << "(totalBytes=" << obj.totalBytes
-     << " totalFiles=" << obj.totalFiles << ")";
+std::ostream& operator<<(std::ostream& os, const ArchiveFileSummary& obj) {
+  os << "(totalBytes=" << obj.totalBytes << " totalFiles=" << obj.totalFiles << ")";
   return os;
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

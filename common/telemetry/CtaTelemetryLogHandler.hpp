@@ -16,8 +16,9 @@
  */
 #pragma once
 
-#include <opentelemetry/sdk/common/global_log_handler.h>
 #include "common/log/Logger.hpp"
+
+#include <opentelemetry/sdk/common/global_log_handler.h>
 
 namespace cta::telemetry {
 

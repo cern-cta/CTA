@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <unistd.h>
-
 #include "common/exception/Exception.hpp"
+
+#include <unistd.h>
 
 namespace cta {
 
@@ -34,9 +34,10 @@ public:
    *
    * @param fd The file descriptor to be owned
    */
-  explicit SmartFd(int fd = -1) noexcept : m_fd(fd) { }
+  explicit SmartFd(int fd = -1) noexcept : m_fd(fd) {}
 
   ~SmartFd() { close(m_fd); }
+
   SmartFd& operator=(SmartFd& obj) = delete;
   SmartFd(const SmartFd& obj) = delete;
 
@@ -46,8 +47,10 @@ public:
    * @param fd The file descriptor to be owned
    */
   void reset(int fd = -1) noexcept {
-    if(fd != m_fd) {
-      if(m_fd >= 0) { close(m_fd); }
+    if (fd != m_fd) {
+      if (m_fd >= 0) {
+        close(m_fd);
+      }
       m_fd = fd;
     }
   }
@@ -61,7 +64,7 @@ public:
    * Releases the owned file descriptor
    */
   int release() {
-    if(m_fd < 0) {
+    if (m_fd < 0) {
       throw exception::Exception("No file descriptor is owned");
     }
     auto tmpFd = m_fd;
@@ -70,7 +73,7 @@ public:
   }
 
 private:
-  int m_fd;    //!< The owned file descriptor (-1 if this SmartFd does not own a file descriptor)
+  int m_fd;  //!< The owned file descriptor (-1 if this SmartFd does not own a file descriptor)
 };
 
-} // namespace cta
+}  // namespace cta

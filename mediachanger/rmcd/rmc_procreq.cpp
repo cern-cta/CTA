@@ -15,27 +15,29 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#include <sys/stat.h>
-#include <time.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <string.h>
+#include "rmc_procreq.hpp"
+
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/serrno.hpp"
 #include "mediachanger/librmc/smc_struct.hpp"
 #include "rmc_constants.hpp"
 #include "rmc_logit.hpp"
-#include "rmc_sendrep.hpp"
 #include "rmc_logreq.hpp"
-#include "rmc_smcsubr2.hpp"
-#include "rmc_smcsubr.hpp"
 #include "rmc_marshall_element.hpp"
-#include "rmc_procreq.hpp"
+#include "rmc_sendrep.hpp"
+#include "rmc_smcsubr.hpp"
+#include "rmc_smcsubr2.hpp"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
 
 // set in rmc_serv.c
 extern struct extended_robot_info g_extended_robot_info;
@@ -132,7 +134,8 @@ int rmc_srv_findcart(const struct rmc_srv_rqst_context* const rqst_context) {
     rmc_logit(func, "returns %d\n", ERMCUNREC);
     return ERMCUNREC;
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info))))
+      == nullptr) {
     rmc_sendrep(rqst_context->rpfd, MSG_ERR, RMC05);
     rmc_logit(func, "returns %d\n", ERMCUNREC);
     return ERMCUNREC;
@@ -352,7 +355,8 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context* const rqst_context) {
     rmc_logit(func, "returns %d\n", ERMCUNREC);
     return ERMCUNREC;
   }
-  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info)))) == nullptr) {
+  if ((element_info = reinterpret_cast<smc_element_info*>(malloc(nbelem * sizeof(struct smc_element_info))))
+      == nullptr) {
     rmc_sendrep(rqst_context->rpfd, MSG_ERR, RMC05);
     rmc_logit(func, "returns %d\n", ERMCUNREC);
     return ERMCUNREC;
@@ -362,7 +366,8 @@ int rmc_srv_readelem(const struct rmc_srv_rqst_context* const rqst_context) {
                                 type,
                                 startaddr,
                                 nbelem,
-                                element_info)) < 0) {
+                                element_info))
+      < 0) {
     c = smc_lasterror(&smc_status, &msgaddr);
     free(element_info);
     rmc_sendrep(rqst_context->rpfd, MSG_ERR, RMC02, "smc_read_elem_status", msgaddr);

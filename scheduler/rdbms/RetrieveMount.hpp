@@ -17,21 +17,21 @@
 
 #pragma once
 
-#include "common/exception/NotImplementedException.hpp"
-#include "common/log/LogContext.hpp"
+#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
-#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
+#include "common/exception/NotImplementedException.hpp"
+#include "common/log/LogContext.hpp"
+#include "scheduler/rdbms/JobPool.hpp"
+#include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/RetrieveRdbJob.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
-#include "scheduler/rdbms/RelationalDB.hpp"
-#include "scheduler/rdbms/JobPool.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <optional>
 #include <string>
-#include <cstdint>
 #include <time.h>
 
 namespace cta::schedulerdb {
@@ -41,9 +41,12 @@ class RetrieveMount : public SchedulerDatabase::RetrieveMount {
   friend class TapeMountDecisionInfo;
 
 public:
-  explicit RetrieveMount(RelationalDB& rdb_instance) : m_RelationalDB(rdb_instance), m_connPool(rdb_instance.m_connPool) {
+  explicit RetrieveMount(RelationalDB& rdb_instance)
+      : m_RelationalDB(rdb_instance),
+        m_connPool(rdb_instance.m_connPool) {
     m_jobPool = std::make_shared<schedulerdb::JobPool<schedulerdb::RetrieveRdbJob>>(m_connPool);
   }
+
   const MountInfo& getMountInfo() override;
   void setIsRepack(std::string_view defaultRepackVO, log::LogContext& logContext);
 

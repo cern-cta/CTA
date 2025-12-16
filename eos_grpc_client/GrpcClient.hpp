@@ -17,14 +17,14 @@
 
 #pragma once
 
-#include <memory>
-#include <grpc++/grpc++.h>
 #include "Rpc.grpc.pb.h"
+
+#include <grpc++/grpc++.h>
+#include <memory>
 
 namespace eos::client {
 
-class GrpcClient
-{
+class GrpcClient {
 public:
   explicit GrpcClient(std::shared_ptr<grpc::Channel> channel) : stub_(eos::rpc::Eos::NewStub(channel)) {}
 
@@ -33,15 +33,15 @@ public:
 
   std::string ping(const std::string& payload);
 
-  int FileInsert(const std::vector<eos::rpc::FileMdProto> &paths, eos::rpc::InsertReply &replies);
+  int FileInsert(const std::vector<eos::rpc::FileMdProto>& paths, eos::rpc::InsertReply& replies);
 
-  int ContainerInsert(const std::vector<eos::rpc::ContainerMdProto> &dirs, eos::rpc::InsertReply &replies);
+  int ContainerInsert(const std::vector<eos::rpc::ContainerMdProto>& dirs, eos::rpc::InsertReply& replies);
 
   // Obtain current container ID and current file ID
-  void GetCurrentIds(uint64_t &cid, uint64_t &fid);
+  void GetCurrentIds(uint64_t& cid, uint64_t& fid);
 
   // Obtain container or file metadata
-  eos::rpc::MDResponse GetMD(eos::rpc::TYPE type, uint64_t id, const std::string &path, bool showJson = false);
+  eos::rpc::MDResponse GetMD(eos::rpc::TYPE type, uint64_t id, const std::string& path, bool showJson = false);
 
   grpc::Status Exec(eos::rpc::NSRequest& request);
 
@@ -53,9 +53,7 @@ public:
 
   const std::string& token() const { return m_token; }
 
-  void *nextTag() {
-    return reinterpret_cast<void*>(++m_tag);
-  }
+  void* nextTag() { return reinterpret_cast<void*>(++m_tag); }
 
 private:
   std::unique_ptr<eos::rpc::Eos::Stub> stub_;
@@ -66,4 +64,4 @@ private:
   uint64_t m_eos_fid = 0;  //!< EOS current file ID
 };
 
-} // namespace eos::client
+}  // namespace eos::client

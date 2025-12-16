@@ -16,6 +16,7 @@
  */
 
 #include "AdminCmdOptions.hpp"
+
 #include "cmdline/CtaAdminCmdParser.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/utils/utils.hpp"
@@ -61,8 +62,8 @@ std::optional<std::string> AdminCmdOptions::getAndValidateDiskFileIdOptional(boo
   auto diskFileIdStr = getOptional(OptionString::DISK_FILE_ID, has_any);
 
   if (diskFileIdHex && diskFileIdStr) {
-    throw exception::UserError("File ID can't be received in both string (" + diskFileIdStr.value() +
-                               ") and hexadecimal (" + diskFileIdHex.value() + ") formats");
+    throw exception::UserError("File ID can't be received in both string (" + diskFileIdStr.value()
+                               + ") and hexadecimal (" + diskFileIdHex.value() + ") formats");
   }
 
   if (diskFileIdHex) {

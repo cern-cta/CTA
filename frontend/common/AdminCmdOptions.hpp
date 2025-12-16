@@ -18,6 +18,7 @@
 #pragma once
 
 #include "cta_frontend.pb.h"
+
 #include <map>
 #include <optional>
 #include <string>

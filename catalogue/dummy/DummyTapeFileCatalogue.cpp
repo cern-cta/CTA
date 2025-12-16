@@ -15,33 +15,37 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/dummy/DummyTapeFileCatalogue.hpp"
+
+#include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
+
 #include <list>
 #include <map>
 #include <memory>
 #include <set>
 #include <string>
 
-#include "catalogue/dummy/DummyTapeFileCatalogue.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/exception/NotImplementedException.hpp"
-
 namespace cta::catalogue {
 
-void DummyTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &event) {
+void DummyTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer>& event) {
   throw exception::NotImplementedException();
 }
 
-void DummyTapeFileCatalogue::deleteTapeFileCopy(common::dataStructures::ArchiveFile &file, const std::string &reason) {
+void DummyTapeFileCatalogue::deleteTapeFileCopy(common::dataStructures::ArchiveFile& file, const std::string& reason) {
   throw exception::NotImplementedException();
 }
 
-common::dataStructures::RetrieveFileQueueCriteria DummyTapeFileCatalogue::prepareToRetrieveFile(
-  const std::string &diskInstanceName, const uint64_t archiveFileId,
-  const common::dataStructures::RequesterIdentity &user, const std::optional<std::string> & activity,
-  log::LogContext &lc, const std::optional<std::string> &mountPolicyName) {
+common::dataStructures::RetrieveFileQueueCriteria
+DummyTapeFileCatalogue::prepareToRetrieveFile(const std::string& diskInstanceName,
+                                              const uint64_t archiveFileId,
+                                              const common::dataStructures::RequesterIdentity& user,
+                                              const std::optional<std::string>& activity,
+                                              log::LogContext& lc,
+                                              const std::optional<std::string>& mountPolicyName) {
   throw exception::NotImplementedException();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

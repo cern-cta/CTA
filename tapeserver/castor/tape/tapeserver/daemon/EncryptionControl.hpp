@@ -17,16 +17,15 @@
 
 #pragma once
 
-#include <list>
-#include <map>
-#include <string>
-
-#include <json-c/json.h>
-
 #include "VolumeInfo.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+
+#include <json-c/json.h>
+#include <list>
+#include <map>
+#include <string>
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -36,7 +35,7 @@ namespace castor::tape::tapeserver::daemon {
  * the encryption key to the tape drive.
  */
 class EncryptionControl {
- public:
+public:
   struct EncryptionStatus {
     bool on;
     std::string keyName;  // encryption key identifier
@@ -45,7 +44,7 @@ class EncryptionControl {
   };
 
   /** @param scriptPath The path to the operator provided script for acquiring the key */
-  explicit EncryptionControl(const bool useEncryption, const std::string & scriptPath);
+  explicit EncryptionControl(const bool useEncryption, const std::string& scriptPath);
   /**
    * Will call the encryption script provided by the operators to acquire the encryption key and then enable the
    * encryption if necessary.
@@ -55,8 +54,9 @@ class EncryptionControl {
    * @param isWriteSession if true, set encryption key when writing to the new tape.
    * @return {true, keyName, key, stdout} if the encryption has been set, {false, "", "", stdout} otherwise.
    */
-  EncryptionStatus enable(castor::tape::tapeserver::drive::DriveInterface &m_drive,
-                          castor::tape::tapeserver::daemon::VolumeInfo &volInfo, cta::catalogue::Catalogue &catalogue,
+  EncryptionStatus enable(castor::tape::tapeserver::drive::DriveInterface& m_drive,
+                          castor::tape::tapeserver::daemon::VolumeInfo& volInfo,
+                          cta::catalogue::Catalogue& catalogue,
                           bool isWriteSession = false);
 
   /**
@@ -64,19 +64,19 @@ class EncryptionControl {
    * @param m_drive The drive object on which the encryption is to be disabled.
    * @return true if encryption parameters cleared, false otherwise.
    */
-  bool disable(castor::tape::tapeserver::drive::DriveInterface &m_drive);
+  bool disable(castor::tape::tapeserver::drive::DriveInterface& m_drive);
 
   /**
    * Get script path
    * @return The script path.
    */
-  const std::string & getScriptPath() const;
+  const std::string& getScriptPath() const;
 
- private:
-  bool m_useEncryption; // Wether encryption must be enabled for the tape
-  
+private:
+  bool m_useEncryption;  // Wether encryption must be enabled for the tape
+
   std::string m_path;  // Path to the key management script file
-  
+
   /**
    * Parse the JSON output of the key management script and translate information into Encryption Status struct.
    * Expected to find keys key_id, encryption_key, message and the respective values as JSON strings.
@@ -92,7 +92,7 @@ class EncryptionControl {
    * @param jobj The JSON-C object which is flattened
    * @return A map of strings to strings representing the flattened hierarchy of the JSON input.
    */
-  std::map<std::string, std::string> flatten_json_object_to_map(const std::string& prefix, json_object *jobj);
+  std::map<std::string, std::string> flatten_json_object_to_map(const std::string& prefix, json_object* jobj);
 
   /**
    * Flattens the arguments list of strings to a single string.
@@ -103,4 +103,4 @@ class EncryptionControl {
   std::string argsToString(std::list<std::string> args, const std::string& delimiter);
 };
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

@@ -20,11 +20,15 @@
 //------------------------------------------------------------------------------
 // toString
 //------------------------------------------------------------------------------
-const char *cta::MountTypeToDecommission::toString(const MountTypeToDecommission::Enum enumValue) noexcept {
-  switch(enumValue) {
-    case Enum::NONE    : return "NONE";
-    case Enum::ARCHIVE : return "ARCHIVE";
-    case Enum::RETRIEVE: return "RETRIEVE";
-    default            : return "UNKNOWN";
+const char* cta::MountTypeToDecommission::toString(const MountTypeToDecommission::Enum enumValue) noexcept {
+  switch (enumValue) {
+    case Enum::NONE:
+      return "NONE";
+    case Enum::ARCHIVE:
+      return "ARCHIVE";
+    case Enum::RETRIEVE:
+      return "RETRIEVE";
+    default:
+      return "UNKNOWN";
   }
 }

@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include "cta_admin.pb.h"
-
 #include "CtaAdminResponseStream.hpp"
+#include "cta_admin.pb.h"
 #include "disk/DiskSystem.hpp"
 
 namespace cta::frontend {

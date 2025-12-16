@@ -15,10 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "rdbms/NullDbValue.hpp"
 #include "rdbms/Rset.hpp"
-#include "rdbms/wrapper/RsetWrapper.hpp"
+
 #include "common/exception/NullPtrException.hpp"
+#include "rdbms/NullDbValue.hpp"
+#include "rdbms/wrapper/RsetWrapper.hpp"
 
 namespace cta::rdbms {
 

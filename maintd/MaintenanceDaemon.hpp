@@ -17,10 +17,11 @@
 
 #pragma once
 
-#include <atomic>
-#include <memory>
 #include "RoutineRunner.hpp"
 #include "common/config/Config.hpp"
+
+#include <atomic>
+#include <memory>
 
 namespace cta::maintd {
 

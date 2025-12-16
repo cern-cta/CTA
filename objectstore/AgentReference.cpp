@@ -15,23 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <sys/syscall.h>
-#include <unistd.h>
-
-#include <iomanip>
-#include <sstream>
+#include "AgentReference.hpp"
 
 #include "Agent.hpp"
-#include "AgentReference.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
 
+#include <iomanip>
+#include <sstream>
+#include <sys/syscall.h>
+#include <unistd.h>
+
 namespace cta::objectstore {
 
-std::atomic <uint64_t> AgentReference::g_nextAgentId(0);
+std::atomic<uint64_t> AgentReference::g_nextAgentId(0);
 
-AgentReference::AgentReference(const std::string & clientType, log::Logger &logger) :
-  m_logger(logger) {
+AgentReference::AgentReference(const std::string& clientType, log::Logger& logger) : m_logger(logger) {
   std::stringstream aid;
   // Get time
   time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -40,18 +39,13 @@ AgentReference::AgentReference(const std::string & clientType, log::Logger &logg
   // Get hostname
   char host[200];
   cta::exception::Errnum::throwOnMinusOne(::gethostname(host, sizeof(host)),
-    "In AgentId::AgentId:  failed to gethostname");
+                                          "In AgentId::AgentId:  failed to gethostname");
   // gettid is a safe system call (never fails)
-  uint64_t id=g_nextAgentId++;
-  aid << clientType << "-" << host << "-" << syscall(SYS_gettid) << "-"
-    << 1900 + localNow.tm_year
-    << std::setfill('0') << std::setw(2)
-    << 1 + localNow.tm_mon
-    << std::setw(2) << localNow.tm_mday << "-"
-    << std::setw(2) << localNow.tm_hour << ":"
-    << std::setw(2) << localNow.tm_min << ":"
-    << std::setw(2) << localNow.tm_sec << "-"
-    << id;
+  uint64_t id = g_nextAgentId++;
+  aid << clientType << "-" << host << "-" << syscall(SYS_gettid) << "-" << 1900 + localNow.tm_year << std::setfill('0')
+      << std::setw(2) << 1 + localNow.tm_mon << std::setw(2) << localNow.tm_mday << "-" << std::setw(2)
+      << localNow.tm_hour << ":" << std::setw(2) << localNow.tm_min << ":" << std::setw(2) << localNow.tm_sec << "-"
+      << id;
   m_agentAddress = aid.str();
   // Initialize the serialization token for queued actions (lock will make helgrind
   // happy, but not really needed
@@ -72,30 +66,30 @@ std::string AgentReference::nextId(const std::string& childType) {
 }
 
 void AgentReference::addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
-  std::shared_ptr<Action> a (new Action(AgentOperation::Add, objectAddress, std::list<std::string>()));
+  std::shared_ptr<Action> a(new Action(AgentOperation::Add, objectAddress, std::list<std::string>()));
   queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::addBatchToOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) {
-  std::shared_ptr<Action> a (new Action(AgentOperation::AddBatch, "", objectAdresses));
+  std::shared_ptr<Action> a(new Action(AgentOperation::AddBatch, "", objectAdresses));
   queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::removeFromOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
-  std::shared_ptr<Action> a (new Action(AgentOperation::Remove, objectAddress, std::list<std::string>()));
+  std::shared_ptr<Action> a(new Action(AgentOperation::Remove, objectAddress, std::list<std::string>()));
   queueAndExecuteAction(a, backend);
 }
 
-void AgentReference::removeBatchFromOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) {
-  std::shared_ptr<Action> a (new Action(AgentOperation::RemoveBatch, "", objectAdresses));
+void AgentReference::removeBatchFromOwnership(const std::list<std::string>& objectAdresses,
+                                              objectstore::Backend& backend) {
+  std::shared_ptr<Action> a(new Action(AgentOperation::RemoveBatch, "", objectAdresses));
   queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::bumpHeatbeat(objectstore::Backend& backend) {
-  std::shared_ptr<Action> a (new Action(AgentOperation::Heartbeat, "", std::list<std::string>()));
+  std::shared_ptr<Action> a(new Action(AgentOperation::Heartbeat, "", std::list<std::string>()));
   queueAndExecuteAction(a, backend);
 }
-
 
 void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objectstore::Backend& backend) {
   // First, we need to determine if a queue exists or not.
@@ -124,7 +118,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     auto futureForThisQueue = std::move(m_nextQueueExecutionFuture);
     // Leave a promise behind for the next queue, and set the future.
     m_nextQueueExecutionPromise.reset(new std::promise<void>);
-    m_nextQueueExecutionFuture=m_nextQueueExecutionPromise->get_future();
+    m_nextQueueExecutionFuture = m_nextQueueExecutionPromise->get_future();
     // Keep a pointer to it, so we will signal our own completion to our successor queue.
     std::shared_ptr<std::promise<void>> promiseForNextQueue = m_nextQueueExecutionPromise;
     // We can now unlock the queue and the general lock: queuing is open.
@@ -137,7 +131,8 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     // We should still be the listed queue
     ulGlobal.lock();
     if (m_currentQueue != q) {
-      throw cta::exception::Exception("In AgentReference::queueAndExecuteAction(): our queue is not the listed one as expected.");
+      throw cta::exception::Exception(
+        "In AgentReference::queueAndExecuteAction(): our queue is not the listed one as expected.");
     }
     m_currentQueue.reset();
     ulGlobal.unlock();
@@ -160,10 +155,11 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       }
       bool ownershipModification = false;
       // First, determine if any action is an ownership modification
-      if (m_ownerShipModifyingOperations.count(action->op))
+      if (m_ownerShipModifyingOperations.count(action->op)) {
         ownershipModification = true;
+      }
       if (!ownershipModification) {
-        for (auto &a: q->queue) {
+        for (auto& a : q->queue) {
           if (m_ownerShipModifyingOperations.count(a->op)) {
             ownershipModification = true;
             break;
@@ -173,22 +169,26 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
       std::set<std::string> ownershipSet;
       // If necessary, we will dump the ownership list into a set, manipulate it in memory,
       // and then recreate it.
-      if (ownershipModification) ownershipSet = ag.getOwnershipSet();
+      if (ownershipModification) {
+        ownershipSet = ag.getOwnershipSet();
+      }
       // First we apply our own modification
       appyAction(*action, ag, ownershipSet, lc);
       // Then those of other threads
-      for (auto a: q->queue) {
+      for (auto a : q->queue) {
         threading::MutexLocker ml(a->mutex);
         appyAction(*a, ag, ownershipSet, lc);
       }
       // Record the new ownership if needed, and commit
-      if (ownershipModification) ag.resetOwnership(ownershipSet);
+      if (ownershipModification) {
+        ag.resetOwnership(ownershipSet);
+      }
       ag.commit();
     } catch (...) {
       // Something wend wrong: , we release the next batch of changes
       promiseForNextQueue->set_value();
       // We now pass the exception to all threads
-      for (auto a: q->queue) {
+      for (auto a : q->queue) {
         threading::MutexLocker ml(a->mutex);
         a->promise->set_exception(std::current_exception());
       }
@@ -198,60 +198,57 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
     // Things went well. We pass the token to the next queue
     promiseForNextQueue->set_value();
     // and release the other threads
-    for (auto a: q->queue) {
+    for (auto a : q->queue) {
       threading::MutexLocker ml(a->mutex);
       a->promise->set_value();
     }
   }
 }
 
-void AgentReference::appyAction(Action& action, objectstore::Agent& agent,
-    std::set<std::string> & ownershipSet, log::LogContext &lc) {
+void AgentReference::appyAction(Action& action,
+                                objectstore::Agent& agent,
+                                std::set<std::string>& ownershipSet,
+                                log::LogContext& lc) {
   switch (action.op) {
-  case AgentOperation::Add:
-  {
-    ownershipSet.insert(action.objectAddress);
-    log::ScopedParamContainer params(lc);
-    params.add("ownedObject", action.objectAddress);
-    lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership.");
-    break;
-  }
-  case AgentOperation::AddBatch:
-  {
-    for (const auto & oa: action.objectAddressSet) {
-      ownershipSet.insert(oa);
+    case AgentOperation::Add: {
+      ownershipSet.insert(action.objectAddress);
       log::ScopedParamContainer params(lc);
-      params.add("ownedObject", oa);
-      lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership (by batch).");
+      params.add("ownedObject", action.objectAddress);
+      lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership.");
+      break;
     }
+    case AgentOperation::AddBatch: {
+      for (const auto& oa : action.objectAddressSet) {
+        ownershipSet.insert(oa);
+        log::ScopedParamContainer params(lc);
+        params.add("ownedObject", oa);
+        lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership (by batch).");
+      }
 
-    break;
-  }
-  case AgentOperation::Remove:
-  {
-    ownershipSet.erase(action.objectAddress);
-    log::ScopedParamContainer params(lc);
-    params.add("ownedObject", action.objectAddress);
-    lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership.");
-    break;
-  }
-  case AgentOperation::RemoveBatch:
-  {
-    for (const auto & oa: action.objectAddressSet) {
-      ownershipSet.erase(oa);
-      log::ScopedParamContainer params(lc);
-      params.add("ownedObject", oa);
-      lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership (by batch).");
+      break;
     }
-    break;
-  }
-  case AgentOperation::Heartbeat:
-    agent.bumpHeartbeat();
-    break;
-  default:
-    throw cta::exception::Exception("In AgentReference::appyAction(): unknown operation.");
+    case AgentOperation::Remove: {
+      ownershipSet.erase(action.objectAddress);
+      log::ScopedParamContainer params(lc);
+      params.add("ownedObject", action.objectAddress);
+      lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership.");
+      break;
+    }
+    case AgentOperation::RemoveBatch: {
+      for (const auto& oa : action.objectAddressSet) {
+        ownershipSet.erase(oa);
+        log::ScopedParamContainer params(lc);
+        params.add("ownedObject", oa);
+        lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership (by batch).");
+      }
+      break;
+    }
+    case AgentOperation::Heartbeat:
+      agent.bumpHeartbeat();
+      break;
+    default:
+      throw cta::exception::Exception("In AgentReference::appyAction(): unknown operation.");
   }
 }
 
-
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

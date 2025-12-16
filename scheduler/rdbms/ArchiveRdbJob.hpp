@@ -19,14 +19,14 @@
 
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "scheduler/rdbms/JobPool.hpp"
+#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <optional>
 #include <string>
-#include <cstdint>
 #include <time.h>
 
 namespace cta {
@@ -55,7 +55,7 @@ public:
   */
   void failTransfer(const std::string& failureReason, log::LogContext& lc) override;
 
- /**
+  /**
   * Sets the status of the report of the archive job to failed in Scheduler DB
   *
   * @param failureReason   The failure reason as string
@@ -65,12 +65,12 @@ public:
   */
   void failReport(const std::string& failureReason, log::LogContext& lc) override;
 
- /**
+  /**
   * Currently unused function throwing an exception
   */
   void bumpUpTapeFileCount(uint64_t newFileCount) override;
 
- /**
+  /**
   * Reinitialise the job object data members with
   * new values after it has been poped from the pool
   *
@@ -79,7 +79,7 @@ public:
   */
   void initialize(const rdbms::Rset& rset, bool jobIsRepack) final;
 
- /**
+  /**
   * @brief Returns the job instance back to its originating JobPool.
   *
   * This method should be called instead of deleting the object when the job
@@ -93,7 +93,7 @@ public:
   bool releaseToPool() override {
     if (!m_pool || !m_pool->releaseJob(this)) {
       // Pool is full, allow destruction
-     return false;
+      return false;
     }
     return true;
   }
@@ -108,12 +108,12 @@ public:
    */
   void setPool(std::shared_ptr<JobPool<ArchiveRdbJob>> pool) { m_pool = pool; }
 
- /**
+  /**
   * Reset all data members to return the job object to the pool
   */
   void reset();
 
- /**
+  /**
   * Handles the case when the job has exceeded its total retry limit.
   * Marks the job for failure reporting and updates its status in the database.
   *

@@ -14,8 +14,9 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #include "RequestMessage.hpp"
+
 #include "cmdline/CtaAdminCmdParser.hpp"
 
 cta::frontend::grpc::request::RequestMessage::RequestMessage(const cta::xrd::Request& request) {

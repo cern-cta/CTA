@@ -17,29 +17,29 @@
 
 #include "WorkflowEvent.hpp"
 
-#include <opentelemetry/context/runtime_context.h>
-
+#include "PbException.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
-#include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "frontend/common/RequestTracker.hpp"
-#include "PbException.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
 
 namespace cta::frontend {
 
 WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
-  const common::dataStructures::SecurityIdentity& clientIdentity,
-  const eos::Notification& event) :
-  m_event(event),
-  m_cliIdentity(clientIdentity),
-  m_catalogue(frontendService.getCatalogue()),
-  m_scheduler(frontendService.getScheduler()),
-  m_lc(frontendService.getLogContext()),
-  m_verificationMountPolicy(frontendService.getVerificationMountPolicy()),
-  m_zeroLengthFilesDisallowed(frontendService.getDisallowZeroLengthFiles()),
-  m_zeroLengthFilesDisallowedExceptions{frontendService.getDisallowZeroLengthFilesExemptions().begin(), frontendService.getDisallowZeroLengthFilesExemptions().end()}
-{
+                             const common::dataStructures::SecurityIdentity& clientIdentity,
+                             const eos::Notification& event)
+    : m_event(event),
+      m_cliIdentity(clientIdentity),
+      m_catalogue(frontendService.getCatalogue()),
+      m_scheduler(frontendService.getScheduler()),
+      m_lc(frontendService.getLogContext()),
+      m_verificationMountPolicy(frontendService.getVerificationMountPolicy()),
+      m_zeroLengthFilesDisallowed(frontendService.getDisallowZeroLengthFiles()),
+      m_zeroLengthFilesDisallowedExceptions {frontendService.getDisallowZeroLengthFilesExemptions().begin(),
+                                             frontendService.getDisallowZeroLengthFilesExemptions().end()} {
   m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
   // Log event before processing. This corresponds to the entry in WFE.log in EOS.
@@ -49,39 +49,37 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
   const std::string& diskFileId = event.file().disk_file_id();
   log::ScopedParamContainer params(m_lc);
   params.add("eventType", eventTypeName)
-        .add("eosInstance", eosInstanceName)
-        .add("diskFilePath", diskFilePath)
-        .add("diskFileId", diskFileId);
+    .add("eosInstance", eosInstanceName)
+    .add("diskFilePath", diskFilePath)
+    .add("diskFileId", diskFileId);
   m_lc.log(log::INFO, "In WorkflowEvent::WorkflowEvent(): received event.");
 
   // Validate that instance name in key used to authenticate == instance name in protocol buffer
-  if(m_cliIdentity.username != event.wf().instance().name()) {
+  if (m_cliIdentity.username != event.wf().instance().name()) {
     // Special case:
     // Allow KRB5 authentication for CLOSEW and PREPARE events, to allow operators to use a command line
     // tool to resubmit failed archive or prepare requests. This is NOT permitted for DELETE events as we
     // don't want files removed from the catalogue to be left in the disk namespace.
-    if(m_cliIdentity.authProtocol == common::dataStructures::SecurityIdentity::Protocol::KRB5 &&
-      (event.wf().event() == eos::Workflow::CLOSEW ||
-       event.wf().event() == eos::Workflow::PREPARE)) {
+    if (m_cliIdentity.authProtocol == common::dataStructures::SecurityIdentity::Protocol::KRB5
+        && (event.wf().event() == eos::Workflow::CLOSEW || event.wf().event() == eos::Workflow::PREPARE)) {
       m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
       m_cliIdentity.username = event.wf().instance().name();
     } else {
-      throw exception::PbException("Instance name \"" + event.wf().instance().name() +
-        "\" does not match key identifier \"" + m_cliIdentity.username + "\"");
+      throw exception::PbException("Instance name \"" + event.wf().instance().name()
+                                   + "\" does not match key identifier \"" + m_cliIdentity.username + "\"");
     }
   }
   // Refuse any workflow events for files in /eos/INSTANCE_NAME/proc/
   const std::string& longInstanceName = event.wf().instance().name();
   const bool longInstanceNameStartsWithEos = (0 == longInstanceName.find("eos"));
-  const std::string shortInstanceName =
-    longInstanceNameStartsWithEos ? longInstanceName.substr(3) : longInstanceName;
-  if(shortInstanceName.empty()) {
+  const std::string shortInstanceName = longInstanceNameStartsWithEos ? longInstanceName.substr(3) : longInstanceName;
+  if (shortInstanceName.empty()) {
     std::ostringstream msg;
     msg << "Short instance name is an empty string: instance=" << longInstanceName;
     throw exception::PbException(msg.str());
   }
   const std::string procFullPath = std::string("/eos/") + shortInstanceName + "/proc/";
-  if(event.file().lpath().find(procFullPath) == 0) {
+  if (event.file().lpath().find(procFullPath) == 0) {
     std::ostringstream msg;
     msg << "Cannot process a workflow event for a file in " << procFullPath << " instance=" << longInstanceName
         << " event=" << Workflow_EventType_Name(event.wf().event()) << " lpath=" << event.file().lpath();
@@ -120,8 +118,8 @@ xrd::Response WorkflowEvent::process() {
         processUPDATE_FID(response);
         break;
       default:
-        throw exception::PbException("Workflow event " + Workflow_EventType_Name(m_event.wf().event()) +
-                                     " is not implemented.");
+        throw exception::PbException("Workflow event " + Workflow_EventType_Name(m_event.wf().event())
+                                     + " is not implemented.");
     }
   } catch (exception::UserError& ex) {
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
@@ -145,15 +143,15 @@ void WorkflowEvent::processOPENW(xrd::Response& response) {
 
 void WorkflowEvent::processCREATE(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(m_event.cli().user().username(),  "m_event.cli.user.username");
+  checkIsNotEmptyString(m_event.cli().user().username(), "m_event.cli.user.username");
   checkIsNotEmptyString(m_event.cli().user().groupname(), "m_event.cli.user.groupname");
-  if(m_event.file().owner().uid() == 0) {
+  if (m_event.file().owner().uid() == 0) {
     throw exception::PbException("CREATE: file owner uid must be non-zero (archive files cannot be owned by root)");
   }
 
   // Unpack message
   common::dataStructures::RequesterIdentity requester;
-  requester.name  = m_event.cli().user().username();
+  requester.name = m_event.cli().user().username();
   requester.group = m_event.cli().user().groupname();
 
   utils::Timer t;
@@ -163,13 +161,11 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
   if (!storageClassStr.empty()) {
     if (storageClassStr == "fail_on_closew_test") {
       archiveFileId = std::numeric_limits<uint64_t>::max();
-    }
-    else {
+    } else {
       archiveFileId =
         m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClassStr, requester, m_lc);
     }
-  }
-  else {
+  } else {
     // fallback to xattr
     auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
     if (m_event.file().xattr().end() == storageClassItor) {
@@ -186,8 +182,7 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
     // For testing, this storage class will always fail on CLOSEW. Allow it to pass CREATE and don't allocate an archive Id from the pool.
     if (storageClassItor->second == "fail_on_closew_test") {
       archiveFileId = std::numeric_limits<uint64_t>::max();
-    }
-    else {
+    } else {
       archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, requester, m_lc);
     }
     storageClassStr = storageClass;
@@ -196,13 +191,14 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
   // Create a log entry
   log::ScopedParamContainer params(m_lc);
   params.add("diskFileId", m_event.file().disk_file_id())
-        .add("diskFilePath", m_event.file().lpath())
-        .add("fileId", archiveFileId)
-        .add("schedulerTime", t.secs());
+    .add("diskFilePath", m_event.file().lpath())
+    .add("fileId", archiveFileId)
+    .add("schedulerTime", t.secs());
   m_lc.log(log::INFO, "In WorkflowEvent::processCREATE(): assigning new archive file ID.");
 
   // Set ArchiveFileId
-  response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.archive.file_id", std::to_string(archiveFileId)));
+  response.mutable_xattr()->insert(
+    google::protobuf::MapPair<std::string, std::string>("sys.archive.file_id", std::to_string(archiveFileId)));
   response.set_archive_file_id(std::to_string(archiveFileId));
   // Set the storage class
   response.mutable_xattr()->insert(
@@ -215,12 +211,12 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
 
 void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(m_event.cli().user().username(),    "m_event.cli.user.username");
-  checkIsNotEmptyString(m_event.cli().user().groupname(),   "m_event.cli.user.groupname");
-  checkIsNotEmptyString(m_event.file().lpath(),             "m_event.file.lpath");
-  checkIsNotEmptyString(m_event.wf().instance().url(),      "m_event.wf.instance.url");
-  checkIsNotEmptyString(m_event.transport().report_url(),   "m_event.transport.report_url");
-  checkIsNotEmptyString(m_event.wf().instance().name(),     "m_event.wf.instance.name");
+  checkIsNotEmptyString(m_event.cli().user().username(), "m_event.cli.user.username");
+  checkIsNotEmptyString(m_event.cli().user().groupname(), "m_event.cli.user.groupname");
+  checkIsNotEmptyString(m_event.file().lpath(), "m_event.file.lpath");
+  checkIsNotEmptyString(m_event.wf().instance().url(), "m_event.wf.instance.url");
+  checkIsNotEmptyString(m_event.transport().report_url(), "m_event.transport.report_url");
+  checkIsNotEmptyString(m_event.wf().instance().name(), "m_event.wf.instance.name");
 
   // check storage class attribute in the first-class attributes, then fall back to checking the xattrs
   // if it is not set
@@ -243,13 +239,13 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
     auto storageClass = m_catalogue.StorageClass()->getStorageClass(storageClassStr);
     // Disallow archival of files above the specified limit
     if (storageClass.vo.maxFileSize && m_event.file().size() > storageClass.vo.maxFileSize) {
-      throw exception::UserError("Archive request rejected: file size (" + std::to_string(m_event.file().size()) +
-                                 " bytes) exceeds maximum allowed size (" +
-                                 std::to_string(storageClass.vo.maxFileSize) + " bytes)");
+      throw exception::UserError("Archive request rejected: file size (" + std::to_string(m_event.file().size())
+                                 + " bytes) exceeds maximum allowed size ("
+                                 + std::to_string(storageClass.vo.maxFileSize) + " bytes)");
     }
     // Check that the file is not 0-length
-    if ((m_event.file().size() == 0) && m_zeroLengthFilesDisallowed &&
-        !m_zeroLengthFilesDisallowedExceptions.count(storageClass.vo.name)) {
+    if ((m_event.file().size() == 0) && m_zeroLengthFilesDisallowed
+        && !m_zeroLengthFilesDisallowedExceptions.count(storageClass.vo.name)) {
       throw exception::UserError("Archival of 0-length files not allowed.");
     }
   }
@@ -257,19 +253,19 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   common::dataStructures::ArchiveRequest request;
   checksum::ProtobufToChecksumBlob(m_event.file().csb(), request.checksumBlob);
   request.diskFileInfo.owner_uid = m_event.file().owner().uid();
-  request.diskFileInfo.gid       = m_event.file().owner().gid();
-  request.diskFileInfo.path      = m_event.file().lpath();
-  request.diskFileID             = m_event.file().disk_file_id();
-  request.fileSize               = m_event.file().size();
-  request.requester.name         = m_event.cli().user().username();
-  request.requester.group        = m_event.cli().user().groupname();
-  request.srcURL                 = m_event.wf().instance().url();
-  request.storageClass           = storageClassStr;
-  request.archiveReportURL       = m_event.transport().report_url();
-  request.archiveErrorReportURL  = m_event.transport().error_report_url();
-  request.creationLog.host       = m_cliIdentity.host;
-  request.creationLog.username   = m_cliIdentity.username;
-  request.creationLog.time       = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  request.diskFileInfo.gid = m_event.file().owner().gid();
+  request.diskFileInfo.path = m_event.file().lpath();
+  request.diskFileID = m_event.file().disk_file_id();
+  request.fileSize = m_event.file().size();
+  request.requester.name = m_event.cli().user().username();
+  request.requester.group = m_event.cli().user().groupname();
+  request.srcURL = m_event.wf().instance().url();
+  request.storageClass = storageClassStr;
+  request.archiveReportURL = m_event.transport().report_url();
+  request.archiveErrorReportURL = m_event.transport().error_report_url();
+  request.creationLog.host = m_cliIdentity.host;
+  request.creationLog.username = m_cliIdentity.username;
+  request.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
   log::ScopedParamContainer params(m_lc);
   params.add("requesterInstance", m_event.wf().requester_instance());
@@ -300,15 +296,17 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
 
   utils::Timer t;
 
-  if(request.fileSize > 0) {
+  if (request.fileSize > 0) {
     // Queue the request
-    std::string archiveRequestAddr = m_scheduler.queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
+    std::string archiveRequestAddr =
+      m_scheduler.queueArchiveWithGivenId(archiveFileId, m_cliIdentity.username, request, m_lc);
     logMessage += "queued file for archive.";
     params.add("schedulerTime", t.secs());
     params.add("archiveRequestId", archiveRequestAddr);
 
     // Add archive request reference to response as an extended attribute
-    response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", archiveRequestAddr));
+    response.mutable_xattr()->insert(
+      google::protobuf::MapPair<std::string, std::string>("sys.cta.objectstore.id", archiveRequestAddr));
     // also add the request_objectstore_id (expected by the dCache/gRPC frontend)
     response.set_request_objectstore_id(archiveRequestAddr);
   } else {
@@ -324,42 +322,41 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
 
 void WorkflowEvent::processPREPARE(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(m_event.cli().user().username(),    "m_event.cli.user.username");
-  checkIsNotEmptyString(m_event.cli().user().groupname(),   "m_event.cli.user.groupname");
-  checkIsNotEmptyString(m_event.file().lpath(),             "m_event.file.lpath");
-  checkIsNotEmptyString(m_event.transport().dst_url(),      "m_event.transport.dst_url");
+  checkIsNotEmptyString(m_event.cli().user().username(), "m_event.cli.user.username");
+  checkIsNotEmptyString(m_event.cli().user().groupname(), "m_event.cli.user.groupname");
+  checkIsNotEmptyString(m_event.file().lpath(), "m_event.file.lpath");
+  checkIsNotEmptyString(m_event.transport().dst_url(), "m_event.transport.dst_url");
 
   // Unpack message
   common::dataStructures::RetrieveRequest request;
-  request.requester.name         = m_event.cli().user().username();
-  request.requester.group        = m_event.cli().user().groupname();
-  request.dstURL                 = m_event.transport().dst_url();
-  request.retrieveReportURL      = m_event.transport().report_url();
-  request.errorReportURL         = m_event.transport().error_report_url();
+  request.requester.name = m_event.cli().user().username();
+  request.requester.group = m_event.cli().user().groupname();
+  request.dstURL = m_event.transport().dst_url();
+  request.retrieveReportURL = m_event.transport().report_url();
+  request.errorReportURL = m_event.transport().error_report_url();
   request.diskFileInfo.owner_uid = m_event.file().owner().uid();
-  request.diskFileInfo.gid       = m_event.file().owner().gid();
-  request.diskFileInfo.path      = m_event.file().lpath();
-  request.creationLog.host       = m_cliIdentity.host;
-  request.creationLog.username   = m_cliIdentity.username;
-  request.creationLog.time       = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  request.isVerifyOnly           = m_event.wf().verify_only();
+  request.diskFileInfo.gid = m_event.file().owner().gid();
+  request.diskFileInfo.path = m_event.file().lpath();
+  request.creationLog.host = m_cliIdentity.host;
+  request.creationLog.username = m_cliIdentity.username;
+  request.creationLog.time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  request.isVerifyOnly = m_event.wf().verify_only();
   if (request.isVerifyOnly) {
-     request.mountPolicy = m_verificationMountPolicy;
+    request.mountPolicy = m_verificationMountPolicy;
   }
 
   // Vid is for tape verification use case (for dual-copy files) so normally is not specified
-  if(!m_event.wf().vid().empty()) {
+  if (!m_event.wf().vid().empty()) {
     request.vid = m_event.wf().vid();
   }
 
   if (auto archiveFileId = m_event.file().archive_file_id(); archiveFileId) {
     request.archiveFileID = archiveFileId;
-  }
-  else {
+  } else {
     // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
     // converted to a valid uint64_t
     auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
-    if(m_event.file().xattr().end() == archiveFileIdItor) {
+    if (m_event.file().xattr().end() == archiveFileIdItor) {
       // Fall back to the old xattr format
       archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
       if (m_event.file().xattr().end() == archiveFileIdItor) {
@@ -386,16 +383,17 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
   // Create a log entry
   log::ScopedParamContainer params(m_lc);
   params.add("fileId", request.archiveFileID)
-        .add("schedulerTime", t.secs())
-        .add("isVerifyOnly", request.isVerifyOnly)
-        .add("retrieveReqId", retrieveReqId);
-  if(static_cast<bool>(request.activity)) {
+    .add("schedulerTime", t.secs())
+    .add("isVerifyOnly", request.isVerifyOnly)
+    .add("retrieveReqId", retrieveReqId);
+  if (static_cast<bool>(request.activity)) {
     params.add("activity", request.activity.value());
   }
   m_lc.log(log::INFO, "In WorkflowEvent::processPREPARE(): queued file for retrieve.");
 
   // Set response type and add retrieve request reference as an extended attribute.
-  response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", retrieveReqId));
+  response.mutable_xattr()->insert(
+    google::protobuf::MapPair<std::string, std::string>("sys.cta.objectstore.id", retrieveReqId));
   // also set it in the first-class citizen attribute
   response.set_request_objectstore_id(retrieveReqId);
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -403,22 +401,21 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
 
 void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(m_event.cli().user().username(),    "m_event.cli.user.username");
-  checkIsNotEmptyString(m_event.cli().user().groupname(),   "m_event.cli.user.groupname");
+  checkIsNotEmptyString(m_event.cli().user().username(), "m_event.cli.user.username");
+  checkIsNotEmptyString(m_event.cli().user().groupname(), "m_event.cli.user.groupname");
 
   // Unpack message
   common::dataStructures::CancelRetrieveRequest request;
-  request.requester.name   = m_event.cli().user().username();
-  request.requester.group  = m_event.cli().user().groupname();
+  request.requester.name = m_event.cli().user().username();
+  request.requester.group = m_event.cli().user().groupname();
 
   if (auto archiveFileId = m_event.file().archive_file_id(); archiveFileId) {
     request.archiveFileID = archiveFileId;
-  }
-  else {
+  } else {
     // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
     // converted to a valid uint64_t
     auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
-    if(m_event.file().xattr().end() == archiveFileIdItor) {
+    if (m_event.file().xattr().end() == archiveFileIdItor) {
       // Fall back to the old xattr format
       archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
       if (m_event.file().xattr().end() == archiveFileIdItor) {
@@ -434,8 +431,7 @@ void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
   // first check if there is a first-class request Id set, if not, fallback to checking xattrs
   if (std::string retrieveRequestId = m_event.file().request_objectstore_id(); !retrieveRequestId.empty()) {
     request.retrieveRequestId = retrieveRequestId;
-  }
-  else {
+  } else {
     // The request Id should be stored as an extended attribute
     const auto retrieveRequestIdItor = m_event.file().xattr().find("sys.cta.objectstore.id");
     if (m_event.file().xattr().end() == retrieveRequestIdItor) {
@@ -453,13 +449,13 @@ void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
   // Create a log entry
   log::ScopedParamContainer params(m_lc);
   params.add("fileId", request.archiveFileID)
-        .add("schedulerTime", t.secs())
-        .add("retrieveRequestId", request.retrieveRequestId)
-        .add("diskFilePath", utils::midEllipsis(request.diskFileInfo.path, 100));
+    .add("schedulerTime", t.secs())
+    .add("retrieveRequestId", request.retrieveRequestId)
+    .add("diskFilePath", utils::midEllipsis(request.diskFileInfo.path, 100));
   m_lc.log(log::INFO, "In WorkflowEvent::processABORT_PREPARE(): canceled retrieve request.");
 
   // Set response type and remove reference to retrieve request in EOS extended attributes.
-  response.mutable_xattr()->insert(google::protobuf::MapPair<std::string,std::string>("sys.cta.objectstore.id", ""));
+  response.mutable_xattr()->insert(google::protobuf::MapPair<std::string, std::string>("sys.cta.objectstore.id", ""));
   // reset request_objectstore_id for consistency with xattrs
   response.set_request_objectstore_id("");
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -467,9 +463,9 @@ void WorkflowEvent::processABORT_PREPARE(xrd::Response& response) {
 
 void WorkflowEvent::processDELETE(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(m_event.cli().user().username(),    "m_event.cli.user.username");
-  checkIsNotEmptyString(m_event.cli().user().groupname(),   "m_event.cli.user.groupname");
-  checkIsNotEmptyString(m_event.file().lpath(),             "m_event.file.lpath");
+  checkIsNotEmptyString(m_event.cli().user().username(), "m_event.cli.user.username");
+  checkIsNotEmptyString(m_event.cli().user().groupname(), "m_event.cli.user.groupname");
+  checkIsNotEmptyString(m_event.file().lpath(), "m_event.file.lpath");
 
   // Unpack message
   common::dataStructures::DeleteArchiveRequest request;
@@ -481,14 +477,14 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
 
   // Log with file size
   if (m_event.file().size() != 0) {
-    request.diskFileSize    = m_event.file().size();
+    request.diskFileSize = m_event.file().size();
   }
-  request.requester.name    = m_event.cli().user().username();
-  request.requester.group   = m_event.cli().user().groupname();
-  std::string lpath         = m_event.file().lpath();
-  request.diskFilePath      = lpath;
-  request.diskFileId        = m_event.file().disk_file_id();
-  request.diskInstance      = m_cliIdentity.username;
+  request.requester.name = m_event.cli().user().username();
+  request.requester.group = m_event.cli().user().groupname();
+  std::string lpath = m_event.file().lpath();
+  request.diskFilePath = lpath;
+  request.diskFileId = m_event.file().disk_file_id();
+  request.diskInstance = m_cliIdentity.username;
   // If the archive_file_id atrribute is set, it takes priority over the extended attributes
   if (const auto& archiveFileIdInt = m_event.file().archive_file_id(); archiveFileIdInt != 0) {
     request.archiveFileID = archiveFileIdInt;
@@ -498,7 +494,7 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
     // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which
     // must be converted to a valid uint64_t
     auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
-    if(m_event.file().xattr().end() == archiveFileIdItor) {
+    if (m_event.file().xattr().end() == archiveFileIdItor) {
       archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
       if (m_event.file().xattr().end() == archiveFileIdItor) {
         throw exception::PbException("DELETE: Failed to find the extended attribute named sys.archive.file_id");
@@ -511,8 +507,9 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   }
   // also get the objectstore_id, either from the standalone attribute or the xattrs
   std::string objectstoreAddress = m_event.file().request_objectstore_id();
-  if (!objectstoreAddress.empty())
+  if (!objectstoreAddress.empty()) {
     request.address = objectstoreAddress;
+  }
   if (objectstoreAddress.empty()) {
     // fallback to xattrs
     if (auto archiveRequestAddrItor = m_event.file().xattr().find("sys.cta.archive.objectstore.id");
@@ -530,8 +527,7 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   try {
     request.archiveFile = m_catalogue.ArchiveFile()->getArchiveFileById(request.archiveFileID);
     tl.insertAndReset("catalogueGetArchiveFileByIdTime", t);
-  }
-  catch (exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     log::ScopedParamContainer spc(m_lc);
     spc.add("fileId", request.archiveFileID);
     spc.add("catalogueError", ex.getMessage().str());
@@ -540,12 +536,12 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
   }
 
   m_scheduler.deleteArchive(m_cliIdentity.username, request, m_lc);
-  tl.insertAndReset("schedulerTime",t);
+  tl.insertAndReset("schedulerTime", t);
   // Create a log entry
   log::ScopedParamContainer params(m_lc);
   params.add("fileId", request.archiveFileID)
-        .add("address", (request.address ? request.address.value() : "null"))
-        .add("filePath",request.diskFilePath);
+    .add("address", (request.address ? request.address.value() : "null"))
+    .add("filePath", request.diskFilePath);
   tl.addToLog(params);
   m_lc.log(log::INFO, "In WorkflowEvent::processDELETE(): archive file deleted.");
 
@@ -555,27 +551,27 @@ void WorkflowEvent::processDELETE(xrd::Response& response) {
 
 void WorkflowEvent::processUPDATE_FID(xrd::Response& response) {
   // Validate received protobuf
-  checkIsNotEmptyString(m_event.file().lpath(),  "m_event.file.lpath");
+  checkIsNotEmptyString(m_event.file().lpath(), "m_event.file.lpath");
 
   // Unpack message
-  const std::string &diskInstance = m_cliIdentity.username;
-  const std::string &diskFilePath = m_event.file().lpath();
+  const std::string& diskInstance = m_cliIdentity.username;
+  const std::string& diskFilePath = m_event.file().lpath();
   const std::string diskFileId = m_event.file().disk_file_id();
 
   // CTA Archive ID is an EOS extended attribute, i.e. it is stored as a string, which must be
   // converted to a valid uint64_t
   auto archiveFileIdItor = m_event.file().xattr().find("sys.archive.file_id");
-  if(m_event.file().xattr().end() == archiveFileIdItor) {
+  if (m_event.file().xattr().end() == archiveFileIdItor) {
     // Fall back to the old xattr format
     archiveFileIdItor = m_event.file().xattr().find("CTA_ArchiveFileId");
-    if(m_event.file().xattr().end() == archiveFileIdItor) {
+    if (m_event.file().xattr().end() == archiveFileIdItor) {
       throw exception::PbException("DELETE: Failed to find the extended attribute named sys.archive.file_id");
     }
   }
   const std::string archiveFileIdStr = archiveFileIdItor->second;
   const uint64_t archiveFileId = strtoul(archiveFileIdStr.c_str(), nullptr, 10);
-  if(0 == archiveFileId) {
-     throw exception::PbException("Invalid archiveFileID " + archiveFileIdStr);
+  if (0 == archiveFileId) {
+    throw exception::PbException("Invalid archiveFileID " + archiveFileIdStr);
   }
 
   // Update the disk file ID
@@ -585,14 +581,14 @@ void WorkflowEvent::processUPDATE_FID(xrd::Response& response) {
   // Create a log entry
   log::ScopedParamContainer params(m_lc);
   params.add("fileId", archiveFileId)
-        .add("schedulerTime", t.secs())
-        .add("diskInstance", diskInstance)
-        .add("diskFilePath", diskFilePath)
-        .add("diskFileId", diskFileId);
+    .add("schedulerTime", t.secs())
+    .add("diskInstance", diskInstance)
+    .add("diskFilePath", diskFilePath)
+    .add("diskFileId", diskFileId);
   m_lc.log(log::INFO, "In WorkflowEvent::processUPDATE_FID(): updated disk file ID.");
 
   // Set response type
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-} // namespace cta::frontend
+}  // namespace cta::frontend

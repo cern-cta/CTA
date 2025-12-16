@@ -17,6 +17,10 @@
 
 #pragma once
 
+#include "scheduler/RetrieveJob.hpp"
+#include "scheduler/RetrieveMount.hpp"
+#include "scheduler/testingMocks/MockRetrieveJob.hpp"
+
 #include <list>
 #include <memory>
 #include <queue>
@@ -24,10 +28,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-
-#include "scheduler/RetrieveJob.hpp"
-#include "scheduler/RetrieveMount.hpp"
-#include "scheduler/testingMocks/MockRetrieveJob.hpp"
 
 namespace cta {
 
@@ -93,7 +93,7 @@ public:
     return 0;
   };
 
-  void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>> &jobs, log::LogContext &logContext) override{};
+  void requeueJobBatch(std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs, log::LogContext& logContext) override {};
 
   bool reserveDiskSpace(const cta::DiskSpaceReservationRequest& request, log::LogContext& logContext) override {
     return true;

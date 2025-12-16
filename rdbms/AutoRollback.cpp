@@ -15,8 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/Exception.hpp"
 #include "rdbms/AutoRollback.hpp"
+
+#include "common/exception/Exception.hpp"
 #include "rdbms/Conn.hpp"
 
 namespace cta::rdbms {
@@ -24,17 +25,17 @@ namespace cta::rdbms {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-AutoRollback::AutoRollback(Conn &conn) : m_conn(conn) {}
+AutoRollback::AutoRollback(Conn& conn) : m_conn(conn) {}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 AutoRollback::~AutoRollback() {
   try {
-    if(!m_cancelled) {
+    if (!m_cancelled) {
       m_conn.rollback();
     }
-  } catch(...) {
+  } catch (...) {
     // Prevent destructor from throwing
   }
 }
@@ -46,4 +47,4 @@ void AutoRollback::cancel() {
   m_cancelled = true;
 }
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

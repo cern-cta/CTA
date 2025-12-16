@@ -16,19 +16,22 @@
  */
 
 #include "scheduler/rdbms/postgres/Transaction.hpp"
+
 #include <random>
 
 namespace cta::schedulerdb {
 
 Transaction::Transaction(cta::rdbms::ConnPool& connPool, log::LogContext& logContext)
-    : m_begin(false), m_conn(std::make_unique<cta::rdbms::Conn>(connPool.getConn())), m_lc(logContext) {
+    : m_begin(false),
+      m_conn(std::make_unique<cta::rdbms::Conn>(connPool.getConn())),
+      m_lc(logContext) {
   startWithRetry(connPool);
 }
 
 Transaction::Transaction(Transaction&& other) noexcept
     : m_begin(other.m_begin),
       m_conn(std::move(other.m_conn)),
-      m_lc(other.m_lc){
+      m_lc(other.m_lc) {
   other.m_begin = false;
 }
 
@@ -37,8 +40,8 @@ Transaction::~Transaction() {
     try {
       m_conn->rollback();
       m_conn->reset();
-    } catch (const cta::exception::Exception &e) {
-      log::ScopedParamContainer (m_lc).add("exceptionMessage", e.getMessageValue());
+    } catch (const cta::exception::Exception& e) {
+      log::ScopedParamContainer(m_lc).add("exceptionMessage", e.getMessageValue());
       m_lc.log(cta::log::ERR, "In Transaction::~Transaction(): Failed to rollback.");
     }
   }
@@ -52,7 +55,7 @@ void Transaction::lockGlobal() {
     auto stmt = m_conn->createStmt(sql);
     stmt.bindUint64(":LOCK_ID", 0);
     stmt.executeQuery();
-  } catch (const cta::exception::Exception &e) {
+  } catch (const cta::exception::Exception& e) {
     log::ScopedParamContainer errorParams(m_lc);
     errorParams.add("exceptionMessage", e.getMessageValue());
     m_lc.log(cta::log::ERR, "In Transaction::lockGlobal(): Failed to take a global advisory lock.");
@@ -61,7 +64,7 @@ void Transaction::lockGlobal() {
 
 void Transaction::takeNamedLock(std::string_view tapePoolString) {
   try {
-    std::hash <std::string_view> lock_id_hasher;
+    std::hash<std::string_view> lock_id_hasher;
     std::size_t lock_id = lock_id_hasher(tapePoolString);
     // Convert to 64-bit integer
     auto hash64 = static_cast<uint64_t>(lock_id);
@@ -71,7 +74,7 @@ void Transaction::takeNamedLock(std::string_view tapePoolString) {
     auto stmt = m_conn->createStmt(sql);
     stmt.bindUint64(":HASH32", hash32);
     stmt.executeQuery();
-  } catch (const cta::exception::Exception &e) {
+  } catch (const cta::exception::Exception& e) {
     log::ScopedParamContainer errorParams(m_lc);
     errorParams.add("exceptionMessage", e.getMessageValue());
     errorParams.add("pgLockString", tapePoolString);
@@ -86,7 +89,7 @@ cta::rdbms::Conn& Transaction::getConn() const {
 void Transaction::startWithRetry(cta::rdbms::ConnPool& connPool) {
   for (int attempt = 1; attempt <= MAX_TXN_START_RETRIES; ++attempt) {
     try {
-      if(nullptr == m_conn){
+      if (nullptr == m_conn) {
         m_conn = std::make_unique<cta::rdbms::Conn>(connPool.getConn());
       }
       m_conn->executeNonQuery("BEGIN");
@@ -98,8 +101,7 @@ void Transaction::startWithRetry(cta::rdbms::ConnPool& connPool) {
       params.add("maxAttempts", MAX_TXN_START_RETRIES);
       params.add("exceptionMessage", e.getMessageValue());
 
-      m_lc.log(cta::log::ERR,
-        "Transaction::startWithRetry(): Failed to start DB transaction, retrying.");
+      m_lc.log(cta::log::ERR, "Transaction::startWithRetry(): Failed to start DB transaction, retrying.");
 
       // Cleanup before retry
       m_conn.reset();
@@ -125,7 +127,7 @@ void Transaction::abort() {
   try {
     m_conn->rollback();
     m_begin = false;
-  } catch (const cta::exception::Exception &e) {
+  } catch (const cta::exception::Exception& e) {
     log::ScopedParamContainer errorParams(m_lc);
     errorParams.add("exceptionMessage", e.getMessageValue());
     m_lc.log(cta::log::ERR, "Transaction::abort(): Failed to abort rollback.");

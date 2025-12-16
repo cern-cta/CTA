@@ -15,11 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "scheduler/rdbms/ArchiveMount.hpp"
-#include "scheduler/rdbms/RetrieveMount.hpp"
 #include "scheduler/rdbms/TapeMountDecisionInfo.hpp"
+
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
+#include "scheduler/rdbms/ArchiveMount.hpp"
+#include "scheduler/rdbms/RetrieveMount.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Mounts.hpp"
 
@@ -96,10 +97,10 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
     std::unique_ptr<SchedulerDatabase::ArchiveMount> ret(privateRet.release());
     return ret;
   } catch (exception::Exception& ex) {
-    log::ScopedParamContainer (m_lc).add("exceptionMessage", ex.getMessageValue());
+    log::ScopedParamContainer(m_lc).add("exceptionMessage", ex.getMessageValue());
     m_lc.log(cta::log::ERR,
-           "In TapeMountDecisionInfo::createArchiveMount: failed to commit the new archive mount to the "
-           "DB and release the named DB lock on the logical library.");
+             "In TapeMountDecisionInfo::createArchiveMount: failed to commit the new archive mount to the "
+             "DB and release the named DB lock on the logical library.");
     m_txn->abort();
     m_lockTaken = false;
     throw;
@@ -111,7 +112,6 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
                                            const std::string& driveName,
                                            const std::string& logicalLibrary,
                                            const std::string& hostName) {
-
   auto privateRet = std::make_unique<schedulerdb::RetrieveMount>(m_RelationalDB);
   auto& rm = *privateRet;
   // Check we hold the scheduling lock
@@ -127,9 +127,9 @@ TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabase::Potenti
     commit();
   } catch (exception::Exception& ex) {
     m_lc.log(cta::log::ERR,
-           "In TapeMountDecisionInfo::createRetrieveMount: failed to commit the new retrieve mount to "
-           "the DB and release the named DB lock on the logical library." +
-             ex.getMessageValue());
+             "In TapeMountDecisionInfo::createRetrieveMount: failed to commit the new retrieve mount to "
+             "the DB and release the named DB lock on the logical library."
+               + ex.getMessageValue());
     m_txn->abort();
     m_lockTaken = false;
     throw;

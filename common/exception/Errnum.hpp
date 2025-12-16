@@ -31,7 +31,7 @@ public:
 
   static void throwOnReturnedErrno(int err, std::string_view context = "");
   static void throwOnNonZero(int status, std::string_view context = "");
-  static void throwOnNull(const void *const f, std::string_view context = "");
+  static void throwOnNull(const void* const f, std::string_view context = "");
   static void throwOnMinusOne(ssize_t ret, const std::string_view context = "");
 
 private:
@@ -39,4 +39,4 @@ private:
   std::string m_strerror;
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

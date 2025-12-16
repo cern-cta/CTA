@@ -16,15 +16,15 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <gtest/gtest.h>
-
 #include "Helpers.hpp"
+
+#include <gtest/gtest.h>
 
 namespace unitTests {
 
-  class ObjectStore : public ::testing::Test {
-  protected:
-    void SetUp() override;
-  };
+class ObjectStore : public ::testing::Test {
+protected:
+  void SetUp() override;
+};
 
-}
+}  // namespace unitTests

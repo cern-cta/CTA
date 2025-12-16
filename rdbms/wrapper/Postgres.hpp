@@ -28,8 +28,8 @@
 #include <cstring>
 #include <iostream>
 #include <libpq-fe.h>
-#include <string>
 #include <regex>
+#include <string>
 
 namespace cta::rdbms::wrapper {
 
@@ -43,8 +43,8 @@ public:
    * request status. The exception will be a LostDatabaseConnection() if the postgres connection structure
    * indicates that the connection is no longer valid.
    */
-  [[noreturn]] static void ThrowInfo(const PGconn *conn, const PGresult *res, const std::string &prefix) {
-    const char *const pgcstr = PQerrorMessage(conn);
+  [[noreturn]] static void ThrowInfo(const PGconn* conn, const PGresult* res, const std::string& prefix) {
+    const char* const pgcstr = PQerrorMessage(conn);
     std::string pgstr;
     if (nullptr != pgcstr) {
       pgstr = pgcstr;
@@ -58,8 +58,8 @@ public:
     std::string violatedConstraint;
     if (nullptr != res) {
       resstr = "DB Result Status:" + std::to_string(PQresultStatus(res));
-      const char *const e = PQresultErrorField(res, PG_DIAG_SQLSTATE);
-      const char *const m = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
+      const char* const e = PQresultErrorField(res, PG_DIAG_SQLSTATE);
+      const char* const m = PQresultErrorField(res, PG_DIAG_MESSAGE_PRIMARY);
       std::regex rgx("constraint\\s*\"([^\\s]*)\"");
       std::smatch match;
       std::string whatStr = (nullptr != m ? m : "");
@@ -76,7 +76,7 @@ public:
     if (!pgstr.empty()) {
       dbmsg = pgstr;
       if (!resstr.empty()) {
-        dbmsg += " ("+resstr+")";
+        dbmsg += " (" + resstr + ")";
       }
     } else {
       dbmsg = resstr;
@@ -122,9 +122,8 @@ public:
    */
   class Result {
   public:
-
-    Result( const Result& ) = delete; // non construction-copyable
-    Result& operator=( const Result& ) = delete; // non copyable
+    Result(const Result&) = delete;             // non construction-copyable
+    Result& operator=(const Result&) = delete;  // non copyable
 
     /**
      * Constructor
@@ -133,14 +132,12 @@ public:
      *
      * @param res A libpq result
      */
-    explicit Result(PGresult* res) : m_res(res), m_rcode(PQresultStatus(res)) { }
+    explicit Result(PGresult* res) : m_res(res), m_rcode(PQresultStatus(res)) {}
 
-   /**
+    /**
     * Destructor.
     */
-    ~Result() {
-      clear();
-    }
+    ~Result() { clear(); }
 
     /**
      * Relases the single result or ensures the conneciton has no pending results.
@@ -155,31 +152,27 @@ public:
      *
      * @return The libpq result.
      */
-    PGresult *get() const {
-      return m_res;
-    }
+    PGresult* get() const { return m_res; }
 
     /**
      * Gets the current result code.
      *
      * @return The libpq result rcode.
      */
-    ExecStatusType rcode() const {
-      return m_rcode;
-    }
+    ExecStatusType rcode() const { return m_rcode; }
 
   private:
     /**
      * The result as a libpq result.
      */
-    PGresult *m_res;
+    PGresult* m_res;
 
     /**
      * rcode of current result.
      */
     ExecStatusType m_rcode;
 
-  }; // class Result
+  };  // class Result
 
   /**
    * A class to help managing a sequence of results from a postgres connection.
@@ -194,10 +187,10 @@ public:
      *
      * @param conn A libpq connection
      */
-    explicit ResultItr(PGconn* conn) : m_conn(conn) { }
+    explicit ResultItr(PGconn* conn) : m_conn(conn) {}
 
-    ResultItr( const ResultItr& ) = delete; // non construction-copyable
-    ResultItr& operator=( const ResultItr& ) = delete; // non copyable
+    ResultItr(const ResultItr&) = delete;             // non construction-copyable
+    ResultItr& operator=(const ResultItr&) = delete;  // non copyable
 
     /**
      * Destructor
@@ -207,25 +200,21 @@ public:
     /**
      * Relases the single result or ensures the conneciton has no pending results.
      */
-    void clear() {
-      while(nullptr != next());
-    }
+    void clear() { while (nullptr != next()); }
 
     /**
      * Gets the current result.
      *
      * @return The libpq result.
      */
-    PGresult *get() const {
-      return m_res;
-    }
+    PGresult* get() const { return m_res; }
 
     /**
      * Moves to the next result available.
      *
      * @return  The libpq result of the next result or nullptr if none is available.
      */
-    PGresult *next() {
+    PGresult* next() {
       if (m_finished) {
         return nullptr;
       }
@@ -243,15 +232,13 @@ public:
      *
      * @return The libpq result rcode.
      */
-    ExecStatusType rcode() const {
-      return m_rcode;
-    }
+    ExecStatusType rcode() const { return m_rcode; }
 
   private:
     /**
      * The libpq postgres connection from which to fetch results
      */
-    PGconn *m_conn;
+    PGconn* m_conn;
 
     /**
      * The current result as a libpq result
@@ -267,7 +254,7 @@ public:
      * rcode of	current	result.
      */
     ExecStatusType m_rcode = PGRES_FATAL_ERROR;
-  }; // class ResultItr
-}; // class Postgres
+  };  // class ResultItr
+};  // class Postgres
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

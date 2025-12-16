@@ -15,10 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "scheduler/ArchiveMount.hpp"
+
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "scheduler/ArchiveMount.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -355,7 +356,10 @@ cta::ArchiveMount::~ArchiveMount() noexcept = default;
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status,
                                        const std::optional<std::string>& reason) {
-  m_dbMount->setDriveStatus(status, getMountType(), std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), reason);
+  m_dbMount->setDriveStatus(status,
+                            getMountType(),
+                            std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
+                            reason);
 }
 
 //------------------------------------------------------------------------------

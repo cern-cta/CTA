@@ -31,4 +31,4 @@ struct CreateMountPolicyAttributes {
   std::string comment;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

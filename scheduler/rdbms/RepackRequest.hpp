@@ -17,15 +17,15 @@
 
 #pragma once
 
-#include "scheduler/rdbms/RelationalDB.hpp"
-#include "scheduler/rdbms/postgres/Transaction.hpp"
-#include "scheduler/rdbms/postgres/RepackRequestTracker.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/log/LogContext.hpp"
 #include "disk/DiskSystem.hpp"
+#include "scheduler/rdbms/RelationalDB.hpp"
+#include "scheduler/rdbms/postgres/RepackRequestTracker.hpp"
+#include "scheduler/rdbms/postgres/Transaction.hpp"
 
-#include <list>
 #include <cstdint>
+#include <list>
 
 namespace cta::schedulerdb {
 
@@ -81,8 +81,9 @@ public:
 
   void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
 
-  void reportRetrieveCreationFailures(const uint64_t failedToRetrieveFiles, const uint64_t failedToRetrieveBytes,
-    const uint64_t failedArchiveReq);
+  void reportRetrieveCreationFailures(const uint64_t failedToRetrieveFiles,
+                                      const uint64_t failedToRetrieveBytes,
+                                      const uint64_t failedArchiveReq);
 
   void insert();
 
@@ -117,7 +118,6 @@ public:
   rdbms::ConnPool& m_connPool;
   catalogue::Catalogue& m_catalogue;
   log::LogContext m_lc;
-
 };
 
 }  // namespace cta::schedulerdb

@@ -16,17 +16,16 @@
  */
 
 #include "JsonStatisticsService.hpp"
+
 #include "common/exception/NotImplementedException.hpp"
 
 namespace cta::statistics {
 
-JsonStatisticsService::JsonStatisticsService(OutputStream * output)
-  : m_output(output), m_input(nullptr) {
-}
+JsonStatisticsService::JsonStatisticsService(OutputStream* output) : m_output(output), m_input(nullptr) {}
 
-JsonStatisticsService::JsonStatisticsService(OutputStream * output, InputStream * input)
-  : m_output(output), m_input(input) {
-}
+JsonStatisticsService::JsonStatisticsService(OutputStream* output, InputStream* input)
+    : m_output(output),
+      m_input(input) {}
 
 void JsonStatisticsService::saveStatistics(const cta::statistics::Statistics& statistics) {
   *m_output << statistics;
@@ -40,4 +39,4 @@ void JsonStatisticsService::updateStatisticsPerTape() {
   throw cta::exception::Exception("In JsonStatistics::updateStatisticsPerTape(), method not implemented.");
 }
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

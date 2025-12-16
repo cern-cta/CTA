@@ -15,8 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string.h>
 #include "marshall.hpp"
+
+#include <string.h>
 
 int unmarshall_STRINGN(char** ptr, const char* ptr_end, char* str, size_t str_maxlen) {
   if (*ptr + str_maxlen > ptr_end) {

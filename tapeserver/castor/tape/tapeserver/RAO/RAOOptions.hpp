@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include <string>
 #include <map>
+#include <string>
 #include <vector>
 
 namespace castor::tape::tapeserver::rao {
@@ -32,7 +32,7 @@ public:
   /**
    * Existing CostHeuristic type
    */
-  enum class CostHeuristicType{ cta };
+  enum class CostHeuristicType { cta };
 
   /**
    * Existing FilePositionEstimator type
@@ -88,16 +88,16 @@ private:
    * @param name the name of the option to get its boolean value
    * @return the boolean value of the option.
    */
-  bool getBooleanValue(const std::string & name) const;
+  bool getBooleanValue(const std::string& name) const;
   /**
    * Returns the string value of the option
    * whose name is passed in parameter
    * @param name the name of the option to get its string value
    * @return the string value of the option
    */
-  std::string getStringValue(const std::string & name) const;
+  std::string getStringValue(const std::string& name) const;
 
   static std::map<std::string, CostHeuristicType> c_mapStringCostHeuristicType;
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

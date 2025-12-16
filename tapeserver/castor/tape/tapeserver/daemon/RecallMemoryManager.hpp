@@ -17,9 +17,9 @@
 
 #pragma once
 
+#include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
-#include "common/log/LogContext.hpp"
 
 namespace castor {
 namespace exception {
@@ -59,7 +59,7 @@ public:
    * Takes back a block which has been released by one of the clients
    * @param mb: the pointer to the block
    */
-  void releaseBlock(MemBlock *mb);
+  void releaseBlock(MemBlock* mb);
 
   /**
    * Pop a free block from the free block queue of the memory manager
@@ -106,4 +106,5 @@ private:
   cta::log::LogContext& m_lc;
 };
 
-}} // namespace castor::tape::tapeserver::daemon
+}  // namespace tape::tapeserver::daemon
+}  // namespace castor

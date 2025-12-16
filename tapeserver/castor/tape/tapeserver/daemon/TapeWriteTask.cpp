@@ -17,6 +17,7 @@
 
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 
+#include "TransferTaskTracker.hpp"
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
@@ -30,7 +31,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
-#include "TransferTaskTracker.hpp"
 
 #include <memory>
 #include <string>
@@ -257,8 +257,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
       // If it's not the error we're looking for, we will go about our business
       // in the catch section. dynamic cast will throw, and we'll do ourselves
       // if the error code is not the one we want.
-      if (const auto& en = dynamic_cast<const cta::exception::Errnum&>(e);
-          en.errorNumber() != ENOSPC) {
+      if (const auto& en = dynamic_cast<const cta::exception::Errnum&>(e); en.errorNumber() != ENOSPC) {
         throw;
       } else {
         doReportJobError = false;
@@ -326,8 +325,8 @@ MemBlock* TapeWriteTask::getFreeBlock() {
 //------------------------------------------------------------------------------
 void TapeWriteTask::checkErrors(MemBlock* mb, uint64_t memBlockId, cta::log::LogContext& lc) {
   using namespace cta::log;
-  if (m_archiveJob->archiveFile.archiveFileID != mb->m_fileid || memBlockId != mb->m_fileBlock || mb->isFailed() ||
-      mb->isCanceled()) {
+  if (m_archiveJob->archiveFile.archiveFileID != mb->m_fileid || memBlockId != mb->m_fileBlock || mb->isFailed()
+      || mb->isCanceled()) {
     LogContext::ScopedParam sp[] = {LogContext::ScopedParam(lc, Param("received_archiveFileID", mb->m_fileid)),
                                     LogContext::ScopedParam(lc, Param("expected_NSBLOCKId", memBlockId)),
                                     LogContext::ScopedParam(lc, Param("received_NSBLOCKId", mb->m_fileBlock)),

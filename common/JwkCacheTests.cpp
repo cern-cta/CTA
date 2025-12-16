@@ -16,21 +16,20 @@
  */
 
 #include "common/JwkCache.hpp"
-#include <gtest/gtest.h>
-#include "common/log/StringLogger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/StringLogger.hpp"
+
+#include <gtest/gtest.h>
 
 namespace unitTests {
 
 class MockJwksFetcher : public cta::JwksFetcher {
 private:
   std::map<std::string, std::string> m_responses;
-  
+
 public:
-  void setResponse(const std::string& url, const std::string& jwks) {
-    m_responses[url] = jwks;
-  }
-  
+  void setResponse(const std::string& url, const std::string& jwks) { m_responses[url] = jwks; }
+
   std::string fetchJWKS(const std::string& jwksUrl) override {
     auto it = m_responses.find(jwksUrl);
     if (it != m_responses.end()) {
@@ -38,7 +37,7 @@ public:
     }
     return generateTestJWKS();
   }
-  
+
 private:
   std::string generateTestJWKS() {
     std::string sample_cert_base64_der = "MIIDSTCCAjGgAwIBAgIUQQp5TK9J3SemQXrCF+ffmED4qy4wDQYJKoZIhvcNAQELBQAwTTELMAkG"
@@ -64,7 +63,8 @@ private:
         "kty": "RSA",
         "use": "sig",
         "x5c": [
-        ")" + sample_cert_base64_der +
+        ")" + sample_cert_base64_der
+                           +
                            R"("
         ],
         "e": "AQAB"
@@ -78,7 +78,7 @@ private:
 TEST(JwkCacheTest, UpdateCacheAddsKey) {
   cta::log::StringLogger log("dummy", "JwkCacheTest_UpdateCacheAddsKey", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  
+
   MockJwksFetcher mockFetcher;
   cta::JwkCache cache(mockFetcher, "http://fake-jwks-uri", 1200, lc);
 
@@ -94,9 +94,9 @@ TEST(JwkCacheTest, UpdateCacheAddsKey) {
 TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
   cta::log::StringLogger log("dummy", "JwkCacheTest_UpdateCacheRemovesExpiredKeys", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  
+
   MockJwksFetcher mockFetcher;
-  
+
   // Set up JWKS with a key that will initially be added
   std::string jwksWithKey = R"({
     "keys": [{
@@ -110,7 +110,7 @@ TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
         "e": "AQAB"
     }]
     })";
-  
+
   mockFetcher.setResponse("http://fake-jwks-uri", jwksWithKey);
   cta::JwkCache cache(mockFetcher, "http://fake-jwks-uri", 200, lc);  // very short pubkeyTimeout
 
@@ -126,12 +126,12 @@ TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
   cache.updateCache(now);
   // should not be removed yet, it should be removed after lastRefreshTime + 200 = 1200
   EXPECT_TRUE(cache.find("expired-key").has_value());
-  
+
   now = lastRefreshTime + 120;
   cache.updateCache(now);
   // still here
   EXPECT_TRUE(cache.find("expired-key").has_value());
-  
+
   // now the PK has expired, should be removed
   now = lastRefreshTime + 220;
   cache.updateCache(now);

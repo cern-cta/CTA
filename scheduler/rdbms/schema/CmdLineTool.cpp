@@ -16,24 +16,21 @@
  */
 
 #include "scheduler/rdbms/schema/CmdLineTool.hpp"
+
 #include "common/exception/CommandLineNotParsed.hpp"
 
-#include <unistd.h>
 #include <array>
+#include <unistd.h>
 
 namespace cta::schedulerdb {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CmdLineTool::CmdLineTool(
-  std::istream &inStream,
-  std::ostream &outStream,
-  std::ostream &errStream) noexcept:
-  m_in(inStream),
-  m_out(outStream),
-  m_err(errStream) {
-}
+CmdLineTool::CmdLineTool(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) noexcept
+    : m_in(inStream),
+      m_out(outStream),
+      m_err(errStream) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -47,7 +44,7 @@ std::string CmdLineTool::getUsername() {
   std::array<char, 256> buf;
   buf.fill('\0');
 
-  if(getlogin_r(buf.data(), buf.size()) == 0) {
+  if (getlogin_r(buf.data(), buf.size()) == 0) {
     buf[buf.size() - 1] = '\0';
     return std::string(buf.data());
   } else {
@@ -62,7 +59,7 @@ std::string CmdLineTool::getHostname() {
   std::array<char, 256> buf;
   buf.fill('\0');
 
-  if(gethostname(buf.data(), buf.size()) == 0) {
+  if (gethostname(buf.data(), buf.size()) == 0) {
     buf[buf.size() - 1] = '\0';
     return std::string(buf.data());
   } else {
@@ -73,20 +70,20 @@ std::string CmdLineTool::getHostname() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int CmdLineTool::cltMain(const int argc, char *const *const argv) {
+int CmdLineTool::cltMain(const int argc, char* const* const argv) {
   bool cmdLineNotParsed = false;
   std::string errorMessage;
 
   try {
     return exceptionThrowingMain(argc, argv);
-  } catch(exception::CommandLineNotParsed &ue) {
+  } catch (exception::CommandLineNotParsed& ue) {
     errorMessage = ue.getMessage().str();
     cmdLineNotParsed = true;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     errorMessage = ex.getMessage().str();
-  } catch(std::exception &se) {
+  } catch (std::exception& se) {
     errorMessage = se.what();
-  } catch(...) {
+  } catch (...) {
     errorMessage = "An unknown exception was thrown";
   }
 
@@ -94,11 +91,11 @@ int CmdLineTool::cltMain(const int argc, char *const *const argv) {
   // and errorMessage has been set accordingly
 
   m_err << "Aborting: " << errorMessage << std::endl;
-  if(cmdLineNotParsed) {
+  if (cmdLineNotParsed) {
     m_err << std::endl;
     printUsage(m_err);
   }
   return 1;
 }
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

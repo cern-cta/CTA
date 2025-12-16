@@ -16,6 +16,7 @@
  */
 
 #include "common/dataStructures/TapeFile.hpp"
+
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -24,29 +25,20 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-TapeFile::TapeFile():
-  fSeq(0),
-  blockId(0),
-  fileSize(0),
-  copyNb(0),
-  creationTime(0) {}
+TapeFile::TapeFile() : fSeq(0), blockId(0), fileSize(0), copyNb(0), creationTime(0) {}
 
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool TapeFile::operator==(const TapeFile &rhs) const {
-  return vid==rhs.vid
-      && fSeq==rhs.fSeq
-      && blockId==rhs.blockId
-      && fileSize==rhs.fileSize
-      && copyNb==rhs.copyNb
-      && creationTime==rhs.creationTime;
+bool TapeFile::operator==(const TapeFile& rhs) const {
+  return vid == rhs.vid && fSeq == rhs.fSeq && blockId == rhs.blockId && fileSize == rhs.fileSize
+         && copyNb == rhs.copyNb && creationTime == rhs.creationTime;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool TapeFile::operator!=(const TapeFile &rhs) const {
+bool TapeFile::operator!=(const TapeFile& rhs) const {
   return !operator==(rhs);
 }
 
@@ -60,15 +52,11 @@ bool TapeFile::matchesCopyNb(uint8_t cnb) const {
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const TapeFile &obj) {
-  os << "(vid=" << obj.vid
-     << " fSeq=" << obj.fSeq
-     << " blockId=" << obj.blockId
-     << " fileSize=" << obj.fileSize
-     << " copyNb=" << static_cast<int>(obj.copyNb)
-     << " creationTime=" << obj.creationTime;
+std::ostream& operator<<(std::ostream& os, const TapeFile& obj) {
+  os << "(vid=" << obj.vid << " fSeq=" << obj.fSeq << " blockId=" << obj.blockId << " fileSize=" << obj.fileSize
+     << " copyNb=" << static_cast<int>(obj.copyNb) << " creationTime=" << obj.creationTime;
   os << ")";
   return os;
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

@@ -16,29 +16,26 @@
  */
 
 #include "SetProductionCmd.hpp"
-#include "rdbms/Login.hpp"
+
 #include "SchemaChecker.hpp"
 #include "SetProductionCmdLineArgs.hpp"
+#include "rdbms/Login.hpp"
 
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SetProductionCmd::SetProductionCmd(
-  std::istream &inStream,
-  std::ostream &outStream,
-  std::ostream &errStream):
-  CmdLineTool(inStream, outStream, errStream) {
-}
+SetProductionCmd::SetProductionCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream)
+    : CmdLineTool(inStream, outStream, errStream) {}
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int SetProductionCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+int SetProductionCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
   const SetProductionCmdLineArgs cmdLineArgs(argc, argv);
 
-  if(cmdLineArgs.help) {
+  if (cmdLineArgs.help) {
     printUsage(m_out);
     return 0;
   }
@@ -48,8 +45,9 @@ int SetProductionCmd::exceptionThrowingMain(const int argc, char *const *const a
   rdbms::ConnPool connPool(dbLogin, maxNbConns);
   auto conn = connPool.getConn();
 
-  if(!isProductionSettable(dbLogin,conn)){
-    throw cta::exception::Exception("Unable to set the catalogue as production because the column IS_PRODUCTION is missing");
+  if (!isProductionSettable(dbLogin, conn)) {
+    throw cta::exception::Exception(
+      "Unable to set the catalogue as production because the column IS_PRODUCTION is missing");
   }
 
   m_out << "Setting the IS_PRODUCTION flag..." << std::endl;
@@ -62,18 +60,19 @@ int SetProductionCmd::exceptionThrowingMain(const int argc, char *const *const a
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void SetProductionCmd::printUsage(std::ostream &os) {
+void SetProductionCmd::printUsage(std::ostream& os) {
   SetProductionCmdLineArgs::printUsage(os);
 }
 
 //------------------------------------------------------------------------------
 // isProductionSettable
 //------------------------------------------------------------------------------
-bool SetProductionCmd::isProductionSettable(const cta::rdbms::Login & login, cta::rdbms::Conn & conn) const {
+bool SetProductionCmd::isProductionSettable(const cta::rdbms::Login& login, cta::rdbms::Conn& conn) const {
   //Check that the IS_PRODUCTION column is there
-  cta::catalogue::SchemaChecker::Builder builder("catalogue",login.dbType,conn);
+  cta::catalogue::SchemaChecker::Builder builder("catalogue", login.dbType, conn);
   auto schemaChecker = builder.build();
-  cta::catalogue::SchemaCheckerResult res = schemaChecker->checkTableContainsColumns("CTA_CATALOGUE",{"IS_PRODUCTION"});
+  cta::catalogue::SchemaCheckerResult res =
+    schemaChecker->checkTableContainsColumns("CTA_CATALOGUE", {"IS_PRODUCTION"});
   return (res.getStatus() == cta::catalogue::SchemaCheckerResult::Status::SUCCESS);
 }
 
@@ -87,5 +86,4 @@ void SetProductionCmd::setProductionFlag(cta::rdbms::Conn& conn) const {
   conn.executeNonQuery(sql);
 }
 
-
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

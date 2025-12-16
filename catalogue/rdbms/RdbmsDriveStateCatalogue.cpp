@@ -15,16 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <list>
-#include <map>
-#include <optional>
-#include <string>
-#include <tuple>
-#include <utility>
+#include "catalogue/rdbms/RdbmsDriveStateCatalogue.hpp"
 
 #include "catalogue/CatalogueExceptions.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
-#include "catalogue/rdbms/RdbmsDriveStateCatalogue.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/dataStructures/TapeDriveStatistics.hpp"
@@ -33,13 +27,20 @@
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <list>
+#include <map>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <utility>
+
 namespace cta::catalogue {
 
-RdbmsDriveStateCatalogue::RdbmsDriveStateCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
-  : m_log(log), m_connPool(connPool) {
-}
+RdbmsDriveStateCatalogue::RdbmsDriveStateCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool)
+    : m_log(log),
+      m_connPool(connPool) {}
 
-void RdbmsDriveStateCatalogue::createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) {
+void RdbmsDriveStateCatalogue::createTapeDrive(const common::dataStructures::TapeDrive& tapeDrive) {
   auto conn = m_connPool->getConn();
   const char* const sql = R"SQL(
     INSERT INTO DRIVE_STATE(
@@ -199,12 +200,12 @@ void RdbmsDriveStateCatalogue::createTapeDrive(const common::dataStructures::Tap
     .add("creationLog_username", tapeDrive.creationLog.has_value() ? tapeDrive.creationLog.value().username : "")
     .add("creationLog_host", tapeDrive.creationLog.has_value() ? tapeDrive.creationLog.value().host : "")
     .add("creationLog_time", tapeDrive.creationLog.has_value() ? tapeDrive.creationLog.value().time : 0)
-    .add("lastModificationLog_username", tapeDrive.lastModificationLog.has_value()
-      ? tapeDrive.lastModificationLog.value().username : "")
-    .add("lastModificationLog_username", tapeDrive.lastModificationLog.has_value()
-      ? tapeDrive.lastModificationLog.value().host : "")
-    .add("lastModificationLog_username", tapeDrive.lastModificationLog.has_value()
-      ? tapeDrive.lastModificationLog.value().time : 0)
+    .add("lastModificationLog_username",
+         tapeDrive.lastModificationLog.has_value() ? tapeDrive.lastModificationLog.value().username : "")
+    .add("lastModificationLog_username",
+         tapeDrive.lastModificationLog.has_value() ? tapeDrive.lastModificationLog.value().host : "")
+    .add("lastModificationLog_username",
+         tapeDrive.lastModificationLog.has_value() ? tapeDrive.lastModificationLog.value().time : 0)
 
     .add("diskSystemName", tapeDrive.diskSystemName.value_or(""))
     .add("reservedBytes", tapeDrive.reservedBytes.value_or(0))
@@ -213,8 +214,8 @@ void RdbmsDriveStateCatalogue::createTapeDrive(const common::dataStructures::Tap
   lc.log(log::INFO, "Catalogue - created tape drive");
 }
 
-void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
-  const common::dataStructures::TapeDrive &tapeDrive) const {
+void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt* stmt,
+                                                         const common::dataStructures::TapeDrive& tapeDrive) const {
   auto setOptionalString = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalField) {
     if (optionalField && !optionalField.value().empty()) {
       stmt->bindString(sqlField, optionalField.value());
@@ -222,7 +223,7 @@ void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
       stmt->bindString(sqlField, std::nullopt);
     }
   };
-  auto setOptionalTime = [&stmt](const std::string &sqlField, const std::optional<time_t>& optionalField) {
+  auto setOptionalTime = [&stmt](const std::string& sqlField, const std::optional<time_t>& optionalField) {
     if (optionalField.has_value()) {
       stmt->bindUint64(sqlField, optionalField.value());
     } else {
@@ -276,23 +277,29 @@ void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   setOptionalString(":NEXT_VO", tapeDrive.nextVo);
   setOptionalString(":USER_COMMENT", tapeDrive.userComment);
 
-  auto setEntryLog = [setOptionalString, setOptionalTime](const std::string &field,
-    const std::optional<std::string> &username, const std::optional<std::string> &host, const std::optional<time_t> &time) {
-      setOptionalString(field + "_USER_NAME", username);
-      setOptionalString(field + "_HOST_NAME", host);
-      setOptionalTime(field + "_TIME", time);
+  auto setEntryLog = [setOptionalString, setOptionalTime](const std::string& field,
+                                                          const std::optional<std::string>& username,
+                                                          const std::optional<std::string>& host,
+                                                          const std::optional<time_t>& time) {
+    setOptionalString(field + "_USER_NAME", username);
+    setOptionalString(field + "_HOST_NAME", host);
+    setOptionalTime(field + "_TIME", time);
   };
 
   if (tapeDrive.creationLog) {
-    setEntryLog(":CREATION_LOG", tapeDrive.creationLog.value().username,
-      tapeDrive.creationLog.value().host, tapeDrive.creationLog.value().time);
+    setEntryLog(":CREATION_LOG",
+                tapeDrive.creationLog.value().username,
+                tapeDrive.creationLog.value().host,
+                tapeDrive.creationLog.value().time);
   } else {
     setEntryLog(":CREATION_LOG", std::nullopt, std::nullopt, std::nullopt);
   }
 
   if (tapeDrive.lastModificationLog) {
-    setEntryLog(":LAST_UPDATE", tapeDrive.lastModificationLog.value().username,
-      tapeDrive.lastModificationLog.value().host, tapeDrive.lastModificationLog.value().time);
+    setEntryLog(":LAST_UPDATE",
+                tapeDrive.lastModificationLog.value().username,
+                tapeDrive.lastModificationLog.value().host,
+                tapeDrive.lastModificationLog.value().time);
   } else {
     setEntryLog(":LAST_UPDATE", std::nullopt, std::nullopt, std::nullopt);
   }
@@ -302,7 +309,7 @@ void RdbmsDriveStateCatalogue::settingSqlTapeDriveValues(cta::rdbms::Stmt *stmt,
   stmt->bindUint64(":RESERVATION_SESSION_ID", tapeDrive.reservationSessionId);
 }
 
-void RdbmsDriveStateCatalogue::deleteTapeDrive(const std::string &tapeDriveName) {
+void RdbmsDriveStateCatalogue::deleteTapeDrive(const std::string& tapeDriveName) {
   const char* const delete_sql = R"SQL(
     DELETE FROM
       DRIVE_STATE
@@ -337,8 +344,10 @@ std::list<std::string> RdbmsDriveStateCatalogue::getTapeDriveNames() const {
 
 common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveValues(cta::rdbms::Rset* rset) const {
   common::dataStructures::TapeDrive tapeDrive;
-  auto getOptionalTime = [](const std::optional<uint64_t> &time) -> std::optional<time_t> {
-    if (!time.has_value()) return std::nullopt;
+  auto getOptionalTime = [](const std::optional<uint64_t>& time) -> std::optional<time_t> {
+    if (!time.has_value()) {
+      return std::nullopt;
+    }
     return time.value();
   };
   tapeDrive.driveName = rset->columnString("DRIVE_NAME");
@@ -394,29 +403,29 @@ common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveV
   tapeDrive.physicalLibraryName = rset->columnOptionalString("PHYSICAL_LIBRARY_NAME");
 
   tapeDrive.userComment = rset->columnOptionalString("USER_COMMENT");
-  auto setOptionEntryLog = [&rset](const std::string &username, const std::string &host,
-    const std::string &time) -> std::optional<common::dataStructures::EntryLog> {
+  auto setOptionEntryLog = [&rset](const std::string& username,
+                                   const std::string& host,
+                                   const std::string& time) -> std::optional<common::dataStructures::EntryLog> {
     if (!rset->columnOptionalString(username)) {
       return std::nullopt;
     } else {
-      return common::dataStructures::EntryLog(
-        rset->columnString(username),
-        rset->columnString(host),
-        rset->columnUint64(time));
+      return common::dataStructures::EntryLog(rset->columnString(username),
+                                              rset->columnString(host),
+                                              rset->columnUint64(time));
     }
   };
-  tapeDrive.creationLog = setOptionEntryLog("CREATION_LOG_USER_NAME", "CREATION_LOG_HOST_NAME",
-    "CREATION_LOG_TIME");
-  tapeDrive.lastModificationLog = setOptionEntryLog("LAST_UPDATE_USER_NAME", "LAST_UPDATE_HOST_NAME",
-    "LAST_UPDATE_TIME");
+  tapeDrive.creationLog = setOptionEntryLog("CREATION_LOG_USER_NAME", "CREATION_LOG_HOST_NAME", "CREATION_LOG_TIME");
+  tapeDrive.lastModificationLog =
+    setOptionEntryLog("LAST_UPDATE_USER_NAME", "LAST_UPDATE_HOST_NAME", "LAST_UPDATE_TIME");
 
   // Log warning for operators that tape drive logical library does not exist (cta/CTA#1163)
   if (!rset->columnOptionalBool("LOGICAL_IS_DISABLED").has_value()) {
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);
-    spc.add("driveName", tapeDrive.driveName)
-       .add("logicalLibrary", tapeDrive.logicalLibrary);
-    lc.log(log::WARNING, "RdbmsCatalogue::gettingSqlTapeDriveValues(): Logical library for tape drive does not exist in the catalogue");
+    spc.add("driveName", tapeDrive.driveName).add("logicalLibrary", tapeDrive.logicalLibrary);
+    lc.log(
+      log::WARNING,
+      "RdbmsCatalogue::gettingSqlTapeDriveValues(): Logical library for tape drive does not exist in the catalogue");
   }
   return tapeDrive;
 }
@@ -507,8 +516,8 @@ std::list<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDr
   return tapeDrives;
 }
 
-std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDrive(
-  const std::string &tapeDriveName) const {
+std::optional<common::dataStructures::TapeDrive>
+RdbmsDriveStateCatalogue::getTapeDrive(const std::string& tapeDriveName) const {
   const char* const sql = R"SQL(
     SELECT
       DRIVE_STATE.DRIVE_NAME AS DRIVE_NAME,
@@ -593,7 +602,7 @@ std::optional<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTa
 }
 
 void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeDriveName,
-  const common::dataStructures::DesiredDriveState &desiredState) {
+                                                        const common::dataStructures::DesiredDriveState& desiredState) {
   const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(desiredState.reason, &m_log);
   std::string sql = R"SQL(
     UPDATE DRIVE_STATE SET
@@ -617,19 +626,18 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeD
   stmt.bindString(":DRIVE_NAME", tapeDriveName);
   stmt.bindBool(":DESIRED_UP", desiredState.up);
   stmt.bindBool(":DESIRED_FORCE_DOWN", desiredState.forceDown);
-  if (trimmedReason&& !trimmedReason.value().empty()) {
+  if (trimmedReason && !trimmedReason.value().empty()) {
     stmt.bindString(":REASON_UP_DOWN", trimmedReason.value());
   }
   stmt.executeNonQuery();
 
   if (0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify Tape Drive: ") + tapeDriveName +
-      " because it doesn't exist");
+    throw exception::UserError(std::string("Cannot modify Tape Drive: ") + tapeDriveName + " because it doesn't exist");
   }
 }
 
 void RdbmsDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
-  const std::string &comment) {
+                                                               const std::string& comment) {
   const char* const sql = R"SQL(
     UPDATE DRIVE_STATE
     SET
@@ -642,7 +650,7 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string
   auto stmt = conn.createStmt(sql);
 
   auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField,
-    const std::optional<std::string>& optionalString) {
+                                         const std::optional<std::string>& optionalString) {
     if (optionalString.has_value()) {
       if (optionalString.value().empty()) {
         stmt.bindString(sqlField, std::nullopt);
@@ -658,13 +666,14 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveStateComment(const std::string
   stmt.executeNonQuery();
 
   if (0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify Tape Drive: ") + tapeDriveName +
-      " because it doesn't exist");
+    throw exception::UserError(std::string("Cannot modify Tape Drive: ") + tapeDriveName + " because it doesn't exist");
   }
 }
 
-void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(const std::string& tapeDriveName,
-  const std::string& host, const std::string& logicalLibrary,
+void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(
+  const std::string& tapeDriveName,
+  const std::string& host,
+  const std::string& logicalLibrary,
   const common::dataStructures::TapeDriveStatistics& statistics) {
   const char* const sql = R"SQL(
     UPDATE DRIVE_STATE
@@ -702,7 +711,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatistics(const std::string& tape
   }
 }
 
-void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive &tapeDrive) {
+void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   const std::string driveStatusStr = common::dataStructures::TapeDrive::stateToString(tapeDrive.driveStatus);
 
   // Case 1 : Drive status stays the same
@@ -746,7 +755,9 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   stmt.executeNonQuery();
 
   // If the update succeeded, we are done. Otherwise proceed to Case 2.
-  if (stmt.getNbAffectedRows() > 0) return;
+  if (stmt.getNbAffectedRows() > 0) {
+    return;
+  }
 
   // Case 2 : Drive status is changing
   sql = R"SQL(
@@ -850,7 +861,8 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
       stmt.bindUint64(sqlField, std::nullopt);
     }
   };
-  auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField, const std::optional<std::string>& optionalString) {
+  auto bindOptionalStringIfSet = [&stmt](const std::string& sqlField,
+                                         const std::optional<std::string>& optionalString) {
     if (optionalString.has_value()) {
       if (optionalString.value().empty()) {
         stmt.bindString(sqlField, std::nullopt);
@@ -903,7 +915,8 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   stmt.executeNonQuery();
 
   if (0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot update status for drive ") + tapeDrive.driveName + ". Drive not found.");
+    throw exception::UserError(std::string("Cannot update status for drive ") + tapeDrive.driveName
+                               + ". Drive not found.");
   }
 }
 
@@ -926,15 +939,19 @@ std::map<std::string, uint64_t, std::less<>> RdbmsDriveStateCatalogue::getDiskSp
 //------------------------------------------------------------------------------
 // reserveDiskSpace
 //------------------------------------------------------------------------------
-void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, const uint64_t mountId,
-  const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
-  if (diskSpaceReservation.empty()) return;
+void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName,
+                                                const uint64_t mountId,
+                                                const DiskSpaceReservationRequest& diskSpaceReservation,
+                                                log::LogContext& lc) {
+  if (diskSpaceReservation.empty()) {
+    return;
+  }
   {
     log::ScopedParamContainer params(lc);
     params.add("driveName", driveName)
-          .add("diskSystem", diskSpaceReservation.begin()->first)
-          .add("reservationBytes", diskSpaceReservation.begin()->second)
-          .add("mountId", mountId);
+      .add("diskSystem", diskSpaceReservation.begin()->first)
+      .add("reservationBytes", diskSpaceReservation.begin()->second)
+      .add("mountId", mountId);
     lc.log(log::DEBUG, "In RetrieveMount::reserveDiskSpace(): reservation request.");
   }
 
@@ -966,9 +983,9 @@ void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
     {
       log::ScopedParamContainer params(lc);
       params.add("driveName", driveName)
-            .add("diskSystem", diskSpaceReservation.begin()->first)
-            .add("reservationBytes", diskSpaceReservation.begin()->second)
-            .add("mountId", mountId);
+        .add("diskSystem", diskSpaceReservation.begin()->first)
+        .add("reservationBytes", diskSpaceReservation.begin()->second)
+        .add("mountId", mountId);
       lc.log(log::INFO, "In RetrieveMount::releaseDiskSpace(): creating reservation for new mount");
     }
     const char* const sql_reset = R"SQL(
@@ -989,9 +1006,9 @@ void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
     if (stmt.getNbAffectedRows() != 1) {
       log::ScopedParamContainer params(lc);
       params.add("driveName", driveName)
-            .add("diskSystem", diskSpaceReservation.begin()->first)
-            .add("reservationBytes", diskSpaceReservation.begin()->second)
-            .add("mountId", mountId);
+        .add("diskSystem", diskSpaceReservation.begin()->first)
+        .add("reservationBytes", diskSpaceReservation.begin()->second)
+        .add("mountId", mountId);
       lc.log(log::ERR, "In RetrieveMount::releaseDiskSpace(): failed to create disk reservation for new mount.");
     }
   }
@@ -1000,15 +1017,19 @@ void RdbmsDriveStateCatalogue::reserveDiskSpace(const std::string& driveName, co
 //------------------------------------------------------------------------------
 // releaseDiskSpace
 //------------------------------------------------------------------------------
-void RdbmsDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, const uint64_t mountId,
-  const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) {
-  if (diskSpaceReservation.empty()) return;
+void RdbmsDriveStateCatalogue::releaseDiskSpace(const std::string& driveName,
+                                                const uint64_t mountId,
+                                                const DiskSpaceReservationRequest& diskSpaceReservation,
+                                                log::LogContext& lc) {
+  if (diskSpaceReservation.empty()) {
+    return;
+  }
   {
     log::ScopedParamContainer params(lc);
     params.add("driveName", driveName)
-          .add("diskSystem", diskSpaceReservation.begin()->first)
-          .add("reservationBytes", diskSpaceReservation.begin()->second)
-          .add("mountId", mountId);
+      .add("diskSystem", diskSpaceReservation.begin()->first)
+      .add("reservationBytes", diskSpaceReservation.begin()->second)
+      .add("mountId", mountId);
     lc.log(log::DEBUG, "In RetrieveMount::releaseDiskSpace(): reservation release request.");
   }
 
@@ -1034,11 +1055,13 @@ void RdbmsDriveStateCatalogue::releaseDiskSpace(const std::string& driveName, co
     // If the reservation does not match the <driveName, diskSystem> pair in the DRIVE_STATE table, log an error and carry on
     log::ScopedParamContainer params(lc);
     params.add("driveName", driveName)
-          .add("diskSystem", diskSpaceReservation.begin()->first)
-          .add("reservationBytes", diskSpaceReservation.begin()->second)
-          .add("mountId", mountId);
-    lc.log(log::ERR, "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, diskSystem and mountId do not match.");
+      .add("diskSystem", diskSpaceReservation.begin()->first)
+      .add("reservationBytes", diskSpaceReservation.begin()->second)
+      .add("mountId", mountId);
+    lc.log(log::ERR,
+           "In RetrieveMount::releaseDiskSpace(): reservation release request failed, driveName, diskSystem and "
+           "mountId do not match.");
   }
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

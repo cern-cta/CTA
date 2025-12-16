@@ -17,27 +17,26 @@
 
 #pragma once
 
-#include <string>
-
 #include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "rdbms/ConnPool.hpp"
+
+#include <string>
 
 namespace cta::catalogue {
 
 class RdbmsCatalogueGetFileRecycleLogItor : public FileRecycleLogItor::Impl {
 public:
-/**
+  /**
    * Constructor.
    *
    * @param log Object representing the API to the CTA logging system.
    * @param conn A database connection.
    */
-  RdbmsCatalogueGetFileRecycleLogItor(
-    log::Logger &log,
-    rdbms::Conn &&conn,
-    const RecycleTapeFileSearchCriteria & searchCriteria,
-    const std::string &tempDiskFxidsTableName);
+  RdbmsCatalogueGetFileRecycleLogItor(log::Logger& log,
+                                      rdbms::Conn&& conn,
+                                      const RecycleTapeFileSearchCriteria& searchCriteria,
+                                      const std::string& tempDiskFxidsTableName);
 
   /**
    * Destructor.
@@ -58,8 +57,7 @@ private:
   /**
    * Object representing the API to the CTA logging system.
    */
-  log::Logger &m_log;
-
+  log::Logger& m_log;
 
   /**
    * The database connection.
@@ -70,7 +68,6 @@ private:
    * The search criteria to be used when listing recycled tape files.
    */
   RecycleTapeFileSearchCriteria m_searchCriteria;
-
 
   /**
    * True if the result set is empty.
@@ -106,4 +103,4 @@ private:
   common::dataStructures::FileRecycleLog populateFileRecycleLog() const;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

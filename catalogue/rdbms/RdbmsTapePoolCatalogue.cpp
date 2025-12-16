@@ -15,18 +15,14 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <list>
-#include <optional>
-#include <string>
-#include <regex>
+#include "catalogue/rdbms/RdbmsTapePoolCatalogue.hpp"
 
+#include "catalogue/TapePool.hpp"
+#include "catalogue/TapePoolSearchCriteria.hpp"
 #include "catalogue/interfaces/StorageClassCatalogue.hpp"
 #include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
-#include "catalogue/rdbms/RdbmsTapePoolCatalogue.hpp"
-#include "catalogue/TapePool.hpp"
-#include "catalogue/TapePoolSearchCriteria.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -36,11 +32,19 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <list>
+#include <optional>
+#include <regex>
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsTapePoolCatalogue::RdbmsTapePoolCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-  RdbmsCatalogue *rdbmsCatalogue)
-  : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsTapePoolCatalogue::RdbmsTapePoolCatalogue(log::Logger& log,
+                                               std::shared_ptr<rdbms::ConnPool> connPool,
+                                               RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
 void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::SecurityIdentity& admin,
                                             const std::string& name,
@@ -49,11 +53,12 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
                                             const std::optional<std::string>& encryptionKeyNameOpt,
                                             const std::list<std::string>& supply_list,
                                             const std::string& comment) {
-  if(name.empty()) {
-    throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape pool because the tape pool name is an empty string");
+  if (name.empty()) {
+    throw UserSpecifiedAnEmptyStringTapePoolName(
+      "Cannot create tape pool because the tape pool name is an empty string");
   }
 
-  if(vo.empty()) {
+  if (vo.empty()) {
     throw UserSpecifiedAnEmptyStringVo("Cannot create tape pool because the VO is an empty string");
   }
 
@@ -73,21 +78,21 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   auto tapePoolToIdMap = getTapePoolIdMap(conn, tp_check_list);
 
   if (tapePoolToIdMap.contains(name)) {
-    throw exception::UserError(std::string("Cannot create tape pool '") + name +
-      "' because a tape pool with the same name already exists");
+    throw exception::UserError(std::string("Cannot create tape pool '") + name
+                               + "' because a tape pool with the same name already exists");
   }
-  if(!RdbmsCatalogueUtils::virtualOrganizationExists(conn,vo)){
-    throw exception::UserError(std::string("Cannot create tape pool '") + name +
-      "' because vo '" + vo + "' does not exist.");
+  if (!RdbmsCatalogueUtils::virtualOrganizationExists(conn, vo)) {
+    throw exception::UserError(std::string("Cannot create tape pool '") + name + "' because vo '" + vo
+                               + "' does not exist.");
   }
-  for (auto& supply_tp_name: supply_list) {
+  for (auto& supply_tp_name : supply_list) {
     if (!tapePoolToIdMap.contains(supply_tp_name)) {
-      throw exception::UserError(std::string("Cannot create tape pool '") + name +
-                                 "' because the supply tape pool '" + supply_tp_name + "' does not exist");
+      throw exception::UserError(std::string("Cannot create tape pool '") + name + "' because the supply tape pool '"
+                                 + supply_tp_name + "' does not exist");
     }
     if (supply_tp_name == name) {
-      throw exception::UserError(std::string("Cannot create tape pool '") + name +
-                                 "' because it and the supply tape pool '" + supply_tp_name + "' are the same");
+      throw exception::UserError(std::string("Cannot create tape pool '") + name
+                                 + "' because it and the supply tape pool '" + supply_tp_name + "' are the same");
     }
   }
 
@@ -220,10 +225,10 @@ RdbmsTapePoolCatalogue::getTapePoolSupplySourcesAndDestinations(rdbms::Conn& con
   return std::pair(std::move(sources), std::move(destinations));
 }
 
-void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
+void RdbmsTapePoolCatalogue::deleteTapePool(const std::string& name) {
   auto conn = m_connPool->getConn();
 
-  if(tapePoolUsedInAnArchiveRoute(conn, name)) {
+  if (tapePoolUsedInAnArchiveRoute(conn, name)) {
     UserSpecifiedTapePoolUsedInAnArchiveRoute ex;
     ex.getMessage() << "Cannot delete tape-pool '" << name << "' because it is used in an archive route";
     throw ex;
@@ -231,7 +236,7 @@ void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
 
   const uint64_t nbTapesInPool = getNbTapesInPool(conn, name);
 
-  if(0 == nbTapesInPool) {
+  if (0 == nbTapesInPool) {
     const char* const sql = R"SQL(
       DELETE FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME
     )SQL";
@@ -239,7 +244,7 @@ void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
     stmt.bindString(":TAPE_POOL_NAME", name);
     stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
+    if (0 == stmt.getNbAffectedRows()) {
       throw exception::UserError(std::string("Cannot delete tape-pool '") + name + "' because it does not exist");
     }
 
@@ -250,17 +255,19 @@ void RdbmsTapePoolCatalogue::deleteTapePool(const std::string &name) {
   }
 }
 
-std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(const TapePoolSearchCriteria &searchCriteria) const {
+std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(const TapePoolSearchCriteria& searchCriteria) const {
   auto conn = m_connPool->getConn();
   return getTapePools(conn, searchCriteria);
 }
 
-std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
-  const TapePoolSearchCriteria &searchCriteria) const {
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.name))
+std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn& conn,
+                                                         const TapePoolSearchCriteria& searchCriteria) const {
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.name)) {
     throw exception::UserError("Pool name cannot be an empty string");
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vo))
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vo)) {
     throw exception::UserError("Virtual organisation cannot be an empty string");
+  }
 
   if (searchCriteria.name && !RdbmsCatalogueUtils::tapePoolExists(conn, searchCriteria.name.value())) {
     UserSpecifiedANonExistentTapePool ex;
@@ -268,10 +275,10 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
     throw ex;
   }
 
-  if (searchCriteria.vo
-    && !RdbmsCatalogueUtils::virtualOrganizationExists(conn, searchCriteria.vo.value())) {
+  if (searchCriteria.vo && !RdbmsCatalogueUtils::virtualOrganizationExists(conn, searchCriteria.vo.value())) {
     UserSpecifiedANonExistentVirtualOrganization ex;
-    ex.getMessage() << "Cannot list tape pools because virtual organization '" + searchCriteria.vo.value() + "' does not exist";
+    ex.getMessage() << "Cannot list tape pools because virtual organization '" + searchCriteria.vo.value()
+                         + "' does not exist";
     throw ex;
   }
 
@@ -313,7 +320,8 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
       TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID
   )SQL";
 
-  if (searchCriteria.name.has_value() || searchCriteria.vo.has_value() || searchCriteria.encrypted.has_value() || searchCriteria.encryptionKeyName.has_value()) {
+  if (searchCriteria.name.has_value() || searchCriteria.vo.has_value() || searchCriteria.encrypted.has_value()
+      || searchCriteria.encryptionKeyName.has_value()) {
     sql += R"SQL(
       WHERE
     )SQL";
@@ -381,8 +389,9 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   )SQL";
 
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":STATE_DISABLED",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
-  stmt.bindString(":STATE_ACTIVE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
+  stmt.bindString(":STATE_DISABLED",
+                  common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
+  stmt.bindString(":STATE_ACTIVE", common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
 
   if (searchCriteria.name.has_value()) {
     stmt.bindString(":NAME", searchCriteria.name.value());
@@ -392,11 +401,11 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
     stmt.bindString(":VO", searchCriteria.vo.value());
   }
 
-  if(searchCriteria.encrypted.has_value()) {
+  if (searchCriteria.encrypted.has_value()) {
     stmt.bindBool(":ENCRYPTED", searchCriteria.encrypted.value());
   }
 
-  if(searchCriteria.encryptionKeyName.has_value() && !searchCriteria.encryptionKeyName.value().empty()) {
+  if (searchCriteria.encryptionKeyName.has_value() && !searchCriteria.encryptionKeyName.value().empty()) {
     stmt.bindString(":ENCRYPTION_KEY_NAME", searchCriteria.encryptionKeyName.value());
   }
 
@@ -445,7 +454,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn &conn,
   return pools;
 }
 
-std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &tapePoolName) const {
+std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string& tapePoolName) const {
   const char* const sql = R"SQL(
     SELECT
       TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
@@ -504,8 +513,9 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
-  stmt.bindString(":STATE_DISABLED",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
-  stmt.bindString(":STATE_ACTIVE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
+  stmt.bindString(":STATE_DISABLED",
+                  common::dataStructures::Tape::stateToString(common::dataStructures::Tape::DISABLED));
+  stmt.bindString(":STATE_ACTIVE", common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
 
   TapePool pool;
   {
@@ -546,14 +556,15 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string &t
   return pool;
 }
 
-void RdbmsTapePoolCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &vo) {
-  if(name.empty()) {
+void RdbmsTapePoolCatalogue::modifyTapePoolVo(const common::dataStructures::SecurityIdentity& admin,
+                                              const std::string& name,
+                                              const std::string& vo) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
-      " string");
+                                                 " string");
   }
 
-  if(vo.empty()) {
+  if (vo.empty()) {
     throw UserSpecifiedAnEmptyStringVo("Cannot modify tape pool because the new VO is an empty string");
   }
 
@@ -569,8 +580,9 @@ void RdbmsTapePoolCatalogue::modifyTapePoolVo(const common::dataStructures::Secu
   )SQL";
   auto conn = m_connPool->getConn();
 
-  if(!RdbmsCatalogueUtils::virtualOrganizationExists(conn,vo)){
-    throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because the vo '" + vo + "' does not exist");
+  if (!RdbmsCatalogueUtils::virtualOrganizationExists(conn, vo)) {
+    throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because the vo '" + vo
+                               + "' does not exist");
   }
 
   auto stmt = conn.createStmt(sql);
@@ -581,18 +593,19 @@ void RdbmsTapePoolCatalogue::modifyTapePoolVo(const common::dataStructures::Secu
   stmt.bindString(":TAPE_POOL_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
   }
   //The VO of this tapepool has changed, invalidate the tapepool-VO cache
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
 }
 
-void RdbmsTapePoolCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t nbPartialTapes) {
-  if(name.empty()) {
+void RdbmsTapePoolCatalogue::modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity& admin,
+                                                          const std::string& name,
+                                                          const uint64_t nbPartialTapes) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
-      " string");
+                                                 " string");
   }
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -614,19 +627,20 @@ void RdbmsTapePoolCatalogue::modifyTapePoolNbPartialTapes(const common::dataStru
   stmt.bindString(":TAPE_POOL_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
   }
 }
 
-void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
-  if(name.empty()) {
+void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures::SecurityIdentity& admin,
+                                                   const std::string& name,
+                                                   const std::string& comment) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
-      " string");
+                                                 " string");
   }
 
-  if(comment.empty()) {
+  if (comment.empty()) {
     throw UserSpecifiedAnEmptyStringComment("Cannot modify tape pool because the new comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
@@ -650,14 +664,14 @@ void RdbmsTapePoolCatalogue::modifyTapePoolComment(const common::dataStructures:
   stmt.bindString(":TAPE_POOL_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
   }
 }
 
-void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin,
-                                                   const std::string &name, const std::string &encryptionKeyName) {
-
+void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures::SecurityIdentity& admin,
+                                                   const std::string& name,
+                                                   const std::string& encryptionKeyName) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   std::optional<std::string> encryptionKeyNameOpt;
   if (!encryptionKeyName.empty()) {
@@ -684,7 +698,7 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
   stmt.bindString(":TAPE_POOL_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
   }
 }
@@ -717,23 +731,23 @@ void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn& conn,
 void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                                   const std::string& name,
                                                   const std::list<std::string>& supply_list) {
-  if(name.empty()) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
-      " string");
+                                                 " string");
   }
 
   auto conn = m_connPool->getConn();
 
-  std::vector<std::string> tp_check_list{supply_list.begin(), supply_list.end()};
+  std::vector<std::string> tp_check_list {supply_list.begin(), supply_list.end()};
   auto tapePoolToIdMap = getTapePoolIdMap(conn, tp_check_list);
-  for (auto& supply_tp_name: supply_list) {
+  for (auto& supply_tp_name : supply_list) {
     if (!tapePoolToIdMap.contains(supply_tp_name)) {
-      throw exception::UserError(std::string("Cannot modify tape pool '") + name +
-                                 "' because the supply tape pool '" + supply_tp_name + "' does not exist");
+      throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because the supply tape pool '"
+                                 + supply_tp_name + "' does not exist");
     }
     if (supply_tp_name == name) {
-      throw exception::UserError(std::string("Cannot modify tape pool '") + name +
-                                 "' because it and the supply tape pool '" + supply_tp_name + "' are the same");
+      throw exception::UserError(std::string("Cannot modify tape pool '") + name
+                                 + "' because it and the supply tape pool '" + supply_tp_name + "' are the same");
     }
   }
 
@@ -758,21 +772,22 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
   stmt.bindString(":TAPE_POOL_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape pool '") + name + "' because it does not exist");
   }
 
   populateSupplyTable(conn, name, supply_list);
 }
 
-void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &currentName, const std::string &newName) {
-  if(currentName.empty()) {
+void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::SecurityIdentity& admin,
+                                                const std::string& currentName,
+                                                const std::string& newName) {
+  if (currentName.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
-      " string");
+                                                 " string");
   }
 
-  if(newName.empty()) {
+  if (newName.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the new name is an empty string");
   }
 
@@ -795,14 +810,14 @@ void RdbmsTapePoolCatalogue::modifyTapePoolName(const common::dataStructures::Se
   stmt.bindString(":CURRENT_TAPE_POOL_NAME", currentName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape pool '") + currentName + "' because it does not exist");
   }
 
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
 }
 
-bool RdbmsTapePoolCatalogue::tapePoolUsedInAnArchiveRoute(rdbms::Conn &conn, const std::string &tapePoolName) const {
+bool RdbmsTapePoolCatalogue::tapePoolUsedInAnArchiveRoute(rdbms::Conn& conn, const std::string& tapePoolName) const {
   const char* const sql = R"SQL(
     SELECT
       TAPE_POOL_NAME AS TAPE_POOL_NAME
@@ -819,7 +834,7 @@ bool RdbmsTapePoolCatalogue::tapePoolUsedInAnArchiveRoute(rdbms::Conn &conn, con
   return rset.next();
 }
 
-uint64_t RdbmsTapePoolCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::string &name) const {
+uint64_t RdbmsTapePoolCatalogue::getNbTapesInPool(rdbms::Conn& conn, const std::string& name) const {
   const char* const sql = R"SQL(
     SELECT
       COUNT(*) AS NB_TAPES
@@ -833,15 +848,14 @@ uint64_t RdbmsTapePoolCatalogue::getNbTapesInPool(rdbms::Conn &conn, const std::
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME", name);
   auto rset = stmt.executeQuery();
-  if(!rset.next()) {
+  if (!rset.next()) {
     throw exception::Exception("Result set of SELECT COUNT(*) is empty");
   }
   return rset.columnUint64("NB_TAPES");
 }
 
-std::map<std::string, uint64_t>
-RdbmsTapePoolCatalogue::getTapePoolIdMap(rdbms::Conn &conn, const std::vector<std::string> &names) const {
-
+std::map<std::string, uint64_t> RdbmsTapePoolCatalogue::getTapePoolIdMap(rdbms::Conn& conn,
+                                                                         const std::vector<std::string>& names) const {
   if (names.empty()) {
     return std::map<std::string, uint64_t>();
   }
@@ -873,13 +887,13 @@ RdbmsTapePoolCatalogue::getTapePoolIdMap(rdbms::Conn &conn, const std::vector<st
   auto rset = stmt.executeQuery();
 
   std::map<std::string, uint64_t> result;
-  while(rset.next()) {
+  while (rset.next()) {
     result[rset.columnString("TAPE_POOL_NAME")] = rset.columnUint64("TAPE_POOL_ID");
   }
   return result;
 }
 
-bool RdbmsTapePoolCatalogue::tapePoolExists(const std::string &tapePoolName) const {
+bool RdbmsTapePoolCatalogue::tapePoolExists(const std::string& tapePoolName) const {
   auto conn = m_connPool->getConn();
   return RdbmsCatalogueUtils::tapePoolExists(conn, tapePoolName);
 }
@@ -895,4 +909,4 @@ void RdbmsTapePoolCatalogue::deleteAllTapePoolSupplyEntries(rdbms::Conn& conn) {
   stmt.executeNonQuery();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

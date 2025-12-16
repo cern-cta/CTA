@@ -16,6 +16,7 @@
  */
 
 #include "mediachanger/CmdLine.hpp"
+
 #include "common/exception/InvalidArgument.hpp"
 #include "common/exception/MissingOperand.hpp"
 
@@ -26,8 +27,8 @@
 //------------------------------------------------------------------------------
 void cta::mediachanger::CmdLine::handleMissingParameter(const int opt) {
   cta::exception::MissingOperand ex;
-  ex.getMessage() << "The -" << (char)opt << " option requires a parameter";
- throw ex;
+  ex.getMessage() << "The -" << (char) opt << " option requires a parameter";
+  throw ex;
 }
 
 //------------------------------------------------------------------------------
@@ -35,10 +36,10 @@ void cta::mediachanger::CmdLine::handleMissingParameter(const int opt) {
 //------------------------------------------------------------------------------
 void cta::mediachanger::CmdLine::handleUnknownOption(const int opt) {
   cta::exception::InvalidArgument ex;
-  if(0 == optopt) {
+  if (0 == optopt) {
     ex.getMessage() << "Unknown command-line option";
   } else {
-    ex.getMessage() << "Unknown command-line option: -" << (char)opt;
+    ex.getMessage() << "Unknown command-line option: -" << (char) opt;
   }
   throw ex;
 }

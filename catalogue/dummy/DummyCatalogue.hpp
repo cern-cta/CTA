@@ -17,10 +17,7 @@
 
 #pragma once
 
-#include <memory>
-
 #include "catalogue/Catalogue.hpp"
-
 #include "catalogue/dummy/DummyAdminUserCatalogue.hpp"
 #include "catalogue/dummy/DummyArchiveFileCatalogue.hpp"
 #include "catalogue/dummy/DummyArchiveRouteCatalogue.hpp"
@@ -41,6 +38,8 @@
 #include "catalogue/dummy/DummyTapePoolCatalogue.hpp"
 #include "catalogue/dummy/DummyVirtualOrganizationCatalogue.hpp"
 
+#include <memory>
+
 namespace cta::catalogue {
 
 /**
@@ -49,7 +48,7 @@ namespace cta::catalogue {
  * requests).
  */
 
-class DummyCatalogue: public Catalogue {
+class DummyCatalogue : public Catalogue {
 public:
   DummyCatalogue();
   ~DummyCatalogue() override = default;
@@ -90,9 +89,12 @@ protected:
   std::unique_ptr<TapePoolCatalogue> m_tapePool = std::make_unique<DummyTapePoolCatalogue>();
   std::unique_ptr<TapeCatalogue> m_tape = std::make_unique<DummyTapeCatalogue>();
   std::unique_ptr<MountPolicyCatalogue> m_mountPolicy = std::make_unique<DummyMountPolicyCatalogue>();
-  std::unique_ptr<RequesterActivityMountRuleCatalogue> m_requesterActivityMountRule = std::make_unique<DummyRequesterActivityMountRuleCatalogue>();
-  std::unique_ptr<RequesterMountRuleCatalogue> m_requesterMountRule = std::make_unique<DummyRequesterMountRuleCatalogue>();
-  std::unique_ptr<RequesterGroupMountRuleCatalogue> m_requesterGroupMountRule = std::make_unique<DummyRequesterGroupMountRuleCatalogue>();
+  std::unique_ptr<RequesterActivityMountRuleCatalogue> m_requesterActivityMountRule =
+    std::make_unique<DummyRequesterActivityMountRuleCatalogue>();
+  std::unique_ptr<RequesterMountRuleCatalogue> m_requesterMountRule =
+    std::make_unique<DummyRequesterMountRuleCatalogue>();
+  std::unique_ptr<RequesterGroupMountRuleCatalogue> m_requesterGroupMountRule =
+    std::make_unique<DummyRequesterGroupMountRuleCatalogue>();
   std::unique_ptr<LogicalLibraryCatalogue> m_logicalLibrary = nullptr;
   std::unique_ptr<PhysicalLibraryCatalogue> m_physicalLibrary = nullptr;
   std::unique_ptr<TapeFileCatalogue> m_tapeFile = std::make_unique<DummyTapeFileCatalogue>();

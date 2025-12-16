@@ -16,10 +16,10 @@
  */
 
 #pragma once
-#include <memory>
-
 #include "CostHeuristic.hpp"
 #include "RAOOptions.hpp"
+
+#include <memory>
 
 namespace castor::tape::tapeserver::rao {
 
@@ -39,4 +39,4 @@ public:
   std::unique_ptr<CostHeuristic> createCostHeuristic(const RAOOptions::CostHeuristicType& costHeuristicType);
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

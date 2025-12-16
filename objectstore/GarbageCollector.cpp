@@ -15,23 +15,24 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <algorithm>
-#include <unistd.h>
-
 #include "GarbageCollector.hpp"
-#include "common/dataStructures/RetrieveJobToAdd.cpp"
-#include "common/exception/NoSuchObject.hpp"
-#include "common/semconv/Attributes.hpp"
-#include "ArchiveQueueAlgorithms.hpp"
+
 #include "Agent.hpp"
 #include "AgentReference.hpp"
 #include "AgentWatchdog.hpp"
+#include "ArchiveQueueAlgorithms.hpp"
 #include "ArchiveRequest.hpp"
 #include "GenericObject.hpp"
 #include "Helpers.hpp"
 #include "RetrieveQueue.hpp"
 #include "RetrieveRequest.hpp"
 #include "RootEntry.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.cpp"
+#include "common/exception/NoSuchObject.hpp"
+#include "common/semconv/Attributes.hpp"
+
+#include <algorithm>
+#include <unistd.h>
 
 namespace cta::objectstore {
 
@@ -401,8 +402,8 @@ doGCObject:
           //If queueType is JobsToReportToRepackForSuccess or JobsToReportToRepackForFailure, it needs to be requeued in a queue identified by the RepackRequest's address
           try {
             std::string vid = rr->getArchiveFile().tapeFiles.begin()->vid;
-            if (rr->getQueueType() != common::dataStructures::JobQueueType::FailedJobs &&
-                rr->getQueueType() != common::dataStructures::JobQueueType::JobsToReportToUser) {
+            if (rr->getQueueType() != common::dataStructures::JobQueueType::FailedJobs
+                && rr->getQueueType() != common::dataStructures::JobQueueType::JobsToReportToUser) {
               retrieveQueuesAndRequests[std::make_tuple(rr->getRepackInfo().repackRequestAddress,
                                                         rr->getQueueType(),
                                                         vid)]

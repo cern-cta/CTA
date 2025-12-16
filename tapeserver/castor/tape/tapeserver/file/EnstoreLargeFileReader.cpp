@@ -15,23 +15,24 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "castor/tape/tapeserver/file/EnstoreLargeFileReader.hpp"
+
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "castor/tape/tapeserver/file/CtaReadSession.hpp"
+#include "castor/tape/tapeserver/file/HeaderChecker.hpp"
+#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "common/exception/NotImplementedException.hpp"
+#include "scheduler/RetrieveJob.hpp"
+
 #include <limits>
 #include <memory>
 #include <sstream>
 #include <string>
 
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/file/CtaReadSession.hpp"
-#include "castor/tape/tapeserver/file/EnstoreLargeFileReader.hpp"
-#include "castor/tape/tapeserver/file/HeaderChecker.hpp"
-#include "castor/tape/tapeserver/file/Structures.hpp"
-#include "scheduler/RetrieveJob.hpp"
-#include "common/exception/NotImplementedException.hpp"
-
 namespace castor::tape::tapeFile {
 
-EnstoreLargeFileReader::EnstoreLargeFileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall) :
-FileReader(rs, fileToRecall) {
+EnstoreLargeFileReader::EnstoreLargeFileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall)
+    : FileReader(rs, fileToRecall) {
   setPositioningMethod(cta::PositioningMethod::ByFSeq);  // Enstore did not store block IDs
 }
 
@@ -74,7 +75,6 @@ void EnstoreLargeFileReader::setBlockSize(const UHL1& uhl1) {  // Could inherit
   }
 }
 
-
 void EnstoreLargeFileReader::setTargetFileSize(const UHL2& uhl2) {  // Could inherit
   bytes_to_read = static_cast<size_t>(atol(uhl2.getTargetFileSize().c_str()));
   if (bytes_to_read < 1) {
@@ -112,12 +112,10 @@ void EnstoreLargeFileReader::moveToFirstHeaderBlock() {
 void EnstoreLargeFileReader::moveReaderByFSeqDelta(const int64_t fSeq_delta) {
   if (fSeq_delta == 0) {
     // do nothing we are in the correct place
-  }
-  else if (fSeq_delta > 0) {
+  } else if (fSeq_delta > 0) {
     // we need to skip three file marks per file (header, payload, trailer)
     m_session.m_drive.spaceFileMarksForward(static_cast<uint32_t>(fSeq_delta) * 3);
-  }
-  else {  // fSeq_delta < 0
+  } else {  // fSeq_delta < 0
     // we need to skip three file marks per file
     // (trailer, payload, header) + 1 to go on the BOT (beginning of tape) side
     // of the file mark before the header of the file we want to read
@@ -157,8 +155,7 @@ void EnstoreLargeFileReader::checkTrailers() {
     eof1.verify(true);  // Skip certain field where enstore and CTA don't match
     eof2.verify("D");
     utl1.verify();
-  }
-  catch (std::exception& e) {
+  } catch (std::exception& e) {
     throw TapeFormatError(e.what());
   }
 }
@@ -196,8 +193,7 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
     hdr2.verify("D");
     uhl1.verify();
     uhl2.verify();
-  }
-  catch (std::exception& e) {
+  } catch (std::exception& e) {
     throw TapeFormatError(e.what());
   }
 

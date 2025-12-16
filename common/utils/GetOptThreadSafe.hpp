@@ -17,10 +17,10 @@
 
 #include "common/process/threading/Mutex.hpp"
 
-#include <vector>
+#include <getopt.h>
 #include <string>
 #include <unistd.h>
-#include <getopt.h>
+#include <vector>
 
 namespace cta::utils {
 
@@ -33,19 +33,23 @@ public:
   struct Request {
     std::vector<std::string> argv;
     std::string optstring;
-    const struct ::option *longopts;
+    const struct ::option* longopts;
   };
+
   struct FoundOption {
     std::string option;
     std::string parameter;
   };
+
   struct Reply {
     std::vector<FoundOption> options;
     std::vector<std::string> remainder;
   };
-  static Reply getOpt (const Request & request);
+
+  static Reply getOpt(const Request& request);
+
 private:
   static threading::Mutex gMutex;
 };
 
-} // namespace cta::utils
+}  // namespace cta::utils

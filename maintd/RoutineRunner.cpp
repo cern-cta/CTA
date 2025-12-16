@@ -15,22 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <signal.h>
-#include <sys/prctl.h>
-#include <chrono>
-#include <thread>
-#include <opentelemetry/context/runtime_context.h>
-
 #include "RoutineRunner.hpp"
 
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
+#include "common/Timer.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/MaintdInstruments.hpp"
-#include "common/Timer.hpp"
 #include "rdbms/Login.hpp"
+
+#include <chrono>
+#include <opentelemetry/context/runtime_context.h>
+#include <signal.h>
+#include <sys/prctl.h>
+#include <thread>
 
 namespace cta::maintd {
 

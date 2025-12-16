@@ -15,22 +15,27 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <algorithm>
-#include <string>
+#include "castor/tape/tapeserver/file/WriteSession.hpp"
 
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
-#include "castor/tape/tapeserver/file/WriteSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
+
+#include <algorithm>
+#include <string>
 
 namespace castor::tape::tapeFile {
 
-WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo& volInfo,
-  const uint32_t last_fSeq, const bool compression,
-  const bool useLbp)
-  : m_drive(drive), m_vid(volInfo.vid), m_compressionEnabled(compression),
-    m_useLbp(useLbp), m_volInfo(volInfo) {
+WriteSession::WriteSession(tapeserver::drive::DriveInterface& drive,
+                           const tapeserver::daemon::VolumeInfo& volInfo,
+                           const uint32_t last_fSeq,
+                           const bool compression,
+                           const bool useLbp)
+    : m_drive(drive),
+      m_vid(volInfo.vid),
+      m_compressionEnabled(compression),
+      m_useLbp(useLbp),
+      m_volInfo(volInfo) {
   if (!m_vid.compare("")) {
     throw cta::exception::InvalidArgument();
   }
@@ -46,8 +51,9 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
   m_drive.disableLogicalBlockProtection();
   {
     VOL1 vol1;
-    m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1),
-      "[WriteSession::WriteSession()] - Reading VOL1");
+    m_drive.readExactBlock(reinterpret_cast<void*>(&vol1),
+                           sizeof(vol1),
+                           "[WriteSession::WriteSession()] - Reading VOL1");
     switch (vol1.getLBPMethod()) {
       case SCSI::logicBlockProtectionMethod::CRC32C:
         m_detectedLbp = true;
@@ -56,14 +62,14 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
         } else {
           cta::exception::Exception ex;
           ex.getMessage() << "[WriteSession::WriteSession()] - Tape is "
-            "labeled with crc32c logical block protection but tapserverd "
-            "started without LBP support";
+                             "labeled with crc32c logical block protection but tapserverd "
+                             "started without LBP support";
           throw ex;
         }
         break;
       case SCSI::logicBlockProtectionMethod::ReedSolomon:
         throw cta::exception::Exception("In WriteSession::WriteSession(): "
-            "ReedSolomon LBP method not supported");
+                                        "ReedSolomon LBP method not supported");
       case SCSI::logicBlockProtectionMethod::DoNotUse:
         m_drive.disableLogicalBlockProtection();
         m_detectedLbp = false;
@@ -77,11 +83,12 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
   m_drive.rewind();
   {
     VOL1 vol1;
-    m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1),
-      "[WriteSession::WriteSession()] - Reading VOL1");
+    m_drive.readExactBlock(reinterpret_cast<void*>(&vol1),
+                           sizeof(vol1),
+                           "[WriteSession::WriteSession()] - Reading VOL1");
     try {
       vol1.verify();
-    } catch (std::exception &e) {
+    } catch (std::exception& e) {
       throw TapeFormatError(e.what());
     }
     HeaderChecker::checkVOL1(vol1, m_vid);  // now we know that we are going to write on the correct tape
@@ -95,12 +102,9 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
     EOF1 eof1;
     EOF2 eof2;
     UTL1 utl1;
-    m_drive.readExactBlock(reinterpret_cast<void *>(&eof1), sizeof(eof1),
-      "[WriteSession::WriteSession] - Reading EOF1");
-    m_drive.readExactBlock(reinterpret_cast<void *>(&eof2), sizeof(eof2),
-      "[WriteSession::WriteSession] - Reading EOF2");
-    m_drive.readExactBlock(reinterpret_cast<void *>(&utl1), sizeof(utl1),
-      "[WriteSession::WriteSession] - Reading UTL1");
+    m_drive.readExactBlock(reinterpret_cast<void*>(&eof1), sizeof(eof1), "[WriteSession::WriteSession] - Reading EOF1");
+    m_drive.readExactBlock(reinterpret_cast<void*>(&eof2), sizeof(eof2), "[WriteSession::WriteSession] - Reading EOF2");
+    m_drive.readExactBlock(reinterpret_cast<void*>(&utl1), sizeof(utl1), "[WriteSession::WriteSession] - Reading UTL1");
     // after this we should be where we want, i.e. at the end of the last trailer of the last file on tape
     m_drive.readFileMark("[WriteSession::WriteSession] - Reading file mark at the end of file trailer");
 
@@ -109,7 +113,7 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
       eof1.verify();
       eof2.verify();
       utl1.verify();
-    } catch (std::exception & e) {
+    } catch (std::exception& e) {
       throw TapeFormatError(e.what());
     }
 
@@ -130,32 +134,33 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface &drive,
 }
 
 std::string WriteSession::getLBPMode() {
-    if (m_useLbp && m_detectedLbp)
-      return "LBP_On";
-    else if (!m_useLbp && m_detectedLbp)
-      return "LBP_Off_but_present";
-    else if (!m_detectedLbp)
-      return "LBP_Off";
-    throw cta::exception::Exception("In WriteSession::getLBPMode(): unexpected state");
+  if (m_useLbp && m_detectedLbp) {
+    return "LBP_On";
+  } else if (!m_useLbp && m_detectedLbp) {
+    return "LBP_Off_but_present";
+  } else if (!m_detectedLbp) {
+    return "LBP_Off";
+  }
+  throw cta::exception::Exception("In WriteSession::getLBPMode(): unexpected state");
 }
 
-void WriteSession::setHostName()  {
-  char *hostname_cstr = new char[MAX_UNIX_HOSTNAME_LENGTH];
+void WriteSession::setHostName() {
+  char* hostname_cstr = new char[MAX_UNIX_HOSTNAME_LENGTH];
   cta::exception::Errnum::throwOnMinusOne(gethostname(hostname_cstr, MAX_UNIX_HOSTNAME_LENGTH),
-    "Failed gethostname() in WriteFile::setHostName");
+                                          "Failed gethostname() in WriteFile::setHostName");
   m_hostName = hostname_cstr;
   std::transform(m_hostName.begin(), m_hostName.end(), m_hostName.begin(), ::toupper);
   m_hostName = m_hostName.substr(0, m_hostName.find("."));
   delete[] hostname_cstr;
 }
 
-void WriteSession::setSiteName()  {
+void WriteSession::setSiteName() {
   std::ifstream resolv;
-  resolv.exceptions(std::ifstream::failbit|std::ifstream::badbit);
+  resolv.exceptions(std::ifstream::failbit | std::ifstream::badbit);
   try {
     resolv.open("/etc/resolv.conf", std::ifstream::in);
     std::string buf;
-    const char * const toFind = "search ";
+    const char* const toFind = "search ";
     while (std::getline(resolv, buf)) {
       if (buf.substr(0, 7) == toFind) {
         m_siteName = buf.substr(7);
@@ -165,11 +170,10 @@ void WriteSession::setSiteName()  {
       }
     }
     resolv.close();
-  }
-  catch (const std::ifstream::failure& e) {
+  } catch (const std::ifstream::failure& e) {
     throw cta::exception::Exception(
       std::string("In /etc/resolv.conf : error opening/closing or can't find search domain [") + e.what() + "]");
   }
 }
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

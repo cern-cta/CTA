@@ -17,15 +17,14 @@
 
 #pragma once
 
-#include "rdbms/ConnPool.hpp"
-#include "scheduler/rdbms/postgres/Enums.hpp"
-#include "scheduler/rdbms/postgres/Transaction.hpp"
-#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
-
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
+#include "rdbms/ConnPool.hpp"
+#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
+#include "scheduler/rdbms/postgres/Enums.hpp"
+#include "scheduler/rdbms/postgres/Transaction.hpp"
 
 namespace cta::schedulerdb {
 
@@ -35,7 +34,7 @@ class ArchiveRequest {
 public:
   ArchiveRequest(rdbms::Conn& conn, log::LogContext& lc) : m_conn(conn), m_lc(lc) {}
 
-  std::unique_ptr<postgres::ArchiveJobQueueRow> makeJobRow(const postgres::ArchiveQueueJob &archiveJob) const;
+  std::unique_ptr<postgres::ArchiveJobQueueRow> makeJobRow(const postgres::ArchiveQueueJob& archiveJob) const;
   void insert();
   [[noreturn]] void update() const;
 
@@ -199,7 +198,6 @@ private:
    * Archive Job metadata
    */
   postgres::ArchiveQueueJob Job;
-
 
   // References to external objects
   //rdbms::ConnPool &m_connPool;

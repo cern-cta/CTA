@@ -15,20 +15,21 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <stdlib.h>
-#include <errno.h>
-#include <signal.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <poll.h>
-#include <string.h>
-#include <chrono>
 #include "net.hpp"
 #include "serrno.hpp"
+
+#include <chrono>
+#include <errno.h>
+#include <poll.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
 /* Signal handler - Simplify the POSIX sigaction calls */
 using Sigfunc = void(int);
@@ -108,10 +109,10 @@ int netconnect_timeout(int fd, struct sockaddr* addr, size_t addr_size, int time
 }
 
 ssize_t netread_timeout(int fd, void* vptr, ssize_t n, int timeout) {
-  size_t nleft;      /* Bytes to read */
-  ssize_t nread = 0; /* Bytes yet read */
-  ssize_t flag = 0;  /* != 0 means error */
-  char* ptr = nullptr;  /* Temp. pointer */
+  size_t nleft;        /* Bytes to read */
+  ssize_t nread = 0;   /* Bytes yet read */
+  ssize_t flag = 0;    /* != 0 means error */
+  char* ptr = nullptr; /* Temp. pointer */
   int select_status = 0;
   Sigfunc* sigpipe; /* Old SIGPIPE handler */
   time_t time_start;
@@ -198,14 +199,14 @@ ssize_t netread_timeout(int fd, void* vptr, ssize_t n, int timeout) {
     return -1;
   }
   /* Return the number of bytes read ( >= 0) */
-  return n-nleft;
+  return n - nleft;
 }
 
 ssize_t netwrite_timeout(int fd, void* vptr, ssize_t n, int timeout) {
   size_t nleft;         /* Bytes to read */
   ssize_t nwritten = 0; /* Bytes yet read */
   ssize_t flag = 0;     /* != 0 means error */
-  char* ptr = nullptr;     /* Temp. pointer */
+  char* ptr = nullptr;  /* Temp. pointer */
   Sigfunc* sigpipe;     /* Old SIGPIPE handler */
   int select_status = 0;
   time_t time_start;
@@ -288,7 +289,7 @@ ssize_t netwrite_timeout(int fd, void* vptr, ssize_t n, int timeout) {
     return -1;
   }
   /* Return the number of bytes writen ( >= 0) */
-  return n-nleft;
+  return n - nleft;
 }
 
 Sigfunc* _netsignal(int signo, Sigfunc* func) {

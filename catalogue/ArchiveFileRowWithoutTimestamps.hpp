@@ -29,7 +29,6 @@ namespace cta::catalogue {
  * CREATION_TIME and RECONCILIATION_TIME.
  */
 struct ArchiveFileRowWithoutTimestamps {
-
   /**
    * Constructor.
    *
@@ -42,7 +41,7 @@ struct ArchiveFileRowWithoutTimestamps {
    *
    * @param ths The right hand side of the operator.
    */
-  bool operator==(const ArchiveFileRowWithoutTimestamps &rhs) const;
+  bool operator==(const ArchiveFileRowWithoutTimestamps& rhs) const;
 
   /**
    * The unique identifier of the file being archived.
@@ -76,18 +75,18 @@ struct ArchiveFileRowWithoutTimestamps {
    * The uncompressed size of the tape file in bytes.
    */
   uint64_t size = 0;
-  
+
   /**
    * Set of checksum types and values
    */
   checksum::ChecksumBlob checksumBlob;
-  
+
   /**
    * The name of the file's storage class.
    */
   std::string storageClassName;
 
-}; // struct ArchiveFileRowWithoutTimestamps
+};  // struct ArchiveFileRowWithoutTimestamps
 
 /**
  * Output stream operator for an ArchiveFileRowWithoutTimestamps object.
@@ -98,6 +97,6 @@ struct ArchiveFileRowWithoutTimestamps {
  * @param os The output stream.
  * @param obj The object.
  */
-std::ostream &operator<<(std::ostream &os, const ArchiveFileRowWithoutTimestamps &obj);
+std::ostream& operator<<(std::ostream& os, const ArchiveFileRowWithoutTimestamps& obj);
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

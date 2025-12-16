@@ -15,11 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/wrapper/SqliteConnFactory.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "rdbms/wrapper/SqliteConn.hpp"
-#include "rdbms/wrapper/SqliteConnFactory.hpp"
 #include "plugin-manager/PluginInterface.hpp"
+#include "rdbms/wrapper/SqliteConn.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -49,7 +50,7 @@ std::string SqliteConnFactory::getDbNamespace() const {
   return m_login.dbNamespace;
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper
 
 extern "C" {
 
@@ -60,4 +61,4 @@ void factory(
     .CLASS<cta::rdbms::wrapper::SqliteConnFactory>("SqliteConnFactory");
 }
 
-}// extern "C"
+}  // extern "C"

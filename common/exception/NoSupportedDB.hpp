@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <string>
-
 #include "common/exception/Exception.hpp"
+
+#include <string>
 
 namespace cta::exception {
 

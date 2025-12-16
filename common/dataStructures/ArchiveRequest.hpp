@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include "common/checksum/ChecksumBlob.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
-#include "common/checksum/ChecksumBlob.hpp"
 
 #include <list>
 #include <map>
@@ -33,12 +33,11 @@ namespace cta::common::dataStructures {
  * This struct holds all the command line parameters of a CTA archive command
  */
 struct ArchiveRequest {
-
   ArchiveRequest();
 
-  bool operator==(const ArchiveRequest &rhs) const;
+  bool operator==(const ArchiveRequest& rhs) const;
 
-  bool operator!=(const ArchiveRequest &rhs) const;
+  bool operator!=(const ArchiveRequest& rhs) const;
 
   RequesterIdentity requester;
   std::string diskFileID;
@@ -52,8 +51,8 @@ struct ArchiveRequest {
   std::string archiveErrorReportURL;
   EntryLog creationLog;
 
-}; // struct ArchiveRequest
+};  // struct ArchiveRequest
 
-std::ostream &operator<<(std::ostream &os, const ArchiveRequest &obj);
+std::ostream& operator<<(std::ostream& os, const ArchiveRequest& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

@@ -15,11 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <opentelemetry/context/runtime_context.h>
-
 #include "RequestTracker.hpp"
+
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
 
 namespace cta::frontend {
 

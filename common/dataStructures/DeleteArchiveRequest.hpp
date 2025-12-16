@@ -17,15 +17,15 @@
 
 #pragma once
 
+#include "common/checksum/ChecksumBlob.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
+
 #include <list>
 #include <map>
 #include <optional>
 #include <stdint.h>
 #include <string>
-
-#include "common/checksum/ChecksumBlob.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/RequesterIdentity.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -34,12 +34,11 @@ namespace cta::common::dataStructures {
  * archival.
  */
 struct DeleteArchiveRequest {
-
   DeleteArchiveRequest();
 
-  bool operator==(const DeleteArchiveRequest &rhs) const;
+  bool operator==(const DeleteArchiveRequest& rhs) const;
 
-  bool operator!=(const DeleteArchiveRequest &rhs) const;
+  bool operator!=(const DeleteArchiveRequest& rhs) const;
 
   RequesterIdentity requester;
   uint64_t archiveFileID = 0;
@@ -52,8 +51,8 @@ struct DeleteArchiveRequest {
   std::optional<ArchiveFile> archiveFile;
   std::optional<uint64_t> diskFileSize;
   std::optional<checksum::ChecksumBlob> checksumBlob;
-}; // struct DeleteArchiveRequest
+};  // struct DeleteArchiveRequest
 
-std::ostream &operator<<(std::ostream &os, const DeleteArchiveRequest &obj);
+std::ostream& operator<<(std::ostream& os, const DeleteArchiveRequest& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

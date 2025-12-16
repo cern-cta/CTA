@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include <memory>
-
 #include "castor/tape/tapeserver/file/CtaReadSession.hpp"
 #include "castor/tape/tapeserver/file/FileReader.hpp"
+
+#include <memory>
 
 namespace castor::tape::tapeFile {
 
@@ -35,7 +35,7 @@ public:
     */
   ~CtaFileReader() override = default;
 
-  size_t readNextDataBlock(void *data, const size_t size) override;
+  size_t readNextDataBlock(void* data, const size_t size) override;
 
 private:
   /**
@@ -43,16 +43,16 @@ private:
     * @param uhl1: the uhl1 header of the current file
     * @param fileInfo: the Information structure of the current file
     */
-  void setBlockSize(const UHL1 &uhl1);
+  void setBlockSize(const UHL1& uhl1);
 
-  void positionByFseq(const cta::RetrieveJob &fileToRecall) override;
-  void positionByBlockID(const cta::RetrieveJob &fileToRecall) override;
+  void positionByFseq(const cta::RetrieveJob& fileToRecall) override;
+  void positionByBlockID(const cta::RetrieveJob& fileToRecall) override;
 
   void moveToFirstHeaderBlock();
   void moveReaderByFSeqDelta(const int64_t fSeq_delta);
-  void useBlockID(const cta::RetrieveJob &fileToRecall);
-  void checkHeaders(const cta::RetrieveJob &fileToRecall);
+  void useBlockID(const cta::RetrieveJob& fileToRecall);
+  void checkHeaders(const cta::RetrieveJob& fileToRecall);
   void checkTrailers();
 };
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

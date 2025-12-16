@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include <memory>
-
+#include "common/CmdLineTool.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
@@ -29,11 +28,12 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "common/CmdLineTool.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
 #include "tapeserver/readtp/TapeFseqRange.hpp"
 #include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
+
+#include <memory>
 
 namespace cta {
 
@@ -50,7 +50,7 @@ namespace tapeserver::readtp {
 /**
  * Command-line tool for reading files from a CTA tape.
  */
-class ReadtpCmd: public common::CmdLineTool {
+class ReadtpCmd : public common::CmdLineTool {
 public:
   /**
    * Constructor
@@ -61,9 +61,14 @@ public:
    * @param log The object representing the API of the CTA logging system
    * @param mc Interface to the media changer
    */
-  ReadtpCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, cta::log::StdoutLogger& log,
-    cta::log::DummyLogger& dummyLog) :
-    CmdLineTool(inStream, outStream, errStream), m_log(log), m_dummyLog(dummyLog) { }
+  ReadtpCmd(std::istream& inStream,
+            std::ostream& outStream,
+            std::ostream& errStream,
+            cta::log::StdoutLogger& log,
+            cta::log::DummyLogger& dummyLog)
+      : CmdLineTool(inStream, outStream, errStream),
+        m_log(log),
+        m_dummyLog(dummyLog) {}
 
   /**
    * Destructor
@@ -78,14 +83,14 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
+  void printUsage(std::ostream& os) override;
 
   /**
    * Sets internal configuration parameters to be used for reading.
@@ -95,12 +100,12 @@ private:
    * @param username The name of the user running the command-line tool.
    * @param cmdLineArgs The arguments parsed from the command line.
    */
-  void readAndSetConfiguration(const std::string &userName, const ReadtpCmdLineArgs &cmdLineArgs);
+  void readAndSetConfiguration(const std::string& userName, const ReadtpCmdLineArgs& cmdLineArgs);
 
   /**
    * Checks if the tape is encrypted
    */
-  bool isEncrypted(const cta::common::dataStructures::Tape &tape) const;
+  bool isEncrypted(const cta::common::dataStructures::Tape& tape) const;
 
   /**
   * Configures encryption to be able to read from an encrypted tape
@@ -108,15 +113,15 @@ private:
   * @param volInfo The volume info of the tape to be mounted.
   * @param drive The tape drive.
   */
-  void configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo &volInfo,
-                           castor::tape::tapeserver::drive::DriveInterface &drive);
+  void configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo& volInfo,
+                           castor::tape::tapeserver::drive::DriveInterface& drive);
 
   /**
   * Disable encryption
   *
   * @param drive The tape drive.
   */
-  void disableEncryption(castor::tape::tapeserver::drive::DriveInterface &drive);
+  void disableEncryption(castor::tape::tapeserver::drive::DriveInterface& drive);
 
   /**
    * Reads a file line by line, strips comments and returns a list of the file lines.
@@ -124,7 +129,7 @@ private:
    * @param filename The name of the file to be read.
    * @return A list of line strings after stripping comments.
    */
-  std::list<std::string> readListFromFile(const std::string &filename) const;
+  std::list<std::string> readListFromFile(const std::string& filename) const;
 
   /**
    * Returns the next destination file URL, or file:///dev/null if all destination files have been used.
@@ -147,7 +152,7 @@ private:
    * @param drive The tape drive.
    * @return The boolean value true if the drive supports LBP or false otherwise.
    */
-  bool isDriveSupportLbp(castor::tape::tapeserver::drive::DriveInterface &drive) const;
+  bool isDriveSupportLbp(castor::tape::tapeserver::drive::DriveInterface& drive) const;
 
   /**
    * Sets the logical block protection mode on the drive
@@ -156,13 +161,13 @@ private:
    *
    * @param drive The tape drive.
    */
-  void setLbpMode(castor::tape::tapeserver::drive::DriveInterface &drive);
+  void setLbpMode(castor::tape::tapeserver::drive::DriveInterface& drive);
 
-   /**
+  /**
    * Mounts the tape to be read.
    * @param vid The volume identifier of the tape to be mounted.
    */
-  void mountTape(const std::string &vid);
+  void mountTape(const std::string& vid);
 
   /**
    * Waits for the tape to be loaded into the tape drive.
@@ -171,24 +176,24 @@ private:
    * @param timeoutSecond The number of seconds to wait for the tape to be
    * loaded into the tape drive. 
    */
-  void waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface &drive,
-    const int timeoutSecond);
+  void waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface& drive, const int timeoutSecond);
 
   /**
    * Read the files requested from tape
    *
    * @param drive Object representing the drive hardware.
    */
-  void readTapeFiles(castor::tape::tapeserver::drive::DriveInterface &drive);
+  void readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& drive);
 
   /**
    * Read a specific file from tape
    * @param drive Object representing the drive hardware.
    * @param fSeq The tape file fSeq.
    */
-  void readTapeFile(castor::tape::tapeserver::drive::DriveInterface &drive, const uint64_t &fSeq,
-                    cta::disk::WriteFile &wf, const castor::tape::tapeserver::daemon::VolumeInfo &volInfo);
-
+  void readTapeFile(castor::tape::tapeserver::drive::DriveInterface& drive,
+                    const uint64_t& fSeq,
+                    cta::disk::WriteFile& wf,
+                    const castor::tape::tapeserver::daemon::VolumeInfo& volInfo);
 
   /**
    * Unloads the specified tape from the specified tape drive.
@@ -197,21 +202,21 @@ private:
    * that the value of this field is only used for logging purposes.
    * @param drive The tape drive.
    */
-  void unloadTape(const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive);
-  
+  void unloadTape(const std::string& vid, castor::tape::tapeserver::drive::DriveInterface& drive);
+
   /**
    * Dismounts the specified tape.
    *
    * @param vid The volume identifier of the tape to be dismounted.
    */
-  void dismountTape(const std::string &vid);
-  
+  void dismountTape(const std::string& vid);
+
   /**
    * Rewinds the specified tape drive.
    *
    * @param drive The tape drive.
    */
-  void rewindDrive(castor::tape::tapeserver::drive::DriveInterface &drive);
+  void rewindDrive(castor::tape::tapeserver::drive::DriveInterface& drive);
 
   /**
    * Returns the string representation of the specified boolean value.
@@ -219,18 +224,18 @@ private:
    * @param value The boolean value.
    * @return The string representation.
    */
-  const char *boolToStr(const bool value);
+  const char* boolToStr(const bool value);
 
   /**
    * The object representing the API of the CTA logging system.
    */
-  cta::log::StdoutLogger  &m_log;
+  cta::log::StdoutLogger& m_log;
 
-/**
+  /**
    *Dummy logger for the catalogue
    */
-  cta::log::DummyLogger &m_dummyLog;
-  
+  cta::log::DummyLogger& m_dummyLog;
+
   /**
    * Hard coded path for the catalogue login configuration.
    */
@@ -240,32 +245,32 @@ private:
    * Unique pointer to the catalogue interface;
    */
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-  
+
   /**
    * The system wrapper used to find the device and instantiate the drive object.
    */
   castor::tape::System::realWrapper m_sysWrapper;
-  
+
   /**
    * The filename of the device file of the tape drive.
    */
   std::string m_devFilename;
-  
+
   /**
    * The slot in the tape library that contains the tape drive (string encoded).
    */
   std::string m_rawLibrarySlot;
-  
+
   /**
    * The logical library of the tape drive.
    */
   std::string m_logicalLibrary;
-  
+
   /**
    * The unit name of the tape drive.
    */
   std::string m_unitName;
-  
+
   /**
    * The name of the user running the command-line tool.
    */
@@ -275,7 +280,7 @@ private:
    * The tape VID to read.
    */
   std::string m_vid;
-  
+
   /**
    * The iterator of destination urls the data read is sent to
    */
@@ -326,9 +331,9 @@ private:
    */
   bool m_isTapeEncrypted;
 
-
-}; // class ReadtpCmd
+};  // class ReadtpCmd
 
 CTA_GENERATE_EXCEPTION_CLASS(NoSuchFSeqException);
 
-}} // namespace cta::tapeserver::readtp
+}  // namespace tapeserver::readtp
+}  // namespace cta

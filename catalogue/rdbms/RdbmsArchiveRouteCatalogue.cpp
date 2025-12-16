@@ -15,12 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
-
-#include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsArchiveRouteCatalogue.hpp"
+
 #include "catalogue/interfaces/StorageClassCatalogue.hpp"
 #include "catalogue/interfaces/TapePoolCatalogue.hpp"
+#include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -30,58 +29,67 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsArchiveRouteCatalogue::RdbmsArchiveRouteCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool):
-  m_log(log), m_connPool(connPool) {}
+RdbmsArchiveRouteCatalogue::RdbmsArchiveRouteCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool)
+    : m_log(log),
+      m_connPool(connPool) {}
 
-void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
-  const std::string &tapePoolName, const std::string &comment) {
-  if(storageClassName.empty()) {
+void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures::SecurityIdentity& admin,
+                                                    const std::string& storageClassName,
+                                                    const uint32_t copyNb,
+                                                    const common::dataStructures::ArchiveRouteType& archiveRouteType,
+                                                    const std::string& tapePoolName,
+                                                    const std::string& comment) {
+  if (storageClassName.empty()) {
     throw UserSpecifiedAnEmptyStringStorageClassName("Cannot create archive route because storage class name is an"
-      " empty string");
+                                                     " empty string");
   }
-  if(0 == copyNb) {
+  if (0 == copyNb) {
     throw UserSpecifiedAZeroCopyNb("Cannot create archive route because copy number is zero");
   }
-  if(tapePoolName.empty()) {
+  if (tapePoolName.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create archive route because tape pool name is an empty"
-      " string");
+                                                 " string");
   }
-  if(comment.empty()) {
+  if (comment.empty()) {
     throw UserSpecifiedAnEmptyStringComment("Cannot create archive route because comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   auto conn = m_connPool->getConn();
-  if(archiveRouteExists(conn, storageClassName, copyNb, archiveRouteType)) {
+  if (archiveRouteExists(conn, storageClassName, copyNb, archiveRouteType)) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << "," <<
-      cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName << " because it already exists";
+    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << ","
+                    << cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName
+                    << " because it already exists";
     throw ue;
   }
 
-  if(const auto routes = getArchiveRoutes(conn, storageClassName, tapePoolName); !routes.empty()) {
+  if (const auto routes = getArchiveRoutes(conn, storageClassName, tapePoolName); !routes.empty()) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << "," <<
-      cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName << " because storage class " << storageClassName <<
-      " already contains a route pointing to tape pool " << tapePoolName;
+    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << ","
+                    << cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName
+                    << " because storage class " << storageClassName
+                    << " already contains a route pointing to tape pool " << tapePoolName;
     throw ue;
   }
 
-  if(!RdbmsCatalogueUtils::storageClassExists(conn, storageClassName)) {
+  if (!RdbmsCatalogueUtils::storageClassExists(conn, storageClassName)) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << "," <<
-      cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName << " because storage class " << storageClassName <<
-      " does not exist";
+    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << ","
+                    << cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName
+                    << " because storage class " << storageClassName << " does not exist";
     throw ue;
   }
-  if(!RdbmsCatalogueUtils::tapePoolExists(conn, tapePoolName)) {
+  if (!RdbmsCatalogueUtils::tapePoolExists(conn, tapePoolName)) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << "," <<
-      cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName << " because tape pool " << tapePoolName + " does not exist";
+    ue.getMessage() << "Cannot create archive route " << ": (" << storageClassName << "," << copyNb << ","
+                    << cta::common::dataStructures::toString(archiveRouteType) << ")->" << tapePoolName
+                    << " because tape pool " << tapePoolName + " does not exist";
     throw ue;
   }
 
@@ -141,7 +149,9 @@ void RdbmsArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures
   stmt.executeNonQuery();
 }
 
-void RdbmsArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType) {
+void RdbmsArchiveRouteCatalogue::deleteArchiveRoute(const std::string& storageClassName,
+                                                    const uint32_t copyNb,
+                                                    const common::dataStructures::ArchiveRouteType& archiveRouteType) {
   const char* const sql = R"SQL(
     DELETE FROM
       ARCHIVE_ROUTE
@@ -161,10 +171,11 @@ void RdbmsArchiveRouteCatalogue::deleteArchiveRoute(const std::string &storageCl
   stmt.bindString(":ARCHIVE_ROUTE_TYPE", common::dataStructures::toString(archiveRouteType));
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot delete archive route for storage-class " << storageClassName +
-      ", copy number " << copyNb << " and type " << common::dataStructures::toString(archiveRouteType) << " because it does not exist";
+    ue.getMessage() << "Cannot delete archive route for storage-class " << storageClassName + ", copy number " << copyNb
+                    << " and type " << common::dataStructures::toString(archiveRouteType)
+                    << " because it does not exist";
     throw ue;
   }
 }
@@ -220,14 +231,17 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
   return routes;
 }
 
-std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getArchiveRoutes(
-  const std::string &storageClassName, const std::string &tapePoolName) const {
+std::list<common::dataStructures::ArchiveRoute>
+RdbmsArchiveRouteCatalogue::getArchiveRoutes(const std::string& storageClassName,
+                                             const std::string& tapePoolName) const {
   auto conn = m_connPool->getConn();
   return getArchiveRoutes(conn, storageClassName, tapePoolName);
 }
 
-std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getArchiveRoutes(rdbms::Conn &conn,
-  const std::string &storageClassName, const std::string &tapePoolName) const {
+std::list<common::dataStructures::ArchiveRoute>
+RdbmsArchiveRouteCatalogue::getArchiveRoutes(rdbms::Conn& conn,
+                                             const std::string& storageClassName,
+                                             const std::string& tapePoolName) const {
   std::list<common::dataStructures::ArchiveRoute> routes;
   const char* const sql = R"SQL(
     SELECT
@@ -282,9 +296,12 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
   return routes;
 }
 
-void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
-  const std::string &tapePoolName) {
+void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& storageClassName,
+  const uint32_t copyNb,
+  const common::dataStructures::ArchiveRouteType& archiveRouteType,
+  const std::string& tapePoolName) {
   try {
     const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     const char* const sql = R"SQL(
@@ -304,11 +321,11 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::da
     )SQL";
     auto conn = m_connPool->getConn();
 
-    if(!archiveRouteExists(conn, storageClassName, copyNb, archiveRouteType)) {
+    if (!archiveRouteExists(conn, storageClassName, copyNb, archiveRouteType)) {
       throw UserSpecifiedANonExistentArchiveRoute("Archive route does not exist");
     }
 
-    if(!RdbmsCatalogueUtils::tapePoolExists(conn, tapePoolName)) {
+    if (!RdbmsCatalogueUtils::tapePoolExists(conn, tapePoolName)) {
       throw UserSpecifiedANonExistentTapePool("Tape pool does not exist");
     }
 
@@ -322,21 +339,24 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteTapePoolName(const common::da
     stmt.bindString(":ARCHIVE_ROUTE_TYPE", common::dataStructures::toString(archiveRouteType));
     stmt.executeNonQuery();
 
-    if(0 == stmt.getNbAffectedRows()) {
+    if (0 == stmt.getNbAffectedRows()) {
       throw UserSpecifiedANonExistentArchiveRoute("Archive route does not exist");
     }
-  } catch(exception::UserError &ue) {
+  } catch (exception::UserError& ue) {
     std::ostringstream msg;
-    msg << "Cannot modify tape pool of archive route: storageClassName=" << storageClassName << " copyNb=" << copyNb <<
-      " tapePoolName=" << tapePoolName << ": " << ue.getMessage().str();
+    msg << "Cannot modify tape pool of archive route: storageClassName=" << storageClassName << " copyNb=" << copyNb
+        << " tapePoolName=" << tapePoolName << ": " << ue.getMessage().str();
     ue.getMessage().str(msg.str());
     throw;
   }
 }
 
-void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType & archiveRouteType,
-  const std::string &comment) {
+void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& storageClassName,
+  const uint32_t copyNb,
+  const common::dataStructures::ArchiveRouteType& archiveRouteType,
+  const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -365,15 +385,18 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(const common::dataStr
   stmt.bindString(":ARCHIVE_ROUTE_TYPE", common::dataStructures::toString(archiveRouteType));
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot modify archive route for storage-class " << ":" + storageClassName +
-      " and copy number " << copyNb << " because it does not exist";
+    ue.getMessage() << "Cannot modify archive route for storage-class " << ":" + storageClassName + " and copy number "
+                    << copyNb << " because it does not exist";
     throw ue;
   }
 }
 
-bool RdbmsArchiveRouteCatalogue::archiveRouteExists(rdbms::Conn &conn, const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType & archiveRouteType) {
+bool RdbmsArchiveRouteCatalogue::archiveRouteExists(rdbms::Conn& conn,
+                                                    const std::string& storageClassName,
+                                                    const uint32_t copyNb,
+                                                    const common::dataStructures::ArchiveRouteType& archiveRouteType) {
   const char* const sql = R"SQL(
     SELECT
       ARCHIVE_ROUTE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,

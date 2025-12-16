@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include "EntryLog.hpp"
+#include "RepackQueueType.hpp"
+
 #include <list>
 #include <optional>
 #include <string>
-
-#include "RepackQueueType.hpp"
-#include "EntryLog.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -36,15 +36,11 @@ struct RepackInfo {
     uint64_t bytes = 0;
     using List = std::list<RepackDestinationInfo>;
   };
+
   uint64_t repackReqId = 0;
   std::string vid;
   std::string repackBufferBaseURL;
-  enum class Type {
-    MoveAndAddCopies,
-    AddCopiesOnly,
-    MoveOnly,
-    Undefined
-  } type;
+  enum class Type { MoveAndAddCopies, AddCopiesOnly, MoveOnly, Undefined } type;
   enum class Status {
     // Values matching the cta.proto values
     Pending = 1,
@@ -82,9 +78,9 @@ struct RepackInfo {
   std::string mountPolicy;
 
   RepackQueueType getQueueType();
-}; // struct RepackInfo
+};  // struct RepackInfo
 
 std::string toString(RepackInfo::Type type);
 std::string toString(RepackInfo::Status status);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

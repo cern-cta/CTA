@@ -15,15 +15,16 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/Exception.hpp"
-#include "common/exception/NullPtrException.hpp"
+#include "rdbms/wrapper/OcciConn.hpp"
+
 #include "common/exception/Errnum.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
+#include "common/exception/NullPtrException.hpp"
 #include "common/process/threading/MutexLocker.hpp"
 #include "common/process/threading/RWLockRdLocker.hpp"
 #include "common/process/threading/RWLockWrLocker.hpp"
 #include "common/utils/utils.hpp"
-#include "rdbms/wrapper/OcciConn.hpp"
 #include "rdbms/wrapper/OcciEnv.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
 
@@ -41,7 +42,7 @@ OcciConn::OcciConn(oracle::occi::Environment* const env,
     : m_env(env),
       m_occiConn(conn),
       m_dbNamespace(dbNamespace) {
-  if(nullptr == conn) {
+  if (nullptr == conn) {
     throw exception::NullPtrException("The OCCI connection is a nullptr pointer");
   }
 }
@@ -51,8 +52,8 @@ OcciConn::OcciConn(oracle::occi::Environment* const env,
 //------------------------------------------------------------------------------
 OcciConn::~OcciConn() {
   try {
-    close(); // Idempotent close() method
-  } catch(...) {
+    close();  // Idempotent close() method
+  } catch (...) {
     // Destructor should not throw any exceptions
   }
 }
@@ -63,7 +64,7 @@ OcciConn::~OcciConn() {
 void OcciConn::close() {
   threading::MutexLocker locker(m_mutex);
 
-  if(nullptr != m_occiConn) {
+  if (nullptr != m_occiConn) {
     m_env->terminateConnection(m_occiConn);
     m_occiConn = nullptr;
   }
@@ -80,7 +81,7 @@ void OcciConn::setAutocommitMode(const AutocommitMode autocommitMode) {
 //------------------------------------------------------------------------------
 // getAutocommitMode
 //------------------------------------------------------------------------------
-AutocommitMode OcciConn::getAutocommitMode() const noexcept{
+AutocommitMode OcciConn::getAutocommitMode() const noexcept {
   threading::RWLockRdLocker rdLocker(m_autocommitModeRWLock);
   return m_autocommitMode;
 }
@@ -88,7 +89,7 @@ AutocommitMode OcciConn::getAutocommitMode() const noexcept{
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void OcciConn::executeNonQuery(const std::string &sql) {
+void OcciConn::executeNonQuery(const std::string& sql) {
   auto stmt = createStmt(sql);
   stmt->executeNonQuery();
 }
@@ -96,23 +97,22 @@ void OcciConn::executeNonQuery(const std::string &sql) {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<StmtWrapper> OcciConn::createStmt(const std::string &sql) {
+std::unique_ptr<StmtWrapper> OcciConn::createStmt(const std::string& sql) {
   try {
     threading::MutexLocker locker(m_mutex);
 
-    if(nullptr == m_occiConn) {
-       throw exception::Exception("Connection is closed");
+    if (nullptr == m_occiConn) {
+      throw exception::Exception("Connection is closed");
     }
 
-    oracle::occi::Statement *const stmt = m_occiConn->createStatement(sql);
+    oracle::occi::Statement* const stmt = m_occiConn->createStatement(sql);
     if (nullptr == stmt) {
       throw exception::NullPtrException("oracle::occi::createStatement() returned a nullptr pointer");
     }
     return std::make_unique<OcciStmt>(sql, *this, stmt);
-  } catch(exception::Exception &ex) {
-    throw exception::Exception("Failed for SQL statement " + sql + ": " +
-      ex.getMessage().str());
-  } catch(std::exception &se) {
+  } catch (exception::Exception& ex) {
+    throw exception::Exception("Failed for SQL statement " + sql + ": " + ex.getMessage().str());
+  } catch (std::exception& se) {
     throw exception::Exception("Failed for SQL statement " + sql + ": " + se.what());
   }
 }
@@ -123,8 +123,8 @@ std::unique_ptr<StmtWrapper> OcciConn::createStmt(const std::string &sql) {
 void OcciConn::commit() {
   threading::MutexLocker locker(m_mutex);
 
-  if(nullptr == m_occiConn) {
-      throw exception::Exception("Connection is closed");
+  if (nullptr == m_occiConn) {
+    throw exception::Exception("Connection is closed");
   }
 
   m_occiConn->commit();
@@ -136,8 +136,8 @@ void OcciConn::commit() {
 void OcciConn::rollback() {
   threading::MutexLocker locker(m_mutex);
 
-  if(nullptr == m_occiConn) {
-      throw exception::Exception("Connection is closed");
+  if (nullptr == m_occiConn) {
+    throw exception::Exception("Connection is closed");
   }
 
   m_occiConn->rollback();
@@ -146,7 +146,7 @@ void OcciConn::rollback() {
 //------------------------------------------------------------------------------
 // getColumns
 //------------------------------------------------------------------------------
-std::map<std::string, std::string, std::less<>> OcciConn::getColumns(const std::string &tableName) {
+std::map<std::string, std::string, std::less<>> OcciConn::getColumns(const std::string& tableName) {
   std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
   const char* const sql = R"SQL(
     SELECT
@@ -164,10 +164,10 @@ std::map<std::string, std::string, std::less<>> OcciConn::getColumns(const std::
   while (rset->next()) {
     auto name = rset->columnOptionalString("COLUMN_NAME");
     auto type = rset->columnOptionalString("DATA_TYPE");
-    if(name && type) {
-        if ("NUMBER" == type.value()) {
-          type = "NUMERIC";
-        }
+    if (name && type) {
+      if ("NUMBER" == type.value()) {
+        type = "NUMERIC";
+      }
       columnNamesAndTypes.insert(std::make_pair(name.value(), type.value()));
     }
   }
@@ -191,7 +191,7 @@ std::list<std::string> OcciConn::getTableNames() {
   auto rset = stmt->executeQuery();
   while (rset->next()) {
     auto name = rset->columnOptionalString("TABLE_NAME");
-    if(name) {
+    if (name) {
       names.push_back(name.value());
     }
   }
@@ -216,7 +216,7 @@ std::list<std::string> OcciConn::getIndexNames() {
   auto rset = stmt->executeQuery();
   while (rset->next()) {
     auto name = rset->columnOptionalString("INDEX_NAME");
-    if(name) {
+    if (name) {
       names.push_back(name.value());
     }
   }
@@ -282,7 +282,7 @@ std::list<std::string> OcciConn::getParallelTableNames() {
 //------------------------------------------------------------------------------
 // getConstraintNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName){
+std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName) {
   std::list<std::string> names;
   const char* const sql = R"SQL(
     SELECT
@@ -293,7 +293,7 @@ std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName
       TABLE_NAME=:TABLE_NAME
   )SQL";
   auto stmt = createStmt(sql);
-  stmt->bindString(":TABLE_NAME",tableName);
+  stmt->bindString(":TABLE_NAME", tableName);
   auto rset = stmt->executeQuery();
   while (rset->next()) {
     auto name = rset->columnOptionalString("CONSTRAINT_NAME");
@@ -379,14 +379,14 @@ bool OcciConn::isOpen() const {
 //------------------------------------------------------------------------------
 // closeStmt
 //------------------------------------------------------------------------------
-void OcciConn::closeStmt(oracle::occi::Statement *const stmt) {
+void OcciConn::closeStmt(oracle::occi::Statement* const stmt) {
   threading::MutexLocker locker(m_mutex);
 
-  if(nullptr == m_occiConn) {
-      throw exception::Exception("Connection is closed");
+  if (nullptr == m_occiConn) {
+    throw exception::Exception("Connection is closed");
   }
 
-  if(nullptr == stmt) {
+  if (nullptr == stmt) {
     throw exception::Exception("stmt is a nullptr");
   }
 
@@ -400,4 +400,4 @@ std::string OcciConn::getDbNamespace() const {
   return m_dbNamespace;
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

@@ -17,17 +17,16 @@
 
 #pragma once
 
+#include "Regex.hpp"
+#include "common/utils/StringConversions.hpp"
+
+#include <chrono>
 #include <list>
 #include <sstream>
 #include <stdint.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include <chrono>
-
-#include "common/utils/StringConversions.hpp"
-#include "Regex.hpp"
-
 
 namespace cta::utils {
 

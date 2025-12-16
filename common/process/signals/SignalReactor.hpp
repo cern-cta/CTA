@@ -18,10 +18,11 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
-#include <unordered_map>
+
 #include <functional>
-#include <thread>
 #include <poll.h>
+#include <thread>
+#include <unordered_map>
 
 namespace cta::process {
 

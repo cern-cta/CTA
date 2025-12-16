@@ -15,24 +15,25 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rmc_smcsubr.hpp"
+
+#include "mediachanger/librmc/serrno.hpp"
+#include "mediachanger/librmc/smc_struct.hpp"
+#include "rbtsubr_constants.hpp"
+#include "rmc_constants.hpp"
+#include "rmc_logit.hpp"
+#include "rmc_send_scsi_cmd.hpp"
+#include "rmc_sendrep.hpp"
+#include "scsictl.hpp"
+#include "smc_constants.hpp"
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/types.h>
-
-#include "mediachanger/librmc/smc_struct.hpp"
-#include "mediachanger/librmc/serrno.hpp"
-#include "scsictl.hpp"
-#include "rmc_send_scsi_cmd.hpp"
-#include "rbtsubr_constants.hpp"
-#include "rmc_logit.hpp"
-#include "rmc_constants.hpp"
-#include "rmc_sendrep.hpp"
-#include "smc_constants.hpp"
-#include "rmc_smcsubr.hpp"
+#include <unistd.h>
 
 constexpr int RBT_XTRA_PROC = 10;
 constexpr int ERR_MSG_BUFSZ = 132;
@@ -66,11 +67,11 @@ static int vmatch(const char* const pattern, const char* const vid) {
       return 1;
     }
     switch (*p) {
-      case '?': // match any single character
+      case '?':  // match any single character
         continue;
       case '*':
         if (*(++p) == 0) {
-          return 0; // trailing * matches the rest
+          return 0;  // trailing * matches the rest
         }
         while (vmatch(p, v)) {
           if (*(++v) == 0) {
@@ -124,7 +125,7 @@ static int get_element_size(const int fd, const char* const rbtdev, const int ty
     save_error(rc, nb_sense_ret, sense, msgaddr);
     return -1;
   }
-  return buf[10]*256 + buf[11];
+  return buf[10] * 256 + buf[11];
 }
 
 static int get_element_info(const char opcode,
@@ -561,8 +562,8 @@ int smc_lasterror(struct smc_status* const smc_stat, const char** const msgaddr)
   smc_stat->asc = smc_status.asc;
   smc_stat->ascq = smc_status.ascq;
   for (i = 0; i < sizeof(scsierr_acttbl) / sizeof(struct scsierr_codact); i++) {
-    if (smc_status.asc == scsierr_acttbl[i].asc && smc_status.ascq == scsierr_acttbl[i].ascq &&
-        smc_status.sensekey == scsierr_acttbl[i].sensekey) {
+    if (smc_status.asc == scsierr_acttbl[i].asc && smc_status.ascq == scsierr_acttbl[i].ascq
+        && smc_status.sensekey == scsierr_acttbl[i].sensekey) {
       const char* const action_str = action_to_str(scsierr_acttbl[i].action);
       *msgaddr = scsierr_acttbl[i].txt;
 
@@ -883,9 +884,8 @@ int smc_import(const int rpfd,
         return RBT_NORETRY;
       }
 
-      if ((c =
-             smc_move_medium(fd, loader, (element_info + i)->element_address, (element_info + j)->element_address, 0)) <
-          0) {
+      if ((c = smc_move_medium(fd, loader, (element_info + i)->element_address, (element_info + j)->element_address, 0))
+          < 0) {
         c = smc_lasterror(&smc_status, &msgaddr);
         rmc_usrmsg(rpfd, func, SR017, "import", (element_info + i)->name, msgaddr);
         free(element_info);

@@ -17,37 +17,39 @@
 
 #pragma once
 
-#include <memory>
-
-#include "catalogue/interfaces/AdminUserCatalogue.hpp"
 #include "catalogue/TimeBasedCache.hpp"
+#include "catalogue/interfaces/AdminUserCatalogue.hpp"
 #include "common/log/Logger.hpp"
+
+#include <memory>
 
 namespace cta {
 
 namespace rdbms {
 class Conn;
 class ConnPool;
-}
+}  // namespace rdbms
 
 namespace catalogue {
 
 class RdbmsAdminUserCatalogue : public AdminUserCatalogue {
 public:
-  RdbmsAdminUserCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool);
+  RdbmsAdminUserCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool);
   ~RdbmsAdminUserCatalogue() override = default;
 
-  void createAdminUser(const common::dataStructures::SecurityIdentity &admin, const std::string &username,
-    const std::string &comment) override;
+  void createAdminUser(const common::dataStructures::SecurityIdentity& admin,
+                       const std::string& username,
+                       const std::string& comment) override;
 
-  void deleteAdminUser(const std::string &username) override;
+  void deleteAdminUser(const std::string& username) override;
 
   std::list<common::dataStructures::AdminUser> getAdminUsers() const override;
 
-  void modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &username, const std::string &comment) override;
+  void modifyAdminUserComment(const common::dataStructures::SecurityIdentity& admin,
+                              const std::string& username,
+                              const std::string& comment) override;
 
-  bool isAdmin(const common::dataStructures::SecurityIdentity &admin) const override;
+  bool isAdmin(const common::dataStructures::SecurityIdentity& admin) const override;
 
 private:
   /**
@@ -57,7 +59,7 @@ private:
    * @param adminUsername The name of the admin user.
    * @return True if the admin user exists.
    */
-  bool adminUserExists(rdbms::Conn &conn, const std::string& adminUsername) const;
+  bool adminUserExists(rdbms::Conn& conn, const std::string& adminUsername) const;
 
   /**
    * Returns a cached version of the result of calling isAdmin().
@@ -65,7 +67,7 @@ private:
    * @param admin The administrator.
    * @return True if the specified user has administrator privileges.
    */
-  bool isCachedAdmin(const common::dataStructures::SecurityIdentity &admin) const;
+  bool isCachedAdmin(const common::dataStructures::SecurityIdentity& admin) const;
 
   /**
    * Returns true if the specified user has administrator privileges.
@@ -75,15 +77,16 @@ private:
    * @param admin The administrator.
    * @return True if the specified user has administrator privileges.
    */
-  bool isNonCachedAdmin(const common::dataStructures::SecurityIdentity &admin) const;
+  bool isNonCachedAdmin(const common::dataStructures::SecurityIdentity& admin) const;
 
-  log::Logger &m_log;
+  log::Logger& m_log;
   std::shared_ptr<rdbms::ConnPool> m_connPool;
 
   /**
    * Cached version of isAdmin() results.
    */
-  mutable TimeBasedCache<common::dataStructures::SecurityIdentity, bool> m_isAdminCache{10};
+  mutable TimeBasedCache<common::dataStructures::SecurityIdentity, bool> m_isAdminCache {10};
 };
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

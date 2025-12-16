@@ -1,17 +1,17 @@
 #pragma once
 
-#include <string>
-#include <map>
-#include <time.h>
-#include <iostream>
-#include <functional>
-#include <shared_mutex>
-#include <optional>
-#include <mutex>
-#include <memory>
-
 #include "exception/Exception.hpp"
 #include "log/LogContext.hpp"
+
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <optional>
+#include <shared_mutex>
+#include <string>
+#include <time.h>
 
 namespace cta {
 CTA_GENERATE_EXCEPTION_CLASS(CurlException);

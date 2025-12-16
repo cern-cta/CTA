@@ -17,13 +17,13 @@
 
 #pragma once
 
-#include <list>
-#include <stdint.h>
-#include <type_traits>
-
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/log/Logger.hpp"
+
+#include <list>
+#include <stdint.h>
+#include <type_traits>
 
 namespace cta::catalogue {
 
@@ -39,18 +39,18 @@ namespace cta::catalogue {
  * @return The result of calling the callable.
  */
 template<typename T>
-typename std::result_of<T()>::type retryOnLostConnection(log::Logger &log, const T &callable,
-  const uint32_t maxTriesToConnect) {
+typename std::result_of<T()>::type
+retryOnLostConnection(log::Logger& log, const T& callable, const uint32_t maxTriesToConnect) {
   try {
     for (uint32_t tryNb = 1; tryNb <= maxTriesToConnect; tryNb++) {
       try {
         return callable();
-      } catch (exception::LostDatabaseConnection &le) {
+      } catch (exception::LostDatabaseConnection& le) {
         // Log lost connection
         std::list<log::Param> params = {
-          {"maxTriesToConnect", maxTriesToConnect},
-          {"tryNb", tryNb},
-          {"msg", le.getMessage().str()}
+          {"maxTriesToConnect", maxTriesToConnect    },
+          {"tryNb",             tryNb                },
+          {"msg",               le.getMessage().str()}
         };
         int logLevel = (tryNb == maxTriesToConnect) ? cta::log::CRIT : cta::log::WARNING;
         log(logLevel, "Lost database connection", params);
@@ -60,9 +60,9 @@ typename std::result_of<T()>::type retryOnLostConnection(log::Logger &log, const
     exception::Exception ex;
     ex.getMessage() << "Lost the database connection after trying " << maxTriesToConnect << " times";
     throw ex;
-  } catch(...) {
+  } catch (...) {
     throw;
   }
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

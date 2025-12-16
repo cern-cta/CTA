@@ -17,9 +17,9 @@
 
 #pragma once
 
+#include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
-#include "common/log/LogContext.hpp"
 
 namespace castor {
 namespace exception {
@@ -37,7 +37,7 @@ class DataPipeline;
  * the free ones around to any class in need. The distribution is actively run in
  * a thread.
  */
-class MigrationMemoryManager: private cta::threading::Thread {
+class MigrationMemoryManager : private cta::threading::Thread {
 public:
   /**
    * Constructor
@@ -61,30 +61,30 @@ public:
   /**
    * Start serving clients (in the dedicated thread)
    */
-  void startThreads() ;
+  void startThreads();
 
   /**
    * Waiting for clients to finish (in the dedicated thread)
    */
-  void waitThreads() ;
+  void waitThreads();
 
   /**
    * Adds a new client in need for free memory blocks
    * @param c: the new client
    */
-  void addClient(DataPipeline* c) ;
+  void addClient(DataPipeline* c);
 
   /**
    * Takes back a block which has been released by one of the clients
    * @param mb: the pointer to the block
    */
-  void releaseBlock(MemBlock *mb) ;
+  void releaseBlock(MemBlock* mb);
 
   /**
    * Function used to specify that there are no more clients for this memory manager.
    * See the definition of endOfClients below.
    */
-  void finish() ;
+  void finish();
 
   /**
    * Get the total number of bytes allocated.
@@ -122,13 +122,13 @@ private:
   /**
    * Container for the free blocks
    */
-  cta::threading::BlockingQueue<MemBlock *> m_freeBlocks;
+  cta::threading::BlockingQueue<MemBlock*> m_freeBlocks;
 
   /**
    * The client queue: we will feed them as soon as blocks
    * become free. This is done in a dedicated thread.
    */
-  cta::threading::BlockingQueue<DataPipeline *> m_clientQueue;
+  cta::threading::BlockingQueue<DataPipeline*> m_clientQueue;
 
   /**
    * Logging purpose. Given the fact the class is threaded, the LogContext
@@ -142,4 +142,5 @@ private:
   void run() override;
 };
 
-}} // namespace castor::tape::tapeserver::daemon
+}  // namespace tape::tapeserver::daemon
+}  // namespace castor

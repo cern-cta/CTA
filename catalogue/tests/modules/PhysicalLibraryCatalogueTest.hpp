@@ -17,19 +17,18 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
-
-#include <memory>
-
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
+#include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "common/dataStructures/PhysicalLibrary.hpp"
+
+#include <gtest/gtest.h>
+#include <memory>
 
 namespace unitTests {
 
-class cta_catalogue_PhysicalLibraryTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_PhysicalLibraryTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_PhysicalLibraryTest();
 
@@ -45,8 +44,8 @@ protected:
   const cta::common::dataStructures::PhysicalLibrary m_physicalLibrary2;
   const cta::common::dataStructures::PhysicalLibrary m_physicalLibrary3;
 
-  std::map<std::string, cta::common::dataStructures::PhysicalLibrary> physicalLibraryListToMap(
-    const std::list<cta::common::dataStructures::PhysicalLibrary> &listOfLibs) const;
+  std::map<std::string, cta::common::dataStructures::PhysicalLibrary>
+  physicalLibraryListToMap(const std::list<cta::common::dataStructures::PhysicalLibrary>& listOfLibs) const;
 };
 
 }  // namespace unitTests

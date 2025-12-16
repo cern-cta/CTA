@@ -17,20 +17,19 @@
 
 #pragma once
 
-#include <stdio.h>
-
-#include <iostream>
-#include <memory>
-
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "common/Timer.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
-#include "common/Timer.hpp"
+
+#include <iostream>
+#include <memory>
+#include <stdio.h>
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -72,20 +71,17 @@ public:
    * when receiving an error from the disk tasks via memory blocks.
    * @param injector the task injector
    */
-  void setTaskInjector(RecallTaskInjector *injector) {
-    m_taskInjector = injector;
-  }
+  void setTaskInjector(RecallTaskInjector* injector) { m_taskInjector = injector; }
 
 private:
-
   // RAII class for cleaning tape stuff
   class TapeCleaning {
     TapeReadSingleThread& m_this;
     // As we are living in the single thread of tape, we can borrow the timer
     cta::utils::Timer& m_timer;
+
   public:
-    TapeCleaning(TapeReadSingleThread& parent, cta::utils::Timer& timer) :
-      m_this(parent), m_timer(timer) {}
+    TapeCleaning(TapeReadSingleThread& parent, cta::utils::Timer& timer) : m_this(parent), m_timer(timer) {}
 
     ~TapeCleaning();
   };
@@ -95,7 +91,7 @@ private:
    * ask the task injector for more
    * @return m_tasks.pop();
    */
-  TapeReadTask *popAndRequestMoreJobs();
+  TapeReadTask* popAndRequestMoreJobs();
 
   /**
    * Try to open an tapeFile::ReadSession, if it fails, we got an exception.
@@ -113,8 +109,7 @@ private:
   /**
    * Log m_stats parameters into m_logContext with msg at the given level
    */
-  void logWithStat(int level, const std::string& msg,
-                   cta::log::ScopedParamContainer& params);
+  void logWithStat(int level, const std::string& msg, cta::log::ScopedParamContainer& params);
 
   /**
    * Number of files a single request to the client might give us.
@@ -123,7 +118,7 @@ private:
   const uint64_t m_maxFilesRequest;
 
   ///a pointer to task injector, thus we can ask him for more tasks
-  RecallTaskInjector *m_taskInjector{};
+  RecallTaskInjector* m_taskInjector {};
 
   /// Reference to the watchdog, used in run()
   RecallWatchDog& m_watchdog;
@@ -155,15 +150,13 @@ private:
   cta::catalogue::Catalogue& m_catalogue;
 
   /// Helper virtual function to access the watchdog from parent class
-  void countTapeLogError(const std::string& error) override {
-    m_watchdog.addToErrorCount(error);
-  }
+  void countTapeLogError(const std::string& error) override { m_watchdog.addToErrorCount(error); }
 
 protected:
   /**
    * Logs SCSI metrics for read session.
    */
   void logSCSIMetrics() override;
-}; // class TapeReadSingleThread
+};  // class TapeReadSingleThread
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

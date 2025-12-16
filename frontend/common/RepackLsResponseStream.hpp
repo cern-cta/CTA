@@ -17,29 +17,29 @@
 
 #pragma once
 
-#include <list>
+#include "CtaAdminResponseStream.hpp"
 #include "cta_admin.pb.h"
 
-#include "CtaAdminResponseStream.hpp"
+#include <list>
 
 namespace cta::frontend {
 
-  class RepackLsResponseStream final : public CtaAdminResponseStream {
-  public:
-    RepackLsResponseStream(cta::catalogue::Catalogue &catalogue,
-                           cta::Scheduler &scheduler,
-                           const std::string &instanceName,
-                           const admin::AdminCmd &adminCmd);
+class RepackLsResponseStream final : public CtaAdminResponseStream {
+public:
+  RepackLsResponseStream(cta::catalogue::Catalogue& catalogue,
+                         cta::Scheduler& scheduler,
+                         const std::string& instanceName,
+                         const admin::AdminCmd& adminCmd);
 
-    bool isDone() override;
+  bool isDone() override;
 
-    cta::xrd::Data next() override;
+  cta::xrd::Data next() override;
 
-  private:
-    std::list <cta::xrd::Data> m_repackItems;
-    std::string m_schedulerBackendName;
+private:
+  std::list<cta::xrd::Data> m_repackItems;
+  std::string m_schedulerBackendName;
 
-    void collectRepacks(const std::optional <std::string> &vid);
-  };
+  void collectRepacks(const std::optional<std::string>& vid);
+};
 
 }  // namespace cta::frontend

@@ -1,4 +1,5 @@
 #include "ValidateToken.hpp"
+
 #include "jwt-cpp/jwt.h"
 
 namespace cta {

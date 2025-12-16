@@ -15,7 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "version.h"
+#include "FrontendService.hpp"
+
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
@@ -23,17 +24,14 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
-#include "common/semconv/Attributes.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
-#include "common/semconv/Attributes.hpp"
-#include <opentelemetry/sdk/common/global_log_handler.h>
-
 #include "rdbms/Login.hpp"
-
-#include "FrontendService.hpp"
+#include "version.h"
 
 #include <fstream>
+#include <opentelemetry/sdk/common/global_log_handler.h>
 
 namespace cta::frontend {
 
@@ -99,8 +97,8 @@ FrontendService::FrontendService(const std::string& configFilename) {
     }
     m_instanceName = instanceName.value();
     if (!backendName.has_value()) {
-      throw exception::UserError("cta.schedulerdb.scheduler_backend_name is not set in configuration file " +
-                                 configFilename);
+      throw exception::UserError("cta.schedulerdb.scheduler_backend_name is not set in configuration file "
+                                 + configFilename);
     } else {
       m_schedulerBackendName = backendName.value();
     }
@@ -126,8 +124,8 @@ FrontendService::FrontendService(const std::string& configFilename) {
   if (auto experimentalTelemetryEnabled = config.getOptionValueBool("cta.experimental.telemetry.enabled");
       experimentalTelemetryEnabled.has_value() && experimentalTelemetryEnabled.value()) {
     try {
-
-      auto retainInstanceIdOnRestart = config.getOptionValueBool("cta.telemetry.retain_instance_id_on_restart").value_or(false);
+      auto retainInstanceIdOnRestart =
+        config.getOptionValueBool("cta.telemetry.retain_instance_id_on_restart").value_or(false);
       auto metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
       auto metricsExportInterval = config.getOptionValueUInt("cta.telemetry.metrics.export.interval").value_or(15000);
       auto metricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metrics.export.timeout").value_or(3000);
@@ -138,8 +136,10 @@ FrontendService::FrontendService(const std::string& configFilename) {
       if (metricsOtlpBasicAuthPasswordFile.has_value()) {
         metricsOtlpBasicAuthPassword = cta::telemetry::stringFromFile(metricsOtlpBasicAuthPasswordFile.value());
       }
-      auto metricsOtlpBasicAuthUsername = config.getOptionValueStr("cta.telemetry.metrics.otlp.auth.basic.username").value_or("");
-      auto metricsFileEndpoint = config.getOptionValueStr("cta.telemetry.metrics.file.endpoint").value_or("/var/log/cta/cta-frontend-metrics.txt");
+      auto metricsOtlpBasicAuthUsername =
+        config.getOptionValueStr("cta.telemetry.metrics.otlp.auth.basic.username").value_or("");
+      auto metricsFileEndpoint = config.getOptionValueStr("cta.telemetry.metrics.file.endpoint")
+                                   .value_or("/var/log/cta/cta-frontend-metrics.txt");
 
       cta::telemetry::TelemetryConfig telemetryConfig =
         cta::telemetry::TelemetryConfigBuilder()
@@ -174,8 +174,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
     params.emplace_back("source", missingFileCopiesMinAgeSecs.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.catalogue");
     params.emplace_back("key", "missingFileCopiesMinAgeSecs");
-    params.push_back(
-      log::Param("value", std::to_string(missingFileCopiesMinAgeSecs.value_or(0))));
+    params.push_back(log::Param("value", std::to_string(missingFileCopiesMinAgeSecs.value_or(0))));
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -293,13 +292,13 @@ FrontendService::FrontendService(const std::string& configFilename) {
     params.emplace_back("source", archiveFileMaxSize.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.archivefile");
     params.emplace_back("key", "max_size_gb");
-    params.push_back(
-      log::Param("value", std::to_string(archiveFileMaxSize.value_or(0))));
+    params.push_back(log::Param("value", std::to_string(archiveFileMaxSize.value_or(0))));
     log(log::INFO, "Configuration entry", params);
   }
 
-  std::optional<bool> zeroLengthFilesForbidden = config.getOptionValueBool("cta.archivefile.zero_length_files_forbidden");
-  m_zeroLengthFilesForbidden = zeroLengthFilesForbidden.value_or(true); // disallow 0-length files by default
+  std::optional<bool> zeroLengthFilesForbidden =
+    config.getOptionValueBool("cta.archivefile.zero_length_files_forbidden");
+  m_zeroLengthFilesForbidden = zeroLengthFilesForbidden.value_or(true);  // disallow 0-length files by default
   {
     // Log cta.archivefile.zero_length_files_forbidden
     std::list<log::Param> params;
@@ -339,13 +338,14 @@ FrontendService::FrontendService(const std::string& configFilename) {
     m_repackBufferURL = repackBufferURLConf.value();
   }
 
-
-  if (auto repackMaxFilesToSelectConf = config.getOptionValueUInt("cta.repack.repack_max_files_to_select"); repackMaxFilesToSelectConf.has_value()) {
+  if (auto repackMaxFilesToSelectConf = config.getOptionValueUInt("cta.repack.repack_max_files_to_select");
+      repackMaxFilesToSelectConf.has_value()) {
     m_repackMaxFilesToSelect = repackMaxFilesToSelectConf.value();
   }
 
   // Get the verification mount policy
-  if (const auto verificationMountPolicy = config.getOptionValueStr("cta.verification.mount_policy"); verificationMountPolicy.has_value()) {
+  if (const auto verificationMountPolicy = config.getOptionValueStr("cta.verification.mount_policy");
+      verificationMountPolicy.has_value()) {
     m_verificationMountPolicy = verificationMountPolicy.value();
   }
 
@@ -367,14 +367,18 @@ FrontendService::FrontendService(const std::string& configFilename) {
     std::optional<bool> disableRepackRequests = config.getOptionValueBool("cta.schedulerdb.disable_repack_requests");
     m_acceptRepackRequests = disableRepackRequests.has_value() ? (!disableRepackRequests.value()) : true;
     if (!disableRepackRequests.has_value()) {
-      log(log::WARNING, "cta.schedulerdb.disable_repack_requests is not set in configuration file, using default value false");
+      log(log::WARNING,
+          "cta.schedulerdb.disable_repack_requests is not set in configuration file, using default value false");
     }
 
     std::list<log::Param> params;
     params.emplace_back("source", disableRepackRequests.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.schedulerdb");
     params.emplace_back("key", "disable_repack_requests");
-    params.emplace_back("value", disableRepackRequests.has_value() ? config.getOptionValueStr("cta.schedulerdb.disable_repack_requests").value() : "false");
+    params.emplace_back("value",
+                        disableRepackRequests.has_value() ?
+                          config.getOptionValueStr("cta.schedulerdb.disable_repack_requests").value() :
+                          "false");
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -382,14 +386,18 @@ FrontendService::FrontendService(const std::string& configFilename) {
     auto disableUserRequests = config.getOptionValueBool("cta.schedulerdb.disable_user_requests");
     m_acceptUserRequests = disableUserRequests.has_value() ? (!disableUserRequests.value()) : true;
     if (!disableUserRequests.has_value()) {
-      log(log::WARNING, "cta.schedulerdb.disable_user_requests is not set in configuration file, using default value false");
+      log(log::WARNING,
+          "cta.schedulerdb.disable_user_requests is not set in configuration file, using default value false");
     }
 
     std::list<log::Param> params;
     params.emplace_back("source", disableUserRequests.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.schedulerdb");
     params.emplace_back("key", "disable_user_requests");
-    params.emplace_back("value", disableUserRequests.has_value() ? config.getOptionValueStr("cta.schedulerdb.disable_user_requests").value() : "false");
+    params.emplace_back("value",
+                        disableUserRequests.has_value() ?
+                          config.getOptionValueStr("cta.schedulerdb.disable_user_requests").value() :
+                          "false");
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -461,27 +469,27 @@ FrontendService::FrontendService(const std::string& configFilename) {
     config.getOptionValueBool("cta.experimental.grpc.cta_admin_commands.enabled");
   m_enableCtaAdminCommands = enableCtaAdminCommands.value_or(false);  // default value is false
   if (!m_tls && m_jwtAuth) {
-    throw exception::UserError("grpc.jwt.auth is set to true when grpc.tls is set to false in configuration file " +
-                               configFilename + ". Cannot use tokens over unencrypted channel, tls must be enabled.");
+    throw exception::UserError("grpc.jwt.auth is set to true when grpc.tls is set to false in configuration file "
+                               + configFilename + ". Cannot use tokens over unencrypted channel, tls must be enabled.");
   }
 
   if (m_jwtAuth && !m_jwksUri.has_value()) {
     throw exception::UserError(
-      "grpc.jwt.auth is set to true but no endpoint is provided in grpc.jwks.uri in configuration file " +
-      configFilename);
+      "grpc.jwt.auth is set to true but no endpoint is provided in grpc.jwks.uri in configuration file "
+      + configFilename);
   }
 
   auto cacheRefreshInterval = config.getOptionValueInt("grpc.jwks.cache.refresh_interval_secs");
   if (cacheRefreshInterval.has_value() && cacheRefreshInterval.value() < 0) {
-    throw exception::UserError(
-      "grpc.jwks.cache.refresh_interval_secs is set to a negative value in configuration file " + configFilename);
+    throw exception::UserError("grpc.jwks.cache.refresh_interval_secs is set to a negative value in configuration file "
+                               + configFilename);
   }
   m_cacheRefreshInterval = cacheRefreshInterval;
 
   auto pubkeyTimeout = config.getOptionValueInt("grpc.jwks.cache.timeout_secs");
   if (pubkeyTimeout.has_value() && pubkeyTimeout.value() < 0) {
-    throw exception::UserError("grpc.jwks.cache.timeout_secs is set to a negative value in configuration file " +
-                               configFilename);
+    throw exception::UserError("grpc.jwks.cache.timeout_secs is set to a negative value in configuration file "
+                               + configFilename);
   }
   m_pubkeyTimeout = pubkeyTimeout;
 

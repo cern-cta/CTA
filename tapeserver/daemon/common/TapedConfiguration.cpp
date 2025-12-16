@@ -16,11 +16,12 @@
  */
 
 #include "TapedConfiguration.hpp"
+
 #include "common/ConfigurationFile.hpp"
 
 #include <algorithm>
-#include <regex>
 #include <filesystem>
+#include <regex>
 
 namespace cta {
 
@@ -28,70 +29,69 @@ namespace cta {
 // addLogParamForValue
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext& lc) {
   lc.pushOrReplace({"maxBytes", m_value.maxBytes});
   lc.pushOrReplace({"maxFiles", m_value.maxFiles});
-} // namespace cta
+}  // namespace cta
 
 //------------------------------------------------------------------------------
 // set
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::set(const std::string & value,
-  const std::string & source) {
+void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::set(const std::string& value,
+                                                                           const std::string& source) {
   // We expect an entry in the form "<size limit>, <file limit>"
   // There should be one and only one comma in the parameter.
   if (1 != std::count(value.begin(), value.end(), ',')) {
     BadlyFormattedSizeFileLimit ex;
-    ex.getMessage() << "In SourcedParameter<FetchReportOrFlushLimits>::set() : badly formatted entry: one (and only one) comma expected"
-      << " for category=" << m_category << " key=" << m_key
-      << " value=\'" << value << "' at:" << source;
+    ex.getMessage() << "In SourcedParameter<FetchReportOrFlushLimits>::set() : badly formatted entry: one (and only "
+                       "one) comma expected"
+                    << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
     throw ex;
   }
   // We can now split the entry
   std::string bytes;
   std::string files;
 
-  size_t commaPos=value.find(',');
-  bytes=value.substr(0, commaPos);
-  files=value.substr(commaPos+1);
-  bytes=utils::trimString(bytes);
-  files=utils::trimString(files);
-  if (!(utils::isValidUInt(bytes)&&utils::isValidUInt(files))) {
+  size_t commaPos = value.find(',');
+  bytes = value.substr(0, commaPos);
+  files = value.substr(commaPos + 1);
+  bytes = utils::trimString(bytes);
+  files = utils::trimString(files);
+  if (!(utils::isValidUInt(bytes) && utils::isValidUInt(files))) {
     BadlyFormattedInteger ex;
     ex.getMessage() << "In SourcedParameter<FetchReportOrFlushLimits>::set() : badly formatted integer"
-      << " for category=" << m_category << " key=" << m_key
-      << " value=\'" << value << "' at:" << source;
+                    << " for category=" << m_category << " key=" << m_key << " value=\'" << value << "' at:" << source;
     throw ex;
   }
   std::istringstream(bytes) >> m_value.maxBytes;
   std::istringstream(files) >> m_value.maxFiles;
   m_source = source;
   m_set = true;
-} // namespace cta
-} // namespace cta
+}  // namespace cta
+}  // namespace cta
 
 namespace cta::tape::daemon::common {
 
 //------------------------------------------------------------------------------
 // TapedConfiguration::getDriveConfigFile
 //------------------------------------------------------------------------------
-std::string TapedConfiguration::getDriveConfigFile(const std::optional<std::string> &unitName, cta::log::Logger &log) {
+std::string TapedConfiguration::getDriveConfigFile(const std::optional<std::string>& unitName, cta::log::Logger& log) {
   const std::regex CTA_CONF_REGEX("cta-taped.*\\.conf");
 
-  if (unitName){
+  if (unitName) {
     // Try exact match.
     std::string tapeDriveConfigFile = "/etc/cta/cta-taped-" + unitName.value() + ".conf";
-    if(std::filesystem::exists(tapeDriveConfigFile)){
+    if (std::filesystem::exists(tapeDriveConfigFile)) {
       return tapeDriveConfigFile;
     }
   } else {
-      log(cta::log::INFO, "Unit name not specified, choosing first config file found.");
-      for(auto const& entry : std::filesystem::directory_iterator("/etc/cta/")){
-        if (std::regex_match( entry.path().filename().string(), CTA_CONF_REGEX)){
-          return entry.path().string();
-        }
+    log(cta::log::INFO, "Unit name not specified, choosing first config file found.");
+    for (const auto& entry : std::filesystem::directory_iterator("/etc/cta/")) {
+      if (std::regex_match(entry.path().filename().string(), CTA_CONF_REGEX)) {
+        return entry.path().string();
       }
+    }
   }
   cta::exception::Exception ex;
   ex.getMessage() << "Failed to find a drive configuration file for the server.";
@@ -133,8 +133,8 @@ std::string TapedConfiguration::constructProcessName(cta::log::LogContext& lc, c
 
   if (shortName.length() > maxShortnameLen) {
     lc.log(log::WARNING,
-           "TapedConfiguration::constructProcessName - short drivename '" + shortName + "' exceeds max length of " +
-             std::to_string(maxShortnameLen) + "; truncating");
+           "TapedConfiguration::constructProcessName - short drivename '" + shortName + "' exceeds max length of "
+             + std::to_string(maxShortnameLen) + "; truncating");
     shortName.resize(maxShortnameLen);
   }
 
@@ -147,8 +147,8 @@ std::string TapedConfiguration::constructProcessName(cta::log::LogContext& lc, c
   std::string px = postfix;
   if (px.length() > maxPostfixLen) {
     lc.log(log::WARNING,
-           "TapedConfiguration::constructProcessName - postfix '" + px + "' exceeds max length of " +
-             std::to_string(maxPostfixLen) + "; truncating");
+           "TapedConfiguration::constructProcessName - postfix '" + px + "' exceeds max length of "
+             + std::to_string(maxPostfixLen) + "; truncating");
     px.resize(maxPostfixLen);
   }
   return shortName + "-" + px;
@@ -157,8 +157,8 @@ std::string TapedConfiguration::constructProcessName(cta::log::LogContext& lc, c
 //------------------------------------------------------------------------------
 // TapedConfiguration::createFromConfigPath
 //------------------------------------------------------------------------------
-TapedConfiguration TapedConfiguration::createFromConfigPath(
-  const std::string &driveTapedConfigPath, cta::log::Logger &log) {
+TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& driveTapedConfigPath,
+                                                            cta::log::Logger& log) {
   TapedConfiguration ret;
 
   // Parse config file
@@ -187,8 +187,8 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   ret.nbDiskThreads.setFromConfigurationFile(cf, driveTapedConfigPath);
   //RAO
   ret.useRAO.setFromConfigurationFile(cf, driveTapedConfigPath);
-  ret.raoLtoAlgorithm.setFromConfigurationFile(cf,driveTapedConfigPath);
-  ret.raoLtoOptions.setFromConfigurationFile(cf,driveTapedConfigPath);
+  ret.raoLtoAlgorithm.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.raoLtoOptions.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Watchdog: parameters for timeouts in various situations.
   ret.wdIdleSessionTimer.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.wdMountMaxSecs.setFromConfigurationFile(cf, driveTapedConfigPath);
@@ -199,12 +199,12 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   ret.backendPath.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.fileCatalogConfigFile.setFromConfigurationFile(cf, driveTapedConfigPath);
   // External free disk space script configuration
-  ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf,driveTapedConfigPath);
+  ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Timeout for tape load action
-  ret.tapeLoadTimeout.setFromConfigurationFile(cf,driveTapedConfigPath);
+  ret.tapeLoadTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
 
-  ret.authenticationProtocol.set(cta::utils::getEnv("XrdSecPROTOCOL"),"Environment variable");
-  ret.authenticationSSSKeytab.set(cta::utils::getEnv("XrdSecSSSKT"),"Environment variable");
+  ret.authenticationProtocol.set(cta::utils::getEnv("XrdSecPROTOCOL"), "Environment variable");
+  ret.authenticationSSSKeytab.set(cta::utils::getEnv("XrdSecSSSKT"), "Environment variable");
   // rmcd connection options
   ret.rmcPort.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.rmcNetTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
@@ -294,8 +294,8 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(
   return ret;
 }
 
-TapedConfiguration TapedConfiguration::createFromOptionalDriveName(
-  const std::optional<std::string> &unitName, cta::log::Logger &log) {
+TapedConfiguration TapedConfiguration::createFromOptionalDriveName(const std::optional<std::string>& unitName,
+                                                                   cta::log::Logger& log) {
   // Get the config file path
   const std::string driveTapedConfigPath = getDriveConfigFile(unitName, log);
 
@@ -307,4 +307,4 @@ TapedConfiguration TapedConfiguration::createFromOptionalDriveName(
 //------------------------------------------------------------------------------
 cta::log::DummyLogger TapedConfiguration::gDummyLogger("", "");
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon::common

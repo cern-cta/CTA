@@ -19,13 +19,14 @@
 
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "common/Timer.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
-#include "common/log/LogContext.hpp"
-#include "common/Timer.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
-#include <vector>
+
 #include <stdint.h>
+#include <vector>
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -42,8 +43,12 @@ public:
    *                    to the task injector
    * @param lc          Log context for logging purpose
    */
-  DiskReadThreadPool(int nbThread, uint64_t maxFilesReq, uint64_t maxBytesReq, MigrationWatchDog& migrationWatchDog,
-    const cta::log::LogContext& lc, uint16_t xrootTimeout);
+  DiskReadThreadPool(int nbThread,
+                     uint64_t maxFilesReq,
+                     uint64_t maxBytesReq,
+                     MigrationWatchDog& migrationWatchDog,
+                     const cta::log::LogContext& lc,
+                     uint16_t xrootTimeout);
 
   /**
    * Destructor.
@@ -70,7 +75,7 @@ public:
    * with finish() as the task injection is done from a single thread (the task
    * injector)
    */
-  void push(DiskReadTask *task);
+  void push(DiskReadTask* task);
 
   /**
    * Injects as many "end" tasks as there are threads in the thread pool.
@@ -88,9 +93,8 @@ public:
    * fetch more work by the read thread pool when the task queue of the thread
    * pool starts to run low.
    */
-  void setTaskInjector(MigrationTaskInjector* injector){
-      m_injector = injector;
-  }
+  void setTaskInjector(MigrationTaskInjector* injector) { m_injector = injector; }
+
 private:
   /**
    * When the last thread finish, we log all m_pooldStat members + message
@@ -131,16 +135,21 @@ private:
   /**
    * Subclass of the thread pool's worker thread.
    */
-  class DiskReadWorkerThread: private cta::threading::Thread {
+  class DiskReadWorkerThread : private cta::threading::Thread {
   public:
-    explicit DiskReadWorkerThread(DiskReadThreadPool& parent) :
-      m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(parent.m_lc), m_diskFileFactory(parent.m_xrootTimeout) {
+    explicit DiskReadWorkerThread(DiskReadThreadPool& parent)
+        : m_parent(parent),
+          m_threadID(parent.m_nbActiveThread++),
+          m_lc(parent.m_lc),
+          m_diskFileFactory(parent.m_xrootTimeout) {
       cta::log::LogContext::ScopedParam param(m_lc, cta::log::Param("threadID", m_threadID));
       m_lc.log(cta::log::INFO, "DiskReadThread created");
     }
 
     void start() { cta::threading::Thread::start(); }
+
     void wait() { cta::threading::Thread::wait(); }
+
   private:
     void logWithStat(int level, const std::string& message);
     /*
@@ -151,7 +160,7 @@ private:
     /** Pointer to the thread pool, allowing calls to popAndRequestMore,
      * and calling finish() on the task injector when the last thread
      * is finishing (thanks to the actomic counter m_parent.m_nbActiveThread) */
-    DiskReadThreadPool & m_parent;
+    DiskReadThreadPool& m_parent;
 
     /** The sequential ID of the thread, used in logs */
     const int m_threadID;
@@ -172,11 +181,11 @@ private:
   };
 
   /** Container for the threads */
-  std::vector<DiskReadWorkerThread *> m_threads;
+  std::vector<DiskReadWorkerThread*> m_threads;
 
   /** The queue of pointer to tasks to be executed. We own the tasks (they are
    * deleted by the threads after execution) */
-  cta::threading::BlockingQueue<DiskReadTask *> m_tasks;
+  cta::threading::BlockingQueue<DiskReadTask*> m_tasks;
 
   /**
    * Parameter: xroot timeout
@@ -186,7 +195,7 @@ private:
   /**
    * Reference to the watchdog, for error reporting.
    */
-  castor::tape::tapeserver::daemon::MigrationWatchDog & m_watchdog;
+  castor::tape::tapeserver::daemon::MigrationWatchDog& m_watchdog;
 
   /** The log context. This is copied on construction to prevent interferences
    * between threads.
@@ -212,4 +221,4 @@ private:
   std::atomic<int> m_nbActiveThread = 0;
 };
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

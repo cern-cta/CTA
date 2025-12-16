@@ -33,10 +33,13 @@ public:
    * @param context optional context string added to the message at initialisation time
    * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
    */
-  explicit UserErrorWithCacheInfo(const std::string& cInfo, const std::string& context = "", const bool embedBacktrace = true) :
-    UserError(context, embedBacktrace), cacheInfo(cInfo) {}
+  explicit UserErrorWithCacheInfo(const std::string& cInfo,
+                                  const std::string& context = "",
+                                  const bool embedBacktrace = true)
+      : UserError(context, embedBacktrace),
+        cacheInfo(cInfo) {}
 
   std::string cacheInfo;
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

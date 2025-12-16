@@ -18,6 +18,7 @@
 #pragma once
 
 #include "cta_frontend.pb.h"
+
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
 

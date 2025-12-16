@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "rdbms/wrapper/ConnFactory.hpp"
 #include "rdbms/Login.hpp"
+#include "rdbms/wrapper/ConnFactory.hpp"
 
 #include <vector>
 
@@ -27,7 +27,7 @@ namespace cta::rdbms::wrapper {
 /**
  * A concrete factory of Conn objects.
  */
-class PostgresConnFactory: public ConnFactory {
+class PostgresConnFactory : public ConnFactory {
 public:
   /**
    * Constructor
@@ -76,6 +76,6 @@ private:
    */
   const rdbms::Login m_login;
 
-}; // class PostgresConnFactory
+};  // class PostgresConnFactory
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

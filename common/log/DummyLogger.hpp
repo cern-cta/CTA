@@ -30,7 +30,7 @@ namespace cta::log {
  * during unit testing means that no logs will actually be written to a log
  * file.
  */
-class DummyLogger: public Logger {
+class DummyLogger : public Logger {
 public:
   /**
    * Constructor
@@ -39,8 +39,7 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  DummyLogger(std::string_view hostName, std::string_view programName) :
-    Logger(hostName, programName, DEBUG) { }
+  DummyLogger(std::string_view hostName, std::string_view programName) : Logger(hostName, programName, DEBUG) {}
 
   /**
    * Destructor
@@ -59,7 +58,7 @@ public:
    * Refresh the underlying logger setup
    */
   void refresh() final { /* intentionally-blank override of pure virtual method */ }
-  
+
 protected:
   /**
    * Writes the specified msg to the underlying logging system
@@ -77,4 +76,4 @@ protected:
   }
 };
 
-} // namespace cta::log
+}  // namespace cta::log

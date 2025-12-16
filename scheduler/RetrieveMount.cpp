@@ -15,22 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <numeric>
-#include <algorithm>
-#include <iterator>
+#include "scheduler/RetrieveMount.hpp"
 
 #include "catalogue/Catalogue.hpp"
+#include "common/Timer.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/Timer.hpp"
 #include "disk/DiskSystem.hpp"
-#include "scheduler/RetrieveMount.hpp"
+
+#include <algorithm>
+#include <iterator>
+#include <numeric>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::RetrieveMount::RetrieveMount(cta::catalogue::Catalogue& catalogue)
-    : m_catalogue(catalogue) {}
+cta::RetrieveMount::RetrieveMount(cta::catalogue::Catalogue& catalogue) : m_catalogue(catalogue) {}
 
 //------------------------------------------------------------------------------
 // constructor
@@ -230,9 +230,10 @@ uint64_t cta::RetrieveMount::requeueJobBatch(const std::list<std::string>& jobID
 //------------------------------------------------------------------------------
 // checkOrReserveFreeDiskSpaceForRequest() - Helper method to do the common disk space reservation check
 //------------------------------------------------------------------------------
-bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
-                                              log::LogContext& logContext,
-                                              bool doReserve) {
+bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(
+  const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
+  log::LogContext& logContext,
+  bool doReserve) {
   if (m_externalFreeDiskSpaceScript.empty()) {
     logContext.log(cta::log::WARNING,
                    "In cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(): missing external script path to "
@@ -264,8 +265,8 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSp
         .add("diskSystemName", failedDiskSystem.first)
         .add("failureReason", failedDiskSystem.second.getMessageValue())
         .log(cta::log::WARNING,
-            "In cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(): unable to request EOS free space for "
-            "disk system using external script, backpressure will not be applied");
+             "In cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(): unable to request EOS free space for "
+             "disk system using external script, backpressure will not be applied");
     }
     return true;
   } catch (std::exception& ex) {
@@ -294,9 +295,9 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSp
         }
       }
     }
-    if (diskSystemFreeSpace.at(ds).freeSpace < diskSpaceReservationRequest.at(ds) +
-                                                 diskSystemFreeSpace.at(ds).targetedFreeSpace +
-                                                 previousDrivesReservationTotal) {
+    if (diskSystemFreeSpace.at(ds).freeSpace < diskSpaceReservationRequest.at(ds)
+                                                 + diskSystemFreeSpace.at(ds).targetedFreeSpace
+                                                 + previousDrivesReservationTotal) {
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", ds)
         .add("diskSystemCount", diskSystemNames.size())
@@ -314,7 +315,7 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSp
       dscount++;
     }
   }
-  if (dscount > 0){
+  if (dscount > 0) {
     return false;
   }
 
@@ -494,7 +495,10 @@ void cta::RetrieveMount::complete() {
 //------------------------------------------------------------------------------
 void cta::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveStatus status,
                                         const std::optional<std::string>& reason) {
-  m_dbMount->setDriveStatus(status, getMountType(), std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), reason);
+  m_dbMount->setDriveStatus(status,
+                            getMountType(),
+                            std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
+                            reason);
 }
 
 //------------------------------------------------------------------------------

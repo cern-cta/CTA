@@ -17,11 +17,10 @@
 
 #pragma once
 
+#include <common/checksum/ChecksumBlob.hpp>
 #include <list>
 #include <map>
 #include <string>
-
-#include <common/checksum/ChecksumBlob.hpp>
 
 namespace cta::common::dataStructures {
 

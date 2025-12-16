@@ -15,22 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <gtest/gtest.h>
+#include "catalogue/tests/modules/DiskInstanceCatalogueTest.hpp"
 
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/tests/CatalogueTestUtils.hpp"
-#include "catalogue/tests/modules/DiskInstanceCatalogueTest.hpp"
-#include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
+
+#include <gtest/gtest.h>
 
 namespace unitTests {
 
 cta_catalogue_DiskInstanceTest::cta_catalogue_DiskInstanceTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_admin(CatalogueTestUtils::getAdmin()) {
-}
+    : m_dummyLog("dummy", "dummy"),
+      m_admin(CatalogueTestUtils::getAdmin()) {}
 
 void cta_catalogue_DiskInstanceTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -54,7 +54,7 @@ TEST_P(cta_catalogue_DiskInstanceTest, createDiskInstance) {
   const auto diskInstanceList = m_catalogue->DiskInstance()->getAllDiskInstances();
   ASSERT_EQ(1, diskInstanceList.size());
 
-  const auto &diskInstance = diskInstanceList.front();
+  const auto& diskInstance = diskInstanceList.front();
   ASSERT_EQ(diskInstance.name, name);
   ASSERT_EQ(diskInstance.comment, comment);
 
@@ -75,7 +75,7 @@ TEST_P(cta_catalogue_DiskInstanceTest, createDiskInstance_twice) {
   const auto diskInstanceList = m_catalogue->DiskInstance()->getAllDiskInstances();
   ASSERT_EQ(1, diskInstanceList.size());
 
-  const auto &diskInstance = diskInstanceList.front();
+  const auto& diskInstance = diskInstanceList.front();
   ASSERT_EQ(diskInstance.name, name);
   ASSERT_EQ(diskInstance.comment, comment);
 
@@ -92,13 +92,13 @@ TEST_P(cta_catalogue_DiskInstanceTest, createDiskInstance_twice) {
 TEST_P(cta_catalogue_DiskInstanceTest, createDiskInstance_emptyName) {
   const std::string comment = "disk_instance_comment";
   ASSERT_THROW(m_catalogue->DiskInstance()->createDiskInstance(m_admin, "", comment),
-    cta::catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
+               cta::catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
 }
 
 TEST_P(cta_catalogue_DiskInstanceTest, createDiskInstance_emptyComment) {
   const std::string name = "disk_instance_name";
   ASSERT_THROW(m_catalogue->DiskInstance()->createDiskInstance(m_admin, name, ""),
-    cta::catalogue::UserSpecifiedAnEmptyStringComment);
+               cta::catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_DiskInstanceTest, deleteDiskInstance) {
@@ -110,7 +110,7 @@ TEST_P(cta_catalogue_DiskInstanceTest, deleteDiskInstance) {
   const auto diskInstanceList = m_catalogue->DiskInstance()->getAllDiskInstances();
   ASSERT_EQ(1, diskInstanceList.size());
 
-  const auto &diskInstance = diskInstanceList.front();
+  const auto& diskInstance = diskInstanceList.front();
   ASSERT_EQ(diskInstance.name, name);
   ASSERT_EQ(diskInstance.comment, comment);
 
@@ -139,7 +139,7 @@ TEST_P(cta_catalogue_DiskInstanceTest, modifyDiskInstanceComment) {
     const auto diskInstanceList = m_catalogue->DiskInstance()->getAllDiskInstances();
     ASSERT_EQ(1, diskInstanceList.size());
 
-    const auto &diskInstance = diskInstanceList.front();
+    const auto& diskInstance = diskInstanceList.front();
     ASSERT_EQ(diskInstance.name, name);
     ASSERT_EQ(diskInstance.comment, comment);
 
@@ -158,7 +158,7 @@ TEST_P(cta_catalogue_DiskInstanceTest, modifyDiskInstanceComment) {
     const auto diskInstanceList = m_catalogue->DiskInstance()->getAllDiskInstances();
     ASSERT_EQ(1, diskInstanceList.size());
 
-    const auto &diskInstance = diskInstanceList.front();
+    const auto& diskInstance = diskInstanceList.front();
     ASSERT_EQ(diskInstance.name, name);
     ASSERT_EQ(diskInstance.comment, modifiedComment);
 
@@ -177,7 +177,7 @@ TEST_P(cta_catalogue_DiskInstanceTest, modifyDiskInstanceComment_emptyName) {
     const auto diskInstanceList = m_catalogue->DiskInstance()->getAllDiskInstances();
     ASSERT_EQ(1, diskInstanceList.size());
 
-    const auto &diskInstance = diskInstanceList.front();
+    const auto& diskInstance = diskInstanceList.front();
     ASSERT_EQ(diskInstance.name, name);
     ASSERT_EQ(diskInstance.comment, comment);
 
@@ -190,7 +190,7 @@ TEST_P(cta_catalogue_DiskInstanceTest, modifyDiskInstanceComment_emptyName) {
   }
 
   ASSERT_THROW(m_catalogue->DiskInstance()->modifyDiskInstanceComment(m_admin, "", comment),
-    cta::catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
+               cta::catalogue::UserSpecifiedAnEmptyStringDiskInstanceName);
 }
 
 TEST_P(cta_catalogue_DiskInstanceTest, modifyDiskInstanceComment_emptyComment) {
@@ -202,7 +202,7 @@ TEST_P(cta_catalogue_DiskInstanceTest, modifyDiskInstanceComment_emptyComment) {
     const auto diskInstanceList = m_catalogue->DiskInstance()->getAllDiskInstances();
     ASSERT_EQ(1, diskInstanceList.size());
 
-    const auto &diskInstance = diskInstanceList.front();
+    const auto& diskInstance = diskInstanceList.front();
     ASSERT_EQ(diskInstance.name, name);
     ASSERT_EQ(diskInstance.comment, comment);
 
@@ -215,7 +215,7 @@ TEST_P(cta_catalogue_DiskInstanceTest, modifyDiskInstanceComment_emptyComment) {
   }
 
   ASSERT_THROW(m_catalogue->DiskInstance()->modifyDiskInstanceComment(m_admin, name, ""),
-    cta::catalogue::UserSpecifiedAnEmptyStringComment);
+               cta::catalogue::UserSpecifiedAnEmptyStringComment);
 }
 
 TEST_P(cta_catalogue_DiskInstanceTest, modifyDiskInstanceComment_nonExisting) {
@@ -223,8 +223,7 @@ TEST_P(cta_catalogue_DiskInstanceTest, modifyDiskInstanceComment_nonExisting) {
   const std::string comment = "disk_instance_comment";
 
   ASSERT_THROW(m_catalogue->DiskInstance()->modifyDiskInstanceComment(m_admin, name, comment),
-    cta::catalogue::UserSpecifiedANonExistentDiskInstance);
+               cta::catalogue::UserSpecifiedANonExistentDiskInstance);
 }
-
 
 }  // namespace unitTests

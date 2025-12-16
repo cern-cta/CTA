@@ -29,7 +29,7 @@ namespace cta::rdbms {
 namespace wrapper {
 class RsetWrapper;
 class IBlobView;
-}
+}  // namespace wrapper
 
 /**
  * A wrapper around an object that iterators over a result set from the
@@ -166,7 +166,6 @@ public:
   std::string columnBlob(const std::string& colName) const;
 
   std::unique_ptr<wrapper::IBlobView> columnBlobView(const std::string& colName) const;
-
 
   /**
    * Returns the value of the specified column as a string.

@@ -32,10 +32,13 @@ public:
    * @param context optional context string added to the message at initialisation time
    * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
    */
-  explicit UserError(const std::string& context = "", const bool embedBacktrace = true) :
-    Exception(context, embedBacktrace) {}
+  explicit UserError(const std::string& context = "", const bool embedBacktrace = true)
+      : Exception(context, embedBacktrace) {}
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception
 
-#define CTA_GENERATE_USER_EXCEPTION_CLASS(A) class A: public cta::exception::UserError { using UserError::UserError; }
+#define CTA_GENERATE_USER_EXCEPTION_CLASS(A)   \
+  class A : public cta::exception::UserError { \
+    using UserError::UserError;                \
+  }

@@ -18,15 +18,15 @@
 #include "FrontendGrpcService.hpp"
 
 #include "catalogue/Catalogue.hpp"
-#include "common/log/LogLevel.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/log/LogLevel.hpp"
 #include "frontend/common/FrontendService.hpp"
-#include "frontend/common/WorkflowEvent.hpp"
 #include "frontend/common/ValidateToken.hpp"
+#include "frontend/common/WorkflowEvent.hpp"
 #include "frontend/grpc/common/GrpcAuthUtils.hpp"
-
 #include "jwt-cpp/jwt.h"
+
 #include <optional>
 
 /*
@@ -50,7 +50,8 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
   // skip any metadata checks in case JWT Auth is disabled
   if (bool jwtAuthEnabled = m_frontendService->getJwtAuth(); !jwtAuthEnabled) {
     lc.log(cta::log::INFO, "Skipping token validation step as token authentication is disabled");
-    cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(), context->peer());
+    cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(),
+                                                                 context->peer());
     return {::grpc::Status::OK, clientIdentity};
   } else {
     auto [status, clientIdentity] =
@@ -69,8 +70,7 @@ Status CtaRpcImpl::processGrpcRequest(const cta::xrd::Request* request,
                                       cta::xrd::Response* response,
                                       cta::log::LogContext& lc,
                                       const cta::common::dataStructures::SecurityIdentity& clientIdentity) const {
-
-  if(!m_frontendService->getUserRequestsAllowed()){
+  if (!m_frontendService->getUserRequestsAllowed()) {
     constexpr const char* USER_REQUESTS_DISABLED_ERROR = "User requests are disabled.";
     response->set_message_txt(USER_REQUESTS_DISABLED_ERROR);
     response->set_type(xrd::Response::RSP_ERR_USER);
@@ -131,11 +131,11 @@ CtaRpcImpl::Create(::grpc::ServerContext* context, const cta::xrd::Request* requ
   // check that the workflow is set appropriately for the create event
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::CREATE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Unexpected workflow event type. Expected CREATE, found " +
-                              cta::eos::Workflow_EventType_Name(event));
+    response->set_message_txt("Unexpected workflow event type. Expected CREATE, found "
+                              + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
-                          "Unexpected workflow event type. Expected CREATE, found " +
-                            cta::eos::Workflow_EventType_Name(event));
+                          "Unexpected workflow event type. Expected CREATE, found "
+                            + cta::eos::Workflow_EventType_Name(event));
   }
   return processGrpcRequest(request, response, lc, clientIdentity.value());
 }
@@ -168,11 +168,11 @@ CtaRpcImpl::Archive(::grpc::ServerContext* context, const cta::xrd::Request* req
 
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::CLOSEW) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Unexpected workflow event type. Expected CLOSEW, found " +
-                              cta::eos::Workflow_EventType_Name(event));
+    response->set_message_txt("Unexpected workflow event type. Expected CLOSEW, found "
+                              + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
-                          "Unexpected workflow event type. Expected CLOSEW, found " +
-                            cta::eos::Workflow_EventType_Name(event));
+                          "Unexpected workflow event type. Expected CLOSEW, found "
+                            + cta::eos::Workflow_EventType_Name(event));
   }
 
   return processGrpcRequest(request, response, lc, clientIdentity.value());
@@ -201,11 +201,11 @@ CtaRpcImpl::Delete(::grpc::ServerContext* context, const cta::xrd::Request* requ
   // check validate request args
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::DELETE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Unexpected workflow event type. Expected DELETE, found " +
-                              cta::eos::Workflow_EventType_Name(event));
+    response->set_message_txt("Unexpected workflow event type. Expected DELETE, found "
+                              + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
-                          "Unexpected workflow event type. Expected DELETE, found " +
-                            cta::eos::Workflow_EventType_Name(event));
+                          "Unexpected workflow event type. Expected DELETE, found "
+                            + cta::eos::Workflow_EventType_Name(event));
   }
 
   if (request->notification().file().archive_file_id() == 0) {
@@ -241,11 +241,11 @@ CtaRpcImpl::Retrieve(::grpc::ServerContext* context, const cta::xrd::Request* re
 
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::PREPARE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Unexpected workflow event type. Expected PREPARE, found " +
-                              cta::eos::Workflow_EventType_Name(event));
+    response->set_message_txt("Unexpected workflow event type. Expected PREPARE, found "
+                              + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
-                          "Unexpected workflow event type. Expected PREPARE, found " +
-                            cta::eos::Workflow_EventType_Name(event));
+                          "Unexpected workflow event type. Expected PREPARE, found "
+                            + cta::eos::Workflow_EventType_Name(event));
   }
 
   const std::string storageClass = request->notification().file().storage_class();
@@ -301,11 +301,11 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
   // check validate request args
   if (auto event = request->notification().wf().event(); event != cta::eos::Workflow::ABORT_PREPARE) {
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt("Unexpected workflow event type. Expected ABORT_PREPARE, found " +
-                              cta::eos::Workflow_EventType_Name(event));
+    response->set_message_txt("Unexpected workflow event type. Expected ABORT_PREPARE, found "
+                              + cta::eos::Workflow_EventType_Name(event));
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT,
-                          "Unexpected workflow event type. Expected ABORT_PREPARE, found " +
-                            cta::eos::Workflow_EventType_Name(event));
+                          "Unexpected workflow event type. Expected ABORT_PREPARE, found "
+                            + cta::eos::Workflow_EventType_Name(event));
   }
 
   if (!request->notification().file().archive_file_id()) {
@@ -336,9 +336,8 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
   }
 
   // Check if repack requests are blocked
-  if(!m_frontendService->getRepackRequestsAllowed() &&
-        request->admincmd().subcmd() != admin::AdminCmd::SUBCMD_LS &&
-        request->admincmd().cmd() == admin::AdminCmd::CMD_REPACK){
+  if (!m_frontendService->getRepackRequestsAllowed() && request->admincmd().subcmd() != admin::AdminCmd::SUBCMD_LS
+      && request->admincmd().cmd() == admin::AdminCmd::CMD_REPACK) {
     constexpr const char* REPACK_REQUESTS_DISABLED_ERROR = "Repack requests are disabled.";
     response->set_message_txt(REPACK_REQUESTS_DISABLED_ERROR);
     response->set_type(xrd::Response::RSP_ERR_USER);

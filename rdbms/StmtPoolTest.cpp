@@ -26,12 +26,9 @@ namespace unitTests {
 
 class cta_rdbms_StmtPoolTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_StmtPoolTest, getStmt) {
@@ -120,7 +117,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
-      while(rset.next()) {
+      while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
       ASSERT_EQ(0, names.size());
@@ -135,7 +132,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
-      while(rset.next()) {
+      while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
       ASSERT_EQ(1, names.size());
@@ -154,7 +151,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
-      while(rset.next()) {
+      while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
       ASSERT_EQ(0, names.size());
@@ -169,7 +166,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
       std::list<std::string> names;
-      while(rset.next()) {
+      while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
       ASSERT_EQ(1, names.size());
@@ -241,6 +238,4 @@ TEST_F(cta_rdbms_StmtPoolTest, sameSqlTwoCachedStmts) {
   ASSERT_EQ(2, pool.getNbStmts());
 }
 
-
-
-} // namespace unitTests
+}  // namespace unitTests

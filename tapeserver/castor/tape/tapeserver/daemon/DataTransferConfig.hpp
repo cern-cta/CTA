@@ -88,12 +88,12 @@ struct DataTransferConfig {
    * Whether to use Recommended Access Order (RAO)
    */
   bool useRAO = false;
-  
+
   /**
    * Which RAO LTO algorithm to use
    */
   std::string raoLtoAlgorithm;
-  
+
   /**
    * Options to be provided to the raoLtoAlgorithm
    */
@@ -107,8 +107,8 @@ struct DataTransferConfig {
   /**
    * Path to the operator-provided encyption control script (empty string for none)
    */
-  std::string externalEncryptionKeyScript;  
-    
+  std::string externalEncryptionKeyScript;
+
   /**
    * Path to the operator-provided disk free space fetch script (empty string for none)
    */
@@ -135,4 +135,4 @@ struct DataTransferConfig {
   time_t wdGetNextMountMaxSecs = 900;
 };
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

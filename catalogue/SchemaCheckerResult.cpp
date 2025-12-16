@@ -15,16 +15,16 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <iostream>
-
 #include "SchemaCheckerResult.hpp"
+
+#include <iostream>
 
 namespace cta::catalogue {
 
 SchemaCheckerResult SchemaCheckerResult::operator+=(const SchemaCheckerResult& other) {
-  m_errors.insert(m_errors.end(),other.m_errors.begin(),other.m_errors.end());
-  m_warnings.insert(m_warnings.end(),other.m_warnings.begin(), other.m_warnings.end());
-  if(m_status == Status::SUCCESS) {
+  m_errors.insert(m_errors.end(), other.m_errors.begin(), other.m_errors.end());
+  m_warnings.insert(m_warnings.end(), other.m_warnings.begin(), other.m_warnings.end());
+  if (m_status == Status::SUCCESS) {
     // The status should not change if it is failed
     m_status = other.m_status;
   }
@@ -40,20 +40,20 @@ void SchemaCheckerResult::addWarning(const std::string& warning) {
   m_warnings.emplace_back(warning);
 }
 
-void SchemaCheckerResult::displayErrors(std::ostream & os) const {
-  for(auto &error: m_errors) {
+void SchemaCheckerResult::displayErrors(std::ostream& os) const {
+  for (auto& error : m_errors) {
     os << "  ERROR: " << error << std::endl;
   }
 }
 
 void SchemaCheckerResult::displayWarnings(std::ostream& os) const {
-  for(auto &warning: m_warnings) {
+  for (auto& warning : m_warnings) {
     os << "  WARNING: " << warning << std::endl;
   }
 }
 
 std::string SchemaCheckerResult::statusToString(const Status& status) {
-  switch(status) {
+  switch (status) {
     case Status::SUCCESS:
       return "SUCCESS";
     case Status::FAILED:
@@ -63,4 +63,4 @@ std::string SchemaCheckerResult::statusToString(const Status& status) {
   }
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

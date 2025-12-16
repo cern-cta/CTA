@@ -15,14 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/DriveConfig.hpp"
+
+#include "catalogue/Catalogue.hpp"
+#include "common/SourcedParameter.hpp"
+#include "tapeserver/daemon/common/FetchReportOrFlushLimits.hpp"
+
 #include <algorithm>
 #include <string>
 #include <utility>
-
-#include "catalogue/Catalogue.hpp"
-#include "catalogue/DriveConfig.hpp"
-#include "common/SourcedParameter.hpp"
-#include "tapeserver/daemon/common/FetchReportOrFlushLimits.hpp"
 
 namespace cta {
 
@@ -73,13 +74,15 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfigu
   setConfigToDB(tapedConfiguration.metricsOtlpEndpoint, catalogue, tapeDriveName);
 }
 
-void DriveConfig::checkConfigInDB(catalogue::Catalogue* catalogue, const std::string& tapeDriveName,
-  const std::string& key) {
+void DriveConfig::checkConfigInDB(catalogue::Catalogue* catalogue,
+                                  const std::string& tapeDriveName,
+                                  const std::string& key) {
   auto namesAndKeys = catalogue->DriveConfig()->getTapeDriveConfigNamesAndKeys();
-  auto it = std::find_if(namesAndKeys.begin(), namesAndKeys.end(),
-    [&tapeDriveName, &key](const std::pair<std::string, std::string>& element) {
-      return element.first == tapeDriveName && element.second == key;
-    });
+  auto it = std::find_if(namesAndKeys.begin(),
+                         namesAndKeys.end(),
+                         [&tapeDriveName, &key](const std::pair<std::string, std::string>& element) {
+                           return element.first == tapeDriveName && element.second == key;
+                         });
   if (it != namesAndKeys.end()) {
     catalogue->DriveConfig()->deleteTapeDriveConfig(tapeDriveName, key);
   }
@@ -89,8 +92,11 @@ void DriveConfig::setConfigToDB(const SourcedParameter<std::string>& sourcedPara
                                 catalogue::Catalogue* catalogue,
                                 const std::string& tapeDriveName) {
   checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
-                                                  sourcedParameter.value(), sourcedParameter.source());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  sourcedParameter.key(),
+                                                  sourcedParameter.value(),
+                                                  sourcedParameter.source());
 }
 
 void DriveConfig::setConfigToDB(
@@ -101,12 +107,16 @@ void DriveConfig::setConfigToDB(
   utils::searchAndReplace(key, "Bytes", "");
   utils::searchAndReplace(key, "Files", "");
   checkConfigInDB(catalogue, tapeDriveName, key.append("Files"));
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), key,
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  key,
                                                   std::to_string(sourcedParameter.value().maxFiles),
                                                   sourcedParameter.source());
   utils::searchAndReplace(key, "Files", "");
   checkConfigInDB(catalogue, tapeDriveName, key.append("Bytes"));
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), key,
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  key,
                                                   std::to_string(sourcedParameter.value().maxBytes),
                                                   sourcedParameter.source());
 }
@@ -115,24 +125,33 @@ void DriveConfig::setConfigToDB(const SourcedParameter<uint32_t>& sourcedParamet
                                 catalogue::Catalogue* catalogue,
                                 const std::string& tapeDriveName) {
   checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
-                                                  std::to_string(sourcedParameter.value()), sourcedParameter.source());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  sourcedParameter.key(),
+                                                  std::to_string(sourcedParameter.value()),
+                                                  sourcedParameter.source());
 }
 
 void DriveConfig::setConfigToDB(const SourcedParameter<uint64_t>& sourcedParameter,
                                 catalogue::Catalogue* catalogue,
                                 const std::string& tapeDriveName) {
   checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
-                                                  std::to_string(sourcedParameter.value()), sourcedParameter.source());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  sourcedParameter.key(),
+                                                  std::to_string(sourcedParameter.value()),
+                                                  sourcedParameter.source());
 }
 
 void DriveConfig::setConfigToDB(const SourcedParameter<time_t>& sourcedParameter,
                                 catalogue::Catalogue* catalogue,
                                 const std::string& tapeDriveName) {
   checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
-  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName, sourcedParameter.category(), sourcedParameter.key(),
-                                                  std::to_string(sourcedParameter.value()), sourcedParameter.source());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  sourcedParameter.key(),
+                                                  std::to_string(sourcedParameter.value()),
+                                                  sourcedParameter.source());
 }
 
 void DriveConfig::setConfigToDB(const SourcedParameter<bool>& sourcedParameter,

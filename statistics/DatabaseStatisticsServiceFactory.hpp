@@ -17,15 +17,16 @@
 
 #pragma once
 
+#include "DatabaseStatisticsService.hpp"
+
 #include <memory>
 
-#include "DatabaseStatisticsService.hpp"
 namespace cta::statistics {
 
 class DatabaseStatisticsServiceFactory {
- public:
+public:
   static std::unique_ptr<DatabaseStatisticsService> create(cta::rdbms::Conn* databaseConnection,
-    cta::rdbms::Login::DbType dbType);
+                                                           cta::rdbms::Login::DbType dbType);
 };
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

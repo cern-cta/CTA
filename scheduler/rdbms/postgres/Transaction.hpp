@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include "rdbms/ConnPool.hpp"
 #include "common/log/LogContext.hpp"
+#include "rdbms/ConnPool.hpp"
 
-#include <thread>
 #include <chrono>
+#include <thread>
 
 namespace cta::schedulerdb {
 
@@ -29,7 +29,7 @@ class Transaction {
 public:
   CTA_GENERATE_EXCEPTION_CLASS(SQLError);
   static constexpr int MAX_TXN_START_RETRIES = 3;
-  static constexpr std::chrono::milliseconds BASE_BACKOFF{1000};
+  static constexpr std::chrono::milliseconds BASE_BACKOFF {1000};
 
   // Constructors
   explicit Transaction(cta::rdbms::ConnPool& connPool, log::LogContext& logContext);
@@ -103,9 +103,8 @@ public:
    */
   void resetConn(cta::rdbms::ConnPool& connPool);
 
-  bool isDead(){
-    return !m_begin;
-  }
+  bool isDead() { return !m_begin; }
+
 private:
   bool m_begin = false;
   std::unique_ptr<cta::rdbms::Conn> m_conn;

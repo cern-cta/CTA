@@ -2,8 +2,9 @@
 
 #include "common/JwkCache.hpp"
 #include "common/log/LogContext.hpp"
-#include <string>
+
 #include <optional>
+#include <string>
 
 namespace cta {
 
@@ -14,4 +15,4 @@ struct TokenValidationResult {
 
 TokenValidationResult
 validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, cta::log::LogContext& logContext);
-}
+}  // namespace cta

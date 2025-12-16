@@ -17,12 +17,6 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
-
-#include <list>
-#include <map>
-#include <memory>
-
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
@@ -33,9 +27,14 @@
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/log/DummyLogger.hpp"
 
+#include <gtest/gtest.h>
+#include <list>
+#include <map>
+#include <memory>
+
 namespace unitTests {
 
-class cta_catalogue_TapeTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_TapeTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_TapeTest();
 
@@ -55,8 +54,8 @@ protected:
   const cta::catalogue::CreateTapeAttributes m_tape2;
   const cta::catalogue::CreateTapeAttributes m_tape3;
 
-  std::map<std::string, cta::common::dataStructures::Tape> tapeListToMap(
-    const std::list<cta::common::dataStructures::Tape> &listOfTapes);
+  std::map<std::string, cta::common::dataStructures::Tape>
+  tapeListToMap(const std::list<cta::common::dataStructures::Tape>& listOfTapes);
 };
 
 }  // namespace unitTests

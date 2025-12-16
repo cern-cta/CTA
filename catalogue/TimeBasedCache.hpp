@@ -21,13 +21,13 @@
 #include "common/process/threading/Mutex.hpp"
 #include "common/process/threading/MutexLocker.hpp"
 
-#include <chrono>
 #include <atomic>
+#include <chrono>
 #include <map>
 
 namespace cta::catalogue {
 
-template <typename Key, typename Value>
+template<typename Key, typename Value>
 class TimeBasedCache {
 public:
   /**
@@ -35,36 +35,38 @@ public:
    *
    * @param m Maximum age of a cached value in seconds
    */
-  explicit TimeBasedCache(const time_t m) : m_maxAgeSecs(m) { }
+  explicit TimeBasedCache(const time_t m) : m_maxAgeSecs(m) {}
 
   /**
    * Get the cached value corresponding to the specified key.
    *
    * This method updates the cache when necessary.
    */
-  template<typename Callable> ValueAndTimeBasedCacheInfo<Value> getCachedValue(const Key &key, const Callable &getNonCachedValue) {
+  template<typename Callable>
+  ValueAndTimeBasedCacheInfo<Value> getCachedValue(const Key& key, const Callable& getNonCachedValue) {
     const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
     threading::MutexLocker cacheLock(m_mutex);
     const auto cacheItor = m_cache.find(key);
     const bool cacheHit = m_cache.end() != cacheItor;
 
-    if(cacheHit) {
-      auto &cachedValue = *(cacheItor->second);
+    if (cacheHit) {
+      auto& cachedValue = *(cacheItor->second);
       const time_t ageSecs = now - cachedValue.timestamp;
 
-      if (m_maxAgeSecs >= ageSecs) { // Cached value is fresh
+      if (m_maxAgeSecs >= ageSecs) {  // Cached value is fresh
         return ValueAndTimeBasedCacheInfo<Value>(cachedValue.value, "Fresh value found in cache");
-      } else { // Cached value is stale
+      } else {  // Cached value is stale
         cachedValue.value = getNonCachedValue();
         cachedValue.timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
         return ValueAndTimeBasedCacheInfo<Value>(cachedValue.value, "Stale value found and replaced in cache");
       }
-    } else { // No cache hit
-      const auto emplaceResult = m_cache.emplace(std::make_pair(key,
-        std::make_unique<TimestampedValue>(now, getNonCachedValue())));
-      return ValueAndTimeBasedCacheInfo<Value>(emplaceResult.first->second->value, "First time value entered into cache");
+    } else {  // No cache hit
+      const auto emplaceResult =
+        m_cache.emplace(std::make_pair(key, std::make_unique<TimestampedValue>(now, getNonCachedValue())));
+      return ValueAndTimeBasedCacheInfo<Value>(emplaceResult.first->second->value,
+                                               "First time value entered into cache");
     }
   }
 
@@ -76,14 +78,13 @@ public:
    */
   void invalidate() {
     threading::MutexLocker cacheLock(m_mutex);
-    for(auto &cacheMaplet: m_cache) {
-      auto &cachedValue = *(cacheMaplet.second);
+    for (auto& cacheMaplet : m_cache) {
+      auto& cachedValue = *(cacheMaplet.second);
       cachedValue.timestamp = 0;
     }
   }
 
 private:
-
   /**
    * Maximum age of a cached value in seconds.
    */
@@ -98,12 +99,10 @@ private:
    * A timestamped value.
    */
   struct TimestampedValue {
-
     /**
      * Constructor.
      */
-    TimestampedValue(): timestamp(0) {
-    }
+    TimestampedValue() : timestamp(0) {}
 
     /**
      * Constructor.
@@ -111,8 +110,7 @@ private:
      * @param t The timestamp.
      * @param v The value.
      */
-    TimestampedValue(const time_t t, const Value &v): timestamp(t), value(v) {
-    }
+    TimestampedValue(const time_t t, const Value& v) : timestamp(t), value(v) {}
 
     /**
      * The timestamp.
@@ -123,12 +121,12 @@ private:
      * The value.
      */
     Value value;
-  }; // struct TimestampedValue
+  };  // struct TimestampedValue
 
   /**
    * The cache.
    */
-  std::map<Key, std::unique_ptr<TimestampedValue> > m_cache;
-}; // class TimeBasedCache
+  std::map<Key, std::unique_ptr<TimestampedValue>> m_cache;
+};  // class TimeBasedCache
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

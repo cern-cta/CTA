@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include "common/dataStructures/EntryLog.hpp"
+
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/EntryLog.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -31,8 +31,8 @@ namespace cta::common::dataStructures {
  */
 struct AdminUser {
   AdminUser() = default;
-  bool operator==(const AdminUser &rhs) const;
-  bool operator!=(const AdminUser &rhs) const;
+  bool operator==(const AdminUser& rhs) const;
+  bool operator!=(const AdminUser& rhs) const;
 
   std::string name;
   EntryLog creationLog;
@@ -40,6 +40,6 @@ struct AdminUser {
   std::string comment;
 };
 
-std::ostream &operator<<(std::ostream &os, const AdminUser &obj);
+std::ostream& operator<<(std::ostream& os, const AdminUser& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

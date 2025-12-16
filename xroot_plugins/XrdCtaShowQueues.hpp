@@ -17,15 +17,15 @@
 
 #pragma once
 
-#include "xroot_plugins/XrdCtaStream.hpp"
 #include "frontend/common/ShowQueuesResponseStream.hpp"
+#include "xroot_plugins/XrdCtaStream.hpp"
 
 namespace cta::xrd {
 
 /*!
  * Stream object which implements "tapepool ls" command
  */
-class ShowQueuesStream: public XrdCtaStream{
+class ShowQueuesStream : public XrdCtaStream {
 public:
   /*!
    * Constructor
@@ -34,11 +34,13 @@ public:
    * @param[in]    catalogue     CTA Catalogue
    * @param[in]    scheduler     CTA Scheduler
    */
-  ShowQueuesStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue& catalogue,
-    cta::Scheduler& scheduler, log::LogContext& lc);
+  ShowQueuesStream(const frontend::AdminCmdStream& requestMsg,
+                   cta::catalogue::Catalogue& catalogue,
+                   cta::Scheduler& scheduler,
+                   log::LogContext& lc);
 
 private:
-  static constexpr const char* const LOG_SUFFIX  = "ShowQueuesStream";                   //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "ShowQueuesStream";  //!< Identifier for log messages
 };
 
 inline ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& requestMsg,
@@ -54,4 +56,4 @@ inline ShowQueuesStream::ShowQueuesStream(const frontend::AdminCmdStream& reques
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

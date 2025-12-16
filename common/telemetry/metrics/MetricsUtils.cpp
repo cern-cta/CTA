@@ -15,12 +15,14 @@
  *               submit itself to any jurisdiction.
  */
 #include "MetricsUtils.hpp"
+
+#include "version.h"
+
 #include <opentelemetry/metrics/provider.h>
+#include <opentelemetry/sdk/metrics/meter_provider.h>
 #include <opentelemetry/sdk/metrics/view/instrument_selector_factory.h>
 #include <opentelemetry/sdk/metrics/view/meter_selector_factory.h>
 #include <opentelemetry/sdk/metrics/view/view_factory.h>
-#include <opentelemetry/sdk/metrics/meter_provider.h>
-#include "version.h"
 
 namespace cta::telemetry::metrics {
 

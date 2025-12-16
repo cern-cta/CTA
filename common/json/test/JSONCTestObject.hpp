@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "common/json/object/JSONCObject.hpp"
 #include "TestObject.hpp"
+#include "common/json/object/JSONCObject.hpp"
 
 namespace unitTests {
 
@@ -28,9 +28,9 @@ namespace unitTests {
 class JSONCTestObject : public cta::utils::json::object::JSONCObject, public TestObject {
 public:
   JSONCTestObject();
-  void buildFromJSON(const std::string & json) override;
+  void buildFromJSON(const std::string& json) override;
   std::string getExpectedJSONToBuildObject() const override;
   std::string getJSON() override;
   ~JSONCTestObject() final = default;
 };
-}
+}  // namespace unitTests

@@ -26,7 +26,7 @@ namespace cta::mediachanger {
 /**
  * Class representing a slot in a SCSI tape-library.
  */
-class ScsiLibrarySlot: public LibrarySlot {
+class ScsiLibrarySlot : public LibrarySlot {
 public:
   /**
    * Constructor
@@ -52,7 +52,7 @@ public:
    *
    * @return The clone.
    */
-  LibrarySlot *clone() final;
+  LibrarySlot* clone() final;
 
   /**
    * Gets the drive ordinal.
@@ -75,7 +75,6 @@ private:
    */
   std::string librarySlotToString(const uint16_t drvOrd);
 
-}; // class ScsiLibrarySlot
+};  // class ScsiLibrarySlot
 
-} // namespace cta::mediachanger
-
+}  // namespace cta::mediachanger

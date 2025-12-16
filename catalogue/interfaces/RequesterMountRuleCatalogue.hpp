@@ -24,7 +24,7 @@ namespace cta {
 namespace common::dataStructures {
 class SecurityIdentity;
 struct RequesterMountRule;
-}
+}  // namespace common::dataStructures
 
 namespace catalogue {
 
@@ -32,11 +32,15 @@ class RequesterMountRuleCatalogue {
 public:
   virtual ~RequesterMountRuleCatalogue() = default;
 
-  virtual void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &instanceName, const std::string &requesterName, const std::string &mountPolicy) = 0;
+  virtual void modifyRequesterMountRulePolicy(const common::dataStructures::SecurityIdentity& admin,
+                                              const std::string& instanceName,
+                                              const std::string& requesterName,
+                                              const std::string& mountPolicy) = 0;
 
-  virtual void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &instanceName, const std::string &requesterName, const std::string &comment) = 0;
+  virtual void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity& admin,
+                                              const std::string& instanceName,
+                                              const std::string& requesterName,
+                                              const std::string& comment) = 0;
 
   /**
    * Creates the rule that the specified mount policy will be used for the
@@ -53,12 +57,11 @@ public:
    * be unique within its disk instance.
    * @param comment Comment.
    */
-  virtual void createRequesterMountRule(
-    const common::dataStructures::SecurityIdentity &admin,
-    const std::string &mountPolicyName,
-    const std::string &diskInstance,
-    const std::string &requesterName,
-    const std::string &comment) = 0;
+  virtual void createRequesterMountRule(const common::dataStructures::SecurityIdentity& admin,
+                                        const std::string& mountPolicyName,
+                                        const std::string& diskInstance,
+                                        const std::string& requesterName,
+                                        const std::string& comment) = 0;
 
   /**
    * Returns the rules that specify which mount policy is be used for which
@@ -77,7 +80,8 @@ public:
    * @param requesterName The name of the requester which is only guaranteed to
    * be unique within its disk instance.
    */
-  virtual void deleteRequesterMountRule(const std::string &diskInstanceName, const std::string &requesterName) = 0;
+  virtual void deleteRequesterMountRule(const std::string& diskInstanceName, const std::string& requesterName) = 0;
 };
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

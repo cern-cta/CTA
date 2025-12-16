@@ -17,14 +17,13 @@
 
 #pragma once
 
-#include "mediachanger/MessageHeader.hpp"
 #include "common/exception/Exception.hpp"
+#include "mediachanger/MessageHeader.hpp"
 
 #include <errno.h>
 #include <stdint.h>
 #include <string>
 #include <time.h>
-
 
 namespace cta::mediachanger {
 
@@ -37,8 +36,7 @@ namespace cta::mediachanger {
  * @param src    The source structure.
  * @return       The total length of the header.
  */
-size_t marshal(char *const dst, const size_t dstLen,
-  const MessageHeader &src);
+size_t marshal(char* const dst, const size_t dstLen, const MessageHeader& src);
 
 /**
  * Marshals the specified source message header structure into the
@@ -48,8 +46,8 @@ size_t marshal(char *const dst, const size_t dstLen,
  * @param src The source structure.
  * @return    The total length of the header.
  */
-template<int n> size_t marshal(char (&dst)[n],
-  const MessageHeader &src)  {
+template<int n>
+size_t marshal(char (&dst)[n], const MessageHeader& src) {
   return marshal(dst, n, src);
 }
 
@@ -67,8 +65,6 @@ template<int n> size_t marshal(char (&dst)[n],
  *               the source buffer.
  * @param dst    The destination structure.
  */
-void unmarshal(const char * &src, size_t &srcLen, MessageHeader &dst);
+void unmarshal(const char*& src, size_t& srcLen, MessageHeader& dst);
 
-} // namespace cta::mediachanger
-
-
+}  // namespace cta::mediachanger

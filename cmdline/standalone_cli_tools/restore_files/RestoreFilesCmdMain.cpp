@@ -15,24 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-
-#include <sstream>
-#include <iostream>
-
-#include <XrdSsiPbLog.hpp>
-#include <XrdSsiPbIStreamBuffer.hpp>
-
 #include "RestoreFilesCmd.hpp"
-#include "common/utils/utils.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/utils/utils.hpp"
+
+#include <XrdSsiPbIStreamBuffer.hpp>
+#include <XrdSsiPbLog.hpp>
+#include <iostream>
+#include <sstream>
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int main(const int argc, char *const *const argv) {
+int main(const int argc, char* const* const argv) {
   char buf[256];
   std::string hostName;
-  if(gethostname(buf, sizeof(buf))) {
+  if (gethostname(buf, sizeof(buf))) {
     hostName = "UNKNOWN";
   } else {
     buf[sizeof(buf) - 1] = '\0';

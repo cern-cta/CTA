@@ -16,6 +16,7 @@
  */
 
 #include "TapePoolLsResponseStream.hpp"
+
 #include "catalogue/TapePoolSearchCriteria.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
 

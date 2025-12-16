@@ -17,19 +17,9 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#include <limits>
-#include <list>
-#include <map>
-#include <memory>
-#include <set>
-#include <stdexcept>
-#include <string>
-#include <vector>
-
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeForWriting.hpp"
+#include "common/MountControl.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
@@ -37,13 +27,13 @@
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/dataStructures/CancelRetrieveRequest.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
+#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
-#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
@@ -51,12 +41,21 @@
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/MountControl.hpp"
 #include "common/remoteFS/RemotePathAndStatus.hpp"
 #include "disk/DiskSystem.hpp"
+#include "rdbms/Rset.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
-#include "rdbms/Rset.hpp"
+
+#include <limits>
+#include <list>
+#include <map>
+#include <memory>
+#include <set>
+#include <stdexcept>
+#include <stdint.h>
+#include <string>
+#include <vector>
 
 namespace cta {
 
@@ -244,9 +243,9 @@ public:
     friend class ArchiveMount;
 
   public:
-    uint64_t jobID = 0;  // for schedulerdb model
-    uint64_t archiveRequestId = 0; // for schedulerdb model
-    uint64_t requestJobCount = 0; // for schedulerdb model
+    uint64_t jobID = 0;             // for schedulerdb model
+    uint64_t archiveRequestId = 0;  // for schedulerdb model
+    uint64_t requestJobCount = 0;   // for schedulerdb model
     std::string srcURL;
     std::string archiveReportURL;
     std::string errorReportURL;
@@ -812,12 +811,12 @@ public:
       if (priority > other.priority) {
         return false;
       }
-      if (type == cta::common::dataStructures::MountType::ArchiveForUser &&
-          other.type != cta::common::dataStructures::MountType::ArchiveForUser) {
+      if (type == cta::common::dataStructures::MountType::ArchiveForUser
+          && other.type != cta::common::dataStructures::MountType::ArchiveForUser) {
         return false;
       }
-      if (other.type == cta::common::dataStructures::MountType::ArchiveForUser &&
-          type != cta::common::dataStructures::MountType::ArchiveForUser) {
+      if (other.type == cta::common::dataStructures::MountType::ArchiveForUser
+          && type != cta::common::dataStructures::MountType::ArchiveForUser) {
         return true;
       }
       // If we have achieved a HIGHER ratio of our mount allowance, then the other mount will be privileged

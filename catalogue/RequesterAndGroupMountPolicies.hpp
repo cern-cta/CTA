@@ -28,7 +28,6 @@ namespace cta::catalogue {
  * requester-group mount-policies.
  */
 struct RequesterAndGroupMountPolicies {
-
   /**
    * List of requester activity mount-policies.
    */
@@ -44,6 +43,6 @@ struct RequesterAndGroupMountPolicies {
    */
   std::list<common::dataStructures::MountPolicy> requesterGroupMountPolicies;
 
-}; // struct RequesterAndGroupMountPolicies
+};  // struct RequesterAndGroupMountPolicies
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -15,8 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueTapeContentsItor.hpp"
+
+#include "catalogue/CatalogueItor.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
@@ -25,53 +26,54 @@
 namespace cta::catalogue {
 
 namespace {
-  /**
+/**
    * Populates an ArchiveFile object with the current column values of the
    * specified result set.
    *
    * @param rset The result set to be used to populate the ArchiveFile object.
    * @return The populated ArchiveFile object.
    */
-  common::dataStructures::ArchiveFile rsetToArchiveFile(const rdbms::Rset &rset) {
-    common::dataStructures::ArchiveFile archiveFile;
+common::dataStructures::ArchiveFile rsetToArchiveFile(const rdbms::Rset& rset) {
+  common::dataStructures::ArchiveFile archiveFile;
 
-    archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
-    archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
-    archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
-    archiveFile.diskFileInfo.owner_uid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_UID"));
-    archiveFile.diskFileInfo.gid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_GID"));
-    archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-    archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"),
-      static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
-    archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
-    archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
-    archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
+  archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+  archiveFile.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
+  archiveFile.diskFileId = rset.columnString("DISK_FILE_ID");
+  archiveFile.diskFileInfo.owner_uid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_UID"));
+  archiveFile.diskFileInfo.gid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_GID"));
+  archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
+  archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"),
+                                                   static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
+  archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
+  archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
+  archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
 
-    common::dataStructures::TapeFile tapeFile;
-    tapeFile.vid = rset.columnString("VID");
-    tapeFile.fSeq = rset.columnUint64("FSEQ");
-    tapeFile.blockId = rset.columnUint64("BLOCK_ID");
-    tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
-    tapeFile.copyNb = static_cast<uint8_t>(rset.columnUint64("COPY_NB"));
-    tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-    tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
+  common::dataStructures::TapeFile tapeFile;
+  tapeFile.vid = rset.columnString("VID");
+  tapeFile.fSeq = rset.columnUint64("FSEQ");
+  tapeFile.blockId = rset.columnUint64("BLOCK_ID");
+  tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
+  tapeFile.copyNb = static_cast<uint8_t>(rset.columnUint64("COPY_NB"));
+  tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
+  tapeFile.checksumBlob = archiveFile.checksumBlob;  // Duplicated for convenience
 
-    archiveFile.tapeFiles.push_back(tapeFile);
+  archiveFile.tapeFiles.push_back(tapeFile);
 
-    return archiveFile;
-  }
-} // anonymous namespace
+  return archiveFile;
+}
+}  // anonymous namespace
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RdbmsCatalogueTapeContentsItor::RdbmsCatalogueTapeContentsItor(
-  log::Logger &log,
-  rdbms::ConnPool &connPool,
-  const std::string &vid) :
-  m_log(log),
-  m_vid(vid) {
-  if (vid.empty()) throw exception::Exception("vid is an empty string");
+RdbmsCatalogueTapeContentsItor::RdbmsCatalogueTapeContentsItor(log::Logger& log,
+                                                               rdbms::ConnPool& connPool,
+                                                               const std::string& vid)
+    : m_log(log),
+      m_vid(vid) {
+  if (vid.empty()) {
+    throw exception::Exception("vid is an empty string");
+  }
 
   std::string sql = R"SQL(
     SELECT /*+ INDEX (TAPE_FILE TAPE_FILE_VID_IDX) */
@@ -117,7 +119,9 @@ RdbmsCatalogueTapeContentsItor::RdbmsCatalogueTapeContentsItor(
   m_stmt.bindString(":VID", vid);
   m_rset = m_stmt.executeQuery();
   m_rsetIsEmpty = !m_rset.next();
-  if(m_rsetIsEmpty) releaseDbResources();
+  if (m_rsetIsEmpty) {
+    releaseDbResources();
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -148,19 +152,23 @@ bool RdbmsCatalogueTapeContentsItor::hasMore() {
 // next
 //------------------------------------------------------------------------------
 common::dataStructures::ArchiveFile RdbmsCatalogueTapeContentsItor::next() {
-  if(!m_hasMoreHasBeenCalled) {
+  if (!m_hasMoreHasBeenCalled) {
     throw exception::Exception("hasMore() must be called before next()");
   }
   m_hasMoreHasBeenCalled = false;
 
   // If there are no more rows in the result set
-  if(m_rsetIsEmpty) throw exception::Exception("next() was called with no more rows in the result set");
+  if (m_rsetIsEmpty) {
+    throw exception::Exception("next() was called with no more rows in the result set");
+  }
 
   auto archiveFile = rsetToArchiveFile(m_rset);
   m_rsetIsEmpty = !m_rset.next();
-  if(m_rsetIsEmpty) releaseDbResources();
+  if (m_rsetIsEmpty) {
+    releaseDbResources();
+  }
 
   return archiveFile;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

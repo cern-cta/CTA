@@ -22,8 +22,8 @@
 
 #include <map>
 #include <memory>
-#include <stdint.h>
 #include <sqlite3.h>
+#include <stdint.h>
 
 namespace cta::rdbms::wrapper {
 
@@ -33,9 +33,8 @@ class SqliteRset;
 /**
  * A convenience wrapper around an SQLite prepared statement.
  */
-class SqliteStmt: public StmtWrapper {
+class SqliteStmt : public StmtWrapper {
 public:
-
   /**
    * Constructor.
    *
@@ -45,7 +44,7 @@ public:
    * @param conn The database connection.
    * @param sql The SQL statement.
    */
-  SqliteStmt(SqliteConn &conn, const std::string &sql);
+  SqliteStmt(SqliteConn& conn, const std::string& sql);
 
   /**
    * Destructor.
@@ -70,7 +69,7 @@ public:
    *
    * @return the underlying prepared statement.
    */
-  sqlite3_stmt *get() const;
+  sqlite3_stmt* get() const;
 
   /**
    * Binds an SQL parameter.
@@ -78,7 +77,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint8(const std::string &paramName, const std::optional<uint8_t> &paramValue) override;
+  void bindUint8(const std::string& paramName, const std::optional<uint8_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -86,7 +85,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint16(const std::string &paramName, const std::optional<uint16_t> &paramValue) override;
+  void bindUint16(const std::string& paramName, const std::optional<uint16_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -94,7 +93,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint32(const std::string &paramName, const std::optional<uint32_t> &paramValue) override;
+  void bindUint32(const std::string& paramName, const std::optional<uint32_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -102,7 +101,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindUint64(const std::string &paramName, const std::optional<uint64_t> &paramValue) override;
+  void bindUint64(const std::string& paramName, const std::optional<uint64_t>& paramValue) override;
 
   /**
    * Binds an SQL parameter.
@@ -110,7 +109,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindDouble(const std::string &paramName, const std::optional<double> &paramValue) override;
+  void bindDouble(const std::string& paramName, const std::optional<double>& paramValue) override;
 
   /**
    * Binds an SQL parameter of type binary string (byte array).
@@ -118,7 +117,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindBlob(const std::string &paramName, const std::string &paramValue) override;
+  void bindBlob(const std::string& paramName, const std::string& paramValue) override;
 
   /**
    * Binds an SQL parameter of type optional-string.
@@ -130,7 +129,7 @@ public:
    * @param paramName The name of the parameter.
    * @param paramValue The value to be bound.
    */
-  void bindString(const std::string &paramName, const std::optional<std::string> &paramValue) override;
+  void bindString(const std::string& paramName, const std::optional<std::string>& paramValue) override;
 
   /**
    * Executes the statement and returns the result set.
@@ -176,7 +175,6 @@ public:
   std::string getDbNamespace() const override;
 
 private:
-
   /**
    * Mutex used to serialize access to the prepared statement.
    */
@@ -185,12 +183,12 @@ private:
   /**
    * The SQL connection.
    */
-  SqliteConn &m_conn;
+  SqliteConn& m_conn;
 
   /**
    * The prepared statement.
    */
-  sqlite3_stmt *m_stmt = nullptr;
+  sqlite3_stmt* m_stmt = nullptr;
 
   /**
    * The number of rows affected by the last execution of this statement.
@@ -207,6 +205,6 @@ private:
    */
   static bool autocommitModeToBool(const AutocommitMode autocommitMode);
 
-}; // class SqlLiteStmt
+};  // class SqlLiteStmt
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

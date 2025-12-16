@@ -18,7 +18,8 @@
 
 namespace cta::objectstore {
 
-  template<>
-  const std::string ContainerTraits<RetrieveQueue,RetrieveQueueToReportToRepackForSuccess>::c_containerTypeName = "RetrieveQueueToReportToRepackForSuccess";
-  
+template<>
+const std::string ContainerTraits<RetrieveQueue, RetrieveQueueToReportToRepackForSuccess>::c_containerTypeName =
+  "RetrieveQueueToReportToRepackForSuccess";
+
 }

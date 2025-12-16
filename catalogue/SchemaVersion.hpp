@@ -28,12 +28,9 @@ class SchemaVersion {
 public:
   class Builder;
 
-  using MajorMinor = std::pair<uint64_t,uint64_t>;
+  using MajorMinor = std::pair<uint64_t, uint64_t>;
 
-  enum class Status{
-    UPGRADING,
-    PRODUCTION
-  };
+  enum class Status { UPGRADING, PRODUCTION };
 
   SchemaVersion() = default;
 
@@ -54,7 +51,7 @@ private:
   std::optional<uint64_t> m_nextSchemaVersionMinor;
 };
 
-class SchemaVersion::Builder{
+class SchemaVersion::Builder {
 public:
   Builder() = default;
   Builder& schemaVersionMajor(const uint64_t schemaVersionMajor);
@@ -62,8 +59,9 @@ public:
   Builder& nextSchemaVersionMajor(const uint64_t pNextSchemaVersionMajor);
   Builder& nextSchemaVersionMinor(const uint64_t pNextSchemaVersionMinor);
   Builder& status(const std::string& status);
-  Builder& status(const SchemaVersion::Status & pstatus);
+  Builder& status(const SchemaVersion::Status& pstatus);
   SchemaVersion build() const;
+
 private:
   void validate() const;
   SchemaVersion m_schemaVersion;
@@ -73,4 +71,4 @@ private:
   static std::map<std::string, SchemaVersion::Status, std::less<>> s_mapStringStatus;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/CmdLineTool.hpp"
+
 #include "common/exception/CommandLineNotParsed.hpp"
 
 #include <cstring>
@@ -26,14 +27,10 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CmdLineTool::CmdLineTool(
-  std::istream &inStream,
-  std::ostream &outStream,
-  std::ostream &errStream) noexcept:
-  m_in(inStream),
-  m_out(outStream),
-  m_err(errStream) {
-}
+CmdLineTool::CmdLineTool(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) noexcept
+    : m_in(inStream),
+      m_out(outStream),
+      m_err(errStream) {}
 
 //------------------------------------------------------------------------------
 // default destructor for abstract base class
@@ -67,20 +64,20 @@ std::string CmdLineTool::getHostname() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int CmdLineTool::mainImpl(const int argc, char *const *const argv) {
+int CmdLineTool::mainImpl(const int argc, char* const* const argv) {
   bool cmdLineNotParsed = false;
   std::string errorMessage;
 
   try {
     return exceptionThrowingMain(argc, argv);
-  } catch(exception::CommandLineNotParsed &ue) {
+  } catch (exception::CommandLineNotParsed& ue) {
     errorMessage = ue.getMessage().str();
     cmdLineNotParsed = true;
-  } catch(exception::Exception &ex) {
+  } catch (exception::Exception& ex) {
     errorMessage = ex.getMessage().str();
-  } catch(std::exception &se) {
+  } catch (std::exception& se) {
     errorMessage = se.what();
-  } catch(...) {
+  } catch (...) {
     errorMessage = "An unknown exception was thrown";
   }
 
@@ -88,11 +85,11 @@ int CmdLineTool::mainImpl(const int argc, char *const *const argv) {
   // and errorMessage has been set accordingly
 
   m_err << "Aborting: " << errorMessage << std::endl;
-  if(cmdLineNotParsed) {
+  if (cmdLineNotParsed) {
     m_err << std::endl;
     printUsage(m_err);
   }
   return 1;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

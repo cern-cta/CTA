@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include <memory>
-
-#include "StatisticsService.hpp"
 #include "Statistics.hpp"
+#include "StatisticsService.hpp"
+
+#include <memory>
 
 namespace cta::statistics {
 
@@ -35,14 +35,14 @@ public:
   /**
    * Constructor of the service with a OutputStream object
    */
-  explicit JsonStatisticsService(OutputStream * output);
+  explicit JsonStatisticsService(OutputStream* output);
 
   /**
    * Constructor of the service with the OutputStream and InputStream objects
    * @param output the OutputStream object
    * @param input the InputStream object
    */
-  JsonStatisticsService(OutputStream * output, InputStream * input);
+  JsonStatisticsService(OutputStream* output, InputStream* input);
 
   JsonStatisticsService(const JsonStatisticsService& orig) = delete;
 
@@ -57,4 +57,4 @@ private:
   InputStream* m_input;
 };
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include <string>
 
 namespace cta::utils {
@@ -28,5 +27,5 @@ namespace cta::utils {
  * @param errnoValue The errno value.
  * @return The string representation.
  */
-  std::string errnoToString(const int errnoValue);
-} // namespace cta::utils
+std::string errnoToString(const int errnoValue);
+}  // namespace cta::utils

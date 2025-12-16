@@ -18,6 +18,7 @@
 #pragma once
 
 #include "JSONObject.hpp"
+
 #include <json-c/json.h>
 
 namespace cta::utils::json::object {
@@ -40,7 +41,7 @@ public:
    * @param json the json to build the object from
    * @throws JSONObjectException if the json provided does not allow to build this object
    */
-  void buildFromJSON(const std::string & json) override;
+  void buildFromJSON(const std::string& json) override;
   /**
    * Return the inherited object expected JSON structure allowing to set its attributes
    * via the buildFromJSON() method
@@ -56,8 +57,8 @@ public:
   ~JSONCObject() override;
 
 protected:
-  json_object * m_jsonObject = nullptr;
-  
+  json_object* m_jsonObject = nullptr;
+
   /**
    * Initialize the JSON representation of this object
    * 
@@ -85,8 +86,8 @@ protected:
    * T is the type of the value associated to the key
    */
   template<typename T>
-  T jsonGetValue(const std::string & key);
-  
+  T jsonGetValue(const std::string& key);
+
   /**
    * This method allows to create or set an object on this JSON-C object representation
    * @param key the key to create
@@ -94,15 +95,14 @@ protected:
    * T is the type of the value associated to the key
    */
   template<typename T>
-  void jsonSetValue(const std::string & key, const T & value);
-  
+  void jsonSetValue(const std::string& key, const T& value);
+
   /**
    * Returns a pointer to the JSON-C representation of the object associated to the key passed in parameter
    * @param key the key to return the JSON-C representation of the object associated to it
    * @return the JSON-C representation of the object associated to the key passed in parameter
    */
-  json_object * getJSONObject(const std::string & key);
-  
+  json_object* getJSONObject(const std::string& key);
 };
 
-} // namespace cta::utils::json::object
+}  // namespace cta::utils::json::object

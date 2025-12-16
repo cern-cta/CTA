@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include <xrootd/private/XrdSsi/XrdSsiStream.hh>
-
 #include "cta_frontend.pb.h"
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/Version.hpp"
+
+#include <xrootd/private/XrdSsi/XrdSsiStream.hh>
 
 namespace cta::frontend {
 

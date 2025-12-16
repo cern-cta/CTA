@@ -15,14 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "scheduler/rdbms/ArchiveRdbJob.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
-#include "scheduler/rdbms/ArchiveRdbJob.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 // includes for debug timings only below
+#include "common/Timer.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
-#include "common/Timer.hpp"
 
 namespace cta::schedulerdb {
 
@@ -63,16 +64,19 @@ void ArchiveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   tapeFile.vid = std::move(m_jobRow.vid);
   tapeFile.copyNb = m_jobRow.copyNb;
   // Re-initialize report type
-  if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForSuccess || m_jobRow.status == ArchiveJobStatus::AJS_ToReportToRepackForSuccess) {
+  if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForSuccess
+      || m_jobRow.status == ArchiveJobStatus::AJS_ToReportToRepackForSuccess) {
     reportType = ReportType::CompletionReport;
-  } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure || m_jobRow.status == ArchiveJobStatus::AJS_ToReportToRepackForFailure) {
+  } else if (m_jobRow.status == ArchiveJobStatus::AJS_ToReportToUserForFailure
+             || m_jobRow.status == ArchiveJobStatus::AJS_ToReportToRepackForFailure) {
     reportType = ReportType::FailureReport;
   } else {
     reportType = ReportType::NoReportRequired;
   }
 }
 
-ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack) : ArchiveRdbJob(connPool) {
+ArchiveRdbJob::ArchiveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack)
+    : ArchiveRdbJob(connPool) {
   initialize(rset, rowFromRepack);
 };
 
@@ -109,10 +113,12 @@ void ArchiveRdbJob::reset() {
 void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
                                              log::LogContext& lc,
                                              [[maybe_unused]] const std::string& reason) {
-  if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser || m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForRepack) {
+  if (m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForUser
+      || m_jobRow.status != ArchiveJobStatus::AJS_ToTransferForRepack) {
     lc.log(log::WARNING,
-           std::string("ArchiveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status) +
-           std::string(". Assuming ToTransfer anyway and changing status to AJS_ToReportToUserForFailure or AJS_ToReportToRepackForFailure."));
+           std::string("ArchiveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status)
+             + std::string(". Assuming ToTransfer anyway and changing status to AJS_ToReportToUserForFailure or "
+                           "AJS_ToReportToRepackForFailure."));
   }
 
   try {
@@ -127,8 +133,7 @@ void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
   } catch (const exception::Exception& ex) {
     cta::log::ScopedParamContainer(lc)
       .add("exceptionMessage", ex.getMessageValue())
-      .log(cta::log::WARNING,
-           "Failed to update job status for reporting failure. Aborting transaction.");
+      .log(cta::log::WARNING, "Failed to update job status for reporting failure. Aborting transaction.");
     txn.abort();
   }
 }
@@ -154,7 +159,7 @@ void ArchiveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
     // since requeueing, we do not report and we do not
     // set reportType to a particular value here
   } catch (const exception::Exception& ex) {
-     cta::log::ScopedParamContainer(lc)
+    cta::log::ScopedParamContainer(lc)
       .add("exceptionMessage", ex.getMessageValue())
       .log(log::ERR, log_msg + std::string(" failed. Aborting transaction."));
     txn.abort();
@@ -232,9 +237,10 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
       m_jobRow.isReporting = false;
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
       if (nrows != 1) {
-        lc.log(log::WARNING,
-               "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): requeue reporting did not succeed, "
-               "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
+        lc.log(
+          log::WARNING,
+          "In schedulerdb::ArchiveJobQueueRow::updateJobStatusForFailedReport(): requeue reporting did not succeed, "
+          "no job was found in the DB (possibly deleted by frontend cancelArchiveJob() call in the meantime).");
       }
     }
     txn.commit();

@@ -22,4 +22,4 @@
 namespace cta::exception {
 
 CTA_GENERATE_EXCEPTION_CLASS(PbException);
-} // namespace cta::exception
+}  // namespace cta::exception

@@ -17,21 +17,21 @@
  */
 
 #include "ArchiveQueueShard.hpp"
+
 #include "GenericObject.hpp"
+
 #include <google/protobuf/util/json_util.h>
-
-
 
 namespace cta::objectstore {
 
-ArchiveQueueShard::ArchiveQueueShard(Backend& os):
-  ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>(os) { }
+ArchiveQueueShard::ArchiveQueueShard(Backend& os)
+    : ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>(os) {}
 
-ArchiveQueueShard::ArchiveQueueShard(const std::string& address, Backend& os):
-  ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>(os, address) { }
+ArchiveQueueShard::ArchiveQueueShard(const std::string& address, Backend& os)
+    : ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>(os, address) {}
 
-ArchiveQueueShard::ArchiveQueueShard(GenericObject& go):
-  ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>(go.objectStore()) {
+ArchiveQueueShard::ArchiveQueueShard(GenericObject& go)
+    : ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
@@ -40,7 +40,7 @@ ArchiveQueueShard::ArchiveQueueShard(GenericObject& go):
 
 void ArchiveQueueShard::rebuild() {
   checkPayloadWritable();
-  uint64_t totalSize=0;
+  uint64_t totalSize = 0;
   for (const auto& j : m_payload.archivejobs()) {
     totalSize += j.size();
   }
@@ -57,24 +57,33 @@ std::string ArchiveQueueShard::dump() {
   return headerDump;
 }
 
-void ArchiveQueueShard::garbageCollect(const std::string& presumedOwner, AgentReference& agentReference, log::LogContext& lc, cta::catalogue::Catalogue& catalogue) {
-  throw exception::Exception("In ArchiveQueueShard::garbageCollect(): garbage collection should not be necessary for this type of object.");
+void ArchiveQueueShard::garbageCollect(const std::string& presumedOwner,
+                                       AgentReference& agentReference,
+                                       log::LogContext& lc,
+                                       cta::catalogue::Catalogue& catalogue) {
+  throw exception::Exception(
+    "In ArchiveQueueShard::garbageCollect(): garbage collection should not be necessary for this type of object.");
 }
 
-ArchiveQueue::CandidateJobList ArchiveQueueShard::getCandidateJobList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> &archiveRequestsToSkip) {
+ArchiveQueue::CandidateJobList
+ArchiveQueueShard::getCandidateJobList(uint64_t maxBytes,
+                                       uint64_t maxFiles,
+                                       const std::set<std::string>& archiveRequestsToSkip) {
   checkPayloadReadable();
   ArchiveQueue::CandidateJobList ret;
   ret.remainingBytesAfterCandidates = m_payload.archivejobstotalsize();
   ret.remainingFilesAfterCandidates = m_payload.archivejobs_size();
-  for (auto & j: m_payload.archivejobs()) {
+  for (auto& j : m_payload.archivejobs()) {
     if (!archiveRequestsToSkip.count(j.address())) {
-      ret.candidates.push_back({j.size(), j.address(), (uint16_t)j.copynb()});
+      ret.candidates.push_back({j.size(), j.address(), (uint16_t) j.copynb()});
       ret.candidateBytes += j.size();
-      ret.candidateFiles ++;
+      ret.candidateFiles++;
     }
     ret.remainingBytesAfterCandidates -= j.size();
     ret.remainingFilesAfterCandidates--;
-    if (ret.candidateBytes >= maxBytes || ret.candidateFiles >= maxFiles) break;
+    if (ret.candidateBytes >= maxBytes || ret.candidateFiles >= maxFiles) {
+      break;
+    }
   }
   return ret;
 }
@@ -83,16 +92,16 @@ auto ArchiveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) -
   checkPayloadWritable();
   RemovalResult ret;
   uint64_t totalSize = m_payload.archivejobstotalsize();
-  auto * jl=m_payload.mutable_archivejobs();
-  for (auto &rrt: jobsToRemove) {
+  auto* jl = m_payload.mutable_archivejobs();
+  for (auto& rrt : jobsToRemove) {
     bool found = false;
     do {
       found = false;
       // Push the found entry all the way to the end.
-      for (size_t i=0; i<(size_t)jl->size(); i++) {
+      for (size_t i = 0; i < (size_t) jl->size(); i++) {
         if (jl->Get(i).address() == rrt) {
           found = true;
-          const auto & j = jl->Get(i);
+          const auto& j = jl->Get(i);
           ret.removedJobs.emplace_back(JobInfo());
           ret.removedJobs.back().address = j.address();
           ret.removedJobs.back().copyNb = j.copynb();
@@ -105,16 +114,17 @@ auto ArchiveQueueShard::removeJobs(const std::list<std::string>& jobsToRemove) -
           totalSize -= j.size();
           ret.jobsRemoved++;
           m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() - j.size());
-          while (i+1 < (size_t)jl->size()) {
-            jl->SwapElements(i, i+1);
+          while (i + 1 < (size_t) jl->size()) {
+            jl->SwapElements(i, i + 1);
             i++;
           }
           break;
         }
       }
       // and remove it
-      if (found)
+      if (found) {
         jl->RemoveLast();
+      }
     } while (found);
   }
   ret.bytesAfter = totalSize;
@@ -127,15 +137,20 @@ void ArchiveQueueShard::initialize(const std::string& owner) {
   setOwner(owner);
   setBackupOwner(owner);
   m_payload.set_archivejobstotalsize(0);
-  m_payloadInterpreted=true;
+  m_payloadInterpreted = true;
 }
 
 auto ArchiveQueueShard::dumpJobs() -> std::list<JobInfo> {
   checkPayloadReadable();
   std::list<JobInfo> ret;
-  for (auto &j: m_payload.archivejobs()) {
-    ret.emplace_back(JobInfo{j.size(), j.address(), (uint16_t)j.copynb(), j.priority(),
-        j.minarchiverequestage(), (time_t)j.starttime(),j.mountpolicyname()});
+  for (auto& j : m_payload.archivejobs()) {
+    ret.emplace_back(JobInfo {j.size(),
+                              j.address(),
+                              (uint16_t) j.copynb(),
+                              j.priority(),
+                              j.minarchiverequestage(),
+                              (time_t) j.starttime(),
+                              j.mountpolicyname()});
   }
   return ret;
 }
@@ -150,7 +165,7 @@ auto ArchiveQueueShard::getJobsSummary() -> JobsSummary {
 
 uint64_t ArchiveQueueShard::addJob(ArchiveQueue::JobToAdd& jobToAdd) {
   checkPayloadWritable();
-  auto * j = m_payload.add_archivejobs();
+  auto* j = m_payload.add_archivejobs();
   j->set_address(jobToAdd.archiveRequestAddress);
   j->set_size(jobToAdd.fileSize);
   j->set_fileid(jobToAdd.archiveFileId);
@@ -159,7 +174,7 @@ uint64_t ArchiveQueueShard::addJob(ArchiveQueue::JobToAdd& jobToAdd) {
   j->set_minarchiverequestage(jobToAdd.policy.archiveMinRequestAge);
   j->set_starttime(jobToAdd.startTime);
   j->set_mountpolicyname(jobToAdd.policy.name);
-  m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize()+jobToAdd.fileSize);
+  m_payload.set_archivejobstotalsize(m_payload.archivejobstotalsize() + jobToAdd.fileSize);
   return m_payload.archivejobs_size();
 }
 
@@ -167,4 +182,4 @@ void ArchiveQueueShard::initialize() {
   throw std::runtime_error("initialize() is not supported for ArchiveQueueShard");
 }
 
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

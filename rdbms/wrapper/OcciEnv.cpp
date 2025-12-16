@@ -15,10 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/wrapper/OcciEnv.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/NullPtrException.hpp"
 #include "rdbms/wrapper/OcciConn.hpp"
-#include "rdbms/wrapper/OcciEnv.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -28,7 +29,7 @@ namespace cta::rdbms::wrapper {
 OcciEnv::OcciEnv() {
   using namespace oracle::occi;
   m_env = Environment::createEnvironment(Environment::THREADED_MUTEXED);
-  if(nullptr == m_env) {
+  if (nullptr == m_env) {
     throw exception::NullPtrException("oracle::occi::createEnvironment() returned a nullptr");
   }
 }
@@ -54,4 +55,4 @@ std::unique_ptr<ConnWrapper> OcciEnv::createConn(const rdbms::Login& login) {
   return std::make_unique<OcciConn>(m_env, conn, login.dbNamespace);
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

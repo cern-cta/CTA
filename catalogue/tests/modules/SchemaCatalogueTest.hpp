@@ -17,16 +17,15 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
-
-#include <memory>
-
 #include "catalogue/Catalogue.hpp"
 #include "common/log/DummyLogger.hpp"
 
+#include <gtest/gtest.h>
+#include <memory>
+
 namespace unitTests {
 
-class cta_catalogue_SchemaTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_SchemaTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_SchemaTest();
 

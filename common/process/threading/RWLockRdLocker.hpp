@@ -33,7 +33,7 @@ public:
    * @param lock The read-write lock on which to take a read-lock
    */
   explicit RWLockRdLocker(RWLock& lock);
-  
+
   /**
    * Destructor
    *
@@ -47,5 +47,5 @@ private:
    */
   RWLock& m_lock;
 };
-  
-} // namespace cta::threading
+
+}  // namespace cta::threading

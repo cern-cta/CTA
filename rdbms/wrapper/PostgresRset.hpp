@@ -17,17 +17,17 @@
 
 #pragma once
 
-#include "rdbms/wrapper/RsetWrapper.hpp"
 #include "rdbms/wrapper/Postgres.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
+#include "rdbms/wrapper/RsetWrapper.hpp"
 
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <string>
 #include <sstream>
 #include <stdexcept>
+#include <string>
 #include <type_traits>
 
 namespace cta::rdbms::wrapper {
@@ -295,7 +295,6 @@ public:
   bool next() override;
 
 private:
-
   /**
    * Getting index of a column by using the columnIndexCache
    * in order to avoid looking them up every time we fetch columns of
@@ -325,8 +324,8 @@ private:
     iss >> result;
     // If conversion failed or if there are extra characters, throw an error
     if (iss.fail() || !iss.eof()) {
-      throw exception::Exception(std::string("Column ") + colName + std::string(" contains the value ") + stringValue +
-                                 std::string(" which is not a valid since it does not match required numeric type"));
+      throw exception::Exception(std::string("Column ") + colName + std::string(" contains the value ") + stringValue
+                                 + std::string(" which is not a valid since it does not match required numeric type"));
     }
     return result;
   }

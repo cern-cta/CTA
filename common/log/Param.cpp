@@ -17,22 +17,22 @@
 
 #include "common/log/Param.hpp"
 
-#include <iostream>
 #include <iomanip>
+#include <iostream>
 
 namespace cta::log {
 
 //------------------------------------------------------------------------------
 // getName
 //------------------------------------------------------------------------------
-const std::string &Param::getName() const noexcept {
+const std::string& Param::getName() const noexcept {
   return m_name;
 }
 
 //------------------------------------------------------------------------------
 // getValueVariant
 //------------------------------------------------------------------------------
-const ParamValType &Param::getValueVariant() const noexcept {
+const ParamValType& Param::getValueVariant() const noexcept {
   return m_value;
 }
 
@@ -42,14 +42,16 @@ const ParamValType &Param::getValueVariant() const noexcept {
 std::string Param::getValueStr() const noexcept {
   std::ostringstream oss;
   if (m_value.has_value()) {
-    std::visit([&oss](const auto &arg) {
-      using T = std::decay_t<decltype(arg)>;
-      if constexpr (std::is_floating_point_v<T>) {
-        oss << floatingPointFormatting(arg);
-      } else {
-        oss << arg;
-      }
-    }, m_value.value());
+    std::visit(
+      [&oss](const auto& arg) {
+        using T = std::decay_t<decltype(arg)>;
+        if constexpr (std::is_floating_point_v<T>) {
+          oss << floatingPointFormatting(arg);
+        } else {
+          oss << arg;
+        }
+      },
+      m_value.value());
   } else {
     oss << "";
   }
@@ -61,4 +63,4 @@ void Param::setValue<ParamValType>(const ParamValType& value) noexcept {
   m_value = value;
 }
 
-} // namespace cta::log
+}  // namespace cta::log

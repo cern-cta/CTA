@@ -16,6 +16,7 @@
  */
 
 #include "ServerTapeLsRequestHandler.hpp"
+
 #include "AsyncServer.hpp"
 #include "RequestMessage.hpp"
 #include "common/log/LogContext.hpp"
@@ -24,7 +25,7 @@
  * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement
  */
 constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
-   return (cmd << 16) + subcmd;
+  return (cmd << 16) + subcmd;
 }
 
 cta::frontend::grpc::server::TapeLsRequestHandler::TapeLsRequestHandler(
@@ -43,22 +44,22 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
   log::LogContext lc(m_log);
 
   // Check the state and report an error
-  if(!bOk) {
+  if (!bOk) {
     switch (m_streamState) {
-      case StreamState::PROCESSING:
-        {
-          log::ScopedParamContainer params(lc);
-          params.add("tag", m_tag);
-          lc.log(cta::log::ERR, "In grpc::server::TapeLsRequestHandler::next(): Server has been shut down before receiving a matching request.");
-        }
-        break;
-      default:
-        {
-          log::ScopedParamContainer params(lc);
-          params.add("tag", m_tag);
-          lc.log(cta::log::ERR, "In grpc::server::TapeLsRequestHandler::next(): Request processing aborted, call is cancelled or connection is dropped.");
-        }
-        break;
+      case StreamState::PROCESSING: {
+        log::ScopedParamContainer params(lc);
+        params.add("tag", m_tag);
+        lc.log(cta::log::ERR,
+               "In grpc::server::TapeLsRequestHandler::next(): Server has been shut down before receiving a matching "
+               "request.");
+      } break;
+      default: {
+        log::ScopedParamContainer params(lc);
+        params.add("tag", m_tag);
+        lc.log(cta::log::ERR,
+               "In grpc::server::TapeLsRequestHandler::next(): Request processing aborted, call is cancelled or "
+               "connection is dropped.");
+      } break;
     }
     return bNext;
   }
@@ -67,87 +68,97 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
 
   switch (m_streamState) {
     case StreamState::NEW:
-      m_ctaRpcStreamSvc.RequestTapeLs(&m_ctx, &m_request, &m_writer, &m_asyncServer.completionQueue(), &m_asyncServer.completionQueue(), m_tag);
+      m_ctaRpcStreamSvc.RequestTapeLs(&m_ctx,
+                                      &m_request,
+                                      &m_writer,
+                                      &m_asyncServer.completionQueue(),
+                                      &m_asyncServer.completionQueue(),
+                                      m_tag);
       m_streamState = StreamState::PROCESSING;
       break;
     case StreamState::PROCESSING:
       m_asyncServer.registerHandler<cta::frontend::grpc::server::TapeLsRequestHandler>(m_ctaRpcStreamSvc).next(bOk);
-      switch(cmd_pair(m_request.admincmd().cmd(), m_request.admincmd().subcmd())) {
-        case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS):
-          {
-            log::ScopedParamContainer params(lc);
-            params.add("tag", m_tag);
-            lc.log(cta::log::INFO, "In grpc::server::TapeLsRequestHandler::next(): Processing tape ls.");
-            request::RequestMessage requestMsg(m_request);
-            bool bHasAny = false; // set to true if at least one optional option is set
+      switch (cmd_pair(m_request.admincmd().cmd(), m_request.admincmd().subcmd())) {
+        case cmd_pair(cta::admin::AdminCmd::CMD_TAPE, cta::admin::AdminCmd::SUBCMD_LS): {
+          log::ScopedParamContainer params(lc);
+          params.add("tag", m_tag);
+          lc.log(cta::log::INFO, "In grpc::server::TapeLsRequestHandler::next(): Processing tape ls.");
+          request::RequestMessage requestMsg(m_request);
+          bool bHasAny = false;  // set to true if at least one optional option is set
 
-            // Get the search criteria from the optional options
+          // Get the search criteria from the optional options
 
-            m_searchCriteria.full                   = requestMsg.getOptional(cta::admin::OptionBoolean::FULL,                       &bHasAny);
-            m_searchCriteria.fromCastor             = requestMsg.getOptional(cta::admin::OptionBoolean::FROM_CASTOR,                &bHasAny);
-            m_searchCriteria.capacityInBytes        = requestMsg.getOptional(cta::admin::OptionUInt64::CAPACITY,                    &bHasAny);
-            m_searchCriteria.logicalLibrary         = requestMsg.getOptional(cta::admin::OptionString::LOGICAL_LIBRARY,             &bHasAny);
-            m_searchCriteria.tapePool               = requestMsg.getOptional(cta::admin::OptionString::TAPE_POOL,                   &bHasAny);
-            m_searchCriteria.vo                     = requestMsg.getOptional(cta::admin::OptionString::VO,                          &bHasAny);
-            m_searchCriteria.vid                    = requestMsg.getOptional(cta::admin::OptionString::VID,                         &bHasAny);
-            m_searchCriteria.mediaType              = requestMsg.getOptional(cta::admin::OptionString::MEDIA_TYPE,                  &bHasAny);
-            m_searchCriteria.vendor                 = requestMsg.getOptional(cta::admin::OptionString::VENDOR,                      &bHasAny);
-            m_searchCriteria.purchaseOrder          = requestMsg.getOptional(cta::admin::OptionString::MEDIA_PURCHASE_ORDER_NUMBER, &bHasAny);
-            m_searchCriteria.diskFileIds            = requestMsg.getOptional(cta::admin::OptionStrList::FILE_ID,                    &bHasAny);
-            m_searchCriteria.checkMissingFileCopies = requestMsg.getOptional(cta::admin::OptionBoolean::MISSING_FILE_COPIES,        &bHasAny);
-            auto stateOpt                    = requestMsg.getOptional(cta::admin::OptionString::STATE,                       &bHasAny);
-            if(stateOpt){
-              m_searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value());
-            }
-
-            if(!(requestMsg.has_flag(cta::admin::OptionBoolean::ALL) || bHasAny)) {
-              lc.log(cta::log::ERR, "In grpc::server::TapeLsRequestHandler::next(): Must specify at least one search option, or --all.");
-              m_response.mutable_header()->set_type(cta::xrd::Response::RSP_ERR_USER);
-              m_response.mutable_header()->set_show_header(cta::admin::HeaderType::NONE);
-              m_response.mutable_header()->set_message_txt("Must specify at least one search option, or --all.");
-              m_streamState = StreamState::ERROR;
-            } else if(requestMsg.has_flag(cta::admin::OptionBoolean::ALL) && bHasAny) {
-              lc.log(cta::log::ERR, "In grpc::server::TapeLsRequestHandler::next(): Cannot specify --all together with other search options.");
-              m_response.mutable_header()->set_type(cta::xrd::Response::RSP_ERR_USER);
-              m_response.mutable_header()->set_show_header(cta::admin::HeaderType::NONE);
-              m_response.mutable_header()->set_message_txt("Cannot specify --all together with other search options.");
-              m_streamState = StreamState::ERROR;
-            } else {
-              // OK
-              m_response.mutable_header()->set_type(cta::xrd::Response::RSP_SUCCESS);
-              m_response.mutable_header()->set_show_header(cta::admin::HeaderType::TAPE_LS);
-              m_streamState = StreamState::WRITE;
-              m_tapeList = m_asyncServer.catalogue().Tape()->getTapes(m_searchCriteria);
-            }
+          m_searchCriteria.full = requestMsg.getOptional(cta::admin::OptionBoolean::FULL, &bHasAny);
+          m_searchCriteria.fromCastor = requestMsg.getOptional(cta::admin::OptionBoolean::FROM_CASTOR, &bHasAny);
+          m_searchCriteria.capacityInBytes = requestMsg.getOptional(cta::admin::OptionUInt64::CAPACITY, &bHasAny);
+          m_searchCriteria.logicalLibrary = requestMsg.getOptional(cta::admin::OptionString::LOGICAL_LIBRARY, &bHasAny);
+          m_searchCriteria.tapePool = requestMsg.getOptional(cta::admin::OptionString::TAPE_POOL, &bHasAny);
+          m_searchCriteria.vo = requestMsg.getOptional(cta::admin::OptionString::VO, &bHasAny);
+          m_searchCriteria.vid = requestMsg.getOptional(cta::admin::OptionString::VID, &bHasAny);
+          m_searchCriteria.mediaType = requestMsg.getOptional(cta::admin::OptionString::MEDIA_TYPE, &bHasAny);
+          m_searchCriteria.vendor = requestMsg.getOptional(cta::admin::OptionString::VENDOR, &bHasAny);
+          m_searchCriteria.purchaseOrder =
+            requestMsg.getOptional(cta::admin::OptionString::MEDIA_PURCHASE_ORDER_NUMBER, &bHasAny);
+          m_searchCriteria.diskFileIds = requestMsg.getOptional(cta::admin::OptionStrList::FILE_ID, &bHasAny);
+          m_searchCriteria.checkMissingFileCopies =
+            requestMsg.getOptional(cta::admin::OptionBoolean::MISSING_FILE_COPIES, &bHasAny);
+          auto stateOpt = requestMsg.getOptional(cta::admin::OptionString::STATE, &bHasAny);
+          if (stateOpt) {
+            m_searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value());
           }
-          break;
-        default:
-          {
-            log::ScopedParamContainer params(lc);
-            params.add("tag", m_tag);
-            lc.log(cta::log::ERR, "In grpc::server::TapeLsRequestHandler::next(): Unrecognized Request message. Possible Protocol Buffer version mismatch between client and server.");
-            m_response.mutable_header()->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
+
+          if (!(requestMsg.has_flag(cta::admin::OptionBoolean::ALL) || bHasAny)) {
+            lc.log(cta::log::ERR,
+                   "In grpc::server::TapeLsRequestHandler::next(): Must specify at least one search option, or --all.");
+            m_response.mutable_header()->set_type(cta::xrd::Response::RSP_ERR_USER);
             m_response.mutable_header()->set_show_header(cta::admin::HeaderType::NONE);
-            m_response.mutable_header()->set_message_txt("Unrecognized Request message. Possible Protocol Buffer version mismatch between client and server.");
+            m_response.mutable_header()->set_message_txt("Must specify at least one search option, or --all.");
             m_streamState = StreamState::ERROR;
+          } else if (requestMsg.has_flag(cta::admin::OptionBoolean::ALL) && bHasAny) {
+            lc.log(cta::log::ERR,
+                   "In grpc::server::TapeLsRequestHandler::next(): Cannot specify --all together with other search "
+                   "options.");
+            m_response.mutable_header()->set_type(cta::xrd::Response::RSP_ERR_USER);
+            m_response.mutable_header()->set_show_header(cta::admin::HeaderType::NONE);
+            m_response.mutable_header()->set_message_txt("Cannot specify --all together with other search options.");
+            m_streamState = StreamState::ERROR;
+          } else {
+            // OK
+            m_response.mutable_header()->set_type(cta::xrd::Response::RSP_SUCCESS);
+            m_response.mutable_header()->set_show_header(cta::admin::HeaderType::TAPE_LS);
+            m_streamState = StreamState::WRITE;
+            m_tapeList = m_asyncServer.catalogue().Tape()->getTapes(m_searchCriteria);
           }
-          break;
+        } break;
+        default: {
+          log::ScopedParamContainer params(lc);
+          params.add("tag", m_tag);
+          lc.log(cta::log::ERR,
+                 "In grpc::server::TapeLsRequestHandler::next(): Unrecognized Request message. Possible Protocol "
+                 "Buffer version mismatch between client and server.");
+          m_response.mutable_header()->set_type(cta::xrd::Response::RSP_ERR_PROTOBUF);
+          m_response.mutable_header()->set_show_header(cta::admin::HeaderType::NONE);
+          m_response.mutable_header()->set_message_txt(
+            "Unrecognized Request message. Possible Protocol Buffer version mismatch between client and server.");
+          m_streamState = StreamState::ERROR;
+        } break;
       }
       m_writer.Write(m_response, m_tag);
       break;
     case StreamState::WRITE:
-      for(; !m_tapeList.empty(); m_tapeList.pop_front()) {
+      for (; !m_tapeList.empty(); m_tapeList.pop_front()) {
         cta::admin::TapeLsItem* pTapeLsItem = m_response.mutable_data()->mutable_tals_item();
         if (!pTapeLsItem) {
           log::ScopedParamContainer params(lc);
           params.add("tag", m_tag);
-          lc.log(cta::log::ERR, "In grpc::server::TapeLsRequestHandler::next(): Request processing error, TapeLsItem points to null.");
-          m_writer.Write(m_response, m_tag); // Wrtie an empty response
+          lc.log(cta::log::ERR,
+                 "In grpc::server::TapeLsRequestHandler::next(): Request processing error, TapeLsItem points to null.");
+          m_writer.Write(m_response, m_tag);  // Wrtie an empty response
           m_streamState = StreamState::ERROR;
           break;
         }
 
-        common::dataStructures::Tape &tape = m_tapeList.front();
+        common::dataStructures::Tape& tape = m_tapeList.front();
 
         pTapeLsItem->set_vid(tape.vid);
         pTapeLsItem->set_media_type(tape.mediaType);
@@ -168,17 +179,17 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
         pTapeLsItem->set_master_data_in_bytes(tape.masterDataInBytes);
         pTapeLsItem->set_purchase_order(tape.purchaseOrder.value_or(""));
 
-        if(tape.labelLog) {
+        if (tape.labelLog) {
           ::cta::common::TapeLog* pLabelLog = pTapeLsItem->mutable_label_log();
           pLabelLog->set_drive(tape.labelLog.value().drive);
           pLabelLog->set_time(tape.labelLog.value().time);
         }
-        if(tape.lastWriteLog) {
+        if (tape.lastWriteLog) {
           ::cta::common::TapeLog* pLastWriteLog = pTapeLsItem->mutable_last_written_log();
           pLastWriteLog->set_drive(tape.lastWriteLog.value().drive);
           pLastWriteLog->set_time(tape.lastWriteLog.value().time);
         }
-        if(tape.lastReadLog) {
+        if (tape.lastReadLog) {
           ::cta::common::TapeLog* pLastReadLog = pTapeLsItem->mutable_last_read_log();
           pLastReadLog->set_drive(tape.lastReadLog.value().drive);
           pLastReadLog->set_time(tape.lastReadLog.value().time);
@@ -202,9 +213,9 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
         }
 
         m_writer.Write(m_response, ::grpc::WriteOptions().set_buffer_hint(), m_tag);
-      }// end for
+      }  // end for
 
-      if(m_tapeList.empty()) {
+      if (m_tapeList.empty()) {
         m_streamState = StreamState::FINISH;
         m_writer.Finish(::grpc::Status::OK, m_tag);
       }

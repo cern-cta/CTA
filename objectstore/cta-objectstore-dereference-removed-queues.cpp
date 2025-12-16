@@ -21,20 +21,20 @@
  * unblock tape servers after changing the ArchiveQueue schema during development.
  */
 
-#include <iostream>
-#include <stdexcept>
-#include <optional>
-
 #include "Agent.hpp"
 #include "AgentRegister.hpp"
 #include "BackendFactory.hpp"
 #include "BackendVFS.hpp"
+#include "RootEntry.hpp"
 #include "common/config/Config.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
-#include "RootEntry.hpp"
+
+#include <iostream>
+#include <optional>
+#include <stdexcept>
 
 /**
  * A queue to delete should be defined by its vid/tapepool + its type
@@ -47,15 +47,16 @@ using QueueIdQueueType = std::pair<std::string, cta::common::dataStructures::Job
  * @param backend the objectstore backend
  * @return the list of the vid-queueType of the missing Retrieve queues
  */
-std::list<QueueIdQueueType> getAllMissingRetrieveQueues(cta::objectstore::RootEntry & re, cta::objectstore::Backend & backend){
+std::list<QueueIdQueueType> getAllMissingRetrieveQueues(cta::objectstore::RootEntry& re,
+                                                        cta::objectstore::Backend& backend) {
   std::list<QueueIdQueueType> missingRetrieveQueues;
-  for(auto queueType: cta::common::dataStructures::AllJobQueueTypes){
+  for (auto queueType : cta::common::dataStructures::AllJobQueueTypes) {
     std::list<cta::objectstore::RootEntry::RetrieveQueueDump> retrieveQueues = re.dumpRetrieveQueues(queueType);
-    for (auto & rq: retrieveQueues){
+    for (auto& rq : retrieveQueues) {
       if (!backend.exists(rq.address)) {
-        missingRetrieveQueues.emplace_back(std::make_pair(rq.vid,queueType));
-        std::cout << "The retrieve queue " << cta::common::dataStructures::toString(queueType) << " for vid " << rq.vid << " at address " << rq.address
-              << " is missing and will be dereferenced." << std::endl;
+        missingRetrieveQueues.emplace_back(std::make_pair(rq.vid, queueType));
+        std::cout << "The retrieve queue " << cta::common::dataStructures::toString(queueType) << " for vid " << rq.vid
+                  << " at address " << rq.address << " is missing and will be dereferenced." << std::endl;
       }
     }
   }
@@ -68,23 +69,24 @@ std::list<QueueIdQueueType> getAllMissingRetrieveQueues(cta::objectstore::RootEn
  * @param backend the objectstore backend
  * @return the list of the tapepool-queueType of the missing Archive queues
  */
-std::list<QueueIdQueueType> getAllMissingArchiveQueues(cta::objectstore::RootEntry & re, cta::objectstore::Backend & backend){
+std::list<QueueIdQueueType> getAllMissingArchiveQueues(cta::objectstore::RootEntry& re,
+                                                       cta::objectstore::Backend& backend) {
   std::list<QueueIdQueueType> missingArchiveQueues;
-  for(auto queueType: cta::common::dataStructures::AllJobQueueTypes){
+  for (auto queueType : cta::common::dataStructures::AllJobQueueTypes) {
     std::list<cta::objectstore::RootEntry::ArchiveQueueDump> archiveQueues = re.dumpArchiveQueues(queueType);
-    for (auto & aq: archiveQueues){
+    for (auto& aq : archiveQueues) {
       if (!backend.exists(aq.address)) {
-        missingArchiveQueues.emplace_back(std::make_pair(aq.tapePool,queueType));
-        std::cout << "The archive queue " << cta::common::dataStructures::toString(queueType) << " for tape pool " << aq.tapePool << " at address " << aq.address
-              << " is missing and will be dereferenced." << std::endl;
+        missingArchiveQueues.emplace_back(std::make_pair(aq.tapePool, queueType));
+        std::cout << "The archive queue " << cta::common::dataStructures::toString(queueType) << " for tape pool "
+                  << aq.tapePool << " at address " << aq.address << " is missing and will be dereferenced."
+                  << std::endl;
       }
     }
   }
   return missingArchiveQueues;
 }
 
-
-int main(int argc, char ** argv) {
+int main(int argc, char** argv) {
   try {
     cta::log::StdoutLogger logger(cta::utils::getShortHostname(), "cta-objectstore-dereference-removed-queues");
     std::unique_ptr<cta::objectstore::Backend> be;
@@ -100,8 +102,8 @@ int main(int argc, char ** argv) {
     // If the backend is a VFS, make sure we don't delete it on exit.
     // If not, nevermind.
     try {
-      dynamic_cast<cta::objectstore::BackendVFS &>(*be).noDeleteOnExit();
-    } catch (std::bad_cast &){}
+      dynamic_cast<cta::objectstore::BackendVFS&>(*be).noDeleteOnExit();
+    } catch (std::bad_cast&) {}
     auto params = be->getParams();
     std::cout << "Object store path: " << params->toURL() << std::endl;
     // Open the root entry RW
@@ -109,14 +111,14 @@ int main(int argc, char ** argv) {
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
     std::list<QueueIdQueueType> missingArchiveQueues, missingRetrieveQueues;
-    missingArchiveQueues = getAllMissingArchiveQueues(re,*be);
-    missingRetrieveQueues = getAllMissingRetrieveQueues(re,*be);
+    missingArchiveQueues = getAllMissingArchiveQueues(re, *be);
+    missingRetrieveQueues = getAllMissingRetrieveQueues(re, *be);
     // Actually do the job
-    for (auto & arQueue: missingArchiveQueues) {
+    for (auto& arQueue : missingArchiveQueues) {
       re.removeMissingArchiveQueueReference(arQueue.first, arQueue.second);
       std::cout << "Archive queue for tape pool " << arQueue.first << " dereferenced." << std::endl;
     }
-    for (auto & reQueue: missingRetrieveQueues) {
+    for (auto& reQueue : missingRetrieveQueues) {
       re.removeMissingRetrieveQueueReference(reQueue.first, reQueue.second);
       std::cout << "Retrieve queue for vid " << reQueue.first << " dereferenced." << std::endl;
     }
@@ -130,7 +132,6 @@ int main(int argc, char ** argv) {
     std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry."
               << std::endl;
   } catch (std::exception& e) {
-    std::cerr << "Failed to cleanup root entry: "
-        << std::endl << e.what() << std::endl;
+    std::cerr << "Failed to cleanup root entry: " << std::endl << e.what() << std::endl;
   }
 }

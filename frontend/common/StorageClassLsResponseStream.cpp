@@ -16,6 +16,7 @@
  */
 
 #include "StorageClassLsResponseStream.hpp"
+
 #include "frontend/common/AdminCmdOptions.hpp"
 
 namespace cta::frontend {

@@ -15,10 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <errno.h>
 #include "serrno.hpp"
+
+#include <errno.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 int netread(int s, char* buf, int nbytes) {
   int n, nb;

@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include "FileStatistics.hpp"
 
 namespace cta::statistics {
@@ -30,4 +29,4 @@ FileStatistics& FileStatistics::operator+=(const FileStatistics& other) {
   return *this;
 }
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include <memory>
-
 #include "catalogue/CatalogueItorImpl.hpp"
 #include "common/exception/NullPtrException.hpp"
+
+#include <memory>
 
 namespace cta::catalogue {
 
@@ -31,10 +31,9 @@ namespace cta::catalogue {
  * This wrapper permits the user of the Catalogue API to use different
  * iterator implementations whilst only using a single iterator type.
  */
-template <typename Item>
+template<typename Item>
 class CatalogueItor {
 public:
-
   using Impl = CatalogueItorImpl<Item>;
 
   /**
@@ -47,7 +46,7 @@ public:
    *
    * @param impl The object actually implementing this iterator.
    */
-  explicit CatalogueItor(Impl *const impl) : m_impl(impl) {
+  explicit CatalogueItor(Impl* const impl) : m_impl(impl) {
     if (nullptr == impl) {
       throw exception::NullPtrException();
     }
@@ -59,13 +58,13 @@ public:
   ~CatalogueItor() = default;
 
   // copy constructor
-  CatalogueItor(const CatalogueItor &rhs) = delete;
+  CatalogueItor(const CatalogueItor& rhs) = delete;
 
   // move constructor
-  CatalogueItor(CatalogueItor &&rhs) noexcept : m_impl(std::move(rhs.m_impl)) {}
+  CatalogueItor(CatalogueItor&& rhs) noexcept : m_impl(std::move(rhs.m_impl)) {}
 
   // move assignment
-  CatalogueItor &operator=(CatalogueItor &&rhs) noexcept {
+  CatalogueItor& operator=(CatalogueItor&& rhs) noexcept {
     if (this != &rhs) {
       m_impl = std::move(rhs.m_impl);
     }
@@ -76,7 +75,7 @@ public:
    * Returns true if a call to next would return another item.
    */
   bool hasMore() const {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw exception::NullPtrException();
     }
     return m_impl->hasMore();
@@ -86,19 +85,18 @@ public:
    * Returns the next item or throws an exception if there isn't one.
    */
   Item next() {
-    if(nullptr == m_impl) {
+    if (nullptr == m_impl) {
       throw exception::NullPtrException();
     }
     return m_impl->next();
   }
 
 private:
-
   /**
    * The object actually implementing this iterator.
    */
   std::unique_ptr<Impl> m_impl;
 
-}; // class CatalogueItor
+};  // class CatalogueItor
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -50,4 +50,4 @@ inline FailedRequestLsStream::FailedRequestLsStream(const frontend::AdminCmdStre
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

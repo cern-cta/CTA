@@ -17,8 +17,9 @@
 
 #pragma once
 
-#include <common/dataStructures/ArchiveRouteType.hpp>
 #include "cta_admin.pb.h"
+
+#include <common/dataStructures/ArchiveRouteType.hpp>
 
 namespace cta::admin {
 
@@ -27,10 +28,13 @@ ProtobufToArchiveRouteTypeFormat(ArchiveRouteLsItem::ArchiveRouteType archiveRou
   using namespace common::dataStructures;
 
   switch (archiveRouteType) {
-    case ArchiveRouteLsItem::DEFAULT: return ArchiveRouteType::DEFAULT;
-    case ArchiveRouteLsItem::REPACK:  return ArchiveRouteType::REPACK;
+    case ArchiveRouteLsItem::DEFAULT:
+      return ArchiveRouteType::DEFAULT;
+    case ArchiveRouteLsItem::REPACK:
+      return ArchiveRouteType::REPACK;
     default:
-      throw std::runtime_error("In ProtobufToArchiveRouteTypeFormat(): unknown archive route type " + std::to_string(archiveRouteType));
+      throw std::runtime_error("In ProtobufToArchiveRouteTypeFormat(): unknown archive route type "
+                               + std::to_string(archiveRouteType));
   }
 }
 
@@ -39,10 +43,13 @@ ArchiveRouteTypeFormatToProtobuf(common::dataStructures::ArchiveRouteType archiv
   using namespace common::dataStructures;
 
   switch (archiveRouteType) {
-    case ArchiveRouteType::DEFAULT: return ArchiveRouteLsItem::DEFAULT;
-    case ArchiveRouteType::REPACK:  return ArchiveRouteLsItem::REPACK;
+    case ArchiveRouteType::DEFAULT:
+      return ArchiveRouteLsItem::DEFAULT;
+    case ArchiveRouteType::REPACK:
+      return ArchiveRouteLsItem::REPACK;
     default:
-      throw std::runtime_error("In ArchiveRouteTypeFormatToProtobuf(): unknown archive route type " + std::to_string(archiveRouteType));
+      throw std::runtime_error("In ArchiveRouteTypeFormatToProtobuf(): unknown archive route type "
+                               + std::to_string(archiveRouteType));
   }
 }
 

@@ -15,19 +15,19 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #include "RAOManager.hpp"
+
 #include "EnterpriseRAOAlgorithm.hpp"
 #include "EnterpriseRAOAlgorithmFactory.hpp"
+#include "LinearRAOAlgorithm.hpp"
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 #include "RAOAlgorithmFactoryFactory.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "LinearRAOAlgorithm.hpp"
 #include "common/Timer.hpp"
 
 namespace castor::tape::tapeserver::rao {
 
-bool RAOManager::useRAO() const{
+bool RAOManager::useRAO() const {
   return m_raoParams.useRAO();
 }
 
@@ -42,46 +42,58 @@ void RAOManager::setEnterpriseRAOUdsLimits(const SCSI::Structures::RAO::udsLimit
   m_isDriveEnterpriseEnabled = true;
 }
 
-std::vector<uint64_t> RAOManager::queryRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>> & jobs, cta::log::LogContext & lc){
+std::vector<uint64_t> RAOManager::queryRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs,
+                                           cta::log::LogContext& lc) {
   cta::utils::Timer totalTimer;
-  RAOAlgorithmFactoryFactory raoAlgoFactoryFactory(*this,lc);
+  RAOAlgorithmFactoryFactory raoAlgoFactoryFactory(*this, lc);
   std::unique_ptr<RAOAlgorithmFactory> raoAlgoFactory = raoAlgoFactoryFactory.createAlgorithmFactory();
   std::unique_ptr<RAOAlgorithm> raoAlgo;
   std::vector<uint64_t> ret;
   try {
     raoAlgo = raoAlgoFactory->createRAOAlgorithm();
-  } catch(const cta::exception::Exception & ex){
-    this->logWarningAfterRAOOperationFailed("In RAOManager::queryRAO(), failed to instanciate the RAO algorithm, will perform a linear RAO.",ex.getMessageValue(),lc);
+  } catch (const cta::exception::Exception& ex) {
+    this->logWarningAfterRAOOperationFailed(
+      "In RAOManager::queryRAO(), failed to instanciate the RAO algorithm, will perform a linear RAO.",
+      ex.getMessageValue(),
+      lc);
     raoAlgo = raoAlgoFactory->createDefaultLinearAlgorithm();
   }
   try {
     ret = raoAlgo->performRAO(jobs);
-  } catch (const cta::exception::Exception & ex) {
-    this->logWarningAfterRAOOperationFailed("In RAOManager::queryRAO(), failed to perform the RAO algorithm, will perform a linear RAO.",ex.getMessageValue(),lc);
+  } catch (const cta::exception::Exception& ex) {
+    this->logWarningAfterRAOOperationFailed(
+      "In RAOManager::queryRAO(), failed to perform the RAO algorithm, will perform a linear RAO.",
+      ex.getMessageValue(),
+      lc);
     raoAlgo = raoAlgoFactory->createDefaultLinearAlgorithm();
     ret = raoAlgo->performRAO(jobs);
-  } catch(const std::exception &ex2){
-    this->logWarningAfterRAOOperationFailed("In RAOManager::queryRAO(), failed to perform the RAO algorithm after a standard exception, will perform a linear RAO.",std::string(ex2.what()),lc);
+  } catch (const std::exception& ex2) {
+    this->logWarningAfterRAOOperationFailed("In RAOManager::queryRAO(), failed to perform the RAO algorithm after a "
+                                            "standard exception, will perform a linear RAO.",
+                                            std::string(ex2.what()),
+                                            lc);
     raoAlgo = raoAlgoFactory->createDefaultLinearAlgorithm();
     ret = raoAlgo->performRAO(jobs);
   }
   cta::log::ScopedParamContainer spc(lc);
-  spc.add("executedRAOAlgorithm",raoAlgo->getName());
+  spc.add("executedRAOAlgorithm", raoAlgo->getName());
   cta::log::TimingList raoTimingList = raoAlgo->getRAOTimings();
-  raoTimingList.insertAndReset("totalTime",totalTimer);
+  raoTimingList.insertAndReset("totalTime", totalTimer);
   raoTimingList.addToLog(spc);
   lc.log(cta::log::INFO, "In RAOManager::queryRAO(), successfully performed RAO.");
   return ret;
 }
 
-void RAOManager::logWarningAfterRAOOperationFailed(const std::string & warningMsg, const std::string & exceptionMsg, cta::log::LogContext & lc) const{
+void RAOManager::logWarningAfterRAOOperationFailed(const std::string& warningMsg,
+                                                   const std::string& exceptionMsg,
+                                                   cta::log::LogContext& lc) const {
   cta::log::ScopedParamContainer spc(lc);
-  spc.add("errorMsg",exceptionMsg)
-     .add("raoAlgorithmName",m_raoParams.getRAOAlgorithmName())
-     .add("raoAlgorithmOptions",m_raoParams.getRAOAlgorithmOptions().getOptionsString())
-     .add("useRAO",m_raoParams.useRAO())
-     .add("vid",m_raoParams.getMountedVid());
-  lc.log(cta::log::WARNING,warningMsg);
+  spc.add("errorMsg", exceptionMsg)
+    .add("raoAlgorithmName", m_raoParams.getRAOAlgorithmName())
+    .add("raoAlgorithmOptions", m_raoParams.getRAOAlgorithmOptions().getOptionsString())
+    .add("useRAO", m_raoParams.useRAO())
+    .add("vid", m_raoParams.getMountedVid());
+  lc.log(cta::log::WARNING, warningMsg);
 }
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

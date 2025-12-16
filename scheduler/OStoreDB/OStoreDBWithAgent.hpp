@@ -23,21 +23,23 @@
 
 namespace cta {
 
-class OStoreDBWithAgent: public cta::OStoreDB {
-public:  
+class OStoreDBWithAgent : public cta::OStoreDB {
+public:
   /**
    * Constructor
    * 
    * @param be The objectstore backend
    * @param ag The agent
    */
-  OStoreDBWithAgent(cta::objectstore::Backend & be, cta::objectstore::AgentReference & ar,
-  catalogue::Catalogue & catalogue, log::Logger & logger);
-  
+  OStoreDBWithAgent(cta::objectstore::Backend& be,
+                    cta::objectstore::AgentReference& ar,
+                    catalogue::Catalogue& catalogue,
+                    log::Logger& logger);
+
   /**
    * Destructor
    */
   ~OStoreDBWithAgent() override;
 };
 
-} // namespace cta
+}  // namespace cta

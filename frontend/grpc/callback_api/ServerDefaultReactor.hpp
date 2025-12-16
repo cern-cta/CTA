@@ -1,16 +1,16 @@
-#include <catalogue/Catalogue.hpp>
-#include <scheduler/Scheduler.hpp>
-
-#include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
 
+#include <catalogue/Catalogue.hpp>
 #include <grpcpp/grpcpp.h>
+#include <scheduler/Scheduler.hpp>
 
 namespace cta::frontend::grpc {
 
 class DefaultWriteReactor : public ::grpc::ServerWriteReactor<cta::xrd::StreamResponse> {
 public:
-  explicit DefaultWriteReactor(const std::string& errMsg, ::grpc::StatusCode errCode = ::grpc::StatusCode::INVALID_ARGUMENT) {
+  explicit DefaultWriteReactor(const std::string& errMsg,
+                               ::grpc::StatusCode errCode = ::grpc::StatusCode::INVALID_ARGUMENT) {
     Finish(Status(errCode, errMsg));
   }
 
@@ -21,4 +21,4 @@ void DefaultWriteReactor::OnDone() {
   delete this;
 }
 
-} // namespace cta::frontend::grpc
+}  // namespace cta::frontend::grpc

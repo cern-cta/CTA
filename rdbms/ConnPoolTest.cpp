@@ -15,8 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
+
+#include "common/exception/Exception.hpp"
 #include "rdbms/Login.hpp"
 
 #include <gtest/gtest.h>
@@ -25,12 +26,9 @@ namespace unitTests {
 
 class cta_rdbms_ConnPoolTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_ConnPoolTest, getPooledConn) {
@@ -79,4 +77,4 @@ TEST_F(cta_rdbms_ConnPoolTest, moveConstructor) {
   Conn conn2(std::move(conn));
 }
 
-} // namespace unitTests
+}  // namespace unitTests

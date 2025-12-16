@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "common/log/LogContext.hpp"
 #include "RAOManager.hpp"
+#include "common/log/LogContext.hpp"
 
 namespace castor::tape::tapeserver::rao {
 
@@ -37,8 +37,7 @@ namespace castor::tape::tapeserver::rao {
  */
 class RAOAlgorithmFactoryFactory {
 public:
-  RAOAlgorithmFactoryFactory(RAOManager& raoManager, cta::log::LogContext& lc) :
-    m_raoManager(raoManager), m_lc(lc) { }
+  RAOAlgorithmFactoryFactory(RAOManager& raoManager, cta::log::LogContext& lc) : m_raoManager(raoManager), m_lc(lc) {}
 
   virtual ~RAOAlgorithmFactoryFactory() = default;
 
@@ -53,4 +52,4 @@ private:
   cta::log::LogContext& m_lc;
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

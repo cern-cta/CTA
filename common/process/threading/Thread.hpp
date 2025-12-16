@@ -40,22 +40,29 @@ CTA_GENERATE_EXCEPTION_CLASS(UncaughtExceptionInThread);
 class Thread {
 public:
   Thread() = default;
-  explicit Thread(std::optional<size_t> stackSize): m_hadException(false), m_what(""), m_started(false), m_stackSize(stackSize) {}
+
+  explicit Thread(std::optional<size_t> stackSize)
+      : m_hadException(false),
+        m_what(""),
+        m_started(false),
+        m_stackSize(stackSize) {}
 
   virtual ~Thread() = default;
   void start();
   void wait();
   void kill();
+
 protected:
-  virtual void run () = 0;
+  virtual void run() = 0;
+
 private:
   pthread_t m_thread = pthread_t();
   bool m_hadException = false;
   std::string m_what;
   std::string m_type;
-  static void * pthread_runner (void * arg);
+  static void* pthread_runner(void* arg);
   bool m_started = false;
   std::optional<size_t> m_stackSize;
 };
 
-} // namespace cta::threading
+}  // namespace cta::threading

@@ -15,13 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/dataStructures/LogicalLibrary.hpp"
-#include "common/semconv/Attributes.hpp"
-#include "CtaFrontendApi.hpp"
-#include "cmdline/CtaAdminCmdParser.hpp"
-#include "frontend/common/AdminCmd.hpp"
 #include "AdminCmdStream.hpp"
 
+#include "CtaFrontendApi.hpp"
 #include "XrdCtaActivityMountRuleLs.hpp"
 #include "XrdCtaAdminLs.hpp"
 #include "XrdCtaArchiveRouteLs.hpp"
@@ -32,9 +28,9 @@
 #include "XrdCtaFailedRequestLs.hpp"
 #include "XrdCtaGroupMountRuleLs.hpp"
 #include "XrdCtaLogicalLibraryLs.hpp"
-#include "XrdCtaPhysicalLibraryLs.hpp"
 #include "XrdCtaMediaTypeLs.hpp"
 #include "XrdCtaMountPolicyLs.hpp"
+#include "XrdCtaPhysicalLibraryLs.hpp"
 #include "XrdCtaRecycleTapeFileLs.hpp"
 #include "XrdCtaRepackLs.hpp"
 #include "XrdCtaRequesterMountRuleLs.hpp"
@@ -45,9 +41,11 @@
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdCtaVersion.hpp"
 #include "XrdCtaVirtualOrganizationLs.hpp"
-
-#include "frontend/common/PbException.hpp"
+#include "cmdline/CtaAdminCmdParser.hpp"
+#include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "frontend/common/AdminCmd.hpp"
+#include "frontend/common/PbException.hpp"
 #include "frontend/common/RequestTracker.hpp"
 
 namespace cta::frontend {
@@ -143,8 +141,8 @@ xrd::Response AdminCmdStream::process() {
         processRecycleTapeFile_Ls(response);
         break;
       default:
-        throw exception::PbException("Admin command pair <" + AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", " +
-                                     AdminCmd_SubCmd_Name(m_adminCmd.subcmd()) + "> is not a stream command.");
+        throw exception::PbException("Admin command pair <" + AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", "
+                                     + AdminCmd_SubCmd_Name(m_adminCmd.subcmd()) + "> is not a stream command.");
     }
 
     // Log the admin command

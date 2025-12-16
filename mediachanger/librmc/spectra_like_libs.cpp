@@ -15,9 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string.h>
-#include <ctype.h>
 #include "spectra_like_libs.hpp"
+
+#include <ctype.h>
+#include <string.h>
 
 #define N_LIBS (sizeof(spectra_like_libs) / sizeof(spectra_like_libs[0]))
 
@@ -61,8 +62,9 @@ int is_library_spectra_like(const struct robot_info* const robot_info) {
   /* find if the vendor (and product) are in the list 'spectra_like_libs' */
   isSpectraLike = 0;
   for (i = 0; i < N_LIBS && !isSpectraLike; i++) {
-    if (strcasecmp(vendorId, spectra_like_libs[i].vendor_id) == 0 &&
-        (spectra_like_libs[i].product_id[0] == '\0' || strcasecmp(productId, spectra_like_libs[i].product_id) == 0)) {
+    if (strcasecmp(vendorId, spectra_like_libs[i].vendor_id) == 0
+        && (spectra_like_libs[i].product_id[0] == '\0'
+            || strcasecmp(productId, spectra_like_libs[i].product_id) == 0)) {
       isSpectraLike = 1;
     }
   }

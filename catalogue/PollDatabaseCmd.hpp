@@ -31,7 +31,7 @@ namespace cta::catalogue {
  * correctly then the polling loop of this command should trigger automatic
  * and successfull reconnects.
  */
-class PollDatabaseCmd: public CmdLineTool {
+class PollDatabaseCmd : public CmdLineTool {
 public:
   /**
    * Constructor.
@@ -40,7 +40,7 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  PollDatabaseCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  PollDatabaseCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream);
 
 private:
   /**
@@ -50,14 +50,14 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
+  void printUsage(std::ostream& os) override;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

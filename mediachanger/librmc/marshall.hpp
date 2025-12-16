@@ -17,32 +17,32 @@
 
 #pragma once
 
-#include <memory.h>
 #include <arpa/inet.h>
+#include <memory.h>
 
 enum DataRepresentation {
-  BYTESIZE   = 1,
-  SHORTSIZE  = 2,
-  LONGSIZE   = 4,
-  QUADSIZE   = 8,
-  HYPERSIZE  = 8,
+  BYTESIZE = 1,
+  SHORTSIZE = 2,
+  LONGSIZE = 4,
+  QUADSIZE = 8,
+  HYPERSIZE = 8,
   TIME_TSIZE = HYPERSIZE
 };
 
-using BYTE  = char;
+using BYTE = char;
 using SHORT = short;
-using LONG  = int;
+using LONG = int;
 
-#define BYTEADDR(x) (((char*) &(x)) + sizeof(BYTE) - BYTESIZE)
-#define SHORTADDR(x) (((char*) &(x)) + sizeof(SHORT) - SHORTSIZE)
-#define LONGADDR(x) (((char*) &(x)) + sizeof(LONG) - LONGSIZE)
-#define INC_PTR(ptr, n)     (ptr) = (char*) (ptr) + (n)
+#define BYTEADDR(x)     (((char*) &(x)) + sizeof(BYTE) - BYTESIZE)
+#define SHORTADDR(x)    (((char*) &(x)) + sizeof(SHORT) - SHORTSIZE)
+#define LONGADDR(x)     (((char*) &(x)) + sizeof(LONG) - LONGSIZE)
+#define INC_PTR(ptr, n) (ptr) = (char*) (ptr) + (n)
 
 /*
  * BIT manipulation
  */
 
-constexpr int BITSOFBYTE = 8;    //!< number of bits in a byte
+constexpr int BITSOFBYTE = 8;  //!< number of bits in a byte
 
 #define bitsof(t) sizeof(t) * BITSOFBYTE  //!< number of bits in a type
 

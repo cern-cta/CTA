@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <memory>
-
 #include "common/dataStructures/LabelFormat.hpp"
+
+#include <memory>
 
 namespace cta {
 class RetrieveJob;
@@ -35,4 +35,4 @@ public:
   static std::unique_ptr<FileReader> create(ReadSession& readSession, const cta::RetrieveJob& fileToRecall);
 };
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

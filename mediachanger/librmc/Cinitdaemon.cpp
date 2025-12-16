@@ -19,13 +19,14 @@
  * Cinitdaemon.c - Common routine for CASTOR daemon initialisation
  */
 
-#include <unistd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <signal.h>
-#include <errno.h>
-#include <string.h>
 #include "serrno.hpp"
+
+#include <errno.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 int Cinitdaemon(const char* const name, void (*const wait4child)(int)) {
   int c;

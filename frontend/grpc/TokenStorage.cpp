@@ -17,8 +17,8 @@
 
 #include "TokenStorage.hpp"
 
-#include "utils.hpp"
 #include "common/utils/Base64.hpp"
+#include "utils.hpp"
 
 void cta::frontend::grpc::server::TokenStorage::store(const std::string& strToken,
                                                       const std::string& strClientPrincipal) {

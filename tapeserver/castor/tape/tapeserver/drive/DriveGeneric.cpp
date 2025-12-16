@@ -15,19 +15,18 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "castor/tape/tapeserver/drive/DriveGeneric.hpp"
 
-#include "common/Timer.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "castor/tape/tapeserver/drive/FakeDrive.hpp"
 #include "common/CRC.hpp"
+#include "common/Timer.hpp"
 #include "common/exception/MemException.hpp"
 
 #include <errno.h>
-
-#include <string>
-#include <map>
 #include <list>
+#include <map>
+#include <string>
 
 namespace castor::tape::tapeserver {
 
@@ -99,9 +98,7 @@ std::string drive::getSerialNumber(const int& fd, System::virtualWrapper& sw) {
   return serialNumber;
 }
 
-drive::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw)
-    : m_SCSIInfo(di),
-      m_sysWrapper(sw) {
+drive::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw) : m_SCSIInfo(di), m_sysWrapper(sw) {
   /* Open the device files */
   /* We open the tape device file non-blocking as blocking open on rewind tapes (at least)
    * will fail after a long timeout when no tape is present (at least with mhvtl)
@@ -562,8 +559,8 @@ void drive::DriveGeneric::setLogicalBlockProtection(const unsigned char method,
     /* Manage both system error and SCSI errors. */
     cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh), "Failed SG_IO ioctl");
     SCSI::ExceptionLauncher(sgh,
-                            std::string("SCSI error fetching data in setLogicalBlockProtection: ") +
-                              SCSI::statusToString(sgh.status));
+                            std::string("SCSI error fetching data in setLogicalBlockProtection: ")
+                              + SCSI::statusToString(sgh.status));
   }
 
   {
@@ -573,9 +570,9 @@ void drive::DriveGeneric::setLogicalBlockProtection(const unsigned char method,
     SCSI::Structures::LinuxSGIO_t sgh;
 
     cdb.PF = 1;  // means nothing for IBM, LTO, T10000
-    cdb.paramListLength = sizeof(controlDataProtection.header) + sizeof(controlDataProtection.blockDescriptor) +
-                          SCSI::controlDataProtectionModePageLengthAddition +
-                          SCSI::Structures::toU16(controlDataProtection.modePage.pageLength);
+    cdb.paramListLength = sizeof(controlDataProtection.header) + sizeof(controlDataProtection.blockDescriptor)
+                          + SCSI::controlDataProtectionModePageLengthAddition
+                          + SCSI::Structures::toU16(controlDataProtection.modePage.pageLength);
     if (cdb.paramListLength > sizeof(controlDataProtection)) {
       // should never happen
       throw cta::exception::Exception(std::string("cdb.paramListLength greater then size "
@@ -596,8 +593,8 @@ void drive::DriveGeneric::setLogicalBlockProtection(const unsigned char method,
     /* Manage both system error and SCSI errors. */
     cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh), "Failed SG_IO ioctl");
     SCSI::ExceptionLauncher(sgh,
-                            std::string("SCSI error setting data in setDataProtection : ") +
-                              SCSI::statusToString(sgh.status));
+                            std::string("SCSI error setting data in setDataProtection : ")
+                              + SCSI::statusToString(sgh.status));
   }
 }
 
@@ -984,9 +981,8 @@ bool drive::DriveGeneric::isTapeBlank() {
 
   struct mtget mtInfo;
 
-  if ((0 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd1)) &&
-      (0 != m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd2)) && m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo) >= 0 &&
-      GMT_EOD(mtInfo.mt_gstat) && GMT_BOT(mtInfo.mt_gstat)) {
+  if ((0 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd1)) && (0 != m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd2))
+      && m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &mtInfo) >= 0 && GMT_EOD(mtInfo.mt_gstat) && GMT_BOT(mtInfo.mt_gstat)) {
     //we are doing it the old CASTOR way (see readlbl.c)
     return true;
   }
@@ -1005,7 +1001,7 @@ bool drive::DriveGeneric::isTapeBlank() {
  * layer, unless the parameter turns out to be disused.
  * @param bufWrite: value of the buffer write switch
  */
-void drive::DriveGeneric::setSTBufferWrite(bool bufWrite)  {
+void drive::DriveGeneric::setSTBufferWrite(bool bufWrite) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = bufWrite ? (MT_ST_SETBOOLEANS | MT_ST_BUFFER_WRITES) : (MT_ST_CLEARBOOLEANS | MT_ST_BUFFER_WRITES);
@@ -1036,7 +1032,7 @@ void drive::DriveGeneric::spaceToEOM(void) {
  * the higher levels of the software (TODO: protected?).
  * @param fastMTEOM the option switch.
  */
-void drive::DriveGeneric::setSTFastMTEOM(bool fastMTEOM)  {
+void drive::DriveGeneric::setSTFastMTEOM(bool fastMTEOM) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = fastMTEOM ? (MT_ST_SETBOOLEANS | MT_ST_FAST_MTEOM) : (MT_ST_CLEARBOOLEANS | MT_ST_FAST_MTEOM);
@@ -1060,7 +1056,7 @@ void drive::DriveGeneric::fastSpaceToEOM(void) {
 /**
  * Rewind tape.
  */
-void drive::DriveGeneric::rewind(void)  {
+void drive::DriveGeneric::rewind(void) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTREW;
   m_mtCmd.mt_count = 1;
@@ -1105,7 +1101,7 @@ void drive::DriveGeneric::spaceFileMarksForward(size_t count) {
 /**
  * Unload the tape.
  */
-void drive::DriveGeneric::unloadTape(void)  {
+void drive::DriveGeneric::unloadTape(void) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTUNLOAD;
   m_mtCmd.mt_count = 1;
@@ -1117,9 +1113,10 @@ void drive::DriveGeneric::unloadTape(void)  {
  * Synch call to the tape drive. This function will not return before the
  * data in the drive's buffer is actually committed to the medium.
  */
-void drive::DriveGeneric::flush(void)  {
+void drive::DriveGeneric::flush(void) {
   struct mtop m_mtCmd = {};
-  m_mtCmd.mt_op = MTWEOF; //Not using MTNOP because it doesn't do what it claims (see st source code) so here we put "write sync file marks" with count set to 0.
+  m_mtCmd.mt_op =
+    MTWEOF;  //Not using MTNOP because it doesn't do what it claims (see st source code) so here we put "write sync file marks" with count set to 0.
   // The following text is a quote from the SCSI Stream commands manual (SSC-3):
   // NOTE 25 Upon completion of any buffered write operation, the application client may issue a WRITE FILEMARKS(16) command with the IMMED bit set to zero and the FILEMARK COUNT field set to zero to perform a synchronize operation (see 4.2.10).
   m_mtCmd.mt_count = 0;
@@ -1132,7 +1129,7 @@ void drive::DriveGeneric::flush(void)  {
  * are committed to medium.
  * @param count
  */
-void drive::DriveGeneric::writeSyncFileMarks(size_t count)  {
+void drive::DriveGeneric::writeSyncFileMarks(size_t count) {
   struct mtop m_mtCmd = {};
   m_mtCmd.mt_op = MTWEOF;
   m_mtCmd.mt_count = (int) count;
@@ -1145,13 +1142,12 @@ void drive::DriveGeneric::writeSyncFileMarks(size_t count)  {
  * buffer and the function return immediately.
  * @param count
  */
-void drive::DriveGeneric::writeImmediateFileMarks(size_t count)  {
+void drive::DriveGeneric::writeImmediateFileMarks(size_t count) {
   struct mtop m_mtCmd = {};
-  m_mtCmd.mt_op = MTWEOFI; //Undocumented in "man st" needs the mtio_add.hh header file (see above)
-  m_mtCmd.mt_count = (int)count;
-  cta::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
-      "Failed ST ioctl (MTWEOFI) in DriveGeneric::writeImmediateFileMarks");
+  m_mtCmd.mt_op = MTWEOFI;  //Undocumented in "man st" needs the mtio_add.hh header file (see above)
+  m_mtCmd.mt_count = (int) count;
+  cta::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
+                                          "Failed ST ioctl (MTWEOFI) in DriveGeneric::writeImmediateFileMarks");
 }
 
 /**
@@ -1162,7 +1158,8 @@ void drive::DriveGeneric::writeImmediateFileMarks(size_t count)  {
 void drive::DriveGeneric::writeBlock(const void* data, size_t count) {
   switch (m_lbpToUse) {
     case lbpToUse::crc32cReadWrite: {
-      const std::unique_ptr<uint8_t[]> dataWithCrc32c(new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
+      const std::unique_ptr<uint8_t[]> dataWithCrc32c(
+        new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
       if (nullptr == dataWithCrc32c) {
         throw cta::exception::MemException("In DriveGeneric::writeBlock: Failed to allocate memory for a new MemBlock");
       }
@@ -1199,7 +1196,8 @@ ssize_t drive::DriveGeneric::readBlock(void* data, size_t count) {
   switch (m_lbpToUse) {
     case lbpToUse::crc32cReadWrite:
     case lbpToUse::crc32cReadOnly: {
-      const std::unique_ptr<uint8_t[]> dataWithCrc32c(new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
+      const std::unique_ptr<uint8_t[]> dataWithCrc32c(
+        new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
       if (nullptr == dataWithCrc32c) {
         throw cta::exception::MemException("In DriveGeneric::readBlock: Failed to allocate memory");
       }
@@ -1215,7 +1213,9 @@ ssize_t drive::DriveGeneric::readBlock(void* data, size_t count) {
       if (0 >= dataLenWithoutCrc32c) {
         throw cta::exception::Exception("In DriveGeneric::readBlock: wrong data block size, checksum cannot fit");
       }
-      if (cta::verifyCrc32cForMemoryBlockWithCrc32c(SCSI::logicBlockProtectionMethod::CRC32CSeed, res, dataWithCrc32c.get())) {
+      if (cta::verifyCrc32cForMemoryBlockWithCrc32c(SCSI::logicBlockProtectionMethod::CRC32CSeed,
+                                                    res,
+                                                    dataWithCrc32c.get())) {
         // everything is fine here do mem copy
         memcpy(data, dataWithCrc32c.get(), dataLenWithoutCrc32c);
         return dataLenWithoutCrc32c;
@@ -1243,9 +1243,11 @@ void drive::DriveGeneric::readExactBlock(void* data, size_t count, const std::st
   switch (m_lbpToUse) {
     case lbpToUse::crc32cReadWrite:
     case lbpToUse::crc32cReadOnly: {
-      const std::unique_ptr<uint8_t[]> dataWithCrc32c(new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
+      const std::unique_ptr<uint8_t[]> dataWithCrc32c(
+        new (std::nothrow) uint8_t[count + SCSI::logicBlockProtectionMethod::CRC32CLength]);
       if (nullptr == dataWithCrc32c) {
-        throw cta::exception::MemException("In DriveGeneric::readExactBlock: Failed to allocate memory for a new MemBlock");
+        throw cta::exception::MemException(
+          "In DriveGeneric::readExactBlock: Failed to allocate memory for a new MemBlock");
       }
       const ssize_t res =
         m_sysWrapper.read(m_tapeFD, dataWithCrc32c.get(), count + SCSI::logicBlockProtectionMethod::CRC32CLength);
@@ -1257,8 +1259,9 @@ void drive::DriveGeneric::readExactBlock(void* data, size_t count, const std::st
       // ENOMEM may be returned if the tape block size is larger than 'count'
       if (res == -1 && ENOMEM == errno) {
         throw cta::exception::Errnum(errno,
-                                     context + ": In DriveGeneric::readExactBlock: Failed ST read. Tape volume label "
-                                               "size not be in the CTA/CASTOR format.");
+                                     context
+                                       + ": In DriveGeneric::readExactBlock: Failed ST read. Tape volume label "
+                                         "size not be in the CTA/CASTOR format.");
       }
       // Generic handling of other errors
       if (res == -1) {
@@ -1274,7 +1277,8 @@ void drive::DriveGeneric::readExactBlock(void* data, size_t count, const std::st
         // everything is fine here do mem copy
         memcpy(data, dataWithCrc32c.get(), count);
       } else {
-        throw cta::exception::Exception(context + ": In DriveGeneric::readExactBlock: Failed checksum verification for ST read");
+        throw cta::exception::Exception(
+          context + ": In DriveGeneric::readExactBlock: Failed checksum verification for ST read");
       }
       break;
     }
@@ -1287,8 +1291,9 @@ void drive::DriveGeneric::readExactBlock(void* data, size_t count, const std::st
       // ENOMEM may be returned if the tape block size is larger than 'count'
       if (res == -1 && ENOMEM == errno) {
         throw cta::exception::Errnum(errno,
-                                     context + ": In DriveGeneric::readExactBlock: Failed ST read. Tape volume label "
-                                               "size not be in the CTA/CASTOR format.");
+                                     context
+                                       + ": In DriveGeneric::readExactBlock: Failed ST read. Tape volume label "
+                                         "size not be in the CTA/CASTOR format.");
       }
       // Generic handling of other errors
       cta::exception::Errnum::throwOnMinusOne(res, context + ": In DriveGeneric::readExactBlock: Failed ST read");

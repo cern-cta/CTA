@@ -15,15 +15,16 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/wrapper/PostgresStmt.hpp"
+
 #include "rdbms/ConstraintError.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresRset.hpp"
-#include "rdbms/wrapper/PostgresStmt.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 #include <string>
-#include <cstdint>
 
 namespace unitTests {
 
@@ -38,7 +39,6 @@ namespace unitTests {
 
 class DISABLED_cta_rdbms_wrapper_PostgresStmtTest : public ::testing::Test {
 protected:
-
   virtual void SetUp() {
     m_connstring = "postgresql://ctaunittest:ctaunittest@localhost/ctaunittest";
     m_login = cta::rdbms::Login::parsePostgresql(m_connstring);
@@ -48,9 +48,7 @@ protected:
     ASSERT_TRUE(m_conn->getTableNames().empty());
   }
 
-  virtual void TearDown() {
-    m_conn.reset();
-  }
+  virtual void TearDown() { m_conn.reset(); }
 
   std::string m_connstring;
   std::unique_ptr<cta::rdbms::wrapper::PostgresConn> m_conn;
@@ -84,7 +82,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, create_table) {
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
-    ASSERT_TRUE((bool)nbTables);
+    ASSERT_TRUE((bool) nbTables);
     ASSERT_EQ(1, nbTables.value());
     ASSERT_FALSE(rset->next());
     ASSERT_EQ(1, m_conn->getTableNames().size());
@@ -114,7 +112,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, create_table) {
     auto rset = stmt->executeQuery();
     ASSERT_TRUE(rset->next());
     const auto nbTables = rset->columnOptionalUint64("NB_TABLES");
-    ASSERT_TRUE((bool)nbTables);
+    ASSERT_TRUE((bool) nbTables);
     ASSERT_EQ(1, nbTables.value());
     ASSERT_FALSE(rset->next());
     const auto tableNames = m_conn->getTableNames();
@@ -216,9 +214,9 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_without_bind) {
     const auto col2 = rset->columnOptionalString("COL2");
     const auto col3 = rset->columnOptionalUint64("COL3");
 
-    ASSERT_TRUE((bool)col1);
-    ASSERT_TRUE((bool)col2);
-    ASSERT_TRUE((bool)col3);
+    ASSERT_TRUE((bool) col1);
+    ASSERT_TRUE((bool) col2);
+    ASSERT_TRUE((bool) col3);
 
     ASSERT_EQ("one", col1.value());
     ASSERT_EQ("two", col2.value());
@@ -285,9 +283,9 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_bind) {
     const auto col2 = rset->columnOptionalString("COL2");
     const auto col3 = rset->columnOptionalUint64("COL3");
 
-    ASSERT_TRUE((bool)col1);
-    ASSERT_TRUE((bool)col2);
-    ASSERT_TRUE((bool)col3);
+    ASSERT_TRUE((bool) col1);
+    ASSERT_TRUE((bool) col2);
+    ASSERT_TRUE((bool) col3);
 
     ASSERT_EQ("one", col1.value());
     ASSERT_EQ("two", col2.value());
@@ -302,7 +300,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, isolated_transaction) {
   using namespace cta::rdbms::wrapper;
 
   // The fiest connection, to be used for creating a table
-  PostgresConn &connForCreate = *m_conn;
+  PostgresConn& connForCreate = *m_conn;
 
   // Create a table
   ASSERT_TRUE(connForCreate.getTableNames().empty());
@@ -354,8 +352,8 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, isolated_transaction) {
     ASSERT_TRUE(rset->next());
 
     const auto nbRows = rset->columnOptionalUint64("NB_ROWS");
-    ASSERT_TRUE((bool)nbRows);
-    ASSERT_EQ((uint64_t)0, nbRows.value());
+    ASSERT_TRUE((bool) nbRows);
+    ASSERT_EQ((uint64_t) 0, nbRows.value());
 
     ASSERT_FALSE(rset->next());
   }
@@ -376,12 +374,11 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, isolated_transaction) {
     ASSERT_TRUE(rset->next());
 
     const auto nbRows = rset->columnOptionalUint64("NB_ROWS");
-    ASSERT_TRUE((bool)nbRows);
-    ASSERT_EQ((uint64_t)1, nbRows.value());
+    ASSERT_TRUE((bool) nbRows);
+    ASSERT_EQ((uint64_t) 1, nbRows.value());
 
     ASSERT_FALSE(rset->next());
   }
-
 }
 
 TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeNonQuery_insert_violating_primary_key) {
@@ -530,7 +527,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, insert_with_large_uint64) {
 
     const auto col1 = rset->columnOptionalUint64("COL1");
 
-    ASSERT_TRUE((bool)col1);
+    ASSERT_TRUE((bool) col1);
 
     ASSERT_EQ(val, col1.value());
 
@@ -561,15 +558,15 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
   const size_t nbBulkRows = 10000;
   // Insert a rows into the test table using a bulk method
   {
-    PostgresColumn c1("MYCOL1",nbBulkRows);
-    PostgresColumn c2("MYCOL2",nbBulkRows);
-    PostgresColumn c3("MYCOL3",nbBulkRows);
+    PostgresColumn c1("MYCOL1", nbBulkRows);
+    PostgresColumn c2("MYCOL2", nbBulkRows);
+    PostgresColumn c3("MYCOL3", nbBulkRows);
 
-    for(size_t i=0;i<nbBulkRows;++i) {
+    for (size_t i = 0; i < nbBulkRows; ++i) {
       std::string s = "column1 string \" \' \\ \n\r\t for row " + std::to_string(i);
       c1.setFieldValue(i, s);
       uint64_t rval = 123ULL * i;
-      s = "column2 string for row " +  std::to_string(i);
+      s = "column2 string for row " + std::to_string(i);
       if ((i % 2) == 0) {
         c2.setFieldValue(i, s);
       }
@@ -587,7 +584,7 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
         :MYCOL3
     )SQL";
     auto stmt = m_conn->createStmt(sql);
-    PostgresStmt &pgStmt = dynamic_cast<PostgresStmt &>(*stmt);
+    PostgresStmt& pgStmt = dynamic_cast<PostgresStmt&>(*stmt);
     pgStmt.setColumn(c3);
     pgStmt.setColumn(c1);
     pgStmt.setColumn(c2);
@@ -608,8 +605,8 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
     ASSERT_TRUE(rset->next());
 
     const auto nbRows = rset->columnOptionalUint64("NB_ROWS");
-    ASSERT_TRUE((bool)nbRows);
-    ASSERT_EQ((uint64_t)nbBulkRows, nbRows.value());
+    ASSERT_TRUE((bool) nbRows);
+    ASSERT_EQ((uint64_t) nbBulkRows, nbRows.value());
 
     ASSERT_FALSE(rset->next());
   }
@@ -627,27 +624,25 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, executeCopyInsert_10000_rows
     auto rset = stmt->executeQuery();
 
     size_t nbrows = 0;
-    while(rset->next()) {
-
+    while (rset->next()) {
       const auto col1 = rset->columnOptionalString("COL1");
       const auto col2 = rset->columnOptionalString("COL2");
       const auto col3 = rset->columnOptionalUint64("COL3");
 
-      ASSERT_TRUE((bool)col1);
+      ASSERT_TRUE((bool) col1);
       if ((nbrows % 2) == 0) {
-        ASSERT_TRUE((bool)col2);
+        ASSERT_TRUE((bool) col2);
       } else {
-        ASSERT_FALSE((bool)col2);
+        ASSERT_FALSE((bool) col2);
       }
-      ASSERT_TRUE((bool)col3);
+      ASSERT_TRUE((bool) col3);
 
       std::string s1exp = "column1 string \" \' \\ \n\r\t for row " + std::to_string(nbrows);
       std::string s2exp = "column2 string for row " + std::to_string(nbrows);
       uint64_t rval_exp = 123ULL * nbrows;
 
-
       ASSERT_EQ(s1exp.c_str(), col1.value());
-      if ((nbrows %2) == 0) {
+      if ((nbrows % 2) == 0) {
         ASSERT_EQ(s2exp.c_str(), col2.value());
       }
       ASSERT_EQ(rval_exp, col3.value());
@@ -707,15 +702,14 @@ TEST_F(DISABLED_cta_rdbms_wrapper_PostgresStmtTest, nbaffected) {
     )SQL";
     auto stmt = m_conn->createStmt(sql);
     auto rset = stmt->executeQuery();
-    size_t nr=0;
-    while(rset->next()) {
+    size_t nr = 0;
+    while (rset->next()) {
       ++nr;
       ASSERT_EQ(nr, stmt->getNbAffectedRows());
     }
     ASSERT_EQ(3, nr);
     ASSERT_EQ(3, stmt->getNbAffectedRows());
   }
-
 }
 
-} // namespace unitTests
+}  // namespace unitTests

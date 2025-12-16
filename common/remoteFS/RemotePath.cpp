@@ -16,6 +16,7 @@
  */
 
 #include "common/remoteFS/RemotePath.hpp"
+
 #include "common/exception/Exception.hpp"
 
 #include <sstream>
@@ -23,30 +24,27 @@
 //------------------------------------------------------------------------------
 // setter
 //------------------------------------------------------------------------------
-void cta::RemotePath::setPath(const std::string &raw)
-{
+void cta::RemotePath::setPath(const std::string& raw) {
   m_raw = raw;
-  auto const pos = raw.find(':');
+  const auto pos = raw.find(':');
 
-  if(std::string::npos == pos) {
+  if (std::string::npos == pos) {
     std::ostringstream msg;
-    msg << "Failed to instantiate RemotePath object for URI " << raw <<
-      " because the colon is missing as in scheme:hierarchical_part";
+    msg << "Failed to instantiate RemotePath object for URI " << raw
+        << " because the colon is missing as in scheme:hierarchical_part";
     throw exception::Exception(msg.str());
   }
 
-  if(0 >= pos) {
+  if (0 >= pos) {
     std::ostringstream msg;
-    msg << "Failed to instantiate RemotePath object for URI " << raw <<
-     " because there is no scheme";
+    msg << "Failed to instantiate RemotePath object for URI " << raw << " because there is no scheme";
     throw exception::Exception(msg.str());
   }
 
   const auto indexOfLastChar = raw.length() - 1;
-  if(pos == indexOfLastChar) {
+  if (pos == indexOfLastChar) {
     std::ostringstream msg;
-    msg << "Failed to instantiate RemotePath object for URI " << raw <<
-     " because there nothing after the scheme";
+    msg << "Failed to instantiate RemotePath object for URI " << raw << " because there nothing after the scheme";
     throw exception::Exception(msg.str());
   }
 
@@ -61,18 +59,17 @@ cta::RemotePath::RemotePath(const std::string& raw) {
   setPath(raw);
 }
 
-
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool cta::RemotePath::operator==(const RemotePath &rhs) const {
+bool cta::RemotePath::operator==(const RemotePath& rhs) const {
   return m_raw == rhs.m_raw;
 }
 
 //------------------------------------------------------------------------------
 // operator<
 //------------------------------------------------------------------------------
-bool cta::RemotePath::operator<(const RemotePath &rhs) const {
+bool cta::RemotePath::operator<(const RemotePath& rhs) const {
   return m_raw < rhs.m_raw;
 }
 
@@ -86,8 +83,8 @@ bool cta::RemotePath::empty() const {
 //------------------------------------------------------------------------------
 // getRaw
 //------------------------------------------------------------------------------
-const std::string &cta::RemotePath::getRaw() const {
-  if(empty()) {
+const std::string& cta::RemotePath::getRaw() const {
+  if (empty()) {
     throw exception::Exception("Empty remote path");
   }
 
@@ -97,8 +94,8 @@ const std::string &cta::RemotePath::getRaw() const {
 //------------------------------------------------------------------------------
 // getScheme
 //------------------------------------------------------------------------------
-const std::string &cta::RemotePath::getScheme() const {
-  if(empty()) {
+const std::string& cta::RemotePath::getScheme() const {
+  if (empty()) {
     throw exception::Exception("Empty remote path");
   }
 
@@ -108,8 +105,8 @@ const std::string &cta::RemotePath::getScheme() const {
 //------------------------------------------------------------------------------
 // getAfterScheme
 //------------------------------------------------------------------------------
-const std::string &cta::RemotePath::getAfterScheme() const {
-  if(empty()) {
+const std::string& cta::RemotePath::getAfterScheme() const {
+  if (empty()) {
     throw exception::Exception("Empty remote path");
   }
 

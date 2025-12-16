@@ -15,19 +15,19 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/utils/utils.hpp"
+#include "rdbms/wrapper/PostgresConn.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/process/threading/RWLockRdLocker.hpp"
 #include "common/process/threading/RWLockWrLocker.hpp"
-
+#include "common/utils/utils.hpp"
 #include "rdbms/Conn.hpp"
-#include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
-#include <stdio.h>
-#include <sstream>
 #include <exception>
+#include <sstream>
+#include <stdio.h>
 
 namespace cta::rdbms::wrapper {
 
@@ -413,9 +413,7 @@ void PostgresConn::rollback() {
   }
 
   Postgres::Result res(PQexec(m_pgsqlConn, "ROLLBACK"));
-  throwDBIfNotStatus(res.get(),
-                     PGRES_COMMAND_OK,
-                     "Problem rolling back the DB transaction");
+  throwDBIfNotStatus(res.get(), PGRES_COMMAND_OK, "Problem rolling back the DB transaction");
 }
 
 //------------------------------------------------------------------------------
@@ -450,9 +448,7 @@ void PostgresConn::deallocateStmt(const std::string& stmt) {
   s << "DEALLOCATE " << stmt;
 
   Postgres::Result res(PQexec(m_pgsqlConn, s.str().c_str()));
-  throwDBIfNotStatus(res.get(),
-                     PGRES_COMMAND_OK,
-                     "Failed to DEALLOCATE statement " + stmt);
+  throwDBIfNotStatus(res.get(), PGRES_COMMAND_OK, "Failed to DEALLOCATE statement " + stmt);
 }
 
 //------------------------------------------------------------------------------

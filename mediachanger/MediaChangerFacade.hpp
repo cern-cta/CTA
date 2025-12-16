@@ -18,9 +18,9 @@
 #pragma once
 
 #include "common/log/Logger.hpp"
+#include "mediachanger/DmcProxy.hpp"
 #include "mediachanger/LibrarySlot.hpp"
 #include "mediachanger/MediaChangerProxy.hpp"
-#include "mediachanger/DmcProxy.hpp"
 #include "mediachanger/RmcProxy.hpp"
 
 #include <memory>
@@ -33,7 +33,6 @@ namespace cta::mediachanger {
  */
 class MediaChangerFacade {
 public:
-
   /**
    * Constructor.
    *
@@ -41,7 +40,7 @@ public:
    * object will be used by the dummy media changer to communicate with the
    * tape operator.
    */
-  MediaChangerFacade(const RmcProxy& rmcProxy, log::Logger &log);
+  MediaChangerFacade(const RmcProxy& rmcProxy, log::Logger& log);
 
   /**
    * Requests the media changer to mount the specified tape for read-only
@@ -53,7 +52,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param slot The library slot containing the tape drive.
    */
-  void mountTapeReadOnly(const std::string &vid, const LibrarySlot &slot);
+  void mountTapeReadOnly(const std::string& vid, const LibrarySlot& slot);
 
   /**
    * Requests the media changer to mount the specified tape for read/write
@@ -62,7 +61,7 @@ public:
    * @param vid The volume identifier of the tape.
    * @param slot The library slot containing the tape drive.
    */
-  void mountTapeReadWrite(const std::string &vid, const LibrarySlot &slot);
+  void mountTapeReadWrite(const std::string& vid, const LibrarySlot& slot);
 
   /**
    * Requests the media changer to dismount the specified tape from the
@@ -71,10 +70,9 @@ public:
    * @param vid The volume identifier of the tape.
    * @param slot The library slot containing the tape drive.
    */
-  void dismountTape(const std::string &vid, const LibrarySlot &slot);
+  void dismountTape(const std::string& vid, const LibrarySlot& slot);
 
 private:
-
   /**
    * SCSI media changer proxy.
    */
@@ -88,8 +86,8 @@ private:
   /**
    * Returns the media changer proxy for the specified library type.
    */
-  MediaChangerProxy &getProxy(const TapeLibraryType libraryType);
+  MediaChangerProxy& getProxy(const TapeLibraryType libraryType);
 
-}; // class MediaChangerFacade
+};  // class MediaChangerFacade
 
-} // namespace cta::mediachanger
+}  // namespace cta::mediachanger

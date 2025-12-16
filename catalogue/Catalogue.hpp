@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include <memory>
-
 #include "catalogue/interfaces/AdminUserCatalogue.hpp"
 #include "catalogue/interfaces/ArchiveFileCatalogue.hpp"
 #include "catalogue/interfaces/ArchiveRouteCatalogue.hpp"
@@ -34,8 +32,6 @@
 #include "catalogue/interfaces/PhysicalLibraryCatalogue.hpp"
 #include "catalogue/interfaces/RequesterActivityMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/RequesterGroupMountRuleCatalogue.hpp"
-#include "catalogue/interfaces/RequesterGroupMountRuleCatalogue.hpp"
-#include "catalogue/interfaces/RequesterMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/RequesterMountRuleCatalogue.hpp"
 #include "catalogue/interfaces/SchemaCatalogue.hpp"
 #include "catalogue/interfaces/StorageClassCatalogue.hpp"
@@ -43,6 +39,8 @@
 #include "catalogue/interfaces/TapeFileCatalogue.hpp"
 #include "catalogue/interfaces/TapePoolCatalogue.hpp"
 #include "catalogue/interfaces/VirtualOrganizationCatalogue.hpp"
+
+#include <memory>
 
 namespace cta::catalogue {
 
@@ -80,7 +78,6 @@ public:
   virtual const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() = 0;
   virtual const std::unique_ptr<DriveStateCatalogue>& DriveState() = 0;
   virtual const std::unique_ptr<ArchiveFileCatalogue>& ArchiveFile() = 0;
-}; // class Catalogue
+};  // class Catalogue
 
-} // namespace cta::catalogue
-
+}  // namespace cta::catalogue

@@ -15,29 +15,29 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/Exception.hpp"
-#include "common/exception/NullPtrException.hpp"
-#include "common/exception/Errnum.hpp"
-#include "common/utils/Regex.hpp"
 #include "common/utils/utils.hpp"
 
-#include <regex>
+#include "common/exception/Errnum.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/exception/NullPtrException.hpp"
+#include "common/utils/Regex.hpp"
+
 #include <algorithm>
 #include <attr/xattr.h>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
 #include <limits>
 #include <memory>
-#include <iostream>
+#include <regex>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <sys/prctl.h>
 #include <sys/types.h>
+#include <sys/utsname.h>
 #include <uuid/uuid.h>
 #include <zlib.h>
-#include <sys/utsname.h>
-#include <sys/prctl.h>
-#include <iomanip>
-
-#include <fstream>
 
 using cta::exception::Exception;
 

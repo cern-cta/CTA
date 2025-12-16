@@ -20,8 +20,8 @@
 #include "SignalReactor.hpp"
 #include "common/log/LogContext.hpp"
 
-#include <unordered_map>
 #include <functional>
+#include <unordered_map>
 
 namespace cta::process {
 

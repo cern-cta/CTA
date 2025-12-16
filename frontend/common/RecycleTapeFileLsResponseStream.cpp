@@ -16,8 +16,9 @@
  */
 
 #include "RecycleTapeFileLsResponseStream.hpp"
-#include "common/checksum/ChecksumBlobSerDeser.hpp"
+
 #include "catalogue/CatalogueItor.hpp"
+#include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
 
 namespace cta::frontend {

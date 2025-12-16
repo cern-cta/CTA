@@ -32,7 +32,6 @@ namespace cta::mediachanger {
  */
 class DebugBuf : public std::streambuf {
 public:
-
   /**
    * Constructor
    *
@@ -56,11 +55,10 @@ public:
   void setDebug(const bool value);
 
 protected:
-
   /**
    * Sends the specified character to the output channnel.
    */
-  int_type overflow (const int_type c) final;
+  int_type overflow(const int_type c) final;
 
   /**
    * Writes the standard preamble to the output stream.
@@ -68,7 +66,6 @@ protected:
   void writePreamble();
 
 private:
-
   /**
    * True if debug mode is on.
    */
@@ -78,13 +75,13 @@ private:
    * The output stream to which each debug message-line togther with its
    * standard preamble shall be written.
    */
-  std::ostream &m_os;
+  std::ostream& m_os;
 
   /**
    * True is a preamble should be written.
    */
   bool m_writePreamble = true;
 
-}; // class DebugBuf
+};  // class DebugBuf
 
-} // namespace cta::mediachanger
+}  // namespace cta::mediachanger

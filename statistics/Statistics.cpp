@@ -83,13 +83,13 @@ std::unique_ptr<Statistics> Statistics::Builder::build(cta::rdbms::Rset* rset) {
   return ret;
 }
 
-std::ostream & operator <<(std::ostream& stream, const Statistics& stats) {
+std::ostream& operator<<(std::ostream& stream, const Statistics& stats) {
   stream << "{"
          << "\"statisticsPerVo\": [";
   const auto& allVoStatistics = stats.getAllVOStatistics();
   uint64_t nbElementsVoStatistics = allVoStatistics.size();
   uint64_t i = 0;
-  for (auto & stat : allVoStatistics) {
+  for (auto& stat : allVoStatistics) {
     stream << "{"
            << "\"vo\": \"" << stat.first << "\","
            << "\"nbMasterFiles\": " << stat.second.nbMasterFiles << ","
@@ -97,8 +97,7 @@ std::ostream & operator <<(std::ostream& stream, const Statistics& stats) {
            << "\"nbCopyNb1\": " << stat.second.nbCopyNb1 << ","
            << "\"copyNb1InBytes\": " << stat.second.copyNb1InBytes << ","
            << "\"nbCopyNbGt1\": " << stat.second.nbCopyNbGt1 << ","
-           << "\"copyNbGt1InBytes\": " << stat.second.copyNbGt1InBytes
-           << "}";
+           << "\"copyNbGt1InBytes\": " << stat.second.copyNbGt1InBytes << "}";
     if (++i < nbElementsVoStatistics) {
       stream << ",";
     }
@@ -110,9 +109,8 @@ std::ostream & operator <<(std::ostream& stream, const Statistics& stats) {
          << "\"totalBytesCopyNb1\": " << stats.getTotalBytesCopyNb1() << ","
          << "\"totalFilesCopyNbGt1\": " << stats.getTotalFilesCopyNbGt1() << ","
          << "\"totalBytesCopyNbGt1\": " << stats.getTotalBytesCopyNbGt1() << ","
-         << "\"updateTime\": " << stats.getUpdateTime()
-         << "}";
+         << "\"updateTime\": " << stats.getUpdateTime() << "}";
   return stream;
 }
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

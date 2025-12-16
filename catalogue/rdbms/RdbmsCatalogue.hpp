@@ -17,18 +17,17 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/Group.hpp"
 #include "catalogue/TimeBasedCache.hpp"
 #include "catalogue/User.hpp"
-#include "common/process/threading/Mutex.hpp"
-#include "common/log/Logger.hpp"
-
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
+#include "common/log/Logger.hpp"
+#include "common/process/threading/Mutex.hpp"
+
+#include <memory>
+#include <string>
 
 namespace cta {
 
@@ -36,14 +35,14 @@ namespace rdbms {
 class Login;
 class Conn;
 class ConnPool;
-}
+}  // namespace rdbms
 
 namespace catalogue {
 
 /**
  * CTA catalogue implemented using a relational database backend.
  */
-class RdbmsCatalogue: public Catalogue {
+class RdbmsCatalogue : public Catalogue {
 protected:
   /**
    * Protected constructor only to be called by sub-classes.
@@ -58,11 +57,10 @@ protected:
    * connections to the underlying relational database for the sole purpose of
    * listing archive files.
    */
-  RdbmsCatalogue(
-    log::Logger &log,
-    const rdbms::Login &login,
-    const uint64_t nbConns,
-    const uint64_t nbArchiveFileListingConns);
+  RdbmsCatalogue(log::Logger& log,
+                 const rdbms::Login& login,
+                 const uint64_t nbConns,
+                 const uint64_t nbArchiveFileListingConns);
 
 public:
   ~RdbmsCatalogue() override = default;
@@ -99,7 +97,7 @@ protected:
   /**
    * Object representing the API to the CTA logging system.
    */
-  log::Logger &m_log;
+  log::Logger& m_log;
 
   /**
    * Mutex to be used to a take a global lock on the database.
@@ -126,8 +124,9 @@ protected:
    * @param diskFileIds List of disk file IDs (fxid).
    * @return Name of the temporary table
    */
-  virtual std::string createAndPopulateTempTableFxid(rdbms::Conn &conn,
-    const std::optional<std::vector<std::string>> &diskFileIds) const = 0;
+  virtual std::string
+  createAndPopulateTempTableFxid(rdbms::Conn& conn,
+                                 const std::optional<std::vector<std::string>>& diskFileIds) const = 0;
 
   friend class RdbmsMountPolicyCatalogue;
   friend class RdbmsRequesterActivityMountRuleCatalogue;
@@ -137,24 +136,25 @@ protected:
   /**
    * Cached versions of mount policies for specific user groups.
    */
-  mutable TimeBasedCache<Group, std::optional<common::dataStructures::MountPolicy> > m_groupMountPolicyCache{10};
+  mutable TimeBasedCache<Group, std::optional<common::dataStructures::MountPolicy>> m_groupMountPolicyCache {10};
 
   /**
    * Cached versions of mount policies for specific users.
    */
-  mutable TimeBasedCache<User, std::optional<common::dataStructures::MountPolicy> > m_userMountPolicyCache{10};
+  mutable TimeBasedCache<User, std::optional<common::dataStructures::MountPolicy>> m_userMountPolicyCache {10};
 
   /**
    * Cached versions of all mount policies
    */
-  mutable TimeBasedCache<std::string, std::list<common::dataStructures::MountPolicy>> m_allMountPoliciesCache{60};
+  mutable TimeBasedCache<std::string, std::list<common::dataStructures::MountPolicy>> m_allMountPoliciesCache {60};
 
   friend class RdbmsVirtualOrganizationCatalogue;
   friend class RdbmsTapePoolCatalogue;
   /**
    * Cached versions of virtual organization for specific tapepools
    */
-  mutable TimeBasedCache<std::string, common::dataStructures::VirtualOrganization> m_tapepoolVirtualOrganizationCache{60};
+  mutable TimeBasedCache<std::string, common::dataStructures::VirtualOrganization> m_tapepoolVirtualOrganizationCache {
+    60};
 
 protected:
   std::unique_ptr<SchemaCatalogue> m_schema;
@@ -181,4 +181,5 @@ protected:
   std::unique_ptr<ArchiveFileCatalogue> m_archiveFile;
 };  // class RdbmsCatalogue
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

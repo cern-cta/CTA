@@ -17,45 +17,44 @@
 
 #pragma once
 
-#include "cta_frontend.pb.h"
-#include "cta_frontend.grpc.pb.h"
-#include "common/log/Logger.hpp"
-#include "common/log/LogContext.hpp"
+#include "ServerDefaultReactor.hpp"
+#include "ServerVersion.hpp"
+#include "common/JwkCache.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "frontend/common/RequestTracker.hpp"
-#include "frontend/common/TapeLsResponseStream.hpp"
-#include "frontend/common/StorageClassLsResponseStream.hpp"
-#include "frontend/common/TapePoolLsResponseStream.hpp"
-#include "frontend/common/VirtualOrganizationLsResponseStream.hpp"
-#include "frontend/common/DiskInstanceLsResponseStream.hpp"
-#include "frontend/common/DriveLsResponseStream.hpp"
+#include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
+#include "frontend/common/ActivityMountRuleLsResponseStream.hpp"
 #include "frontend/common/AdminLsResponseStream.hpp"
 #include "frontend/common/ArchiveRouteLsResponseStream.hpp"
-#include "frontend/common/GroupMountRuleLsResponseStream.hpp"
-#include "frontend/common/MediaTypeLsResponseStream.hpp"
-#include "frontend/common/RequesterMountRuleLsResponseStream.hpp"
-#include "frontend/common/PhysicalLibraryLsResponseStream.hpp"
-#include "frontend/common/MountPolicyLsResponseStream.hpp"
-#include "frontend/common/DiskSystemLsResponseStream.hpp"
+#include "frontend/common/DiskInstanceLsResponseStream.hpp"
 #include "frontend/common/DiskInstanceSpaceLsResponseStream.hpp"
-#include "frontend/common/TapeFileLsResponseStream.hpp"
-#include "frontend/common/ActivityMountRuleLsResponseStream.hpp"
-#include "frontend/common/ShowQueuesResponseStream.hpp"
-#include "frontend/common/RepackLsResponseStream.hpp"
-#include "frontend/common/RecycleTapeFileLsResponseStream.hpp"
-#include "frontend/common/LogicalLibraryLsResponseStream.hpp"
+#include "frontend/common/DiskSystemLsResponseStream.hpp"
+#include "frontend/common/DriveLsResponseStream.hpp"
 #include "frontend/common/FailedRequestLsResponseStream.hpp"
-#include "ServerVersion.hpp"
-#include "ServerDefaultReactor.hpp"
+#include "frontend/common/GroupMountRuleLsResponseStream.hpp"
+#include "frontend/common/LogicalLibraryLsResponseStream.hpp"
+#include "frontend/common/MediaTypeLsResponseStream.hpp"
+#include "frontend/common/MountPolicyLsResponseStream.hpp"
+#include "frontend/common/PhysicalLibraryLsResponseStream.hpp"
+#include "frontend/common/RecycleTapeFileLsResponseStream.hpp"
+#include "frontend/common/RepackLsResponseStream.hpp"
+#include "frontend/common/RequestTracker.hpp"
+#include "frontend/common/RequesterMountRuleLsResponseStream.hpp"
+#include "frontend/common/ShowQueuesResponseStream.hpp"
+#include "frontend/common/StorageClassLsResponseStream.hpp"
+#include "frontend/common/TapeFileLsResponseStream.hpp"
+#include "frontend/common/TapeLsResponseStream.hpp"
+#include "frontend/common/TapePoolLsResponseStream.hpp"
+#include "frontend/common/VirtualOrganizationLsResponseStream.hpp"
 #include "frontend/grpc/common/GrpcAuthUtils.hpp"
-#include "common/JwkCache.hpp"
 
 #include <grpcpp/grpcpp.h>
-
-#include <string>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
 
 /*
@@ -105,18 +104,18 @@ public:
    * a pointer to ::grpc::ServerWriteReactor
    */
   ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>* GenericAdminStream(::grpc::CallbackServerContext* context,
-    const cta::xrd::Request* request) final;
+                                                                           const cta::xrd::Request* request) final;
 
 private:
-  cta::log::LogContext m_lc;               // <! Provided by the frontendService
-  cta::catalogue::Catalogue& m_catalogue;  //!< Reference to CTA Catalogue
-  cta::Scheduler& m_scheduler;             //!< Reference to CTA Scheduler
-  std::string m_instanceName;              //!< Instance name
-  cta::SchedulerDB_t& m_schedDb;           //!< Reference to CTA SchedulerDB
-  std::string m_catalogueConnString;       //!< Provided by frontendService
-  uint64_t m_missingFileCopiesMinAgeSecs;  //!< Provided by the frontendService
-  bool m_enableCtaAdminCommands;           //!< Feature flag to disable CTA admin commands
-  bool m_jwtAuthEnabled;                   //!< Whether JWT authentication is enabled
+  cta::log::LogContext m_lc;                // <! Provided by the frontendService
+  cta::catalogue::Catalogue& m_catalogue;   //!< Reference to CTA Catalogue
+  cta::Scheduler& m_scheduler;              //!< Reference to CTA Scheduler
+  std::string m_instanceName;               //!< Instance name
+  cta::SchedulerDB_t& m_schedDb;            //!< Reference to CTA SchedulerDB
+  std::string m_catalogueConnString;        //!< Provided by frontendService
+  uint64_t m_missingFileCopiesMinAgeSecs;   //!< Provided by the frontendService
+  bool m_enableCtaAdminCommands;            //!< Feature flag to disable CTA admin commands
+  bool m_jwtAuthEnabled;                    //!< Whether JWT authentication is enabled
   std::shared_ptr<JwkCache> m_pubkeyCache;  //!< Shared JWK cache for token validation
   server::TokenStorage& m_tokenStorage;     //!< Required for Kerberos token validation
 };
@@ -262,8 +261,8 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
         break;
       default:
         // Just to return an error status code when the specified command is not implemented
-        const std::string errMsg("Admin command pair <" + AdminCmd_Cmd_Name(request->admincmd().cmd()) + ", " +
-                                 AdminCmd_SubCmd_Name(request->admincmd().subcmd()) + "> is not implemented.");
+        const std::string errMsg("Admin command pair <" + AdminCmd_Cmd_Name(request->admincmd().cmd()) + ", "
+                                 + AdminCmd_SubCmd_Name(request->admincmd().subcmd()) + "> is not implemented.");
         requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
         return new DefaultWriteReactor(errMsg);
     }  // switch

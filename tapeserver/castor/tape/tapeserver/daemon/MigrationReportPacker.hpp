@@ -18,10 +18,11 @@
 #pragma once
 
 #include "common/process/threading/BlockingQueue.hpp"
+#include "scheduler/ArchiveJob.hpp"
+#include "scheduler/ArchiveMount.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "scheduler/ArchiveMount.hpp"
-#include "scheduler/ArchiveJob.hpp"
+
 #include <list>
 #include <memory>
 #include <utility>
@@ -223,6 +224,7 @@ private:
 
     void execute(MigrationReportPacker& reportPacker) override;
   };
+
   /*
    * This Report is only for jobs which were successfully
    * written to drive, but never flushed to tape
@@ -233,8 +235,7 @@ private:
     const std::string m_failureLog;
 
   public:
-    explicit ReportLastBatchError(std::string& failureLog) :
-      m_failureLog(failureLog) {}
+    explicit ReportLastBatchError(std::string& failureLog) : m_failureLog(failureLog) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };

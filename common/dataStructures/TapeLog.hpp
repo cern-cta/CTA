@@ -30,20 +30,19 @@ namespace cta::common::dataStructures {
  * specific tape operation (read/write/label) and when did it happen
  */
 struct TapeLog {
-
   TapeLog();
 
-  bool operator==(const TapeLog &rhs) const;
+  bool operator==(const TapeLog& rhs) const;
 
-  bool operator!=(const TapeLog &rhs) const;
+  bool operator!=(const TapeLog& rhs) const;
 
   std::string drive;
   time_t time = 0;
 
-}; // struct TapeLog
+};  // struct TapeLog
 
-std::ostream &operator<<(std::ostream &os, const TapeLog &obj);
+std::ostream& operator<<(std::ostream& os, const TapeLog& obj);
 
-std::ostream &operator<<(std::ostream &os, const std::optional<TapeLog> &obj);
+std::ostream& operator<<(std::ostream& os, const std::optional<TapeLog>& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

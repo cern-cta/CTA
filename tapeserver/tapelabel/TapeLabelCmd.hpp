@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include <memory>
-
 #include "common/CmdLineTool.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -26,6 +24,8 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+
+#include <memory>
 
 namespace cta {
 
@@ -38,7 +38,7 @@ namespace tapeserver::tapelabel {
 /**
  * Command-line tool for pre-labeling a CTA tape.
  */
-class TapeLabelCmd: public common::CmdLineTool {
+class TapeLabelCmd : public common::CmdLineTool {
 public:
   /**
    * Constructor
@@ -48,8 +48,9 @@ public:
    * @param errStream Standard error stream
    * @param log The object representing the API of the CTA logging system
    */
-   TapeLabelCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, log::StdoutLogger& log) : CmdLineTool(inStream, outStream, errStream),
-      m_log(log) { }
+  TapeLabelCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream, log::StdoutLogger& log)
+      : CmdLineTool(inStream, outStream, errStream),
+        m_log(log) {}
 
   /**
    * Destructor
@@ -61,61 +62,61 @@ private:
    * The object representing the API of the CTA logging system.
    */
   cta::log::StdoutLogger& m_log;
-  
+
   /**
    * Hard coded path for the catalogue login configuration.
    */
   const std::string CATALOGUE_CONFIG_PATH = "/etc/cta/cta-catalogue.conf";
-  
+
   /**
    * Unique pointer to the catalogue interface;
    */
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
-  
+
   /**
    * The system wrapper used to find the device and instantiate the drive object.
    */
   castor::tape::System::realWrapper m_sysWrapper;
-  
+
   /**
    * The filename of the device file of the tape drive.
    */
   std::string m_devFilename;
-  
+
   /**
    * The slot in the tape library that contains the tape drive (string encoded).
    */
   std::string m_rawLibrarySlot;
-  
+
   /**
    * The logical library of the tape drive.
    */
   std::string m_logicalLibrary;
-  
+
   /**
    * The unit name of the tape drive.
    */
   std::string m_unitName;
-  
+
   /**
    * The name of the user running the command-line tool.
    */
   std::string m_userName;
-  
+
   /**
    * The tape VID to be pre-label.
    */
   std::string m_vid;
-  
+
   /**
    * The old label on tape to be checked when pre-labeling.
    */
   std::string m_oldLabel;
-  
+
   /** 
    * Encryption helper object 
    */
-  castor::tape::tapeserver::daemon::EncryptionControl m_encryptionControl { false, "" };
+  castor::tape::tapeserver::daemon::EncryptionControl m_encryptionControl {false, ""};
 
   /**
    * Object representeing the rmc proxy
@@ -126,22 +127,22 @@ private:
    * The object representing the media changer.
    */
   std::unique_ptr<cta::mediachanger::MediaChangerFacade> m_mc;
-  
+
   /**
    * Use Logical Block Protection?
    */
   const bool m_useLbp = true;
-  
+
   /**
    * Does the drive support Logical Block Protection?
    */
   bool m_driveSupportLbp = true;
-  
+
   /**
    * Skip label checks on non-blank tapes?
-   */ 
+   */
   bool m_force = false;
-  
+
   /**
    * An exception throwing version of main().
    *
@@ -149,15 +150,15 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
-  
+  void printUsage(std::ostream& os) override;
+
   /**
    * Sets internal configuration parameters to be used for labeling.
    * It reads drive and library parameters from /etc/cta/cta-taped-*.conf
@@ -168,17 +169,18 @@ private:
    * @param oldLabel The old label on tape to be checked when pre-labeling. Could be empty.
    * @param unitName The unit name of the drive used to label the tape
    */
-  void readAndSetConfiguration(const std::string &userName,
-    const std::string &vid, const std::string &oldLabel,  const std::optional<std::string> &unitName);
-  
-  
+  void readAndSetConfiguration(const std::string& userName,
+                               const std::string& vid,
+                               const std::string& oldLabel,
+                               const std::optional<std::string>& unitName);
+
   /**
    * Sets the capabilities of the process and logs the result.
    *
    * @param capabilities The string representation of the capabilities.
    */
-  void setProcessCapabilities(const std::string &capabilities);
-  
+  void setProcessCapabilities(const std::string& capabilities);
+
   /**
    * Returns a Drive object representing the tape drive to be used to label
    * a tape.
@@ -186,13 +188,13 @@ private:
    * @return The drive object.
    */
   std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> createDrive();
-  
+
   /**
    * Mounts the tape to be labeled.
    * @param vid The volume identifier of the tape to be mounted.
    */
-  void mountTape(const std::string &vid);
-  
+  void mountTape(const std::string& vid);
+
   /**
    * Waits for the tape to be loaded into the tape drive.
    *
@@ -200,9 +202,8 @@ private:
    * @param timeoutSecond The number of seconds to wait for the tape to be
    * loaded into the tape drive. 
    */
-  void waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface &drive,
-    const int timeoutSecond);
-  
+  void waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface& drive, const int timeoutSecond);
+
   /**
    * Writes the label file with logical block protection to the tape.
    *
@@ -210,8 +211,8 @@ private:
    *
    * @param drive The tape drive.
    */
-  void writeLabelWithLbpToTape(castor::tape::tapeserver::drive::DriveInterface &drive);
-  
+  void writeLabelWithLbpToTape(castor::tape::tapeserver::drive::DriveInterface& drive);
+
   /**
    * Writes the label file to the tape.
    *
@@ -219,8 +220,8 @@ private:
    *
    * @param drive The tape drive.
    */
-  void writeLabelToTape(castor::tape::tapeserver::drive::DriveInterface &drive);
-  
+  void writeLabelToTape(castor::tape::tapeserver::drive::DriveInterface& drive);
+
   /**
    * Unloads the specified tape from the specified tape drive.
    *
@@ -228,22 +229,22 @@ private:
    * that the value of this field is only used for logging purposes.
    * @param drive The tape drive.
    */
-  void unloadTape(const std::string &vid, castor::tape::tapeserver::drive::DriveInterface &drive);
-  
+  void unloadTape(const std::string& vid, castor::tape::tapeserver::drive::DriveInterface& drive);
+
   /**
    * Dismounts the specified tape.
    *
    * @param vid The volume identifier of the tape to be dismounted.
    */
-  void dismountTape(const std::string &vid);
-  
+  void dismountTape(const std::string& vid);
+
   /**
    * Rewinds the specified tape drive.
    *
    * @param drive The tape drive.
    */
-  void rewindDrive(castor::tape::tapeserver::drive::DriveInterface &drive);
-  
+  void rewindDrive(castor::tape::tapeserver::drive::DriveInterface& drive);
+
   /**
    * Checks the specified tape on the specified tape drive.
    * This method assumes that the drive has the tape and the tape has been rewound. 
@@ -253,8 +254,8 @@ private:
    * @param drive The tape drive.
    * @param labelToCheck The label for what the tape should be checked for.
    */
-  void checkTapeLabel(castor::tape::tapeserver::drive::DriveInterface &drive, const std::string &labelToCheck);
-  
+  void checkTapeLabel(castor::tape::tapeserver::drive::DriveInterface& drive, const std::string& labelToCheck);
+
   /**
    * Writes the label file with or without logical block protection to the tape
    * depending on useLbp and driveSupportLbp parameters.
@@ -265,9 +266,9 @@ private:
    * @param useLbp The configuration parameter for LBP mode.
    * @param driveSupportLbp The detected parameter for the drive.
    */
-  void writeTapeLabel(castor::tape::tapeserver::drive::DriveInterface &drive,
-    const bool useLbp, const bool driveSupportLbp);
-  
+  void
+  writeTapeLabel(castor::tape::tapeserver::drive::DriveInterface& drive, const bool useLbp, const bool driveSupportLbp);
+
   /**
    * Sets the logical block protection mode on the drive
    * depending on useLbp and driveSupportLbp parameters. This method needs to
@@ -277,24 +278,25 @@ private:
    * @param useLbp The configuration parameter for LBP mode.
    * @param driveSupportLbp The detected parameter for the drive.
    */
-  void setLbpMode(castor::tape::tapeserver::drive::DriveInterface &drive,
-    const bool useLbp, const bool driveSupportLbp);
-  
+  void
+  setLbpMode(castor::tape::tapeserver::drive::DriveInterface& drive, const bool useLbp, const bool driveSupportLbp);
+
   /**
    * Detects if the drive supports the logical block protection.
    *
    * @param drive The tape drive.
    * @return The boolean value true if the drive supports LBP or false otherwise.
    */
-  bool isDriveSupportLbp(castor::tape::tapeserver::drive::DriveInterface &drive) const;
-  
+  bool isDriveSupportLbp(castor::tape::tapeserver::drive::DriveInterface& drive) const;
+
   /**
    * Returns the string representation of the specified boolean value.
    *
    * @param value The boolean value.
    * @return The string representation.
    */
-  const char *boolToStr(const bool value);
-}; // class TapeLabelCmd
+  const char* boolToStr(const bool value);
+};  // class TapeLabelCmd
 
-}} // namespace cta::tapeserver::tapelabel
+}  // namespace tapeserver::tapelabel
+}  // namespace cta

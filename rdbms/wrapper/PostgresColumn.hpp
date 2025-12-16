@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include <libpq-fe.h>
 #include <memory>
+#include <rdbms/Conn.hpp>
 #include <string.h>
 #include <typeinfo>
 #include <vector>
-#include <libpq-fe.h>
-#include <rdbms/Conn.hpp>
 
 namespace cta::rdbms::wrapper {
 
@@ -37,14 +37,14 @@ public:
    * @param colName The name of the column.
    * @param nbRows The number of rows in the column.
    */
-  PostgresColumn(const std::string &colName, const size_t nbRows);
+  PostgresColumn(const std::string& colName, const size_t nbRows);
 
   /**
    * Returns the name of the column.
    *
    * @return The name of the column.
    */
-  const std::string &getColName() const;
+  const std::string& getColName() const;
 
   /**
    * Returns the number of rows in the column.
@@ -58,7 +58,7 @@ public:
    *
    * @return The pointer to the row value.
    */
-  const char *getValue(size_t index) const;
+  const char* getValue(size_t index) const;
 
   /**
    * Sets the field at the specified index to the specified value.
@@ -68,7 +68,8 @@ public:
    * @param index The index of the field.
    * @param value The value of the field.
    */
-  template<typename T> void setFieldValue(const size_t index, const T &value) {
+  template<typename T>
+  void setFieldValue(const size_t index, const T& value) {
     setFieldValue(index, value, std::is_integral<T>());
   }
 
@@ -79,10 +80,9 @@ public:
    * @param index The index of the field
    * @param value The value of the field expressed as a byte array
    */
-  void setFieldByteA(rdbms::Conn &conn, const size_t index, const std::string &value);
+  void setFieldByteA(rdbms::Conn& conn, const size_t index, const std::string& value);
 
 private:
-
   /**
    * Sets the field at the specified index to the specified value.
    *
@@ -92,7 +92,8 @@ private:
    * @param index The index of the field.
    * @param value The value of the field.
    */
-  template<typename T> void setFieldValue(const size_t index, const T &value, std::true_type) {
+  template<typename T>
+  void setFieldValue(const size_t index, const T& value, std::true_type) {
     copyStrIntoField(index, std::to_string(value));
   }
 
@@ -105,7 +106,8 @@ private:
    * @param index The index of the field.
    * @param value The value of the field.
    */
-  template<typename T> void setFieldValue(const size_t index, const T &value, std::false_type) {
+  template<typename T>
+  void setFieldValue(const size_t index, const T& value, std::false_type) {
     copyStrIntoField(index, value);
   }
 
@@ -115,7 +117,7 @@ private:
    * @param index The index of the field.
    * @param str The string value.
    */
-  void copyStrIntoField(const size_t index, const std::string &str);
+  void copyStrIntoField(const size_t index, const std::string& str);
 
   /**
    * The name of the column.
@@ -130,8 +132,8 @@ private:
   /**
    * The array of field values.
    */
-  std::vector<std::pair<bool, std::string> > m_fieldValues;
+  std::vector<std::pair<bool, std::string>> m_fieldValues;
 
-}; // PostgresColumn
+};  // PostgresColumn
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

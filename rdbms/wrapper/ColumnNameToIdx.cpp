@@ -15,16 +15,17 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/Exception.hpp"
 #include "rdbms/wrapper/ColumnNameToIdx.hpp"
+
+#include "common/exception/Exception.hpp"
 
 namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // add
 //------------------------------------------------------------------------------
-void ColumnNameToIdx::add(const std::string &name, const int idx) {
-  if(m_nameToIdx.end() != m_nameToIdx.find(name)) {
+void ColumnNameToIdx::add(const std::string& name, const int idx) {
+  if (m_nameToIdx.end() != m_nameToIdx.find(name)) {
     throw exception::Exception("Duplicate column name: " + name);
   }
   m_nameToIdx[name] = idx;
@@ -33,9 +34,9 @@ void ColumnNameToIdx::add(const std::string &name, const int idx) {
 //------------------------------------------------------------------------------
 // getIdx
 //------------------------------------------------------------------------------
-int ColumnNameToIdx::getIdx(const std::string &name) const {
+int ColumnNameToIdx::getIdx(const std::string& name) const {
   auto it = m_nameToIdx.find(name);
-  if(m_nameToIdx.end() == it) {
+  if (m_nameToIdx.end() == it) {
     throw exception::Exception("Unknown column name: " + name);
   }
   return it->second;
@@ -48,4 +49,4 @@ bool ColumnNameToIdx::empty() const {
   return m_nameToIdx.empty();
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

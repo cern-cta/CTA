@@ -15,16 +15,18 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <stdio.h>
+#include "rmc_logit.hpp"
+
+#include "rmc_constants.hpp"
+
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <time.h>
-#include <stdarg.h>
 #include <unistd.h>
-#include "rmc_constants.hpp"
-#include "rmc_logit.hpp"
 
 /* Set in rmc_serv.c */
 extern int g_jid;

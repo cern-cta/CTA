@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/process/threading/SubProcess.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/process/threading/SubProcess.hpp"
 
 #include <gtest/gtest.h>
 
@@ -38,10 +38,10 @@ TEST(SubProcessHelper, basicTests) {
 
 TEST(SubProcessHelper, testSubprocessWithStdinInput) {
   std::string stdinInput = "{\"integer_number\":42,\"str\":\"forty two\",\"double_number\":42.000000}";
-  cta::threading::SubProcess sp2("tee", std::list<std::string>({"tee"}),stdinInput);
+  cta::threading::SubProcess sp2("tee", std::list<std::string>({"tee"}), stdinInput);
   sp2.wait();
   ASSERT_EQ("", sp2.stderr());
   ASSERT_EQ(0, sp2.exitValue());
   ASSERT_EQ(stdinInput, sp2.stdout());
 }
-}
+}  // namespace integrationTests

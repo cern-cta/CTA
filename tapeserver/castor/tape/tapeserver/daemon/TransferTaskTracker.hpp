@@ -17,9 +17,10 @@
 
 #pragma once
 
-#include <string>
-#include <optional>
 #include "common/Timer.hpp"
+
+#include <optional>
+#include <string>
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -28,8 +29,8 @@ class TransferTaskTracker {
 public:
   TransferTaskTracker(std::string_view ioDirection, std::string_view ioMedium);
   ~TransferTaskTracker();
-  TransferTaskTracker (const TransferTaskTracker&) = delete;
-  TransferTaskTracker& operator= (const TransferTaskTracker&) = delete;
+  TransferTaskTracker(const TransferTaskTracker&) = delete;
+  TransferTaskTracker& operator=(const TransferTaskTracker&) = delete;
 
 private:
   std::string m_ioDirection;

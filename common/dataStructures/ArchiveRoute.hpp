@@ -17,13 +17,13 @@
 
 #pragma once
 
+#include "common/dataStructures/ArchiveRouteType.hpp"
+#include "common/dataStructures/EntryLog.hpp"
+
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/ArchiveRouteType.hpp"
-#include "common/dataStructures/EntryLog.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -32,12 +32,11 @@ namespace cta::common::dataStructures {
  * a specific copy of a storage class
  */
 struct ArchiveRoute {
-
   ArchiveRoute();
 
-  bool operator==(const ArchiveRoute &rhs) const;
+  bool operator==(const ArchiveRoute& rhs) const;
 
-  bool operator!=(const ArchiveRoute &rhs) const;
+  bool operator!=(const ArchiveRoute& rhs) const;
 
   /**
    * The name of the storage class which is only guranateed to be unique within
@@ -63,8 +62,8 @@ struct ArchiveRoute {
   using StorageClassMap = std::map<uint32_t, ArchiveRoute>;
   using FullMap = std::map<std::string /*storage class*/, StorageClassMap>;
 
-}; // struct ArchiveRoute
+};  // struct ArchiveRoute
 
-std::ostream &operator<<(std::ostream &os, const ArchiveRoute &obj);
+std::ostream& operator<<(std::ostream& os, const ArchiveRoute& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

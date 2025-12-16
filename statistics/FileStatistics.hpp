@@ -15,7 +15,6 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #pragma once
 
 #include <stdint.h>
@@ -36,4 +35,4 @@ struct FileStatistics {
   uint64_t copyNbGt1InBytes = 0;
 };
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

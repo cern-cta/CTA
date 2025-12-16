@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include <string>
 #include <pthread.h>
+#include <string>
 
 namespace cta::exception {
 
@@ -30,6 +30,7 @@ public:
 
 private:
   std::string m_trace;
+
   /**
    * Singleton lock around the apparently racy backtrace().
    * We write it with no error check as it's used only here.
@@ -38,12 +39,16 @@ private:
   class mutex {
   public:
     mutex() { pthread_mutex_init(&m_mutex, nullptr); }
+
     void lock() { pthread_mutex_lock(&m_mutex); }
+
     void unlock() { pthread_mutex_unlock(&m_mutex); }
+
   private:
     pthread_mutex_t m_mutex;
   };
+
   static mutex g_lock;
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception
