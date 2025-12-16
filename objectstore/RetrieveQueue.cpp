@@ -370,7 +370,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
       goto jobInserted;
     }
     // Find where the job lands in the shards
-    for (auto sfa=shardsForAddition.begin(); sfa != shardsForAddition.end(); sfa++) {
+    for (auto& sfa : shardsForAddition) {
       if (sfa->minFseq > jta.fSeq) {
         // Are we before the current shard? (for example, before first shard)
         addJobToShardAndMaybeSplit(jta, sfa, shardsForAddition);
@@ -379,7 +379,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
         // Is it within this shard?
         addJobToShardAndMaybeSplit(jta, sfa, shardsForAddition);
         goto jobInserted;
-      } else if (sfa != shardsForAddition.end() && std::next(sfa) != shardsForAddition.end()) {
+      } else if (std::next(sfa) != shardsForAddition.end()) {
         // Are we between shards?
         auto nextSfa=std::next(sfa);
         if (jta.fSeq > sfa->maxFseq && jta.fSeq < nextSfa->minFseq) {

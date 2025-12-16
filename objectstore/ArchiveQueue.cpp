@@ -622,7 +622,7 @@ auto ArchiveQueue::dumpJobs() -> std::list<JobDump> {
   return ret;
 }
 
-auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, std::set<std::string> archiveRequestsToSkip, log::LogContext & lc) -> CandidateJobList {
+auto ArchiveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string>& archiveRequestsToSkip, log::LogContext & lc) -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
   for (auto & aqsp: m_payload.archivequeueshards()) {

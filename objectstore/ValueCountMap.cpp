@@ -49,7 +49,7 @@ uint64_t ValueCountMap<google::protobuf::RepeatedPtrField<serializers::ValueCoun
   if (!m_valueCountMap.size()) throw  cta::exception::Exception("In ValueCountMap::minValue: empty map");
   uint64_t ret = std::numeric_limits<uint64_t>::max();
   std::for_each(m_valueCountMap.begin(), m_valueCountMap.end(),
-      [&ret](decltype(*m_valueCountMap.begin()) pair) {
+      [&ret](const auto& pair) {
         if(ret > pair.value()) ret = pair.value();
       });
   return ret;
