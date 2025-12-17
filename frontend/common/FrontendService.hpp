@@ -185,6 +185,11 @@ public:
    */
   bool getenableCtaAdminCommands() const { return m_enableCtaAdminCommands; }
 
+  /*
+   * Get the list of allowed authentication protocols for gRPC admin commands
+   */
+  const std::vector<std::string>& getAdminAuthProtocols() const { return m_adminAuthProtocols; }
+
 private:
   /*!
    * Set the verification mount policy
@@ -228,6 +233,7 @@ private:
   std::optional<int>                            m_pubkeyTimeout;        //!< The number of seconds after which to update the cache entry for a cached key
   bool                                          m_jwtAuth;                      //!< Feature flag to guard JWT auth when TLS is enabled
   bool                                          m_enableCtaAdminCommands;      //!< Feature flag to disable CTA admin commands
+  std::vector<std::string>                      m_adminAuthProtocols;           //!< List of allowed authentication protocols for gRPC admin commands (e.g., "jwt", "krb5")
   // clang-format on
 };
 
