@@ -75,7 +75,6 @@ lint-python:
       codequality: ruff.json
 
 lint-licenses:
-  allow_failure: true
   stage: lint
   image:
     name: $IMAGE_LICENSE_CHECK
