@@ -1,4 +1,4 @@
-lint-cppcheck:
+lint-cpp:
   stage: lint
   image:
     name: $IMAGE_LINT
@@ -31,7 +31,7 @@ lint-cppcheck:
     reports:
       codequality: cppcheck.json
 
-lint-shellcheck:
+lint-bash:
   stage: lint
   image:
     name: $IMAGE_LINT
@@ -52,7 +52,7 @@ lint-shellcheck:
     reports:
       codequality: shellcheck.json
 
-lint-ruff:
+lint-python:
   stage: lint
   image:
     name: $IMAGE_LINT
@@ -70,6 +70,22 @@ lint-ruff:
     expire_in: 7 days
     reports:
       codequality: ruff.json
+
+lint-licenses:
+  allow_failure: true
+  stage: lint
+  image:
+    name: $IMAGE_LICENSE_CHECK
+    entrypoint: [""]
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - when: always
+  dependencies: []
+  script:
+    - reuse lint
 
 # Generic format check job template
 # The idea is to extend this, fill in the FORMAT_DIFF variable
