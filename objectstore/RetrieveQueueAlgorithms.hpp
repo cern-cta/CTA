@@ -465,7 +465,7 @@ template<>
 struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PopCriteria {
   uint64_t files;
   uint64_t bytes;
-  explicit PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {} // cppcheck-suppress uninitMemberVar
+  explicit PopCriteria(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
   template<typename PoppedElementsSummary_t>
   PopCriteria& operator-=(const PoppedElementsSummary_t &pes) {
     bytes -= pes.bytes;
@@ -486,7 +486,7 @@ struct ContainerTraits<RetrieveQueue,RetrieveQueueToTransfer>::PoppedElementsSum
   uint64_t bytes;
   bool diskSystemFull = false;
   std::string fullDiskSystem;
-  explicit PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}  // cppcheck-suppress uninitMemberVar
+  explicit PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
   bool operator==(const PoppedElementsSummary &pes) const {
     return bytes == pes.bytes && files == pes.files;
   }

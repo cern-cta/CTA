@@ -54,9 +54,7 @@ template<typename Type, typename Key>
 void ValueCountMap<Type, Key>::decCount(const Key& value) {
   // Find the entry for this value. Failing is an error.
   auto counter = std::find_if(m_valueCountMap.begin(), m_valueCountMap.end(),
-      // https://trac.cppcheck.net/ticket/10739
-      // cppcheck-suppress internalAstError
-      [&value](decltype(*m_valueCountMap.begin()) pair) {
+      [&value](const auto& pair) {
         return pair.value() == value;
       });
   if (counter == m_valueCountMap.end()) {
@@ -84,7 +82,7 @@ void ValueCountMap<Type, Key>::decCount(const Key& value) {
     }
     // Cross check we cannot find the value.
     auto counter2 = std::find_if(m_valueCountMap.begin(), m_valueCountMap.end(),
-        [&value](decltype(*m_valueCountMap.begin()) pair) {
+        [&value](const auto& pair) {
           return pair.value() == value;
         });
     if (m_valueCountMap.end() != counter2) {
@@ -100,7 +98,7 @@ template<typename Type, typename Key>
 void ValueCountMap<Type, Key>::incCount(const Key& value) {
   // Find the entry for this value (might fail)
   auto counter = std::find_if(m_valueCountMap.begin(), m_valueCountMap.end(),
-      [&value](decltype(*m_valueCountMap.begin()) pair) {
+      [&value](const auto& pair) {
         return pair.value() == value;
       });
   if (counter != m_valueCountMap.end()) {
@@ -143,7 +141,7 @@ template<typename Type, typename Key>
 uint64_t ValueCountMap<Type, Key>::total() {
   uint64_t ret = 0;
   std::for_each(m_valueCountMap.begin(), m_valueCountMap.end(),
-      [&ret](decltype(*m_valueCountMap.begin()) pair) {
+      [&ret](const auto& pair) {
         if (pair.count() < 1) {
           std::stringstream err;
           err << "In ValueCountMap::total: unexpected count value=" << pair.value() << " count=" << pair.count();

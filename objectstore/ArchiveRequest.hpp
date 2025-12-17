@@ -140,15 +140,14 @@ public:
     const std::string & getArchiveReportURL();
     const std::string & getArchiveErrorReportURL();
     const std::string & getLastestError();
-    RepackInfo getRepackInfo();
-    std::map<uint32_t, serializers::ArchiveJobStatus> getJobsStatusMap();
+    RepackInfo getRepackInfo(); // cppcheck-suppress returnByReference
+    std::map<uint32_t, serializers::ArchiveJobStatus> getJobsStatusMap(); // cppcheck-suppress returnByReference
     // TODO: use the more general structure from utils.
     struct TimingsReport {
       double lockFetchTime = 0;
       double processTime = 0;
       double commitUnlockTime = 0;
     };
-    TimingsReport getTimeingsReport();
   private:
     std::function<std::string(const std::string &)> m_updaterCallback;
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;

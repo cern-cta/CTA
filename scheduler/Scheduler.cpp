@@ -1594,9 +1594,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
   // list of tapes from the catalogue.
   if (std::count_if(mountInfo->potentialMounts.cbegin(),
                     mountInfo->potentialMounts.cend(),
-                    // https://trac.cppcheck.net/ticket/10739
-                    // cppcheck-suppress internalAstError
-                    [](decltype(*mountInfo->potentialMounts.cbegin())& m) {
+                    [](const auto& m) {
                       return common::dataStructures::getMountBasicType(m.type) ==
                              common::dataStructures::MountType::ArchiveAllTypes;
                     })) {

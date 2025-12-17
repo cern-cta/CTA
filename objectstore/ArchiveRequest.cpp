@@ -636,13 +636,6 @@ void ArchiveRequest::AsyncJobOwnerUpdater::wait() {
 }
 
 //------------------------------------------------------------------------------
-// ArchiveRequest::AsyncJobOwnerUpdater::getTimeingsReport()
-//------------------------------------------------------------------------------
-ArchiveRequest::AsyncJobOwnerUpdater::TimingsReport ArchiveRequest::AsyncJobOwnerUpdater::getTimeingsReport() {
-  return m_timingReport;
-}
-
-//------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile()
 //------------------------------------------------------------------------------
 const common::dataStructures::ArchiveFile& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
@@ -789,9 +782,7 @@ void ArchiveRequest::AsyncRequestDeleter::wait() {
 std::string ArchiveRequest::getJobOwner(uint32_t copyNumber) {
   checkPayloadReadable();
   auto jl = m_payload.jobs();
-  // https://trac.cppcheck.net/ticket/10739
-  // cppcheck-suppress internalAstError
-  auto j = std::find_if(jl.begin(), jl.end(), [&copyNumber](decltype(*jl.begin())& j2) { return j2.copynb() == copyNumber; });
+  auto j = std::find_if(jl.begin(), jl.end(), [&copyNumber](const auto& j2) { return j2.copynb() == copyNumber; });
   if (jl.end() == j)
     throw NoSuchJob("In ArchiveRequest::getJobOwner: no such job");
   return j->owner();
