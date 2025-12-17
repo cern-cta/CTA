@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <unistd.h>
+
 int netread(int, char*, int);                     //!< Network receive function
 int netwrite(const int, const char*, const int);  //!< Network send function
 const char* neterror();                           //!< Network error function

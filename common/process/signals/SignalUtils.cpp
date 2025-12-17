@@ -18,7 +18,6 @@
 #include "SignalUtils.hpp"
 
 #include <signal.h>
-#include <string>
 
 namespace cta::process::utils {
 

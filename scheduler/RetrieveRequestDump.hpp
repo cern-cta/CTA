@@ -17,18 +17,13 @@
 
 #pragma once
 
-#include "common/CreationLog.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
-#include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/TapeFile.hpp"
-
-#include <list>
-#include <string>
+#include "common/dataStructures/RetrieveRequest.hpp"
+#include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 
 namespace cta {
 
 /**
- * Class representing a user request to retrieve a single archive file to a 
+ * Class representing a user request to retrieve a single archive file to a
  * single remote file.
  */
 struct RetrieveRequestDump {

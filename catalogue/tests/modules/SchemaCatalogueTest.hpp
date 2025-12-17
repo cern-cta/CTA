@@ -18,6 +18,7 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "common/log/DummyLogger.hpp"
 
 #include <gtest/gtest.h>

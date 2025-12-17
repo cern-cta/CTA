@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "common/exception/Exception.hpp"
 #include "common/process/threading/Mutex.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
 

@@ -19,6 +19,7 @@
 
 #include "catalogue/RecyleTapeFileSearchCriteria.hpp"
 #include "catalogue/interfaces/FileRecycleLogCatalogue.hpp"
+#include "common/log/Logger.hpp"
 
 #include <memory>
 #include <string>

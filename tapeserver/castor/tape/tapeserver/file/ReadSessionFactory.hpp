@@ -18,6 +18,7 @@
 #pragma once
 
 #include "common/dataStructures/LabelFormat.hpp"
+#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 
 #include <memory>
 

@@ -18,6 +18,7 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueItor.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "rdbms/ConnPool.hpp"
 

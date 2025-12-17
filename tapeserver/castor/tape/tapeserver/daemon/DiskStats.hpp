@@ -17,6 +17,9 @@
 
 #pragma once
 
+#include <cstdint>
+#include <string>
+
 namespace castor::tape::tapeserver::daemon {
 
 /**

@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace cta::tape::daemon::common {
 
 /** The structure representing the maximum number of bytes and files

@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace cta::process::utils {
 
 std::string signalToString(int signal);

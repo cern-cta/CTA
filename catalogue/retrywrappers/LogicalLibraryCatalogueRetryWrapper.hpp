@@ -18,6 +18,7 @@
 #pragma once
 
 #include "catalogue/interfaces/LogicalLibraryCatalogue.hpp"
+#include "common/log/Logger.hpp"
 
 #include <list>
 #include <memory>

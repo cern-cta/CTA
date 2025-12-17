@@ -18,6 +18,7 @@
 #pragma once
 
 #include "catalogue/interfaces/SchemaCatalogue.hpp"
+#include "common/log/Logger.hpp"
 
 #include <memory>
 

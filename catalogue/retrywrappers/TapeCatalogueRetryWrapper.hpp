@@ -18,6 +18,7 @@
 #pragma once
 
 #include "catalogue/interfaces/TapeCatalogue.hpp"
+#include "common/log/Logger.hpp"
 
 #include <memory>
 

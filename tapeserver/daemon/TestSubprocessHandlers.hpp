@@ -23,6 +23,8 @@
 
 #include <chrono>
 #include <string>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 namespace unitTests {
 /** A simple subprocess that sends a struct over a socketpair and waits for

@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "rdbms/ConnPool.hpp"
+
 #include <memory>
 #include <stack>
 

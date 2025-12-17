@@ -20,6 +20,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/SchemaVersion.hpp"
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
+#include "common/log/Logger.hpp"
 
 #include <memory>
 

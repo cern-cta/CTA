@@ -17,7 +17,7 @@
 
 #include "Device.hpp"
 
-#include "../system/Wrapper.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "common/exception/Errnum.hpp"
 
 #include <gmock/gmock-cardinalities.h>

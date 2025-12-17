@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "../system/Wrapper.hpp"
 #include "Constants.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/Regex.hpp"
 

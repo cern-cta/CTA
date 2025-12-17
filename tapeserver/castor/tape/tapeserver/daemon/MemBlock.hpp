@@ -21,6 +21,7 @@
 #include "common/exception/Exception.hpp"
 
 #include <memory>
+#include <optional>
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -32,7 +33,7 @@ class MemBlock {
     /** Flag indicating to the receiver that the file read failed */
     bool m_failed;
 
-    /** Flag indicating that the transfer was cancelled, usually due to a 
+    /** Flag indicating that the transfer was cancelled, usually due to a
      previous failure. */
     bool m_cancelled;
 
@@ -41,7 +42,7 @@ class MemBlock {
     bool m_verifyOnly;
 
     /**
-     * in case of error, the error message 
+     * in case of error, the error message
      */
     std::string m_errorMsg;
 
@@ -63,16 +64,16 @@ class MemBlock {
 
 public:
   /**
-   * Constructor 
+   * Constructor
    * @param id the block ID for its whole life
-   * @param capacity the capacity (in byte) of the embed payload 
+   * @param capacity the capacity (in byte) of the embed payload
    */
   MemBlock(const uint32_t id, const uint32_t capacity) : m_memoryBlockId(id), m_payload(capacity) { reset(); }
 
   /**
-   * Get the error message from the context, 
+   * Get the error message from the context,
    * Throw an exception if there is no context
-   * @return 
+   * @return
    */
   std::string errorMsg() const {
     if (m_context) {
@@ -84,25 +85,25 @@ public:
   }
 
   /**
-   * Return true if the block has been marked as failed 
-   * @return 
+   * Return true if the block has been marked as failed
+   * @return
    */
   bool isFailed() const { return m_context.has_value() && m_context->m_failed; }
 
   /**
-   * Return true if the block has been marked as canceled 
-   * @return 
+   * Return true if the block has been marked as canceled
+   * @return
    */
   bool isCanceled() const { return m_context.has_value() && m_context->m_cancelled; }
 
   /**
    * Return true if the block has been marked as verify only
-   * @return 
+   * @return
    */
   bool isVerifyOnly() const { return m_context.has_value() && m_context->m_verifyOnly; }
 
   /**
-   * Mark this block as failed ie 
+   * Mark this block as failed ie
    * m_failed is true, m_fileBlock and m_tapeFileBlock are set at -1
    * Other members do not change
    */

@@ -15,6 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
+#pragma once
+
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "castor/tape/tapeserver/file/FileReader.hpp"
 #include "castor/tape/tapeserver/file/FileWriter.hpp"
@@ -23,8 +25,6 @@
 #include "disk/DiskFile.hpp"
 
 #include <zlib.h>
-
-#pragma once
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -67,8 +67,8 @@ public:
   /** Returns a pointer to the beginning of the payload block (readonly version) */
   const unsigned char* get() const { return m_data; }
 
-  /** 
-   * Reads all the buffer in one go from a diskFile::ReadFile object 
+  /**
+   * Reads all the buffer in one go from a diskFile::ReadFile object
    * @param from reference to the diskFile::ReadFile
    */
   size_t read(cta::disk::ReadFile& from) {

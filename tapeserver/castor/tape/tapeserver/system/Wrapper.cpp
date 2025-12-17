@@ -17,7 +17,7 @@
 
 #include "Wrapper.hpp"
 
-#include "../drive/DriveInterface.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 
 #include <errno.h>
 #include <limits.h>
@@ -73,7 +73,7 @@ int System::fakeWrapper::readlink(const char* path, char* buf, size_t len) {
     return -1;
   }
   const std::string& link = m_links[std::string(path)];
-  /* Copy the link without the training \0 as it is the behavior 
+  /* Copy the link without the training \0 as it is the behavior
    of the real readlink */
   size_t lenToCopy = link.size();
   if (lenToCopy > len) {
@@ -96,7 +96,7 @@ char* System::fakeWrapper::realpath(const char* name, char* resolved) {
 }
 
 int System::fakeWrapper::open(const char* file, int oflag) {
-  /* 
+  /*
    * Mimic open. See man 2 open.
    * We only allow read for the moment.
    */
@@ -204,7 +204,7 @@ castor::tape::tapeserver::drive::DriveInterface* System::fakeWrapper::getDriveBy
 
 /**
  * Function merging all types of files into a single pointer
- * based map. This allows usage of polymorphic 
+ * based map. This allows usage of polymorphic
  */
 void System::fakeWrapper::referenceFiles() {
   for (std::map<std::string, regularFile>::iterator i = m_regularFiles.begin(); i != m_regularFiles.end(); ++i) {

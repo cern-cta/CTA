@@ -24,6 +24,7 @@
 #include <atomic>
 #include <chrono>
 #include <map>
+#include <memory>
 
 namespace cta::catalogue {
 

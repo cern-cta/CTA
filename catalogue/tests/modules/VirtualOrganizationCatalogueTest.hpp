@@ -18,6 +18,7 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"

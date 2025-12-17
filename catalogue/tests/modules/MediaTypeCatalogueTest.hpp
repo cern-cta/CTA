@@ -18,6 +18,7 @@
 #pragma once
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "catalogue/MediaTypeWithLogs.hpp"

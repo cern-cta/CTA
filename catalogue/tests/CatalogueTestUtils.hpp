@@ -17,8 +17,10 @@
 
 #pragma once
 
+#include <cstdint>
 #include <list>
 #include <map>
+#include <memory>
 
 namespace cta {
 namespace catalogue {

@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "catalogue/Catalogue.hpp"
 #include "catalogue/interfaces/DriveStateCatalogue.hpp"
 #include "common/log/Logger.hpp"
 

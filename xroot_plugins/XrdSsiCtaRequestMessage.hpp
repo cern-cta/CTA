@@ -23,6 +23,7 @@
 #include "frontend/common/Version.hpp"
 
 #include <XrdSsi/XrdSsiEntity.hh>
+#include <XrdSsi/XrdSsiStream.hh>
 
 namespace cta::xrd {
 

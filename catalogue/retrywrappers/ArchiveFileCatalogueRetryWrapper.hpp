@@ -18,6 +18,7 @@
 #pragma once
 
 #include "catalogue/interfaces/ArchiveFileCatalogue.hpp"
+#include "common/log/Logger.hpp"
 
 #include <memory>
 

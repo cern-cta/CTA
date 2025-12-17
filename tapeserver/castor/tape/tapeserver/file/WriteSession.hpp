@@ -18,6 +18,7 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
+#include "castor/tape/tapeserver/file/Exceptions.hpp"
 
 #include <string>
 

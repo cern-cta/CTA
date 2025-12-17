@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <stddef.h>
+
 void Cglobals_init(int (*)(int*, void**), int (*)(int*, void*), int (*)(void));
 int Cglobals_get(int*, void**, size_t size);
 void Cglobals_getTid(int*);

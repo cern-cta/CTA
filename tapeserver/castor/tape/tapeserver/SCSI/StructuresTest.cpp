@@ -17,7 +17,7 @@
 
 #include "Structures.hpp"
 
-#include "../system/Wrapper.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "Device.hpp"
 #include "Exception.hpp"
 
@@ -31,9 +31,9 @@ using ::testing::Return;
 namespace unitTests {
 TEST(castor_tape_SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
   /* Validate the bit field behavior of the struct inquiryData_t,
-     which represents the standard INQUIRY data format as defined in 
+     which represents the standard INQUIRY data format as defined in
      SPC-4. This test also validates the handling of multi-bytes numbers,
-     as SCSI structures are big endian (and main development target is 
+     as SCSI structures are big endian (and main development target is
      little endian.  */
   castor::tape::SCSI::Structures::inquiryData_t inq;
   unsigned char* inqBuff = (unsigned char*) &inq;

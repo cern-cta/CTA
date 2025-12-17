@@ -17,7 +17,7 @@
 
 #include "FileWrappers.hpp"
 
-#include "../SCSI/Structures.hpp"
+#include "castor/tape/tapeserver/SCSI/Structures.hpp"
 
 #include <errno.h>
 #include <stddef.h>

@@ -17,6 +17,9 @@
 
 #pragma once
 
+#include <string>
+#include <list>
+
 namespace cta {
 
 namespace common::dataStructures {

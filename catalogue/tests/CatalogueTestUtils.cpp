@@ -50,6 +50,7 @@
 #include "common/log/DummyLogger.hpp"
 #include "disk/DiskSystem.hpp"
 
+#include <cstdint>
 #include <iostream>
 #include <list>
 

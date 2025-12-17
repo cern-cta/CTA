@@ -1,13 +1,13 @@
-#include "../../common/CtaAdminResponseStream.hpp"
-#include "../RequestMessage.hpp"
+#pragma once
+
 #include "cta_frontend.grpc.pb.h"
 #include "cta_frontend.pb.h"
+#include "frontend/common/CtaAdminResponseStream.hpp"
+#include "frontend/grpc/RequestMessage.hpp"
 
 #include <catalogue/Catalogue.hpp>
 #include <grpcpp/grpcpp.h>
 #include <scheduler/Scheduler.hpp>
-
-#pragma once
 
 namespace cta::frontend::grpc {
 

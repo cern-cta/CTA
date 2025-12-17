@@ -19,6 +19,7 @@
 
 #include "catalogue/ArchiveFileBuilder.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/log/Logger.hpp"

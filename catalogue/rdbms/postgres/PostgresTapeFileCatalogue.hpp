@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "catalogue/InsertFileRecycleLog.hpp"
 #include "catalogue/rdbms/RdbmsTapeFileCatalogue.hpp"
 
 #include <string>

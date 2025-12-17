@@ -17,7 +17,9 @@
 
 #pragma once
 
+#include "catalogue/Group.hpp"
 #include "catalogue/RequesterAndGroupMountPolicies.hpp"
+#include "catalogue/User.hpp"
 #include "catalogue/interfaces/MountPolicyCatalogue.hpp"
 #include "common/log/Logger.hpp"
 

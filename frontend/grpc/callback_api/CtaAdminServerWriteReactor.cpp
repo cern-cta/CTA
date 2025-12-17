@@ -1,6 +1,6 @@
 #include "CtaAdminServerWriteReactor.hpp"
 
-#include "../RequestMessage.hpp"
+#include "frontend/grpc/RequestMessage.hpp"
 #include "cta_frontend.grpc.pb.h"
 #include "cta_frontend.pb.h"
 

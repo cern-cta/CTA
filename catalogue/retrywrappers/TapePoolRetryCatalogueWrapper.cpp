@@ -19,6 +19,7 @@
 #include "catalogue/TapePool.hpp"
 #include "catalogue/retrywrappers/TapePoolCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
+#include "common/log/Logger.hpp"
 
 #include <memory>
 

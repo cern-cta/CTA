@@ -18,14 +18,13 @@
 #pragma once
 
 #include "cta_frontend.pb.h"
+#include "frontend/common/AdminCmd.hpp"
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/Version.hpp"
 
 #include <xrootd/private/XrdSsi/XrdSsiStream.hh>
 
 namespace cta::frontend {
-
-class AdminCmd;
 
 class AdminCmdStream : public AdminCmd {
 public:
