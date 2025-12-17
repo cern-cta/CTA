@@ -498,6 +498,39 @@ FrontendService::FrontendService(const std::string& configFilename) {
     }
   }
 
+  // Parse allowed authentication protocols for gRPC admin commands
+  auto admAuthProtocolsStr = config.getOptionValueStr("grpc.adm.auth.protocols");
+  if (admAuthProtocolsStr.has_value()) {
+    // Split by comma to support comma-separated values
+    std::istringstream protocolStream(admAuthProtocolsStr.value());
+    std::string protocol;
+
+    while(protocolStream.good()) {
+      std::string substr;
+      getline(protocolStream, substr, ',');
+      if (substr == "krb5" || substr == "jwt")
+        m_adminAuthProtocols.push_back(substr);
+      else
+        throw exception::UserError("Unrecognized authentication method " + substr + " for cta-admin. Allowed values are krb5, jwt");
+    }
+
+    // Log the configured authentication protocols
+    std::list<log::Param> params;
+    params.emplace_back("source", configFilename);
+    params.emplace_back("category", "grpc.adm.auth");
+    params.emplace_back("key", "protocols");
+    std::string protocolsList;
+    for (size_t i = 0; i < m_adminAuthProtocols.size(); ++i) {
+      if (i > 0) protocolsList += ", ";
+      protocolsList += m_adminAuthProtocols[i];
+    }
+    params.emplace_back("value", protocolsList);
+    log(log::INFO, "Configuration entry", params);
+  } else {
+    // This is likely not what we intended, admin commands will fail, so log a warning
+    log(log::WARNING, "No grpc.adm.auth.protocols specified!");
+  }
+
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
 }

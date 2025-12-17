@@ -30,6 +30,8 @@
 #include <getopt.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <thread>
+#include <future>
+#include <algorithm>
 
 using namespace cta;
 using namespace cta::common;
@@ -211,26 +213,37 @@ int main(const int argc, char* const* const argv) {
   lc.log(log::INFO, "Using " + std::to_string(threads) + " request processing threads");
   builder.SetResourceQuota(quota);
 
-  // Get Kerberos configuration
-  std::string strKeytab = frontendService->getKeytab().value_or("/etc/cta/cta-frontend.keytab");
-  std::string strService = frontendService->getServicePrincipal().value_or("cta/" + shortHostName);
+    // Check if Kerberos authentication is enabled in the allowed protocols
+    const auto& allowedProtocols = frontendService->getAdminAuthProtocols();
+    bool krb5Enabled = std::find(allowedProtocols.begin(), allowedProtocols.end(), "krb5") != allowedProtocols.end();
 
-  lc.log(log::INFO, "Using keytab: " + strKeytab);
-  lc.log(log::INFO, "Using service principal: " + strService);
+    // Only create and register negotiation service if Kerberos is enabled
+    std::unique_ptr<cta::frontend::grpc::server::NegotiationService> negotiationService;
+    if (krb5Enabled) {
+        // Get Kerberos configuration
+        std::string strKeytab = frontendService->getKeytab().value_or("/etc/cta/cta-frontend.keytab");
+        std::string strService = frontendService->getServicePrincipal().value_or("cta/" + shortHostName);
 
-  // Create completion queue that will be used only for the Kerberos negotiation service
-  std::unique_ptr<::grpc::ServerCompletionQueue> negCq = builder.AddCompletionQueue();
+        lc.log(log::INFO, "Kerberos authentication enabled");
+        lc.log(log::INFO, "Using keytab: " + strKeytab);
+        lc.log(log::INFO, "Using service principal: " + strService);
 
-  // Create negotiation service
-  auto negotiationService = std::make_unique<cta::frontend::grpc::server::NegotiationService>(lc,
-                                                                                              tokenStorage,
-                                                                                              std::move(negCq),
-                                                                                              strKeytab,
-                                                                                              strService,
-                                                                                              1 /* threads */);
+        // Create completion queue that will be used only for the Kerberos negotiation service
+        std::unique_ptr<::grpc::ServerCompletionQueue> negCq = builder.AddCompletionQueue();
 
-  // Register negotiation service on main builder
-  builder.RegisterService(&negotiationService->getService());
+        // Create negotiation service
+        negotiationService = std::make_unique<cta::frontend::grpc::server::NegotiationService>(lc,
+                                                                                                    tokenStorage,
+                                                                                                    std::move(negCq),
+                                                                                                    strKeytab,
+                                                                                                    strService,
+                                                                                                    1 /* threads */);
+
+        // Register negotiation service on main builder
+        builder.RegisterService(&negotiationService->getService());
+    } else {
+        lc.log(log::INFO, "Kerberos authentication disabled (krb5 not in grpc.adm.auth.protocols)");
+    }
 
   // Register "service" as the instance through which we'll communicate with
   // clients. In this case it corresponds to an *synchronous* service.
@@ -254,8 +267,10 @@ int main(const int argc, char* const* const argv) {
   // Build and start server
   std::unique_ptr<Server> server(builder.BuildAndStart());
 
-  // Start negotiation service processing (after server is built)
-  negotiationService->startProcessing();
+    // Start negotiation service processing (after server is built) if it was created
+    if (negotiationService) {
+        negotiationService->startProcessing();
+    }
 
   lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
   server->Wait();

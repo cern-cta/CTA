@@ -110,4 +110,5 @@ data:
     # Kerberos authentication
     grpc.keytab {{ .Values.grpc.keytab }}
     grpc.service_principal {{ .Values.grpc.service_principal }}
+    grpc.adm.auth.protocols jwt
 {{- end }}
