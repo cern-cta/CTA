@@ -1,7 +1,7 @@
 # If required, the user can specify a custom image here
 isPrivileged: true
 
-replicas: 1
+replicas: 2
 
 conf:
   general:
