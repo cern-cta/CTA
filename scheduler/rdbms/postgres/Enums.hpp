@@ -7,8 +7,6 @@
 
 #include "scheduler/rdbms/postgres/EnumToString.hpp"
 
-
-
 // Enums should inherit from uint8_t. A corresponding array of string values should be provided. The
 // macro TO_STRING uses the enum class and the string array to define cta::to_string(T) and
 // cta::from_string<T>(string). The string array is also used to define the valid values in the
