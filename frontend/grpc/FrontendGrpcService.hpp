@@ -11,13 +11,14 @@
 #include "TokenStorage.hpp"
 #include "common/JwkCache.hpp"
 #include "common/log/Logger.hpp"
-#include "cta_frontend.grpc.pb.h"
-#include "cta_frontend.pb.h"
 #include "frontend/common/AdminCmd.hpp"
 #include "frontend/common/FrontendService.hpp"
 
 #include <grpcpp/health_check_service_interface.h>
 #include <scheduler/Scheduler.hpp>
+
+#include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
 
 using cta::Scheduler;
 using cta::catalogue::Catalogue;

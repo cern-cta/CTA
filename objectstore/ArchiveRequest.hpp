@@ -26,10 +26,11 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <list>
 #include <optional>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 

@@ -19,10 +19,11 @@
 
 #include "ObjectOps.hpp"
 #include "common/Timer.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <cxxabi.h>
 #include <list>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 

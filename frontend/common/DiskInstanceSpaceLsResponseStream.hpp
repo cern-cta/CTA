@@ -19,9 +19,10 @@
 
 #include "CtaAdminResponseStream.hpp"
 #include "common/dataStructures/DiskInstanceSpace.hpp"
-#include "cta_admin.pb.h"
 
 #include <list>
+
+#include "cta_admin.pb.h"
 
 namespace cta::frontend {
 

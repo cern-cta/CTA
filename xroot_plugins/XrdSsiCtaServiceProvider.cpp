@@ -17,11 +17,11 @@
 
 #include "XrdSsiCtaServiceProvider.hpp"
 
-#include "cta_frontend.pb.h"
-
 #include <XrdSsiPbAlert.hpp>
 #include <XrdSsiPbConfig.hpp>
 #include <XrdSsiPbService.hpp>
+
+#include "cta_frontend.pb.h"
 
 /*
  * Global pointer to the Service Provider object.

@@ -19,11 +19,12 @@
 
 #include "XrdSsiCtaServiceProvider.hpp"
 #include "common/utils/utils.hpp"
-#include "cta_frontend.pb.h"
 #include "frontend/common/Version.hpp"
 
 #include <XrdSsi/XrdSsiEntity.hh>
 #include <XrdSsi/XrdSsiStream.hh>
+
+#include "cta_frontend.pb.h"
 
 namespace cta::xrd {
 

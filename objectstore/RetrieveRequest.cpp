@@ -29,10 +29,11 @@
 #include "Sorter.hpp"
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/utils/utils.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <cmath>
 #include <google/protobuf/util/json_util.h>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 

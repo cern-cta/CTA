@@ -21,8 +21,9 @@
 #include "common/Timer.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
 #include "common/log/TimingList.hpp"
-#include "objectstore/cta.pb.h"
 #include "scheduler/SchedulerDatabase.hpp"
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 

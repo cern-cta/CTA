@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include "cta_admin.pb.h"
-
 #include <common/dataStructures/DriveStatus.hpp>
+
+#include "cta_admin.pb.h"
 
 namespace cta::admin {
 

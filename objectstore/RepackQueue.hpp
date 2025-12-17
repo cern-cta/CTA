@@ -19,11 +19,12 @@
 
 #include "ObjectOps.hpp"
 #include "RetrieveQueue.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <list>
 #include <set>
 #include <string>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 

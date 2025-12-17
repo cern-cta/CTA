@@ -18,12 +18,13 @@
 #pragma once
 
 #include "common/exception/Exception.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <algorithm>
 #include <map>
 #include <string>
 #include <utility>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 

@@ -19,11 +19,12 @@
 
 #include "EntryLogSerDeser.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <limits>
 #include <stdint.h>
 #include <string>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 

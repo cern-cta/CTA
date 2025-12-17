@@ -33,7 +33,6 @@
 #include "tapeserver/daemon/DriveHandlerProxy.hpp"
 #include "tapeserver/daemon/DriveHandlerStateReporter.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
-#include "tapeserver/daemon/WatchdogMessage.pb.h"
 
 #include <chrono>
 #include <set>
@@ -41,6 +40,8 @@
 #include <sys/prctl.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include "tapeserver/daemon/WatchdogMessage.pb.h"
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else

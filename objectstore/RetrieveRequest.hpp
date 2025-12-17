@@ -28,10 +28,11 @@
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "objectstore/RetrieveActivityCountMap.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <list>
 #include <string_view>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta {
 namespace objectstore {

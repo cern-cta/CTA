@@ -20,7 +20,6 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
-#include "cta_frontend.pb.h"  //!< Auto-generated message types from .proto file
 #include "version.h"
 
 #include <XrdSsiPbIStreamBuffer.hpp>
@@ -29,6 +28,8 @@
 #include <list>
 #include <string>
 #include <utility>
+
+#include "cta_frontend.pb.h"  //!< Auto-generated message types from .proto file
 
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 

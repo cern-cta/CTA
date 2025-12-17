@@ -24,12 +24,13 @@
 #include "common/telemetry/metrics/instruments/ObjectstoreInstruments.hpp"
 #include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/utils/utils.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <cryptopp/base64.h>
 #include <memory>
 #include <opentelemetry/context/runtime_context.h>
 #include <stdint.h>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta {
 

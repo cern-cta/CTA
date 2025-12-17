@@ -18,7 +18,6 @@
 #pragma once
 
 #include "common/log/StdoutLogger.hpp"
-#include "cta_frontend.pb.h"  //!< Auto-generated message types from .proto file
 #include "version.h"
 #include "xrootd-ssi-protobuf-interface/eos_cta/include/CtaFrontendApi.hpp"
 
@@ -28,6 +27,8 @@
 #include <list>
 #include <string>
 #include <utility>
+
+#include "cta_frontend.pb.h"  //!< Auto-generated message types from .proto file
 
 namespace cta::cliTool {
 

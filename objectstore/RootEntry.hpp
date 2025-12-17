@@ -23,9 +23,10 @@
 #include "common/MountControl.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RepackQueueType.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <list>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 

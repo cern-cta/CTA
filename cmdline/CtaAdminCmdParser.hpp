@@ -19,11 +19,12 @@
 
 #include "common/dataStructures/ArchiveRouteType.hpp"
 #include "common/dataStructures/Tape.hpp"
-#include "cta_frontend.pb.h"
 
 #include <map>
 #include <set>
 #include <string>
+
+#include "cta_frontend.pb.h"
 
 namespace cta::admin {
 

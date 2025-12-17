@@ -18,11 +18,12 @@
 #pragma once
 
 #include "common/dataStructures/EntryLog.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <limits>
 #include <stdint.h>
 #include <string>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 

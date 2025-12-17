@@ -30,10 +30,11 @@
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SubprocessHandler.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
-#include "tapeserver/daemon/WatchdogMessage.pb.h"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
+
+#include "tapeserver/daemon/WatchdogMessage.pb.h"
 
 namespace cta {
 

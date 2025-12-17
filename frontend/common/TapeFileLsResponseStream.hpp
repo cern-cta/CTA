@@ -20,9 +20,10 @@
 #include "CtaAdminResponseStream.hpp"
 #include "catalogue/CatalogueItor.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
-#include "cta_admin.pb.h"
 
 #include <list>
+
+#include "cta_admin.pb.h"
 
 namespace cta::frontend {
 

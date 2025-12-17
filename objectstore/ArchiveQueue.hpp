@@ -25,9 +25,10 @@
 #include "common/CreationLog.hpp"
 #include "common/MountControl.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
-#include "objectstore/cta.pb.h"
 
 #include <string>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 
