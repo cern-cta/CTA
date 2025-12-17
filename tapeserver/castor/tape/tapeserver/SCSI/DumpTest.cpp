@@ -19,8 +19,8 @@
  * Test main program. For development use.
  */
 
-#include "castor/tape/tapeserver/System/Wrapper.hpp"
 #include "Device.hpp"
+#include "castor/tape/tapeserver/System/Wrapper.hpp"
 
 #include <iostream>
 

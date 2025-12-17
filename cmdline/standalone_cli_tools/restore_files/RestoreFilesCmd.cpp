@@ -18,7 +18,6 @@
 #include "cmdline/standalone_cli_tools/restore_files/RestoreFilesCmd.hpp"
 
 #include "CtaFrontendApi.hpp"
-#include "Rpc.grpc.pb.h"
 #include "cmdline/CtaAdminCmdParser.hpp"
 #include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
 #include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
@@ -32,6 +31,8 @@
 #include <iostream>
 #include <memory>
 #include <sys/stat.h>
+
+#include "Rpc.grpc.pb.h"
 
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 

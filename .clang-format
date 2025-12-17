@@ -74,6 +74,10 @@ EmptyLineAfterAccessModifier: Never
 EmptyLineBeforeAccessModifier: LogicalBlock
 FixNamespaceComments: true
 IncludeBlocks: Regroup
+IncludeCategories:
+  # Protobuf headers should be last
+  - Regex: '.*pb\.h'
+    Priority: 100
 IndentCaseBlocks: false
 IndentCaseLabels: true
 IndentExternBlock: AfterExternBlock

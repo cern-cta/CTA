@@ -41,5 +41,4 @@ void fillRetrieveRequestsForCleanupRunner(
   cta::objectstore::BackendVFS& be,
   cta::objectstore::AgentReference& agentRef,
   uint64_t startFseq = 0);
-
 }

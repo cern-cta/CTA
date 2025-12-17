@@ -20,10 +20,11 @@
 #include "IHandler.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
 #include "common/log/Logger.hpp"
-#include "cta_frontend.grpc.pb.h"
-#include "cta_frontend.pb.h"
 
 #include <grpcpp/grpcpp.h>
+
+#include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
 
 namespace cta::frontend::grpc::server {
 
@@ -50,7 +51,7 @@ private:
   AsyncServer& m_asyncServer;
   cta::xrd::CtaRpcStream::AsyncService& m_ctaRpcStreamSvc;
   StreamState m_streamState;
-  /* 
+  /*
    * Context for the rpc, allowing to tweak aspects of it such as the use
    * of compression, authentication, as well as to send metadata back to the
    * client.

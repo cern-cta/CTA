@@ -20,8 +20,6 @@
 #include "cmdline/CtaAdminCmdParser.hpp"
 #include "cmdline/CtaAdminParsedCmd.hpp"
 #include "common/exception/UserError.hpp"
-#include "cta_frontend.grpc.pb.h"
-#include "cta_frontend.pb.h"
 #include "frontend/common/PbException.hpp"
 #include "version.h"
 
@@ -29,6 +27,9 @@
 #include <google/protobuf/util/json_util.h>
 #include <grpcpp/grpcpp.h>
 #include <variant>
+
+#include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
 
 constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::AdminCmd::SubCmd subcmd) {
   return (cmd << 16) + subcmd;

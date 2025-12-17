@@ -17,9 +17,9 @@
 
 #include "Structures.hpp"
 
-#include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "Device.hpp"
 #include "Exception.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
 
 #include <gmock/gmock-cardinalities.h>
 #include <gtest/gtest.h>

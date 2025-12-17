@@ -21,8 +21,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
-#include "cta_frontend.grpc.pb.h"
-#include "cta_frontend.pb.h"
 
 #include <grpcpp/grpcpp.h>
 #include <memory>
@@ -30,6 +28,9 @@
 #include <string>
 #include <thread>
 #include <unordered_map>
+
+#include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
 
 namespace cta::frontend::grpc::client {
 

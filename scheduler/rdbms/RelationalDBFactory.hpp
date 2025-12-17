@@ -31,7 +31,6 @@
 namespace cta::catalogue {
 
 class Catalogue;
-
 }
 
 namespace cta {

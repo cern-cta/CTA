@@ -18,7 +18,6 @@
 #include "cmdline/standalone_cli_tools/eos_namespace_injection/EosNamespaceInjection.hpp"
 
 #include "CtaFrontendApi.hpp"
-#include "Rpc.grpc.pb.h"
 #include "XrdSsiPbIStreamBuffer.hpp"
 #include "XrdSsiPbLog.hpp"
 #include "cmdline/CtaAdminParsedCmd.hpp"
@@ -36,6 +35,8 @@
 #include <memory>
 #include <string>
 #include <sys/stat.h>
+
+#include "Rpc.grpc.pb.h"
 
 // global synchronisation flag
 std::atomic<bool> isHeaderSent;

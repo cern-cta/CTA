@@ -1,14 +1,15 @@
 #include "CtaAdminServerWriteReactor.hpp"
 #include "catalogue/SchemaVersion.hpp"
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
-#include "cta_frontend.grpc.pb.h"
-#include "cta_frontend.pb.h"
 #include "frontend/common/Version.hpp"
 #include "version.h"
 
 #include <catalogue/Catalogue.hpp>
 #include <grpcpp/grpcpp.h>
 #include <scheduler/Scheduler.hpp>
+
+#include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
 
 namespace cta::frontend::grpc {
 

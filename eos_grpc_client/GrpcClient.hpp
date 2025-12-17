@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include "Rpc.grpc.pb.h"
-
 #include <grpc++/grpc++.h>
 #include <memory>
+
+#include "Rpc.grpc.pb.h"
 
 namespace eos::client {
 

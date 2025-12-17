@@ -24,8 +24,6 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "cta_frontend.grpc.pb.h"
-#include "cta_frontend.pb.h"
 #include "frontend/common/ActivityMountRuleLsResponseStream.hpp"
 #include "frontend/common/AdminLsResponseStream.hpp"
 #include "frontend/common/ArchiveRouteLsResponseStream.hpp"
@@ -56,6 +54,9 @@
 #include <mutex>
 #include <string>
 #include <thread>
+
+#include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
 
 /*
  * Convert AdminCmd <Cmd, SubCmd> pair to an integer so that it can be used in a switch statement

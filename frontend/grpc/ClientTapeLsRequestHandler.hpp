@@ -20,10 +20,11 @@
 #include "IHandler.hpp"
 #include "cmdline/CtaAdminTextFormatter.hpp"
 #include "common/log/Logger.hpp"
-#include "cta_frontend.grpc.pb.h"
-#include "cta_frontend.pb.h"
 
 #include <grpcpp/grpcpp.h>
+
+#include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
 
 namespace cta::frontend::grpc::client {
 

@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include <string>
 #include <list>
+#include <string>
 
 namespace cta {
 

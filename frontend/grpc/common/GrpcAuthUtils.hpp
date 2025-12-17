@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include "frontend/grpc/TokenStorage.hpp"
 #include "common/JwkCache.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
+#include "frontend/grpc/TokenStorage.hpp"
 
 #include <grpcpp/grpcpp.h>
 #include <optional>

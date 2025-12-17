@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
+#include "common/dataStructures/RetrieveRequest.hpp"
 
 namespace cta {
 
