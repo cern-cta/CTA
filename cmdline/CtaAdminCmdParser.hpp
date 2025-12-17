@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -687,7 +675,7 @@ disksystem (ds)
     The two options below are provided to configure backpressure for retrieve operations. Backpressure
     is a mechanism to postpone retrieval of files from tape to the disk buffer when there is insufficient
     disk space. It can be configured separately for each disk system.
-    
+
     Before a retrieve mount, the destination URL of each file is pattern-matched to identify the disk
     system. The corresponding disk instance space is queried to determine if there is sufficient free
     space to perform the mount. If there is insufficient space, the tape server sleeps for the specified

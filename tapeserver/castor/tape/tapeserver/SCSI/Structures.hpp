@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -48,7 +36,7 @@ const unsigned int maxLTOTapeWraps = 280;
    * Structures as defined in the SCSI specifications, and helper functions for them.
    * SPC-4 (SCSI primary commands) can be found at:
    * http://hackipedia.org/Hardware/SCSI/Primary%20Commands/SCSI%20Primary%20Commands%20-%204.pdf
-   * 
+   *
    * and SSC-3 (SCSI stream commands, i.e. tape drives) at:
    * http://hackipedia.org/Hardware/SCSI/Stream%20Commands/SCSI%20Stream%20Commands%20-%203.pdf
    */
@@ -121,7 +109,7 @@ public:
 /**
      * Helper function to deal with endianness.
      * @param t byte array in SCSI order representing a 64 bits number
-     * @return 
+     * @return
      */
 inline uint64_t toU64(const unsigned char (&t)[8]) {
   /* Like network, SCSI is BigEndian */
@@ -146,7 +134,7 @@ inline uint64_t toU64(const unsigned char (&t)[6]) {
 /**
      * Helper function to deal with endianness.
      * @param t byte array in SCSI order representing a 32 bits number
-     * @return 
+     * @return
      */
 inline uint32_t toU32(const unsigned char (&t)[4]) {
   /* Like network, SCSI is BigEndian */
@@ -155,9 +143,9 @@ inline uint32_t toU32(const unsigned char (&t)[4]) {
 
 /**
      * Helper function to deal with endianness.
-     * for 3 bytes! fields in SCSI replies 
+     * for 3 bytes! fields in SCSI replies
      * @param t byte array in SCSI order representing a 32 bits number
-     * @return 
+     * @return
      */
 inline uint32_t toU32(const unsigned char (&t)[3]) {
   union {
@@ -178,7 +166,7 @@ inline uint32_t toU32(const unsigned char (&t)[3]) {
      * Helper function to deal with endianness.
      * for signed values
      * @param t byte array in SCSI order representing a 32 bits number
-     * @return 
+     * @return
      */
 inline int32_t toS32(const unsigned char (&t)[4]) {
   /* Like network, SCSI is BigEndian */
@@ -188,7 +176,7 @@ inline int32_t toS32(const unsigned char (&t)[4]) {
 /**
      * Helper function to deal with endianness.
      * @param t byte array in SCSI order representing a 16 bits number
-     * @return 
+     * @return
      */
 inline uint16_t toU16(const unsigned char (&t)[2]) {
   /* Like network, SCSI is BigEndian */
@@ -533,7 +521,7 @@ public:
 };
 
 /**
-     * Log sense CDB as described in SPC-4, 
+     * Log sense CDB as described in SPC-4,
      */
 class logSenseCDB_t {
 public:
@@ -563,7 +551,7 @@ public:
 };
 
 /**
-     * Log sense Log Page Parameter Format as described in SPC-4, 
+     * Log sense Log Page Parameter Format as described in SPC-4,
      */
 class logSenseParameterHeader_t {
 public:
@@ -592,10 +580,10 @@ public:
 
   /**
        * Gets the parameter value
-       * 
+       *
        * @return The value  of the log sense parameter as uint64_t.
        *         If we have a parameter length more than 8 bytes the returning
-       *         value is not determined. 
+       *         value is not determined.
        */
   inline uint64_t getU64Value() {
     union {
@@ -645,7 +633,7 @@ public:
 };
 
 /**
-     * Log sense Log Page Format as described in SPC-4, 
+     * Log sense Log Page Format as described in SPC-4,
      */
 class logSenseLogPageHeader_t {
 public:
@@ -662,7 +650,7 @@ public:
 };
 
 /**
-     * Log sense Log Page Format as described in SPC-4, 
+     * Log sense Log Page Format as described in SPC-4,
      */
 class logSenseLogPage_t {
 public:
@@ -750,7 +738,7 @@ public:
 /**
      * MODE SENSE(6) or MODE SENSE(10) mode page 10h: Device Configuration.
      * There is no description in SPC-4 or SSC-3.
-     * We use descriptions from: 
+     * We use descriptions from:
      * IBM System Storage Tape Drive 3592 SCSI Reference,
      * Sun StorageTekTM T10000 Tape Drive Fibre Channel Interface Reference Manual,
      * IBM TotalStorage LTO Ultrium Tape Drive SCSI Reference.
@@ -989,8 +977,8 @@ public:
 };
 
 /**
-     * Sense buffer as defined in SPC-4, 
-     * section 4.5.2 Descriptor format sense data and 
+     * Sense buffer as defined in SPC-4,
+     * section 4.5.2 Descriptor format sense data and
      * section 4.5.3 Fixed format sense data
      * The sense buffer size is stored in the form of
      * a single byte. Therefore, the constructor forbids

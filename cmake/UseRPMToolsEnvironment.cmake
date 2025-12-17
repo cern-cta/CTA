@@ -1,3 +1,7 @@
+
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Small duplication of the main UseRPMToolsEnvironement
 # in order to have rpm variables handy before calling
 # CPack (which in turn should be done before UseRPMTools)

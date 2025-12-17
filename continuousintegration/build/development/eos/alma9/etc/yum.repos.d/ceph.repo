@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 [ceph]
 name=Ceph packages for $basearch
 baseurl=https://download.ceph.com/rpm-17.2.8/el9/x86_64/

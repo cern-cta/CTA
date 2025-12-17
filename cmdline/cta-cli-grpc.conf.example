@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 #
 # CTA gRPC client options
 #
@@ -14,7 +17,7 @@ cta.endpoint ctafrontend.cern.ch:17017
 
 # Path to the CA certificate chain file for TLS connections. Required when grpc.tls.enabled is true.
 # Note that if left blank, grpc will try to load the default root certificates.
-# It can also be overriden by setting grpc's environment variable GRPC_DEFAULT_SSL_ROOTS_FILE_PATH   
+# It can also be overriden by setting grpc's environment variable GRPC_DEFAULT_SSL_ROOTS_FILE_PATH
 # grpc.tls.chain_cert_path /etc/grid-security/certificates/ca-chain.pem
 
 # Authentication method for cta-admin-grpc. Must be either "jwt" or "krb5".

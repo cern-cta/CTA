@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # This job ensures we still fail the pipeline if danger-review failed
 # But we only do so after the full pipeline has completed
 danger-review-gate:

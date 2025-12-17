@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 apiVersion: v2
 name: catalogue-updater
 version: 0.1.0

@@ -27,9 +27,9 @@ SPDX-License-Identifier = "GPL-3.0-or-later"
 # Misc files that are tedious to attach copyright to
 [[annotations]]
 path = [
-    ".gitignore",
     ".gitmodules",
     ".git-blame-ignore-revs",
+    ".cppcheck-suppressions.txt",
     "catalogue/cta_catalogue_class_diagram.png",
     "catalogue/rdbms_classes.pdf",
     "catalogue/rdbms_classes.pptx",

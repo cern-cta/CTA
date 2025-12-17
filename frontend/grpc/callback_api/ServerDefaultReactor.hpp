@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2025 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 #include <catalogue/Catalogue.hpp>
 #include <grpcpp/grpcpp.h>
 #include <scheduler/Scheduler.hpp>
