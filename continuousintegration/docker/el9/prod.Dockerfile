@@ -53,7 +53,7 @@ priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
 
 RUN dnf config-manager --enable ceph
 RUN dnf install -y \
-      ceph-common
+      ceph-common \
       cta-debuginfo \
       cta-debugsource
 
