@@ -376,15 +376,6 @@ uint64_t EosNamespaceInjection::createFileInEos(const MetaDataObject& metaDataFr
 
   // Checksums
   file.mutable_checksum()->set_type(metaDataFromUser.checksumType);
-  {
-    {
-      {
-        {
-          {}
-        }
-      }
-    }
-  }
   const auto byteArray = checksum::ChecksumBlob::HexToByteArray(metaDataFromUser.checksumValue);
   file.mutable_checksum()->set_value(std::string(byteArray.rbegin(), byteArray.rend()));
 
