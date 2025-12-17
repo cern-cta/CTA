@@ -15,38 +15,46 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
 #include "GrpcUtils.hpp"
 
+#include <string>
 
 namespace eos::client {
 
-void checkPrefix(std::string &prefix)
-{
-  if(prefix.empty()) {
+void checkPrefix(std::string& prefix) {
+  if (prefix.empty()) {
     prefix = '/';
   } else {
-    if(prefix.at(0) != '/') prefix = '/' + prefix;
-    if(prefix.at(prefix.length()-1) != '/') prefix += '/';
+    if (prefix.at(0) != '/') {
+      prefix = '/' + prefix;
+    }
+    if (prefix.at(prefix.length() - 1) != '/') {
+      prefix += '/';
+    }
   }
 }
 
-
-Dirname manglePathname(const std::string &remove_prefix, const std::string &add_prefix, const std::string &pathname, const std::string &filename)
-{
+Dirname manglePathname(const std::string& remove_prefix,
+                       const std::string& add_prefix,
+                       const std::string& pathname,
+                       const std::string& filename) {
   Dirname dir;
 
   // Set the pathname
   size_t clip = (pathname.rfind(remove_prefix, 0) == std::string::npos) ? 0 : remove_prefix.length();
-  if(pathname.length() > clip && pathname.at(clip) == '/') ++clip;
+  if (pathname.length() > clip && pathname.at(clip) == '/') {
+    ++clip;
+  }
   dir.pathname = add_prefix + pathname.substr(clip);
 
   // Set the filename
-  if(filename.empty()) {
+  if (filename.empty()) {
     clip = dir.pathname.find_last_of('/');
-    dir.basename = dir.pathname.substr(clip+1);
+    dir.basename = dir.pathname.substr(clip + 1);
   } else {
-    if(!dir.pathname.empty() && dir.pathname.at(dir.pathname.length()-1) != '/') dir.pathname += '/';
+    if (!dir.pathname.empty() && dir.pathname.at(dir.pathname.length() - 1) != '/') {
+      dir.pathname += '/';
+    }
     dir.pathname += filename;
     dir.basename = filename;
   }
@@ -54,4 +62,4 @@ Dirname manglePathname(const std::string &remove_prefix, const std::string &add_
   return dir;
 }
 
-} // namespace eos::client
+}  // namespace eos::client

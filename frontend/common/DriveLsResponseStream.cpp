@@ -17,8 +17,8 @@
 
 #include "DriveLsResponseStream.hpp"
 
-#include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "common/dataStructures/DriveStatusSerDeser.hpp"
+#include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
 
 namespace cta::frontend {
@@ -76,20 +76,19 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
       std::string driveSchedulerBackendName = "unknown";
       {
         auto config_it =
-                std::find_if(driveConfigs.begin(),
-                             driveConfigs.end(),
-                             [&driveSchedulerBackendName](
-                                     const cta::catalogue::DriveConfigCatalogue::DriveConfig &config) {
-                               if (config.keyName == "SchedulerBackendName") {
-                                 driveSchedulerBackendName = config.value;
-                                 return true;
-                               }
-                               return false;
-                             });
+          std::find_if(driveConfigs.begin(),
+                       driveConfigs.end(),
+                       [&driveSchedulerBackendName](const cta::catalogue::DriveConfigCatalogue::DriveConfig& config) {
+                         if (config.keyName == "SchedulerBackendName") {
+                           driveSchedulerBackendName = config.value;
+                           return true;
+                         }
+                         return false;
+                       });
         if (config_it == driveConfigs.end()) {
           m_lc.log(cta::log::ERR,
-                   "DriveLsStream::fillBuffer could not find SchedulerBackendName configuration for drive " +
-                   dr_it->driveName);
+                   "DriveLsStream::fillBuffer could not find SchedulerBackendName configuration for drive "
+                     + dr_it->driveName);
         }
       }
       if (m_schedulerBackendName.value_or("") != driveSchedulerBackendName) {
@@ -129,20 +128,20 @@ cta::xrd::Data DriveLsResponseStream::next() {
   // Extract the SchedulerBackendName configuration if it exists
   std::string driveSchedulerBackendName = "unknown";
   {
-    auto it = std::find_if(driveConfigs.begin(),
-                           driveConfigs.end(),
-                           [&driveSchedulerBackendName](
-                                   const cta::catalogue::DriveConfigCatalogue::DriveConfig &config) {
-                             if (config.keyName == "SchedulerBackendName") {
-                               driveSchedulerBackendName = config.value;
-                               return true;
-                             }
-                             return false;
-                           });
+    auto it =
+      std::find_if(driveConfigs.begin(),
+                   driveConfigs.end(),
+                   [&driveSchedulerBackendName](const cta::catalogue::DriveConfigCatalogue::DriveConfig& config) {
+                     if (config.keyName == "SchedulerBackendName") {
+                       driveSchedulerBackendName = config.value;
+                       return true;
+                     }
+                     return false;
+                   });
     if (it == driveConfigs.end()) {
       m_lc.log(cta::log::ERR,
-               "DriveLsResponseStream::next could not find SchedulerBackendName configuration for drive " +
-               dr.driveName);
+               "DriveLsResponseStream::next could not find SchedulerBackendName configuration for drive "
+                 + dr.driveName);
     }
   }
   cta::xrd::Data data;
@@ -164,8 +163,11 @@ cta::xrd::Data DriveLsResponseStream::next() {
   driveItem->set_files_transferred_in_session(dr.filesTransferedInSession.value_or(0));
   driveItem->set_bytes_transferred_in_session(dr.bytesTransferedInSession.value_or(0));
   driveItem->set_session_id(dr.sessionId.value_or(0));
-  const auto lastUpdateTime = dr.lastModificationLog.has_value() ? dr.lastModificationLog.value().time : std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  driveItem->set_time_since_last_update(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - lastUpdateTime);
+  const auto lastUpdateTime = dr.lastModificationLog.has_value() ?
+                                dr.lastModificationLog.value().time :
+                                std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  driveItem->set_time_since_last_update(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())
+                                        - lastUpdateTime);
   driveItem->set_current_priority(dr.currentPriority.value_or(0));
   driveItem->set_current_activity(dr.currentActivity.value_or(""));
   driveItem->set_dev_file_name(dr.devFileName.value_or(""));

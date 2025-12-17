@@ -25,20 +25,18 @@
 namespace cta::schedulerdb {
 
 class RetrieveJobQueueItor : public SchedulerDatabase::IRetrieveJobQueueItor {
- friend class cta::RelationalDB;
+  friend class cta::RelationalDB;
 
- public:
+public:
+  [[noreturn]] RetrieveJobQueueItor();
 
-   [[noreturn]] RetrieveJobQueueItor();
+  const std::string& qid() const override;
 
-   const std::string &qid() const override;
+  bool end() const override;
 
-   bool end() const override;
+  void operator++() override;
 
-   void operator++() override;
-
-   const common::dataStructures::RetrieveJob &operator*() const override;
-
+  const common::dataStructures::RetrieveJob& operator*() const override;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

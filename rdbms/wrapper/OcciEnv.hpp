@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "rdbms/wrapper/ConnWrapper.hpp"
 #include "rdbms/Login.hpp"
+#include "rdbms/wrapper/ConnWrapper.hpp"
 
 #include <memory>
 #include <occi.h>
@@ -30,7 +30,6 @@ namespace cta::rdbms::wrapper {
  */
 class OcciEnv {
 public:
-
   /**
    * Constructor.
    *
@@ -57,12 +56,11 @@ public:
   std::unique_ptr<ConnWrapper> createConn(const rdbms::Login& login);
 
 private:
-
   /**
    * The OCCI environment.
    */
-  oracle::occi::Environment *m_env;
+  oracle::occi::Environment* m_env;
 
-}; // class OcciEnv
+};  // class OcciEnv
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

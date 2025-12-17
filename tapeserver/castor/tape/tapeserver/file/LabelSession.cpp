@@ -15,14 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
-
 #include "castor/tape/tapeserver/file/LabelSession.hpp"
+
 #include "castor/tape/tapeserver/file/Structures.hpp"
+
+#include <string>
 
 namespace castor::tape::tapeFile {
 
-void LabelSession::label(tapeserver::drive::DriveInterface *drive, const std::string &vid, const bool lbp)  {
+void LabelSession::label(tapeserver::drive::DriveInterface* drive, const std::string& vid, const bool lbp) {
   VOL1 vol1;
   if (lbp) {
     // we only support crc32c LBP method
@@ -37,4 +38,4 @@ void LabelSession::label(tapeserver::drive::DriveInterface *drive, const std::st
   drive->writeSyncFileMarks(1);
 }
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

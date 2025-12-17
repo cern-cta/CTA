@@ -38,4 +38,4 @@ public:
   double getCost(const FilePositionInfos& file1, const FilePositionInfos& file2) const override;
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

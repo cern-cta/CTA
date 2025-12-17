@@ -15,11 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <gtest/gtest.h>
-#include <algorithm>
-
 #include "common/process/threading/SocketPair.hpp"
+
 #include "common/exception/Errnum.hpp"
+
+#include <algorithm>
+#include <gtest/gtest.h>
 
 namespace unitTests {
 
@@ -75,11 +76,11 @@ TEST(cta_threading_SocketPair, MaxLength) {
   std::string smallMessage = "Hello!";
   std::string bigMessage;
   int i = 0;
-  bigMessage.resize(10*1024, '.');
-  std::for_each(bigMessage.begin(), bigMessage.end(), [&i](char &c){ c = 'A' + (i++ % 26); });
+  bigMessage.resize(10 * 1024, '.');
+  std::for_each(bigMessage.begin(), bigMessage.end(), [&i](char& c) { c = 'A' + (i++ % 26); });
   std::string hugeMessage;
-  hugeMessage.resize(100*1024, '.');
-  std::for_each(hugeMessage.begin(), hugeMessage.end(), [&i](char &c){ c = 'Z' - (i++ % 26); });
+  hugeMessage.resize(100 * 1024, '.');
+  std::for_each(hugeMessage.begin(), hugeMessage.end(), [&i](char& c) { c = 'Z' - (i++ % 26); });
   // 2) send/receive them
   using cta::server::SocketPair;
   cta::server::SocketPair sp;
@@ -93,4 +94,4 @@ TEST(cta_threading_SocketPair, MaxLength) {
   ASSERT_EQ(smallMessage, sp.receive(SocketPair::Side::child));
 }
 
-}
+}  // namespace unitTests

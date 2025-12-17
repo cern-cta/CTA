@@ -17,20 +17,19 @@
 
 #pragma once
 
-#include <stdint.h>
-
-#include <string>
-#include <list>
-
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/exception/UserError.hpp"
+
+#include <list>
+#include <stdint.h>
+#include <string>
 
 namespace cta {
 
 namespace common::dataStructures {
 struct ArchiveRoute;
 struct SecurityIdentity;
-}
+}  // namespace common::dataStructures
 
 namespace catalogue {
 
@@ -41,13 +40,12 @@ class ArchiveRouteCatalogue {
 public:
   virtual ~ArchiveRouteCatalogue() = default;
 
-  virtual void createArchiveRoute(
-    const common::dataStructures::SecurityIdentity &admin,
-    const std::string &storageClassName,
-    const uint32_t copyNb,
-    const common::dataStructures::ArchiveRouteType &archiveRouteType,
-    const std::string &tapePoolName,
-    const std::string &comment) = 0;
+  virtual void createArchiveRoute(const common::dataStructures::SecurityIdentity& admin,
+                                  const std::string& storageClassName,
+                                  const uint32_t copyNb,
+                                  const common::dataStructures::ArchiveRouteType& archiveRouteType,
+                                  const std::string& tapePoolName,
+                                  const std::string& comment) = 0;
 
   /**
    * Deletes the specified archive route.
@@ -55,10 +53,9 @@ public:
    * @param storageClassName The name of the storage class.
    * @param copyNb The copy number of the tape file.
    */
-  virtual void deleteArchiveRoute(
-    const std::string &storageClassName,
-    const uint32_t copyNb,
-    const common::dataStructures::ArchiveRouteType &archiveRouteType) = 0;
+  virtual void deleteArchiveRoute(const std::string& storageClassName,
+                                  const uint32_t copyNb,
+                                  const common::dataStructures::ArchiveRouteType& archiveRouteType) = 0;
 
   virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const = 0;
 
@@ -73,9 +70,8 @@ public:
    * @param storageClassName The name of the storage class.
    * @param tapePoolName The name of the tape pool.
    */
-  virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(
-    const std::string &storageClassName,
-    const std::string &tapePoolName) const = 0;
+  virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName,
+                                                                           const std::string& tapePoolName) const = 0;
 
   /**
    * Modifies the tape pool of the specified archive route.
@@ -87,13 +83,18 @@ public:
    * @throw UserSpecifiedANonExistentTapePool if the user specified a
    * non-existent tape pool.
    */
-  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
-    const std::string &tapePoolName) = 0;
+  virtual void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity& admin,
+                                              const std::string& storageClassName,
+                                              const uint32_t copyNb,
+                                              const common::dataStructures::ArchiveRouteType& archiveRouteType,
+                                              const std::string& tapePoolName) = 0;
 
-  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &storageClassName, const uint32_t copyNb, const common::dataStructures::ArchiveRouteType &archiveRouteType,
-    const std::string &comment) = 0;
+  virtual void modifyArchiveRouteComment(const common::dataStructures::SecurityIdentity& admin,
+                                         const std::string& storageClassName,
+                                         const uint32_t copyNb,
+                                         const common::dataStructures::ArchiveRouteType& archiveRouteType,
+                                         const std::string& comment) = 0;
 };
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

@@ -25,7 +25,7 @@ namespace cta::log {
 /**
  * Class implementaing the API of the CTA logging system
  */
-class FileLogger: public Logger {
+class FileLogger : public Logger {
 public:
   /**
    * Constructor
@@ -85,4 +85,4 @@ protected:
   void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final;
 };
 
-} // namespace cta::log
+}  // namespace cta::log

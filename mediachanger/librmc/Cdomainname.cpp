@@ -15,18 +15,20 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <sys/types.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <unistd.h>
-#include <netdb.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
+#include "Cdomainname.hpp"
+
 #include "Cnetdb.hpp"
 #include "serrno.hpp"
-#include "Cdomainname.hpp"
+
+#include <errno.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 int Cdomainname(char* name, int namelen) {
   char hostname[CA_MAXHOSTNAMELEN + 1];

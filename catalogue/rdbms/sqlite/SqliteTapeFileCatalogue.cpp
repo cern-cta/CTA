@@ -15,20 +15,20 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#include "catalogue/rdbms/sqlite/SqliteTapeFileCatalogue.hpp"
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/ArchiveFileRowWithoutTimestamps.hpp"
+#include "catalogue/TapeFileWritten.hpp"
+#include "catalogue/TapeItemWritten.hpp"
+#include "catalogue/TapeItemWrittenPointer.hpp"
 #include "catalogue/rdbms/RdbmsArchiveFileCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsTapeFileCatalogue.hpp"
 #include "catalogue/rdbms/sqlite/SqliteTapeCatalogue.hpp"
-#include "catalogue/rdbms/sqlite/SqliteTapeFileCatalogue.hpp"
-#include "catalogue/TapeFileWritten.hpp"
-#include "catalogue/TapeItemWritten.hpp"
-#include "catalogue/TapeItemWrittenPointer.hpp"
+#include "common/Timer.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "common/exception/Exception.hpp"
@@ -36,23 +36,29 @@
 #include "common/exception/TapeFseqMismatch.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/Timer.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
 
+#include <string>
+
 namespace cta::catalogue {
 
-SqliteTapeFileCatalogue::SqliteTapeFileCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue)
-  : RdbmsTapeFileCatalogue(log, connPool, rdbmsCatalogue) {}
+SqliteTapeFileCatalogue::SqliteTapeFileCatalogue(log::Logger& log,
+                                                 std::shared_ptr<rdbms::ConnPool> connPool,
+                                                 RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsTapeFileCatalogue(log, connPool, rdbmsCatalogue) {}
 
-void SqliteTapeFileCatalogue::copyTapeFileToFileRecyleLogAndDeleteTransaction(rdbms::Conn & conn,
-  const cta::common::dataStructures::ArchiveFile &file, const std::string &reason, utils::Timer *timer,
-  log::TimingList *timingList, log::LogContext & lc) const {
+void SqliteTapeFileCatalogue::copyTapeFileToFileRecyleLogAndDeleteTransaction(
+  rdbms::Conn& conn,
+  const cta::common::dataStructures::ArchiveFile& file,
+  const std::string& reason,
+  utils::Timer* timer,
+  log::TimingList* timingList,
+  log::LogContext& lc) const {
   conn.executeNonQuery(R"SQL(BEGIN TRANSACTION)SQL");
-  const auto fileRecycleLogCatalogue = static_cast<RdbmsFileRecycleLogCatalogue*>(
-    RdbmsTapeFileCatalogue::m_rdbmsCatalogue->FileRecycleLog().get());
+  const auto fileRecycleLogCatalogue =
+    static_cast<RdbmsFileRecycleLogCatalogue*>(RdbmsTapeFileCatalogue::m_rdbmsCatalogue->FileRecycleLog().get());
   fileRecycleLogCatalogue->copyTapeFilesToFileRecycleLog(conn, file, reason);
   timingList->insertAndReset("insertToRecycleBinTime", *timer);
   RdbmsCatalogueUtils::setTapeDirty(conn, file.archiveFileID);
@@ -62,13 +68,13 @@ void SqliteTapeFileCatalogue::copyTapeFileToFileRecyleLogAndDeleteTransaction(rd
   conn.commit();
 }
 
-void SqliteTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer> &events) {
-  if(events.empty()) {
+void SqliteTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenPointer>& events) {
+  if (events.empty()) {
     return;
   }
 
   auto firstEventItor = events.cbegin();
-  const auto &firstEvent = **firstEventItor;
+  const auto& firstEvent = **firstEventItor;
   checkTapeItemWrittenFieldsAreSet(firstEvent);
 
   // The SQLite implementation of this method relies on the fact that a tape
@@ -80,32 +86,31 @@ void SqliteTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
   threading::MutexLocker locker(m_rdbmsCatalogue->m_mutex);
   auto conn = m_connPool->getConn();
 
-  const uint64_t lastFSeq
-    = static_cast<SqliteTapeCatalogue*>(m_rdbmsCatalogue->Tape().get())->getTapeLastFSeq(conn, firstEvent.vid);
+  const uint64_t lastFSeq =
+    static_cast<SqliteTapeCatalogue*>(m_rdbmsCatalogue->Tape().get())->getTapeLastFSeq(conn, firstEvent.vid);
   uint64_t expectedFSeq = lastFSeq + 1;
   uint64_t totalLogicalBytesWritten = 0;
   uint64_t filesCount = 0;
 
-  for(const auto &eventP: events) {
-    const auto & event = *eventP;
+  for (const auto& eventP : events) {
+    const auto& event = *eventP;
     checkTapeItemWrittenFieldsAreSet(event);
 
-    if(event.vid != firstEvent.vid) {
+    if (event.vid != firstEvent.vid) {
       throw exception::Exception(std::string("VID mismatch: expected=") + firstEvent.vid + " actual=" + event.vid);
     }
 
-    if(expectedFSeq != event.fSeq) {
+    if (expectedFSeq != event.fSeq) {
       exception::TapeFseqMismatch ex;
-      ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq << " actual=" <<
-        firstEvent.fSeq;
+      ex.getMessage() << "FSeq mismatch for tape " << firstEvent.vid << ": expected=" << expectedFSeq
+                      << " actual=" << firstEvent.fSeq;
       throw ex;
     }
     expectedFSeq++;
 
-
     try {
       // If this is a file (as opposed to a placeholder), do the full processing.
-      const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(event);
+      const auto& fileEvent = dynamic_cast<const TapeFileWritten&>(event);
       totalLogicalBytesWritten += fileEvent.size;
       filesCount++;
     } catch (std::bad_cast&) {}
@@ -113,20 +118,24 @@ void SqliteTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
 
   auto lastEventItor = events.cend();
   lastEventItor--;
-  const TapeItemWritten &lastEvent = **lastEventItor;
-  RdbmsCatalogueUtils::updateTape(conn, lastEvent.vid, lastEvent.fSeq, totalLogicalBytesWritten, filesCount,
-    lastEvent.tapeDrive);
+  const TapeItemWritten& lastEvent = **lastEventItor;
+  RdbmsCatalogueUtils::updateTape(conn,
+                                  lastEvent.vid,
+                                  lastEvent.fSeq,
+                                  totalLogicalBytesWritten,
+                                  filesCount,
+                                  lastEvent.tapeDrive);
 
-  for(const auto &event : events) {
+  for (const auto& event : events) {
     try {
       // If this is a file (as opposed to a placeholder), do the full processing.
-      const auto &fileEvent=dynamic_cast<const TapeFileWritten &>(*event);
+      const auto& fileEvent = dynamic_cast<const TapeFileWritten&>(*event);
       fileWrittenToTape(conn, fileEvent);
     } catch (std::bad_cast&) {}
   }
 }
 
-void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFileWritten &event) {
+void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn& conn, const TapeFileWritten& event) {
   checkTapeFileWrittenFieldsAreSet(event);
 
   // Try to insert a row into the ARCHIVE_FILE table - it is normal this will
@@ -142,9 +151,9 @@ void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFil
     row.diskFileOwnerUid = event.diskFileOwnerUid;
     row.diskFileGid = event.diskFileGid;
     static_cast<RdbmsArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get())->insertArchiveFile(conn, row);
-  } catch(rdbms::PrimaryKeyError &) {
+  } catch (rdbms::PrimaryKeyError&) {
     // Ignore this error
-  } catch(...) {
+  } catch (...) {
     throw;
   }
 
@@ -152,7 +161,7 @@ void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFil
   const auto archiveFileCatalogue = static_cast<RdbmsArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
   const auto archiveFileRow = archiveFileCatalogue->getArchiveFileRowById(conn, event.archiveFileId);
 
-  if(nullptr == archiveFileRow) {
+  if (nullptr == archiveFileRow) {
     // This should never happen
     exception::Exception ex;
     ex.getMessage() << "Failed to find archive file row: archiveFileId=" << event.archiveFileId;
@@ -160,13 +169,13 @@ void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFil
   }
 
   std::ostringstream fileContext;
-  fileContext << "archiveFileId=" << event.archiveFileId << ", diskInstanceName=" << event.diskInstance <<
-    ", diskFileId=" << event.diskFileId;
+  fileContext << "archiveFileId=" << event.archiveFileId << ", diskInstanceName=" << event.diskInstance
+              << ", diskFileId=" << event.diskFileId;
 
-  if(archiveFileRow->size != event.size) {
+  if (archiveFileRow->size != event.size) {
     catalogue::FileSizeMismatch ex;
     ex.getMessage() << "File size mismatch: expected=" << archiveFileRow->size << ", actual=" << event.size << ": "
-      << fileContext.str();
+                    << fileContext.str();
     m_log(log::ALERT, ex.getMessage().str());
     throw ex;
   }
@@ -175,13 +184,13 @@ void SqliteTapeFileCatalogue::fileWrittenToTape(rdbms::Conn &conn, const TapeFil
 
   // Insert the tape file
   common::dataStructures::TapeFile tapeFile;
-  tapeFile.vid            = event.vid;
-  tapeFile.fSeq           = event.fSeq;
-  tapeFile.blockId        = event.blockId;
-  tapeFile.fileSize       = event.size;
-  tapeFile.copyNb         = event.copyNb;
-  tapeFile.creationTime   = now;
+  tapeFile.vid = event.vid;
+  tapeFile.fSeq = event.fSeq;
+  tapeFile.blockId = event.blockId;
+  tapeFile.fileSize = event.size;
+  tapeFile.copyNb = event.copyNb;
+  tapeFile.creationTime = now;
   insertTapeFile(conn, tapeFile, event.archiveFileId);
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

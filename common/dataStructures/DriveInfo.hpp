@@ -30,5 +30,5 @@ struct DriveInfo {
   std::string host;
   std::string logicalLibrary;
 };
-  
-} // namespace cta::common::dataStructures
+
+}  // namespace cta::common::dataStructures

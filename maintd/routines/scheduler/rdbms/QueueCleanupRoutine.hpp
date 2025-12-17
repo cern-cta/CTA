@@ -45,7 +45,6 @@ public:
   RelationalDBQCR(log::LogContext& lc, catalogue::Catalogue& catalogue, RelationalDB& pgs) : m_conn(pgs.getConn()) {}
 
   void execute() {
-
     /* cta::utils::Timer timer;
     // DELETE is implicit transaction in postgresql
 
@@ -90,5 +89,4 @@ private:
   rdbms::Conn m_conn;
 };
 
-}
-
+}  // namespace cta::maintd

@@ -17,18 +17,18 @@
 
 #pragma once
 
-#include <list>
-#include <string>
-#include <optional>
-
 #include "common/exception/UserError.hpp"
+
+#include <list>
+#include <optional>
+#include <string>
 
 namespace cta {
 
 namespace common::dataStructures {
 struct LogicalLibrary;
 struct SecurityIdentity;
-}
+}  // namespace common::dataStructures
 
 namespace catalogue {
 
@@ -40,10 +40,13 @@ class LogicalLibraryCatalogue {
 public:
   virtual ~LogicalLibraryCatalogue() = default;
 
-  virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) = 0;
+  virtual void createLogicalLibrary(const common::dataStructures::SecurityIdentity& admin,
+                                    const std::string& name,
+                                    const bool isDisabled,
+                                    const std::optional<std::string>& physicalLibraryName,
+                                    const std::string& comment) = 0;
 
-  virtual void deleteLogicalLibrary(const std::string &name) = 0;
+  virtual void deleteLogicalLibrary(const std::string& name) = 0;
 
   virtual std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const = 0;
 
@@ -54,20 +57,26 @@ public:
    * @param currentName The current name of the logical library.
    * @param newName The new name of the logical library.
    */
-  virtual void modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &currentName, const std::string &newName) = 0;
+  virtual void modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
+                                        const std::string& currentName,
+                                        const std::string& newName) = 0;
 
-  virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &comment) = 0;
+  virtual void modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity& admin,
+                                           const std::string& name,
+                                           const std::string& comment) = 0;
 
-  virtual void modifyLogicalLibraryDisabledReason(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &disabledReason) = 0;
+  virtual void modifyLogicalLibraryDisabledReason(const common::dataStructures::SecurityIdentity& admin,
+                                                  const std::string& name,
+                                                  const std::string& disabledReason) = 0;
 
-  virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const bool disabledValue) = 0;
+  virtual void setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity& admin,
+                                         const std::string& name,
+                                         const bool disabledValue) = 0;
 
-  virtual void modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const std::string &physicalLibraryName) = 0;
+  virtual void modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin,
+                                                   const std::string& name,
+                                                   const std::string& physicalLibraryName) = 0;
 };
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include <memory>
-
 #include "catalogue/interfaces/SchemaCatalogue.hpp"
 #include "common/log/Logger.hpp"
+
+#include <memory>
 
 namespace cta {
 
@@ -32,7 +32,7 @@ namespace catalogue {
 
 class RdbmsSchemaCatalogue : public SchemaCatalogue {
 public:
-  RdbmsSchemaCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool);
+  RdbmsSchemaCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool);
   ~RdbmsSchemaCatalogue() override = default;
 
   SchemaVersion getSchemaVersion() const override;
@@ -52,8 +52,9 @@ public:
   std::list<std::string> getTableNames() const;
 
 private:
-  log::Logger &m_log;
+  log::Logger& m_log;
   std::shared_ptr<rdbms::ConnPool> m_connPool;
 };
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

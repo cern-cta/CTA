@@ -22,8 +22,8 @@
 
 namespace cta {
 
-struct DiskSpaceReservationRequest: public std::map<std::string, uint64_t> {
-  void addRequest(const std::string &diskSystemName, uint64_t size);
+struct DiskSpaceReservationRequest : public std::map<std::string, uint64_t> {
+  void addRequest(const std::string& diskSystemName, uint64_t size);
 };
 
-}
+}  // namespace cta

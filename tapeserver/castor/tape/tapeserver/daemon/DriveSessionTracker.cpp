@@ -15,12 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <opentelemetry/context/runtime_context.h>
-
 #include "DriveSessionTracker.hpp"
+
+#include "common/dataStructures/TapeDrive.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
-#include "common/dataStructures/TapeDrive.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
 
 namespace castor::tape::tapeserver::daemon {
 

@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/InMemoryCatalogue.hpp"
+
 #include "catalogue/rdbms/RdbmsSchemaCatalogue.hpp"
 #include "common/log/DummyLogger.hpp"
 
@@ -25,7 +26,6 @@ namespace unitTests {
 
 class cta_catalogue_InMemoryCatalogue : public ::testing::Test {
 protected:
-
   void SetUp() override {
     // nothing to do
   }
@@ -43,14 +43,10 @@ TEST_F(cta_catalogue_InMemoryCatalogue, createSameSchemaInTwoSeparateInMemoryDat
   const uint64_t nbArchiveFileListingConns = 0;
 
   // First in-memory database
-  {
-    catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns);
-  }
+  { catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns); }
 
   // Second in-memory database
-  {
-    catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns);
-  }
+  { catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns); }
 }
 
 TEST_F(cta_catalogue_InMemoryCatalogue, schemaTables) {
@@ -61,12 +57,13 @@ TEST_F(cta_catalogue_InMemoryCatalogue, schemaTables) {
   const uint64_t nbArchiveFileListingConns = 0;
 
   catalogue::InMemoryCatalogue inMemoryCatalogue(dummyLog, nbConns, nbArchiveFileListingConns);
-  const auto tableNameList = static_cast<catalogue::RdbmsSchemaCatalogue*>(inMemoryCatalogue.Schema().get())->getTableNames();
+  const auto tableNameList =
+    static_cast<catalogue::RdbmsSchemaCatalogue*>(inMemoryCatalogue.Schema().get())->getTableNames();
   std::set<std::string> tableNameSet;
 
   std::map<std::string, uint32_t> tableNameToListPos;
   uint32_t listPos = 0;
-  for(auto &tableName: tableNameList) {
+  for (auto& tableName : tableNameList) {
     ASSERT_EQ(tableNameToListPos.end(), tableNameToListPos.find(tableName));
     tableNameToListPos[tableName] = listPos++;
   }
@@ -85,4 +82,4 @@ TEST_F(cta_catalogue_InMemoryCatalogue, schemaTables) {
   ASSERT_NE(tableNameToListPos.end(), tableNameToListPos.find("TAPE_POOL"));
 }
 
-} // namespace unitTests
+}  // namespace unitTests

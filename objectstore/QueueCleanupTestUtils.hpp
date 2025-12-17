@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include "objectstore/Sorter.hpp"
 #include "objectstore/BackendVFS.hpp"
-
+#include "objectstore/Sorter.hpp"
 
 /**
  * Plan => Cleanup runner keeps track of queues that need to be emptied
@@ -31,12 +30,15 @@
 namespace unitTests {
 
 void fillRetrieveRequestsForCleanupRunner(
-        typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue, cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list &requests,
-        uint32_t requestNr,
-        std::list<std::unique_ptr<cta::objectstore::RetrieveRequest> > &requestPtrs, //List to avoid memory leak on ArchiveQueueAlgorithms test
-        std::set<std::string> & tapeNames, // List of tapes that will contain a replica
-        std::string & activeCopyTape,
-        cta::objectstore::BackendVFS &be,
-        cta::objectstore::AgentReference &agentRef, uint64_t startFseq = 0);
-
+  typename cta::objectstore::ContainerAlgorithms<cta::objectstore::RetrieveQueue,
+                                                 cta::objectstore::RetrieveQueueToTransfer>::InsertedElement::list&
+    requests,
+  uint32_t requestNr,
+  std::list<std::unique_ptr<cta::objectstore::RetrieveRequest>>&
+    requestPtrs,                     //List to avoid memory leak on ArchiveQueueAlgorithms test
+  std::set<std::string>& tapeNames,  // List of tapes that will contain a replica
+  std::string& activeCopyTape,
+  cta::objectstore::BackendVFS& be,
+  cta::objectstore::AgentReference& agentRef,
+  uint64_t startFseq = 0);
 }

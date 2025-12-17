@@ -17,19 +17,18 @@
 
 #pragma once
 
-#include "scheduler/rdbms/RelationalDB.hpp"
 #include "common/log/LogContext.hpp"
+#include "scheduler/rdbms/RelationalDB.hpp"
 
 namespace cta::schedulerdb {
 
 class RepackReportBatch : public SchedulerDatabase::RepackReportBatch {
- friend class cta::RelationalDB;
+  friend class cta::RelationalDB;
 
- public:
+public:
+  [[noreturn]] RepackReportBatch();
 
-   [[noreturn]] RepackReportBatch();
-
-   void report(log::LogContext & lc) override;
+  void report(log::LogContext& lc) override;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

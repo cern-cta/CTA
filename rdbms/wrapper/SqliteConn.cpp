@@ -15,19 +15,20 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/wrapper/SqliteConn.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/process/threading/MutexLocker.hpp"
-#include "common/utils/utils.hpp"
 #include "common/utils/Regex.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/wrapper/Sqlite.hpp"
-#include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteStmt.hpp"
 
 #include <iostream>
 #include <stdexcept>
-#include <string>
 #include <string.h>
+#include <string>
 
 namespace cta::rdbms::wrapper {
 
@@ -52,11 +53,11 @@ SqliteConn::SqliteConn(const rdbms::Login& login) : m_dbNamespace(login.dbNamesp
   sqlite3_busy_timeout(m_sqliteConn, 120000);
 
   {
-    char *errMsg = nullptr;
-    if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &errMsg)) {
+    char* errMsg = nullptr;
+    if (SQLITE_OK != sqlite3_exec(m_sqliteConn, "PRAGMA foreign_keys = ON;", nullptr, nullptr, &errMsg)) {
       exception::Exception ex;
       ex.getMessage() << "Failed to to set PRAGMA foreign_keys = ON";
-      if(nullptr != errMsg) {
+      if (nullptr != errMsg) {
         ex.getMessage() << ": " << errMsg;
         sqlite3_free(errMsg);
       }
@@ -71,8 +72,8 @@ SqliteConn::SqliteConn(const rdbms::Login& login) : m_dbNamespace(login.dbNamesp
 //------------------------------------------------------------------------------
 SqliteConn::~SqliteConn() {
   try {
-    close(); // Idempotent close() method
-  } catch(...) {
+    close();  // Idempotent close() method
+  } catch (...) {
     // Destructor should not throw any exceptions
   }
 }
@@ -83,9 +84,8 @@ SqliteConn::~SqliteConn() {
 void SqliteConn::close() {
   threading::MutexLocker locker(m_mutex);
 
-  if(nullptr != m_sqliteConn) {
-    if(const int closeRc = sqlite3_close(m_sqliteConn);
-       SQLITE_OK != closeRc) {
+  if (nullptr != m_sqliteConn) {
+    if (const int closeRc = sqlite3_close(m_sqliteConn); SQLITE_OK != closeRc) {
       exception::Exception ex;
       ex.getMessage() << "Failed to close SQLite connection: " << Sqlite::rcToStr(closeRc);
       throw ex;
@@ -98,23 +98,23 @@ void SqliteConn::close() {
 // setAutocommitMode
 //------------------------------------------------------------------------------
 void SqliteConn::setAutocommitMode(const AutocommitMode autocommitMode) {
-  if(AutocommitMode::AUTOCOMMIT_OFF == autocommitMode) {
+  if (AutocommitMode::AUTOCOMMIT_OFF == autocommitMode) {
     throw rdbms::Conn::AutocommitModeNotSupported("Failed to set autocommit mode to AUTOCOMMIT_OFF: SqliteConn only"
-      " supports AUTOCOMMIT_ON");
+                                                  " supports AUTOCOMMIT_ON");
   }
 }
 
 //------------------------------------------------------------------------------
 // getAutocommitMode
 //------------------------------------------------------------------------------
-AutocommitMode SqliteConn::getAutocommitMode() const noexcept{
+AutocommitMode SqliteConn::getAutocommitMode() const noexcept {
   return AutocommitMode::AUTOCOMMIT_ON;
 }
 
 //------------------------------------------------------------------------------
 // executeNonQuery
 //------------------------------------------------------------------------------
-void SqliteConn::executeNonQuery(const std::string &sql) {
+void SqliteConn::executeNonQuery(const std::string& sql) {
   auto stmt = createStmt(sql);
   stmt->executeNonQuery();
 }
@@ -122,10 +122,10 @@ void SqliteConn::executeNonQuery(const std::string &sql) {
 //------------------------------------------------------------------------------
 // createStmt
 //------------------------------------------------------------------------------
-std::unique_ptr<StmtWrapper> SqliteConn::createStmt(const std::string &sql) {
+std::unique_ptr<StmtWrapper> SqliteConn::createStmt(const std::string& sql) {
   threading::MutexLocker locker(m_mutex);
 
-  if(nullptr == m_sqliteConn) {
+  if (nullptr == m_sqliteConn) {
     throw exception::Exception("Connection is closed");
   }
 
@@ -138,15 +138,15 @@ std::unique_ptr<StmtWrapper> SqliteConn::createStmt(const std::string &sql) {
 void SqliteConn::commit() {
   threading::MutexLocker locker(m_mutex);
 
-  if(nullptr == m_sqliteConn) {
+  if (nullptr == m_sqliteConn) {
     throw exception::Exception("Connection is closed");
   }
 
-  char *errMsg = nullptr;
-  if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "COMMIT", nullptr, nullptr, &errMsg)) {
-    if(nullptr == errMsg) {
+  char* errMsg = nullptr;
+  if (SQLITE_OK != sqlite3_exec(m_sqliteConn, "COMMIT", nullptr, nullptr, &errMsg)) {
+    if (nullptr == errMsg) {
       throw exception::Exception("sqlite3_exec failed");
-    } else if(strcmp("cannot commit - no transaction is active", errMsg)) {
+    } else if (strcmp("cannot commit - no transaction is active", errMsg)) {
       exception::Exception ex;
       ex.getMessage() << "sqlite3_exec failed: " << errMsg;
       sqlite3_free(errMsg);
@@ -163,15 +163,15 @@ void SqliteConn::commit() {
 void SqliteConn::rollback() {
   threading::MutexLocker locker(m_mutex);
 
-  if(nullptr == m_sqliteConn) {
+  if (nullptr == m_sqliteConn) {
     throw exception::Exception("Connection is closed");
   }
 
-  char *errMsg = nullptr;
-  if(SQLITE_OK != sqlite3_exec(m_sqliteConn, "ROLLBACK", nullptr, nullptr, &errMsg)) {
+  char* errMsg = nullptr;
+  if (SQLITE_OK != sqlite3_exec(m_sqliteConn, "ROLLBACK", nullptr, nullptr, &errMsg)) {
     exception::Exception ex;
     ex.getMessage() << "sqlite3_exec failed";
-    if(nullptr != errMsg) {
+    if (nullptr != errMsg) {
       ex.getMessage() << ": " << errMsg;
       sqlite3_free(errMsg);
     }
@@ -182,7 +182,7 @@ void SqliteConn::rollback() {
 //------------------------------------------------------------------------------
 // printSchema
 //------------------------------------------------------------------------------
-void SqliteConn::printSchema(std::ostream &os) {
+void SqliteConn::printSchema(std::ostream& os) {
   const char* const sql = R"SQL(
     SELECT
       NAME AS NAME,
@@ -207,7 +207,7 @@ void SqliteConn::printSchema(std::ostream &os) {
 //------------------------------------------------------------------------------
 // getColumns
 //------------------------------------------------------------------------------
-std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std::string &tableName) {
+std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std::string& tableName) {
   std::map<std::string, std::string, std::less<>> columnNamesAndTypes;
   const char* const sql = R"SQL(
     SELECT
@@ -241,14 +241,14 @@ std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std
   stmt->bindString(":TABLE_NAME", tableName);
   if (auto rset = stmt->executeQuery(); rset->next()) {
     auto tableSql = rset->columnOptionalString("SQL").value();
-    tableSql += std::string(","); // hack for parsing
+    tableSql += std::string(",");  // hack for parsing
     std::string::size_type searchPosComma = 0;
     std::string::size_type findResultComma = std::string::npos;
-    while(std::string::npos != (findResultComma = tableSql.find(',', searchPosComma))) {
+    while (std::string::npos != (findResultComma = tableSql.find(',', searchPosComma))) {
       const std::string::size_type stmtLenComma = findResultComma - searchPosComma;
       const std::string sqlStmtComma = utils::trimString(tableSql.substr(searchPosComma, stmtLenComma));
       searchPosComma = findResultComma + 1;
-      if(0 < sqlStmtComma.size()) { // Ignore empty statements
+      if (0 < sqlStmtComma.size()) {  // Ignore empty statements
         const std::string columnSQL = "([a-zA-Z_0-9]+) +(" + columnTypes + ")";
         cta::utils::Regex columnSqlRegex(columnSQL.c_str());
         auto columnSql = columnSqlRegex.exec(sqlStmtComma);
@@ -284,7 +284,7 @@ std::list<std::string> SqliteConn::getTableNames() {
   std::list<std::string> names;
   while (rset->next()) {
     auto name = rset->columnOptionalString("NAME");
-    if(name) {
+    if (name) {
       names.push_back(name.value());
     }
   }
@@ -314,7 +314,7 @@ std::list<std::string> SqliteConn::getIndexNames() {
   std::list<std::string> names;
   while (rset->next()) {
     auto name = rset->columnOptionalString("NAME");
-    if(name) {
+    if (name) {
       names.push_back(name.value());
     }
   }
@@ -345,14 +345,14 @@ std::list<std::string> SqliteConn::getTriggerNames() {
 //------------------------------------------------------------------------------
 // getParallelTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getParallelTableNames(){
+std::list<std::string> SqliteConn::getParallelTableNames() {
   return std::list<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getConstraintNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableName){
+std::list<std::string> SqliteConn::getConstraintNames(const std::string& tableName) {
   std::list<std::string> constraintNames;
   const char* const sql = R"SQL(
     SELECT
@@ -370,14 +370,14 @@ std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableNa
   stmt->bindString(":TABLE_NAME", tableName);
   if (auto rset = stmt->executeQuery(); rset->next()) {
     auto tableSql = rset->columnOptionalString("SQL").value();
-    tableSql += std::string(","); // hack for parsing
+    tableSql += std::string(",");  // hack for parsing
     std::string::size_type searchPosComma = 0;
     std::string::size_type findResultComma = std::string::npos;
-    while(std::string::npos != (findResultComma = tableSql.find(',', searchPosComma))) {
+    while (std::string::npos != (findResultComma = tableSql.find(',', searchPosComma))) {
       const std::string::size_type stmtLenComma = findResultComma - searchPosComma;
       const std::string sqlStmtComma = utils::trimString(tableSql.substr(searchPosComma, stmtLenComma));
       searchPosComma = findResultComma + 1;
-      if(0 < sqlStmtComma.size()) { // Ignore empty statements
+      if (0 < sqlStmtComma.size()) {  // Ignore empty statements
         const std::string constraintSQL = "CONSTRAINT ([a-zA-Z_0-9]+)";
         cta::utils::Regex constraintSQLRegex(constraintSQL.c_str());
         auto constraintSql = constraintSQLRegex.exec(sqlStmtComma);
@@ -389,7 +389,6 @@ std::list<std::string> SqliteConn::getConstraintNames(const std::string &tableNa
   }
   return constraintNames;
 }
-
 
 //------------------------------------------------------------------------------
 // getStoredProcedureNames
@@ -426,4 +425,4 @@ std::string SqliteConn::getDbNamespace() const {
   return m_dbNamespace;
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

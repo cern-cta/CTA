@@ -18,12 +18,12 @@
 #pragma once
 
 #include <cstdio>
-#include <optional>
-#include <variant>
-#include <sstream>
 #include <iomanip>
 #include <limits>
+#include <optional>
+#include <sstream>
 #include <string.h>
+#include <variant>
 
 namespace cta::log {
 
@@ -53,9 +53,7 @@ using ParamValType = std::optional<std::variant<std::string, int64_t, uint64_t, 
  * A name/value parameter for the CASTOR logging system.
  */
 class Param {
-
 public:
-
   /**
    * Constructor.
    *
@@ -63,7 +61,8 @@ public:
    * @param value The value of the parameter that will be converted to a string
    * using std::ostringstream.
    */
-  template <typename T> Param(std::string_view name, const T &value) noexcept: m_name(name) {
+  template<typename T>
+  Param(std::string_view name, const T& value) noexcept : m_name(name) {
     setValue(value);
   }
 
@@ -71,8 +70,8 @@ public:
    * Value changer. Useful for log contexts.
    * @param value
    */
-  template <typename T>
-  void setValue (const T &value) noexcept {
+  template<typename T>
+  void setValue(const T& value) noexcept {
     if constexpr (std::is_same_v<T, ParamValType>) {
       m_value = value;
     } else if constexpr (is_optional_type<T>::value) {
@@ -107,7 +106,7 @@ public:
   /**
    * Returns a const reference to the name of the parameter.
    */
-  const std::string &getName() const noexcept;
+  const std::string& getName() const noexcept;
 
   /**
    * Returns the value of the parameter as a string.
@@ -117,10 +116,9 @@ public:
   /**
    * Returns a const reference to the variant of the parameter.
    */
-  const ParamValType &getValueVariant() const noexcept;
+  const ParamValType& getValueVariant() const noexcept;
 
 protected:
-
   /**
    * `is_optional_type<T>` will be used to detect, at compile time, if a variable is of type `std::optional`
    */
@@ -137,10 +135,12 @@ protected:
   struct always_false : std::false_type {};
 
   // A helper trait to check for operator<<
-  template <typename, typename = void>
+  template<typename, typename = void>
   struct has_ostream_operator : std::false_type {};
-  template <typename T>
-  struct has_ostream_operator<T, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<T>())>> : std::true_type {};
+
+  template<typename T>
+  struct has_ostream_operator<T, std::void_t<decltype(std::declval<std::ostream&>() << std::declval<T>())>>
+      : std::true_type {};
 
   /**
    * Name of the parameter
@@ -151,6 +151,7 @@ protected:
    * The value of the parameter in the original type
    */
   ParamValType m_value;
+
   /**
    * Helper class to format floating-point values
    */
@@ -177,6 +178,6 @@ protected:
   private:
     T m_value;
   };
-}; // class Param
+};  // class Param
 
-} // namespace cta::log
+}  // namespace cta::log

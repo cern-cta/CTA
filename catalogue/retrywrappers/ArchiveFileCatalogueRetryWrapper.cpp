@@ -15,113 +15,153 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
-#include <string>
+#include "catalogue/retrywrappers/ArchiveFileCatalogueRetryWrapper.hpp"
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueItor.hpp"
-#include "catalogue/retrywrappers/ArchiveFileCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileSummary.hpp"
 
+#include <memory>
+#include <string>
+
 namespace cta::catalogue {
 
 ArchiveFileCatalogueRetryWrapper::ArchiveFileCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-  log::Logger &log, const uint32_t maxTriesToConnect)
-  : m_catalogue(catalogue), m_log(log), m_maxTriesToConnect(maxTriesToConnect) {}
+                                                                   log::Logger& log,
+                                                                   const uint32_t maxTriesToConnect)
+    : m_catalogue(catalogue),
+      m_log(log),
+      m_maxTriesToConnect(maxTriesToConnect) {}
 
-uint64_t ArchiveFileCatalogueRetryWrapper::checkAndGetNextArchiveFileId(const std::string &diskInstanceName,
-  const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user) {
-  return retryOnLostConnection(m_log, [this,&diskInstanceName,&storageClassName,&user] {
-    return m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName, storageClassName, user);
-  }, m_maxTriesToConnect);
+uint64_t
+ArchiveFileCatalogueRetryWrapper::checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
+                                                               const std::string& storageClassName,
+                                                               const common::dataStructures::RequesterIdentity& user) {
+  return retryOnLostConnection(
+    m_log,
+    [this, &diskInstanceName, &storageClassName, &user] {
+      return m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName, storageClassName, user);
+    },
+    m_maxTriesToConnect);
 }
 
-common::dataStructures::ArchiveFileQueueCriteria ArchiveFileCatalogueRetryWrapper::getArchiveFileQueueCriteria(
-  const std::string &diskInstanceName, const std::string &storageClassName,
-  const common::dataStructures::RequesterIdentity &user) {
-  return retryOnLostConnection(m_log, [this,&diskInstanceName,&storageClassName,&user] {
-    return m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName, storageClassName, user);
-  }, m_maxTriesToConnect);
+common::dataStructures::ArchiveFileQueueCriteria
+ArchiveFileCatalogueRetryWrapper::getArchiveFileQueueCriteria(const std::string& diskInstanceName,
+                                                              const std::string& storageClassName,
+                                                              const common::dataStructures::RequesterIdentity& user) {
+  return retryOnLostConnection(
+    m_log,
+    [this, &diskInstanceName, &storageClassName, &user] {
+      return m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName, storageClassName, user);
+    },
+    m_maxTriesToConnect);
 }
 
-ArchiveFileItor ArchiveFileCatalogueRetryWrapper::getArchiveFilesItor(
-  const TapeFileSearchCriteria &searchCriteria) const {
-  return retryOnLostConnection(m_log, [this,&searchCriteria] {
-    return m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria);
-  }, m_maxTriesToConnect);
+ArchiveFileItor
+ArchiveFileCatalogueRetryWrapper::getArchiveFilesItor(const TapeFileSearchCriteria& searchCriteria) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &searchCriteria] { return m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria); },
+    m_maxTriesToConnect);
 }
 
-common::dataStructures::ArchiveFile ArchiveFileCatalogueRetryWrapper::getArchiveFileCopyForDeletion(
-  const TapeFileSearchCriteria &searchCriteria) const {
-  return retryOnLostConnection(m_log, [this,&searchCriteria] {
-    return m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(searchCriteria);
-  }, m_maxTriesToConnect);
+common::dataStructures::ArchiveFile
+ArchiveFileCatalogueRetryWrapper::getArchiveFileCopyForDeletion(const TapeFileSearchCriteria& searchCriteria) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &searchCriteria] { return m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(searchCriteria); },
+    m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::ArchiveFile> ArchiveFileCatalogueRetryWrapper::getFilesForRepack(
-  const std::string &vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const {
-  return retryOnLostConnection(m_log, [this,&vid,&startFSeq,&maxNbFiles] {
-    return m_catalogue->ArchiveFile()->getFilesForRepack(vid, startFSeq, maxNbFiles);
-  }, m_maxTriesToConnect);
+std::list<common::dataStructures::ArchiveFile>
+ArchiveFileCatalogueRetryWrapper::getFilesForRepack(const std::string& vid,
+                                                    const uint64_t startFSeq,
+                                                    const uint64_t maxNbFiles) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &vid, &startFSeq, &maxNbFiles] {
+      return m_catalogue->ArchiveFile()->getFilesForRepack(vid, startFSeq, maxNbFiles);
+    },
+    m_maxTriesToConnect);
 }
 
-ArchiveFileItor ArchiveFileCatalogueRetryWrapper::getArchiveFilesForRepackItor(const std::string &vid,
-  const uint64_t startFSeq) const {
-  return retryOnLostConnection(m_log, [this,&vid,&startFSeq] {
-    return m_catalogue->ArchiveFile()->getArchiveFilesForRepackItor(vid, startFSeq);
-  }, m_maxTriesToConnect);
+ArchiveFileItor ArchiveFileCatalogueRetryWrapper::getArchiveFilesForRepackItor(const std::string& vid,
+                                                                               const uint64_t startFSeq) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &vid, &startFSeq] { return m_catalogue->ArchiveFile()->getArchiveFilesForRepackItor(vid, startFSeq); },
+    m_maxTriesToConnect);
 }
 
-common::dataStructures::ArchiveFileSummary ArchiveFileCatalogueRetryWrapper::getTapeFileSummary(
-  const TapeFileSearchCriteria &searchCriteria) const {
-  return retryOnLostConnection(m_log, [this,&searchCriteria] {
-    return m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
-  }, m_maxTriesToConnect);
+common::dataStructures::ArchiveFileSummary
+ArchiveFileCatalogueRetryWrapper::getTapeFileSummary(const TapeFileSearchCriteria& searchCriteria) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &searchCriteria] { return m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria); },
+    m_maxTriesToConnect);
 }
 
 common::dataStructures::ArchiveFile ArchiveFileCatalogueRetryWrapper::getArchiveFileById(const uint64_t id) const {
-  return retryOnLostConnection(m_log, [this,&id] {
-    return m_catalogue->ArchiveFile()->getArchiveFileById(id);
-  }, m_maxTriesToConnect);
+  return retryOnLostConnection(
+    m_log,
+    [this, &id] { return m_catalogue->ArchiveFile()->getArchiveFileById(id); },
+    m_maxTriesToConnect);
 }
 
 void ArchiveFileCatalogueRetryWrapper::modifyArchiveFileStorageClassId(const uint64_t archiveFileId,
-  const std::string& newStorageClassName) const {
-  return retryOnLostConnection(m_log, [this,&archiveFileId,&newStorageClassName] {
-    return m_catalogue->ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName);
-  }, m_maxTriesToConnect);
+                                                                       const std::string& newStorageClassName) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &archiveFileId, &newStorageClassName] {
+      return m_catalogue->ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName);
+    },
+    m_maxTriesToConnect);
 }
 
 void ArchiveFileCatalogueRetryWrapper::modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId,
-  const std::string& fxId, const std::string &diskInstance) const {
-  return retryOnLostConnection(m_log, [this,&archiveId,&fxId,&diskInstance] {
-    return m_catalogue->ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(archiveId, fxId, diskInstance);
-  }, m_maxTriesToConnect);
+                                                                            const std::string& fxId,
+                                                                            const std::string& diskInstance) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &archiveId, &fxId, &diskInstance] {
+      return m_catalogue->ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(archiveId, fxId, diskInstance);
+    },
+    m_maxTriesToConnect);
 }
 
-void ArchiveFileCatalogueRetryWrapper::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &diskInstanceName,
-  const uint64_t archiveFileId, log::LogContext &lc) {
-  return retryOnLostConnection(m_log, [this,&diskInstanceName,&archiveFileId,&lc] {
-    return m_catalogue->ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstanceName, archiveFileId, lc);
-  }, m_maxTriesToConnect);
+void ArchiveFileCatalogueRetryWrapper::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string& diskInstanceName,
+                                                                               const uint64_t archiveFileId,
+                                                                               log::LogContext& lc) {
+  return retryOnLostConnection(
+    m_log,
+    [this, &diskInstanceName, &archiveFileId, &lc] {
+      return m_catalogue->ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstanceName, archiveFileId, lc);
+    },
+    m_maxTriesToConnect);
 }
 
-void ArchiveFileCatalogueRetryWrapper::updateDiskFileId(uint64_t archiveFileId, const std::string &diskInstance,
-  const std::string &diskFileId) {
-  return retryOnLostConnection(m_log, [this,&archiveFileId,&diskInstance,&diskFileId] {
-    return m_catalogue->ArchiveFile()->updateDiskFileId(archiveFileId, diskInstance, diskFileId);
-  }, m_maxTriesToConnect);
+void ArchiveFileCatalogueRetryWrapper::updateDiskFileId(uint64_t archiveFileId,
+                                                        const std::string& diskInstance,
+                                                        const std::string& diskFileId) {
+  return retryOnLostConnection(
+    m_log,
+    [this, &archiveFileId, &diskInstance, &diskFileId] {
+      return m_catalogue->ArchiveFile()->updateDiskFileId(archiveFileId, diskInstance, diskFileId);
+    },
+    m_maxTriesToConnect);
 }
 
 void ArchiveFileCatalogueRetryWrapper::moveArchiveFileToRecycleLog(
-  const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc) {
-  return retryOnLostConnection(m_log, [this,&request,&lc] {
-    return m_catalogue->ArchiveFile()->moveArchiveFileToRecycleLog(request, lc);
-  }, m_maxTriesToConnect);
+  const common::dataStructures::DeleteArchiveRequest& request,
+  log::LogContext& lc) {
+  return retryOnLostConnection(
+    m_log,
+    [this, &request, &lc] { return m_catalogue->ArchiveFile()->moveArchiveFileToRecycleLog(request, lc); },
+    m_maxTriesToConnect);
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

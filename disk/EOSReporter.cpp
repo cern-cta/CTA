@@ -16,40 +16,43 @@
  */
 
 #include "EOSReporter.hpp"
+
 #include "XrdClException.hpp"
 
 namespace cta::disk {
 
-EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue):
-  m_fs(hostURL), m_query(queryValue) {}
+EOSReporter::EOSReporter(const std::string& hostURL, const std::string& queryValue)
+    : m_fs(hostURL),
+      m_query(queryValue) {}
 
 void EOSReporter::asyncReport() {
   auto qcOpaque = XrdCl::QueryCode::OpaqueFile;
-  XrdCl::Buffer arg (m_query.size());
+  XrdCl::Buffer arg(m_query.size());
   arg.FromString(m_query);
-  XrdCl::XRootDStatus status=m_fs.Query( qcOpaque, arg, this, CTA_EOS_QUERY_TIMEOUT);
-  exception::XrdClException::throwOnError(status,
-      "In EOSReporter::asyncReportArchiveFullyComplete(): failed to XrdCl::FileSystem::Query()");
+  XrdCl::XRootDStatus status = m_fs.Query(qcOpaque, arg, this, CTA_EOS_QUERY_TIMEOUT);
+  exception::XrdClException::throwOnError(
+    status,
+    "In EOSReporter::asyncReportArchiveFullyComplete(): failed to XrdCl::FileSystem::Query()");
 }
 
 //------------------------------------------------------------------------------
 //EOSReporter::AsyncQueryHandler::HandleResponse
 //------------------------------------------------------------------------------
-void EOSReporter::HandleResponse(XrdCl::XRootDStatus *status,
-                                 XrdCl::AnyObject    *response) {
+void EOSReporter::HandleResponse(XrdCl::XRootDStatus* status, XrdCl::AnyObject* response) {
   try {
-    exception::XrdClException::throwOnError(*status,
+    exception::XrdClException::throwOnError(
+      *status,
       "In EOSReporter::AsyncQueryHandler::HandleResponse(): failed to XrdCl::FileSystem::Query()");
     m_promise.set_value();
   } catch (...) {
     try {
       // store anything thrown in the promise
       m_promise.set_exception(std::current_exception());
-    } catch(...) {
+    } catch (...) {
       // set_exception() may throw too
     }
   }
   delete response;
   delete status;
-  }
-} // namespace cta::disk
+}
+}  // namespace cta::disk

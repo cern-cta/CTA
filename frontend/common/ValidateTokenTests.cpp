@@ -2,13 +2,13 @@
 
 #include "ValidateToken.hpp"
 #include "common/JwkCache.hpp"
-#include "common/log/StringLogger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/StringLogger.hpp"
 
 #include <chrono>
-#include <optional>
-#include <jwt-cpp/jwt.h>
 #include <gtest/gtest.h>
+#include <jwt-cpp/jwt.h>
+#include <optional>
 
 namespace unitTests {
 
@@ -64,7 +64,8 @@ std::string raw_jwks = R"({
         "kty": "RSA",
         "use": "sig",
         "x5c": [
-        ")" + sample_cert_base64_der +
+        ")" + sample_cert_base64_der
+                       +
                        R"("
         ],
         "e": "AQAB"
@@ -78,13 +79,9 @@ private:
 public:
   MockJwksFetcherValidateToken() : m_jwks(raw_jwks) {}
 
-  void setJwks(const std::string& jwks) {
-    m_jwks = jwks;
-  }
+  void setJwks(const std::string& jwks) { m_jwks = jwks; }
 
-  std::string fetchJWKS(const std::string& jwksUrl) override {
-    return m_jwks;
-  }
+  std::string fetchJWKS(const std::string& jwksUrl) override { return m_jwks; }
 };
 
 std::string pubkeyPem = jwt::helper::convert_base64_der_to_pem(sample_cert_base64_der);
@@ -95,8 +92,8 @@ std::string createTestJwt(bool expired, const std::string& kid) {
   auto token = jwt::create()
                  .set_issuer("test")
                  .set_payload_claim("exp",
-                                    jwt::claim(std::chrono::system_clock::now() +
-                                               (expired ? -std::chrono::minutes(60) : std::chrono::minutes(60))))
+                                    jwt::claim(std::chrono::system_clock::now()
+                                               + (expired ? -std::chrono::minutes(60) : std::chrono::minutes(60))))
                  .set_header_claim("kid", jwt::claim(kid))
                  .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
                  .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
@@ -109,9 +106,7 @@ protected:
   cta::log::LogContext lc;
   MockJwksFetcherValidateToken m_mockFetcher;
 
-  ValidateTokenTestFixture()
-      : log("dummy", "ValidateTokenTests", cta::log::DEBUG),
-        lc(log) {}
+  ValidateTokenTestFixture() : log("dummy", "ValidateTokenTests", cta::log::DEBUG), lc(log) {}
 
   std::shared_ptr<cta::JwkCache> createCacheWithMockFetcher() {
     return std::make_shared<cta::JwkCache>(m_mockFetcher, "http://fake-jwks-uri", 1200, lc);
@@ -274,11 +269,12 @@ TEST_F(ValidateTokenTestFixture, BadTokenEmtpyToken) {
 TEST_F(ValidateTokenTestFixture, BadTokenMissingSub) {
   auto cache = createCacheWithMockFetcher();
   // missing "sub" claim, validation will fail
-  std::string token = jwt::create()
-                        .set_issuer("test")
-                        .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
-                        .set_header_claim("kid", jwt::claim(std::string("test-kid")))
-                        .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
+  std::string token =
+    jwt::create()
+      .set_issuer("test")
+      .set_payload_claim("exp", jwt::claim(std::chrono::system_clock::now() + std::chrono::minutes(60)))
+      .set_header_claim("kid", jwt::claim(std::string("test-kid")))
+      .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
   auto result = cta::validateToken(token, cache, lc);
   ASSERT_FALSE(result.isValid);

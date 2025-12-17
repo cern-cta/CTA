@@ -17,11 +17,11 @@
 
 #include "SignalReactorBuilder.hpp"
 
-#include <signal.h>
-
 #include "SignalUtils.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/semconv/Attributes.hpp"
+
+#include <signal.h>
 
 namespace cta::process {
 
@@ -36,8 +36,8 @@ SignalReactorBuilder::SignalReactorBuilder(cta::log::LogContext& lc) : m_lc(lc) 
 SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>& func) {
   if (m_signalFunctions.contains(signal)) {
     m_lc.log(log::WARNING,
-             "In SignalReactorBuilder::addSignalFunction(): Function already registered for signal " +
-               std::to_string(signal));
+             "In SignalReactorBuilder::addSignalFunction(): Function already registered for signal "
+               + std::to_string(signal));
     return *this;
   }
   m_lc.log(log::INFO,

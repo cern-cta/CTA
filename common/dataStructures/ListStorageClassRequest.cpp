@@ -16,6 +16,7 @@
  */
 
 #include "common/dataStructures/ListStorageClassRequest.hpp"
+
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -24,23 +25,23 @@ namespace cta::common::dataStructures {
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool ListStorageClassRequest::operator==(const ListStorageClassRequest &rhs) const {
-  return requester==rhs.requester;
+bool ListStorageClassRequest::operator==(const ListStorageClassRequest& rhs) const {
+  return requester == rhs.requester;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool ListStorageClassRequest::operator!=(const ListStorageClassRequest &rhs) const {
+bool ListStorageClassRequest::operator!=(const ListStorageClassRequest& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const ListStorageClassRequest &obj) {
+std::ostream& operator<<(std::ostream& os, const ListStorageClassRequest& obj) {
   os << "(requester=" << obj.requester << ")";
   return os;
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

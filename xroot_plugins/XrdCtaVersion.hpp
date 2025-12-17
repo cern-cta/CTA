@@ -17,12 +17,12 @@
 
 #pragma once
 
-#include <string>
-
-#include "xroot_plugins/XrdCtaStream.hpp"
-#include "frontend/common/Version.hpp"
 #include "catalogue/SchemaVersion.hpp"
+#include "frontend/common/Version.hpp"
 #include "version.h"
+#include "xroot_plugins/XrdCtaStream.hpp"
+
+#include <string>
 
 namespace cta::xrd {
 
@@ -75,8 +75,8 @@ inline VersionStream::VersionStream(const frontend::AdminCmdStream& requestMsg,
       m_catalogue_version(m_catalogue.Schema()->getSchemaVersion().getSchemaVersion<std::string>()),
       m_schedulerBackendName(scheduler.getSchedulerBackendName()),
       m_instanceName(requestMsg.getInstanceName()),
-      m_is_upgrading(m_catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>() ==
-                     catalogue::SchemaVersion::Status::UPGRADING) {
+      m_is_upgrading(m_catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>()
+                     == catalogue::SchemaVersion::Status::UPGRADING) {
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "VersionStream() constructor");
   m_server_versions.ctaVersion = CTA_VERSION;
   m_server_versions.protobufTag = XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;

@@ -16,15 +16,15 @@
  */
 
 #pragma once
- 
-#include <string>
+
 #include "EntryLog.hpp"
+
+#include <string>
 
 namespace cta::common::dataStructures {
 
 struct DiskInstance {
-  
-   /**
+  /**
    * The name
    */
   std::string name;
@@ -33,7 +33,7 @@ struct DiskInstance {
    * The comment.
    */
   std::string comment;
-    
+
   /**
    * The creation log.
    */
@@ -44,9 +44,7 @@ struct DiskInstance {
    */
   EntryLog lastModificationLog;
 
-  bool operator==(const DiskInstance & other) const{
-    return (name == other.name && comment == other.comment);
-  }
+  bool operator==(const DiskInstance& other) const { return (name == other.name && comment == other.comment); }
 };
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

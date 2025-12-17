@@ -20,8 +20,8 @@
 #include "common/log/Constants.hpp"
 #include "common/log/Param.hpp"
 
-#include <chrono>
 #include <atomic>
+#include <chrono>
 #include <list>
 #include <map>
 
@@ -106,7 +106,7 @@ public:
   /**
    * Refresh the underlying logger setup
    */
-  virtual void refresh()  = 0;
+  virtual void refresh() = 0;
 
   /**
    * Writes a message into the CTA logging system
@@ -119,7 +119,8 @@ public:
    * @param msg      the message
    * @param params   optional parameters of the message
    */
-  virtual void operator() (int priority, std::string_view msg, const std::list<Param>& params = std::list<Param>()) noexcept;
+  virtual void
+  operator()(int priority, std::string_view msg, const std::list<Param>& params = std::list<Param>()) noexcept;
 
   /**
    * Sets the log mask
@@ -138,7 +139,7 @@ public:
   /**
    * Sets the map of static headers to be included in every log line.
    */
-  void setStaticParams(const std::map<std::string, std::string> &staticHeaders);
+  void setStaticParams(const std::map<std::string, std::string>& staticHeaders);
 
   /**
    * Creates a clean version of the specified string ready for use with syslog
@@ -226,7 +227,7 @@ protected:
    */
   std::string m_staticParamsStr;
 
- /**
+  /**
    * Map from syslog integer priority to textual representation
    */
   const std::map<int, std::string> m_priorityToText = generatePriorityToTextMap();
@@ -258,7 +259,6 @@ protected:
   static std::map<std::string, int> generateConfigTextToPriorityMap();
 
 private:
-
   /**
    * Timestamp type
    */
@@ -297,7 +297,8 @@ private:
    * @param pid         Process ID of the process logging the message
    * @return            Message body
    */
-  std::string createMsgBody(std::string_view logLevel, std::string_view msg, const std::list<Param> &params, int pid) const;
+  std::string
+  createMsgBody(std::string_view logLevel, std::string_view msg, const std::list<Param>& params, int pid) const;
 };
 
-} // namespace cta::log
+}  // namespace cta::log

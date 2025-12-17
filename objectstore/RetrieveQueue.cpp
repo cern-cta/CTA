@@ -15,35 +15,35 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <google/protobuf/util/json_util.h>
+#include "RetrieveQueue.hpp"
 
 #include "AgentReference.hpp"
-#include "common/dataStructures/RetrieveJobToAdd.hpp"
-#include "common/exception/NoSuchObject.hpp"
 #include "EntryLogSerDeser.hpp"
 #include "GenericObject.hpp"
 #include "RetrieveActivityCountMap.hpp"
-#include "RetrieveQueue.hpp"
 #include "RetrieveQueueShard.hpp"
 #include "ValueCountMap.hpp"
+#include "common/dataStructures/RetrieveJobToAdd.hpp"
+#include "common/exception/NoSuchObject.hpp"
+
+#include <google/protobuf/util/json_util.h>
 
 namespace cta::objectstore {
 
-RetrieveQueue::RetrieveQueue(const std::string& address, Backend& os):
-  ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(os, address) { }
+RetrieveQueue::RetrieveQueue(const std::string& address, Backend& os)
+    : ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(os, address) {}
 
-RetrieveQueue::RetrieveQueue(GenericObject& go):
-  ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(go.objectStore()){
+RetrieveQueue::RetrieveQueue(GenericObject& go)
+    : ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(go.objectStore()) {
   // Here we transplant the generic object into the new object
   go.transplantHeader(*this);
   // And interpret the header.
   RetrieveQueue::getPayloadFromHeader();
 }
 
-RetrieveQueue::RetrieveQueue(Backend& os):
-  ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(os) { }
+RetrieveQueue::RetrieveQueue(Backend& os) : ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>(os) {}
 
-void RetrieveQueue::initialize(const std::string &vid) {
+void RetrieveQueue::initialize(const std::string& vid) {
   ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::initialize();
   // Set the reguired fields
   m_payload.set_oldestjobcreationtime(0);
@@ -63,7 +63,7 @@ bool RetrieveQueue::checkMapsAndShardsCoherency() {
   uint64_t bytesFromShardPointers = 0;
   uint64_t jobsExpectedFromShardsPointers = 0;
   // Add up shard summaries
-  for (auto & aqs: m_payload.retrievequeueshards()) {
+  for (auto& aqs : m_payload.retrievequeueshards()) {
     bytesFromShardPointers += aqs.shardbytescount();
     jobsExpectedFromShardsPointers += aqs.shardjobscount();
   }
@@ -71,20 +71,20 @@ bool RetrieveQueue::checkMapsAndShardsCoherency() {
   {
     uint64_t totalBytes = m_payload.retrievejobstotalsize();
     uint64_t totalJobs = m_payload.retrievejobscount();
-    if (totalBytes != bytesFromShardPointers ||
-        totalJobs != jobsExpectedFromShardsPointers)
+    if (totalBytes != bytesFromShardPointers || totalJobs != jobsExpectedFromShardsPointers) {
       return false;
+    }
   }
   // Check that we have coherent queue summaries
   {
     ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
     ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
     ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
-    if (priorityMap.total() != m_payload.retrievejobscount() ||
-        minRetrieveRequestAgeMap.total() != m_payload.retrievejobscount() ||
-        mountPolicyNameMap.total() != m_payload.retrievejobscount()
-            )
+    if (priorityMap.total() != m_payload.retrievejobscount()
+        || minRetrieveRequestAgeMap.total() != m_payload.retrievejobscount()
+        || mountPolicyNameMap.total() != m_payload.retrievejobscount()) {
       return false;
+    }
   }
   return true;
 }
@@ -108,16 +108,16 @@ void RetrieveQueue::rebuild() {
   minRetrieveRequestAgeMap.clear();
   ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
   mountPolicyNameMap.clear();
-  for (auto & sa: m_payload.retrievequeueshards()) {
+  for (auto& sa : m_payload.retrievequeueshards()) {
     shards.emplace_back(RetrieveQueueShard(sa.address(), m_objectStore));
     shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
   }
   auto s = shards.begin();
   auto sf = shardsFetchers.begin();
-  uint64_t totalJobs=0;
-  uint64_t totalBytes=0;
-  time_t oldestJobCreationTime=std::numeric_limits<time_t>::max();
-  time_t youngestJobCreationTime=std::numeric_limits<time_t>::min();
+  uint64_t totalJobs = 0;
+  uint64_t totalBytes = 0;
+  time_t oldestJobCreationTime = std::numeric_limits<time_t>::max();
+  time_t youngestJobCreationTime = std::numeric_limits<time_t>::min();
 
   while (s != shards.end()) {
     // Each shard could be gone or be empty
@@ -145,23 +145,31 @@ void RetrieveQueue::rebuild() {
       uint64_t size = 0;
       uint64_t minFseq = std::numeric_limits<uint64_t>::max();
       uint64_t maxFseq = std::numeric_limits<uint64_t>::min();
-      for (auto & j: s->dumpJobs()) {
+      for (auto& j : s->dumpJobs()) {
         jobs++;
         size += j.size;
         priorityMap.incCount(j.priority);
         minRetrieveRequestAgeMap.incCount(j.minRetrieveRequestAge);
         mountPolicyNameMap.incCount(j.mountPolicyName);
-        if (j.startTime < oldestJobCreationTime) oldestJobCreationTime = j.startTime;
-        if (j.startTime > youngestJobCreationTime) youngestJobCreationTime = j.startTime;
-        if (j.fSeq < minFseq) minFseq = j.fSeq;
-        if (j.fSeq > maxFseq) maxFseq = j.fSeq;
+        if (j.startTime < oldestJobCreationTime) {
+          oldestJobCreationTime = j.startTime;
+        }
+        if (j.startTime > youngestJobCreationTime) {
+          youngestJobCreationTime = j.startTime;
+        }
+        if (j.fSeq < minFseq) {
+          minFseq = j.fSeq;
+        }
+        if (j.fSeq > maxFseq) {
+          maxFseq = j.fSeq;
+        }
       }
       // Add the summary to total.
-      totalJobs+=jobs;
-      totalBytes+=size;
+      totalJobs += jobs;
+      totalBytes += size;
       // And store the value in the shard pointers.
       auto mrqs = m_payload.mutable_retrievequeueshards();
-      for (auto & rqsp: *mrqs) {
+      for (auto& rqsp : *mrqs) {
         if (rqsp.address() == s->getAddressIfSet()) {
           rqsp.set_shardjobscount(jobs);
           rqsp.set_shardbytescount(size);
@@ -172,9 +180,10 @@ void RetrieveQueue::rebuild() {
       }
       {
         // We had to update a shard and did not find it. This is an error.
-        throw exception::Exception(std::string ("In RetrieveQueue::rebuild(): failed to record summary for shard " + s->getAddressIfSet()));
+        throw exception::Exception(
+          std::string("In RetrieveQueue::rebuild(): failed to record summary for shard " + s->getAddressIfSet()));
       }
-    shardUpdated:;
+shardUpdated:;
       // We still need to check if the shard itself is coherent (we have an opportunity to
       // match its summary with the jobs total we just recomputed.
       if (size != s->getJobsSummary().bytes) {
@@ -185,7 +194,7 @@ void RetrieveQueue::rebuild() {
         rqs.commit();
       }
     }
-  nextShard:;
+nextShard:;
     s++;
     sf++;
   }
@@ -197,11 +206,10 @@ void RetrieveQueue::rebuild() {
   // gone shards. Done.}
 }
 
-
 void RetrieveQueue::commit() {
   if (!checkMapsAndShardsCoherency()) {
     rebuild();
-    m_payload.set_mapsrebuildcount(m_payload.mapsrebuildcount()+1);
+    m_payload.set_mapsrebuildcount(m_payload.mapsrebuildcount() + 1);
   }
   ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::commit();
 }
@@ -216,7 +224,7 @@ bool RetrieveQueue::isEmpty() {
   return !m_payload.retrievejobstotalsize() && !m_payload.retrievequeueshards_size();
 }
 
-void RetrieveQueue::removeIfEmpty(log::LogContext & lc) {
+void RetrieveQueue::removeIfEmpty(log::LogContext& lc) {
   checkPayloadWritable();
   if (!isEmpty()) {
     throw NotEmpty("In RetrieveQueue::removeIfEmpty: trying to remove an tape with retrieves queued");
@@ -238,9 +246,11 @@ void RetrieveQueue::resetSleepForFreeSpaceStartTime() {
   m_payload.clear_disk_system_slept_for();
 }
 
-void RetrieveQueue::setSleepForFreeSpaceStartTimeAndName(time_t time, const std::string & diskSystemName, uint64_t sleepTime) {
+void RetrieveQueue::setSleepForFreeSpaceStartTimeAndName(time_t time,
+                                                         const std::string& diskSystemName,
+                                                         uint64_t sleepTime) {
   checkPayloadWritable();
-  m_payload.set_sleep_for_free_space_since((uint64_t)time);
+  m_payload.set_sleep_for_free_space_since((uint64_t) time);
   m_payload.set_disk_system_slept_for(diskSystemName);
   m_payload.set_sleep_time(sleepTime);
 }
@@ -255,18 +265,22 @@ std::string RetrieveQueue::dump() {
   return headerDump;
 }
 
-void RetrieveQueue::updateShardLimits(uint64_t fSeq, ShardForAddition & sfa) {
-  if (fSeq < sfa.minFseq) sfa.minFseq=fSeq;
-  if (fSeq > sfa.maxFseq) sfa.maxFseq=fSeq;
+void RetrieveQueue::updateShardLimits(uint64_t fSeq, ShardForAddition& sfa) {
+  if (fSeq < sfa.minFseq) {
+    sfa.minFseq = fSeq;
+  }
+  if (fSeq > sfa.maxFseq) {
+    sfa.maxFseq = fSeq;
+  }
 }
 
 /** Add a jobs to a shard, spliting it if necessary*/
-void RetrieveQueue::addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJobToAdd & jobToAdd,
-    std::list<ShardForAddition>::iterator & shardForAddition, std::list<ShardForAddition> & shardList) {
+void RetrieveQueue::addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJobToAdd& jobToAdd,
+                                               std::list<ShardForAddition>::iterator& shardForAddition,
+                                               std::list<ShardForAddition>& shardList) {
   // Is the shard still small enough? We will not double split shards (we suppose insertion size << shard size cap).
   // We will also no split a new shard.
-  if (   shardForAddition->jobsCount < m_maxShardSize
-      || shardForAddition->fromSplit || shardForAddition->newShard) {
+  if (shardForAddition->jobsCount < m_maxShardSize || shardForAddition->fromSplit || shardForAddition->newShard) {
     // We just piggy back here. No need to increase range, we are within it.
     shardForAddition->jobsCount++;
     shardForAddition->jobsToAdd.emplace_back(jobToAdd);
@@ -281,17 +295,17 @@ void RetrieveQueue::addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJ
     // half and new shard gets the bottom half.
     uint64_t shardRange = shardForAddition->maxFseq - shardForAddition->minFseq;
     newSfa->minFseq = shardForAddition->minFseq;
-    newSfa->maxFseq = shardForAddition->minFseq + shardRange/2;
-    newSfa->jobsCount = shardForAddition->jobsCount/2;
+    newSfa->maxFseq = shardForAddition->minFseq + shardRange / 2;
+    newSfa->jobsCount = shardForAddition->jobsCount / 2;
     newSfa->splitSource = &*shardForAddition;
     newSfa->fromSplit = true;
     newSfa->newShard = true;
-    shardForAddition->minFseq = shardForAddition->minFseq + shardRange/2 + 1;
-    shardForAddition->jobsCount = shardForAddition->jobsCount/2;
+    shardForAddition->minFseq = shardForAddition->minFseq + shardRange / 2 + 1;
+    shardForAddition->jobsCount = shardForAddition->jobsCount / 2;
     shardForAddition->toSplit = true;
     shardForAddition->splitDestination = &*newSfa;
     // Transfer jobs to add to new shard if needed
-    for (auto jta2=shardForAddition->jobsToAdd.begin(); jta2!=shardForAddition->jobsToAdd.end();) {
+    for (auto jta2 = shardForAddition->jobsToAdd.begin(); jta2 != shardForAddition->jobsToAdd.end();) {
       if (jta2->fSeq <= newSfa->maxFseq) {
         newSfa->jobsToAdd.emplace_back(*jta2);
         jta2 = shardForAddition->jobsToAdd.erase(jta2);
@@ -312,9 +326,13 @@ void RetrieveQueue::addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJ
   }
 }
 
-void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd, AgentReference & agentReference, [[maybe_unused]] log::LogContext & lc) {
+void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd>& jobsToAdd,
+                                     AgentReference& agentReference,
+                                     [[maybe_unused]] log::LogContext& lc) {
   checkPayloadWritable();
-  if (jobsToAdd.empty()) return;
+  if (jobsToAdd.empty()) {
+    return;
+  }
   // Keep track of the mounting criteria
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
@@ -340,9 +358,9 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
   // sorted by fseq and to contain non-overlapping segments of fSeq ranges. We will tweak the
   // extracted values from the object store to achieve this condition.
   std::list<ShardForAddition> shardsForAddition;
-  for (auto & rqsp: m_payload.retrievequeueshards()) {
+  for (auto& rqsp : m_payload.retrievequeueshards()) {
     shardsForAddition.emplace_back(ShardForAddition());
-    auto & sfa = shardsForAddition.back();
+    auto& sfa = shardsForAddition.back();
     sfa.minFseq = rqsp.minfseq();
     sfa.maxFseq = rqsp.maxfseq();
     sfa.jobsCount = rqsp.shardjobscount();
@@ -350,27 +368,27 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
   }
   // After extracting the pointers, we ensure the fSeqs are in order. We go from first to last,
   // and whichever fSeq is used will push forward the limits of the following shards.
-  uint64_t highestFseqSoFar=0;
-  for (auto & sfa: shardsForAddition) {
+  uint64_t highestFseqSoFar = 0;
+  for (auto& sfa : shardsForAddition) {
     sfa.minFseq = std::max(highestFseqSoFar, sfa.minFseq);
     highestFseqSoFar = sfa.minFseq;
     sfa.maxFseq = std::max(highestFseqSoFar, sfa.maxFseq);
-    highestFseqSoFar = sfa.maxFseq+1;
+    highestFseqSoFar = sfa.maxFseq + 1;
   }
   // We now try to fit the jobs to the right shards
-  for (auto & jta: jobsToAdd) {
+  for (auto& jta : jobsToAdd) {
     // If there is no shard, let's create the initial one.
     if (shardsForAddition.empty()) {
       shardsForAddition.emplace_back(ShardForAddition());
-      auto & sfa=shardsForAddition.back();
-      sfa.newShard=true;
+      auto& sfa = shardsForAddition.back();
+      sfa.newShard = true;
       sfa.maxFseq = sfa.minFseq = jta.fSeq;
-      sfa.jobsCount=1;
+      sfa.jobsCount = 1;
       sfa.jobsToAdd.emplace_back(jta);
       goto jobInserted;
     }
     // Find where the job lands in the shards
-    for (auto sfa=shardsForAddition.begin(); sfa != shardsForAddition.end(); sfa++) {
+    for (auto sfa = shardsForAddition.begin(); sfa != shardsForAddition.end(); sfa++) {
       if (sfa->minFseq > jta.fSeq) {
         // Are we before the current shard? (for example, before first shard)
         addJobToShardAndMaybeSplit(jta, sfa, shardsForAddition);
@@ -381,7 +399,7 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
         goto jobInserted;
       } else if (std::next(sfa) != shardsForAddition.end()) {
         // Are we between shards?
-        auto nextSfa=std::next(sfa);
+        auto nextSfa = std::next(sfa);
         if (jta.fSeq > sfa->maxFseq && jta.fSeq < nextSfa->minFseq) {
           if (sfa->jobsCount < nextSfa->jobsCount) {
             addJobToShardAndMaybeSplit(jta, sfa, shardsForAddition);
@@ -398,15 +416,18 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
     }
     // Still not inserted? Now we run out of options. Segfault to ease debugging.
     {
-      throw cta::exception::Exception("In RetrieveQueue::addJobsAndCommit(): could not find an appropriate shard for job");
+      throw cta::exception::Exception(
+        "In RetrieveQueue::addJobsAndCommit(): could not find an appropriate shard for job");
     }
-    jobInserted:;
+jobInserted:;
   }
 
   {
     // Number the shards.
-    size_t shardIndex=0;
-    for (auto & shard: shardsForAddition) shard.shardIndex=shardIndex++;
+    size_t shardIndex = 0;
+    for (auto& shard : shardsForAddition) {
+      shard.shardIndex = shardIndex++;
+    }
   }
 
   // Jobs are now planned for insertions in their respective (and potentially
@@ -415,10 +436,10 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
   // TODO: shard creation and update could be parallelized (to some extent as we
   // have shard to shard dependencies with the splits), but as a first implementation
   // we just go iteratively.
-  for (auto & shard: shardsForAddition) {
+  for (auto& shard : shardsForAddition) {
     uint64_t addedJobs = 0, addedBytes = 0, transferedInSplitJobs = 0, transferedInSplitBytes = 0;
     // Variables which will allow the shard/pointer updates in all cases.
-    cta::objectstore::serializers::RetrieveQueueShardPointer * shardPointer = nullptr, * splitFromShardPointer = nullptr;
+    cta::objectstore::serializers::RetrieveQueueShardPointer *shardPointer = nullptr, *splitFromShardPointer = nullptr;
     RetrieveQueueShard rqs(m_objectStore), rqsSplitFrom(m_objectStore);
     if (shard.newShard) {
       // Irrespective of the case, we need to create the shard.
@@ -437,9 +458,9 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
       shard.creationDone = true;
       shard.address = rqs.getAddressIfSet();
       // Move the shard pointer to its intended location.
-      size_t currentShardPosition=m_payload.retrievequeueshards_size() - 1;
+      size_t currentShardPosition = m_payload.retrievequeueshards_size() - 1;
       while (currentShardPosition != shard.shardIndex) {
-        m_payload.mutable_retrievequeueshards()->SwapElements(currentShardPosition-1,currentShardPosition);
+        m_payload.mutable_retrievequeueshards()->SwapElements(currentShardPosition - 1, currentShardPosition);
         currentShardPosition--;
       }
       // Make sure the pointer is the right one after move.
@@ -447,17 +468,17 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
       // If necessary, fill up this new shard with jobs from the split one.
       if (shard.fromSplit) {
         rqsSplitFrom.setAddress(shard.splitSource->address);
-        splitFromShardPointer=m_payload.mutable_retrievequeueshards(shard.splitSource->shardIndex);
+        splitFromShardPointer = m_payload.mutable_retrievequeueshards(shard.splitSource->shardIndex);
         m_exclusiveLock->includeSubObject(rqsSplitFrom);
         rqsSplitFrom.fetch();
-        auto jobsFromSource=rqsSplitFrom.dumpJobsToAdd();
+        auto jobsFromSource = rqsSplitFrom.dumpJobsToAdd();
         std::list<std::string> jobsToTransferAddresses;
-        for (auto &j: jobsFromSource) {
+        for (auto& j : jobsFromSource) {
           RetrieveQueueShard::JobsToAddSet jtas;
           if (j.fSeq >= shard.minFseq && j.fSeq <= shard.maxFseq) {
             jtas.insert(j);
             addedJobs++;
-            addedBytes+=j.fileSize;
+            addedBytes += j.fileSize;
             jobsToTransferAddresses.emplace_back(j.retrieveRequestAddress);
           }
           rqs.addJobsBatch(jtas);
@@ -484,14 +505,14 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
       rqs.setAddress(shard.address);
       m_exclusiveLock->includeSubObject(rqs);
       rqs.fetch();
-      shardPointer=m_payload.mutable_retrievequeueshards(shard.shardIndex);
+      shardPointer = m_payload.mutable_retrievequeueshards(shard.shardIndex);
     }
     // ... add the jobs to the shard (in memory)
     RetrieveQueueShard::JobsToAddSet jtas;
-    for (auto j:shard.jobsToAdd) {
+    for (auto j : shard.jobsToAdd) {
       jtas.insert(j);
       addedJobs++;
-      addedBytes+=j.fileSize;
+      addedBytes += j.fileSize;
       priorityMap.incCount(j.policy.retrievePriority);
       minRetrieveRequestAgeMap.incCount(j.policy.retrieveMinRequestAge);
       mountPolicyNameMap.incCount(j.policy.name);
@@ -500,15 +521,17 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
       }
       // oldestjobcreationtime is initialized to 0 when
       if (m_payload.oldestjobcreationtime()) {
-        if ((uint64_t)j.startTime < m_payload.oldestjobcreationtime())
+        if ((uint64_t) j.startTime < m_payload.oldestjobcreationtime()) {
           m_payload.set_oldestjobcreationtime(j.startTime);
+        }
       } else {
         m_payload.set_oldestjobcreationtime(j.startTime);
       }
       // youngestjobcreationtime has a default value of 0 when it is not initialized
       if (m_payload.youngestjobcreationtime()) {
-        if ((uint64_t)j.startTime > m_payload.youngestjobcreationtime())
+        if ((uint64_t) j.startTime > m_payload.youngestjobcreationtime()) {
           m_payload.set_youngestjobcreationtime(j.startTime);
+        }
       } else {
         m_payload.set_youngestjobcreationtime(j.startTime);
       }
@@ -531,8 +554,9 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
     // 1) Get the shard on storage. Could be either insert or commit.
     if (shard.newShard) {
       rqs.insert();
-      if (shard.fromSplit)
+      if (shard.fromSplit) {
         rqsSplitFrom.commit();
+      }
     } else {
       rqs.commit();
     }
@@ -541,15 +565,15 @@ void RetrieveQueue::addJobsAndCommit(std::list<common::dataStructures::RetrieveJ
   }
 }
 
-auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<common::dataStructures::RetrieveJobToAdd> & jobsToAdd,
-    AgentReference & agentReference, log::LogContext & lc)
--> AdditionSummary {
+auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<common::dataStructures::RetrieveJobToAdd>& jobsToAdd,
+                                                AgentReference& agentReference,
+                                                log::LogContext& lc) -> AdditionSummary {
   checkPayloadWritable();
   // First get all the shards of the queue to understand which jobs to add.
   std::list<RetrieveQueueShard> shards;
   std::list<std::unique_ptr<RetrieveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
 
-  for (auto & sp: m_payload.retrievequeueshards()) {
+  for (auto& sp : m_payload.retrievequeueshards()) {
     shards.emplace_back(sp.address(), m_objectStore);
     shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
   }
@@ -557,17 +581,17 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<common::dataStructures
   auto s = shards.begin();
   auto sf = shardsFetchers.begin();
 
-  while (s!= shards.end()) {
+  while (s != shards.end()) {
     try {
       (*sf)->wait();
     } catch (cta::exception::NoSuchObject&) {
       goto nextShard;
     }
     shardsDumps.emplace_back(std::list<JobDump>());
-    for (auto & j: s->dumpJobs()) {
+    for (auto& j : s->dumpJobs()) {
       shardsDumps.back().emplace_back(JobDump({j.address, j.copyNb, j.size, j.activity, j.diskSystemName}));
     }
-  nextShard:
+nextShard:
     s++;
     sf++;
   }
@@ -575,24 +599,24 @@ auto RetrieveQueue::addJobsIfNecessaryAndCommit(std::list<common::dataStructures
   // Now filter the jobs to add
   AdditionSummary ret;
   std::list<common::dataStructures::RetrieveJobToAdd> jobsToReallyAdd;
-  for (auto & jta: jobsToAdd) {
-    for (auto & sd: shardsDumps) {
-      for (auto & sjd: sd) {
-        if (sjd.address == jta.retrieveRequestAddress)
+  for (auto& jta : jobsToAdd) {
+    for (auto& sd : shardsDumps) {
+      for (auto& sjd : sd) {
+        if (sjd.address == jta.retrieveRequestAddress) {
           goto found;
+        }
       }
     }
     jobsToReallyAdd.emplace_back(jta);
     ret.bytes += jta.fileSize;
     ret.files++;
-  found:;
+found:;
   }
 
   // We can now proceed with the standard addition.
   addJobsAndCommit(jobsToReallyAdd, agentReference, lc);
   return ret;
 }
-
 
 RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
   checkPayloadReadable();
@@ -609,15 +633,13 @@ RetrieveQueue::JobsSummary RetrieveQueue::getJobsSummary() {
     ValueCountMapString mountPolicyNameMap(m_payload.mutable_mountpolicynamemap());
     ret.mountPolicyCountMap = mountPolicyNameMap.getMap();
     RetrieveActivityCountMap retrieveActivityCountMap(m_payload.mutable_activity_map());
-    for (auto ra: retrieveActivityCountMap.getActivities()) {
+    for (auto ra : retrieveActivityCountMap.getActivities()) {
       ret.activityCounts.push_back({ra.activity, ra.count});
     }
     if (m_payload.has_sleep_for_free_space_since()) {
-      ret.sleepInfo = JobsSummary::SleepInfo{
-        static_cast<time_t>(m_payload.sleep_for_free_space_since()),
-        m_payload.disk_system_slept_for(),
-        m_payload.sleep_time()
-      };
+      ret.sleepInfo = JobsSummary::SleepInfo {static_cast<time_t>(m_payload.sleep_for_free_space_since()),
+                                              m_payload.disk_system_slept_for(),
+                                              m_payload.sleep_time()};
     }
   } else {
     ret.priority = 0;
@@ -632,7 +654,7 @@ auto RetrieveQueue::dumpJobs() -> std::list<JobDump> {
   std::list<JobDump> ret;
   std::list<RetrieveQueueShard> shards;
   std::list<std::unique_ptr<RetrieveQueueShard::AsyncLockfreeFetcher>> shardsFetchers;
-  for (auto & sa: m_payload.retrievequeueshards()) {
+  for (auto& sa : m_payload.retrievequeueshards()) {
     shards.emplace_back(RetrieveQueueShard(sa.address(), m_objectStore));
     shardsFetchers.emplace_back(shards.back().asyncLockfreeFetch());
   }
@@ -646,26 +668,31 @@ auto RetrieveQueue::dumpJobs() -> std::list<JobDump> {
       // Just skip this shard.
       goto nextShard;
     }
-    for (auto & j: s->dumpJobs()) {
-      ret.emplace_back(JobDump{j.address, j.copyNb, j.size, j.activity, j.diskSystemName});
+    for (auto& j : s->dumpJobs()) {
+      ret.emplace_back(JobDump {j.address, j.copyNb, j.size, j.activity, j.diskSystemName});
     }
-  nextShard:
-    s++; sf++;
+nextShard:
+    s++;
+    sf++;
   }
   return ret;
 }
 
-auto RetrieveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, const std::set<std::string> & retrieveRequestsToSkip, const std::set<std::string> & diskSystemsToSkip, log::LogContext & lc) -> CandidateJobList {
+auto RetrieveQueue::getCandidateList(uint64_t maxBytes,
+                                     uint64_t maxFiles,
+                                     const std::set<std::string>& retrieveRequestsToSkip,
+                                     const std::set<std::string>& diskSystemsToSkip,
+                                     log::LogContext& lc) -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
-  for(auto & rqsp: m_payload.retrievequeueshards()) {
+  for (auto& rqsp : m_payload.retrievequeueshards()) {
     // We need to go through all shard pointers unconditionnaly to count what is left (see else part)
     if (ret.candidateBytes < maxBytes && ret.candidateFiles < maxFiles) {
       // Fetch the shard
       RetrieveQueueShard rqs(rqsp.address(), m_objectStore);
       try {
         rqs.fetchNoLock();
-      } catch(const cta::exception::NoSuchObject &) {
+      } catch (const cta::exception::NoSuchObject&) {
         // If the shard's gone we are not getting any pointers from it...
         log::ScopedParamContainer params(lc);
         params.add("retrieveQueueObject", getAddressIfSet());
@@ -673,8 +700,10 @@ auto RetrieveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, const
         lc.log(log::ERR, "In RetrieveQueue::getCandidateList(): Shard object is missing. Ignoring shard.");
         continue;
       }
-      auto shardCandidates = rqs.getCandidateJobList(maxBytes - ret.candidateBytes, maxFiles - ret.candidateFiles,
-          retrieveRequestsToSkip, diskSystemsToSkip);
+      auto shardCandidates = rqs.getCandidateJobList(maxBytes - ret.candidateBytes,
+                                                     maxFiles - ret.candidateFiles,
+                                                     retrieveRequestsToSkip,
+                                                     diskSystemsToSkip);
       ret.candidateBytes += shardCandidates.candidateBytes;
       ret.candidateFiles += shardCandidates.candidateFiles;
       // We overwrite the remaining values each time as the previous
@@ -694,7 +723,7 @@ auto RetrieveQueue::getCandidateList(uint64_t maxBytes, uint64_t maxFiles, const
 auto RetrieveQueue::getCandidateSummary() -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
-  for(auto & rqsp: m_payload.retrievequeueshards()) {
+  for (auto& rqsp : m_payload.retrievequeueshards()) {
     ret.candidateBytes += rqsp.shardbytescount();
     ret.candidateFiles += rqsp.shardjobscount();
   }
@@ -707,7 +736,7 @@ auto RetrieveQueue::getMountPolicyNames() -> std::list<std::string> {
 
   std::list<std::string> mountPolicyNames;
 
-  for(const auto &mountPolicyCount: mountPolicyCountMap) {
+  for (const auto& mountPolicyCount : mountPolicyCountMap) {
     if (mountPolicyCount.second != 0) {
       mountPolicyNames.push_back(mountPolicyCount.first);
     }
@@ -715,7 +744,7 @@ auto RetrieveQueue::getMountPolicyNames() -> std::list<std::string> {
   return mountPolicyNames;
 }
 
-void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemove, log::LogContext & lc) {
+void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemove, log::LogContext& lc) {
   checkPayloadWritable();
   ValueCountMapUint64 priorityMap(m_payload.mutable_prioritymap());
   ValueCountMapUint64 minRetrieveRequestAgeMap(m_payload.mutable_minretrieverequestagemap());
@@ -725,16 +754,16 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
   auto localJobsToRemove = jobsToRemove;
   // The jobs are expected to be removed from the front shards first (poped in order)
   // Remove jobs until there are no more jobs or no more shards.
-  ssize_t shardIndex=0;
-  auto * mutableRetrieveQueueShards= m_payload.mutable_retrievequeueshards();
-  while (localJobsToRemove.size() && shardIndex <  mutableRetrieveQueueShards->size()) {
-    auto * shardPointer = mutableRetrieveQueueShards->Mutable(shardIndex);
+  ssize_t shardIndex = 0;
+  auto* mutableRetrieveQueueShards = m_payload.mutable_retrievequeueshards();
+  while (localJobsToRemove.size() && shardIndex < mutableRetrieveQueueShards->size()) {
+    auto* shardPointer = mutableRetrieveQueueShards->Mutable(shardIndex);
     // Get hold of the shard
     RetrieveQueueShard rqs(shardPointer->address(), m_objectStore);
     m_exclusiveLock->includeSubObject(rqs);
     try {
       rqs.fetch();
-    } catch(const cta::exception::NoSuchObject &) {
+    } catch (const cta::exception::NoSuchObject&) {
       // If the shard's gone, so should the pointer be gone... Push it to the end of the queue and trim it.
       log::ScopedParamContainer params(lc);
       params.add("retrieveQueueObject", getAddressIfSet());
@@ -754,11 +783,11 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
     bool needToRebuild = false;
     time_t oldestJobCreationTime = m_payload.oldestjobcreationtime();
     time_t youngestJobCreationTime = m_payload.youngestjobcreationtime();
-    for (auto & j: removalResult.removedJobs) {
+    for (auto& j : removalResult.removedJobs) {
       priorityMap.decCount(j.priority);
       minRetrieveRequestAgeMap.decCount(j.minRetrieveRequestAge);
       mountPolicyNameMap.decCount(j.mountPolicyName);
-      if(j.startTime <= oldestJobCreationTime){
+      if (j.startTime <= oldestJobCreationTime) {
         //the job we remove was the oldest one, we should rebuild the queue
         //to update the oldestjobcreationtime counter
         needToRebuild = true;
@@ -781,8 +810,9 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
       shardPointer->set_shardbytescount(shardPointer->shardbytescount() - removalResult.bytesRemoved);
       shardPointer->set_shardjobscount(shardPointer->shardjobscount() - removalResult.jobsRemoved);
 
-      if (!needToRebuild && (shardPointer->shardbytescount() != removalResult.bytesAfter
-          || shardPointer->shardjobscount() != removalResult.jobsAfter)) {
+      if (!needToRebuild
+          && (shardPointer->shardbytescount() != removalResult.bytesAfter
+              || shardPointer->shardjobscount() != removalResult.jobsAfter)) {
         rebuild();
       }
       // We will commit when exiting anyway...
@@ -790,23 +820,19 @@ void RetrieveQueue::removeJobsAndCommit(const std::list<std::string>& jobsToRemo
     } else {
       // Shard's gone, so should the pointer. Push it to the end of the queue and
       // trim it.
-      for (auto i=shardIndex; i<mutableRetrieveQueueShards->size()-1; i++) {
-        mutableRetrieveQueueShards->SwapElements(i, i+1);
+      for (auto i = shardIndex; i < mutableRetrieveQueueShards->size() - 1; i++) {
+        mutableRetrieveQueueShards->SwapElements(i, i + 1);
       }
       mutableRetrieveQueueShards->RemoveLast();
     }
     // We should also trim the removed jobs from our list.
-    localJobsToRemove.remove_if(
-      [&removalResult](const std::string & ja){
-        return std::count_if(removalResult.removedJobs.begin(), removalResult.removedJobs.end(),
-          [&ja](RetrieveQueueShard::JobInfo & j) {
-            return j.address == ja;
-          }
-        );
-      }
-    ); // end of remove_if
+    localJobsToRemove.remove_if([&removalResult](const std::string& ja) {
+      return std::count_if(removalResult.removedJobs.begin(),
+                           removalResult.removedJobs.end(),
+                           [&ja](RetrieveQueueShard::JobInfo& j) { return j.address == ja; });
+    });  // end of remove_if
     // And commit the queue (once per shard should not hurt performance).
-    if(needToRebuild){
+    if (needToRebuild) {
       rebuild();
     }
     commit();
@@ -826,7 +852,7 @@ bool RetrieveQueue::getQueueCleanupDoCleanup() {
 std::optional<std::string> RetrieveQueue::getQueueCleanupAssignedAgent() {
   checkPayloadReadable();
   if (m_payload.mutable_cleanupinfo()->has_assignedagent()) {
-    return std::optional{m_payload.mutable_cleanupinfo()->assignedagent()};
+    return std::optional {m_payload.mutable_cleanupinfo()->assignedagent()};
   }
   return std::nullopt;
 }
@@ -856,18 +882,21 @@ void RetrieveQueue::tickQueueCleanupHeartbeat() {
   m_payload.mutable_cleanupinfo()->set_heartbeat(m_payload.mutable_cleanupinfo()->heartbeat() + 1);
 }
 
-void RetrieveQueue::garbageCollect(const std::string &presumedOwner, AgentReference & agentReference, log::LogContext & lc,
-    cta::catalogue::Catalogue & catalogue) {
+void RetrieveQueue::garbageCollect(const std::string& presumedOwner,
+                                   AgentReference& agentReference,
+                                   log::LogContext& lc,
+                                   cta::catalogue::Catalogue& catalogue) {
   // Garbage collection of a retrieve queue should only happen it died in the middle of QueueCleanup.
-  if(!getQueueCleanupDoCleanup()){
-    lc.log(log::WARNING, "In RetrieveQueue::garbageCollect(): trying to gabarbage collect Retrieve Queue not marked for cleanup. Ignoring it.");
+  if (!getQueueCleanupDoCleanup()) {
+    lc.log(log::WARNING,
+           "In RetrieveQueue::garbageCollect(): trying to gabarbage collect Retrieve Queue not marked for cleanup. "
+           "Ignoring it.");
   }
 
   // It might happen that the queue was added to ownership but the
   // server crashed before changing the reservation value of the queue.
   // Check assigned agent is the same as the one we are cleaning up.
-  if (getQueueCleanupAssignedAgent().has_value() &&
-      getQueueCleanupAssignedAgent().value() == presumedOwner) {
+  if (getQueueCleanupAssignedAgent().has_value() && getQueueCleanupAssignedAgent().value() == presumedOwner) {
     clearQueueCleanupAssignedAgent();
     setOwner("root");
     commit();
@@ -885,11 +914,10 @@ void RetrieveQueue::setShardSize(uint64_t shardSize) {
 std::list<std::string> RetrieveQueue::getShardAddresses() {
   checkPayloadReadable();
   std::list<std::string> ret;
-  for(auto & rqs: m_payload.retrievequeueshards()) {
+  for (auto& rqs : m_payload.retrievequeueshards()) {
     ret.push_back(rqs.address());
   }
   return ret;
 }
 
-
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

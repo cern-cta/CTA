@@ -17,32 +17,32 @@
 
 #pragma once
 
-#include "common/log/LogContext.hpp"
-#include "common/dataStructures/ArchiveFile.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
-#include "scheduler/rdbms/postgres/Transaction.hpp"
-#include "scheduler/rdbms/postgres/Enums.hpp"
-#include "rdbms/NullDbValue.hpp"
+#include "common/dataStructures/ArchiveFile.hpp"
+#include "common/log/LogContext.hpp"
 #include "rdbms/Conn.hpp"
+#include "rdbms/NullDbValue.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/rdbms/postgres/Enums.hpp"
+#include "scheduler/rdbms/postgres/Transaction.hpp"
 
 #include <vector>
 
 namespace cta::schedulerdb::postgres {
 
 struct ArchiveQueueJob {
-    int copyNb;
-    ArchiveJobStatus status;
-    std::string tapepool;
-    int totalRetries;
-    int retriesWithinMount;
-    int lastMountWithFailure;
-    int maxRetriesWithinMount;
-    int maxTotalRetries;
-    int totalReportRetries;
-    int maxReportRetries;
-    int archiveRequestId;
-  };
+  int copyNb;
+  ArchiveJobStatus status;
+  std::string tapepool;
+  int totalRetries;
+  int retriesWithinMount;
+  int lastMountWithFailure;
+  int maxRetriesWithinMount;
+  int maxTotalRetries;
+  int totalReportRetries;
+  int maxReportRetries;
+  int archiveRequestId;
+};
 
 struct ArchiveJobQueueRow {
   uint64_t jobId = 0;
@@ -116,9 +116,7 @@ private:
   }
 
 public:
-  ArchiveJobQueueRow() {
-    reserveStringFields();
-  }
+  ArchiveJobQueueRow() { reserveStringFields(); }
 
   /**
      * Constructor from row
@@ -179,12 +177,11 @@ public:
     diskFileInfoOwnerUid = 0;
     diskFileInfoGid = 0;
     checksumBlob.clear();
-
   }
 
   ArchiveJobQueueRow& operator=(const rdbms::Rset& rset) {
     jobId = rset.columnUint64NoOpt("JOB_ID");
-    if (rset.columnExists("REPACK_REQUEST_ID")){
+    if (rset.columnExists("REPACK_REQUEST_ID")) {
       repackRequestId = rset.columnUint64NoOpt("REPACK_REQUEST_ID");
     }
     reqId = rset.columnUint64NoOpt("ARCHIVE_REQUEST_ID");
@@ -230,6 +227,7 @@ public:
     totalReportRetries = rset.columnUint16NoOpt("TOTAL_REPORT_RETRIES");
     return *this;
   }
+
   void insert(rdbms::Conn& conn) const {
     // does not set mountId or jobId
     const char* const sql = R"SQL(
@@ -333,16 +331,18 @@ public:
     stmt.executeNonQuery();
   }
 
+  static void
+  insertBatch(rdbms::Conn& conn, const std::vector<std::unique_ptr<ArchiveJobQueueRow>>& rows, bool isRepack) {
+    if (rows.empty()) {
+      return;
+    }
 
-  static void insertBatch(rdbms::Conn &conn,
-                          const std::vector <std::unique_ptr<ArchiveJobQueueRow>> &rows,
-                          bool isRepack) {
-  if (rows.empty()) return;
-
-  std::string prefix = isRepack ? "REPACK_" : "";
-  std::string sql = "INSERT INTO " + prefix + "ARCHIVE_PENDING_QUEUE ( ";
-  if (isRepack) sql += "REPACK_REQUEST_ID,";
-  sql +=  R"SQL(
+    std::string prefix = isRepack ? "REPACK_" : "";
+    std::string sql = "INSERT INTO " + prefix + "ARCHIVE_PENDING_QUEUE ( ";
+    if (isRepack) {
+      sql += "REPACK_REQUEST_ID,";
+    }
+    sql += R"SQL(
       ARCHIVE_REQUEST_ID,
       REQUEST_JOB_COUNT,
       STATUS,
@@ -375,89 +375,153 @@ public:
       TOTAL_REPORT_RETRIES,
       MAX_REPORT_RETRIES) VALUES )SQL";
 
-  // Generate VALUES placeholders for each row
-  for (size_t i = 0; i < rows.size(); ++i) {
-    std::string idx = std::to_string(i);
-    sql += "(";
-    if (isRepack) sql += ":REPACK_REQUEST_ID" + idx + ",";
-    sql += ":ARCHIVE_REQUEST_ID"      + idx + ","
-           ":REQUEST_JOB_COUNT"       + idx + ","
-           ":STATUS"                  + idx + ","
-           ":TAPE_POOL"               + idx + ","
-           ":MOUNT_POLICY"            + idx + ","
-           ":PRIORITY"                + idx + ","
-           ":MIN_ARCHIVE_REQUEST_AGE" + idx + ","
-           ":ARCHIVE_FILE_ID"         + idx + ","
-           ":SIZE_IN_BYTES"           + idx + ","
-           ":COPY_NB"                 + idx + ","
-           ":START_TIME"              + idx + ","
-           ":CHECKSUMBLOB"            + idx + ","
-           ":CREATION_TIME"           + idx + ","
-           ":DISK_INSTANCE"           + idx + ","
-           ":DISK_FILE_ID"            + idx + ","
-           ":DISK_FILE_OWNER_UID"     + idx + ","
-           ":DISK_FILE_GID"           + idx + ","
-           ":DISK_FILE_PATH"          + idx + ","
-           ":ARCHIVE_REPORT_URL"      + idx + ","
-           ":ARCHIVE_ERROR_REPORT_URL"+ idx + ","
-           ":REQUESTER_NAME"          + idx + ","
-           ":REQUESTER_GROUP"         + idx + ","
-           ":SRC_URL"                 + idx + ","
-           ":STORAGE_CLASS"           + idx + ","
-           ":RETRIES_WITHIN_MOUNT"    + idx + ","
-           ":MAX_RETRIES_WITHIN_MOUNT"+ idx + ","
-           ":TOTAL_RETRIES"           + idx + ","
-           ":LAST_MOUNT_WITH_FAILURE" + idx + ","
-           ":MAX_TOTAL_RETRIES"       + idx + ","
-           ":TOTAL_REPORT_RETRIES"    + idx + ","
-           ":MAX_REPORT_RETRIES"      + idx + ")";
-    if (i < rows.size() - 1) sql += ",";
-  }
-
-  auto stmt = conn.createStmt(sql);
-
-  // Bind values for each row with distinct names
-  for (size_t i = 0; i < rows.size(); ++i) {
-    const auto &row = *rows[i];
-    std::string idx = std::to_string(i);
-    if (isRepack) {
-        stmt.bindUint64(":REPACK_REQUEST_ID" + idx, row.repackRequestId);
+    // Generate VALUES placeholders for each row
+    for (size_t i = 0; i < rows.size(); ++i) {
+      std::string idx = std::to_string(i);
+      sql += "(";
+      if (isRepack) {
+        sql += ":REPACK_REQUEST_ID" + idx + ",";
+      }
+      sql += ":ARCHIVE_REQUEST_ID" + idx
+             + ","
+               ":REQUEST_JOB_COUNT"
+             + idx
+             + ","
+               ":STATUS"
+             + idx
+             + ","
+               ":TAPE_POOL"
+             + idx
+             + ","
+               ":MOUNT_POLICY"
+             + idx
+             + ","
+               ":PRIORITY"
+             + idx
+             + ","
+               ":MIN_ARCHIVE_REQUEST_AGE"
+             + idx
+             + ","
+               ":ARCHIVE_FILE_ID"
+             + idx
+             + ","
+               ":SIZE_IN_BYTES"
+             + idx
+             + ","
+               ":COPY_NB"
+             + idx
+             + ","
+               ":START_TIME"
+             + idx
+             + ","
+               ":CHECKSUMBLOB"
+             + idx
+             + ","
+               ":CREATION_TIME"
+             + idx
+             + ","
+               ":DISK_INSTANCE"
+             + idx
+             + ","
+               ":DISK_FILE_ID"
+             + idx
+             + ","
+               ":DISK_FILE_OWNER_UID"
+             + idx
+             + ","
+               ":DISK_FILE_GID"
+             + idx
+             + ","
+               ":DISK_FILE_PATH"
+             + idx
+             + ","
+               ":ARCHIVE_REPORT_URL"
+             + idx
+             + ","
+               ":ARCHIVE_ERROR_REPORT_URL"
+             + idx
+             + ","
+               ":REQUESTER_NAME"
+             + idx
+             + ","
+               ":REQUESTER_GROUP"
+             + idx
+             + ","
+               ":SRC_URL"
+             + idx
+             + ","
+               ":STORAGE_CLASS"
+             + idx
+             + ","
+               ":RETRIES_WITHIN_MOUNT"
+             + idx
+             + ","
+               ":MAX_RETRIES_WITHIN_MOUNT"
+             + idx
+             + ","
+               ":TOTAL_RETRIES"
+             + idx
+             + ","
+               ":LAST_MOUNT_WITH_FAILURE"
+             + idx
+             + ","
+               ":MAX_TOTAL_RETRIES"
+             + idx
+             + ","
+               ":TOTAL_REPORT_RETRIES"
+             + idx
+             + ","
+               ":MAX_REPORT_RETRIES"
+             + idx + ")";
+      if (i < rows.size() - 1) {
+        sql += ",";
+      }
     }
-    stmt.bindUint64(":ARCHIVE_REQUEST_ID" + idx, row.reqId);
-    stmt.bindUint32(":REQUEST_JOB_COUNT" + idx, row.reqJobCount);
-    stmt.bindString(":STATUS" + idx, to_string(row.status));
-    stmt.bindString(":TAPE_POOL" + idx, row.tapePool);
-    stmt.bindString(":MOUNT_POLICY" + idx, row.mountPolicy);
-    stmt.bindUint16(":PRIORITY" + idx, row.priority);
-    stmt.bindUint32(":MIN_ARCHIVE_REQUEST_AGE" + idx, row.minArchiveRequestAge);
-    stmt.bindUint64(":ARCHIVE_FILE_ID" + idx, row.archiveFileID);
-    stmt.bindUint64(":SIZE_IN_BYTES" + idx, row.fileSize);
-    stmt.bindUint16(":COPY_NB" + idx, row.copyNb);
-    stmt.bindUint64(":START_TIME" + idx, row.startTime);
-    stmt.bindBlob(":CHECKSUMBLOB" + idx, row.checksumBlob.serialize());
-    stmt.bindUint64(":CREATION_TIME" + idx, row.creationTime);
-    stmt.bindString(":DISK_INSTANCE" + idx, row.diskInstance);
-    stmt.bindString(":DISK_FILE_ID" + idx, row.diskFileId);
-    stmt.bindUint32(":DISK_FILE_OWNER_UID" + idx, row.diskFileInfoOwnerUid);
-    stmt.bindUint32(":DISK_FILE_GID" + idx, row.diskFileInfoGid);
-    stmt.bindString(":DISK_FILE_PATH" + idx, row.diskFileInfoPath);
-    stmt.bindString(":ARCHIVE_REPORT_URL" + idx, row.archiveReportURL);
-    stmt.bindString(":ARCHIVE_ERROR_REPORT_URL" + idx, row.archiveErrorReportURL);
-    stmt.bindString(":REQUESTER_NAME" + idx, row.requesterName);
-    stmt.bindString(":REQUESTER_GROUP" + idx, row.requesterGroup);
-    stmt.bindString(":SRC_URL" + idx, row.srcUrl);
-    stmt.bindString(":STORAGE_CLASS" + idx, row.storageClass);
-    stmt.bindUint16(":RETRIES_WITHIN_MOUNT" + idx, row.retriesWithinMount);
-    stmt.bindUint16(":MAX_RETRIES_WITHIN_MOUNT" + idx, row.maxRetriesWithinMount);
-    stmt.bindUint16(":TOTAL_RETRIES" + idx, row.totalRetries);
-    stmt.bindUint32(":LAST_MOUNT_WITH_FAILURE" + idx, row.lastMountWithFailure);
-    stmt.bindUint16(":MAX_TOTAL_RETRIES" + idx, row.maxTotalRetries);
-    stmt.bindUint16(":TOTAL_REPORT_RETRIES" + idx, row.totalReportRetries);
-    stmt.bindUint16(":MAX_REPORT_RETRIES" + idx, row.maxReportRetries);
-  }
 
-  stmt.executeNonQuery();
-}
+    auto stmt = conn.createStmt(sql);
+
+    // Bind values for each row with distinct names
+    for (size_t i = 0; i < rows.size(); ++i) {
+      const auto& row = *rows[i];
+      std::string idx = std::to_string(i);
+      if (isRepack) {
+        stmt.bindUint64(":REPACK_REQUEST_ID" + idx, row.repackRequestId);
+      }
+      stmt.bindUint64(":ARCHIVE_REQUEST_ID" + idx, row.reqId);
+      stmt.bindUint32(":REQUEST_JOB_COUNT" + idx, row.reqJobCount);
+      stmt.bindString(":STATUS" + idx, to_string(row.status));
+      stmt.bindString(":TAPE_POOL" + idx, row.tapePool);
+      stmt.bindString(":MOUNT_POLICY" + idx, row.mountPolicy);
+      stmt.bindUint16(":PRIORITY" + idx, row.priority);
+      stmt.bindUint32(":MIN_ARCHIVE_REQUEST_AGE" + idx, row.minArchiveRequestAge);
+      stmt.bindUint64(":ARCHIVE_FILE_ID" + idx, row.archiveFileID);
+      stmt.bindUint64(":SIZE_IN_BYTES" + idx, row.fileSize);
+      stmt.bindUint16(":COPY_NB" + idx, row.copyNb);
+      stmt.bindUint64(":START_TIME" + idx, row.startTime);
+      stmt.bindBlob(":CHECKSUMBLOB" + idx, row.checksumBlob.serialize());
+      stmt.bindUint64(":CREATION_TIME" + idx, row.creationTime);
+      stmt.bindString(":DISK_INSTANCE" + idx, row.diskInstance);
+      stmt.bindString(":DISK_FILE_ID" + idx, row.diskFileId);
+      stmt.bindUint32(":DISK_FILE_OWNER_UID" + idx, row.diskFileInfoOwnerUid);
+      stmt.bindUint32(":DISK_FILE_GID" + idx, row.diskFileInfoGid);
+      stmt.bindString(":DISK_FILE_PATH" + idx, row.diskFileInfoPath);
+      stmt.bindString(":ARCHIVE_REPORT_URL" + idx, row.archiveReportURL);
+      stmt.bindString(":ARCHIVE_ERROR_REPORT_URL" + idx, row.archiveErrorReportURL);
+      stmt.bindString(":REQUESTER_NAME" + idx, row.requesterName);
+      stmt.bindString(":REQUESTER_GROUP" + idx, row.requesterGroup);
+      stmt.bindString(":SRC_URL" + idx, row.srcUrl);
+      stmt.bindString(":STORAGE_CLASS" + idx, row.storageClass);
+      stmt.bindUint16(":RETRIES_WITHIN_MOUNT" + idx, row.retriesWithinMount);
+      stmt.bindUint16(":MAX_RETRIES_WITHIN_MOUNT" + idx, row.maxRetriesWithinMount);
+      stmt.bindUint16(":TOTAL_RETRIES" + idx, row.totalRetries);
+      stmt.bindUint32(":LAST_MOUNT_WITH_FAILURE" + idx, row.lastMountWithFailure);
+      stmt.bindUint16(":MAX_TOTAL_RETRIES" + idx, row.maxTotalRetries);
+      stmt.bindUint16(":TOTAL_REPORT_RETRIES" + idx, row.totalReportRetries);
+      stmt.bindUint16(":MAX_REPORT_RETRIES" + idx, row.maxReportRetries);
+    }
+
+    stmt.executeNonQuery();
+  }
 
   void addParamsToLogContext(log::ScopedParamContainer& params) const {
     // does not set jobId
@@ -541,7 +605,8 @@ public:
                           ArchiveJobStatus newStatus,
                           const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
                           uint64_t maxBytesRequested,
-                          uint64_t limit, bool isRepack);
+                          uint64_t limit,
+                          bool isRepack);
 
   /**
    * Update job status for jobs from single-copy user request
@@ -592,7 +657,8 @@ public:
    */
   uint64_t requeueFailedJob(Transaction& txn,
                             ArchiveJobStatus newStatus,
-                            bool keepMountId, bool isRepack,
+                            bool keepMountId,
+                            bool isRepack,
                             std::optional<std::list<std::string>> jobIDs = std::nullopt);
 
   /**
@@ -607,10 +673,8 @@ public:
    * @param keepMountId          true or false
    * @return                     Number of updated rows
    */
-  static uint64_t requeueJobBatch(Transaction& txn,
-                                  ArchiveJobStatus newStatus,
-                                  bool isRepack,
-                                  const std::list<std::string>& jobIDs);
+  static uint64_t
+  requeueJobBatch(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack, const std::list<std::string>& jobIDs);
 
   /**
    * Update job status when job report failed
@@ -662,9 +726,7 @@ public:
    */
   void updateRetryCounts(uint64_t mountId);
 
-  static rdbms::Rset getNextSuccessfulArchiveRepackReportBatch(Transaction &txn,
-                                                               const size_t limit);
-  static rdbms::Rset deleteSuccessfulRepackArchiveJobBatch(Transaction &txn,
-                                                           std::vector<std::string>& jobIDs);
+  static rdbms::Rset getNextSuccessfulArchiveRepackReportBatch(Transaction& txn, const size_t limit);
+  static rdbms::Rset deleteSuccessfulRepackArchiveJobBatch(Transaction& txn, std::vector<std::string>& jobIDs);
 };
 };  // namespace cta::schedulerdb::postgres

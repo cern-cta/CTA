@@ -1,11 +1,13 @@
+#include "CtaAdminServerWriteReactor.hpp"
+
+#include "frontend/grpc/RequestMessage.hpp"
+
 #include <catalogue/Catalogue.hpp>
+#include <grpcpp/grpcpp.h>
 #include <scheduler/Scheduler.hpp>
 
-#include "cta_frontend.pb.h"
 #include "cta_frontend.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
-#include "../RequestMessage.hpp"
-#include "CtaAdminServerWriteReactor.hpp"
+#include "cta_frontend.pb.h"
 
 namespace cta::frontend::grpc {
 

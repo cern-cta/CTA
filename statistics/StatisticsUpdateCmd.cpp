@@ -15,23 +15,24 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <cstdlib>
-#include <memory>
+#include "statistics/StatisticsUpdateCmd.hpp"
 
+#include "StatisticsService.hpp"
+#include "StatisticsServiceFactory.hpp"
 #include "catalogue/SchemaChecker.hpp"
 #include "common/Timer.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "statistics/StatisticsUpdateCmd.hpp"
 #include "statistics/StatisticsUpdateCmdLineArgs.hpp"
-#include "StatisticsService.hpp"
-#include "StatisticsServiceFactory.hpp"
+
+#include <cstdlib>
+#include <memory>
 
 namespace cta::statistics {
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
   const StatisticsUpdateCmdLineArgs cmdLineArgs(argc, argv);
 
   if (cmdLineArgs.help) {
@@ -51,15 +52,15 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
   std::unique_ptr<cta::catalogue::SchemaChecker> catalogueChecker;
   catalogueChecker = catalogueCheckerBuilder.build();
 
-  catalogue::SchemaCheckerResult result = catalogueChecker->checkTableContainsColumns("TAPE", {"VID",
-                                                                                               "DIRTY",
-                                                                                               "NB_MASTER_FILES",
-                                                                                               "MASTER_DATA_IN_BYTES",
-                                                                                               "NB_COPY_NB_1",
-                                                                                               "COPY_NB_1_IN_BYTES",
-                                                                                               "NB_COPY_NB_GT_1",
-                                                                                               "COPY_NB_GT_1_IN_BYTES"
-                                                                                              });
+  catalogue::SchemaCheckerResult result = catalogueChecker->checkTableContainsColumns("TAPE",
+                                                                                      {"VID",
+                                                                                       "DIRTY",
+                                                                                       "NB_MASTER_FILES",
+                                                                                       "MASTER_DATA_IN_BYTES",
+                                                                                       "NB_COPY_NB_1",
+                                                                                       "COPY_NB_1_IN_BYTES",
+                                                                                       "NB_COPY_NB_GT_1",
+                                                                                       "COPY_NB_GT_1_IN_BYTES"});
   result += catalogueChecker->checkTableContainsColumns("TAPE_FILE", {"VID", "ARCHIVE_FILE_ID", "FSEQ", "COPY_NB"});
   result += catalogueChecker->checkTableContainsColumns("ARCHIVE_FILE", {"ARCHIVE_FILE_ID", "SIZE_IN_BYTES"});
 
@@ -74,8 +75,8 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
   std::cout << "Updating tape statistics in the catalogue..." << std::endl;
   cta::utils::Timer t;
   service->updateStatisticsPerTape();
-  std::cout << "Updated catalogue tape statistics in " << t.secs() << " seconds, "
-            << service->getNbUpdatedTapes() << " tape(s) have been updated" << std::endl;
+  std::cout << "Updated catalogue tape statistics in " << t.secs() << " seconds, " << service->getNbUpdatedTapes()
+            << " tape(s) have been updated" << std::endl;
 
   return EXIT_SUCCESS;
 }
@@ -83,8 +84,8 @@ int StatisticsUpdateCmd::exceptionThrowingMain(const int argc, char *const *cons
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void StatisticsUpdateCmd::printUsage(std::ostream &os) {
+void StatisticsUpdateCmd::printUsage(std::ostream& os) {
   StatisticsUpdateCmdLineArgs::printUsage(os);
 }
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

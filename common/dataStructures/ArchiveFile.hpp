@@ -17,13 +17,13 @@
 
 #pragma once
 
+#include "common/checksum/ChecksumBlob.hpp"
+#include "common/dataStructures/DiskFileInfo.hpp"
+#include "common/dataStructures/TapeFile.hpp"
+
 #include <list>
 #include <map>
 #include <string>
-
-#include "common/dataStructures/DiskFileInfo.hpp"
-#include "common/dataStructures/TapeFile.hpp"
-#include "common/checksum/ChecksumBlob.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -31,9 +31,8 @@ namespace cta::common::dataStructures {
  * This struct holds all the CTA file metadata 
  */
 struct ArchiveFile {
-
   ArchiveFile() = default;
-  
+
   /**
    * Equality operator
    *
@@ -52,12 +51,13 @@ struct ArchiveFile {
   checksum::ChecksumBlob checksumBlob;
   std::string storageClass;
   DiskFileInfo diskFileInfo;
+
   /**
    * This list represents the non-necessarily-exhaustive set of tape copies 
    * to be listed by the operator. For example, if the listing requested is 
    * for a single tape, the map will contain only one element. 
    */
-  class TapeFilesList: public std::list<TapeFile> {
+  class TapeFilesList : public std::list<TapeFile> {
   public:
     using std::list<TapeFile>::list;
     TapeFile& at(uint8_t copyNb);
@@ -66,6 +66,7 @@ struct ArchiveFile {
     TapeFilesList::const_iterator find(uint8_t copyNb) const;
     void removeAllVidsExcept(std::string_view vid);
   };
+
   TapeFilesList tapeFiles;
   time_t creationTime = 0;
   time_t reconciliationTime = 0;
@@ -73,4 +74,4 @@ struct ArchiveFile {
 
 std::ostream& operator<<(std::ostream& os, const ArchiveFile& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

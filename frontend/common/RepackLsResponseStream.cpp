@@ -15,22 +15,23 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <set>
-#include <algorithm>
-
 #include "RepackLsResponseStream.hpp"
-#include "frontend/common/AdminCmdOptions.hpp"
+
 #include "common/dataStructures/RepackInfo.hpp"
+#include "frontend/common/AdminCmdOptions.hpp"
+
+#include <algorithm>
+#include <set>
 
 namespace cta::frontend {
 
-  RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue &catalogue,
-                                                 cta::Scheduler &scheduler,
-                                                 const std::string &instanceName,
-                                                 const admin::AdminCmd &adminCmd)
-          : CtaAdminResponseStream(catalogue, scheduler, instanceName),
-            m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
-    using namespace cta::admin;
+RepackLsResponseStream::RepackLsResponseStream(cta::catalogue::Catalogue& catalogue,
+                                               cta::Scheduler& scheduler,
+                                               const std::string& instanceName,
+                                               const admin::AdminCmd& adminCmd)
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
+      m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
+  using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request(adminCmd);
 
@@ -101,7 +102,8 @@ void RepackLsResponseStream::collectRepacks(const std::optional<std::string>& vi
     repackRequestItem->set_failed_to_archive_bytes(repackRequest.failedBytesToArchive);
     repackRequestItem->set_total_failed_files(repackRequest.failedFilesToRetrieve + repackRequest.failedFilesToArchive);
     repackRequestItem->set_status(toString(repackRequest.status));
-    uint64_t repackTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - repackRequest.creationLog.time;
+    uint64_t repackTime =
+      std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - repackRequest.creationLog.time;
     repackRequestItem->set_repack_finished_time(repackRequest.repackFinishedTime);
     if (repackRequest.repackFinishedTime != 0) {
       //repackFinishedTime != 0: repack is finished

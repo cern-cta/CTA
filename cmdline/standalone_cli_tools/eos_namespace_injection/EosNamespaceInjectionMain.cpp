@@ -15,23 +15,21 @@
  *               submit itself to any jurisdiction.
  */
 
-
-#include <sstream>
-#include <iostream>
-
-#include <XrdSsiPbLog.hpp>
-#include <XrdSsiPbIStreamBuffer.hpp>
-
 #include "cmdline/standalone_cli_tools/eos_namespace_injection/EosNamespaceInjection.hpp"
-#include "common/utils/utils.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/utils/utils.hpp"
+
+#include <XrdSsiPbIStreamBuffer.hpp>
+#include <XrdSsiPbLog.hpp>
+#include <iostream>
+#include <sstream>
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int main(const int argc, char *const *const argv) {
+int main(const int argc, char* const* const argv) {
   std::optional<std::string> hostName = std::getenv("HOSTNAME");
-  if(!hostName) {
+  if (!hostName) {
     hostName = "UNKNOWN";
   }
 

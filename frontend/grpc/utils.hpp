@@ -26,4 +26,4 @@ namespace cta::frontend::grpc::utils {
  */
 void read(const std::string& strPath, std::string& strValu);
 
-} // namespace cta::frontend::grpc::utils
+}  // namespace cta::frontend::grpc::utils

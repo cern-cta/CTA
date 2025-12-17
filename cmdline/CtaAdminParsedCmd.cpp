@@ -15,14 +15,15 @@
 *               submit itself to any jurisdiction.
 */
 
-#include <filesystem>
-#include <sstream>
-#include <iostream>
-#include <fstream>
+#include "CtaAdminParsedCmd.hpp"
 
-#include <cmdline/CtaAdminParsedCmd.hpp>
-#include <cmdline/CtaAdminTextFormatter.hpp>
+#include "CtaAdminTextFormatter.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
+
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 
@@ -152,11 +153,9 @@ void CtaAdminParsedCmd::parseOptions(int start, int argc, const char* const* con
         if (std::string(argv[i]) == "--all" || std::string(argv[i]) == "-a") {
           // Find the OPT_FLAG type --all option explicitly
           {
-            auto flag_it = std::find_if(
-                    options.begin(), options.end(),
-                    [](const Option &opt) {
-                      return opt.get_type() == Option::OPT_FLAG && (opt == opt_all);
-                    });
+            auto flag_it = std::find_if(options.begin(), options.end(), [](const Option& opt) {
+              return opt.get_type() == Option::OPT_FLAG && (opt == opt_all);
+            });
             if (flag_it != options.end()) {
               addOption(*flag_it, "");  // Add --all as a flag option
               continue;                 // Move to the next argument

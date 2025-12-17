@@ -15,15 +15,16 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/utils/utils.hpp"
-#include "common/exception/Exception.hpp"
-#include "rdbms/NullDbValue.hpp"
 #include "rdbms/wrapper/PostgresRset.hpp"
-#include "rdbms/wrapper/PostgresStmt.hpp"
-#include "rdbms/wrapper/PostgresConn.hpp"
-#include "common/process/threading/RWLockWrLocker.hpp"
-#include <cctype>
 
+#include "common/exception/Exception.hpp"
+#include "common/process/threading/RWLockWrLocker.hpp"
+#include "common/utils/utils.hpp"
+#include "rdbms/NullDbValue.hpp"
+#include "rdbms/wrapper/PostgresConn.hpp"
+#include "rdbms/wrapper/PostgresStmt.hpp"
+
+#include <cctype>
 #include <utility>
 
 namespace cta::rdbms::wrapper {
@@ -195,6 +196,7 @@ bool PostgresRset::columnExists(const std::string& colName) const {
   }
   return true;
 }
+
 //------------------------------------------------------------------------------
 // Get uint64_t value from a column with error handling
 //------------------------------------------------------------------------------
@@ -240,7 +242,6 @@ std::optional<std::string> PostgresRset::columnOptionalString(const std::string&
 
   // Construct std::string directly from PG buffer without intermediate copy
   return std::make_optional<std::string>(value, length);
-
 }
 
 //------------------------------------------------------------------------------
@@ -271,8 +272,8 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string& co
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
   if (!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                               " which is not a valid unsigned integer");
+    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue
+                               + " which is not a valid unsigned integer");
   }
 
   return utils::toUint16(stringValue);
@@ -292,8 +293,8 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string& co
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
   if (!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                               " which is not a valid unsigned integer");
+    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue
+                               + " which is not a valid unsigned integer");
   }
 
   return utils::toUint32(stringValue);
@@ -313,8 +314,8 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string& co
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
   if (!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                               " which is not a valid unsigned integer");
+    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue
+                               + " which is not a valid unsigned integer");
   }
 
   return utils::toUint64(stringValue);
@@ -334,8 +335,8 @@ std::optional<double> PostgresRset::columnOptionalDouble(const std::string& colN
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
   if (!utils::isValidDecimal(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue +
-                               " which is not a valid decimal");
+    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue
+                               + " which is not a valid decimal");
   }
 
   return utils::toDouble(stringValue);

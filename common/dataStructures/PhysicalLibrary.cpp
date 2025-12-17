@@ -1,4 +1,4 @@
-  /*
+/*
  * @project      The CERN Tape Archive (CTA)
  * @copyright    Copyright © 2021-2022 CERN
  * @license      This program is free software, distributed under the terms of the GNU General Public
@@ -27,17 +27,12 @@ PhysicalLibrary::PhysicalLibrary() = default;
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool PhysicalLibrary::operator==(const PhysicalLibrary &rhs) const {
-  return name==rhs.name
-      && manufacturer==rhs.manufacturer
-      && model==rhs.model
-      && type==rhs.type
-      && guiUrl==rhs.guiUrl
-      && webcamUrl==rhs.webcamUrl
-      && location==rhs.location
-      && nbPhysicalCartridgeSlots==rhs.nbPhysicalCartridgeSlots
-      && nbAvailableCartridgeSlots==rhs.nbAvailableCartridgeSlots
-      && nbPhysicalDriveSlots==rhs.nbPhysicalDriveSlots;
+bool PhysicalLibrary::operator==(const PhysicalLibrary& rhs) const {
+  return name == rhs.name && manufacturer == rhs.manufacturer && model == rhs.model && type == rhs.type
+         && guiUrl == rhs.guiUrl && webcamUrl == rhs.webcamUrl && location == rhs.location
+         && nbPhysicalCartridgeSlots == rhs.nbPhysicalCartridgeSlots
+         && nbAvailableCartridgeSlots == rhs.nbAvailableCartridgeSlots
+         && nbPhysicalDriveSlots == rhs.nbPhysicalDriveSlots;
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

@@ -17,44 +17,42 @@
 
 #pragma once
 
+#include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/log/DummyLogger.hpp"
+#include "rdbms/Login.hpp"
+#include "scheduler/LogicalLibrary.hpp"
+#include "scheduler/RetrieveRequestDump.hpp"
+#include "scheduler/SchedulerDatabaseFactory.hpp"
+#include "scheduler/rdbms/RelationalDB.hpp"
+
 #include <memory>
 #include <string>
 
-#include "common/dataStructures/SecurityIdentity.hpp"
-#include "common/log/DummyLogger.hpp"
-#include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/rdbms/RelationalDB.hpp"
-#include "scheduler/RetrieveRequestDump.hpp"
-#include "scheduler/SchedulerDatabaseFactory.hpp"
-#include "rdbms/Login.hpp"
-
 namespace cta::catalogue {
 
-    class Catalogue;
-
+class Catalogue;
 }
 
 namespace cta {
 
-class RelationalDBWrapper: public SchedulerDatabaseDecorator {
-
+class RelationalDBWrapper : public SchedulerDatabaseDecorator {
 private:
-    std::unique_ptr <cta::log::Logger> m_logger;
-    cta::catalogue::Catalogue& m_catalogue;
-    RelationalDB m_RelationalDB;
+  std::unique_ptr<cta::log::Logger> m_logger;
+  cta::catalogue::Catalogue& m_catalogue;
+  RelationalDB m_RelationalDB;
 
 public:
-  RelationalDBWrapper(const std::string &ownerId,
-                         std::unique_ptr<cta::log::Logger> logger,
-                         catalogue::Catalogue &catalogue,
-                         const rdbms::Login &login,
-                         const uint64_t nbConns) :
-      SchedulerDatabaseDecorator(m_RelationalDB),
-      m_logger(std::move(logger)), m_catalogue(catalogue),
-      m_RelationalDB(ownerId, *logger, catalogue, login, nbConns)
-   {
-     // empty
-   }
+  RelationalDBWrapper(const std::string& ownerId,
+                      std::unique_ptr<cta::log::Logger> logger,
+                      catalogue::Catalogue& catalogue,
+                      const rdbms::Login& login,
+                      const uint64_t nbConns)
+      : SchedulerDatabaseDecorator(m_RelationalDB),
+        m_logger(std::move(logger)),
+        m_catalogue(catalogue),
+        m_RelationalDB(ownerId, *logger, catalogue, login, nbConns) {
+    // empty
+  }
 
   ~RelationalDBWrapper() noexcept {}
 };
@@ -63,12 +61,12 @@ public:
  * A concrete implementation of a scheduler database factory that creates mock
  * scheduler database objects.
  */
-class RelationalDBFactory: public SchedulerDatabaseFactory {
+class RelationalDBFactory : public SchedulerDatabaseFactory {
 public:
   /**
    * Constructor
    */
-  explicit RelationalDBFactory(const std::string & URL = ""): m_URL(URL) {}
+  explicit RelationalDBFactory(const std::string& URL = "") : m_URL(URL) {}
 
   /**
    * Destructor.
@@ -80,8 +78,8 @@ public:
    *
    * @return A newly created scheduler database object.
    */
-  std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue> &catalogue) const {
-    auto dummylogger = std::make_unique<cta::log::DummyLogger>("","");
+  std::unique_ptr<SchedulerDatabase> create(std::unique_ptr<cta::catalogue::Catalogue>& catalogue) const {
+    auto dummylogger = std::make_unique<cta::log::DummyLogger>("", "");
     auto logger = std::unique_ptr<cta::log::Logger>(std::move(dummylogger));
 
     cta::rdbms::Login login(cta::rdbms::Login::DBTYPE_POSTGRESQL, "user", "password", "", "host", 0, "namespace");
@@ -90,8 +88,8 @@ public:
     return std::unique_ptr<SchedulerDatabase>(std::move(pgwrapper));
   }
 
-  private:
-    std::string m_URL;
+private:
+  std::string m_URL;
 };  // class RelationalDBFactory
 
-} // namespace cta::catalogue
+}  // namespace cta

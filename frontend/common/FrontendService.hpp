@@ -64,9 +64,7 @@ public:
    *
    * @return value of cta.schedulerdb.scheduler_backend_name from the CTA frontend config file
    */
-  const std::string& getSchedulerBackendName() const {
-      return m_schedulerBackendName;
-  }
+  const std::string& getSchedulerBackendName() const { return m_schedulerBackendName; }
 
   /*!
    * Get missing tape file copies minimum age

@@ -15,8 +15,8 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 // This is a simplified main for integration tests. There is not point in using
 // valgrind with it, and we will not use gmock with it either (pure gtest).

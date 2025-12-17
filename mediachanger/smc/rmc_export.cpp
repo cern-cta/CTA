@@ -16,13 +16,14 @@
  */
 
 /*      rmc_export - export/eject a cartridge from the robot */
-#include <stdlib.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <netinet/in.h>
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/serrno.hpp"
 #include "rmc_api.hpp"
+
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 int rmc_export(const char* const server, const char* const vid) {
   int c;

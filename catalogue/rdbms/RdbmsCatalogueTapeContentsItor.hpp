@@ -19,19 +19,20 @@
 
 #include "catalogue/ArchiveFileBuilder.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/log/Logger.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "rdbms/Stmt.hpp"
 #include "rdbms/Rset.hpp"
+#include "rdbms/Stmt.hpp"
 
 namespace cta::catalogue {
 
 /**
  * Iteratess across the tape files that make up the contents of a given tape.
  */
-class RdbmsCatalogueTapeContentsItor: public ArchiveFileItor::Impl {
+class RdbmsCatalogueTapeContentsItor : public ArchiveFileItor::Impl {
 public:
   /**
    * Constructor.
@@ -40,10 +41,7 @@ public:
    * @param connPool The database connection pool.
    * @param vid The volume identifier of the tape.
    */
-  RdbmsCatalogueTapeContentsItor(
-    log::Logger &log,
-    rdbms::ConnPool &connPool,
-    const std::string &vid);
+  RdbmsCatalogueTapeContentsItor(log::Logger& log, rdbms::ConnPool& connPool, const std::string& vid);
 
   /**
    * Destructor.
@@ -61,11 +59,10 @@ public:
   common::dataStructures::ArchiveFile next() override;
 
 private:
-
   /**
    * Object representing the API to the CTA logging system.
    */
-  log::Logger &m_log;
+  log::Logger& m_log;
 
   /**
    * The volume identifier of the tape.
@@ -108,6 +105,6 @@ private:
    */
   void releaseDbResources() noexcept;
 
-}; // class RdbmsCatalogueTapeContentsItor
+};  // class RdbmsCatalogueTapeContentsItor
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

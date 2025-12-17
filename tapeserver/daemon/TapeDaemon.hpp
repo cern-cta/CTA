@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "common/process/threading/Daemon.hpp"
 #include "common/CmdLineParams.hpp"
+#include "common/process/threading/Daemon.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
 namespace cta::tape::daemon {
@@ -27,17 +27,14 @@ namespace cta::tape::daemon {
  * drives drives connected to a tape server. */
 
 class TapeDaemon : public cta::server::Daemon {
-
 public:
-
   /** Constructor.
    * @param commandLine The parameters extracted from the command line.
    * @param log The object representing the API of the CTA logging system.
    * @param globalConfig The configuration of the tape server. */
-  TapeDaemon(
-    const cta::common::CmdLineParams & commandLine,
-    cta::log::Logger &log,
-    const common::TapedConfiguration &globalConfig);
+  TapeDaemon(const cta::common::CmdLineParams& commandLine,
+             cta::log::Logger& log,
+             const common::TapedConfiguration& globalConfig);
 
   ~TapeDaemon() final;
 
@@ -63,7 +60,7 @@ protected:
   /**
    * The program name of the daemon.
    */
-  const std::string m_programName{"cta-taped"};
-}; // class TapeDaemon
+  const std::string m_programName {"cta-taped"};
+};  // class TapeDaemon
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon

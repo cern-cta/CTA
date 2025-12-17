@@ -17,14 +17,14 @@
 
 #include "SignalReactor.hpp"
 
-#include <signal.h>
-#include <sys/prctl.h>
-#include <chrono>
-#include <thread>
-
+#include "SignalUtils.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "SignalUtils.hpp"
+
+#include <chrono>
+#include <signal.h>
+#include <sys/prctl.h>
+#include <thread>
 
 namespace cta::process {
 

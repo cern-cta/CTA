@@ -23,8 +23,8 @@
 #include "rdbms/wrapper/RsetWrapper.hpp"
 
 #include <memory>
-#include <stdint.h>
 #include <sqlite3.h>
+#include <stdint.h>
 
 namespace cta::rdbms::wrapper {
 
@@ -99,19 +99,31 @@ public:
    * @param colName
    * @return
    */
-  uint8_t columnUint8NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  uint8_t columnUint8NoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
-  uint16_t columnUint16NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  uint16_t columnUint16NoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
-  uint32_t columnUint32NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  uint32_t columnUint32NoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
-  uint64_t columnUint64NoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  uint64_t columnUint64NoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
   bool columnExists(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
-  std::string columnStringNoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  std::string columnStringNoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
-  double columnDoubleNoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
+  double columnDoubleNoOpt(const std::string& colName) const override {
+    throw cta::exception::NotImplementedException();
+  };
 
   bool columnBoolNoOpt(const std::string& colName) const override { throw cta::exception::NotImplementedException(); };
 
@@ -131,7 +143,7 @@ public:
    */
   std::string columnBlob(const std::string& colName) const override;
 
- /**
+  /**
   * Returns the value of the specified column as a non-owning view over a binary large object (BLOB).
   *
   * This method provides direct access to the binary data stored in the specified column using

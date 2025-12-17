@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include "common/exception/Exception.hpp"
-#include "common/Constants.hpp"
 #include "Constants.hpp"
+#include "common/Constants.hpp"
+#include "common/exception/Exception.hpp"
 
 namespace cta::mediachanger {
 
@@ -29,8 +29,8 @@ namespace cta::mediachanger {
 struct RmcMountMsgBody {
   uint32_t uid = 0;
   uint32_t gid = 0;
-  char unusedLoader[1]; // Should always be set to the empty string
-  char vid[CA_MAXVIDLEN+1];
+  char unusedLoader[1];  // Should always be set to the empty string
+  char vid[CA_MAXVIDLEN + 1];
   uint16_t side = 0;
   uint16_t drvOrd = 0;
 
@@ -47,7 +47,6 @@ struct RmcMountMsgBody {
   uint32_t bodyLen() const;
 
   static const RequestType requestType = RMC_MOUNT;
-}; // struct RmcMountMsgBody
+};  // struct RmcMountMsgBody
 
-} // namespace cta::mediachanger
-
+}  // namespace cta::mediachanger

@@ -15,29 +15,27 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <signal.h>
-#include <sys/prctl.h>
-#include <chrono>
-#include <thread>
-
-#include "RoutineRunner.hpp"
 #include "RoutineRunnerFactory.hpp"
+
+#include "IRoutine.hpp"
+#include "RoutineRunner.hpp"
+#include "catalogue/CatalogueFactory.hpp"
+#include "catalogue/CatalogueFactoryFactory.hpp"
+#include "common/exception/Errnum.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "rdbms/Login.hpp"
 #include "routines/disk/DiskReportArchiveRoutine.hpp"
 #include "routines/disk/DiskReportRetrieveRoutine.hpp"
 #include "routines/repack/RepackExpandRoutine.hpp"
 #include "routines/repack/RepackReportRoutine.hpp"
-#include "routines/scheduler/objectstore/QueueCleanupRoutine.hpp"
 #include "routines/scheduler/objectstore/GarbageCollectRoutine.hpp"
+#include "routines/scheduler/objectstore/QueueCleanupRoutine.hpp"
 
-#include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/CatalogueFactoryFactory.hpp"
-#include "common/exception/Errnum.hpp"
-#include "common/semconv/Attributes.hpp"
-#include "rdbms/Login.hpp"
-
-#include "common/exception/Exception.hpp"
-
-#include "IRoutine.hpp"
+#include <chrono>
+#include <signal.h>
+#include <sys/prctl.h>
+#include <thread>
 
 namespace cta::maintd {
 

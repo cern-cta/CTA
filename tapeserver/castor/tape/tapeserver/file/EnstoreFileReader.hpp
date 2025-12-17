@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include <fstream>
-#include <memory>
-
 #include "castor/tape/tapeserver/file/CpioFileHeaderStructure.hpp"
 #include "castor/tape/tapeserver/file/FileReader.hpp"
+
+#include <fstream>
+#include <memory>
 
 namespace castor::tape::tapeFile {
 
@@ -44,17 +44,17 @@ public:
     */
   ~EnstoreFileReader() override = default;
 
-  size_t readNextDataBlock(void *data, const size_t size) override;
+  size_t readNextDataBlock(void* data, const size_t size) override;
 
 private:
   // Stuff for CPIO file
   CPIO m_cpioHeader;
   uint64_t m_ui64CPIODataSize = 0;
 
-  void setPositioningMethod(const cta::PositioningMethod &newMethod);
-  void positionByFseq(const cta::RetrieveJob &fileToRecall) override;
-  void positionByBlockID(const cta::RetrieveJob &fileToRecall) override;
+  void setPositioningMethod(const cta::PositioningMethod& newMethod);
+  void positionByFseq(const cta::RetrieveJob& fileToRecall) override;
+  void positionByBlockID(const cta::RetrieveJob& fileToRecall) override;
   void setBlockSize(const size_t uiBlockSize);
 };
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

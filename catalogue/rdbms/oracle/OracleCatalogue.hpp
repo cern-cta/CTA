@@ -17,17 +17,17 @@
 
 #pragma once
 
-#include <string>
-
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "rdbms/Conn.hpp"
+
+#include <string>
 
 namespace cta::catalogue {
 
 /**
  * An Oracle based implementation of the CTA catalogue.
  */
-class OracleCatalogue: public RdbmsCatalogue {
+class OracleCatalogue : public RdbmsCatalogue {
 public:
   /**
    * Constructor.
@@ -58,8 +58,8 @@ public:
    * @param diskFileIds List of disk file IDs (fxid).
    * @return Name of the temporary table
    */
-  std::string createAndPopulateTempTableFxid(rdbms::Conn &conn,
-    const std::optional<std::vector<std::string>> &diskFileIds) const override;
-}; // class OracleCatalogue
+  std::string createAndPopulateTempTableFxid(rdbms::Conn& conn,
+                                             const std::optional<std::vector<std::string>>& diskFileIds) const override;
+};  // class OracleCatalogue
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

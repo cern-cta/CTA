@@ -15,13 +15,14 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/StmtTest.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/CheckConstraintError.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/NullDbValue.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
-#include "rdbms/StmtTest.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
 
 #include <gtest/gtest.h>
@@ -34,7 +35,7 @@ namespace unitTests {
 void cta_rdbms_StmtTest::SetUp() {
   using namespace cta::rdbms;
 
-  if(!m_connPool) {
+  if (!m_connPool) {
     m_login = GetParam()->create();
     const uint64_t maxNbConns = 1;
     m_connPool = std::make_unique<ConnPool>(m_login, maxNbConns);
@@ -45,7 +46,7 @@ void cta_rdbms_StmtTest::SetUp() {
 
   try {
     m_conn.executeNonQuery(R"SQL(DROP TABLE STMT_TEST)SQL");
-  } catch(...) {
+  } catch (...) {
     // Do nothing
   }
 
@@ -76,37 +77,35 @@ std::string cta_rdbms_StmtTest::getCreateStmtTestTableSql() {
     )
   )SQL";
 
-  switch(m_login.dbType) {
-  case Login::DBTYPE_IN_MEMORY:
-    break;
-  case Login::DBTYPE_ORACLE:
-    utils::searchAndReplace(sql, "UINT8TYPE", "NUMERIC(3, 0)");
-    utils::searchAndReplace(sql, "UINT16TYPE", "NUMERIC(5, 0)");
-    utils::searchAndReplace(sql, "UINT32TYPE", "NUMERIC(10, 0)");
-    utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
-    utils::searchAndReplace(sql, "VARCHAR", "VARCHAR2");
-    utils::searchAndReplace(sql, "BLOBTYPE", "RAW(200)");
-    break;
-  case Login::DBTYPE_SQLITE:
-    utils::searchAndReplace(sql, "UINT8TYPE", "INTEGER");
-    utils::searchAndReplace(sql, "UINT16TYPE", "INTEGER");
-    utils::searchAndReplace(sql, "UINT32TYPE", "INTEGER");
-    utils::searchAndReplace(sql, "UINT64TYPE", "INTEGER");
-    utils::searchAndReplace(sql, "BLOBTYPE", "BLOB(200)");
-    break;
-  case Login::DBTYPE_POSTGRESQL:
-    utils::searchAndReplace(sql, "UINT8TYPE", "NUMERIC(3, 0)");
-    utils::searchAndReplace(sql, "UINT16TYPE", "NUMERIC(5, 0)");
-    utils::searchAndReplace(sql, "UINT32TYPE", "NUMERIC(10, 0)");
-    utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
-    utils::searchAndReplace(sql, "BLOBTYPE", "BYTEA");
-    break;
-  case Login::DBTYPE_NONE:
-    {
+  switch (m_login.dbType) {
+    case Login::DBTYPE_IN_MEMORY:
+      break;
+    case Login::DBTYPE_ORACLE:
+      utils::searchAndReplace(sql, "UINT8TYPE", "NUMERIC(3, 0)");
+      utils::searchAndReplace(sql, "UINT16TYPE", "NUMERIC(5, 0)");
+      utils::searchAndReplace(sql, "UINT32TYPE", "NUMERIC(10, 0)");
+      utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
+      utils::searchAndReplace(sql, "VARCHAR", "VARCHAR2");
+      utils::searchAndReplace(sql, "BLOBTYPE", "RAW(200)");
+      break;
+    case Login::DBTYPE_SQLITE:
+      utils::searchAndReplace(sql, "UINT8TYPE", "INTEGER");
+      utils::searchAndReplace(sql, "UINT16TYPE", "INTEGER");
+      utils::searchAndReplace(sql, "UINT32TYPE", "INTEGER");
+      utils::searchAndReplace(sql, "UINT64TYPE", "INTEGER");
+      utils::searchAndReplace(sql, "BLOBTYPE", "BLOB(200)");
+      break;
+    case Login::DBTYPE_POSTGRESQL:
+      utils::searchAndReplace(sql, "UINT8TYPE", "NUMERIC(3, 0)");
+      utils::searchAndReplace(sql, "UINT16TYPE", "NUMERIC(5, 0)");
+      utils::searchAndReplace(sql, "UINT32TYPE", "NUMERIC(10, 0)");
+      utils::searchAndReplace(sql, "UINT64TYPE", "NUMERIC(20, 0)");
+      utils::searchAndReplace(sql, "BLOBTYPE", "BYTEA");
+      break;
+    case Login::DBTYPE_NONE: {
       throw exception::Exception("Cannot create SQL for database type DBTYPE_NONE");
     }
-  default:
-    {
+    default: {
       std::ostringstream msg;
       msg << "Unknown database type: intVal=" << m_login.dbType;
       throw exception::Exception(msg.str());
@@ -123,7 +122,7 @@ void cta_rdbms_StmtTest::TearDown() {
   using namespace cta::rdbms;
   try {
     m_conn.executeNonQuery(R"SQL(DROP TABLE STMT_TEST)SQL");
-  } catch(...) {
+  } catch (...) {
     // Do nothing
   }
 }
@@ -163,7 +162,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble) {
     {
       const auto selectValue = rset.columnOptionalDouble("DOUBLE_COL");
 
-      ASSERT_TRUE((bool)selectValue);
+      ASSERT_TRUE((bool) selectValue);
 
       const double diff = insertValue - selectValue.value();
       ASSERT_TRUE(0.000001 > diff);
@@ -222,11 +221,10 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBlob) {
   }
 }
 
-
 TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble_null) {
   using namespace cta::rdbms;
 
-  const std::optional<double> insertValue; // Null value
+  const std::optional<double> insertValue;  // Null value
 
   // Insert a row into the test table
   {
@@ -257,7 +255,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindDouble_null) {
 
     const auto selectValue = rset.columnOptionalDouble("DOUBLE_COL");
 
-    ASSERT_FALSE((bool)selectValue);
+    ASSERT_FALSE((bool) selectValue);
 
     ASSERT_THROW(rset.columnDouble("DOUBLE_COL"), NullDbValue);
 
@@ -300,7 +298,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8) {
     {
       const auto selectValue = rset.columnOptionalUint8("UINT8_COL");
 
-      ASSERT_TRUE((bool)selectValue);
+      ASSERT_TRUE((bool) selectValue);
 
       ASSERT_EQ(insertValue, selectValue.value());
     }
@@ -346,7 +344,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_2_pow_8_minus_1) {
     {
       const auto selectValue = rset.columnOptionalUint8("UINT8_COL");
 
-      ASSERT_TRUE((bool)selectValue);
+      ASSERT_TRUE((bool) selectValue);
 
       ASSERT_EQ(insertValue, selectValue.value());
     }
@@ -360,7 +358,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_2_pow_8_minus_1) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_null) {
   using namespace cta::rdbms;
 
-  const std::optional<uint8_t> insertValue; // Null value
+  const std::optional<uint8_t> insertValue;  // Null value
 
   // Insert a row into the test table
   {
@@ -391,14 +389,13 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint8_null) {
 
     const auto selectValue = rset.columnOptionalUint8("UINT8_COL");
 
-    ASSERT_FALSE((bool)selectValue);
+    ASSERT_FALSE((bool) selectValue);
 
     ASSERT_THROW(rset.columnUint8("UINT8_COL"), NullDbValue);
 
     ASSERT_FALSE(rset.next());
   }
 }
-
 
 TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16) {
   using namespace cta::rdbms;
@@ -434,7 +431,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16) {
 
     const auto selectValue = rset.columnOptionalUint16("UINT16_COL");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
 
@@ -478,7 +475,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_2_pow_16_minus_1) {
 
     const auto selectValue = rset.columnOptionalUint16("UINT16_COL");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
 
@@ -491,7 +488,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_2_pow_16_minus_1) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_null) {
   using namespace cta::rdbms;
 
-  const std::optional<uint16_t> insertValue; // Null value
+  const std::optional<uint16_t> insertValue;  // Null value
 
   // Insert a row into the test table
   {
@@ -522,7 +519,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint16_null) {
 
     const auto selectValue = rset.columnOptionalUint16("UINT16_COL");
 
-    ASSERT_FALSE((bool)selectValue);
+    ASSERT_FALSE((bool) selectValue);
 
     ASSERT_THROW(rset.columnUint16("UINT16_COL"), NullDbValue);
 
@@ -564,7 +561,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32) {
 
     const auto selectValue = rset.columnOptionalUint32("UINT32_COL");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
 
@@ -608,7 +605,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_2_pow_32_minus_1) {
 
     const auto selectValue = rset.columnOptionalUint32("UINT32_COL");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
     ASSERT_EQ(insertValue, rset.columnUint32("UINT32_COL"));
@@ -620,7 +617,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_2_pow_32_minus_1) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_null) {
   using namespace cta::rdbms;
 
-  const std::optional<uint32_t> insertValue; // Null value
+  const std::optional<uint32_t> insertValue;  // Null value
 
   // Insert a row into the test table
   {
@@ -651,7 +648,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint32_null) {
 
     const auto selectValue = rset.columnOptionalUint32("UINT32_COL");
 
-    ASSERT_FALSE((bool)selectValue);
+    ASSERT_FALSE((bool) selectValue);
 
     ASSERT_THROW(rset.columnUint32("UINT32_COL"), NullDbValue);
 
@@ -693,7 +690,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64) {
 
     const auto selectValue = rset.columnOptionalUint64("UINT64_COL");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
 
@@ -737,7 +734,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_1) {
 
     const auto selectValue = rset.columnOptionalUint64("UINT64_COL");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
 
@@ -781,7 +778,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_2) {
 
     const auto selectValue = rset.columnOptionalUint64("UINT64_COL");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
 
@@ -794,7 +791,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindUint64_2_pow_64_minus_2) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindString_null) {
   using namespace cta::rdbms;
 
-  const std::optional<std::string> insertValue; // Null value
+  const std::optional<std::string> insertValue;  // Null value
 
   // Insert a row into the test table
   {
@@ -825,7 +822,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString_null) {
 
     const auto selectValue = rset.columnOptionalString("STRING_COL");
 
-    ASSERT_FALSE((bool)selectValue);
+    ASSERT_FALSE((bool) selectValue);
 
     ASSERT_THROW(rset.columnString("STRING_COL"), NullDbValue);
 
@@ -867,7 +864,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString) {
 
     const auto selectValue = rset.columnOptionalString("STRING_COL");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
 
@@ -880,7 +877,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindString) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_null) {
   using namespace cta::rdbms;
 
-  const std::optional<bool> insertValue; // Null value
+  const std::optional<bool> insertValue;  // Null value
 
   // Insert a row into the test table
   {
@@ -911,7 +908,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_null) {
 
     const auto selectValue = rset.columnOptionalBool("BOOL_COL");
 
-    ASSERT_FALSE((bool)selectValue);
+    ASSERT_FALSE((bool) selectValue);
 
     ASSERT_THROW(rset.columnBool("BOOL_COL"), NullDbValue);
 
@@ -953,7 +950,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_true) {
 
     const auto selectValue = rset.columnOptionalBool("BOOL_COL");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
 
@@ -997,7 +994,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_false) {
 
     const auto selectValue = rset.columnOptionalBool("BOOL_COL");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
 
@@ -1010,7 +1007,7 @@ TEST_P(cta_rdbms_StmtTest, insert_with_bindBool_false) {
 TEST_P(cta_rdbms_StmtTest, insert_with_bindString_invalid_bool_value) {
   using namespace cta::rdbms;
 
-  const std::string insertValue = "2"; // null, "0" and "1" are valid values
+  const std::string insertValue = "2";  // null, "0" and "1" are valid values
 
   // Insert a row into the test table
   {
@@ -1061,7 +1058,7 @@ TEST_P(cta_rdbms_StmtTest, insert_same_primary_twice) {
 
     const auto selectValue = rset.columnOptionalUint64("ID");
 
-    ASSERT_TRUE((bool)selectValue);
+    ASSERT_TRUE((bool) selectValue);
 
     ASSERT_EQ(insertValue, selectValue.value());
 
@@ -1091,4 +1088,4 @@ TEST_P(cta_rdbms_StmtTest, insert_same_primary_twice) {
   }
 }
 
-} // namespace unitTests
+}  // namespace unitTests

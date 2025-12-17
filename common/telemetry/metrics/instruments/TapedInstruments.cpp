@@ -16,13 +16,13 @@
  */
 #include "TapedInstruments.hpp"
 
-#include <opentelemetry/metrics/provider.h>
-
-#include "version.h"
-#include "common/telemetry/metrics/InstrumentRegistry.hpp"
-#include "common/telemetry/metrics/MetricsUtils.hpp"
 #include "common/semconv/Meter.hpp"
 #include "common/semconv/Metrics.hpp"
+#include "common/telemetry/metrics/InstrumentRegistry.hpp"
+#include "common/telemetry/metrics/MetricsUtils.hpp"
+#include "version.h"
+
+#include <opentelemetry/metrics/provider.h>
 
 namespace cta::telemetry::metrics {
 

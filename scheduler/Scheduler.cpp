@@ -15,21 +15,7 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
-
-#include <algorithm>
-#include <chrono>
-#include <cstdlib>
-#include <iomanip>
-#include <iostream>
-#include <random>
-#include <sstream>
-#include <regex>
-
-#include <opentelemetry/context/runtime_context.h>
+#include "scheduler/Scheduler.hpp"
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueItor.hpp"
@@ -37,22 +23,35 @@
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/TapePool.hpp"
 #include "common/Constants.hpp"
+#include "common/Timer.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
-#include "common/exception/NonRetryableError.hpp"
 #include "common/exception/NoSuchObject.hpp"
+#include "common/exception/NonRetryableError.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
-#include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFileImplementations.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
-#include "scheduler/Scheduler.hpp"
+
+#include <algorithm>
+#include <chrono>
+#include <cstdlib>
+#include <iomanip>
+#include <iostream>
+#include <opentelemetry/context/runtime_context.h>
+#include <random>
+#include <regex>
+#include <sstream>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
 
 namespace cta {
 
@@ -152,8 +151,9 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   using utils::postEllipsis;
 
   if (!request.fileSize) {
-    throw cta::exception::UserError(std::string("In Scheduler::queueArchiveWithGivenId(): Rejecting archive request for zero-length file: ") +
-                                    request.diskFileInfo.path);
+    throw cta::exception::UserError(
+      std::string("In Scheduler::queueArchiveWithGivenId(): Rejecting archive request for zero-length file: ")
+      + request.diskFileInfo.path);
   }
 
   const auto queueCriteria =
@@ -236,8 +236,8 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     queueCriteria.archiveFile.tapeFiles.removeAllVidsExcept(*request.vid);
     if (queueCriteria.archiveFile.tapeFiles.empty()) {
       exception::UserError ex;
-      ex.getMessage() << "In Scheduler::queueRetrieve(): VID " << *request.vid << " does not contain a tape copy of file with archive file ID "
-                      << request.archiveFileID;
+      ex.getMessage() << "In Scheduler::queueRetrieve(): VID " << *request.vid
+                      << " does not contain a tape copy of file with archive file ID " << request.archiveFileID;
       throw ex;
     }
   }
@@ -380,31 +380,31 @@ void Scheduler::checkTapeCanBeRepacked(const std::string& vid,
       case common::dataStructures::Tape::DISABLED:
       case common::dataStructures::Tape::ACTIVE:
         throw exception::UserError(
-          std::string("You cannot repack a tape that is ") +
-          common::dataStructures::Tape::stateToString(tapeToCheck.state) + ". You must first change its state to " +
-          common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING) + ".");
+          std::string("You cannot repack a tape that is ")
+          + common::dataStructures::Tape::stateToString(tapeToCheck.state) + ". You must first change its state to "
+          + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING) + ".");
 
       case common::dataStructures::Tape::BROKEN:
       case common::dataStructures::Tape::BROKEN_PENDING:
       case common::dataStructures::Tape::EXPORTED:
       case common::dataStructures::Tape::EXPORTED_PENDING:
-        throw exception::UserError(std::string("You cannot repack a tape that is ") +
-                                   common::dataStructures::Tape::stateToString(tapeToCheck.state) + ".");
+        throw exception::UserError(std::string("You cannot repack a tape that is ")
+                                   + common::dataStructures::Tape::stateToString(tapeToCheck.state) + ".");
 
       case common::dataStructures::Tape::REPACKING_PENDING:
         throw exception::UserError(
-          std::string("You cannot repack a tape that is ") +
-          common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_PENDING) +
-          ". You must wait for its state to complete the transition to " +
-          common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING) + ".");
+          std::string("You cannot repack a tape that is ")
+          + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_PENDING)
+          + ". You must wait for its state to complete the transition to "
+          + common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING) + ".");
 
       case common::dataStructures::Tape::REPACKING:
       case common::dataStructures::Tape::REPACKING_DISABLED:
         break;  // OK to repack!
 
       default:
-        throw exception::UserError(std::string("You cannot repack the tape with VID ") + vid +
-                                   ". The current state is unknown.");
+        throw exception::UserError(std::string("You cannot repack the tape with VID ") + vid
+                                   + ". The current state is unknown.");
     }
   } catch (const exception::UserError&) {
     throw;
@@ -422,7 +422,9 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
   // Check request sanity
   SchedulerDatabase::QueueRepackRequest repackRequestToQueue = repackRequest;
   repackRequestToQueue.m_creationLog =
-    common::dataStructures::EntryLog(cliIdentity.username, cliIdentity.host, ::std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+    common::dataStructures::EntryLog(cliIdentity.username,
+                                     cliIdentity.host,
+                                     ::std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   std::string vid = repackRequest.m_vid;
   std::string repackBufferURL = repackRequest.m_repackBufferURL;
   if (vid.empty()) {
@@ -518,8 +520,8 @@ void Scheduler::promoteRepackRequestsToToExpand(log::LogContext& lc, size_t repa
   // Statistics are supposed to be initialized for each status value. We only try to
   // expand if there are requests available in Pending status.
   using Status = common::dataStructures::RepackInfo::Status;
-  if (repackStatsNL->at(Status::Pending) &&
-      (targetAvailableRequests > repackStatsNL->at(Status::ToExpand) + repackStatsNL->at(Status::Starting))) {
+  if (repackStatsNL->at(Status::Pending)
+      && (targetAvailableRequests > repackStatsNL->at(Status::ToExpand) + repackStatsNL->at(Status::Starting))) {
     // Let's try to promote a repack request. Take the lock.
     repackStatsNL.reset();
     decltype(m_db.getRepackStatistics()) repackStats;
@@ -529,8 +531,8 @@ void Scheduler::promoteRepackRequestsToToExpand(log::LogContext& lc, size_t repa
       // Nothing to promote after all.
       return;
     }
-    if (repackStats->at(Status::Pending) &&
-        (targetAvailableRequests > repackStats->at(Status::ToExpand) + repackStats->at(Status::Starting))) {
+    if (repackStats->at(Status::Pending)
+        && (targetAvailableRequests > repackStats->at(Status::ToExpand) + repackStats->at(Status::Starting))) {
       auto requestsToPromote = targetAvailableRequests;
       requestsToPromote -= repackStats->at(Status::ToExpand);
       requestsToPromote -= repackStats->at(Status::Starting);
@@ -560,7 +562,6 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
   return nullptr;
 }
 
-
 //------------------------------------------------------------------------------
 // expandRepackRequest
 //------------------------------------------------------------------------------
@@ -581,9 +582,9 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   cta::common::dataStructures::ArchiveRoute::FullMap archiveRoutesMap;
   for (const auto& route : routes) {
     //insert the route into the map to allow a quick retrieval
-    if (route.type == common::dataStructures::ArchiveRouteType::DEFAULT &&
-        archiveRoutesMap.count(route.storageClassName) &&
-        archiveRoutesMap[route.storageClassName].count(route.copyNb)) {
+    if (route.type == common::dataStructures::ArchiveRouteType::DEFAULT
+        && archiveRoutesMap.count(route.storageClassName)
+        && archiveRoutesMap[route.storageClassName].count(route.copyNb)) {
       // A DEFAULT archive route type should not override a previously found one
       continue;
     }
@@ -622,8 +623,8 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
       }
     } catch (const exception::XrdClException& ex) {
       throw ExpandRepackRequestException(
-        "In Scheduler::expandRepackRequest(): errors while doing some checks on the repack buffer. ExceptionMsg = " +
-        ex.getMessageValue());
+        "In Scheduler::expandRepackRequest(): errors while doing some checks on the repack buffer. ExceptionMsg = "
+        + ex.getMessageValue());
     }
   }
 
@@ -632,14 +633,12 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   if (!repackRequest || !repackRequest->m_dbReq) {
     lc.log(log::ERR, "In Scheduler::expandRepackRequest():  m_dbReq is null!");
   }
-  try{
+  try {
     repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
-   } catch (cta::exception::Exception &e) {
-      std::string bt = e.backtrace();
-      lc.log(log::ERR,
-               "In Scheduler::expandRepackRequest(): setExpandStartedAndChangeStatus() Exception thrown: " +
-               bt);
-    }
+  } catch (cta::exception::Exception& e) {
+    std::string bt = e.backtrace();
+    lc.log(log::ERR, "In Scheduler::expandRepackRequest(): setExpandStartedAndChangeStatus() Exception thrown: " + bt);
+  }
   lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after  setExpandStartedAndChangeStatus().");
 
   uint64_t nbRetrieveSubrequestsQueued = 0;
@@ -677,25 +676,28 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   }
 
   if (repackInfo.noRecall) {
-    archiveFilesFromCatalogue.remove_if([&repackInfo,
-                                         &filesInDirectory](const common::dataStructures::ArchiveFile& archiveFile) {
-      //We remove all the elements that are not in the repack buffer so that we don't recall them
-      return std::find_if(filesInDirectory.begin(),
-                          filesInDirectory.end(),
-                          [&archiveFile, &repackInfo](const std::string& fseq) {
-                            //If we find a tape file that has the current fseq and belongs to the VID to repack, then we DON'T remove it from
-                            //the archiveFilesFromCatalogue list
-                            return std::find_if(archiveFile.tapeFiles.begin(),
-                                                archiveFile.tapeFiles.end(),
-                                                [&repackInfo, &fseq](const common::dataStructures::TapeFile& tapeFile) {
-                                                  //Can we find, in the archiveFilesFromCatalogue list an archiveFile that contains a tapefile that belongs to the VID to repack and that has the
-                                                  //fseq of the current file read from the filesInDirectory list ?
-                                                  return tapeFile.vid == repackInfo.vid &&
-                                                         tapeFile.fSeq ==
-                                                           cta::utils::toUint64(cta::utils::removePrefix(fseq, '0'));
-                                                }) != archiveFile.tapeFiles.end();
-                          }) == filesInDirectory.end();
-    });
+    archiveFilesFromCatalogue.remove_if(
+      [&repackInfo, &filesInDirectory](const common::dataStructures::ArchiveFile& archiveFile) {
+        //We remove all the elements that are not in the repack buffer so that we don't recall them
+        return std::find_if(filesInDirectory.begin(),
+                            filesInDirectory.end(),
+                            [&archiveFile, &repackInfo](const std::string& fseq) {
+                              //If we find a tape file that has the current fseq and belongs to the VID to repack, then we DON'T remove it from
+                              //the archiveFilesFromCatalogue list
+                              return std::find_if(
+                                       archiveFile.tapeFiles.begin(),
+                                       archiveFile.tapeFiles.end(),
+                                       [&repackInfo, &fseq](const common::dataStructures::TapeFile& tapeFile) {
+                                         //Can we find, in the archiveFilesFromCatalogue list an archiveFile that contains a tapefile that belongs to the VID to repack and that has the
+                                         //fseq of the current file read from the filesInDirectory list ?
+                                         return tapeFile.vid == repackInfo.vid
+                                                && tapeFile.fSeq
+                                                     == cta::utils::toUint64(cta::utils::removePrefix(fseq, '0'));
+                                       })
+                                     != archiveFile.tapeFiles.end();
+                            })
+               == filesInDirectory.end();
+      });
   }
 
   std::list<SchedulerDatabase::RepackRequest::Subrequest> retrieveSubrequests;
@@ -709,8 +711,8 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
 
     retrieveSubRequest.archiveFile = archiveFile;
     log::ScopedParamContainer params(lc);
-        params.add("archiveFile.diskFileInfo.path", retrieveSubRequest.archiveFile.diskFileInfo.path)
-        .log(log::DEBUG, "In Scheduler::expandRepackRequest(): checking archiveFile to have diskFineInfo path.");
+    params.add("archiveFile.diskFileInfo.path", retrieveSubRequest.archiveFile.diskFileInfo.path)
+      .log(log::DEBUG, "In Scheduler::expandRepackRequest(): checking archiveFile to have diskFineInfo path.");
     retrieveSubRequest.fSeq = std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max();
 
     //Check that all the archive routes have been configured, if one archive route is missing, we fail the repack request.
@@ -817,8 +819,8 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
         createArchiveSubrequest = true;
       }
     }
-    if (!createArchiveSubrequest &&
-        retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) {
+    if (!createArchiveSubrequest
+        && retrieveSubRequest.fSeq == std::numeric_limits<decltype(retrieveSubRequest.fSeq)>::max()) {
       if (!createArchiveSubrequest) {
         log::ScopedParamContainer params(lc);
         params.add("fileId", retrieveSubRequest.archiveFile.archiveFileID).add("repackVid", repackInfo.vid);
@@ -870,8 +872,8 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   params.add("nbRetrieveSubrequestsQueued", nbRetrieveSubrequestsQueued);
   timingList.addToLog(params);
 
-  if (archiveFilesFromCatalogue.empty() && totalStatsFile.totalFilesToArchive == 0 &&
-      (totalStatsFile.totalFilesToRetrieve == 0 || nbRetrieveSubrequestsQueued == 0)) {
+  if (archiveFilesFromCatalogue.empty() && totalStatsFile.totalFilesToArchive == 0
+      && (totalStatsFile.totalFilesToRetrieve == 0 || nbRetrieveSubrequestsQueued == 0)) {
     //If no files have been retrieved, the repack buffer will have to be deleted
     //TODO : in case of Repack tape repair, we should not try to delete the buffer
     deleteRepackBuffer(std::move(dir), lc);
@@ -972,8 +974,8 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
   const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
   for (const auto& driveState : driveStates) {
     lc.log(log::DEBUG,
-           "In Scheduler::getDesiredDriveState(): checking driveName: " + driveName +
-             " against existing: " + driveState.driveName);
+           "In Scheduler::getDesiredDriveState(): checking driveName: " + driveName
+             + " against existing: " + driveState.driveName);
     if (driveState.driveName == driveName) {
       if (const auto schedulerDbTime = t.secs(); schedulerDbTime > 1) {
         log::ScopedParamContainer spc(lc);
@@ -1060,7 +1062,11 @@ void Scheduler::reportDriveStatus(const common::dataStructures::DriveInfo& drive
                                   common::dataStructures::DriveStatus status,
                                   log::LogContext& lc) {
   utils::Timer t;
-  m_tapeDrivesState->reportDriveStatus(driveInfo, type, status, std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()), lc);
+  m_tapeDrivesState->reportDriveStatus(driveInfo,
+                                       type,
+                                       status,
+                                       std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()),
+                                       lc);
   auto schedulerDbTime = t.secs();
   if (schedulerDbTime > 1) {
     log::ScopedParamContainer spc(lc);
@@ -1230,8 +1236,8 @@ void Scheduler::sortAndGetTapesForMountInfo(
       v.erase(std::remove_if(v.begin(),
                              v.end(),
                              [&eligibleTapeMap](const SchedulerDatabase::PotentialMount& pm) {
-                               return (pm.type == common::dataStructures::MountType::Retrieve &&
-                                       !eligibleTapeMap.contains(pm.vid));
+                               return (pm.type == common::dataStructures::MountType::Retrieve
+                                       && !eligibleTapeMap.contains(pm.vid));
                              }),
               v.end());
     }
@@ -1263,18 +1269,18 @@ void Scheduler::sortAndGetTapesForMountInfo(
     // Remove empty string tape pools
     std::set<std::string> vidsWithEmptyTapePoolString;
     mountInfo->potentialMounts.erase(
-    std::remove_if(mountInfo->potentialMounts.begin(),
-                   mountInfo->potentialMounts.end(),
-                   [&vidsWithEmptyTapePoolString](const SchedulerDatabase::PotentialMount& mount) {
-                     if (mount.tapePool.empty()) {
-                       vidsWithEmptyTapePoolString.insert(mount.vid);
-                       return true;
-                     }
-                     return false;
-                   }),
-    mountInfo->potentialMounts.end());
+      std::remove_if(mountInfo->potentialMounts.begin(),
+                     mountInfo->potentialMounts.end(),
+                     [&vidsWithEmptyTapePoolString](const SchedulerDatabase::PotentialMount& mount) {
+                       if (mount.tapePool.empty()) {
+                         vidsWithEmptyTapePoolString.insert(mount.vid);
+                         return true;
+                       }
+                       return false;
+                     }),
+      mountInfo->potentialMounts.end());
     if (!vidsWithEmptyTapePoolString.empty()) {
-      for (auto & vid : vidsWithEmptyTapePoolString) {
+      for (auto& vid : vidsWithEmptyTapePoolString) {
         log::ScopedParamContainer params(lc);
         params.add("tapeVid", vid);
         lc.log(log::ERR,
@@ -1288,23 +1294,22 @@ void Scheduler::sortAndGetTapesForMountInfo(
     // Remove empty string tape pools
     std::set<std::string> drivesWithEmptyTapePoolString;
     mountInfo->existingOrNextMounts.erase(
-        std::remove_if(
-            mountInfo->existingOrNextMounts.begin(),
-            mountInfo->existingOrNextMounts.end(),
-            [&drivesWithEmptyTapePoolString](const SchedulerDatabase::ExistingMount& mount) {
-              if (mount.tapePool.empty()) {
-                drivesWithEmptyTapePoolString.insert(mount.driveName);
-                return true;
-              }
-              return false;
-        }),
-        mountInfo->existingOrNextMounts.end());
+      std::remove_if(mountInfo->existingOrNextMounts.begin(),
+                     mountInfo->existingOrNextMounts.end(),
+                     [&drivesWithEmptyTapePoolString](const SchedulerDatabase::ExistingMount& mount) {
+                       if (mount.tapePool.empty()) {
+                         drivesWithEmptyTapePoolString.insert(mount.driveName);
+                         return true;
+                       }
+                       return false;
+                     }),
+      mountInfo->existingOrNextMounts.end());
     if (!drivesWithEmptyTapePoolString.empty()) {
-      for (auto & drive : drivesWithEmptyTapePoolString) {
+      for (auto& drive : drivesWithEmptyTapePoolString) {
         log::ScopedParamContainer params(lc);
         params.add("drive", drive);
         lc.log(log::ERR,
-             "In Scheduler::sortAndGetTapesForMountInfo(): empty tape pool string found on existing or next mount.");
+               "In Scheduler::sortAndGetTapesForMountInfo(): empty tape pool string found on existing or next mount.");
       }
     }
 
@@ -1312,21 +1317,22 @@ void Scheduler::sortAndGetTapesForMountInfo(
     auto schedulerBackendName = getSchedulerBackendName();
     std::list<std::string> ignoredDrives;
     mountInfo->existingOrNextMounts.erase(
-        std::remove_if(
-            mountInfo->existingOrNextMounts.begin(),
-            mountInfo->existingOrNextMounts.end(),
-            [&ignoredDrives, &schedulerBackendName](const SchedulerDatabase::ExistingMount& mount) {
-              if (!mount.schedulerBackendName.has_value()) {
-                ignoredDrives.emplace_back(mount.driveName);
-                return true;
-              }
-              return mount.schedulerBackendName != schedulerBackendName;
-        }),
-        mountInfo->existingOrNextMounts.end());
-    for (const auto & ignoredDriveName: ignoredDrives) {
+      std::remove_if(mountInfo->existingOrNextMounts.begin(),
+                     mountInfo->existingOrNextMounts.end(),
+                     [&ignoredDrives, &schedulerBackendName](const SchedulerDatabase::ExistingMount& mount) {
+                       if (!mount.schedulerBackendName.has_value()) {
+                         ignoredDrives.emplace_back(mount.driveName);
+                         return true;
+                       }
+                       return mount.schedulerBackendName != schedulerBackendName;
+                     }),
+      mountInfo->existingOrNextMounts.end());
+    for (const auto& ignoredDriveName : ignoredDrives) {
       log::ScopedParamContainer params(lc);
       params.add("ignoredDrive", ignoredDriveName);
-      lc.log(log::ERR, "In Scheduler::sortAndGetTapesForMountInfo(): found a drive without SchedulerBackendName configuration. Ignoring drive.");
+      lc.log(log::ERR,
+             "In Scheduler::sortAndGetTapesForMountInfo(): found a drive without SchedulerBackendName configuration. "
+             "Ignoring drive.");
     }
   }
 
@@ -1427,8 +1433,10 @@ void Scheduler::sortAndGetTapesForMountInfo(
           .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
           .add("filesQueued", m->filesQueued)
           .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-          .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
-          .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
+          .add("oldestJobAge",
+               std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+          .add("youngestJobAge",
+               std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
           .add("minRequestAge", m->minRequestAge);
         lc.log(log::ERR,
                "In Scheduler::sortAndGetTapesForMountInfo(): potential repack mount not considered due to lack of "
@@ -1496,7 +1504,9 @@ void Scheduler::sortAndGetTapesForMountInfo(
     if (m->filesQueued / (1 + effectiveExistingMountsForThisTapepool) >= minFilesToWarrantAMount) {
       mountPassesACriteria = true;
     }
-    if (!effectiveExistingMountsForThisTapepool && ((std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime) > m->minRequestAge)) {
+    if (!effectiveExistingMountsForThisTapepool
+        && ((std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+            > m->minRequestAge)) {
       mountPassesACriteria = true;
     }
     if (m->sleepingMount) {
@@ -1523,8 +1533,10 @@ void Scheduler::sortAndGetTapesForMountInfo(
         .add("minBytesToWarrantMount", minBytesToWarrantAMount)
         .add("filesQueued", m->filesQueued)
         .add("minFilesToWarrantMount", minFilesToWarrantAMount)
-        .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
-        .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
+        .add("oldestJobAge",
+             std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+        .add("youngestJobAge",
+             std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
         .add("minRequestAge", m->minRequestAge)
         .add("voReadMaxDrives", voOfThisPotentialMount.readMaxDrives)
         .add("voWriteMaxDrives", voOfThisPotentialMount.writeMaxDrives)
@@ -1558,8 +1570,10 @@ void Scheduler::sortAndGetTapesForMountInfo(
         .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
         .add("filesQueued", m->filesQueued)
         .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-        .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
-        .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
+        .add("oldestJobAge",
+             std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+        .add("youngestJobAge",
+             std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
         .add("minArchiveRequestAge", m->minRequestAge)
         .add("maxDrives", maxDrives)
         .add("voReadMaxDrives", voOfThisPotentialMount.readMaxDrives)
@@ -1592,12 +1606,9 @@ void Scheduler::sortAndGetTapesForMountInfo(
 
   // Find out if we have any potential archive mount in the list. If so, get the
   // list of tapes from the catalogue.
-  if (std::count_if(mountInfo->potentialMounts.cbegin(),
-                    mountInfo->potentialMounts.cend(),
-                    [](const auto& m) {
-                      return common::dataStructures::getMountBasicType(m.type) ==
-                             common::dataStructures::MountType::ArchiveAllTypes;
-                    })) {
+  if (std::count_if(mountInfo->potentialMounts.cbegin(), mountInfo->potentialMounts.cend(), [](const auto& m) {
+        return common::dataStructures::getMountBasicType(m.type) == common::dataStructures::MountType::ArchiveAllTypes;
+      })) {
     tapeList = m_catalogue.Tape()->getTapesForWriting(logicalLibraryName);
     getTapeForWriteTime = timer.secs(utils::Timer::resetCounter);
   }
@@ -1721,13 +1732,11 @@ void Scheduler::checkNeededEnvironmentVariables() {
       }
     };
     listVariablesNotSet += "]";
-    std::string errMsg =
-      "In Scheduler::checkNeededEnvironmentVariables(), the following environment variables: " + listVariablesNotSet +
-      " are not set.";
+    std::string errMsg = "In Scheduler::checkNeededEnvironmentVariables(), the following environment variables: "
+                         + listVariablesNotSet + " are not set.";
     throw cta::exception::Exception(errMsg);
   }
 }
-
 
 //------------------------------------------------------------------------------
 // Scheduler::getArchiveMountPolicyMaxPriorityMinAge()
@@ -1739,29 +1748,29 @@ Scheduler::getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataSt
   }
   uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
   uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
-  for (auto & mountPolicy : mountPolicies) {
+  for (auto& mountPolicy : mountPolicies) {
     maxPriority = std::max(maxPriority, mountPolicy.archivePriority);
     minMinRequestAge = std::min(minMinRequestAge, mountPolicy.archiveMinRequestAge);
   }
-  return std::pair{maxPriority, minMinRequestAge};
+  return std::pair {maxPriority, minMinRequestAge};
 }
-
 
 //------------------------------------------------------------------------------
 // Scheduler::getRetrieveMountPolicyMaxPriorityMinAge()
 //------------------------------------------------------------------------------
-std::pair<uint64_t, uint64_t>
-Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+std::pair<uint64_t, uint64_t> Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(
+  const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
   if (mountPolicies.empty()) {
-    throw cta::exception::Exception("In Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(), empty mount policy list.");
+    throw cta::exception::Exception(
+      "In Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(), empty mount policy list.");
   }
   uint64_t maxPriority = std::numeric_limits<uint64_t>::min();
   uint64_t minMinRequestAge = std::numeric_limits<uint64_t>::max();
-  for (auto & mountPolicy : mountPolicies) {
+  for (auto& mountPolicy : mountPolicies) {
     maxPriority = std::max(maxPriority, mountPolicy.retrievePriority);
     minMinRequestAge = std::min(minMinRequestAge, mountPolicy.retrieveMinRequestAge);
   }
-  return std::pair{maxPriority, minMinRequestAge};
+  return std::pair {maxPriority, minMinRequestAge};
 }
 
 //------------------------------------------------------------------------------
@@ -1865,7 +1874,7 @@ std::string Scheduler::getLowestRequestAgeRetrieveMountPolicyName(
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::MountPolicy>
 Scheduler::getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
-                                  const std::map<std::string, uint64_t>& queueMountPolicyMap) {
+                                   const std::map<std::string, uint64_t>& queueMountPolicyMap) {
   std::list<cta::common::dataStructures::MountPolicy> mountPolicyRet;
   std::copy_if(mountPoliciesInCatalogue.begin(),
                mountPoliciesInCatalogue.end(),
@@ -1879,56 +1888,48 @@ Scheduler::getMountPoliciesInQueue(const std::list<common::dataStructures::Mount
 //------------------------------------------------------------------------------
 // fillMountPolicyNamesForPotentialMounts
 //------------------------------------------------------------------------------
-void Scheduler::fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo &tmdi,
-                                                  log::LogContext &logContext) {
-
-  std::list <common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
+void Scheduler::fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
+                                                       log::LogContext& logContext) {
+  std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
 
   // Walk the all PotentialMounts and check Mount Policies agains the catalogue
-  for (auto &m: tmdi.potentialMounts) {
+  for (auto& m : tmdi.potentialMounts) {
     // !!! add this to potential mount
     // m.mountPolicyCountMap = aqueueJobsSummary.mountPolicyCountMap
     //If there are mount policies in the Catalogue
     if (mountPolicies.size()) {
       //We get all the mount policies that are on the queue from the catalogue list
       auto mountPoliciesInQueueList = getMountPoliciesInQueue(mountPolicies, m.mountPolicyCountMap);
-      std::list <std::string> queueMountPolicyNames;
+      std::list<std::string> queueMountPolicyNames;
       //If an operator removed the queue mountPolicies from the catalogue, we will have no results...
       if (mountPoliciesInQueueList.size()) {
         if (m.type == cta::common::dataStructures::MountType::Retrieve) {
           std::transform(
-                  mountPoliciesInQueueList.begin(),
-                  mountPoliciesInQueueList.end(),
-                  std::back_inserter(queueMountPolicyNames),
-                  [](const cta::common::dataStructures::MountPolicy &policy) -> std::string { return policy.name; });
-          std::tie(m.priority, m.minRequestAge) = getRetrieveMountPolicyMaxPriorityMinAge(
-                  mountPoliciesInQueueList);
+            mountPoliciesInQueueList.begin(),
+            mountPoliciesInQueueList.end(),
+            std::back_inserter(queueMountPolicyNames),
+            [](const cta::common::dataStructures::MountPolicy& policy) -> std::string { return policy.name; });
+          std::tie(m.priority, m.minRequestAge) = getRetrieveMountPolicyMaxPriorityMinAge(mountPoliciesInQueueList);
           m.highestPriorityMountPolicyName = getHighestPriorityRetrieveMountPolicyName(mountPoliciesInQueueList);
           m.lowestRequestAgeMountPolicyName = getLowestRequestAgeRetrieveMountPolicyName(mountPoliciesInQueueList);
 
         } else {
           std::transform(
-                  mountPoliciesInQueueList.begin(),
-                  mountPoliciesInQueueList.end(),
-                  std::back_inserter(queueMountPolicyNames),
-                  [](const cta::common::dataStructures::MountPolicy &policy) -> std::string { return policy.name; });
-          std::tie(m.priority, m.minRequestAge) = getArchiveMountPolicyMaxPriorityMinAge(
-                  mountPoliciesInQueueList);
-          m.highestPriorityMountPolicyName = getHighestPriorityArchiveMountPolicyName(
-                  mountPoliciesInQueueList);
-          m.lowestRequestAgeMountPolicyName = getLowestRequestAgeArchiveMountPolicyName(
-                  mountPoliciesInQueueList);
+            mountPoliciesInQueueList.begin(),
+            mountPoliciesInQueueList.end(),
+            std::back_inserter(queueMountPolicyNames),
+            [](const cta::common::dataStructures::MountPolicy& policy) -> std::string { return policy.name; });
+          std::tie(m.priority, m.minRequestAge) = getArchiveMountPolicyMaxPriorityMinAge(mountPoliciesInQueueList);
+          m.highestPriorityMountPolicyName = getHighestPriorityArchiveMountPolicyName(mountPoliciesInQueueList);
+          m.lowestRequestAgeMountPolicyName = getLowestRequestAgeArchiveMountPolicyName(mountPoliciesInQueueList);
         }
-
       }
       m.mountPolicyNames = queueMountPolicyNames;
     }
   }
 }
 
-
-void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi, log::LogContext& logContext){
-
+void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi, log::LogContext& logContext) {
   // Collect information about the existing and next mounts
   // If a next mount exists the drive "counts double", but the corresponding drive
   // is either about to mount, or about to replace its current mount.
@@ -1950,7 +1951,7 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
                                     (int) cta::common::dataStructures::MountType::Label};
   std::unordered_map<std::string, std::string> tapeDrivetoSchedulerBackendNameMap;
 
-  for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
+  for (const auto& config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
     if (config.keyName == SCHEDULER_NAME_CONFIG_KEY) {
       tapeDrivetoSchedulerBackendNameMap.emplace(config.tapeDriveName, config.value);
     }
@@ -1960,10 +1961,11 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
     std::optional<std::string> driveSchedulerBackendName;
     try {
       driveSchedulerBackendName = tapeDrivetoSchedulerBackendNameMap.at(driveState.driveName);
-    } catch (std::out_of_range &) {
+    } catch (std::out_of_range&) {
       log::ScopedParamContainer(logContext)
         .add("driveName", driveState.driveName)
-        .log(log::ERR, "In Scheduler::getExistingAndNextMounts(): drive is missing SchedulerBackendName configuration.");
+        .log(log::ERR,
+             "In Scheduler::getExistingAndNextMounts(): drive is missing SchedulerBackendName configuration.");
     }
     if (activeDriveStatuses.count(static_cast<int>(driveState.driveStatus))) {
       if (driveState.mountType == common::dataStructures::MountType::NoMount) {
@@ -1983,8 +1985,8 @@ void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInf
       tmdi.existingOrNextMounts.back().currentMount = true;
       tmdi.existingOrNextMounts.back().bytesTransferred = driveState.bytesTransferedInSession.value_or(0);
       tmdi.existingOrNextMounts.back().filesTransferred = driveState.filesTransferedInSession.value_or(0);
-      if (driveState.filesTransferedInSession.has_value() && driveState.sessionElapsedTime.has_value() &&
-          driveState.sessionElapsedTime.value() > 0) {
+      if (driveState.filesTransferedInSession.has_value() && driveState.sessionElapsedTime.has_value()
+          && driveState.sessionElapsedTime.value() > 0) {
         tmdi.existingOrNextMounts.back().averageBandwidth =
           driveState.bytesTransferedInSession.value() / driveState.sessionElapsedTime.value();
       } else {
@@ -2103,8 +2105,10 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
             .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
             .add("filesQueued", m->filesQueued)
             .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-            .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
-            .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
+            .add("oldestJobAge",
+                 std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+            .add("youngestJobAge",
+                 std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
             .add("minArchiveRequestAge", m->minRequestAge)
             .add("getMountInfoTime", getMountInfoTime)
             .add("getTapeInfoTime", getTapeInfoTime)
@@ -2152,8 +2156,10 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
         .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
         .add("filesQueued", m->filesQueued)
         .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-        .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
-        .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
+        .add("oldestJobAge",
+             std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+        .add("youngestJobAge",
+             std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
         .add("minArchiveRequestAge", m->minRequestAge)
         .add("getMountInfoTime", getMountInfoTime)
         .add("getTapeInfoTime", getTapeInfoTime)
@@ -2177,8 +2183,8 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
     .add("decisionTime", decisionTime)
     .add("schedulerDbTime", schedulerDbTime)
     .add("catalogueTime", catalogueTime);
-  if ((getMountInfoTime > 1) || (getTapeInfoTime > 1) || (candidateSortingTime > 1) || (getTapeForWriteTime > 1) ||
-      (decisionTime > 1) || (schedulerDbTime > 1) || (catalogueTime > 1)) {
+  if ((getMountInfoTime > 1) || (getTapeInfoTime > 1) || (candidateSortingTime > 1) || (getTapeForWriteTime > 1)
+      || (decisionTime > 1) || (schedulerDbTime > 1) || (catalogueTime > 1)) {
     lc.log(log::DEBUG, "In Scheduler::getNextMountDryRun(): No valid mount found.");
   }
   return false;
@@ -2305,8 +2311,10 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
               .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
               .add("filesQueued", m->filesQueued)
               .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-              .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
-              .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
+              .add("oldestJobAge",
+                   std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+              .add("youngestJobAge",
+                   std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
               .add("minArchiveRequestAge", m->minRequestAge)
               .add("getMountInfoTime", getMountInfoTime)
               .add("queueTrimingTime", queueTrimingTime)
@@ -2383,8 +2391,10 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
           .add("minBytesToWarrantMount", m_minBytesToWarrantAMount)
           .add("filesQueued", m->filesQueued)
           .add("minFilesToWarrantMount", m_minFilesToWarrantAMount)
-          .add("oldestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
-          .add("youngestJobAge", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
+          .add("oldestJobAge",
+               std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->oldestJobStartTime)
+          .add("youngestJobAge",
+               std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m->youngestJobStartTime)
           .add("minArchiveRequestAge", m->minRequestAge)
           .add("getMountInfoTime", getMountInfoTime)
           .add("queueTrimingTime", queueTrimingTime)
@@ -2447,29 +2457,31 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   {
     auto schedulerBackendName = getSchedulerBackendName();
     std::unordered_map<std::string, std::string> tapeDriveSchedulerBackendNameMap;
-    for (const auto & config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
+    for (const auto& config : m_catalogue.DriveConfig()->getTapeDriveConfigs()) {
       if (config.keyName == SCHEDULER_NAME_CONFIG_KEY) {
         tapeDriveSchedulerBackendNameMap.try_emplace(config.tapeDriveName, config.value);
       }
     }
     std::list<std::string> ignoredDrives;
     mountDecisionInfo->existingOrNextMounts.erase(
-        std::remove_if(
-            mountDecisionInfo->existingOrNextMounts.begin(),
-            mountDecisionInfo->existingOrNextMounts.end(),
-            [&ignoredDrives, &tapeDriveSchedulerBackendNameMap, &schedulerBackendName](const SchedulerDatabase::ExistingMount& mount) {
-              try {
-                return tapeDriveSchedulerBackendNameMap.at(mount.driveName) != schedulerBackendName;
-              } catch (std::out_of_range &) {
-                ignoredDrives.emplace_back(mount.driveName);
-                return true;
-              }
-        }),
-        mountDecisionInfo->existingOrNextMounts.end());
-    for (const auto & ignoredDriveName: ignoredDrives) {
+      std::remove_if(mountDecisionInfo->existingOrNextMounts.begin(),
+                     mountDecisionInfo->existingOrNextMounts.end(),
+                     [&ignoredDrives, &tapeDriveSchedulerBackendNameMap, &schedulerBackendName](
+                       const SchedulerDatabase::ExistingMount& mount) {
+                       try {
+                         return tapeDriveSchedulerBackendNameMap.at(mount.driveName) != schedulerBackendName;
+                       } catch (std::out_of_range&) {
+                         ignoredDrives.emplace_back(mount.driveName);
+                         return true;
+                       }
+                     }),
+      mountDecisionInfo->existingOrNextMounts.end());
+    for (const auto& ignoredDriveName : ignoredDrives) {
       log::ScopedParamContainer params(lc);
       params.add("ignoredDrive", ignoredDriveName);
-      lc.log(log::ERR, "In Scheduler::getQueuesAndMountSummaries(): found a drive without SchedulerBackendName configuration. Ignoring drive.");
+      lc.log(log::ERR,
+             "In Scheduler::getQueuesAndMountSummaries(): found a drive without SchedulerBackendName configuration. "
+             "Ignoring drive.");
     }
   }
 
@@ -2516,8 +2528,10 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         summary->mountPolicy.archiveMinRequestAge = pm.minRequestAge;
         summary->bytesQueued = pm.bytesQueued;
         summary->filesQueued = pm.filesQueued;
-        summary->oldestJobAge = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.oldestJobStartTime;
-        summary->youngestJobAge = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.youngestJobStartTime;
+        summary->oldestJobAge =
+          std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.oldestJobStartTime;
+        summary->youngestJobAge =
+          std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.youngestJobStartTime;
         if (pm.mountPolicyNames) {
           summary->mountPolicies = pm.mountPolicyNames.value();
         }
@@ -2534,8 +2548,10 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
         summary->mountPolicy.retrievePriority = pm.priority;
         summary->bytesQueued = pm.bytesQueued;
         summary->filesQueued = pm.filesQueued;
-        summary->oldestJobAge = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.oldestJobStartTime;
-        summary->youngestJobAge = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.youngestJobStartTime;
+        summary->oldestJobAge =
+          std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.oldestJobStartTime;
+        summary->youngestJobAge =
+          std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - pm.youngestJobStartTime;
         if (pm.mountPolicyNames) {
           summary->mountPolicies = pm.mountPolicyNames.value();
         }
@@ -2621,8 +2637,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
 
   // Add the tape and VO information where useful (archive queues).
   for (auto& mountOrQueue : ret) {
-    if (common::dataStructures::MountType::ArchiveForUser == mountOrQueue.mountType ||
-        common::dataStructures::MountType::ArchiveForRepack == mountOrQueue.mountType) {
+    if (common::dataStructures::MountType::ArchiveForUser == mountOrQueue.mountType
+        || common::dataStructures::MountType::ArchiveForRepack == mountOrQueue.mountType) {
       utils::Timer catalogueGetTapePoolTimer;
       const auto tapePool = m_catalogue.TapePool()->getTapePool(mountOrQueue.tapePool);
       catalogueGetTapePoolTotalTime += catalogueGetTapePoolTimer.secs();
@@ -2645,8 +2661,7 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
       // Get info for this tape.
       auto& t = tapes.at(mountOrQueue.vid);
       utils::Timer catalogueGetVoTimer;
-      bool isRepacking =
-        (t.state == Tape::REPACKING || t.state == Tape::REPACKING_DISABLED);
+      bool isRepacking = (t.state == Tape::REPACKING || t.state == Tape::REPACKING_DISABLED);
       repackingTapesCount += (isRepacking ? 1 : 0);
       const auto vo = isRepacking ? repackVo : m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(t.tapePoolName);
       catalogueGetVoTotalTime += catalogueGetVoTimer.secs();
@@ -2747,9 +2762,9 @@ void Scheduler::updateTapeStateFromPending(const std::string& queueVid, cta::log
       .add("expectedPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshed.state))
       .add("actualPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshedUpdated.state));
 
-    if ((tapeDataRefreshed.state == Tape::REPACKING_PENDING && tapeDataRefreshedUpdated.state == Tape::REPACKING) ||
-        (tapeDataRefreshed.state == Tape::BROKEN_PENDING && tapeDataRefreshedUpdated.state == Tape::BROKEN) ||
-        (tapeDataRefreshed.state == Tape::EXPORTED_PENDING && tapeDataRefreshedUpdated.state == Tape::EXPORTED)) {
+    if ((tapeDataRefreshed.state == Tape::REPACKING_PENDING && tapeDataRefreshedUpdated.state == Tape::REPACKING)
+        || (tapeDataRefreshed.state == Tape::BROKEN_PENDING && tapeDataRefreshedUpdated.state == Tape::BROKEN)
+        || (tapeDataRefreshed.state == Tape::EXPORTED_PENDING && tapeDataRefreshedUpdated.state == Tape::EXPORTED)) {
       logContext.log(log::WARNING,
                      "In Scheduler::updateTapeStateFromPending(): Tape already moved into its final state, probably by "
                      "another agent.");
@@ -2780,8 +2795,8 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
   auto prev_state = tape_meta_data.state;
   const auto& prev_reason = tape_meta_data.stateReason;
   // User is not allowed to select explicitly a temporary state
-  if (new_state == Tape::BROKEN_PENDING || new_state == Tape::EXPORTED_PENDING ||
-      new_state == Tape::REPACKING_PENDING) {
+  if (new_state == Tape::BROKEN_PENDING || new_state == Tape::EXPORTED_PENDING
+      || new_state == Tape::REPACKING_PENDING) {
     throw cta::exception::UserError("Internal states cannot be set directly by the user");
   }
   // If previous and desired states are the same, do nothing but changing the reason if provided
@@ -2793,26 +2808,26 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
     return;
   }
   // If previous state is PENDING (not of the same type), user should wait for it to complete
-  if ((prev_state == Tape::BROKEN_PENDING && new_state != Tape::BROKEN) ||
-      (prev_state == Tape::EXPORTED_PENDING && new_state != Tape::EXPORTED) ||
-      (prev_state == Tape::REPACKING_PENDING && new_state != Tape::REPACKING)) {
+  if ((prev_state == Tape::BROKEN_PENDING && new_state != Tape::BROKEN)
+      || (prev_state == Tape::EXPORTED_PENDING && new_state != Tape::EXPORTED)
+      || (prev_state == Tape::REPACKING_PENDING && new_state != Tape::REPACKING)) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state while it is in a temporary internal state");
   }
   // Moving out of REPACKING/REPACKING_DISABLED is only allowed if there is no repacking ongoing
-  if ((prev_state == Tape::REPACKING || prev_state == Tape::REPACKING_DISABLED) &&
-      !(new_state == Tape::REPACKING || new_state == Tape::REPACKING_DISABLED) && isBeingRepacked(vid)) {
+  if ((prev_state == Tape::REPACKING || prev_state == Tape::REPACKING_DISABLED)
+      && !(new_state == Tape::REPACKING || new_state == Tape::REPACKING_DISABLED) && isBeingRepacked(vid)) {
     throw cta::exception::UserError("Cannot modify tape " + vid + " state because there is a repack for that tape");
   }
   // REPACKING_DISABLED can only be set while in REPACKING
   if (prev_state != Tape::REPACKING && new_state == Tape::REPACKING_DISABLED) {
-    throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + Tape::stateToString(prev_state) +
-                                    " to " + Tape::stateToString(new_state));
+    throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + Tape::stateToString(prev_state)
+                                    + " to " + Tape::stateToString(new_state));
   }
   // REPACKING_DISABLED can only be modified to REPACKING, BROKEN or EXPORTED
-  if (prev_state == Tape::REPACKING_DISABLED &&
-      !(new_state == Tape::REPACKING || new_state == Tape::BROKEN || new_state == Tape::EXPORTED)) {
-    throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + Tape::stateToString(prev_state) +
-                                    " to " + Tape::stateToString(new_state));
+  if (prev_state == Tape::REPACKING_DISABLED
+      && !(new_state == Tape::REPACKING || new_state == Tape::BROKEN || new_state == Tape::EXPORTED)) {
+    throw cta::exception::UserError("Cannot modify tape " + vid + " state from " + Tape::stateToString(prev_state)
+                                    + " to " + Tape::stateToString(new_state));
   }
   // Validation of tape state change request is complete
   // Proceed with tape state change...
@@ -3048,7 +3063,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
     archiveJobsBatch.size() - reportedJobs.size(),
     {
       {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive},
-      {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+      {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException         }
   });
 }
 
@@ -3133,7 +3148,7 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
     retrieveJobsBatch.size() - reportedJobs.size(),
     {
       {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve},
-      {cta::semconv::attr::kErrorType, cta::semconv::attr::ErrorTypeValues::kException}
+      {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException          }
   });
 }
 

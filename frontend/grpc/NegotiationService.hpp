@@ -17,17 +17,18 @@
 
 #pragma once
 
+#include "IHandler.hpp"
+#include "ServerNegotiationRequestHandler.hpp"
 #include "TokenStorage.hpp"
-#include "cta_frontend.grpc.pb.h"
-#include "common/log/Logger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 
 #include <grpcpp/grpcpp.h>
 #include <memory>
 #include <thread>
 #include <vector>
-#include "IHandler.hpp"
-#include "ServerNegotiationRequestHandler.hpp"
+
+#include "cta_frontend.grpc.pb.h"
 
 namespace cta::frontend::grpc::server {
 

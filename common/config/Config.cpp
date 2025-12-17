@@ -15,19 +15,20 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <fstream>
-#include <sstream>
-#include <vector>
-#include <map>
-#include <limits>
-#include <algorithm>
-#include <iterator>
-#include <numeric>
+#include "Config.hpp"
 
 #include "common/exception/UserError.hpp"
-#include "common/log/LogContext.hpp"
 #include "common/log/DummyLogger.hpp"
-#include "Config.hpp"
+#include "common/log/LogContext.hpp"
+
+#include <algorithm>
+#include <fstream>
+#include <iterator>
+#include <limits>
+#include <map>
+#include <numeric>
+#include <sstream>
+#include <vector>
 
 namespace cta::common {
 

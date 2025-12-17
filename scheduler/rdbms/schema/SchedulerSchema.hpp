@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <string>
 #include <list>
 #include <map>
+#include <string>
 
 namespace cta::schedulerdb {
 
@@ -28,26 +28,25 @@ namespace cta::schedulerdb {
  * database.
  */
 struct SchedulerSchema {
-  
   /**
    * Constructor.
    *
    */
   SchedulerSchema();
-  
+
   /**
    * Constructor.
    *
    * @param sqlSchema The sql for the scheduler schema provided at compilation
    *                  time.
    */
-  explicit SchedulerSchema(const std::string &sqlSchema);
-  
+  explicit SchedulerSchema(const std::string& sqlSchema);
+
   /**
    * The schema.
    */
   std::string sql;
-  
+
   /**
    * Returns the map of strings to uint64 for the scheduler SCHEMA_VERSION_MAJOR
    * and SCHEMA_VERSION_MINOR values.
@@ -57,4 +56,4 @@ struct SchedulerSchema {
   std::map<std::string, uint64_t, std::less<>> getSchemaVersion() const;
 };
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

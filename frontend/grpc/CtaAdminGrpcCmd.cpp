@@ -16,18 +16,19 @@
 */
 
 #include "CtaAdminGrpcCmd.hpp"
-#include <cmdline/CtaAdminTextFormatter.hpp>
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
-#include "callback_api/CtaAdminClientReadReactor.hpp"
+
 #include "AsyncClient.hpp"
 #include "ClientNegotiationRequestHandler.hpp"
-#include "utils.hpp"
-#include "common/log/Logger.hpp"
-#include "common/log/LogContext.hpp"
+#include "callback_api/CtaAdminClientReadReactor.hpp"
 #include "common/log/FileLogger.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 #include "common/utils/Base64.hpp"
 #include "common/utils/utils.hpp"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "utils.hpp"
 
+#include <cmdline/CtaAdminTextFormatter.hpp>
 #include <cstdlib>  // for getenv
 
 namespace cta::admin {
@@ -185,8 +186,8 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
       auto client_reactor = CtaAdminClientReadReactor(context, client_stub.get(), parsedCmd);
       status = client_reactor.Await();
       if (!status.ok()) {
-        std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code()) +
-                       " Error message: " + status.error_message()
+        std::cout << "gRPC call failed. Error code: " + std::to_string(status.error_code())
+                       + " Error message: " + status.error_message()
                   << std::endl;
       }
       // close the json delimiter, open is done inside command execution

@@ -17,19 +17,16 @@
 
 #include "common/dataStructures/LogicalLibrary.hpp"
 
-#include <gtest/gtest.h>
 #include <algorithm>
+#include <gtest/gtest.h>
 
 namespace unitTests {
 
 class cta_common_dataStructures_LogicalLibraryTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_common_dataStructures_LogicalLibraryTest, constructor) {
@@ -39,4 +36,4 @@ TEST_F(cta_common_dataStructures_LogicalLibraryTest, constructor) {
   ASSERT_FALSE(logicalLibrary.isDisabled);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

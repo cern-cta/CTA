@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/rdbms/postgres/PostgresTapePoolCatalogue.hpp"
+
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -24,20 +25,21 @@
 
 namespace cta::catalogue {
 
-PostgresTapePoolCatalogue::PostgresTapePoolCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsTapePoolCatalogue(log, connPool, rdbmsCatalogue) {}
+PostgresTapePoolCatalogue::PostgresTapePoolCatalogue(log::Logger& log,
+                                                     std::shared_ptr<rdbms::ConnPool> connPool,
+                                                     RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsTapePoolCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t PostgresTapePoolCatalogue::getNextTapePoolId(rdbms::Conn &conn) const {
+uint64_t PostgresTapePoolCatalogue::getNextTapePoolId(rdbms::Conn& conn) const {
   const char* const sql = R"SQL(
     SELECT NEXTVAL('TAPE_POOL_ID_SEQ') AS TAPE_POOL_ID
   )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
-  if(!rset.next()) {
+  if (!rset.next()) {
     throw exception::Exception("Result set is unexpectedly empty");
   }
   return rset.columnUint64("TAPE_POOL_ID");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

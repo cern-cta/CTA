@@ -15,16 +15,17 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
-#include <sstream>
+#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 
 #include "castor/tape/tapeserver/file/CtaFileReader.hpp"
 #include "castor/tape/tapeserver/file/EnstoreFileReader.hpp"
 #include "castor/tape/tapeserver/file/EnstoreLargeFileReader.hpp"
-#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
 #include "castor/tape/tapeserver/file/OsmFileReader.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
+
+#include <memory>
+#include <sstream>
 
 namespace castor::tape::tapeFile {
 
@@ -60,4 +61,4 @@ std::unique_ptr<FileReader> FileReaderFactory::create(ReadSession& readSession, 
   return reader;
 }
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

@@ -17,18 +17,17 @@
 
 #pragma once
 
-#include <dirent.h>
-#include <regex.h>
-#include <sys/sysmacros.h>
-#include <sys/types.h>
-
-#include <vector>
-#include <string>
-
-#include "../system/Wrapper.hpp"
+#include "Constants.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/utils/Regex.hpp"
-#include "Constants.hpp"
+#include "tapeserver/castor/tape/tapeserver/system/Wrapper.hpp"
+
+#include <dirent.h>
+#include <regex.h>
+#include <string>
+#include <sys/sysmacros.h>
+#include <sys/types.h>
+#include <vector>
 
 namespace castor::tape::SCSI {
 
@@ -43,20 +42,19 @@ struct DeviceInfo {
   std::string nst_dev;
 
   class DeviceFile {
-   public:
+  public:
     /* We avoid being hit by the macros major() and minor() by using a longer syntax */
     DeviceFile() = default;
     unsigned int major = 0;
     unsigned int minor = 0;
 
-    bool operator !=(const DeviceFile& b) const {
-      return major != b.major || minor != b.minor;
-    }
+    bool operator!=(const DeviceFile& b) const { return major != b.major || minor != b.minor; }
 
-    bool operator ==(const struct stat & sbuff) const {
+    bool operator==(const struct stat& sbuff) const {
       return major == major(sbuff.st_rdev) && minor == minor(sbuff.st_rdev);
     }
   };
+
   DeviceFile sg;
   DeviceFile st;
   DeviceFile nst;
@@ -70,32 +68,32 @@ struct DeviceInfo {
  * Automatic lister of the system's SCSI devices
  */
 class DeviceVector : public std::vector<DeviceInfo> {
- public:
+public:
   /**
    * Fill up the array that the device list is with all the system's
    * SCSI devices information.
    *
    * (all code using templates must be in the header file)
    */
-  explicit DeviceVector(castor::tape::System::virtualWrapper & sysWrapper);
+  explicit DeviceVector(castor::tape::System::virtualWrapper& sysWrapper);
 
   /**
    * Find an array element that shares the same device files as one pointed
    * to as a path. This is designed to be used with a symlink like:
    * /dev/tape_T10D6116 -> /dev/nst0
    */
-  DeviceInfo & findBySymlink(const std::string& path);
+  DeviceInfo& findBySymlink(const std::string& path);
 
   /**
    * Exception for previous function
    */
-  class NotFound: public cta::exception::Exception {
-   public:
-    explicit NotFound(const std::string& what): cta::exception::Exception(what) {}
+  class NotFound : public cta::exception::Exception {
+  public:
+    explicit NotFound(const std::string& what) : cta::exception::Exception(what) {}
   };
 
- private:
-  castor::tape::System::virtualWrapper & m_sysWrapper;
+private:
+  castor::tape::System::virtualWrapper& m_sysWrapper;
 
   static const size_t readfileBlockSize = 1024;
 
@@ -110,14 +108,14 @@ class DeviceVector : public std::vector<DeviceInfo> {
    * from sysfs.
    * @param devinfo
    */
-  void getTapeInfo(DeviceInfo & devinfo);
+  void getTapeInfo(DeviceInfo& devinfo);
 
   /**
    * Extract information from sysfs about a SCSI device.
    * @param path Path to the directory with information about
    * @return
    */
-  DeviceInfo getDeviceInfo(const char * path);
+  DeviceInfo getDeviceInfo(const char* path);
 }; /* class DeviceVector */
 
-} // namespace castor::tape::SCSI
+}  // namespace castor::tape::SCSI

@@ -17,22 +17,21 @@
 
 #pragma once
 
-#include "rdbms/ConnPool.hpp"
-#include "scheduler/rdbms/postgres/Enums.hpp"
-#include "scheduler/rdbms/postgres/Transaction.hpp"
-#include "scheduler/rdbms/postgres/RetrieveJobQueue.hpp"
-
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
-#include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
+#include "common/dataStructures/RetrieveRequest.hpp"
+#include "rdbms/ConnPool.hpp"
+#include "scheduler/rdbms/postgres/Enums.hpp"
+#include "scheduler/rdbms/postgres/RetrieveJobQueue.hpp"
+#include "scheduler/rdbms/postgres/Transaction.hpp"
 
 #include <list>
 #include <map>
-#include <string>
 #include <set>
+#include <string>
 #include <vector>
 
 namespace cta::schedulerdb {
@@ -68,6 +67,7 @@ public:
   void setFailed() const;
 
   std::unique_ptr<postgres::RetrieveJobQueueRow> makeJobRow() const;
+
   /* OStoreDB compatibility function returning a request ID as string
    *
    * 'bogus' string is returned by getIdStr() and passed to EOS as Archive Request ID

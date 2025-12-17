@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/file/ReadSession.hpp"
+
+#include <memory>
+#include <string>
 
 namespace castor::tape::tapeFile {
 
@@ -41,10 +41,11 @@ public:
     * @param volInfo: volume name of the tape we would like to read from
     * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
     */
-  EnstoreReadSession(tapeserver::drive::DriveInterface &drive, const tapeserver::daemon::VolumeInfo &volInfo,
-    const bool useLbp);
+  EnstoreReadSession(tapeserver::drive::DriveInterface& drive,
+                     const tapeserver::daemon::VolumeInfo& volInfo,
+                     const bool useLbp);
 
   ~EnstoreReadSession() override = default;
 };
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

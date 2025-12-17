@@ -16,15 +16,16 @@
  */
 
 #include "scheduler/rdbms/ArchiveMount.hpp"
+
+#include "catalogue/TapeDrivesCatalogueState.hpp"
+#include "common/Timer.hpp"
+#include "common/dataStructures/TapeFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
-#include "catalogue/TapeDrivesCatalogueState.hpp"
-#include "common/Timer.hpp"
-#include "common/dataStructures/TapeFile.hpp"
 
 #include <unordered_map>
 
@@ -34,11 +35,10 @@ const SchedulerDatabase::ArchiveMount::MountInfo& ArchiveMount::getMountInfo() {
   return mountInfo;
 }
 
-void ArchiveMount::setIsRepack(log::LogContext &lc) {
+void ArchiveMount::setIsRepack(log::LogContext& lc) {
   if (mountInfo.mountType == common::dataStructures::MountType::ArchiveForRepack) {
     m_isRepack = true;
-    lc.log(cta::log::INFO,
-           "In ArchiveMount::setIsRepack(): Marked ArchiveMount for repack.");
+    lc.log(cta::log::INFO, "In ArchiveMount::setIsRepack(): Marked ArchiveMount for repack.");
   }
 }
 
@@ -65,7 +65,8 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
                                                                                      queriedJobStatus,
                                                                                      mountInfo,
                                                                                      bytesRequested,
-                                                                                     filesRequested, m_isRepack);
+                                                                                     filesRequested,
+                                                                                     m_isRepack);
     timings.insertAndReset("mountUpdateBatchTime", t);
     params.add("updateMountInfoRowCount", nrows);
     params.add("MountID", mountInfo.mountId);
@@ -99,8 +100,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     }
   } catch (exception::Exception& ex) {
     params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(cta::log::ERR,
-           "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs.");
+    lc.log(cta::log::ERR, "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs.");
     txn.abort();
     throw;
   }
@@ -156,8 +156,7 @@ void ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::T
   m_RelationalDB.m_tapeDrivesState->updateDriveStatistics(driveInfo, inputs, lc);
 }
 
-uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
-                                       cta::log::LogContext& lc) const {
+uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& lc) const {
   // here we will do ALMOST the same as for ArchiveRdbJob::failTransfer for a bunch of jobs,
   // but it will not update the statistics on the number of retries as `failTransfer` does!
   cta::schedulerdb::Transaction txn(m_connPool, lc);
@@ -186,7 +185,7 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
 
 void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                           log::LogContext& lc) {
-  if(m_isRepack){
+  if (m_isRepack) {
     // For Repack workflow: We know that as soon as the recall of a file is done,
     // the row will get moved to the archive pending table and any additional
     // copies needed will be recorded as a separate row in this table as well.
@@ -206,7 +205,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
   auto jobsBatchItor = jobsBatch.begin();
   while (jobsBatchItor != jobsBatch.end()) {
     const auto& job = *jobsBatchItor;
-    if (job->requestJobCount == 1){
+    if (job->requestJobCount == 1) {
       jobIDsList_single_copy.emplace_back(std::to_string(job->jobID));
     } else {
       jobIDsList_multi_copy.emplace_back(std::to_string(job->jobID));
@@ -231,22 +230,22 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
       nrows = postgres::ArchiveJobQueueRow::updateJobStatus(txn, status, jobIDsList_single_copy);
       if (nrows != jobIDsList_single_copy.size()) {
         log::ScopedParamContainer(lc)
-                .add("updatedRows", nrows)
-                .add("jobListSize", jobIDsList_single_copy.size())
-                .log(log::ERR,
-                     "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for "
-                     "entire job list provided.");
+          .add("updatedRows", nrows)
+          .add("jobListSize", jobIDsList_single_copy.size())
+          .log(log::ERR,
+               "In ArchiveMount::setJobBatchTransferred(): Failed to ArchiveJobQueueRow::updateJobStatus() for "
+               "entire job list provided.");
       }
     }
     if (!jobIDsList_multi_copy.empty()) {
       uint64_t nrows = 0;
       nrows = postgres::ArchiveJobQueueRow::updateMultiCopyJobSuccess(txn, jobIDsList_multi_copy);
       log::ScopedParamContainer(lc)
-              .add("updatedRows", nrows)
-              .add("jobListSize", jobIDsList_multi_copy.size())
-              .log(log::INFO,
-                   "In ArchiveMount::setJobBatchTransferred(): Finished ArchiveJobQueueRow::updateJobStatus() for "
-                   "the job list provided.");
+        .add("updatedRows", nrows)
+        .add("jobListSize", jobIDsList_multi_copy.size())
+        .log(log::INFO,
+             "In ArchiveMount::setJobBatchTransferred(): Finished ArchiveJobQueueRow::updateJobStatus() for "
+             "the job list provided.");
     }
     txn.commit();
     // After processing, return the job object to the job pool for re-use
@@ -254,15 +253,17 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
   } catch (exception::Exception& ex) {
     txn.abort();
     throw exception::Exception(
-           "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to update job status for "
-           "reporting. Aborting the transaction." + ex.getMessageValue());
+      "In schedulerdb::ArchiveMount::setJobBatchTransferred(): Failed to update job status for "
+      "reporting. Aborting the transaction."
+      + ex.getMessageValue());
   }
 }
 
 void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                                 log::LogContext& lc) {
-  if(!m_isRepack){
-     throw exception::Exception("In ArchiveMount::setRepackJobBatchTransferred(): This method must not be used for Archive mounts which are not repack.");
+  if (!m_isRepack) {
+    throw exception::Exception("In ArchiveMount::setRepackJobBatchTransferred(): This method must not be used for "
+                               "Archive mounts which are not repack.");
   }
   std::vector<std::string> jobIDsList;
   auto jobsBatchItor = jobsBatch.begin();
@@ -296,17 +297,18 @@ void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<Schedu
       nrows = postgres::ArchiveJobQueueRow::updateRepackJobSuccess(txn, jobIDsList);
     }
     log::ScopedParamContainer(lc)
-        .add("updatedRows", nrows)
-        .add("jobListSize", jobIDsList.size())
-        .log(log::INFO, "In ArchiveMount::updateRepackJobSuccess(): Finished DB report for job list provided.");
+      .add("updatedRows", nrows)
+      .add("jobListSize", jobIDsList.size())
+      .log(log::INFO, "In ArchiveMount::updateRepackJobSuccess(): Finished DB report for job list provided.");
     txn.commit();
     // After processing, return the job object to the job pool for re-use
     recycleTransferredJobs(jobsBatch, lc);
   } catch (exception::Exception& ex) {
     txn.abort();
     throw exception::Exception(
-           "In schedulerdb::ArchiveMount::updateRepackJobSuccess(): Failed to update job status for "
-           "reporting. Aborting the transaction." + ex.getMessageValue());
+      "In schedulerdb::ArchiveMount::updateRepackJobSuccess(): Failed to update job status for "
+      "reporting. Aborting the transaction."
+      + ex.getMessageValue());
   }
 }
 

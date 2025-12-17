@@ -21,11 +21,8 @@
 
 namespace cta::common::dataStructures {
 
-enum TestSourceType {
-  devzero,
-  devurandom
-};
+enum TestSourceType { devzero, devurandom };
 
 std::string toString(TestSourceType type);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

@@ -14,17 +14,17 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
+#pragma once
+
 #include "version.h"
 
-#pragma once
+#include <string>
 
 namespace cta {
 
-const int CA_MAXVIDLEN = 6; // maximum length for a VID
+const int CA_MAXVIDLEN = 6;  // maximum length for a VID
 const int CTA_SCHEMA_VERSION_MAJOR = CTA_CATALOGUE_SCHEMA_VERSION_MAJOR;
 const int CTA_SCHEMA_VERSION_MINOR = CTA_CATALOGUE_SCHEMA_VERSION_MINOR;
 const int TAPE_LABEL_UNITREADY_TIMEOUT = 300;
 const std::string SCHEDULER_NAME_CONFIG_KEY = "SchedulerBackendName";
-} // namespace cta
-
-
+}  // namespace cta

@@ -14,7 +14,7 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
 #include "cta_frontend.pb.h"
@@ -30,7 +30,7 @@ class RequestMessage : public cta::frontend::AdminCmdOptions {
 public:
   explicit RequestMessage(const cta::xrd::Request& request);
   ~RequestMessage() final = default;
-  
+
   /*!
    * Get a required option
    */
@@ -48,4 +48,4 @@ public:
 private:
 };
 
-} // namespace cta::frontend::grpc::request
+}  // namespace cta::frontend::grpc::request

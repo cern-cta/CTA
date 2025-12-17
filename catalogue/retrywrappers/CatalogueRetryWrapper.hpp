@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include <memory>
-
 #include "catalogue/Catalogue.hpp"
 #include "common/log/LogContext.hpp"
+
+#include <memory>
 
 namespace cta::catalogue {
 
@@ -28,7 +28,7 @@ namespace cta::catalogue {
  * Wrapper around a CTA catalogue object that retries a method if a
  * LostConnectionException is thrown.
  */
-class CatalogueRetryWrapper: public Catalogue {
+class CatalogueRetryWrapper : public Catalogue {
 public:
   /**
    * Constructor.
@@ -39,13 +39,13 @@ public:
    * try to connect to the database in the event of LostDatabaseConnection
    * exceptions being thrown.
    */
-  CatalogueRetryWrapper(log::Logger &log, std::unique_ptr<Catalogue> catalogue, const uint32_t maxTriesToConnect = 3);
+  CatalogueRetryWrapper(log::Logger& log, std::unique_ptr<Catalogue> catalogue, const uint32_t maxTriesToConnect = 3);
 
-  CatalogueRetryWrapper(CatalogueRetryWrapper &) = delete;
+  CatalogueRetryWrapper(CatalogueRetryWrapper&) = delete;
 
   ~CatalogueRetryWrapper() override = default;
 
-  CatalogueRetryWrapper &operator=(const CatalogueRetryWrapper &) = delete;
+  CatalogueRetryWrapper& operator=(const CatalogueRetryWrapper&) = delete;
 
   const std::unique_ptr<SchemaCatalogue>& Schema() override;
   const std::unique_ptr<AdminUserCatalogue>& AdminUser() override;
@@ -74,7 +74,7 @@ protected:
   /**
    * Object representing the API to the CTA logging system.
    */
-  log::Logger &m_log;
+  log::Logger& m_log;
 
   /**
    * The wrapped catalogue.
@@ -112,4 +112,4 @@ private:
   std::unique_ptr<ArchiveFileCatalogue> m_archiveFile;
 };  // class CatalogueRetryWrapper
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

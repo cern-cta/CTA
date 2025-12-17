@@ -17,9 +17,9 @@
 
 #include "SourcedParameter.hpp"
 
-#include <algorithm>
-
 #include "common/utils/StringConversions.hpp"
+
+#include <algorithm>
 
 namespace cta {
 
@@ -37,7 +37,7 @@ void SourcedParameter<time_t>::set(const std::string& value, const std::string& 
 }
 
 template<>
-void SourcedParameter<uint16_t>:: set(const std::string &value, const std::string & source){
+void SourcedParameter<uint16_t>::set(const std::string& value, const std::string& source) {
   if (!utils::isValidUInt(value)) {
     BadlyFormattedInteger ex;
     ex.getMessage() << "In SourcedParameter<uint16_t>::set() : badly formatted integer"
@@ -50,7 +50,7 @@ void SourcedParameter<uint16_t>:: set(const std::string &value, const std::strin
 }
 
 template<>
-void SourcedParameter<uint32_t>:: set(const std::string &value, const std::string & source){
+void SourcedParameter<uint32_t>::set(const std::string& value, const std::string& source) {
   if (!utils::isValidUInt(value)) {
     BadlyFormattedInteger ex;
     ex.getMessage() << "In SourcedParameter<uint32_t>::set() : badly formatted integer"
@@ -103,33 +103,33 @@ void SourcedParameter<std::string>::set(const std::string& value, const std::str
 }
 
 template<>
-void SourcedParameter<time_t>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<time_t>::addLogParamForValue(log::LogContext& lc) {
   lc.pushOrReplace({"value", m_value});
 }
 
 template<>
-void SourcedParameter<uint16_t>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<uint16_t>::addLogParamForValue(log::LogContext& lc) {
   lc.pushOrReplace({"value", m_value});
 }
 
 template<>
-void SourcedParameter<uint32_t>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<uint32_t>::addLogParamForValue(log::LogContext& lc) {
   lc.pushOrReplace({"value", m_value});
 }
 
 template<>
-void SourcedParameter<uint64_t>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<uint64_t>::addLogParamForValue(log::LogContext& lc) {
   lc.pushOrReplace({"value", m_value});
 }
 
 template<>
-void SourcedParameter<std::string>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<std::string>::addLogParamForValue(log::LogContext& lc) {
   lc.pushOrReplace({"value", m_value});
 }
 
 template<>
-void SourcedParameter<bool>::addLogParamForValue(log::LogContext & lc) {
+void SourcedParameter<bool>::addLogParamForValue(log::LogContext& lc) {
   lc.pushOrReplace({"value", m_value});
 }
 
-} // namespace cta
+}  // namespace cta

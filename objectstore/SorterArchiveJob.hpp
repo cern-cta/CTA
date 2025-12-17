@@ -17,23 +17,23 @@
 
 #pragma once
 
-#include <list>
-#include <memory>
-
 #include "AgentReferenceInterface.hpp"
 #include "ArchiveRequest.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
+
+#include <list>
+#include <memory>
 
 namespace cta::objectstore {
 
 /**
  * This structure holds the necessary data to queue a job taken from the ArchiveRequest that needs to be queued.
  */
-struct SorterArchiveJob{
+struct SorterArchiveJob {
   std::shared_ptr<ArchiveRequest> archiveRequest;
   ArchiveRequest::JobDump jobDump;
   common::dataStructures::ArchiveFile archiveFile;
-  AgentReferenceInterface * previousOwner;
+  AgentReferenceInterface* previousOwner;
   common::dataStructures::MountPolicy mountPolicy;
   common::dataStructures::JobQueueType jobQueueType;
 };
@@ -42,8 +42,8 @@ struct SorterArchiveJob{
  * This structure holds the datas the user have to
  * give to insert an ArchiveRequest without any fetch needed on the Request
  */
-struct SorterArchiveRequest{
+struct SorterArchiveRequest {
   std::list<SorterArchiveJob> archiveJobs;
 };
 
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

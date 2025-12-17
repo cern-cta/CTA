@@ -17,11 +17,12 @@
 
 #pragma once
 
-#include "cta_frontend.pb.h"
 #include <map>
 #include <optional>
 #include <string>
 #include <vector>
+
+#include "cta_frontend.pb.h"
 
 namespace cta::frontend {
 

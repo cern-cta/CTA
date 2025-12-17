@@ -15,27 +15,33 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#include "catalogue/rdbms/RdbmsRequesterGroupMountRuleCatalogue.hpp"
 
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsMountPolicyCatalogue.hpp"
-#include "catalogue/rdbms/RdbmsRequesterGroupMountRuleCatalogue.hpp"
 #include "common/dataStructures/RequesterGroupMountRule.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsRequesterGroupMountRuleCatalogue::RdbmsRequesterGroupMountRuleCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue):
-  m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsRequesterGroupMountRuleCatalogue::RdbmsRequesterGroupMountRuleCatalogue(log::Logger& log,
+                                                                             std::shared_ptr<rdbms::ConnPool> connPool,
+                                                                             RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
 void RdbmsRequesterGroupMountRuleCatalogue::modifyRequesterGroupMountRulePolicy(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterGroupName, const std::string &mountPolicy) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterGroupName,
+  const std::string& mountPolicy) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE REQUESTER_GROUP_MOUNT_RULE SET
@@ -57,15 +63,17 @@ void RdbmsRequesterGroupMountRuleCatalogue::modifyRequesterGroupMountRulePolicy(
   stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify requester group mount rule ") + instanceName + ":" +
-      requesterGroupName + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify requester group mount rule ") + instanceName + ":"
+                               + requesterGroupName + " because it does not exist");
   }
 }
 
 void RdbmsRequesterGroupMountRuleCatalogue::modifyRequesterGroupMountRuleComment(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterGroupName, const std::string &comment) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterGroupName,
+  const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -88,18 +96,18 @@ void RdbmsRequesterGroupMountRuleCatalogue::modifyRequesterGroupMountRuleComment
   stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify requester group mount rule ") + instanceName + ":" +
-      requesterGroupName + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify requester group mount rule ") + instanceName + ":"
+                               + requesterGroupName + " because it does not exist");
   }
 }
 
 void RdbmsRequesterGroupMountRuleCatalogue::createRequesterGroupMountRule(
-  const common::dataStructures::SecurityIdentity &admin,
-  const std::string &mountPolicyName,
-  const std::string &diskInstanceName,
-  const std::string &requesterGroupName,
-  const std::string &comment) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& mountPolicyName,
+  const std::string& diskInstanceName,
+  const std::string& requesterGroupName,
+  const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   auto conn = m_connPool->getConn();
 
@@ -107,19 +115,21 @@ void RdbmsRequesterGroupMountRuleCatalogue::createRequesterGroupMountRule(
   const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
 
   if (const auto mountPolicy = mountPolicyCatalogue->getRequesterGroupMountPolicy(conn, group); mountPolicy) {
-    throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
-                                " to requester-group " + diskInstanceName + ":" + requesterGroupName +
-                                " because a rule already exists assigning the requester-group to mount-policy " +
-                                mountPolicy->name);
+    throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName
+                               + " to requester-group " + diskInstanceName + ":" + requesterGroupName
+                               + " because a rule already exists assigning the requester-group to mount-policy "
+                               + mountPolicy->name);
   }
 
-  if(!RdbmsCatalogueUtils::mountPolicyExists(conn, mountPolicyName)) {
-    throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
-      diskInstanceName + ":" + requesterGroupName + " because mount-policy " + mountPolicyName + " does not exist");
+  if (!RdbmsCatalogueUtils::mountPolicyExists(conn, mountPolicyName)) {
+    throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group "
+                               + diskInstanceName + ":" + requesterGroupName + " because mount-policy "
+                               + mountPolicyName + " does not exist");
   }
-  if(!RdbmsCatalogueUtils::diskInstanceExists(conn, diskInstanceName)) {
-    throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group " +
-      diskInstanceName + ":" + requesterGroupName + " because disk-instance " + diskInstanceName + " does not exist");
+  if (!RdbmsCatalogueUtils::diskInstanceExists(conn, diskInstanceName)) {
+    throw exception::UserError(std::string("Cannot assign mount-policy ") + mountPolicyName + " to requester-group "
+                               + diskInstanceName + ":" + requesterGroupName + " because disk-instance "
+                               + diskInstanceName + " does not exist");
   }
 
   const uint64_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -175,7 +185,7 @@ void RdbmsRequesterGroupMountRuleCatalogue::createRequesterGroupMountRule(
 }
 
 std::list<common::dataStructures::RequesterGroupMountRule>
-  RdbmsRequesterGroupMountRuleCatalogue::getRequesterGroupMountRules() const {
+RdbmsRequesterGroupMountRuleCatalogue::getRequesterGroupMountRules() const {
   std::list<common::dataStructures::RequesterGroupMountRule> rules;
   const char* const sql = R"SQL(
     SELECT
@@ -200,7 +210,7 @@ std::list<common::dataStructures::RequesterGroupMountRule>
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
-  while(rset.next()) {
+  while (rset.next()) {
     common::dataStructures::RequesterGroupMountRule rule;
 
     rule.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
@@ -221,8 +231,8 @@ std::list<common::dataStructures::RequesterGroupMountRule>
   return rules;
 }
 
-void RdbmsRequesterGroupMountRuleCatalogue::deleteRequesterGroupMountRule(const std::string &diskInstanceName,
-  const std::string &requesterGroupName) {
+void RdbmsRequesterGroupMountRuleCatalogue::deleteRequesterGroupMountRule(const std::string& diskInstanceName,
+                                                                          const std::string& requesterGroupName) {
   const char* const sql = R"SQL(
     DELETE FROM
       REQUESTER_GROUP_MOUNT_RULE
@@ -236,12 +246,12 @@ void RdbmsRequesterGroupMountRuleCatalogue::deleteRequesterGroupMountRule(const 
   stmt.bindString(":REQUESTER_GROUP_NAME", requesterGroupName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot delete the mount rule for requester group ") + diskInstanceName
-      + ":" + requesterGroupName + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot delete the mount rule for requester group ") + diskInstanceName + ":"
+                               + requesterGroupName + " because it does not exist");
   }
 
   m_rdbmsCatalogue->m_groupMountPolicyCache.invalidate();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

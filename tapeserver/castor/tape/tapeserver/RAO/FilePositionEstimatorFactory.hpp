@@ -17,13 +17,13 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <vector>
-
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "common/log/TimingList.hpp"
 #include "tapeserver/castor/tape/tapeserver/RAO/FilePositionEstimator.hpp"
+
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace cta::catalogue {
 class Catalogue;
@@ -36,8 +36,14 @@ namespace castor::tape::tapeserver::rao {
  */
 class FilePositionEstimatorFactory {
 public:
-  static std::unique_ptr<FilePositionEstimator> createInterpolationFilePositionEstimator(const std::string & vid, cta::catalogue::Catalogue *catalogue, drive::DriveInterface *drive, cta::log::TimingList &tl);
-  static std::unique_ptr<FilePositionEstimator> createInterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition> & eowp, cta::catalogue::MediaType & mediaType);
+  static std::unique_ptr<FilePositionEstimator>
+  createInterpolationFilePositionEstimator(const std::string& vid,
+                                           cta::catalogue::Catalogue* catalogue,
+                                           drive::DriveInterface* drive,
+                                           cta::log::TimingList& tl);
+  static std::unique_ptr<FilePositionEstimator>
+  createInterpolationFilePositionEstimator(const std::vector<drive::endOfWrapPosition>& eowp,
+                                           cta::catalogue::MediaType& mediaType);
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

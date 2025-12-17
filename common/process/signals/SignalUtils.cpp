@@ -15,10 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <signal.h>
-#include <string>
-
 #include "SignalUtils.hpp"
+
+#include <signal.h>
 
 namespace cta::process::utils {
 

@@ -17,13 +17,8 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
-
-#include <list>
-#include <map>
-#include <memory>
-
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "catalogue/MediaTypeWithLogs.hpp"
@@ -32,9 +27,14 @@
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/log/DummyLogger.hpp"
 
+#include <gtest/gtest.h>
+#include <list>
+#include <map>
+#include <memory>
+
 namespace unitTests {
 
-class cta_catalogue_MediaTypeTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_MediaTypeTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_MediaTypeTest();
 
@@ -58,8 +58,8 @@ protected:
    * @param listOfMediaTypes The list of tape media types.
    * @return Map from tape media type name to tape media type.
    */
-  std::map<std::string, cta::catalogue::MediaTypeWithLogs> mediaTypeWithLogsListToMap(
-    const std::list<cta::catalogue::MediaTypeWithLogs> &listOfMediaTypes);
+  std::map<std::string, cta::catalogue::MediaTypeWithLogs>
+  mediaTypeWithLogsListToMap(const std::list<cta::catalogue::MediaTypeWithLogs>& listOfMediaTypes);
 };
 
 }  // namespace unitTests

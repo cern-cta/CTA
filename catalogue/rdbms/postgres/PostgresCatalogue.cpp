@@ -15,22 +15,23 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
-
-#include "catalogue/rdbms/postgres/PostgresArchiveFileCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresCatalogue.hpp"
+
+#include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
+#include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
+#include "catalogue/rdbms/postgres/PostgresArchiveFileCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresFileRecycleLogCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresLogicalLibraryCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresMediaTypeCatalogue.hpp"
+#include "catalogue/rdbms/postgres/PostgresPhysicalLibraryCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresStorageClassCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresTapeCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresTapeFileCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresTapePoolCatalogue.hpp"
 #include "catalogue/rdbms/postgres/PostgresVirtualOrganizationCatalogue.hpp"
-#include "catalogue/rdbms/postgres/PostgresPhysicalLibraryCatalogue.hpp"
-#include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
-#include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 #include "rdbms/Login.hpp"
+
+#include <memory>
 
 namespace cta::catalogue {
 
@@ -51,15 +52,16 @@ PostgresCatalogue::PostgresCatalogue(log::Logger& log,
   RdbmsCatalogue::m_tape = std::make_unique<PostgresTapeCatalogue>(m_log, m_connPool, this);
 }
 
-std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
-  const std::optional<std::vector<std::string>> &diskFileIds) const {
+std::string
+PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn& conn,
+                                                  const std::optional<std::vector<std::string>>& diskFileIds) const {
   const std::string tempTableName = "TEMP_DISK_FXIDS";
 
-  if(diskFileIds) {
+  if (diskFileIds) {
     std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(DISK_FILE_ID VARCHAR(100))";
     try {
       conn.executeNonQuery(sql);
-    } catch(exception::Exception&) {
+    } catch (exception::Exception&) {
       // Postgres does not drop temporary tables until the end of the session; trying to create another
       // temporary table in the same unit test will fail. If this happens, truncate the table and carry on.
       std::string sql2 = "TRUNCATE TABLE " + tempTableName;
@@ -68,7 +70,7 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
 
     std::string sql3 = "INSERT INTO " + tempTableName + " VALUES(:DISK_FILE_ID)";
     auto stmt = conn.createStmt(sql3);
-    for(auto &diskFileId : diskFileIds.value()) {
+    for (auto& diskFileId : diskFileIds.value()) {
       stmt.bindString(":DISK_FILE_ID", diskFileId);
       stmt.executeNonQuery();
     }
@@ -76,4 +78,4 @@ std::string PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn &conn,
   return tempTableName;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

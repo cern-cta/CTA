@@ -16,8 +16,9 @@
  */
 
 #include "ShowQueuesResponseStream.hpp"
-#include "frontend/common/AdminCmdOptions.hpp"
+
 #include "common/dataStructures/MountTypeSerDeser.hpp"
+#include "frontend/common/AdminCmdOptions.hpp"
 
 namespace cta::frontend {
 

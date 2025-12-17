@@ -15,16 +15,16 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "scheduler/rdbms/RetrieveRdbJob.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
-#include "scheduler/rdbms/RetrieveRdbJob.hpp"
 #include "scheduler/rdbms/postgres/RetrieveJobQueue.hpp"
-
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 // includes for debug timings only below
+#include "common/Timer.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/utils/utils.hpp"
-#include "common/Timer.hpp"
 
 namespace cta::schedulerdb {
 
@@ -57,7 +57,8 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   retrieveRequest.isVerifyOnly =
     m_jobRow.isVerifyOnly;             // request to retrieve file from tape but do not write a disk copy
   retrieveRequest.vid = m_jobRow.vid;  // limit retrieve requests to the specified vid (in the case of dual-copy files)
-  retrieveRequest.mountPolicy = m_jobRow.mountPolicy;  // limit retrieve requests to a specified mount policy (only used for verification requests)
+  retrieveRequest.mountPolicy =
+    m_jobRow.mountPolicy;  // limit retrieve requests to a specified mount policy (only used for verification requests)
   retrieveRequest.lifecycleTimings.creation_time = m_jobRow.lifecycleTimings_creation_time;
   retrieveRequest.lifecycleTimings.first_selected_time = m_jobRow.lifecycleTimings_first_selected_time;
   retrieveRequest.lifecycleTimings.completed_time = m_jobRow.lifecycleTimings_completed_time;
@@ -94,7 +95,8 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
   // Re-initialize report type
   if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForSuccess) {
     reportType = ReportType::CompletionReport;
-  } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure || m_jobRow.status == RetrieveJobStatus::RJS_ToReportToRepackForFailure) {
+  } else if (m_jobRow.status == RetrieveJobStatus::RJS_ToReportToUserForFailure
+             || m_jobRow.status == RetrieveJobStatus::RJS_ToReportToRepackForFailure) {
     reportType = ReportType::FailureReport;
   } else {
     reportType = ReportType::NoReportRequired;
@@ -102,7 +104,8 @@ void RetrieveRdbJob::initialize(const rdbms::Rset& rset, bool jobIsRepack) {
 }
 
 // contructor to get next job batch to report
-RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack) : RetrieveRdbJob(connPool) {
+RetrieveRdbJob::RetrieveRdbJob(rdbms::ConnPool& connPool, const rdbms::Rset& rset, bool rowFromRepack)
+    : RetrieveRdbJob(connPool) {
   initialize(rset, rowFromRepack);
 };
 
@@ -156,8 +159,8 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
                                               [[maybe_unused]] const std::string& reason) {
   if (m_jobRow.status != RetrieveJobStatus::RJS_ToTransfer) {
     lc.log(log::WARNING,
-           std::string("RetrieveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status) +
-           std::string(". Assuming ToTransfer anyway and changing status to RJS_ToReportToUserForFailure."));
+           std::string("RetrieveRdbJob::handleExceedTotalRetries(): Unexpected status: ") + to_string(m_jobRow.status)
+             + std::string(". Assuming ToTransfer anyway and changing status to RJS_ToReportToUserForFailure."));
   }
 
   try {
@@ -172,8 +175,7 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
   } catch (const exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(cta::log::WARNING,
-           "Failed to update job status for reporting failure. Aborting transaction.");
+    lc.log(cta::log::WARNING, "Failed to update job status for reporting failure. Aborting transaction.");
     txn.abort();
   }
 }
@@ -207,8 +209,7 @@ void RetrieveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
     // since requeueing, we do not report and we do not
     // set reportType to a particular value here
   } catch (const exception::Exception& ex) {
-    lc.log(log::ERR, log_msg + std::string(" failed. Aborting txn: " +
-                                             ex.getMessageValue()));
+    lc.log(log::ERR, log_msg + std::string(" failed. Aborting txn: " + ex.getMessageValue()));
     txn.abort();
   }
 }
@@ -288,13 +289,13 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
     }
     txn.commit();
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
-       log::ScopedParamContainer(lc)
+      log::ScopedParamContainer(lc)
         .add("rowDeletionCount", nrowsdeleted)
         .add("rowDeletionTime", t.secs())
         .log(log::INFO, "In schedulerdb::RetrieveJobQueueRow::updateJobStatusForFailedReport(): deleted jobs");
     }
   } catch (exception::Exception& ex) {
-    log::ScopedParamContainer (lc).add("exceptionMessage", ex.getMessageValue());
+    log::ScopedParamContainer(lc).add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::WARNING,
            "In schedulerdb::RetrieveRdbJob::failReport(): failed to update job status for failed "
            "report case. Aborting the transaction.");

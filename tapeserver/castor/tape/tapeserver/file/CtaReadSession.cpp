@@ -15,25 +15,26 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
-#include <string>
+#include "castor/tape/tapeserver/file/CtaReadSession.hpp"
 
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
-#include "castor/tape/tapeserver/file/CtaReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
+
+#include <memory>
+#include <string>
 
 namespace castor::tape::tapeFile {
 
-CtaReadSession::CtaReadSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
-  : ReadSession(drive, volInfo, useLbp) {
+CtaReadSession::CtaReadSession(tapeserver::drive::DriveInterface& drive,
+                               const tapeserver::daemon::VolumeInfo& volInfo,
+                               const bool useLbp)
+    : ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
   {
     VOL1 vol1;
-    m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1),
-      "[ReadSession::ReadSession()] - Reading VOL1");
+    m_drive.readExactBlock(reinterpret_cast<void*>(&vol1), sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
     switch (vol1.getLBPMethod()) {
       case SCSI::logicBlockProtectionMethod::CRC32C:
         m_detectedLbp = true;
@@ -45,7 +46,7 @@ CtaReadSession::CtaReadSession(tapeserver::drive::DriveInterface &drive,
         break;
       case SCSI::logicBlockProtectionMethod::ReedSolomon:
         throw cta::exception::Exception("In ReadSession::ReadSession(): "
-            "ReedSolomon LBP method not supported");
+                                        "ReedSolomon LBP method not supported");
       case SCSI::logicBlockProtectionMethod::DoNotUse:
         m_drive.disableLogicalBlockProtection();
         m_detectedLbp = false;
@@ -59,11 +60,10 @@ CtaReadSession::CtaReadSession(tapeserver::drive::DriveInterface &drive,
   m_drive.rewind();
   {
     VOL1 vol1;
-    m_drive.readExactBlock(reinterpret_cast<void *>(&vol1), sizeof(vol1),
-      "[ReadSession::ReadSession()] - Reading VOL1");
+    m_drive.readExactBlock(reinterpret_cast<void*>(&vol1), sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
     try {
       vol1.verify();
-    } catch (std::exception &e) {
+    } catch (std::exception& e) {
       throw TapeFormatError(e.what());
     }
     HeaderChecker::checkVOL1(vol1, volInfo.vid);
@@ -72,4 +72,4 @@ CtaReadSession::CtaReadSession(tapeserver::drive::DriveInterface &drive,
   }
 }
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

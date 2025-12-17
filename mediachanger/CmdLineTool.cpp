@@ -20,18 +20,16 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::CmdLineTool::CmdLineTool(
-  std::istream &inStream,
-  std::ostream &outStream,
-  std::ostream &errStream,
-  MediaChangerFacade &mc):
-  m_in(inStream),
-  m_out(outStream),
-  m_err(errStream),
-  m_mc(mc),
-  m_debugBuf(outStream),
-  m_dbg(&m_debugBuf) {
-}
+cta::mediachanger::CmdLineTool::CmdLineTool(std::istream& inStream,
+                                            std::ostream& outStream,
+                                            std::ostream& errStream,
+                                            MediaChangerFacade& mc)
+    : m_in(inStream),
+      m_out(outStream),
+      m_err(errStream),
+      m_mc(mc),
+      m_debugBuf(outStream),
+      m_dbg(&m_debugBuf) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -41,7 +39,6 @@ cta::mediachanger::CmdLineTool::~CmdLineTool() = default;
 //------------------------------------------------------------------------------
 // bool2Str
 //------------------------------------------------------------------------------
-std::string cta::mediachanger::CmdLineTool::bool2Str(const bool value)
-  const {
+std::string cta::mediachanger::CmdLineTool::bool2Str(const bool value) const {
   return value ? "TRUE" : "FALSE";
 }

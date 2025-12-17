@@ -15,14 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <limits>
-#include <list>
-#include <memory>
-#include <string>
-#include <utility>
+#include "scheduler/OStoreDB/OStoreDB.hpp"
 
-#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "catalogue/InMemoryCatalogue.hpp"
+#include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
@@ -31,9 +27,14 @@
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "scheduler/OStoreDB/MemQueues.hpp"
-#include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/OStoreDB/OStoreDBTest.hpp"
+
+#include <limits>
+#include <list>
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace unitTests {
 
@@ -41,40 +42,35 @@ namespace unitTests {
  * This structure is used to parameterize OStore database tests.
  */
 struct OStoreDBTestParams {
-  cta::SchedulerDatabaseFactory &dbFactory;
+  cta::SchedulerDatabaseFactory& dbFactory;
 
-  explicit OStoreDBTestParams(cta::SchedulerDatabaseFactory *dbFactory) :
-    dbFactory(*dbFactory) {}
+  explicit OStoreDBTestParams(cta::SchedulerDatabaseFactory* dbFactory) : dbFactory(*dbFactory) {}
 };  // struct OStoreDBTestParams
-
 
 /**
  * The OStore database test is a parameterized test.  It takes an
  * OStore database factory as a parameter.
  */
-class OStoreDBTest: public
-  ::testing::TestWithParam<OStoreDBTestParams> {
- public:
-  OStoreDBTest() noexcept { }
+class OStoreDBTest : public ::testing::TestWithParam<OStoreDBTestParams> {
+public:
+  OStoreDBTest() noexcept {}
 
-  class FailedToGetDatabase: public std::exception {
-   public:
-    const char *what() const noexcept {
-      return "Failed to get scheduler database";
-    }
+  class FailedToGetDatabase : public std::exception {
+  public:
+    const char* what() const noexcept { return "Failed to get scheduler database"; }
   };
 
   virtual void SetUp() {
     // We do a deep reference to the member as the C++ compiler requires the function to be
     // already defined if called implicitly.
-    const auto &factory = GetParam().dbFactory;
+    const auto& factory = GetParam().dbFactory;
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     // Get the OStore DB from the factory.
     auto osdb = std::move(factory.create(m_catalogue));
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface).
-    dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osdb.get());
+    dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory).
-    m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface *> (osdb.release()));
+    m_db.reset(dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.release()));
   }
 
   virtual void TearDown() {
@@ -82,8 +78,8 @@ class OStoreDBTest: public
     m_catalogue.reset();
   }
 
-  cta::objectstore::OStoreDBWrapperInterface &getDb() {
-    cta::objectstore::OStoreDBWrapperInterface *const ptr = m_db.get();
+  cta::objectstore::OStoreDBWrapperInterface& getDb() {
+    cta::objectstore::OStoreDBWrapperInterface* const ptr = m_db.get();
     if (nullptr == ptr) {
       throw FailedToGetDatabase();
     }
@@ -106,12 +102,12 @@ class OStoreDBTest: public
   static const cta::common::dataStructures::SecurityIdentity s_userOnAdminHost;
   static const cta::common::dataStructures::SecurityIdentity s_userOnUserHost;
 
- private:
+private:
   // Prevent copying
-  OStoreDBTest(const OStoreDBTest &) = delete;
+  OStoreDBTest(const OStoreDBTest&) = delete;
 
   // Prevent assignment
-  OStoreDBTest & operator= (const OStoreDBTest &) = delete;
+  OStoreDBTest& operator=(const OStoreDBTest&) = delete;
 
   std::unique_ptr<cta::objectstore::OStoreDBWrapperInterface> m_db;
 
@@ -122,7 +118,7 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
   cta::log::LogContext lc(logger);
   // Get the OStoreBDinterface
-  cta::objectstore::OStoreDBWrapperInterface & osdbi = getDb();
+  cta::objectstore::OStoreDBWrapperInterface& osdbi = getDb();
   // Add jobs to an archive queue.
   for (size_t i = 0; i < 10; i++) {
     cta::common::dataStructures::ArchiveRequest ar;
@@ -172,15 +168,14 @@ TEST_P(OStoreDBTest, getBatchArchiveJob) {
   tape.tapePool = "Tapepool1";
   tape.vid = "tape";
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
-  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(),
-    tape, "drive", "library", "host");
+  auto mount = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tape, "drive", "library", "host");
   auto giveAll = std::numeric_limits<uint64_t>::max();
   auto jobs = mount->getNextJobBatch(giveAll, giveAll, lc);
   ASSERT_EQ(8, jobs.size());
   // With the first 2 jobs removed from queue, we get the 3 and next. (i=2...)
   size_t i = 2;
-  for (auto & j : jobs) {
-    ASSERT_EQ(123*(i++ + 1), j->archiveFile.fileSize);
+  for (auto& j : jobs) {
+    ASSERT_EQ(123 * (i++ + 1), j->archiveFile.fileSize);
   }
   // Check the queue has been emptied, and hence removed.
   ASSERT_EQ(false, osdbi.getBackend().exists(aqAddr));
@@ -192,14 +187,13 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
   cta::log::StringLogger logger("dummy", "OStoreAbstractTest", cta::log::DEBUG);
   cta::log::LogContext lc(logger);
   // Get the OStoreBDinterface
-  cta::objectstore::OStoreDBWrapperInterface & osdbi = getDb();
+  cta::objectstore::OStoreDBWrapperInterface& osdbi = getDb();
   // Create many archive jobs and enqueue them in the same archive queue.
   const size_t filesToDo = 100;
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
   for (size_t i = 0; i < filesToDo; i++) {
-    lambdas.emplace_back(
-    [i, &osdbi, &lc](){
+    lambdas.emplace_back([i, &osdbi, &lc]() {
       cta::log::LogContext localLc = lc;
       // We need to pass an archive request and an archive request job dump to sharedAddToArchiveQueue.
       ArchiveRequest aReq(osdbi.getAgentReference().nextId("ArchiveRequest"), osdbi.getBackend());
@@ -222,12 +216,17 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
       ArchiveRequest::JobDump jd;
       jd.tapePool = "tapepool";
       jd.copyNb = 1;
-      auto sharedLock = cta::ostoredb::MemQueue<ArchiveRequest, ArchiveQueue>::sharedAddToQueue(jd, jd.tapePool, aReq,
-          osdbi.getOstoreDB(), localLc);
+      auto sharedLock = cta::ostoredb::MemQueue<ArchiveRequest, ArchiveQueue>::sharedAddToQueue(jd,
+                                                                                                jd.tapePool,
+                                                                                                aReq,
+                                                                                                osdbi.getOstoreDB(),
+                                                                                                localLc);
     });
     jobInsertions.emplace_back(std::async(std::launch::async, lambdas.back()));
   }
-  for (auto &j : jobInsertions) { j.get(); }
+  for (auto& j : jobInsertions) {
+    j.get();
+  }
   jobInsertions.clear();
   lambdas.clear();
 
@@ -238,11 +237,9 @@ TEST_P(OStoreDBTest, MemQueuesSharedAddToArchiveQueue) {
 static cta::objectstore::BackendVFS osVFS(__LINE__, __FILE__);
 #ifdef TEST_RADOS
 static cta::OStoreDBFactory<cta::objectstore::BackendRados> OStoreDBFactoryRados("rados://tapetest@tapetest");
-INSTANTIATE_TEST_CASE_P(OStoreTestRados, OStoreDBTest,
-    ::testing::Values(OStoreDBTestParams(&OStoreDBFactoryRados)));
+INSTANTIATE_TEST_CASE_P(OStoreTestRados, OStoreDBTest, ::testing::Values(OStoreDBTestParams(&OStoreDBFactoryRados)));
 #endif
 static cta::OStoreDBFactory<cta::objectstore::BackendVFS> OStoreDBFactoryVFS;
-INSTANTIATE_TEST_CASE_P(OStoreTestVFS, OStoreDBTest,
-    ::testing::Values(OStoreDBTestParams(&OStoreDBFactoryVFS)));
+INSTANTIATE_TEST_CASE_P(OStoreTestVFS, OStoreDBTest, ::testing::Values(OStoreDBTestParams(&OStoreDBFactoryVFS)));
 
 }  // namespace unitTests

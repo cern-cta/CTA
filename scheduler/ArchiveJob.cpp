@@ -15,15 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <cryptopp/base64.h>
-
-#include <limits>
+#include "scheduler/ArchiveJob.hpp"
 
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "disk/DiskReporterFactory.hpp"
-#include "scheduler/ArchiveJob.hpp"
 #include "scheduler/ArchiveMount.hpp"
+
+#include <cryptopp/base64.h>
+#include <limits>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -113,8 +113,8 @@ std::string cta::ArchiveJob::exceptionThrowingReportURL() {
       throw exception::Exception(
         "In ArchiveJob::exceptionThrowingReportURL(): job status Report does not require reporting.");
   }
-  throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): invalid report type reportType=" +
-                             std::to_string(static_cast<uint8_t>(m_dbJob->reportType)));
+  throw exception::Exception("In ArchiveJob::exceptionThrowingReportURL(): invalid report type reportType="
+                             + std::to_string(static_cast<uint8_t>(m_dbJob->reportType)));
 }
 
 //------------------------------------------------------------------------------

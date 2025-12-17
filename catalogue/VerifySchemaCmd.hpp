@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "catalogue/CmdLineTool.hpp"
 #include "catalogue/CatalogueSchema.hpp"
+#include "catalogue/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
 
@@ -27,7 +27,7 @@ namespace cta::catalogue {
 /**
  * Command-line tool for verifying the catalogue schema.
  */
-class VerifySchemaCmd: public CmdLineTool {
+class VerifySchemaCmd : public CmdLineTool {
 public:
   /**
    * Constructor.
@@ -36,7 +36,7 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  VerifySchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream);
+  VerifySchemaCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream);
 
   enum class VerifyStatus { OK, INFO, ERROR, UNKNOWN };
 
@@ -48,14 +48,14 @@ private:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int exceptionThrowingMain(const int argc, char *const *const argv) override;
+  int exceptionThrowingMain(const int argc, char* const* const argv) override;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  void printUsage(std::ostream &os) override;
+  void printUsage(std::ostream& os) override;
 
   /**
    * Returns true if the table with the specified name exists in the database
@@ -73,7 +73,7 @@ private:
    * @param conn The database connection
    * @return True if the catalogue is upgrading
    */
-  bool isUpgrading(rdbms::Conn *conn) const;
+  bool isUpgrading(rdbms::Conn* conn) const;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

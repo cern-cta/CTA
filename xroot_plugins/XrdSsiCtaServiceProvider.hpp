@@ -17,14 +17,14 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-#include <XrdSsi/XrdSsiProvider.hh>
-#include <XrdSsiPbLog.hpp>
-
 #include "catalogue/Catalogue.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/Scheduler.hpp"
+
+#include <XrdSsi/XrdSsiProvider.hh>
+#include <XrdSsiPbLog.hpp>
+#include <memory>
+#include <string>
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
@@ -35,7 +35,7 @@
 /*!
  * Global pointer to the Service Provider object.
  */
-extern XrdSsiProvider *XrdSsiProviderServer;
+extern XrdSsiProvider* XrdSsiProviderServer;
 
 /*!
  * Instantiates a Service to process client requests.
@@ -56,10 +56,10 @@ public:
    * This is always called before any other method.
    */
   // This method inherits from an external class to this project, so we cannot modify the interface
-    bool Init(XrdSsiLogger* logP,
+  bool Init(XrdSsiLogger* logP,
             XrdSsiCluster* clsP,
-            const std::string cfgFn, // cppcheck-suppress passedByValue
-            const std::string parms, // cppcheck-suppress passedByValue
+            const std::string cfgFn,  // cppcheck-suppress passedByValue
+            const std::string parms,  // cppcheck-suppress passedByValue
             int argc,
             char** argv) override;
 
@@ -68,7 +68,7 @@ public:
    *
    * Called exactly once after initialisation to obtain an instance of an XrdSsiService object
    */
-  XrdSsiService *GetService(XrdSsiErrInfo &eInfo, const std::string &contact, int oHold = 256) override;
+  XrdSsiService* GetService(XrdSsiErrInfo& eInfo, const std::string& contact, int oHold = 256) override;
 
   /*!
    * Query whether a resource exists on a server.
@@ -85,15 +85,15 @@ public:
    *                                          only in clustered environments where the resource may be
    *                                          immediately available on some other node.)
    */
-  XrdSsiProvider::rStat QueryResource(const char *rName, const char *contact = nullptr) override;
+  XrdSsiProvider::rStat QueryResource(const char* rName, const char* contact = nullptr) override;
 
   /*!
    * Get a reference to the FrontendService object
    */
   cta::frontend::FrontendService& getFrontendService() const { return *m_frontendService; }
 
- private:
+private:
   // Member variables
-  std::unique_ptr<cta::frontend::FrontendService> m_frontendService;             //!< protocol-neutral CTA Frontend Service object
-  static constexpr const char* const LOG_SUFFIX = "XrdSsiCtaServiceProvider";    //!< Identifier for log messages
+  std::unique_ptr<cta::frontend::FrontendService> m_frontendService;  //!< protocol-neutral CTA Frontend Service object
+  static constexpr const char* const LOG_SUFFIX = "XrdSsiCtaServiceProvider";  //!< Identifier for log messages
 };

@@ -15,23 +15,24 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <getopt.h>
-#include <ostream>
-#include <iostream>
-
 #include "StatisticsSaveCmdLineArgs.hpp"
+
 #include "common/exception/CommandLineNotParsed.hpp"
+
+#include <getopt.h>
+#include <iostream>
+#include <ostream>
 
 namespace cta::statistics {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const *const argv) {
+StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char* const* const argv) {
   static struct option longopts[] = {
-    {"catalogueconf",  required_argument, nullptr, 'c'},
-    {"help",  no_argument, nullptr, 'h'},
-    {nullptr  ,           0, nullptr,   0}
+    {"catalogueconf", required_argument, nullptr, 'c'},
+    {"help",          no_argument,       nullptr, 'h'},
+    {nullptr,         0,                 nullptr, 0  }
   };
 
   // Prevent getopt() from printing an error message if it does not recognize
@@ -41,21 +42,21 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
   int opt = 0;
   while ((opt = getopt_long(argc, argv, ":hc:j", longopts, nullptr)) != -1) {
     switch (opt) {
-    case 'h':
-      help = true;
-      break;
-    case 'j':  // This should remove in the future, but we keep it for backward compatibility
-      break;
-    case 'c':
-      catalogueDbConfigPath = optarg;
-      break;
-    case ':':  // Missing parameter
+      case 'h':
+        help = true;
+        break;
+      case 'j':  // This should remove in the future, but we keep it for backward compatibility
+        break;
+      case 'c':
+        catalogueDbConfigPath = optarg;
+        break;
+      case ':':  // Missing parameter
       {
         exception::CommandLineNotParsed ex;
         ex.getMessage() << "The -" << static_cast<char>(optopt) << " option requires a parameter";
         throw ex;
       }
-    case '?':  // Unknown option
+      case '?':  // Unknown option
       {
         exception::CommandLineNotParsed ex;
         if (0 == optopt) {
@@ -65,12 +66,9 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
         }
         throw ex;
       }
-    default:
-      {
+      default: {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() <<
-          "getopt_long returned the following unknown value: 0x" <<
-          std::hex << static_cast<int>(opt);
+        ex.getMessage() << "getopt_long returned the following unknown value: 0x" << std::hex << static_cast<int>(opt);
         throw ex;
       }
     }  // switch(opt)
@@ -95,17 +93,16 @@ StatisticsSaveCmdLineArgs::StatisticsSaveCmdLineArgs(const int argc, char *const
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void StatisticsSaveCmdLineArgs::printUsage(std::ostream &os) {
-  os <<
-    "Usage:" << std::endl <<
-    "    cta-statistics-save --catalogueconf catalogueDbConnectionFile" << std::endl <<
-    "Where:" << std::endl <<
-    "    catalogueDbConnectionFile" << std::endl <<
-    "        The path to the file containing the connection details of the CTA" << std::endl <<
-    "        catalogue database" << std::endl <<
-    "Options:" << std::endl <<
-    "    -h,--help" << std::endl <<
-    "        Prints this usage message" << std::endl;
+void StatisticsSaveCmdLineArgs::printUsage(std::ostream& os) {
+  os << "Usage:" << std::endl
+     << "    cta-statistics-save --catalogueconf catalogueDbConnectionFile" << std::endl
+     << "Where:" << std::endl
+     << "    catalogueDbConnectionFile" << std::endl
+     << "        The path to the file containing the connection details of the CTA" << std::endl
+     << "        catalogue database" << std::endl
+     << "Options:" << std::endl
+     << "    -h,--help" << std::endl
+     << "        Prints this usage message" << std::endl;
 }
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

@@ -17,13 +17,14 @@
 
 #pragma once
 
-#include <string>
-#include <optional>
-#include <grpcpp/grpcpp.h>
+#include "common/JwkCache.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/JwkCache.hpp"
-#include "../TokenStorage.hpp"
+#include "frontend/grpc/TokenStorage.hpp"
+
+#include <grpcpp/grpcpp.h>
+#include <optional>
+#include <string>
 
 namespace cta::frontend::grpc::common {
 

@@ -15,19 +15,20 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/process/threading/RWLockRdLocker.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/process/threading/RWLock.hpp"
-#include "common/process/threading/RWLockRdLocker.hpp"
 
 namespace cta::threading {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RWLockRdLocker::RWLockRdLocker(RWLock &lock): m_lock(lock) {
+RWLockRdLocker::RWLockRdLocker(RWLock& lock) : m_lock(lock) {
   try {
     m_lock.rdlock();
-  } catch(exception::Exception &ne) {
+  } catch (exception::Exception& ne) {
     throw exception::Exception("Failed to take read lock: " + ne.getMessage().str());
   }
 }
@@ -39,4 +40,4 @@ RWLockRdLocker::~RWLockRdLocker() {
   m_lock.unlock();
 }
 
-} // namespace cta::threading
+}  // namespace cta::threading

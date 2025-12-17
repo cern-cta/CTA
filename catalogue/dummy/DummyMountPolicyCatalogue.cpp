@@ -15,19 +15,20 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <list>
-#include <optional>
-#include <string>
-
 #include "catalogue/dummy/DummyMountPolicyCatalogue.hpp"
+
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
+#include <list>
+#include <optional>
+#include <string>
+
 namespace cta::catalogue {
 
-void DummyMountPolicyCatalogue::createMountPolicy(const common::dataStructures::SecurityIdentity &admin,
-  const CreateMountPolicyAttributes & mountPolicy) {
+void DummyMountPolicyCatalogue::createMountPolicy(const common::dataStructures::SecurityIdentity& admin,
+                                                  const CreateMountPolicyAttributes& mountPolicy) {
   throw exception::NotImplementedException();
 }
 
@@ -51,8 +52,8 @@ std::list<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getMou
   return mountPolicies;
 }
 
-std::optional<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getMountPolicy(
-  const std::string &mountPolicyName) const {
+std::optional<common::dataStructures::MountPolicy>
+DummyMountPolicyCatalogue::getMountPolicy(const std::string& mountPolicyName) const {
   throw exception::NotImplementedException();
 }
 
@@ -76,34 +77,40 @@ std::list<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getCac
   return mountPolicies;
 }
 
-void DummyMountPolicyCatalogue::deleteMountPolicy(const std::string &name) {
+void DummyMountPolicyCatalogue::deleteMountPolicy(const std::string& name) {
   throw exception::NotImplementedException();
 }
 
-void DummyMountPolicyCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t archivePriority) {
+void DummyMountPolicyCatalogue::modifyMountPolicyArchivePriority(const common::dataStructures::SecurityIdentity& admin,
+                                                                 const std::string& name,
+                                                                 const uint64_t archivePriority) {
   throw exception::NotImplementedException();
 }
 
 void DummyMountPolicyCatalogue::modifyMountPolicyArchiveMinRequestAge(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t minArchiveRequestAge) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const uint64_t minArchiveRequestAge) {
   throw exception::NotImplementedException();
 }
 
-void DummyMountPolicyCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t retrievePriority) {
+void DummyMountPolicyCatalogue::modifyMountPolicyRetrievePriority(const common::dataStructures::SecurityIdentity& admin,
+                                                                  const std::string& name,
+                                                                  const uint64_t retrievePriority) {
   throw exception::NotImplementedException();
 }
 
 void DummyMountPolicyCatalogue::modifyMountPolicyRetrieveMinRequestAge(
-  const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t minRetrieveRequestAge) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const uint64_t minRetrieveRequestAge) {
   throw exception::NotImplementedException();
 }
 
-void DummyMountPolicyCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
+void DummyMountPolicyCatalogue::modifyMountPolicyComment(const common::dataStructures::SecurityIdentity& admin,
+                                                         const std::string& name,
+                                                         const std::string& comment) {
   throw exception::NotImplementedException();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

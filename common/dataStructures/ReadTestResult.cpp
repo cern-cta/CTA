@@ -16,6 +16,7 @@
  */
 
 #include "common/dataStructures/ReadTestResult.hpp"
+
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -29,37 +30,27 @@ ReadTestResult::ReadTestResult() {}
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool ReadTestResult::operator==(const ReadTestResult &rhs) const {
-  return driveName==rhs.driveName
-      && vid==rhs.vid
-      && noOfFilesRead==rhs.noOfFilesRead
-      && errors==rhs.errors
-      && checksums==rhs.checksums
-      && totalBytesRead==rhs.totalBytesRead
-      && totalFilesRead==rhs.totalFilesRead
-      && totalTimeInSeconds==rhs.totalTimeInSeconds;
+bool ReadTestResult::operator==(const ReadTestResult& rhs) const {
+  return driveName == rhs.driveName && vid == rhs.vid && noOfFilesRead == rhs.noOfFilesRead && errors == rhs.errors
+         && checksums == rhs.checksums && totalBytesRead == rhs.totalBytesRead && totalFilesRead == rhs.totalFilesRead
+         && totalTimeInSeconds == rhs.totalTimeInSeconds;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool ReadTestResult::operator!=(const ReadTestResult &rhs) const {
+bool ReadTestResult::operator!=(const ReadTestResult& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const ReadTestResult &obj) {
-  os << "(driveName=" << obj.driveName
-     << " vid=" << obj.vid
-     << " noOfFilesRead=" << obj.noOfFilesRead
-     << " errors=" << obj.errors
-     << " checksums=" << obj.checksums
-     << " totalBytesRead=" << obj.totalBytesRead
-     << " totalFilesRead=" << obj.totalFilesRead
-     << " totalTimeInSeconds=" << obj.totalTimeInSeconds << ")";
+std::ostream& operator<<(std::ostream& os, const ReadTestResult& obj) {
+  os << "(driveName=" << obj.driveName << " vid=" << obj.vid << " noOfFilesRead=" << obj.noOfFilesRead
+     << " errors=" << obj.errors << " checksums=" << obj.checksums << " totalBytesRead=" << obj.totalBytesRead
+     << " totalFilesRead=" << obj.totalFilesRead << " totalTimeInSeconds=" << obj.totalTimeInSeconds << ")";
   return os;
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

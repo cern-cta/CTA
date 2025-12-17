@@ -15,12 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/ConnPool.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/process/threading/MutexLocker.hpp"
-#include "rdbms/ConnPool.hpp"
-#include "rdbms/wrapper/ConnFactoryFactory.hpp"
-#include "common/telemetry/metrics/instruments/RdbmsInstruments.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/RdbmsInstruments.hpp"
+#include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
 #include <memory>
 
@@ -41,13 +42,12 @@ ConnPool::~ConnPool() {
 // getConn
 //------------------------------------------------------------------------------
 Conn ConnPool::getConn() {
-
   if (0 == m_maxNbConns) {
     throw ConnPoolConfiguredWithZeroConns("ConnPool is configured with zero connections");
   }
   std::unique_ptr<ConnAndStmts> connAndStmts;
 
-  { // artificial scope to limit the lock taken here
+  {  // artificial scope to limit the lock taken here
     threading::MutexLocker locker(m_connsAndStmtsMutex);
 
     while (m_connsAndStmts.empty() && m_nbConnsOnLoan == m_maxNbConns) {

@@ -15,10 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <sstream>
-
 #include "DesiredDriveState.hpp"
+
 #include "common/log/PriorityMaps.hpp"
+
+#include <sstream>
 
 namespace cta::common::dataStructures {
 
@@ -33,8 +34,7 @@ std::string DesiredDriveState::generateReasonFromLogMsg(int logLevel, std::strin
 }
 
 std::ostream& operator<<(std::ostream& os, const DesiredDriveState& obj) {
-  return os << "(up="        << (obj.up        ? "true" : "false")
-            << " forceDown=" << (obj.forceDown ? "true" : "false") << ")";
+  return os << "(up=" << (obj.up ? "true" : "false") << " forceDown=" << (obj.forceDown ? "true" : "false") << ")";
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

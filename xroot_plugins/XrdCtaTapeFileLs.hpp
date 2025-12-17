@@ -27,7 +27,9 @@ namespace cta::xrd {
  */
 class TapeFileLsStream : public XrdCtaStream {
 public:
-  TapeFileLsStream(const frontend::AdminCmdStream& requestMsg, cta::catalogue::Catalogue &catalogue, cta::Scheduler &scheduler);
+  TapeFileLsStream(const frontend::AdminCmdStream& requestMsg,
+                   cta::catalogue::Catalogue& catalogue,
+                   cta::Scheduler& scheduler);
 
 private:
   static constexpr const char* const LOG_SUFFIX = "TapeFileLsStream";  //!< Identifier for log messages
@@ -45,4 +47,4 @@ inline TapeFileLsStream::TapeFileLsStream(const frontend::AdminCmdStream& reques
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

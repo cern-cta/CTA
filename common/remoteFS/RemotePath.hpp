@@ -31,13 +31,13 @@ public:
    * Constructor
    */
   RemotePath() = default;
-  
+
   /**
    * Setter
    * @param raw
    */
-  void setPath(const std::string &raw);
-  
+  void setPath(const std::string& raw);
+
   /**
    * Constructor
    *
@@ -48,12 +48,12 @@ public:
   /**
    * Equals operator.
    */
-  bool operator==(const RemotePath &rhs) const;
-  
+  bool operator==(const RemotePath& rhs) const;
+
   /**
    * Less than operator
    */
-  bool operator<(const RemotePath &rhs) const;
+  bool operator<(const RemotePath& rhs) const;
 
   /**
    * Returns true if the remote path is empty.
@@ -63,12 +63,12 @@ public:
   /**
    * Returns the raw path in the form "scheme:after_schem".
    */
-  const std::string &getRaw() const;
+  const std::string& getRaw() const;
 
   /**
    * Returns the scheme part of the remote path.
    */
-  const std::string &getScheme() const;
+  const std::string& getScheme() const;
 
   /**
    * Returns the part of the remote path after the scheme as in the raw path
@@ -77,10 +77,9 @@ public:
    * @return The part of the remote path after the scheme as in the raw path
    * "scheme:after_scheme" would result in "after_scheme" being returned.
    */
-  const std::string &getAfterScheme() const;
+  const std::string& getAfterScheme() const;
 
 private:
-
   /**
    * The raw path in the form "scheme:after_scheme".
    */
@@ -97,6 +96,6 @@ private:
    */
   std::string m_afterScheme;
 
-}; // class RemotePath
+};  // class RemotePath
 
-} // namespace cta
+}  // namespace cta

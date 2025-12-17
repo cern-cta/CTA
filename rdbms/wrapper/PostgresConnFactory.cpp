@@ -15,11 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/wrapper/PostgresConnFactory.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "rdbms/wrapper/PostgresConn.hpp"
-#include "rdbms/wrapper/PostgresConnFactory.hpp"
 #include "plugin-manager/PluginInterface.hpp"
+#include "rdbms/wrapper/PostgresConn.hpp"
 
 #include <sstream>
 
@@ -51,7 +52,7 @@ std::string PostgresConnFactory::getDbNamespace() const {
   return m_login.dbNamespace;
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper
 
 extern "C" {
 
@@ -63,4 +64,4 @@ void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
     .CLASS<cta::rdbms::wrapper::PostgresConnFactory>("PostgresConnFactory");
 }
 
-}// extern "C"
+}  // extern "C"

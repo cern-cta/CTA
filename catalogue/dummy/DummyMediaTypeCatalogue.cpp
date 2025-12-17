@@ -15,24 +15,25 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/dummy/DummyMediaTypeCatalogue.hpp"
+
+#include "catalogue/MediaType.hpp"
+#include "catalogue/MediaTypeWithLogs.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/exception/NotImplementedException.hpp"
+
 #include <list>
 #include <map>
 #include <string>
 
-#include "catalogue/MediaType.hpp"
-#include "catalogue/MediaTypeWithLogs.hpp"
-#include "catalogue/dummy/DummyMediaTypeCatalogue.hpp"
-#include "common/exception/Exception.hpp"
-#include "common/exception/NotImplementedException.hpp"
-
 namespace cta::catalogue {
 
-void DummyMediaTypeCatalogue::createMediaType(const common::dataStructures::SecurityIdentity &admin,
-  const MediaType &mediaType) {
+void DummyMediaTypeCatalogue::createMediaType(const common::dataStructures::SecurityIdentity& admin,
+                                              const MediaType& mediaType) {
   throw exception::NotImplementedException();
 }
 
-void DummyMediaTypeCatalogue::deleteMediaType(const std::string &name) {
+void DummyMediaTypeCatalogue::deleteMediaType(const std::string& name) {
   throw exception::NotImplementedException();
 }
 
@@ -40,53 +41,62 @@ std::list<MediaTypeWithLogs> DummyMediaTypeCatalogue::getMediaTypes() const {
   throw exception::NotImplementedException();
 }
 
-MediaType DummyMediaTypeCatalogue::getMediaTypeByVid(const std::string & vid) const {
+MediaType DummyMediaTypeCatalogue::getMediaTypeByVid(const std::string& vid) const {
   throw exception::NotImplementedException();
 }
 
-void DummyMediaTypeCatalogue::modifyMediaTypeName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &currentName, const std::string &newName) {
+void DummyMediaTypeCatalogue::modifyMediaTypeName(const common::dataStructures::SecurityIdentity& admin,
+                                                  const std::string& currentName,
+                                                  const std::string& newName) {
   throw exception::NotImplementedException();
 }
 
-void DummyMediaTypeCatalogue::modifyMediaTypeCartridge(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &cartridge) {
+void DummyMediaTypeCatalogue::modifyMediaTypeCartridge(const common::dataStructures::SecurityIdentity& admin,
+                                                       const std::string& name,
+                                                       const std::string& cartridge) {
   throw exception::NotImplementedException();
 }
 
-void DummyMediaTypeCatalogue::modifyMediaTypeCapacityInBytes(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint64_t capacityInBytes) {
+void DummyMediaTypeCatalogue::modifyMediaTypeCapacityInBytes(const common::dataStructures::SecurityIdentity& admin,
+                                                             const std::string& name,
+                                                             const uint64_t capacityInBytes) {
   throw exception::NotImplementedException();
 }
 
-void DummyMediaTypeCatalogue::modifyMediaTypePrimaryDensityCode(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint8_t primaryDensityCode) {
+void DummyMediaTypeCatalogue::modifyMediaTypePrimaryDensityCode(const common::dataStructures::SecurityIdentity& admin,
+                                                                const std::string& name,
+                                                                const uint8_t primaryDensityCode) {
   throw exception::NotImplementedException();
 }
 
-void DummyMediaTypeCatalogue::modifyMediaTypeSecondaryDensityCode(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const uint8_t secondaryDensityCode) {
+void DummyMediaTypeCatalogue::modifyMediaTypeSecondaryDensityCode(const common::dataStructures::SecurityIdentity& admin,
+                                                                  const std::string& name,
+                                                                  const uint8_t secondaryDensityCode) {
   throw exception::NotImplementedException();
 }
 
-void DummyMediaTypeCatalogue::modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::optional<std::uint32_t> &nbWraps) {
+void DummyMediaTypeCatalogue::modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& name,
+                                                     const std::optional<std::uint32_t>& nbWraps) {
   throw exception::NotImplementedException();
 }
 
-void DummyMediaTypeCatalogue::modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::optional<std::uint64_t> &minLPos) {
+void DummyMediaTypeCatalogue::modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& name,
+                                                     const std::optional<std::uint64_t>& minLPos) {
   throw exception::NotImplementedException();
 }
 
-void DummyMediaTypeCatalogue::modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::optional<std::uint64_t> &maxLPos) {
+void DummyMediaTypeCatalogue::modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& name,
+                                                     const std::optional<std::uint64_t>& maxLPos) {
   throw exception::NotImplementedException();
 }
 
-void DummyMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
+void DummyMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& name,
+                                                     const std::string& comment) {
   throw exception::NotImplementedException();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

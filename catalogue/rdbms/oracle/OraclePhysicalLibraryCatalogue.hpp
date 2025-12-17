@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <string>
-
 #include "catalogue/rdbms/RdbmsPhysicalLibraryCatalogue.hpp"
+
+#include <string>
 
 namespace cta::catalogue {
 
@@ -27,12 +27,13 @@ class RdbmsCatalogue;
 
 class OraclePhysicalLibraryCatalogue : public RdbmsPhysicalLibraryCatalogue {
 public:
-  OraclePhysicalLibraryCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  OraclePhysicalLibraryCatalogue(log::Logger& log,
+                                 std::shared_ptr<rdbms::ConnPool> connPool,
+                                 RdbmsCatalogue* rdbmsCatalogue);
   ~OraclePhysicalLibraryCatalogue() override = default;
 
 private:
-  uint64_t getNextPhysicalLibraryId(rdbms::Conn &conn) const override;
+  uint64_t getNextPhysicalLibraryId(rdbms::Conn& conn) const override;
 };  // class SqliteFileRecycleLogCatalogue
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

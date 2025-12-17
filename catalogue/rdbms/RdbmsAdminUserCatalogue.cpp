@@ -15,10 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#include "catalogue/rdbms/RdbmsAdminUserCatalogue.hpp"
 
 #include "catalogue/rdbms/CommonExceptions.hpp"
-#include "catalogue/rdbms/RdbmsAdminUserCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -28,16 +27,17 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsAdminUserCatalogue::RdbmsAdminUserCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool):
-  m_log(log), m_connPool(connPool) {}
+RdbmsAdminUserCatalogue::RdbmsAdminUserCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool)
+    : m_log(log),
+      m_connPool(connPool) {}
 
-void RdbmsAdminUserCatalogue::createAdminUser(
-  const common::dataStructures::SecurityIdentity &admin,
-  const std::string &username,
-  const std::string &comment) {
-
+void RdbmsAdminUserCatalogue::createAdminUser(const common::dataStructures::SecurityIdentity& admin,
+                                              const std::string& username,
+                                              const std::string& comment) {
   if (username.empty()) {
     throw UserSpecifiedAnEmptyStringUsername("Cannot create admin user because the username is an empty string");
   }
@@ -49,8 +49,8 @@ void RdbmsAdminUserCatalogue::createAdminUser(
 
   auto conn = m_connPool->getConn();
   if (adminUserExists(conn, username)) {
-    throw exception::UserError(std::string("Cannot create admin user " + username +
-      " because an admin user with the same name already exists"));
+    throw exception::UserError(
+      std::string("Cannot create admin user " + username + " because an admin user with the same name already exists"));
   }
   const uint64_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -96,7 +96,7 @@ void RdbmsAdminUserCatalogue::createAdminUser(
   stmt.executeNonQuery();
 }
 
-bool RdbmsAdminUserCatalogue::adminUserExists(rdbms::Conn &conn, const std::string& adminUsername) const {
+bool RdbmsAdminUserCatalogue::adminUserExists(rdbms::Conn& conn, const std::string& adminUsername) const {
   const char* const sql = R"SQL(
     SELECT
       ADMIN_USER_NAME AS ADMIN_USER_NAME
@@ -111,7 +111,7 @@ bool RdbmsAdminUserCatalogue::adminUserExists(rdbms::Conn &conn, const std::stri
   return rset.next();
 }
 
-void RdbmsAdminUserCatalogue::deleteAdminUser(const std::string &username) {
+void RdbmsAdminUserCatalogue::deleteAdminUser(const std::string& username) {
   const char* const sql = R"SQL(
     DELETE FROM ADMIN_USER WHERE ADMIN_USER_NAME = :ADMIN_USER_NAME
   )SQL";
@@ -120,7 +120,7 @@ void RdbmsAdminUserCatalogue::deleteAdminUser(const std::string &username) {
   stmt.bindString(":ADMIN_USER_NAME", username);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot delete admin-user ") + username + " because they do not exist");
   }
 }
@@ -166,8 +166,9 @@ std::list<common::dataStructures::AdminUser> RdbmsAdminUserCatalogue::getAdminUs
   return admins;
 }
 
-void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &username, const std::string &comment) {
+void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& username,
+                                                     const std::string& comment) {
   if (username.empty()) {
     throw UserSpecifiedAnEmptyStringUsername("Cannot modify admin user because the username is an empty string");
   }
@@ -196,7 +197,7 @@ void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructure
   stmt.bindString(":ADMIN_USER_NAME", username);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify admin user ") + username + " because they do not exist");
   }
 }
@@ -204,7 +205,7 @@ void RdbmsAdminUserCatalogue::modifyAdminUserComment(const common::dataStructure
 //------------------------------------------------------------------------------
 // isNonCachedAdmin
 //------------------------------------------------------------------------------
-bool RdbmsAdminUserCatalogue::isNonCachedAdmin(const common::dataStructures::SecurityIdentity &admin) const {
+bool RdbmsAdminUserCatalogue::isNonCachedAdmin(const common::dataStructures::SecurityIdentity& admin) const {
   const char* const sql = R"SQL(
     SELECT
       ADMIN_USER_NAME AS ADMIN_USER_NAME
@@ -220,13 +221,12 @@ bool RdbmsAdminUserCatalogue::isNonCachedAdmin(const common::dataStructures::Sec
   return rset.next();
 }
 
-bool RdbmsAdminUserCatalogue::isCachedAdmin(const common::dataStructures::SecurityIdentity &admin)
-  const {
-  auto l_getNonCachedValue = [this,&admin] { return isNonCachedAdmin(admin); };
+bool RdbmsAdminUserCatalogue::isCachedAdmin(const common::dataStructures::SecurityIdentity& admin) const {
+  auto l_getNonCachedValue = [this, &admin] { return isNonCachedAdmin(admin); };
   return m_isAdminCache.getCachedValue(admin, l_getNonCachedValue).value;
 }
 
-bool RdbmsAdminUserCatalogue::isAdmin(const common::dataStructures::SecurityIdentity &admin) const {
+bool RdbmsAdminUserCatalogue::isAdmin(const common::dataStructures::SecurityIdentity& admin) const {
   return isCachedAdmin(admin);
 }
 

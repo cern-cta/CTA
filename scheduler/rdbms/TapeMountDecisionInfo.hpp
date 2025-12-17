@@ -23,10 +23,10 @@
 #include "common/log/LogContext.hpp"
 #include "scheduler/rdbms/RelationalDB.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
-#include <cstdint>
 #include <time.h>
 
 #ifndef TAPEMOUNTDECISIONINFO_H

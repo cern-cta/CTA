@@ -30,20 +30,21 @@ namespace cta::log {
  * parameter value per parameter name.
  */
 class LogContext {
-  friend std::ostream & operator << (std::ostream & os , const LogContext & lc);
+  friend std::ostream& operator<<(std::ostream& os, const LogContext& lc);
+
 public:
   /**
    * Constructor
    *
    * @param programName The name of the program to be prepended to every log message
    */
-  explicit LogContext(Logger&logger) noexcept;
+  explicit LogContext(Logger& logger) noexcept;
 
   /**
    * Destructor
    */
   virtual ~LogContext() = default;
-  
+
   /**
    * Access to the logger object.
    * @return  reference to this context's logger
@@ -55,8 +56,8 @@ public:
    * name. Does not throw exceptions (fails silently).
    * @param param
    */
-  void pushOrReplace(const Param & param) noexcept;
-  
+  void pushOrReplace(const Param& param) noexcept;
+
   /**
    * Move a parameter with a given name to the end of the container it it 
    * present.
@@ -74,9 +75,9 @@ public:
   /**
    * Clears the context content.
    */
-  
+
   void clear();
-  
+
   /**
    * Writes a message into the CTA logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
@@ -91,7 +92,7 @@ public:
    * @param msg the message.
    */
   virtual void log(int priority, std::string_view msg) noexcept;
-  
+
   /**
    * Logs a multiline backtrace as multiple entries in the logs, without
    * the context
@@ -99,53 +100,52 @@ public:
    * @param backtrace the multi-line (\n separated) stack trace
    */
   virtual void logBacktrace(int priority, std::string_view backtrace) noexcept;
-  
+
   /**
    * Small introspection function to help in tests
    * @return size
    */
   size_t size() const { return m_params.size(); }
-  
+
   /**
    * Scoped parameter addition to the context. Constructor adds the parameter,
    * destructor erases it.
    */
   class ScopedParam {
   public:
-    ScopedParam(LogContext & context, const Param &param) noexcept;
+    ScopedParam(LogContext& context, const Param& param) noexcept;
     ~ScopedParam() noexcept;
+
   private:
-    LogContext & m_context;
+    LogContext& m_context;
     std::string m_name;
   };
+
 private:
-  Logger & m_log;
+  Logger& m_log;
   std::list<Param> m_params;
-}; // class LogContext
+};  // class LogContext
 
 class ScopedParamContainer {
 public:
   explicit ScopedParamContainer(LogContext& context) : m_context(context) {}
-  ~ScopedParamContainer() {
-    m_context.erase(m_names);
-  }
 
-  template <class T>
+  ~ScopedParamContainer() { m_context.erase(m_names); }
+
+  template<class T>
   ScopedParamContainer& add(const std::string& s, const T& t) {
-    m_context.pushOrReplace(Param(s,t));
+    m_context.pushOrReplace(Param(s, t));
     m_names.insert(s);
     return *this;
   }
 
-  void log(int iPriority, std::string_view strvMsg) noexcept {
-    m_context.log(iPriority, strvMsg);
-  }
+  void log(int iPriority, std::string_view strvMsg) noexcept { m_context.log(iPriority, strvMsg); }
 
 private:
   LogContext& m_context;
   std::set<std::string> m_names;
 };
 
-std::ostream& operator << (std::ostream& os, const LogContext& lc);
+std::ostream& operator<<(std::ostream& os, const LogContext& lc);
 
-} // namespace cta::log
+}  // namespace cta::log

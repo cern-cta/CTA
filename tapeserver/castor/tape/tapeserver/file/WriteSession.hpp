@@ -17,9 +17,10 @@
 
 #pragma once
 
-#include <string>
-
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
+#include "castor/tape/tapeserver/file/Exceptions.hpp"
+
+#include <string>
 
 namespace castor::tape {
 
@@ -36,7 +37,7 @@ namespace tapeFile {
   * the drive before the WriteSession is started (i.e. constructed).
   * Likewise, tape unmount is the business of the user.
   */
-class WriteSession{
+class WriteSession {
 public:
   /**
     * Constructor of the WriteSession. It will rewind the tape, and check the
@@ -49,15 +50,16 @@ public:
     * @param compression: set this to true in case the drive has compression enabled (x000GC)
     * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
     */
-  WriteSession(tapeserver::drive::DriveInterface &drive,
-    const tapeserver::daemon::VolumeInfo &volInfo,
-    const uint32_t last_fseq, const bool compression,
-    const bool useLbp);
+  WriteSession(tapeserver::drive::DriveInterface& drive,
+               const tapeserver::daemon::VolumeInfo& volInfo,
+               const uint32_t last_fseq,
+               const bool compression,
+               const bool useLbp);
 
   /**
     * DriveGeneric object referencing the drive used during this write session
     */
-  tapeserver::drive::DriveInterface & m_drive;
+  tapeserver::drive::DriveInterface& m_drive;
 
   /**
     * Volume Serial Number
@@ -75,27 +77,17 @@ public:
   */
   const bool m_useLbp;
 
-  inline std::string getSiteName() noexcept {
-    return m_siteName;
-  }
+  inline std::string getSiteName() noexcept { return m_siteName; }
 
-  inline std::string getHostName() noexcept {
-    return m_hostName;
-  }
+  inline std::string getHostName() noexcept { return m_hostName; }
 
-  inline void setCorrupted() noexcept {
-    m_corrupted = true;
-  }
+  inline void setCorrupted() noexcept { m_corrupted = true; }
 
-  inline bool isCorrupted() noexcept {
-    return m_corrupted;
-  }
+  inline bool isCorrupted() noexcept { return m_corrupted; }
 
-  inline bool isTapeWithLbp() noexcept {
-    return m_detectedLbp;
-  }
+  inline bool isTapeWithLbp() noexcept { return m_detectedLbp; }
 
-  inline void lock()  {
+  inline void lock() {
     if (m_locked) {
       throw SessionAlreadyInUse();
     }
@@ -113,9 +105,7 @@ public:
     m_locked = false;
   }
 
-  inline const tapeserver::daemon::VolumeInfo& getVolumeInfo()  const {
-    return m_volInfo;
-  }
+  inline const tapeserver::daemon::VolumeInfo& getVolumeInfo() const { return m_volInfo; }
 
   /**
     * Checks that a fSeq we are intending to write the the proper one,
@@ -196,4 +186,5 @@ private:
   const uint16_t MAX_UNIX_HOSTNAME_LENGTH = 256;  // 255 + 1 terminating character
 };
 
-}} // namespace castor::tape::tapeFile
+}  // namespace tapeFile
+}  // namespace castor::tape

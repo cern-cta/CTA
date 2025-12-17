@@ -17,19 +17,19 @@
 
 #pragma once
 
-#include <list>
-#include <memory>
-#include <queue>
-#include <set>
-#include <string>
-#include <vector>
-
 #include "common/exception/Exception.hpp"
 #include "disk/DiskReporterFactory.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
+
+#include <list>
+#include <memory>
+#include <queue>
+#include <set>
+#include <string>
+#include <vector>
 
 namespace cta {
 
@@ -273,7 +273,7 @@ public:
   virtual void addDiskSystemToSkip(const cta::SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystem);
 
 protected:
-   /**
+  /**
     * Internal tracking of the session completion
     * This member variable used to be private,
     * now protected to have it accessible via TestRetrieveMount
@@ -322,8 +322,8 @@ private:
     * @param doReserve if true, the method will attempt to reserve the space in the catalogue
     */
   bool checkOrReserveFreeDiskSpaceForRequest(const cta::DiskSpaceReservationRequest& diskSpaceReservationRequest,
-                                              log::LogContext& logContext,
-                                              bool doReserve);
+                                             log::LogContext& logContext,
+                                             bool doReserve);
 
 };  // class RetrieveMount
 

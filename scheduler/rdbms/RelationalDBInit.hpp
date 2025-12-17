@@ -17,14 +17,14 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-
-#include "scheduler/rdbms/RelationalDB.hpp"
-#include "scheduler/rdbms/postgres/Enums.hpp"
+#include "common/Timer.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
-#include "common/Timer.hpp"
+#include "scheduler/rdbms/RelationalDB.hpp"
+#include "scheduler/rdbms/postgres/Enums.hpp"
+
+#include <memory>
+#include <string>
 
 namespace cta {
 

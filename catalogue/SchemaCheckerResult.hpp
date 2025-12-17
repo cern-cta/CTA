@@ -22,7 +22,7 @@
 
 namespace cta::catalogue {
 
-  /**
+/**
    * This class holds the results of the Schema comparison against the catalogue database schema
    * It is simply composed of:
    * - a list of differences between the catalogue schema and the schema we are comparing it against
@@ -34,10 +34,7 @@ public:
   /**
    * The comparison is either SUCCESS or FAILED
    */
-  enum class Status {
-    SUCCESS,
-    FAILED
-  };
+  enum class Status { SUCCESS, FAILED };
 
   virtual ~SchemaCheckerResult() = default;
 
@@ -63,11 +60,13 @@ public:
    * @param os the ostream to print the warnings
    */
   void displayWarnings(std::ostream& os) const;
+
   /**
    * Returns the status of the SchemaComparerResult
    * @return the status of the SchemaComparerResult
    */
   Status getStatus() const { return m_status; }
+
   /**
    * Add an error to this result
    * @param error the error to add
@@ -85,4 +84,4 @@ private:
   Status m_status = Status::SUCCESS;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

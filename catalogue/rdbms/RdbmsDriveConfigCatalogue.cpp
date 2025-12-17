@@ -15,15 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <list>
-#include <map>
-#include <optional>
-#include <string>
-#include <tuple>
-#include <utility>
+#include "catalogue/rdbms/RdbmsDriveConfigCatalogue.hpp"
 
 #include "catalogue/CatalogueExceptions.hpp"
-#include "catalogue/rdbms/RdbmsDriveConfigCatalogue.hpp"
 #include "common/Constants.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
@@ -33,14 +27,24 @@
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <list>
+#include <map>
+#include <optional>
+#include <string>
+#include <tuple>
+#include <utility>
+
 namespace cta::catalogue {
 
-RdbmsDriveConfigCatalogue::RdbmsDriveConfigCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
-  : m_log(log), m_connPool(connPool) {
-}
+RdbmsDriveConfigCatalogue::RdbmsDriveConfigCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool)
+    : m_log(log),
+      m_connPool(connPool) {}
 
-void RdbmsDriveConfigCatalogue::createTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
-  const std::string &keyName, const std::string &value, const std::string &source) {
+void RdbmsDriveConfigCatalogue::createTapeDriveConfig(const std::string& tapeDriveName,
+                                                      const std::string& category,
+                                                      const std::string& keyName,
+                                                      const std::string& value,
+                                                      const std::string& source) {
   auto conn = m_connPool->getConn();
   const char* const sql = R"SQL(
     INSERT INTO DRIVE_CONFIG( 
@@ -128,8 +132,12 @@ std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> RdbmsDriveConfigCat
     const std::string keyName = rset.columnString("KEY_NAME");
     std::string value = rset.columnString("VALUE");
     std::string source = rset.columnString("SOURCE");
-    if (value == "NULL") value.clear();
-    if (source == "NULL") source.clear();
+    if (value == "NULL") {
+      value.clear();
+    }
+    if (source == "NULL") {
+      source.clear();
+    }
     cta::catalogue::DriveConfigCatalogue::DriveConfig driveConfig = {tapeDriveName, category, keyName, value, source};
     drivesConfigs.push_back(driveConfig);
   }
@@ -137,7 +145,7 @@ std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> RdbmsDriveConfigCat
 }
 
 std::list<std::string>
-RdbmsDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::string &schedulerBackendName) const {
+RdbmsDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::string& schedulerBackendName) const {
   const char* const sql = R"SQL(
     SELECT
       DRIVE_NAME AS DRIVE_NAME
@@ -157,8 +165,8 @@ RdbmsDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::strin
   return tapeDriveNames;
 }
 
-std::optional<std::tuple<std::string, std::string, std::string>> RdbmsDriveConfigCatalogue::getTapeDriveConfig(
-  const std::string &tapeDriveName, const std::string &keyName) const {
+std::optional<std::tuple<std::string, std::string, std::string>>
+RdbmsDriveConfigCatalogue::getTapeDriveConfig(const std::string& tapeDriveName, const std::string& keyName) const {
   const char* const sql = R"SQL(
     SELECT 
       DRIVE_NAME AS DRIVE_NAME,
@@ -175,20 +183,27 @@ std::optional<std::tuple<std::string, std::string, std::string>> RdbmsDriveConfi
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":DRIVE_NAME", tapeDriveName);
   stmt.bindString(":KEY_NAME", keyName);
-  
+
   if (auto rset = stmt.executeQuery(); rset.next()) {
     const std::string category = rset.columnString("CATEGORY");
     std::string value = rset.columnString("VALUE");
     std::string source = rset.columnString("SOURCE");
-    if (value == "NULL") value.clear();
-    if (source == "NULL") source.clear();
+    if (value == "NULL") {
+      value.clear();
+    }
+    if (source == "NULL") {
+      source.clear();
+    }
     return std::make_tuple(category, value, source);
   }
   return std::nullopt;
 }
 
-void RdbmsDriveConfigCatalogue::modifyTapeDriveConfig(const std::string &tapeDriveName, const std::string &category,
-  const std::string &keyName, const std::string &value, const std::string &source) {
+void RdbmsDriveConfigCatalogue::modifyTapeDriveConfig(const std::string& tapeDriveName,
+                                                      const std::string& category,
+                                                      const std::string& keyName,
+                                                      const std::string& value,
+                                                      const std::string& source) {
   const char* const sql = R"SQL(
     UPDATE DRIVE_CONFIG 
     SET 
@@ -219,12 +234,12 @@ void RdbmsDriveConfigCatalogue::modifyTapeDriveConfig(const std::string &tapeDri
   stmt.executeNonQuery();
 
   if (0 == stmt.getNbAffectedRows()) {
-    throw exception::Exception(std::string("Cannot modify Config Drive with name: ") + tapeDriveName +
-      " and key" + keyName + " because it doesn't exist");
+    throw exception::Exception(std::string("Cannot modify Config Drive with name: ") + tapeDriveName + " and key"
+                               + keyName + " because it doesn't exist");
   }
 }
 
-void RdbmsDriveConfigCatalogue::deleteTapeDriveConfig(const std::string &tapeDriveName, const std::string &keyName) {
+void RdbmsDriveConfigCatalogue::deleteTapeDriveConfig(const std::string& tapeDriveName, const std::string& keyName) {
   const char* const delete_sql = R"SQL(
     DELETE 
     FROM 
@@ -239,4 +254,4 @@ void RdbmsDriveConfigCatalogue::deleteTapeDriveConfig(const std::string &tapeDri
   stmt.executeNonQuery();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

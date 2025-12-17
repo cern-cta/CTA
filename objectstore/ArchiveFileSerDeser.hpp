@@ -17,27 +17,30 @@
 
 #pragma once
 
-#include "objectstore/cta.pb.h"
-#include "common/dataStructures/TapeFile.hpp"
+#include "DiskFileInfoSerDeser.hpp"
 #include "EntryLogSerDeser.hpp"
 #include "TapeFileSerDeser.hpp"
-#include "DiskFileInfoSerDeser.hpp"
+#include "common/dataStructures/TapeFile.hpp"
 
-#include <string>
-#include <stdint.h>
 #include <limits>
+#include <stdint.h>
+#include <string>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 
 /**
  * A decorator class of scheduler's creation log adding serialization.
  */
-class ArchiveFileSerDeser: public cta::common::dataStructures::ArchiveFile {
+class ArchiveFileSerDeser : public cta::common::dataStructures::ArchiveFile {
 public:
   ArchiveFileSerDeser() : cta::common::dataStructures::ArchiveFile() {}
-  explicit ArchiveFileSerDeser(const cta::common::dataStructures::ArchiveFile& af) : cta::common::dataStructures::ArchiveFile(af) {}
 
-  void serialize (cta::objectstore::serializers::ArchiveFile & osaf) const {
+  explicit ArchiveFileSerDeser(const cta::common::dataStructures::ArchiveFile& af)
+      : cta::common::dataStructures::ArchiveFile(af) {}
+
+  void serialize(cta::objectstore::serializers::ArchiveFile& osaf) const {
     osaf.set_archivefileid(archiveFileID);
     osaf.set_creationtime(creationTime);
     osaf.set_checksumblob(checksumBlob.serialize());
@@ -49,24 +52,25 @@ public:
     osaf.set_filesize(fileSize);
     osaf.set_reconciliationtime(reconciliationTime);
     osaf.set_storageclass(storageClass);
-    for (auto & tf: tapeFiles)
+    for (auto& tf : tapeFiles) {
       TapeFileSerDeser(tf).serialize(*osaf.add_tapefiles());
+    }
   }
-  
-  void deserialize (const cta::objectstore::serializers::ArchiveFile & osaf) {
+
+  void deserialize(const cta::objectstore::serializers::ArchiveFile& osaf) {
     tapeFiles.clear();
-    archiveFileID=osaf.archivefileid();
-    creationTime=osaf.creationtime();
+    archiveFileID = osaf.archivefileid();
+    creationTime = osaf.creationtime();
     checksumBlob.deserialize(osaf.checksumblob());
-    diskFileId=osaf.diskfileid();
+    diskFileId = osaf.diskfileid();
     DiskFileInfoSerDeser dfisd;
     dfisd.deserialize(osaf.diskfileinfo());
-    diskFileInfo=dfisd;
-    diskInstance=osaf.diskinstance();
+    diskFileInfo = dfisd;
+    diskInstance = osaf.diskinstance();
     // TODO rename to filesize.
-    fileSize=osaf.filesize();
-    reconciliationTime=osaf.reconciliationtime();
-    storageClass=osaf.storageclass();
+    fileSize = osaf.filesize();
+    reconciliationTime = osaf.reconciliationtime();
+    storageClass = osaf.storageclass();
     for (const auto& tf : osaf.tapefiles()) {
       TapeFileSerDeser tfsd;
       tfsd.deserialize(tf);
@@ -74,5 +78,5 @@ public:
     }
   }
 };
-  
-} // namespace cta::objectstore
+
+}  // namespace cta::objectstore

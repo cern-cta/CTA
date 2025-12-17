@@ -20,8 +20,8 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/Timer.hpp"
 #include "maintd/IRoutine.hpp"
-#include "scheduler/Scheduler.hpp"
 #include "objectstore/QueueCleanup.hpp"
+#include "scheduler/Scheduler.hpp"
 
 /**
  * Plan => Cleanup routine keeps track of queues that need to be emptied
@@ -35,9 +35,11 @@ namespace cta::maintd {
 class RetrieveRequest;
 
 class QueueCleanupRoutine : public IRoutine {
-
 public:
-  QueueCleanupRoutine(cta::log::LogContext& lc, SchedulerDatabase & oStoreDb, catalogue::Catalogue &catalogue, int batchSize);
+  QueueCleanupRoutine(cta::log::LogContext& lc,
+                      SchedulerDatabase& oStoreDb,
+                      catalogue::Catalogue& catalogue,
+                      int batchSize);
 
   ~QueueCleanupRoutine() = default;
 
@@ -50,4 +52,4 @@ private:
   cta::objectstore::QueueCleanup m_queueCleanup;
 };
 
-} // namespace cta::maintd
+}  // namespace cta::maintd

@@ -17,15 +17,6 @@
 
 #pragma once
 
-#include <syscall.h>
-
-#include <fstream>
-#include <future>
-#include <list>
-#include <map>
-#include <set>
-#include <string>
-
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RepackQueueType.hpp"
 #include "common/dataStructures/Tape.hpp"
@@ -33,6 +24,14 @@
 #include "common/process/threading/MutexLocker.hpp"
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+
+#include <fstream>
+#include <future>
+#include <list>
+#include <map>
+#include <set>
+#include <string>
+#include <syscall.h>
 
 /**
  * A collection of helper functions for commonly used multi-object operations
@@ -54,7 +53,7 @@ class RepackQueue;
  * A class with static functions allowing multi-object operations
  */
 class Helpers {
- public:
+public:
   /**
    * Find or create an archive or retrieve queue, and return it locked and fetched to the caller
    * (Queue and ScopedExclusiveLock objects are provided empty)
@@ -63,10 +62,13 @@ class Helpers {
    * @param agentReference the agent reference that will be needed in case of object creation
    * @param tapePool or vid the name of the needed tape pool
    */
-  template <class Queue>
-  static void getLockedAndFetchedJobQueue(Queue & queue,
-    ScopedExclusiveLock & queueLock, AgentReference & agentReference,
-    const std::optional<std::string> & tapePoolOrVid, common::dataStructures::JobQueueType queueType, log::LogContext & lc);
+  template<class Queue>
+  static void getLockedAndFetchedJobQueue(Queue& queue,
+                                          ScopedExclusiveLock& queueLock,
+                                          AgentReference& agentReference,
+                                          const std::optional<std::string>& tapePoolOrVid,
+                                          common::dataStructures::JobQueueType queueType,
+                                          log::LogContext& lc);
 
   /**
    * Find or create a repack queue, and return it locked and fetched to the caller
@@ -75,9 +77,11 @@ class Helpers {
    * @param queueLock the lock, not initialized
    * @param agentReference the agent reference that will be needed in case of object creation
    */
-  static void getLockedAndFetchedRepackQueue(RepackQueue & queue,
-    ScopedExclusiveLock & queueLock, AgentReference & agentReference,
-    common::dataStructures::RepackQueueType queueType, log::LogContext & lc);
+  static void getLockedAndFetchedRepackQueue(RepackQueue& queue,
+                                             ScopedExclusiveLock& queueLock,
+                                             AgentReference& agentReference,
+                                             common::dataStructures::RepackQueueType queueType,
+                                             log::LogContext& lc);
 
   CTA_GENERATE_EXCEPTION_CLASS(NoTapeAvailableForRetrieve);
   /**
@@ -87,30 +91,37 @@ class Helpers {
    * frequent access to the object store. The caching create a small inefficiency
    * to the algorithm, but will help performance drastically for a very similar result
    */
-  static std::string selectBestRetrieveQueue(const std::set<std::string, std::less<>> & candidateVids,
-    cta::catalogue::Catalogue & catalogue, objectstore::Backend & objectstore, log::LogContext &lc, bool isRepack = false);
+  static std::string selectBestRetrieveQueue(const std::set<std::string, std::less<>>& candidateVids,
+                                             cta::catalogue::Catalogue& catalogue,
+                                             objectstore::Backend& objectstore,
+                                             log::LogContext& lc,
+                                             bool isRepack = false);
 
   /**
    * Gets the retrieve queue statistics for a set of Vids (extracted from the OStoreDB
    * so it can be used in the Helper context without passing the DB object.
    */
-  static std::list<SchedulerDatabase::RetrieveQueueStatistics> getRetrieveQueueStatistics(
-    const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
-    const std::set<std::string> & vidsToConsider,
-    objectstore::Backend & objectstore);
+  static std::list<SchedulerDatabase::RetrieveQueueStatistics>
+  getRetrieveQueueStatistics(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
+                             const std::set<std::string>& vidsToConsider,
+                             objectstore::Backend& objectstore);
 
   /**
    * Opportunistic updating of the queue stats cache as we access it. This implies the
    * tape is not disabled (full status not fetched).
    */
-  static void updateRetrieveQueueStatisticsCache(const std::string & vid, uint64_t files, uint64_t bytes, uint64_t priority, log::LogContext &lc);
+  static void updateRetrieveQueueStatisticsCache(const std::string& vid,
+                                                 uint64_t files,
+                                                 uint64_t bytes,
+                                                 uint64_t priority,
+                                                 log::LogContext& lc);
 
   /**
    * Allows to flush the statistics caches
    * Required by the unit tests
    */
   static void flushStatisticsCache();
-  static void flushStatisticsCacheForVid(const std::string & vid);
+  static void flushStatisticsCacheForVid(const std::string& vid);
 
   /**
    * Helper function to set the time between cache updates.
@@ -126,10 +137,12 @@ private:
     common::dataStructures::Tape tapeStatus;
     time_t updateTime;
   };
+
   /** Cache for tape statistics */
   static std::map<std::string, TapeStatusWithTime> g_tapeStatuses;
   /** Lock for the retrieve queues stats */
   static cta::threading::Mutex g_retrieveQueueStatisticsMutex;
+
   /** A struct holding together RetrieveQueueStatistics, tape status and an update time. */
   struct RetrieveQueueStatisticsWithTime {
     cta::SchedulerDatabase::RetrieveQueueStatistics stats;
@@ -140,31 +153,34 @@ private:
     std::shared_future<void> updateFuture;
     time_t updateTime;
   };
+
   /** The stats for the queues */
   static std::map<std::string, RetrieveQueueStatisticsWithTime> g_retrieveQueueStatistics;
   /** Time between cache updates */
   static time_t g_tapeCacheMaxAge;
   static time_t g_retrieveQueueCacheMaxAge;
-  static void logUpdateCacheIfNeeded(const bool entryCreation, const RetrieveQueueStatisticsWithTime& tapeStatistic, log::LogContext &lc,
-    const std::string& message = "");
+  static void logUpdateCacheIfNeeded(const bool entryCreation,
+                                     const RetrieveQueueStatisticsWithTime& tapeStatistic,
+                                     log::LogContext& lc,
+                                     const std::string& message = "");
 
- public:
-  enum class CreateIfNeeded: bool {
-    create = true,
-    doNotCreate = false
-  };
+public:
+  enum class CreateIfNeeded : bool { create = true, doNotCreate = false };
 
   /**
    * Helper to register a repack request in the repack index.
    * As this structure was developed late, we potentially have to create it on the fly.
    */
-  static void registerRepackRequestToIndex(const std::string & vid, const std::string & requestAddress,
-      AgentReference & agentReference, Backend & backend, log::LogContext & lc);
+  static void registerRepackRequestToIndex(const std::string& vid,
+                                           const std::string& requestAddress,
+                                           AgentReference& agentReference,
+                                           Backend& backend,
+                                           log::LogContext& lc);
 
   /**
    * Helper to remove an entry form the repack index.
    */
-  static void removeRepackRequestToIndex(const std::string & vid, Backend & backend, log::LogContext & lc);
+  static void removeRepackRequestToIndex(const std::string& vid, Backend& backend, log::LogContext& lc);
 };
 
 }  // namespace objectstore

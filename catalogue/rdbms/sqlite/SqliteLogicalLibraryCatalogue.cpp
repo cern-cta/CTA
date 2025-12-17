@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/rdbms/sqlite/SqliteLogicalLibraryCatalogue.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "rdbms/Conn.hpp"
@@ -23,11 +24,12 @@
 
 namespace cta::catalogue {
 
-SqliteLogicalLibraryCatalogue::SqliteLogicalLibraryCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsLogicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
+SqliteLogicalLibraryCatalogue::SqliteLogicalLibraryCatalogue(log::Logger& log,
+                                                             std::shared_ptr<rdbms::ConnPool> connPool,
+                                                             RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsLogicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t SqliteLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn &conn) const {
+uint64_t SqliteLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn& conn) const {
   conn.executeNonQuery(R"SQL(INSERT INTO LOGICAL_LIBRARY_ID VALUES(NULL))SQL");
   uint64_t logicalLibraryId = 0;
   const char* const sql = R"SQL(
@@ -35,11 +37,11 @@ uint64_t SqliteLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn &con
   )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
-  if(!rset.next()) {
+  if (!rset.next()) {
     throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
   }
   logicalLibraryId = rset.columnUint64("ID");
-  if(rset.next()) {
+  if (rset.next()) {
     throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
   }
   conn.executeNonQuery(R"SQL(DELETE FROM LOGICAL_LIBRARY_ID)SQL");
@@ -47,4 +49,4 @@ uint64_t SqliteLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn &con
   return logicalLibraryId;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

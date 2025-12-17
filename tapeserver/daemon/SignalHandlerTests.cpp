@@ -15,12 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <gtest/gtest.h>
 #include "ProcessManager.hpp"
 #include "SignalHandler.hpp"
 #include "TestSubprocessHandlers.hpp"
-#include "common/log/StringLogger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/StringLogger.hpp"
+
+#include <gtest/gtest.h>
 
 namespace unitTests {
 using cta::tape::daemon::SignalHandler;
@@ -41,7 +42,7 @@ TEST(cta_Daemon, SignalHandlerShutdown) {
     ::kill(::getpid(), SIGTERM);
   }
   pm.run();
-  ProbeSubprocess &ps=dynamic_cast<ProbeSubprocess&>(pm.at("ProbeProcessHandler"));
+  ProbeSubprocess& ps = dynamic_cast<ProbeSubprocess&>(pm.at("ProbeProcessHandler"));
   ASSERT_TRUE(ps.sawShutdown());
   ASSERT_FALSE(ps.sawKill());
 }
@@ -64,7 +65,7 @@ TEST(cta_Daemon, SignalHandlerKill) {
     ::kill(::getpid(), SIGTERM);
   }
   pm.run();
-  ProbeSubprocess &ps=dynamic_cast<ProbeSubprocess&>(pm.at("ProbeProcessHandler"));
+  ProbeSubprocess& ps = dynamic_cast<ProbeSubprocess&>(pm.at("ProbeProcessHandler"));
   ASSERT_TRUE(ps.sawShutdown());
   ASSERT_TRUE(ps.sawKill());
 }
@@ -90,11 +91,11 @@ TEST(cta_Daemon, SignalHandlerSigChild) {
     pm.addHandler(std::move(es));
   }
   pm.run();
-  ProbeSubprocess &ps = dynamic_cast<ProbeSubprocess&>(pm.at("ProbeProcessHandler"));
+  ProbeSubprocess& ps = dynamic_cast<ProbeSubprocess&>(pm.at("ProbeProcessHandler"));
   ASSERT_TRUE(ps.sawShutdown());
   ASSERT_FALSE(ps.sawKill());
   ASSERT_TRUE(ps.sawSigChild());
-  EchoSubprocess &es = dynamic_cast<EchoSubprocess&>(pm.at("Echo"));
+  EchoSubprocess& es = dynamic_cast<EchoSubprocess&>(pm.at("Echo"));
   ASSERT_FALSE(es.echoReceived());
 }
-}
+}  // namespace unitTests

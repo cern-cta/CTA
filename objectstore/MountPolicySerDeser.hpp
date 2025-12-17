@@ -17,12 +17,13 @@
 
 #pragma once
 
+#include "EntryLogSerDeser.hpp"
+#include "common/dataStructures/MountPolicy.hpp"
+
 #include <limits>
 #include <stdint.h>
 #include <string>
 
-#include "common/dataStructures/MountPolicy.hpp"
-#include "EntryLogSerDeser.hpp"
 #include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
@@ -30,12 +31,14 @@ namespace cta::objectstore {
 /**
  * A decorator class of scheduler's creation log adding serialization.
  */
-class MountPolicySerDeser: public cta::common::dataStructures::MountPolicy {
+class MountPolicySerDeser : public cta::common::dataStructures::MountPolicy {
 public:
-  MountPolicySerDeser (): cta::common::dataStructures::MountPolicy() {}
-  explicit MountPolicySerDeser(const cta::common::dataStructures::MountPolicy& mp) : cta::common::dataStructures::MountPolicy(mp) {}
+  MountPolicySerDeser() : cta::common::dataStructures::MountPolicy() {}
 
-  void serialize (cta::objectstore::serializers::MountPolicy & osmp) const {
+  explicit MountPolicySerDeser(const cta::common::dataStructures::MountPolicy& mp)
+      : cta::common::dataStructures::MountPolicy(mp) {}
+
+  void serialize(cta::objectstore::serializers::MountPolicy& osmp) const {
     osmp.set_name(name);
     osmp.set_archivepriority(archivePriority);
     osmp.set_archiveminrequestage(archiveMinRequestAge);
@@ -45,19 +48,20 @@ public:
     EntryLogSerDeser(lastModificationLog).serialize(*osmp.mutable_lastmodificationlog());
     osmp.set_comment(comment);
   }
-  void deserialize (const cta::objectstore::serializers::MountPolicy & osmp) {
-    name=osmp.name();
-    archivePriority=osmp.archivepriority();
-    archiveMinRequestAge=osmp.archiveminrequestage();
-    retrievePriority=osmp.retrievepriority();
-    retrieveMinRequestAge=osmp.retieveminrequestage();
+
+  void deserialize(const cta::objectstore::serializers::MountPolicy& osmp) {
+    name = osmp.name();
+    archivePriority = osmp.archivepriority();
+    archiveMinRequestAge = osmp.archiveminrequestage();
+    retrievePriority = osmp.retrievepriority();
+    retrieveMinRequestAge = osmp.retieveminrequestage();
     EntryLogSerDeser el;
     el.deserialize(osmp.creationlog());
-    creationLog=el;
+    creationLog = el;
     el.deserialize(osmp.lastmodificationlog());
-    lastModificationLog=el;
-    comment=osmp.comment();
+    lastModificationLog = el;
+    comment = osmp.comment();
   }
 };
 
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

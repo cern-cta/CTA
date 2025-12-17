@@ -15,30 +15,34 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#include "catalogue/rdbms/sqlite/SqliteFileRecycleLogCatalogue.hpp"
 
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/interfaces/FileRecycleLogCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsArchiveFileCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
-#include "catalogue/rdbms/sqlite/SqliteFileRecycleLogCatalogue.hpp"
+#include "common/Timer.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/Timer.hpp"
 #include "rdbms/Conn.hpp"
+
+#include <string>
 
 namespace cta::catalogue {
 
-SqliteFileRecycleLogCatalogue::SqliteFileRecycleLogCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue)
-  : RdbmsFileRecycleLogCatalogue(log, connPool, rdbmsCatalogue) {}
+SqliteFileRecycleLogCatalogue::SqliteFileRecycleLogCatalogue(log::Logger& log,
+                                                             std::shared_ptr<rdbms::ConnPool> connPool,
+                                                             RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsFileRecycleLogCatalogue(log, connPool, rdbmsCatalogue) {}
 
-void SqliteFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
-  FileRecycleLogItor &fileRecycleLogItor, const std::string &newFid, log::LogContext & lc) {
+void SqliteFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn& conn,
+                                                             FileRecycleLogItor& fileRecycleLogItor,
+                                                             const std::string& newFid,
+                                                             log::LogContext& lc) {
   utils::Timer timer;
   log::TimingList timingList;
 
@@ -55,16 +59,15 @@ void SqliteFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
   conn.executeNonQuery(R"SQL(BEGIN TRANSACTION)SQL");
   const auto archiveFileCatalogue = static_cast<RdbmsArchiveFileCatalogue*>(m_rdbmsCatalogue->ArchiveFile().get());
   if (auto archiveFilePtr = archiveFileCatalogue->getArchiveFileById(conn, fileRecycleLog.archiveFileId);
-    !archiveFilePtr) {
+      !archiveFilePtr) {
     RdbmsFileRecycleLogCatalogue::restoreArchiveFileInRecycleLog(conn, fileRecycleLog, newFid, lc);
   } else {
     if (archiveFilePtr->tapeFiles.find(fileRecycleLog.copyNb) != archiveFilePtr->tapeFiles.end()) {
       // copy with same copy_nb exists, cannot restore
       UserSpecifiedExistingDeletedFileCopy ex;
-      ex.getMessage() << "Cannot restore file copy with archiveFileId "
-        << std::to_string(fileRecycleLog.archiveFileId)
-        << " and copy_nb " << std::to_string(fileRecycleLog.copyNb)
-        << " because a tapefile with same archiveFileId and copy_nb already exists";
+      ex.getMessage() << "Cannot restore file copy with archiveFileId " << std::to_string(fileRecycleLog.archiveFileId)
+                      << " and copy_nb " << std::to_string(fileRecycleLog.copyNb)
+                      << " because a tapefile with same archiveFileId and copy_nb already exists";
       throw ex;
     }
   }
@@ -76,11 +79,12 @@ void SqliteFileRecycleLogCatalogue::restoreEntryInRecycleLog(rdbms::Conn & conn,
   log::ScopedParamContainer spc(lc);
   timingList.insertAndReset("commitTime", timer);
   timingList.addToLog(spc);
-  lc.log(log::INFO, "In PostgresFileRecycleLogCatalogue::restoreEntryInRecycleLog: "
-    "all file copies successfully restored.");
+  lc.log(log::INFO,
+         "In PostgresFileRecycleLogCatalogue::restoreEntryInRecycleLog: "
+         "all file copies successfully restored.");
 }
 
-uint64_t SqliteFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn) const {
+uint64_t SqliteFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn& conn) const {
   conn.executeNonQuery(R"SQL(INSERT INTO FILE_RECYCLE_LOG_ID VALUES(NULL))SQL");
   uint64_t fileRecycleLogId = 0;
   const char* const sql = R"SQL(
@@ -88,11 +92,11 @@ uint64_t SqliteFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn
   )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
-  if(!rset.next()) {
+  if (!rset.next()) {
     throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
   }
   fileRecycleLogId = rset.columnUint64("ID");
-  if(rset.next()) {
+  if (rset.next()) {
     throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
   }
   conn.executeNonQuery(R"SQL(DELETE FROM FILE_RECYCLE_LOG_ID)SQL");
@@ -100,4 +104,4 @@ uint64_t SqliteFileRecycleLogCatalogue::getNextFileRecyleLogId(rdbms::Conn &conn
   return fileRecycleLogId;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -16,8 +16,9 @@
  */
 
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
+
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionReporter.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor for TapeWriteSingleThread
@@ -499,8 +500,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       // If it's not the error we're looking for, we will go about our business
       // in the catch section. dynamic cast will throw, and we'll do ourselves
       // if the error code is not the one we want.
-      if (const auto& en = dynamic_cast<const cta::exception::Errnum&>(e);
-          en.errorNumber() != ENOSPC) {
+      if (const auto& en = dynamic_cast<const cta::exception::Errnum&>(e); en.errorNumber() != ENOSPC) {
         throw 0;
       } else {
         isTapeFull = true;
@@ -604,8 +604,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(int l
 //------------------------------------------------------------------------------
 //   requeueFailedTask - for PGCHED
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::requeueUnprocessedTasks(const std::list<std::string>& jobIDsList,
-                                                                                      cta::log::LogContext& lc) const {
+void castor::tape::tapeserver::daemon::TapeWriteSingleThread::requeueUnprocessedTasks(
+  const std::list<std::string>& jobIDsList,
+  cta::log::LogContext& lc) const {
   uint64_t njobs = m_archiveMount.requeueJobBatch(jobIDsList, lc);
   cta::log::ScopedParamContainer requeueparam(lc);
   requeueparam.add("requeuedTaskQueueJobs", njobs);
@@ -618,8 +619,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::requeueUnprocessed
     }
     lc.log(cta::log::ERR,
            std::string("In TapeWriteSingleThread::requeueUnprocessedTasks(): Did not requeue all task jobs of "
-                       "the remaining queue, job IDs attempting to update were: ") +
-             jobIDsString);
+                       "the remaining queue, job IDs attempting to update were: ")
+             + jobIDsString);
   } else {
     lc.log(cta::log::INFO, std::string("In TapeWriteSingleThread::requeueUnprocessedTasks(): success."));
   }

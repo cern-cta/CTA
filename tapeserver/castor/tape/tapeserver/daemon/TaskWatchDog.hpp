@@ -17,16 +17,15 @@
 
 #pragma once
 
-
+#include "DataTransferSession.hpp"
+#include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "common/Timer.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/process/threading/AtomicFlag.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
-#include "common/log/LogContext.hpp"
-#include "tapeserver/daemon/TapedProxy.hpp"
-#include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
-#include "common/Timer.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "DataTransferSession.hpp"
+#include "tapeserver/daemon/TapedProxy.hpp"
 
 #include <map>
 #include <set>
@@ -37,8 +36,9 @@ namespace castor::tape::tapeserver::daemon {
 /**
  * Virtual class for watching tape read or write operation (mostly complete)
  */
-class TaskWatchDog : private cta::threading::Thread{
+class TaskWatchDog : private cta::threading::Thread {
   friend class DataTransferSession;
+
 protected:
   /**
    * The mutex protecting updates and the worker thread from each other
@@ -110,7 +110,7 @@ protected:
    * Reference to the current mount. Used to report performance statistics to object
    * store.
    */
-  cta::TapeMount & m_mount;
+  cta::TapeMount& m_mount;
 
   /**
    * The drive unit name to report
@@ -159,23 +159,21 @@ protected:
       // final stats at the end of the last disk thread. This allows proper
       // estimation of statistics for data transfer sessions that get killed
       // before completion.
-      const double deliveryTime =
-        m_stats.deliveryTime?m_stats.deliveryTime:m_tapeThreadTimer.secs();
+      const double deliveryTime = m_stats.deliveryTime ? m_stats.deliveryTime : m_tapeThreadTimer.secs();
       // total time is a special case. We will estimate it ourselves before
       // getting the final stats (at the end of the thread). This will allow
       // proper estimation of statistics for tape sessions that get killed
       // before completion.
-      const double totalTime = m_stats.totalTime?m_stats.totalTime:m_tapeThreadTimer.secs();
+      const double totalTime = m_stats.totalTime ? m_stats.totalTime : m_tapeThreadTimer.secs();
       /** Time beetwen fineshed tape thread and finished disk threads */
-      const double drainingTime =
-        deliveryTime > totalTime?deliveryTime-totalTime: 0.0;
+      const double drainingTime = deliveryTime > totalTime ? deliveryTime - totalTime : 0.0;
       bool wasTapeMounted = true;
-      if(m_stats.mountTime == 0.0){
+      if (m_stats.mountTime == 0.0) {
         //Tape was not mounted, we add a message to tell that no physical mount has been
         //triggered
         wasTapeMounted = false;
       }
-      paramList.emplace_back("wasTapeMounted",wasTapeMounted);
+      paramList.emplace_back("wasTapeMounted", wasTapeMounted);
       paramList.emplace_back("mountTime", m_stats.mountTime);
       paramList.emplace_back("positionTime", m_stats.positionTime);
       paramList.emplace_back("waitInstructionsTime", m_stats.waitInstructionsTime);
@@ -196,17 +194,18 @@ protected:
       paramList.emplace_back("filesCount", m_stats.filesCount);
       paramList.emplace_back("headerVolume", m_stats.headerVolume);
       // Compute performance
-      paramList.push_back(Param("payloadTransferSpeedMBps", totalTime?1.0*m_stats.dataVolume
-                /1000/1000/totalTime:0.0));
-      paramList.push_back(Param("driveTransferSpeedMBps", totalTime?1.0*(m_stats.dataVolume+m_stats.headerVolume)
-                /1000/1000/totalTime:0.0));
-      if(m_mount.getMountType() == cta::common::dataStructures::MountType::Retrieve){
-        paramList.emplace_back("repackFilesCount",m_stats.repackFilesCount);
-        paramList.emplace_back("userFilesCount",m_stats.userFilesCount);
-        paramList.emplace_back("verifiedFilesCount",m_stats.verifiedFilesCount);
-        paramList.emplace_back("repackBytesCount",m_stats.repackBytesCount);
-        paramList.emplace_back("userBytesCount",m_stats.userBytesCount);
-        paramList.emplace_back("verifiedBytesCount",m_stats.verifiedBytesCount);
+      paramList.push_back(
+        Param("payloadTransferSpeedMBps", totalTime ? 1.0 * m_stats.dataVolume / 1000 / 1000 / totalTime : 0.0));
+      paramList.push_back(
+        Param("driveTransferSpeedMBps",
+              totalTime ? 1.0 * (m_stats.dataVolume + m_stats.headerVolume) / 1000 / 1000 / totalTime : 0.0));
+      if (m_mount.getMountType() == cta::common::dataStructures::MountType::Retrieve) {
+        paramList.emplace_back("repackFilesCount", m_stats.repackFilesCount);
+        paramList.emplace_back("userFilesCount", m_stats.userFilesCount);
+        paramList.emplace_back("verifiedFilesCount", m_stats.verifiedFilesCount);
+        paramList.emplace_back("repackBytesCount", m_stats.repackBytesCount);
+        paramList.emplace_back("userBytesCount", m_stats.userBytesCount);
+        paramList.emplace_back("verifiedBytesCount", m_stats.verifiedBytesCount);
       }
       // Ship the logs to the initial process
       m_initialProcess.addLogParams(paramList);
@@ -246,13 +245,15 @@ protected:
     // Flush the one-of parameters to add
     if (!paramsToAdd.empty()) {
       std::list<Param> paramsToAddList;
-      std::transform(paramsToAdd.begin(), paramsToAdd.end(), std::back_inserter(paramsToAddList), [](auto & keyPair) { return keyPair.second; });
+      std::transform(paramsToAdd.begin(), paramsToAdd.end(), std::back_inserter(paramsToAddList), [](auto& keyPair) {
+        return keyPair.second;
+      });
       m_initialProcess.addLogParams(paramsToAddList);
     }
 
     // Flush the one-of parameters to delete
     if (!paramsToDelete.empty()) {
-      std::list<std::string> paramsToDeleteList{paramsToDelete.begin(), paramsToDelete.end()};
+      std::list<std::string> paramsToDeleteList {paramsToDelete.begin(), paramsToDelete.end()};
       m_initialProcess.deleteLogParams(paramsToDeleteList);
     }
   }
@@ -265,15 +266,13 @@ protected:
     m_reportTimer.reset();
     m_blockMovementReportTimer.reset();
     m_blockMovementTimer.reset();
-    while(!m_stopFlag) {
-
+    while (!m_stopFlag) {
       // Critical section block for internal watchdog
       {
         cta::threading::MutexLocker locker(m_mutex);
         //useful if we are stuck on a particular file
-        if(m_fileBeingMoved &&
-           m_blockMovementTimer.secs()>m_stuckPeriod &&
-           m_blockMovementReportTimer.secs()>m_stuckPeriod){
+        if (m_fileBeingMoved && m_blockMovementTimer.secs() > m_stuckPeriod
+            && m_blockMovementReportTimer.secs() > m_stuckPeriod) {
           // We are stuck while moving a file. We will just log that.
           logStuckFile();
           m_blockMovementReportTimer.reset();
@@ -285,23 +284,23 @@ protected:
 
       //heartbeat to notify activity to the mother
       // and transmit statistics
-      if(m_reportTimer.secs() > m_reportPeriod){
+      if (m_reportTimer.secs() > m_reportPeriod) {
         cta::threading::MutexLocker locker(m_mutex);
-        m_lc.log(cta::log::DEBUG,"going to report");
+        m_lc.log(cta::log::DEBUG, "going to report");
         m_reportTimer.reset();
         m_initialProcess.reportHeartbeat(m_TapeBytesMovedMoved, 0);
         reportStats();
         try {
           m_mount.setTapeSessionStats(m_stats);
-        } catch (cta::exception::Exception & ex) {
-          cta::log::ScopedParamContainer params (m_lc);
+        } catch (cta::exception::Exception& ex) {
+          cta::log::ScopedParamContainer params(m_lc);
           params.add("exceptionMessage", ex.getMessageValue());
-          m_lc.log(cta::log::WARNING, "In TaskWatchDog::run(): failed to set tape session stats in sched. DB. Skipping.");
+          m_lc.log(cta::log::WARNING,
+                   "In TaskWatchDog::run(): failed to set tape session stats in sched. DB. Skipping.");
         }
 
-      }
-      else{
-        usleep(m_pollPeriod*1000*1000);
+      } else {
+        usleep(m_pollPeriod * 1000 * 1000);
       }
     }
     // At the end of the run, make sure we push the last stats to the initial
@@ -311,8 +310,8 @@ protected:
       reportStats();
       try {
         m_mount.setTapeSessionStats(m_stats);
-      } catch (cta::exception::Exception & ex) {
-        cta::log::ScopedParamContainer params (m_lc);
+      } catch (cta::exception::Exception& ex) {
+        cta::log::ScopedParamContainer params(m_lc);
         params.add("exceptionMessage", ex.getMessageValue());
         m_lc.log(cta::log::WARNING, "In TaskWatchDog::run(): failed to set tape session stats in sched. DB. Skipping.");
       }
@@ -324,8 +323,9 @@ protected:
     // by the end our process. To delay the latter, we sleep half a second here.
     // To be sure we wait the full half second, we use a timed loop.
     cta::utils::Timer exitTimer;
-    while (exitTimer.secs() < 0.5)
-      usleep(100*1000);
+    while (exitTimer.secs() < 0.5) {
+      usleep(100 * 1000);
+    }
   }
 
 public:
@@ -338,27 +338,37 @@ public:
    * @param reportPacker
    * @param lc To log the events
    */
-  TaskWatchDog(double reportPeriod, double stuckPeriod, cta::tape::daemon::TapedProxy& initialProcess,
-    cta::TapeMount& mount, std::string_view driveUnitName, const cta::log::LogContext& lc, double pollPeriod = 0.1) :
-    m_pollPeriod(pollPeriod), m_reportPeriod(reportPeriod), m_stuckPeriod(stuckPeriod), m_initialProcess(initialProcess),
-    m_mount(mount), m_driveUnitName(driveUnitName), m_lc(lc) {
-    m_lc.pushOrReplace(cta::log::Param("thread","Watchdog"));
+  TaskWatchDog(double reportPeriod,
+               double stuckPeriod,
+               cta::tape::daemon::TapedProxy& initialProcess,
+               cta::TapeMount& mount,
+               std::string_view driveUnitName,
+               const cta::log::LogContext& lc,
+               double pollPeriod = 0.1)
+      : m_pollPeriod(pollPeriod),
+        m_reportPeriod(reportPeriod),
+        m_stuckPeriod(stuckPeriod),
+        m_initialProcess(initialProcess),
+        m_mount(mount),
+        m_driveUnitName(driveUnitName),
+        m_lc(lc) {
+    m_lc.pushOrReplace(cta::log::Param("thread", "Watchdog"));
   }
 
   /**
    * notify the watchdog a mem block has been moved
    */
-  void notify(uint64_t movedBytes){
+  void notify(uint64_t movedBytes) {
     cta::threading::MutexLocker locker(m_mutex);
     m_blockMovementTimer.reset();
-    m_TapeBytesMovedMoved+=movedBytes;
+    m_TapeBytesMovedMoved += movedBytes;
   }
 
   /**
    * update the watchdog's statistics for the session delivery time
    * @param a new deliveryTime
    */
-  void updateStatsDeliveryTime (const double deliveryTime) {
+  void updateStatsDeliveryTime(const double deliveryTime) {
     cta::threading::MutexLocker locker(m_mutex);
     m_stats.deliveryTime = deliveryTime;
   }
@@ -367,7 +377,7 @@ public:
    * update the watchdog's statistics for the session
    * @param stats the stats counters collection to push
    */
-  void updateStatsWithoutDeliveryTime (const TapeSessionStats & stats) {
+  void updateStatsWithoutDeliveryTime(const TapeSessionStats& stats) {
     cta::threading::MutexLocker locker(m_mutex);
     const double savedDeliveryTime = m_stats.deliveryTime;
     m_stats = stats;
@@ -379,7 +389,7 @@ public:
    * update the watchdog's statistics for the session
    * @param stats the stats counters collection to push
    */
-  void updateStats (const TapeSessionStats & stats) {
+  void updateStats(const TapeSessionStats& stats) {
     cta::threading::MutexLocker locker(m_mutex);
     m_stats = stats;
     m_statsSet = true;
@@ -391,7 +401,7 @@ public:
    * time, we will not use this value.
    * @param tapeThreadTimer:  the start time of the tape thread
    */
-  void updateThreadTimer(const cta::utils::Timer & timer) {
+  void updateThreadTimer(const cta::utils::Timer& timer) {
     cta::threading::MutexLocker locker(m_mutex);
     m_tapeThreadTimer = timer;
   }
@@ -399,27 +409,23 @@ public:
   /**
    * Queue new parameter to be sent asynchronously to the main thread.
    */
-  void addParameter (const cta::log::Param & param) {
-    m_toAddParamsQueue.push(param);
-  }
+  void addParameter(const cta::log::Param& param) { m_toAddParamsQueue.push(param); }
 
- /**
+  /**
    * Queue the parameter to be deleted asynchronously in the main thread.
    */
-  void deleteParameter (const std::string & param) {
-    m_toDeleteParamsQueue.push(param);
-  }
+  void deleteParameter(const std::string& param) { m_toDeleteParamsQueue.push(param); }
 
   /**
    * Add error by name. We will count the errors by name in the watchdog.
    */
-  void addToErrorCount (const std::string & errorName) {
+  void addToErrorCount(const std::string& errorName) {
     uint32_t count;
     {
       cta::threading::MutexLocker locker(m_mutex);
       // There is no default constructor for uint32_t (auto set to zero),
       // so we need to consider 2 cases.
-      if(m_errorCounts.end() != m_errorCounts.find(errorName)) {
+      if (m_errorCounts.end() != m_errorCounts.find(errorName)) {
         count = ++m_errorCounts[errorName];
       } else {
         count = m_errorCounts[errorName] = 1;
@@ -433,7 +439,7 @@ public:
    * Set error count. This is used for once per session events that could
    * be detected several times.
    */
-  void setErrorCount (const std::string & errorName, uint32_t value) {
+  void setErrorCount(const std::string& errorName, uint32_t value) {
     {
       cta::threading::MutexLocker locker(m_mutex);
       m_errorCounts[errorName] = value;
@@ -453,27 +459,22 @@ public:
   /**
    * Start the thread
    */
-  void startThread(){
-    start();
-  }
+  void startThread() { start(); }
 
   /**
    * Ask to stop the watchdog thread and join it
    */
-  void stopAndWaitThread(){
+  void stopAndWaitThread() {
     m_stopFlag.set();
     wait();
   }
-
 };
 
 /**
  * Implementation of TaskWatchDog for recalls
  */
-class RecallWatchDog: public TaskWatchDog {
-
+class RecallWatchDog : public TaskWatchDog {
 private:
-
   /** The file we are working on */
   uint64_t m_fileId;
   uint64_t m_fSeq;
@@ -481,23 +482,23 @@ private:
   void logStuckFile() override {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
-          .add("TimeSinceLastBlockMoveReport", m_blockMovementReportTimer.secs())
-          .add("NoBlockMoveMaxSecs", m_stuckPeriod)
-          .add("fileId", m_fileId)
-          .add("fSeq", m_fSeq);
+      .add("TimeSinceLastBlockMoveReport", m_blockMovementReportTimer.secs())
+      .add("NoBlockMoveMaxSecs", m_stuckPeriod)
+      .add("fileId", m_fileId)
+      .add("fSeq", m_fSeq);
     m_lc.log(cta::log::WARNING, "No tape block movement for too long during recalling");
   }
 
 public:
-
   /** Pass through constructor */
-  RecallWatchDog(double periodToReport,double stuckPeriod,
-    cta::tape::daemon::TapedProxy& initialProcess,
-    cta::TapeMount & mount,
-    const std::string & driveUnitName,
-    const cta::log::LogContext& lc, double pollPeriod = 0.1):
-  TaskWatchDog(periodToReport, stuckPeriod, initialProcess, mount, driveUnitName, lc,
-    pollPeriod) {}
+  RecallWatchDog(double periodToReport,
+                 double stuckPeriod,
+                 cta::tape::daemon::TapedProxy& initialProcess,
+                 cta::TapeMount& mount,
+                 const std::string& driveUnitName,
+                 const cta::log::LogContext& lc,
+                 double pollPeriod = 0.1)
+      : TaskWatchDog(periodToReport, stuckPeriod, initialProcess, mount, driveUnitName, lc, pollPeriod) {}
 
   /**
    * Notify the watchdog which file we are operating
@@ -505,29 +506,27 @@ public:
    */
   void notifyBeginNewJob(const uint64_t fileId, uint64_t fSeq) {
     cta::threading::MutexLocker locker(m_mutex);
-    m_fileId=fileId;
-    m_fSeq=fSeq;
-    m_fileBeingMoved=true;
+    m_fileId = fileId;
+    m_fSeq = fSeq;
+    m_fileBeingMoved = true;
   }
 
   /**
    * Notify the watchdog  we have finished operating on the current file
    */
-  void fileFinished(){
+  void fileFinished() {
     cta::threading::MutexLocker locker(m_mutex);
-    m_fileBeingMoved=false;
-    m_fileId=0;
-    m_fSeq=0;
+    m_fileBeingMoved = false;
+    m_fileId = 0;
+    m_fSeq = 0;
   }
 };
 
 /**
  * Implementation of TaskWatchDog for migrations
  */
-class MigrationWatchDog: public TaskWatchDog {
-
+class MigrationWatchDog : public TaskWatchDog {
 private:
-
   /** The file we are working on */
   uint64_t m_fileId;
   uint64_t m_fSeq;
@@ -535,44 +534,44 @@ private:
   void logStuckFile() override {
     cta::log::ScopedParamContainer params(m_lc);
     params.add("TimeSinceLastBlockMove", m_blockMovementTimer.secs())
-          .add("TimeSinceLastBlockMoveReport", m_blockMovementReportTimer.secs())
-          .add("NoBlockMoveMaxSecs", m_stuckPeriod)
-          .add("fileId", m_fileId)
-          .add("fSeq", m_fSeq);
+      .add("TimeSinceLastBlockMoveReport", m_blockMovementReportTimer.secs())
+      .add("NoBlockMoveMaxSecs", m_stuckPeriod)
+      .add("fileId", m_fileId)
+      .add("fSeq", m_fSeq);
     m_lc.log(cta::log::WARNING, "No tape block movement for too long during archiving");
   }
 
 public:
-
   /** Pass through constructor */
-  MigrationWatchDog(double periodToReport,double stuckPeriod,
-    cta::tape::daemon::TapedProxy& initialProcess,
-    cta::TapeMount & mount,
-    const std::string & driveUnitName,
-    const cta::log::LogContext& lc, double pollPeriod = 0.1):
-  TaskWatchDog(periodToReport, stuckPeriod, initialProcess, mount, driveUnitName, lc,
-    pollPeriod) {}
+  MigrationWatchDog(double periodToReport,
+                    double stuckPeriod,
+                    cta::tape::daemon::TapedProxy& initialProcess,
+                    cta::TapeMount& mount,
+                    const std::string& driveUnitName,
+                    const cta::log::LogContext& lc,
+                    double pollPeriod = 0.1)
+      : TaskWatchDog(periodToReport, stuckPeriod, initialProcess, mount, driveUnitName, lc, pollPeriod) {}
 
   /**
    * Notify the watchdog which file we are operating
    * @param file
    */
-  void notifyBeginNewJob(const uint64_t fileId, uint64_t fSeq){
+  void notifyBeginNewJob(const uint64_t fileId, uint64_t fSeq) {
     cta::threading::MutexLocker locker(m_mutex);
-    m_fileId=fileId;
-    m_fSeq=fSeq;
-    m_fileBeingMoved=true;
+    m_fileId = fileId;
+    m_fSeq = fSeq;
+    m_fileBeingMoved = true;
   }
 
   /**
    * Notify the watchdog  we have finished operating on the current file
    */
-  void fileFinished(){
+  void fileFinished() {
     cta::threading::MutexLocker locker(m_mutex);
-    m_fileBeingMoved=false;
-    m_fileId=0;
-    m_fSeq=0;
+    m_fileBeingMoved = false;
+    m_fileId = 0;
+    m_fSeq = 0;
   }
 };
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

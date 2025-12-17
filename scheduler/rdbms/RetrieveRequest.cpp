@@ -16,12 +16,12 @@
  */
 
 #include "scheduler/rdbms/RetrieveRequest.hpp"
+
 #include "common/exception/NotImplementedException.hpp"
 
 namespace cta::schedulerdb {
 
-std::unique_ptr<postgres::RetrieveJobQueueRow>
-RetrieveRequest::makeJobRow() const {
+std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() const {
   auto rjr = std::make_unique<postgres::RetrieveJobQueueRow>();
   rjr->retrieveRequestId = cta::schedulerdb::postgres::RetrieveJobQueueRow::getNextRetrieveRequestID(m_conn);
   rjr->repackRequestId = m_repackInfo.repackRequestId;
@@ -65,34 +65,44 @@ RetrieveRequest::makeJobRow() const {
 
   // Populate alternates from jobs
   int i = 0;
-  for (const auto &rj : m_jobs) {
-    rjr->alternateVids     += rj.vid + ",";
-    rjr->alternateCopyNbs  += std::to_string(rj.copyNb) + ",";
-    rjr->alternateFSeq     += std::to_string(rj.fSeq) + ",";
-    rjr->alternateBlockId  += std::to_string(rj.blockId) + ",";
+  for (const auto& rj : m_jobs) {
+    rjr->alternateVids += rj.vid + ",";
+    rjr->alternateCopyNbs += std::to_string(rj.copyNb) + ",";
+    rjr->alternateFSeq += std::to_string(rj.fSeq) + ",";
+    rjr->alternateBlockId += std::to_string(rj.blockId) + ",";
 
     if (i++ == 0) {
-      rjr->retriesWithinMount   = rj.retriesWithinMount;
+      rjr->retriesWithinMount = rj.retriesWithinMount;
       rjr->maxRetriesWithinMount = rj.maxRetriesWithinMount;
-      rjr->maxReportRetries     = rj.maxReportRetries;
-      rjr->totalRetries         = rj.totalRetries;
-      rjr->totalReportRetries   = rj.totalReportRetries;
+      rjr->maxReportRetries = rj.maxReportRetries;
+      rjr->totalRetries = rj.totalRetries;
+      rjr->totalReportRetries = rj.totalReportRetries;
       rjr->lastMountWithFailure = rj.lastMountWithFailure;
-      rjr->maxTotalRetries      = rj.maxTotalRetries;
+      rjr->maxTotalRetries = rj.maxTotalRetries;
     }
   }
 
-  if (!rjr->alternateVids.empty())        rjr->alternateVids.pop_back();
-  if (!rjr->alternateCopyNbs.empty())     rjr->alternateCopyNbs.pop_back();
-  if (!rjr->alternateFSeq.empty())        rjr->alternateFSeq.pop_back();
-  if (!rjr->alternateBlockId.empty())     rjr->alternateBlockId.pop_back();
+  if (!rjr->alternateVids.empty()) {
+    rjr->alternateVids.pop_back();
+  }
+  if (!rjr->alternateCopyNbs.empty()) {
+    rjr->alternateCopyNbs.pop_back();
+  }
+  if (!rjr->alternateFSeq.empty()) {
+    rjr->alternateFSeq.pop_back();
+  }
+  if (!rjr->alternateBlockId.empty()) {
+    rjr->alternateBlockId.pop_back();
+  }
 
   // For any additional copies that will need to be archive for repack,
   // we need to record the additional requested copyNbs
   std::string copyNbsToRearchiveString = "";
   std::string tapePoolsForReparchiveCopyNbsString = "";
   for (const auto& copyNb : m_repackInfo.copyNbsToRearchive) {
-    if (copyNb == 0) { continue; }
+    if (copyNb == 0) {
+      continue;
+    }
     if (!copyNbsToRearchiveString.empty()) {
       copyNbsToRearchiveString += ",";
       tapePoolsForReparchiveCopyNbsString += ",";
@@ -101,24 +111,24 @@ RetrieveRequest::makeJobRow() const {
     tapePoolsForReparchiveCopyNbsString += m_repackInfo.archiveRouteMap.at(copyNb);
   }
   log::ScopedParamContainer(m_lc)
-      .add("copyNbsToRearchiveString", copyNbsToRearchiveString)
-      .add("tapePoolsForReparchiveCopyNbsString", tapePoolsForReparchiveCopyNbsString)
-      .log(log::DEBUG, "In RetrieveRequest::insert(): copyNbsToRearchiveString check.");
-  if (!copyNbsToRearchiveString.empty()){
+    .add("copyNbsToRearchiveString", copyNbsToRearchiveString)
+    .add("tapePoolsForReparchiveCopyNbsString", tapePoolsForReparchiveCopyNbsString)
+    .log(log::DEBUG, "In RetrieveRequest::insert(): copyNbsToRearchiveString check.");
+  if (!copyNbsToRearchiveString.empty()) {
     rjr->rearchiveCopyNbs = copyNbsToRearchiveString;
   }
-  if (!tapePoolsForReparchiveCopyNbsString.empty()){
+  if (!tapePoolsForReparchiveCopyNbsString.empty()) {
     rjr->rearchiveTapePools = tapePoolsForReparchiveCopyNbsString;
   }
   rjr->srrMountPolicy = "?";
-  rjr->srrActivity    = m_schedRetrieveReq.activity.value_or("?");
+  rjr->srrActivity = m_schedRetrieveReq.activity.value_or("?");
 
   return rjr;
 }
 
 // Inserts one row into DB
 void RetrieveRequest::insert() {
-  try{
+  try {
     auto row = makeJobRow();
     log::ScopedParamContainer params(m_lc);
     row->addParamsToLogContext(params);
@@ -179,7 +189,8 @@ void RetrieveRequest::fillJobsSetRetrieveFileQueueCriteria(
       m_jobs.emplace_back();
       m_jobs.back().copyNb = tf.copyNb;
       m_jobs.back().vid = tf.vid;
-      m_jobs.back().maxRetriesWithinMount = m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
+      m_jobs.back().maxRetriesWithinMount =
+        m_repackInfo.isRepack ? RETRIES_WITHIN_MOUNT_FOR_REPACK : RETRIES_WITHIN_MOUNT_FOR_USER;
       m_jobs.back().maxTotalRetries = m_repackInfo.isRepack ? TOTAL_RETRIES_FOR_REPACK : TOTAL_RETRIES_FOR_USER;
       m_jobs.back().maxReportRetries = REPORT_RETRIES;
       m_jobs.back().status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;

@@ -44,4 +44,4 @@ inline TapePoolLsStream::TapePoolLsStream(const frontend::AdminCmdStream& reques
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

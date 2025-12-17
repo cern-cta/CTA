@@ -15,8 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/log/DummyLogger.hpp"
 #include "common/process/threading/Daemon.hpp"
+
+#include "common/log/DummyLogger.hpp"
 
 #include <gtest/gtest.h>
 #include <sstream>
@@ -27,18 +28,12 @@ namespace unitTests {
 
 class cta_threading_DaemonTest : public ::testing::Test {
 protected:
-
   const std::string m_hostName;
   const std::string m_programName;
   int m_argc;
-  char **m_argv;
+  char** m_argv;
 
-  cta_threading_DaemonTest() :
-    m_hostName("dummy"),
-    m_programName("testdaemon"),
-    m_argc(0),
-    m_argv(nullptr) {
-  }
+  cta_threading_DaemonTest() : m_hostName("dummy"), m_programName("testdaemon"), m_argc(0), m_argv(nullptr) {}
 
   virtual void SetUp() {
     m_argc = 0;
@@ -46,7 +41,7 @@ protected:
   }
 
   virtual void TearDown() {
-    for(int i = 0; i < m_argc; i++) {
+    for (int i = 0; i < m_argc; i++) {
       free(m_argv[i]);
     }
 
@@ -61,4 +56,4 @@ TEST_F(cta_threading_DaemonTest, getForegroundBeforeParseCommandLine) {
   ASSERT_THROW(daemon.getForeground(), cta::server::Daemon::CommandLineNotParsed);
 }
 
-} // namespace unitTests
+}  // namespace unitTests

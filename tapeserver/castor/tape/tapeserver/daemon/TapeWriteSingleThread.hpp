@@ -25,10 +25,10 @@
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "castor/tape/tapeserver/file/FileWriter.hpp"
 #include "castor/tape/tapeserver/file/WriteSession.hpp"
+#include "common/Timer.hpp"
 #include "common/process/ProcessCap.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
-#include "common/Timer.hpp"
 
 #include <iostream>
 #include <stdio.h>
@@ -49,22 +49,21 @@ public:
   /**
    * Constructor
    */
-  TapeWriteSingleThread(
-    castor::tape::tapeserver::drive::DriveInterface& drive,
-    cta::mediachanger::MediaChangerFacade& mediaChanger,
-    TapeSessionReporter& reporter,
-    MigrationWatchDog& watchdog,
-    const VolumeInfo& volInfo,
-    const cta::log::LogContext& logContext,
-    MigrationReportPacker& reportPacker,
-    uint64_t filesBeforeFlush,
-    uint64_t bytesBeforeFlush,
-    const bool useLbp,
-    const bool useEncryption,
-    const std::string& externalEncryptionKeyScript,
-    const cta::ArchiveMount& archiveMount,
-    const uint64_t tapeLoadTimeout,
-    cta::catalogue::Catalogue& catalogue);
+  TapeWriteSingleThread(castor::tape::tapeserver::drive::DriveInterface& drive,
+                        cta::mediachanger::MediaChangerFacade& mediaChanger,
+                        TapeSessionReporter& reporter,
+                        MigrationWatchDog& watchdog,
+                        const VolumeInfo& volInfo,
+                        const cta::log::LogContext& logContext,
+                        MigrationReportPacker& reportPacker,
+                        uint64_t filesBeforeFlush,
+                        uint64_t bytesBeforeFlush,
+                        const bool useLbp,
+                        const bool useEncryption,
+                        const std::string& externalEncryptionKeyScript,
+                        const cta::ArchiveMount& archiveMount,
+                        const uint64_t tapeLoadTimeout,
+                        cta::catalogue::Catalogue& catalogue);
 
   /**
    * Sets up the pointer to the task injector. This cannot be done at
@@ -75,9 +74,8 @@ public:
    * when receiving an error from the disk tasks via memory blocks.
    * @param injector pointer to the task injector
    */
-  void setTaskInjector(MigrationTaskInjector *injector) {
-    m_taskInjector = injector;
-  }
+  void setTaskInjector(MigrationTaskInjector* injector) { m_taskInjector = injector; }
+
   /**
    * Requeues all jobs in from the list of jobIDs failed tape tasks
    *
@@ -92,15 +90,14 @@ public:
   void setlastFseq(uint64_t lastFseq);
 
 private:
-
   // RAII class for cleaning tape stuff
   class TapeCleaning {
     TapeWriteSingleThread& m_this;
     // As we are living in the single thread of tape, we can borrow the timer
     cta::utils::Timer& m_timer;
+
   public:
-    TapeCleaning(TapeWriteSingleThread& parent, cta::utils::Timer& timer) :
-      m_this(parent), m_timer(timer) {}
+    TapeCleaning(TapeWriteSingleThread& parent, cta::utils::Timer& timer) : m_this(parent), m_timer(timer) {}
 
     ~TapeCleaning();
   };
@@ -113,8 +110,7 @@ private:
   /**
    * Log m_stats parameters into m_logContext with msg at the given level
    */
-  void logWithStats(int level, const std::string& msg,
-                    cta::log::ScopedParamContainer& params);
+  void logWithStats(int level, const std::string& msg, cta::log::ScopedParamContainer& params);
 
   /**
    * Function to open the WriteSession
@@ -133,8 +129,7 @@ private:
    * @param files the number of files that have been written since the last flush
    * (also for logging)
    */
-  void tapeFlush(const std::string& message, uint64_t bytes, uint64_t files,
-                 cta::utils::Timer& timer);
+  void tapeFlush(const std::string& message, uint64_t bytes, uint64_t files, cta::utils::Timer& timer);
 
   /**
    * After waiting for the drive, we will dump the tape alert log content, if it
@@ -202,9 +197,7 @@ protected:
   /***
    * Helper virtual function to access the watchdog from parent class
    */
-  void countTapeLogError(const std::string& error) override {
-    m_watchdog.addToErrorCount(error);
-  }
+  void countTapeLogError(const std::string& error) override { m_watchdog.addToErrorCount(error); }
 
   /**
    * Logs SCSI metrics for write session.
@@ -215,8 +208,8 @@ private:
   /**
    *  Pointer to the task injector allowing termination signaling
    */
-  MigrationTaskInjector *m_taskInjector;
+  MigrationTaskInjector* m_taskInjector;
 
-}; // class TapeWriteSingleThread
+};  // class TapeWriteSingleThread
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

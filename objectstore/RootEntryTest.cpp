@@ -15,21 +15,21 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <gtest/gtest.h>
+#include "RootEntry.hpp"
 
 #include "Agent.hpp"
 #include "AgentReference.hpp"
 #include "AgentRegister.hpp"
 #include "ArchiveQueue.hpp"
 #include "BackendVFS.hpp"
+#include "ObjectStoreFixture.hpp"
+#include "RetrieveQueue.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "objectstore/SerializersExceptions.hpp"
-#include "RetrieveQueue.hpp"
-#include "RootEntry.hpp"
 
-#include "ObjectStoreFixture.hpp"
+#include <gtest/gtest.h>
 
 namespace unitTests {
 
@@ -62,7 +62,8 @@ TEST_F(ObjectStore, RootEntryBasicAccess) {
     cta::objectstore::Agent agent(agentRef.getAgentAddress(), be);
     re.fetch();
     cta::objectstore::EntryLogSerDeser el("user0",
-      "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+                                          "unittesthost",
+                                          std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
     re.addOrGetAgentRegisterPointerAndCommit(agentRef, el, lc);
     ASSERT_NO_THROW(re.getAgentRegisterAddress());
     re.commit();
@@ -81,7 +82,8 @@ TEST_F(ObjectStore, RootEntryArchiveQueues) {
   using cta::common::dataStructures::JobQueueType;
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+                                        "unittesthost",
+                                        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -103,7 +105,7 @@ TEST_F(ObjectStore, RootEntryArchiveQueues) {
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
     ASSERT_THROW(re.getArchiveQueueAddress("tapePool1", JobQueueType::JobsToTransferForUser),
-      cta::objectstore::RootEntry::NoSuchArchiveQueue);
+                 cta::objectstore::RootEntry::NoSuchArchiveQueue);
     tpAddr1 = re.addOrGetArchiveQueueAndCommit("tapePool1", agr, JobQueueType::JobsToTransferForUser);
     // Check that we car read it
     cta::objectstore::ArchiveQueue aq(tpAddr1, be);
@@ -149,7 +151,8 @@ TEST_F(ObjectStore, RootEntryDriveRegister) {
     re.insert();
   }
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+                                        "unittesthost",
+                                        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -169,10 +172,8 @@ TEST_F(ObjectStore, RootEntryDriveRegister) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    ASSERT_THROW(re.getDriveRegisterAddress(),
-      cta::objectstore::RootEntry::NotAllocated);
-    ASSERT_NO_THROW(
-      driveRegisterAddress = re.addOrGetDriveRegisterPointerAndCommit(agr, el));
+    ASSERT_THROW(re.getDriveRegisterAddress(), cta::objectstore::RootEntry::NotAllocated);
+    ASSERT_NO_THROW(driveRegisterAddress = re.addOrGetDriveRegisterPointerAndCommit(agr, el));
     ASSERT_TRUE(be.exists(driveRegisterAddress));
   }
   {
@@ -205,7 +206,8 @@ TEST_F(ObjectStore, RootEntryAgentRegister) {
     re.insert();
   }
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+                                        "unittesthost",
+                                        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -217,8 +219,7 @@ TEST_F(ObjectStore, RootEntryAgentRegister) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock lock(re);
     re.fetch();
-    ASSERT_THROW(re.getAgentRegisterAddress(),
-      cta::objectstore::RootEntry::NotAllocated);
+    ASSERT_THROW(re.getAgentRegisterAddress(), cta::objectstore::RootEntry::NotAllocated);
     arAddr = re.addOrGetAgentRegisterPointerAndCommit(agr, el, lc);
     // Check that we car read it
     cta::objectstore::AgentRegister ar(arAddr, be);
@@ -255,7 +256,8 @@ TEST_F(ObjectStore, RootEntrySchedulerGlobalLock) {
     re.insert();
   }
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+                                        "unittesthost",
+                                        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -275,10 +277,8 @@ TEST_F(ObjectStore, RootEntrySchedulerGlobalLock) {
     cta::objectstore::RootEntry re(be);
     cta::objectstore::ScopedExclusiveLock rel(re);
     re.fetch();
-    ASSERT_THROW(re.getDriveRegisterAddress(),
-      cta::objectstore::RootEntry::NotAllocated);
-    ASSERT_NO_THROW(
-      schedulerGlobalLockAddress = re.addOrGetSchedulerGlobalLockAndCommit(agr, el));
+    ASSERT_THROW(re.getDriveRegisterAddress(), cta::objectstore::RootEntry::NotAllocated);
+    ASSERT_NO_THROW(schedulerGlobalLockAddress = re.addOrGetSchedulerGlobalLockAndCommit(agr, el));
     ASSERT_TRUE(be.exists(schedulerGlobalLockAddress));
   }
   {
@@ -306,7 +306,8 @@ TEST_F(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest) {
   using cta::common::dataStructures::JobQueueType;
   cta::objectstore::BackendVFS be;
   cta::objectstore::EntryLogSerDeser el("user0",
-    "unittesthost", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+                                        "unittesthost",
+                                        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
   cta::log::DummyLogger dl("dummy", "dummyLogger");
   cta::log::LogContext lc(dl);
   cta::objectstore::AgentReference agr("UnitTests", dl);
@@ -330,7 +331,7 @@ TEST_F(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest) {
     re.fetch();
     // Try to retrieve a retrieve queue address that does not exist
     ASSERT_THROW(re.getRetrieveQueueAddress("VID1", JobQueueType::JobsToReportToRepackForSuccess),
-      cta::objectstore::RootEntry::NoSuchRetrieveQueue);
+                 cta::objectstore::RootEntry::NoSuchRetrieveQueue);
 
     tpAddr1 = re.addOrGetRetrieveQueueAndCommit("VID1", agr, JobQueueType::JobsToReportToRepackForSuccess);
 
@@ -372,4 +373,4 @@ TEST_F(ObjectStore, RetrieveQueueToReportToRepackForSuccessRootEntryTest) {
   ASSERT_FALSE(re.exists());
 }
 
-}
+}  // namespace unitTests

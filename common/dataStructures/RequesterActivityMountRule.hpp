@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include "common/dataStructures/EntryLog.hpp"
+
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/EntryLog.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -31,12 +31,11 @@ namespace cta::common::dataStructures {
  * requester.
  */
 struct RequesterActivityMountRule {
-
   RequesterActivityMountRule() = default;
 
-  bool operator==(const RequesterActivityMountRule &rhs) const;
+  bool operator==(const RequesterActivityMountRule& rhs) const;
 
-  bool operator!=(const RequesterActivityMountRule &rhs) const;
+  bool operator!=(const RequesterActivityMountRule& rhs) const;
 
   /**
    * The name of the disk instance to which the requester belongs.
@@ -59,8 +58,8 @@ struct RequesterActivityMountRule {
   EntryLog lastModificationLog;
   std::string comment;
 
-}; // struct RequesterMountRule
+};  // struct RequesterMountRule
 
-std::ostream &operator<<(std::ostream &os, const RequesterActivityMountRule &obj);
+std::ostream& operator<<(std::ostream& os, const RequesterActivityMountRule& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

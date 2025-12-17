@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include "catalogue/TapePoolSearchCriteria.hpp"
+#include "common/exception/UserError.hpp"
+
 #include <list>
 #include <optional>
 #include <string>
-
-#include "catalogue/TapePoolSearchCriteria.hpp"
-#include "common/exception/UserError.hpp"
 
 namespace cta {
 
@@ -51,31 +51,36 @@ public:
                               const std::list<std::string>& supply_list,
                               const std::string& comment) = 0;
 
-  virtual void deleteTapePool(const std::string &name) = 0;
+  virtual void deleteTapePool(const std::string& name) = 0;
 
-  virtual std::list<TapePool> getTapePools(
-    const TapePoolSearchCriteria &searchCriteria = TapePoolSearchCriteria()) const = 0;
+  virtual std::list<TapePool>
+  getTapePools(const TapePoolSearchCriteria& searchCriteria = TapePoolSearchCriteria()) const = 0;
 
-  virtual std::optional<TapePool> getTapePool(const std::string &tapePoolName) const = 0;
+  virtual std::optional<TapePool> getTapePool(const std::string& tapePoolName) const = 0;
 
-  virtual void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo) = 0;
+  virtual void modifyTapePoolVo(const common::dataStructures::SecurityIdentity& admin,
+                                const std::string& name,
+                                const std::string& vo) = 0;
 
-  virtual void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin,
-    const std::string &name, const uint64_t nbPartialTapes) = 0;
+  virtual void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity& admin,
+                                            const std::string& name,
+                                            const uint64_t nbPartialTapes) = 0;
 
-  virtual void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &comment) = 0;
+  virtual void modifyTapePoolComment(const common::dataStructures::SecurityIdentity& admin,
+                                     const std::string& name,
+                                     const std::string& comment) = 0;
 
-  virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-                                     const std::string &encryptionKeyName) = 0;
+  virtual void setTapePoolEncryption(const common::dataStructures::SecurityIdentity& admin,
+                                     const std::string& name,
+                                     const std::string& encryptionKeyName) = 0;
 
   virtual void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                     const std::string& name,
                                     const std::list<std::string>& supply_list) = 0;
 
-  virtual void modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName,
-    const std::string &newName) = 0;
+  virtual void modifyTapePoolName(const common::dataStructures::SecurityIdentity& admin,
+                                  const std::string& currentName,
+                                  const std::string& newName) = 0;
 
   /**
    * Returns true if the specified tape pool exists.
@@ -83,8 +88,9 @@ public:
    * @param tapePoolName The name of the tape pool.
    * @return True if the tape pool exists.
    */
-  virtual bool tapePoolExists(const std::string &tapePoolName) const = 0;
+  virtual bool tapePoolExists(const std::string& tapePoolName) const = 0;
   virtual void deleteAllTapePoolSupplyEntries() = 0;
 };
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

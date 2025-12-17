@@ -50,4 +50,4 @@ struct RemotePathAndStatus {
   RemoteFileStatus status;
 };
 
-} // namespace cta
+}  // namespace cta

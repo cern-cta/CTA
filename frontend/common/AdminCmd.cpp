@@ -17,17 +17,17 @@
 
 #include "AdminCmd.hpp"
 
-#include <opentelemetry/context/runtime_context.h>
-
+#include "PbException.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "cmdline/CtaAdminCmdParser.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
-#include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "frontend/common/RequestTracker.hpp"
-#include "PbException.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
 
 namespace cta::frontend {
 
@@ -58,7 +58,7 @@ xrd::Response AdminCmd::process() {
 
   try {
     // Map the <Cmd, SubCmd> to a method
-    switch(cmd_pair(m_adminCmd.cmd(), m_adminCmd.subcmd())) {
+    switch (cmd_pair(m_adminCmd.cmd(), m_adminCmd.subcmd())) {
       case cmd_pair(admin::AdminCmd::CMD_ADMIN, admin::AdminCmd::SUBCMD_ADD):
         processAdmin_Add(response);
         break;
@@ -240,26 +240,25 @@ xrd::Response AdminCmd::process() {
         processModifyArchiveFile(response);
         break;
       default:
-        throw exception::PbException("Admin command pair <" +
-              AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", " +
-              AdminCmd_SubCmd_Name(m_adminCmd.subcmd()) + "> is not implemented.");
+        throw exception::PbException("Admin command pair <" + AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", "
+                                     + AdminCmd_SubCmd_Name(m_adminCmd.subcmd()) + "> is not implemented.");
     }
 
     // Log the admin command
     logAdminCmd(AdminCmdStatus::SUCCESS, "", t);
-  } catch(exception::PbException& ex) {
+  } catch (exception::PbException& ex) {
     logAdminCmd(AdminCmdStatus::EXCEPTION, ex.what(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
-  } catch(exception::UserError& ex) {
+  } catch (exception::UserError& ex) {
     logAdminCmd(AdminCmdStatus::USER_ERROR, ex.getMessageValue(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kUserError);
     throw ex;
-  } catch(exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     logAdminCmd(AdminCmdStatus::EXCEPTION, ex.what(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
-  } catch(std::runtime_error& ex) {
+  } catch (std::runtime_error& ex) {
     logAdminCmd(AdminCmdStatus::EXCEPTION, ex.what(), t);
     requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
     throw ex;
@@ -267,9 +266,7 @@ xrd::Response AdminCmd::process() {
   return response;
 }
 
-void AdminCmd::logAdminCmd(const AdminCmdStatus status,
-                           const std::string& reason,
-                           utils::Timer& t) {
+void AdminCmd::logAdminCmd(const AdminCmdStatus status, const std::string& reason, utils::Timer& t) {
   // We do the metric recording here to prevent repetition in the catch statements
   std::string statusStr;
   switch (status) {
@@ -290,15 +287,15 @@ void AdminCmd::logAdminCmd(const AdminCmdStatus status,
   log::ScopedParamContainer params(m_lc);
 
   // Reverse lookup of strings corresponding to <command,subcommand> pair
-  for(auto cmd_it = admin::cmdLookup.begin(); cmd_it != admin::cmdLookup.end(); ++cmd_it) {
+  for (auto cmd_it = admin::cmdLookup.begin(); cmd_it != admin::cmdLookup.end(); ++cmd_it) {
     // Return the matching long string (length > 3)
-    if(m_adminCmd.cmd() == cmd_it->second && cmd_it->first.length() > 3) {
+    if (m_adminCmd.cmd() == cmd_it->second && cmd_it->first.length() > 3) {
       params.add("command", cmd_it->first);
       break;
     }
   }
-  for(auto subcmd_it = admin::subcmdLookup.begin(); subcmd_it != admin::subcmdLookup.end(); ++subcmd_it) {
-    if(m_adminCmd.subcmd() == subcmd_it->second) {
+  for (auto subcmd_it = admin::subcmdLookup.begin(); subcmd_it != admin::subcmdLookup.end(); ++subcmd_it) {
+    if (m_adminCmd.subcmd() == subcmd_it->second) {
       params.add("subcommand", subcmd_it->first);
       break;
     }
@@ -306,7 +303,7 @@ void AdminCmd::logAdminCmd(const AdminCmdStatus status,
 
   params.add("status", statusStr);
 
-  if(!reason.empty()) {
+  if (!reason.empty()) {
     params.add("reason", reason);
   }
 
@@ -314,55 +311,51 @@ void AdminCmd::logAdminCmd(const AdminCmdStatus status,
   std::pair<admin::AdminCmd::Cmd, admin::AdminCmd::SubCmd> cmd_key(m_adminCmd.cmd(), m_adminCmd.subcmd());
   std::vector<admin::Option> cmd_options = admin::cmdOptions.at(cmd_key);
 
-  for(const auto &cmd_option: cmd_options) {
+  for (const auto& cmd_option : cmd_options) {
     bool has_option = false;
     const auto& lookup_key = cmd_option.get_key();
     // Lookup if command line option was used in the command
-    switch(cmd_option.get_type()) {
-      case admin::Option::option_t::OPT_FLAG: // Treat flag options as bool options
+    switch (cmd_option.get_type()) {
+      case admin::Option::option_t::OPT_FLAG:  // Treat flag options as bool options
       case admin::Option::option_t::OPT_BOOL: {
-          auto bool_key = admin::boolOptions.at(lookup_key);
-          auto opt_value = getOptional(bool_key, &has_option);
-          if (has_option) {
-            auto descriptor = admin::OptionBoolean::Key_descriptor();
-            auto bool_key_name = descriptor->FindValueByNumber(bool_key)->name();
-            params.add(bool_key_name, opt_value.value() ? "true" : "false");
-          }
+        auto bool_key = admin::boolOptions.at(lookup_key);
+        auto opt_value = getOptional(bool_key, &has_option);
+        if (has_option) {
+          auto descriptor = admin::OptionBoolean::Key_descriptor();
+          auto bool_key_name = descriptor->FindValueByNumber(bool_key)->name();
+          params.add(bool_key_name, opt_value.value() ? "true" : "false");
         }
-        break;
+      } break;
       case admin::Option::option_t::OPT_UINT: {
-          auto int_key = admin::uint64Options.at(lookup_key);
-          auto opt_value = getOptional(int_key, &has_option);
-          if (has_option) {
-            auto descriptor = admin::OptionUInt64::Key_descriptor();
-            auto int_key_name = descriptor->FindValueByNumber(int_key)->name();
-            params.add(int_key_name, opt_value.value());
-          }
+        auto int_key = admin::uint64Options.at(lookup_key);
+        auto opt_value = getOptional(int_key, &has_option);
+        if (has_option) {
+          auto descriptor = admin::OptionUInt64::Key_descriptor();
+          auto int_key_name = descriptor->FindValueByNumber(int_key)->name();
+          params.add(int_key_name, opt_value.value());
         }
-        break;
-      case admin::Option::option_t::OPT_CMD: // Treat command options as string options
+      } break;
+      case admin::Option::option_t::OPT_CMD:  // Treat command options as string options
       case admin::Option::option_t::OPT_STR: {
-          auto string_key = admin::strOptions.at(lookup_key);
-          auto opt_value = getOptional(string_key, &has_option);
-          if (has_option) {
-            auto descriptor = admin::OptionString::Key_descriptor();
-            auto string_key_name = descriptor->FindValueByNumber(string_key)->name();
-            params.add(string_key_name, opt_value.value());
-          }
+        auto string_key = admin::strOptions.at(lookup_key);
+        auto opt_value = getOptional(string_key, &has_option);
+        if (has_option) {
+          auto descriptor = admin::OptionString::Key_descriptor();
+          auto string_key_name = descriptor->FindValueByNumber(string_key)->name();
+          params.add(string_key_name, opt_value.value());
         }
-        break;
+      } break;
       case admin::Option::option_t::OPT_STR_LIST: {
-          auto string_list_key = admin::strListOptions.at(lookup_key);
-          auto opt_value = getOptional(string_list_key, &has_option);
-          if (has_option) {
-            auto descriptor = admin::OptionStrList::Key_descriptor();
-            auto string_list_key_name = descriptor->FindValueByNumber(string_list_key)->name();
-            params.add(string_list_key_name, cmd_option.get_help_text());
-          }
+        auto string_list_key = admin::strListOptions.at(lookup_key);
+        auto opt_value = getOptional(string_list_key, &has_option);
+        if (has_option) {
+          auto descriptor = admin::OptionStrList::Key_descriptor();
+          auto string_list_key_name = descriptor->FindValueByNumber(string_list_key)->name();
+          params.add(string_list_key_name, cmd_option.get_help_text());
         }
-        break;
-    } // end switch
-  } // end for
+      } break;
+    }  // end switch
+  }  // end for
   params.add("adminTime", t.secs());
   params.add("user", m_cliIdentity.username + "@" + m_cliIdentity.host);
   m_lc.log(cta::log::INFO, "Admin command succeeded");
@@ -372,7 +365,7 @@ void AdminCmd::processAdmin_Add(xrd::Response& response) {
   using namespace cta::admin;
 
   auto& username = getRequired(OptionString::USERNAME);
-  auto& comment  = getRequired(OptionString::COMMENT);
+  auto& comment = getRequired(OptionString::COMMENT);
 
   m_catalogue.AdminUser()->createAdminUser(m_cliIdentity, username, comment);
 
@@ -383,7 +376,7 @@ void AdminCmd::processAdmin_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
   auto& username = getRequired(OptionString::USERNAME);
-  auto& comment  = getRequired(OptionString::COMMENT);
+  auto& comment = getRequired(OptionString::COMMENT);
 
   m_catalogue.AdminUser()->modifyAdminUserComment(m_cliIdentity, username, comment);
 
@@ -403,14 +396,15 @@ void AdminCmd::processAdmin_Rm(xrd::Response& response) {
 void AdminCmd::processArchiveRoute_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& scn      = getRequired(OptionString::STORAGE_CLASS);
-  auto& cn       = getRequired(OptionUInt64::COPY_NUMBER);
-  auto  art_opt  = getOptional(OptionString::ARCHIVE_ROUTE_TYPE);
+  auto& scn = getRequired(OptionString::STORAGE_CLASS);
+  auto& cn = getRequired(OptionUInt64::COPY_NUMBER);
+  auto art_opt = getOptional(OptionString::ARCHIVE_ROUTE_TYPE);
   auto& tapepool = getRequired(OptionString::TAPE_POOL);
-  auto& comment  = getRequired(OptionString::COMMENT);
+  auto& comment = getRequired(OptionString::COMMENT);
 
   // Adding a new archive route without type is allowed. If so, it should default to DEFAULT.
-  auto art = art_opt.has_value() ? common::dataStructures::strToArchiveRouteType(art_opt.value()) : cta::common::dataStructures::ArchiveRouteType::DEFAULT;
+  auto art = art_opt.has_value() ? common::dataStructures::strToArchiveRouteType(art_opt.value()) :
+                                   cta::common::dataStructures::ArchiveRouteType::DEFAULT;
 
   m_catalogue.ArchiveRoute()->createArchiveRoute(m_cliIdentity, scn, static_cast<uint32_t>(cn), art, tapepool, comment);
 
@@ -420,17 +414,25 @@ void AdminCmd::processArchiveRoute_Add(xrd::Response& response) {
 void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& scn     = getRequired(OptionString::STORAGE_CLASS);
-  auto& cn      = getRequired(OptionUInt64::COPY_NUMBER);
+  auto& scn = getRequired(OptionString::STORAGE_CLASS);
+  auto& cn = getRequired(OptionUInt64::COPY_NUMBER);
   auto& art_str = getRequired(OptionString::ARCHIVE_ROUTE_TYPE);
 
   auto art = common::dataStructures::strToArchiveRouteType(art_str);
 
-  if(const auto comment = getOptional(OptionString::COMMENT); comment) {
-    m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity, scn, static_cast<uint32_t>(cn), art, comment.value());
+  if (const auto comment = getOptional(OptionString::COMMENT); comment) {
+    m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(m_cliIdentity,
+                                                          scn,
+                                                          static_cast<uint32_t>(cn),
+                                                          art,
+                                                          comment.value());
   }
-  if(const auto tapepool = getOptional(OptionString::TAPE_POOL); tapepool) {
-    m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity, scn, static_cast<uint32_t>(cn), art, tapepool.value());
+  if (const auto tapepool = getOptional(OptionString::TAPE_POOL); tapepool) {
+    m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(m_cliIdentity,
+                                                               scn,
+                                                               static_cast<uint32_t>(cn),
+                                                               art,
+                                                               tapepool.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -439,8 +441,8 @@ void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
 void AdminCmd::processArchiveRoute_Rm(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& scn     = getRequired(OptionString::STORAGE_CLASS);
-  auto& cn      = getRequired(OptionUInt64::COPY_NUMBER);
+  auto& scn = getRequired(OptionString::STORAGE_CLASS);
+  auto& cn = getRequired(OptionUInt64::COPY_NUMBER);
   auto& art_str = getRequired(OptionString::ARCHIVE_ROUTE_TYPE);
 
   auto art = common::dataStructures::strToArchiveRouteType(art_str);
@@ -458,7 +460,7 @@ void AdminCmd::processDrive_Up(xrd::Response& response) {
   desiredDS.up = true;
   desiredDS.forceDown = false;
   desiredDS.reason = reason;
-  if(!desiredDS.reason) {
+  if (!desiredDS.reason) {
     //If reason not provided while setting the drive up, we delete it, so we set it to an empty string
     desiredDS.reason = "";
   }
@@ -473,7 +475,7 @@ void AdminCmd::processDrive_Down(xrd::Response& response) {
   using namespace cta::admin;
 
   std::string reason = getRequired(OptionString::REASON);
-  if(utils::trimString(reason).empty()) {
+  if (utils::trimString(reason).empty()) {
     throw exception::UserError("You must provide a reason in order to set the drive down");
   }
   common::dataStructures::DesiredDriveState desiredDS;
@@ -487,11 +489,11 @@ void AdminCmd::processDrive_Down(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processDrive_Ch(xrd::Response&  response) {
+void AdminCmd::processDrive_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
   std::string comment = getRequired(OptionString::COMMENT);
-  if(utils::trimString(comment).empty()) {
+  if (utils::trimString(comment).empty()) {
     throw exception::UserError("You must provide a comment to change it.");
   }
 
@@ -513,36 +515,34 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
   regex = '^' + regex + '$';
   utils::Regex driveNameRegex(regex.c_str());
 
-  if (!m_schedulerBackendName.has_value()){
-    throw exception::UserError("You must provide a value for cta.schedulerdb.scheduler_backend_name in the frontend configuration !");
+  if (!m_schedulerBackendName.has_value()) {
+    throw exception::UserError(
+      "You must provide a value for cta.schedulerdb.scheduler_backend_name in the frontend configuration !");
   }
-  const auto tapeDriveNames = m_catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(m_schedulerBackendName.value());
+  const auto tapeDriveNames =
+    m_catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(m_schedulerBackendName.value());
   bool drivesFound = false;
 
-  for (const auto& tapeDriveName : tapeDriveNames)
-  {
+  for (const auto& tapeDriveName : tapeDriveNames) {
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
-    if(!regexResult.empty())
-    {
-      if(const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(tapeDriveName).value();
-        tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down     ||
-        tapeDrive.driveStatus == common::dataStructures::DriveStatus::Shutdown ||
-        tapeDrive.driveStatus == common::dataStructures::DriveStatus::Unknown  ||
-        has_flag(OptionBoolean::FORCE))
-      {
+    if (!regexResult.empty()) {
+      if (const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(tapeDriveName).value();
+          tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down
+          || tapeDrive.driveStatus == common::dataStructures::DriveStatus::Shutdown
+          || tapeDrive.driveStatus == common::dataStructures::DriveStatus::Unknown || has_flag(OptionBoolean::FORCE)) {
         m_scheduler.removeDrive(tapeDriveName, m_lc);
         cmdlineOutput << "Drive " << tapeDriveName << " removed"
                       << (has_flag(OptionBoolean::FORCE) ? " (forced)." : ".") << std::endl;
       } else {
         cmdlineOutput << "Drive " << tapeDriveName << " in state "
-                      << common::dataStructures::toString(tapeDrive.driveStatus)
-                      << " and force is not set (skipped)." << std::endl;
+                      << common::dataStructures::toString(tapeDrive.driveStatus) << " and force is not set (skipped)."
+                      << std::endl;
       }
       drivesFound = true;
     }
   }
 
-  if(!drivesFound) {
+  if (!drivesFound) {
     cmdlineOutput << "No drives match \"" << regex << "\". No drives were removed." << std::endl;
   }
 
@@ -564,9 +564,9 @@ void AdminCmd::processGroupMountRule_Add(xrd::Response& response) {
   using namespace cta::admin;
 
   auto& mountpolicy = getRequired(OptionString::MOUNT_POLICY);
-  auto& in          = getRequired(OptionString::INSTANCE);
-  auto& name        = getRequired(OptionString::USERNAME);
-  auto& comment     = getRequired(OptionString::COMMENT);
+  auto& in = getRequired(OptionString::INSTANCE);
+  auto& name = getRequired(OptionString::USERNAME);
+  auto& comment = getRequired(OptionString::COMMENT);
 
   m_catalogue.RequesterGroupMountRule()->createRequesterGroupMountRule(m_cliIdentity, mountpolicy, in, name, comment);
 
@@ -576,14 +576,20 @@ void AdminCmd::processGroupMountRule_Add(xrd::Response& response) {
 void AdminCmd::processGroupMountRule_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& in          = getRequired(OptionString::INSTANCE);
-  auto& name        = getRequired(OptionString::USERNAME);
+  auto& in = getRequired(OptionString::INSTANCE);
+  auto& name = getRequired(OptionString::USERNAME);
 
-  if(const auto comment = getOptional(OptionString::COMMENT); comment) {
-    m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(m_cliIdentity, in, name, comment.value());
+  if (const auto comment = getOptional(OptionString::COMMENT); comment) {
+    m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(m_cliIdentity,
+                                                                                in,
+                                                                                name,
+                                                                                comment.value());
   }
-  if(const auto mountpolicy = getOptional(OptionString::MOUNT_POLICY); mountpolicy) {
-    m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
+  if (const auto mountpolicy = getOptional(OptionString::MOUNT_POLICY); mountpolicy) {
+    m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(m_cliIdentity,
+                                                                               in,
+                                                                               name,
+                                                                               mountpolicy.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -592,7 +598,7 @@ void AdminCmd::processGroupMountRule_Ch(xrd::Response& response) {
 void AdminCmd::processGroupMountRule_Rm(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& in   = getRequired(OptionString::INSTANCE);
+  auto& in = getRequired(OptionString::INSTANCE);
   auto& name = getRequired(OptionString::USERNAME);
 
   m_catalogue.RequesterGroupMountRule()->deleteRequesterGroupMountRule(in, name);
@@ -603,12 +609,16 @@ void AdminCmd::processGroupMountRule_Rm(xrd::Response& response) {
 void AdminCmd::processLogicalLibrary_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& name               = getRequired(OptionString::LOGICAL_LIBRARY);
-  auto isDisabled          = getOptional(OptionBoolean::DISABLED);
+  auto& name = getRequired(OptionString::LOGICAL_LIBRARY);
+  auto isDisabled = getOptional(OptionBoolean::DISABLED);
   auto physicalLibraryName = getOptional(OptionString::PHYSICAL_LIBRARY);
-  auto& comment            = getRequired(OptionString::COMMENT);
+  auto& comment = getRequired(OptionString::COMMENT);
 
-  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity, name, isDisabled.value_or(false), physicalLibraryName, comment);
+  m_catalogue.LogicalLibrary()->createLogicalLibrary(m_cliIdentity,
+                                                     name,
+                                                     isDisabled.value_or(false),
+                                                     physicalLibraryName,
+                                                     comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -616,30 +626,30 @@ void AdminCmd::processLogicalLibrary_Add(xrd::Response& response) {
 void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& name             = getRequired(OptionString::LOGICAL_LIBRARY);
-  auto  disabled         = getOptional(OptionBoolean::DISABLED);
-  auto  comment          = getOptional(OptionString::COMMENT);
-  auto  disabledReason   = getOptional(OptionString::DISABLED_REASON);
-  auto  physicalLibrary  = getOptional(OptionString::PHYSICAL_LIBRARY);
+  auto& name = getRequired(OptionString::LOGICAL_LIBRARY);
+  auto disabled = getOptional(OptionBoolean::DISABLED);
+  auto comment = getOptional(OptionString::COMMENT);
+  auto disabledReason = getOptional(OptionString::DISABLED_REASON);
+  auto physicalLibrary = getOptional(OptionString::PHYSICAL_LIBRARY);
 
-  if(disabled.has_value()) {
+  if (disabled.has_value()) {
     if (disabled.value() && !disabledReason) {
-      throw exception::UserError(std::string("Cannot disable logical library ") + name +
-                                 " because the reason has not been provided");
+      throw exception::UserError(std::string("Cannot disable logical library ") + name
+                                 + " because the reason has not been provided");
     }
     m_catalogue.LogicalLibrary()->setLogicalLibraryDisabled(m_cliIdentity, name, disabled.value());
-    if((!disabled.value()) && (!disabledReason)) {
+    if ((!disabled.value()) && (!disabledReason)) {
       // if enabling the tape and the reason is not specified in the command, erase the reason
       m_catalogue.LogicalLibrary()->modifyLogicalLibraryDisabledReason(m_cliIdentity, name, "");
     }
   }
-  if(comment.has_value()) {
+  if (comment.has_value()) {
     m_catalogue.LogicalLibrary()->modifyLogicalLibraryComment(m_cliIdentity, name, comment.value());
   }
-  if(disabledReason.has_value()) {
+  if (disabledReason.has_value()) {
     m_catalogue.LogicalLibrary()->modifyLogicalLibraryDisabledReason(m_cliIdentity, name, disabledReason.value());
   }
-  if(physicalLibrary.has_value()) {
+  if (physicalLibrary.has_value()) {
     m_catalogue.LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(m_cliIdentity, name, physicalLibrary.value());
   }
 
@@ -663,35 +673,41 @@ void AdminCmd::processMediaType_Add(xrd::Response& response) {
   const auto nbWraps = getOptional(OptionUInt64::NUMBER_OF_WRAPS);
   const auto primaryDensityCode = getOptional(OptionUInt64::PRIMARY_DENSITY_CODE);
   const auto secondaryDensityCode = getOptional(OptionUInt64::SECONDARY_DENSITY_CODE);
-  if(nbWraps.has_value() && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
+  if (nbWraps.has_value() && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
     exception::UserError ex;
-    ex.getMessage() << "Number of wraps cannot be larger than " << std::numeric_limits<uint32_t>::max() << ": value="
-                    << nbWraps.value();
+    ex.getMessage() << "Number of wraps cannot be larger than " << std::numeric_limits<uint32_t>::max()
+                    << ": value=" << nbWraps.value();
     throw ex;
   }
-  if(primaryDensityCode.has_value() && primaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
+  if (primaryDensityCode.has_value() && primaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
     exception::UserError ex;
-    ex.getMessage() << "Primary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
+    ex.getMessage() << "Primary density code cannot be larger than " << (uint16_t) (std::numeric_limits<uint8_t>::max())
                     << ": value=" << primaryDensityCode.value();
     throw ex;
   }
-  if(secondaryDensityCode.has_value() && secondaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
+  if (secondaryDensityCode.has_value() && secondaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
     exception::UserError ex;
-    ex.getMessage() << "Secondary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
-                    << ": value=" << secondaryDensityCode.value();
+    ex.getMessage() << "Secondary density code cannot be larger than "
+                    << (uint16_t) (std::numeric_limits<uint8_t>::max()) << ": value=" << secondaryDensityCode.value();
     throw ex;
   }
 
   catalogue::MediaType mediaType;
-  mediaType.name                 = getRequired(OptionString::MEDIA_TYPE);
-  mediaType.cartridge            = getRequired(OptionString::CARTRIDGE);
-  mediaType.capacityInBytes      = getRequired(OptionUInt64::CAPACITY);
-  if(primaryDensityCode.has_value()) mediaType.primaryDensityCode = primaryDensityCode.value();
-  if(secondaryDensityCode.has_value()) mediaType.secondaryDensityCode = secondaryDensityCode.value();
-  if(nbWraps.has_value()) mediaType.nbWraps = nbWraps.value();
-  mediaType.minLPos              = getOptional(OptionUInt64::MIN_LPOS);
-  mediaType.maxLPos              = getOptional(OptionUInt64::MAX_LPOS);
-  mediaType.comment              = getRequired(OptionString::COMMENT);
+  mediaType.name = getRequired(OptionString::MEDIA_TYPE);
+  mediaType.cartridge = getRequired(OptionString::CARTRIDGE);
+  mediaType.capacityInBytes = getRequired(OptionUInt64::CAPACITY);
+  if (primaryDensityCode.has_value()) {
+    mediaType.primaryDensityCode = primaryDensityCode.value();
+  }
+  if (secondaryDensityCode.has_value()) {
+    mediaType.secondaryDensityCode = secondaryDensityCode.value();
+  }
+  if (nbWraps.has_value()) {
+    mediaType.nbWraps = nbWraps.value();
+  }
+  mediaType.minLPos = getOptional(OptionUInt64::MIN_LPOS);
+  mediaType.maxLPos = getOptional(OptionUInt64::MAX_LPOS);
+  mediaType.comment = getRequired(OptionString::COMMENT);
   m_catalogue.MediaType()->createMediaType(m_cliIdentity, mediaType);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -710,46 +726,50 @@ void AdminCmd::processMediaType_Ch(xrd::Response& response) {
   auto comment = getOptional(OptionString::COMMENT);
 
   // Bounds check unsigned integer options less than 64-bits in width
-  if(nbWraps.has_value() && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
+  if (nbWraps.has_value() && nbWraps.value() > std::numeric_limits<uint32_t>::max()) {
     exception::UserError ex;
-    ex.getMessage() << "Number of wraps cannot be larger than " << std::numeric_limits<uint32_t>::max() << ": value="
-      << nbWraps.value();
+    ex.getMessage() << "Number of wraps cannot be larger than " << std::numeric_limits<uint32_t>::max()
+                    << ": value=" << nbWraps.value();
     throw ex;
   }
-  if(primaryDensityCode.has_value() && primaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
+  if (primaryDensityCode.has_value() && primaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
     exception::UserError ex;
-    ex.getMessage() << "Primary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
-      << ": value=" << primaryDensityCode.value();
+    ex.getMessage() << "Primary density code cannot be larger than " << (uint16_t) (std::numeric_limits<uint8_t>::max())
+                    << ": value=" << primaryDensityCode.value();
     throw ex;
   }
-  if(secondaryDensityCode.has_value() && secondaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
+  if (secondaryDensityCode.has_value() && secondaryDensityCode.value() > std::numeric_limits<uint8_t>::max()) {
     exception::UserError ex;
-    ex.getMessage() << "Secondary density code cannot be larger than " << (uint16_t)(std::numeric_limits<uint8_t>::max())
-      << ": value=" << secondaryDensityCode.value();
+    ex.getMessage() << "Secondary density code cannot be larger than "
+                    << (uint16_t) (std::numeric_limits<uint8_t>::max()) << ": value=" << secondaryDensityCode.value();
     throw ex;
   }
 
-  if(cartridge.has_value()) {
-    m_catalogue.MediaType()->modifyMediaTypeCartridge(m_cliIdentity,mediaTypeName,cartridge.value());
+  if (cartridge.has_value()) {
+    m_catalogue.MediaType()->modifyMediaTypeCartridge(m_cliIdentity, mediaTypeName, cartridge.value());
   }
-  if(primaryDensityCode.has_value()) {
-    m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(primaryDensityCode.value()));
+  if (primaryDensityCode.has_value()) {
+    m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(m_cliIdentity,
+                                                               mediaTypeName,
+                                                               static_cast<uint8_t>(primaryDensityCode.value()));
   }
-  if(secondaryDensityCode.has_value()) {
-    m_catalogue.MediaType()->modifyMediaTypeSecondaryDensityCode(m_cliIdentity,mediaTypeName,static_cast<uint8_t>(secondaryDensityCode.value()));
+  if (secondaryDensityCode.has_value()) {
+    m_catalogue.MediaType()->modifyMediaTypeSecondaryDensityCode(m_cliIdentity,
+                                                                 mediaTypeName,
+                                                                 static_cast<uint8_t>(secondaryDensityCode.value()));
   }
-  if(nbWraps.has_value()) {
+  if (nbWraps.has_value()) {
     std::optional<uint32_t> newNbWraps = nbWraps.value();
-    m_catalogue.MediaType()->modifyMediaTypeNbWraps(m_cliIdentity,mediaTypeName,newNbWraps);
+    m_catalogue.MediaType()->modifyMediaTypeNbWraps(m_cliIdentity, mediaTypeName, newNbWraps);
   }
-  if(minlpos.has_value()) {
+  if (minlpos.has_value()) {
     m_catalogue.MediaType()->modifyMediaTypeMinLPos(m_cliIdentity, mediaTypeName, minlpos);
   }
-  if(maxlpos.has_value()) {
-    m_catalogue.MediaType()->modifyMediaTypeMaxLPos(m_cliIdentity,mediaTypeName,maxlpos);
+  if (maxlpos.has_value()) {
+    m_catalogue.MediaType()->modifyMediaTypeMaxLPos(m_cliIdentity, mediaTypeName, maxlpos);
   }
-  if(comment.has_value()) {
-    m_catalogue.MediaType()->modifyMediaTypeComment(m_cliIdentity,mediaTypeName,comment.value());
+  if (comment.has_value()) {
+    m_catalogue.MediaType()->modifyMediaTypeComment(m_cliIdentity, mediaTypeName, comment.value());
   }
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -767,12 +787,12 @@ void AdminCmd::processMediaType_Rm(xrd::Response& response) {
 void AdminCmd::processMountPolicy_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& group                 = getRequired(OptionString::MOUNT_POLICY);
-  auto& archivepriority       = getRequired(OptionUInt64::ARCHIVE_PRIORITY);
-  auto& minarchiverequestage  = getRequired(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
-  auto& retrievepriority      = getRequired(OptionUInt64::RETRIEVE_PRIORITY);
+  auto& group = getRequired(OptionString::MOUNT_POLICY);
+  auto& archivepriority = getRequired(OptionUInt64::ARCHIVE_PRIORITY);
+  auto& minarchiverequestage = getRequired(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
+  auto& retrievepriority = getRequired(OptionUInt64::RETRIEVE_PRIORITY);
   auto& minretrieverequestage = getRequired(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
-  auto& comment               = getRequired(OptionString::COMMENT);
+  auto& comment = getRequired(OptionString::COMMENT);
 
   catalogue::CreateMountPolicyAttributes mountPolicy;
   mountPolicy.name = group;
@@ -790,26 +810,30 @@ void AdminCmd::processMountPolicy_Add(xrd::Response& response) {
 void AdminCmd::processMountPolicy_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& group                 = getRequired(OptionString::MOUNT_POLICY);
-  auto  archivepriority       = getOptional(OptionUInt64::ARCHIVE_PRIORITY);
-  auto  minarchiverequestage  = getOptional(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
-  auto  retrievepriority      = getOptional(OptionUInt64::RETRIEVE_PRIORITY);
-  auto  minretrieverequestage = getOptional(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
-  auto  comment               = getOptional(OptionString::COMMENT);
+  auto& group = getRequired(OptionString::MOUNT_POLICY);
+  auto archivepriority = getOptional(OptionUInt64::ARCHIVE_PRIORITY);
+  auto minarchiverequestage = getOptional(OptionUInt64::MIN_ARCHIVE_REQUEST_AGE);
+  auto retrievepriority = getOptional(OptionUInt64::RETRIEVE_PRIORITY);
+  auto minretrieverequestage = getOptional(OptionUInt64::MIN_RETRIEVE_REQUEST_AGE);
+  auto comment = getOptional(OptionString::COMMENT);
 
-  if(archivepriority.has_value()) {
+  if (archivepriority.has_value()) {
     m_catalogue.MountPolicy()->modifyMountPolicyArchivePriority(m_cliIdentity, group, archivepriority.value());
   }
-  if(minarchiverequestage.has_value()) {
-    m_catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(m_cliIdentity, group, minarchiverequestage.value());
+  if (minarchiverequestage.has_value()) {
+    m_catalogue.MountPolicy()->modifyMountPolicyArchiveMinRequestAge(m_cliIdentity,
+                                                                     group,
+                                                                     minarchiverequestage.value());
   }
-  if(retrievepriority.has_value()) {
+  if (retrievepriority.has_value()) {
     m_catalogue.MountPolicy()->modifyMountPolicyRetrievePriority(m_cliIdentity, group, retrievepriority.value());
   }
-  if(minretrieverequestage.has_value()) {
-    m_catalogue.MountPolicy()->modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity, group, minretrieverequestage.value());
+  if (minretrieverequestage.has_value()) {
+    m_catalogue.MountPolicy()->modifyMountPolicyRetrieveMinRequestAge(m_cliIdentity,
+                                                                      group,
+                                                                      minretrieverequestage.value());
   }
-  if(comment.has_value()) {
+  if (comment.has_value()) {
     m_catalogue.MountPolicy()->modifyMountPolicyComment(m_cliIdentity, group, comment.value());
   }
 
@@ -833,12 +857,14 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
   std::vector<std::string> vid_list;
   std::string bufferURL;
 
-  if(const auto vidl = getOptional(OptionStrList::VID); vidl.has_value())
+  if (const auto vidl = getOptional(OptionStrList::VID); vidl.has_value()) {
     vid_list = vidl.value();
-  if(const auto vid = getOptional(OptionString::VID); vid.has_value())
+  }
+  if (const auto vid = getOptional(OptionString::VID); vid.has_value()) {
     vid_list.push_back(vid.value());
+  }
 
-  if(vid_list.empty()) {
+  if (vid_list.empty()) {
     throw exception::UserError("Must specify at least one vid, using --vid or --vidfile options");
   }
 
@@ -854,12 +880,12 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
   {
     using MountPolicyList = std::list<common::dataStructures::MountPolicy>;
     MountPolicyList mountPolicies = m_catalogue.MountPolicy()->getMountPolicies();
-    MountPolicyList::const_iterator repackMountPolicyItor = std::find_if(
-            mountPolicies.begin(),
-            mountPolicies.end(),
-            [&mountPolicyProvidedByUser](const common::dataStructures::MountPolicy &mp) {
-              return mp.name == mountPolicyProvidedByUser;
-            });
+    MountPolicyList::const_iterator repackMountPolicyItor =
+      std::find_if(mountPolicies.begin(),
+                   mountPolicies.end(),
+                   [&mountPolicyProvidedByUser](const common::dataStructures::MountPolicy& mp) {
+                     return mp.name == mountPolicyProvidedByUser;
+                   });
     if (repackMountPolicyItor != mountPolicies.end()) {
       //The mount policy exists
       mountPolicy = *repackMountPolicyItor;
@@ -868,30 +894,31 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
       throw exception::UserError("The mount policy name provided does not match any existing mount policy.");
     }
   }
-  if(const auto buff = getOptional(OptionString::BUFFERURL); buff.has_value()) {
+  if (const auto buff = getOptional(OptionString::BUFFERURL); buff.has_value()) {
     //The buffer is provided by the user
     bufferURL = buff.value();
   } else {
     //Buffer is not provided by the user, try to get the one from the configuration file
-    if(m_repackBufferURL.has_value()) {
+    if (m_repackBufferURL.has_value()) {
       bufferURL = m_repackBufferURL.value();
     } else {
       //Buffer is neither provided by the user, neither provided by the frontend configuration file, exception
-      throw exception::UserError("Must specify the buffer URL using --bufferurl option or using the frontend configuration file.");
+      throw exception::UserError(
+        "Must specify the buffer URL using --bufferurl option or using the frontend configuration file.");
     }
   }
 
   // Expand, repack, or both ?
   common::dataStructures::RepackInfo::Type type;
 
-  if(has_flag(OptionBoolean::JUSTADDCOPIES) && has_flag(OptionBoolean::JUSTMOVE)) {
-     throw exception::UserError("--justaddcopies and --justmove are mutually exclusive");
-  } else if(has_flag(OptionBoolean::JUSTADDCOPIES)) {
-     type = common::dataStructures::RepackInfo::Type::AddCopiesOnly;
-  } else if(has_flag(OptionBoolean::JUSTMOVE)) {
-     type = common::dataStructures::RepackInfo::Type::MoveOnly;
+  if (has_flag(OptionBoolean::JUSTADDCOPIES) && has_flag(OptionBoolean::JUSTMOVE)) {
+    throw exception::UserError("--justaddcopies and --justmove are mutually exclusive");
+  } else if (has_flag(OptionBoolean::JUSTADDCOPIES)) {
+    type = common::dataStructures::RepackInfo::Type::AddCopiesOnly;
+  } else if (has_flag(OptionBoolean::JUSTMOVE)) {
+    type = common::dataStructures::RepackInfo::Type::MoveOnly;
   } else {
-     type = common::dataStructures::RepackInfo::Type::MoveAndAddCopies;
+    type = common::dataStructures::RepackInfo::Type::MoveAndAddCopies;
   }
 
   bool noRecall = has_flag(OptionBoolean::NO_RECALL);
@@ -902,7 +929,7 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
   uint64_t maxFilesToSelect = maxFilesToSelectOpt ? maxFilesToSelectOpt.value() : m_repackMaxFilesToSelect.value_or(0);
 
   // Process each item in the list
-  for(auto it = vid_list.begin(); it != vid_list.end(); ++it) {
+  for (auto it = vid_list.begin(); it != vid_list.end(); ++it) {
     SchedulerDatabase::QueueRepackRequest repackRequest(*it, bufferURL, type, mountPolicy, noRecall, maxFilesToSelect);
     m_scheduler.queueRepack(m_cliIdentity, repackRequest, m_lc);
   }
@@ -928,30 +955,30 @@ void AdminCmd::processRepack_Err(xrd::Response& response) {
 }
 
 void AdminCmd::processRequesterMountRule_Add(xrd::Response& response) {
-   using namespace cta::admin;
+  using namespace cta::admin;
 
-   auto& mountpolicy = getRequired(OptionString::MOUNT_POLICY);
-   auto& in          = getRequired(OptionString::INSTANCE);
-   auto& name        = getRequired(OptionString::USERNAME);
-   auto& comment     = getRequired(OptionString::COMMENT);
+  auto& mountpolicy = getRequired(OptionString::MOUNT_POLICY);
+  auto& in = getRequired(OptionString::INSTANCE);
+  auto& name = getRequired(OptionString::USERNAME);
+  auto& comment = getRequired(OptionString::COMMENT);
 
-   m_catalogue.RequesterMountRule()->createRequesterMountRule(m_cliIdentity, mountpolicy, in, name, comment);
+  m_catalogue.RequesterMountRule()->createRequesterMountRule(m_cliIdentity, mountpolicy, in, name, comment);
 
-   response.set_type(xrd::Response::RSP_SUCCESS);
+  response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
 void AdminCmd::processRequesterMountRule_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& in          = getRequired(OptionString::INSTANCE);
-  auto& name        = getRequired(OptionString::USERNAME);
-  auto  comment     = getOptional(OptionString::COMMENT);
-  auto  mountpolicy = getOptional(OptionString::MOUNT_POLICY);
+  auto& in = getRequired(OptionString::INSTANCE);
+  auto& name = getRequired(OptionString::USERNAME);
+  auto comment = getOptional(OptionString::COMMENT);
+  auto mountpolicy = getOptional(OptionString::MOUNT_POLICY);
 
-  if(comment.has_value()) {
+  if (comment.has_value()) {
     m_catalogue.RequesterMountRule()->modifyRequesteMountRuleComment(m_cliIdentity, in, name, comment.value());
   }
-  if(mountpolicy.has_value()) {
+  if (mountpolicy.has_value()) {
     m_catalogue.RequesterMountRule()->modifyRequesterMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
   }
 
@@ -961,7 +988,7 @@ void AdminCmd::processRequesterMountRule_Ch(xrd::Response& response) {
 void AdminCmd::processRequesterMountRule_Rm(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& in   = getRequired(OptionString::INSTANCE);
+  auto& in = getRequired(OptionString::INSTANCE);
   auto& name = getRequired(OptionString::USERNAME);
 
   m_catalogue.RequesterMountRule()->deleteRequesterMountRule(in, name);
@@ -972,14 +999,14 @@ void AdminCmd::processRequesterMountRule_Rm(xrd::Response& response) {
 void AdminCmd::processActivityMountRule_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& mountpolicy   = getRequired(OptionString::MOUNT_POLICY);
-  auto& in            = getRequired(OptionString::INSTANCE);
-  auto& name          = getRequired(OptionString::USERNAME);
-  auto& comment       = getRequired(OptionString::COMMENT);
+  auto& mountpolicy = getRequired(OptionString::MOUNT_POLICY);
+  auto& in = getRequired(OptionString::INSTANCE);
+  auto& name = getRequired(OptionString::USERNAME);
+  auto& comment = getRequired(OptionString::COMMENT);
   auto& activityRegex = getRequired(OptionString::ACTIVITY_REGEX);
 
-  m_catalogue.RequesterActivityMountRule()->createRequesterActivityMountRule(m_cliIdentity, mountpolicy, in, name,
-    activityRegex, comment);
+  m_catalogue.RequesterActivityMountRule()
+    ->createRequesterActivityMountRule(m_cliIdentity, mountpolicy, in, name, activityRegex, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -987,19 +1014,25 @@ void AdminCmd::processActivityMountRule_Add(xrd::Response& response) {
 void AdminCmd::processActivityMountRule_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& in            = getRequired(OptionString::INSTANCE);
-  auto& name          = getRequired(OptionString::USERNAME);
+  auto& in = getRequired(OptionString::INSTANCE);
+  auto& name = getRequired(OptionString::USERNAME);
   auto& activityRegex = getRequired(OptionString::ACTIVITY_REGEX);
-  auto  comment       = getOptional(OptionString::COMMENT);
-  auto  mountpolicy   = getOptional(OptionString::MOUNT_POLICY);
+  auto comment = getOptional(OptionString::COMMENT);
+  auto mountpolicy = getOptional(OptionString::MOUNT_POLICY);
 
-  if(comment.has_value()) {
-    m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRuleComment(m_cliIdentity, in, name,
-      activityRegex, comment.value());
+  if (comment.has_value()) {
+    m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRuleComment(m_cliIdentity,
+                                                                                      in,
+                                                                                      name,
+                                                                                      activityRegex,
+                                                                                      comment.value());
   }
-  if(mountpolicy.has_value()) {
-    m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRulePolicy(m_cliIdentity, in, name,
-      activityRegex, mountpolicy.value());
+  if (mountpolicy.has_value()) {
+    m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRulePolicy(m_cliIdentity,
+                                                                                     in,
+                                                                                     name,
+                                                                                     activityRegex,
+                                                                                     mountpolicy.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -1008,7 +1041,7 @@ void AdminCmd::processActivityMountRule_Ch(xrd::Response& response) {
 void AdminCmd::processActivityMountRule_Rm(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& in   = getRequired(OptionString::INSTANCE);
+  auto& in = getRequired(OptionString::INSTANCE);
   auto& name = getRequired(OptionString::USERNAME);
   auto& activityRegex = getRequired(OptionString::ACTIVITY_REGEX);
 
@@ -1022,10 +1055,10 @@ void AdminCmd::processStorageClass_Add(xrd::Response& response) {
 
   common::dataStructures::StorageClass storageClass;
 
-  storageClass.name         = getRequired(OptionString::STORAGE_CLASS);
-  storageClass.nbCopies     = getRequired(OptionUInt64::COPY_NUMBER);
-  storageClass.comment      = getRequired(OptionString::COMMENT);
-  storageClass.vo.name      = getRequired(OptionString::VO);
+  storageClass.name = getRequired(OptionString::STORAGE_CLASS);
+  storageClass.nbCopies = getRequired(OptionUInt64::COPY_NUMBER);
+  storageClass.comment = getRequired(OptionString::COMMENT);
+  storageClass.vo.name = getRequired(OptionString::VO);
 
   m_catalogue.StorageClass()->createStorageClass(m_cliIdentity, storageClass);
 
@@ -1035,19 +1068,19 @@ void AdminCmd::processStorageClass_Add(xrd::Response& response) {
 void AdminCmd::processStorageClass_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& scn     = getRequired(OptionString::STORAGE_CLASS);
-  auto  comment = getOptional(OptionString::COMMENT);
-  auto  cn      = getOptional(OptionUInt64::COPY_NUMBER);
-  auto vo       = getOptional(OptionString::VO);
+  auto& scn = getRequired(OptionString::STORAGE_CLASS);
+  auto comment = getOptional(OptionString::COMMENT);
+  auto cn = getOptional(OptionUInt64::COPY_NUMBER);
+  auto vo = getOptional(OptionString::VO);
 
-  if(comment.has_value()) {
+  if (comment.has_value()) {
     m_catalogue.StorageClass()->modifyStorageClassComment(m_cliIdentity, scn, comment.value());
   }
-  if(cn.has_value()) {
+  if (cn.has_value()) {
     m_catalogue.StorageClass()->modifyStorageClassNbCopies(m_cliIdentity, scn, cn.value());
   }
-  if(vo.has_value()) {
-    m_catalogue.StorageClass()->modifyStorageClassVo(m_cliIdentity,scn,vo.value());
+  if (vo.has_value()) {
+    m_catalogue.StorageClass()->modifyStorageClassVo(m_cliIdentity, scn, vo.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -1066,16 +1099,16 @@ void AdminCmd::processStorageClass_Rm(xrd::Response& response) {
 void AdminCmd::processTape_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& vid            = getRequired(OptionString::VID);
-  auto& mediaType      = getRequired(OptionString::MEDIA_TYPE);
-  auto& vendor         = getRequired(OptionString::VENDOR);
+  auto& vid = getRequired(OptionString::VID);
+  auto& mediaType = getRequired(OptionString::MEDIA_TYPE);
+  auto& vendor = getRequired(OptionString::VENDOR);
   auto& logicallibrary = getRequired(OptionString::LOGICAL_LIBRARY);
-  auto& tapepool       = getRequired(OptionString::TAPE_POOL);
-  auto& full           = getRequired(OptionBoolean::FULL);
-  auto purchaseOrder   = getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER);
-  auto state           = getOptional(OptionString::STATE);
-  auto stateReason     = getOptional(OptionString::REASON);
-  auto comment         = getOptional(OptionString::COMMENT);
+  auto& tapepool = getRequired(OptionString::TAPE_POOL);
+  auto& full = getRequired(OptionBoolean::FULL);
+  auto purchaseOrder = getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER);
+  auto state = getOptional(OptionString::STATE);
+  auto stateReason = getOptional(OptionString::REASON);
+  auto comment = getOptional(OptionString::COMMENT);
 
   catalogue::CreateTapeAttributes tape;
   tape.vid = vid;
@@ -1086,7 +1119,7 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
   tape.full = full;
   tape.purchaseOrder = purchaseOrder;
   tape.comment = comment.value_or("");
-  if(!state.has_value()) {
+  if (!state.has_value()) {
     // By default, the state of the tape will be ACTIVE
     tape.state = common::dataStructures::Tape::ACTIVE;
   } else {
@@ -1102,60 +1135,60 @@ void AdminCmd::processTape_Add(xrd::Response& response) {
 void AdminCmd::processTape_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& vid                = getRequired(OptionString::VID);
-  auto  mediaType          = getOptional(OptionString::MEDIA_TYPE);
-  auto  vendor             = getOptional(OptionString::VENDOR);
-  auto  logicallibrary     = getOptional(OptionString::LOGICAL_LIBRARY);
-  auto  tapepool           = getOptional(OptionString::TAPE_POOL);
-  auto  comment            = getOptional(OptionString::COMMENT);
-  auto  encryptionkeyName  = getOptional(OptionString::ENCRYPTION_KEY_NAME);
-  auto  purchaseOrder      = getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER);
-  auto  full               = getOptional(OptionBoolean::FULL);
-  auto  state              = getOptional(OptionString::STATE);
-  auto  stateReason        = getOptional(OptionString::REASON);
-  auto  dirty              = getOptional(OptionBoolean::DIRTY_BIT);
-  auto  verificationStatus = getOptional(OptionString::VERIFICATION_STATUS);
+  auto& vid = getRequired(OptionString::VID);
+  auto mediaType = getOptional(OptionString::MEDIA_TYPE);
+  auto vendor = getOptional(OptionString::VENDOR);
+  auto logicallibrary = getOptional(OptionString::LOGICAL_LIBRARY);
+  auto tapepool = getOptional(OptionString::TAPE_POOL);
+  auto comment = getOptional(OptionString::COMMENT);
+  auto encryptionkeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
+  auto purchaseOrder = getOptional(OptionString::MEDIA_PURCHASE_ORDER_NUMBER);
+  auto full = getOptional(OptionBoolean::FULL);
+  auto state = getOptional(OptionString::STATE);
+  auto stateReason = getOptional(OptionString::REASON);
+  auto dirty = getOptional(OptionBoolean::DIRTY_BIT);
+  auto verificationStatus = getOptional(OptionString::VERIFICATION_STATUS);
 
-  if(mediaType.has_value()) {
-    if(m_catalogue.Tape()->getNbFilesOnTape(vid) != 0) {
+  if (mediaType.has_value()) {
+    if (m_catalogue.Tape()->getNbFilesOnTape(vid) != 0) {
       response.set_type(xrd::Response::RSP_ERR_CTA);
       return;
     }
     m_catalogue.Tape()->modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
   }
-  if(vendor.has_value()) {
+  if (vendor.has_value()) {
     m_catalogue.Tape()->modifyTapeVendor(m_cliIdentity, vid, vendor.value());
   }
-  if(logicallibrary.has_value()) {
+  if (logicallibrary.has_value()) {
     m_catalogue.Tape()->modifyTapeLogicalLibraryName(m_cliIdentity, vid, logicallibrary.value());
   }
-  if(tapepool.has_value()) {
+  if (tapepool.has_value()) {
     m_catalogue.Tape()->modifyTapeTapePoolName(m_cliIdentity, vid, tapepool.value());
   }
-  if(comment.has_value()) {
-    if(comment.value().empty()) {
+  if (comment.has_value()) {
+    if (comment.value().empty()) {
       // If the comment is an empty string, the user meant to delete it
       comment = std::nullopt;
     }
     m_catalogue.Tape()->modifyTapeComment(m_cliIdentity, vid, comment);
   }
-  if(encryptionkeyName.has_value()) {
+  if (encryptionkeyName.has_value()) {
     m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
   }
-  if(purchaseOrder.has_value()) {
+  if (purchaseOrder.has_value()) {
     m_catalogue.Tape()->modifyPurchaseOrder(m_cliIdentity, vid, purchaseOrder.value());
   }
-  if(full.has_value()) {
+  if (full.has_value()) {
     m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());
   }
-  if(state.has_value()) {
+  if (state.has_value()) {
     auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value(), true);
-    m_scheduler.triggerTapeStateChange(m_cliIdentity,vid,stateEnumValue,stateReason, m_lc);
+    m_scheduler.triggerTapeStateChange(m_cliIdentity, vid, stateEnumValue, stateReason, m_lc);
   }
-  if(dirty.has_value()) {
+  if (dirty.has_value()) {
     m_catalogue.Tape()->setTapeDirty(m_cliIdentity, vid, dirty.value());
   }
-  if(verificationStatus.has_value()) {
+  if (verificationStatus.has_value()) {
     m_catalogue.Tape()->modifyTapeVerificationStatus(m_cliIdentity, vid, verificationStatus.value());
   }
 
@@ -1167,7 +1200,7 @@ void AdminCmd::processTape_Rm(xrd::Response& response) {
 
   auto& vid = getRequired(OptionString::VID);
 
-  if(m_scheduler.isBeingRepacked(vid)) {
+  if (m_scheduler.isBeingRepacked(vid)) {
     throw exception::UserError("Cannot delete tape " + vid + " because there is a repack for that tape");
   }
   m_catalogue.Tape()->deleteTape(vid);
@@ -1187,25 +1220,25 @@ void AdminCmd::processTape_Reclaim(xrd::Response& response) {
 
 void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
   using namespace cta::admin;
-  auto& vid           = getRequired(OptionString::VID);
-  auto& reason        = getRequired(OptionString::REASON);
-  auto archiveFileId  = getOptional(OptionUInt64::ARCHIVE_FILE_ID);
-  auto instance       = getOptional(OptionString::INSTANCE);
-  auto diskFileIdStr  = getAndValidateDiskFileIdOptional();
+  auto& vid = getRequired(OptionString::VID);
+  auto& reason = getRequired(OptionString::REASON);
+  auto archiveFileId = getOptional(OptionUInt64::ARCHIVE_FILE_ID);
+  auto instance = getOptional(OptionString::INSTANCE);
+  auto diskFileIdStr = getAndValidateDiskFileIdOptional();
 
   catalogue::TapeFileSearchCriteria searchCriteria;
   searchCriteria.vid = vid;
 
-  if(archiveFileId.has_value()) {
+  if (archiveFileId.has_value()) {
     searchCriteria.archiveFileId = archiveFileId.value();
   }
 
-  if(diskFileIdStr.has_value()) {
+  if (diskFileIdStr.has_value()) {
     searchCriteria.diskFileIds = std::vector<std::string>();
     searchCriteria.diskFileIds.value().push_back(diskFileIdStr.value());
   }
 
-  if(instance.has_value()) {
+  if (instance.has_value()) {
     searchCriteria.diskInstance = instance.value();
   }
 
@@ -1218,15 +1251,15 @@ void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
 void AdminCmd::processTapePool_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& name             = getRequired(OptionString::TAPE_POOL);
-  auto& vo               = getRequired(OptionString::VO);
-  auto& ptn              = getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
-  auto& comment          = getRequired(OptionString::COMMENT);
-  auto encrypted         = getOptional(OptionBoolean::ENCRYPTED);
+  auto& name = getRequired(OptionString::TAPE_POOL);
+  auto& vo = getRequired(OptionString::VO);
+  auto& ptn = getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
+  auto& comment = getRequired(OptionString::COMMENT);
+  auto encrypted = getOptional(OptionBoolean::ENCRYPTED);
   auto encryptionKeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
-  auto supply            = getOptional(OptionString::SUPPLY);
+  auto supply = getOptional(OptionString::SUPPLY);
 
-  if(encrypted) {
+  if (encrypted) {
     throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
   }
 
@@ -1246,31 +1279,32 @@ void AdminCmd::processTapePool_Add(xrd::Response& response) {
 void AdminCmd::processTapePool_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  auto& name              = getRequired(OptionString::TAPE_POOL);
-  auto  vo                = getOptional(OptionString::VO);
-  auto  ptn               = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
-  auto  comment           = getOptional(OptionString::COMMENT);
-  auto  encrypted         = getOptional(OptionBoolean::ENCRYPTED);
-  auto  encryptionKeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
-  auto  supply            = getOptional(OptionString::SUPPLY);
+  auto& name = getRequired(OptionString::TAPE_POOL);
+  auto vo = getOptional(OptionString::VO);
+  auto ptn = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
+  auto comment = getOptional(OptionString::COMMENT);
+  auto encrypted = getOptional(OptionBoolean::ENCRYPTED);
+  auto encryptionKeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
+  auto supply = getOptional(OptionString::SUPPLY);
 
-  if(encrypted.has_value()) {
+  if (encrypted.has_value()) {
     throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
   }
-  if(comment.has_value()) {
+  if (comment.has_value()) {
     m_catalogue.TapePool()->modifyTapePoolComment(m_cliIdentity, name, comment.value());
   }
-  if(vo.has_value()) {
+  if (vo.has_value()) {
     m_catalogue.TapePool()->modifyTapePoolVo(m_cliIdentity, name, vo.value());
   }
-  if(ptn.has_value()) {
+  if (ptn.has_value()) {
     m_catalogue.TapePool()->modifyTapePoolNbPartialTapes(m_cliIdentity, name, ptn.value());
   }
-  if(encryptionKeyName.has_value()) {
+  if (encryptionKeyName.has_value()) {
     m_catalogue.TapePool()->setTapePoolEncryption(m_cliIdentity, name, encryptionKeyName.value());
   }
-  if(supply.has_value()) {
-    m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity, name,
+  if (supply.has_value()) {
+    m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity,
+                                                 name,
                                                  cta::utils::commaSeparatedStringToList(supply.value()));
   }
 
@@ -1290,16 +1324,22 @@ void AdminCmd::processTapePool_Rm(xrd::Response& response) {
 void AdminCmd::processDiskSystem_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  const auto& name              = getRequired(OptionString::DISK_SYSTEM);
-  const auto& diskInstance      = getRequired(OptionString::DISK_INSTANCE);
+  const auto& name = getRequired(OptionString::DISK_SYSTEM);
+  const auto& diskInstance = getRequired(OptionString::DISK_INSTANCE);
   const auto& diskInstanceSpace = getRequired(OptionString::DISK_INSTANCE_SPACE);
-  const auto& fileRegexp        = getRequired(OptionString::FILE_REGEXP);
+  const auto& fileRegexp = getRequired(OptionString::FILE_REGEXP);
   const auto& targetedFreeSpace = getRequired(OptionUInt64::TARGETED_FREE_SPACE);
-  const auto& sleepTime         = getRequired(OptionUInt64::SLEEP_TIME);
-  const auto& comment           = getRequired(OptionString::COMMENT);
+  const auto& sleepTime = getRequired(OptionUInt64::SLEEP_TIME);
+  const auto& comment = getRequired(OptionString::COMMENT);
 
-  m_catalogue.DiskSystem()->createDiskSystem(m_cliIdentity, name,diskInstance, diskInstanceSpace, fileRegexp,
-   targetedFreeSpace, sleepTime, comment);
+  m_catalogue.DiskSystem()->createDiskSystem(m_cliIdentity,
+                                             name,
+                                             diskInstance,
+                                             diskInstanceSpace,
+                                             fileRegexp,
+                                             targetedFreeSpace,
+                                             sleepTime,
+                                             comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -1307,30 +1347,30 @@ void AdminCmd::processDiskSystem_Add(xrd::Response& response) {
 void AdminCmd::processDiskSystem_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  const auto& name                  = getRequired(OptionString::DISK_SYSTEM);
-  const auto& fileRegexp            = getOptional(OptionString::FILE_REGEXP);
-  const auto  targetedFreeSpace     = getOptional(OptionUInt64::TARGETED_FREE_SPACE);
-  const auto  sleepTime             = getOptional(OptionUInt64::SLEEP_TIME);
-  const auto  comment               = getOptional(OptionString::COMMENT);
-  const auto  diskInstanceName      = getOptional(OptionString::DISK_INSTANCE);
-  const auto  diskInstanceSpaceName = getOptional(OptionString::DISK_INSTANCE_SPACE);
+  const auto& name = getRequired(OptionString::DISK_SYSTEM);
+  const auto& fileRegexp = getOptional(OptionString::FILE_REGEXP);
+  const auto targetedFreeSpace = getOptional(OptionUInt64::TARGETED_FREE_SPACE);
+  const auto sleepTime = getOptional(OptionUInt64::SLEEP_TIME);
+  const auto comment = getOptional(OptionString::COMMENT);
+  const auto diskInstanceName = getOptional(OptionString::DISK_INSTANCE);
+  const auto diskInstanceSpaceName = getOptional(OptionString::DISK_INSTANCE_SPACE);
 
-  if(comment.has_value()) {
+  if (comment.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemComment(m_cliIdentity, name, comment.value());
   }
-  if(fileRegexp.has_value()) {
+  if (fileRegexp.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemFileRegexp(m_cliIdentity, name, fileRegexp.value());
   }
-  if(sleepTime.has_value()) {
+  if (sleepTime.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemSleepTime(m_cliIdentity, name, sleepTime.value());
   }
-  if(targetedFreeSpace.has_value()) {
+  if (targetedFreeSpace.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemTargetedFreeSpace(m_cliIdentity, name, targetedFreeSpace.value());
   }
-  if(diskInstanceName.has_value()) {
+  if (diskInstanceName.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
   }
-  if(diskInstanceSpaceName.has_value()) {
+  if (diskInstanceSpaceName.has_value()) {
     m_catalogue.DiskSystem()->modifyDiskSystemDiskInstanceSpaceName(m_cliIdentity, name, diskInstanceSpaceName.value());
   }
 
@@ -1350,7 +1390,7 @@ void AdminCmd::processDiskSystem_Rm(xrd::Response& response) {
 void AdminCmd::processDiskInstance_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  const auto& name    = getRequired(OptionString::DISK_INSTANCE);
+  const auto& name = getRequired(OptionString::DISK_INSTANCE);
   const auto& comment = getRequired(OptionString::COMMENT);
 
   m_catalogue.DiskInstance()->createDiskInstance(m_cliIdentity, name, comment);
@@ -1363,7 +1403,7 @@ void AdminCmd::processDiskInstance_Ch(xrd::Response& response) {
 
   const auto& name = getRequired(OptionString::DISK_INSTANCE);
 
-  if(const auto comment = getOptional(OptionString::COMMENT); comment.has_value()) {
+  if (const auto comment = getOptional(OptionString::COMMENT); comment.has_value()) {
     m_catalogue.DiskInstance()->modifyDiskInstanceComment(m_cliIdentity, name, comment.value());
   }
 
@@ -1383,14 +1423,14 @@ void AdminCmd::processDiskInstance_Rm(xrd::Response& response) {
 void AdminCmd::processDiskInstanceSpace_Add(xrd::Response& response) {
   using namespace cta::admin;
 
-  const auto& name              = getRequired(OptionString::DISK_INSTANCE_SPACE);
-  const auto& diskInstance      = getRequired(OptionString::DISK_INSTANCE);
-  const auto& comment           = getRequired(OptionString::COMMENT);
+  const auto& name = getRequired(OptionString::DISK_INSTANCE_SPACE);
+  const auto& diskInstance = getRequired(OptionString::DISK_INSTANCE);
+  const auto& comment = getRequired(OptionString::COMMENT);
   const auto& freeSpaceQueryURL = getRequired(OptionString::FREE_SPACE_QUERY_URL);
-  const auto refreshInterval    = getRequired(OptionUInt64::REFRESH_INTERVAL);
+  const auto refreshInterval = getRequired(OptionUInt64::REFRESH_INTERVAL);
 
-  m_catalogue.DiskInstanceSpace()->createDiskInstanceSpace(m_cliIdentity, name, diskInstance, freeSpaceQueryURL,
-    refreshInterval, comment);
+  m_catalogue.DiskInstanceSpace()
+    ->createDiskInstanceSpace(m_cliIdentity, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -1398,23 +1438,26 @@ void AdminCmd::processDiskInstanceSpace_Add(xrd::Response& response) {
 void AdminCmd::processDiskInstanceSpace_Ch(xrd::Response& response) {
   using namespace cta::admin;
 
-  const auto& name              = getRequired(OptionString::DISK_INSTANCE_SPACE);
-  const auto& diskInstance      = getRequired(OptionString::DISK_INSTANCE);
-  const auto comment            = getOptional(OptionString::COMMENT);
+  const auto& name = getRequired(OptionString::DISK_INSTANCE_SPACE);
+  const auto& diskInstance = getRequired(OptionString::DISK_INSTANCE);
+  const auto comment = getOptional(OptionString::COMMENT);
   const auto& freeSpaceQueryURL = getOptional(OptionString::FREE_SPACE_QUERY_URL);
-  const auto refreshInterval    = getOptional(OptionUInt64::REFRESH_INTERVAL);
+  const auto refreshInterval = getOptional(OptionUInt64::REFRESH_INTERVAL);
 
-  if(comment.has_value()) {
-    m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceComment(m_cliIdentity, name, diskInstance,
-      comment.value());
+  if (comment.has_value()) {
+    m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceComment(m_cliIdentity, name, diskInstance, comment.value());
   }
-  if(freeSpaceQueryURL.has_value()) {
-    m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceQueryURL(m_cliIdentity, name, diskInstance,
-      freeSpaceQueryURL.value());
+  if (freeSpaceQueryURL.has_value()) {
+    m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceQueryURL(m_cliIdentity,
+                                                                     name,
+                                                                     diskInstance,
+                                                                     freeSpaceQueryURL.value());
   }
-  if(refreshInterval.has_value()) {
-    m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceRefreshInterval(m_cliIdentity, name, diskInstance,
-      refreshInterval.value());
+  if (refreshInterval.has_value()) {
+    m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceRefreshInterval(m_cliIdentity,
+                                                                            name,
+                                                                            diskInstance,
+                                                                            refreshInterval.value());
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -1423,7 +1466,7 @@ void AdminCmd::processDiskInstanceSpace_Ch(xrd::Response& response) {
 void AdminCmd::processDiskInstanceSpace_Rm(xrd::Response& response) {
   using namespace cta::admin;
 
-  const auto& name         = getRequired(OptionString::DISK_INSTANCE_SPACE);
+  const auto& name = getRequired(OptionString::DISK_INSTANCE_SPACE);
   const auto& diskInstance = getRequired(OptionString::DISK_INSTANCE);
 
   m_catalogue.DiskInstanceSpace()->deleteDiskInstanceSpace(name, diskInstance);
@@ -1452,7 +1495,7 @@ void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) {
   vo.maxFileSize = maxFileSizeOpt.value_or(m_archiveFileMaxSize);
   vo.isRepackVo = isRepackVo.value_or(false);
 
-  m_catalogue.VO()->createVirtualOrganization(m_cliIdentity,vo);
+  m_catalogue.VO()->createVirtualOrganization(m_cliIdentity, vo);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
@@ -1468,22 +1511,27 @@ void AdminCmd::processVirtualOrganization_Ch(xrd::Response& response) {
   const auto diskInstanceName = getOptional(OptionString::DISK_INSTANCE);
   const auto isRepackVo = getOptional(OptionBoolean::IS_REPACK_VO);
 
-  if(comment.has_value())
-    m_catalogue.VO()->modifyVirtualOrganizationComment(m_cliIdentity,name,comment.value());
+  if (comment.has_value()) {
+    m_catalogue.VO()->modifyVirtualOrganizationComment(m_cliIdentity, name, comment.value());
+  }
 
-  if(readMaxDrives.has_value())
-    m_catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(m_cliIdentity,name,readMaxDrives.value());
+  if (readMaxDrives.has_value()) {
+    m_catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(m_cliIdentity, name, readMaxDrives.value());
+  }
 
-  if(writeMaxDrives.has_value())
-    m_catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(m_cliIdentity,name,writeMaxDrives.value());
+  if (writeMaxDrives.has_value()) {
+    m_catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(m_cliIdentity, name, writeMaxDrives.value());
+  }
 
-  if(maxFileSize.has_value())
-    m_catalogue.VO()->modifyVirtualOrganizationMaxFileSize(m_cliIdentity,name,maxFileSize.value());
+  if (maxFileSize.has_value()) {
+    m_catalogue.VO()->modifyVirtualOrganizationMaxFileSize(m_cliIdentity, name, maxFileSize.value());
+  }
 
-  if(diskInstanceName.has_value())
+  if (diskInstanceName.has_value()) {
     m_catalogue.VO()->modifyVirtualOrganizationDiskInstanceName(m_cliIdentity, name, diskInstanceName.value());
+  }
 
-  if(isRepackVo.has_value()) {
+  if (isRepackVo.has_value()) {
     // Don't allow unsetting repackvo while repacks are ongoing.
     if (m_scheduler.repackExists() && !isRepackVo.value()) {
       throw exception::UserError("Cannot remove default virtual organization "
@@ -1514,18 +1562,18 @@ void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
   using namespace cta::admin;
 
   common::dataStructures::PhysicalLibrary pl;
-  pl.name                     = getRequired(OptionString::PHYSICAL_LIBRARY);
-  pl.manufacturer             = getRequired(OptionString::MANUFACTURER);
-  pl.model                    = getRequired(OptionString::LIBRARY_MODEL);
+  pl.name = getRequired(OptionString::PHYSICAL_LIBRARY);
+  pl.manufacturer = getRequired(OptionString::MANUFACTURER);
+  pl.model = getRequired(OptionString::LIBRARY_MODEL);
   pl.nbPhysicalCartridgeSlots = getRequired(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
-  pl.nbPhysicalDriveSlots     = getRequired(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
+  pl.nbPhysicalDriveSlots = getRequired(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
 
-  pl.type                      = getOptional(OptionString::LIBRARY_TYPE);
-  pl.guiUrl                    = getOptional(OptionString::GUI_URL);
-  pl.webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
-  pl.location                  = getOptional(OptionString::LIBRARY_LOCATION);
+  pl.type = getOptional(OptionString::LIBRARY_TYPE);
+  pl.guiUrl = getOptional(OptionString::GUI_URL);
+  pl.webcamUrl = getOptional(OptionString::WEBCAM_URL);
+  pl.location = getOptional(OptionString::LIBRARY_LOCATION);
   pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
-  pl.comment                   = getOptional(OptionString::COMMENT);
+  pl.comment = getOptional(OptionString::COMMENT);
 
   m_catalogue.PhysicalLibrary()->createPhysicalLibrary(m_cliIdentity, pl);
 
@@ -1539,15 +1587,15 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
 
   pl.name = getRequired(OptionString::PHYSICAL_LIBRARY);
 
-  pl.guiUrl                    = getOptional(OptionString::GUI_URL);
-  pl.webcamUrl                 = getOptional(OptionString::WEBCAM_URL);
-  pl.location                  = getOptional(OptionString::LIBRARY_LOCATION);
-  pl.nbPhysicalCartridgeSlots  = getOptional(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
+  pl.guiUrl = getOptional(OptionString::GUI_URL);
+  pl.webcamUrl = getOptional(OptionString::WEBCAM_URL);
+  pl.location = getOptional(OptionString::LIBRARY_LOCATION);
+  pl.nbPhysicalCartridgeSlots = getOptional(OptionUInt64::NB_PHYSICAL_CARTRIDGE_SLOTS);
   pl.nbAvailableCartridgeSlots = getOptional(OptionUInt64::NB_AVAILABLE_CARTRIDGE_SLOTS);
-  pl.nbPhysicalDriveSlots      = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
-  pl.comment                   = getOptional(OptionString::COMMENT);
-  pl.isDisabled                = getOptional(OptionBoolean::DISABLED);
-  pl.disabledReason            = getOptional(OptionString::DISABLED_REASON);
+  pl.nbPhysicalDriveSlots = getOptional(OptionUInt64::NB_PHYSICAL_DRIVE_SLOTS);
+  pl.comment = getOptional(OptionString::COMMENT);
+  pl.isDisabled = getOptional(OptionBoolean::DISABLED);
+  pl.disabledReason = getOptional(OptionString::DISABLED_REASON);
 
   m_catalogue.PhysicalLibrary()->modifyPhysicalLibrary(m_cliIdentity, pl);
 
@@ -1564,29 +1612,31 @@ void AdminCmd::processPhysicalLibrary_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-std::string AdminCmd::setDriveState(const std::string& regex, const common::dataStructures::DesiredDriveState& desiredDriveState) {
+std::string AdminCmd::setDriveState(const std::string& regex,
+                                    const common::dataStructures::DesiredDriveState& desiredDriveState) {
   using namespace cta::admin;
 
   std::stringstream cmdlineOutput;
   utils::Regex driveNameRegex(regex.c_str());
 
-  if (!m_schedulerBackendName.has_value()){
-    throw exception::UserError("You must provide a value for cta.schedulerdb.scheduler_backend_name in the frontend configuration !");
+  if (!m_schedulerBackendName.has_value()) {
+    throw exception::UserError(
+      "You must provide a value for cta.schedulerdb.scheduler_backend_name in the frontend configuration !");
   }
 
-  const auto tapeDriveNames = m_catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(m_schedulerBackendName.value());
+  const auto tapeDriveNames =
+    m_catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(m_schedulerBackendName.value());
   bool is_found = false;
 
-  for(const auto& tapeDriveName: tapeDriveNames) {
+  for (const auto& tapeDriveName : tapeDriveNames) {
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
-    if(!regexResult.empty()) {
+    if (!regexResult.empty()) {
       is_found = true;
       m_scheduler.setDesiredDriveState(m_cliIdentity, tapeDriveName, desiredDriveState, m_lc);
 
       cmdlineOutput << "Drive " << tapeDriveName << ": set ";
-      if(!desiredDriveState.comment) {
-        cmdlineOutput << (desiredDriveState.up ? "Up" : "Down")
-                      << (desiredDriveState.forceDown ? " (forced)" : "")
+      if (!desiredDriveState.comment) {
+        cmdlineOutput << (desiredDriveState.up ? "Up" : "Down") << (desiredDriveState.forceDown ? " (forced)" : "")
                       << "." << std::endl;
       } else {
         // We modified the comment so we will output that the comment was changed
@@ -1594,7 +1644,7 @@ std::string AdminCmd::setDriveState(const std::string& regex, const common::data
       }
     }
   }
-  if(!is_found) {
+  if (!is_found) {
     cmdlineOutput << "No drives match \"" << regex << "\". No action was taken." << std::endl;
   }
 
@@ -1612,7 +1662,7 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
   searchCriteria.vid = getOptional(OptionString::VID, &has_any);
 
   const auto diskFileIdStr = getAndValidateDiskFileIdOptional();
-  if(!diskFileIdStr) {
+  if (!diskFileIdStr) {
     throw exception::UserError("Must specify at least one of the following search options: fxid, diskfileid");
   }
 
@@ -1622,8 +1672,9 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
   // Copy number on its own does not give a valid set of search criteria (no &has_any)
   searchCriteria.copynb = getOptional(OptionUInt64::COPY_NUMBER);
 
-  if(!has_any) {
-    throw exception::UserError("Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
+  if (!has_any) {
+    throw exception::UserError(
+      "Must specify at least one of the following search options: vid, fxid, fxidfile or archiveFileId");
   }
   m_catalogue.FileRecycleLog()->restoreFileInRecycleLog(searchCriteria, diskFileIdStr.value());
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -1641,24 +1692,25 @@ void AdminCmd::processModifyArchiveFile(xrd::Response& response) {
     auto archiveFileIds = getRequired(OptionStrList::FILE_ID);
 
     // call is from cta-change-storageclass
-    if(newStorageClassName) {
-      for(const auto& id : archiveFileIds) {
+    if (newStorageClassName) {
+      for (const auto& id : archiveFileIds) {
         const uint64_t archiveFileId = utils::toUint64(id);
         m_catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName.value());
       }
     }
     // call is from cta-eos-namespace-inject
-    else if(diskFileIdStr && diskInstance) {
+    else if (diskFileIdStr && diskInstance) {
       m_catalogue.ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(utils::toUint64(archiveFileIds[0]),
-        diskFileIdStr.value(), diskInstance.value());
+                                                                      diskFileIdStr.value(),
+                                                                      diskInstance.value());
     } else {
       throw exception::UserError("Must specify either Storage Class or Disk File ID and Disk Instance");
     }
     response.set_type(xrd::Response::RSP_SUCCESS);
-  } catch(exception::UserError& ue) {
+  } catch (exception::UserError& ue) {
     response.set_message_txt(ue.getMessage().str());
     response.set_type(xrd::Response::RSP_ERR_USER);
   }
 }
 
-} // namespace cta::frontend
+}  // namespace cta::frontend

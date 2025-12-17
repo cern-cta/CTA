@@ -28,7 +28,6 @@ namespace cta::rdbms {
  */
 class CheckConstraintError : public ConstraintError {
 public:
-
   /**
    * Constructor.
    *
@@ -38,14 +37,17 @@ public:
    * @param violatedConstraintName name of the db constraint that has been violated
    * exception was throw in the message
    */
-  CheckConstraintError(const std::string &context,   const std::string &dbErrorMessage, const std::string &violatedConstraintName, const bool embedBacktrace = true);
+  CheckConstraintError(const std::string& context,
+                       const std::string& dbErrorMessage,
+                       const std::string& violatedConstraintName,
+                       const bool embedBacktrace = true);
 
   /**
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
   ~CheckConstraintError() noexcept override = default;
-  
-}; // class CheckConstraintError
 
-} // namespace cta::rdbms
+};  // class CheckConstraintError
+
+}  // namespace cta::rdbms

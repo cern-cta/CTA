@@ -23,8 +23,7 @@ namespace cta::exception {
 
 class NullPtrException : public cta::exception::Exception {
 public:
-  explicit NullPtrException(const std::string& context = "") :
-    cta::exception::Exception(context) {}
+  explicit NullPtrException(const std::string& context = "") : cta::exception::Exception(context) {}
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

@@ -15,27 +15,25 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "XrdClException.hpp"
+
 #include <sstream>
 #include <string>
-
-#include "XrdClException.hpp"
 
 namespace cta::exception {
 
 XrdClException::XrdClException(const XrdCl::XRootDStatus& status, std::string_view what) {
-  if(!what.empty()) {
+  if (!what.empty()) {
     getMessage() << what << " ";
   }
   getMessage() << status.ToStr().c_str();
-  getMessage() << " code:"   << status.code
-               << " errNo:"  << status.errNo
-               << " status:" << status.status;
+  getMessage() << " code:" << status.code << " errNo:" << status.errNo << " status:" << status.status;
 }
 
 void XrdClException::throwOnError(const XrdCl::XRootDStatus& status, std::string_view context) {
-  if(!status.IsOK()) {
+  if (!status.IsOK()) {
     throw XrdClException(status, context);
   }
 }
 
-} // namespace cta::exception
+}  // namespace cta::exception

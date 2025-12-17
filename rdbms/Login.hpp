@@ -30,27 +30,27 @@ struct Login {
   /**
    * Enumeration of the supported database types.
    */
-  enum DbType {
-    DBTYPE_IN_MEMORY,
-    DBTYPE_ORACLE,
-    DBTYPE_SQLITE,
-    DBTYPE_POSTGRESQL,
-    DBTYPE_NONE
-  };
+  enum DbType { DBTYPE_IN_MEMORY, DBTYPE_ORACLE, DBTYPE_SQLITE, DBTYPE_POSTGRESQL, DBTYPE_NONE };
 
   /**
    * Returns the string representation of the specified database type.
    *
    * @return The string representation of the specified database type.
    */
-  static std::string dbTypeToString(const DbType &dbType) {
+  static std::string dbTypeToString(const DbType& dbType) {
     switch (dbType) {
-      case DBTYPE_IN_MEMORY: return "DBTYPE_IN_MEMORY";
-      case DBTYPE_ORACLE: return "DBTYPE_ORACLE";
-      case DBTYPE_SQLITE: return "DBTYPE_SQLITE";
-      case DBTYPE_POSTGRESQL: return "DBTYPE_POSTGRESQL";
-      case DBTYPE_NONE: return "DBTYPE_NONE";
-      default: return "UNKNOWN";
+      case DBTYPE_IN_MEMORY:
+        return "DBTYPE_IN_MEMORY";
+      case DBTYPE_ORACLE:
+        return "DBTYPE_ORACLE";
+      case DBTYPE_SQLITE:
+        return "DBTYPE_SQLITE";
+      case DBTYPE_POSTGRESQL:
+        return "DBTYPE_POSTGRESQL";
+      case DBTYPE_NONE:
+        return "DBTYPE_NONE";
+      default:
+        return "UNKNOWN";
     }
   }
 
@@ -133,7 +133,7 @@ struct Login {
    * information.
    * @return The database login information.
    */
-  static Login parseFile(const std::string &filename);
+  static Login parseFile(const std::string& filename);
 
   /**
    * Reads and parses the database login information from the specified input
@@ -146,7 +146,7 @@ struct Login {
    * @param inputStream The input stream to be read from.
    * @return The database login information.
    */
-  static Login parseStream(std::istream &inputStream);
+  static Login parseStream(std::istream& inputStream);
 
   /**
    * Reads and parses the database login information from the specified string.
@@ -160,7 +160,7 @@ struct Login {
    * @param connectionString The connection string.
    * @return The database login information.
    */
-  static Login parseString(const std::string &connectionString);
+  static Login parseString(const std::string& connectionString);
 
   /**
    * Reads the entire contents of the specified stream and returns a list of the
@@ -172,7 +172,7 @@ struct Login {
    * @param is The input stream.
    * @return A list of the non-empty lines.
    */
-  static std::list<std::string> readNonEmptyLines(std::istream &inputStream);
+  static std::list<std::string> readNonEmptyLines(std::istream& inputStream);
 
   /**
    * Structure containing two strings: the database type string and the
@@ -194,28 +194,28 @@ struct Login {
    * @param connectionString The connection string.
    * @return The database type and connection details.
    */
-  static DbTypeAndConnectionDetails parseDbTypeAndConnectionDetails(const std::string &connectionString);
+  static DbTypeAndConnectionDetails parseDbTypeAndConnectionDetails(const std::string& connectionString);
 
   /**
    * Parses the specified database connection details.
    *
    * @param connectionDetails The database connection details.
    */
-  static Login parseInMemory(const std::string &connectionDetails);
+  static Login parseInMemory(const std::string& connectionDetails);
 
   /**
    * Parses the specified database connection details.
    *
    * @param connectionDetails The database connection details.
    */
-  static Login parseOracle(const std::string &connectionDetails);
+  static Login parseOracle(const std::string& connectionDetails);
 
   /**
    * Parses the specified connection details.
    *
    * @param connectionDetails The database connection details.
    */
-  static Login parseSqlite(const std::string &connectionDetails);
+  static Login parseSqlite(const std::string& connectionDetails);
   /**
    * Constructs a login object for an in memory DB.
    */
@@ -244,7 +244,7 @@ struct Login {
    *
    * @param connectionDetails The database connection details.
    */
-  static Login parsePostgresql(const std::string &connectionDetails);
+  static Login parsePostgresql(const std::string& connectionDetails);
 
   /**
    * Constructs the database namespace of a Postgresql database based on the provided connection details.
@@ -259,14 +259,14 @@ struct Login {
    * Human readable description of the format of the database
    * login/configuration file.
    */
-  static const char *s_fileFormat;
+  static const char* s_fileFormat;
 
   /**
    * String displayed instead of the actual password.
    */
   static const std::string s_hiddenPassword;
 
- private:
+private:
   /**
    * Sets the connection string of an in_memory database
    */
@@ -277,19 +277,19 @@ struct Login {
    * @param user
    * @param db
    */
-  void setOracleConnectionString(const std::string &user, const std::string &db);
+  void setOracleConnectionString(const std::string& user, const std::string& db);
 
   /**
    * Sets the connection string of a Postgresql database
    * @param connectionDetails
    */
-  void setPostgresqlConnectionString(const std::string &connectionDetails);
+  void setPostgresqlConnectionString(const std::string& connectionDetails);
 
   /**
    * Sets the connection string of a sqlite database
    * @param filename
    */
-  void setSqliteConnectionString(const std::string & filename);
+  void setSqliteConnectionString(const std::string& filename);
 
   /**
    * Returns true if the Postgresql connectionDetails contains a password, false otherwise
@@ -299,4 +299,4 @@ struct Login {
   static bool postgresqlHasPassword(const std::string& connectionDetails);
 };  // class Login
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

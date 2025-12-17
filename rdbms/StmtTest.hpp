@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "rdbms/LoginFactory.hpp"
 #include "rdbms/Conn.hpp"
+#include "rdbms/LoginFactory.hpp"
 
 #include <gtest/gtest.h>
 #include <memory>
@@ -55,6 +55,6 @@ protected:
 
   virtual void TearDown();
 
-}; // cta_rdbms_StmtTest
+};  // cta_rdbms_StmtTest
 
-} // namespace unitTests
+}  // namespace unitTests

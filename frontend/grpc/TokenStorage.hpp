@@ -14,18 +14,17 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
- 
+
 #pragma once
 
-#include <unordered_map>
-#include <string>
-#include <shared_mutex>
 #include <mutex>
+#include <shared_mutex>
+#include <string>
+#include <unordered_map>
 
 namespace cta::frontend::grpc::server {
 
 class TokenStorage {
-
 public:
   TokenStorage() = default;
   ~TokenStorage() = default;
@@ -59,4 +58,4 @@ private:
   mutable std::shared_mutex m_mtxLockStorage;
 };
 
-} // namespace cta::frontend::grpc::server
+}  // namespace cta::frontend::grpc::server

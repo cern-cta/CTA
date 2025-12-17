@@ -15,18 +15,16 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "rdbms/rdbms.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
+
+#include "rdbms/rdbms.hpp"
 
 namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-StmtWrapper::StmtWrapper(const std::string &sql):
-  m_sql(sql),
-  m_paramNameToIdx(sql) {
-}
+StmtWrapper::StmtWrapper(const std::string& sql) : m_sql(sql), m_paramNameToIdx(sql) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -36,14 +34,14 @@ StmtWrapper::~StmtWrapper() = default;
 //------------------------------------------------------------------------------
 // getSql
 //------------------------------------------------------------------------------
-const std::string &StmtWrapper::getSql() const {
+const std::string& StmtWrapper::getSql() const {
   return m_sql;
 }
 
 //------------------------------------------------------------------------------
 // getParamIdx
 //------------------------------------------------------------------------------
-uint32_t StmtWrapper::getParamIdx(const std::string &paramName) const {
+uint32_t StmtWrapper::getParamIdx(const std::string& paramName) const {
   return m_paramNameToIdx.getIdx(paramName);
 }
 
@@ -57,12 +55,12 @@ std::string StmtWrapper::getSqlForException(const std::string::size_type maxSqlL
 //------------------------------------------------------------------------------
 // bindBool
 //------------------------------------------------------------------------------
-void StmtWrapper::bindBool(const std::string &paramName, const std::optional<bool> &paramValue) {
-  if(paramValue.has_value()) {
+void StmtWrapper::bindBool(const std::string& paramName, const std::optional<bool>& paramValue) {
+  if (paramValue.has_value()) {
     bindString(paramName, paramValue.value() ? std::string("1") : std::string("0"));
   } else {
     bindString(paramName, std::nullopt);
   }
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

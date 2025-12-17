@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/rdbms/oracle/OracleLogicalLibraryCatalogue.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "rdbms/Conn.hpp"
@@ -23,11 +24,12 @@
 
 namespace cta::catalogue {
 
-OracleLogicalLibraryCatalogue::OracleLogicalLibraryCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsLogicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
+OracleLogicalLibraryCatalogue::OracleLogicalLibraryCatalogue(log::Logger& log,
+                                                             std::shared_ptr<rdbms::ConnPool> connPool,
+                                                             RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsLogicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t OracleLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn &conn) const {
+uint64_t OracleLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn& conn) const {
   const char* const sql = R"SQL(
     SELECT 
       LOGICAL_LIBRARY_ID_SEQ.NEXTVAL AS LOGICAL_LIBRARY_ID 
@@ -43,4 +45,4 @@ uint64_t OracleLogicalLibraryCatalogue::getNextLogicalLibraryId(rdbms::Conn &con
   return rset.columnUint64("LOGICAL_LIBRARY_ID");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

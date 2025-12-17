@@ -15,38 +15,33 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "common/json/object/JSONCObject.hpp"
+#include "common/json/object/JSONObjectException.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/log/Param.hpp"
+#include "common/log/StringLogger.hpp"
+
 #include <gtest/gtest.h>
 #include <memory>
 
-#include "common/log/Param.hpp"
-#include "common/log/StringLogger.hpp"
-#include "common/log/LogContext.hpp"
-
-#include "common/json/object/JSONCObject.hpp"
-#include "common/json/object/JSONObjectException.hpp"
-
 namespace unitTests {
 
-class JSONCObjectProbe: public cta::utils::json::object::JSONCObject {
+class JSONCObjectProbe : public cta::utils::json::object::JSONCObject {
 public:
   template<typename T>
-  T jsonGetValueProbe(const std::string & key) {
+  T jsonGetValueProbe(const std::string& key) {
     return jsonGetValue<T>(key);
   }
-  json_type jsonGetValueType(const std::string & key) {
-    return getJSONObjectType(key);
-  }
+
+  json_type jsonGetValueType(const std::string& key) { return getJSONObjectType(key); }
 };
 
-class cta_log_JsonTest: public ::testing::Test {
+class cta_log_JsonTest : public ::testing::Test {
 protected:
+  void SetUp() {}
 
-  void SetUp() {
-  }
-
-  void TearDown() {
-  }
-}; // cta_log_ParamTest
+  void TearDown() {}
+};  // cta_log_ParamTest
 
 TEST_F(cta_log_JsonTest, testJsonPrinting) {
   using namespace cta::log;
@@ -170,7 +165,7 @@ TEST_F(cta_log_JsonTest, testJsonStringEscape) {
     paramsA.add("key_\t", "value_\t");
     paramsA.add("key_\x00", "value_\x00");
     paramsA.add("key_\x1f", "value_\x1f");
-    paramsA.add("key_\x20", "value_\x20"); //This is a whitespace character
+    paramsA.add("key_\x20", "value_\x20");  //This is a whitespace character
     logContext.log(INFO, "Testing escaped values");
   }
 
@@ -196,4 +191,4 @@ TEST_F(cta_log_JsonTest, testJsonStringEscape) {
   ASSERT_EQ("value_ ", jObj.jsonGetValueProbe<std::string>("key_ "));
 }
 
-} // namespace unitTests
+}  // namespace unitTests

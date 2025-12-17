@@ -26,4 +26,4 @@ namespace cta::rdbms {
  */
 const std::string::size_type MAX_SQL_LEN_IN_EXCEPTIONS = 80;
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

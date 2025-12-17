@@ -25,7 +25,7 @@ namespace cta::rdbms {
  * An exception class representing an unexpected encounter with a nullptr database
  * value (not to be confused with a nullptr C/C++ pointer)
  */
-class NullDbValue: public exception::Exception {
+class NullDbValue : public exception::Exception {
 public:
   /**
    * Constructor
@@ -36,4 +36,4 @@ public:
   explicit NullDbValue(const std::string& context = "", const bool embedBacktrace = true);
 };
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

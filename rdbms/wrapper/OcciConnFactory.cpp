@@ -15,11 +15,12 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/wrapper/OcciConnFactory.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "rdbms/wrapper/OcciConnFactory.hpp"
-#include "rdbms/wrapper/OcciEnvSingleton.hpp"
 #include "plugin-manager/PluginInterface.hpp"
+#include "rdbms/wrapper/OcciEnvSingleton.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -49,7 +50,7 @@ std::string OcciConnFactory::getDbNamespace() const {
   return m_login.dbNamespace;
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper
 
 extern "C" {
 
@@ -61,4 +62,4 @@ void factory(cta::plugin::Interface<cta::rdbms::wrapper::ConnFactory,
     .CLASS<cta::rdbms::wrapper::OcciConnFactory>("OcciConnFactory");
 }
 
-}// extern "C"
+}  // extern "C"

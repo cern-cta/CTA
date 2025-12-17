@@ -45,19 +45,18 @@ enum class ArchiveJobStatus : uint8_t {
   Cancelled
 };
 
-constexpr std::array<const char *, 12>
-StringsArchiveJobStatus = {"AJS_ToTransferForUser",
-                           "AJS_ToReportToUserForSuccess",
-                           "AJS_WaitReplicasBeforeReportingSuccessToDisk",
-                           "AJS_Complete",
-                           "AJS_ToReportToUserForFailure",
-                           "AJS_Failed",
-                           "AJS_Abandoned",
-                           "AJS_ToTransferForRepack",
-                           "AJS_ToReportToRepackForSuccess",
-                           "AJS_ToReportToRepackForFailure",
-                           "ReadyForDeletion",
-                           "Cancelled"};
+constexpr std::array<const char*, 12> StringsArchiveJobStatus = {"AJS_ToTransferForUser",
+                                                                 "AJS_ToReportToUserForSuccess",
+                                                                 "AJS_WaitReplicasBeforeReportingSuccessToDisk",
+                                                                 "AJS_Complete",
+                                                                 "AJS_ToReportToUserForFailure",
+                                                                 "AJS_Failed",
+                                                                 "AJS_Abandoned",
+                                                                 "AJS_ToTransferForRepack",
+                                                                 "AJS_ToReportToRepackForSuccess",
+                                                                 "AJS_ToReportToRepackForFailure",
+                                                                 "ReadyForDeletion",
+                                                                 "Cancelled"};
 
 // ================================ Retrieve Job Status ========================
 
@@ -73,16 +72,15 @@ enum class RetrieveJobStatus : uint8_t {
   Cancelled
 };
 
-constexpr std::array<const char *, 9>
-StringsRetrieveJobStatus = {"RJS_ToTransfer",
-                            "RJS_ToReportToUserForSuccess",
-                            "RJS_ToReportToUserForFailure",
-                            "RJS_Failed",
-                            "RJS_Complete",
-                            "RJS_ToReportToRepackForSuccess",
-                            "RJS_ToReportToRepackForFailure",
-                            "ReadyForDeletion",
-                            "Cancelled"};
+constexpr std::array<const char*, 9> StringsRetrieveJobStatus = {"RJS_ToTransfer",
+                                                                 "RJS_ToReportToUserForSuccess",
+                                                                 "RJS_ToReportToUserForFailure",
+                                                                 "RJS_Failed",
+                                                                 "RJS_Complete",
+                                                                 "RJS_ToReportToRepackForSuccess",
+                                                                 "RJS_ToReportToRepackForFailure",
+                                                                 "ReadyForDeletion",
+                                                                 "Cancelled"};
 
 // ============================== Repack Job Status ===========================
 

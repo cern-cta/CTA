@@ -16,8 +16,9 @@
  */
 
 #include "GrpcAuthUtils.hpp"
-#include "frontend/common/ValidateToken.hpp"
+
 #include "common/log/LogLevel.hpp"
+#include "frontend/common/ValidateToken.hpp"
 
 namespace cta::frontend::grpc::common {
 

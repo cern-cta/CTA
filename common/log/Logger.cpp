@@ -15,25 +15,28 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <algorithm>
-#include <iomanip>
-#include <variant>
-
 #include "common/log/Logger.hpp"
+
+#include "PriorityMaps.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
-#include "common/exception/Exception.hpp"
-#include "PriorityMaps.hpp"
-#include <sys/time.h>
+
+#include <algorithm>
+#include <iomanip>
 #include <sys/syscall.h>
+#include <sys/time.h>
+#include <variant>
 
 namespace cta::log {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-Logger::Logger(std::string_view hostName, std::string_view programName, int logMask) :
-  m_hostName(hostName), m_programName(programName), m_logMask(logMask) { }
+Logger::Logger(std::string_view hostName, std::string_view programName, int logMask)
+    : m_hostName(hostName),
+      m_programName(programName),
+      m_logMask(logMask) {}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -43,7 +46,7 @@ Logger::~Logger() = default;
 //-----------------------------------------------------------------------------
 // operator()
 //-----------------------------------------------------------------------------
-void Logger::operator() (int priority, std::string_view msg, const std::list<Param>& params) noexcept {
+void Logger::operator()(int priority, std::string_view msg, const std::list<Param>& params) noexcept {
   // Ignore messages whose priority is not of interest
   if (priority > m_logMask) {
     return;
@@ -54,11 +57,12 @@ void Logger::operator() (int priority, std::string_view msg, const std::list<Par
   const int pid = getpid();
 
   // Try to find the textual representation of the syslog priority
-  std::map<int, std::string>::const_iterator priorityTextPair =
-    m_priorityToText.find(priority);
+  std::map<int, std::string>::const_iterator priorityTextPair = m_priorityToText.find(priority);
 
   // Ignore messages where log priority is not valid
-  if(m_priorityToText.end() == priorityTextPair) return;
+  if (m_priorityToText.end() == priorityTextPair) {
+    return;
+  }
 
   const std::string header = createMsgHeader(timeStamp);
   const std::string body = createMsgBody(priorityTextPair->second, msg, params, pid);
@@ -74,7 +78,6 @@ std::string Logger::cleanString(std::string_view s, bool replaceUnderscores) {
   std::string result = utils::trimString(s);
 
   for (std::string::iterator it = result.begin(); it != result.end(); ++it) {
-
     // Replace double quote with single quote
     if ('"' == *it) {
       *it = '\'';
@@ -86,7 +89,7 @@ std::string Logger::cleanString(std::string_view s, bool replaceUnderscores) {
     }
 
     // If requested, replace spaces with underscores
-    if(replaceUnderscores && ' ' == *it) {
+    if (replaceUnderscores && ' ' == *it) {
       *it = '_';
     }
   }
@@ -104,8 +107,7 @@ std::map<int, std::string> Logger::generatePriorityToTextMap() {
 //------------------------------------------------------------------------------
 // generateConfigTextToPriorityMap
 //------------------------------------------------------------------------------
-std::map<std::string, int>
-  Logger::generateConfigTextToPriorityMap() {
+std::map<std::string, int> Logger::generateConfigTextToPriorityMap() {
   return PriorityMaps::c_configTextToPriorityMap;
 }
 
@@ -115,7 +117,7 @@ std::map<std::string, int>
 void Logger::setLogMask(std::string_view logMask) {
   try {
     m_logMask = toLogLevel(logMask);
-  } catch(exception::Exception& ex) {
+  } catch (exception::Exception& ex) {
     throw exception::Exception("Failed to set log mask: " + ex.getMessage().str());
   }
 }
@@ -124,9 +126,9 @@ void Logger::setLogMask(std::string_view logMask) {
 // setLogFormat
 //------------------------------------------------------------------------------
 void Logger::setLogFormat(std::string_view logFormat) {
-  if(logFormat == "default") {
+  if (logFormat == "default") {
     m_logFormat = LogFormat::DEFAULT;
-  } else if(logFormat == "json") {
+  } else if (logFormat == "json") {
     m_logFormat = LogFormat::JSON;
   } else {
     throw exception::Exception("Log format value \"" + std::string(logFormat) + "\" is invalid.");
@@ -136,23 +138,23 @@ void Logger::setLogFormat(std::string_view logFormat) {
 //------------------------------------------------------------------------------
 // setStaticParams
 //------------------------------------------------------------------------------
-void Logger::setStaticParams(const std::map<std::string, std::string> &staticParams) {
+void Logger::setStaticParams(const std::map<std::string, std::string>& staticParams) {
   // Build the static params string
   std::ostringstream os;
   if (!m_staticParamsStr.empty()) {
     throw exception::Exception("Static log params have already been set.");
   }
-  switch(m_logFormat){
-  case LogFormat::DEFAULT:
-    for(const auto& [headerKey, headerValue] : staticParams){
-      os << headerKey << "=\""  << headerValue << "\" ";
-    }
-    break;
-  case LogFormat::JSON:
-    for(const auto& [headerKey, headerValue] : staticParams){
-      os << ",\"" << stringFormattingJSON(headerKey) << "\":\"" << stringFormattingJSON(headerValue) << "\"";
-    }
-    break;
+  switch (m_logFormat) {
+    case LogFormat::DEFAULT:
+      for (const auto& [headerKey, headerValue] : staticParams) {
+        os << headerKey << "=\"" << headerValue << "\" ";
+      }
+      break;
+    case LogFormat::JSON:
+      for (const auto& [headerKey, headerValue] : staticParams) {
+        os << ",\"" << stringFormattingJSON(headerKey) << "\":\"" << stringFormattingJSON(headerValue) << "\"";
+      }
+      break;
   }
   m_staticParamsStr = os.str();
 }
@@ -176,12 +178,10 @@ std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
   struct tm localTime;
   localtime_r(&ts_t, &localTime);
 
-  switch(m_logFormat) {
+  switch (m_logFormat) {
     case LogFormat::DEFAULT:
-      os << std::put_time(&localTime, "%b %e %T")
-         << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << ' '
-         << m_hostName << " "
-         << m_programName << ": ";
+      os << std::put_time(&localTime, "%b %e %T") << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << ' '
+         << m_hostName << " " << m_programName << ": ";
       break;
     case LogFormat::JSON:
       os << R"("epoch_time":)" << ts_s_fraction << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << R"(,)"
@@ -223,8 +223,7 @@ std::ostream& operator<<(std::ostream& oss, const Logger::stringFormattingJSON& 
       default:
         if ('\x00' <= c && c <= '\x1f') {
           oss_tmp << R"(\u)" << std::hex << std::setw(4) << std::setfill('0') << static_cast<unsigned int>(c);
-        }
-        else {
+        } else {
           oss_tmp << c;
         }
     }
@@ -236,14 +235,14 @@ std::ostream& operator<<(std::ostream& oss, const Logger::stringFormattingJSON& 
 //-----------------------------------------------------------------------------
 // createMsgBody
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgBody(std::string_view logLevel, std::string_view msg,
-  const std::list<Param>& params, int pid) const {
+std::string
+Logger::createMsgBody(std::string_view logLevel, std::string_view msg, const std::list<Param>& params, int pid) const {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);
 
   // Append the log level, the thread id and the message text
-  switch(m_logFormat) {
+  switch (m_logFormat) {
     case LogFormat::DEFAULT:
       os << R"(LVL=")" << logLevel << R"(" PID=")" << pid << R"(" TID=")" << tid << R"(" MSG=")" << msg << R"(" )";
       break;
@@ -258,17 +257,15 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
   os << m_staticParamsStr;
 
   // Process parameters
-  for(auto& param : params) {
+  for (auto& param : params) {
     // Write the name and value to the buffer
-    switch(m_logFormat) {
-      case LogFormat::DEFAULT:
-        {
-          // If parameter name is an empty string, set the value to "Undefined"
-          const std::string name_str = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);
-          const std::string value_str = cleanString(param.getValueStr(), false);
-          os << name_str << "=\"" << value_str << "\" ";
-        }
-        break;
+    switch (m_logFormat) {
+      case LogFormat::DEFAULT: {
+        // If parameter name is an empty string, set the value to "Undefined"
+        const std::string name_str = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);
+        const std::string value_str = cleanString(param.getValueStr(), false);
+        os << name_str << "=\"" << value_str << "\" ";
+      } break;
       case LogFormat::JSON:
         os << ","
            << "\"" << stringFormattingJSON(param.getName()) << "\":";
@@ -278,23 +275,18 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
               using T = std::decay_t<decltype(arg)>;
               if constexpr (std::is_same_v<T, bool>) {
                 os << (arg ? "true" : "false");
-              }
-              else if constexpr (std::is_same_v<T, std::string>) {
+              } else if constexpr (std::is_same_v<T, std::string>) {
                 os << "\"" << stringFormattingJSON(arg) << "\"";
-              }
-              else if constexpr (std::is_integral_v<T>) {
+              } else if constexpr (std::is_integral_v<T>) {
                 os << arg;
-              }
-              else if constexpr (std::is_floating_point_v<T>) {
+              } else if constexpr (std::is_floating_point_v<T>) {
                 os << floatingPointFormatting(arg);
-              }
-              else {
+              } else {
                 static_assert(always_false<T>::value, "Type not supported");
               }
             },
             param.getValueVariant().value());
-        }
-        else {
+        } else {
           os << "null";
         }
         break;
@@ -304,4 +296,4 @@ std::string Logger::createMsgBody(std::string_view logLevel, std::string_view ms
   return os.str();
 }
 
-} // namespace cta::log
+}  // namespace cta::log

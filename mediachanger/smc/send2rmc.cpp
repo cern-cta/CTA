@@ -15,20 +15,21 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <errno.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <string.h>
-#include "mediachanger/librmc/getconfent.hpp"
-#include "mediachanger/librmc/serrno.hpp"
 #include "mediachanger/librmc/Cnetdb.hpp"
-#include "mediachanger/librmc/net.hpp"
+#include "mediachanger/librmc/getconfent.hpp"
 #include "mediachanger/librmc/marshall.hpp"
+#include "mediachanger/librmc/net.hpp"
+#include "mediachanger/librmc/serrno.hpp"
 #include "rmc_api.hpp"
+
+#include <errno.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 /* send2tpd - send a request to the SCSI media changer server and wait for the reply */
 
@@ -101,7 +102,7 @@ int send2rmc(const char* const host,
 
   if ((n = netwrite(s, reqp, reql)) <= 0) {
     if (n == 0) {
-      rmc_errmsg(func, RMC02, "send", sys_serrlist[serrno-SEBASEOFF]);
+      rmc_errmsg(func, RMC02, "send", sys_serrlist[serrno - SEBASEOFF]);
     } else {
       rmc_errmsg(func, RMC02, "send", neterror());
     }
@@ -120,7 +121,7 @@ int send2rmc(const char* const host,
   while (1) {
     if ((n = netread(s, repbuf, 3 * LONGSIZE)) <= 0) {
       if (n == 0) {
-        rmc_errmsg(func, RMC02, "recv", sys_serrlist[serrno-SEBASEOFF]);
+        rmc_errmsg(func, RMC02, "recv", sys_serrlist[serrno - SEBASEOFF]);
       } else {
         rmc_errmsg(func, RMC02, "recv", neterror());
       }
@@ -142,7 +143,7 @@ int send2rmc(const char* const host,
     }
     if ((n = netread(s, repbuf, c)) <= 0) {
       if (n == 0) {
-        rmc_errmsg(func, RMC02, "recv", sys_serrlist[serrno-SEBASEOFF]);
+        rmc_errmsg(func, RMC02, "recv", sys_serrlist[serrno - SEBASEOFF]);
       } else {
         rmc_errmsg(func, RMC02, "recv", neterror());
       }

@@ -61,8 +61,7 @@ protected:
    * @param[in]    reason      Reason for this log message (error message)
    * @param[in]    t           Timer
    */
-  void
-  logAdminCmd(const AdminCmdStatus status, const std::string& reason, utils::Timer& t);
+  void logAdminCmd(const AdminCmdStatus status, const std::string& reason, utils::Timer& t);
 
   /*!
    * Drive state enum
@@ -77,12 +76,13 @@ protected:
    *
    * @return       The result of the operation, to return to the client
    */
-  std::string setDriveState(const std::string& regex, const common::dataStructures::DesiredDriveState& desiredDriveState);
+  std::string setDriveState(const std::string& regex,
+                            const common::dataStructures::DesiredDriveState& desiredDriveState);
 
-  const admin::AdminCmd    m_adminCmd;        //!< Administrator Command protocol buffer
-  catalogue::Catalogue    &m_catalogue;       //!< Reference to CTA Catalogue
-  cta::Scheduler          &m_scheduler;       //!< Reference to CTA Scheduler
-  log::LogContext          m_lc;              //!< CTA Log Context
+  const admin::AdminCmd m_adminCmd;   //!< Administrator Command protocol buffer
+  catalogue::Catalogue& m_catalogue;  //!< Reference to CTA Catalogue
+  cta::Scheduler& m_scheduler;        //!< Reference to CTA Scheduler
+  log::LogContext m_lc;               //!< CTA Log Context
 
 private:
   /*!
@@ -90,74 +90,74 @@ private:
    *
    * @param[out]    response    CTA Admin Command response message
    */
-  void processAdmin_Add               (xrd::Response& response);
-  void processAdmin_Ch                (xrd::Response& response);
-  void processAdmin_Rm                (xrd::Response& response);
-  void processArchiveRoute_Add        (xrd::Response& response);
-  void processArchiveRoute_Ch         (xrd::Response& response);
-  void processArchiveRoute_Rm         (xrd::Response& response);
-  void processDrive_Up                (xrd::Response& response);
-  void processDrive_Down              (xrd::Response& response);
-  void processDrive_Ch                (xrd::Response& response);
-  void processDrive_Rm                (xrd::Response& response);
-  void processFailedRequest_Rm        (xrd::Response& response);
-  void processGroupMountRule_Add      (xrd::Response& response);
-  void processGroupMountRule_Ch       (xrd::Response& response);
-  void processGroupMountRule_Rm       (xrd::Response& response);
-  void processLogicalLibrary_Add      (xrd::Response& response);
-  void processLogicalLibrary_Ch       (xrd::Response& response);
-  void processLogicalLibrary_Rm       (xrd::Response& response);
-  void processMediaType_Add           (xrd::Response& response);
-  void processMediaType_Ch            (xrd::Response& response);
-  void processMediaType_Rm            (xrd::Response& response);
-  void processMountPolicy_Add         (xrd::Response& response);
-  void processMountPolicy_Ch          (xrd::Response& response);
-  void processMountPolicy_Rm          (xrd::Response& response);
-  void processRepack_Add              (xrd::Response& response);
-  void processRepack_Rm               (xrd::Response& response);
-  void processRepack_Err              (xrd::Response& response);
-  void processRequesterMountRule_Add  (xrd::Response& response);
-  void processRequesterMountRule_Ch   (xrd::Response& response);
-  void processRequesterMountRule_Rm   (xrd::Response& response);
-  void processActivityMountRule_Add   (xrd::Response& response);
-  void processActivityMountRule_Ch    (xrd::Response& response);
-  void processActivityMountRule_Rm    (xrd::Response& response);
-  void processStorageClass_Add        (xrd::Response& response);
-  void processStorageClass_Ch         (xrd::Response& response);
-  void processStorageClass_Rm         (xrd::Response& response);
-  void processTape_Add                (xrd::Response& response);
-  void processTape_Ch                 (xrd::Response& response);
-  void processTape_Rm                 (xrd::Response& response);
-  void processTape_Reclaim            (xrd::Response& response);
-  void processTape_Label              (xrd::Response& response);
-  void processTapeFile_Rm             (xrd::Response& response);
-  void processTapePool_Add            (xrd::Response& response);
-  void processTapePool_Ch             (xrd::Response& response);
-  void processTapePool_Rm             (xrd::Response& response);
-  void processDiskSystem_Add          (xrd::Response& response);
-  void processDiskSystem_Ch           (xrd::Response& response);
-  void processDiskSystem_Rm           (xrd::Response& response);
-  void processDiskInstance_Add        (xrd::Response& response);
-  void processDiskInstance_Ch         (xrd::Response& response);
-  void processDiskInstance_Rm         (xrd::Response& response);
-  void processDiskInstanceSpace_Add   (xrd::Response& response);
-  void processDiskInstanceSpace_Ch    (xrd::Response& response);
-  void processDiskInstanceSpace_Rm    (xrd::Response& response);
-  void processVirtualOrganization_Add (xrd::Response& response);
-  void processVirtualOrganization_Ch  (xrd::Response& response);
-  void processVirtualOrganization_Rm  (xrd::Response& response);
-  void processPhysicalLibrary_Add     (xrd::Response& response);
-  void processPhysicalLibrary_Ch      (xrd::Response& response);
-  void processPhysicalLibrary_Rm      (xrd::Response& response);
-  void processRecycleTapeFile_Restore (xrd::Response& response);
-  void processModifyArchiveFile       (xrd::Response& response);
+  void processAdmin_Add(xrd::Response& response);
+  void processAdmin_Ch(xrd::Response& response);
+  void processAdmin_Rm(xrd::Response& response);
+  void processArchiveRoute_Add(xrd::Response& response);
+  void processArchiveRoute_Ch(xrd::Response& response);
+  void processArchiveRoute_Rm(xrd::Response& response);
+  void processDrive_Up(xrd::Response& response);
+  void processDrive_Down(xrd::Response& response);
+  void processDrive_Ch(xrd::Response& response);
+  void processDrive_Rm(xrd::Response& response);
+  void processFailedRequest_Rm(xrd::Response& response);
+  void processGroupMountRule_Add(xrd::Response& response);
+  void processGroupMountRule_Ch(xrd::Response& response);
+  void processGroupMountRule_Rm(xrd::Response& response);
+  void processLogicalLibrary_Add(xrd::Response& response);
+  void processLogicalLibrary_Ch(xrd::Response& response);
+  void processLogicalLibrary_Rm(xrd::Response& response);
+  void processMediaType_Add(xrd::Response& response);
+  void processMediaType_Ch(xrd::Response& response);
+  void processMediaType_Rm(xrd::Response& response);
+  void processMountPolicy_Add(xrd::Response& response);
+  void processMountPolicy_Ch(xrd::Response& response);
+  void processMountPolicy_Rm(xrd::Response& response);
+  void processRepack_Add(xrd::Response& response);
+  void processRepack_Rm(xrd::Response& response);
+  void processRepack_Err(xrd::Response& response);
+  void processRequesterMountRule_Add(xrd::Response& response);
+  void processRequesterMountRule_Ch(xrd::Response& response);
+  void processRequesterMountRule_Rm(xrd::Response& response);
+  void processActivityMountRule_Add(xrd::Response& response);
+  void processActivityMountRule_Ch(xrd::Response& response);
+  void processActivityMountRule_Rm(xrd::Response& response);
+  void processStorageClass_Add(xrd::Response& response);
+  void processStorageClass_Ch(xrd::Response& response);
+  void processStorageClass_Rm(xrd::Response& response);
+  void processTape_Add(xrd::Response& response);
+  void processTape_Ch(xrd::Response& response);
+  void processTape_Rm(xrd::Response& response);
+  void processTape_Reclaim(xrd::Response& response);
+  void processTape_Label(xrd::Response& response);
+  void processTapeFile_Rm(xrd::Response& response);
+  void processTapePool_Add(xrd::Response& response);
+  void processTapePool_Ch(xrd::Response& response);
+  void processTapePool_Rm(xrd::Response& response);
+  void processDiskSystem_Add(xrd::Response& response);
+  void processDiskSystem_Ch(xrd::Response& response);
+  void processDiskSystem_Rm(xrd::Response& response);
+  void processDiskInstance_Add(xrd::Response& response);
+  void processDiskInstance_Ch(xrd::Response& response);
+  void processDiskInstance_Rm(xrd::Response& response);
+  void processDiskInstanceSpace_Add(xrd::Response& response);
+  void processDiskInstanceSpace_Ch(xrd::Response& response);
+  void processDiskInstanceSpace_Rm(xrd::Response& response);
+  void processVirtualOrganization_Add(xrd::Response& response);
+  void processVirtualOrganization_Ch(xrd::Response& response);
+  void processVirtualOrganization_Rm(xrd::Response& response);
+  void processPhysicalLibrary_Add(xrd::Response& response);
+  void processPhysicalLibrary_Ch(xrd::Response& response);
+  void processPhysicalLibrary_Rm(xrd::Response& response);
+  void processRecycleTapeFile_Restore(xrd::Response& response);
+  void processModifyArchiveFile(xrd::Response& response);
 
-  common::dataStructures::SecurityIdentity    m_cliIdentity;                 //!< Client identity: username, host, authentication
-  const uint64_t                              m_archiveFileMaxSize;          //!< Maximum allowed file size for archive requests
-  const std::optional<std::string>            m_repackBufferURL;             //!< Repack buffer URL
-  const std::optional<std::uint64_t>          m_repackMaxFilesToSelect;      //!< Repack max files to expand
-  const uint64_t                              m_missingFileCopiesMinAgeSecs; //!< Missing tape file copies minimum age
-  std::optional<std::string> m_schedulerBackendName;  //!< Name of the Scheduler DB to which Frontend connects
+  common::dataStructures::SecurityIdentity m_cliIdentity;       //!< Client identity: username, host, authentication
+  const uint64_t m_archiveFileMaxSize;                          //!< Maximum allowed file size for archive requests
+  const std::optional<std::string> m_repackBufferURL;           //!< Repack buffer URL
+  const std::optional<std::uint64_t> m_repackMaxFilesToSelect;  //!< Repack max files to expand
+  const uint64_t m_missingFileCopiesMinAgeSecs;                 //!< Missing tape file copies minimum age
+  std::optional<std::string> m_schedulerBackendName;            //!< Name of the Scheduler DB to which Frontend connects
 };
 
-} // namespace cta::frontend
+}  // namespace cta::frontend

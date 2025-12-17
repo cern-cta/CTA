@@ -28,8 +28,7 @@ namespace cta::tapeserver::readtp {
 /**
  * A list of tape file sequence ranges.
  */
-class TapeFseqRangeList: public  std::list<TapeFseqRange> {
-}; // class TapeFseqRangeList
+class TapeFseqRangeList : public std::list<TapeFseqRange> {};  // class TapeFseqRangeList
 
 /**
  * Generates a sequence of tape file sequence numbers from a list of tape file
@@ -37,14 +36,13 @@ class TapeFseqRangeList: public  std::list<TapeFseqRange> {
  */
 class TapeFseqRangeListSequence {
 public:
-
   /**
    * Constructor.
    *
    * Creates an empty sequence, in other word hasMore() will always return
    * false.
    */
-  TapeFseqRangeListSequence() ;
+  TapeFseqRangeListSequence();
 
   /**
    * Constructor
@@ -59,8 +57,7 @@ public:
    * @param list The list of tape file sequence ranges from which the sequence
    * of tape file sequence numbers is to be generated.
    */
-  void reset(const TapeFseqRangeList *const list)
-    ;
+  void reset(const TapeFseqRangeList* const list);
 
   /**
    * Returns true if there is another tape file sequence number in the
@@ -72,7 +69,7 @@ public:
    * Returns the next  tape file sequence number in the sequence, or throws an
    * exception if there isn't one.
    */
-  uint32_t next() ;
+  uint32_t next();
 
   /**
    * Returns true if the sequence is finite, else false if it is infinite.
@@ -87,13 +84,11 @@ public:
    */
   uint32_t totalSize() const noexcept;
 
-
 private:
-
   /**
    * The list of tape file sequence ranges.
    */
-  const TapeFseqRangeList *m_list;
+  const TapeFseqRangeList* m_list;
 
   /**
    * Iterator pointing to the current range of tape file sequence numbers.
@@ -118,12 +113,11 @@ private:
    */
   TapeFseqRangeSequence m_nbSequence;
 
-}; // class TapeFseqRangeListSequence
+};  // class TapeFseqRangeListSequence
 
-} // namespace cta::tapeserver::readtp
+}  // namespace cta::tapeserver::readtp
 
 /**
  * ostream << operator for cta::tapeserver::readtp::TapeFseqRangeList
  */
-std::ostream &operator<<(std::ostream &os,
-  const cta::tapeserver::readtp::TapeFseqRangeList &value);
+std::ostream& operator<<(std::ostream& os, const cta::tapeserver::readtp::TapeFseqRangeList& value);

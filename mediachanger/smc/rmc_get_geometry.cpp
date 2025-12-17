@@ -17,13 +17,14 @@
 
 /*      rmc_get_geometry - get the remote SCSI robot geometry */
 
-#include <stdlib.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <netinet/in.h>
 #include "mediachanger/librmc/marshall.hpp"
 #include "mediachanger/librmc/serrno.hpp"
 #include "rmc_api.hpp"
+
+#include <netinet/in.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 int rmc_get_geometry(const char* const server, struct robot_info* const robot_info) {
   int c;

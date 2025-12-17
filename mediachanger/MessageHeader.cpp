@@ -24,4 +24,4 @@ namespace cta::mediachanger {
 //------------------------------------------------------------------------------
 MessageHeader::MessageHeader() {}
 
-} // namespace cta::mediachanger
+}  // namespace cta::mediachanger

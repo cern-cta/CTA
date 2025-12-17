@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include "scheduler/PositioningMethod.hpp"
+
 #include <memory>
 #include <string>
-
-#include "scheduler/PositioningMethod.hpp"
 
 namespace cta {
 class RetrieveJob;
@@ -65,7 +65,7 @@ public:
     * @param size: size of the buffer
     * @return The amount of data actually copied. Zero at end of file.
     */
-  virtual size_t readNextDataBlock(void *data, const size_t size) = 0;
+  virtual size_t readNextDataBlock(void* data, const size_t size) = 0;
 
   /**
     * Returns the LBP access mode.
@@ -77,12 +77,12 @@ protected:
   /**
     * Move throught the headers to the block to read using Fseq Delta increments.
     */
-  virtual void positionByFseq(const cta::RetrieveJob &fileToRecall) = 0;
+  virtual void positionByFseq(const cta::RetrieveJob& fileToRecall) = 0;
 
   /**
     * Move throught the headers to the blocks to read using the ID of the block.
     */
-  virtual void positionByBlockID(const cta::RetrieveJob &fileToRecall) = 0;
+  virtual void positionByBlockID(const cta::RetrieveJob& fileToRecall) = 0;
 
   /**
     * Block size in Bytes of the current file
@@ -112,7 +112,7 @@ private:
     * As usual, exception is thrown if anything goes wrong.
     * @param fileInfo: all relevant information passed by the stager about the file.
     */
-  void position(const cta::RetrieveJob &fileToRecall);
+  void position(const cta::RetrieveJob& fileToRecall);
 };
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

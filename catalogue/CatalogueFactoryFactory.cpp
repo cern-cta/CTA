@@ -15,82 +15,75 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
-
 #include "catalogue/CatalogueFactoryFactory.hpp"
+
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSupportedDB.hpp"
 #include "common/log/Logger.hpp"
-#include "rdbms/Login.hpp"
 #include "plugin-manager/PluginManager.hpp"
+#include "rdbms/Login.hpp"
+
+#include <string>
 
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
-  log::Logger &log,
-  const rdbms::Login &login,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect) {
-
-  static cta::plugin::Manager<cta::catalogue::CatalogueFactory,
-    cta::plugin::Args<
-      cta::log::Logger&,
-      const uint64_t,
-      const uint64_t,
-      const uint32_t>,
-    cta::plugin::Args<
-      cta::log::Logger&,
-      const cta::rdbms::Login&,
-      const uint64_t,
-      const uint64_t,
-      const uint32_t>> pm;
+std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(log::Logger& log,
+                                                                  const rdbms::Login& login,
+                                                                  const uint64_t nbConns,
+                                                                  const uint64_t nbArchiveFileListingConns,
+                                                                  const uint32_t maxTriesToConnect) {
+  static cta::plugin::Manager<
+    cta::catalogue::CatalogueFactory,
+    cta::plugin::Args<cta::log::Logger&, const uint64_t, const uint64_t, const uint32_t>,
+    cta::plugin::Args<cta::log::Logger&, const cta::rdbms::Login&, const uint64_t, const uint64_t, const uint32_t>>
+    pm;
 
   pm.onRegisterPlugin([](const auto& plugin) {
-      // API VERSION CHECKING
-      if (plugin.template GET<plugin::DATA::API_VERSION>() != VERSION_API) {
-        std::ostringstream osErr;
-        osErr << "Plugin API version mismatch: "
-              << "API_VERSION = " << VERSION_API
-              << ", PLUGIN_NAME = " << plugin.template GET<plugin::DATA::PLUGIN_NAME>()
-              << ", PLUGIN_API_VERSION = " << plugin.template GET<plugin::DATA::API_VERSION>();
-        throw exception::Exception(osErr.str());
-      }
-    });
+    // API VERSION CHECKING
+    if (plugin.template GET<plugin::DATA::API_VERSION>() != VERSION_API) {
+      std::ostringstream osErr;
+      osErr << "Plugin API version mismatch: "
+            << "API_VERSION = " << VERSION_API << ", PLUGIN_NAME = " << plugin.template GET<plugin::DATA::PLUGIN_NAME>()
+            << ", PLUGIN_API_VERSION = " << plugin.template GET<plugin::DATA::API_VERSION>();
+      throw exception::Exception(osErr.str());
+    }
+  });
 
   switch (login.dbType) {
-  case rdbms::Login::DBTYPE_IN_MEMORY:
-    pm.load("libctacatalogueinmemory.so");
-    if (!pm.isRegistered("ctacatalogueinmemory")) {
-      pm.bootstrap("factory");
-    }
-    return pm.plugin("ctacatalogueinmemory").make("InMemoryCatalogueFactory", log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-  case rdbms::Login::DBTYPE_ORACLE:
+    case rdbms::Login::DBTYPE_IN_MEMORY:
+      pm.load("libctacatalogueinmemory.so");
+      if (!pm.isRegistered("ctacatalogueinmemory")) {
+        pm.bootstrap("factory");
+      }
+      return pm.plugin("ctacatalogueinmemory")
+        .make("InMemoryCatalogueFactory", log, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+    case rdbms::Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
-    pm.load("libctacatalogueocci.so");
-    if (!pm.isRegistered("ctacatalogueocci")) {
-      pm.bootstrap("factory");
-    }
-    return pm.plugin("ctacatalogueocci").make("OracleCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+      pm.load("libctacatalogueocci.so");
+      if (!pm.isRegistered("ctacatalogueocci")) {
+        pm.bootstrap("factory");
+      }
+      return pm.plugin("ctacatalogueocci")
+        .make("OracleCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
 #else
-    throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
+      throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
-  case rdbms::Login::DBTYPE_POSTGRESQL:
-    pm.load("libctacataloguepostrgres.so");
-    if (!pm.isRegistered("ctacataloguepostgres")) {
-      pm.bootstrap("factory");
-    }
-    return pm.plugin("ctacataloguepostgres").make("PostgresqlCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
-  case rdbms::Login::DBTYPE_SQLITE:
-    throw exception::Exception("Sqlite file based databases are not supported");
-  case rdbms::Login::DBTYPE_NONE:
-    throw exception::Exception("Cannot create a catalogue without a database type");
-  default:
-    {
+    case rdbms::Login::DBTYPE_POSTGRESQL:
+      pm.load("libctacataloguepostrgres.so");
+      if (!pm.isRegistered("ctacataloguepostgres")) {
+        pm.bootstrap("factory");
+      }
+      return pm.plugin("ctacataloguepostgres")
+        .make("PostgresqlCatalogueFactory", log, login, nbConns, nbArchiveFileListingConns, maxTriesToConnect);
+    case rdbms::Login::DBTYPE_SQLITE:
+      throw exception::Exception("Sqlite file based databases are not supported");
+    case rdbms::Login::DBTYPE_NONE:
+      throw exception::Exception("Cannot create a catalogue without a database type");
+    default: {
       exception::NoSupportedDB ex;
       ex.getMessage() << "Unknown database type: value=" << login.dbType;
       throw ex;
@@ -98,4 +91,4 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(
   }
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

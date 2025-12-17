@@ -17,13 +17,13 @@
 
 #pragma once
 
+#include "common/dataStructures/EntryLog.hpp"
+
 #include <list>
 #include <map>
 #include <optional>
 #include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/EntryLog.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -46,7 +46,7 @@ struct PhysicalLibrary {
   std::optional<std::string> comment;
   bool isDisabled;
   std::optional<std::string> disabledReason;
-}; // struct PhysicalLibrary
+};  // struct PhysicalLibrary
 
 struct UpdatePhysicalLibrary {
   std::string name;
@@ -59,6 +59,6 @@ struct UpdatePhysicalLibrary {
   std::optional<std::string> comment;
   std::optional<bool> isDisabled;
   std::optional<std::string> disabledReason;
-}; // struct PhysicalLibrary
+};  // struct PhysicalLibrary
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

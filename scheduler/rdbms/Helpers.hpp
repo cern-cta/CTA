@@ -17,19 +17,19 @@
 
 #pragma once
 
-#include "scheduler/rdbms/postgres/Transaction.hpp"
-#include "common/process/threading/Mutex.hpp"
-#include "common/process/threading/MutexLocker.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RepackQueueType.hpp"
 #include "common/dataStructures/Tape.hpp"
-#include "catalogue/Catalogue.hpp"
+#include "common/process/threading/Mutex.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/rdbms/postgres/Transaction.hpp"
 
-#include <vector>
-#include <string>
-#include <set>
 #include <future>
+#include <set>
+#include <string>
+#include <vector>
 
 namespace cta::schedulerdb {
 

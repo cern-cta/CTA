@@ -53,7 +53,6 @@ public:
   bool getForeground() const;
 
 protected:
-
   /**
    * Tells the daemon object that the command-line has been parsed.  This
    * method allows subclasses to implement their own command-line parsing logic,
@@ -79,10 +78,9 @@ protected:
   /**
    * Object representing the API of the CASTOR logging system.
    */
- cta::log::Logger &m_log;
+  cta::log::Logger& m_log;
 
 private:
-
   /**
    * Flag indicating whether the server should run in foreground or background
    * mode.
@@ -94,6 +92,6 @@ private:
    */
   bool m_commandLineHasBeenParsed = false;
 
-}; // class Daemon
+};  // class Daemon
 
-} // namespace cta::server
+}  // namespace cta::server

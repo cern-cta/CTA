@@ -15,8 +15,9 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/NoSuchObject.hpp"
 #include "RepackExpandRoutine.hpp"
+
+#include "common/exception/NoSuchObject.hpp"
 #include "scheduler/Scheduler.hpp"
 
 namespace cta::maintd {

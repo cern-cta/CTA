@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <stdint.h>
 #include <string>
-#include <memory>
 
 namespace cta::rdbms::wrapper {
 

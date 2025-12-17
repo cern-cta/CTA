@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include "common/log/Logger.hpp"
+
 #include <map>
 #include <optional>
 #include <sstream>
 #include <vector>
-
-#include "common/log/Logger.hpp"
 
 namespace cta::common {
 
@@ -34,7 +34,7 @@ public:
   /*!
    * Construct from a configuration file
    */
-  explicit Config(const std::string& filename, cta::log::Logger *log = nullptr);
+  explicit Config(const std::string& filename, cta::log::Logger* log = nullptr);
 
   /*!
    * Get a option string list vector from config
@@ -69,8 +69,8 @@ public:
   /*!
    * Parse config file
    */
-  void parse(log::Logger &log);
-  
+  void parse(log::Logger& log);
+
 private:
   //! Configuration option list type
   using optionlist_t = std::vector<std::string>;
@@ -98,7 +98,6 @@ private:
   const optionlist_t m_nulloptionlist;                  //!< Empty option list returned when key not found
   std::map<std::string, optionlist_t> m_configuration;  //!< Parsed configuration options
   const std::string m_configFileName;
-
 };
 
 }  // namespace cta::common

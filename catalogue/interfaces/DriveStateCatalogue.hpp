@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
+
 #include <list>
 #include <map>
 #include <optional>
 #include <string>
-
-#include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 
 namespace cta {
 
@@ -30,7 +30,7 @@ namespace common::dataStructures {
 class DesiredDriveState;
 struct TapeDrive;
 struct TapeDriveStatistics;
-}
+}  // namespace common::dataStructures
 
 namespace log {
 class LogContext;
@@ -49,7 +49,7 @@ public:
    * Creates the specified Tape Drive
    * @param tapeDrive Parameters of the Tape Drive.
    */
-  virtual void createTapeDrive(const common::dataStructures::TapeDrive &tapeDrive) = 0;
+  virtual void createTapeDrive(const common::dataStructures::TapeDrive& tapeDrive) = 0;
 
   /**
    * Gets the names of all stored Tape Drive
@@ -68,7 +68,7 @@ public:
    * @param tapeDriveName The name of the tape drive.
    * @return Parameters of the Tape Drive.
    */
-  virtual std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string &tapeDriveName) const = 0;
+  virtual std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string& tapeDriveName) const = 0;
 
   /**
    * Modifies the desired state parameters off the specified Tape Drive
@@ -76,22 +76,22 @@ public:
    * @param desiredState Desired state parameters of the Tape Drive.
    */
   virtual void setDesiredTapeDriveState(const std::string& tapeDriveName,
-      const common::dataStructures::DesiredDriveState &desiredState) = 0;
+                                        const common::dataStructures::DesiredDriveState& desiredState) = 0;
 
-  virtual void setDesiredTapeDriveStateComment(const std::string& tapeDriveName,
-    const std::string &comment) = 0;
+  virtual void setDesiredTapeDriveStateComment(const std::string& tapeDriveName, const std::string& comment) = 0;
 
   virtual void updateTapeDriveStatistics(const std::string& tapeDriveName,
-    const std::string& host, const std::string& logicalLibrary,
-    const common::dataStructures::TapeDriveStatistics& statistics) = 0;
+                                         const std::string& host,
+                                         const std::string& logicalLibrary,
+                                         const common::dataStructures::TapeDriveStatistics& statistics) = 0;
 
-  virtual void updateTapeDriveStatus(const common::dataStructures::TapeDrive &tapeDrive) = 0;
+  virtual void updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) = 0;
 
   /**
    * Deletes the entry of a Tape Drive
    * @param tapeDriveName The name of the tape drive.
    */
-  virtual void deleteTapeDrive(const std::string &tapeDriveName) = 0;
+  virtual void deleteTapeDrive(const std::string& tapeDriveName) = 0;
 
   /**
    * Gets the disk space reservations for all disk systems
@@ -101,16 +101,21 @@ public:
   /**
    * Adds to the current disk space reservation
    */
-  virtual void reserveDiskSpace(const std::string& driveName, const uint64_t mountId,
-    const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
+  virtual void reserveDiskSpace(const std::string& driveName,
+                                const uint64_t mountId,
+                                const DiskSpaceReservationRequest& diskSpaceReservation,
+                                log::LogContext& lc) = 0;
 
   /**
    * Subtracts from the current disk space reservation.
    *
    * If the amount released exceeds the current reservation, the reservation will be reduced to zero.
    */
-  virtual void releaseDiskSpace(const std::string& driveName, const uint64_t mountId,
-    const DiskSpaceReservationRequest& diskSpaceReservation, log::LogContext & lc) = 0;
+  virtual void releaseDiskSpace(const std::string& driveName,
+                                const uint64_t mountId,
+                                const DiskSpaceReservationRequest& diskSpaceReservation,
+                                log::LogContext& lc) = 0;
 };  // class DriveStateCatalogue
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

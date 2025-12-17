@@ -28,7 +28,6 @@ namespace cta::rdbms::wrapper {
  */
 class ConnFactory {
 public:
-
   /**
    * Destructor.
    */
@@ -67,6 +66,6 @@ public:
    */
   virtual std::string getDbNamespace() const = 0;
 
-}; // class ConnFactory
+};  // class ConnFactory
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

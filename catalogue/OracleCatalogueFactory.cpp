@@ -15,34 +15,35 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
-#include <string>
-#include <utility>
-
 #include "catalogue/OracleCatalogueFactory.hpp"
+
 #include "catalogue/rdbms/oracle/OracleCatalogue.hpp"
 #include "catalogue/retrywrappers/CatalogueRetryWrapper.hpp"
 #include "common/exception/Exception.hpp"
 #include "plugin-manager/PluginInterface.hpp"
+
+#include <memory>
+#include <string>
+#include <utility>
 
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OracleCatalogueFactory::OracleCatalogueFactory(
-  log::Logger &log,
-  const rdbms::Login &login,
-  const uint64_t nbConns,
-  const uint64_t nbArchiveFileListingConns,
-  const uint32_t maxTriesToConnect):
-  m_log(log),
-  m_login(login),
-  m_nbConns(nbConns),
-  m_nbArchiveFileListingConns(nbArchiveFileListingConns),
-  m_maxTriesToConnect(maxTriesToConnect) {
+OracleCatalogueFactory::OracleCatalogueFactory(log::Logger& log,
+                                               const rdbms::Login& login,
+                                               const uint64_t nbConns,
+                                               const uint64_t nbArchiveFileListingConns,
+                                               const uint32_t maxTriesToConnect)
+    : m_log(log),
+      m_login(login),
+      m_nbConns(nbConns),
+      m_nbArchiveFileListingConns(nbArchiveFileListingConns),
+      m_maxTriesToConnect(maxTriesToConnect) {
   if (rdbms::Login::DBTYPE_ORACLE != login.dbType) {
-    throw exception::Exception("Incorrect database type: expected=DBTYPE_ORACLE actual=" + rdbms::Login::dbTypeToString(login.dbType));
+    throw exception::Exception("Incorrect database type: expected=DBTYPE_ORACLE actual="
+                               + rdbms::Login::dbTypeToString(login.dbType));
   }
 }
 
@@ -54,7 +55,7 @@ std::unique_ptr<Catalogue> OracleCatalogueFactory::create() {
   return std::make_unique<CatalogueRetryWrapper>(m_log, std::move(c), m_maxTriesToConnect);
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue
 
 extern "C" {
 
@@ -69,4 +70,4 @@ void factory(
     .CLASS<cta::catalogue::OracleCatalogueFactory>("OracleCatalogueFactory");
 }
 
-}// extern "C"
+}  // extern "C"

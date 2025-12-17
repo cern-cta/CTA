@@ -22,23 +22,18 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool TapeForWriting::operator==(const TapeForWriting &rhs) const {
+bool TapeForWriting::operator==(const TapeForWriting& rhs) const {
   return vid == rhs.vid;
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const TapeForWriting &obj) {
-  os <<
-    "{"                  <<
-    "vid="               << obj.vid << "," <<
-    "lastFseq="          << obj.lastFSeq << "," <<
-    "capacityInBytes="   << obj.capacityInBytes << "," <<
-    "dataOnTapeInBytes=" << obj.dataOnTapeInBytes <<
-    "}";
+std::ostream& operator<<(std::ostream& os, const TapeForWriting& obj) {
+  os << "{" << "vid=" << obj.vid << "," << "lastFseq=" << obj.lastFSeq << ","
+     << "capacityInBytes=" << obj.capacityInBytes << "," << "dataOnTapeInBytes=" << obj.dataOnTapeInBytes << "}";
 
   return os;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

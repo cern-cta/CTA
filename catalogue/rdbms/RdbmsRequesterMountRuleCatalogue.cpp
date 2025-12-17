@@ -15,27 +15,33 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#include "catalogue/rdbms/RdbmsRequesterMountRuleCatalogue.hpp"
 
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsMountPolicyCatalogue.hpp"
-#include "catalogue/rdbms/RdbmsRequesterMountRuleCatalogue.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsRequesterMountRuleCatalogue::RdbmsRequesterMountRuleCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue *rdbmsCatalogue):
-  m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsRequesterMountRuleCatalogue::RdbmsRequesterMountRuleCatalogue(log::Logger& log,
+                                                                   std::shared_ptr<rdbms::ConnPool> connPool,
+                                                                   RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
 void RdbmsRequesterMountRuleCatalogue::modifyRequesterMountRulePolicy(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterName, const std::string &mountPolicy) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterName,
+  const std::string& mountPolicy) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE REQUESTER_MOUNT_RULE SET
@@ -57,15 +63,17 @@ void RdbmsRequesterMountRuleCatalogue::modifyRequesterMountRulePolicy(
   stmt.bindString(":REQUESTER_NAME", requesterName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify requester mount rule ") + instanceName + ":" +
-      requesterName + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify requester mount rule ") + instanceName + ":" + requesterName
+                               + " because it does not exist");
   }
 }
 
 void RdbmsRequesterMountRuleCatalogue::modifyRequesteMountRuleComment(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &instanceName,
-  const std::string &requesterName, const std::string &comment) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& instanceName,
+  const std::string& requesterName,
+  const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -88,34 +96,36 @@ void RdbmsRequesterMountRuleCatalogue::modifyRequesteMountRuleComment(
   stmt.bindString(":REQUESTER_NAME", requesterName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify requester mount rule ") + instanceName + ":" +
-      requesterName + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify requester mount rule ") + instanceName + ":" + requesterName
+                               + " because it does not exist");
   }
 }
 
-void RdbmsRequesterMountRuleCatalogue::createRequesterMountRule(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &mountPolicyName, const std::string &diskInstanceName, const std::string &requesterName,
-  const std::string &comment) {
+void RdbmsRequesterMountRuleCatalogue::createRequesterMountRule(const common::dataStructures::SecurityIdentity& admin,
+                                                                const std::string& mountPolicyName,
+                                                                const std::string& diskInstanceName,
+                                                                const std::string& requesterName,
+                                                                const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const auto user = User(diskInstanceName, requesterName);
   auto conn = m_connPool->getConn();
   const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
 
-  if(const auto mountPolicy = mountPolicyCatalogue->getRequesterMountPolicy(conn, user); mountPolicy) {
-    throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName +
-      " to requester " + diskInstanceName + ":" + requesterName +
-      " because the requester is already assigned to mount-policy " + mountPolicy->name);
+  if (const auto mountPolicy = mountPolicyCatalogue->getRequesterMountPolicy(conn, user); mountPolicy) {
+    throw exception::UserError(std::string("Cannot create rule to assign mount-policy ") + mountPolicyName
+                               + " to requester " + diskInstanceName + ":" + requesterName
+                               + " because the requester is already assigned to mount-policy " + mountPolicy->name);
   }
-  if(!RdbmsCatalogueUtils::mountPolicyExists(conn, mountPolicyName)) {
-    throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName +
-      " to requester " + diskInstanceName + ":" + requesterName + " because mount-policy " + mountPolicyName +
-      " does not exist");
+  if (!RdbmsCatalogueUtils::mountPolicyExists(conn, mountPolicyName)) {
+    throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName
+                               + " to requester " + diskInstanceName + ":" + requesterName + " because mount-policy "
+                               + mountPolicyName + " does not exist");
   }
-  if(!RdbmsCatalogueUtils::diskInstanceExists(conn, diskInstanceName)) {
-    throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName +
-      " to requester " + diskInstanceName + ":" + requesterName + " because disk-instance " + diskInstanceName +
-      " does not exist");
+  if (!RdbmsCatalogueUtils::diskInstanceExists(conn, diskInstanceName)) {
+    throw exception::UserError(std::string("Cannot create a rule to assign mount-policy ") + mountPolicyName
+                               + " to requester " + diskInstanceName + ":" + requesterName + " because disk-instance "
+                               + diskInstanceName + " does not exist");
   }
 
   const uint64_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -195,7 +205,7 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsRequesterMountRuleCat
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
-  while(rset.next()) {
+  while (rset.next()) {
     common::dataStructures::RequesterMountRule rule;
 
     rule.diskInstance = rset.columnString("DISK_INSTANCE_NAME");
@@ -215,8 +225,8 @@ std::list<common::dataStructures::RequesterMountRule> RdbmsRequesterMountRuleCat
   return rules;
 }
 
-void RdbmsRequesterMountRuleCatalogue::deleteRequesterMountRule(const std::string &diskInstanceName,
-  const std::string &requesterName) {
+void RdbmsRequesterMountRuleCatalogue::deleteRequesterMountRule(const std::string& diskInstanceName,
+                                                                const std::string& requesterName) {
   const char* const sql = R"SQL(
     DELETE FROM
       REQUESTER_MOUNT_RULE
@@ -230,12 +240,12 @@ void RdbmsRequesterMountRuleCatalogue::deleteRequesterMountRule(const std::strin
   stmt.bindString(":REQUESTER_NAME", requesterName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot delete mount rule for requester ") + diskInstanceName + ":" + requesterName +
-      " because the rule does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot delete mount rule for requester ") + diskInstanceName + ":"
+                               + requesterName + " because the rule does not exist");
   }
 
   m_rdbmsCatalogue->m_userMountPolicyCache.invalidate();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

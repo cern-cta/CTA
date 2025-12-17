@@ -18,11 +18,6 @@
 
 #pragma once
 
-#include <unistd.h>
-#include <syscall.h>
-
-#include <future>
-
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/Mutex.hpp"
 #include "common/process/threading/MutexLocker.hpp"
@@ -31,6 +26,10 @@
 #include "objectstore/Helpers.hpp"
 #include "objectstore/RetrieveQueue.hpp"
 #include "objectstore/RetrieveRequest.hpp"
+
+#include <future>
+#include <syscall.h>
+#include <unistd.h>
 
 namespace cta {
 
@@ -45,13 +44,16 @@ namespace ostoredb {
  * to the caller of sharedAddToArchiveQueue, so they can delete their copy AFTER
  * updating the ownership of their requests.
  */
-template <class Queue, class Request>
+template<class Queue, class Request>
 class SharedQueueLock {
-  template <class, class>
+  template<class, class>
   friend class MemQueue;
+
 public:
   explicit SharedQueueLock(log::LogContext& logContext) : m_logContext(logContext) {}
+
   ~SharedQueueLock();
+
 private:
   std::unique_ptr<objectstore::ScopedExclusiveLock> m_lock;
   std::unique_ptr<Queue> m_queue;
@@ -61,10 +63,10 @@ private:
   utils::Timer m_timer;
 };
 
-template <class Queue, class Request>
+template<class Queue, class Request>
 SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   double waitTime = m_timer.secs(utils::Timer::resetCounter);
-  bool skipQueuesTrim=false;
+  bool skipQueuesTrim = false;
   std::string queueAddress;
 
   // Save queue address for logging before we destroy it
@@ -73,14 +75,16 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   }
 
   try {
-    if(m_lock.get() && m_lock->isLocked()) {
+    if (m_lock.get() && m_lock->isLocked()) {
       m_lock->release();
     } else {
       throw objectstore::ObjectOpsBase::NotLocked("Lock not present or not locked");
     }
-  } catch(objectstore::ObjectOpsBase::NotLocked&) {
-    m_logContext.log(log::ERR, "In SharedQueueLock::~SharedQueueLock(): the lock was not present or not locked. Skipping unlock.");
-    skipQueuesTrim=true;
+  } catch (objectstore::ObjectOpsBase::NotLocked&) {
+    m_logContext.log(
+      log::ERR,
+      "In SharedQueueLock::~SharedQueueLock(): the lock was not present or not locked. Skipping unlock.");
+    skipQueuesTrim = true;
   }
 
   double queueUnlockTime = m_timer.secs(utils::Timer::resetCounter);
@@ -97,10 +101,13 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
   if (m_promiseForSuccessor.get()) {
     m_promiseForSuccessor->set_value();
   } else {
-    m_logContext.log(log::ERR, "In SharedQueueLock::~SharedQueueLock(): the promise was not present. Skipping value setting.");
-    skipQueuesTrim=true;
+    m_logContext.log(log::ERR,
+                     "In SharedQueueLock::~SharedQueueLock(): the promise was not present. Skipping value setting.");
+    skipQueuesTrim = true;
   }
-  if (skipQueuesTrim) return;
+  if (skipQueuesTrim) {
+    return;
+  }
   double successorUnlockTime = m_timer.secs(utils::Timer::resetCounter);
   // We can now cleanup the promise/future couple if they were not picked up to trim the maps.
   // A next thread finding them unlocked or absent will be equivalent.
@@ -111,7 +118,7 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
       MemQueue<Queue, Request>::g_futures.erase(m_queueIndex);
       MemQueue<Queue, Request>::g_promises.erase(m_queueIndex);
     }
-  } catch (std::out_of_range &) {}
+  } catch (std::out_of_range&) {}
   double inMemoryQueuesCleanupTime = m_timer.secs();
   log::ScopedParamContainer params(m_logContext);
   try {
@@ -122,23 +129,22 @@ SharedQueueLock<Queue, Request>::~SharedQueueLock() {
       .add("successorUnlockTime", successorUnlockTime)
       .add("inMemoryQueuesCleanupTime", inMemoryQueuesCleanupTime);
     m_logContext.log(log::INFO, "In SharedQueueLock::~SharedQueueLock(): unlocked the archive queue pointer.");
-  } catch (std::exception &) {}
+  } catch (std::exception&) {}
 }
 
-template <class Request, class Queue>
+template<class Request, class Queue>
 class MemQueueRequest {
-  template <class, class>
+  template<class, class>
   friend class MemQueue;
+
 public:
-  MemQueueRequest(typename Request::JobDump& job, Request& archiveRequest)
-      : m_job(job),
-        m_request(archiveRequest) {}
-  virtual ~MemQueueRequest() {
-    threading::MutexLocker ml(m_mutex);
-  }
+  MemQueueRequest(typename Request::JobDump& job, Request& archiveRequest) : m_job(job), m_request(archiveRequest) {}
+
+  virtual ~MemQueueRequest() { threading::MutexLocker ml(m_mutex); }
+
 private:
   typename Request::JobDump m_job;
-  Request & m_request;
+  Request& m_request;
   std::shared_ptr<std::promise<void>> m_promise = std::make_shared<std::promise<void>>();
   std::shared_ptr<SharedQueueLock<Queue, Request>> m_returnValue;
   // Mutex protecting users against premature deletion
@@ -147,10 +153,11 @@ private:
   pid_t m_tid = ::syscall(SYS_gettid);
 };
 
-template <class Request, class Queue>
+template<class Request, class Queue>
 class MemQueue {
-  template <class, class>
+  template<class, class>
   friend class SharedQueueLock;
+
 public:
   /**
    * This function adds ArchiveRequeuest to an ArchiveQueue in batch.
@@ -171,8 +178,11 @@ public:
    * if needed
    * @param logContext log context to log addition of jobs to the queue.
    */
-  static std::shared_ptr<SharedQueueLock<Queue, Request>> sharedAddToQueue(typename Request::JobDump & job,
-    const std::string & queueIndex, Request & request, OStoreDB & oStoreDB, log::LogContext & logContext);
+  static std::shared_ptr<SharedQueueLock<Queue, Request>> sharedAddToQueue(typename Request::JobDump& job,
+                                                                           const std::string& queueIndex,
+                                                                           Request& request,
+                                                                           OStoreDB& oStoreDB,
+                                                                           log::LogContext& logContext);
 
 private:
   /** Mutex that should be locked before attempting any operation */
@@ -202,45 +212,55 @@ private:
   static std::map<std::string, std::future<void>> g_futures;
 
   /** Helper function for sharedAddToArchiveQueue */
-  static std::shared_ptr<SharedQueueLock<Queue, Request>> sharedAddToNewQueue(typename Request::JobDump & job, const std::string & queueIndex,
-    Request & request, OStoreDB & oStoreDB, log::LogContext & logContext, threading::MutexLocker &globalLock);
+  static std::shared_ptr<SharedQueueLock<Queue, Request>> sharedAddToNewQueue(typename Request::JobDump& job,
+                                                                              const std::string& queueIndex,
+                                                                              Request& request,
+                                                                              OStoreDB& oStoreDB,
+                                                                              log::LogContext& logContext,
+                                                                              threading::MutexLocker& globalLock);
 
   /** Struct holding the job plus request data */
   struct JobAndRequest {
-    typename Request::JobDump & job;
-    Request & request;
+    typename Request::JobDump& job;
+    Request& request;
   };
 
   /** Helper function handling the difference between archive and retrieve (vid vs tapepool) */
-  static void specializedAddJobsToQueueAndCommit(std::list<JobAndRequest> & jobsToAdd, Queue & queue,
-    objectstore::AgentReference & agentReference, log::LogContext & logContext);
+  static void specializedAddJobsToQueueAndCommit(std::list<JobAndRequest>& jobsToAdd,
+                                                 Queue& queue,
+                                                 objectstore::AgentReference& agentReference,
+                                                 log::LogContext& logContext);
 
   /** Helper function updating the cached retrieve queue stats. Noop for archive queues */
-  static void specializedUpdateCachedQueueStats(Queue &queue, log::LogContext& logContext);
+  static void specializedUpdateCachedQueueStats(Queue& queue, log::LogContext& logContext);
 };
 
-template <class Request, class Queue>
+template<class Request, class Queue>
 cta::threading::Mutex MemQueue<Request, Queue>::g_mutex;
 
-template <class Request, class Queue>
+template<class Request, class Queue>
 std::map<std::string, std::shared_ptr<MemQueue<Request, Queue>>> MemQueue<Request, Queue>::g_queues;
 
-template <class Request, class Queue>
+template<class Request, class Queue>
 std::map<std::string, std::shared_ptr<std::promise<void>>> MemQueue<Request, Queue>::g_promises;
 
-template <class Request, class Queue>
+template<class Request, class Queue>
 std::map<std::string, std::future<void>> MemQueue<Request, Queue>::g_futures;
 
-template <class Request, class Queue>
-std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::sharedAddToQueue(typename Request::JobDump& job,
-    const std::string & queueIndex, Request& request, OStoreDB & oStoreDB, log::LogContext & logContext) {
+template<class Request, class Queue>
+std::shared_ptr<SharedQueueLock<Queue, Request>>
+MemQueue<Request, Queue>::sharedAddToQueue(typename Request::JobDump& job,
+                                           const std::string& queueIndex,
+                                           Request& request,
+                                           OStoreDB& oStoreDB,
+                                           log::LogContext& logContext) {
   // 1) Take the global lock (implicit in the constructor)
   threading::MutexLocker globalLock(g_mutex);
   std::shared_ptr<MemQueue> q;
   try {
     // 2) Determine if the queue exists already or not
     q = g_queues.at(queueIndex);
-  } catch (std::out_of_range &) {
+  } catch (std::out_of_range&) {
     // The queue is not there. We will just create a new one.
     return sharedAddToNewQueue(job, queueIndex, request, oStoreDB, logContext, globalLock);
   }
@@ -257,16 +277,20 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
   globalLock.unlock();
   // Wait for our request completion (this could throw, if there was a problem)
   resultFuture.get();
-  auto ret=maqr->m_returnValue;
-  __attribute__((unused)) auto debugMaqr=maqr.get();
+  auto ret = maqr->m_returnValue;
+  __attribute__((unused)) auto debugMaqr = maqr.get();
   maqr.reset();
   return ret;
 }
 
-template <class Request, class Queue>
-std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::sharedAddToNewQueue(
-  typename Request::JobDump& job, const std::string & queueIndex, Request& request,
-  OStoreDB& oStoreDB, log::LogContext& logContext, threading::MutexLocker &globalLock) {
+template<class Request, class Queue>
+std::shared_ptr<SharedQueueLock<Queue, Request>>
+MemQueue<Request, Queue>::sharedAddToNewQueue(typename Request::JobDump& job,
+                                              const std::string& queueIndex,
+                                              Request& request,
+                                              OStoreDB& oStoreDB,
+                                              log::LogContext& logContext,
+                                              threading::MutexLocker& globalLock) {
   utils::Timer timer;
   // Re-check the queue is not there
   if (g_queues.end() != g_queues.find(queueIndex)) {
@@ -282,12 +306,14 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
   if (promiseFromPredecessor.get()) {
     try {
       futureFromPredecessor = std::move(g_futures.at(queueIndex));
-    } catch (std::out_of_range &) {
-      throw cta::exception::Exception("In MemQueue::sharedAddToNewQueue(): the future is not present, while it should!");
+    } catch (std::out_of_range&) {
+      throw cta::exception::Exception(
+        "In MemQueue::sharedAddToNewQueue(): the future is not present, while it should!");
     }
   }
   // Create the promise and future for successor.
-  std::shared_ptr<std::promise<void>> promiseForSuccessor = (g_promises[queueIndex] = std::make_shared<std::promise<void>>());
+  std::shared_ptr<std::promise<void>> promiseForSuccessor =
+    (g_promises[queueIndex] = std::make_shared<std::promise<void>>());
   g_futures[queueIndex] = promiseForSuccessor->get_future();
   // Release the global list
   globalLock.unlock();
@@ -303,7 +329,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     if (g_queues.at(queueIndex).get() != maq.get()) {
       throw cta::exception::Exception("In MemQueue::sharedAddToNewQueue(): the queue is not ours, while it should!");
     }
-  } catch (std::out_of_range &) {
+  } catch (std::out_of_range&) {
     throw cta::exception::Exception("In MemQueue::sharedAddToNewQueue(): the queue is not present, while it should!");
   }
   // Checks are fine, let's just drop the queue from the map
@@ -317,17 +343,22 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
   // We can now proceed with the queuing of the jobs in the object store.
   try {
     std::shared_ptr<SharedQueueLock<Queue, Request>> ret(new SharedQueueLock<Queue, Request>(logContext));
-    ret->m_promiseForSuccessor=promiseForSuccessor;
-    ret->m_queueIndex=queueIndex;
+    ret->m_promiseForSuccessor = promiseForSuccessor;
+    ret->m_queueIndex = queueIndex;
     ret->m_queue.reset(new Queue(oStoreDB.m_objectStore));
     ret->m_lock.reset(new objectstore::ScopedExclusiveLock);
-    auto & queue = *ret->m_queue;
-    auto & aql = *ret->m_lock;
-    objectstore::Helpers::getLockedAndFetchedJobQueue<Queue>(queue, aql,
-            *oStoreDB.m_agentReference, queueIndex, common::dataStructures::JobQueueType::JobsToTransferForUser, logContext);
+    auto& queue = *ret->m_queue;
+    auto& aql = *ret->m_lock;
+    objectstore::Helpers::getLockedAndFetchedJobQueue<Queue>(
+      queue,
+      aql,
+      *oStoreDB.m_agentReference,
+      queueIndex,
+      common::dataStructures::JobQueueType::JobsToTransferForUser,
+      logContext);
     double getFetchedQueueTime = timer.secs(utils::Timer::resetCounter);
-    auto summaryBefore=queue.getJobsSummary();
-    size_t addedJobs=1;
+    auto summaryBefore = queue.getJobsSummary();
+    size_t addedJobs = 1;
     // Build the list of jobs to add to the queue
     std::list<JobAndRequest> jta;
     // First add the job for this thread
@@ -335,7 +366,7 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     // We are done with the queue: release the lock to make helgrind happy.
     ulq.unlock();
     // We do the same for all the queued requests
-    for (auto &maqr: maq->m_requests) {
+    for (auto& maqr : maq->m_requests) {
       // Add the job
       jta.push_back({maqr->m_job, maqr->m_request});
       addedJobs++;
@@ -347,37 +378,34 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     specializedUpdateCachedQueueStats(queue, logContext);
     double cacheUpdateTime = timer.secs(utils::Timer::resetCounter);
     // Log
-    auto summaryAfter=queue.getJobsSummary();
+    auto summaryAfter = queue.getJobsSummary();
     {
       log::ScopedParamContainer params(logContext);
       if (typeid(Queue) == typeid(objectstore::ArchiveQueue)) {
-        params.add("type", "Archive")
-              .add("tapePool", queueIndex);
+        params.add("type", "Archive").add("tapePool", queueIndex);
       } else if (typeid(Queue) == typeid(objectstore::RetrieveQueue)) {
-        params.add("type", "Retrieve")
-              .add("tapeVid", queueIndex);
+        params.add("type", "Retrieve").add("tapeVid", queueIndex);
       }
       params.add("objectQueue", queue.getAddressIfSet())
-            .add("jobsBefore", summaryBefore.jobs)
-            .add("jobsAfter", summaryAfter.jobs)
-            .add("bytesBefore", summaryBefore.bytes)
-            .add("bytesAfter", summaryAfter.bytes)
-            .add("addedJobs", addedJobs)
-            .add("waitTime", waitTime)
-            .add("getFetchedQueueTime", getFetchedQueueTime)
-            .add("queueProcessAndCommitTime", queueProcessAndCommitTime)
-            .add("cacheUpdateTime", cacheUpdateTime)
-            .add("totalEnqueueTime", getFetchedQueueTime + queueProcessAndCommitTime
-                                    + cacheUpdateTime + timer.secs());
+        .add("jobsBefore", summaryBefore.jobs)
+        .add("jobsAfter", summaryAfter.jobs)
+        .add("bytesBefore", summaryBefore.bytes)
+        .add("bytesAfter", summaryAfter.bytes)
+        .add("addedJobs", addedJobs)
+        .add("waitTime", waitTime)
+        .add("getFetchedQueueTime", getFetchedQueueTime)
+        .add("queueProcessAndCommitTime", queueProcessAndCommitTime)
+        .add("cacheUpdateTime", cacheUpdateTime)
+        .add("totalEnqueueTime", getFetchedQueueTime + queueProcessAndCommitTime + cacheUpdateTime + timer.secs());
       logContext.log(log::INFO, "In MemQueue::sharedAddToNewQueue(): added batch of jobs to the queue.");
     }
     // We will also count how much time we mutually wait for the other threads.
     ret->m_timer.reset();
     // And finally release all the user threads
-    for (auto &maqr: maq->m_requests) {
+    for (auto& maqr : maq->m_requests) {
       {
-        threading::MutexLocker (maqr->m_mutex);
-        maqr->m_returnValue=ret;
+        threading::MutexLocker(maqr->m_mutex);
+        maqr->m_returnValue = ret;
         maqr->m_promise->set_value();
       }
     }
@@ -386,22 +414,27 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
   } catch (...) {
     try {
       std::rethrow_exception(std::current_exception());
-    } catch (cta::exception::Exception &ex) {
+    } catch (cta::exception::Exception& ex) {
       log::ScopedParamContainer params(logContext);
       params.add("exceptionMessage", ex.getMessageValue());
-      logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): got an exception writing. Will propagate to other threads.");
-    } catch (std::exception & ex) {
+      logContext.log(log::ERR,
+                     "In MemQueue::sharedAddToNewQueue(): got an exception writing. Will propagate to other threads.");
+    } catch (std::exception& ex) {
       log::ScopedParamContainer params(logContext);
       params.add("exceptionWhat", ex.what());
-      logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): got a standard exception writing. Will propagate to other threads.");
+      logContext.log(
+        log::ERR,
+        "In MemQueue::sharedAddToNewQueue(): got a standard exception writing. Will propagate to other threads.");
     } catch (...) {
-      logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): got an unknown exception writing. Will propagate to other threads.");
+      logContext.log(
+        log::ERR,
+        "In MemQueue::sharedAddToNewQueue(): got an unknown exception writing. Will propagate to other threads.");
     }
     size_t exceptionsNotPassed = 0;
     // Something went wrong. We should inform the other threads
-    for (auto & maqr: maq->m_requests) {
+    for (auto& maqr : maq->m_requests) {
       try {
-        threading::MutexLocker (maqr->m_mutex);
+        threading::MutexLocker(maqr->m_mutex);
         maqr->m_promise->set_exception(std::current_exception());
       } catch (...) {
         exceptionsNotPassed++;
@@ -411,24 +444,24 @@ std::shared_ptr<SharedQueueLock<Queue, Request>> MemQueue<Request, Queue>::share
     if (exceptionsNotPassed) {
       try {
         std::rethrow_exception(std::current_exception());
-      } catch (std::exception & ex) {
+      } catch (std::exception& ex) {
         std::stringstream err;
-        err << "In MemQueue::sharedAddToNewQueue(), in main thread, failed to notify "
-            << exceptionsNotPassed << " other threads out of  " << maq->m_requests.size()
-            << " : " << ex.what();
+        err << "In MemQueue::sharedAddToNewQueue(), in main thread, failed to notify " << exceptionsNotPassed
+            << " other threads out of  " << maq->m_requests.size() << " : " << ex.what();
         log::ScopedParamContainer params(logContext);
-        params.add("what", ex.what())
-              .add("exceptionsNotPassed", exceptionsNotPassed);
-        logContext.log(log::ERR, "In MemQueue::sharedAddToNewQueue(): Failed to propagate exceptions to other threads.");
+        params.add("what", ex.what()).add("exceptionsNotPassed", exceptionsNotPassed);
+        logContext.log(log::ERR,
+                       "In MemQueue::sharedAddToNewQueue(): Failed to propagate exceptions to other threads.");
 
         throw cta::exception::Exception(err.str());
       }
-    } else
+    } else {
       throw;
+    }
   }
 }
 
-template <class Request, class Queue>
+template<class Request, class Queue>
 void MemQueue<Request, Queue>::add(std::shared_ptr<MemQueueRequest<Request, Queue>>& request) {
   m_requests.emplace_back(request);
 }
@@ -436,4 +469,5 @@ void MemQueue<Request, Queue>::add(std::shared_ptr<MemQueueRequest<Request, Queu
 using MemArchiveQueue = MemQueue<objectstore::ArchiveRequest, objectstore::ArchiveQueue>;
 using MemRetrieveQueue = MemQueue<objectstore::RetrieveRequest, objectstore::RetrieveQueue>;
 
-}} // namespace cta::ostoredb
+}  // namespace ostoredb
+}  // namespace cta

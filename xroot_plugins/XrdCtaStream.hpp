@@ -17,18 +17,18 @@
 
 #pragma once
 
+#include "frontend/common/CtaAdminResponseStream.hpp"
+
 #include <XrdSsiPbOStreamBuffer.hpp>
 #include <catalogue/Catalogue.hpp>
 #include <scheduler/Scheduler.hpp>
-#include "frontend/common/CtaAdminResponseStream.hpp"
 
 namespace cta::xrd {
 
 /*!
  * Virtual stream object
  */
-class XrdCtaStream : public XrdSsiStream
-{
+class XrdCtaStream : public XrdSsiStream {
 public:
   XrdCtaStream(cta::catalogue::Catalogue& catalogue,
                cta::Scheduler& scheduler,
@@ -40,9 +40,7 @@ public:
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "XrdCtaStream() constructor");
   }
 
-  ~XrdCtaStream() override {
-    XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "~XrdCtaStream() destructor");
-  }
+  ~XrdCtaStream() override { XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "~XrdCtaStream() destructor"); }
 
   /*!
    * Synchronously obtain data from an active stream
@@ -63,13 +61,13 @@ public:
    *                 last = true:  No more data remains.
    *                 last = false: A fatal error occurred, eRef has the reason.
    */
-  Buffer *GetBuff(XrdSsiErrInfo &eInfo, int &dlen, bool &last) override {
+  Buffer* GetBuff(XrdSsiErrInfo& eInfo, int& dlen, bool& last) override {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): XrdSsi buffer fill request (", dlen, " bytes)");
 
     std::unique_ptr<XrdSsiPb::OStreamBuffer<Data>> streambuf;
 
     try {
-      if(isDone()) {
+      if (isDone()) {
         // Nothing more to send, close the stream
         last = true;
         return nullptr;
@@ -79,18 +77,22 @@ public:
 
       dlen = fillBuffer(streambuf.get());
 
-      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, "GetBuff(): Returning buffer with ", dlen, " bytes of data.");
-    } catch(cta::exception::Exception &ex) {
+      XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG,
+                         LOG_SUFFIX,
+                         "GetBuff(): Returning buffer with ",
+                         dlen,
+                         " bytes of data.");
+    } catch (cta::exception::Exception& ex) {
       std::ostringstream errMsg;
       errMsg << "In GetBuff(): Caught CTA exception: " << ex.what();
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
       return nullptr;
-    } catch(std::exception &ex) {
+    } catch (std::exception& ex) {
       std::ostringstream errMsg;
       errMsg << "In GetBuff(): Failed: " << ex.what();
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
       return nullptr;
-    } catch(...) {
+    } catch (...) {
       std::ostringstream errMsg;
       errMsg << "In GetBuff(): Caught an unknown exception";
       eInfo.Set(errMsg.str().c_str(), ECANCELED);
@@ -126,12 +128,12 @@ private:
   }
 
 protected:
-  cta::catalogue::Catalogue &m_catalogue;    //!< Reference to CTA Catalogue
-  cta::Scheduler            &m_scheduler;    //!< Reference to CTA Scheduler
+  cta::catalogue::Catalogue& m_catalogue;                           //!< Reference to CTA Catalogue
+  cta::Scheduler& m_scheduler;                                      //!< Reference to CTA Scheduler
   std::unique_ptr<cta::frontend::CtaAdminResponseStream> m_stream;  //!< Response stream
 
 private:
-  static constexpr const char* const LOG_SUFFIX  = "XrdCtaStream";    //!< Identifier for log messages
+  static constexpr const char* const LOG_SUFFIX = "XrdCtaStream";  //!< Identifier for log messages
 };
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

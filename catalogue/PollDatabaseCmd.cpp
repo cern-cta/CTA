@@ -15,29 +15,30 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <unistd.h>
+#include "catalogue/PollDatabaseCmd.hpp"
 
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include "catalogue/PollDatabaseCmd.hpp"
 #include "catalogue/PollDatabaseCmdLineArgs.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
+
+#include <unistd.h>
 
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PollDatabaseCmd::PollDatabaseCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) :
-  CmdLineTool(inStream, outStream, errStream) { }
+PollDatabaseCmd::PollDatabaseCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream)
+    : CmdLineTool(inStream, outStream, errStream) {}
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int PollDatabaseCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+int PollDatabaseCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
   const PollDatabaseCmdLineArgs cmdLineArgs(argc, argv);
 
-  if(cmdLineArgs.help) {
+  if (cmdLineArgs.help) {
     printUsage(m_out);
     return 0;
   }
@@ -47,12 +48,12 @@ int PollDatabaseCmd::exceptionThrowingMain(const int argc, char *const *const ar
   rdbms::ConnPool connPool(dbLogin, nbConns);
 
   uint32_t elapsedSeconds = 0;
-  for(uint32_t i = 0; i < cmdLineArgs.numberOfSecondsToKeepPolling; i++) {
+  for (uint32_t i = 0; i < cmdLineArgs.numberOfSecondsToKeepPolling; i++) {
     try {
       m_out << "Querying the database" << std::endl;
       auto conn = connPool.getConn();
       conn.getTableNames();
-    } catch(exception::Exception &ex) {
+    } catch (exception::Exception& ex) {
       m_out << "Database error: " << ex.getMessage().str() << std::endl;
     }
 
@@ -68,8 +69,8 @@ int PollDatabaseCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void PollDatabaseCmd::printUsage(std::ostream &os) {
+void PollDatabaseCmd::printUsage(std::ostream& os) {
   PollDatabaseCmdLineArgs::printUsage(os);
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/rdbms/oracle/OracleTapePoolCatalogue.hpp"
+
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
@@ -24,11 +25,12 @@
 
 namespace cta::catalogue {
 
-OracleTapePoolCatalogue::OracleTapePoolCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsTapePoolCatalogue(log, connPool, rdbmsCatalogue) {}
+OracleTapePoolCatalogue::OracleTapePoolCatalogue(log::Logger& log,
+                                                 std::shared_ptr<rdbms::ConnPool> connPool,
+                                                 RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsTapePoolCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t OracleTapePoolCatalogue::getNextTapePoolId(rdbms::Conn &conn) const {
+uint64_t OracleTapePoolCatalogue::getNextTapePoolId(rdbms::Conn& conn) const {
   const char* const sql = R"SQL(
     SELECT 
       TAPE_POOL_ID_SEQ.NEXTVAL AS TAPE_POOL_ID 
@@ -44,4 +46,4 @@ uint64_t OracleTapePoolCatalogue::getNextTapePoolId(rdbms::Conn &conn) const {
   return rset.columnUint64("TAPE_POOL_ID");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

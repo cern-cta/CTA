@@ -28,4 +28,4 @@ namespace cta::common::dataStructures {
  */
 using TapeCopyToPoolMap = std::map<uint32_t, std::string>;
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

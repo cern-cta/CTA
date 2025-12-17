@@ -15,9 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/Rset.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "rdbms/Rset.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
 #include <gtest/gtest.h>
@@ -27,12 +28,9 @@ namespace unitTests {
 
 class cta_rdbms_RsetTest : public ::testing::Test {
 protected:
+  virtual void SetUp() {}
 
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
+  virtual void TearDown() {}
 };
 
 TEST_F(cta_rdbms_RsetTest, constructor) {
@@ -85,4 +83,4 @@ TEST_F(cta_rdbms_RsetTest, next) {
   }
 }
 
-} // namespace unitTests
+}  // namespace unitTests

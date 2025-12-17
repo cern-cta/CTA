@@ -17,12 +17,13 @@
 
 #pragma once
 
-#include <string>
-#include <optional>
-#include <memory>
 #include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/MountType.hpp"
+
+#include <memory>
+#include <optional>
+#include <string>
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -34,8 +35,8 @@ class DriveSessionTracker {
 public:
   DriveSessionTracker(std::shared_ptr<cta::catalogue::Catalogue> catalogue, std::string_view driveName);
   ~DriveSessionTracker();
-  DriveSessionTracker (const DriveSessionTracker&) = delete;
-  DriveSessionTracker& operator= (const DriveSessionTracker&) = delete;
+  DriveSessionTracker(const DriveSessionTracker&) = delete;
+  DriveSessionTracker& operator=(const DriveSessionTracker&) = delete;
 
   std::optional<cta::common::dataStructures::TapeDrive> queryTapeDrive() const;
 

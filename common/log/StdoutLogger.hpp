@@ -24,7 +24,7 @@ namespace cta::log {
 /**
  * Class implementaing the API of the CASTOR logging system.
  */
-class StdoutLogger: public Logger {
+class StdoutLogger : public Logger {
 public:
   /**
    * Constructor
@@ -34,8 +34,9 @@ public:
    * message.
    * @param simple If true, then logging header is not included.
    */
-  StdoutLogger(std::string_view hostName, std::string_view programName, bool simple = false) :
-    Logger(hostName, programName, DEBUG), m_simple(simple) { }
+  StdoutLogger(std::string_view hostName, std::string_view programName, bool simple = false)
+      : Logger(hostName, programName, DEBUG),
+        m_simple(simple) {}
 
   /**
    * Destructor
@@ -70,7 +71,7 @@ protected:
   void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) final;
 
 private:
-    bool m_simple;
+  bool m_simple;
 };
 
-} // namespace cta::log
+}  // namespace cta::log

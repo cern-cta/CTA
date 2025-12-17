@@ -18,6 +18,7 @@
 #pragma once
 
 #include "TapeItemWritten.hpp"
+
 #include <memory>
 
 namespace cta::catalogue {

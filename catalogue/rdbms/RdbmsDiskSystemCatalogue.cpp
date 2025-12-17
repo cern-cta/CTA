@@ -15,53 +15,62 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#include "catalogue/rdbms/RdbmsDiskSystemCatalogue.hpp"
 
 #include "catalogue/interfaces/DiskInstanceCatalogue.hpp"
 #include "catalogue/interfaces/DiskInstanceSpaceCatalogue.hpp"
 #include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
-#include "catalogue/rdbms/RdbmsDiskSystemCatalogue.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "disk/DiskSystem.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsDiskSystemCatalogue::RdbmsDiskSystemCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool)
-  : m_log(log), m_connPool(connPool) {}
+RdbmsDiskSystemCatalogue::RdbmsDiskSystemCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool)
+    : m_log(log),
+      m_connPool(connPool) {}
 
-void RdbmsDiskSystemCatalogue::createDiskSystem(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &diskInstanceName, const std::string &diskInstanceSpaceName,
-  const std::string &fileRegexp, const uint64_t targetedFreeSpace, const time_t sleepTime, const std::string &comment) {
-  if(name.empty()) {
+void RdbmsDiskSystemCatalogue::createDiskSystem(const common::dataStructures::SecurityIdentity& admin,
+                                                const std::string& name,
+                                                const std::string& diskInstanceName,
+                                                const std::string& diskInstanceSpaceName,
+                                                const std::string& fileRegexp,
+                                                const uint64_t targetedFreeSpace,
+                                                const time_t sleepTime,
+                                                const std::string& comment) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot create disk system because the name is an empty string");
   }
-  if(fileRegexp.empty()) {
+  if (fileRegexp.empty()) {
     throw UserSpecifiedAnEmptyStringFileRegexp("Cannot create disk system because the file regexp is an empty string");
   }
-  if(diskInstanceName.empty()) {
-    throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot create disk system because the disk instance name is an empty string");
+  if (diskInstanceName.empty()) {
+    throw UserSpecifiedAnEmptyStringDiskInstanceName(
+      "Cannot create disk system because the disk instance name is an empty string");
   }
-  if(diskInstanceSpaceName.empty()) {
-    throw UserSpecifiedAnEmptyStringDiskInstanceSpaceName("Cannot create disk system because the disk instance space name is an empty string");
+  if (diskInstanceSpaceName.empty()) {
+    throw UserSpecifiedAnEmptyStringDiskInstanceSpaceName(
+      "Cannot create disk system because the disk instance space name is an empty string");
   }
-  if(0 == targetedFreeSpace) {
+  if (0 == targetedFreeSpace) {
     throw UserSpecifiedAZeroTargetedFreeSpace("Cannot create disk system because the targeted free space is zero");
   }
   if (0 == sleepTime) {
     throw UserSpecifiedAZeroSleepTime("Cannot create disk system because the sleep time is zero");
   }
-  if(comment.empty()) {
+  if (comment.empty()) {
     throw UserSpecifiedAnEmptyStringComment("Cannot create disk system because the comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
   auto conn = m_connPool->getConn();
-  if(RdbmsCatalogueUtils::diskSystemExists(conn, name)) {
-    throw exception::UserError(std::string("Cannot create disk system ") + name +
-      " because a disk system with the same name identifier already exists");
+  if (RdbmsCatalogueUtils::diskSystemExists(conn, name)) {
+    throw exception::UserError(std::string("Cannot create disk system ") + name
+                               + " because a disk system with the same name identifier already exists");
   }
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -123,7 +132,7 @@ void RdbmsDiskSystemCatalogue::createDiskSystem(const common::dataStructures::Se
   stmt.executeNonQuery();
 }
 
-void RdbmsDiskSystemCatalogue::deleteDiskSystem(const std::string &name) {
+void RdbmsDiskSystemCatalogue::deleteDiskSystem(const std::string& name) {
   const char* const delete_sql = R"SQL(
     DELETE
     FROM
@@ -133,16 +142,18 @@ void RdbmsDiskSystemCatalogue::deleteDiskSystem(const std::string &name) {
   )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(delete_sql);
-    stmt.bindString(":DISK_SYSTEM_NAME", name);
+  stmt.bindString(":DISK_SYSTEM_NAME", name);
   stmt.executeNonQuery();
 
   // The delete statement will effect no rows and will not raise an error if
   // either the tape does not exist or if it still has tape files
-  if(0 == stmt.getNbAffectedRows()) {
-    if(RdbmsCatalogueUtils::diskSystemExists(conn, name)) {
-      throw UserSpecifiedANonEmptyDiskSystemAfterDelete(std::string("Cannot delete disk system ") + name + " for unknown reason");
+  if (0 == stmt.getNbAffectedRows()) {
+    if (RdbmsCatalogueUtils::diskSystemExists(conn, name)) {
+      throw UserSpecifiedANonEmptyDiskSystemAfterDelete(std::string("Cannot delete disk system ") + name
+                                                        + " for unknown reason");
     } else {
-      throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot delete disk system ") + name + " because it does not exist");
+      throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot delete disk system ") + name
+                                                + " because it does not exist");
     }
   }
 }
@@ -188,8 +199,8 @@ disk::DiskSystemList RdbmsDiskSystemCatalogue::getAllDiskSystems() const {
     disk::DiskSystem diskSystem;
     diskSystem.name = rset.columnString("DISK_SYSTEM_NAME");
     diskSystem.fileRegexp = rset.columnString("FILE_REGEXP");
-    diskSystem.targetedFreeSpace =  rset.columnUint64("TARGETED_FREE_SPACE");
-    diskSystem.sleepTime =  rset.columnUint64("SLEEP_TIME");
+    diskSystem.targetedFreeSpace = rset.columnUint64("TARGETED_FREE_SPACE");
+    diskSystem.sleepTime = rset.columnUint64("SLEEP_TIME");
     diskSystem.comment = rset.columnString("USER_COMMENT");
     diskSystem.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
     diskSystem.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
@@ -208,15 +219,16 @@ disk::DiskSystemList RdbmsDiskSystemCatalogue::getAllDiskSystems() const {
   return diskSystemList;
 }
 
-void RdbmsDiskSystemCatalogue::modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &fileRegexp) {
-  if(name.empty()) {
+void RdbmsDiskSystemCatalogue::modifyDiskSystemFileRegexp(const common::dataStructures::SecurityIdentity& admin,
+                                                          const std::string& name,
+                                                          const std::string& fileRegexp) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
-      " because the disk system name is an empty string");
+                                                   " because the disk system name is an empty string");
   }
-  if(fileRegexp.empty()) {
+  if (fileRegexp.empty()) {
     throw UserSpecifiedAnEmptyStringFileRegexp("Cannot modify disk system "
-      "because the new fileRegexp is an empty string");
+                                               "because the new fileRegexp is an empty string");
   }
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -238,20 +250,22 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemFileRegexp(const common::dataStru
   stmt.bindString(":DISK_SYSTEM_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name
+                                              + " because it does not exist");
   }
 }
 
-void RdbmsDiskSystemCatalogue::modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t targetedFreeSpace) {
-  if(name.empty()) {
+void RdbmsDiskSystemCatalogue::modifyDiskSystemTargetedFreeSpace(const common::dataStructures::SecurityIdentity& admin,
+                                                                 const std::string& name,
+                                                                 const uint64_t targetedFreeSpace) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
-      " because the disk system name is an empty string");
+                                                   " because the disk system name is an empty string");
   }
-  if(0 == targetedFreeSpace) {
+  if (0 == targetedFreeSpace) {
     throw UserSpecifiedAZeroTargetedFreeSpace("Cannot modify disk system "
-      "because the new targeted free space has zero value");
+                                              "because the new targeted free space has zero value");
   }
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -273,20 +287,22 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemTargetedFreeSpace(const common::d
   stmt.bindString(":DISK_SYSTEM_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name
+                                              + " because it does not exist");
   }
 }
 
-void RdbmsDiskSystemCatalogue::modifyDiskSystemComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
-  if(name.empty()) {
+void RdbmsDiskSystemCatalogue::modifyDiskSystemComment(const common::dataStructures::SecurityIdentity& admin,
+                                                       const std::string& name,
+                                                       const std::string& comment) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
-      " because the disk system name is an empty string");
+                                                   " because the disk system name is an empty string");
   }
-  if(comment.empty()) {
+  if (comment.empty()) {
     throw UserSpecifiedAnEmptyStringComment("Cannot modify disk system "
-      "because the new comment is an empty string");
+                                            "because the new comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
@@ -309,20 +325,22 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemComment(const common::dataStructu
   stmt.bindString(":DISK_SYSTEM_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name
+                                              + " because it does not exist");
   }
 }
 
 void RdbmsDiskSystemCatalogue::modifyDiskSystemSleepTime(const common::dataStructures::SecurityIdentity& admin,
-  const std::string& name, const uint64_t sleepTime) {
-  if(name.empty()) {
+                                                         const std::string& name,
+                                                         const uint64_t sleepTime) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
-      " because the disk system name is an empty string");
+                                                   " because the disk system name is an empty string");
   }
-  if(sleepTime == 0) {
+  if (sleepTime == 0) {
     throw UserSpecifiedAZeroSleepTime("Cannot modify disk system "
-      "because the new sleep time is zero");
+                                      "because the new sleep time is zero");
   }
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -344,20 +362,22 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemSleepTime(const common::dataStruc
   stmt.bindString(":DISK_SYSTEM_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name
+                                              + " because it does not exist");
   }
 }
 
-void RdbmsDiskSystemCatalogue::modifyDiskSystemDiskInstanceName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &diskInstanceName) {
-  if(name.empty()) {
+void RdbmsDiskSystemCatalogue::modifyDiskSystemDiskInstanceName(const common::dataStructures::SecurityIdentity& admin,
+                                                                const std::string& name,
+                                                                const std::string& diskInstanceName) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
-      " because the disk system name is an empty string");
+                                                   " because the disk system name is an empty string");
   }
-  if(diskInstanceName.empty()) {
+  if (diskInstanceName.empty()) {
     throw UserSpecifiedAnEmptyStringDiskInstanceName("Cannot modify disk system "
-      "because the new comment is an empty string");
+                                                     "because the new comment is an empty string");
   }
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -379,21 +399,23 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemDiskInstanceName(const common::da
   stmt.bindString(":DISK_SYSTEM_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name
+                                              + " because it does not exist");
   }
 }
 
 void RdbmsDiskSystemCatalogue::modifyDiskSystemDiskInstanceSpaceName(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-  const std::string &diskInstanceSpaceName) {
-  if(name.empty()) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const std::string& diskInstanceSpaceName) {
+  if (name.empty()) {
     throw UserSpecifiedAnEmptyStringDiskSystemName("Cannot modify disk system"
-      " because the disk system name is an empty string");
+                                                   " because the disk system name is an empty string");
   }
-  if(diskInstanceSpaceName.empty()) {
+  if (diskInstanceSpaceName.empty()) {
     throw UserSpecifiedAnEmptyStringDiskInstanceSpaceName("Cannot modify disk system "
-      "because the new comment is an empty string");
+                                                          "because the new comment is an empty string");
   }
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -415,14 +437,15 @@ void RdbmsDiskSystemCatalogue::modifyDiskSystemDiskInstanceSpaceName(
   stmt.bindString(":DISK_SYSTEM_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw UserSpecifiedANonExistentDiskSystem(std::string("Cannot modify disk system ") + name
+                                              + " because it does not exist");
   }
 }
 
-bool RdbmsDiskSystemCatalogue::diskSystemExists(const std::string &name) const {
+bool RdbmsDiskSystemCatalogue::diskSystemExists(const std::string& name) const {
   auto conn = m_connPool->getConn();
   return RdbmsCatalogueUtils::diskSystemExists(conn, name);
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include "catalogue/interfaces/PhysicalLibraryCatalogue.hpp"
+
 #include <list>
 #include <memory>
 #include <optional>
 #include <string>
-
-#include "catalogue/interfaces/PhysicalLibraryCatalogue.hpp"
 
 namespace cta {
 
@@ -30,7 +30,7 @@ namespace rdbms {
 class Conn;
 class ConnPool;
 class Stmt;
-}
+}  // namespace rdbms
 
 namespace log {
 class Logger;
@@ -40,21 +40,24 @@ namespace catalogue {
 
 class RdbmsCatalogue;
 
-class RdbmsPhysicalLibraryCatalogue: public PhysicalLibraryCatalogue {
+class RdbmsPhysicalLibraryCatalogue : public PhysicalLibraryCatalogue {
 public:
   ~RdbmsPhysicalLibraryCatalogue() override = default;
 
-  void createPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::PhysicalLibrary& pl) override;
+  void createPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin,
+                             const common::dataStructures::PhysicalLibrary& pl) override;
 
   void deletePhysicalLibrary(const std::string& name) override;
 
   std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const override;
 
-  void modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin, const common::dataStructures::UpdatePhysicalLibrary& pl) override;
+  void modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin,
+                             const common::dataStructures::UpdatePhysicalLibrary& pl) override;
 
 protected:
-  RdbmsPhysicalLibraryCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue *rdbmsCatalogue);
+  RdbmsPhysicalLibraryCatalogue(log::Logger& log,
+                                std::shared_ptr<rdbms::ConnPool> connPool,
+                                RdbmsCatalogue* rdbmsCatalogue);
 
   /**
    * Returns a unique physical library ID that can be used by a new physical
@@ -73,14 +76,17 @@ protected:
 private:
   log::Logger& m_log;
   std::shared_ptr<rdbms::ConnPool> m_connPool;
-  RdbmsCatalogue *m_rdbmsCatalogue;
+  RdbmsCatalogue* m_rdbmsCatalogue;
 
   friend class RdbmsLogicalLibraryCatalogue;
   std::optional<uint64_t> getPhysicalLibraryId(rdbms::Conn& conn, const std::string& name) const;
 
   std::string buildUpdateStmtStr(const common::dataStructures::UpdatePhysicalLibrary& pl) const;
-  void bindUpdateParams(cta::rdbms::Stmt& stmt, const common::dataStructures::UpdatePhysicalLibrary& pl,
-    const common::dataStructures::SecurityIdentity& admin, const time_t now) const;
+  void bindUpdateParams(cta::rdbms::Stmt& stmt,
+                        const common::dataStructures::UpdatePhysicalLibrary& pl,
+                        const common::dataStructures::SecurityIdentity& admin,
+                        const time_t now) const;
 };
 
-}} // namespace cta::catalogue
+}  // namespace catalogue
+}  // namespace cta

@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/CreateSchemaCmd.hpp"
+
 #include "catalogue/CreateSchemaCmdLineArgs.hpp"
 #ifdef SUPPORT_OCCI
 #include "catalogue/OracleCatalogueSchema.hpp"
@@ -26,9 +27,9 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/NoSupportedDB.hpp"
 #include "common/utils/utils.hpp"
+#include "rdbms/AutocommitMode.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
-#include "rdbms/AutocommitMode.hpp"
 
 #include <algorithm>
 
@@ -37,16 +38,16 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CreateSchemaCmd::CreateSchemaCmd(std::istream &inStream, std::ostream &outStream, std::ostream &errStream) :
-  CmdLineTool(inStream, outStream, errStream) { }
+CreateSchemaCmd::CreateSchemaCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream)
+    : CmdLineTool(inStream, outStream, errStream) {}
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+int CreateSchemaCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
   const CreateSchemaCmdLineArgs cmdLineArgs(argc, argv);
 
-  if(cmdLineArgs.help) {
+  if (cmdLineArgs.help) {
     printUsage(m_out);
     return 0;
   }
@@ -56,20 +57,19 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
   rdbms::ConnPool connPool(login, maxNbConns);
   auto conn = connPool.getConn();
 
-  if(tableExists("CTA_CATALOGUE", conn)) {
+  if (tableExists("CTA_CATALOGUE", conn)) {
     std::cerr << "Cannot create the database schema because the CTA_CATALOGUE table already exists" << std::endl;
     return 1;
   }
 
-  switch(login.dbType) {
-  case rdbms::Login::DBTYPE_IN_MEMORY:
-    std::cerr << "Creating the database schema for an in_memory database is not supported" << std::endl;
-    return 1;
-  case rdbms::Login::DBTYPE_SQLITE:
-    std::cerr << "Creating the database schema for an sqlite database is not supported" << std::endl;
-    return 1;
-  case rdbms::Login::DBTYPE_POSTGRESQL:
-    {
+  switch (login.dbType) {
+    case rdbms::Login::DBTYPE_IN_MEMORY:
+      std::cerr << "Creating the database schema for an in_memory database is not supported" << std::endl;
+      return 1;
+    case rdbms::Login::DBTYPE_SQLITE:
+      std::cerr << "Creating the database schema for an sqlite database is not supported" << std::endl;
+      return 1;
+    case rdbms::Login::DBTYPE_POSTGRESQL: {
       if (cmdLineArgs.catalogueVersion) {
         PostgresVersionedCatalogueSchema schema(cmdLineArgs.catalogueVersion.value());
         executeNonQueries(conn, schema.sql);
@@ -77,9 +77,8 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
         PostgresCatalogueSchema schema;
         executeNonQueries(conn, schema.sql);
       }
-    }
-    break;
-  case rdbms::Login::DBTYPE_ORACLE:
+    } break;
+    case rdbms::Login::DBTYPE_ORACLE:
 #ifdef SUPPORT_OCCI
     {
       if (cmdLineArgs.catalogueVersion) {
@@ -89,15 +88,13 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
         OracleCatalogueSchema schema;
         executeNonQueries(conn, schema.sql);
       }
-    }
-    break;
+    } break;
 #else
-    throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
+      throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
-  case rdbms::Login::DBTYPE_NONE:
-    throw exception::Exception("Cannot create a catalogue without a database type");
-  default:
-    {
+    case rdbms::Login::DBTYPE_NONE:
+      throw exception::Exception("Cannot create a catalogue without a database type");
+    default: {
       exception::NoSupportedDB ex;
       ex.getMessage() << "Unknown database type: value=" << login.dbType;
       throw ex;
@@ -112,35 +109,33 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char *const *const ar
 //------------------------------------------------------------------------------
 bool CreateSchemaCmd::tableExists(const std::string& tableName, const rdbms::Conn& conn) const {
   const auto names = conn.getTableNames();
-  return std::any_of(names.begin(), names.end(), [&](const std::string_view& name) {
-    return tableName == name;
-  });
+  return std::any_of(names.begin(), names.end(), [&](const std::string_view& name) { return tableName == name; });
 }
 
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void CreateSchemaCmd::printUsage(std::ostream &os) {
+void CreateSchemaCmd::printUsage(std::ostream& os) {
   CreateSchemaCmdLineArgs::printUsage(os);
 }
 
 //------------------------------------------------------------------------------
 // executeNonQueries
 //------------------------------------------------------------------------------
-void CreateSchemaCmd::executeNonQueries(rdbms::Conn &conn, const std::string &sqlStmts) const {
+void CreateSchemaCmd::executeNonQueries(rdbms::Conn& conn, const std::string& sqlStmts) const {
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
 
-  while(std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
+  while (std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
     // Calculate the length of the current statement without the trailing ';'
     const std::string::size_type stmtLen = findResult - searchPos;
     const std::string sqlStmt = utils::trimString(std::string_view(sqlStmts).substr(searchPos, stmtLen));
     searchPos = findResult + 1;
 
-    if(0 < sqlStmt.size()) { // Ignore empty statements
+    if (0 < sqlStmt.size()) {  // Ignore empty statements
       conn.executeNonQuery(sqlStmt);
     }
   }
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

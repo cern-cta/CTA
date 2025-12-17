@@ -17,16 +17,16 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-
 #include "Backend.hpp"
 #include "common/log/Logger.hpp"
+
+#include <memory>
+#include <string>
 
 namespace cta::objectstore {
 
 class BackendFactory {
- public:
-  static std::unique_ptr<Backend> createBackend(const std::string & URL, log::Logger & logger);
+public:
+  static std::unique_ptr<Backend> createBackend(const std::string& URL, log::Logger& logger);
 };
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

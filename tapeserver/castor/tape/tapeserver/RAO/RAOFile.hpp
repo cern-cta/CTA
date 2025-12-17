@@ -17,10 +17,10 @@
 
 #pragma once
 
-#include <utility>
-#include <list>
-
 #include "FilePositionInfos.hpp"
+
+#include <list>
+#include <utility>
 
 namespace castor::tape::tapeserver::rao {
 
@@ -28,14 +28,17 @@ namespace castor::tape::tapeserver::rao {
  * This class represents an RAO file. It contains the index of the file in the vector
  * of jobs passed in the RAOAlgorithm::performRAO() method and the file position informations.
  * It also stores the distance this file has with other files.
- */  
+ */
 class RAOFile {
 public:
-  RAOFile(const uint64_t index, const FilePositionInfos& filePositionInfos) :
-    m_index(index), m_filePositionInfos(filePositionInfos) { }
+  RAOFile(const uint64_t index, const FilePositionInfos& filePositionInfos)
+      : m_index(index),
+        m_filePositionInfos(filePositionInfos) {}
+
   virtual ~RAOFile() = default;
 
   bool operator<(const RAOFile& other) const { return m_index < other.m_index; }
+
   bool operator==(const RAOFile& other) const { return m_index == other.m_index; }
 
   uint64_t getIndex() const { return m_index; }
@@ -45,6 +48,7 @@ public:
    * @return the position informations about this file
    */
   const FilePositionInfos& getFilePositionInfos() const { return m_filePositionInfos; }
+
   /**
    * Add a distance between this file and another RAOFile
    * @param distance the distance to go from this file to another RAOFile
@@ -60,7 +64,7 @@ public:
 private:
   uint64_t m_index;
   FilePositionInfos m_filePositionInfos;
-  
+
   /**
    * This class holds information about the 
    * cost to go to the destination file
@@ -69,15 +73,18 @@ private:
    */
   class DistanceToFile {
   public:
-    DistanceToFile(const double cost, const uint64_t destinationFileIndex) :
-      m_cost(cost),m_destinationFileIndex(destinationFileIndex) { }
+    DistanceToFile(const double cost, const uint64_t destinationFileIndex)
+        : m_cost(cost),
+          m_destinationFileIndex(destinationFileIndex) {}
 
     bool operator<(const DistanceToFile& other) const { return m_cost < other.m_cost; }
+
     /**
      * Returns the cost to go to the destination file located at the destinationFileIndex
      * @return the cost to go to the destination file
      */
     double getCost() const { return m_cost; }
+
     /**
      * Get the destination file index
      * @return the destination file index
@@ -88,8 +95,8 @@ private:
     double m_cost;
     uint64_t m_destinationFileIndex;
   };
-  
+
   std::list<DistanceToFile> m_distancesWithOtherFiles;
 };
 
-} // namespace castor::tape::tapeserver::rao
+}  // namespace castor::tape::tapeserver::rao

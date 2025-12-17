@@ -40,23 +40,24 @@ public:
   ProcessingStatus processTimeout() override;
   int runChild() override;
   ProcessingStatus shutdown() override;
-  template <class C>
+
+  template<class C>
   void setTimeout(C timeout) {
-    m_timeoutDuration=std::chrono::duration_cast<decltype(m_timeoutDuration)>(timeout);
+    m_timeoutDuration = std::chrono::duration_cast<decltype(m_timeoutDuration)>(timeout);
   }
+
 private:
-  cta::tape::daemon::ProcessManager & m_processManager;
-  int m_sigFd=-1;
-  bool m_shutdownRequested=false;
-  bool m_shutdownAcknowlegded=false;
-  bool m_refreshLoggerRequested=false;
-  bool m_sigChildPending=false;
-  std::chrono::time_point<std::chrono::steady_clock> m_shutdownStartTime=
-          decltype(m_shutdownStartTime)::max();
-  std::chrono::milliseconds m_timeoutDuration=
-          std::chrono::duration_cast<decltype(m_timeoutDuration)>(std::chrono::minutes(9));
+  cta::tape::daemon::ProcessManager& m_processManager;
+  int m_sigFd = -1;
+  bool m_shutdownRequested = false;
+  bool m_shutdownAcknowlegded = false;
+  bool m_refreshLoggerRequested = false;
+  bool m_sigChildPending = false;
+  std::chrono::time_point<std::chrono::steady_clock> m_shutdownStartTime = decltype(m_shutdownStartTime)::max();
+  std::chrono::milliseconds m_timeoutDuration =
+    std::chrono::duration_cast<decltype(m_timeoutDuration)>(std::chrono::minutes(9));
   // The current state we report to process manager
   ProcessingStatus m_processingStatus;
 };
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon

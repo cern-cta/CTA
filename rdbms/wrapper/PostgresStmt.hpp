@@ -19,10 +19,10 @@
 
 #include "common/process/threading/RWLock.hpp"
 #include "common/process/threading/RWLockWrLocker.hpp"
-#include "rdbms/wrapper/StmtWrapper.hpp"
 #include "rdbms/wrapper/Postgres.hpp"
-#include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresColumn.hpp"
+#include "rdbms/wrapper/PostgresConn.hpp"
+#include "rdbms/wrapper/StmtWrapper.hpp"
 
 #include <cstdint>
 #include <memory>
@@ -349,8 +349,7 @@ private:
         m_paramValuesPtrs[idx] = nullptr;
       }
     } catch (exception::Exception& ex) {
-      throw exception::Exception("Failed for SQL statement " + getSqlForException() +
-                                 ": " + ex.getMessage().str());
+      throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
     }
   }
 

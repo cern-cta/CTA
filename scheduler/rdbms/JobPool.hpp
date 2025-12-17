@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include "rdbms/ConnPool.hpp"
+
 #include <memory>
 #include <stack>
 
@@ -47,9 +49,8 @@ private:
 
 // Constructor to initialize the job pool
 template<typename T>
-JobPool<T>::JobPool(rdbms::ConnPool& connPool, size_t poolSize)
-    : m_poolSize(poolSize),
-      m_connPool(connPool) {
+JobPool<T>::JobPool(rdbms::ConnPool& connPool, size_t poolSize) : m_poolSize(poolSize),
+                                                                  m_connPool(connPool) {
   // Optionally, pre-fill the pool with some job objects
   for (size_t i = 0; i < m_poolSize; ++i) {
     auto job = std::make_unique<T>(m_connPool);

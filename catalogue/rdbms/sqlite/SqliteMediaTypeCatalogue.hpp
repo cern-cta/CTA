@@ -25,12 +25,11 @@ class RdbmsCatalogue;
 
 class SqliteMediaTypeCatalogue : public RdbmsMediaTypeCatalogue {
 public:
-  SqliteMediaTypeCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-    RdbmsCatalogue* rdbmsCatalogue);
+  SqliteMediaTypeCatalogue(log::Logger& log, std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue);
   ~SqliteMediaTypeCatalogue() override = default;
 
 private:
-  uint64_t getNextMediaTypeId(rdbms::Conn &conn) const override;
+  uint64_t getNextMediaTypeId(rdbms::Conn& conn) const override;
 };  // class SqliteMediaTypeCatalogue
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

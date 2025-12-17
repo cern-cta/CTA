@@ -27,7 +27,6 @@ namespace cta::rdbms::wrapper {
  */
 class ColumnNameToIdx {
 public:
-
   /**
    * Adds the specified column name to index mapping.
    *
@@ -37,7 +36,7 @@ public:
    * @param name The name of the column.
    * @param idx The index of the column.
    */
-  void add(const std::string &name, const int idx);
+  void add(const std::string& name, const int idx);
 
   /**
    * Returns the index of the column with the specified name.
@@ -47,7 +46,7 @@ public:
    *
    * @return the index of the column with the specified name.
    */
-  int getIdx(const std::string &name) const;
+  int getIdx(const std::string& name) const;
 
   /**
    * Returns true if this map is empty.
@@ -57,12 +56,11 @@ public:
   bool empty() const;
 
 private:
-
   /**
    * The underlying STL map from column name to column index.
    */
   std::map<std::string, int> m_nameToIdx;
 
-}; // class ColumnNameToIdx
+};  // class ColumnNameToIdx
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

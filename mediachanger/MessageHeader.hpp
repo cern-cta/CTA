@@ -49,7 +49,6 @@ struct MessageHeader {
    * Sets all integer member-variables to 0.
    */
   MessageHeader();
-}; // struct MessageHeader
+};  // struct MessageHeader
 
-} // namespace cta::mediachanger
-
+}  // namespace cta::mediachanger

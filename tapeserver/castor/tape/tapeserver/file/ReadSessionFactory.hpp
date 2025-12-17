@@ -17,9 +17,10 @@
 
 #pragma once
 
-#include <memory>
-
+#include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
+
+#include <memory>
 
 namespace castor::tape {
 
@@ -33,7 +34,9 @@ class ReadSession;
 
 class ReadSessionFactory {
 public:
-  static std::unique_ptr<ReadSession> create(tapeserver::drive::DriveInterface &drive, const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp);
+  static std::unique_ptr<ReadSession>
+  create(tapeserver::drive::DriveInterface& drive, const tapeserver::daemon::VolumeInfo& volInfo, const bool useLbp);
 };
 
-}} // namespace castor::tape::tapeFile
+}  // namespace tapeFile
+}  // namespace castor::tape

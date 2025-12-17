@@ -16,6 +16,7 @@
  */
 
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
+
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
@@ -64,8 +65,8 @@ RecallMemoryManager::RecallMemoryManager(size_t numberOfBlocks, size_t blockSize
   }
   cta::log::ScopedParamContainer params(m_lc);
   params.add("blockCount", m_totalNumberOfBlocks)
-        .add("blockSize", m_blockCapacity)
-        .add("totalSize", m_totalMemoryAllocated);
+    .add("blockSize", m_blockCapacity)
+    .add("totalSize", m_totalMemoryAllocated);
   m_lc.log(cta::log::INFO, "RecallMemoryManager: all blocks have been created");
   cta::telemetry::metrics::ctaTapedBufferUsage->AddCallback(ObserveRecallMemoryUsage, this);
   cta::telemetry::metrics::ctaTapedBufferLimit->AddCallback(ObserveRecallMemoryLimit, this);
@@ -107,9 +108,8 @@ MemBlock* RecallMemoryManager::getFreeBlock() {
   // When delivering a fresh block to the user, it should be empty.
   if (ret->m_payload.size()) {
     m_freeBlocks.push(ret);
-    throw cta::exception::Exception(
-      "Internal error: RecallMemoryManager::getFreeBlock "
-      "popped a non-empty memory block");
+    throw cta::exception::Exception("Internal error: RecallMemoryManager::getFreeBlock "
+                                    "popped a non-empty memory block");
   }
   return ret;
 }
@@ -136,4 +136,4 @@ size_t RecallMemoryManager::getTotalMemoryUsed() const {
   return m_totalMemoryAllocated - (m_freeBlocks.size() * m_blockCapacity);
 }
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

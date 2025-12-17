@@ -20,18 +20,16 @@
 namespace cta::objectstore {
 
 template<>
-const std::string ContainerTraits<RepackQueue,RepackQueuePending>::c_containerTypeName = "RepackQueuePending";
+const std::string ContainerTraits<RepackQueue, RepackQueuePending>::c_containerTypeName = "RepackQueuePending";
 
 template<>
-const std::string ContainerTraits<RepackQueue,RepackQueuePending>::c_identifierType = "uniqueQueue";
+const std::string ContainerTraits<RepackQueue, RepackQueuePending>::c_identifierType = "uniqueQueue";
 
 template<>
-auto ContainerTraits<RepackQueue,RepackQueuePending>::getContainerSummary(Container &cont) -> ContainerSummary
-{
+auto ContainerTraits<RepackQueue, RepackQueuePending>::getContainerSummary(Container& cont) -> ContainerSummary {
   ContainerSummary ret;
   ret.requests = cont.getRequestsSummary().requests;
   return ret;
 }
 
-
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

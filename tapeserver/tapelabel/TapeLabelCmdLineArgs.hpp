@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include <string>
 #include <optional>
+#include <string>
 
 namespace cta::tapeserver::tapelabel {
 
@@ -61,7 +61,7 @@ struct TapeLabelCmdLineArgs {
   /**
    * The timeout to load the tape in the drive slot in seconds
    */
-  uint64_t m_tapeLoadTimeout = 2 * 60 * 60; // 2 hours
+  uint64_t m_tapeLoadTimeout = 2 * 60 * 60;  // 2 hours
 
   /**
    * Constructor that parses the specified command-line arguments.
@@ -70,14 +70,14 @@ struct TapeLabelCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  TapeLabelCmdLineArgs(const int argc, char *const *const argv);
+  TapeLabelCmdLineArgs(const int argc, char* const* const argv);
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  static void printUsage(std::ostream &os);
+  static void printUsage(std::ostream& os);
 };
 
-} // namespace cta::tapeserver::tapelabel
+}  // namespace cta::tapeserver::tapelabel

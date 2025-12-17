@@ -18,31 +18,25 @@
 
 #pragma once
 
-#include <stdexcept>
-#include <type_traits>
-#include <memory>
 #include <functional>
-#include <tuple>
-#include <variant>
-#include <unordered_map>
+#include <memory>
+#include <stdexcept>
 #include <string>
+#include <tuple>
+#include <type_traits>
+#include <unordered_map>
+#include <variant>
 
 namespace cta::plugin {
 
-enum class DATA {
-  FILE_NAME = 0,
-  API_VERSION,
-  PLUGIN_NAME,
-  PLUGIN_VERSION
-};
+enum class DATA { FILE_NAME = 0, API_VERSION, PLUGIN_NAME, PLUGIN_VERSION };
 
-template<typename... ARGS> using Args = std::tuple<ARGS...>;
+template<typename... ARGS>
+using Args = std::tuple<ARGS...>;
 
 template<typename BASE_TYPE, typename... IARGS>
 class Interface {
-
 public:
-
   template<plugin::DATA D>
   Interface& SET(const std::string& strValue) {
     m_umapData.emplace(D, strValue);
@@ -63,13 +57,16 @@ public:
 
     m_umapFactories.emplace(strClassName, [](const std::variant<IARGS...>& variantPluginArgs) -> std::unique_ptr<TYPE> {
       try {
-        std::unique_ptr<TYPE> upType = std::visit([](auto&& tuplePluginArgs) ->
-          std::unique_ptr<TYPE> {
-          // unpack parameter pack (IARGS...)
-          return std::apply([](auto&&... unpackedPluginArgs) -> std::unique_ptr<TYPE> {
-                   return make<TYPE>(std::forward<decltype(unpackedPluginArgs)>(unpackedPluginArgs)...);
-                 }, std::forward<decltype(tuplePluginArgs)>(tuplePluginArgs));
-        }, variantPluginArgs);
+        std::unique_ptr<TYPE> upType = std::visit(
+          [](auto&& tuplePluginArgs) -> std::unique_ptr<TYPE> {
+            // unpack parameter pack (IARGS...)
+            return std::apply(
+              [](auto&&... unpackedPluginArgs) -> std::unique_ptr<TYPE> {
+                return make<TYPE>(std::forward<decltype(unpackedPluginArgs)>(unpackedPluginArgs)...);
+              },
+              std::forward<decltype(tuplePluginArgs)>(tuplePluginArgs));
+          },
+          variantPluginArgs);
 
         return upType;
 
@@ -82,20 +79,18 @@ public:
   }
 
   template<typename... ARGS>
-  constexpr
-  std::unique_ptr<BASE_TYPE> make(const std::string& strClassName, ARGS&&... args) const {
+  constexpr std::unique_ptr<BASE_TYPE> make(const std::string& strClassName, ARGS&&... args) const {
     if (!m_umapFactories.contains(strClassName)) {
-      throw std::logic_error("The "
-                              + GET<plugin::DATA::PLUGIN_NAME>()
-                              + " plugin does not provide a class called: "
-                              + strClassName);
+      throw std::logic_error("The " + GET<plugin::DATA::PLUGIN_NAME>()
+                             + " plugin does not provide a class called: " + strClassName);
     }
     return m_umapFactories.at(strClassName)(std::forward_as_tuple(args...));
   }
 
 private:
   std::unordered_map<DATA, std::string> m_umapData;
-  std::unordered_map<std::string, std::function<std::unique_ptr<BASE_TYPE> (const std::variant<IARGS...>&)>> m_umapFactories;
+  std::unordered_map<std::string, std::function<std::unique_ptr<BASE_TYPE>(const std::variant<IARGS...>&)>>
+    m_umapFactories;
 
   /**
    * A static partial specialized template for instantiating a class
@@ -105,15 +100,16 @@ private:
   static std::enable_if_t<std::is_constructible_v<TYPE, ARGS&&...>, std::unique_ptr<TYPE>> make(ARGS&&... args) {
     return std::make_unique<TYPE>(args...);
   }
+
   /**
    * A static partial specialized template for instantiating a class
    * to be captured by the lambda function if a class cannot be constructible
    */
   template<typename TYPE, typename... ARGS>
-  static std::enable_if_t<!std::is_constructible_v<TYPE, ARGS&&...>, std::unique_ptr<TYPE>> make(ARGS&&... ) {
-    throw std::logic_error("The class cannot be instantiated. No constructor has been implemented for the given parameter set.");
+  static std::enable_if_t<!std::is_constructible_v<TYPE, ARGS&&...>, std::unique_ptr<TYPE>> make(ARGS&&...) {
+    throw std::logic_error(
+      "The class cannot be instantiated. No constructor has been implemented for the given parameter set.");
   }
-
 };
 
-} // namespace cta::plugin
+}  // namespace cta::plugin

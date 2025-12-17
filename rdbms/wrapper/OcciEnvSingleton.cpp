@@ -15,9 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rdbms/wrapper/OcciEnvSingleton.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/process/threading/MutexLocker.hpp"
-#include "rdbms/wrapper/OcciEnvSingleton.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -34,13 +35,13 @@ std::unique_ptr<OcciEnvSingleton> OcciEnvSingleton::s_instance;
 //------------------------------------------------------------------------------
 // instance
 //------------------------------------------------------------------------------
-OcciEnvSingleton &OcciEnvSingleton::instance() {
+OcciEnvSingleton& OcciEnvSingleton::instance() {
   threading::MutexLocker locker(s_mutex);
 
-  if(nullptr == s_instance.get()) {
+  if (nullptr == s_instance.get()) {
     s_instance.reset(new OcciEnvSingleton());
   }
   return *s_instance;
 }
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

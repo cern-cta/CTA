@@ -15,18 +15,19 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/rdbms/oracle/OracleArchiveFileCatalogue.hpp"
+
+#include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsTapeFileCatalogue.hpp"
+#include "common/Timer.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/Timer.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
@@ -35,12 +36,14 @@
 
 namespace cta::catalogue {
 
-OracleArchiveFileCatalogue::OracleArchiveFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-  RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsArchiveFileCatalogue(log, connPool, rdbmsCatalogue) {}
+OracleArchiveFileCatalogue::OracleArchiveFileCatalogue(log::Logger& log,
+                                                       std::shared_ptr<rdbms::ConnPool> connPool,
+                                                       RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsArchiveFileCatalogue(log, connPool, rdbmsCatalogue) {}
 
-void OracleArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string &diskInstanceName,
-  const uint64_t archiveFileId, log::LogContext &lc) {
+void OracleArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const std::string& diskInstanceName,
+                                                                         const uint64_t archiveFileId,
+                                                                         log::LogContext& lc) {
   const char* selectSql = R"SQL(
     SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
@@ -86,8 +89,8 @@ void OracleArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
   const auto selectFromArchiveFileTime = t.secs();
   std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
   std::set<std::string, std::less<>> vidsToSetDirty;
-  while(selectRset.next()) {
-    if(nullptr == archiveFile.get()) {
+  while (selectRset.next()) {
+    if (nullptr == archiveFile.get()) {
       archiveFile = std::make_unique<common::dataStructures::ArchiveFile>();
 
       archiveFile->archiveFileID = selectRset.columnUint64("ARCHIVE_FILE_ID");
@@ -96,7 +99,8 @@ void OracleArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
       archiveFile->diskFileInfo.owner_uid = static_cast<uint32_t>(selectRset.columnUint64("DISK_FILE_UID"));
       archiveFile->diskFileInfo.gid = static_cast<uint32_t>(selectRset.columnUint64("DISK_FILE_GID"));
       archiveFile->fileSize = selectRset.columnUint64("SIZE_IN_BYTES");
-      archiveFile->checksumBlob.deserializeOrSetAdler32(selectRset.columnBlob("CHECKSUM_BLOB"),
+      archiveFile->checksumBlob.deserializeOrSetAdler32(
+        selectRset.columnBlob("CHECKSUM_BLOB"),
         static_cast<uint32_t>(selectRset.columnUint64("CHECKSUM_ADLER32")));
       archiveFile->storageClass = selectRset.columnString("STORAGE_CLASS_NAME");
       archiveFile->creationTime = selectRset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
@@ -104,7 +108,7 @@ void OracleArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
     }
 
     // If there is a tape file
-    if(!selectRset.columnIsNull("VID")) {
+    if (!selectRset.columnIsNull("VID")) {
       // Add the tape file to the archive file's in-memory structure
       common::dataStructures::TapeFile tapeFile;
       tapeFile.vid = selectRset.columnString("VID");
@@ -114,56 +118,56 @@ void OracleArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
       tapeFile.fileSize = selectRset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = selectRset.columnUint8("COPY_NB");
       tapeFile.creationTime = selectRset.columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
+      tapeFile.checksumBlob = archiveFile->checksumBlob;  // Duplicated for convenience
       archiveFile->tapeFiles.push_back(tapeFile);
     }
   }
 
-  if(nullptr == archiveFile.get()) {
+  if (nullptr == archiveFile.get()) {
     log::ScopedParamContainer spc(lc);
     spc.add("fileId", archiveFileId);
     lc.log(log::WARNING, "Ignoring request to delete archive file because it does not exist in the catalogue");
     return;
   }
 
-  if(diskInstanceName != archiveFile->diskInstance) {
+  if (diskInstanceName != archiveFile->diskInstance) {
     log::ScopedParamContainer spc(lc);
     spc.add("fileId", std::to_string(archiveFile->archiveFileID))
-        .add("diskInstance", archiveFile->diskInstance)
-        .add("requestDiskInstance", diskInstanceName)
-        .add("diskFileId", archiveFile->diskFileId)
-        .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
-        .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
-        .add("fileSize", std::to_string(archiveFile->fileSize))
-        .add("creationTime", std::to_string(archiveFile->creationTime))
-        .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
-        .add("storageClass", archiveFile->storageClass)
-        .add("getConnTime", getConnTime)
-        .add("createStmtTime", createStmtTime)
-        .add("selectFromArchiveFileTime", selectFromArchiveFileTime);
-    for(const auto& tapeFile : archiveFile->tapeFiles) {
+      .add("diskInstance", archiveFile->diskInstance)
+      .add("requestDiskInstance", diskInstanceName)
+      .add("diskFileId", archiveFile->diskFileId)
+      .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+      .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
+      .add("fileSize", std::to_string(archiveFile->fileSize))
+      .add("creationTime", std::to_string(archiveFile->creationTime))
+      .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
+      .add("storageClass", archiveFile->storageClass)
+      .add("getConnTime", getConnTime)
+      .add("createStmtTime", createStmtTime)
+      .add("selectFromArchiveFileTime", selectFromArchiveFileTime);
+    for (const auto& tapeFile : archiveFile->tapeFiles) {
       std::stringstream tapeCopyLogStream;
-      tapeCopyLogStream << "copy number: " << static_cast<int>(tapeFile.copyNb)
-        << " vid: " << tapeFile.vid
-        << " fSeq: " << tapeFile.fSeq
-        << " blockId: " << tapeFile.blockId
-        << " creationTime: " << tapeFile.creationTime
-        << " fileSize: " << tapeFile.fileSize;
+      tapeCopyLogStream << "copy number: " << static_cast<int>(tapeFile.copyNb) << " vid: " << tapeFile.vid
+                        << " fSeq: " << tapeFile.fSeq << " blockId: " << tapeFile.blockId
+                        << " creationTime: " << tapeFile.creationTime << " fileSize: " << tapeFile.fileSize;
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
-    lc.log(log::WARNING, "Failed to delete archive file because the disk instance of the request does not match that "
-      "of the archived file");
+    lc.log(log::WARNING,
+           "Failed to delete archive file because the disk instance of the request does not match that "
+           "of the archived file");
 
     exception::UserError ue;
-    ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId << " because the disk instance of "
-      "the request does not match that of the archived file: archiveFileId=" << archiveFileId << " requestDiskInstance=" << diskInstanceName << " archiveFileDiskInstance=" <<
-      archiveFile->diskInstance;
+    ue.getMessage() << "Failed to delete archive file with ID " << archiveFileId
+                    << " because the disk instance of "
+                       "the request does not match that of the archived file: archiveFileId="
+                    << archiveFileId << " requestDiskInstance=" << diskInstanceName
+                    << " archiveFileDiskInstance=" << archiveFile->diskInstance;
     throw ue;
   }
 
   t.reset();
 
-  auto executeQuery = [&conn](const char *sql, uint64_t archiveFId) {
+  auto executeQuery = [&conn](const char* sql, uint64_t archiveFId) {
     auto stmt = conn.createStmt(sql);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFId);
     stmt.executeNonQuery();
@@ -174,8 +178,8 @@ void OracleArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
   const auto deleteFromTapeFileTime = t.secs(utils::Timer::resetCounter);
 
   //Set the tapes where the files have been deleted to dirty
-  for(auto &vidToSetDirty: vidsToSetDirty){
-    RdbmsCatalogueUtils::setTapeDirty(conn,vidToSetDirty);
+  for (auto& vidToSetDirty : vidsToSetDirty) {
+    RdbmsCatalogueUtils::setTapeDirty(conn, vidToSetDirty);
   }
 
   const auto setTapeDirtyTime = t.secs(utils::Timer::resetCounter);
@@ -189,37 +193,34 @@ void OracleArchiveFileCatalogue::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(const s
 
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", std::to_string(archiveFile->archiveFileID))
-      .add("diskInstance", archiveFile->diskInstance)
-      .add("diskFileId", archiveFile->diskFileId)
-      .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
-      .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
-      .add("fileSize", std::to_string(archiveFile->fileSize))
-      .add("creationTime", std::to_string(archiveFile->creationTime))
-      .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
-      .add("storageClass", archiveFile->storageClass)
-      .add("getConnTime", getConnTime)
-      .add("createStmtTime", createStmtTime)
-      .add("selectFromArchiveFileTime", selectFromArchiveFileTime)
-      .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
-      .add("setTapeDirtyTime",setTapeDirtyTime)
-      .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
-      .add("commitTime", commitTime);
-  for(const auto& tapeFile : archiveFile->tapeFiles) {
+    .add("diskInstance", archiveFile->diskInstance)
+    .add("diskFileId", archiveFile->diskFileId)
+    .add("diskFileInfo.owner_uid", archiveFile->diskFileInfo.owner_uid)
+    .add("diskFileInfo.gid", archiveFile->diskFileInfo.gid)
+    .add("fileSize", std::to_string(archiveFile->fileSize))
+    .add("creationTime", std::to_string(archiveFile->creationTime))
+    .add("reconciliationTime", std::to_string(archiveFile->reconciliationTime))
+    .add("storageClass", archiveFile->storageClass)
+    .add("getConnTime", getConnTime)
+    .add("createStmtTime", createStmtTime)
+    .add("selectFromArchiveFileTime", selectFromArchiveFileTime)
+    .add("deleteFromTapeFileTime", deleteFromTapeFileTime)
+    .add("setTapeDirtyTime", setTapeDirtyTime)
+    .add("deleteFromArchiveFileTime", deleteFromArchiveFileTime)
+    .add("commitTime", commitTime);
+  for (const auto& tapeFile : archiveFile->tapeFiles) {
     std::stringstream tapeCopyLogStream;
-    tapeCopyLogStream << "copy number: " << tapeFile.copyNb
-      << " vid: " << tapeFile.vid
-      << " fSeq: " << tapeFile.fSeq
-      << " blockId: " << tapeFile.blockId
-      << " creationTime: " << tapeFile.creationTime
-      << " fileSize: " << tapeFile.fileSize
-      << " checksumBlob: " << tapeFile.checksumBlob //this shouldn't be here: repeated field
-      << " copyNb: " << static_cast<int>(tapeFile.copyNb); //this shouldn't be here: repeated field
+    tapeCopyLogStream << "copy number: " << tapeFile.copyNb << " vid: " << tapeFile.vid << " fSeq: " << tapeFile.fSeq
+                      << " blockId: " << tapeFile.blockId << " creationTime: " << tapeFile.creationTime
+                      << " fileSize: " << tapeFile.fileSize
+                      << " checksumBlob: " << tapeFile.checksumBlob         //this shouldn't be here: repeated field
+                      << " copyNb: " << static_cast<int>(tapeFile.copyNb);  //this shouldn't be here: repeated field
     spc.add("TAPE FILE", tapeCopyLogStream.str());
   }
   lc.log(log::INFO, "Archive file deleted from CTA catalogue");
 }
 
-uint64_t OracleArchiveFileCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
+uint64_t OracleArchiveFileCatalogue::getNextArchiveFileId(rdbms::Conn& conn) {
   const char* const sql = R"SQL(
     SELECT
       ARCHIVE_FILE_ID_SEQ.NEXTVAL AS ARCHIVE_FILE_ID
@@ -235,41 +236,43 @@ uint64_t OracleArchiveFileCatalogue::getNextArchiveFileId(rdbms::Conn &conn) {
   return rset.columnUint64("ARCHIVE_FILE_ID");
 }
 
-void OracleArchiveFileCatalogue::copyArchiveFileToFileRecyleLogAndDelete(rdbms::Conn & conn,
-  const common::dataStructures::DeleteArchiveRequest &request, log::LogContext & lc){
+void OracleArchiveFileCatalogue::copyArchiveFileToFileRecyleLogAndDelete(
+  rdbms::Conn& conn,
+  const common::dataStructures::DeleteArchiveRequest& request,
+  log::LogContext& lc) {
   utils::Timer t;
   log::TimingList tl;
   //We currently do an INSERT INTO, update and two DELETE FROM
   //in a single transaction
   conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
   const auto fileRecycleLog = static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
-  fileRecycleLog->copyArchiveFileToFileRecycleLog(conn,request);
-  tl.insertAndReset("insertToRecycleBinTime",t);
-  RdbmsCatalogueUtils::setTapeDirty(conn,request.archiveFileID);
-  tl.insertAndReset("setTapeDirtyTime",t);
+  fileRecycleLog->copyArchiveFileToFileRecycleLog(conn, request);
+  tl.insertAndReset("insertToRecycleBinTime", t);
+  RdbmsCatalogueUtils::setTapeDirty(conn, request.archiveFileID);
+  tl.insertAndReset("setTapeDirtyTime", t);
   const auto tapeFileCatalogue = static_cast<RdbmsTapeFileCatalogue*>(m_rdbmsCatalogue->TapeFile().get());
-  tapeFileCatalogue->deleteTapeFiles(conn,request);
-  tl.insertAndReset("deleteTapeFilesTime",t);
+  tapeFileCatalogue->deleteTapeFiles(conn, request);
+  tl.insertAndReset("deleteTapeFilesTime", t);
   conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_ON);
-  deleteArchiveFile(conn,request);
-  tl.insertAndReset("deleteArchiveFileTime",t);
+  deleteArchiveFile(conn, request);
+  tl.insertAndReset("deleteArchiveFileTime", t);
   log::ScopedParamContainer spc(lc);
-  spc.add("archiveFileId",request.archiveFileID);
-  spc.add("diskFileId",request.diskFileId);
-  spc.add("diskFilePath",request.diskFilePath);
-  spc.add("diskInstance",request.diskInstance);
+  spc.add("archiveFileId", request.archiveFileID);
+  spc.add("diskFileId", request.diskFileId);
+  spc.add("diskFilePath", request.diskFilePath);
+  spc.add("diskInstance", request.diskInstance);
   tl.addToLog(spc);
-  lc.log(log::INFO,"In OracleCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
+  lc.log(log::INFO, "In OracleCatalogue::copyArchiveFileToRecycleBinAndDelete: ArchiveFile moved to the recycle-bin.");
 }
 
 //------------------------------------------------------------------------------
 // selectArchiveFileSizeAndChecksum
 //------------------------------------------------------------------------------
 std::map<uint64_t, OracleArchiveFileCatalogue::FileSizeAndChecksum>
-  OracleArchiveFileCatalogue::selectArchiveFileSizesAndChecksums(rdbms::Conn &conn,
-  const std::set<TapeFileWritten> &events) const {
+OracleArchiveFileCatalogue::selectArchiveFileSizesAndChecksums(rdbms::Conn& conn,
+                                                               const std::set<TapeFileWritten>& events) const {
   std::vector<oracle::occi::Number> archiveFileIdList(events.size());
-  for (const auto &event: events) {
+  for (const auto& event : events) {
     archiveFileIdList.emplace_back(event.archiveFileId);
   }
 
@@ -292,11 +295,13 @@ std::map<uint64_t, OracleArchiveFileCatalogue::FileSizeAndChecksum>
     const uint64_t archiveFileId = rset.columnUint64("ARCHIVE_FILE_ID");
 
     if (fileSizesAndChecksums.contains(archiveFileId)) {
-      throw exception::Exception("Found duplicate archive file identifier in batch of files written to tape: archiveFileId=" + archiveFileId);
+      throw exception::Exception(
+        "Found duplicate archive file identifier in batch of files written to tape: archiveFileId=" + archiveFileId);
     }
     FileSizeAndChecksum fileSizeAndChecksum;
     fileSizeAndChecksum.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-    fileSizeAndChecksum.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"),
+    fileSizeAndChecksum.checksumBlob.deserializeOrSetAdler32(
+      rset.columnBlob("CHECKSUM_BLOB"),
       static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
     fileSizesAndChecksums[archiveFileId] = fileSizeAndChecksum;
   }
@@ -304,4 +309,4 @@ std::map<uint64_t, OracleArchiveFileCatalogue::FileSizeAndChecksum>
   return fileSizesAndChecksums;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

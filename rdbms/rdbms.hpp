@@ -38,7 +38,7 @@ namespace cta::rdbms {
  * an exception error message.
  * @return The SQL string to be used in an exception message.
  */
- std::string getSqlForException(const std::string &sql,
-   const std::string::size_type maxSqlLenInExceptions = MAX_SQL_LEN_IN_EXCEPTIONS);
+std::string getSqlForException(const std::string& sql,
+                               const std::string::size_type maxSqlLenInExceptions = MAX_SQL_LEN_IN_EXCEPTIONS);
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

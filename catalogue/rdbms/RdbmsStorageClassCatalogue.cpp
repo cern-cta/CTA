@@ -15,34 +15,36 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <list>
-#include <string>
+#include "catalogue/rdbms/RdbmsStorageClassCatalogue.hpp"
 
 #include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
-#include "catalogue/rdbms/RdbmsStorageClassCatalogue.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/StorageClass.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
-#include "common/log/Logger.hpp"
-#include "common/dataStructures/SecurityIdentity.hpp"
-#include "rdbms/Conn.hpp"
+
+#include <list>
+#include <string>
 
 namespace cta::catalogue {
 
-RdbmsStorageClassCatalogue::RdbmsStorageClassCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-   RdbmsCatalogue *rdbmsCatalogue):
-  m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsStorageClassCatalogue::RdbmsStorageClassCatalogue(log::Logger& log,
+                                                       std::shared_ptr<rdbms::ConnPool> connPool,
+                                                       RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
-void RdbmsStorageClassCatalogue::createStorageClass(
-  const common::dataStructures::SecurityIdentity &admin,
-  const common::dataStructures::StorageClass &storageClass) {
-  if(storageClass.name.empty()) {
+void RdbmsStorageClassCatalogue::createStorageClass(const common::dataStructures::SecurityIdentity& admin,
+                                                    const common::dataStructures::StorageClass& storageClass) {
+  if (storageClass.name.empty()) {
     throw UserSpecifiedAnEmptyStringStorageClassName("Cannot create storage class because the storage class name is"
-      " an empty string");
+                                                     " an empty string");
   }
 
   if (storageClass.comment.empty()) {
@@ -51,18 +53,18 @@ void RdbmsStorageClassCatalogue::createStorageClass(
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(storageClass.comment, &m_log);
   std::string vo = storageClass.vo.name;
 
-  if(vo.empty()) {
+  if (vo.empty()) {
     throw UserSpecifiedAnEmptyStringVo("Cannot create storage class because the vo is an empty string");
   }
 
   auto conn = m_connPool->getConn();
-  if(RdbmsCatalogueUtils::storageClassExists(conn, storageClass.name)) {
-    throw exception::UserError(std::string("Cannot create storage class : ") +
-      storageClass.name + " because it already exists");
+  if (RdbmsCatalogueUtils::storageClassExists(conn, storageClass.name)) {
+    throw exception::UserError(std::string("Cannot create storage class : ") + storageClass.name
+                               + " because it already exists");
   }
-  if(!RdbmsCatalogueUtils::virtualOrganizationExists(conn,vo)) {
-    throw exception::UserError(std::string("Cannot create storage class : ") +
-      storageClass.name + " because the vo : " + vo + " does not exist");
+  if (!RdbmsCatalogueUtils::virtualOrganizationExists(conn, vo)) {
+    throw exception::UserError(std::string("Cannot create storage class : ") + storageClass.name
+                               + " because the vo : " + vo + " does not exist");
   }
   const uint64_t storageClassId = getNextStorageClassId(conn);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -103,7 +105,7 @@ void RdbmsStorageClassCatalogue::createStorageClass(
   stmt.bindUint64(":STORAGE_CLASS_ID", storageClassId);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClass.name);
   stmt.bindUint64(":NB_COPIES", storageClass.nbCopies);
-  stmt.bindString(":VO",vo);
+  stmt.bindString(":VO", vo);
 
   stmt.bindString(":USER_COMMENT", trimmedComment);
 
@@ -118,22 +120,22 @@ void RdbmsStorageClassCatalogue::createStorageClass(
   stmt.executeNonQuery();
 }
 
-void RdbmsStorageClassCatalogue::deleteStorageClass(const std::string &storageClassName) {
+void RdbmsStorageClassCatalogue::deleteStorageClass(const std::string& storageClassName) {
   auto conn = m_connPool->getConn();
 
-  if(storageClassIsUsedByArchiveRoutes(conn, storageClassName)) {
-    throw UserSpecifiedStorageClassUsedByArchiveRoutes(std::string("The ") + storageClassName +
-      " storage class is being used by one or more archive routes");
+  if (storageClassIsUsedByArchiveRoutes(conn, storageClassName)) {
+    throw UserSpecifiedStorageClassUsedByArchiveRoutes(std::string("The ") + storageClassName
+                                                       + " storage class is being used by one or more archive routes");
   }
 
-  if(storageClassIsUsedByArchiveFiles(conn, storageClassName)) {
-    throw UserSpecifiedStorageClassUsedByArchiveFiles(std::string("The ") + storageClassName +
-      " storage class is being used by one or more archive files");
+  if (storageClassIsUsedByArchiveFiles(conn, storageClassName)) {
+    throw UserSpecifiedStorageClassUsedByArchiveFiles(std::string("The ") + storageClassName
+                                                      + " storage class is being used by one or more archive files");
   }
 
-  if(storageClassIsUsedByFileRecyleLogs(conn,storageClassName)){
-    throw UserSpecifiedStorageClassUsedByFileRecycleLogs(std::string("The ") + storageClassName +
-      " storage class is being used by one or more file in the recycle logs");
+  if (storageClassIsUsedByFileRecyleLogs(conn, storageClassName)) {
+    throw UserSpecifiedStorageClassUsedByFileRecycleLogs(
+      std::string("The ") + storageClassName + " storage class is being used by one or more file in the recycle logs");
   }
 
   const char* const sql = R"SQL(
@@ -147,9 +149,9 @@ void RdbmsStorageClassCatalogue::deleteStorageClass(const std::string &storageCl
   stmt.bindString(":STORAGE_CLASS_NAME", storageClassName);
 
   stmt.executeNonQuery();
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot delete storage-class : ") +
-      storageClassName + " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot delete storage-class : ") + storageClassName
+                               + " because it does not exist");
   }
 }
 
@@ -200,7 +202,7 @@ std::list<common::dataStructures::StorageClass> RdbmsStorageClassCatalogue::getS
   return storageClasses;
 }
 
-common::dataStructures::StorageClass RdbmsStorageClassCatalogue::getStorageClass(const std::string &name) const {
+common::dataStructures::StorageClass RdbmsStorageClassCatalogue::getStorageClass(const std::string& name) const {
   const char* const sql = R"SQL(
     SELECT
       STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
@@ -229,8 +231,7 @@ common::dataStructures::StorageClass RdbmsStorageClassCatalogue::getStorageClass
   auto rset = stmt.executeQuery();
   rset.next();
   if (rset.isEmpty()) {
-    throw exception::UserError(std::string("Cannot get storage class : ") + name +
-      " because it does not exist");
+    throw exception::UserError(std::string("Cannot get storage class : ") + name + " because it does not exist");
   }
   common::dataStructures::StorageClass storageClass;
 
@@ -249,8 +250,9 @@ common::dataStructures::StorageClass RdbmsStorageClassCatalogue::getStorageClass
   return storageClass;
 }
 
-void RdbmsStorageClassCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t nbCopies) {
+void RdbmsStorageClassCatalogue::modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity& admin,
+                                                            const std::string& name,
+                                                            const uint64_t nbCopies) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE STORAGE_CLASS SET
@@ -270,14 +272,14 @@ void RdbmsStorageClassCatalogue::modifyStorageClassNbCopies(const common::dataSt
   stmt.bindString(":STORAGE_CLASS_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify storage class : ") + name +
-      " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify storage class : ") + name + " because it does not exist");
   }
 }
 
-void RdbmsStorageClassCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
+void RdbmsStorageClassCatalogue::modifyStorageClassComment(const common::dataStructures::SecurityIdentity& admin,
+                                                           const std::string& name,
+                                                           const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -299,14 +301,14 @@ void RdbmsStorageClassCatalogue::modifyStorageClassComment(const common::dataStr
   stmt.bindString(":STORAGE_CLASS_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify storage class : ") + name +
-      " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify storage class : ") + name + " because it does not exist");
   }
 }
 
-void RdbmsStorageClassCatalogue::modifyStorageClassVo(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &vo) {
+void RdbmsStorageClassCatalogue::modifyStorageClassVo(const common::dataStructures::SecurityIdentity& admin,
+                                                      const std::string& name,
+                                                      const std::string& vo) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE STORAGE_CLASS SET
@@ -318,12 +320,13 @@ void RdbmsStorageClassCatalogue::modifyStorageClassVo(const common::dataStructur
       STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
   )SQL";
   auto conn = m_connPool->getConn();
-  if(vo.empty()){
-    throw UserSpecifiedAnEmptyStringVo(std::string("Cannot modify the vo of the storage class : ") + name + " because the vo is an empty string");
+  if (vo.empty()) {
+    throw UserSpecifiedAnEmptyStringVo(std::string("Cannot modify the vo of the storage class : ") + name
+                                       + " because the vo is an empty string");
   }
-  if(!RdbmsCatalogueUtils::virtualOrganizationExists(conn,vo)){
-    throw exception::UserError(std::string("Cannot modify storage class : ") + name +
-      " because the vo " + vo + " does not exist");
+  if (!RdbmsCatalogueUtils::virtualOrganizationExists(conn, vo)) {
+    throw exception::UserError(std::string("Cannot modify storage class : ") + name + " because the vo " + vo
+                               + " does not exist");
   }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VO", vo);
@@ -333,14 +336,14 @@ void RdbmsStorageClassCatalogue::modifyStorageClassVo(const common::dataStructur
   stmt.bindString(":STORAGE_CLASS_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify storage class : ") + name +
-      " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify storage class : ") + name + " because it does not exist");
   }
 }
 
-void RdbmsStorageClassCatalogue::modifyStorageClassName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &currentName, const std::string &newName) {
+void RdbmsStorageClassCatalogue::modifyStorageClassName(const common::dataStructures::SecurityIdentity& admin,
+                                                        const std::string& currentName,
+                                                        const std::string& newName) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE STORAGE_CLASS SET
@@ -352,8 +355,9 @@ void RdbmsStorageClassCatalogue::modifyStorageClassName(const common::dataStruct
       STORAGE_CLASS_NAME = :CURRENT_STORAGE_CLASS_NAME
   )SQL";
   auto conn = m_connPool->getConn();
-  if(newName != currentName && RdbmsCatalogueUtils::storageClassExists(conn,newName)){
-    throw exception::UserError(std::string("Cannot modify the storage class name ") + currentName +". The new name : " + newName+" already exists in the database.");
+  if (newName != currentName && RdbmsCatalogueUtils::storageClassExists(conn, newName)) {
+    throw exception::UserError(std::string("Cannot modify the storage class name ") + currentName
+                               + ". The new name : " + newName + " already exists in the database.");
   }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":NEW_STORAGE_CLASS_NAME", newName);
@@ -363,14 +367,14 @@ void RdbmsStorageClassCatalogue::modifyStorageClassName(const common::dataStruct
   stmt.bindString(":CURRENT_STORAGE_CLASS_NAME", currentName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify storage class : ") + currentName +
-      " because it does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify storage class : ") + currentName
+                               + " because it does not exist");
   }
 }
 
-bool RdbmsStorageClassCatalogue::storageClassIsUsedByArchiveRoutes(rdbms::Conn &conn,
-  const std::string &storageClassName) const {
+bool RdbmsStorageClassCatalogue::storageClassIsUsedByArchiveRoutes(rdbms::Conn& conn,
+                                                                   const std::string& storageClassName) const {
   const char* const sql = R"SQL(
     SELECT
       STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME
@@ -389,8 +393,8 @@ bool RdbmsStorageClassCatalogue::storageClassIsUsedByArchiveRoutes(rdbms::Conn &
   return rset.next();
 }
 
-bool RdbmsStorageClassCatalogue::storageClassIsUsedByArchiveFiles(rdbms::Conn &conn,
-  const std::string &storageClassName) const {
+bool RdbmsStorageClassCatalogue::storageClassIsUsedByArchiveFiles(rdbms::Conn& conn,
+                                                                  const std::string& storageClassName) const {
   const char* const sql = R"SQL(
     SELECT
       STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME
@@ -409,8 +413,8 @@ bool RdbmsStorageClassCatalogue::storageClassIsUsedByArchiveFiles(rdbms::Conn &c
   return rset.next();
 }
 
-bool RdbmsStorageClassCatalogue::storageClassIsUsedByFileRecyleLogs(rdbms::Conn &conn,
-  const std::string &storageClassName) const {
+bool RdbmsStorageClassCatalogue::storageClassIsUsedByFileRecyleLogs(rdbms::Conn& conn,
+                                                                    const std::string& storageClassName) const {
   const char* const sql = R"SQL(
     SELECT
       STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME
@@ -429,4 +433,4 @@ bool RdbmsStorageClassCatalogue::storageClassIsUsedByFileRecyleLogs(rdbms::Conn 
   return rset.next();
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

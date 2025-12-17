@@ -15,13 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
-#include <optional>
-#include <string>
+#include "catalogue/rdbms/RdbmsLogicalLibraryCatalogue.hpp"
 
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
-#include "catalogue/rdbms/RdbmsLogicalLibraryCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsPhysicalLibraryCatalogue.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -31,27 +28,38 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <memory>
+#include <optional>
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsLogicalLibraryCatalogue::RdbmsLogicalLibraryCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-  RdbmsCatalogue *rdbmsCatalogue)
-  : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsLogicalLibraryCatalogue::RdbmsLogicalLibraryCatalogue(log::Logger& log,
+                                                           std::shared_ptr<rdbms::ConnPool> connPool,
+                                                           RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
-void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) {
+void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity& admin,
+                                                        const std::string& name,
+                                                        const bool isDisabled,
+                                                        const std::optional<std::string>& physicalLibraryName,
+                                                        const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   auto conn = m_connPool->getConn();
-  if(RdbmsCatalogueUtils::logicalLibraryExists(conn, name)) {
-    throw exception::UserError(std::string("Cannot create logical library ") + name +
-      " because a logical library with the same name already exists");
+  if (RdbmsCatalogueUtils::logicalLibraryExists(conn, name)) {
+    throw exception::UserError(std::string("Cannot create logical library ") + name
+                               + " because a logical library with the same name already exists");
   }
   std::optional<uint64_t> physicalLibraryId;
-  if(physicalLibraryName) {
-    const auto physicalLibCatalogue = static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
+  if (physicalLibraryName) {
+    const auto physicalLibCatalogue =
+      static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
     physicalLibraryId = physicalLibCatalogue->getPhysicalLibraryId(conn, physicalLibraryName.value());
-    if(!physicalLibraryId.has_value()) {
-      throw exception::UserError(std::string("Cannot create logical library ") + name + " because physical library " +
-        physicalLibraryName.value() + " does not exist");
+    if (!physicalLibraryId.has_value()) {
+      throw exception::UserError(std::string("Cannot create logical library ") + name + " because physical library "
+                                 + physicalLibraryName.value() + " does not exist");
     }
   }
   const uint64_t logicalLibraryId = getNextLogicalLibraryId(conn);
@@ -108,7 +116,7 @@ void RdbmsLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStruct
   stmt.executeNonQuery();
 }
 
-void RdbmsLogicalLibraryCatalogue::deleteLogicalLibrary(const std::string &name) {
+void RdbmsLogicalLibraryCatalogue::deleteLogicalLibrary(const std::string& name) {
   const char* const sql = R"SQL(
     DELETE FROM LOGICAL_LIBRARY
     WHERE
@@ -128,13 +136,13 @@ void RdbmsLogicalLibraryCatalogue::deleteLogicalLibrary(const std::string &name)
 
   // The delete statement will effect no rows and will not raise an error if
   // either the logical library does not exist or if it still contains tapes
-  if(0 == stmt.getNbAffectedRows()) {
-    if(RdbmsCatalogueUtils::logicalLibraryExists(conn, name)) {
-      throw UserSpecifiedANonEmptyLogicalLibrary(std::string("Cannot delete logical library ") + name +
-        " because it contains one or more tapes");
+  if (0 == stmt.getNbAffectedRows()) {
+    if (RdbmsCatalogueUtils::logicalLibraryExists(conn, name)) {
+      throw UserSpecifiedANonEmptyLogicalLibrary(std::string("Cannot delete logical library ") + name
+                                                 + " because it contains one or more tapes");
     } else {
-      throw UserSpecifiedANonExistentLogicalLibrary(std::string("Cannot delete logical library ") + name +
-        " because it does not exist");
+      throw UserSpecifiedANonExistentLogicalLibrary(std::string("Cannot delete logical library ") + name
+                                                    + " because it does not exist");
     }
   }
 }
@@ -188,14 +196,15 @@ std::list<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::
   return libs;
 }
 
-void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &currentName, const std::string &newName) {
-  if(currentName.empty()) {
+void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
+                                                            const std::string& currentName,
+                                                            const std::string& newName) {
+  if (currentName.empty()) {
     throw UserSpecifiedAnEmptyStringLogicalLibraryName(
       "Cannot modify logical library because the logical library name is an empty string");
   }
 
-  if(newName.empty()) {
+  if (newName.empty()) {
     throw UserSpecifiedAnEmptyStringLogicalLibraryName(
       "Cannot modify logical library because the new name is an empty string");
   }
@@ -219,14 +228,15 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryName(const common::dataSt
   stmt.bindString(":CURRENT_LOGICAL_LIBRARY_NAME", currentName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify logical library ") + currentName
-      + " because it does not exist");
+                               + " because it does not exist");
   }
 }
 
-void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
+void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity& admin,
+                                                               const std::string& name,
+                                                               const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -247,21 +257,24 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dat
   stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify logical library ") + name + " because it does not exist");
   }
 }
 
-void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &physicalLibraryName) {
+void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const std::string& physicalLibraryName) {
   auto conn = m_connPool->getConn();
   std::optional<std::uint64_t> physicalLibraryId;
-  if(physicalLibraryName != "") {
-    const auto physicalLibCatalogue = static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
+  if (physicalLibraryName != "") {
+    const auto physicalLibCatalogue =
+      static_cast<RdbmsPhysicalLibraryCatalogue*>(m_rdbmsCatalogue->PhysicalLibrary().get());
     physicalLibraryId = physicalLibCatalogue->getPhysicalLibraryId(conn, physicalLibraryName);
-    if(!physicalLibraryId.has_value()) {
-      throw exception::UserError(std::string("Cannot update logical library ") + name + " because physical library " +
-        physicalLibraryName + " does not exist");
+    if (!physicalLibraryId.has_value()) {
+      throw exception::UserError(std::string("Cannot update logical library ") + name + " because physical library "
+                                 + physicalLibraryName + " does not exist");
     }
   } else {
     physicalLibraryId = std::nullopt;
@@ -284,13 +297,15 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const com
   stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify logical library ") + name + " because it does not exist");
   }
 }
 
 void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &disabledReason) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const std::string& disabledReason) {
   const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(disabledReason, &m_log);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -311,13 +326,14 @@ void RdbmsLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
   stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify logical library ") + name + " because it does not exist");
   }
 }
 
-void RdbmsLogicalLibraryCatalogue::setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const bool disabledValue) {
+void RdbmsLogicalLibraryCatalogue::setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity& admin,
+                                                             const std::string& name,
+                                                             const bool disabledValue) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE LOGICAL_LIBRARY SET
@@ -337,13 +353,13 @@ void RdbmsLogicalLibraryCatalogue::setLogicalLibraryDisabled(const common::dataS
   stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify logical library ") + name + " because it does not exist");
   }
 }
 
-std::optional<uint64_t> RdbmsLogicalLibraryCatalogue::getLogicalLibraryId(rdbms::Conn &conn,
-  const std::string &name) const {
+std::optional<uint64_t> RdbmsLogicalLibraryCatalogue::getLogicalLibraryId(rdbms::Conn& conn,
+                                                                          const std::string& name) const {
   const char* const sql = R"SQL(
     SELECT
       LOGICAL_LIBRARY_ID AS LOGICAL_LIBRARY_ID
@@ -355,10 +371,10 @@ std::optional<uint64_t> RdbmsLogicalLibraryCatalogue::getLogicalLibraryId(rdbms:
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":LOGICAL_LIBRARY_NAME", name);
   auto rset = stmt.executeQuery();
-  if(!rset.next()) {
+  if (!rset.next()) {
     return std::nullopt;
   }
   return rset.columnUint64("LOGICAL_LIBRARY_ID");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

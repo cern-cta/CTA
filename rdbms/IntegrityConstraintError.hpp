@@ -21,7 +21,6 @@
 
 #include <string>
 
-
 namespace cta::rdbms {
 
 /**
@@ -31,4 +30,4 @@ class IntegrityConstraintError : public ConstraintError {
   using ConstraintError::ConstraintError;
 };
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

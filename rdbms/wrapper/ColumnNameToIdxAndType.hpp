@@ -25,7 +25,6 @@ namespace cta::rdbms::wrapper {
  */
 class ColumnNameToIdxAndType {
 public:
-
   /**
    * Structure to store a column's index and type.  With SQLite 3 the type of a
    * column needs to be stored before any type conversion has taken place.  This
@@ -54,7 +53,7 @@ public:
    * @param name The name of the column.
    * @param idxAndType The column index and type.
    */
-  void add(const std::string &name, const IdxAndType &idxAndType);
+  void add(const std::string& name, const IdxAndType& idxAndType);
 
   /**
    * Returns the index and type of the column with the specified name.
@@ -65,7 +64,7 @@ public:
    * @param name The name of the column.
    * @return The index and type of the column.
    */
-  IdxAndType getIdxAndType(const std::string &name) const;
+  IdxAndType getIdxAndType(const std::string& name) const;
 
   /**
    * Returns true if this map is empty.
@@ -80,12 +79,11 @@ public:
   void clear();
 
 private:
-
   /**
    * The underlying STL map from column name to column index.
    */
   std::map<std::string, IdxAndType> m_nameToIdxAndType;
 
-}; // class ColumnNameToIdxAndType
+};  // class ColumnNameToIdxAndType
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

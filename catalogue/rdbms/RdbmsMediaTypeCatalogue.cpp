@@ -15,49 +15,53 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#include "catalogue/rdbms/RdbmsMediaTypeCatalogue.hpp"
 
 #include "catalogue/MediaType.hpp"
 #include "catalogue/MediaTypeWithLogs.hpp"
 #include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
-#include "catalogue/rdbms/RdbmsMediaTypeCatalogue.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsMediaTypeCatalogue::RdbmsMediaTypeCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-  RdbmsCatalogue *rdbmsCatalogue)
-  : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsMediaTypeCatalogue::RdbmsMediaTypeCatalogue(log::Logger& log,
+                                                 std::shared_ptr<rdbms::ConnPool> connPool,
+                                                 RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
-void RdbmsMediaTypeCatalogue::createMediaType(const common::dataStructures::SecurityIdentity &admin,
-  const MediaType &mediaType) {
+void RdbmsMediaTypeCatalogue::createMediaType(const common::dataStructures::SecurityIdentity& admin,
+                                              const MediaType& mediaType) {
   if (mediaType.name.empty()) {
     throw UserSpecifiedAnEmptyStringMediaTypeName("Cannot create media type because the media type name is an"
-      " empty string");
+                                                  " empty string");
   }
 
   if (mediaType.cartridge.empty()) {
-    throw UserSpecifiedAnEmptyStringCartridge(std::string("Cannot create media type ") + mediaType.name +
-      " because the cartridge is an empty string");
+    throw UserSpecifiedAnEmptyStringCartridge(std::string("Cannot create media type ") + mediaType.name
+                                              + " because the cartridge is an empty string");
   }
 
   if (mediaType.comment.empty()) {
-    throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create media type ") + mediaType.name +
-      " because the comment is an empty string");
+    throw UserSpecifiedAnEmptyStringComment(std::string("Cannot create media type ") + mediaType.name
+                                            + " because the comment is an empty string");
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(mediaType.comment, &m_log);
-  if (mediaType.capacityInBytes == 0){
+  if (mediaType.capacityInBytes == 0) {
     throw UserSpecifiedAZeroCapacity(std::string("Cannot create media type ") + mediaType.name
-      + " because the capacity is zero");
+                                     + " because the capacity is zero");
   }
   auto conn = m_connPool->getConn();
   if (RdbmsCatalogueUtils::mediaTypeExists(conn, mediaType.name)) {
-    throw exception::UserError(std::string("Cannot create media type ") + mediaType.name +
-      " because it already exists");
+    throw exception::UserError(std::string("Cannot create media type ") + mediaType.name
+                               + " because it already exists");
   }
   const uint64_t mediaTypeId = getNextMediaTypeId(conn);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -128,12 +132,12 @@ void RdbmsMediaTypeCatalogue::createMediaType(const common::dataStructures::Secu
   stmt.executeNonQuery();
 }
 
-void RdbmsMediaTypeCatalogue::deleteMediaType(const std::string &name) {
+void RdbmsMediaTypeCatalogue::deleteMediaType(const std::string& name) {
   auto conn = m_connPool->getConn();
 
-  if(mediaTypeIsUsedByTapes(conn, name)) {
-    throw UserSpecifiedMediaTypeUsedByTapes(std::string("The ") + name +
-      " media type is being used by one or more tapes");
+  if (mediaTypeIsUsedByTapes(conn, name)) {
+    throw UserSpecifiedMediaTypeUsedByTapes(std::string("The ") + name
+                                            + " media type is being used by one or more tapes");
   }
 
   const char* const sql = R"SQL(
@@ -147,7 +151,7 @@ void RdbmsMediaTypeCatalogue::deleteMediaType(const std::string &name) {
   stmt.bindString(":MEDIA_TYPE_NAME", name);
 
   stmt.executeNonQuery();
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot delete media type ") + name + " because it does not exist");
   }
 }
@@ -207,7 +211,7 @@ std::list<MediaTypeWithLogs> RdbmsMediaTypeCatalogue::getMediaTypes() const {
   return mediaTypes;
 }
 
-MediaType RdbmsMediaTypeCatalogue::getMediaTypeByVid(const std::string & vid) const {
+MediaType RdbmsMediaTypeCatalogue::getMediaTypeByVid(const std::string& vid) const {
   std::list<MediaTypeWithLogs> mediaTypes;
   const char* const sql = R"SQL(
     SELECT
@@ -230,9 +234,9 @@ MediaType RdbmsMediaTypeCatalogue::getMediaTypeByVid(const std::string & vid) co
   )SQL";
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":VID",vid);
+  stmt.bindString(":VID", vid);
   auto rset = stmt.executeQuery();
-  if(rset.next()){
+  if (rset.next()) {
     MediaType mediaType;
 
     mediaType.name = rset.columnString("MEDIA_TYPE_NAME");
@@ -247,12 +251,13 @@ MediaType RdbmsMediaTypeCatalogue::getMediaTypeByVid(const std::string & vid) co
 
     return mediaType;
   } else {
-    throw exception::Exception("The tape vid "+vid+" does not exist.");
+    throw exception::Exception("The tape vid " + vid + " does not exist.");
   }
 }
 
-void RdbmsMediaTypeCatalogue::modifyMediaTypeName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &currentName, const std::string &newName) {
+void RdbmsMediaTypeCatalogue::modifyMediaTypeName(const common::dataStructures::SecurityIdentity& admin,
+                                                  const std::string& currentName,
+                                                  const std::string& newName) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE MEDIA_TYPE SET
@@ -264,9 +269,9 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeName(const common::dataStructures::
       MEDIA_TYPE_NAME = :CURRENT_MEDIA_TYPE_NAME
   )SQL";
   auto conn = m_connPool->getConn();
-  if(newName != currentName && RdbmsCatalogueUtils::mediaTypeExists(conn, newName)){
-    throw exception::UserError(std::string("Cannot modify the media type name ") + currentName +". The new name : "
-    + newName + " already exists in the database.");
+  if (newName != currentName && RdbmsCatalogueUtils::mediaTypeExists(conn, newName)) {
+    throw exception::UserError(std::string("Cannot modify the media type name ") + currentName
+                               + ". The new name : " + newName + " already exists in the database.");
   }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":NEW_MEDIA_TYPE_NAME", newName);
@@ -276,13 +281,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeName(const common::dataStructures::
   stmt.bindString(":CURRENT_MEDIA_TYPE_NAME", currentName);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify media type ") + currentName + " because it does not exist");
   }
 }
 
-void RdbmsMediaTypeCatalogue::modifyMediaTypeCartridge(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &cartridge) {
+void RdbmsMediaTypeCatalogue::modifyMediaTypeCartridge(const common::dataStructures::SecurityIdentity& admin,
+                                                       const std::string& name,
+                                                       const std::string& cartridge) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE MEDIA_TYPE SET
@@ -302,13 +308,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeCartridge(const common::dataStructu
   stmt.bindString(":MEDIA_TYPE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify media type ") + name + " because it does not exist");
   }
 }
 
-void RdbmsMediaTypeCatalogue::modifyMediaTypeCapacityInBytes(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint64_t capacityInBytes) {
+void RdbmsMediaTypeCatalogue::modifyMediaTypeCapacityInBytes(const common::dataStructures::SecurityIdentity& admin,
+                                                             const std::string& name,
+                                                             const uint64_t capacityInBytes) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE MEDIA_TYPE SET
@@ -328,13 +335,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeCapacityInBytes(const common::dataS
   stmt.bindString(":MEDIA_TYPE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify media type ") + name + " because it does not exist");
   }
 }
 
-void RdbmsMediaTypeCatalogue::modifyMediaTypePrimaryDensityCode(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint8_t primaryDensityCode) {
+void RdbmsMediaTypeCatalogue::modifyMediaTypePrimaryDensityCode(const common::dataStructures::SecurityIdentity& admin,
+                                                                const std::string& name,
+                                                                const uint8_t primaryDensityCode) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE MEDIA_TYPE SET
@@ -354,13 +362,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypePrimaryDensityCode(const common::da
   stmt.bindString(":MEDIA_TYPE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify media type ") + name + " because it does not exist");
   }
 }
 
-void RdbmsMediaTypeCatalogue::modifyMediaTypeSecondaryDensityCode(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const uint8_t secondaryDensityCode) {
+void RdbmsMediaTypeCatalogue::modifyMediaTypeSecondaryDensityCode(const common::dataStructures::SecurityIdentity& admin,
+                                                                  const std::string& name,
+                                                                  const uint8_t secondaryDensityCode) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE MEDIA_TYPE SET
@@ -380,13 +389,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeSecondaryDensityCode(const common::
   stmt.bindString(":MEDIA_TYPE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify media type ") + name + " because it does not exist");
   }
 }
 
-void RdbmsMediaTypeCatalogue::modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::optional<std::uint32_t> &nbWraps) {
+void RdbmsMediaTypeCatalogue::modifyMediaTypeNbWraps(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& name,
+                                                     const std::optional<std::uint32_t>& nbWraps) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE MEDIA_TYPE SET
@@ -406,13 +416,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeNbWraps(const common::dataStructure
   stmt.bindString(":MEDIA_TYPE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify media type ") + name + " because it does not exist");
   }
 }
 
-void RdbmsMediaTypeCatalogue::modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::optional<std::uint64_t> &minLPos) {
+void RdbmsMediaTypeCatalogue::modifyMediaTypeMinLPos(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& name,
+                                                     const std::optional<std::uint64_t>& minLPos) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE MEDIA_TYPE SET
@@ -432,13 +443,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeMinLPos(const common::dataStructure
   stmt.bindString(":MEDIA_TYPE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify media type ") + name + " because it does not exist");
   }
 }
 
-void RdbmsMediaTypeCatalogue::modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::optional<std::uint64_t> &maxLPos) {
+void RdbmsMediaTypeCatalogue::modifyMediaTypeMaxLPos(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& name,
+                                                     const std::optional<std::uint64_t>& maxLPos) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE MEDIA_TYPE SET
@@ -458,13 +470,14 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeMaxLPos(const common::dataStructure
   stmt.bindString(":MEDIA_TYPE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify media type ") + name + " because it does not exist");
   }
 }
 
-void RdbmsMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &comment) {
+void RdbmsMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& name,
+                                                     const std::string& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -485,12 +498,12 @@ void RdbmsMediaTypeCatalogue::modifyMediaTypeComment(const common::dataStructure
   stmt.bindString(":MEDIA_TYPE_NAME", name);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify media type ") + name + " because it does not exist");
   }
 }
 
-bool RdbmsMediaTypeCatalogue::mediaTypeIsUsedByTapes(rdbms::Conn &conn, const std::string &name) const {
+bool RdbmsMediaTypeCatalogue::mediaTypeIsUsedByTapes(rdbms::Conn& conn, const std::string& name) const {
   const char* const sql = R"SQL(
     SELECT
       MEDIA_TYPE.MEDIA_TYPE_NAME
@@ -509,7 +522,7 @@ bool RdbmsMediaTypeCatalogue::mediaTypeIsUsedByTapes(rdbms::Conn &conn, const st
   return rset.next();
 }
 
-std::optional<uint64_t> RdbmsMediaTypeCatalogue::getMediaTypeId(rdbms::Conn &conn, const std::string &name) const {
+std::optional<uint64_t> RdbmsMediaTypeCatalogue::getMediaTypeId(rdbms::Conn& conn, const std::string& name) const {
   const char* const sql = R"SQL(
     SELECT
       MEDIA_TYPE.MEDIA_TYPE_ID AS MEDIA_TYPE_ID
@@ -521,10 +534,10 @@ std::optional<uint64_t> RdbmsMediaTypeCatalogue::getMediaTypeId(rdbms::Conn &con
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":MEDIA_TYPE_NAME", name);
   auto rset = stmt.executeQuery();
-  if(!rset.next()) {
+  if (!rset.next()) {
     return std::nullopt;
   }
   return rset.columnUint64("MEDIA_TYPE_ID");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

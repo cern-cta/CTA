@@ -17,9 +17,10 @@
 
 #pragma once
 
-#include <string>
-#include <optional>
 #include "common/Timer.hpp"
+
+#include <optional>
+#include <string>
 
 namespace cta::frontend {
 
@@ -28,8 +29,8 @@ class RequestTracker {
 public:
   RequestTracker(std::string_view eventName, std::string_view requesterName);
   ~RequestTracker();
-  RequestTracker (const RequestTracker&) = delete;
-  RequestTracker& operator= (const RequestTracker&) = delete;
+  RequestTracker(const RequestTracker&) = delete;
+  RequestTracker& operator=(const RequestTracker&) = delete;
 
   void setErrorType(std::string_view errorType);
 

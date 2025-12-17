@@ -17,13 +17,13 @@
 
 #pragma once
 
-#include "common/dataStructures/JobQueueType.hpp"
-#include "common/log/LogContext.hpp"
 #include "Agent.hpp"
 #include "AgentRegister.hpp"
 #include "AgentWatchdog.hpp"
 #include "GenericObject.hpp"
 #include "Sorter.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
+#include "common/log/LogContext.hpp"
 
 /**
  * Plan => Garbage collector keeps track of the agents.

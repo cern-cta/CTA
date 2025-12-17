@@ -16,24 +16,21 @@
  */
 
 #include "mediachanger/ScsiLibrarySlot.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot()
- :
-  LibrarySlot(TAPE_LIBRARY_TYPE_SCSI),
-  m_drvOrd(0) {
+cta::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot() : LibrarySlot(TAPE_LIBRARY_TYPE_SCSI), m_drvOrd(0) {
   m_str = librarySlotToString(0);
 }
 
 //------------------------------------------------------------------------------
 // librarySlotToString
 //------------------------------------------------------------------------------
-std::string cta::mediachanger::ScsiLibrarySlot::librarySlotToString(
-  const uint16_t drvOrd) {
+std::string cta::mediachanger::ScsiLibrarySlot::librarySlotToString(const uint16_t drvOrd) {
   std::ostringstream oss;
   oss << "smc" << drvOrd;
   return oss.str();
@@ -42,17 +39,16 @@ std::string cta::mediachanger::ScsiLibrarySlot::librarySlotToString(
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-cta::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(const uint16_t drvOrd):
-  LibrarySlot(TAPE_LIBRARY_TYPE_SCSI),
-  m_drvOrd(drvOrd) {
+cta::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot(const uint16_t drvOrd)
+    : LibrarySlot(TAPE_LIBRARY_TYPE_SCSI),
+      m_drvOrd(drvOrd) {
   m_str = librarySlotToString(drvOrd);
 }
 
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-cta::mediachanger::LibrarySlot *cta::mediachanger::ScsiLibrarySlot::
-  clone() {
+cta::mediachanger::LibrarySlot* cta::mediachanger::ScsiLibrarySlot::clone() {
   return new ScsiLibrarySlot(*this);
 }
 

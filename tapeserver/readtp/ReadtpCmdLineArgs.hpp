@@ -19,8 +19,8 @@
 
 #include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
 
-#include <string>
 #include <optional>
+#include <string>
 
 namespace cta::tapeserver::readtp {
 
@@ -61,14 +61,14 @@ struct ReadtpCmdLineArgs {
    * executable.
    * @param argv The vector of command-line arguments.
    */
-  ReadtpCmdLineArgs(const int argc, char *const *const argv);
+  ReadtpCmdLineArgs(const int argc, char* const* const argv);
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  static void printUsage(std::ostream &os);
-}; // class ReadtpCmdLineArgs
+  static void printUsage(std::ostream& os);
+};  // class ReadtpCmdLineArgs
 
-} // namespace cta::tapeserver::readtp
+}  // namespace cta::tapeserver::readtp

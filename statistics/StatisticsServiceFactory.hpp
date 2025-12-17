@@ -15,14 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
-
 #pragma once
 
-#include <memory>
-
+#include "StatisticsService.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/Login.hpp"
-#include "StatisticsService.hpp"
+
+#include <memory>
 
 namespace cta::statistics {
 
@@ -30,7 +29,7 @@ namespace cta::statistics {
  * Factory to instanciate a StatisticsService
  */
 class StatisticsServiceFactory {
- public:
+public:
   /**
    * Creates a StatisticsService to perform Statistics operations
    * @param connection the database connection
@@ -43,7 +42,7 @@ class StatisticsServiceFactory {
    * Creates a StatisticsService to perform Statistics operations
    * @return a unique_ptr containing the StatisticsService
    */
-  static std::unique_ptr<StatisticsService> create(std::ostream & ostream);
+  static std::unique_ptr<StatisticsService> create(std::ostream& ostream);
 };
 
-} // namespace cta::statistics
+}  // namespace cta::statistics

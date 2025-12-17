@@ -21,14 +21,14 @@
 
 namespace unitTests {
 
-  /**
+/**
    * Object that will be used
    * to unit test the JSONCTestObject
    */
-  struct TestObject {
-    uint64_t integer_number = 0;
-    std::string str;
-    double double_number = 0.0;
-  };
-  
-}
+struct TestObject {
+  uint64_t integer_number = 0;
+  std::string str;
+  double double_number = 0.0;
+};
+
+}  // namespace unitTests

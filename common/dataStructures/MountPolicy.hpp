@@ -17,12 +17,12 @@
 
 #pragma once
 
-#include <stdint.h>
+#include "common/dataStructures/EntryLog.hpp"
+
 #include <list>
 #include <map>
+#include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/EntryLog.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -32,8 +32,8 @@ namespace cta::common::dataStructures {
 struct MountPolicy {
   MountPolicy() = default;
 
-  bool operator==(const MountPolicy &rhs) const;
-  bool operator!=(const MountPolicy &rhs) const;
+  bool operator==(const MountPolicy& rhs) const;
+  bool operator!=(const MountPolicy& rhs) const;
 
   std::string name;
   uint64_t archivePriority = 0;
@@ -48,10 +48,13 @@ struct MountPolicy {
   // to do a Retrieve mount or Archive mount
   static const MountPolicy s_defaultMountPolicyForRepack;
 
-  MountPolicy(std::string_view mpName, uint64_t archivePriority, uint64_t archiveMinRequestAge,
-    uint64_t retrievePriority, uint64_t retrieveMinRequestAge);
+  MountPolicy(std::string_view mpName,
+              uint64_t archivePriority,
+              uint64_t archiveMinRequestAge,
+              uint64_t retrievePriority,
+              uint64_t retrieveMinRequestAge);
 };
 
 std::ostream& operator<<(std::ostream& os, const MountPolicy& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

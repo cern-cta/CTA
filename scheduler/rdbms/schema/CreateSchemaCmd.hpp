@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "scheduler/rdbms/schema/CmdLineTool.hpp"
 #include "rdbms/Conn.hpp"
+#include "scheduler/rdbms/schema/CmdLineTool.hpp"
 
 namespace cta::schedulerdb {
 

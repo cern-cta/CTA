@@ -24,7 +24,7 @@ namespace cta::exception {
 /**
  * Exception representing an unexpected mismatch between tape file sequence numbers
  */
-class TapeFseqMismatch: public exception::Exception {
+class TapeFseqMismatch : public exception::Exception {
 public:
   /**
    * Constructor
@@ -32,10 +32,10 @@ public:
    * @param context optional context string added to the message at initialisation time
    * @param embedBacktrace whether to embed a backtrace of where the exception was thrown in the message
    */
-  explicit TapeFseqMismatch(const std::string &context = "", const bool embedBacktrace = true) :
-    Exception(context, embedBacktrace) {}
+  explicit TapeFseqMismatch(const std::string& context = "", const bool embedBacktrace = true)
+      : Exception(context, embedBacktrace) {}
 
   ~TapeFseqMismatch() override = default;
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

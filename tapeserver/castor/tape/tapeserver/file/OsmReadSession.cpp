@@ -15,20 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
-#include <string>
+#include "castor/tape/tapeserver/file/OsmReadSession.hpp"
 
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
 #include "castor/tape/tapeserver/file/OsmFileStructure.hpp"
-#include "castor/tape/tapeserver/file/OsmReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
+
+#include <memory>
+#include <string>
 
 namespace castor::tape::tapeFile {
 
-OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
-  : ReadSession(drive, volInfo, useLbp) {
+OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
+                               const tapeserver::daemon::VolumeInfo& volInfo,
+                               const bool useLbp)
+    : ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
 
@@ -36,11 +38,11 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   osm::LABEL osmLabel;
 
   m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-    osm::LIMITS::MAXMRECSIZE,
-    "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+                         osm::LIMITS::MAXMRECSIZE,
+                         "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
   m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
-    osm::LIMITS::MAXMRECSIZE,
-    "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
+                         osm::LIMITS::MAXMRECSIZE,
+                         "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
 
   try {
     osmLabel.decode();
@@ -72,11 +74,11 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   m_drive.rewind();
   {
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-      osm::LIMITS::MAXMRECSIZE,
-      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+                           osm::LIMITS::MAXMRECSIZE,
+                           "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
-      osm::LIMITS::MAXMRECSIZE,
-      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
+                           osm::LIMITS::MAXMRECSIZE,
+                           "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
     try {
       osmLabel.decode();
     } catch (const std::exception& e) {
@@ -86,4 +88,4 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   }
 }
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

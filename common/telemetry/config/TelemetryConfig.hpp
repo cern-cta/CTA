@@ -16,10 +16,10 @@
  */
 #pragma once
 
-#include <string>
 #include <chrono>
-#include <map>
 #include <iostream>
+#include <map>
+#include <string>
 
 namespace cta::telemetry {
 

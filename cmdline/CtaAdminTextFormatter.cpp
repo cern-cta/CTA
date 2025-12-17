@@ -15,16 +15,16 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <iostream>
-#include <iomanip>
+#include "common/utils/utils.hpp"
+
 #include <cmdline/CtaAdminTextFormatter.hpp>
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
-#include <common/dataStructures/DriveStatusSerDeser.hpp>
-#include <common/dataStructures/MountTypeSerDeser.hpp>
 #include <common/dataStructures/ArchiveRouteType.hpp>
 #include <common/dataStructures/ArchiveRouteTypeSerDeser.hpp>
-
-#include "common/utils/utils.hpp"
+#include <common/dataStructures/DriveStatusSerDeser.hpp>
+#include <common/dataStructures/MountTypeSerDeser.hpp>
+#include <iomanip>
+#include <iostream>
 
 namespace cta::admin {
 
@@ -106,8 +106,7 @@ std::string TextFormatter::dataSizeToStr(uint64_t value) {
   // or yottabytes of data in a tapepool anytime soon.
   int unit;
   uint64_t divisor;
-  for (unit = 0, divisor = 1000; unit < 6 && value >= divisor * 1000; divisor *= 1000, ++unit)
-    ;
+  for (unit = 0, divisor = 1000; unit < 6 && value >= divisor * 1000; divisor *= 1000, ++unit);
 
   // Convert to format like "3.1G"
   double val_d = static_cast<double>(value) / static_cast<double>(divisor);
@@ -301,13 +300,13 @@ void TextFormatter::print(const DriveLsItem& drls_item) {
       averageBandwidth = "0.0";
     }
   }
-  if (drls_item.drive_status() != DriveLsItem::UP && drls_item.drive_status() != DriveLsItem::DOWN &&
-      drls_item.drive_status() != DriveLsItem::UNKNOWN_DRIVE_STATUS) {
+  if (drls_item.drive_status() != DriveLsItem::UP && drls_item.drive_status() != DriveLsItem::DOWN
+      && drls_item.drive_status() != DriveLsItem::UNKNOWN_DRIVE_STATUS) {
     sessionId = std::to_string(drls_item.session_id());
   }
 
-  timeSinceLastUpdate = std::to_string(drls_item.time_since_last_update()) +
-                        (drls_item.time_since_last_update() > m_driveTimeoutSec ? " [STALE]" : "");
+  timeSinceLastUpdate = std::to_string(drls_item.time_since_last_update())
+                        + (drls_item.time_since_last_update() > m_driveTimeoutSec ? " [STALE]" : "");
 
   std::string reportedLogicalLibrary = drls_item.logical_library();
   if (drls_item.logical_library_disabled()) {
@@ -717,8 +716,8 @@ void TextFormatter::print(const ShowQueuesItem& sq_item) {
   std::string readMaxDrives;
   std::string writeMaxDrives;
 
-  if (sq_item.mount_type() == ARCHIVE_FOR_USER || sq_item.mount_type() == ARCHIVE_FOR_REPACK ||
-      sq_item.mount_type() == RETRIEVE) {
+  if (sq_item.mount_type() == ARCHIVE_FOR_USER || sq_item.mount_type() == ARCHIVE_FOR_REPACK
+      || sq_item.mount_type() == RETRIEVE) {
     priority = std::to_string(sq_item.priority());
     minAge = std::to_string(sq_item.min_age());
     readMaxDrives = std::to_string(sq_item.read_max_drives());

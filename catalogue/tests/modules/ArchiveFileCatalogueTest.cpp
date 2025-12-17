@@ -1,21 +1,14 @@
-#include <gtest/gtest.h>
-
-#include <list>
-#include <map>
-#include <memory>
-#include <set>
-#include <string>
+#include "catalogue/tests/modules/ArchiveFileCatalogueTest.hpp"
 
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
-#include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/TapeFileSearchCriteria.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "catalogue/TapePool.hpp"
+#include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/tests/CatalogueTestUtils.hpp"
-#include "catalogue/tests/modules/ArchiveFileCatalogueTest.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
@@ -36,20 +29,26 @@
 #include "common/process/threading/MutexLocker.hpp"
 #include "common/process/threading/Thread.hpp"
 
+#include <gtest/gtest.h>
+#include <list>
+#include <map>
+#include <memory>
+#include <set>
+#include <string>
+
 namespace unitTests {
 
 cta_catalogue_ArchiveFileTest::cta_catalogue_ArchiveFileTest()
-  : m_dummyLog("dummy", "dummy"),
-    m_tape1(CatalogueTestUtils::getTape1()),
-    m_tape2(CatalogueTestUtils::getTape2()),
-    m_tape3(CatalogueTestUtils::getTape3()),
-    m_mediaType(CatalogueTestUtils::getMediaType()),
-    m_admin(CatalogueTestUtils::getAdmin()),
-    m_diskInstance(CatalogueTestUtils::getDiskInstance()),
-    m_vo(CatalogueTestUtils::getVo()),
-    m_storageClassSingleCopy(CatalogueTestUtils::getStorageClass()),
-    m_storageClassDualCopy(CatalogueTestUtils::getStorageClassDualCopy()) {
-}
+    : m_dummyLog("dummy", "dummy"),
+      m_tape1(CatalogueTestUtils::getTape1()),
+      m_tape2(CatalogueTestUtils::getTape2()),
+      m_tape3(CatalogueTestUtils::getTape3()),
+      m_mediaType(CatalogueTestUtils::getMediaType()),
+      m_admin(CatalogueTestUtils::getAdmin()),
+      m_diskInstance(CatalogueTestUtils::getDiskInstance()),
+      m_vo(CatalogueTestUtils::getVo()),
+      m_storageClassSingleCopy(CatalogueTestUtils::getStorageClass()),
+      m_storageClassDualCopy(CatalogueTestUtils::getStorageClassDualCopy()) {}
 
 void cta_catalogue_ArchiveFileTest::SetUp() {
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -65,16 +64,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_no_archive_ro
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
-  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
-    comment);
+  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin,
+                                                              mountPolicyName,
+                                                              diskInstanceName,
+                                                              requesterName,
+                                                              comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
+    m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
   const cta::common::dataStructures::RequesterMountRule rule = rules.front();
@@ -96,8 +99,10 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_no_archive_ro
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstance, m_storageClassSingleCopy.name,
-    requesterIdentity), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstance,
+                                                                        m_storageClassSingleCopy.name,
+                                                                        requesterIdentity),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_no_mount_rules) {
@@ -113,12 +118,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_no_mount_rule
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName,
+                                                  archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -142,24 +157,31 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_no_mount_rule
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstance, m_storageClassSingleCopy.name,
-    requesterIdentity), cta::exception::UserErrorWithCacheInfo);
+  ASSERT_THROW(m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstance,
+                                                                        m_storageClassSingleCopy.name,
+                                                                        requesterIdentity),
+               cta::exception::UserErrorWithCacheInfo);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_and_then_deleted_requester_mount_rule) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
-  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin,
+                                                              mountPolicyName,
+                                                              diskInstanceName,
+                                                              requesterName,
+                                                              comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
+    m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
   const cta::common::dataStructures::RequesterMountRule rule = rules.front();
@@ -179,12 +201,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName,
+                                                  archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -209,8 +241,9 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
 
   // Get an archive ID which should pouplate for the first time the user mount
   // rule cache
-  m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name,
-    requesterIdentity);
+  m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
+                                                           m_storageClassSingleCopy.name,
+                                                           requesterIdentity);
 
   // Delete the user mount rule which should immediately invalidate the user
   // mount rule cache
@@ -221,23 +254,31 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
   // Try to get an archive ID which should now fail because there is no user
   // mount rule and the invalidated user mount rule cache should not hide this
   // fact
-  ASSERT_THROW(m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity), cta::exception::UserErrorWithCacheInfo);
+  ASSERT_THROW(m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
+                                                                        m_storageClassSingleCopy.name,
+                                                                        requesterIdentity),
+               cta::exception::UserErrorWithCacheInfo);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mount_rule) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
-  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin,
+                                                              mountPolicyName,
+                                                              diskInstanceName,
+                                                              requesterName,
+                                                              comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
+    m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
   const cta::common::dataStructures::RequesterMountRule rule = rules.front();
@@ -257,11 +298,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName,
+                                                  archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -285,10 +337,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
   requesterIdentity.group = "group";
 
   std::set<uint64_t> archiveFileIds;
-  for(uint64_t i = 0; i<10; i++) {
+  for (uint64_t i = 0; i < 10; i++) {
     const uint64_t archiveFileId =
-      m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name,
-        requesterIdentity);
+      m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
+                                                               m_storageClassSingleCopy.name,
+                                                               requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -298,15 +351,18 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
 TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_group_mount_rule) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
-  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-    requesterGroupName, comment);
+  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin,
+                                                                        mountPolicyName,
+                                                                        diskInstanceName,
+                                                                        requesterGroupName,
+                                                                        comment);
 
   const auto rules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
   ASSERT_EQ(1, rules.size());
@@ -327,11 +383,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_gro
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName,
+                                                  archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -355,28 +422,34 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_gro
   requesterIdentity.group = requesterGroupName;
 
   std::set<uint64_t> archiveFileIds;
-  for(uint64_t i = 0; i<10; i++) {
-    const uint64_t archiveFileId = m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
-      m_storageClassSingleCopy.name, requesterIdentity);
+  for (uint64_t i = 0; i < 10; i++) {
+    const uint64_t archiveFileId =
+      m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
+                                                               m_storageClassSingleCopy.name,
+                                                               requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
   }
 }
 
-TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_and_then_deleted_requester_group_mount_rule) {
+TEST_P(cta_catalogue_ArchiveFileTest,
+       checkAndGetNextArchiveFileId_after_cached_and_then_deleted_requester_group_mount_rule) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
-  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-    requesterGroupName, comment);
+  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin,
+                                                                        mountPolicyName,
+                                                                        diskInstanceName,
+                                                                        requesterGroupName,
+                                                                        comment);
 
   const auto rules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
   ASSERT_EQ(1, rules.size());
@@ -397,11 +470,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName,
+                                                  archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -426,8 +510,9 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
 
   // Get an archive ID which should populate for the first time the group mount
   // rule cache
-  m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name,
-    requesterIdentity);
+  m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
+                                                           m_storageClassSingleCopy.name,
+                                                           requesterIdentity);
 
   // Delete the group mount rule which should immediately invalidate the group
   // mount rule cache
@@ -438,23 +523,28 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
   // Try to get an archive ID which should now fail because there is no group
   // mount rule and the invalidated group mount rule cache should not hide this
   // fact
-  ASSERT_THROW(m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName, m_storageClassSingleCopy.name,
-    requesterIdentity), cta::exception::UserErrorWithCacheInfo);
+  ASSERT_THROW(m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
+                                                                        m_storageClassSingleCopy.name,
+                                                                        requesterIdentity),
+               cta::exception::UserErrorWithCacheInfo);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mount_rule_overide) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string requesterRuleComment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
-  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
-    requesterRuleComment);
+  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin,
+                                                              mountPolicyName,
+                                                              diskInstanceName,
+                                                              requesterName,
+                                                              requesterRuleComment);
 
   const auto requesterRules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, requesterRules.size());
@@ -470,11 +560,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
 
   const std::string requesterGroupRuleComment = "Create mount rule for requester group";
   const std::string requesterGroupName = "requester_group";
-  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-    requesterName, requesterGroupRuleComment);
+  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin,
+                                                                        mountPolicyName,
+                                                                        diskInstanceName,
+                                                                        requesterName,
+                                                                        requesterGroupRuleComment);
 
-  const auto requesterGroupRules =
-    m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
+  const auto requesterGroupRules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
   ASSERT_EQ(1, requesterGroupRules.size());
 
   const cta::common::dataStructures::RequesterGroupMountRule requesterGroupRule = requesterGroupRules.front();
@@ -493,12 +585,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName,
+                                                  archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -522,9 +624,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
   requesterIdentity.group = "group";
 
   std::set<uint64_t> archiveFileIds;
-  for(uint64_t i = 0; i<10; i++) {
-    const uint64_t archiveFileId = m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
-      m_storageClassSingleCopy.name, requesterIdentity);
+  for (uint64_t i = 0; i < 10; i++) {
+    const uint64_t archiveFileId =
+      m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName,
+                                                               m_storageClassSingleCopy.name,
+                                                               requesterIdentity);
 
     const bool archiveFileIdIsNew = archiveFileIds.end() == archiveFileIds.find(archiveFileId);
     ASSERT_TRUE(archiveFileIdIsNew);
@@ -534,17 +638,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
 TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_no_archive_routes) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
-  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin,
+                                                              mountPolicyName,
+                                                              diskInstanceName,
+                                                              requesterName,
+                                                              comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
+    m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
   const cta::common::dataStructures::RequesterMountRule rule = rules.front();
@@ -564,23 +673,31 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_no_archive_rou
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
 
-  ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName,
+                                                                       m_storageClassSingleCopy.name,
+                                                                       requesterIdentity),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_mount_rule) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
-  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName, comment);
+  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin,
+                                                              mountPolicyName,
+                                                              diskInstanceName,
+                                                              requesterName,
+                                                              comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
+    m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
   const cta::common::dataStructures::RequesterMountRule rule = rules.front();
@@ -600,11 +717,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName,
+                                                  archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -626,23 +754,27 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
   cta::common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
-  m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName, m_storageClassSingleCopy.name,
-    requesterIdentity);
+  m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName,
+                                                          m_storageClassSingleCopy.name,
+                                                          requesterIdentity);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_group_mount_rule) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
-  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-    requesterGroupName, comment);
+  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin,
+                                                                        mountPolicyName,
+                                                                        diskInstanceName,
+                                                                        requesterGroupName,
+                                                                        comment);
 
   const auto rules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
   ASSERT_EQ(1, rules.size());
@@ -663,11 +795,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_grou
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName,
+                                                  archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -689,22 +832,27 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_grou
   cta::common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = "username";
   requesterIdentity.group = requesterGroupName;
-  m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity);
+  m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName,
+                                                          m_storageClassSingleCopy.name,
+                                                          requesterIdentity);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_mount_rule_overide) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
-  auto mountPolicyToAdd =CatalogueTestUtils::getMountPolicy1();
+  auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string requesterRuleComment = "Create mount rule for requester";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterName = "requester_name";
-  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin, mountPolicyName, diskInstanceName, requesterName,
-    requesterRuleComment);
+  m_catalogue->RequesterMountRule()->createRequesterMountRule(m_admin,
+                                                              mountPolicyName,
+                                                              diskInstanceName,
+                                                              requesterName,
+                                                              requesterRuleComment);
 
   const auto requesterRules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, requesterRules.size());
@@ -720,8 +868,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
 
   const std::string requesterGroupRuleComment = "Create mount rule for requester group";
   const std::string requesterGroupName = "requester_group";
-  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-    requesterName, requesterGroupRuleComment);
+  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin,
+                                                                        mountPolicyName,
+                                                                        diskInstanceName,
+                                                                        requesterName,
+                                                                        requesterGroupRuleComment);
 
   const auto requesterGroupRules = m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules();
   ASSERT_EQ(1, requesterGroupRules.size());
@@ -742,11 +893,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   const uint32_t copyNb = 1;
   const std::string archiveRouteComment = "Create archive route";
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName, archiveRouteComment);
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName,
+                                                  archiveRouteComment);
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -768,8 +930,9 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
   cta::common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = requesterName;
   requesterIdentity.group = "group";
-  m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName, m_storageClassSingleCopy.name,
-    requesterIdentity);
+  m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName,
+                                                          m_storageClassSingleCopy.name,
+                                                          requesterIdentity);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFiles_non_existance_archiveFileId) {
@@ -806,7 +969,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFiles_existent_storage_class_wit
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
-  const std::list<cta::common::dataStructures::StorageClass> storageClasses = m_catalogue->StorageClass()->getStorageClasses();
+  const std::list<cta::common::dataStructures::StorageClass> storageClasses =
+    m_catalogue->StorageClass()->getStorageClasses();
 
   ASSERT_EQ(1, storageClasses.size());
 
@@ -838,7 +1002,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFiles_non_existent_vid) {
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -846,13 +1010,21 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName,
-    "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply,
-    "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -864,7 +1036,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -886,8 +1058,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const cta::common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
@@ -900,24 +1071,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
 
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassSingleCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassSingleCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -925,7 +1096,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
@@ -946,7 +1117,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -974,7 +1145,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -984,7 +1155,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
@@ -994,11 +1165,16 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(1, pools.size());
@@ -1006,7 +1182,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
@@ -1015,7 +1191,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
@@ -1023,7 +1200,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
@@ -1043,7 +1220,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
@@ -1068,7 +1245,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
@@ -1091,7 +1268,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     {
       auto it = vidToTape.find(tape1.vid);
       ASSERT_NE(vidToTape.end(), it);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(tape1.vid, tape.vid);
       ASSERT_EQ(tape1.mediaType, tape.mediaType);
       ASSERT_EQ(tape1.vendor, tape.vendor);
@@ -1119,7 +1296,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     {
       auto it = vidToTape.find(tape2.vid);
       ASSERT_NE(vidToTape.end(), it);
-      const auto &tape = it->second;
+      const auto& tape = it->second;
       ASSERT_EQ(tape2.vid, tape.vid);
       ASSERT_EQ(tape2.mediaType, tape.mediaType);
       ASSERT_EQ(tape2.vendor, tape.vendor);
@@ -1149,17 +1326,17 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
   const std::string tapeDrive = "tape_drive";
 
   ASSERT_FALSE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
-  const uint64_t nbArchiveFiles = 10; // Must be a multiple of 2 for this test
+  const uint64_t nbArchiveFiles = 10;  // Must be a multiple of 2 for this test
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
 
   std::set<cta::catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
-  for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+  for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + i);
 
     // Tape copy 1 written to tape
-    auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-    auto & fileWritten = *fileWrittenUP;
+    auto fileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto& fileWritten = *fileWrittenUP;
     fileWritten.archiveFileId = i;
     fileWritten.diskInstance = diskInstance;
     fileWritten.diskFileId = diskFileId.str();
@@ -1184,7 +1361,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
@@ -1217,13 +1394,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
   }
 
   std::set<cta::catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy2;
-  for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+  for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + i);
 
     // Tape copy 2 written to tape
-    auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-    auto & fileWritten = *fileWrittenUP;
+    auto fileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto& fileWritten = *fileWrittenUP;
     fileWritten.archiveFileId = i;
     fileWritten.diskInstance = diskInstance;
     fileWritten.diskFileId = diskFileId.str();
@@ -1248,7 +1425,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
@@ -1290,7 +1467,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     searchCriteria.vid = tape1.vid;
 
     auto archiveFileItor = m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria);
-    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
+    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m =
+      CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(1, m.size());
 
     const auto idAndFile = m.find(1);
@@ -1305,10 +1483,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
 
   {
     auto archiveFileItor = m_catalogue->ArchiveFile()->getArchiveFilesItor();
-    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
+    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m =
+      CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -1376,10 +1555,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     cta::catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.vid = tape1.vid;
     auto archiveFileItor = m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria);
-    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
+    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m =
+      CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -1432,10 +1612,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     cta::catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.vid = tape1.vid;
     auto archiveFileItor = m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria);
-    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
+    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m =
+      CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -1488,10 +1669,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     cta::catalogue::TapeFileSearchCriteria searchCriteria;
     searchCriteria.vid = tape2.vid;
     auto archiveFileItor = m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria);
-    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
+    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m =
+      CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -1545,7 +1727,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -1556,8 +1738,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
       fileWritten1.diskInstance = diskInstance;
       fileWritten1.diskFileId = diskFileId.str();
 
-      fileWritten1.diskFileOwnerUid     = PUBLIC_DISK_USER;
-      fileWritten1.diskFileGid     = PUBLIC_DISK_GROUP;
+      fileWritten1.diskFileOwnerUid = PUBLIC_DISK_USER;
+      fileWritten1.diskFileGid = PUBLIC_DISK_GROUP;
       fileWritten1.size = archiveFileSize;
       fileWritten1.checksumBlob.insert(cta::checksum::ADLER32, "1357");
       fileWritten1.storageClassName = m_storageClassDualCopy.name;
@@ -1608,7 +1790,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     }
   }
 
-  for(uint32_t copyNb = 1; copyNb <= 2; copyNb++) {
+  for (uint32_t copyNb = 1; copyNb <= 2; copyNb++) {
     const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles;
@@ -1616,7 +1798,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
+    for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -1666,7 +1848,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     }
   }
 
-  for(uint32_t copyNb = 1; copyNb <= 2; copyNb++) {
+  for (uint32_t copyNb = 1; copyNb <= 2; copyNb++) {
     const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
@@ -1674,7 +1856,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles / 2, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles / 2; i++) {
+    for (uint64_t i = 1; i <= nbArchiveFiles / 2; i++) {
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -1724,7 +1906,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     }
   }
 
-  for(uint32_t copyNb = 1; copyNb <= 2; copyNb++) {
+  for (uint32_t copyNb = 1; copyNb <= 2; copyNb++) {
     const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = nbArchiveFiles / 2 + 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
@@ -1732,7 +1914,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles / 2, m.size());
 
-    for(uint64_t i = nbArchiveFiles / 2 + 1; i <= nbArchiveFiles; i++) {
+    for (uint64_t i = nbArchiveFiles / 2 + 1; i <= nbArchiveFiles; i++) {
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -1791,7 +1973,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(10, m.begin()->first);
     ASSERT_EQ(10, m.begin()->second.archiveFileID);
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(m_storageClassDualCopy.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(m_storageClassDualCopy.nbCopies, summary.totalFiles);
   }
@@ -1803,7 +1986,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * m_storageClassDualCopy.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(nbArchiveFiles * m_storageClassDualCopy.nbCopies, summary.totalFiles);
   }
@@ -1819,7 +2003,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(1, m.size());
     ASSERT_EQ("12345687", m.begin()->second.diskFileId);
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(m_storageClassDualCopy.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(m_storageClassDualCopy.nbCopies, summary.totalFiles);
   }
@@ -1830,7 +2015,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * m_storageClassDualCopy.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(nbArchiveFiles * m_storageClassDualCopy.nbCopies, summary.totalFiles);
   }
@@ -1842,7 +2028,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
@@ -1852,7 +2039,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     searchCriteria.archiveFileId = nbArchiveFiles + 1234;
     ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria), cta::exception::UserError);
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(0, summary.totalBytes);
     ASSERT_EQ(0, summary.totalFiles);
   }
@@ -1864,7 +2052,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
@@ -1878,7 +2066,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, cta::common::dataStructures::Tape::State::DISABLED,std::nullopt, "unit Test");
+  m_catalogue->Tape()->modifyTapeState(m_admin,
+                                       tape1.vid,
+                                       cta::common::dataStructures::Tape::State::DISABLED,
+                                       std::nullopt,
+                                       "unit Test");
 
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
@@ -1887,7 +2079,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(0, pool.nbEmptyTapes);
@@ -1900,8 +2092,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     ASSERT_EQ(nbArchiveFiles, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->Tape()->modifyTapeState(m_admin, tape1.vid, cta::common::dataStructures::Tape::ACTIVE, std::nullopt,
-    std::nullopt);
+  m_catalogue->Tape()->modifyTapeState(m_admin,
+                                       tape1.vid,
+                                       cta::common::dataStructures::Tape::ACTIVE,
+                                       std::nullopt,
+                                       std::nullopt);
 
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
@@ -1910,7 +2105,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(0, pool.nbEmptyTapes);
@@ -1932,7 +2127,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(0, pool.nbEmptyTapes);
@@ -1954,7 +2149,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
     ASSERT_EQ(0, pool.nbEmptyTapes);
@@ -1968,17 +2163,16 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
   }
 }
 
-
 TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_many_archive_files) {
   std::unique_ptr<cta::catalogue::Catalogue> catalogue2;
 
-  cta::catalogue::CatalogueFactory *const *const catalogueFactoryPtrPtr = GetParam();
+  cta::catalogue::CatalogueFactory* const* const catalogueFactoryPtrPtr = GetParam();
 
-  if(nullptr == catalogueFactoryPtrPtr) {
+  if (nullptr == catalogueFactoryPtrPtr) {
     throw cta::exception::Exception("Global pointer to the catalogue factory pointer for unit-tests in null");
   }
 
-  if(nullptr == (*catalogueFactoryPtrPtr)) {
+  if (nullptr == (*catalogueFactoryPtrPtr)) {
     throw cta::exception::Exception("Global pointer to the catalogue factoryfor unit-tests in null");
   }
 
@@ -1986,15 +2180,12 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
 
   class Barrier {
   public:
-    Barrier(unsigned int count) : m_exited(false) {
-      pthread_barrier_init(&m_barrier, nullptr, count);
-    }
-    ~Barrier() {
-      pthread_barrier_destroy(&m_barrier);
-    }
-    void wait() {
-      pthread_barrier_wait(&m_barrier);
-    }
+    Barrier(unsigned int count) : m_exited(false) { pthread_barrier_init(&m_barrier, nullptr, count); }
+
+    ~Barrier() { pthread_barrier_destroy(&m_barrier); }
+
+    void wait() { pthread_barrier_wait(&m_barrier); }
+
     void exit() {
       cta::threading::MutexLocker lock(m_mtx);
       m_exited = true;
@@ -2012,40 +2203,48 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
 
   class filesWrittenThread : public cta::threading::Thread {
   public:
-    filesWrittenThread(
-        cta::catalogue::Catalogue *const cat,
-        Barrier &barrier,
-        const uint64_t nbArchiveFiles,
-        const uint64_t batchSize,
-        const cta::common::dataStructures::StorageClass &storageClass,
-        const uint64_t &archiveFileSize,
-        const cta::checksum::ChecksumBlob &checksumBlob,
-        const std::string &vid,
-        const uint64_t &copyNb,
-        const std::string &tapeDrive,
-        const std::string &diskInstance) :
-          m_cat(cat), m_barrier(barrier), m_nbArchiveFiles(nbArchiveFiles), m_batchSize(batchSize), m_storageClass(storageClass), m_archiveFileSize(archiveFileSize),
-          m_checksumBlob(checksumBlob), m_vid(vid), m_copyNb(copyNb), m_tapeDrive(tapeDrive),m_diskInstance(diskInstance) { }
+    filesWrittenThread(cta::catalogue::Catalogue* const cat,
+                       Barrier& barrier,
+                       const uint64_t nbArchiveFiles,
+                       const uint64_t batchSize,
+                       const cta::common::dataStructures::StorageClass& storageClass,
+                       const uint64_t& archiveFileSize,
+                       const cta::checksum::ChecksumBlob& checksumBlob,
+                       const std::string& vid,
+                       const uint64_t& copyNb,
+                       const std::string& tapeDrive,
+                       const std::string& diskInstance)
+        : m_cat(cat),
+          m_barrier(barrier),
+          m_nbArchiveFiles(nbArchiveFiles),
+          m_batchSize(batchSize),
+          m_storageClass(storageClass),
+          m_archiveFileSize(archiveFileSize),
+          m_checksumBlob(checksumBlob),
+          m_vid(vid),
+          m_copyNb(copyNb),
+          m_tapeDrive(tapeDrive),
+          m_diskInstance(diskInstance) {}
 
     void run() override {
-      for(uint64_t batch=0;batch< 1 + (m_nbArchiveFiles-1)/m_batchSize;++batch) {
-        uint64_t bs = m_nbArchiveFiles - (m_batchSize*batch);
-        if (bs> m_batchSize) {
+      for (uint64_t batch = 0; batch < 1 + (m_nbArchiveFiles - 1) / m_batchSize; ++batch) {
+        uint64_t bs = m_nbArchiveFiles - (m_batchSize * batch);
+        if (bs > m_batchSize) {
           bs = m_batchSize;
         }
         std::set<cta::catalogue::TapeItemWrittenPointer> tapeFilesWritten;
-        for(uint64_t i= 0 ; i < bs; i++) {
+        for (uint64_t i = 0; i < bs; i++) {
           // calculate this file's archive_file_id and fseq numbers
-          const uint64_t fn_afid = 1 + m_batchSize*batch + i;
-          const uint64_t fn_seq = (m_copyNb == 1) ? fn_afid : 1 + m_batchSize*batch + (bs-i-1);
+          const uint64_t fn_afid = 1 + m_batchSize * batch + i;
+          const uint64_t fn_seq = (m_copyNb == 1) ? fn_afid : 1 + m_batchSize * batch + (bs - i - 1);
           std::ostringstream diskFileId;
           diskFileId << (12345677 + fn_afid);
           std::ostringstream diskFilePath;
           diskFilePath << "/public_dir/public_file_" << fn_afid;
 
           // Tape this batch to tape
-          auto fileWrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-          auto & fileWritten = *fileWrittenUP;
+          auto fileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+          auto& fileWritten = *fileWrittenUP;
           fileWritten.archiveFileId = fn_afid;
           fileWritten.diskInstance = m_diskInstance;
           fileWritten.diskFileId = diskFileId.str();
@@ -2065,7 +2264,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
         m_barrier.wait();
         try {
           m_cat->TapeFile()->filesWrittenToTape(tapeFilesWritten);
-        } catch(std::exception &) {
+        } catch (std::exception&) {
           m_barrier.exit();
           m_barrier.wait();
           throw;
@@ -2077,8 +2276,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
       }
     }
 
-    cta::catalogue::Catalogue *const m_cat;
-    Barrier &m_barrier;
+    cta::catalogue::Catalogue* const m_cat;
+    Barrier& m_barrier;
     const uint64_t m_nbArchiveFiles;
     const uint64_t m_batchSize;
     const cta::common::dataStructures::StorageClass m_storageClass;
@@ -2092,27 +2291,30 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
 
   class filesWrittenRunner {
   public:
-    filesWrittenRunner(filesWrittenThread &th) : m_th(th), m_waited(false) { m_th.start(); }
+    filesWrittenRunner(filesWrittenThread& th) : m_th(th), m_waited(false) { m_th.start(); }
+
     ~filesWrittenRunner() {
       if (!m_waited) {
         try {
           m_th.wait();
-        } catch(...) {
+        } catch (...) {
           // nothing
         }
       }
     }
+
     void wait() {
       m_waited = true;
       m_th.wait();
     }
-    filesWrittenThread &m_th;
+
+    filesWrittenThread& m_th;
     bool m_waited;
   };
 
   const std::string vid1 = "VID123";
   const std::string vid2 = "VID456";
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const std::string tapePoolName1 = "tape_pool_name_1";
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
@@ -2122,11 +2324,16 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, tapePoolName1, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(1, pools.size());
@@ -2134,7 +2341,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
@@ -2143,7 +2350,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     ASSERT_EQ(0, pool.nbPhysicalFiles);
   }
 
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()
+    ->createTapePool(m_admin, tapePoolName2, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
   {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
@@ -2151,7 +2359,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(0, pool.nbTapes);
@@ -2171,7 +2379,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
@@ -2191,7 +2399,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
@@ -2209,7 +2417,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     {
       auto it = vidToTape.find(vid1);
       ASSERT_NE(vidToTape.end(), it);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(tape1.vid, tape.vid);
       ASSERT_EQ(tape1.mediaType, tape.mediaType);
       ASSERT_EQ(tape1.vendor, tape.vendor);
@@ -2235,7 +2443,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     {
       auto it = vidToTape.find(vid2);
       ASSERT_NE(vidToTape.end(), it);
-      const auto &tape = it->second;
+      const auto& tape = it->second;
       ASSERT_EQ(tape2.vid, tape.vid);
       ASSERT_EQ(tape2.mediaType, tape.mediaType);
       ASSERT_EQ(tape2.vendor, tape.vendor);
@@ -2268,7 +2476,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
   const std::string tapeDrive2 = "tape_drive2";
 
   ASSERT_FALSE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
-  const uint64_t nbArchiveFiles = 200; // Must be a multiple of batchsize for this test
+  const uint64_t nbArchiveFiles = 200;  // Must be a multiple of batchsize for this test
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
 
   const uint64_t batchsize = 20;
@@ -2278,8 +2486,28 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
 
   {
     Barrier barrier(2);
-    filesWrittenThread a(m_catalogue.get(), barrier, nbArchiveFiles, batchsize, storageClass, archiveFileSize, checksumBlob, vid1, 1, tapeDrive1,diskInstance);
-    filesWrittenThread b(catalogue2.get(), barrier, nbArchiveFiles, batchsize, storageClass, archiveFileSize, checksumBlob, vid2, 2, tapeDrive2,diskInstance);
+    filesWrittenThread a(m_catalogue.get(),
+                         barrier,
+                         nbArchiveFiles,
+                         batchsize,
+                         storageClass,
+                         archiveFileSize,
+                         checksumBlob,
+                         vid1,
+                         1,
+                         tapeDrive1,
+                         diskInstance);
+    filesWrittenThread b(catalogue2.get(),
+                         barrier,
+                         nbArchiveFiles,
+                         batchsize,
+                         storageClass,
+                         archiveFileSize,
+                         checksumBlob,
+                         vid2,
+                         2,
+                         tapeDrive2,
+                         diskInstance);
 
     filesWrittenRunner r1(a);
     filesWrittenRunner r2(b);
@@ -2294,7 +2522,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName1, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
@@ -2328,7 +2556,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
-    const auto &pool = tapePoolMapItor->second;
+    const auto& pool = tapePoolMapItor->second;
 
     ASSERT_EQ(tapePoolName2, pool.name);
     ASSERT_EQ(1, pool.nbTapes);
@@ -2365,7 +2593,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     searchCriteria.vid = tape1.vid;
 
     auto archiveFileItor = m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria);
-    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
+    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m =
+      CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(1, m.size());
 
     const auto idAndFile = m.find(1);
@@ -2378,24 +2607,26 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     ASSERT_EQ(searchCriteria.vid, archiveFile.tapeFiles.begin()->vid);
   }
 
-  auto afidToSeq = [](const uint64_t l_nbTot, const uint64_t l_batchsize, const uint64_t l_afid, uint64_t &l_seq1, uint64_t &l_seq2) {
-    l_seq1 = l_afid;
-    uint64_t batch = (l_afid-1)/l_batchsize;
-    uint64_t bidx = (l_afid-1)%l_batchsize;
-    uint64_t bs = l_nbTot - batch*l_batchsize;
-    if (bs>l_batchsize) {
-      bs = l_batchsize;
-    }
-    l_seq2 = batch*l_batchsize + (bs-bidx);
-  };
+  auto afidToSeq =
+    [](const uint64_t l_nbTot, const uint64_t l_batchsize, const uint64_t l_afid, uint64_t& l_seq1, uint64_t& l_seq2) {
+      l_seq1 = l_afid;
+      uint64_t batch = (l_afid - 1) / l_batchsize;
+      uint64_t bidx = (l_afid - 1) % l_batchsize;
+      uint64_t bs = l_nbTot - batch * l_batchsize;
+      if (bs > l_batchsize) {
+        bs = l_batchsize;
+      }
+      l_seq2 = batch * l_batchsize + (bs - bidx);
+    };
 
   {
     auto archiveFileItor = m_catalogue->ArchiveFile()->getArchiveFilesItor();
-    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
+    std::map<uint64_t, cta::common::dataStructures::ArchiveFile> m =
+      CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
-      uint64_t seq1,seq2;
+    for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
+      uint64_t seq1, seq2;
       afidToSeq(nbArchiveFiles, batchsize, i, seq1, seq2);
 
       std::ostringstream diskFileId;
@@ -2468,8 +2699,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
-      uint64_t seq1,seq2;
+    for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
+      uint64_t seq1, seq2;
       afidToSeq(nbArchiveFiles, batchsize, i, seq1, seq2);
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
@@ -2535,7 +2766,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     }
   }
 
-  for(uint64_t copyNb = 1; copyNb <= 2; copyNb++) {
+  for (uint64_t copyNb = 1; copyNb <= 2; copyNb++) {
     const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles;
@@ -2543,10 +2774,10 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles; i++) {
-      uint64_t seq1,seq2;
+    for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
+      uint64_t seq1, seq2;
       afidToSeq(nbArchiveFiles, batchsize, i, seq1, seq2);
-      uint64_t seq = (copyNb==1) ? seq1 : seq2;
+      uint64_t seq = (copyNb == 1) ? seq1 : seq2;
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -2596,7 +2827,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     }
   }
 
-  for(uint64_t copyNb = 1; copyNb <= 2; copyNb++) {
+  for (uint64_t copyNb = 1; copyNb <= 2; copyNb++) {
     const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
@@ -2604,10 +2835,10 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles / 2, m.size());
 
-    for(uint64_t i = 1; i <= nbArchiveFiles / 2; i++) {
-      uint64_t seq1,seq2;
+    for (uint64_t i = 1; i <= nbArchiveFiles / 2; i++) {
+      uint64_t seq1, seq2;
       afidToSeq(nbArchiveFiles, batchsize, i, seq1, seq2);
-      uint64_t seq = (copyNb==1) ? seq1 : seq2;
+      uint64_t seq = (copyNb == 1) ? seq1 : seq2;
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -2657,7 +2888,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     }
   }
 
-  for(uint64_t copyNb = 1; copyNb <= 2; copyNb++) {
+  for (uint64_t copyNb = 1; copyNb <= 2; copyNb++) {
     const std::string vid = copyNb == 1 ? tape1.vid : tape2.vid;
     const uint64_t startFseq = nbArchiveFiles / 2 + 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
@@ -2665,10 +2896,10 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles / 2, m.size());
 
-    for(uint64_t i = nbArchiveFiles / 2 + 1; i <= nbArchiveFiles; i++) {
-      uint64_t seq1,seq2;
+    for (uint64_t i = nbArchiveFiles / 2 + 1; i <= nbArchiveFiles; i++) {
+      uint64_t seq1, seq2;
       afidToSeq(nbArchiveFiles, batchsize, i, seq1, seq2);
-      uint64_t seq = (copyNb==1) ? seq1 : seq2;
+      uint64_t seq = (copyNb == 1) ? seq1 : seq2;
       std::ostringstream diskFileId;
       diskFileId << (12345677 + i);
       std::ostringstream diskFilePath;
@@ -2727,7 +2958,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     ASSERT_EQ(10, m.begin()->first);
     ASSERT_EQ(10, m.begin()->second.archiveFileID);
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
@@ -2739,7 +2971,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
@@ -2755,7 +2988,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     ASSERT_EQ(1, m.size());
     ASSERT_EQ("12345687", m.begin()->second.diskFileId);
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
@@ -2768,7 +3002,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     ASSERT_EQ(1, m.size());
     ASSERT_EQ("/public_dir/public_file_10", m.begin()->second.diskFileInfo.path);
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(storageClass.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(storageClass.nbCopies, summary.totalFiles);
   }
@@ -2779,7 +3014,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(nbArchiveFiles * storageClass.nbCopies, summary.totalFiles);
   }
@@ -2791,7 +3027,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto m = CatalogueTestUtils::archiveFileItorToMap(archiveFileItor);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(nbArchiveFiles * archiveFileSize, summary.totalBytes);
     ASSERT_EQ(nbArchiveFiles, summary.totalFiles);
   }
@@ -2801,14 +3038,15 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     searchCriteria.archiveFileId = nbArchiveFiles + 1234;
     ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria), cta::exception::UserError);
 
-    const cta::common::dataStructures::ArchiveFileSummary summary = m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
+    const cta::common::dataStructures::ArchiveFileSummary summary =
+      m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria);
     ASSERT_EQ(0, summary.totalBytes);
     ASSERT_EQ(0, summary.totalFiles);
   }
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_copy) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -2816,10 +3054,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
@@ -2830,124 +3078,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
-      ASSERT_EQ(m_tape1.vid, tape.vid);
-      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
-      ASSERT_EQ(m_tape1.vendor, tape.vendor);
-      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
-      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
-      ASSERT_EQ(m_vo.name, tape.vo);
-      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
-      ASSERT_EQ(m_tape1.full, tape.full);
-
-      ASSERT_FALSE(tape.isFromCastor);
-      ASSERT_EQ(0, tape.readMountCount);
-      ASSERT_EQ(0, tape.writeMountCount);
-      ASSERT_EQ(m_tape1.comment, tape.comment);
-      ASSERT_FALSE(tape.labelLog);
-      ASSERT_FALSE(tape.lastReadLog);
-      ASSERT_FALSE(tape.lastWriteLog);
-
-      const cta::common::dataStructures::EntryLog creationLog = tape.creationLog;
-      ASSERT_EQ(m_admin.username, creationLog.username);
-      ASSERT_EQ(m_admin.host, creationLog.host);
-
-      const cta::common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
-      ASSERT_EQ(creationLog, lastModificationLog);
-    }
-  }
-
-  const uint64_t archiveFileId = 1234;
-
-  ASSERT_FALSE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
-  ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId), cta::exception::Exception);
-
-  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
-
-  const uint64_t archiveFileSize = 1;
-  const std::string tapeDrive = "tape_drive";
-
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
-  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
-  file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
-
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassSingleCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
-
-  {
-    cta::catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
-    ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
-    ASSERT_EQ(1, tape.lastFSeq);
-  }
-
-  {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
-
-    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
-    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
-    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
-    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
-    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
-
-    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
-
-    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
-    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
-
-    ASSERT_EQ(1, archiveFile.tapeFiles.size());
-    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
-    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
-    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
-    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
-    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
-    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
-    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
-  }
-}
-
-TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_copy_deleteStorageClass) {
-  const std::string diskInstance = m_diskInstance.name;
-  const bool logicalLibraryIsDisabled= false;
-  const uint64_t nbPartialTapes = 2;
-  const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
-  std::optional<std::string> physicalLibraryName;
-
-  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
-  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
-  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
-
-  m_catalogue->Tape()->createTape(m_admin, m_tape1);
-
-  {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-
-    ASSERT_EQ(1, tapes.size());
-
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
-    {
-      auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2984,24 +3115,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
 
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassSingleCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassSingleCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -3009,12 +3140,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
@@ -3030,132 +3162,50 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
     ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
-
-  ASSERT_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name), cta::catalogue::UserSpecifiedStorageClassUsedByArchiveFiles);
-  ASSERT_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name), cta::exception::UserError);
 }
 
-TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_file_recycle_log_deleteStorageClass) {
-  cta::log::LogContext dummyLc(m_dummyLog);
-
+TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_copy_deleteStorageClass) {
   const std::string diskInstance = m_diskInstance.name;
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
 
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
     const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+
     ASSERT_EQ(1, tapes.size());
-  }
-
-  const uint64_t archiveFileId = 1234;
-
-  ASSERT_FALSE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
-  ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId), cta::exception::Exception);
-
-  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
-
-  const uint64_t archiveFileSize = 1;
-  const std::string tapeDrive = "tape_drive";
-
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
-  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
-  file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
-
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
-  file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassSingleCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
-  m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
-
-  {
-    cta::catalogue::TapeSearchCriteria searchCriteria;
-    searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
-    ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
-    ASSERT_EQ(1, tape.lastFSeq);
-  }
-
-  {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
-
-    cta::common::dataStructures::DeleteArchiveRequest deletedArchiveReq;
-    deletedArchiveReq.archiveFile = archiveFile;
-    deletedArchiveReq.diskInstance = diskInstance;
-    deletedArchiveReq.archiveFileID = archiveFileId;
-    deletedArchiveReq.diskFileId = file1Written.diskFileId;
-    deletedArchiveReq.recycleTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    deletedArchiveReq.requester = cta::common::dataStructures::RequesterIdentity(m_admin.username,"group");
-    deletedArchiveReq.diskFilePath = "/path/";
-    m_catalogue->ArchiveFile()->moveArchiveFileToRecycleLog(deletedArchiveReq,dummyLc);
-  }
-
-  ASSERT_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name), cta::catalogue::UserSpecifiedStorageClassUsedByFileRecycleLogs);
-  ASSERT_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name), cta::exception::UserError);
-
-  {
-    //reclaim the tape to delete the files from the recycle log and delete the storage class
-    m_catalogue->Tape()->setTapeFull(m_admin,m_tape1.vid,true);
-    m_catalogue->Tape()->reclaimTape(m_admin,m_tape1.vid,dummyLc);
-  }
-
-  ASSERT_NO_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name));
-}
-
-TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_copies) {
-  const bool logicalLibraryIsDisabled= false;
-  const uint64_t nbPartialTapes = 2;
-  const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
-  const std::string diskInstance = m_diskInstance.name;
-  std::optional<std::string> physicalLibraryName;
-
-  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
-  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
-  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
-
-  m_catalogue->Tape()->createTape(m_admin, m_tape1);
-  m_catalogue->Tape()->createTape(m_admin, m_tape2);
-
-  {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-
-    ASSERT_EQ(2, tapes.size());
 
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -3177,13 +3227,246 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const cta::common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
+  ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId), cta::exception::Exception);
+
+  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
+
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
+  file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
+  file1Written.storageClassName = m_storageClassSingleCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
+  m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = file1Written.vid;
+    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    ASSERT_EQ(1, tapes.size());
+    const cta::common::dataStructures::Tape& tape = tapes.front();
+    ASSERT_EQ(1, tape.lastFSeq);
+  }
+
+  {
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
+    ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
+    ASSERT_EQ(file1Written.size, archiveFile.fileSize);
+    ASSERT_EQ(file1Written.checksumBlob, archiveFile.checksumBlob);
+    ASSERT_EQ(file1Written.storageClassName, archiveFile.storageClass);
+
+    ASSERT_EQ(file1Written.diskInstance, archiveFile.diskInstance);
+
+    ASSERT_EQ(file1Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
+    ASSERT_EQ(file1Written.diskFileGid, archiveFile.diskFileInfo.gid);
+
+    ASSERT_EQ(1, archiveFile.tapeFiles.size());
+    auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
+    ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
+    ASSERT_EQ(file1Written.vid, tapeFile1.vid);
+    ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
+    ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
+    ASSERT_EQ(file1Written.checksumBlob, tapeFile1.checksumBlob);
+    ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
+  }
+
+  ASSERT_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name),
+               cta::catalogue::UserSpecifiedStorageClassUsedByArchiveFiles);
+  ASSERT_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name),
+               cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_file_recycle_log_deleteStorageClass) {
+  cta::log::LogContext dummyLc(m_dummyLog);
+
+  const std::string diskInstance = m_diskInstance.name;
+  const bool logicalLibraryIsDisabled = false;
+  const uint64_t nbPartialTapes = 2;
+  const std::string encryptionKeyName = "encryption_key_name";
+  const std::list<std::string> supply;
+  std::optional<std::string> physicalLibraryName;
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
+
+  m_catalogue->Tape()->createTape(m_admin, m_tape1);
+
+  {
+    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    ASSERT_EQ(1, tapes.size());
+  }
+
+  const uint64_t archiveFileId = 1234;
+
+  ASSERT_FALSE(m_catalogue->ArchiveFile()->getArchiveFilesItor().hasMore());
+  ASSERT_THROW(m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId), cta::exception::Exception);
+
+  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  const uint64_t archiveFileSize = 1;
+  const std::string tapeDrive = "tape_drive";
+
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+  file1WrittenSet.insert(file1WrittenUP.release());
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
+
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
+  file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
+  file1Written.storageClassName = m_storageClassSingleCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
+  m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = file1Written.vid;
+    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    ASSERT_EQ(1, tapes.size());
+    const cta::common::dataStructures::Tape& tape = tapes.front();
+    ASSERT_EQ(1, tape.lastFSeq);
+  }
+
+  {
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+
+    cta::common::dataStructures::DeleteArchiveRequest deletedArchiveReq;
+    deletedArchiveReq.archiveFile = archiveFile;
+    deletedArchiveReq.diskInstance = diskInstance;
+    deletedArchiveReq.archiveFileID = archiveFileId;
+    deletedArchiveReq.diskFileId = file1Written.diskFileId;
+    deletedArchiveReq.recycleTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    deletedArchiveReq.requester = cta::common::dataStructures::RequesterIdentity(m_admin.username, "group");
+    deletedArchiveReq.diskFilePath = "/path/";
+    m_catalogue->ArchiveFile()->moveArchiveFileToRecycleLog(deletedArchiveReq, dummyLc);
+  }
+
+  ASSERT_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name),
+               cta::catalogue::UserSpecifiedStorageClassUsedByFileRecycleLogs);
+  ASSERT_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name),
+               cta::exception::UserError);
+
+  {
+    //reclaim the tape to delete the files from the recycle log and delete the storage class
+    m_catalogue->Tape()->setTapeFull(m_admin, m_tape1.vid, true);
+    m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc);
+  }
+
+  ASSERT_NO_THROW(m_catalogue->StorageClass()->deleteStorageClass(m_storageClassSingleCopy.name));
+}
+
+TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_copies) {
+  const bool logicalLibraryIsDisabled = false;
+  const uint64_t nbPartialTapes = 2;
+  const std::string encryptionKeyName = "encryption_key_name";
+  const std::list<std::string> supply;
+  const std::string diskInstance = m_diskInstance.name;
+  std::optional<std::string> physicalLibraryName;
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
+
+  m_catalogue->Tape()->createTape(m_admin, m_tape1);
+  m_catalogue->Tape()->createTape(m_admin, m_tape2);
+
+  {
+    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+
+    ASSERT_EQ(2, tapes.size());
+
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    {
+      auto it = vidToTape.find(m_tape1.vid);
+      const cta::common::dataStructures::Tape& tape = it->second;
+      ASSERT_EQ(m_tape1.vid, tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_vo.name, tape.vo);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.full, tape.full);
+
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(0, tape.readMountCount);
+      ASSERT_EQ(0, tape.writeMountCount);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
+
+      const cta::common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_admin.username, creationLog.username);
+      ASSERT_EQ(m_admin.host, creationLog.host);
+
+      const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
       auto it = vidToTape.find(m_tape2.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape2.vid, tape.vid);
       ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape2.vendor, tape.vendor);
@@ -3205,8 +3488,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const cta::common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
@@ -3221,24 +3503,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
 
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassSingleCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassSingleCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -3246,12 +3528,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
@@ -3267,7 +3550,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -3275,24 +3558,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  auto file2WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file2Written = *file2WrittenUP;
+  auto file2WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file2Written = *file2WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
   file2WrittenSet.insert(file2WrittenUP.release());
-  file2Written.archiveFileId        = file1Written.archiveFileId;
-  file2Written.diskInstance         = file1Written.diskInstance;
-  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.archiveFileId = file1Written.archiveFileId;
+  file2Written.diskInstance = file1Written.diskInstance;
+  file2Written.diskFileId = file1Written.diskFileId;
 
-  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
-  file2Written.diskFileGid          = file1Written.diskFileGid;
-  file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClassSingleCopy.name;
-  file2Written.vid                  = m_tape2.vid;
-  file2Written.fSeq                 = 1;
-  file2Written.blockId              = 4331;
-  file2Written.copyNb               = 2;
-  file2Written.tapeDrive            = tapeDrive;
+  file2Written.diskFileOwnerUid = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid = file1Written.diskFileGid;
+  file2Written.size = archiveFileSize;
+  file2Written.checksumBlob = file1Written.checksumBlob;
+  file2Written.storageClassName = m_storageClassSingleCopy.name;
+  file2Written.vid = m_tape2.vid;
+  file2Written.fSeq = 1;
+  file2Written.blockId = 4331;
+  file2Written.copyNb = 2;
+  file2Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file2WrittenSet);
 
   {
@@ -3301,12 +3584,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     searchCriteria.vid = file2Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
@@ -3323,7 +3607,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -3332,7 +3616,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -3342,7 +3626,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_copies_same_copy_number) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -3350,10 +3634,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
 
@@ -3365,7 +3659,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -3390,7 +3684,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     }
     {
       auto it = vidToTape.find(m_tape2.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape2.vid, tape.vid);
       ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape2.vendor, tape.vendor);
@@ -3425,24 +3719,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
 
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassSingleCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassSingleCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -3450,12 +3744,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
@@ -3471,7 +3766,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -3479,24 +3774,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  auto file2WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file2Written = *file2WrittenUP;
+  auto file2WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file2Written = *file2WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
   file2WrittenSet.insert(file2WrittenUP.release());
-  file2Written.archiveFileId        = file1Written.archiveFileId;
-  file2Written.diskInstance         = file1Written.diskInstance;
-  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.archiveFileId = file1Written.archiveFileId;
+  file2Written.diskInstance = file1Written.diskInstance;
+  file2Written.diskFileId = file1Written.diskFileId;
 
-  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
-  file2Written.diskFileGid          = file1Written.diskFileGid;
-  file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClassSingleCopy.name;
-  file2Written.vid                  = m_tape2.vid;
-  file2Written.fSeq                 = 1;
-  file2Written.blockId              = 4331;
-  file2Written.copyNb               = 1;
-  file2Written.tapeDrive            = tapeDrive;
+  file2Written.diskFileOwnerUid = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid = file1Written.diskFileGid;
+  file2Written.size = archiveFileSize;
+  file2Written.checksumBlob = file1Written.checksumBlob;
+  file2Written.storageClassName = m_storageClassSingleCopy.name;
+  file2Written.vid = m_tape2.vid;
+  file2Written.fSeq = 1;
+  file2Written.blockId = 4331;
+  file2Written.copyNb = 1;
+  file2Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file2WrittenSet);
 
   {
@@ -3505,12 +3800,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     searchCriteria.vid = file2Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
@@ -3523,12 +3819,12 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
-    const auto &tapeFile = *archiveFile.tapeFiles.begin();
+    const auto& tapeFile = *archiveFile.tapeFiles.begin();
 
     ASSERT_TRUE(file1Written.vid == tapeFile.vid || file2Written.vid == tapeFile.vid);
 
     {
-      const auto &fileWritten = file1Written.vid == tapeFile.vid ? file1Written : file2Written;
+      const auto& fileWritten = file1Written.vid == tapeFile.vid ? file1Written : file2Written;
 
       ASSERT_EQ(fileWritten.vid, tapeFile.vid);
       ASSERT_EQ(fileWritten.fSeq, tapeFile.fSeq);
@@ -3540,7 +3836,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_copies_same_copy_number_same_tape) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -3548,10 +3844,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
@@ -3563,7 +3869,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -3585,8 +3891,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const cta::common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
@@ -3599,24 +3904,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
 
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassSingleCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassSingleCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -3624,12 +3929,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
@@ -3645,7 +3951,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -3653,24 +3959,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  auto file2WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file2Written = *file2WrittenUP;
+  auto file2WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file2Written = *file2WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
   file2WrittenSet.insert(file2WrittenUP.release());
-  file2Written.archiveFileId        = file1Written.archiveFileId;
-  file2Written.diskInstance         = file1Written.diskInstance;
-  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.archiveFileId = file1Written.archiveFileId;
+  file2Written.diskInstance = file1Written.diskInstance;
+  file2Written.diskFileId = file1Written.diskFileId;
 
-  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
-  file2Written.diskFileGid          = file1Written.diskFileGid;
-  file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClassSingleCopy.name;
-  file2Written.vid                  = m_tape1.vid;
-  file2Written.fSeq                 = 2;
-  file2Written.blockId              = 4331;
-  file2Written.copyNb               = 1;
-  file2Written.tapeDrive            = tapeDrive;
+  file2Written.diskFileOwnerUid = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid = file1Written.diskFileGid;
+  file2Written.size = archiveFileSize;
+  file2Written.checksumBlob = file1Written.checksumBlob;
+  file2Written.storageClassName = m_storageClassSingleCopy.name;
+  file2Written.vid = m_tape1.vid;
+  file2Written.fSeq = 2;
+  file2Written.blockId = 4331;
+  file2Written.copyNb = 1;
+  file2Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file2WrittenSet);
 
   {
@@ -3679,12 +3985,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     searchCriteria.vid = file2Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(2, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
@@ -3697,12 +4004,12 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(file2Written.diskFileOwnerUid, archiveFile.diskFileInfo.owner_uid);
     ASSERT_EQ(file2Written.diskFileGid, archiveFile.diskFileInfo.gid);
 
-    const auto &tapeFile = *archiveFile.tapeFiles.begin();
+    const auto& tapeFile = *archiveFile.tapeFiles.begin();
 
     ASSERT_TRUE(file1Written.fSeq == tapeFile.fSeq || file2Written.fSeq == tapeFile.fSeq);
 
     {
-      const auto &fileWritten = file1Written.fSeq == tapeFile.fSeq ? file1Written : file2Written;
+      const auto& fileWritten = file1Written.fSeq == tapeFile.fSeq ? file1Written : file2Written;
 
       ASSERT_EQ(fileWritten.vid, tapeFile.vid);
       ASSERT_EQ(fileWritten.fSeq, tapeFile.fSeq);
@@ -3714,7 +4021,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_copies_same_fseq_same_tape) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -3722,10 +4029,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
@@ -3737,7 +4054,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -3759,8 +4076,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const cta::common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
@@ -3773,23 +4089,23 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassDualCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassDualCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -3797,12 +4113,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
@@ -3818,7 +4135,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -3826,29 +4143,29 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  auto file2WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file2Written = *file2WrittenUP;
+  auto file2WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file2Written = *file2WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
   file2WrittenSet.insert(file2WrittenUP.release());
-  file2Written.archiveFileId        = file1Written.archiveFileId;
-  file2Written.diskInstance         = file1Written.diskInstance;
-  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.archiveFileId = file1Written.archiveFileId;
+  file2Written.diskInstance = file1Written.diskInstance;
+  file2Written.diskFileId = file1Written.diskFileId;
 
-  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
-  file2Written.diskFileGid          = file1Written.diskFileGid;
-  file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClassDualCopy.name;
-  file2Written.vid                  = m_tape1.vid;
-  file2Written.fSeq                 = file1Written.fSeq;
-  file2Written.blockId              = 4331;
-  file2Written.copyNb               = 2;
-  file2Written.tapeDrive            = tapeDrive;
+  file2Written.diskFileOwnerUid = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid = file1Written.diskFileGid;
+  file2Written.size = archiveFileSize;
+  file2Written.checksumBlob = file1Written.checksumBlob;
+  file2Written.storageClassName = m_storageClassDualCopy.name;
+  file2Written.vid = m_tape1.vid;
+  file2Written.fSeq = file1Written.fSeq;
+  file2Written.blockId = 4331;
+  file2Written.copyNb = 2;
+  file2Written.tapeDrive = tapeDrive;
   ASSERT_THROW(m_catalogue->TapeFile()->filesWrittenToTape(file2WrittenSet), cta::exception::TapeFseqMismatch);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_copies_different_sizes) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -3856,10 +4173,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
@@ -3872,7 +4199,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -3899,7 +4226,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     }
     {
       auto it = vidToTape.find(m_tape2.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape2.vid, tape.vid);
       ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape2.vendor, tape.vendor);
@@ -3932,24 +4259,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const uint64_t archiveFileSize1 = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
 
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize1;
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize1;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassDualCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassDualCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -3957,12 +4284,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
@@ -3978,7 +4306,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -3988,29 +4316,29 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
 
   const uint64_t archiveFileSize2 = 2;
 
-  auto file2WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file2Written = *file2WrittenUP;
+  auto file2WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file2Written = *file2WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
   file2WrittenSet.insert(file2WrittenUP.release());
-  file2Written.archiveFileId        = file1Written.archiveFileId;
-  file2Written.diskInstance         = file1Written.diskInstance;
-  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.archiveFileId = file1Written.archiveFileId;
+  file2Written.diskInstance = file1Written.diskInstance;
+  file2Written.diskFileId = file1Written.diskFileId;
 
-  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
-  file2Written.diskFileGid          = file1Written.diskFileGid;
-  file2Written.size                 = archiveFileSize2;
-  file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClassDualCopy.name;
-  file2Written.vid                  = m_tape2.vid;
-  file2Written.fSeq                 = 1;
-  file2Written.blockId              = 4331;
-  file2Written.copyNb               = 2;
-  file2Written.tapeDrive            = tapeDrive;
+  file2Written.diskFileOwnerUid = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid = file1Written.diskFileGid;
+  file2Written.size = archiveFileSize2;
+  file2Written.checksumBlob = file1Written.checksumBlob;
+  file2Written.storageClassName = m_storageClassDualCopy.name;
+  file2Written.vid = m_tape2.vid;
+  file2Written.fSeq = 1;
+  file2Written.blockId = 4331;
+  file2Written.copyNb = 2;
+  file2Written.tapeDrive = tapeDrive;
   ASSERT_THROW(m_catalogue->TapeFile()->filesWrittenToTape(file2WrittenSet), cta::catalogue::FileSizeMismatch);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_copies_different_checksum_types) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -4018,10 +4346,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
@@ -4034,7 +4372,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -4061,7 +4399,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     }
     {
       auto it = vidToTape.find(m_tape2.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape2.vid, tape.vid);
       ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape2.vendor, tape.vendor);
@@ -4096,24 +4434,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
 
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassDualCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassDualCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -4121,12 +4459,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
@@ -4142,7 +4481,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -4150,29 +4489,29 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  auto file2WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file2Written = *file2WrittenUP;
+  auto file2WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file2Written = *file2WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
   file2WrittenSet.insert(file2WrittenUP.release());
-  file2Written.archiveFileId        = file1Written.archiveFileId;
-  file2Written.diskInstance         = file1Written.diskInstance;
-  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.archiveFileId = file1Written.archiveFileId;
+  file2Written.diskInstance = file1Written.diskInstance;
+  file2Written.diskFileId = file1Written.diskFileId;
 
-  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
-  file2Written.diskFileGid          = file1Written.diskFileGid;
-  file2Written.size                 = archiveFileSize;
+  file2Written.diskFileOwnerUid = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid = file1Written.diskFileGid;
+  file2Written.size = archiveFileSize;
   file2Written.checksumBlob.insert(cta::checksum::CRC32, "1234");
-  file2Written.storageClassName     = m_storageClassDualCopy.name;
-  file2Written.vid                  = m_tape2.vid;
-  file2Written.fSeq                 = 1;
-  file2Written.blockId              = 4331;
-  file2Written.copyNb               = 2;
-  file2Written.tapeDrive            = tapeDrive;
+  file2Written.storageClassName = m_storageClassDualCopy.name;
+  file2Written.vid = m_tape2.vid;
+  file2Written.fSeq = 1;
+  file2Written.blockId = 4331;
+  file2Written.copyNb = 2;
+  file2Written.tapeDrive = tapeDrive;
   ASSERT_THROW(m_catalogue->TapeFile()->filesWrittenToTape(file2WrittenSet), cta::exception::ChecksumTypeMismatch);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_copies_different_checksum_values) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -4180,10 +4519,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
@@ -4196,7 +4545,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -4216,13 +4565,12 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const cta::common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
     {
       auto it = vidToTape.find(m_tape2.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape2.vid, tape.vid);
       ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape2.vendor, tape.vendor);
@@ -4242,8 +4590,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
       ASSERT_EQ(m_admin.username, creationLog.username);
       ASSERT_EQ(m_admin.host, creationLog.host);
 
-      const cta::common::dataStructures::EntryLog lastModificationLog =
-        tape.lastModificationLog;
+      const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
       ASSERT_EQ(creationLog, lastModificationLog);
     }
   }
@@ -4256,24 +4603,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
 
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassDualCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassDualCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -4281,12 +4628,13 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
@@ -4302,7 +4650,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -4310,30 +4658,29 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-
-  auto file2WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file2Written = *file2WrittenUP;
+  auto file2WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file2Written = *file2WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
   file2WrittenSet.insert(file2WrittenUP.release());
-  file2Written.archiveFileId        = file1Written.archiveFileId;
-  file2Written.diskInstance         = file1Written.diskInstance;
-  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.archiveFileId = file1Written.archiveFileId;
+  file2Written.diskInstance = file1Written.diskInstance;
+  file2Written.diskFileId = file1Written.diskFileId;
 
-  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
-  file2Written.diskFileGid          = file1Written.diskFileGid;
-  file2Written.size                 = archiveFileSize;
+  file2Written.diskFileOwnerUid = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid = file1Written.diskFileGid;
+  file2Written.size = archiveFileSize;
   file2Written.checksumBlob.insert(cta::checksum::ADLER32, "5678");
-  file2Written.storageClassName     = m_storageClassDualCopy.name;
-  file2Written.vid                  = m_tape2.vid;
-  file2Written.fSeq                 = 1;
-  file2Written.blockId              = 4331;
-  file2Written.copyNb               = 2;
-  file2Written.tapeDrive            = tapeDrive;
+  file2Written.storageClassName = m_storageClassDualCopy.name;
+  file2Written.vid = m_tape2.vid;
+  file2Written.fSeq = 1;
+  file2Written.blockId = 4331;
+  file2Written.copyNb = 2;
+  file2Written.tapeDrive = tapeDrive;
   ASSERT_THROW(m_catalogue->TapeFile()->filesWrittenToTape(file2WrittenSet), cta::exception::ChecksumValueMismatch);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -4341,10 +4688,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
@@ -4357,7 +4714,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -4384,7 +4741,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
     }
     {
       auto it = vidToTape.find(m_tape2.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape2.vid, tape.vid);
       ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape2.vendor, tape.vendor);
@@ -4417,24 +4774,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
 
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassDualCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassDualCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -4442,7 +4799,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
@@ -4469,7 +4826,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -4478,7 +4835,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
@@ -4494,7 +4852,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -4502,24 +4860,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  auto file2WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file2Written = *file2WrittenUP;
+  auto file2WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file2Written = *file2WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
   file2WrittenSet.insert(file2WrittenUP.release());
-  file2Written.archiveFileId        = file1Written.archiveFileId;
-  file2Written.diskInstance         = file1Written.diskInstance;
-  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.archiveFileId = file1Written.archiveFileId;
+  file2Written.diskInstance = file1Written.diskInstance;
+  file2Written.diskFileId = file1Written.diskFileId;
 
-  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
-  file2Written.diskFileGid          = file1Written.diskFileGid;
-  file2Written.size                 = archiveFileSize;
-  file2Written.checksumBlob         = file1Written.checksumBlob;
-  file2Written.storageClassName     = m_storageClassDualCopy.name;
-  file2Written.vid                  = m_tape2.vid;
-  file2Written.fSeq                 = 1;
-  file2Written.blockId              = 4331;
-  file2Written.copyNb               = 2;
-  file2Written.tapeDrive            = tapeDrive;
+  file2Written.diskFileOwnerUid = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid = file1Written.diskFileGid;
+  file2Written.size = archiveFileSize;
+  file2Written.checksumBlob = file1Written.checksumBlob;
+  file2Written.storageClassName = m_storageClassDualCopy.name;
+  file2Written.vid = m_tape2.vid;
+  file2Written.fSeq = 1;
+  file2Written.blockId = 4331;
+  file2Written.copyNb = 2;
+  file2Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file2WrittenSet);
 
   {
@@ -4528,7 +4886,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
     searchCriteria.vid = file2Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
@@ -4558,7 +4916,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
 
       auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
       ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-      const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+      const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
       ASSERT_EQ(file1Written.vid, tapeFile1.vid);
       ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
       ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -4567,7 +4925,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
 
       auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
       ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
-      const cta::common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
+      const cta::common::dataStructures::TapeFile& tapeFile2 = *copyNbToTapeFile2Itor;
       ASSERT_EQ(file2Written.vid, tapeFile2.vid);
       ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
       ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -4577,7 +4935,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
@@ -4594,7 +4953,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -4603,7 +4962,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -4618,7 +4977,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_another_disk_instance) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -4626,10 +4985,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
@@ -4642,7 +5011,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
     const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape1.vid, tape.vid);
       ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -4667,7 +5036,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
     }
     {
       auto it = vidToTape.find(m_tape2.vid);
-      const cta::common::dataStructures::Tape &tape = it->second;
+      const cta::common::dataStructures::Tape& tape = it->second;
       ASSERT_EQ(m_tape2.vid, tape.vid);
       ASSERT_EQ(m_tape2.mediaType, tape.mediaType);
       ASSERT_EQ(m_tape2.vendor, tape.vendor);
@@ -4700,24 +5069,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
   const uint64_t archiveFileSize = 1;
   const std::string tapeDrive = "tape_drive";
 
-  auto file1WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file1Written = *file1WrittenUP;
+  auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file1Written = *file1WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
   file1WrittenSet.insert(file1WrittenUP.release());
-  file1Written.archiveFileId        = archiveFileId;
-  file1Written.diskInstance         = diskInstance;
-  file1Written.diskFileId           = "5678";
+  file1Written.archiveFileId = archiveFileId;
+  file1Written.diskInstance = diskInstance;
+  file1Written.diskFileId = "5678";
 
-  file1Written.diskFileOwnerUid     = PUBLIC_DISK_USER;
-  file1Written.diskFileGid          = PUBLIC_DISK_GROUP;
-  file1Written.size                 = archiveFileSize;
+  file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+  file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+  file1Written.size = archiveFileSize;
   file1Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file1Written.storageClassName     = m_storageClassDualCopy.name;
-  file1Written.vid                  = m_tape1.vid;
-  file1Written.fSeq                 = 1;
-  file1Written.blockId              = 4321;
-  file1Written.copyNb               = 1;
-  file1Written.tapeDrive            = tapeDrive;
+  file1Written.storageClassName = m_storageClassDualCopy.name;
+  file1Written.vid = m_tape1.vid;
+  file1Written.fSeq = 1;
+  file1Written.blockId = 4321;
+  file1Written.copyNb = 1;
+  file1Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
 
   {
@@ -4725,7 +5094,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
     searchCriteria.vid = file1Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
@@ -4752,7 +5121,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -4761,7 +5130,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file1Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file1Written.diskFileId, archiveFile.diskFileId);
@@ -4777,7 +5147,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
     ASSERT_EQ(1, archiveFile.tapeFiles.size());
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -4785,24 +5155,24 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
     ASSERT_EQ(file1Written.copyNb, tapeFile1.copyNb);
   }
 
-  auto file2WrittenUP=std::make_unique<cta::catalogue::TapeFileWritten>();
-  auto & file2Written = *file2WrittenUP;
+  auto file2WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& file2Written = *file2WrittenUP;
   std::set<cta::catalogue::TapeItemWrittenPointer> file2WrittenSet;
   file2WrittenSet.insert(file2WrittenUP.release());
-  file2Written.archiveFileId        = file1Written.archiveFileId;
-  file2Written.diskInstance         = file1Written.diskInstance;
-  file2Written.diskFileId           = file1Written.diskFileId;
+  file2Written.archiveFileId = file1Written.archiveFileId;
+  file2Written.diskInstance = file1Written.diskInstance;
+  file2Written.diskFileId = file1Written.diskFileId;
 
-  file2Written.diskFileOwnerUid     = file1Written.diskFileOwnerUid;
-  file2Written.diskFileGid          = file1Written.diskFileGid;
-  file2Written.size                 = archiveFileSize;
+  file2Written.diskFileOwnerUid = file1Written.diskFileOwnerUid;
+  file2Written.diskFileGid = file1Written.diskFileGid;
+  file2Written.size = archiveFileSize;
   file2Written.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-  file2Written.storageClassName     = m_storageClassDualCopy.name;
-  file2Written.vid                  = m_tape2.vid;
-  file2Written.fSeq                 = 1;
-  file2Written.blockId              = 4331;
-  file2Written.copyNb               = 2;
-  file2Written.tapeDrive            = tapeDrive;
+  file2Written.storageClassName = m_storageClassDualCopy.name;
+  file2Written.vid = m_tape2.vid;
+  file2Written.fSeq = 1;
+  file2Written.blockId = 4331;
+  file2Written.copyNb = 2;
+  file2Written.tapeDrive = tapeDrive;
   m_catalogue->TapeFile()->filesWrittenToTape(file2WrittenSet);
 
   {
@@ -4811,7 +5181,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
     searchCriteria.vid = file2Written.vid;
     std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const cta::common::dataStructures::Tape &tape = tapes.front();
+    const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
   }
 
@@ -4840,7 +5210,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -4849,7 +5219,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -4858,7 +5228,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
   }
 
   {
-    const cta::common::dataStructures::ArchiveFile archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+    const cta::common::dataStructures::ArchiveFile archiveFile =
+      m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
 
     ASSERT_EQ(file2Written.archiveFileId, archiveFile.archiveFileID);
     ASSERT_EQ(file2Written.diskFileId, archiveFile.diskFileId);
@@ -4875,7 +5246,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
 
     auto copyNbToTapeFile1Itor = archiveFile.tapeFiles.find(1);
     ASSERT_NE(copyNbToTapeFile1Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile1 = *copyNbToTapeFile1Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile1 = *copyNbToTapeFile1Itor;
     ASSERT_EQ(file1Written.vid, tapeFile1.vid);
     ASSERT_EQ(file1Written.fSeq, tapeFile1.fSeq);
     ASSERT_EQ(file1Written.blockId, tapeFile1.blockId);
@@ -4884,7 +5255,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
 
     auto copyNbToTapeFile2Itor = archiveFile.tapeFiles.find(2);
     ASSERT_NE(copyNbToTapeFile2Itor, archiveFile.tapeFiles.end());
-    const cta::common::dataStructures::TapeFile &tapeFile2 = *copyNbToTapeFile2Itor;
+    const cta::common::dataStructures::TapeFile& tapeFile2 = *copyNbToTapeFile2Itor;
     ASSERT_EQ(file2Written.vid, tapeFile2.vid);
     ASSERT_EQ(file2Written.fSeq, tapeFile2.fSeq);
     ASSERT_EQ(file2Written.blockId, tapeFile2.blockId);
@@ -4893,7 +5264,10 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
   }
 
   cta::log::LogContext dummyLc(m_dummyLog);
-  ASSERT_THROW(m_catalogue->ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE("another_disk_instance", archiveFileId, dummyLc), cta::exception::UserError);
+  ASSERT_THROW(m_catalogue->ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE("another_disk_instance",
+                                                                                   archiveFileId,
+                                                                                   dummyLc),
+               cta::exception::UserError);
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_non_existent) {
@@ -4903,17 +5277,19 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_non_e
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_ignore_repack_archiveroutes) {
-
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
   std::string mountPolicyName = mountPolicyToAdd.name;
-  m_catalogue->MountPolicy()->createMountPolicy(m_admin,mountPolicyToAdd);
+  m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
 
   const std::string comment = "Create mount rule for requester group";
   const std::string diskInstanceName = m_diskInstance.name;
   const std::string requesterGroupName = "requester_group";
-  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin, mountPolicyName, diskInstanceName,
-                                                                        requesterGroupName, comment);
+  m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(m_admin,
+                                                                        mountPolicyName,
+                                                                        diskInstanceName,
+                                                                        requesterGroupName,
+                                                                        comment);
 
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
@@ -4926,17 +5302,50 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_ignore_repack_
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName_default_1, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool for default 1");
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName_repack_1, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool for repack 1");
-  m_catalogue->TapePool()->createTapePool(m_admin, tapePoolName_default_2, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool for default 2");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          tapePoolName_default_1,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool for default 1");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          tapePoolName_repack_1,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool for repack 1");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          tapePoolName_default_2,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool for default 2");
 
   ASSERT_TRUE(m_catalogue->ArchiveRoute()->getArchiveRoutes().empty());
 
   const uint32_t copyNb_1 = 1;
   const uint32_t copyNb_2 = 2;
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb_1, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName_default_1, "Create archive route for default 1");
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb_1, cta::common::dataStructures::ArchiveRouteType::REPACK, tapePoolName_repack_1, "Create archive route for repack 1");
-  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin, m_storageClassSingleCopy.name, copyNb_2, cta::common::dataStructures::ArchiveRouteType::DEFAULT, tapePoolName_default_2, "Create archive route for default 2");
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb_1,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName_default_1,
+                                                  "Create archive route for default 1");
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb_1,
+                                                  cta::common::dataStructures::ArchiveRouteType::REPACK,
+                                                  tapePoolName_repack_1,
+                                                  "Create archive route for repack 1");
+  m_catalogue->ArchiveRoute()->createArchiveRoute(m_admin,
+                                                  m_storageClassSingleCopy.name,
+                                                  copyNb_2,
+                                                  cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                                  tapePoolName_default_2,
+                                                  "Create archive route for default 2");
 
   const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
@@ -4970,7 +5379,9 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_ignore_repack_
   cta::common::dataStructures::RequesterIdentity requesterIdentity;
   requesterIdentity.name = "username";
   requesterIdentity.group = requesterGroupName;
-  auto archiveFileQueueCriteria = m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName, m_storageClassSingleCopy.name, requesterIdentity);
+  auto archiveFileQueueCriteria = m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName,
+                                                                                          m_storageClassSingleCopy.name,
+                                                                                          requesterIdentity);
 
   ASSERT_EQ(2, archiveFileQueueCriteria.copyToPoolMap.size());
 
@@ -4984,7 +5395,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_ignore_repack_
 }
 
 TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
-  const bool logicalLibraryIsDisabled= false;
+  const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
   const std::list<std::string> supply;
@@ -4992,10 +5403,20 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
-  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin, m_tape1.logicalLibraryName, logicalLibraryIsDisabled, physicalLibraryName, "Create logical library");
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
-  m_catalogue->TapePool()->createTapePool(m_admin, m_tape1.tapePoolName, m_vo.name, nbPartialTapes, encryptionKeyName, supply, "Create tape pool");
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
   m_catalogue->Tape()->createTape(m_admin, m_tape3);
@@ -5014,22 +5435,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
 
   {
     auto tapeFileWrittenPtr = std::make_unique<cta::catalogue::TapeFileWritten>();
-    auto & tapeFileWritten = *tapeFileWrittenPtr;
+    auto& tapeFileWritten = *tapeFileWrittenPtr;
 
-    tapeFileWritten.archiveFileId        = archiveFileId_1;
-    tapeFileWritten.diskInstance         = diskInstance;
-    tapeFileWritten.diskFileId           = "12340000";
+    tapeFileWritten.archiveFileId = archiveFileId_1;
+    tapeFileWritten.diskInstance = diskInstance;
+    tapeFileWritten.diskFileId = "12340000";
 
-    tapeFileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-    tapeFileWritten.diskFileGid          = PUBLIC_DISK_GROUP;
-    tapeFileWritten.size                 = archiveFileSize;
+    tapeFileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    tapeFileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    tapeFileWritten.size = archiveFileSize;
     tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-    tapeFileWritten.storageClassName     = m_storageClassDualCopy.name;
-    tapeFileWritten.vid                  = m_tape1.vid;
-    tapeFileWritten.fSeq                 = 1;
-    tapeFileWritten.blockId              = 4321;
-    tapeFileWritten.copyNb               = 1;
-    tapeFileWritten.tapeDrive            = tapeDrive;
+    tapeFileWritten.storageClassName = m_storageClassDualCopy.name;
+    tapeFileWritten.vid = m_tape1.vid;
+    tapeFileWritten.fSeq = 1;
+    tapeFileWritten.blockId = 4321;
+    tapeFileWritten.copyNb = 1;
+    tapeFileWritten.tapeDrive = tapeDrive;
 
     std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
     fileWrittenSet.insert(tapeFileWrittenPtr.release());
@@ -5038,22 +5459,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
 
   {
     auto tapeFileWrittenPtr = std::make_unique<cta::catalogue::TapeFileWritten>();
-    auto & tapeFileWritten = *tapeFileWrittenPtr;
+    auto& tapeFileWritten = *tapeFileWrittenPtr;
 
-    tapeFileWritten.archiveFileId        = archiveFileId_2;
-    tapeFileWritten.diskInstance         = diskInstance;
-    tapeFileWritten.diskFileId           = "56780000";
+    tapeFileWritten.archiveFileId = archiveFileId_2;
+    tapeFileWritten.diskInstance = diskInstance;
+    tapeFileWritten.diskFileId = "56780000";
 
-    tapeFileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-    tapeFileWritten.diskFileGid          = PUBLIC_DISK_GROUP;
-    tapeFileWritten.size                 = archiveFileSize;
+    tapeFileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    tapeFileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    tapeFileWritten.size = archiveFileSize;
     tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, "8765");
-    tapeFileWritten.storageClassName     = m_storageClassDualCopy.name;
-    tapeFileWritten.vid                  = m_tape2.vid;
-    tapeFileWritten.fSeq                 = 1;
-    tapeFileWritten.blockId              = 5678;
-    tapeFileWritten.copyNb               = 1;
-    tapeFileWritten.tapeDrive            = tapeDrive;
+    tapeFileWritten.storageClassName = m_storageClassDualCopy.name;
+    tapeFileWritten.vid = m_tape2.vid;
+    tapeFileWritten.fSeq = 1;
+    tapeFileWritten.blockId = 5678;
+    tapeFileWritten.copyNb = 1;
+    tapeFileWritten.tapeDrive = tapeDrive;
 
     std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
     fileWrittenSet.insert(tapeFileWrittenPtr.release());
@@ -5070,9 +5491,9 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
     ASSERT_EQ(2, tapes.size());
 
     const auto vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
-    const cta::common::dataStructures::Tape & tape_1 = vidToTape.at(m_tape1.vid);
+    const cta::common::dataStructures::Tape& tape_1 = vidToTape.at(m_tape1.vid);
     ASSERT_EQ(m_tape1.vid, tape_1.vid);
-    const cta::common::dataStructures::Tape & tape_2 = vidToTape.at(m_tape2.vid);
+    const cta::common::dataStructures::Tape& tape_2 = vidToTape.at(m_tape2.vid);
     ASSERT_EQ(m_tape2.vid, tape_2.vid);
   }
 
@@ -5080,22 +5501,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   // 2. Only 'm_tape3' should now be identified as missing a second tape file copy
   {
     auto tapeFileWrittenPtr = std::make_unique<cta::catalogue::TapeFileWritten>();
-    auto & tapeFileWritten = *tapeFileWrittenPtr;
+    auto& tapeFileWritten = *tapeFileWrittenPtr;
 
-    tapeFileWritten.archiveFileId        = archiveFileId_1;
-    tapeFileWritten.diskInstance         = diskInstance;
-    tapeFileWritten.diskFileId           = "12340000";
+    tapeFileWritten.archiveFileId = archiveFileId_1;
+    tapeFileWritten.diskInstance = diskInstance;
+    tapeFileWritten.diskFileId = "12340000";
 
-    tapeFileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-    tapeFileWritten.diskFileGid          = PUBLIC_DISK_GROUP;
-    tapeFileWritten.size                 = archiveFileSize;
+    tapeFileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    tapeFileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    tapeFileWritten.size = archiveFileSize;
     tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, "1234");
-    tapeFileWritten.storageClassName     = m_storageClassDualCopy.name;
-    tapeFileWritten.vid                  = m_tape3.vid;
-    tapeFileWritten.fSeq                 = 1;
-    tapeFileWritten.blockId              = 4321;
-    tapeFileWritten.copyNb               = 2;
-    tapeFileWritten.tapeDrive            = tapeDrive;
+    tapeFileWritten.storageClassName = m_storageClassDualCopy.name;
+    tapeFileWritten.vid = m_tape3.vid;
+    tapeFileWritten.fSeq = 1;
+    tapeFileWritten.blockId = 4321;
+    tapeFileWritten.copyNb = 2;
+    tapeFileWritten.tapeDrive = tapeDrive;
 
     std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
     fileWrittenSet.insert(tapeFileWrittenPtr.release());
@@ -5112,7 +5533,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
     ASSERT_EQ(1, tapes.size());
 
     const auto vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
-    const cta::common::dataStructures::Tape & tape_2 = vidToTape.at(m_tape2.vid);
+    const cta::common::dataStructures::Tape& tape_2 = vidToTape.at(m_tape2.vid);
     ASSERT_EQ(m_tape2.vid, tape_2.vid);
   }
 
@@ -5120,22 +5541,22 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   // 2. No tapes should now be identified as missing a second tape file copy
   {
     auto tapeFileWrittenPtr = std::make_unique<cta::catalogue::TapeFileWritten>();
-    auto & tapeFileWritten = *tapeFileWrittenPtr;
+    auto& tapeFileWritten = *tapeFileWrittenPtr;
 
-    tapeFileWritten.archiveFileId        = archiveFileId_2;
-    tapeFileWritten.diskInstance         = diskInstance;
-    tapeFileWritten.diskFileId           = "56780000";
+    tapeFileWritten.archiveFileId = archiveFileId_2;
+    tapeFileWritten.diskInstance = diskInstance;
+    tapeFileWritten.diskFileId = "56780000";
 
-    tapeFileWritten.diskFileOwnerUid     = PUBLIC_DISK_USER;
-    tapeFileWritten.diskFileGid          = PUBLIC_DISK_GROUP;
-    tapeFileWritten.size                 = archiveFileSize;
+    tapeFileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    tapeFileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    tapeFileWritten.size = archiveFileSize;
     tapeFileWritten.checksumBlob.insert(cta::checksum::ADLER32, "8765");
-    tapeFileWritten.storageClassName     = m_storageClassDualCopy.name;
-    tapeFileWritten.vid                  = m_tape3.vid;
-    tapeFileWritten.fSeq                 = 2;
-    tapeFileWritten.blockId              = 5678;
-    tapeFileWritten.copyNb               = 2;
-    tapeFileWritten.tapeDrive            = tapeDrive;
+    tapeFileWritten.storageClassName = m_storageClassDualCopy.name;
+    tapeFileWritten.vid = m_tape3.vid;
+    tapeFileWritten.fSeq = 2;
+    tapeFileWritten.blockId = 5678;
+    tapeFileWritten.copyNb = 2;
+    tapeFileWritten.tapeDrive = tapeDrive;
 
     std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
     fileWrittenSet.insert(tapeFileWrittenPtr.release());
@@ -5153,4 +5574,4 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   }
 }
 
-} // namespace unitTests
+}  // namespace unitTests

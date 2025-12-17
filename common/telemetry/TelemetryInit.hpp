@@ -16,10 +16,10 @@
  */
 #pragma once
 
-#include <opentelemetry/metrics/meter.h>
-
-#include "config/TelemetryConfig.hpp"
 #include "common/log/LogContext.hpp"
+#include "config/TelemetryConfig.hpp"
+
+#include <opentelemetry/metrics/meter.h>
 
 namespace cta::telemetry {
 

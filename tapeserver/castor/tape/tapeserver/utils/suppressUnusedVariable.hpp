@@ -28,4 +28,4 @@ void suppresUnusedVariable([[maybe_unused]] const T& sp) {
      */
 }
 
-} // namespace castor::tape::utils
+}  // namespace castor::tape::utils

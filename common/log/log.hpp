@@ -18,18 +18,18 @@
 #pragma once
 
 #include "Logger.hpp"
-#include "common/log/Param.hpp"
 #include "common/log/IPAddress.hpp"
+#include "common/log/Param.hpp"
 #include "common/log/TimeStamp.hpp"
 //#include "common/Cuuid.h"
 
 #include <list>
-#include <syslog.h>
 #include <sys/time.h>
+#include <syslog.h>
 
 namespace cta::log {
 
-  /**
+/**
    * Initialises the logging system with the specified logger which should be
    * allocated on the heap and will be owned by the logging system;
    *
@@ -37,29 +37,29 @@ namespace cta::log {
    *
    * @logger The logger to be used by the logging system.
    */
-  void init(cta::log::Logger *logger);
+void init(cta::log::Logger* logger);
 
-  /**
+/**
    * Deallocates the logger.
    *
    * This method is not thread safe.
    */
-  void shutdown();
+void shutdown();
 
-  /**
+/**
    * Returns a reference to the logger if it exists else throws an exception.
    */
-  Logger &instance();
+Logger& instance();
 
-  /**
+/**
    * Prepares the logger object for a call to fork().
    *
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork();
+void prepareForFork();
 
-  /**
+/**
    * Writes a message into the CASTOR logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
@@ -71,13 +71,11 @@ namespace cta::log {
    * @param msg the message.
    * @param params optionally the parameters of the message.
    */
-  void write(
-    const int priority,
-    std::string_view msg,
-    const std::list<cta::log::Param> &params =
-      std::list<cta::log::Param>());
+void write(const int priority,
+           std::string_view msg,
+           const std::list<cta::log::Param>& params = std::list<cta::log::Param>());
 
-  /**
+/**
    * Writes a message into the CASTOR logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
@@ -94,22 +92,21 @@ namespace cta::log {
    * @param progName the program name of the log message.
    * @param pid the pid of the log message.
    */
-  void write(
-    const int priority,
-    std::string_view msg,
-    std::string_view rawParams,
-    const struct timeval &timeStamp,
-    std::string_view progName,
-    const int pid);
+void write(const int priority,
+           std::string_view msg,
+           std::string_view rawParams,
+           const struct timeval& timeStamp,
+           std::string_view progName,
+           const int pid);
 
-  /**
+/**
    * Returns the program name if known or the empty string if not.
    *
    * @return the program name if known or the empty string if not.
    */
-  std::string getProgramName();
+std::string getProgramName();
 
-} // namespace cta::log
+}  // namespace cta::log
 
 /**
  * non-member operator to stream a Cuuid_t

@@ -30,15 +30,13 @@ enum class JobQueueType {
   JobsToTransferForRepack
 };
 
-static const JobQueueType AllJobQueueTypes[] = {
-  JobQueueType::JobsToTransferForUser,
-  JobQueueType::FailedJobs,
-  JobQueueType::JobsToReportToUser,
-  JobQueueType::JobsToReportToRepackForSuccess,
-  JobQueueType::JobsToReportToRepackForFailure,
-  JobQueueType::JobsToTransferForRepack
-};
+static const JobQueueType AllJobQueueTypes[] = {JobQueueType::JobsToTransferForUser,
+                                                JobQueueType::FailedJobs,
+                                                JobQueueType::JobsToReportToUser,
+                                                JobQueueType::JobsToReportToRepackForSuccess,
+                                                JobQueueType::JobsToReportToRepackForFailure,
+                                                JobQueueType::JobsToTransferForRepack};
 
 std::string toString(JobQueueType queueType);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

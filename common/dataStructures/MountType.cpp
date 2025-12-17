@@ -16,12 +16,13 @@
  */
 
 #include "common/dataStructures/MountType.hpp"
+
 #include "common/exception/Exception.hpp"
 
 namespace cta::common::dataStructures {
 
 std::string toString(cta::common::dataStructures::MountType type) {
-  switch(type) {
+  switch (type) {
     case MountType::ArchiveForUser:
       return "ARCHIVE_FOR_USER";
     case MountType::ArchiveForRepack:
@@ -40,7 +41,7 @@ std::string toString(cta::common::dataStructures::MountType type) {
 }
 
 std::string toCamelCaseString(cta::common::dataStructures::MountType type) {
-  switch(type) {
+  switch (type) {
     case MountType::ArchiveForUser:
       return "ArchiveForUser";
     case MountType::ArchiveForRepack:
@@ -59,17 +60,25 @@ std::string toCamelCaseString(cta::common::dataStructures::MountType type) {
 }
 
 MountType strToMountType(const std::string& mountTypeStr) {
-       if(mountTypeStr == "ARCHIVE_FOR_USER")   return MountType::ArchiveForUser;
-  else if(mountTypeStr == "ARCHIVE_FOR_REPACK") return MountType::ArchiveForRepack;
-  else if(mountTypeStr == "ARCHIVE_ALL_TYPES")  return MountType::ArchiveAllTypes;
-  else if(mountTypeStr == "RETRIEVE")           return MountType::Retrieve;
-  else if(mountTypeStr == "LABEL")              return MountType::Label;
-  else if(mountTypeStr == "NO_MOUNT")           return MountType::NoMount;
-  else throw cta::exception::Exception("Mount type " + mountTypeStr + " does not correspond to a valid mount type.");
+  if (mountTypeStr == "ARCHIVE_FOR_USER") {
+    return MountType::ArchiveForUser;
+  } else if (mountTypeStr == "ARCHIVE_FOR_REPACK") {
+    return MountType::ArchiveForRepack;
+  } else if (mountTypeStr == "ARCHIVE_ALL_TYPES") {
+    return MountType::ArchiveAllTypes;
+  } else if (mountTypeStr == "RETRIEVE") {
+    return MountType::Retrieve;
+  } else if (mountTypeStr == "LABEL") {
+    return MountType::Label;
+  } else if (mountTypeStr == "NO_MOUNT") {
+    return MountType::NoMount;
+  } else {
+    throw cta::exception::Exception("Mount type " + mountTypeStr + " does not correspond to a valid mount type.");
+  }
 }
 
 MountType getMountBasicType(MountType type) {
-  switch(type) {
+  switch (type) {
     case MountType::ArchiveForUser:
     case MountType::ArchiveForRepack:
       return MountType::ArchiveAllTypes;
@@ -78,9 +87,8 @@ MountType getMountBasicType(MountType type) {
   }
 }
 
-std::ostream & operator<<(std::ostream &os,
-  const cta::common::dataStructures::MountType &obj) {
+std::ostream& operator<<(std::ostream& os, const cta::common::dataStructures::MountType& obj) {
   return os << toString(obj);
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

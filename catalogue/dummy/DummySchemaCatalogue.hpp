@@ -21,7 +21,7 @@
 
 namespace cta::catalogue {
 
-class DummySchemaCatalogue: public SchemaCatalogue {
+class DummySchemaCatalogue : public SchemaCatalogue {
 public:
   DummySchemaCatalogue() = default;
   ~DummySchemaCatalogue() override = default;
@@ -33,4 +33,4 @@ public:
   void ping() override;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

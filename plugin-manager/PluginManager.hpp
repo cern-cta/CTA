@@ -20,23 +20,20 @@
 
 #include "PluginInterface.hpp"
 
+#include <dlfcn.h>
+#include <functional>
+#include <memory>
 #include <stdexcept>
 #include <string>
-#include <memory>
 #include <unordered_map>
-#include <functional>
-#include <dlfcn.h>
 
 namespace cta::plugin {
 
 class Loader {
-
 public:
   Loader() = default;
 
-  ~Loader() {
-    unload();
-  }
+  ~Loader() { unload(); }
 
   Loader& load(const std::string& strFile) {
     m_strFile = strFile;
@@ -44,7 +41,7 @@ public:
       throw std::logic_error("An attempt to load a library before unloading the previous one.");
     }
     // RTLD_NOW ensures that all the symbols are resolved immediately. This means that
-	  // if a symbol cannot be found, the program will crash now instead of later.
+    // if a symbol cannot be found, the program will crash now instead of later.
     // RTLD_LAZY -
     m_pHandler = dlopen(strFile.c_str(), RTLD_NOW);
 
@@ -68,7 +65,7 @@ public:
       throw std::runtime_error("Null pointer exception.");
     }
 
-    dlerror(); // to clear any old error conditions
+    dlerror();  // to clear any old error conditions
     m_pFun = dlsym(m_pHandler, strEntryPointName.c_str());
     if (char* pcError = dlerror(); pcError) {
       throw std::runtime_error(pcError);
@@ -76,9 +73,7 @@ public:
     return *this;
   }
 
-  const std::string& File() {
-    return m_strFile;
-  }
+  const std::string& File() { return m_strFile; }
 
   template<typename HANDLER, typename RETURN, typename... ARGS>
   RETURN call(ARGS&... args) {
@@ -90,25 +85,19 @@ public:
   }
 
 private:
-
   void* m_pHandler = nullptr;
   void* m_pFun = nullptr;
   std::string m_strFile;
-
 };
 
-template <typename BASE_TYPE, typename... IARGS>
+template<typename BASE_TYPE, typename... IARGS>
 class Manager {
-
 public:
-
-  ~Manager() {
-    unloadAll();
-  }
+  ~Manager() { unloadAll(); }
 
   bool isRegistered(const std::string& strPluginName) const { return m_umapPlugins.contains(strPluginName); }
 
-  void onRegisterPlugin(std::function<void (const plugin::Interface<BASE_TYPE, IARGS...>& )>&& callBackOnRegisterPlugin) {
+  void onRegisterPlugin(std::function<void(const plugin::Interface<BASE_TYPE, IARGS...>&)>&& callBackOnRegisterPlugin) {
     m_callBackOnRegisterPlugin = callBackOnRegisterPlugin;
   }
 
@@ -155,8 +144,8 @@ public:
   }
 
   Manager& unload(const std::string& strFile) {
-    for (auto iter = m_umapPlugins.begin() ; iter != m_umapPlugins.end(); ) {
-      if(iter->second->template GET<plugin::DATA::FILE_NAME>() == strFile) {
+    for (auto iter = m_umapPlugins.begin(); iter != m_umapPlugins.end();) {
+      if (iter->second->template GET<plugin::DATA::FILE_NAME>() == strFile) {
         iter = m_umapPlugins.erase(iter);
       } else {
         iter++;
@@ -167,9 +156,10 @@ public:
   }
 
   template<typename... ARGS>
-  Manager&  bootstrap(const std::string& strEntryPoint, ARGS&... args) {
+  Manager& bootstrap(const std::string& strEntryPoint, ARGS&... args) {
     loader().attach(strEntryPoint);
-    std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>> upInterface = std::make_unique<plugin::Interface<BASE_TYPE, IARGS...>>();
+    std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>> upInterface =
+      std::make_unique<plugin::Interface<BASE_TYPE, IARGS...>>();
 
     loader().template call<void (*)(plugin::Interface<BASE_TYPE, IARGS...>&), void>(*upInterface, args...);
     // Set / overload plugin file name
@@ -185,16 +175,15 @@ private:
   std::string m_strActiveLoader;
   std::unordered_map<std::string, plugin::Loader> m_umapLoaders;
   std::unordered_map<std::string, std::unique_ptr<plugin::Interface<BASE_TYPE, IARGS...>>> m_umapPlugins;
-  std::function<void (const plugin::Interface<BASE_TYPE, IARGS...>& )> m_callBackOnRegisterPlugin;
+  std::function<void(const plugin::Interface<BASE_TYPE, IARGS...>&)> m_callBackOnRegisterPlugin;
 
   Loader& loader() {
     try {
       return m_umapLoaders.at(m_strActiveLoader);
-    } catch(const std::out_of_range&) {
+    } catch (const std::out_of_range&) {
       throw std::runtime_error("Loader " + m_strActiveLoader + " does not exists.");
     }
   }
-
 };
 
-} // namespace cta::plugin
+}  // namespace cta::plugin

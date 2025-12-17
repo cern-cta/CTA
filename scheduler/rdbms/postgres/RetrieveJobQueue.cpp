@@ -16,9 +16,10 @@
  */
 
 #include "scheduler/rdbms/postgres/RetrieveJobQueue.hpp"
-#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
+
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
+#include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 
 namespace cta::schedulerdb::postgres {
 
@@ -91,7 +92,7 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
     )
     INSERT INTO )SQL";
   sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ( ";
-  if(isRepack) {
+  if (isRepack) {
     sql += " REPACK_REQUEST_ID,";
     sql += " REPACK_REARCHIVE_COPY_NBS,";
     sql += " REPACK_REARCHIVE_TAPE_POOLS,";
@@ -153,12 +154,12 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
     )
     SELECT
     )SQL";
-    if(isRepack) {
-      sql += " M.REPACK_REQUEST_ID,";
-      sql += " M.REPACK_REARCHIVE_COPY_NBS,";
-      sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
-    }
-    sql += R"SQL(
+  if (isRepack) {
+    sql += " M.REPACK_REQUEST_ID,";
+    sql += " M.REPACK_REARCHIVE_COPY_NBS,";
+    sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql += R"SQL(
         M.JOB_ID,
         M.RETRIEVE_REQUEST_ID,
         M.REQUEST_JOB_COUNT,
@@ -238,10 +239,10 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   return std::make_pair(std::move(result), nrows);
 }
 
-
 uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
                                               RetrieveJobStatus newStatus,
-                                              const std::vector<std::string>& jobIDs, bool isRepack) {
+                                              const std::vector<std::string>& jobIDs,
+                                              bool isRepack) {
   if (jobIDs.empty()) {
     return 0;
   }
@@ -256,8 +257,8 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
 
   // DISABLE DELETION FOR DEBUGGING
-  if (newStatus == RetrieveJobStatus::RJS_Complete || newStatus == RetrieveJobStatus::RJS_Failed ||
-      newStatus == RetrieveJobStatus::ReadyForDeletion) {
+  if (newStatus == RetrieveJobStatus::RJS_Complete || newStatus == RetrieveJobStatus::RJS_Failed
+      || newStatus == RetrieveJobStatus::ReadyForDeletion) {
     if (newStatus == RetrieveJobStatus::RJS_Failed) {
       return RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs, isRepack);
     } else {
@@ -295,11 +296,11 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
 uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepack) {
   RetrieveJobStatus newStatus;
   std::string repack_table_name_prefix = "";
-  if(isRepack){
+  if (isRepack) {
     repack_table_name_prefix = "REPACK_";
     newStatus = RetrieveJobStatus::RJS_ToReportToRepackForFailure;
   } else {
-   newStatus = RetrieveJobStatus::RJS_ToReportToUserForFailure;
+    newStatus = RetrieveJobStatus::RJS_ToReportToUserForFailure;
   }
   std::string sql = R"SQL(
       UPDATE )SQL";
@@ -325,8 +326,7 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRep
 void RetrieveJobQueueRow::updateJobRowFailureLog(const std::string& reason, bool is_report_log) {
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + reason;
 
-  if (auto& logField = is_report_log ? reportFailureLogs : failureLogs;
-      logField.has_value()) {
+  if (auto& logField = is_report_log ? reportFailureLogs : failureLogs; logField.has_value()) {
     logField.value() += failureLog;
   } else {
     logField.emplace(failureLog);
@@ -353,8 +353,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
                                                RetrieveJobStatus newStatus,
                                                bool keepMountId,
                                                bool isRepack,
-                                               std::optional<std::list<std::string>> jobIDs
-                                               ) {
+                                               std::optional<std::list<std::string>> jobIDs) {
   std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
@@ -446,12 +445,12 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
     )
     SELECT
    )SQL";
-   if (isRepack) {
-     sql += " M.REPACK_REQUEST_ID,";
-     sql += " M.REPACK_REARCHIVE_COPY_NBS,";
-     sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
-   }
-   sql += R"SQL(
+  if (isRepack) {
+    sql += " M.REPACK_REQUEST_ID,";
+    sql += " M.REPACK_REARCHIVE_COPY_NBS,";
+    sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql += R"SQL(
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
@@ -533,8 +532,10 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   return stmt.getNbAffectedRows();
 };
 
-uint64_t
-RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStatus, const std::list<std::string>& jobIDs, bool isRepack) {
+uint64_t RetrieveJobQueueRow::requeueJobBatch(Transaction& txn,
+                                              RetrieveJobStatus newStatus,
+                                              const std::list<std::string>& jobIDs,
+                                              bool isRepack) {
   std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
@@ -622,12 +623,12 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
     )
     SELECT
     )SQL";
-    if (isRepack) {
-      sql += " M.REPACK_REQUEST_ID,";
-      sql += " M.REPACK_REARCHIVE_COPY_NBS,";
-      sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
-    }
-    sql += R"SQL(
+  if (isRepack) {
+    sql += " M.REPACK_REQUEST_ID,";
+    sql += " M.REPACK_REARCHIVE_COPY_NBS,";
+    sql += " M.REPACK_REARCHIVE_TAPE_POOLS,";
+  }
+  sql += R"SQL(
       M.JOB_ID,
       M.RETRIEVE_REQUEST_ID,
       M.REQUEST_JOB_COUNT,
@@ -692,8 +693,7 @@ RetrieveJobQueueRow::requeueJobBatch(Transaction& txn, RetrieveJobStatus newStat
   return stmt.getNbAffectedRows();
 }
 
-rdbms::Rset
-RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, const size_t limit) {
+rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, const size_t limit) {
   // Notes for dev process: we assume the DST_URL becomes SRC_URL, the ARCHIVE_REPORT_URL
   // and ARCHIVE_ERROR_REPORT_URL should not need to be used - must be checked
   // we assume these should be poiniting to the same disk URL as for retrieve
@@ -1064,7 +1064,9 @@ uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   return stmt.getNbAffectedRows();
 }
 
-uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, const std::vector<std::string>& jobIDs, bool isRepack) {
+uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
+                                                             const std::vector<std::string>& jobIDs,
+                                                             bool isRepack) {
   std::string sqlpart;
   for (const auto& piece : jobIDs) {
     sqlpart += piece + ",";
@@ -1094,7 +1096,6 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, c
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
 }
-
 
 rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit) {
   std::string sql = R"SQL(

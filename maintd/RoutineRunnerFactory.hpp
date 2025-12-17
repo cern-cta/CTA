@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include "RoutineRunner.hpp"
+#include "catalogue/Catalogue.hpp"
 #include "common/config/Config.hpp"
 #include "common/log/LogContext.hpp"
-
-#include "catalogue/Catalogue.hpp"
 #include "scheduler/Scheduler.hpp"
 
 #ifdef CTA_PGSCHED

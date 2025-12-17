@@ -15,12 +15,13 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rmc_api.hpp"
+
 #include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 #include <sys/types.h>
-#include "rmc_api.hpp"
 
 static char* errbufp = nullptr;
 static int errbuflen;

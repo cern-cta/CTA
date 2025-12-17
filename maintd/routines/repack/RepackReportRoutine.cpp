@@ -15,10 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/exception/NoSuchObject.hpp"
 #include "RepackReportRoutine.hpp"
-#include "scheduler/Scheduler.hpp"
+
+#include "common/exception/NoSuchObject.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "scheduler/Scheduler.hpp"
 
 namespace cta::maintd {
 

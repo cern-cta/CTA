@@ -22,9 +22,9 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-OracleCatalogueSchema::OracleCatalogueSchema(): CatalogueSchema(
-  // CTA_SQL_SCHEMA - The contents of oracle_catalogue_schema.cpp go here
-  ) {
-}
+OracleCatalogueSchema::OracleCatalogueSchema()
+    : CatalogueSchema(
+        // CTA_SQL_SCHEMA - The contents of oracle_catalogue_schema.cpp go here
+      ) {}
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

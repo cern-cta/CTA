@@ -14,16 +14,16 @@
  *               granted to it by virtue of its status as an Intergovernmental Organization or
  *               submit itself to any jurisdiction.
  */
-#include <sys/types.h>
-#include <sys/stat.h>
-
-#include "disk/DiskFileImplementations.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/process/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
-#include <xrootd/XrdCl/XrdClFile.hh>
-#include <uuid/uuid.h>
+#include "disk/DiskFileImplementations.hpp"
+
 #include <algorithm>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <uuid/uuid.h>
+#include <xrootd/XrdCl/XrdClFile.hh>
 
 namespace cta::disk {
 
@@ -40,7 +40,7 @@ ReadFile* DiskFileFactory::createReadFile(const std::string& path) {
   // Xroot URL?
   regexResult = m_URLXrootFile.exec(path);
   if (regexResult.size()) {
-     return new XrootReadFile(regexResult[1], m_xrootTimeout);
+    return new XrootReadFile(regexResult[1], m_xrootTimeout);
   }
   // No URL path parsing
   // Do we have a local file?
@@ -81,8 +81,8 @@ LocalReadFile::LocalReadFile(const std::string& path) {
   m_URL = "file://";
   m_URL += path;
   cta::exception::Errnum::throwOnMinusOne(m_fd,
-                                          std::string("In diskFile::LocalReadFile::LocalReadFile failed open64() on ") +
-                                            m_URL);
+                                          std::string("In diskFile::LocalReadFile::LocalReadFile failed open64() on ")
+                                            + m_URL);
 }
 
 size_t LocalReadFile::read(void* data, const size_t size) const {
@@ -94,8 +94,8 @@ size_t LocalReadFile::size() const {
   struct stat64 statbuf;
   int ret = ::fstat64(m_fd, &statbuf);
   cta::exception::Errnum::throwOnMinusOne(ret,
-                                          std::string("In diskFile::LocalReadFile::LocalReadFile failed stat64() on ") +
-                                            m_URL);
+                                          std::string("In diskFile::LocalReadFile::LocalReadFile failed stat64() on ")
+                                            + m_URL);
 
   return statbuf.st_size;
 }
@@ -113,8 +113,8 @@ LocalWriteFile::LocalWriteFile(const std::string& path) {
   m_URL = "file://";
   m_URL += path;
   cta::exception::Errnum::throwOnMinusOne(m_fd,
-                                          std::string("In LocalWriteFile::LocalWriteFile() failed to open64() on ") +
-                                            m_URL);
+                                          std::string("In LocalWriteFile::LocalWriteFile() failed to open64() on ")
+                                            + m_URL);
 }
 
 void LocalWriteFile::write(const void* data, const size_t size) {
@@ -147,14 +147,15 @@ XrootReadFile::XrootReadFile(const std::string& xrootUrl, uint16_t timeout) : Xr
   // and simply open
   using XrdCl::OpenFlags;
   exception::XrdClException::throwOnError(m_xrootFile.Open(xrootUrl, OpenFlags::Read, XrdCl::Access::None, m_timeout),
-                          std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ") + xrootUrl);
+                                          std::string("In XrootReadFile::XrootReadFile failed XrdCl::File::Open() on ")
+                                            + xrootUrl);
   m_xrootFile.GetProperty("LastURL", m_URL);
 }
 
 size_t XrootBaseReadFile::read(void* data, const size_t size) const {
   uint32_t ret;
   exception::XrdClException::throwOnError(m_xrootFile.Read(m_readPosition, size, data, ret, m_timeout),
-                          std::string("In XrootReadFile::read failed XrdCl::File::Read() on ") + m_URL);
+                                          std::string("In XrootReadFile::read failed XrdCl::File::Read() on ") + m_URL);
   m_readPosition += ret;
   return ret;
 }
@@ -164,7 +165,7 @@ size_t XrootBaseReadFile::size() const {
   XrdCl::StatInfo* statInfo(nullptr);
   size_t ret;
   exception::XrdClException::throwOnError(m_xrootFile.Stat(forceStat, statInfo, m_timeout),
-                          std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ") + m_URL);
+                                          std::string("In XrootReadFile::size failed XrdCl::File::Stat() on ") + m_URL);
   ret = statInfo->GetSize();
   delete statInfo;
   return ret;
@@ -193,7 +194,8 @@ XrootWriteFile::XrootWriteFile(const std::string& xrootUrl, uint16_t timeout) : 
 
 void XrootBaseWriteFile::write(const void* data, const size_t size) {
   exception::XrdClException::throwOnError(m_xrootFile.Write(m_writePosition, size, data, m_timeout),
-                          std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ") + m_URL);
+                                          std::string("In XrootWriteFile::write failed XrdCl::File::Write() on ")
+                                            + m_URL);
   m_writePosition += size;
 }
 
@@ -204,7 +206,8 @@ void XrootBaseWriteFile::close() {
   }
   m_closeTried = true;
   exception::XrdClException::throwOnError(m_xrootFile.Close(m_timeout),
-                          std::string("In XrootWriteFile::close failed XrdCl::File::Close() on ") + m_URL);
+                                          std::string("In XrootWriteFile::close failed XrdCl::File::Close() on ")
+                                            + m_URL);
 }
 
 XrootBaseWriteFile::~XrootBaseWriteFile() noexcept {
@@ -387,12 +390,14 @@ void XRootdDirectory::mkdir() {
                             XrdCl::MkDirFlags::None,
                             XrdCl::Access::Mode::UR | XrdCl::Access::Mode::UW | XrdCl::Access::Mode::UX,
                             c_xrootTimeout);
-  exception::XrdClException::throwOnError(mkdirStatus, "In XRootdDirectory::mkdir() : failed to create directory at " + m_URL);
+  exception::XrdClException::throwOnError(mkdirStatus,
+                                          "In XRootdDirectory::mkdir() : failed to create directory at " + m_URL);
 }
 
 void XRootdDirectory::rmdir() {
   XrdCl::XRootDStatus rmdirStatus = m_xrootFileSystem.RmDir(m_truncatedDirectoryURL, c_xrootTimeout);
-  exception::XrdClException::throwOnError(rmdirStatus, "In XRootdDirectory::rmdir() : failed to remove directory at " + m_URL);
+  exception::XrdClException::throwOnError(rmdirStatus,
+                                          "In XRootdDirectory::rmdir() : failed to remove directory at " + m_URL);
 }
 
 bool XRootdDirectory::exist() {
@@ -402,7 +407,8 @@ bool XRootdDirectory::exist() {
     return false;
   }
   // If the EOS instance does not exist, don't return false, just throw an exception
-  exception::XrdClException::throwOnError(statStatus, "In XRootdDirectory::exist() : failed to stat the directory at " + m_URL);
+  exception::XrdClException::throwOnError(statStatus,
+                                          "In XRootdDirectory::exist() : failed to stat the directory at " + m_URL);
   // No exception, return true
   return true;
 }
@@ -414,7 +420,9 @@ std::set<std::string> XRootdDirectory::getFilesName() {
                                                                 XrdCl::DirListFlags::Flags::Stat,
                                                                 directoryContent,
                                                                 c_xrootTimeout);
-  exception::XrdClException::throwOnError(dirListStatus, "In XrootdDirectory::getFilesName(): unable to list the files contained in the directory.");
+  exception::XrdClException::throwOnError(
+    dirListStatus,
+    "In XrootdDirectory::getFilesName(): unable to list the files contained in the directory.");
   XrdCl::DirectoryList::ConstIterator iter = directoryContent->Begin();
   while (iter != directoryContent->End()) {
     ret.insert((*iter)->GetName());

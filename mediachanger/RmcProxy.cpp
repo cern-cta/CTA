@@ -15,32 +15,29 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/utils/utils.hpp"
-#include "mediachanger/SmartFd.hpp"
-#include "mediachanger/CommonMarshal.hpp"
-#include "mediachanger/io.hpp"
-#include "mediachanger/RmcMarshal.hpp"
 #include "mediachanger/RmcProxy.hpp"
+
+#include "common/utils/utils.hpp"
+#include "mediachanger/CommonMarshal.hpp"
+#include "mediachanger/RmcMarshal.hpp"
 #include "mediachanger/ScsiLibrarySlot.hpp"
+#include "mediachanger/SmartFd.hpp"
+#include "mediachanger/io.hpp"
 
 namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RmcProxy::RmcProxy(
-  const uint16_t rmcPort,
-  const uint32_t netTimeout,
-  const uint32_t maxRqstAttempts):
-  m_rmcPort(rmcPort),
-  m_netTimeout(netTimeout),
-  m_maxRqstAttempts(maxRqstAttempts) {
-} 
+RmcProxy::RmcProxy(const uint16_t rmcPort, const uint32_t netTimeout, const uint32_t maxRqstAttempts)
+    : m_rmcPort(rmcPort),
+      m_netTimeout(netTimeout),
+      m_maxRqstAttempts(maxRqstAttempts) {}
 
 //------------------------------------------------------------------------------
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
-void RmcProxy::mountTapeReadOnly(const std::string &vid, const LibrarySlot &librarySlot) {
+void RmcProxy::mountTapeReadOnly(const std::string& vid, const LibrarySlot& librarySlot) {
   // SCSI libraries do not support read-only mounts
   mountTapeReadWrite(vid, librarySlot);
 }
@@ -48,22 +45,21 @@ void RmcProxy::mountTapeReadOnly(const std::string &vid, const LibrarySlot &libr
 //------------------------------------------------------------------------------
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
-void RmcProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &librarySlot) {
+void RmcProxy::mountTapeReadWrite(const std::string& vid, const LibrarySlot& librarySlot) {
   try {
     RmcMountMsgBody rqstBody;
     rqstBody.uid = geteuid();
     rqstBody.gid = getegid();
     utils::copyString(rqstBody.vid, vid);
-    const ScsiLibrarySlot &scsiLibrarySlot = dynamic_cast<const ScsiLibrarySlot&>(librarySlot);
+    const ScsiLibrarySlot& scsiLibrarySlot = dynamic_cast<const ScsiLibrarySlot&>(librarySlot);
     rqstBody.drvOrd = scsiLibrarySlot.getDrvOrd();
 
     rmcSendRecvNbAttempts(m_maxRqstAttempts, rqstBody);
-  } catch(cta::exception::Exception &ne) {
+  } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to mount tape in SCSI tape-library for read/write access"
-      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
-      ne.getMessage().str();
+    ex.getMessage() << "Failed to mount tape in SCSI tape-library for read/write access"
+                       ": vid="
+                    << vid << " librarySlot=" << librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
 }
@@ -71,23 +67,22 @@ void RmcProxy::mountTapeReadWrite(const std::string &vid, const LibrarySlot &lib
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void RmcProxy::dismountTape(const std::string &vid, const LibrarySlot &librarySlot) {
+void RmcProxy::dismountTape(const std::string& vid, const LibrarySlot& librarySlot) {
   try {
     RmcUnmountMsgBody rqstBody;
     rqstBody.uid = geteuid();
     rqstBody.gid = getegid();
     utils::copyString(rqstBody.vid, vid);
-    const ScsiLibrarySlot &scsiLibrarySlot = dynamic_cast<const ScsiLibrarySlot&>(librarySlot);
+    const ScsiLibrarySlot& scsiLibrarySlot = dynamic_cast<const ScsiLibrarySlot&>(librarySlot);
     rqstBody.drvOrd = scsiLibrarySlot.getDrvOrd();
     rqstBody.force = 0;
 
     rmcSendRecvNbAttempts(m_maxRqstAttempts, rqstBody);
-  } catch(cta::exception::Exception &ne) {
+  } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() <<
-      "Failed to dismount tape in SCSI tape-library"
-      ": vid=" << vid << " librarySlot=" << librarySlot.str() << ": " <<
-      ne.getMessage().str();
+    ex.getMessage() << "Failed to dismount tape in SCSI tape-library"
+                       ": vid="
+                    << vid << " librarySlot=" << librarySlot.str() << ": " << ne.getMessage().str();
     throw ex;
   }
 }
@@ -95,17 +90,15 @@ void RmcProxy::dismountTape(const std::string &vid, const LibrarySlot &librarySl
 //-----------------------------------------------------------------------------
 // connectToRmc
 //-----------------------------------------------------------------------------
-int RmcProxy::connectToRmc()
-  const {
+int RmcProxy::connectToRmc() const {
   const std::string rmcHost = "localhost";
   cta::SmartFd smartConnectSock;
   try {
-    smartConnectSock.reset(connectWithTimeout(rmcHost, m_rmcPort,
-      m_netTimeout));
-  } catch(cta::exception::Exception &ne) {
+    smartConnectSock.reset(connectWithTimeout(rmcHost, m_rmcPort, m_netTimeout));
+  } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to connect to rmcd: rmcHost=" << rmcHost
-      << " rmcPort=" << RMC_PORT << ": " << ne.getMessage().str();
+    ex.getMessage() << "Failed to connect to rmcd: rmcHost=" << rmcHost << " rmcPort=" << RMC_PORT << ": "
+                    << ne.getMessage().str();
     throw ex;
   }
 
@@ -116,27 +109,26 @@ int RmcProxy::connectToRmc()
 // readRmcMsgHeader
 //-----------------------------------------------------------------------------
 MessageHeader RmcProxy::readRmcMsgHeader(const int fd) {
-  char buf[12]; // Magic + type + len
+  char buf[12];  // Magic + type + len
   MessageHeader header;
 
   try {
     readBytes(fd, m_netTimeout, sizeof(buf), buf);
-  } catch(cta::exception::Exception &ne) {
+  } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to read message header: "
-      << ne.getMessage().str();
+    ex.getMessage() << "Failed to read message header: " << ne.getMessage().str();
     throw ex;
   }
 
-  const char *bufPtr = buf;
+  const char* bufPtr = buf;
   size_t bufLen = sizeof(buf);
   unmarshal(bufPtr, bufLen, header);
 
-  if(RMC_MAGIC != header.magic) {
+  if (RMC_MAGIC != header.magic) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to read message header: "
-      " Header contains an invalid magic number: expected=0x" << std::hex <<
-      RMC_MAGIC << " actual=0x" << header.magic;
+                       " Header contains an invalid magic number: expected=0x"
+                    << std::hex << RMC_MAGIC << " actual=0x" << header.magic;
     throw ex;
   }
 
@@ -148,15 +140,15 @@ MessageHeader RmcProxy::readRmcMsgHeader(const int fd) {
 //-----------------------------------------------------------------------------
 std::string RmcProxy::rmcReplyTypeToStr(const int replyType) {
   std::ostringstream oss;
-  switch(replyType) {
-  case RMC_RC:
-    oss << "RMC_RC";
-    break;
-  case MSG_ERR:
-    oss << "MSG_ERR";
-    break;
-  default:
-    oss << "UNKNOWN(0x" << std::hex << replyType << ")";
+  switch (replyType) {
+    case RMC_RC:
+      oss << "RMC_RC";
+      break;
+    case MSG_ERR:
+      oss << "MSG_ERR";
+      break;
+    default:
+      oss << "UNKNOWN(0x" << std::hex << replyType << ")";
   }
   return oss.str();
 }
@@ -164,13 +156,12 @@ std::string RmcProxy::rmcReplyTypeToStr(const int replyType) {
 //-----------------------------------------------------------------------------
 // handleMSG_ERR
 //-----------------------------------------------------------------------------
-std::string RmcProxy::handleMSG_ERR(const MessageHeader &header, const int fd) {
+std::string RmcProxy::handleMSG_ERR(const MessageHeader& header, const int fd) {
   char errorBuf[1024];
-  const int nbBytesToRead = header.lenOrStatus > sizeof(errorBuf) ?
-    sizeof(errorBuf) : header.lenOrStatus;
+  const int nbBytesToRead = header.lenOrStatus > sizeof(errorBuf) ? sizeof(errorBuf) : header.lenOrStatus;
   readBytes(fd, m_netTimeout, nbBytesToRead, errorBuf);
   errorBuf[sizeof(errorBuf) - 1] = '\0';
   return errorBuf;
 }
 
-} // namespace cta::mediachanger
+}  // namespace cta::mediachanger

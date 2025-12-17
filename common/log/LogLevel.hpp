@@ -28,4 +28,4 @@ namespace cta::log {
  */
 int toLogLevel(std::string_view s);
 
-} // namespace cta::log
+}  // namespace cta::log

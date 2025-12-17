@@ -16,12 +16,16 @@
  */
 
 #include "DriveHandlerProxy.hpp"
+
 #include "common/exception/NotImplementedException.hpp"
+
 #include "tapeserver/daemon/WatchdogMessage.pb.h"
 
 namespace cta::tape::daemon {
 
-DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair, cta::log::LogContext& lc): m_socketPair(socketPair), m_lc(lc) {}
+DriveHandlerProxy::DriveHandlerProxy(server::SocketPair& socketPair, cta::log::LogContext& lc)
+    : m_socketPair(socketPair),
+      m_lc(lc) {}
 
 DriveHandlerProxy::~DriveHandlerProxy() {
   if (m_refreshLoggerClosingSock) {
@@ -30,7 +34,7 @@ DriveHandlerProxy::~DriveHandlerProxy() {
     try {
       m_refreshLoggerClosingSock->send("stop_thread", server::SocketPair::Side::child);
       m_refreshLoggerAsyncFut.wait();
-    } catch (std::exception &ex) {
+    } catch (std::exception& ex) {
       log::ScopedParamContainer exParams(m_lc);
       exParams.add("exceptionMessage", ex.what());
       m_lc.log(log::ERR, "In DriveHandlerProxy::~DriveHandlerProxy(): received a std::exception.");
@@ -40,52 +44,52 @@ DriveHandlerProxy::~DriveHandlerProxy() {
   }
 }
 
-void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param> &params) {
+void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param>& params) {
   serializers::WatchdogMessage watchdogMessage;
   watchdogMessage.set_reportingstate(false);
   watchdogMessage.set_reportingbytes(false);
-  for (auto & p: params) {
-    auto * lp = watchdogMessage.mutable_addedlogparams()->Add();
+  for (auto& p : params) {
+    auto* lp = watchdogMessage.mutable_addedlogparams()->Add();
     lp->set_name(p.getName());
     lp->set_value(p.getValueStr());
   }
   std::string buffer;
   if (!watchdogMessage.SerializeToString(&buffer)) {
-    throw cta::exception::Exception(std::string("In DriveHandlerProxy::addLogParams(): could not serialize: ")+
-        watchdogMessage.InitializationErrorString());
+    throw cta::exception::Exception(std::string("In DriveHandlerProxy::addLogParams(): could not serialize: ")
+                                    + watchdogMessage.InitializationErrorString());
   }
   try {
     m_socketPair.send(buffer, server::SocketPair::Side::parent);
   } catch (cta::exception::Exception& e) {
-      log::ScopedParamContainer exParams(m_lc);
-      exParams.add("bufferLength", buffer.length());
-      exParams.add("bufferMsg", buffer);
-      m_lc.log(log::ERR, "In DriveHandlerProxy::addLogParams(): Socket send failed.");
-      throw e;
+    log::ScopedParamContainer exParams(m_lc);
+    exParams.add("bufferLength", buffer.length());
+    exParams.add("bufferMsg", buffer);
+    m_lc.log(log::ERR, "In DriveHandlerProxy::addLogParams(): Socket send failed.");
+    throw e;
   }
 }
 
-void DriveHandlerProxy::deleteLogParams(const std::list<std::string> &paramNames) {
+void DriveHandlerProxy::deleteLogParams(const std::list<std::string>& paramNames) {
   serializers::WatchdogMessage watchdogMessage;
   watchdogMessage.set_reportingstate(false);
   watchdogMessage.set_reportingbytes(false);
-  for (auto &pn: paramNames) {
-    auto * lpn = watchdogMessage.mutable_deletedlogparams()->Add();
+  for (auto& pn : paramNames) {
+    auto* lpn = watchdogMessage.mutable_deletedlogparams()->Add();
     *lpn = pn;
   }
   std::string buffer;
   if (!watchdogMessage.SerializeToString(&buffer)) {
-    throw cta::exception::Exception(std::string("In DriveHandlerProxy::deleteLogParams(): could not serialize: ")+
-        watchdogMessage.InitializationErrorString());
+    throw cta::exception::Exception(std::string("In DriveHandlerProxy::deleteLogParams(): could not serialize: ")
+                                    + watchdogMessage.InitializationErrorString());
   }
   try {
     m_socketPair.send(buffer, server::SocketPair::Side::parent);
   } catch (cta::exception::Exception& e) {
-      log::ScopedParamContainer exParams(m_lc);
-      exParams.add("bufferLength", buffer.length());
-      exParams.add("bufferMsg", buffer);
-      m_lc.log(log::ERR, "In DriveHandlerProxy::deleteLogParams(): Socket send failed.");
-      throw e;
+    log::ScopedParamContainer exParams(m_lc);
+    exParams.add("bufferLength", buffer.length());
+    exParams.add("bufferMsg", buffer);
+    m_lc.log(log::ERR, "In DriveHandlerProxy::deleteLogParams(): Socket send failed.");
+    throw e;
   }
 }
 
@@ -96,17 +100,17 @@ void DriveHandlerProxy::resetLogParams() {
   watchdogMessage.set_resetlogparams(true);
   std::string buffer;
   if (!watchdogMessage.SerializeToString(&buffer)) {
-    throw cta::exception::Exception(std::string("In DriveHandlerProxy::resetLogParams(): could not serialize: ")+
-                                    watchdogMessage.InitializationErrorString());
+    throw cta::exception::Exception(std::string("In DriveHandlerProxy::resetLogParams(): could not serialize: ")
+                                    + watchdogMessage.InitializationErrorString());
   }
   try {
     m_socketPair.send(buffer, server::SocketPair::Side::parent);
   } catch (cta::exception::Exception& e) {
-      log::ScopedParamContainer exParams(m_lc);
-      exParams.add("bufferLength", buffer.length());
-      exParams.add("bufferMsg", buffer);
-      m_lc.log(log::ERR, "In DriveHandlerProxy::resetLogParams(): Socket send failed.");
-      throw e;
+    log::ScopedParamContainer exParams(m_lc);
+    exParams.add("bufferLength", buffer.length());
+    exParams.add("bufferMsg", buffer);
+    m_lc.log(log::ERR, "In DriveHandlerProxy::resetLogParams(): Socket send failed.");
+    throw e;
   }
 }
 
@@ -130,9 +134,12 @@ void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
         lc.log(log::INFO, "In DriveHandlerProxy::setRefreshLoggerHandler(): Waiting for refresh logger signal.");
         while (!m_refreshLoggerClosing) {
           try {
-            server::SocketPair::poll(pollList, 300,
-                                     server::SocketPair::Side::parent); // Add a 5 minute timeout, as a fallback in case we get stuck during shutdown
-          } catch (server::SocketPair::Timeout &) {
+            server::SocketPair::poll(
+              pollList,
+              300,
+              server::SocketPair::Side::
+                parent);  // Add a 5 minute timeout, as a fallback in case we get stuck during shutdown
+          } catch (server::SocketPair::Timeout&) {
             // Do nothing
             continue;
           }
@@ -142,19 +149,20 @@ void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
             handler();
           }
         }
-      } catch(cta::exception::Exception & ex) {
+      } catch (cta::exception::Exception& ex) {
         log::ScopedParamContainer exParams(lc);
         exParams.add("exceptionMessage", ex.getMessageValue());
         lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an exception. Backtrace follows.");
         lc.logBacktrace(log::INFO, ex.backtrace());
-      } catch(std::exception &ex) {
+      } catch (std::exception& ex) {
         log::ScopedParamContainer exParams(lc);
         exParams.add("exceptionMessage", ex.what());
         lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received a std::exception.");
       }
     });
   } else {
-    throw cta::exception::Exception("In DriveHandlerProxy::setRefreshLoggerHandler(): refresh logger handler is already set");
+    throw cta::exception::Exception(
+      "In DriveHandlerProxy::setRefreshLoggerHandler(): refresh logger handler is already set");
   }
 }
 
@@ -166,43 +174,45 @@ void DriveHandlerProxy::reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t t
   watchdogMessage.set_totaldiskbytesmoved(totalDiskBytesMoved);
   std::string buffer;
   if (!watchdogMessage.SerializeToString(&buffer)) {
-    throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportHeartbeat(): could not serialize: ")+
-        watchdogMessage.InitializationErrorString());
+    throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportHeartbeat(): could not serialize: ")
+                                    + watchdogMessage.InitializationErrorString());
   }
   try {
     m_socketPair.send(buffer, server::SocketPair::Side::parent);
   } catch (cta::exception::Exception& e) {
-      log::ScopedParamContainer exParams(m_lc);
-      exParams.add("bufferLength", buffer.length());
-      exParams.add("bufferMsg", buffer);
-      m_lc.log(log::ERR, "In DriveHandlerProxy::reportHeartbeat(): Socket send failed.");
-      throw e;
+    log::ScopedParamContainer exParams(m_lc);
+    exParams.add("bufferLength", buffer.length());
+    exParams.add("bufferMsg", buffer);
+    m_lc.log(log::ERR, "In DriveHandlerProxy::reportHeartbeat(): Socket send failed.");
+    throw e;
   }
 }
 
-void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state, const cta::tape::session::SessionType type, const std::string& vid) {
+void DriveHandlerProxy::reportState(const cta::tape::session::SessionState state,
+                                    const cta::tape::session::SessionType type,
+                                    const std::string& vid) {
   serializers::WatchdogMessage watchdogMessage;
   watchdogMessage.set_reportingstate(true);
   watchdogMessage.set_reportingbytes(false);
   watchdogMessage.set_totaldiskbytesmoved(0);
   watchdogMessage.set_totaltapebytesmoved(0);
-  watchdogMessage.set_sessionstate((uint32_t)state);
-  watchdogMessage.set_sessiontype((uint32_t)type);
+  watchdogMessage.set_sessionstate((uint32_t) state);
+  watchdogMessage.set_sessiontype((uint32_t) type);
   watchdogMessage.set_vid(vid);
   std::string buffer;
   if (!watchdogMessage.SerializeToString(&buffer)) {
-    throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportState(): could not serialize: ")+
-        watchdogMessage.InitializationErrorString());
+    throw cta::exception::Exception(std::string("In DriveHandlerProxy::reportState(): could not serialize: ")
+                                    + watchdogMessage.InitializationErrorString());
   }
   try {
     m_socketPair.send(buffer, server::SocketPair::Side::parent);
   } catch (cta::exception::Exception& e) {
-      log::ScopedParamContainer exParams(m_lc);
-      exParams.add("bufferLength", buffer.length());
-      exParams.add("bufferMsg", buffer);
-      m_lc.log(log::ERR, "In DriveHandlerProxy::reportState(): Socket send failed.");
-      throw e;
+    log::ScopedParamContainer exParams(m_lc);
+    exParams.add("bufferLength", buffer.length());
+    exParams.add("bufferMsg", buffer);
+    m_lc.log(log::ERR, "In DriveHandlerProxy::reportState(): Socket send failed.");
+    throw e;
   }
 }
 
-} // namespace cta::tape::daemon
+}  // namespace cta::tape::daemon

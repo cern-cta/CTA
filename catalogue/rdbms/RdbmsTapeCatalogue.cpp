@@ -15,24 +15,22 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <list>
-#include <memory>
-#include <string>
+#include "catalogue/rdbms/RdbmsTapeCatalogue.hpp"
 
 #include "catalogue/CreateTapeAttributes.hpp"
+#include "catalogue/TapeForWriting.hpp"
+#include "catalogue/TapeSearchCriteria.hpp"
 #include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsLogicalLibraryCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsMediaTypeCatalogue.hpp"
-#include "catalogue/rdbms/RdbmsTapeCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsTapePoolCatalogue.hpp"
-#include "catalogue/TapeForWriting.hpp"
-#include "catalogue/TapeSearchCriteria.hpp"
+#include "common/Timer.hpp"
+#include "common/dataStructures/LabelFormat.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/dataStructures/Tape.hpp"
-#include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
@@ -40,19 +38,25 @@
 #include "common/log/TimingList.hpp"
 #include "common/process/threading/Mutex.hpp"
 #include "common/process/threading/MutexLocker.hpp"
-#include "common/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <list>
+#include <memory>
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsTapeCatalogue::RdbmsTapeCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-  RdbmsCatalogue *rdbmsCatalogue)
-  : m_log(log), m_connPool(connPool), m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsTapeCatalogue::RdbmsTapeCatalogue(log::Logger& log,
+                                       std::shared_ptr<rdbms::ConnPool> connPool,
+                                       RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
-void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdentity &admin,
-  const CreateTapeAttributes & tape) {
+void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdentity& admin,
+                                    const CreateTapeAttributes& tape) {
   // CTA hard code this field to FALSE
   const bool isFromCastor = false;
   std::string vid = tape.vid;
@@ -65,71 +69,73 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
   // Translate an empty comment string to a NULL database value
   const std::optional<std::string> tapeComment = tape.comment && tape.comment->empty() ? std::nullopt : tape.comment;
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(tapeComment, &m_log);
-  const std::optional<std::string> stateReason = tape.stateReason
-    && cta::utils::trimString(tape.stateReason.value()).empty() ? std::nullopt : tape.stateReason;
+  const std::optional<std::string> stateReason =
+    tape.stateReason && cta::utils::trimString(tape.stateReason.value()).empty() ? std::nullopt : tape.stateReason;
   const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(stateReason, &m_log);
-  if(vid.empty()) {
+  if (vid.empty()) {
     throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID is an empty string");
   }
 
-  if(!utils::isUpper(vid)) {
+  if (!utils::isUpper(vid)) {
     throw UserSpecifiedAnEmptyStringVid("Cannot create tape because the VID has non uppercase characters");
   }
 
-  if(mediaTypeName.empty()) {
+  if (mediaTypeName.empty()) {
     throw UserSpecifiedAnEmptyStringMediaType("Cannot create tape because the media type is an empty string");
   }
 
-  if(vendor.empty()) {
+  if (vendor.empty()) {
     throw UserSpecifiedAnEmptyStringVendor("Cannot create tape because the vendor is an empty string");
   }
 
-  if(logicalLibraryName.empty()) {
+  if (logicalLibraryName.empty()) {
     throw UserSpecifiedAnEmptyStringLogicalLibraryName("Cannot create tape because the logical library name is an"
-      " empty string");
+                                                       " empty string");
   }
 
-  if(tapePoolName.empty()) {
+  if (tapePoolName.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot create tape because the tape pool name is an empty string");
   }
 
   std::string tapeState;
   try {
     tapeState = common::dataStructures::Tape::stateToString(tape.state);
-  } catch(cta::exception::Exception&) {
-    std::string errorMsg = "Cannot create tape because the state specified does not exist. Possible values for state are: "
+  } catch (cta::exception::Exception&) {
+    std::string errorMsg =
+      "Cannot create tape because the state specified does not exist. Possible values for state are: "
       + common::dataStructures::Tape::getAllPossibleStates();
     throw UserSpecifiedANonExistentTapeState(errorMsg);
   }
 
-  if(tape.state != common::dataStructures::Tape::ACTIVE && !stateReason.has_value()) {
+  if (tape.state != common::dataStructures::Tape::ACTIVE && !stateReason.has_value()) {
     throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive("Cannot create tape because no reason has been "
-      "provided for the state " + tapeState);
+                                                                 "provided for the state "
+                                                                 + tapeState);
   }
 
   auto conn = m_connPool->getConn();
-  if(RdbmsCatalogueUtils::tapeExists(conn, vid)) {
-    throw exception::UserError(std::string("Cannot create tape ") + vid +
-      " because a tape with the same volume identifier already exists");
+  if (RdbmsCatalogueUtils::tapeExists(conn, vid)) {
+    throw exception::UserError(std::string("Cannot create tape ") + vid
+                               + " because a tape with the same volume identifier already exists");
   }
   const auto logicLibCatalogue = static_cast<RdbmsLogicalLibraryCatalogue*>(m_rdbmsCatalogue->LogicalLibrary().get());
   const auto logicalLibraryId = logicLibCatalogue->getLogicalLibraryId(conn, logicalLibraryName);
-  if(!logicalLibraryId.has_value()) {
-    throw exception::UserError(std::string("Cannot create tape ") + vid + " because logical library " +
-      logicalLibraryName + " does not exist");
+  if (!logicalLibraryId.has_value()) {
+    throw exception::UserError(std::string("Cannot create tape ") + vid + " because logical library "
+                               + logicalLibraryName + " does not exist");
   }
   const auto tapePoolCatalogue = static_cast<RdbmsTapePoolCatalogue*>(m_rdbmsCatalogue->TapePool().get());
   const auto tapePoolIdMap = tapePoolCatalogue->getTapePoolIdMap(conn, {tapePoolName});
   if (!tapePoolIdMap.contains(tapePoolName)) {
-    throw exception::UserError(std::string("Cannot create tape ") + vid + " because tape pool " +
-    tapePoolName + " does not exist");
+    throw exception::UserError(std::string("Cannot create tape ") + vid + " because tape pool " + tapePoolName
+                               + " does not exist");
   }
   const auto tapePoolId = tapePoolIdMap.at(tapePoolName);
   const auto mediaTypeCatalogue = static_cast<RdbmsMediaTypeCatalogue*>(m_rdbmsCatalogue->MediaType().get());
   const auto mediaTypeId = mediaTypeCatalogue->getMediaTypeId(conn, mediaTypeName);
-  if(!mediaTypeId.has_value()) {
-    throw exception::UserError(std::string("Cannot create tape ") + vid + " because media type " +
-      mediaTypeName + " does not exist");
+  if (!mediaTypeId.has_value()) {
+    throw exception::UserError(std::string("Cannot create tape ") + vid + " because media type " + mediaTypeName
+                               + " does not exist");
   }
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -202,9 +208,9 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
   stmt.bindString(":PURCHASE_ORDER", purchaseOrder);
 
   std::string stateModifiedBy = RdbmsCatalogueUtils::generateTapeStateModifiedBy(admin);
-  stmt.bindString(":TAPE_STATE",cta::common::dataStructures::Tape::stateToString(tape.state));
-  stmt.bindString(":STATE_REASON",trimmedReason);
-  stmt.bindUint64(":STATE_UPDATE_TIME",now);
+  stmt.bindString(":TAPE_STATE", cta::common::dataStructures::Tape::stateToString(tape.state));
+  stmt.bindString(":STATE_REASON", trimmedReason);
+  stmt.bindUint64(":STATE_UPDATE_TIME", now);
   stmt.bindString(":STATE_MODIFIED_BY", stateModifiedBy);
 
   stmt.bindString(":CREATION_LOG_USER_NAME", admin.username);
@@ -220,25 +226,25 @@ void RdbmsTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("mediaType", mediaTypeName)
-      .add("vendor", vendor)
-      .add("logicalLibraryName", logicalLibraryName)
-      .add("tapePoolName", tapePoolName)
-      .add("isFull", full ? 1 : 0)
-      .add("isFromCastor", isFromCastor ? 1 : 0)
-      .add("userComment", tape.comment.value_or(""))
-      .add("purchaseOrder", tape.purchaseOrder.value_or(""))
-      .add("tapeState",cta::common::dataStructures::Tape::stateToString(tape.state))
-      .add("stateReason",stateReason.value_or(""))
-      .add("stateUpdateTime",now)
-      .add("stateModifiedBy",stateModifiedBy)
-      .add("creationLogUserName", admin.username)
-      .add("creationLogHostName", admin.host)
-      .add("creationLogTime", now);
+    .add("mediaType", mediaTypeName)
+    .add("vendor", vendor)
+    .add("logicalLibraryName", logicalLibraryName)
+    .add("tapePoolName", tapePoolName)
+    .add("isFull", full ? 1 : 0)
+    .add("isFromCastor", isFromCastor ? 1 : 0)
+    .add("userComment", tape.comment.value_or(""))
+    .add("purchaseOrder", tape.purchaseOrder.value_or(""))
+    .add("tapeState", cta::common::dataStructures::Tape::stateToString(tape.state))
+    .add("stateReason", stateReason.value_or(""))
+    .add("stateUpdateTime", now)
+    .add("stateModifiedBy", stateModifiedBy)
+    .add("creationLogUserName", admin.username)
+    .add("creationLogHostName", admin.host)
+    .add("creationLogTime", now);
   lc.log(log::INFO, "Catalogue - user created tape");
 }
 
-void RdbmsTapeCatalogue::deleteTape(const std::string &vid) {
+void RdbmsTapeCatalogue::deleteTape(const std::string& vid) {
   const char* const delete_sql = R"SQL(
     DELETE
     FROM
@@ -257,16 +263,18 @@ void RdbmsTapeCatalogue::deleteTape(const std::string &vid) {
 
   // The delete statement will effect no rows and will not raise an error if
   // either the tape does not exist or if it still has tape files or files in the recycle log
-  if(0 == stmt.getNbAffectedRows()) {
-    if(RdbmsCatalogueUtils::tapeExists(conn, vid)) {
-      throw UserSpecifiedANonEmptyTape(std::string("Cannot delete tape ") + vid + " because either it contains one or more files or the files that were in it are in the file recycle log.");
+  if (0 == stmt.getNbAffectedRows()) {
+    if (RdbmsCatalogueUtils::tapeExists(conn, vid)) {
+      throw UserSpecifiedANonEmptyTape(
+        std::string("Cannot delete tape ") + vid
+        + " because either it contains one or more files or the files that were in it are in the file recycle log.");
     } else {
       throw UserSpecifiedANonExistentTape(std::string("Cannot delete tape ") + vid + " because it does not exist");
     }
   }
 }
 
-std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(const TapeSearchCriteria &searchCriteria) const {
+std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(const TapeSearchCriteria& searchCriteria) const {
   auto conn = m_connPool->getConn();
   return getTapes(conn, searchCriteria);
 }
@@ -332,21 +340,24 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
   stmt.bindString(":VID", vid);
   executeGetTapesByVidStmtAndCollectResults(stmt, vidToTapeMap);
 
-  if(vidToTapeMap.empty()){
+  if (vidToTapeMap.empty()) {
     throw TapeNotFound(std::string("Cannot find tape ") + vid);
   }
   return vidToTapeMap;
 }
 
-common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::set<std::string, std::less<>> &vids) const {
+common::dataStructures::VidToTapeMap
+RdbmsTapeCatalogue::getTapesByVid(const std::set<std::string, std::less<>>& vids) const {
   return getTapesByVid(vids, false);
 }
 
-common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::set<std::string, std::less<>> &vids,
-  bool ignoreMissingVids) const {
+common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::set<std::string, std::less<>>& vids,
+                                                                       bool ignoreMissingVids) const {
   common::dataStructures::VidToTapeMap vidToTapeMap;
 
-  if(vids.empty()) return vidToTapeMap;
+  if (vids.empty()) {
+    return vidToTapeMap;
+  }
 
   static const std::string selectTapesBy100VidsSql = getSelectTapesBy100VidsSql();
 
@@ -355,16 +366,16 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
   auto stmt = conn.createStmt(selectTapesBy100VidsSql);
   uint64_t vidNb = 1;
 
-  for(const auto &vid: vids) {
+  for (const auto& vid : vids) {
     // Bind the current tape VID
     std::ostringstream paramName;
     paramName << ":V" << vidNb;
     stmt.bindString(paramName.str(), vid);
 
     // If the 100th tape VID has not yet been reached
-    if(100 > vidNb) {
+    if (100 > vidNb) {
       vidNb++;
-    } else { // The 100th VID has been reached
+    } else {  // The 100th VID has been reached
       vidNb = 1;
 
       // Execute the query and collect the results
@@ -376,11 +387,11 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
   }
 
   // If there is a statement under construction
-  if(1 != vidNb) {
+  if (1 != vidNb) {
     // Bind the remaining parameters with last tape VID.  This has no effect
     // on the search results but makes the statement valid.
-    const std::string &lastVid = *vids.rbegin();
-    while(100 >= vidNb) {
+    const std::string& lastVid = *vids.rbegin();
+    while (100 >= vidNb) {
       std::ostringstream paramName;
       paramName << ":V" << vidNb;
       stmt.bindString(paramName.str(), lastVid);
@@ -391,7 +402,7 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
     executeGetTapesByVidStmtAndCollectResults(stmt, vidToTapeMap);
   }
 
-  if(!ignoreMissingVids && vids.size() != vidToTapeMap.size()) {
+  if (!ignoreMissingVids && vids.size() != vidToTapeMap.size()) {
     std::ostringstream oss;
     oss << "Not all tapes were found: expected=" << vids.size() << " actual=" << vidToTapeMap.size();
     throw TapeNotFound(oss.str());
@@ -400,11 +411,13 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
   return vidToTapeMap;
 }
 
-std::map<std::string, std::string, std::less<>> RdbmsTapeCatalogue::getVidToLogicalLibrary(
-  const std::set<std::string, std::less<>> &vids) const {
+std::map<std::string, std::string, std::less<>>
+RdbmsTapeCatalogue::getVidToLogicalLibrary(const std::set<std::string, std::less<>>& vids) const {
   std::map<std::string, std::string, std::less<>> vidToLogicalLibrary;
 
-  if(vids.empty()) return vidToLogicalLibrary;
+  if (vids.empty()) {
+    return vidToLogicalLibrary;
+  }
 
   static const std::string sql = getSelectVidToLogicalLibraryBy100Sql();
 
@@ -413,16 +426,16 @@ std::map<std::string, std::string, std::less<>> RdbmsTapeCatalogue::getVidToLogi
   auto stmt = conn.createStmt(sql);
   uint64_t vidNb = 1;
 
-  for(const auto &vid: vids) {
+  for (const auto& vid : vids) {
     // Bind the current tape VID
     std::ostringstream paramName;
     paramName << ":V" << vidNb;
     stmt.bindString(paramName.str(), vid);
 
     // If the 100th tape VID has not yet been reached
-    if(100 > vidNb) {
+    if (100 > vidNb) {
       vidNb++;
-    } else { // The 100th VID has been reached
+    } else {  // The 100th VID has been reached
       vidNb = 1;
 
       // Execute the query and collect the results
@@ -434,11 +447,11 @@ std::map<std::string, std::string, std::less<>> RdbmsTapeCatalogue::getVidToLogi
   }
 
   // If there is a statement under construction
-  if(1 != vidNb) {
+  if (1 != vidNb) {
     // Bind the remaining parameters with last tape VID.  This has no effect
     // on the search results but makes the statement valid.
-    const std::string &lastVid = *vids.rbegin();
-    while(100 >= vidNb) {
+    const std::string& lastVid = *vids.rbegin();
+    while (100 >= vidNb) {
       std::ostringstream paramName;
       paramName << ":V" << vidNb;
       stmt.bindString(paramName.str(), lastVid);
@@ -449,19 +462,18 @@ std::map<std::string, std::string, std::less<>> RdbmsTapeCatalogue::getVidToLogi
     executeGetVidToLogicalLibraryBy100StmtAndCollectResults(stmt, vidToLogicalLibrary);
   }
 
-  if(vids.size() != vidToLogicalLibrary.size()) {
+  if (vids.size() != vidToLogicalLibrary.size()) {
     exception::Exception ex;
-    ex.getMessage() << "Not all tapes were found: expected=" << vids.size() << " actual=" <<
-      vidToLogicalLibrary.size();
+    ex.getMessage() << "Not all tapes were found: expected=" << vids.size() << " actual=" << vidToLogicalLibrary.size();
     throw ex;
   }
 
   return vidToLogicalLibrary;
 }
 
-void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-  cta::log::LogContext & lc) {
-
+void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdentity& admin,
+                                     const std::string& vid,
+                                     cta::log::LogContext& lc) {
   using namespace common::dataStructures;
 
   log::TimingList tl;
@@ -477,11 +489,10 @@ void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdent
     throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it does not exist");
   }
 
-  if (auto & tape = tapes.front();
-    tape.state != Tape::State::ACTIVE
-    && tape.state != Tape::State::DISABLED
-    && tape.state != Tape::State::BROKEN) {
-    throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not on ACTIVE, DISABLED or BROKEN state");
+  if (auto& tape = tapes.front();
+      tape.state != Tape::State::ACTIVE && tape.state != Tape::State::DISABLED && tape.state != Tape::State::BROKEN) {
+    throw exception::UserError(std::string("Cannot reclaim tape ") + vid
+                               + " because it is not on ACTIVE, DISABLED or BROKEN state");
   } else if (!tape.full) {
     throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it is not FULL");
   }
@@ -490,8 +501,8 @@ void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdent
   if (this->getNbFilesOnTape(conn, vid) == 0) {
     tl.insertAndReset("getNbFilesOnTape", t);
     // There is no files on the tape, we can reclaim it : delete the files and reset the counters
-    static_cast<RdbmsFileRecycleLogCatalogue*>(
-      m_rdbmsCatalogue->FileRecycleLog().get())->deleteFilesFromRecycleLog(conn, vid, lc);
+    static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get())
+      ->deleteFilesFromRecycleLog(conn, vid, lc);
     tl.insertAndReset("deleteFileFromRecycleLogTime", t);
     resetTapeCounters(conn, admin, vid);
     tl.insertAndReset("resetTapeCountersTime", t);
@@ -502,41 +513,41 @@ void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdent
     tl.addToLog(spc);
     lc.log(log::INFO, "In RdbmsCatalogue::reclaimTape(), tape reclaimed.");
   } else {
-    throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because there is at least one tape"
-          " file in the catalogue that is on the tape");
+    throw exception::UserError(std::string("Cannot reclaim tape ") + vid
+                               + " because there is at least one tape"
+                                 " file in the catalogue that is on the tape");
   }
 }
 
-void RdbmsTapeCatalogue::checkTapeForLabel(const std::string &vid) {
+void RdbmsTapeCatalogue::checkTapeForLabel(const std::string& vid) {
   auto conn = m_connPool->getConn();
 
   TapeSearchCriteria searchCriteria;
   searchCriteria.vid = vid;
 
-  if(const auto tapes = getTapes(conn, searchCriteria); tapes.empty()) {
-    throw exception::UserError(std::string("Cannot label tape ") + vid +
-                                            " because it does not exist");
+  if (const auto tapes = getTapes(conn, searchCriteria); tapes.empty()) {
+    throw exception::UserError(std::string("Cannot label tape ") + vid + " because it does not exist");
   }
   //The tape exists checks any files on it
   const uint64_t nbFilesOnTape = getNbFilesOnTape(conn, vid);
-  if( 0 != nbFilesOnTape) {
-    throw exception::UserError(std::string("Cannot label tape ") + vid +
-                                            " because it has " +
-                                            std::to_string(nbFilesOnTape) +
-                                            " file(s)");
+  if (0 != nbFilesOnTape) {
+    throw exception::UserError(std::string("Cannot label tape ") + vid + " because it has "
+                               + std::to_string(nbFilesOnTape) + " file(s)");
   }
 }
 
-uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(const std::string &vid) const {
+uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(const std::string& vid) const {
   auto conn = m_connPool->getConn();
   return getNbFilesOnTape(conn, vid);
 }
 
-void RdbmsTapeCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string &mediaType) {
+void RdbmsTapeCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
+                                             const std::string& vid,
+                                             const std::string& mediaType) {
   auto conn = m_connPool->getConn();
-  if(!RdbmsCatalogueUtils::mediaTypeExists(conn, mediaType)){
-    throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the media type " + mediaType + " does not exist");
+  if (!RdbmsCatalogueUtils::mediaTypeExists(conn, mediaType)) {
+    throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the media type " + mediaType
+                               + " does not exist");
   }
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -557,22 +568,23 @@ void RdbmsTapeCatalogue::modifyTapeMediaType(const common::dataStructures::Secur
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
   }
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("mediaType", mediaType)
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("mediaType", mediaType)
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - mediaType");
 }
 
-void RdbmsTapeCatalogue::modifyTapeVendor(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-  const std::string &vendor) {
+void RdbmsTapeCatalogue::modifyTapeVendor(const common::dataStructures::SecurityIdentity& admin,
+                                          const std::string& vid,
+                                          const std::string& vendor) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
@@ -592,22 +604,23 @@ void RdbmsTapeCatalogue::modifyTapeVendor(const common::dataStructures::Security
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
   }
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("vendor", vendor)
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("vendor", vendor)
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - vendor");
 }
 
-void RdbmsTapeCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string &logicalLibraryName) {
+void RdbmsTapeCatalogue::modifyTapeLogicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
+                                                      const std::string& vid,
+                                                      const std::string& logicalLibraryName) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
@@ -620,8 +633,9 @@ void RdbmsTapeCatalogue::modifyTapeLogicalLibraryName(const common::dataStructur
       VID = :VID
   )SQL";
   auto conn = m_connPool->getConn();
-  if(!RdbmsCatalogueUtils::logicalLibraryExists(conn,logicalLibraryName)){
-    throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the logical library " + logicalLibraryName + " does not exist");
+  if (!RdbmsCatalogueUtils::logicalLibraryExists(conn, logicalLibraryName)) {
+    throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the logical library "
+                               + logicalLibraryName + " does not exist");
   }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
@@ -631,23 +645,24 @@ void RdbmsTapeCatalogue::modifyTapeLogicalLibraryName(const common::dataStructur
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify tape ") + vid + " because either it or logical library " +
-      logicalLibraryName + " does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify tape ") + vid + " because either it or logical library "
+                               + logicalLibraryName + " does not exist");
   }
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("logicalLibraryName", logicalLibraryName)
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("logicalLibraryName", logicalLibraryName)
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - logicalLibraryName");
 }
 
-void RdbmsTapeCatalogue::modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string &tapePoolName) {
+void RdbmsTapeCatalogue::modifyTapeTapePoolName(const common::dataStructures::SecurityIdentity& admin,
+                                                const std::string& vid,
+                                                const std::string& tapePoolName) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
@@ -659,8 +674,9 @@ void RdbmsTapeCatalogue::modifyTapeTapePoolName(const common::dataStructures::Se
       VID = :VID
   )SQL";
   auto conn = m_connPool->getConn();
-  if(!RdbmsCatalogueUtils::tapePoolExists(conn,tapePoolName)){
-    throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the tape pool " + tapePoolName + " does not exist");
+  if (!RdbmsCatalogueUtils::tapePoolExists(conn, tapePoolName)) {
+    throw exception::UserError(std::string("Cannot modify tape ") + vid + " because the tape pool " + tapePoolName
+                               + " does not exist");
   }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":TAPE_POOL_NAME", tapePoolName);
@@ -670,25 +686,26 @@ void RdbmsTapeCatalogue::modifyTapeTapePoolName(const common::dataStructures::Se
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
-    throw exception::UserError(std::string("Cannot modify tape ") + vid + " because either it or tape pool " +
-      tapePoolName + " does not exist");
+  if (0 == stmt.getNbAffectedRows()) {
+    throw exception::UserError(std::string("Cannot modify tape ") + vid + " because either it or tape pool "
+                               + tapePoolName + " does not exist");
   }
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("tapePoolName", tapePoolName)
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("tapePoolName", tapePoolName)
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - tapePoolName");
 }
 
-void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string &encryptionKeyName) {
+void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructures::SecurityIdentity& admin,
+                                                     const std::string& vid,
+                                                     const std::string& encryptionKeyName) {
   std::optional<std::string> optionalEncryptionKeyName;
-  if(!encryptionKeyName.empty()) {
+  if (!encryptionKeyName.empty()) {
     optionalEncryptionKeyName = encryptionKeyName;
   }
 
@@ -711,24 +728,25 @@ void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructure
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
   }
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("encryptionKeyName", optionalEncryptionKeyName.value_or("NULL"))
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("encryptionKeyName", optionalEncryptionKeyName.value_or("NULL"))
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - encryptionKeyName");
 }
 
-void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string &purchaseOrder) {
+void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::SecurityIdentity& admin,
+                                             const std::string& vid,
+                                             const std::string& purchaseOrder) {
   std::optional<std::string> optionalPurchaseOrder;
-  if(!purchaseOrder.empty()) {
+  if (!purchaseOrder.empty()) {
     optionalPurchaseOrder = purchaseOrder;
   }
 
@@ -751,22 +769,23 @@ void RdbmsTapeCatalogue::modifyPurchaseOrder(const common::dataStructures::Secur
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
   }
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("optionalPurchaseOrder", optionalPurchaseOrder.value_or("NULL"))
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("optionalPurchaseOrder", optionalPurchaseOrder.value_or("NULL"))
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - optionalPurchaseOrder");
 }
 
-void RdbmsTapeCatalogue::modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::string &verificationStatus) {
+void RdbmsTapeCatalogue::modifyTapeVerificationStatus(const common::dataStructures::SecurityIdentity& admin,
+                                                      const std::string& vid,
+                                                      const std::string& verificationStatus) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
@@ -790,24 +809,25 @@ void RdbmsTapeCatalogue::modifyTapeVerificationStatus(const common::dataStructur
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
   }
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("verificationStatus", verificationStatus)
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("verificationStatus", verificationStatus)
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - verificationStatus");
 }
 
-void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity &admin,const std::string &vid,
-  const common::dataStructures::Tape::State & state,
-  const std::optional<common::dataStructures::Tape::State> & prev_state,
-  const std::optional<std::string> & stateReason) {
+void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityIdentity& admin,
+                                         const std::string& vid,
+                                         const common::dataStructures::Tape::State& state,
+                                         const std::optional<common::dataStructures::Tape::State>& prev_state,
+                                         const std::optional<std::string>& stateReason) {
   using namespace common::dataStructures;
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
@@ -816,8 +836,10 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
   std::string stateStr;
   try {
     stateStr = cta::common::dataStructures::Tape::stateToString(state);
-  } catch(cta::exception::Exception&){
-    std::string errorMsg = "The state provided in parameter (" + std::to_string(state) + ") is not known or has not been initialized existing states are:" + common::dataStructures::Tape::getAllPossibleStates();
+  } catch (cta::exception::Exception&) {
+    std::string errorMsg = "The state provided in parameter (" + std::to_string(state)
+                           + ") is not known or has not been initialized existing states are:"
+                           + common::dataStructures::Tape::getAllPossibleStates();
     throw UserSpecifiedANonExistentTapeState(errorMsg);
   }
 
@@ -826,14 +848,18 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
     try {
       prevStateStr = cta::common::dataStructures::Tape::stateToString(prev_state.value());
     } catch (cta::exception::Exception&) {
-      std::string errorMsg = "The previous state provided in parameter (" + std::to_string(prev_state.value()) + ") is not known or has not been initialized existing states are:" + common::dataStructures::Tape::getAllPossibleStates();
+      std::string errorMsg = "The previous state provided in parameter (" + std::to_string(prev_state.value())
+                             + ") is not known or has not been initialized existing states are:"
+                             + common::dataStructures::Tape::getAllPossibleStates();
       throw UserSpecifiedANonExistentTapeState(errorMsg);
     }
   }
 
   //Check the reason is set for all the status except the ACTIVE one, this is the only state that allows the reason to be set to null.
-  if(state != Tape::State::ACTIVE && !trimmedReason){
-    throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::string("Cannot modify the state of the tape ") + vid + " to " + stateStr + " because the reason has not been provided.");
+  if (state != Tape::State::ACTIVE && !trimmedReason) {
+    throw UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(std::string("Cannot modify the state of the tape ")
+                                                                 + vid + " to " + stateStr
+                                                                 + " because the reason has not been provided.");
   }
 
   std::string sql = R"SQL(
@@ -859,19 +885,19 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
   stmt.bindString(":STATE_REASON", trimmedReason);
   stmt.bindUint64(":STATE_UPDATE_TIME", now);
   stmt.bindString(":STATE_MODIFIED_BY", RdbmsCatalogueUtils::generateTapeStateModifiedBy(admin));
-  stmt.bindString(":VID",vid);
+  stmt.bindString(":VID", vid);
   if (prev_state.has_value()) {
-    stmt.bindString(":PREV_TAPE_STATE",prevStateStr);
+    stmt.bindString(":PREV_TAPE_STATE", prevStateStr);
   }
   stmt.executeNonQuery();
 
   if (0 == stmt.getNbAffectedRows()) {
     if (prev_state.has_value() && RdbmsCatalogueUtils::tapeExists(conn, vid)) {
-      throw UserSpecifiedAWrongPrevState(std::string("Cannot modify the state of the tape ") + vid +
-                                         " because a recent state change has been detected");
+      throw UserSpecifiedAWrongPrevState(std::string("Cannot modify the state of the tape ") + vid
+                                         + " because a recent state change has been detected");
     }
-    throw UserSpecifiedANonExistentTape(std::string("Cannot modify the state of the tape ") + vid +
-                                        " because it does not exist");
+    throw UserSpecifiedANonExistentTape(std::string("Cannot modify the state of the tape ") + vid
+                                        + " because it does not exist");
   }
 
   log::LogContext lc(m_log);
@@ -883,19 +909,20 @@ void RdbmsTapeCatalogue::modifyTapeState(const common::dataStructures::SecurityI
   }
 
   spc.add("tapeState", stateStr)
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - state");
 }
 
-bool RdbmsTapeCatalogue::tapeExists(const std::string &vid) const {
+bool RdbmsTapeCatalogue::tapeExists(const std::string& vid) const {
   auto conn = m_connPool->getConn();
   return RdbmsCatalogueUtils::tapeExists(conn, vid);
 }
 
-void RdbmsTapeCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-  const bool fullValue) {
+void RdbmsTapeCatalogue::setTapeFull(const common::dataStructures::SecurityIdentity& admin,
+                                     const std::string& vid,
+                                     const bool fullValue) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
@@ -915,22 +942,23 @@ void RdbmsTapeCatalogue::setTapeFull(const common::dataStructures::SecurityIdent
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
   }
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("isFull", fullValue ? 1 : 0)
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("isFull", fullValue ? 1 : 0)
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - isFull");
 }
 
-void RdbmsTapeCatalogue::setTapeDirty(const common::dataStructures::SecurityIdentity &admin, const std::string &vid,
-  const bool dirtyValue) {
+void RdbmsTapeCatalogue::setTapeDirty(const common::dataStructures::SecurityIdentity& admin,
+                                      const std::string& vid,
+                                      const bool dirtyValue) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
@@ -950,21 +978,21 @@ void RdbmsTapeCatalogue::setTapeDirty(const common::dataStructures::SecurityIden
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
   }
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("dirty", dirtyValue ? 1 : 0)
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("dirty", dirtyValue ? 1 : 0)
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - dirty");
 }
 
-void RdbmsTapeCatalogue::noSpaceLeftOnTape(const std::string &vid) {
+void RdbmsTapeCatalogue::noSpaceLeftOnTape(const std::string& vid) {
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       IS_FULL = '1'
@@ -982,13 +1010,11 @@ void RdbmsTapeCatalogue::noSpaceLeftOnTape(const std::string &vid) {
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
-  spc.add("vid", vid)
-      .add("isFull", 1)
-      .add("method", "noSpaceLeftOnTape");
+  spc.add("vid", vid).add("isFull", 1).add("method", "noSpaceLeftOnTape");
   lc.log(log::INFO, "Catalogue - system modified tape - isFull");
 }
 
-std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::string &logicalLibraryName) const {
+std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::string& logicalLibraryName) const {
   std::list<TapeForWriting> tapes;
   const char* const sql = R"SQL(
     SELECT
@@ -1026,7 +1052,7 @@ std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::stri
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":LOGICAL_LIBRARY_NAME", logicalLibraryName);
-  stmt.bindString(":TAPE_STATE",common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
+  stmt.bindString(":TAPE_STATE", common::dataStructures::Tape::stateToString(common::dataStructures::Tape::ACTIVE));
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     TapeForWriting tape;
@@ -1039,7 +1065,7 @@ std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::stri
     tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
     tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
     tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"),
-      "[RdbmsCatalogue::getTapesForWriting()]");
+                                                                     "[RdbmsCatalogue::getTapesForWriting()]");
     tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
 
     tapes.push_back(tape);
@@ -1061,15 +1087,15 @@ common::dataStructures::Label::Format RdbmsTapeCatalogue::getTapeLabelFormat(con
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);
   auto rset = stmt.executeQuery();
-  if(rset.next()) {
+  if (rset.next()) {
     return common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"),
-      "[RdbmsCatalogue::getTapeLabelFormat()]");
+                                                         "[RdbmsCatalogue::getTapeLabelFormat()]");
   } else {
     throw exception::Exception(std::string("No such tape with vid=") + vid);
   }
 }
 
-void RdbmsTapeCatalogue::setTapeIsFromCastorInUnitTests(const std::string &vid) {
+void RdbmsTapeCatalogue::setTapeIsFromCastorInUnitTests(const std::string& vid) {
   const char* const sql = R"SQL(
     UPDATE TAPE SET
       IS_FROM_CASTOR = '1'
@@ -1085,22 +1111,20 @@ void RdbmsTapeCatalogue::setTapeIsFromCastorInUnitTests(const std::string &vid) 
     throw exception::Exception(std::string("Tape ") + vid + " does not exist");
   }
 
-
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
-  spc.add("vid", vid)
-      .add("isFromCastor", 1)
-      .add("method", "setTapeIsFromCastorInUnitTests");
+  spc.add("vid", vid).add("isFromCastor", 1).add("method", "setTapeIsFromCastorInUnitTests");
   lc.log(log::INFO, "Catalogue - system modified tape - isFromCastor");
 }
 
-void RdbmsTapeCatalogue::setTapeDirty(const std::string & vid) {
+void RdbmsTapeCatalogue::setTapeDirty(const std::string& vid) {
   auto conn = m_connPool->getConn();
-  RdbmsCatalogueUtils::setTapeDirty(conn,vid);
+  RdbmsCatalogueUtils::setTapeDirty(conn, vid);
 }
 
-void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &vid, const std::optional<std::string> &comment) {
+void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::SecurityIdentity& admin,
+                                           const std::string& vid,
+                                           const std::optional<std::string>& comment) {
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
@@ -1121,22 +1145,21 @@ void RdbmsTapeCatalogue::modifyTapeComment(const common::dataStructures::Securit
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
   }
-
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
   spc.add("vid", vid)
-      .add("userComment", trimmedComment.value_or(""))
-      .add("lastUpdateUserName", admin.username)
-      .add("lastUpdateHostName", admin.host)
-      .add("lastUpdateTime", now);
+    .add("userComment", trimmedComment.value_or(""))
+    .add("lastUpdateUserName", admin.username)
+    .add("lastUpdateHostName", admin.host)
+    .add("lastUpdateTime", now);
   lc.log(log::INFO, "Catalogue - user modified tape - userComment");
 }
 
-void RdbmsTapeCatalogue::tapeLabelled(const std::string &vid, const std::string &drive) {
+void RdbmsTapeCatalogue::tapeLabelled(const std::string& vid, const std::string& drive) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
@@ -1154,12 +1177,12 @@ void RdbmsTapeCatalogue::tapeLabelled(const std::string &vid, const std::string 
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
   }
 }
 
-void RdbmsTapeCatalogue::tapeMountedForArchive(const std::string &vid, const std::string &drive) {
+void RdbmsTapeCatalogue::tapeMountedForArchive(const std::string& vid, const std::string& drive) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
@@ -1182,13 +1205,11 @@ void RdbmsTapeCatalogue::tapeMountedForArchive(const std::string &vid, const std
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
-  spc.add("vid", vid)
-      .add("lastWriteDrive", drive)
-      .add("lastWriteTime", now);
+  spc.add("vid", vid).add("lastWriteDrive", drive).add("lastWriteTime", now);
   lc.log(log::INFO, "Catalogue - system modified tape - mountedForArchive");
 }
 
-void RdbmsTapeCatalogue::tapeMountedForRetrieve(const std::string &vid, const std::string &drive) {
+void RdbmsTapeCatalogue::tapeMountedForRetrieve(const std::string& vid, const std::string& drive) {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
@@ -1205,38 +1226,45 @@ void RdbmsTapeCatalogue::tapeMountedForRetrieve(const std::string &vid, const st
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     throw exception::UserError(std::string("Cannot modify tape ") + vid + " because it does not exist");
   }
 
   log::LogContext lc(m_log);
   log::ScopedParamContainer spc(lc);
-  spc.add("vid", vid)
-      .add("lastReadDrive", drive)
-      .add("lastReadTime", now);
+  spc.add("vid", vid).add("lastReadDrive", drive).add("lastReadTime", now);
   lc.log(log::INFO, "Catalogue - system modified tape - mountedForRetrieve");
 }
 
-std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn &conn,
-  const TapeSearchCriteria &searchCriteria) const {
-  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vid))
+std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn& conn,
+                                                                     const TapeSearchCriteria& searchCriteria) const {
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vid)) {
     throw exception::UserError("VID cannot be an empty string");
-  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.mediaType))
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.mediaType)) {
     throw exception::UserError("Media type cannot be an empty string");
-  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vendor))
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vendor)) {
     throw exception::UserError("Vendor cannot be an empty string");
-  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.logicalLibrary))
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.logicalLibrary)) {
     throw exception::UserError("Logical library cannot be an empty string");
-  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.tapePool))
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.tapePool)) {
     throw exception::UserError("Tape pool cannot be an empty string");
-  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vo))
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vo)) {
     throw exception::UserError("Virtual organisation cannot be an empty string");
-  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.purchaseOrder))
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.purchaseOrder)) {
     throw exception::UserError("Purchase order cannot be an empty string");
-  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.diskFileIds))
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.diskFileIds)) {
     throw exception::UserError("Disk file ID list cannot be empty");
-  if(RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.physicalLibraryName))
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.physicalLibraryName)) {
     throw exception::UserError("Physical library name cannot be empty");
+  }
 
   if (searchCriteria.vid && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
     cta::exception::UserError ex;
@@ -1310,32 +1338,24 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID
   )SQL";
 
-  if(searchCriteria.vid.has_value() ||
-      searchCriteria.mediaType.has_value() ||
-      searchCriteria.vendor.has_value() ||
-      searchCriteria.logicalLibrary.has_value() ||
-      searchCriteria.tapePool.has_value() ||
-      searchCriteria.vo.has_value() ||
-      searchCriteria.capacityInBytes.has_value() ||
-      searchCriteria.full.has_value() ||
-      searchCriteria.diskFileIds.has_value() ||
-      searchCriteria.state.has_value() ||
-      searchCriteria.fromCastor.has_value() ||
-      searchCriteria.purchaseOrder.has_value() ||
-      searchCriteria.physicalLibraryName.has_value() ||
-      searchCriteria.checkMissingFileCopies.has_value()) {
+  if (searchCriteria.vid.has_value() || searchCriteria.mediaType.has_value() || searchCriteria.vendor.has_value()
+      || searchCriteria.logicalLibrary.has_value() || searchCriteria.tapePool.has_value()
+      || searchCriteria.vo.has_value() || searchCriteria.capacityInBytes.has_value() || searchCriteria.full.has_value()
+      || searchCriteria.diskFileIds.has_value() || searchCriteria.state.has_value()
+      || searchCriteria.fromCastor.has_value() || searchCriteria.purchaseOrder.has_value()
+      || searchCriteria.physicalLibraryName.has_value() || searchCriteria.checkMissingFileCopies.has_value()) {
     sql += R"SQL( WHERE )SQL";
   }
 
   bool addedAWhereConstraint = false;
 
-  if(searchCriteria.vid.has_value()) {
+  if (searchCriteria.vid.has_value()) {
     sql += R"SQL(
       TAPE.VID = :VID
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.mediaType.has_value()) {
+  if (searchCriteria.mediaType.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1344,7 +1364,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.vendor.has_value()) {
+  if (searchCriteria.vendor.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1353,7 +1373,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.logicalLibrary.has_value()) {
+  if (searchCriteria.logicalLibrary.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1362,7 +1382,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.tapePool.has_value()) {
+  if (searchCriteria.tapePool.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1371,7 +1391,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.vo.has_value()) {
+  if (searchCriteria.vo.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1380,7 +1400,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.capacityInBytes.has_value()) {
+  if (searchCriteria.capacityInBytes.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1389,7 +1409,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.full.has_value()) {
+  if (searchCriteria.full.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1398,7 +1418,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.diskFileIds.has_value()) {
+  if (searchCriteria.diskFileIds.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1415,7 +1435,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     addedAWhereConstraint = true;
   }
 
-  if(searchCriteria.state.has_value()) {
+  if (searchCriteria.state.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1424,7 +1444,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.fromCastor.has_value()) {
+  if (searchCriteria.fromCastor.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1433,7 +1453,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.purchaseOrder.has_value()) {
+  if (searchCriteria.purchaseOrder.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1442,7 +1462,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.physicalLibraryName.has_value()) {
+  if (searchCriteria.physicalLibraryName.has_value()) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -1479,23 +1499,46 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
 
   auto stmt = conn.createStmt(sql);
 
-  if(searchCriteria.vid.has_value()) stmt.bindString(":VID", searchCriteria.vid.value());
-  if(searchCriteria.mediaType.has_value()) stmt.bindString(":MEDIA_TYPE", searchCriteria.mediaType.value());
-  if(searchCriteria.vendor.has_value()) stmt.bindString(":VENDOR", searchCriteria.vendor.value());
-  if(searchCriteria.logicalLibrary.has_value()) stmt.bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
-  if(searchCriteria.tapePool.has_value()) stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
-  if(searchCriteria.vo.has_value()) stmt.bindString(":VO", searchCriteria.vo.value());
-  if(searchCriteria.capacityInBytes.has_value()) stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
-  if(searchCriteria.full.has_value()) stmt.bindBool(":IS_FULL", searchCriteria.full.value());
-  if(searchCriteria.fromCastor.has_value()) stmt.bindBool(":FROM_CASTOR", searchCriteria.fromCastor.value());
-  if(searchCriteria.purchaseOrder.has_value()) stmt.bindString(":PURCHASE_ORDER", searchCriteria.purchaseOrder.value());
-  if(searchCriteria.physicalLibraryName.has_value()) stmt.bindString(":PHYSICAL_LIBRARY_NAME", searchCriteria.physicalLibraryName.value());
-  try{
-    if(searchCriteria.state)
+  if (searchCriteria.vid.has_value()) {
+    stmt.bindString(":VID", searchCriteria.vid.value());
+  }
+  if (searchCriteria.mediaType.has_value()) {
+    stmt.bindString(":MEDIA_TYPE", searchCriteria.mediaType.value());
+  }
+  if (searchCriteria.vendor.has_value()) {
+    stmt.bindString(":VENDOR", searchCriteria.vendor.value());
+  }
+  if (searchCriteria.logicalLibrary.has_value()) {
+    stmt.bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
+  }
+  if (searchCriteria.tapePool.has_value()) {
+    stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
+  }
+  if (searchCriteria.vo.has_value()) {
+    stmt.bindString(":VO", searchCriteria.vo.value());
+  }
+  if (searchCriteria.capacityInBytes.has_value()) {
+    stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
+  }
+  if (searchCriteria.full.has_value()) {
+    stmt.bindBool(":IS_FULL", searchCriteria.full.value());
+  }
+  if (searchCriteria.fromCastor.has_value()) {
+    stmt.bindBool(":FROM_CASTOR", searchCriteria.fromCastor.value());
+  }
+  if (searchCriteria.purchaseOrder.has_value()) {
+    stmt.bindString(":PURCHASE_ORDER", searchCriteria.purchaseOrder.value());
+  }
+  if (searchCriteria.physicalLibraryName.has_value()) {
+    stmt.bindString(":PHYSICAL_LIBRARY_NAME", searchCriteria.physicalLibraryName.value());
+  }
+  try {
+    if (searchCriteria.state) {
       stmt.bindString(":TAPE_STATE", cta::common::dataStructures::Tape::stateToString(searchCriteria.state.value()));
-  } catch(cta::exception::Exception&){
+    }
+  } catch (cta::exception::Exception&) {
     throw cta::exception::UserError(std::string("The state provided does not exist. Possible values are: ")
-      + cta::common::dataStructures::Tape::getAllPossibleStates());
+                                    + cta::common::dataStructures::Tape::getAllPossibleStates());
   }
   if (searchCriteria.checkMissingFileCopies.value_or(false)) {
     uint64_t max_creation_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -1506,11 +1549,13 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
   // Disk file ID lookup requires multiple queries
   std::vector<std::string>::const_iterator diskFileId_it;
   std::set<std::string, std::less<>> vidsInList;
-  if(searchCriteria.diskFileIds) diskFileId_it = searchCriteria.diskFileIds.value().begin();
+  if (searchCriteria.diskFileIds) {
+    diskFileId_it = searchCriteria.diskFileIds.value().begin();
+  }
   int num_queries = searchCriteria.diskFileIds ? static_cast<int>(searchCriteria.diskFileIds.value().size()) : 1;
 
-  for(int i = 0; i < num_queries; ++i) {
-    if(searchCriteria.diskFileIds) {
+  for (int i = 0; i < num_queries; ++i) {
+    if (searchCriteria.diskFileIds) {
       stmt.bindString(":DISK_FID0", *diskFileId_it++);
     }
 
@@ -1543,7 +1588,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
 
       tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"),
-        "[RdbmsCatalogue::getTapes()]");
+                                                                       "[RdbmsCatalogue::getTapes()]");
 
       tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
       tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -1552,7 +1597,7 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
       tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
 
-      tape.verificationStatus =  rset.columnOptionalString("VERIFICATION_STATUS");
+      tape.verificationStatus = rset.columnOptionalString("VERIFICATION_STATUS");
 
       auto optionalComment = rset.columnOptionalString("USER_COMMENT");
       tape.comment = optionalComment.value_or("");
@@ -1572,21 +1617,22 @@ std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn
       tapes.push_back(tape);
     }
   }
-  if(searchCriteria.diskFileIds) {
+  if (searchCriteria.diskFileIds) {
     // When searching by diskFileId, results are not guaranteed to be in sorted order
-    tapes.sort([](const common::dataStructures::Tape &a, const common::dataStructures::Tape &b) { return a.vid < b.vid; });
+    tapes.sort(
+      [](const common::dataStructures::Tape& a, const common::dataStructures::Tape& b) { return a.vid < b.vid; });
   }
 
   return tapes;
 }
 
-void RdbmsTapeCatalogue::setTapeLastFSeq(rdbms::Conn &conn, const std::string &vid, const uint64_t lastFSeq) {
+void RdbmsTapeCatalogue::setTapeLastFSeq(rdbms::Conn& conn, const std::string& vid, const uint64_t lastFSeq) {
   threading::MutexLocker locker(m_rdbmsCatalogue->m_mutex);
 
-  if(const uint64_t currentValue = getTapeLastFSeq(conn, vid); lastFSeq != currentValue + 1) {
+  if (const uint64_t currentValue = getTapeLastFSeq(conn, vid); lastFSeq != currentValue + 1) {
     exception::Exception ex;
-    ex.getMessage() << "The last FSeq MUST be incremented by exactly one: currentValue=" << currentValue <<
-      ",nextValue=" << lastFSeq;
+    ex.getMessage() << "The last FSeq MUST be incremented by exactly one: currentValue=" << currentValue
+                    << ",nextValue=" << lastFSeq;
     throw ex;
   }
   const char* const sql = R"SQL(
@@ -1608,7 +1654,7 @@ void RdbmsTapeCatalogue::deleteTapeFiles(rdbms::Conn& conn, const std::string& v
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
-  RdbmsCatalogueUtils::setTapeDirty(conn,vid);
+  RdbmsCatalogueUtils::setTapeDirty(conn, vid);
 }
 
 uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::string& vid) const {
@@ -1625,8 +1671,9 @@ uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::stri
   return rset.columnUint64("NB_FILES");
 }
 
-void RdbmsTapeCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::dataStructures::SecurityIdentity& admin,
-  const std::string& vid) const {
+void RdbmsTapeCatalogue::resetTapeCounters(rdbms::Conn& conn,
+                                           const common::dataStructures::SecurityIdentity& admin,
+                                           const std::string& vid) const {
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE SET
@@ -1657,23 +1704,25 @@ void RdbmsTapeCatalogue::resetTapeCounters(rdbms::Conn& conn, const common::data
   stmt.executeNonQuery();
 }
 
-std::optional<common::dataStructures::TapeLog> RdbmsTapeCatalogue::getTapeLogFromRset(const rdbms::Rset &rset,
-  const std::string &driveColName, const std::string &timeColName) const {
+std::optional<common::dataStructures::TapeLog>
+RdbmsTapeCatalogue::getTapeLogFromRset(const rdbms::Rset& rset,
+                                       const std::string& driveColName,
+                                       const std::string& timeColName) const {
   const std::optional<std::string> drive = rset.columnOptionalString(driveColName);
   const std::optional<uint64_t> time = rset.columnOptionalUint64(timeColName);
 
-  if(!drive.has_value() && !time.has_value()) {
+  if (!drive.has_value() && !time.has_value()) {
     return std::nullopt;
   }
 
-  if(drive.has_value() && !time.has_value()) {
-    throw exception::Exception(std::string("Database column ") + driveColName + " contains " + drive.value() +
-      " but column " + timeColName + " is nullptr");
+  if (drive.has_value() && !time.has_value()) {
+    throw exception::Exception(std::string("Database column ") + driveColName + " contains " + drive.value()
+                               + " but column " + timeColName + " is nullptr");
   }
 
-  if(time.has_value() && !drive.has_value()) {
-    throw exception::Exception(std::string("Database column ") + timeColName + " contains " +
-      std::to_string(time.value()) + " but column " + driveColName + " is nullptr");
+  if (time.has_value() && !drive.has_value()) {
+    throw exception::Exception(std::string("Database column ") + timeColName + " contains "
+                               + std::to_string(time.value()) + " but column " + driveColName + " is nullptr");
   }
 
   common::dataStructures::TapeLog tapeLog;
@@ -1748,7 +1797,7 @@ std::string RdbmsTapeCatalogue::getSelectTapesBy100VidsSql() const {
       VID IN (:V1
   )SQL";
 
-  for(uint32_t i=2; i<=100; i++) {
+  for (uint32_t i = 2; i <= 100; i++) {
     sql << ",:V" << i;
   }
 
@@ -1757,8 +1806,9 @@ std::string RdbmsTapeCatalogue::getSelectTapesBy100VidsSql() const {
   return sql.str();
 }
 
-void RdbmsTapeCatalogue::executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &stmt,
-  common::dataStructures::VidToTapeMap &vidToTapeMap) const {
+void RdbmsTapeCatalogue::executeGetTapesByVidStmtAndCollectResults(
+  rdbms::Stmt& stmt,
+  common::dataStructures::VidToTapeMap& vidToTapeMap) const {
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     common::dataStructures::Tape tape;
@@ -1779,8 +1829,9 @@ void RdbmsTapeCatalogue::executeGetTapesByVidStmtAndCollectResults(rdbms::Stmt &
     tape.dirty = rset.columnBool("DIRTY");
     tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
 
-    tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"),
-      "[RdbmsCatalogue::executeGetTapesByVidsStmtAndCollectResults()]");
+    tape.labelFormat =
+      common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"),
+                                                    "[RdbmsCatalogue::executeGetTapesByVidsStmtAndCollectResults()]");
 
     tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
     tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
@@ -1821,7 +1872,7 @@ std::string RdbmsTapeCatalogue::getSelectVidToLogicalLibraryBy100Sql() const {
       VID IN (:V1
   )SQL";
 
-  for(uint32_t i=2; i<=100; i++) {
+  for (uint32_t i = 2; i <= 100; i++) {
     sql << ",:V" << i;
   }
 
@@ -1830,12 +1881,13 @@ std::string RdbmsTapeCatalogue::getSelectVidToLogicalLibraryBy100Sql() const {
   return sql.str();
 }
 
-void RdbmsTapeCatalogue::executeGetVidToLogicalLibraryBy100StmtAndCollectResults(rdbms::Stmt &stmt,
-std::map<std::string, std::string, std::less<>> &vidToLogicalLibrary) const {
+void RdbmsTapeCatalogue::executeGetVidToLogicalLibraryBy100StmtAndCollectResults(
+  rdbms::Stmt& stmt,
+  std::map<std::string, std::string, std::less<>>& vidToLogicalLibrary) const {
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     vidToLogicalLibrary[rset.columnString("VID")] = rset.columnString("LOGICAL_LIBRARY_NAME");
   }
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

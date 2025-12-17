@@ -17,15 +17,15 @@
 
 #pragma once
 
-#include <xrootd/private/XrdSsi/XrdSsiStream.hh>
-
-#include "cta_frontend.pb.h"
+#include "frontend/common/AdminCmd.hpp"
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/Version.hpp"
 
-namespace cta::frontend {
+#include <xrootd/private/XrdSsi/XrdSsiStream.hh>
 
-class AdminCmd;
+#include "cta_frontend.pb.h"
+
+namespace cta::frontend {
 
 class AdminCmdStream : public AdminCmd {
 public:

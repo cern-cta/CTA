@@ -15,13 +15,14 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#include "catalogue/rdbms/RdbmsArchiveFileCatalogue.hpp"
 
 #include "catalogue/ArchiveFileRow.hpp"
 #include "catalogue/ArchiveFileRowWithoutTimestamps.hpp"
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/Group.hpp"
-#include "catalogue/rdbms/RdbmsArchiveFileCatalogue.hpp"
+#include "catalogue/User.hpp"
+#include "catalogue/ValueAndTimeBasedCacheInfo.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueGetArchiveFilesForRepackItor.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueGetArchiveFilesItor.hpp"
@@ -29,8 +30,7 @@
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsMountPolicyCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsStorageClassCatalogue.hpp"
-#include "catalogue/User.hpp"
-#include "catalogue/ValueAndTimeBasedCacheInfo.hpp"
+#include "common/Timer.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileSummary.hpp"
@@ -41,55 +41,59 @@
 #include "common/exception/UserError.hpp"
 #include "common/exception/UserErrorWithCacheInfo.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/Timer.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <string>
+
 namespace cta::catalogue {
 
-RdbmsArchiveFileCatalogue::RdbmsArchiveFileCatalogue(log::Logger &log, std::shared_ptr<rdbms::ConnPool> connPool,
-  RdbmsCatalogue *rdbmsCatalogue)
-  : m_log(log),
-    m_connPool(connPool),
-    m_rdbmsCatalogue(rdbmsCatalogue) {}
+RdbmsArchiveFileCatalogue::RdbmsArchiveFileCatalogue(log::Logger& log,
+                                                     std::shared_ptr<rdbms::ConnPool> connPool,
+                                                     RdbmsCatalogue* rdbmsCatalogue)
+    : m_log(log),
+      m_connPool(connPool),
+      m_rdbmsCatalogue(rdbmsCatalogue) {}
 
-uint64_t RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string &diskInstanceName,
-  const std::string &storageClassName, const common::dataStructures::RequesterIdentity &user) {
+uint64_t
+RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
+                                                        const std::string& storageClassName,
+                                                        const common::dataStructures::RequesterIdentity& user) {
   try {
     const auto storageClass = catalogue::StorageClass(storageClassName);
     const auto copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass, false);
     const auto expectedNbRoutes = getCachedExpectedNbArchiveRoutes(storageClass, false);
 
     // Check that the number of archive routes is correct
-    if(copyToPoolMap.empty()) {
+    if (copyToPoolMap.empty()) {
       exception::UserError ue;
       ue.getMessage() << "Storage class " << storageClassName << " has no archive routes";
       throw ue;
     }
-    if(copyToPoolMap.size() != expectedNbRoutes) {
+    if (copyToPoolMap.size() != expectedNbRoutes) {
       exception::UserError ue;
-      ue.getMessage() << "Storage class " << storageClassName << " does not have the"
-        " expected number of archive routes routes: expected=" << expectedNbRoutes << ", actual=" <<
-        copyToPoolMap.size();
+      ue.getMessage() << "Storage class " << storageClassName
+                      << " does not have the"
+                         " expected number of archive routes routes: expected="
+                      << expectedNbRoutes << ", actual=" << copyToPoolMap.size();
       throw ue;
     }
 
-
     // Only consider the requester's group if there is no user mount policy
-    if(const auto userMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
-      !userMountPolicyAndCacheInfo.value) {
+    if (const auto userMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
+        !userMountPolicyAndCacheInfo.value) {
       const auto groupMountPolicyAndCacheInfo = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
       const auto& groupMountPolicy = groupMountPolicyAndCacheInfo.value;
 
-      if(!groupMountPolicy) {
+      if (!groupMountPolicy) {
+        const auto defaultUserMountPolicyAndCacheInfo =
+          getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
 
-        const auto defaultUserMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
-
-
-        if(!defaultUserMountPolicyAndCacheInfo.value) {
+        if (!defaultUserMountPolicyAndCacheInfo.value) {
           exception::UserErrorWithCacheInfo ue(userMountPolicyAndCacheInfo.cacheInfo);
-          ue.getMessage() << "Failed to check and get next archive file ID: No mount rules: storageClass=" <<
-            storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
+          ue.getMessage() << "Failed to check and get next archive file ID: No mount rules: storageClass="
+                          << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":"
+                          << user.group;
           throw ue;
         }
       }
@@ -99,84 +103,88 @@ uint64_t RdbmsArchiveFileCatalogue::checkAndGetNextArchiveFileId(const std::stri
     // safe to consume an archive file identifier
     auto conn = m_connPool->getConn();
     return getNextArchiveFileId(conn);
-  } catch(exception::UserErrorWithCacheInfo &ue) {
+  } catch (exception::UserErrorWithCacheInfo& ue) {
     log::LogContext lc(m_log);
     log::ScopedParamContainer spc(lc);
-    spc.add("cacheInfo", ue.cacheInfo)
-       .add("userError", ue.getMessage().str());
+    spc.add("cacheInfo", ue.cacheInfo).add("userError", ue.getMessage().str());
     lc.log(log::INFO, "Catalogue::checkAndGetNextArchiveFileId caught a UserErrorWithCacheInfo");
     throw;
   }
 }
 
-common::dataStructures::ArchiveFileQueueCriteria RdbmsArchiveFileCatalogue::getArchiveFileQueueCriteria(
-  const std::string &diskInstanceName, const std::string &storageClassName,
-  const common::dataStructures::RequesterIdentity &user) {
+common::dataStructures::ArchiveFileQueueCriteria
+RdbmsArchiveFileCatalogue::getArchiveFileQueueCriteria(const std::string& diskInstanceName,
+                                                       const std::string& storageClassName,
+                                                       const common::dataStructures::RequesterIdentity& user) {
   const auto storageClass = catalogue::StorageClass(storageClassName);
   const common::dataStructures::TapeCopyToPoolMap copyToPoolMap = getCachedTapeCopyToPoolMap(storageClass, false);
   const uint64_t expectedNbRoutes = getCachedExpectedNbArchiveRoutes(storageClass, false);
 
   // Check that the number of archive routes is correct
-  if(copyToPoolMap.empty()) {
+  if (copyToPoolMap.empty()) {
     exception::UserError ue;
     ue.getMessage() << "Storage class " << diskInstanceName << ": " << storageClassName << " has no archive routes";
     throw ue;
   }
-  if(copyToPoolMap.size() != expectedNbRoutes) {
+  if (copyToPoolMap.size() != expectedNbRoutes) {
     exception::UserError ue;
-    ue.getMessage() << "Storage class " << diskInstanceName << ": " << storageClassName << " does not have the"
-      " expected number of archive routes routes: expected=" << expectedNbRoutes << ", actual=" <<
-      copyToPoolMap.size();
+    ue.getMessage() << "Storage class " << diskInstanceName << ": " << storageClassName
+                    << " does not have the"
+                       " expected number of archive routes routes: expected="
+                    << expectedNbRoutes << ", actual=" << copyToPoolMap.size();
     throw ue;
   }
 
   // Get the mount policy - user mount policies overrule group ones
   const auto userMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, user.name));
 
-  if(const auto& userMountPolicy = userMountPolicyAndCacheInfo.value; userMountPolicy) {
+  if (const auto& userMountPolicy = userMountPolicyAndCacheInfo.value; userMountPolicy) {
     return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *userMountPolicy);
   } else {
     const auto groupMountPolicyAndCacheInfo = getCachedRequesterGroupMountPolicy(Group(diskInstanceName, user.group));
 
-    if(const auto& groupMountPolicy = groupMountPolicyAndCacheInfo.value; groupMountPolicy) {
+    if (const auto& groupMountPolicy = groupMountPolicyAndCacheInfo.value; groupMountPolicy) {
       return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *groupMountPolicy);
     } else {
       const auto defaultUserMountPolicyAndCacheInfo = getCachedRequesterMountPolicy(User(diskInstanceName, "default"));
 
-      if(const auto& defaultUserMountPolicy = defaultUserMountPolicyAndCacheInfo.value; defaultUserMountPolicy) {
+      if (const auto& defaultUserMountPolicy = defaultUserMountPolicyAndCacheInfo.value; defaultUserMountPolicy) {
         return common::dataStructures::ArchiveFileQueueCriteria(copyToPoolMap, *defaultUserMountPolicy);
       } else {
         exception::UserErrorWithCacheInfo ue(defaultUserMountPolicyAndCacheInfo.cacheInfo);
-        ue.getMessage() << "Failed to get archive file queue criteria: No mount rules: storageClass=" <<
-          storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":" << user.group;
+        ue.getMessage() << "Failed to get archive file queue criteria: No mount rules: storageClass="
+                        << storageClassName << " requester=" << diskInstanceName << ":" << user.name << ":"
+                        << user.group;
         throw ue;
       }
     }
   }
 }
 
-ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesItor(const TapeFileSearchCriteria &searchCriteria) const {
+ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesItor(const TapeFileSearchCriteria& searchCriteria) const {
   checkTapeFileSearchCriteria(searchCriteria);
 
   // If this is the listing of the contents of a tape
-  if (!searchCriteria.archiveFileId.has_value() && !searchCriteria.diskInstance.has_value() && !searchCriteria.diskFileIds.has_value() &&
-    !searchCriteria.fSeq.has_value() && searchCriteria.vid.has_value()) {
+  if (!searchCriteria.archiveFileId.has_value() && !searchCriteria.diskInstance.has_value()
+      && !searchCriteria.diskFileIds.has_value() && !searchCriteria.fSeq.has_value()
+      && searchCriteria.vid.has_value()) {
     return getTapeContentsItor(searchCriteria.vid.value());
   }
 
   // Create a connection to populate the temporary table (specialised by database type)
   auto conn = m_rdbmsCatalogue->m_archiveFileListingConnPool->getConn();
-  const auto tempDiskFxidsTableName = m_rdbmsCatalogue->createAndPopulateTempTableFxid(conn,
-    searchCriteria.diskFileIds);
+  const auto tempDiskFxidsTableName =
+    m_rdbmsCatalogue->createAndPopulateTempTableFxid(conn, searchCriteria.diskFileIds);
   // Pass ownership of the connection to the Iterator object
   auto impl = new RdbmsCatalogueGetArchiveFilesItor(m_log, std::move(conn), searchCriteria, tempDiskFxidsTableName);
   return ArchiveFileItor(impl);
 }
 
-common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileCopyForDeletion(
-  const TapeFileSearchCriteria &criteria) const {
+common::dataStructures::ArchiveFile
+RdbmsArchiveFileCatalogue::getArchiveFileCopyForDeletion(const TapeFileSearchCriteria& criteria) const {
   if (!criteria.diskFileIds.has_value() && !criteria.archiveFileId.has_value()) {
-    throw exception::UserError("To delete a file copy either the diskFileId+diskInstanceName or archiveFileId must be specified");
+    throw exception::UserError(
+      "To delete a file copy either the diskFileId+diskInstanceName or archiveFileId must be specified");
   }
   if (criteria.diskFileIds.has_value() && !criteria.diskInstance.has_value()) {
     throw exception::UserError("DiskFileId makes no sense without disk instance");
@@ -188,11 +196,12 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileCop
   auto vid = criteria.vid.value();
   try {
     auto vidToTapeMap = m_rdbmsCatalogue->m_tape->getTapesByVid(vid);
-    if (auto tapeState = vidToTapeMap[vid].state;
-      tapeState != common::dataStructures::Tape::REPACKING_DISABLED && tapeState != common::dataStructures::Tape::BROKEN) {
+    if (auto tapeState = vidToTapeMap[vid].state; tapeState != common::dataStructures::Tape::REPACKING_DISABLED
+                                                  && tapeState != common::dataStructures::Tape::BROKEN) {
       std::ostringstream oss;
-      oss << "Tape " << vid << " not in " << common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_DISABLED)
-          << " or " << common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN) << " states";
+      oss << "Tape " << vid << " not in "
+          << common::dataStructures::Tape::stateToString(common::dataStructures::Tape::REPACKING_DISABLED) << " or "
+          << common::dataStructures::Tape::stateToString(common::dataStructures::Tape::BROKEN) << " states";
       throw exception::UserError(oss.str());
     }
   } catch (const TapeNotFound&) {
@@ -200,19 +209,19 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileCop
   }
 
   TapeFileSearchCriteria searchCriteria = criteria;
-  searchCriteria.vid = std::nullopt; //unset vid, we want to get all copies of the archive file so we can check that it is not a one copy file
+  searchCriteria.vid = std::
+    nullopt;  //unset vid, we want to get all copies of the archive file so we can check that it is not a one copy file
   auto itor = getArchiveFilesItor(searchCriteria);
 
   // itor should have at most one archive file since we always search on unique attributes
   if (!itor.hasMore()) {
     if (criteria.archiveFileId.has_value()) {
-      throw exception::UserError(std::string("Cannot delete a copy of the file with archiveFileId ") +
-                                std::to_string(criteria.archiveFileId.value()) +
-                                 " because the file does not exist");
+      throw exception::UserError(std::string("Cannot delete a copy of the file with archiveFileId ")
+                                 + std::to_string(criteria.archiveFileId.value()) + " because the file does not exist");
     } else {
-      throw exception::UserError(std::string("Cannot delete a copy of the file with eosFxid ") +
-                                criteria.diskFileIds.value().front() + " and diskInstance " +
-                                criteria.diskInstance.value() + " because the file does not exist");
+      throw exception::UserError(std::string("Cannot delete a copy of the file with eosFxid ")
+                                 + criteria.diskFileIds.value().front() + " and diskInstance "
+                                 + criteria.diskInstance.value() + " because the file does not exist");
     }
   }
 
@@ -220,43 +229,42 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileCop
 
   if (af.tapeFiles.size() == 1) {
     if (criteria.archiveFileId.has_value()) {
-      throw exception::UserError(std::string("Cannot delete a copy of the file with archiveFileId ") +
-                                std::to_string(criteria.archiveFileId.value()) +
-                                " because it is the only copy");
+      throw exception::UserError(std::string("Cannot delete a copy of the file with archiveFileId ")
+                                 + std::to_string(criteria.archiveFileId.value()) + " because it is the only copy");
     } else {
-      throw exception::UserError(std::string("Cannot delete a copy of the file with eosFxid ") +
-                                criteria.diskFileIds.value().front() + " and diskInstance " +
-                                criteria.diskInstance.value() + " because it is the only copy");
+      throw exception::UserError(std::string("Cannot delete a copy of the file with eosFxid ")
+                                 + criteria.diskFileIds.value().front() + " and diskInstance "
+                                 + criteria.diskInstance.value() + " because it is the only copy");
     }
   }
-  af.tapeFiles.removeAllVidsExcept(vid); // assume there is only one copy per vid, this should return a list with at most one item
+  af.tapeFiles.removeAllVidsExcept(
+    vid);  // assume there is only one copy per vid, this should return a list with at most one item
   if (af.tapeFiles.empty()) {
     if (criteria.archiveFileId) {
-      throw exception::UserError(std::string("No copy of the file with archiveFileId ") +
-                                std::to_string(criteria.archiveFileId.value()) +
-                                 " on vid " + vid);
+      throw exception::UserError(std::string("No copy of the file with archiveFileId ")
+                                 + std::to_string(criteria.archiveFileId.value()) + " on vid " + vid);
     } else {
-      throw exception::UserError(std::string("No copy of the file with eosFxid ") +
-                                criteria.diskFileIds.value().front() + " and diskInstance " +
-                                criteria.diskInstance.value() + " on vid " + vid);
+      throw exception::UserError(std::string("No copy of the file with eosFxid ") + criteria.diskFileIds.value().front()
+                                 + " and diskInstance " + criteria.diskInstance.value() + " on vid " + vid);
     }
   }
-  if (af.tapeFiles.size() > 1){
+  if (af.tapeFiles.size() > 1) {
     if (criteria.archiveFileId.has_value()) {
-      throw exception::UserError(std::string("Error: More than one copy of the file with archiveFileId ") +
-                                std::to_string(criteria.archiveFileId.value()) +
-                                 " on vid " + vid);
+      throw exception::UserError(std::string("Error: More than one copy of the file with archiveFileId ")
+                                 + std::to_string(criteria.archiveFileId.value()) + " on vid " + vid);
     } else {
-      throw exception::UserError(std::string("Error: More than one copy of the file with eosFxid ") +
-                                criteria.diskFileIds.value().front() + " and diskInstance " +
-                                criteria.diskInstance.value() + " on vid " + vid);
+      throw exception::UserError(std::string("Error: More than one copy of the file with eosFxid ")
+                                 + criteria.diskFileIds.value().front() + " and diskInstance "
+                                 + criteria.diskInstance.value() + " on vid " + vid);
     }
   }
   return af;
 }
 
-std::list<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::getFilesForRepack(const std::string &vid,
-  const uint64_t startFSeq, const uint64_t maxNbFiles) const {
+std::list<common::dataStructures::ArchiveFile>
+RdbmsArchiveFileCatalogue::getFilesForRepack(const std::string& vid,
+                                             const uint64_t startFSeq,
+                                             const uint64_t maxNbFiles) const {
   const char* const sql = R"SQL(
     SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
@@ -300,7 +308,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::getFil
   auto rset = stmt.executeQuery();
 
   std::list<common::dataStructures::ArchiveFile> archiveFiles;
-  while(rset.next()) {
+  while (rset.next()) {
     common::dataStructures::ArchiveFile archiveFile;
 
     archiveFile.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
@@ -310,7 +318,7 @@ std::list<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::getFil
     archiveFile.diskFileInfo.gid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_GID"));
     archiveFile.fileSize = rset.columnUint64("SIZE_IN_BYTES");
     archiveFile.checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"),
-      static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
+                                                     static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
     archiveFile.storageClass = rset.columnString("STORAGE_CLASS_NAME");
     archiveFile.creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
     archiveFile.reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -322,26 +330,31 @@ std::list<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::getFil
     tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
     tapeFile.copyNb = static_cast<uint8_t>(rset.columnUint64("COPY_NB"));
     tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-    tapeFile.checksumBlob = archiveFile.checksumBlob; // Duplicated for convenience
+    tapeFile.checksumBlob = archiveFile.checksumBlob;  // Duplicated for convenience
 
     archiveFile.tapeFiles.push_back(tapeFile);
 
     archiveFiles.push_back(archiveFile);
 
-    if(maxNbFiles == archiveFiles.size()) break;
+    if (maxNbFiles == archiveFiles.size()) {
+      break;
+    }
   }
   return archiveFiles;
 }
 
-ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesForRepackItor(const std::string &vid,
-  const uint64_t startFSeq) const {
-  auto impl = std::make_unique<RdbmsCatalogueGetArchiveFilesForRepackItor>(m_log, *(m_rdbmsCatalogue->m_archiveFileListingConnPool),
-    vid, startFSeq);
+ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesForRepackItor(const std::string& vid,
+                                                                        const uint64_t startFSeq) const {
+  auto impl =
+    std::make_unique<RdbmsCatalogueGetArchiveFilesForRepackItor>(m_log,
+                                                                 *(m_rdbmsCatalogue->m_archiveFileListingConnPool),
+                                                                 vid,
+                                                                 startFSeq);
   return ArchiveFileItor(impl.release());
 }
 
-common::dataStructures::ArchiveFileSummary RdbmsArchiveFileCatalogue::getTapeFileSummary(
-  const TapeFileSearchCriteria &searchCriteria) const {
+common::dataStructures::ArchiveFileSummary
+RdbmsArchiveFileCatalogue::getTapeFileSummary(const TapeFileSearchCriteria& searchCriteria) const {
   auto conn = m_connPool->getConn();
 
   std::string sql = R"SQL(
@@ -360,22 +373,19 @@ common::dataStructures::ArchiveFileSummary RdbmsArchiveFileCatalogue::getTapeFil
       TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
   )SQL";
 
-  if(searchCriteria.archiveFileId  ||
-     searchCriteria.diskInstance   ||
-     searchCriteria.vid            ||
-     searchCriteria.diskFileIds) {
+  if (searchCriteria.archiveFileId || searchCriteria.diskInstance || searchCriteria.vid || searchCriteria.diskFileIds) {
     sql += R"SQL( WHERE )SQL";
   }
 
   bool addedAWhereConstraint = false;
 
-  if(searchCriteria.archiveFileId) {
+  if (searchCriteria.archiveFileId) {
     sql += R"SQL(
       ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.diskInstance) {
+  if (searchCriteria.diskInstance) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -384,7 +394,7 @@ common::dataStructures::ArchiveFileSummary RdbmsArchiveFileCatalogue::getTapeFil
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.vid) {
+  if (searchCriteria.vid) {
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
     }
@@ -393,9 +403,9 @@ common::dataStructures::ArchiveFileSummary RdbmsArchiveFileCatalogue::getTapeFil
     )SQL";
     addedAWhereConstraint = true;
   }
-  if(searchCriteria.diskFileIds) {
-    const auto tempDiskFxidsTableName = m_rdbmsCatalogue->createAndPopulateTempTableFxid(conn,
-      searchCriteria.diskFileIds);
+  if (searchCriteria.diskFileIds) {
+    const auto tempDiskFxidsTableName =
+      m_rdbmsCatalogue->createAndPopulateTempTableFxid(conn, searchCriteria.diskFileIds);
 
     if (addedAWhereConstraint) {
       sql += R"SQL( AND )SQL";
@@ -404,18 +414,18 @@ common::dataStructures::ArchiveFileSummary RdbmsArchiveFileCatalogue::getTapeFil
   }
 
   auto stmt = conn.createStmt(sql);
-  if(searchCriteria.archiveFileId.has_value()) {
+  if (searchCriteria.archiveFileId.has_value()) {
     stmt.bindUint64(":ARCHIVE_FILE_ID", searchCriteria.archiveFileId.value());
   }
-  if(searchCriteria.diskInstance.has_value()) {
+  if (searchCriteria.diskInstance.has_value()) {
     stmt.bindString(":DISK_INSTANCE_NAME", searchCriteria.diskInstance.value());
   }
-  if(searchCriteria.vid.has_value()) {
+  if (searchCriteria.vid.has_value()) {
     stmt.bindString(":VID", searchCriteria.vid.value());
   }
   auto rset = stmt.executeQuery();
 
-  if(!rset.next()) {
+  if (!rset.next()) {
     throw exception::Exception("SELECT COUNT statement did not return a row");
   }
 
@@ -430,7 +440,7 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileByI
   const auto archiveFile = getArchiveFileById(conn, id);
 
   // Throw an exception if the archive file does not exist
-  if(nullptr == archiveFile.get()) {
+  if (nullptr == archiveFile.get()) {
     exception::Exception ex;
     ex.getMessage() << "No such archive file with ID " << id;
     throw ex;
@@ -439,8 +449,8 @@ common::dataStructures::ArchiveFile RdbmsArchiveFileCatalogue::getArchiveFileByI
   return *archiveFile;
 }
 
-std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::getArchiveFileById(rdbms::Conn &conn,
-  const uint64_t id) const {
+std::unique_ptr<common::dataStructures::ArchiveFile>
+RdbmsArchiveFileCatalogue::getArchiveFileById(rdbms::Conn& conn, const uint64_t id) const {
   const char* const sql = R"SQL(
     SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
@@ -476,7 +486,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
   auto rset = stmt.executeQuery();
   std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
   while (rset.next()) {
-    if(nullptr == archiveFile.get()) {
+    if (nullptr == archiveFile.get()) {
       archiveFile = std::make_unique<common::dataStructures::ArchiveFile>();
 
       archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
@@ -486,14 +496,14 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
       archiveFile->diskFileInfo.gid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_GID"));
       archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
       archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"),
-        static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
+                                                        static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
       archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
       archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
       archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
     }
 
     // If there is a tape file
-    if(!rset.columnIsNull("VID")) {
+    if (!rset.columnIsNull("VID")) {
       // Add the tape file to the archive file's in-memory structure
       common::dataStructures::TapeFile tapeFile;
       tapeFile.vid = rset.columnString("VID");
@@ -502,7 +512,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
       tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = static_cast<uint8_t>(rset.columnUint64("COPY_NB"));
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
+      tapeFile.checksumBlob = archiveFile->checksumBlob;  // Duplicated for convenience
 
       archiveFile->tapeFiles.push_back(tapeFile);
     }
@@ -511,18 +521,19 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
   return archiveFile;
 }
 
-common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getCachedTapeCopyToPoolMap(
-  const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const {
-  auto l_getNonCachedValue = [this,&storageClass,&useRepackArchiveRoute] {
+common::dataStructures::TapeCopyToPoolMap
+RdbmsArchiveFileCatalogue::getCachedTapeCopyToPoolMap(const catalogue::StorageClass& storageClass,
+                                                      bool useRepackArchiveRoute) const {
+  auto l_getNonCachedValue = [this, &storageClass, &useRepackArchiveRoute] {
     auto conn = m_connPool->getConn();
     return getTapeCopyToPoolMap(conn, storageClass, useRepackArchiveRoute);
   };
   return m_tapeCopyToPoolCache.getCachedValue(storageClass, l_getNonCachedValue).value;
 }
 
-uint64_t RdbmsArchiveFileCatalogue::getCachedExpectedNbArchiveRoutes(
-  const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const {
-  auto l_getNonCachedValue = [this,&storageClass,&useRepackArchiveRoute] {
+uint64_t RdbmsArchiveFileCatalogue::getCachedExpectedNbArchiveRoutes(const catalogue::StorageClass& storageClass,
+                                                                     bool useRepackArchiveRoute) const {
+  auto l_getNonCachedValue = [this, &storageClass, &useRepackArchiveRoute] {
     auto conn = m_connPool->getConn();
     return getExpectedNbArchiveRoutes(conn, storageClass, useRepackArchiveRoute);
   };
@@ -530,8 +541,8 @@ uint64_t RdbmsArchiveFileCatalogue::getCachedExpectedNbArchiveRoutes(
 }
 
 ValueAndTimeBasedCacheInfo<std::optional<common::dataStructures::MountPolicy>>
-  RdbmsArchiveFileCatalogue::getCachedRequesterMountPolicy(const User &user) const {
-  auto l_getNonCachedValue = [this,&user] {
+RdbmsArchiveFileCatalogue::getCachedRequesterMountPolicy(const User& user) const {
+  auto l_getNonCachedValue = [this, &user] {
     auto conn = m_connPool->getConn();
     const auto mountPolicy = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
     return mountPolicy->getRequesterMountPolicy(conn, user);
@@ -543,8 +554,8 @@ ValueAndTimeBasedCacheInfo<std::optional<common::dataStructures::MountPolicy>>
 // getCachedRequesterGroupMountPolicy
 //------------------------------------------------------------------------------
 ValueAndTimeBasedCacheInfo<std::optional<common::dataStructures::MountPolicy>>
-  RdbmsArchiveFileCatalogue::getCachedRequesterGroupMountPolicy(const Group &group) const {
-  auto l_getNonCachedValue = [this,&group] {
+RdbmsArchiveFileCatalogue::getCachedRequesterGroupMountPolicy(const Group& group) const {
+  auto l_getNonCachedValue = [this, &group] {
     auto conn = m_connPool->getConn();
     const auto mountPolicyCatalogue = static_cast<RdbmsMountPolicyCatalogue*>(m_rdbmsCatalogue->MountPolicy().get());
     return mountPolicyCatalogue->getRequesterGroupMountPolicy(conn, group);
@@ -552,41 +563,41 @@ ValueAndTimeBasedCacheInfo<std::optional<common::dataStructures::MountPolicy>>
   return m_rdbmsCatalogue->m_groupMountPolicyCache.getCachedValue(group, l_getNonCachedValue);
 }
 
-ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesItor(rdbms::Conn &conn,
-  const TapeFileSearchCriteria &searchCriteria) const {
-
+ArchiveFileItor RdbmsArchiveFileCatalogue::getArchiveFilesItor(rdbms::Conn& conn,
+                                                               const TapeFileSearchCriteria& searchCriteria) const {
   checkTapeFileSearchCriteria(conn, searchCriteria);
 
   // If this is the listing of the contents of a tape
-  if (!searchCriteria.archiveFileId.has_value() && !searchCriteria.diskInstance.has_value() && !searchCriteria.diskFileIds.has_value() &&
-    searchCriteria.vid.has_value()) {
+  if (!searchCriteria.archiveFileId.has_value() && !searchCriteria.diskInstance.has_value()
+      && !searchCriteria.diskFileIds.has_value() && searchCriteria.vid.has_value()) {
     return getTapeContentsItor(searchCriteria.vid.value());
   }
 
   auto archiveListingConn = m_rdbmsCatalogue->m_archiveFileListingConnPool->getConn();
-  const auto tempDiskFxidsTableName = m_rdbmsCatalogue->createAndPopulateTempTableFxid(archiveListingConn,
-    searchCriteria.diskFileIds);
+  const auto tempDiskFxidsTableName =
+    m_rdbmsCatalogue->createAndPopulateTempTableFxid(archiveListingConn, searchCriteria.diskFileIds);
   // Pass ownership of the connection to the Iterator object
-  auto impl = std::make_unique<RdbmsCatalogueGetArchiveFilesItor>(m_log, std::move(archiveListingConn), searchCriteria,
-    tempDiskFxidsTableName);
+  auto impl = std::make_unique<RdbmsCatalogueGetArchiveFilesItor>(m_log,
+                                                                  std::move(archiveListingConn),
+                                                                  searchCriteria,
+                                                                  tempDiskFxidsTableName);
   return ArchiveFileItor(impl.release());
 }
 
-void RdbmsArchiveFileCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria &searchCriteria) const {
+void RdbmsArchiveFileCatalogue::checkTapeFileSearchCriteria(const TapeFileSearchCriteria& searchCriteria) const {
   auto conn = m_connPool->getConn();
   checkTapeFileSearchCriteria(conn, searchCriteria);
-
 }
 
-void RdbmsArchiveFileCatalogue::checkTapeFileSearchCriteria(rdbms::Conn &conn,
-  const TapeFileSearchCriteria &searchCriteria) const {
-  if(searchCriteria.archiveFileId.has_value() &&
-    !RdbmsCatalogueUtils::archiveFileIdExists(conn, searchCriteria.archiveFileId.value())) {
-      throw exception::UserError(std::string("Archive file with ID ") +
-        std::to_string(searchCriteria.archiveFileId.value()) + " does not exist");
+void RdbmsArchiveFileCatalogue::checkTapeFileSearchCriteria(rdbms::Conn& conn,
+                                                            const TapeFileSearchCriteria& searchCriteria) const {
+  if (searchCriteria.archiveFileId.has_value()
+      && !RdbmsCatalogueUtils::archiveFileIdExists(conn, searchCriteria.archiveFileId.value())) {
+    throw exception::UserError(std::string("Archive file with ID ")
+                               + std::to_string(searchCriteria.archiveFileId.value()) + " does not exist");
   }
 
-  if(searchCriteria.diskFileIds.has_value() && !searchCriteria.diskInstance) {
+  if (searchCriteria.diskFileIds.has_value() && !searchCriteria.diskInstance) {
     throw exception::UserError(std::string("Disk file IDs are ambiguous without disk instance name"));
   }
 
@@ -594,19 +605,21 @@ void RdbmsArchiveFileCatalogue::checkTapeFileSearchCriteria(rdbms::Conn &conn,
     throw exception::UserError(std::string("fSeq makes no sense without vid"));
   }
 
-  if(searchCriteria.vid.has_value() && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
+  if (searchCriteria.vid.has_value() && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
     throw exception::UserError(std::string("Tape ") + searchCriteria.vid.value() + " does not exist");
   }
 }
 
-ArchiveFileItor RdbmsArchiveFileCatalogue::getTapeContentsItor(const std::string &vid) const {
+ArchiveFileItor RdbmsArchiveFileCatalogue::getTapeContentsItor(const std::string& vid) const {
   // Create a connection to populate the temporary table (specialised by database type)
   auto impl = std::make_unique<RdbmsCatalogueTapeContentsItor>(m_log, *m_connPool, vid);
   return ArchiveFileItor(impl.release());
 }
 
-common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getTapeCopyToPoolMap(rdbms::Conn &conn,
-  const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const {
+common::dataStructures::TapeCopyToPoolMap
+RdbmsArchiveFileCatalogue::getTapeCopyToPoolMap(rdbms::Conn& conn,
+                                                const catalogue::StorageClass& storageClass,
+                                                bool useRepackArchiveRoute) const {
   common::dataStructures::TapeCopyToPoolMap copyToPoolMap;
   std::string sql = R"SQL(
     SELECT
@@ -644,8 +657,9 @@ common::dataStructures::TapeCopyToPoolMap RdbmsArchiveFileCatalogue::getTapeCopy
   return copyToPoolMap;
 }
 
-uint64_t RdbmsArchiveFileCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn,
-  const catalogue::StorageClass &storageClass, bool useRepackArchiveRoute) const {
+uint64_t RdbmsArchiveFileCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn& conn,
+                                                               const catalogue::StorageClass& storageClass,
+                                                               bool useRepackArchiveRoute) const {
   std::string sql = R"SQL(
     SELECT
       COUNT(*) AS NB_ROUTES
@@ -662,25 +676,25 @@ uint64_t RdbmsArchiveFileCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn &conn
   )SQL";
   if (!useRepackArchiveRoute) {
     sql += " AND ARCHIVE_ROUTE.ARCHIVE_ROUTE_TYPE != '"
-            + common::dataStructures::toString(common::dataStructures::ArchiveRouteType::REPACK) + "'";
+           + common::dataStructures::toString(common::dataStructures::ArchiveRouteType::REPACK) + "'";
   }
   sql += ") ROUTES";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", storageClass.storageClassName);
   auto rset = stmt.executeQuery();
-  if(!rset.next()) {
+  if (!rset.next()) {
     throw exception::Exception("Result set of SELECT COUNT(*) is empty");
   }
   return rset.columnUint64("NB_ROUTES");
 }
 
 void RdbmsArchiveFileCatalogue::modifyArchiveFileStorageClassId(const uint64_t archiveFileId,
-  const std::string& newStorageClassName) const {
+                                                                const std::string& newStorageClassName) const {
   auto conn = m_connPool->getConn();
-  if(!RdbmsCatalogueUtils::storageClassExists(conn, newStorageClassName)) {
+  if (!RdbmsCatalogueUtils::storageClassExists(conn, newStorageClassName)) {
     exception::UserError ue;
     ue.getMessage() << "Cannot modify archive file " << ": " << archiveFileId << " because storage class "
-    << ":" << newStorageClassName << " does not exist";
+                    << ":" << newStorageClassName << " does not exist";
     throw ue;
   }
 
@@ -699,8 +713,9 @@ void RdbmsArchiveFileCatalogue::modifyArchiveFileStorageClassId(const uint64_t a
   auto rset = stmt.executeQuery();
 }
 
-void RdbmsArchiveFileCatalogue::modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId, const std::string& fxId,
-  const std::string &diskInstance) const {
+void RdbmsArchiveFileCatalogue::modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId,
+                                                                     const std::string& fxId,
+                                                                     const std::string& diskInstance) const {
   const char* const sql = R"SQL(
     UPDATE ARCHIVE_FILE SET
       DISK_FILE_ID = :FXID,
@@ -720,9 +735,9 @@ void RdbmsArchiveFileCatalogue::modifyArchiveFileFxIdAndDiskInstance(const uint6
 //------------------------------------------------------------------------------
 // moveArchiveFileToRecycleBin
 //------------------------------------------------------------------------------
-void RdbmsArchiveFileCatalogue::moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest &request,
-  log::LogContext & lc) {
-  if(!request.archiveFile){
+void RdbmsArchiveFileCatalogue::moveArchiveFileToRecycleLog(const common::dataStructures::DeleteArchiveRequest& request,
+                                                            log::LogContext& lc) {
+  if (!request.archiveFile) {
     //The archive file does not exist in the catalogue, nothing to do with it
     return;
   }
@@ -731,47 +746,44 @@ void RdbmsArchiveFileCatalogue::moveArchiveFileToRecycleLog(const common::dataSt
   utils::Timer totalTime;
   log::TimingList tl;
   try {
-    checkDeleteRequestConsistency(request,archiveFile);
-    tl.insertAndReset("checkDeleteRequestConsistency",t);
-  } catch(const cta::exception::Exception & ex){
+    checkDeleteRequestConsistency(request, archiveFile);
+    tl.insertAndReset("checkDeleteRequestConsistency", t);
+  } catch (const cta::exception::Exception& ex) {
     log::ScopedParamContainer spc(lc);
     spc.add("fileId", std::to_string(request.archiveFileID))
-     .add("diskInstance", archiveFile.diskInstance)
-     .add("requestDiskInstance", request.diskInstance)
-     .add("diskFileId", archiveFile.diskFileId)
-     .add("diskFileInfo.owner_uid", archiveFile.diskFileInfo.owner_uid)
-     .add("diskFileInfo.gid", archiveFile.diskFileInfo.gid)
-     .add("fileSize", std::to_string(archiveFile.fileSize))
-     .add("creationTime", std::to_string(archiveFile.creationTime))
-     .add("reconciliationTime", std::to_string(archiveFile.reconciliationTime))
-     .add("diskFilePath",request.diskFilePath)
-     .add("errorMessage",ex.getMessageValue())
-     .add("storageClass", archiveFile.storageClass);
+      .add("diskInstance", archiveFile.diskInstance)
+      .add("requestDiskInstance", request.diskInstance)
+      .add("diskFileId", archiveFile.diskFileId)
+      .add("diskFileInfo.owner_uid", archiveFile.diskFileInfo.owner_uid)
+      .add("diskFileInfo.gid", archiveFile.diskFileInfo.gid)
+      .add("fileSize", std::to_string(archiveFile.fileSize))
+      .add("creationTime", std::to_string(archiveFile.creationTime))
+      .add("reconciliationTime", std::to_string(archiveFile.reconciliationTime))
+      .add("diskFilePath", request.diskFilePath)
+      .add("errorMessage", ex.getMessageValue())
+      .add("storageClass", archiveFile.storageClass);
     archiveFile.checksumBlob.addFirstChecksumToLog(spc);
-    for(const auto& tapeFile : archiveFile.tapeFiles) {
+    for (const auto& tapeFile : archiveFile.tapeFiles) {
       std::stringstream tapeCopyLogStream;
-      tapeCopyLogStream << "copy number: " << static_cast<int>(tapeFile.copyNb)
-        << " vid: " << tapeFile.vid
-        << " fSeq: " << tapeFile.fSeq
-        << " blockId: " << tapeFile.blockId
-        << " creationTime: " << tapeFile.creationTime
-        << " fileSize: " << tapeFile.fileSize;
+      tapeCopyLogStream << "copy number: " << static_cast<int>(tapeFile.copyNb) << " vid: " << tapeFile.vid
+                        << " fSeq: " << tapeFile.fSeq << " blockId: " << tapeFile.blockId
+                        << " creationTime: " << tapeFile.creationTime << " fileSize: " << tapeFile.fileSize;
       spc.add("TAPE FILE", tapeCopyLogStream.str());
     }
     lc.log(log::WARNING, "Failed to move archive file to the file-recycle-log.");
 
     exception::UserError ue;
     ue.getMessage() << "Failed to move archive file with ID " << request.archiveFileID
-      << " to the file-recycle-log. errorMessage=" << ex.getMessageValue();
+                    << " to the file-recycle-log. errorMessage=" << ex.getMessageValue();
     throw ue;
   }
 
   //All checks are good, we can move the file to the recycle-bin
   auto conn = m_connPool->getConn();
   rdbms::AutoRollback autoRollback(conn);
-  copyArchiveFileToFileRecyleLogAndDelete(conn,request,lc);
-  tl.insertAndReset("copyArchiveFileToFileRecyleLogAndDeleteTime",t);
-  tl.insertAndReset("totalTime",totalTime);
+  copyArchiveFileToFileRecyleLogAndDelete(conn, request, lc);
+  tl.insertAndReset("copyArchiveFileToFileRecyleLogAndDeleteTime", t);
+  tl.insertAndReset("totalTime", totalTime);
   log::ScopedParamContainer spc(lc);
   spc.add("fileId", std::to_string(request.archiveFileID))
     .add("diskInstance", archiveFile.diskInstance)
@@ -784,14 +796,11 @@ void RdbmsArchiveFileCatalogue::moveArchiveFileToRecycleLog(const common::dataSt
     .add("reconciliationTime", std::to_string(archiveFile.reconciliationTime))
     .add("storageClass", archiveFile.storageClass);
   archiveFile.checksumBlob.addFirstChecksumToLog(spc);
-  for(const auto& tapeFile : archiveFile.tapeFiles) {
+  for (const auto& tapeFile : archiveFile.tapeFiles) {
     std::stringstream tapeCopyLogStream;
-    tapeCopyLogStream << "copy number: " << static_cast<int>(tapeFile.copyNb)
-      << " vid: " << tapeFile.vid
-      << " fSeq: " << tapeFile.fSeq
-      << " blockId: " << tapeFile.blockId
-      << " creationTime: " << tapeFile.creationTime
-      << " fileSize: " << tapeFile.fileSize;
+    tapeCopyLogStream << "copy number: " << static_cast<int>(tapeFile.copyNb) << " vid: " << tapeFile.vid
+                      << " fSeq: " << tapeFile.fSeq << " blockId: " << tapeFile.blockId
+                      << " creationTime: " << tapeFile.creationTime << " fileSize: " << tapeFile.fileSize;
     spc.add("TAPE FILE", tapeCopyLogStream.str());
   }
   tl.addToLog(spc);
@@ -801,43 +810,46 @@ void RdbmsArchiveFileCatalogue::moveArchiveFileToRecycleLog(const common::dataSt
 void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
   const cta::common::dataStructures::DeleteArchiveRequest& deleteRequest,
   const cta::common::dataStructures::ArchiveFile& archiveFile) const {
-  if(deleteRequest.diskInstance != archiveFile.diskInstance){
+  if (deleteRequest.diskInstance != archiveFile.diskInstance) {
     std::ostringstream msg;
     msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
         << " to the recycle-bin because the disk instance of "
-        "the request does not match that of the archived file: archiveFileId=" << archiveFile.archiveFileID
-        << " requestDiskInstance=" << deleteRequest.diskInstance << " archiveFileDiskInstance=" <<
-        archiveFile.diskInstance;
+           "the request does not match that of the archived file: archiveFileId="
+        << archiveFile.archiveFileID << " requestDiskInstance=" << deleteRequest.diskInstance
+        << " archiveFileDiskInstance=" << archiveFile.diskInstance;
     log::LogContext lc(m_log);
-    lc.log(log::ALERT, "Failed to move archive file to the recycle-bin because the disk instance of the request "
-      "does not match that of the archived file.");
+    lc.log(log::ALERT,
+           "Failed to move archive file to the recycle-bin because the disk instance of the request "
+           "does not match that of the archived file.");
     throw cta::exception::Exception(msg.str());
   }
-  if(deleteRequest.diskFileSize.has_value() && deleteRequest.diskFileSize.value() != archiveFile.fileSize) {
+  if (deleteRequest.diskFileSize.has_value() && deleteRequest.diskFileSize.value() != archiveFile.fileSize) {
     std::ostringstream msg;
     msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
         << " to the recycle-bin because the disk file size of "
-        "the request does not match that of the archived file: archiveFileId=" << archiveFile.archiveFileID
-        << " requestDiskFileSize=" << deleteRequest.diskFileSize.value() << " archiveFileDiskFileSize=" <<
-        archiveFile.fileSize;
+           "the request does not match that of the archived file: archiveFileId="
+        << archiveFile.archiveFileID << " requestDiskFileSize=" << deleteRequest.diskFileSize.value()
+        << " archiveFileDiskFileSize=" << archiveFile.fileSize;
     log::LogContext lc(m_log);
-    lc.log(log::ALERT, "Failed to move archive file to the recycle-bin because the disk file size of the "
-      "request does not match that of the archived file.");
+    lc.log(log::ALERT,
+           "Failed to move archive file to the recycle-bin because the disk file size of the "
+           "request does not match that of the archived file.");
     throw cta::exception::Exception(msg.str());
   }
   if (deleteRequest.checksumBlob.has_value() && deleteRequest.checksumBlob.value() != archiveFile.checksumBlob) {
     std::ostringstream msg;
     msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
         << " to the recycle-bin because the checksum of "
-        "the request does not match that of the archived file: archiveFileId=" << archiveFile.archiveFileID
-        << " requestChecksum=" << deleteRequest.checksumBlob.value().serialize() << " archiveFileChecksum=" <<
-        archiveFile.checksumBlob.serialize();
+           "the request does not match that of the archived file: archiveFileId="
+        << archiveFile.archiveFileID << " requestChecksum=" << deleteRequest.checksumBlob.value().serialize()
+        << " archiveFileChecksum=" << archiveFile.checksumBlob.serialize();
     log::LogContext lc(m_log);
-    lc.log(log::ALERT, "Failed to move archive file to the recycle-bin because the checksum of the request "
-      "does not match that of the archived file.");
+    lc.log(log::ALERT,
+           "Failed to move archive file to the recycle-bin because the checksum of the request "
+           "does not match that of the archived file.");
     throw cta::exception::Exception(msg.str());
   }
-  if(deleteRequest.diskFilePath.empty()){
+  if (deleteRequest.diskFilePath.empty()) {
     std::ostringstream msg;
     msg << "Failed to move archive file with ID " << deleteRequest.archiveFileID
         << " to the recycle-bin because the disk file path has not been provided.";
@@ -846,7 +858,7 @@ void RdbmsArchiveFileCatalogue::checkDeleteRequestConsistency(
 }
 
 void RdbmsArchiveFileCatalogue::deleteArchiveFile(rdbms::Conn& conn,
-  const common::dataStructures::DeleteArchiveRequest& request) const {
+                                                  const common::dataStructures::DeleteArchiveRequest& request) const {
   const char* const deleteArchiveFileSql = R"SQL(
     DELETE FROM
       ARCHIVE_FILE
@@ -854,14 +866,14 @@ void RdbmsArchiveFileCatalogue::deleteArchiveFile(rdbms::Conn& conn,
   )SQL";
 
   auto deleteArchiveFileStmt = conn.createStmt(deleteArchiveFileSql);
-  deleteArchiveFileStmt.bindUint64(":ARCHIVE_FILE_ID",request.archiveFileID);
+  deleteArchiveFileStmt.bindUint64(":ARCHIVE_FILE_ID", request.archiveFileID);
   deleteArchiveFileStmt.executeNonQuery();
 }
 
-void RdbmsArchiveFileCatalogue::insertArchiveFile(rdbms::Conn &conn, const ArchiveFileRowWithoutTimestamps &row) const {
-  if(!RdbmsCatalogueUtils::storageClassExists(conn, row.storageClassName)) {
-    throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName +
-      " does not exist");
+void RdbmsArchiveFileCatalogue::insertArchiveFile(rdbms::Conn& conn, const ArchiveFileRowWithoutTimestamps& row) const {
+  if (!RdbmsCatalogueUtils::storageClassExists(conn, row.storageClassName)) {
+    throw exception::UserError(std::string("Storage class ") + row.diskInstance + ":" + row.storageClassName
+                               + " does not exist");
   }
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -903,13 +915,13 @@ void RdbmsArchiveFileCatalogue::insertArchiveFile(rdbms::Conn &conn, const Archi
   stmt.bindUint64(":DISK_FILE_UID", row.diskFileOwnerUid);
   stmt.bindUint64(":DISK_FILE_GID", row.diskFileGid);
   stmt.bindUint64(":SIZE_IN_BYTES", row.size);
-  stmt.bindBlob  (":CHECKSUM_BLOB", row.checksumBlob.serialize());
+  stmt.bindBlob(":CHECKSUM_BLOB", row.checksumBlob.serialize());
   // Keep transition ADLER32 checksum up-to-date if it exists
   uint32_t adler32;
   try {
     std::string adler32hex = checksum::ChecksumBlob::ByteArrayToHex(row.checksumBlob.at(checksum::ADLER32));
     adler32 = static_cast<uint32_t>(strtoul(adler32hex.c_str(), nullptr, 16));
-  } catch(exception::ChecksumTypeMismatch&) {
+  } catch (exception::ChecksumTypeMismatch&) {
     adler32 = 0;
   }
   stmt.bindUint64(":CHECKSUM_ADLER32", adler32);
@@ -923,8 +935,8 @@ void RdbmsArchiveFileCatalogue::insertArchiveFile(rdbms::Conn &conn, const Archi
 //------------------------------------------------------------------------------
 // getArchiveFileRowByArchiveId
 //------------------------------------------------------------------------------
-std::unique_ptr<ArchiveFileRow> RdbmsArchiveFileCatalogue::getArchiveFileRowById(rdbms::Conn &conn,
-  const uint64_t id) const {
+std::unique_ptr<ArchiveFileRow> RdbmsArchiveFileCatalogue::getArchiveFileRowById(rdbms::Conn& conn,
+                                                                                 const uint64_t id) const {
   const char* const sql = R"SQL(
     SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
@@ -959,7 +971,7 @@ std::unique_ptr<ArchiveFileRow> RdbmsArchiveFileCatalogue::getArchiveFileRowById
     row->diskFileGid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_GID"));
     row->size = rset.columnUint64("SIZE_IN_BYTES");
     row->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"),
-      static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
+                                              static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
     row->storageClassName = rset.columnString("STORAGE_CLASS_NAME");
     row->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
     row->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
@@ -968,12 +980,12 @@ std::unique_ptr<ArchiveFileRow> RdbmsArchiveFileCatalogue::getArchiveFileRowById
   return row;
 }
 
-
 //------------------------------------------------------------------------------
 // updateDiskFileId
 //------------------------------------------------------------------------------
-void RdbmsArchiveFileCatalogue::updateDiskFileId(const uint64_t archiveFileId, const std::string &diskInstance,
-  const std::string &diskFileId) {
+void RdbmsArchiveFileCatalogue::updateDiskFileId(const uint64_t archiveFileId,
+                                                 const std::string& diskInstance,
+                                                 const std::string& diskFileId) {
   const char* const sql = R"SQL(
     UPDATE ARCHIVE_FILE SET
       DISK_INSTANCE_NAME = :DISK_INSTANCE_NAME,
@@ -988,10 +1000,10 @@ void RdbmsArchiveFileCatalogue::updateDiskFileId(const uint64_t archiveFileId, c
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
   stmt.executeNonQuery();
 
-  if(0 == stmt.getNbAffectedRows()) {
+  if (0 == stmt.getNbAffectedRows()) {
     std::ostringstream msg;
-    msg << "Cannot update the disk file ID of the archive file with archive file ID " << archiveFileId <<
-      " because the archive file does not exist";
+    msg << "Cannot update the disk file ID of the archive file with archive file ID " << archiveFileId
+        << " because the archive file does not exist";
     throw exception::UserError(msg.str());
   }
 }
@@ -999,8 +1011,9 @@ void RdbmsArchiveFileCatalogue::updateDiskFileId(const uint64_t archiveFileId, c
 //------------------------------------------------------------------------------
 // getArchiveFileToRetrieveByArchiveFileId
 //------------------------------------------------------------------------------
-std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::getArchiveFileToRetrieveByArchiveFileId(
-  rdbms::Conn &conn, const uint64_t archiveFileId) const {
+std::unique_ptr<common::dataStructures::ArchiveFile>
+RdbmsArchiveFileCatalogue::getArchiveFileToRetrieveByArchiveFileId(rdbms::Conn& conn,
+                                                                   const uint64_t archiveFileId) const {
   const char* const sql = R"SQL(
     SELECT
       ARCHIVE_FILE.ARCHIVE_FILE_ID AS ARCHIVE_FILE_ID,
@@ -1039,7 +1052,7 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
   auto rset = stmt.executeQuery();
   std::unique_ptr<common::dataStructures::ArchiveFile> archiveFile;
   while (rset.next()) {
-    if(nullptr == archiveFile.get()) {
+    if (nullptr == archiveFile.get()) {
       archiveFile = std::make_unique<common::dataStructures::ArchiveFile>();
 
       archiveFile->archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
@@ -1049,14 +1062,14 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
       archiveFile->diskFileInfo.gid = static_cast<uint32_t>(rset.columnUint64("DISK_FILE_GID"));
       archiveFile->fileSize = rset.columnUint64("SIZE_IN_BYTES");
       archiveFile->checksumBlob.deserializeOrSetAdler32(rset.columnBlob("CHECKSUM_BLOB"),
-        static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
+                                                        static_cast<uint32_t>(rset.columnUint64("CHECKSUM_ADLER32")));
       archiveFile->storageClass = rset.columnString("STORAGE_CLASS_NAME");
       archiveFile->creationTime = rset.columnUint64("ARCHIVE_FILE_CREATION_TIME");
       archiveFile->reconciliationTime = rset.columnUint64("RECONCILIATION_TIME");
     }
 
     // If there is a tape file we add it to the archiveFile's list of tape files
-    if(!rset.columnIsNull("VID")) {
+    if (!rset.columnIsNull("VID")) {
       // Add the tape file to the archive file's in-memory structure
       common::dataStructures::TapeFile tapeFile;
       tapeFile.vid = rset.columnString("VID");
@@ -1065,14 +1078,14 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
       tapeFile.fileSize = rset.columnUint64("LOGICAL_SIZE_IN_BYTES");
       tapeFile.copyNb = static_cast<uint8_t>(rset.columnUint64("COPY_NB"));
       tapeFile.creationTime = rset.columnUint64("TAPE_FILE_CREATION_TIME");
-      tapeFile.checksumBlob = archiveFile->checksumBlob; // Duplicated for convenience
+      tapeFile.checksumBlob = archiveFile->checksumBlob;  // Duplicated for convenience
 
       archiveFile->tapeFiles.push_back(tapeFile);
     }
   }
 
   //If there are no tape files that belong to the archive file, then return a nullptr.
-  if(archiveFile.get() != nullptr && archiveFile->tapeFiles.empty()){
+  if (archiveFile.get() != nullptr && archiveFile->tapeFiles.empty()) {
     archiveFile.reset(nullptr);
   }
 
@@ -1082,8 +1095,8 @@ std::unique_ptr<common::dataStructures::ArchiveFile> RdbmsArchiveFileCatalogue::
 //------------------------------------------------------------------------------
 // getArchiveFileToRetrieveByArchiveFileId
 //------------------------------------------------------------------------------
-std::list<std::pair<std::string, std::string>> RdbmsArchiveFileCatalogue::getTapeFileStateListForArchiveFileId(
-  rdbms::Conn &conn, const uint64_t archiveFileId) const {
+std::list<std::pair<std::string, std::string>>
+RdbmsArchiveFileCatalogue::getTapeFileStateListForArchiveFileId(rdbms::Conn& conn, const uint64_t archiveFileId) const {
   const char* const sql = R"SQL(
     SELECT
       TAPE_FILE.VID AS VID,
@@ -1103,11 +1116,11 @@ std::list<std::pair<std::string, std::string>> RdbmsArchiveFileCatalogue::getTap
   auto rset = stmt.executeQuery();
   std::list<std::pair<std::string, std::string>> ret;
   while (rset.next()) {
-    const auto &vid = rset.columnString("VID");
-    const auto &state = rset.columnString("STATE");
+    const auto& vid = rset.columnString("VID");
+    const auto& state = rset.columnString("STATE");
     ret.emplace_back(vid, state);
   }
   return ret;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

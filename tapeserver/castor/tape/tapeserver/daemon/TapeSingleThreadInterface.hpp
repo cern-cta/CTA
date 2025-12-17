@@ -22,20 +22,20 @@
 
 #pragma once
 
-#include <opentelemetry/context/runtime_context.h>
-
-#include "mediachanger/MediaChangerFacade.hpp"
-#include "common/log/LogContext.hpp"
-#include "common/process/threading/BlockingQueue.hpp"
-#include "common/process/threading/Thread.hpp"
 #include "Session.hpp"
 #include "TapeSessionStats.hpp"
 #include "VolumeInfo.hpp"
-#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "common/Timer.hpp"
+#include "common/log/LogContext.hpp"
+#include "common/process/threading/BlockingQueue.hpp"
+#include "common/process/threading/Thread.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
+#include "mediachanger/MediaChangerFacade.hpp"
+#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
+#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
 
 namespace castor::tape::tapeserver::daemon {
 
@@ -49,10 +49,10 @@ class TapeSessionReporter;
  */
 template<class Task>
 class TapeSingleThreadInterface : private cta::threading::Thread {
-private :
+private:
 protected:
   ///the queue of tasks
-  cta::threading::BlockingQueue<Task *> m_tasks;
+  cta::threading::BlockingQueue<Task*> m_tasks;
 
   /**
    * An interface to manipulate the drive to manipulate the tape
@@ -106,8 +106,7 @@ protected:
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
       m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
-    }
-    catch (cta::exception::Exception& ex) {
+    } catch (cta::exception::Exception& ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());
       m_logContext.log(cta::log::ERR, "Failed to mount the tape for read-only access");
       throw;
@@ -132,11 +131,9 @@ protected:
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
       m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
-    }
-    catch (cta::exception::Exception& ex) {
+    } catch (cta::exception::Exception& ex) {
       scoped.add("exceptionMessage", ex.getMessageValue());
-      m_logContext.log(cta::log::ERR,
-                       "Failed to mount the tape for read/write access");
+      m_logContext.log(cta::log::ERR, "Failed to mount the tape for read/write access");
       throw;
     }
   }
@@ -156,8 +153,8 @@ protected:
     } catch (const cta::exception::Exception& e) {
       cta::log::ScopedParamContainer spc(m_logContext);
       spc.add("exceptionMessage", e.getMessageValue())
-         .add("configuredTapeLoadTimeout", m_tapeLoadTimeout)
-         .add("tapeLoadTime", tapeLoadTime.secs());
+        .add("configuredTapeLoadTimeout", m_tapeLoadTimeout)
+        .add("tapeLoadTime", tapeLoadTime.secs());
       m_logContext.log(cta::log::ERR, "Got timeout or error while waiting for drive to be ready.");
       throw;
     }
@@ -170,20 +167,20 @@ protected:
    */
   bool logTapeAlerts() {
     std::vector<uint16_t> tapeAlertCodes = m_drive.getTapeAlertCodes();
-    if (tapeAlertCodes.empty()) return false;
+    if (tapeAlertCodes.empty()) {
+      return false;
+    }
     size_t alertNumber = 0;
     // Log tape alerts in the logs.
     std::vector<std::string> tapeAlerts = m_drive.getTapeAlerts(tapeAlertCodes);
-    for (const auto& ta: tapeAlerts) {
+    for (const auto& ta : tapeAlerts) {
       cta::log::ScopedParamContainer params(m_logContext);
-      params.add("tapeAlert", ta)
-            .add("tapeAlertNumber", alertNumber++)
-            .add("tapeAlertCount", tapeAlerts.size());
+      params.add("tapeAlert", ta).add("tapeAlertNumber", alertNumber++).add("tapeAlertCount", tapeAlerts.size());
       m_logContext.log(cta::log::WARNING, "Tape alert detected");
     }
     // Add tape alerts in the tape log parameters
     std::vector<std::string> tapeAlertsCompact = m_drive.getTapeAlertsCompact(tapeAlertCodes);
-    for (const auto& tac: tapeAlertsCompact) {
+    for (const auto& tac : tapeAlertsCompact) {
       countTapeLogError(std::string("Error_") + tac);
     }
     return true;
@@ -198,7 +195,7 @@ protected:
    * Function iterating through the map of available SCSI metrics and logging them.
    */
   void logSCSIStats(const std::string& logTitle, size_t metricsHashLength) {
-    if (metricsHashLength == 0) { // skip logging entirely if hash is empty.
+    if (metricsHashLength == 0) {  // skip logging entirely if hash is empty.
       m_logContext.log(cta::log::INFO, "SCSI Statistics could not be acquired from drive");
       return;
     }
@@ -220,7 +217,8 @@ protected:
    * Function appending SCSI Metrics to the Scoped Container passed.
    */
   template<class N>
-  static void appendMetricsToScopedParams(cta::log::ScopedParamContainer& scopedContainer, const std::map<std::string, N>& metricsHash) {
+  static void appendMetricsToScopedParams(cta::log::ScopedParamContainer& scopedContainer,
+                                          const std::map<std::string, N>& metricsHash) {
     for (auto it = metricsHash.cbegin(); it != metricsHash.end(); it++) {
       scopedContainer.add(it->first, it->second);
     }
@@ -234,10 +232,7 @@ protected:
   virtual void countTapeLogError(const std::string& error) = 0;
 
 public:
-
-  Session::EndOfSessionAction getHardwareStatus() const {
-    return m_hardwareStatus;
-  }
+  Session::EndOfSessionAction getHardwareStatus() const { return m_hardwareStatus; }
 
   /**
    * Push into the class a sentinel value to trigger to end the the thread.
@@ -248,7 +243,7 @@ public:
    * Push a new task into the internal queue
    * @param t the task to push
    */
-  void push(Task *t) { m_tasks.push(t); }
+  void push(Task* t) { m_tasks.push(t); }
 
   /**
    * Start the threads
@@ -267,13 +262,9 @@ public:
    * This function MUST be called before starting the thread.
    * @param secs time in seconds (double)
    */
-  virtual void setWaitForInstructionsTime(double secs) {
-    m_stats.waitInstructionsTime = secs;
-  }
+  virtual void setWaitForInstructionsTime(double secs) { m_stats.waitInstructionsTime = secs; }
 
-  virtual castor::tape::tapeserver::drive::DriveInterface *getDriveReference() {
-    return &m_drive;
-  }
+  virtual castor::tape::tapeserver::drive::DriveInterface* getDriveReference() { return &m_drive; }
 
   /**
    * Constructor
@@ -286,14 +277,21 @@ public:
    * @param tapeLoadTimeout the timeout after which the mount of the tape is considered failed
    */
   TapeSingleThreadInterface(castor::tape::tapeserver::drive::DriveInterface& drive,
-                            cta::mediachanger::MediaChangerFacade& mc, TapeSessionReporter& tsr,
+                            cta::mediachanger::MediaChangerFacade& mc,
+                            TapeSessionReporter& tsr,
                             const VolumeInfo& volInfo,
                             const cta::log::LogContext& lc,
                             const bool useEncryption,
-                            const std::string& externalEncryptionKeyScript, const uint32_t tapeLoadTimeout)
-    : m_drive(drive), m_mediaChanger(mc), m_reporter(tsr), m_vid(volInfo.vid), m_logContext(lc),
-      m_volInfo(volInfo),
-      m_encryptionControl(useEncryption, externalEncryptionKeyScript), m_tapeLoadTimeout(tapeLoadTimeout) {}
-}; // class TapeSingleThreadInterface
+                            const std::string& externalEncryptionKeyScript,
+                            const uint32_t tapeLoadTimeout)
+      : m_drive(drive),
+        m_mediaChanger(mc),
+        m_reporter(tsr),
+        m_vid(volInfo.vid),
+        m_logContext(lc),
+        m_volInfo(volInfo),
+        m_encryptionControl(useEncryption, externalEncryptionKeyScript),
+        m_tapeLoadTimeout(tapeLoadTimeout) {}
+};  // class TapeSingleThreadInterface
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

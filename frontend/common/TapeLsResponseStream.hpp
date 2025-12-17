@@ -17,12 +17,13 @@
 
 #pragma once
 
-#include <list>
-#include "cta_admin.pb.h"
-
 #include "CtaAdminResponseStream.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
 #include "common/dataStructures/Tape.hpp"
+
+#include <list>
+
+#include "cta_admin.pb.h"
 
 namespace cta::frontend {
 

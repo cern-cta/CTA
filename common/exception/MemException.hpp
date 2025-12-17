@@ -17,6 +17,7 @@
 
 #pragma once
 #include "common/exception/Exception.hpp"
+
 #include <string>
 
 namespace cta::exception {
@@ -27,7 +28,8 @@ namespace cta::exception {
 class MemException : public Exception {
 public:
   explicit MemException(const std::string& what) : Exception(what) {}
+
   ~MemException() final = default;
 };
 
-} // namespace cta::exception
+}  // namespace cta::exception

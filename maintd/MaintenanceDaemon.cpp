@@ -15,10 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <map>
-
 #include "MaintenanceDaemon.hpp"
+
 #include "RoutineRunnerFactory.hpp"
+
+#include <map>
 
 namespace cta::maintd {
 

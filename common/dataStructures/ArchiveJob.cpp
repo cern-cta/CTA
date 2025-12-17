@@ -16,6 +16,7 @@
  */
 
 #include "common/dataStructures/ArchiveJob.hpp"
+
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
@@ -29,31 +30,25 @@ ArchiveJob::ArchiveJob() {}
 //------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
-bool ArchiveJob::operator==(const ArchiveJob &rhs) const {
-  return request==rhs.request
-      && tapePool==rhs.tapePool
-      && instanceName==rhs.instanceName
-      && copyNumber==rhs.copyNumber
-      && archiveFileID==rhs.archiveFileID;
+bool ArchiveJob::operator==(const ArchiveJob& rhs) const {
+  return request == rhs.request && tapePool == rhs.tapePool && instanceName == rhs.instanceName
+         && copyNumber == rhs.copyNumber && archiveFileID == rhs.archiveFileID;
 }
 
 //------------------------------------------------------------------------------
 // operator!=
 //------------------------------------------------------------------------------
-bool ArchiveJob::operator!=(const ArchiveJob &rhs) const {
+bool ArchiveJob::operator!=(const ArchiveJob& rhs) const {
   return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------
 // operator<<
 //------------------------------------------------------------------------------
-std::ostream &operator<<(std::ostream &os, const ArchiveJob &obj) {
-  os << "(request=" << obj.request
-     << " tapePool=" << obj.tapePool
-     << " instanceName=" << obj.instanceName
-     << " copyNumber=" << obj.copyNumber
-     << " archiveFileID=" << obj.archiveFileID << ")";
+std::ostream& operator<<(std::ostream& os, const ArchiveJob& obj) {
+  os << "(request=" << obj.request << " tapePool=" << obj.tapePool << " instanceName=" << obj.instanceName
+     << " copyNumber=" << obj.copyNumber << " archiveFileID=" << obj.archiveFileID << ")";
   return os;
 }
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

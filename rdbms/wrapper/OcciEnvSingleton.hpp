@@ -27,16 +27,14 @@ namespace cta::rdbms::wrapper {
 /**
  * A singleton version of OcciEnv.
  */
-class OcciEnvSingleton: public OcciEnv {
+class OcciEnvSingleton : public OcciEnv {
 public:
-
   /**
    * Returns the single instance of this class.
    */
-  static OcciEnvSingleton &instance();
+  static OcciEnvSingleton& instance();
 
 private:
-
   /**
    * Mutex used to implement a critical region around the implementation of the
    * instance() method.
@@ -56,13 +54,13 @@ private:
   /**
    * Prevent copying.
    */
-  OcciEnvSingleton(const OcciEnvSingleton &) = delete;
+  OcciEnvSingleton(const OcciEnvSingleton&) = delete;
 
   /**
    * Prevent assignment
    */
   OcciEnvSingleton& operator=(const OcciEnvSingleton&) = delete;
 
-}; // class OcciEnvSingleton
+};  // class OcciEnvSingleton
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

@@ -15,21 +15,23 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
-
 #include "catalogue/rdbms/oracle/OracleVirtualOrganizationCatalogue.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <string>
+
 namespace cta::catalogue {
 
-OracleVirtualOrganizationCatalogue::OracleVirtualOrganizationCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsVirtualOrganizationCatalogue(log, connPool, rdbmsCatalogue) {}
+OracleVirtualOrganizationCatalogue::OracleVirtualOrganizationCatalogue(log::Logger& log,
+                                                                       std::shared_ptr<rdbms::ConnPool> connPool,
+                                                                       RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsVirtualOrganizationCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t OracleVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms::Conn &conn) {
+uint64_t OracleVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms::Conn& conn) {
   const char* const sql = R"SQL(
     SELECT 
       VIRTUAL_ORGANIZATION_ID_SEQ.NEXTVAL AS VIRTUAL_ORGANIZATION_ID 
@@ -45,4 +47,4 @@ uint64_t OracleVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms:
   return rset.columnUint64("VIRTUAL_ORGANIZATION_ID");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

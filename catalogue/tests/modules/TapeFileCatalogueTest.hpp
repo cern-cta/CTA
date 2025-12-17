@@ -17,11 +17,8 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
-
-#include <memory>
-
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "catalogue/MediaTypeWithLogs.hpp"
@@ -31,9 +28,12 @@
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/log/DummyLogger.hpp"
 
+#include <gtest/gtest.h>
+#include <memory>
+
 namespace unitTests {
 
-class cta_catalogue_TapeFileTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_TapeFileTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_TapeFileTest();
 

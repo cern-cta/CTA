@@ -17,11 +17,12 @@
 
 #pragma once
 
-#include <list>
-#include "cta_admin.pb.h"
-
 #include "CtaAdminResponseStream.hpp"
 #include "catalogue/MediaTypeWithLogs.hpp"
+
+#include <list>
+
+#include "cta_admin.pb.h"
 
 namespace cta::frontend {
 

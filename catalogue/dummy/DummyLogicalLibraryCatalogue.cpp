@@ -16,17 +16,21 @@
  */
 
 #include "catalogue/dummy/DummyLogicalLibraryCatalogue.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
 namespace cta::catalogue {
 
-void DummyLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const bool isDisabled, const std::optional<std::string>& physicalLibraryName, const std::string &comment) {
+void DummyLogicalLibraryCatalogue::createLogicalLibrary(const common::dataStructures::SecurityIdentity& admin,
+                                                        const std::string& name,
+                                                        const bool isDisabled,
+                                                        const std::optional<std::string>& physicalLibraryName,
+                                                        const std::string& comment) {
   throw exception::NotImplementedException();
 }
 
-void DummyLogicalLibraryCatalogue::deleteLogicalLibrary(const std::string &name) {
+void DummyLogicalLibraryCatalogue::deleteLogicalLibrary(const std::string& name) {
   throw exception::NotImplementedException();
 }
 
@@ -34,30 +38,36 @@ std::list<common::dataStructures::LogicalLibrary> DummyLogicalLibraryCatalogue::
   throw exception::NotImplementedException();
 }
 
-void DummyLogicalLibraryCatalogue::modifyLogicalLibraryName(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &currentName, const std::string &newName) {
+void DummyLogicalLibraryCatalogue::modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
+                                                            const std::string& currentName,
+                                                            const std::string& newName) {
   throw exception::NotImplementedException();
 }
 
-void DummyLogicalLibraryCatalogue::modifyLogicalLibraryComment(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &comment) {
+void DummyLogicalLibraryCatalogue::modifyLogicalLibraryComment(const common::dataStructures::SecurityIdentity& admin,
+                                                               const std::string& name,
+                                                               const std::string& comment) {
   throw exception::NotImplementedException();
 }
 
-void DummyLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(const common::dataStructures::SecurityIdentity &admin,
-  const std::string &name, const std::string &physicalLibraryName) {
+void DummyLogicalLibraryCatalogue::modifyLogicalLibraryPhysicalLibrary(
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const std::string& physicalLibraryName) {
   throw exception::NotImplementedException();
 }
 
 void DummyLogicalLibraryCatalogue::modifyLogicalLibraryDisabledReason(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const std::string &disabledReason) {
+  const common::dataStructures::SecurityIdentity& admin,
+  const std::string& name,
+  const std::string& disabledReason) {
   throw exception::NotImplementedException();
 }
 
-void DummyLogicalLibraryCatalogue::setLogicalLibraryDisabled(
-  const common::dataStructures::SecurityIdentity &admin, const std::string &name, const bool disabledValue) {
+void DummyLogicalLibraryCatalogue::setLogicalLibraryDisabled(const common::dataStructures::SecurityIdentity& admin,
+                                                             const std::string& name,
+                                                             const bool disabledValue) {
   throw exception::NotImplementedException();
 }
 
-
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

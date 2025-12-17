@@ -51,4 +51,4 @@ private:
   std::map<std::string, uint32_t> m_nameToIdx;
 };
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

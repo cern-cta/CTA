@@ -17,14 +17,16 @@
 
 #pragma once
 
+#include <cstdint>
 #include <list>
 #include <map>
+#include <memory>
 
 namespace cta {
 namespace catalogue {
 class Catalogue;
 class CatalogueFactory;
-template <typename Item>
+template<typename Item>
 class CatalogueItor;
 class CreateMountPolicyAttributes;
 class CreateTapeAttributes;
@@ -62,8 +64,8 @@ const uint32_t NON_EXISTENT_DISK_FILE_GID = 9756;
 
 class CatalogueTestUtils {
 public:
-  static std::unique_ptr<cta::catalogue::Catalogue> createCatalogue(
-    cta::catalogue::CatalogueFactory *const *const catalogueFactoryPtrPtr, cta::log::LogContext *lc);
+  static std::unique_ptr<cta::catalogue::Catalogue>
+  createCatalogue(cta::catalogue::CatalogueFactory* const* const catalogueFactoryPtrPtr, cta::log::LogContext* lc);
   static cta::common::dataStructures::SecurityIdentity getLocalAdmin();
   static cta::common::dataStructures::SecurityIdentity getAdmin();
   static cta::common::dataStructures::DiskInstance getDiskInstance();
@@ -84,28 +86,27 @@ public:
   static cta::catalogue::CreateMountPolicyAttributes getMountPolicy1();
   static cta::catalogue::CreateMountPolicyAttributes getMountPolicy2();
 
-  static std::map<std::string, cta::catalogue::TapePool> tapePoolListToMap(
-    const std::list<cta::catalogue::TapePool> &listOfTapePools);
+  static std::map<std::string, cta::catalogue::TapePool>
+  tapePoolListToMap(const std::list<cta::catalogue::TapePool>& listOfTapePools);
 
-  static std::map<std::string, cta::common::dataStructures::LogicalLibrary> logicalLibraryListToMap(
-    const std::list<cta::common::dataStructures::LogicalLibrary> &listOfLibs);
+  static std::map<std::string, cta::common::dataStructures::LogicalLibrary>
+  logicalLibraryListToMap(const std::list<cta::common::dataStructures::LogicalLibrary>& listOfLibs);
 
+  static std::map<std::string, cta::common::dataStructures::Tape>
+  tapeListToMap(const std::list<cta::common::dataStructures::Tape>& listOfTapes);
 
-  static std::map<std::string, cta::common::dataStructures::Tape> tapeListToMap(
-    const std::list<cta::common::dataStructures::Tape> &listOfTapes);
+  static std::map<uint64_t, cta::common::dataStructures::ArchiveFile>
+  archiveFileItorToMap(cta::catalogue::CatalogueItor<cta::common::dataStructures::ArchiveFile>& itor);
 
-  static std::map<uint64_t, cta::common::dataStructures::ArchiveFile> archiveFileItorToMap(
-    cta::catalogue::CatalogueItor<cta::common::dataStructures::ArchiveFile> &itor);
+  static std::map<uint64_t, cta::common::dataStructures::ArchiveFile>
+  archiveFileListToMap(const std::list<cta::common::dataStructures::ArchiveFile>& listOfArchiveFiles);
 
-  static std::map<uint64_t, cta::common::dataStructures::ArchiveFile> archiveFileListToMap(
-    const std::list<cta::common::dataStructures::ArchiveFile> &listOfArchiveFiles);
-
-  static std::map<std::string, cta::common::dataStructures::AdminUser> adminUserListToMap(
-    const std::list<cta::common::dataStructures::AdminUser> &listOfAdminUsers);
+  static std::map<std::string, cta::common::dataStructures::AdminUser>
+  adminUserListToMap(const std::list<cta::common::dataStructures::AdminUser>& listOfAdminUsers);
 
 private:
-  static void wipeDatabase(cta::catalogue::Catalogue *catalogue, cta::log::LogContext *lc);
-  static void checkWipedDatabase(cta::catalogue::Catalogue *catalogue);
+  static void wipeDatabase(cta::catalogue::Catalogue* catalogue, cta::log::LogContext* lc);
+  static void checkWipedDatabase(cta::catalogue::Catalogue* catalogue);
 };
 
 }  // namespace unitTests

@@ -17,18 +17,18 @@
 
 #pragma once
 
-#include <memory>
-#include <string>
-
 #include "common/log/Logger.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "scheduler/Scheduler.hpp"
+#include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 #include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
-#include "tapeserver/castor/tape/tapeserver/SCSI/Device.hpp"
 #include "tapeserver/daemon/DriveConfigEntry.hpp"
+
+#include <memory>
+#include <string>
 
 namespace cta::catalogue {
 class Catalogue;
@@ -58,17 +58,16 @@ public:
     * for encryption control.
     * @param catalogue the CTA catalogue
     */
-  CleanerSession(
-    cta::mediachanger::MediaChangerFacade &mc,
-    cta::log::Logger &log,
-    const cta::tape::daemon::DriveConfigEntry &driveConfig,
-    System::virtualWrapper &sysWrapper,
-    const std::string &vid,
-    const bool waitMediaInDrive,
-    const uint32_t waitMediaInDriveTimeout,
-    const std::string & externalEncryptionKeyScript,
-    cta::catalogue::Catalogue & catalogue,
-    cta::Scheduler & scheduler);
+  CleanerSession(cta::mediachanger::MediaChangerFacade& mc,
+                 cta::log::Logger& log,
+                 const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                 System::virtualWrapper& sysWrapper,
+                 const std::string& vid,
+                 const bool waitMediaInDrive,
+                 const uint32_t waitMediaInDriveTimeout,
+                 const std::string& externalEncryptionKeyScript,
+                 cta::catalogue::Catalogue& catalogue,
+                 cta::Scheduler& scheduler);
 
   /**
     * Execute the session and return the type of action to be performed
@@ -83,12 +82,12 @@ private:
   /**
     * The object representing the media changer.
     */
-  cta::mediachanger::MediaChangerFacade &m_mc;
+  cta::mediachanger::MediaChangerFacade& m_mc;
 
   /**
     * The logging object
     */
-  cta::log::Logger & m_log;
+  cta::log::Logger& m_log;
 
   /**
     * The configuration of the tape drive to be cleaned.
@@ -98,7 +97,7 @@ private:
   /**
     * The system wrapper used to find the device and instantiate the drive object
     */
-  System::virtualWrapper & m_sysWrapper;
+  System::virtualWrapper& m_sysWrapper;
 
   /**
     * The volume identifier of the mounted tape if known, else the empty
@@ -126,12 +125,12 @@ private:
   /**
     * CTA catalogue
     */
-  cta::catalogue::Catalogue & m_catalogue;
+  cta::catalogue::Catalogue& m_catalogue;
 
   /**
     * CTA scheduler
     */
-  cta::Scheduler & m_scheduler;
+  cta::Scheduler& m_scheduler;
 
   /**
     * Variable used to log UPDATE_USER_NAME in the DB
@@ -152,14 +151,14 @@ private:
     *
     * @param drive The tape drive.
     */
-  void logAndClearTapeAlerts(drive::DriveInterface &drive) noexcept;
+  void logAndClearTapeAlerts(drive::DriveInterface& drive) noexcept;
 
   /**
     * Does the actual steps to clean the drive
     *
     * @param drive The tape drive.
     */
-  void cleanDrive(drive::DriveInterface &drive);
+  void cleanDrive(drive::DriveInterface& drive);
 
   /**
     * Creates and returns the object that represents the tape drive to be
@@ -174,14 +173,14 @@ private:
     *
     * @param drive The tape drive.
     */
-  void waitUntilMediaIsReady(drive::DriveInterface &drive);
+  void waitUntilMediaIsReady(drive::DriveInterface& drive);
 
   /**
     * Rewinds the specified tape drive.
     *
     * @param drive The tape drive.
     */
-  void rewindDrive(drive::DriveInterface &drive);
+  void rewindDrive(drive::DriveInterface& drive);
 
   /**
     * Checks the tape in the specified tape drive contains some data where no
@@ -189,7 +188,7 @@ private:
     *
     * @param drive The tape drive.
     */
-  void checkTapeContainsData(drive::DriveInterface &drive);
+  void checkTapeContainsData(drive::DriveInterface& drive);
 
   /**
     * Checks that the tape in the specified drive contains a valid volume
@@ -199,7 +198,7 @@ private:
     * tested is present and rewound to the beginning.
     * @return The VSN stored within the colue label.
     */
-  std::string checkVolumeLabel(drive::DriveInterface &drive);
+  std::string checkVolumeLabel(drive::DriveInterface& drive);
 
   /**
     * Unloads the specified tape from the specified tape drive.
@@ -208,19 +207,19 @@ private:
     * that the value of this field is only used for logging purposes.
     * @param drive The tape drive.
     */
-  void unloadTape(const std::string &vid, drive::DriveInterface &drive);
+  void unloadTape(const std::string& vid, drive::DriveInterface& drive);
 
   /**
     * Dismounts the specified tape.
     *
     * @param vid The volume identifier of the tape to be dismounted.
     */
-  void dismountTape(const std::string &vid);
+  void dismountTape(const std::string& vid);
 
   /**
     * Put the drive down in case the Cleaner has failed
     */
-  void setDriveDownAfterCleanerFailed(const std::string & errorMsg);
+  void setDriveDownAfterCleanerFailed(const std::string& errorMsg);
 };  // class CleanerSession
 
-} // namespace castor::tape::tapeserver::daemon
+}  // namespace castor::tape::tapeserver::daemon

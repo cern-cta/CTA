@@ -15,22 +15,23 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "getconfent.hpp"
+
+#include "Cglobals.hpp"
+#include "serrno.hpp"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "Cglobals.hpp"
-#include "serrno.hpp"
-#include "getconfent.hpp"
 
 #define strtok(X, Y) strtok_r(X, Y, &last)
 
-static char*
-getconfent_r(const char* category, const char* name, int flags, char* buffer, int bufsiz) {
+static char* getconfent_r(const char* category, const char* name, int flags, char* buffer, int bufsiz) {
   FILE* fp;
   char *p, *cp;
   int found = 0;
   char* last = nullptr;
-  constexpr char const* path_config = "/etc/cta/cta-rmcd.conf";
+  constexpr const char* path_config = "/etc/cta/cta-rmcd.conf";
 
   if ((fp = fopen(path_config, "r")) == nullptr) {
     serrno = SENOCONFIG;

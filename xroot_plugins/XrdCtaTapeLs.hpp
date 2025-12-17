@@ -45,4 +45,4 @@ inline TapeLsStream::TapeLsStream(const frontend::AdminCmdStream& requestMsg,
   XrdSsiPb::Log::Msg(XrdSsiPb::Log::DEBUG, LOG_SUFFIX, " constructor");
 }
 
-} // namespace cta::xrd
+}  // namespace cta::xrd

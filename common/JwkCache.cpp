@@ -1,6 +1,8 @@
 #include "JwkCache.hpp"
-#include <curl/curl.h>
+
 #include "jwt-cpp/jwt.h"
+
+#include <curl/curl.h>
 #include <mutex>
 
 namespace cta {
@@ -57,7 +59,6 @@ std::optional<JwkCacheEntry> JwkCache::find(const std::string& key) {
     return std::optional<JwkCacheEntry>(it->second);
   }
 }
-
 
 void JwkCache::updateCache(time_t now) {
   log::LogContext lc(m_lc);

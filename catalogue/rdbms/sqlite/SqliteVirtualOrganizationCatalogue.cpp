@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/rdbms/sqlite/SqliteVirtualOrganizationCatalogue.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "rdbms/Conn.hpp"
@@ -23,11 +24,12 @@
 
 namespace cta::catalogue {
 
-SqliteVirtualOrganizationCatalogue::SqliteVirtualOrganizationCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsVirtualOrganizationCatalogue(log, connPool, rdbmsCatalogue) {}
+SqliteVirtualOrganizationCatalogue::SqliteVirtualOrganizationCatalogue(log::Logger& log,
+                                                                       std::shared_ptr<rdbms::ConnPool> connPool,
+                                                                       RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsVirtualOrganizationCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t SqliteVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms::Conn &conn) {
+uint64_t SqliteVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms::Conn& conn) {
   conn.executeNonQuery(R"SQL(INSERT INTO VIRTUAL_ORGANIZATION_ID VALUES(NULL))SQL");
   uint64_t virtualOrganizationId = 0;
   const char* const sql = R"SQL(
@@ -35,11 +37,11 @@ uint64_t SqliteVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms:
   )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
-  if(!rset.next()) {
+  if (!rset.next()) {
     throw exception::Exception(std::string("Unexpected empty result set for '") + sql + "\'");
   }
   virtualOrganizationId = rset.columnUint64("ID");
-  if(rset.next()) {
+  if (rset.next()) {
     throw exception::Exception(std::string("Unexpectedly found more than one row in the result of '") + sql + "\'");
   }
   conn.executeNonQuery(R"SQL(DELETE FROM VIRTUAL_ORGANIZATION_ID)SQL");
@@ -47,4 +49,4 @@ uint64_t SqliteVirtualOrganizationCatalogue::getNextVirtualOrganizationId(rdbms:
   return virtualOrganizationId;
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

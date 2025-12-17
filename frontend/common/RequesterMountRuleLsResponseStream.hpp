@@ -17,11 +17,12 @@
 
 #pragma once
 
-#include <list>
-#include "cta_admin.pb.h"
-
 #include "CtaAdminResponseStream.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
+
+#include <list>
+
+#include "cta_admin.pb.h"
 
 namespace cta::frontend {
 

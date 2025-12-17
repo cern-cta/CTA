@@ -30,7 +30,6 @@ class Conn;
  */
 class AutoRollback {
 public:
-
   /**
    * Constructor
    *
@@ -41,7 +40,7 @@ public:
   /**
    * Prevent copying.
    */
-  AutoRollback(const AutoRollback &) = delete;
+  AutoRollback(const AutoRollback&) = delete;
 
   /**
    * Destructor.
@@ -51,7 +50,7 @@ public:
   /**
    * Prevent assignment.
    */
-  AutoRollback &operator=(const AutoRollback &) = delete;
+  AutoRollback& operator=(const AutoRollback&) = delete;
 
   /**
    * Cancel the automatic rollback.
@@ -61,7 +60,6 @@ public:
   void cancel();
 
 private:
-
   /**
    * True if the automatic rollback has been cancelled.
    */
@@ -70,8 +68,8 @@ private:
   /**
    * The database connection or nullptr if no rollback should take place.
    */
-  Conn &m_conn;
+  Conn& m_conn;
 
-}; // class Login
+};  // class Login
 
-} // namespace cta::rdbms
+}  // namespace cta::rdbms

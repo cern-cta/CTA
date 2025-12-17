@@ -16,9 +16,10 @@
  */
 
 #include "scheduler/rdbms/schema/DropSchemaCmd.hpp"
-#include "scheduler/rdbms/schema/DropSchemaCmdLineArgs.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "rdbms/ConnPool.hpp"
+#include "scheduler/rdbms/schema/DropSchemaCmdLineArgs.hpp"
 
 #include <algorithm>
 
@@ -52,8 +53,8 @@ int DropSchemaCmd::exceptionThrowingMain(const int argc, char* const* const argv
   auto conn = connPool.getConn();
 
   // Abort if the schema is already dropped
-  if (conn.getTableNames().empty() && conn.getSequenceNames().empty() && conn.getViewNames().empty() &&
-      conn.getTypeNames().empty()) {
+  if (conn.getTableNames().empty() && conn.getSequenceNames().empty() && conn.getViewNames().empty()
+      && conn.getTypeNames().empty()) {
     m_out << "Database contains no tables, no sequences, no views and no type names." << std::endl
           << "Assuming the schema has already been dropped." << std::endl;
     return 0;

@@ -15,29 +15,30 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <unistd.h>
-#include <sys/ioctl.h>
-#include <stdio.h>
-#include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <fcntl.h>
-#include <stdlib.h>
-#include <dirent.h>
-#include <sys/stat.h>
-#include <sys/sysmacros.h>
-#include <linux/version.h>
-#include <sys/param.h>
-#include <scsi/sg.h>
-#include <sys/stat.h>
-#include "mediachanger/librmc/serrno.hpp"
-#include "scsictl.hpp"
 #include "rmc_send_scsi_cmd.hpp"
 
+#include "mediachanger/librmc/serrno.hpp"
+#include "scsictl.hpp"
+
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <linux/version.h>
+#include <scsi/sg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+#include <sys/sysmacros.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 constexpr int RMC_ERR_MSG_BUFSZ = 132;
-constexpr int ST_DEV_BUFSZ      = 64;
-constexpr int SYSPATH_BUFSZ     = 256;
-constexpr int SGPATH_BUFSZ      = 80;
+constexpr int ST_DEV_BUFSZ = 64;
+constexpr int SYSPATH_BUFSZ = 256;
+constexpr int SGPATH_BUFSZ = 80;
 
 static char rmc_err_msgbuf[RMC_ERR_MSG_BUFSZ];
 static const char* sk_msg[] = {
@@ -335,11 +336,11 @@ int rmc_send_scsi_cmd(const int tapefd,
     *nb_sense_ret = sizeof(sg_hd->sense_buffer);
   }
   if (sg_hd->sense_buffer[0] & 0x80) { /* valid */
-    resid = sg_hd->sense_buffer[3] << 24 | sg_hd->sense_buffer[4] << 16 | sg_hd->sense_buffer[5] << 8 |
-            sg_hd->sense_buffer[6];
+    resid = sg_hd->sense_buffer[3] << 24 | sg_hd->sense_buffer[4] << 16 | sg_hd->sense_buffer[5] << 8
+            | sg_hd->sense_buffer[6];
   }
-  if ((sg_hd->sense_buffer[0] & 0x70) &&
-      ((sg_hd->sense_buffer[2] & 0xE0) == 0 || (sg_hd->sense_buffer[2] & 0xF) != 0)) {
+  if ((sg_hd->sense_buffer[0] & 0x70)
+      && ((sg_hd->sense_buffer[2] & 0xE0) == 0 || (sg_hd->sense_buffer[2] & 0xF) != 0)) {
     char tmp_msgbuf[32];
     snprintf(tmp_msgbuf,
              sizeof(tmp_msgbuf),
@@ -367,5 +368,5 @@ int rmc_send_scsi_cmd(const int tapefd,
   if (n && (flags & SCSI_IN)) {
     memcpy(buffer, sg_buffer + sizeof(struct sg_header), n);
   }
-  return (flags & SCSI_IN) ? n : buflen-resid;
+  return (flags & SCSI_IN) ? n : buflen - resid;
 }

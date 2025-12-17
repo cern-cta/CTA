@@ -18,14 +18,14 @@
 #pragma once
 
 #include "common/process/threading/RWLock.hpp"
+#include "rdbms/Login.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
 #include "rdbms/wrapper/Postgres.hpp"
-#include "rdbms/Login.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <string>
-#include <cstdint>
 
 namespace cta::rdbms::wrapper {
 

@@ -16,6 +16,7 @@
  */
 
 #include "QueueCleanup.hpp"
+
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/ObjectstoreInstruments.hpp"
 #include "objectstore/GenericObject.hpp"
@@ -74,9 +75,9 @@ void QueueCleanup::cleanupQueues() {
 
   for (const auto& [queueVid, tapeData] : vidToTapesMap) {
     // Check if tape state is the expected one (PENDING)
-    if (tapeData.state != common::dataStructures::Tape::REPACKING_PENDING &&
-        tapeData.state != common::dataStructures::Tape::BROKEN_PENDING &&
-        tapeData.state != common::dataStructures::Tape::EXPORTED_PENDING) {
+    if (tapeData.state != common::dataStructures::Tape::REPACKING_PENDING
+        && tapeData.state != common::dataStructures::Tape::BROKEN_PENDING
+        && tapeData.state != common::dataStructures::Tape::EXPORTED_PENDING) {
       // Do not cleanup a tape that is not in a X_PENDING state
       log::ScopedParamContainer params(m_lc);
       params.add("tapeVid", queueVid).add("tapeState", common::dataStructures::Tape::stateToString(tapeData.state));
@@ -219,9 +220,10 @@ void QueueCleanup::cleanupQueues() {
         paramsWarnMsg.add("tapeVid", queueVid)
           .add("expectedPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshed.state))
           .add("actualPrevState", common::dataStructures::Tape::stateToString(tapeDataRefreshedUpdated.state));
-        if ((tapeDataRefreshed.state == Tape::REPACKING_PENDING && tapeDataRefreshedUpdated.state == Tape::REPACKING) ||
-            (tapeDataRefreshed.state == Tape::BROKEN_PENDING && tapeDataRefreshedUpdated.state == Tape::BROKEN) ||
-            (tapeDataRefreshed.state == Tape::EXPORTED_PENDING && tapeDataRefreshedUpdated.state == Tape::EXPORTED)) {
+        if ((tapeDataRefreshed.state == Tape::REPACKING_PENDING && tapeDataRefreshedUpdated.state == Tape::REPACKING)
+            || (tapeDataRefreshed.state == Tape::BROKEN_PENDING && tapeDataRefreshedUpdated.state == Tape::BROKEN)
+            || (tapeDataRefreshed.state == Tape::EXPORTED_PENDING
+                && tapeDataRefreshedUpdated.state == Tape::EXPORTED)) {
           m_lc.log(log::WARNING,
                    "In QueueCleanup::cleanupQueues(): Tape already moved into it's final state, probably by "
                    "another agent.");

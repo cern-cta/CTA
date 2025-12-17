@@ -15,31 +15,29 @@
  *               submit itself to any jurisdiction.
  */
 
-#include "common/utils/utils.hpp"
+#include "rdbms/wrapper/PostgresStmt.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/process/threading/RWLockRdLocker.hpp"
 #include "common/semconv/Attributes.hpp"
-
+#include "common/utils/utils.hpp"
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresConn.hpp"
 #include "rdbms/wrapper/PostgresRset.hpp"
-#include "rdbms/wrapper/PostgresStmt.hpp"
 
 #include <algorithm>
 #include <exception>
+#include <regex>
 #include <sstream>
 #include <utility>
-#include <regex>
 
 namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresStmt::PostgresStmt(PostgresConn& conn, const std::string& sql)
-    : StmtWrapper(sql),
-      m_conn(conn) {
+PostgresStmt::PostgresStmt(PostgresConn& conn, const std::string& sql) : StmtWrapper(sql), m_conn(conn) {
   // connection is rd locked
 
   CountAndReformatSqlBinds(sql, m_pgsql, m_nParams);
@@ -68,9 +66,9 @@ void PostgresStmt::bindString(const std::string& paramName, const std::optional<
   try {
     if (paramValue.has_value() && paramValue.value().empty()) {
       throw exception::Exception(
-        std::string("Optional string parameter ") + paramName +
-        " is an empty string. "
-        "An optional string parameter should either have a non-empty string value or no value at all.");
+        std::string("Optional string parameter ") + paramName
+        + " is an empty string. "
+          "An optional string parameter should either have a non-empty string value or no value at all.");
     }
 
     const unsigned int paramIdx = getParamIdx(paramName);  // starts from 1.
@@ -90,8 +88,7 @@ void PostgresStmt::bindString(const std::string& paramName, const std::optional<
       m_paramValuesPtrs[idx] = nullptr;
     }
   } catch (exception::Exception& ex) {
-    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
-                               ex.getMessage().str());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
   }
 }
 
@@ -102,8 +99,7 @@ void PostgresStmt::bindUint8(const std::string& paramName, const std::optional<u
   try {
     return bindInteger<uint8_t>(paramName, paramValue);
   } catch (exception::Exception& ex) {
-    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " +
-                        ex.getMessage().str());
+    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
     throw;
   }
 }
@@ -115,8 +111,7 @@ void PostgresStmt::bindUint16(const std::string& paramName, const std::optional<
   try {
     return bindInteger<uint16_t>(paramName, paramValue);
   } catch (exception::Exception& ex) {
-    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " +
-                        ex.getMessage().str());
+    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
     throw;
   }
 }
@@ -128,8 +123,7 @@ void PostgresStmt::bindUint32(const std::string& paramName, const std::optional<
   try {
     return bindInteger<uint32_t>(paramName, paramValue);
   } catch (exception::Exception& ex) {
-    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " +
-                        ex.getMessage().str());
+    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
     throw;
   }
 }
@@ -141,8 +135,7 @@ void PostgresStmt::bindUint64(const std::string& paramName, const std::optional<
   try {
     return bindInteger<uint64_t>(paramName, paramValue);
   } catch (exception::Exception& ex) {
-    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " +
-                        ex.getMessage().str());
+    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
     throw;
   }
 }
@@ -189,8 +182,7 @@ void PostgresStmt::bindDouble(const std::string& paramName, const std::optional<
       m_paramValuesPtrs[idx] = nullptr;
     }
   } catch (exception::Exception& ex) {
-    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
-                               ex.getMessage().str());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
   }
 }
 
@@ -302,11 +294,10 @@ void PostgresStmt::executeCopyInsert(const size_t rows) {
     }
 
   } catch (exception::LostDatabaseConnection& ex) {
-    throw exception::LostDatabaseConnection("Detected lost connection for SQL statement " +
-                                            getSqlForException() + ": " + ex.getMessage().str());
+    throw exception::LostDatabaseConnection("Detected lost connection for SQL statement " + getSqlForException() + ": "
+                                            + ex.getMessage().str());
   } catch (exception::Exception& ex) {
-    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
-                               ex.getMessage().str());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
   }
 }
 
@@ -347,11 +338,10 @@ void PostgresStmt::executeNonQuery() {
     }
 
   } catch (exception::LostDatabaseConnection& ex) {
-    throw exception::LostDatabaseConnection("Detected lost connection for SQL statement " +
-                                            getSqlForException() + ": " + ex.getMessage().str());
+    throw exception::LostDatabaseConnection("Detected lost connection for SQL statement " + getSqlForException() + ": "
+                                            + ex.getMessage().str());
   } catch (exception::Exception& ex) {
-    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " +
-                        ex.getMessage().str());
+    ex.getMessage().str("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
     throw;
   }
 }
@@ -395,13 +385,12 @@ std::unique_ptr<RsetWrapper> PostgresStmt::executeQuery() {
   } catch (exception::LostDatabaseConnection& ex) {
     // reset to initial value
     m_conn.setAsyncInProgress(isasync);
-    throw exception::LostDatabaseConnection("Detected lost connection for SQL statement " +
-                                            getSqlForException() + ": " + ex.getMessage().str());
+    throw exception::LostDatabaseConnection("Detected lost connection for SQL statement " + getSqlForException() + ": "
+                                            + ex.getMessage().str());
   } catch (exception::Exception& ex) {
     // reset to initial value
     m_conn.setAsyncInProgress(isasync);
-    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
-                               ex.getMessage().str());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
   } catch (std::exception&) {
     // reset to initial value
     m_conn.setAsyncInProgress(isasync);
@@ -431,8 +420,7 @@ void PostgresStmt::setColumn(PostgresColumn& col) {
     const unsigned int idx = paramIdx - 1;
     m_columnPtrs[idx] = &col;
   } catch (exception::Exception& ex) {
-    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
-                               ex.getMessage().str());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
   }
 }
 
@@ -464,8 +452,7 @@ void PostgresStmt::closeAssumeLocked() {
     m_conn.deallocateStmt(stmt);
 
   } catch (exception::Exception& ex) {
-    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " +
-                               ex.getMessage().str());
+    throw exception::Exception("Failed for SQL statement " + getSqlForException() + ": " + ex.getMessage().str());
   }
 }
 

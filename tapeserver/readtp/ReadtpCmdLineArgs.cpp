@@ -16,14 +16,14 @@
  */
 
 #include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
-#include "tapeserver/readtp/TapeFseqSequenceParser.hpp"
+
+#include "common/Constants.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 #include "common/utils/utils.hpp"
-#include "common/Constants.hpp"
+#include "tapeserver/readtp/TapeFseqSequenceParser.hpp"
 
 #include <getopt.h>
 #include <ostream>
-
 #include <string.h>
 
 namespace cta::tapeserver::readtp {
@@ -31,12 +31,12 @@ namespace cta::tapeserver::readtp {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) {
+ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char* const* const argv) {
   if (argc < 3) {
     help = true;
     return;
   }
-  if(strnlen(argv[1], CA_MAXVIDLEN+1) > CA_MAXVIDLEN) {
+  if (strnlen(argv[1], CA_MAXVIDLEN + 1) > CA_MAXVIDLEN) {
     exception::CommandLineNotParsed ex;
     ex.getMessage() << "The vid is too long";
     throw ex;
@@ -47,10 +47,10 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) {
   m_fSeqRangeList = TapeFileSequenceParser::parse(argv[2]);
 
   static struct option longopts[] = {
-    {"destination_files",      required_argument, nullptr, 'f'},
-    {"drive",                  required_argument, nullptr, 'u'},
-    {"help",                   no_argument,       nullptr, 'h'},
-    {nullptr,                  0,                 nullptr,   0}
+    {"destination_files", required_argument, nullptr, 'f'},
+    {"drive",             required_argument, nullptr, 'u'},
+    {"help",              no_argument,       nullptr, 'h'},
+    {nullptr,             0,                 nullptr, 0  }
   };
 
   opterr = 0;
@@ -58,69 +58,68 @@ ReadtpCmdLineArgs::ReadtpCmdLineArgs(const int argc, char *const *const argv) {
   int opt_index = 3;
 
   while ((opt = getopt_long(argc, argv, ":d:f:u:p:h", longopts, &opt_index)) != -1) {
-    switch(opt) {
-    case 'f':
-      m_destinationFileListURL = std::string(optarg);
-      break;
-    case 'u':
-      m_unitName = std::string(optarg);
-      break;
-    case 'h':
-      help = true;
-      break;
-    case ':': // Missing parameter
+    switch (opt) {
+      case 'f':
+        m_destinationFileListURL = std::string(optarg);
+        break;
+      case 'u':
+        m_unitName = std::string(optarg);
+        break;
+      case 'h':
+        help = true;
+        break;
+      case ':':  // Missing parameter
       {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() << "The -" << (char)optopt << " option requires a parameter";
+        ex.getMessage() << "The -" << (char) optopt << " option requires a parameter";
         throw ex;
       }
-    case '?': // Unknown option
+      case '?':  // Unknown option
       {
         exception::CommandLineNotParsed ex;
-        if(0 == optopt) {
+        if (0 == optopt) {
           ex.getMessage() << "Unknown command-line option";
         } else {
-          ex.getMessage() << "Unknown command-line option: -" << (char)optopt;
+          ex.getMessage() << "Unknown command-line option: -" << (char) optopt;
         }
         throw ex;
       }
-    default:
-      {
+      default: {
         exception::CommandLineNotParsed ex;
-        ex.getMessage() <<
-        "getopt_long returned the following unknown value: 0x" <<
-        std::hex << (int)opt;
+        ex.getMessage() << "getopt_long returned the following unknown value: 0x" << std::hex << (int) opt;
         throw ex;
       }
-    } // switch(opt)
-  } // while getopt_long()
+    }  // switch(opt)
+  }  // while getopt_long()
 
   if (m_destinationFileListURL.empty()) {
-    m_destinationFileListURL = "/dev/null"; // Equivalent to an empty file
+    m_destinationFileListURL = "/dev/null";  // Equivalent to an empty file
   }
 }
-
 
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void ReadtpCmdLineArgs::printUsage(std::ostream &os) {
-  os <<
-    "Usage:" << std::endl <<
-    "  cta-readtp <VID> <SEQUENCE> [options]" << std::endl <<
-    "Where:" << std::endl <<
-    "  <VID>            The VID of the tape to be read" << std::endl <<
-    "  <SEQUENCE>       A sequence of tape file sequence numbers. The syntax to be used is:" << std::endl <<
-    "      f1-f2            Files f1 to f2 inclusive" << std::endl <<
-    "      f1-              Files f1 to the last file on the tape" << std::endl <<
-    "      f1-f2,f4,f6-     A series of non-consecutive ranges of files" << std::endl <<
-    "Options:" <<std::endl <<
-    "  -h, --help                              Print this help message and exit." << std::endl <<
-    "  -u, --drive                             The unit name of the drive used (if absent, the first drive configuration file found is used)" << std::endl <<
-    "  -f, --destination_files <FILE URL>      URL to file containing a list of destination files."  << std::endl <<
-    "                                          If not set, all data read is written to file:///dev/null" << std::endl <<
-    "                                          If there are less destination files than read files, the remaining" << std::endl <<
-    "                                          files read will be written to file:///dev/null." << std::endl;
+void ReadtpCmdLineArgs::printUsage(std::ostream& os) {
+  os << "Usage:" << std::endl
+     << "  cta-readtp <VID> <SEQUENCE> [options]" << std::endl
+     << "Where:" << std::endl
+     << "  <VID>            The VID of the tape to be read" << std::endl
+     << "  <SEQUENCE>       A sequence of tape file sequence numbers. The syntax to be used is:" << std::endl
+     << "      f1-f2            Files f1 to f2 inclusive" << std::endl
+     << "      f1-              Files f1 to the last file on the tape" << std::endl
+     << "      f1-f2,f4,f6-     A series of non-consecutive ranges of files" << std::endl
+     << "Options:" << std::endl
+     << "  -h, --help                              Print this help message and exit." << std::endl
+     << "  -u, --drive                             The unit name of the drive used (if absent, the first drive "
+        "configuration file found is used)"
+     << std::endl
+     << "  -f, --destination_files <FILE URL>      URL to file containing a list of destination files." << std::endl
+     << "                                          If not set, all data read is written to file:///dev/null"
+     << std::endl
+     << "                                          If there are less destination files than read files, the remaining"
+     << std::endl
+     << "                                          files read will be written to file:///dev/null." << std::endl;
 }
 
-} // namespace cta::tapeserver::readtp
+}  // namespace cta::tapeserver::readtp

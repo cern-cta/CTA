@@ -35,7 +35,7 @@ public:
    * @param outStream Standard output stream.
    * @param errStream Standard error stream.
    */
-  CmdLineTool(std::istream &inStream, std::ostream &outStream, std::ostream &errStream) noexcept;
+  CmdLineTool(std::istream& inStream, std::ostream& outStream, std::ostream& errStream) noexcept;
 
   /**
    * Pure-virtual destructor to guarantee this class is abstract.
@@ -50,10 +50,9 @@ public:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  int mainImpl(const int argc, char *const *const argv);
+  int mainImpl(const int argc, char* const* const argv);
 
 protected:
-
   /**
    * An exception throwing version of main().
    *
@@ -61,29 +60,29 @@ protected:
    * @param argv The command-line arguments.
    * @return The exit value of the program.
    */
-  virtual int exceptionThrowingMain(const int argc, char *const *const argv) = 0;
+  virtual int exceptionThrowingMain(const int argc, char* const* const argv) = 0;
 
   /**
    * Prints the usage message of the command-line tool.
    *
    * @param os The output stream to which the usage message is to be printed.
    */
-  virtual void printUsage(std::ostream &os) = 0;
+  virtual void printUsage(std::ostream& os) = 0;
 
   /**
    * Standard input stream.
    */
-  std::istream &m_in;
+  std::istream& m_in;
 
   /**
    * Standard output stream.
    */
-  std::ostream &m_out;
+  std::ostream& m_out;
 
   /**
    * Standard error stream.
    */
-  std::ostream &m_err;
+  std::ostream& m_err;
 
   /**
    * Returns the name of the user running the command-line tool.
@@ -99,6 +98,6 @@ protected:
    */
   static std::string getHostname();
 
-}; // class CmdLineTool
+};  // class CmdLineTool
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

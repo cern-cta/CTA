@@ -17,9 +17,9 @@
 
 #pragma once
 
-#include <memory>
-
 #include "common/process/threading/SocketPair.hpp"
+
+#include <memory>
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
@@ -29,11 +29,12 @@
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
 #include "tapeserver/daemon/ProcessManager.hpp"
 #include "tapeserver/daemon/SubprocessHandler.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
-#include "tapeserver/daemon/WatchdogMessage.pb.h"
+#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
+
+#include "tapeserver/daemon/WatchdogMessage.pb.h"
 
 namespace cta {
 
@@ -59,10 +60,10 @@ class DriveHandler : public SubprocessHandler {
 public:
   // Possible outcomes of the previous session/child process
   enum class PreviousSession {
-    Initiating, ///< The process is the first to run after daemon startup. A cleanup will be run beforehand.
-    Up,         ///< The previous process unmounted the tape properly and hardware is ready for another session.
-    Down,       ///< The previous session tried and failed to unmount the tape, and reported such instance.
-    Crashed     ///< The previous process was killed or crashed. The next session will be a cleanup.
+    Initiating,  ///< The process is the first to run after daemon startup. A cleanup will be run beforehand.
+    Up,          ///< The previous process unmounted the tape properly and hardware is ready for another session.
+    Down,        ///< The previous session tried and failed to unmount the tape, and reported such instance.
+    Crashed      ///< The previous process was killed or crashed. The next session will be a cleanup.
   };
 
   DriveHandler(const common::TapedConfiguration& tapedConfig, const DriveConfigEntry& driveConfig, ProcessManager& pm);
@@ -157,8 +158,10 @@ private:
   void processBytes(serializers::WatchdogMessage& message);
 
   bool schedulerPing(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy);
-  void puttingDriveDown(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy,
-    std::string_view errorMsg, const cta::common::dataStructures::DriveInfo& driveInfo);
+  void puttingDriveDown(IScheduler* scheduler,
+                        cta::tape::daemon::TapedProxy* driveHandlerProxy,
+                        std::string_view errorMsg,
+                        const cta::common::dataStructures::DriveInfo& driveInfo);
   void setDriveDownForShutdown(const std::string& reason);
 
   /**
@@ -169,25 +172,30 @@ private:
 
   virtual std::shared_ptr<cta::catalogue::Catalogue> createCatalogue(const std::string& processName) const;
   virtual std::shared_ptr<cta::IScheduler> createScheduler(const std::string& processName,
-    const uint64_t minFilesToWarrantAMount, const uint64_t minBytesToWarrantAMount);
+                                                           const uint64_t minFilesToWarrantAMount,
+                                                           const uint64_t minBytesToWarrantAMount);
   virtual std::shared_ptr<cta::tape::daemon::TapedProxy> createDriveHandlerProxy() const;
-  virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeCleanerSession(
-    cta::IScheduler* scheduler) const;
-  virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction executeDataTransferSession(
-    cta::IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy) const;
+  virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  executeCleanerSession(cta::IScheduler* scheduler) const;
+  virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  executeDataTransferSession(cta::IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy) const;
 
 protected:
   // Methods inherited by DriveHandlerMock to manipulate class internal state for unit tests
-  void setPreviousSession(PreviousSession previousSessionState, session::SessionState previousState,
-    session::SessionType previousType, std::string_view vid) {
+  void setPreviousSession(PreviousSession previousSessionState,
+                          session::SessionState previousState,
+                          session::SessionType previousType,
+                          std::string_view vid) {
     m_previousSession = previousSessionState;
     m_previousState = previousState;
     m_previousType = previousType;
     m_previousVid = vid;
   }
+
   void setSessionVid(std::string_view vid) { m_sessionVid = vid; }
+
   void setSessionState(session::SessionState state) { m_sessionState = state; }
 };
 
-} // namespace tape::daemon
-} // namespace cta
+}  // namespace tape::daemon
+}  // namespace cta

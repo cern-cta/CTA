@@ -15,9 +15,10 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "rmc_logreq.hpp"
+
 #include "rmc_constants.hpp"
 #include "rmc_logit.hpp"
-#include "rmc_logreq.hpp"
 
 #include <string.h>
 

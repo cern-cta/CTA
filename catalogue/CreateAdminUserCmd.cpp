@@ -15,10 +15,11 @@
  *               submit itself to any jurisdiction.
  */
 
+#include "catalogue/CreateAdminUserCmd.hpp"
+
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include "catalogue/CreateAdminUserCmd.hpp"
 #include "catalogue/CreateAdminUserCmdLineArgs.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/DummyLogger.hpp"
@@ -29,20 +30,16 @@ namespace cta::catalogue {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-CreateAdminUserCmd::CreateAdminUserCmd(
-  std::istream &inStream,
-  std::ostream &outStream,
-  std::ostream &errStream):
-  CmdLineTool(inStream, outStream, errStream) {
-}
+CreateAdminUserCmd::CreateAdminUserCmd(std::istream& inStream, std::ostream& outStream, std::ostream& errStream)
+    : CmdLineTool(inStream, outStream, errStream) {}
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int CreateAdminUserCmd::exceptionThrowingMain(const int argc, char *const *const argv) {
+int CreateAdminUserCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
   const CreateAdminUserCmdLineArgs cmdLineArgs(argc, argv);
 
-  if(cmdLineArgs.help) {
+  if (cmdLineArgs.help) {
     printUsage(m_out);
     return 0;
   }
@@ -62,8 +59,8 @@ int CreateAdminUserCmd::exceptionThrowingMain(const int argc, char *const *const
 //------------------------------------------------------------------------------
 // printUsage
 //------------------------------------------------------------------------------
-void CreateAdminUserCmd::printUsage(std::ostream &os) {
+void CreateAdminUserCmd::printUsage(std::ostream& os) {
   CreateAdminUserCmdLineArgs::printUsage(os);
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

@@ -16,11 +16,12 @@
  */
 
 #include "utils.hpp"
+
 #include "common/exception/Exception.hpp"
 
-#include <string>
-#include <sstream>
 #include <fstream>
+#include <sstream>
+#include <string>
 
 namespace cta::frontend::grpc::utils {
 
@@ -43,4 +44,4 @@ void read(const std::string& strPath, std::string& strValu) {
   strValu.assign(std::istreambuf_iterator<char>(ifs), std::istreambuf_iterator<char>());
 }
 
-} // namespace cta::frontend::grpc::utils
+}  // namespace cta::frontend::grpc::utils

@@ -15,14 +15,15 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <sys/types.h>
-#include <signal.h>
-#include <unistd.h>
-
 #include "AgentHeartbeatThread.hpp"
-#include "common/log/LogContext.hpp"
+
 #include "common/Timer.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/utils/utils.hpp"
+
+#include <signal.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace cta::objectstore {
 
@@ -53,12 +54,12 @@ void AgentHeartbeatThread::run() {
       if (updateTime > std::chrono::duration_cast<std::chrono::seconds>(m_heartbeatDeadline).count()) {
         log::ScopedParamContainer params(lc);
         params.add("HeartbeatDeadline", std::chrono::duration_cast<std::chrono::seconds>(m_heartbeatDeadline).count())
-              .add("HeartbeatUpdateTime", updateTime);
+          .add("HeartbeatUpdateTime", updateTime);
         lc.log(log::CRIT, "In AgentHeartbeatThread::run(): Could not update heartbeat in time. Exiting.");
         ::exit(EXIT_FAILURE);
       }
     }
-  } catch (cta::exception::Exception & ex) {
+  } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", ex.getMessageValue());
     lc.log(log::CRIT, "In AgentHeartbeatThread::run(): exception while bumping heartbeat. Backtrace follows. Exiting.");
@@ -67,6 +68,4 @@ void AgentHeartbeatThread::run() {
   }
 }
 
-
-
-} // namespace cta::objectstore
+}  // namespace cta::objectstore

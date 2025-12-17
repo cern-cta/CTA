@@ -34,34 +34,39 @@ public:
                       const std::list<std::string>& supply_list,
                       const std::string& comment) override;
 
-  void deleteTapePool(const std::string &name) override;
+  void deleteTapePool(const std::string& name) override;
 
-  std::list<TapePool> getTapePools(const TapePoolSearchCriteria &searchCriteria) const override;
+  std::list<TapePool> getTapePools(const TapePoolSearchCriteria& searchCriteria) const override;
 
-  std::optional<TapePool> getTapePool(const std::string &tapePoolName) const override;
+  std::optional<TapePool> getTapePool(const std::string& tapePoolName) const override;
 
-  void modifyTapePoolVo(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &vo) override;
+  void modifyTapePoolVo(const common::dataStructures::SecurityIdentity& admin,
+                        const std::string& name,
+                        const std::string& vo) override;
 
-  void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const uint64_t nbPartialTapes) override;
+  void modifyTapePoolNbPartialTapes(const common::dataStructures::SecurityIdentity& admin,
+                                    const std::string& name,
+                                    const uint64_t nbPartialTapes) override;
 
-  void modifyTapePoolComment(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-    const std::string &comment) override;
+  void modifyTapePoolComment(const common::dataStructures::SecurityIdentity& admin,
+                             const std::string& name,
+                             const std::string& comment) override;
 
-  void setTapePoolEncryption(const common::dataStructures::SecurityIdentity &admin, const std::string &name,
-                             const std::string &encryptionKeyName) override;
+  void setTapePoolEncryption(const common::dataStructures::SecurityIdentity& admin,
+                             const std::string& name,
+                             const std::string& encryptionKeyName) override;
 
   void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                             const std::string& name,
                             const std::list<std::string>& supply_list) override;
 
-  void modifyTapePoolName(const common::dataStructures::SecurityIdentity &admin, const std::string &currentName,
-    const std::string &newName) override;
+  void modifyTapePoolName(const common::dataStructures::SecurityIdentity& admin,
+                          const std::string& currentName,
+                          const std::string& newName) override;
 
   bool tapePoolExists(const std::string& tapePoolName) const override;
 
   void deleteAllTapePoolSupplyEntries() override;
 };
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

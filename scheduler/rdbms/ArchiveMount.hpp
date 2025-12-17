@@ -17,18 +17,18 @@
 
 #pragma once
 
-#include "common/log/LogContext.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/MountType.hpp"
+#include "common/log/LogContext.hpp"
 #include "scheduler/rdbms/ArchiveRdbJob.hpp"
-#include "scheduler/rdbms/postgres/Enums.hpp"
-#include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/JobPool.hpp"
+#include "scheduler/rdbms/RelationalDB.hpp"
+#include "scheduler/rdbms/postgres/Enums.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <optional>
-#include <cstdint>
 #include <time.h>
 
 namespace cta::schedulerdb {
@@ -109,7 +109,8 @@ public:
    * @return number of jobs re-queued in the DB
    */
   uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, cta::log::LogContext& logContext) const override;
-  void setIsRepack(log::LogContext &logContext);
+  void setIsRepack(log::LogContext& logContext);
+
 private:
   cta::RelationalDB& m_RelationalDB;
   cta::rdbms::ConnPool& m_connPool;
@@ -118,7 +119,8 @@ private:
   std::shared_ptr<schedulerdb::JobPool<schedulerdb::ArchiveRdbJob>> m_jobPool;
   bool m_isRepack = false;
 
-  void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch, log::LogContext& lc);
+  void recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>>& jobsBatch,
+                              log::LogContext& lc);
   /*
    * Setting a batch of REPACK mount jobs to state which informs
    * the Scheduler that they are ready for reporting

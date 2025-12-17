@@ -1,14 +1,15 @@
-#include <catalogue/Catalogue.hpp>
-#include <scheduler/Scheduler.hpp>
-
-#include "cta_frontend.pb.h"
-#include "cta_frontend.grpc.pb.h"
-#include <grpcpp/grpcpp.h>
+#include "CtaAdminServerWriteReactor.hpp"
+#include "catalogue/SchemaVersion.hpp"
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "frontend/common/Version.hpp"
-#include "catalogue/SchemaVersion.hpp"
 #include "version.h"
-#include "CtaAdminServerWriteReactor.hpp"
+
+#include <catalogue/Catalogue.hpp>
+#include <grpcpp/grpcpp.h>
+#include <scheduler/Scheduler.hpp>
+
+#include "cta_frontend.grpc.pb.h"
+#include "cta_frontend.pb.h"
 
 namespace cta::frontend::grpc {
 
@@ -38,8 +39,8 @@ VersionWriteReactor::VersionWriteReactor(cta::catalogue::Catalogue& catalogue,
     : CtaAdminServerWriteReactor(scheduler, instanceName, nullptr, cta::admin::HeaderType::VERSION_CMD),
       m_catalogue_conn_string(catalogueConnString),
       m_catalogue_version(catalogue.Schema()->getSchemaVersion().getSchemaVersion<std::string>()),
-      m_is_upgrading(catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>() ==
-                     catalogue::SchemaVersion::Status::UPGRADING) {
+      m_is_upgrading(catalogue.Schema()->getSchemaVersion().getStatus<catalogue::SchemaVersion::Status>()
+                     == catalogue::SchemaVersion::Status::UPGRADING) {
   m_server_versions.ctaVersion = CTA_VERSION;
   m_server_versions.protobufTag = XROOTD_SSI_PROTOBUF_INTERFACE_VERSION;
 

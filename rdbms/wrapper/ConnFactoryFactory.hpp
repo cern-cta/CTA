@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "rdbms/wrapper/ConnFactory.hpp"
 #include "rdbms/Login.hpp"
+#include "rdbms/wrapper/ConnFactory.hpp"
 
 #include <memory>
 
@@ -29,7 +29,6 @@ namespace cta::rdbms::wrapper {
  */
 class ConnFactoryFactory {
 public:
-
   /**
    * Returns a newly created ConnFactory object.
    *
@@ -37,8 +36,8 @@ public:
    * connections.
    * @return A newly created ConnFactory object.
    */
-  static std::unique_ptr<ConnFactory> create(const Login &login);
+  static std::unique_ptr<ConnFactory> create(const Login& login);
 
-}; // class ConnFactoryFactory
+};  // class ConnFactoryFactory
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

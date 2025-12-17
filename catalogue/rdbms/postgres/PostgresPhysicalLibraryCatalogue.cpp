@@ -16,6 +16,7 @@
  */
 
 #include "catalogue/rdbms/postgres/PostgresPhysicalLibraryCatalogue.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "rdbms/Conn.hpp"
@@ -23,20 +24,21 @@
 
 namespace cta::catalogue {
 
-PostgresPhysicalLibraryCatalogue::PostgresPhysicalLibraryCatalogue(log::Logger &log,
-  std::shared_ptr<rdbms::ConnPool> connPool, RdbmsCatalogue* rdbmsCatalogue)
-  : RdbmsPhysicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
+PostgresPhysicalLibraryCatalogue::PostgresPhysicalLibraryCatalogue(log::Logger& log,
+                                                                   std::shared_ptr<rdbms::ConnPool> connPool,
+                                                                   RdbmsCatalogue* rdbmsCatalogue)
+    : RdbmsPhysicalLibraryCatalogue(log, connPool, rdbmsCatalogue) {}
 
-uint64_t PostgresPhysicalLibraryCatalogue::getNextPhysicalLibraryId(rdbms::Conn &conn) const {
+uint64_t PostgresPhysicalLibraryCatalogue::getNextPhysicalLibraryId(rdbms::Conn& conn) const {
   const char* const sql = R"SQL(
     SELECT NEXTVAL('PHYSICAL_LIBRARY_ID_SEQ') AS PHYSICAL_LIBRARY_ID
   )SQL";
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
-  if(!rset.next()) {
+  if (!rset.next()) {
     throw exception::Exception("Result set is unexpectedly empty");
   }
   return rset.columnUint64("PHYSICAL_LIBRARY_ID");
 }
 
-} // namespace cta::catalogue
+}  // namespace cta::catalogue

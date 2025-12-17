@@ -24,7 +24,7 @@ namespace cta::mediachanger {
 /**
  * Class representing a dummy slot for the tests.
  */
-class DummyLibrarySlot: public LibrarySlot {
+class DummyLibrarySlot : public LibrarySlot {
 public:
   /**
    * Constructor
@@ -56,4 +56,4 @@ public:
   LibrarySlot* clone() final;
 };
 
-} // namespace cta::mediachanger
+}  // namespace cta::mediachanger

@@ -17,11 +17,8 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
-
-#include <memory>
-
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
@@ -29,9 +26,12 @@
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/log/DummyLogger.hpp"
 
+#include <gtest/gtest.h>
+#include <memory>
+
 namespace unitTests {
 
-class cta_catalogue_VirtualOrganizationTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory **> {
+class cta_catalogue_VirtualOrganizationTest : public ::testing::TestWithParam<cta::catalogue::CatalogueFactory**> {
 public:
   cta_catalogue_VirtualOrganizationTest();
 

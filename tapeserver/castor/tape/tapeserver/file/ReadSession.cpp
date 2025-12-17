@@ -15,18 +15,23 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <string>
+#include "castor/tape/tapeserver/file/ReadSession.hpp"
 
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
-#include "castor/tape/tapeserver/file/ReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
+
+#include <string>
 
 namespace castor::tape::tapeFile {
 
-ReadSession::ReadSession(tapeserver::drive::DriveInterface &drive,
-  const tapeserver::daemon::VolumeInfo &volInfo, const bool useLbp)
-  : m_drive(drive), m_vid(volInfo.vid), m_useLbp(useLbp), m_volInfo(volInfo) {
+ReadSession::ReadSession(tapeserver::drive::DriveInterface& drive,
+                         const tapeserver::daemon::VolumeInfo& volInfo,
+                         const bool useLbp)
+    : m_drive(drive),
+      m_vid(volInfo.vid),
+      m_useLbp(useLbp),
+      m_volInfo(volInfo) {
   if (!m_vid.compare("")) {
     throw cta::exception::InvalidArgument();
   }
@@ -38,4 +43,4 @@ ReadSession::ReadSession(tapeserver::drive::DriveInterface &drive,
   }
 }
 
-} // namespace castor::tape::tapeFile
+}  // namespace castor::tape::tapeFile

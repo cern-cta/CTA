@@ -15,17 +15,18 @@
  *               submit itself to any jurisdiction.
  */
 
-#include <memory>
-#include <numeric>
-#include <cstdio>
-
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
+
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "catalogue/TapeFileWritten.hpp"
+#include "common/Timer.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/utils.hpp"
-#include "common/Timer.hpp"
+
+#include <cstdio>
+#include <memory>
+#include <numeric>
 
 using cta::log::LogContext;
 using cta::log::Param;
@@ -255,7 +256,8 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
   // in case there are no remaining jobs, we refrain from sending an empty report to the client in this case.
   if (reportPacker.m_successfulArchiveJobs.empty() && reportPacker.m_skippedFiles.empty()) {
     reportPacker.m_lc.log(cta::log::INFO,
-                          "Received a request to requeue last non-flushed job batch from tape session, but no jobs were found. Doing nothing.");
+                          "Received a request to requeue last non-flushed job batch from tape session, but no jobs "
+                          "were found. Doing nothing.");
     return;
   }
   // We re-queue all the jobs which were left in the m_successfulArchiveJobs
@@ -274,8 +276,8 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
     } catch (cta::exception::Exception& ex) {
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
       params.add("ExceptionMSG", ex.getMessageValue())
-            .add("archiveFileId", job->archiveFile.archiveFileID)
-            .add("jobIDsListSize", jobIDsList.size());
+        .add("archiveFileId", job->archiveFile.archiveFileID)
+        .add("jobIDsListSize", jobIDsList.size());
       reportPacker.m_lc.log(cta::log::ERR,
                             "In MigrationReportPacker::ReportLastBatchError::execute(): looping through reportPacker "
                             "jobIDs threw an exception.");
@@ -560,8 +562,7 @@ void MigrationReportPacker::WorkerThread::run() {
   // Drain the FIFO if necessary. We know that m_continue will be
   // set by ReportEndofSessionWithErrors or ReportEndofSession
   // TODO devise a more generic mechanism
-  if (uint64_t leftOverReportCount = m_parent.m_fifo.size();
-      leftOverReportCount != 0) {
+  if (uint64_t leftOverReportCount = m_parent.m_fifo.size(); leftOverReportCount != 0) {
     cta::log::ScopedParamContainer params(lc);
     params.add("leftOverReportCount", leftOverReportCount);
     params.add("MigrationReportPacker.m_continue", m_parent.m_continue);

@@ -17,18 +17,18 @@
 
 #pragma once
 
+#include "common/exception/Exception.hpp"
+#include "disk/DiskReporterFactory.hpp"
+#include "scheduler/ArchiveJob.hpp"
+#include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/TapeMount.hpp"
+
 #include <atomic>
 #include <list>
 #include <memory>
 #include <queue>
 #include <set>
 #include <string>
-
-#include "common/exception/Exception.hpp"
-#include "disk/DiskReporterFactory.hpp"
-#include "scheduler/ArchiveJob.hpp"
-#include "scheduler/SchedulerDatabase.hpp"
-#include "scheduler/TapeMount.hpp"
 
 namespace cta {
 

@@ -17,10 +17,10 @@
 
 #include "FailedRequestLsResponseStream.hpp"
 
-#include "frontend/common/AdminCmdOptions.hpp"
-#include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
+#include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
+#include "frontend/common/AdminCmdOptions.hpp"
 
 namespace cta::frontend {
 

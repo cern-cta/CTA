@@ -17,11 +17,12 @@
 
 #pragma once
 
+#include "common/dataStructures/ArchiveRouteType.hpp"
+#include "common/dataStructures/Tape.hpp"
+
 #include <map>
 #include <set>
 #include <string>
-#include "common/dataStructures/Tape.hpp"
-#include "common/dataStructures/ArchiveRouteType.hpp"
 
 #include "cta_frontend.pb.h"
 
@@ -249,26 +250,26 @@ const subcmdLookup_t subcmdLookup = {
  */
 const std::map<std::string, OptionBoolean::Key> boolOptions = {
   // Boolean options
-  {"--all",             OptionBoolean::ALL             },
-  {"--disabled",        OptionBoolean::DISABLED        },
-  {"--encrypted",       OptionBoolean::ENCRYPTED       },
-  {"--force",           OptionBoolean::FORCE           },
-  {"--full",            OptionBoolean::FULL            },
-  {"--fromcastor",      OptionBoolean::FROM_CASTOR     },
+  {"--all",               OptionBoolean::ALL                },
+  {"--disabled",          OptionBoolean::DISABLED           },
+  {"--encrypted",         OptionBoolean::ENCRYPTED          },
+  {"--force",             OptionBoolean::FORCE              },
+  {"--full",              OptionBoolean::FULL               },
+  {"--fromcastor",        OptionBoolean::FROM_CASTOR        },
 
   // hasOption options
-  {"--disabledtape",         OptionBoolean::DISABLED            },
-  {"--justarchive",          OptionBoolean::JUSTARCHIVE         },
-  {"--justmove",             OptionBoolean::JUSTMOVE            },
-  {"--justaddcopies",        OptionBoolean::JUSTADDCOPIES       },
-  {"--justretrieve",         OptionBoolean::JUSTRETRIEVE        },
-  {"--log",                  OptionBoolean::SHOW_LOG_ENTRIES    },
-  {"--lookupnamespace",      OptionBoolean::LOOKUP_NAMESPACE    },
-  {"--summary",              OptionBoolean::SUMMARY             },
-  {"--no-recall",            OptionBoolean::NO_RECALL           },
-  {"--dirtybit",             OptionBoolean::DIRTY_BIT           },
-  {"--isrepackvo",           OptionBoolean::IS_REPACK_VO        },
-  {"--missingfilecopies",    OptionBoolean::MISSING_FILE_COPIES },
+  {"--disabledtape",      OptionBoolean::DISABLED           },
+  {"--justarchive",       OptionBoolean::JUSTARCHIVE        },
+  {"--justmove",          OptionBoolean::JUSTMOVE           },
+  {"--justaddcopies",     OptionBoolean::JUSTADDCOPIES      },
+  {"--justretrieve",      OptionBoolean::JUSTRETRIEVE       },
+  {"--log",               OptionBoolean::SHOW_LOG_ENTRIES   },
+  {"--lookupnamespace",   OptionBoolean::LOOKUP_NAMESPACE   },
+  {"--summary",           OptionBoolean::SUMMARY            },
+  {"--no-recall",         OptionBoolean::NO_RECALL          },
+  {"--dirtybit",          OptionBoolean::DIRTY_BIT          },
+  {"--isrepackvo",        OptionBoolean::IS_REPACK_VO       },
+  {"--missingfilecopies", OptionBoolean::MISSING_FILE_COPIES},
 };
 
 /*!
@@ -462,13 +463,13 @@ const Option opt_state {
   Option::OPT_STR,
   "--state",
   "-s",
-  std::string(" <\"") + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::ACTIVE) +
-    "\"" + " or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::DISABLED) +
-    "\" or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::BROKEN) +
-    "\" or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::EXPORTED) +
-    "\" or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::REPACKING) +
-    "\" or \"" +
-    cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::REPACKING_DISABLED) + "\">"};
+  std::string(" <\"") + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::ACTIVE)
+    + "\"" + " or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::DISABLED)
+    + "\" or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::BROKEN)
+    + "\" or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::EXPORTED)
+    + "\" or \"" + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::REPACKING)
+    + "\" or \""
+    + cta::common::dataStructures::Tape::stateToString(cta::common::dataStructures::Tape::REPACKING_DISABLED) + "\">"};
 const Option opt_activityregex {Option::OPT_STR, "--activityregex", "--ar", " <activity_regex>"};
 const Option opt_diskinstance {Option::OPT_STR, "--diskinstance", "--di", " <disk_instance_name>"};
 const Option opt_diskinstance_alias {Option::OPT_STR, "--name", "-n", " <disk_instance_name>", "--diskinstance"};
@@ -517,9 +518,9 @@ const Option opt_archive_route_type {
   Option::OPT_STR,
   "--archiveroutetype",
   "--art",
-  std::string(R"( <")") +
-    cta::common::dataStructures::toString(cta::common::dataStructures::ArchiveRouteType::DEFAULT) + R"(" or ")" +
-    cta::common::dataStructures::toString(cta::common::dataStructures::ArchiveRouteType::REPACK) + R"(">)"};
+  std::string(R"( <")") + cta::common::dataStructures::toString(cta::common::dataStructures::ArchiveRouteType::DEFAULT)
+    + R"(" or ")" + cta::common::dataStructures::toString(cta::common::dataStructures::ArchiveRouteType::REPACK)
+    + R"(">)"};
 const Option opt_missingfilecopies {Option::OPT_FLAG, "--missingfilecopies", "--mfc", ""};
 
 /*!
@@ -1043,7 +1044,7 @@ tape (ta)
     opt_fromcastor.optional(),
     opt_purchase_order.optional(),
     opt_physical_library.optional(),
-    opt_missingfilecopies.optional()}                                                                                         },
+    opt_missingfilecopies.optional()}                                                                                        },
 
   /**md
 tapefile (tf)
@@ -1076,7 +1077,12 @@ tapefile (tf)
     opt_fidfile.optional(),
     opt_archivefileid.optional()}                                                                                            },
   {{AdminCmd::CMD_TAPEFILE, AdminCmd::SUBCMD_RM},
-   {opt_vid, opt_instance.optional(), opt_fid.optional(), opt_diskfileid.optional(), opt_archivefileid.optional(), opt_reason}                          },
+   {opt_vid,
+    opt_instance.optional(),
+    opt_fid.optional(),
+    opt_diskfileid.optional(),
+    opt_archivefileid.optional(),
+    opt_reason}                                                                                                              },
 
   /**md
 tapepool (tp)
@@ -1115,10 +1121,7 @@ tapepool (tp)
     opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_RM},             {opt_tapepool_alias}                                           },
   {{AdminCmd::CMD_TAPEPOOL, AdminCmd::SUBCMD_LS},
-   {opt_tapepool_alias.optional(),
-    opt_vo.optional(),
-    opt_encrypted.optional(),
-    opt_encryptionkeyname.optional()}                                                                                        },
+   {opt_tapepool_alias.optional(), opt_vo.optional(), opt_encrypted.optional(), opt_encryptionkeyname.optional()}            },
 
   /**md
 version (v)
@@ -1174,10 +1177,19 @@ virtualorganization (vo)
 
   // Used by cta-change-storageclass and cta-eos-namespace-inject
   {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
-   {opt_storageclass.optional(), opt_archive_file_ids, opt_fid.optional(), opt_diskfileid.optional(), opt_diskinstance.optional()}                      },
+   {opt_storageclass.optional(),
+    opt_archive_file_ids,
+    opt_fid.optional(),
+    opt_diskfileid.optional(),
+    opt_diskinstance.optional()}                                                                                             },
   // Used by cta-restore-deleted-files
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE},
-   {opt_vid.optional(), opt_fid.optional(), opt_diskfileid.optional(), opt_copynb.optional(), opt_archivefileid.optional(), opt_instance.optional()}               },
+   {opt_vid.optional(),
+    opt_fid.optional(),
+    opt_diskfileid.optional(),
+    opt_copynb.optional(),
+    opt_archivefileid.optional(),
+    opt_instance.optional()}                                                                                                 },
   /*-------------------------------------------------------------------------------------------------------------------------*/
 };
 

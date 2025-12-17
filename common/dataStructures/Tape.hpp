@@ -18,13 +18,13 @@
 #pragma once
 
 #include "common/dataStructures/EntryLog.hpp"
-#include "common/dataStructures/TapeLog.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
+#include "common/dataStructures/TapeLog.hpp"
 
 #include <list>
 #include <map>
-#include <set>
 #include <optional>
+#include <set>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -35,7 +35,6 @@ namespace cta::common::dataStructures {
  * This struct holds all tape metadata information
  */
 struct Tape {
-
   enum State {
     ACTIVE = 1,
     BROKEN = 2,
@@ -48,19 +47,19 @@ struct Tape {
     EXPORTED_PENDING = 103,
   };
 
-  static const std::map<State,std::string> STATE_TO_STRING_MAP;
-  static const std::map<std::string,State> STRING_TO_STATE_MAP;
+  static const std::map<State, std::string> STATE_TO_STRING_MAP;
+  static const std::map<std::string, State> STRING_TO_STATE_MAP;
   static const std::set<State> PENDING_STATES_SET;
 
   static std::string getAllPossibleStates(bool hidePendingStates = false);
 
   Tape();
 
-  bool operator==(const Tape &rhs) const;
+  bool operator==(const Tape& rhs) const;
 
-  bool operator!=(const Tape &rhs) const;
+  bool operator!=(const Tape& rhs) const;
 
-  void setState(const std::string & state);
+  void setState(const std::string& state);
 
   std::string getStateStr() const;
 
@@ -70,7 +69,7 @@ struct Tape {
    * @return the string representation of the state passed in parameter
    * @throws cta::exception::Exception if the state passed in parameter does not exist
    */
-  static std::string stateToString(const State &state);
+  static std::string stateToString(const State& state);
 
   /**
    * Return the state value according to the state passed in parameter (not case sensitive)
@@ -78,7 +77,7 @@ struct Tape {
    * @return the state corresponding to the State enum value
    * @throws cta::exception::Exception if the state passed in parameter does not match any existing State enum value
    */
-  static State stringToState(const std::string & state, bool hidePendingStates = false);
+  static State stringToState(const std::string& state, bool hidePendingStates = false);
 
   std::string vid;
   std::string mediaType;
@@ -92,7 +91,7 @@ struct Tape {
   uint64_t nbMasterFiles = 0;
   uint64_t masterDataInBytes = 0;
 
-  cta::common::dataStructures::Label::Format  labelFormat;
+  cta::common::dataStructures::Label::Format labelFormat;
 
   /**
    * The optional name of the encryption key.
@@ -127,8 +126,8 @@ struct Tape {
   bool isRepacking() const;
   bool isBroken() const;
   bool isExported() const;
-}; // struct Tape
+};  // struct Tape
 
-std::ostream &operator<<(std::ostream &os, const Tape &obj);
+std::ostream& operator<<(std::ostream& os, const Tape& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures

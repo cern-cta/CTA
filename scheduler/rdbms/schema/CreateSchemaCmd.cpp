@@ -16,14 +16,15 @@
  */
 
 #include "scheduler/rdbms/schema/CreateSchemaCmd.hpp"
-#include "scheduler/rdbms/schema/CreateSchemaCmdLineArgs.hpp"
-#include "scheduler/rdbms/schema/PostgresSchedulerSchema.hpp"
+
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/utils/utils.hpp"
+#include "rdbms/AutocommitMode.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
-#include "rdbms/AutocommitMode.hpp"
+#include "scheduler/rdbms/schema/CreateSchemaCmdLineArgs.hpp"
+#include "scheduler/rdbms/schema/PostgresSchedulerSchema.hpp"
 
 #include <algorithm>
 

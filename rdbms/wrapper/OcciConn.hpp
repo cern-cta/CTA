@@ -34,9 +34,8 @@ class OcciStmt;
 /**
  * A convenience wrapper around a connection to an OCCI database.
  */
-class OcciConn: public ConnWrapper {
+class OcciConn : public ConnWrapper {
 public:
-
   /**
    * Constructor.
    *
@@ -79,7 +78,7 @@ public:
    *
    * @param sql The SQL statement.
    */
-  void executeNonQuery(const std::string &sql) override;
+  void executeNonQuery(const std::string& sql) override;
 
   /**
    * Creates a prepared statement.
@@ -87,7 +86,7 @@ public:
    * @param sql The SQL statement.
    * @return The prepared statement.
    */
-  std::unique_ptr<StmtWrapper> createStmt(const std::string &sql) override;
+  std::unique_ptr<StmtWrapper> createStmt(const std::string& sql) override;
 
   /**
    * Commits the current transaction.
@@ -106,7 +105,7 @@ public:
    * @param tableName The table name to get the columns.
    * @return The map of types by name of all the columns for the given table in the database schema.
    */
-  std::map<std::string, std::string, std::less<>> getColumns(const std::string &tableName) override;
+  std::map<std::string, std::string, std::less<>> getColumns(const std::string& tableName) override;
 
   /**
    * Returns the names of all the tables in the database schema in alphabetical
@@ -172,7 +171,7 @@ public:
    * @param tableName the table name to get the constraint names from
    * @return the list of the names of the constraints that the given table has.
    */
-  std::list<std::string> getConstraintNames(const std::string &tableName) override;
+  std::list<std::string> getConstraintNames(const std::string& tableName) override;
 
   /**
    *
@@ -218,7 +217,6 @@ public:
   std::string getDbNamespace() const override;
 
 private:
-
   friend OcciStmt;
 
   /**
@@ -229,12 +227,12 @@ private:
   /**
    * The OCCI environment.
    */
-  oracle::occi::Environment *m_env;
+  oracle::occi::Environment* m_env;
 
   /**
    * The OCCI connection.
    */
-  oracle::occi::Connection *m_occiConn;
+  oracle::occi::Connection* m_occiConn;
 
   /**
    * Read-write lock to protect m_autocommitMode.
@@ -251,10 +249,10 @@ private:
    *
    * @param stmt The OCCI statement to be closed.
    */
-  void closeStmt(oracle::occi::Statement *const stmt);
+  void closeStmt(oracle::occi::Statement* const stmt);
 
   std::string m_dbNamespace;
 
-}; // class OcciConn
+};  // class OcciConn
 
-} // namespace cta::rdbms::wrapper
+}  // namespace cta::rdbms::wrapper

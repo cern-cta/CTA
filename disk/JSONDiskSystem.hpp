@@ -41,4 +41,4 @@ public:
   ~JSONDiskSystem() final = default;
 };
 
-} // namespace cta::disk
+}  // namespace cta::disk

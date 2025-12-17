@@ -17,13 +17,13 @@
 
 #pragma once
 
+#include "common/dataStructures/DiskFileInfo.hpp"
+#include "common/dataStructures/RequesterIdentity.hpp"
+
 #include <list>
 #include <map>
 #include <stdint.h>
 #include <string>
-
-#include "common/dataStructures/DiskFileInfo.hpp"
-#include "common/dataStructures/RequesterIdentity.hpp"
 
 namespace cta::common::dataStructures {
 
@@ -31,12 +31,11 @@ namespace cta::common::dataStructures {
  * This is the request to cancel and ongoing retrieval
  */
 struct CancelRetrieveRequest {
-
   CancelRetrieveRequest();
 
-  bool operator==(const CancelRetrieveRequest &rhs) const;
+  bool operator==(const CancelRetrieveRequest& rhs) const;
 
-  bool operator!=(const CancelRetrieveRequest &rhs) const;
+  bool operator!=(const CancelRetrieveRequest& rhs) const;
 
   RequesterIdentity requester;
   uint64_t archiveFileID = 0;
@@ -44,8 +43,8 @@ struct CancelRetrieveRequest {
   DiskFileInfo diskFileInfo;
   std::string retrieveRequestId;
 
-}; // struct CancelRetrieveRequest
+};  // struct CancelRetrieveRequest
 
-std::ostream &operator<<(std::ostream &os, const CancelRetrieveRequest &obj);
+std::ostream& operator<<(std::ostream& os, const CancelRetrieveRequest& obj);
 
-} // namespace cta::common::dataStructures
+}  // namespace cta::common::dataStructures
