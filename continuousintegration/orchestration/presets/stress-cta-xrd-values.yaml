@@ -74,8 +74,6 @@ tpsrv:
       mount --bind ${PV_PATH} /var/log
 
 maintd:
-  replicas: 4
-
   preRun:
     enabled: true
     script: |
