@@ -135,16 +135,16 @@ lint-licenses:
 
 lint-secrets:
   stage: lint
-  image:
-    name: $IMAGE_LINT
-    entrypoint: [""]
+  needs: []
   rules:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: always
-  needs: []
+  image:
+    name: $IMAGE_LINT
+    entrypoint: [""]
   script:
     - detect-secrets scan --baseline .secrets.baseline
 
