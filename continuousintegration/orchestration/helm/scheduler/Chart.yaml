@@ -4,11 +4,11 @@
 apiVersion: v2
 name: scheduler
 version: 0.1.0
-description: A chart that sets up a configmap for the scheduler. Due to the nature of the scheduler, there are no pods to spawn; only a job that sets up/resets the scheduler. Requires the init chart to have been installed.
+description: A chart that sets up a configmap for the scheduler and optionally a postgres pod.
 type: application
 appVersion: "5.11.10.1"
 
 dependencies:
-- name: common
-  version: 0.1.1
-  repository: "file://../common"
+  - name: common
+    version: 0.1.1
+    repository: "file://../common"

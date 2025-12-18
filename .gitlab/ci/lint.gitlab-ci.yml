@@ -74,7 +74,7 @@ lint-python:
     reports:
       codequality: ruff.json
 
-lint-licenses:
+lint-yaml:
   stage: lint
   needs: []  # Ensure no artifacts are downloaded
   rules:
@@ -88,7 +88,7 @@ lint-licenses:
     entrypoint: ["/usr/bin/env"]
   script:
     - python3 continuousintegration/checks/check_gitlab_ci_key_order.py .gitlab/
-    - yamllint .gitlab
+    - yamllint .
 
 lint-licenses:
   stage: lint
