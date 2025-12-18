@@ -3,8 +3,6 @@
 
 build-cta-rpms:
   stage: build
-  extends:
-    - .build-cta
   needs:
     - job: validate-pipeline-variables
     - job: modify-project-json
@@ -49,8 +47,8 @@ build-cta-rpms:
       else
         export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
         export VCS_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
-        echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${CTA_VERSION} - CTA_RELEASE=${VCS_VERSION}"
       fi
+    - echo "Building package CTA_VERSION=${CTA_VERSION} - CTA_RELEASE=${VCS_VERSION}"
     - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
     - |
       if [[ -z "$XRD_SSI_VERSION" ]]; then
