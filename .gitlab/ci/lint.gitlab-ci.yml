@@ -108,7 +108,7 @@ lint-licenses:
 # Generic format check job template
 # The idea is to extend this, fill in the FORMAT_DIFF variable
 # And then add a before_script: section that populates this FORMAT_DIFF file
-.format-report:
+.format:
   stage: lint
   needs: []  # Ensure no artifacts are downloaded
   rules:
@@ -147,9 +147,22 @@ lint-licenses:
       - $FORMAT_DIFF
 
 
-format-report-cpp:
+format-cpp:
   extends:
     - .format-report
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - changes:
+        - "**/*.c"
+        - "**/*.h"
+        - "**/*.cpp"
+        - "**/*.hpp"
+      when: always
+    - when: manual
+      allow_failure: true
   variables:
     FORMAT_DIFF: artifacts/clang-format.diff
   before_script:
@@ -159,9 +172,20 @@ format-report-cpp:
     - echo "Running clang-format for changes compared to branch $TARGET_BRANCH"
     - git-clang-format $TARGET_BRANCH HEAD --diff > $FORMAT_DIFF || true
 
-format-report-python:
+format-python:
   extends:
     - .format-report
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - when: always
+    - changes:
+        - "**/*.py"
+      when: always
+    - when: manual
+      allow_failure: true
   variables:
     FORMAT_DIFF: artifacts/black.diff
   before_script:
