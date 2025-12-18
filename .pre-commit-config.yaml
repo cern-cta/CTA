@@ -1,4 +1,8 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Latest versions can be found in the respective repos if an update is desired
+# Note that not all are compatible with the (slightly outdated) Python version on alma9
 repos:
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.5.0
@@ -24,3 +28,7 @@ repos:
     rev: v1.37.1
     hooks:
       - id: yamllint
+  - repo: https://github.com/fsfe/reuse-tool
+    rev: v5.1.0
+    hooks:
+      - id: reuse
