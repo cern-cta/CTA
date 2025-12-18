@@ -33,7 +33,7 @@ namespace cta::rdbms::wrapper {
 SqliteStmt::SqliteStmt(SqliteConn& conn, const std::string& sql) : StmtWrapper(sql), m_conn(conn) {
   const int nByte = -1;  // Read SQL up to first null terminator
 
-       const uint maxPrepareRetries = 20;  // A worst case scenario of 2 seconds
+  const uint maxPrepareRetries = 20;  // A worst case scenario of 2 seconds
   for (unsigned int i = 1; i <= maxPrepareRetries; i++) {
     const int prepareRc = sqlite3_prepare_v2(m_conn.m_sqliteConn, getSql().c_str(), nByte, &m_stmt, nullptr);
 
