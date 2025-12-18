@@ -3,16 +3,16 @@
 
 lint-cpp:
   stage: lint
-  image:
-    name: $IMAGE_LINT
-    entrypoint: ["/usr/bin/env"]
+  needs: [] # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: always
-  needs: [] # Ensure no artifacts are downloaded
+  image:
+    name: $IMAGE_LINT
+    entrypoint: ["/usr/bin/env"]
   script:
     - cppcheck --xml
                --force
@@ -36,16 +36,16 @@ lint-cpp:
 
 lint-bash:
   stage: lint
-  image:
-    name: $IMAGE_LINT
-    entrypoint: ["/usr/bin/env"]
+  needs: [] # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: always
-  needs: [] # Ensure no artifacts are downloaded
+  image:
+    name: $IMAGE_LINT
+    entrypoint: ["/usr/bin/env"]
   script:
     - all_shell_scripts=( **/*.sh )
     - if [ ${#all_shell_scripts[@]} -eq 0 ]; then echo "No shell scripts"; exit 0; fi
@@ -57,16 +57,16 @@ lint-bash:
 
 lint-python:
   stage: lint
-  image:
-    name: $IMAGE_LINT
-    entrypoint: ["/usr/bin/env"]
+  needs: [] # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: always
-  needs: [] # Ensure no artifacts are downloaded
+  image:
+    name: $IMAGE_LINT
+    entrypoint: ["/usr/bin/env"]
   script:
     - ruff check --output-format gitlab | tee ruff.json | jq -C
   artifacts:
@@ -76,16 +76,31 @@ lint-python:
 
 lint-licenses:
   stage: lint
-  image:
-    name: $IMAGE_LICENSE_CHECK
-    entrypoint: [""]
+  needs: [] # Ensure no artifacts are downloaded
   rules:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: always
-  dependencies: []
+  image:
+    name: $IMAGE_LINT
+    entrypoint: ["/usr/bin/env"]
+  script:
+    - /continuousintegration/checks/check_gitlab_ci_key_order.py .gitlab/
+
+lint-licenses:
+  stage: lint
+  needs: [] # Ensure no artifacts are downloaded
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - when: always
+  image:
+    name: $IMAGE_LICENSE_CHECK
+    entrypoint: [""]
   script:
     - reuse lint
 
@@ -154,11 +169,11 @@ format-report-python:
     - black . --line-length=120 --diff | sed "s|$CI_PROJECT_DIR|$CI_PROJECT_NAME|" > $FORMAT_DIFF
 
 format-apply:
+  allow_failure: true
   stage: lint
   needs:
     - format-report-cpp
     - format-report-python
-  allow_failure: true
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
@@ -184,9 +199,9 @@ format-apply:
 
 
 trigger-sonarcloud:
-  stage: lint
-  needs: []
   allow_failure: true
+  stage: lint
+  needs: [] # Ensure no artifacts are downloaded
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
@@ -206,7 +221,7 @@ trigger-sonarcloud:
 danger-review:
   interruptible: false
   stage: lint
-  needs: []
+  needs: [] # Ensure no artifacts are downloaded
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always

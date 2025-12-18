@@ -58,6 +58,9 @@
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - when: on_success
+  tags: # Used to indicate that these jobs should run on our own runners
+    - kubernetes
+    - mhvtl
   variables:
     TEST_SCRIPT:
     # Passed to the run_systemtest.sh script verbatim
@@ -100,16 +103,13 @@
     expire_in: 30 days
     paths:
       - pod_logs
-  tags: # Used to indicate that these jobs should run on our own runners
-    - kubernetes
-    - mhvtl
 
 # Tests
 
 test-client:
-  stage: system-test
   extends:
     - .kubernetes-test
+  stage: system-test
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400"
@@ -117,27 +117,27 @@ test-client:
     EXTRA_SPAWN_ARGS: "--local-telemetry"
 
 test-client-gfal2:
-  stage: system-test
   extends:
     - .kubernetes-test
+  stage: system-test
   variables:
     TEST_SCRIPT: "tests/test_client_gfal2.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400"
 
 test-repack:
   # test is flaky and we want to prevent cancelling everything
-  retry: 1
-  stage: system-test
   extends:
     - .kubernetes-test
+  retry: 1
+  stage: system-test
   variables:
     TEST_SCRIPT: "tests/test_repack.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400"
 
 test-cta-admin:
-  stage: system-test
   extends:
     - .kubernetes-test
+  stage: system-test
   rules:
     # Skip this test for regressions as it does not test anything new
     # with respect to the other tests we run.
@@ -169,9 +169,9 @@ test-cta-admin:
       allow_failure: true
 
 test-liquibase-update:
-  stage: system-test
   extends:
     - .kubernetes-test
+  stage: system-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
@@ -189,9 +189,9 @@ test-liquibase-update:
     - export EXTRA_SPAWN_ARGS="--catalogue-version ${PREV_CATALOGUE_VERSION}"
 
 test-external-tape-formats:
-  stage: system-test
   extends:
     - .kubernetes-test
+  stage: system-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
@@ -199,26 +199,26 @@ test-external-tape-formats:
     EXTRA_RUN_ARGS: "--test-timeout 2400"
 
 test-regression-dCache:
-  stage: system-test
   extends:
     - .kubernetes-test
+  stage: system-test
   rules:
     - when: manual
       allow_failure: true
     - if: $DCACHE_REGRESSION_TESTS == "TRUE"
       when: on_success
+  tags:
+    - kubernetes
+    - xlarge
   variables:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400 --skip-preflight"
     EXTRA_SPAWN_ARGS: "--cta-config presets/dev-cta-grpc-values.yaml --dcache-enabled true --eos-enabled false"
-  tags:
-    - kubernetes
-    - xlarge
 
 stress-test:
-  timeout: 10 hours
   allow_failure: true
   interruptible: false
+  timeout: 10 hours
   stage: system-test
   needs:
     - job: modify-project-json
@@ -234,6 +234,8 @@ stress-test:
       when: never
     - when: manual
       allow_failure: true # Otherwise this blocks the pipeline
+  tags:
+    - stress
   variables:
     NAMESPACE: stress-${CI_JOB_ID}
     # Passed to the create_instance.sh script verbatim
@@ -285,5 +287,4 @@ stress-test:
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd continuousintegration/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
-  tags:
-    - stress
+

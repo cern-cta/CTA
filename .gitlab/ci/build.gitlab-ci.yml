@@ -37,9 +37,9 @@
 
 # Generic build jobs for rpms and srpms
 build-cta-srpm:
-  stage: build
   extends:
     - .build-cta
+  stage: build
   needs:
     - job: validate-project-json
     - job: modify-project-json
@@ -61,9 +61,9 @@ build-cta-srpm:
                                                   --jobs $(nproc --ignore=1)
 
 build-cta-rpm:
-  stage: build
   extends:
     - .build-cta
+  stage: build
   needs:
     - job: validate-pipeline-variables
     - job: build-cta-srpm
@@ -146,8 +146,8 @@ build-cta-rpm-pgsched:
 
 # Documentation export
 export-docs:
-  needs: []
   stage: build
+  needs: []
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
   script:
