@@ -4,15 +4,11 @@ repos:
     hooks:
       - id: detect-secrets
         args: ['--baseline', '.secrets.baseline']
-  - repo: local
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.8
     hooks:
-      - id: git-clang-format
-        name: git-clang-format
-        entry: git-clang-format
-        language: system
+      - id: clang-format
         types: [c, c++]
-        pass_filenames: false
-
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.14.9
     hooks:
