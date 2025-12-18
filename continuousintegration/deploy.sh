@@ -38,7 +38,6 @@ deploy() {
   local scheduler_config="presets/dev-scheduler-vfs-values.yaml"
   local extra_spawn_options=""
   local local_telemetry=false
-  echo "hi"
 
   # Defaults
   local deploy_namespace="dev"
