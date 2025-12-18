@@ -108,7 +108,7 @@ lint-licenses:
 # Generic format check job template
 # The idea is to extend this, fill in the FORMAT_DIFF variable
 # And then add a before_script: section that populates this FORMAT_DIFF file
-.format:
+.format-report:
   stage: lint
   needs: []  # Ensure no artifacts are downloaded
   rules:
