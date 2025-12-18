@@ -180,7 +180,6 @@ format-python:
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
-    - when: always
     - changes:
         - "**/*.py"
       when: always
