@@ -1,7 +1,13 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-.build-cta:
+build-cta-rpms:
+  stage: build
+  needs:
+    - job: validate-pipeline-variables
+    - job: modify-project-json
+      optional: true
+      artifacts: true
   rules:
     - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never
@@ -30,26 +36,27 @@
     # Ensure we cover any other cases that might trigger this
     - when: on_success
   image: $IMAGE_BUILD
-  artifacts:
-    expire_in: 30 days
-    paths:
-      - ${BUILD_PATH}
-
-# Generic build jobs for rpms and srpms
-build-cta-srpm:
-  extends:
-    - .build-cta
-  stage: build
-  needs:
-    - job: validate-project-json
-    - job: modify-project-json
-      optional: true
-  rules:
-    - !reference [.build-cta, rules]
-    - when: on_success
   variables:
-    BUILD_PATH: "build_srpm/RPM/SRPMS/"
+    BUILD_PATH: "build_rpm/RPM/RPMS"
+    XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
+  before_script:
+    - |
+      if [[ -z "${CI_COMMIT_TAG}" ]]; then
+        export VCS_VERSION=$CTA_BUILD_ID
+        export CTA_VERSION=$BUILD_CTA_VERSION
+      else
+        export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
+        export VCS_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
+      fi
+    - echo "Building package CTA_VERSION=${CTA_VERSION} - CTA_RELEASE=${VCS_VERSION}"
+    - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
+    - |
+      if [[ -z "$XRD_SSI_VERSION" ]]; then
+        echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
+        exit 1
+      fi
   script:
+    # SRPMS
     - ./continuousintegration/build/build_srpm.sh --build-dir build_srpm
                                                   --build-generator "${BUILD_GENERATOR}"
                                                   --create-build-dir
@@ -59,41 +66,8 @@ build-cta-srpm:
                                                   --oracle-support ${ORACLE_SUPPORT}
                                                   --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                                   --jobs $(nproc --ignore=1)
-
-build-cta-rpm:
-  extends:
-    - .build-cta
-  stage: build
-  needs:
-    - job: validate-pipeline-variables
-    - job: build-cta-srpm
-    - job: modify-project-json
-      optional: true
-      artifacts: true
-  rules:
-    - !reference [.build-cta, rules]
-    - when: on_success
-  variables:
-    BUILD_PATH: "build_rpm/RPM/RPMS"
-    XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
-  script:
-    - |
-      if [[ -z "${CI_COMMIT_TAG}" ]]; then
-        export VCS_VERSION=$CTA_BUILD_ID
-        export CTA_VERSION=$BUILD_CTA_VERSION
-      else
-        export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
-        export VCS_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
-        echo "Building package for tag ${CI_COMMIT_TAG}. CTA_VERSION=${CTA_VERSION} - CTA_RELEASE=${VCS_VERSION}"
-      fi
-    - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
-    - |
-      if [[ -z "$XRD_SSI_VERSION" ]]; then
-        echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
-        exit 1
-      fi
+    # RPMS
     - BUILD_OPTIONS=""
-    # For now we automatically skip the unit tests for the postgres scheduler.
     - |
       if [[ "${SKIP_UNIT_TESTS}" == "TRUE" ]]; then
         BUILD_OPTIONS+=" --skip-unit-tests"
@@ -120,27 +94,18 @@ build-cta-rpm:
                                                  --install-srpms
                                                  --platform ${PLATFORM}
                                                  ${BUILD_OPTIONS}
-
+  artifacts:
+    expire_in: 30 days
+    paths:
+      - ${BUILD_PATH}
 
 # This is not (and ideally should not) be used further down the pipeline; this is just a compilation check
-build-cta-srpm-pgsched:
+build-cta-rpms-pgsched:
   extends:
-    - build-cta-srpm
+    - build-cta-rpms
   variables:
     # We don't have a way of separating what the user entered and what the actual value is,
     # so this will always run, even if the pipeline type was already postgres
-    SCHEDULER_TYPE: "pgsched"
-
-build-cta-rpm-pgsched:
-  extends:
-    - build-cta-rpm
-  needs:
-    - job: validate-pipeline-variables
-    - job: build-cta-srpm-pgsched
-    - job: modify-project-json
-      optional: true
-      artifacts: true
-  variables:
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
 

@@ -17,7 +17,7 @@
 test-cta-valgrind:
   stage: test
   needs:
-    - job: build-cta-rpm
+    - job: build-cta-rpms
   rules:
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
@@ -40,7 +40,7 @@ integration-test-cta:
   retry: 1
   stage: test
   needs:
-    - job: build-cta-rpm
+    - job: build-cta-rpms
   rules:
     - if: $CI_COMMIT_TAG
       when: never
@@ -58,7 +58,7 @@ integration-test-cta:
 unit-test-postgresql:
   stage: test
   needs:
-    - job: build-cta-rpm
+    - job: build-cta-rpms
   rules:
     - if: $CI_COMMIT_TAG
       when: never
@@ -101,7 +101,7 @@ unit-test-postgresql:
 unit-test-oracle:
   stage: test
   needs:
-    - job: build-cta-rpm
+    - job: build-cta-rpms
   rules:
     - if: $CI_COMMIT_TAG
       when: never
@@ -139,7 +139,7 @@ unit-test-oracle:
 test-cta-release:
   stage: test
   needs:
-    - job: build-cta-rpm
+    - job: build-cta-rpms
   rules:
     - if: $CI_COMMIT_TAG
       when: never

@@ -4,7 +4,7 @@
 prepare-rootfs:
   stage: sbom
   needs:
-    - job: build-cta-rpm
+    - job: build-cta-rpms
   rules:
     - if: $GENERATE_SBOM == "TRUE"
       when: on_success
