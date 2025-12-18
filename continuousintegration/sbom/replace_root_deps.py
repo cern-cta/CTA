@@ -20,6 +20,7 @@ def get_root_component(sbom):
 def replace_root_dependencies(sbom, prefix) -> None:
     components = sbom.get("components") or []
     dependencies = sbom.get("dependencies") or []
+    print("test with python trigger")
 
     project_ref = get_root_component(sbom)
     ref2comp = {c.get("bom-ref"): c for c in components if c.get("bom-ref")}

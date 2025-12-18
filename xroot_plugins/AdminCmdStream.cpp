@@ -53,7 +53,7 @@ xrd::Response AdminCmdStream::process() {
   xrd::Response response;
 
   utils::Timer t;
-
+  int x = 3;
   try {
     // Map the <Cmd, SubCmd> to a method
     switch (cmd_pair(m_adminCmd.cmd(), m_adminCmd.subcmd())) {
