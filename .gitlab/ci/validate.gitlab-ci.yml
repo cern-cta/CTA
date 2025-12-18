@@ -10,25 +10,21 @@ validate-catalogue-schema-version:
     # For pivot CTA releases: vX.Y.0
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
       when: on_success
-      allow_failure: false
       variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: "-p -t"
     # For non-pivot CTA releases
     - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
       when: on_success
-      allow_failure: false
       variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: "-n -t"
     # Any run on main
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: on_success
-      allow_failure: false
       variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
     # For all other scenarios, manual run only
     - when: on_success
-    - allow_failure: false
-    - variables:
+      variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   script:
     - ./continuousintegration/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
