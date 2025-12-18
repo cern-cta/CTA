@@ -87,7 +87,7 @@ lint-licenses:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
   script:
-    - /continuousintegration/checks/check_gitlab_ci_key_order.py .gitlab/
+    - ptyhon3 continuousintegration/checks/check_gitlab_ci_key_order.py .gitlab/
 
 lint-licenses:
   stage: lint
