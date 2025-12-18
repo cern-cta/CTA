@@ -34,7 +34,7 @@ build-ctageneric-from-local-rpms:
   extends:
     - .build-image
   needs:
-    - job: build-cta-rpm
+    - job: build-cta-rpms
     - job: modify-project-json
       optional: true
   rules:
@@ -80,7 +80,7 @@ build-images:
     - .build-image
   allow_failure: true  # Don't block the pipeline
   needs:
-    - job: build-cta-rpm
+    - job: build-cta-rpms
     - job: modify-project-json
       optional: true
   rules:
