@@ -169,36 +169,6 @@ format-report-python:
     - echo "Running black on all Python files"
     - black . --line-length=120 --diff | sed "s|$CI_PROJECT_DIR|$CI_PROJECT_NAME|" > $FORMAT_DIFF
 
-format-apply:
-  allow_failure: true
-  stage: lint
-  needs:
-    - format-report-cpp
-    - format-report-python
-  rules:
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      when: manual
-  image: $IMAGE_LINT
-  variables:
-    REPO_REMOTE: https://gitlab-ci-token:${CI_PUSH_TOKEN}@${CI_SERVER_HOST}/${CI_PROJECT_PATH}.git
-    DIFF_DIRECTORY: artifacts
-  before_script:
-    - git config user.email $GITLAB_USER_EMAIL
-    - git config user.name $GITLAB_USER_LOGIN
-  script:
-    - |
-      if [[ $(ls $DIFF_DIRECTORY | wc -l) -lt 1 ]]; then
-        echo "No formatting diffs found to apply"
-        exit 0;
-      fi
-    - |
-      for diff_file in $DIFF_DIRECTORY/*; do
-        cat "$diff_file" | patch -p1
-      done
-    - git commit -am "Applied all formatting diffs"
-    - git push $REPO_REMOTE HEAD:$CI_COMMIT_REF_NAME
-
-
 trigger-sonarcloud:
   allow_failure: true
   stage: lint
