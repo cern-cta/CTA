@@ -9,7 +9,16 @@ lint-cpp:
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
-    - when: always
+    - changes:
+        - "**/*.c"
+        - "**/*.h"
+        - "**/*.cpp"
+        - "**/*.hpp"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
   image:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
@@ -42,7 +51,13 @@ lint-bash:
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
-    - when: always
+    - changes:
+        - "**/*.sh"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
   image:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
@@ -63,7 +78,13 @@ lint-python:
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
-    - when: always
+    - changes:
+        - "**/*.py"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
   image:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
@@ -82,7 +103,14 @@ lint-yaml:
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
-    - when: always
+    - changes:
+        - "**/*.yaml"
+        - "**/*.yml"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
   image:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
@@ -176,6 +204,8 @@ format-cpp:
         - "**/*.cpp"
         - "**/*.hpp"
       when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
     - when: manual
       allow_failure: true
   variables:
@@ -197,6 +227,8 @@ format-python:
       when: never
     - changes:
         - "**/*.py"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
     - when: manual
       allow_failure: true
