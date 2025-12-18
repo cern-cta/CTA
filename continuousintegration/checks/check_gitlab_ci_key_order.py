@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import sys
 from pathlib import Path
 import yaml
@@ -36,6 +39,7 @@ IGNORED_TOP_LEVEL_KEYS = {
 
 
 # ---- GitLab-aware YAML loader ----------------------------------------------
+
 
 class GitLabLoader(yaml.SafeLoader):
     pass
