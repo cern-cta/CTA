@@ -5,43 +5,43 @@
 # These are also the only tests executed on our personal runners instead of the GitLab runners
 
 .setup-k8s-test-variables: &setup-k8s-test-variables
-    - | # Which scheduler config to use
-      if [[ $SCHEDULER_TYPE == "objectstore" ]]; then
-        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
+  - | # Which scheduler config to use
+    if [[ $SCHEDULER_TYPE == "objectstore" ]]; then
+      SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
+    else
+      SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
+    fi
+  - | # Which catalogue config to use
+    if [[ $ORACLE_SUPPORT == "TRUE" ]]; then
+      CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
+    else
+      CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
+    fi
+  - | # Which image tag to use
+    if [[ $PIPELINE_TYPE == "SYSTEM_TEST_ONLY" ]]; then
+      if [[ -z "$CUSTOM_SYSTEM_TEST_IMAGE_TAG" ]]; then
+        IMAGE_TAG=$(./continuousintegration/utils/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
       else
-        SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
+        IMAGE_TAG=$CUSTOM_SYSTEM_TEST_IMAGE_TAG
       fi
-    - | # Which catalogue config to use
-      if [[ $ORACLE_SUPPORT == "TRUE" ]]; then
-        CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
+    else
+      IMAGE_TAG=$CTA_BUILD_ID
+    fi
+  # If we are testing from a CTA tag, get the Catalogue version for that tag
+  - |
+    if [[ -n "${CUSTOM_CTA_VERSION}" ]]; then
+      git fetch --tags --force
+      if git checkout "tags/$CUSTOM_CTA_VERSION" -- project.json; then
+        catalogue_version=$(jq -r '.catalogueVersion' project.json)
+        git restore project.json
       else
-        CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
+        # If the project.json does not exist, just assume catalogue version 15.0
+        catalogue_version=15.0
       fi
-    - | # Which image tag to use
-      if [[ $PIPELINE_TYPE == "SYSTEM_TEST_ONLY" ]]; then
-        if [[ -z "$CUSTOM_SYSTEM_TEST_IMAGE_TAG" ]]; then
-          IMAGE_TAG=$(./continuousintegration/utils/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
-        else
-          IMAGE_TAG=$CUSTOM_SYSTEM_TEST_IMAGE_TAG
-        fi
-      else
-        IMAGE_TAG=$CTA_BUILD_ID
-      fi
-    # If we are testing from a CTA tag, get the Catalogue version for that tag
-    - |
-      if [[ -n "${CUSTOM_CTA_VERSION}" ]]; then
-        git fetch --tags --force
-        if git checkout "tags/$CUSTOM_CTA_VERSION" -- project.json; then
-          catalogue_version=$(jq -r '.catalogueVersion' project.json)
-          git restore project.json
-        else
-          # If the project.json does not exist, just assume catalogue version 15.0
-          catalogue_version=15.0
-        fi
-        EXTRA_SPAWN_ARGS+=" --catalogue-version ${catalogue_version}"
-      fi
-    # Export all variables here so that it is clear which ones are available
-    - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
+      EXTRA_SPAWN_ARGS+=" --catalogue-version ${catalogue_version}"
+    fi
+  # Export all variables here so that it is clear which ones are available
+  - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
 
 
 .kubernetes-test:
@@ -49,7 +49,7 @@
     - job: modify-project-json
       optional: true
     - job: build-ctageneric-from-local-rpms
-      optional: true # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
+      optional: true  # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
     - job: build-ctageneric-from-remote-rpms
       optional: true
   rules:
@@ -58,7 +58,7 @@
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - when: on_success
-  tags: # Used to indicate that these jobs should run on our own runners
+  tags:  # Used to indicate that these jobs should run on our own runners
     - kubernetes
     - mhvtl
   variables:
@@ -141,7 +141,7 @@ test-cta-admin:
   rules:
     # Skip this test for regressions as it does not test anything new
     # with respect to the other tests we run.
-    - if:  $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
     - !reference [.kubernetes-test, rules]
   variables:
@@ -224,7 +224,7 @@ stress-test:
     - job: modify-project-json
       optional: true
     - job: build-ctageneric-from-local-rpms
-      optional: true # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
+      optional: true  # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
     - job: build-ctageneric-from-remote-rpms
       optional: true
   rules:
@@ -233,7 +233,7 @@ stress-test:
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - when: manual
-      allow_failure: true # Otherwise this blocks the pipeline
+      allow_failure: true  # Otherwise this blocks the pipeline
   tags:
     - stress
   variables:
@@ -287,4 +287,3 @@ stress-test:
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd continuousintegration/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
-

@@ -42,10 +42,10 @@ variables:
     description: "Custom XRootD version to use for building and running."
     value: ""
   CUSTOM_CTA_VERSION:
-    description: "Custom CTA version to build a docker image from and test with. Must exist in the CTA testing repo. Should only be used when the PIPELINE_TYPE != DEFAULT."
+    description: "Custom CTA version to build a docker image from and test with. Must exist in the CTA testing repo. Should only be used when PIPELINE_TYPE != DEFAULT."
     value: ""
   CUSTOM_SYSTEM_TEST_IMAGE_TAG:
-    description: "Custom image tag to run the systemtests against. If left empty, the latest image tag from main will be used. Should only be used when the PIPELINE_TYPE = SYSTEM_TEST_ONLY."
+    description: "Custom image tag to run the systemtests against. If left empty, the latest image tag from main will be used. Should only be used when PIPELINE_TYPE = SYSTEM_TEST_ONLY."
     value: ""
 
   PLATFORM:
@@ -181,8 +181,8 @@ variables:
   # Git CI Configuration
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
-  GIT_DEPTH: 1 # Enforce a shallow clone of the main repo
-  GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
+  GIT_DEPTH: 1  # Enforce a shallow clone of the main repo
+  GIT_SUBMODULE_DEPTH: 0  # Full clone of the submodules
 
   # Job output configuration
   FF_TIMESTAMPS: true

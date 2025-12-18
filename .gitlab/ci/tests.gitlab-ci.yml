@@ -148,7 +148,7 @@ test-cta-release:
     - when: on_success
   image: $IMAGE_TEST
   variables:
-    GIT_STRATEGY: none # We don't need the repo clone here
+    GIT_STRATEGY: none  # We don't need the repo clone here
     CTAREPODIR: /tmp/repo
   script:
     - mkdir -p ${CTAREPODIR}

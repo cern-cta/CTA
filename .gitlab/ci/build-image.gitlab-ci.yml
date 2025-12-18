@@ -78,7 +78,7 @@ build-ctageneric-from-remote-rpms:
 build-images:
   extends:
     - .build-image
-  allow_failure: true # Don't block the pipeline
+  allow_failure: true  # Don't block the pipeline
   needs:
     - job: build-cta-rpm
     - job: modify-project-json

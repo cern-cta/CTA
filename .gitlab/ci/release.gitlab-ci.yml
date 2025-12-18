@@ -3,7 +3,7 @@
 
 changelog-preview:
   stage: release
-  needs: [] # Ensure this job can be triggered at the beginning if necessary
+  needs: []  # Ensure this job can be triggered at the beginning if necessary
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -15,7 +15,7 @@ changelog-preview:
       allow_failure: true
   image: $IMAGE_RELEASE
   variables:
-    GIT_DEPTH: 0 # Ensure we don't do a shallow clone here as we might need to find the latest tag
+    GIT_DEPTH: 0  # Ensure we don't do a shallow clone here as we might need to find the latest tag
     TO_COMMIT: "HEAD"
     FROM_REF: ""
     RELEASE_VERSION: ""
@@ -167,4 +167,3 @@ public-release-cta-stable:
                                                        --cta-version ${CTA_VERSION}
     - REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/el9/cta/x86_64"
     - ./continuousintegration/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
-
