@@ -3,7 +3,6 @@
 
 .build-image:
   stage: build:image
-  retry: 1
   rules:
     - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never
@@ -77,9 +76,9 @@ build-ctageneric-from-remote-rpms:
 ###############################################
 
 build-images:
-  allow_failure: true # Don't block the pipeline
   extends:
     - .build-image
+  allow_failure: true  # Don't block the pipeline
   needs:
     - job: build-cta-rpm
     - job: modify-project-json

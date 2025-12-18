@@ -8,8 +8,8 @@ resetImage:
   tag: ""
   pullPolicy: IfNotPresent
   pullSecrets:
-  - ctaregsecret
-  - reg-ctageneric
+    - ctaregsecret
+    - reg-ctageneric
 
 # configuration:
 #   backend: "" # Options: vfs, vfsDeprecated ceph, postgres

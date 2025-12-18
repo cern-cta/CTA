@@ -9,18 +9,18 @@ version: 0.2.0
 appVersion: "5.11.10.1"
 
 dependencies:
-- name: frontend
-  repository: "file://../frontend"
-  version: 0.2.0
-- name: cli
-  repository: "file://../cli"
-  version: 0.2.0
-- name: client
-  repository: "file://../client"
-  version: 0.2.0
-- name: tpsrv
-  repository: "file://../tpsrv"
-  version: 0.2.0
-- name: maintd
-  repository: "file://../maintd"
-  version: 0.2.0
+  - name: frontend
+    repository: "file://../frontend"
+    version: 0.2.0
+  - name: cli
+    repository: "file://../cli"
+    version: 0.2.0
+  - name: client
+    repository: "file://../client"
+    version: 0.2.0
+  - name: tpsrv
+    repository: "file://../tpsrv"
+    version: 0.2.0
+  - name: maintd
+    repository: "file://../maintd"
+    version: 0.2.0

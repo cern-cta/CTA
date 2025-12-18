@@ -42,10 +42,10 @@ variables:
     description: "Custom XRootD version to use for building and running."
     value: ""
   CUSTOM_CTA_VERSION:
-    description: "Custom CTA version to build a docker image from and test with. Must exist in the CTA testing repo. Should only be used when the PIPELINE_TYPE != DEFAULT."
+    description: "Custom CTA version to build a docker image from and test with. Must exist in the CTA testing repo. Should only be used when PIPELINE_TYPE != DEFAULT."
     value: ""
   CUSTOM_SYSTEM_TEST_IMAGE_TAG:
-    description: "Custom image tag to run the systemtests against. If left empty, the latest image tag from main will be used. Should only be used when the PIPELINE_TYPE = SYSTEM_TEST_ONLY."
+    description: "Custom image tag to run the systemtests against. If left empty, the latest image tag from main will be used. Should only be used when PIPELINE_TYPE = SYSTEM_TEST_ONLY."
     value: ""
 
   PLATFORM:
@@ -181,15 +181,15 @@ variables:
   # Git CI Configuration
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
-  GIT_DEPTH: 1 # Enforce a shallow clone of the main repo
-  GIT_SUBMODULE_DEPTH: 0 # Full clone of the submodules
+  GIT_DEPTH: 1  # Enforce a shallow clone of the main repo
+  GIT_SUBMODULE_DEPTH: 0  # Full clone of the submodules
 
   # Job output configuration
   FF_TIMESTAMPS: true
 
   # Images
   IMAGE_DEFAULT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2025-12-09-13553555.el9
-  IMAGE_LINT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2025-12-09-13553555.el9
+  IMAGE_LINT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2025-12-18-13624966.el9
   IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2025-12-09-13553555.el9
   IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2025-12-09-13553555.el9
   IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2025-12-09-13553555.el9

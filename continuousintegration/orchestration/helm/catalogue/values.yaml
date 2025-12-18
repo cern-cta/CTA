@@ -3,11 +3,11 @@
 
 resetImage:
   repository: gitlab-registry.cern.ch/cta/ctageneric
-  tag: ""
+  tag: "latest"
   pullPolicy: IfNotPresent
   pullSecrets:
-  - ctaregsecret
-  - reg-ctageneric
+    - ctaregsecret
+    - reg-ctageneric
 
 resetCatalogue: false
 

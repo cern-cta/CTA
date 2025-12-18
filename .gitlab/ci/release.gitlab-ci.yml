@@ -3,7 +3,7 @@
 
 changelog-preview:
   stage: release
-  needs: [] # Ensure this job can be triggered at the beginning if necessary
+  needs: []  # Ensure this job can be triggered at the beginning if necessary
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
@@ -15,7 +15,7 @@ changelog-preview:
       allow_failure: true
   image: $IMAGE_RELEASE
   variables:
-    GIT_DEPTH: 0 # Ensure we don't do a shallow clone here as we might need to find the latest tag
+    GIT_DEPTH: 0  # Ensure we don't do a shallow clone here as we might need to find the latest tag
     TO_COMMIT: "HEAD"
     FROM_REF: ""
     RELEASE_VERSION: ""
@@ -89,11 +89,11 @@ internal-release-cta:
   stage: release
   needs:
     - build-cta-rpm
-  image: $IMAGE_RELEASE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
+  image: $IMAGE_RELEASE
   script:
     - echo "Publishing to internal CTA repository"
     - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
@@ -106,11 +106,11 @@ public-release-cta-unstable:
   stage: release
   needs:
     - internal-release-cta
-  image: $IMAGE_RELEASE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
+  image: $IMAGE_RELEASE
   script:
     - export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
     - echo "Publishing CTA version ${CTA_VERSION} to unstable CTA repository"
@@ -127,11 +127,11 @@ public-release-cta-testing:
   stage: release
   needs:
     - internal-release-cta
-  image: $IMAGE_RELEASE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
+  image: $IMAGE_RELEASE
   script:
     - export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
     - echo "Publishing CTA version ${CTA_VERSION} to testing CTA repository"
@@ -151,11 +151,11 @@ public-release-cta-stable:
     # Anything in stable must also be in unstable and testing
     - public-release-cta-unstable
     - public-release-cta-testing
-  image: $IMAGE_RELEASE
   rules:
     - if: $CI_COMMIT_TAG
       when: manual
       allow_failure: true
+  image: $IMAGE_RELEASE
   script:
     - export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
     - echo "Publishing CTA version ${CTA_VERSION} to public CTA repository"
@@ -167,4 +167,3 @@ public-release-cta-stable:
                                                        --cta-version ${CTA_VERSION}
     - REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/el9/cta/x86_64"
     - ./continuousintegration/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
-

@@ -26,14 +26,12 @@ global:
   # So this means not all log-related writes go to an SSD
   extraVolumes:
     volumes:
-    - name: logstorage
-      persistentVolumeClaim:
-        claimName: logstorage-pvc
+      - name: logstorage
+        persistentVolumeClaim:
+          claimName: logstorage-pvc
     volumeMounts:
-    - name: logstorage
-      mountPath: /mnt/logs
-
-
+      - name: logstorage
+        mountPath: /mnt/logs
 
 frontend:
   preRun:

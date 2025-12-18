@@ -68,7 +68,7 @@ preRun:
 postRun:
   enabled: false
   script: |
-  #!/usr/bin/bash
+    #!/usr/bin/bash
 
 pod:
   extraSpec:

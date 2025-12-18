@@ -69,13 +69,13 @@ mgm:
     liveness: false
 
   extraEnv:
-  - name: EOS_HA_REDIRECT_READS
-    value: "1"
-  - name: LD_PRELOAD
-    value: "/usr/lib64/libjemalloc.so.2"
-  # For some reason EOS is on another time zone, so set this to CET
-  - name: TZ
-    value: "CET"
+    - name: EOS_HA_REDIRECT_READS
+      value: "1"
+    - name: LD_PRELOAD
+      value: "/usr/lib64/libjemalloc.so.2"
+    # For some reason EOS is on another time zone, so set this to CET
+    - name: TZ
+      value: "CET"
 
   # Generate the self-signed certificates for http
   initContainer:
@@ -85,22 +85,22 @@ mgm:
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
     volumeMounts:
-    - name: grid-security
-      mountPath: /etc/grid-security
+      - name: grid-security
+        mountPath: /etc/grid-security
 
   extraVolumes:
     volumeMounts:
-    # varlog-tmp is the location where core dumps will end up
-    - name: varlog-tmp
-      mountPath: /var/log/tmp
-    - name: grid-security
-      mountPath: /etc/grid-security
-      readOnly: true
+      # varlog-tmp is the location where core dumps will end up
+      - name: varlog-tmp
+        mountPath: /var/log/tmp
+      - name: grid-security
+        mountPath: /etc/grid-security
+        readOnly: true
     volumes:
-    - name: varlog-tmp
-      emptyDir: {}
-    - name: grid-security
-      emptyDir: {}
+      - name: varlog-tmp
+        emptyDir: {}
+      - name: grid-security
+        emptyDir: {}
 
 fst:
   replicaCount: 1
@@ -122,8 +122,8 @@ fst:
     liveness: false
 
   extraEnv:
-  - name: TZ
-    value: "CET"
+    - name: TZ
+      value: "CET"
 
   initContainer:
     enabled: true
@@ -132,21 +132,21 @@ fst:
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
     volumeMounts:
-    - name: grid-security
-      mountPath: /etc/grid-security
+      - name: grid-security
+        mountPath: /etc/grid-security
 
   extraVolumes:
     volumeMounts:
-    - name: varlog-tmp
-      mountPath: /var/log/tmp
-    - name: grid-security
-      mountPath: /etc/grid-security
-      readOnly: true
+      - name: varlog-tmp
+        mountPath: /var/log/tmp
+      - name: grid-security
+        mountPath: /etc/grid-security
+        readOnly: true
     volumes:
-    - name: varlog-tmp
-      emptyDir: {}
-    - name: grid-security
-      emptyDir: {}
+      - name: varlog-tmp
+        emptyDir: {}
+      - name: grid-security
+        emptyDir: {}
 
 qdb:
   replicaCount: 1
@@ -156,10 +156,10 @@ qdb:
       terminationGracePeriodSeconds: 1
 
   extraEnv:
-  - name: LD_PRELOAD
-    value: "/usr/lib64/libjemalloc.so.2"
-  - name: TZ
-    value: "CET"
+    - name: LD_PRELOAD
+      value: "/usr/lib64/libjemalloc.so.2"
+    - name: TZ
+      value: "CET"
 
   probes:
     liveness: false

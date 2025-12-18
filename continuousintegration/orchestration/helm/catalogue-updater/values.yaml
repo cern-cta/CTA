@@ -6,8 +6,8 @@ image:
   tag: "alma9-base.1"
   pullPolicy: IfNotPresent
   pullSecrets:
-  - ctaregsecret
-  - reg-eoscta-operations
+    - ctaregsecret
+    - reg-eoscta-operations
 
 catalogueSourceVersion: ""
 

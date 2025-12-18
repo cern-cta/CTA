@@ -29,4 +29,3 @@ extraVolumes:
     - name: grpc-certs
       mountPath: /etc/grpc-certs
       readOnly: true
-

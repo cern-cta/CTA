@@ -63,4 +63,3 @@ modify-project-json:
     paths:
       - project.json
   when: on_success
-

@@ -8,8 +8,8 @@ global:
     tag: ""
     pullPolicy: IfNotPresent
     pullSecrets:
-    - ctaregsecret
-    - reg-ctageneric
+      - ctaregsecret
+      - reg-ctageneric
 
   #
   # Define extra arbitrary Kubernetes objects (secrets, configmaps, static PVs, etc.) as items in a list.
@@ -36,16 +36,16 @@ global:
   # This shared mount is to be removed once vfsDeprecated is removed
   extraVolumes:
     volumes:
-    - name: shared
-      hostPath:
-        path: /opt/cta
-    - name: coredumps
-      emptyDir: {}
+      - name: shared
+        hostPath:
+          path: /opt/cta
+      - name: coredumps
+        emptyDir: {}
     volumeMounts:
-    - name: shared
-      mountPath: /shared
-    - name: coredumps
-      mountPath: /var/log/tmp
+      - name: shared
+        mountPath: /shared
+      - name: coredumps
+        mountPath: /var/log/tmp
 
 
   securityContext:

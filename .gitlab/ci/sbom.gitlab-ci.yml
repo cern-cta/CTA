@@ -3,13 +3,13 @@
 
 prepare-rootfs:
   stage: sbom
-  image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
   needs:
     - job: build-cta-rpm
   rules:
     - if: $GENERATE_SBOM == "TRUE"
       when: on_success
     - when: never
+  image: gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
   variables:
     ROOTFS: '/tmp/installroot'
     CTA_RPMS_PATH: "build_rpm/RPM/RPMS"
@@ -49,13 +49,13 @@ prepare-rootfs:
 
 generate-sbom-trivy:
   stage: sbom
-  image: registry.cern.ch/docker.io/aquasec/trivy:canary
   needs:
     - job: prepare-rootfs
   rules:
     - if: $GENERATE_SBOM == "TRUE"
       when: on_success
     - when: never
+  image: registry.cern.ch/docker.io/aquasec/trivy:canary
   variables:
     SBOM_OUT_PATH: sboms/sbom-trivy.json
     ROOTFS: '/tmp/installroot'
@@ -77,13 +77,13 @@ generate-sbom-trivy:
 
 enrich-sbom-cern-info:
   stage: sbom
-  image: registry.cern.ch/code-scanners/sbom-helper:latest
   needs:
     - job: generate-sbom-trivy
   rules:
     - if: $GENERATE_SBOM == "TRUE"
       when: on_success
     - when: never
+  image: registry.cern.ch/code-scanners/sbom-helper:latest
   variables:
     SBOM_IN_FILE: sboms/sbom-trivy.json
     SBOM_OUT_FILE: sboms/cta.cdx.json
@@ -109,13 +109,13 @@ enrich-sbom-cern-info:
 
 score-sbom:
   stage: sbom
-  image: registry.cern.ch/ghcr.io/interlynk-io/sbomqs
   needs:
     - job: enrich-sbom-cern-info
   rules:
     - if: $GENERATE_SBOM == "TRUE"
       when: on_success
     - when: never
+  image: registry.cern.ch/ghcr.io/interlynk-io/sbomqs
   variables:
     # Can be used for e.g. --detailed
     EXTRA_FLAGS: ""
