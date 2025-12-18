@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2025 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 // required tests: expired token, token with bad field
 
 #include "ValidateToken.hpp"

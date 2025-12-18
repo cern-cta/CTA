@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -23,10 +11,10 @@
 
 namespace cta::tape::daemon {
 
-/** 
+/**
  * The interface to classes managing subprocesses. It allows an external loop
  * to handle global polling and timeouts for a set of them. Several children
- * classes are expected to be developed: a DriveHandler, a MaintenanceHandler 
+ * classes are expected to be developed: a DriveHandler, a MaintenanceHandler
  * and a SignalHandler (using signalfd()).
  * The main loop will typically be:
  * statuses[] = [all]->getInitialStatus(); // This implicitly registers the right fds in epoll (if needed)
@@ -46,8 +34,8 @@ namespace cta::tape::daemon {
  *        statuses[] = [all]->postFork()
  *   Compute the next timeout statuses[all].timeToTimeout
  *   epoll()
- * 
- * This loop allows cooperative preparation for forking, and cleanup after the 
+ *
+ * This loop allows cooperative preparation for forking, and cleanup after the
  * fork. This could be as simple as a pre-fork noop and a closing of child
  * communication sockets post fork (child side).
  * TODO: post-fork is not yet implemented.
@@ -92,16 +80,16 @@ public:
   virtual ProcessingStatus refreshLogger() = 0;
   /** Instructs the handler to initiate a clean shutdown and update its status */
   virtual ProcessingStatus shutdown() = 0;
-  /** Instructs the handler to kill its subprocess immediately. The process 
+  /** Instructs the handler to kill its subprocess immediately. The process
    * should be gone upon return. */
   virtual void kill() = 0;
   /** Cleanup anything that should be in the child process */
   virtual void postForkCleanup() = 0;
-  /** Instructs the handler to proceed with the fork it requested (returns 
+  /** Instructs the handler to proceed with the fork it requested (returns
    * which side of the fork we are in) */
   virtual ProcessingStatus fork() = 0;
-  /** Instructs the handler to run the intended function. We are in the new 
-   * process and it's all his. This function should return the exit() code or 
+  /** Instructs the handler to run the intended function. We are in the new
+   * process and it's all his. This function should return the exit() code or
    * call exit() itself */
   virtual int runChild() = 0;
 };

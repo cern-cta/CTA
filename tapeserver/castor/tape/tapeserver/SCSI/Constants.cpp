@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "Constants.hpp"
@@ -30,9 +18,9 @@ std::string castor::tape::SCSI::tapeAlertToString(uint16_t parameterCode) {
     return ret.str();
   }
   switch (parameterCode) {
-    /* This is generated with the following small perl and a copy-paste from SSC-3: 
+    /* This is generated with the following small perl and a copy-paste from SSC-3:
        * #!/usr/bin/perl -w
-       * 
+       *
        * my $step=0;
        * while (<>) {
        *         chomp;
@@ -298,7 +286,7 @@ bool castor::tape::SCSI::isTapeAlertCriticalForWrite(const uint16_t code) {
 /**
  * Turn a SCSI status code into a string
  * @param status
- * @return 
+ * @return
  */
 std::string castor::tape::SCSI::statusToString(unsigned char status) {
   switch (status) {

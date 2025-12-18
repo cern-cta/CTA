@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 global:
   # Note that the repository and tag are manually overriden by the create_instance script
   repository:

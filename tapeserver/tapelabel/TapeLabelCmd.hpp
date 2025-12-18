@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -113,8 +101,8 @@ private:
    */
   std::string m_oldLabel;
 
-  /** 
-   * Encryption helper object 
+  /**
+   * Encryption helper object
    */
   castor::tape::tapeserver::daemon::EncryptionControl m_encryptionControl {false, ""};
 
@@ -200,7 +188,7 @@ private:
    *
    * @param drive Object representing the drive hardware.
    * @param timeoutSecond The number of seconds to wait for the tape to be
-   * loaded into the tape drive. 
+   * loaded into the tape drive.
    */
   void waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface& drive, const int timeoutSecond);
 
@@ -247,10 +235,10 @@ private:
 
   /**
    * Checks the specified tape on the specified tape drive.
-   * This method assumes that the drive has the tape and the tape has been rewound. 
+   * This method assumes that the drive has the tape and the tape has been rewound.
    * It checks the tape label from the VOL1 tape header on the tape against given label
    * and throws an exception in case of labels mismatch. This method leaves tape rewound.
-   *  
+   *
    * @param drive The tape drive.
    * @param labelToCheck The label for what the tape should be checked for.
    */

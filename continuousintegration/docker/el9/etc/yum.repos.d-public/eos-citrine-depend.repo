@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 [cta-eos-diopside]
 name=EOS diopside releases from EOS project
 baseurl=https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-$releasever/$basearch/

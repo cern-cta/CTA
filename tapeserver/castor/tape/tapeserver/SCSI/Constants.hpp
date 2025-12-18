@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
@@ -22,7 +10,7 @@
 
 namespace castor::tape::SCSI {
 
-/* Extracted from linux kernel's include/scsi/scsi.h. System-level include 
+/* Extracted from linux kernel's include/scsi/scsi.h. System-level include
    is less complete */
 class Types {
 public:
@@ -635,7 +623,7 @@ public:
 
 class senseConstants {
 public:
-  /* Structures from the Linux Kernel. It holds ASC/ASCQ to string 
+  /* Structures from the Linux Kernel. It holds ASC/ASCQ to string
      * translations (from http://www.t10.org/lists/asc-num.txt) */
   struct error_info {
     uint16_t code12; /* 0x0302 looks better than 0x03,0x02 */
@@ -681,7 +669,7 @@ public:
 };
 
 /**
-   * Logic block protection as defined in SSC-5 (latest drafts) 
+   * Logic block protection as defined in SSC-5 (latest drafts)
    * 8.4.9 Control Data Protection mode page
    */
 
@@ -707,7 +695,7 @@ public:
 /**
    * Turn a LBP method code into a string
    * @param LBPmethod  The integer presentation of Logical Block Protection method
-   * @return           The string presentation for LBP method or Unknown if method 
+   * @return           The string presentation for LBP method or Unknown if method
    *                   unknown.
    */
 std::string LBPMethodToString(const unsigned char LBPMethod);

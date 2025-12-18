@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 [Unit]
 Description=gRPC frontend for CERN Tape Archive (CTA)
 After=network-online.target

@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 apiVersion: v2
 name: cta
 description: Umbrella chart that spawns a fully fledged CTA instance. Requires a disk buffer instance to be spawned separately.

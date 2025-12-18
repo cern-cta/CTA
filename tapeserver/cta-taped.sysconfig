@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # Environment variables to configue the libXrdCl.so linked with cta-taped
 #
 # These two variables set the authentication mechanism to Simple Shared Secret

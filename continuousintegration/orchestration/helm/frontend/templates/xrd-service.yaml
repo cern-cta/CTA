@@ -1,3 +1,8 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
 {{- if .Values.xrd.enabled }}
 {{- $name := include "ctafrontend.fullname" . }}
 apiVersion: v1

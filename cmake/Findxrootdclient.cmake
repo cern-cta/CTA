@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # - Find xrootclient
 # Finds the header files of xrootd-devel by searching for XrdVersion.hh
 #

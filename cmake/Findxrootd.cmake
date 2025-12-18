@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 # - Find xroot
 # Finds the header files of xrootd-devel by searching for XrdVersion.hh
 # Finds the header files of xrootd-private-devel by searching for XrdOssApi.hh

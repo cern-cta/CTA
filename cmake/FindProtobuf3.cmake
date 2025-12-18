@@ -1,3 +1,9 @@
+# SPDX-FileCopyrightText: 2009 Kitware, Inc.
+# SPDX-FileCopyrightText: 2009-2011 Philip Lowman <philip@yhbt.com>
+# SPDX-FileCopyrightText: 2008 Esben Mose Hansen, Ange Optimization ApS
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: BSD-3-Clause
+
 # From, https://raw.githubusercontent.com/Kitware/CMake/master/Modules/FindProtobuf.cmake
 # cut down to solve our problem and nothing more
 #=============================================================================
@@ -67,7 +73,7 @@ function(PROTOBUF3_GENERATE_CPP SRCS HDRS)
       ARGS --cpp_out  ${CMAKE_CURRENT_BINARY_DIR} ${_protobuf_include_path} ${ABS_FIL}
       DEPENDS ${ABS_FIL}
       COMMENT "Running C++ protocol buffer compiler on ${FIL}"
-      VERBATIM ) 
+      VERBATIM )
   endforeach()
 
   set_source_files_properties(${${SRCS}} ${${HDRS}} PROPERTIES GENERATED TRUE)

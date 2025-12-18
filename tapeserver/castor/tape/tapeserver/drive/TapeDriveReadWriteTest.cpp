@@ -1,18 +1,6 @@
 /*
- * @project      The CERN Tape Archive (CTA)
- * @copyright    Copyright © 2021-2022 CERN
- * @license      This program is free software, distributed under the terms of the GNU General Public
- *               Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
- *               redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
- *               option) any later version.
- *
- *               This program is distributed in the hope that it will be useful, but WITHOUT ANY
- *               WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
- *               PARTICULAR PURPOSE. See the GNU General Public License for more details.
- *
- *               In applying this licence, CERN does not waive the privileges and immunities
- *               granted to it by virtue of its status as an Intergovernmental Organization or
- *               submit itself to any jurisdiction.
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 /**
@@ -30,7 +18,7 @@
 namespace {
 /*
  * Prints and compares the current position with the expected one. Returns on
- * success (expected value is the same as the actual value), or else fails the 
+ * success (expected value is the same as the actual value), or else fails the
  * assertion and exits.
  * @param expected_position expected position
  */
@@ -43,7 +31,7 @@ void print_and_assert_position(castor::tape::tapeserver::drive::DriveInterface& 
 
 /*
  * Prints and compares the current data read with the expected one. Returns on
- * success (expected value is the same as the actual value), or else fails the 
+ * success (expected value is the same as the actual value), or else fails the
  * assertion and exits.
  * @param expected_data expected data
  */
@@ -70,7 +58,7 @@ int main() {
 
         /**
          * From now we could use generic SCSI request for the drive object.
-         * We should be aware that there might be a problem with tape in the 
+         * We should be aware that there might be a problem with tape in the
          * drive for example incompatible media installed.
          */
 
@@ -111,7 +99,7 @@ int main() {
         drive->enableCRC32CLogicalBlockProtectionReadWrite();
 
         try {
-          /** 
+          /**
            * We will write on the tape, so prepare 2 blocks
            */
           std::cout << "-- INFO --------------------------------------" << std::endl

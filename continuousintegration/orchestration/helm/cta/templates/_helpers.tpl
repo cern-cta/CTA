@@ -1,3 +1,8 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
 {{/* Define a helper function to generate the scheduler URL based on backend type */}}
 {{- define "global.schedulerUrl" -}}
 {{- $schedulerConfig := .Values.global.configuration.scheduler }}

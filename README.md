@@ -40,6 +40,19 @@ CTA is designed to operate on physical tape infrastructure and is used in combin
 
 ## License
 
+CTA is licensed under [GPL Version 3](https://gitlab.cern.ch/cta/CTA/-/blob/main/COPYING?ref_type=heads) and uses [SPDX](https://spdx.dev) identifiers for machine-readable licensing information.
+All files must therefore include an SPDX header at the top of the file:
+
+```text
+SPDX-FileCopyrightText: <year of creation> CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+```
+
+External contributors are encouraged to add their own `SPDX-FileCopyrightText` line for new files or significant contributions. Files may therefore contain multiple copyright lines.
+
+All files must include an SPDX license identifier indicating GPL-3.0-or-later. License compliance is checked using REUSE.
+
+
 > This program is free software, distributed under the terms of the GNU General Public Licence version 3 (GPL Version 3), copied verbatim in the file [COPYING](COPYING). You can redistribute it and/or modify it under the terms of the GPL Version 3, or (at your option) any later version.
 >
 > This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.

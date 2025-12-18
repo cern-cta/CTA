@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2025 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
 CREATE TYPE ARCHIVE_JOB_STATUS AS ENUM (
   'AJS_ToTransferForUser',
   'AJS_WaitReplicasBeforeReportingSuccessToDisk',

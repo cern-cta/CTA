@@ -1,4 +1,7 @@
-# Udev rules setting the permissions on the tape device files for CASTOR's 
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Udev rules setting the permissions on the tape device files for CASTOR's
 # tapeserverd operations.
 
 KERNEL=="nst*", GROUP="st"
