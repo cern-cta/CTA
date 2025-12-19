@@ -443,8 +443,8 @@ public:
     stmt.bindBool(":IS_REPORTING", isReporting);
     stmt.bindString(":VID", vid);
     stmt.bindString(":ALTERNATE_VIDS", alternateVids);
-    stmt.bindString(":SRR_USERNAME", srrUsername); // this also seems to be empty and causing a problem
-    stmt.bindString(":SRR_HOST", srrHost); // this would be a problem too I suppose
+    stmt.bindString(":SRR_USERNAME", srrUsername);  // this also seems to be empty and causing a problem
+    stmt.bindString(":SRR_HOST", srrHost);          // this would be a problem too I suppose
     stmt.bindUint64(":SRR_TIME", srrTime);
     stmt.bindString(":SRR_MOUNT_POLICY", srrMountPolicy);
     stmt.bindUint64(":LIFECYCLE_CREATION_TIME", lifecycleTimings_creation_time);

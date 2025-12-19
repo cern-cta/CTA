@@ -162,68 +162,73 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
 #ifdef LOOPING_TEST
   do {
 #endif
-  // bool doSleep = true;
-  // while (doSleep) {
-  //   sleep(2);
-  // }
-  for (size_t i=0; i<filesToDo; i++) {
-    lambdas.emplace_back(
-    [i,&db,&lc](){
-      cta::common::dataStructures::ArchiveRequest ar;
-      cta::log::LogContext locallc=lc;
-      cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
-      afqc.copyToPoolMap.insert({1, "tapePool"});
-      afqc.fileId = 0;
-      afqc.mountPolicy.name = "mountPolicy";
-      afqc.mountPolicy.archivePriority = 1;
-      afqc.mountPolicy.archiveMinRequestAge = 0;
-      afqc.mountPolicy.retrievePriority = 1;
-      afqc.mountPolicy.retrieveMinRequestAge = 0;
-      afqc.mountPolicy.creationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-      afqc.mountPolicy.lastModificationLog = { "u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-      afqc.mountPolicy.comment = "comment";
-      afqc.fileId = i;
-      // ar.archiveReportURL=""; // this cannot be an empty string for the PG scheduler... check with Jaro if this can be changed
-      ar.archiveReportURL = "test://archive-report-url";
-      ar.archiveErrorReportURL = "test://error-report-url";
-      ar.checksumBlob.insert(cta::checksum::NONE, "");
-      ar.creationLog = { "user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-      uuid_t fileUUID;
-      uuid_generate(fileUUID);
-      char fileUUIDStr[37];
-      uuid_unparse(fileUUID, fileUUIDStr);
-      ar.diskFileID = fileUUIDStr;
-      ar.diskFileInfo.path = std::string("/uuid/")+fileUUIDStr;
-      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      ar.diskFileInfo.gid = DISK_FILE_GID;
-      ar.fileSize = 1000;
-      ar.requester = { "user", "group" };
-      ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
-      ar.storageClass = "storageClass";
-      db.queueArchive("eosInstance", ar, afqc, locallc);
-    });
-    jobInsertions.emplace_back(std::async(std::launch::async,lambdas.back()));
-  }
-  for (auto &j: jobInsertions) { j.get(); }
-  jobInsertions.clear();
-  lambdas.clear();
-  db.waitSubthreadsComplete();
+    // bool doSleep = true;
+    // while (doSleep) {
+    //   sleep(2);
+    // }
+    for (size_t i = 0; i < filesToDo; i++) {
+      lambdas.emplace_back([i, &db, &lc]() {
+        cta::common::dataStructures::ArchiveRequest ar;
+        cta::log::LogContext locallc = lc;
+        cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
+        afqc.copyToPoolMap.insert({1, "tapePool"});
+        afqc.fileId = 0;
+        afqc.mountPolicy.name = "mountPolicy";
+        afqc.mountPolicy.archivePriority = 1;
+        afqc.mountPolicy.archiveMinRequestAge = 0;
+        afqc.mountPolicy.retrievePriority = 1;
+        afqc.mountPolicy.retrieveMinRequestAge = 0;
+        afqc.mountPolicy.creationLog = {"u",
+                                        "h",
+                                        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+        afqc.mountPolicy.lastModificationLog = {"u",
+                                                "h",
+                                                std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+        afqc.mountPolicy.comment = "comment";
+        afqc.fileId = i;
+        // ar.archiveReportURL=""; // this cannot be an empty string for the PG scheduler... check with Jaro if this can be changed
+        ar.archiveReportURL = "test://archive-report-url";
+        ar.archiveErrorReportURL = "test://error-report-url";
+        ar.checksumBlob.insert(cta::checksum::NONE, "");
+        ar.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+        uuid_t fileUUID;
+        uuid_generate(fileUUID);
+        char fileUUIDStr[37];
+        uuid_unparse(fileUUID, fileUUIDStr);
+        ar.diskFileID = fileUUIDStr;
+        ar.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
+        ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+        ar.diskFileInfo.gid = DISK_FILE_GID;
+        ar.fileSize = 1000;
+        ar.requester = {"user", "group"};
+        ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
+        ar.storageClass = "storageClass";
+        db.queueArchive("eosInstance", ar, afqc, locallc);
+      });
+      jobInsertions.emplace_back(std::async(std::launch::async, lambdas.back()));
+    }
+    for (auto& j : jobInsertions) {
+      j.get();
+    }
+    jobInsertions.clear();
+    lambdas.clear();
+    db.waitSubthreadsComplete();
 
-  // Then load all archive jobs into memory
-  // Create mount.
-  auto mountInfo = db.getMountInfo(lc);
-  cta::catalogue::TapeForWriting tfw;
-  tfw.tapePool = "tapePool";
-  tfw.vid = "vid";
-  ASSERT_EQ(1, mountInfo->potentialMounts.size());
-  auto am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw,
-                                         "drive", "library", "host");
-  bool done = false;
-  size_t count = 0;
-  while (!done) {
-    auto aj = am->getNextJobBatch(1,1000,lc); // with the total size here being 1 byte we do not get the files moved
-    // size in bytes of each of those files is 1000
-    // I am surprised this even works for the objectstore! does it mean the bytes requested argument gets ignored?
+    // Then load all archive jobs into memory
+    // Create mount.
+    auto mountInfo = db.getMountInfo(lc);
+    cta::catalogue::TapeForWriting tfw;
+    tfw.tapePool = "tapePool";
+    tfw.vid = "vid";
+    ASSERT_EQ(1, mountInfo->potentialMounts.size());
+    auto am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw, "drive", "library", "host");
+    bool done = false;
+    size_t count = 0;
+    while (!done) {
+      auto aj =
+        am->getNextJobBatch(1, 1000, lc);  // with the total size here being 1 byte we do not get the files moved
+                                           // size in bytes of each of those files is 1000
+      // I am surprised this even works for the objectstore! does it mean the bytes requested argument gets ignored?
       if (!aj.empty()) {
         std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> jobBatch;
         jobBatch.emplace_back(std::move(aj.front()));
@@ -317,7 +322,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   auto done = false;
   auto count = 0;
 #else
-  mountInfo = db.getMountInfo(lc); // now stuck in here
+  mountInfo = db.getMountInfo(lc);  // now stuck in here
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
   am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw, "drive", "library", "host");
   done = false;
@@ -397,8 +402,8 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
     rr.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
     rr.requester = {"user", "group"};
     rr.dstURL = std::string("root://") + "a" + ".disk.system/" + std::to_string(0);
-      // Populate errorReportURL (required for PostgreSQL scheduler - cannot be empty)
-      rr.errorReportURL = "test://error-report-url";
+    // Populate errorReportURL (required for PostgreSQL scheduler - cannot be empty)
+    rr.errorReportURL = "test://error-report-url";
     std::string dsName = "ds-A";
     db.queueRetrieve(rr, rfqc, dsName, locallc);
   };
