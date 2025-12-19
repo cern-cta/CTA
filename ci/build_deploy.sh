@@ -305,7 +305,7 @@ build_deploy() {
       print_header "SETTING UP BUILD CONTAINER"
       restarted=true
       echo "Rebuilding build container image"
-      ${container_runtime} build --no-cache -t "${build_image_name}" -f continuousintegration/docker/"${platform}"/build.Dockerfile .
+      ${container_runtime} build --no-cache -t "${build_image_name}" -f ci/docker/"${platform}"/build.Dockerfile .
       echo "Starting new build container: ${build_container_name}"
       ${container_runtime} run -dit --rm --name "${build_container_name}" \
         -v "${project_root}:/shared/CTA:z" \
@@ -320,7 +320,7 @@ build_deploy() {
 
       # shellcheck disable=SC2086
       ${container_runtime} exec -it "${build_container_name}" \
-        ./shared/CTA/continuousintegration/build/build_srpm.sh \
+        ./shared/CTA/ci/build/build_srpm.sh \
         --build-dir /shared/CTA/build_srpm \
         --build-generator "${build_generator}" \
         --create-build-dir \
@@ -370,7 +370,7 @@ build_deploy() {
     print_header "BUILDING RPMS"
     # shellcheck disable=SC2086
     ${container_runtime} exec -it "${build_container_name}" \
-      ./shared/CTA/continuousintegration/build/build_rpm.sh \
+      ./shared/CTA/ci/build/build_rpm.sh \
       --build-dir /shared/CTA/build_rpm \
       --build-generator "${build_generator}" \
       --create-build-dir \
@@ -426,7 +426,7 @@ build_deploy() {
     local rpm_src=build_rpm/RPM/RPMS/x86_64
     echo "Building image from ${rpm_src}"
     # shellcheck disable=SC2086
-    ./continuousintegration/build/build_image.sh --tag ${image_tag} \
+    ./ci/build/build_image.sh --tag ${image_tag} \
       --rpm-src "${rpm_src}" \
       --rpm-version "${cta_version}-${vcs_version}" \
       --container-runtime "${container_runtime}" \
@@ -452,7 +452,7 @@ build_deploy() {
   if [[ ${skip_deploy} = false ]]; then
     if [[ "$upgrade_cta" = true ]]; then
       print_header "UPGRADING CTA INSTANCE"
-      cd continuousintegration/orchestration
+      cd ci/orchestration
       upgrade_options=""
       if [[ "$skip_image_reload" == "false" ]]; then
         upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
@@ -461,13 +461,13 @@ build_deploy() {
       ./upgrade_cta_instance.sh --namespace "${deploy_namespace}" "${upgrade_options}" ${extra_spawn_options}
     elif [[ "$upgrade_eos" = true ]]; then
       print_header "UPGRADING EOS INSTANCE"
-      cd continuousintegration/orchestration
+      cd ci/orchestration
       ./deploy_eos_instance.sh --namespace "${deploy_namespace}" --eos-image-tag "${eos_image_tag}"
     else
       print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development
       # and polutes the dev machine
-      ./continuousintegration/orchestration/delete_instance.sh -n "${deploy_namespace}" --discard-logs
+      ./ci/orchestration/delete_instance.sh -n "${deploy_namespace}" --discard-logs
       print_header "DEPLOYING CTA INSTANCE"
       if [[ -n "${tapeservers_config}" ]]; then
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
@@ -500,7 +500,7 @@ build_deploy() {
       fi
 
       echo "Deploying CTA instance"
-      cd continuousintegration/orchestration
+      cd ci/orchestration
        # shellcheck disable=SC2086
       ./create_instance.sh --namespace "${deploy_namespace}" \
         --cta-image-repository localhost/ctageneric \

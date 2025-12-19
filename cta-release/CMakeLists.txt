@@ -62,7 +62,7 @@ foreach(PNAME ${RESULTS})
 endforeach()
 
 execute_process(
-  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3 ${CMAKE_SOURCE_DIR}/continuousintegration/project-json/generate_versionlock.py --platform ${RPMTools_RPMBUILD_DIST}
+  COMMAND ${CMAKE_COMMAND} -E env PYTHONUNBUFFERED=1 python3 ${CMAKE_SOURCE_DIR}/ci/project-json/generate_versionlock.py --platform ${RPMTools_RPMBUILD_DIST}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
   OUTPUT_VARIABLE VERSIONLOCK
   OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -70,7 +70,7 @@ execute_process(
 
 # Repos files
 file (GLOB REPO_FILES
-  "${CMAKE_SOURCE_DIR}/continuousintegration/docker/${RPMTools_RPMBUILD_DIST}/etc/yum.repos.d-public/*.repo"
+  "${CMAKE_SOURCE_DIR}/ci/docker/${RPMTools_RPMBUILD_DIST}/etc/yum.repos.d-public/*.repo"
 )
 
 string(APPEND CTAVERSIONLOCK "${VERSIONLOCK}")

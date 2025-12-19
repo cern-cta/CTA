@@ -133,7 +133,7 @@ build_local() {
       fi
     fi
 
-    ./continuousintegration/build/build_srpm.sh \
+    ./ci/build/build_srpm.sh \
       --build-dir build_srpm \
       --build-generator "${build_generator}" \
       --create-build-dir \
@@ -172,7 +172,7 @@ build_local() {
   fi
 
   echo "Building RPMs..."
-  ./continuousintegration/build/build_rpm.sh \
+  ./ci/build/build_rpm.sh \
     --build-dir build_rpm \
     --build-generator "${build_generator}" \
     --create-build-dir \

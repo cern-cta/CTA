@@ -31,7 +31,7 @@ validate-catalogue-schema-version:
     - variables:
         CATALOGUE_SCHEMA_CHECK_PARAMS: ""
   script:
-    - ./continuousintegration/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
+    - ./ci/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
 
 validate-pipeline-variables:
   stage: validate
@@ -39,14 +39,14 @@ validate-pipeline-variables:
   rules:
     - when: on_success
   script:
-    - cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
+    - cp -f ci/docker/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     - |
       if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
-        cp -f continuousintegration/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+        cp -f ci/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
       fi
     # This repo is a special case as it provides CTA itself
-    - cp -f continuousintegration/docker/${PLATFORM}/cta-public-testing.repo /etc/yum.repos.d/
-    - python3 ./continuousintegration/checks/validate_ci_input_variables.py
+    - cp -f ci/docker/${PLATFORM}/cta-public-testing.repo /etc/yum.repos.d/
+    - python3 ./ci/checks/validate_ci_input_variables.py
 
 validate-project-json:
   stage: validate
@@ -54,4 +54,4 @@ validate-project-json:
   rules:
     - when: on_success
   script:
-    - python3 ./continuousintegration/project-json/validate_project_json.py
+    - python3 ./ci/project-json/validate_project_json.py

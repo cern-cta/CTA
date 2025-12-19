@@ -7,7 +7,7 @@ ENV CTA_REPO_DIR="/opt/repo"
 ENV LOCAL_RPM_DIR="image_rpms"
 
 # Common repo configuration
-COPY continuousintegration/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d/
+COPY ci/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d/
 
 # Core dependencies
 RUN dnf install -y \
@@ -39,11 +39,9 @@ priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
     dnf install -y cta-release && \
     cta-versionlock apply
 
-RUN dnf config-manager --enable ceph
 RUN dnf install -y \
-      ceph-common
-      cta-debuginfo \
-      cta-debugsource
+  cta-debuginfo \
+  cta-debugsource
 
 
 ###############################################
@@ -66,7 +64,7 @@ RUN dnf install -y \
 # Remove the local RPMs to reduce size
 RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
 
-# TODO: can this run as non-root?
+# Can this run as non-root?
 CMD ["/bin/bash", "-c", "runuser -c \"/usr/bin/cta-taped -c /etc/cta/cta-taped.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped.log\""]
 
 
@@ -88,7 +86,7 @@ RUN dnf install -y \
 # Remove the local RPMs to reduce size
 RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
 
-# TODO: can this can run as non-root?
+# Can this can run as non-root?
 CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
 
 ###############################################
@@ -140,7 +138,6 @@ RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
 USER cta
 CMD ["/bin/bash", "-c", "cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4"]
 
-
 ###############################################
 # TOOLS cta-tools-grpc
 ###############################################
@@ -149,7 +146,7 @@ FROM base AS cta-tools-grpc
 RUN dnf install -y \
       cta-admin-grpc \
       cta-catalogueutils \
-      cta-objectstore-tools && \
+      cta-scheduler-utils && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
@@ -165,7 +162,7 @@ FROM base AS cta-tools-xrd
 RUN dnf install -y \
       cta-cli \
       cta-catalogueutils \
-      cta-objectstore-tools && \
+      cta-scheduler-utils && \
     dnf clean all
 
 # Remove the local RPMs to reduce size

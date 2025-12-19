@@ -20,7 +20,7 @@
   - | # Which image tag to use
     if [[ $PIPELINE_TYPE == "SYSTEM_TEST_ONLY" ]]; then
       if [[ -z "$CUSTOM_SYSTEM_TEST_IMAGE_TAG" ]]; then
-        IMAGE_TAG=$(./continuousintegration/utils/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
+        IMAGE_TAG=$(./ci/utils/get_latest_image_tag_on_branch.sh --branch $CI_DEFAULT_BRANCH)
       else
         IMAGE_TAG=$CUSTOM_SYSTEM_TEST_IMAGE_TAG
       fi
@@ -70,7 +70,7 @@
     # Passed to the test script verbatim
     EXTRA_TEST_ARGS: ""
   before_script:
-    - bash ./continuousintegration/checks/check_runner_healthy.sh
+    - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
     - EXTRA_SPAWN_ARGS="--cta-config ${DEFAULT_CTA_VALUES_FILE} --eos-config ${DEFAULT_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
@@ -82,7 +82,7 @@
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     - if [[ -n "${EXTRA_TEST_ARGS}" ]];  then extra_args+=(--test-options "${EXTRA_TEST_ARGS}"); fi
     # Run test
-    - cd continuousintegration/orchestration/
+    - cd ci/orchestration/
     - ./run_systemtest.sh --namespace ${NAMESPACE}
                           --cta-image-tag ${IMAGE_TAG}
                           --cleanup-namespaces
@@ -96,7 +96,7 @@
     # Repeat the namespace declaration here as the after_script does not have access to previously exported variables
     - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
-    - cd continuousintegration/orchestration/
+    - cd ci/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE}
   artifacts:
     when: always
@@ -242,7 +242,7 @@ stress-test:
     EXTRA_ARGS: ""
     EXTRA_SPAWN_ARGS: ""
   before_script:
-    - bash ./continuousintegration/checks/check_runner_healthy.sh
+    - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
     - |
@@ -258,7 +258,7 @@ stress-test:
         EXTRA_STRESS_TEST_OPTIONS+=" -Q"
       fi
     # Set up stress test
-    - cd continuousintegration/orchestration/
+    - cd ci/orchestration/
     # We don't clean up old namespace so this will fail (deliberately) when another test is running there
     # This is because we check for the libraries in use before we start
     - ./run_systemtest.sh --namespace ${NAMESPACE}
@@ -285,5 +285,5 @@ stress-test:
         exit 0
       fi
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
-    - cd continuousintegration/orchestration/
+    - cd ci/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs

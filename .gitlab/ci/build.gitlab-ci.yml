@@ -57,7 +57,7 @@ build-cta-rpms:
       fi
   script:
     # SRPMS
-    - ./continuousintegration/build/build_srpm.sh --build-dir build_srpm
+    - ./ci/build/build_srpm.sh --build-dir build_srpm
                                                   --build-generator "${BUILD_GENERATOR}"
                                                   --create-build-dir
                                                   --cta-version ${BUILD_CTA_VERSION}
@@ -80,7 +80,7 @@ build-cta-rpms:
       if [ "$ENABLE_ADDRESS_SANITIZER" == "TRUE" ]; then
         BUILD_OPTIONS+=" --enable-address-sanitizer"
       fi
-    - ./continuousintegration/build/build_rpm.sh --build-dir build_rpm
+    - ./ci/build/build_rpm.sh --build-dir build_rpm
                                                  --build-generator "${BUILD_GENERATOR}"
                                                  --create-build-dir
                                                  --srpm-dir build_srpm/RPM/SRPMS

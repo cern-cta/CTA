@@ -13,7 +13,7 @@ The test can be run with the following command:
 
 In addition, the tool must be run from the folder:
 
-`~/CTA/continuousintegration/orchestration/tests`
+`~/CTA/ci/orchestration/tests`
 
 Finally, as this tool currently reads from `/etc/cta/cta-frontend-xrootd.conf` to get the namespace config, manually add the following to this file:
 
