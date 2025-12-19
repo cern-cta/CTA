@@ -57,12 +57,21 @@
         "cppVersion": {
           "description": "C++ version to use for building the project.",
           "type": "string",
-          "enum": ["c++17", "c++20", "c++23"]
+          "enum": [
+            "c++17",
+            "c++20",
+            "c++23"
+          ]
         },
         "defaultBuildType": {
           "description": "Default build type to use use for building the project.",
           "type": "string",
-          "enum": ["Release", "Debug", "RelWithDebInfo", "MinSizeRel"]
+          "enum": [
+            "Release",
+            "Debug",
+            "RelWithDebInfo",
+            "MinSizeRel"
+          ]
         },
         "eosServerChartVersion": {
           "description": "Version of the EOS server Helm chart to use in CI.",
@@ -98,13 +107,16 @@
           "description": "Default platform to use for the development environment and build.",
           "type": "string",
           "minLength": 1,
-          "enum": ["el9"]
+          "enum": [
+            "el9"
+          ]
         }
       },
       "additionalProperties": false
     },
     "packageGroups": {
-      "description": "Defines custom package groups. Each key can be referenced in the versionlock or buildRequires below, causing the corresponding version information to be applied to all packages in the package group.",
+      "description":
+        "Defines custom package groups. Each key can be referenced in the versionlock or buildRequires below, causing the corresponding version information to be applied to all packages in the package group.",
       "type": "object",
       "additionalProperties": {
         "type": "array",
@@ -133,14 +145,16 @@
             }
           },
           "runRequires": {
-            "description": "These values are used to generate KEY_VERSION_CONSTRAINT cmake variables. Every key will be converted to uppercase, special characters converted to underscores and _VERSION_CONSTRAINT will be appended.",
+            "description":
+              "These values are used to generate KEY_VERSION_CONSTRAINT cmake variables. Every key will be converted to uppercase, special characters converted to underscores and _VERSION_CONSTRAINT will be appended.",
             "type": "object",
             "additionalProperties": {
               "type": "string"
             }
           },
           "buildRequires": {
-            "description": "These values are used to generate a list of BuildRequires items that are put in the cta.spec.in file.",
+            "description":
+              "These values are used to generate a list of BuildRequires items that are put in the cta.spec.in file.",
             "type": "object",
             "additionalProperties": {
               "type": "string"

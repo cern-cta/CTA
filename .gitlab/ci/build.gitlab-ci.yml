@@ -58,14 +58,14 @@ build-cta-rpms:
   script:
     # SRPMS
     - ./ci/build/build_srpm.sh --build-dir build_srpm
-                                                  --build-generator "${BUILD_GENERATOR}"
-                                                  --create-build-dir
-                                                  --cta-version ${BUILD_CTA_VERSION}
-                                                  --vcs-version ${CTA_BUILD_ID}
-                                                  --scheduler-type ${SCHEDULER_TYPE}
-                                                  --oracle-support ${ORACLE_SUPPORT}
-                                                  --cmake-build-type "${CMAKE_BUILD_TYPE}"
-                                                  --jobs $(nproc --ignore=1)
+                               --build-generator "${BUILD_GENERATOR}"
+                               --create-build-dir
+                               --cta-version ${BUILD_CTA_VERSION}
+                               --vcs-version ${CTA_BUILD_ID}
+                               --scheduler-type ${SCHEDULER_TYPE}
+                               --oracle-support ${ORACLE_SUPPORT}
+                               --cmake-build-type "${CMAKE_BUILD_TYPE}"
+                               --jobs $(nproc --ignore=1)
     # RPMS
     - BUILD_OPTIONS=""
     - |
@@ -81,19 +81,19 @@ build-cta-rpms:
         BUILD_OPTIONS+=" --enable-address-sanitizer"
       fi
     - ./ci/build/build_rpm.sh --build-dir build_rpm
-                                                 --build-generator "${BUILD_GENERATOR}"
-                                                 --create-build-dir
-                                                 --srpm-dir build_srpm/RPM/SRPMS
-                                                 --cta-version ${CTA_VERSION}
-                                                 --vcs-version ${VCS_VERSION}
-                                                 --xrootd-ssi-version ${XRD_SSI_VERSION}
-                                                 --scheduler-type ${SCHEDULER_TYPE}
-                                                 --oracle-support ${ORACLE_SUPPORT}
-                                                 --cmake-build-type "${CMAKE_BUILD_TYPE}"
-                                                 --jobs $(nproc --ignore=1)
-                                                 --install-srpms
-                                                 --platform ${PLATFORM}
-                                                 ${BUILD_OPTIONS}
+                              --build-generator "${BUILD_GENERATOR}"
+                              --create-build-dir
+                              --srpm-dir build_srpm/RPM/SRPMS
+                              --cta-version ${CTA_VERSION}
+                              --vcs-version ${VCS_VERSION}
+                              --xrootd-ssi-version ${XRD_SSI_VERSION}
+                              --scheduler-type ${SCHEDULER_TYPE}
+                              --oracle-support ${ORACLE_SUPPORT}
+                              --cmake-build-type "${CMAKE_BUILD_TYPE}"
+                              --jobs $(nproc --ignore=1)
+                              --install-srpms
+                              --platform ${PLATFORM}
+                              ${BUILD_OPTIONS}
   artifacts:
     expire_in: 30 days
     paths:
