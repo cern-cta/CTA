@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Latest versions can be found in the respective repos if an update is desired
+# Note that not all are compatible with the (slightly outdated) Python version on alma9
+repos:
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: ['--baseline', '.secrets.baseline']
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.8
+    hooks:
+      - id: clang-format
+        files: \.(c|h|cc|cpp|cxx|hpp|hh)$
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.9
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+  - repo: https://github.com/psf/black
+    rev: 25.11.0
+    hooks:
+      - id: black
+        args: [--line-length, "120"]
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.37.1
+    hooks:
+      - id: yamllint
+  - repo: https://github.com/fsfe/reuse-tool
+    rev: v5.1.0
+    hooks:
+      - id: reuse
