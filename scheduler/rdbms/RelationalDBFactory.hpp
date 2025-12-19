@@ -120,7 +120,7 @@ public:
 
       // Create wrapper that will drop the schema on destruction
       auto pgwrapper = std::make_unique<RelationalDBWrapper>(
-        "UnitTest", std::move(logger), *catalogue, login, 2, schemaName);
+        "UnitTest", std::move(logger), *catalogue, login, 5, schemaName);
 
       return std::unique_ptr<SchedulerDatabase>(std::move(pgwrapper));
 
@@ -130,7 +130,7 @@ public:
                               "user", "password", "", "host", 0, "public");
 
       auto pgwrapper = std::make_unique<RelationalDBWrapper>(
-        "UnitTest", std::move(logger), *catalogue, login, 2, "public");
+        "UnitTest", std::move(logger), *catalogue, login, 5, "public");
 
       return std::unique_ptr<SchedulerDatabase>(std::move(pgwrapper));
     }

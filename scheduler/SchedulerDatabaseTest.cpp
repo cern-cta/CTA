@@ -162,10 +162,10 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
 #ifdef LOOPING_TEST
   do {
 #endif
-  bool doSleep = true;
-  while (doSleep) {
-    sleep(2);
-  }
+  // bool doSleep = true;
+  // while (doSleep) {
+  //   sleep(2);
+  // }
   for (size_t i=0; i<filesToDo; i++) {
     lambdas.emplace_back(
     [i,&db,&lc](){
@@ -317,7 +317,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   auto done = false;
   auto count = 0;
 #else
-  mountInfo = db.getMountInfo(lc);
+  mountInfo = db.getMountInfo(lc); // now stuck in here
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
   am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw, "drive", "library", "host");
   done = false;
