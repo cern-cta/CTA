@@ -140,7 +140,7 @@ deploy() {
   print_header "DELETING OLD CTA INSTANCES"
   # By default we discard the logs from deletion as this is not very useful during development
   # and polutes the dev machine
-  ./continuousintegration/orchestration/delete_instance.sh -n ${deploy_namespace} --discard-logs
+  ./ci/orchestration/delete_instance.sh -n ${deploy_namespace} --discard-logs
   print_header "DEPLOYING CTA INSTANCE"
   if [[ -n "${tapeservers_config}" ]]; then
     extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
@@ -163,7 +163,7 @@ deploy() {
   fi
 
   echo "Deploying CTA instance"
-  cd continuousintegration/orchestration
+  cd ci/orchestration
    # shellcheck disable=SC2086
   ./create_instance.sh --namespace ${deploy_namespace} \
                       --cta-image-tag "${cta_image_tag}" \

@@ -31,15 +31,15 @@ changelog-preview:
       if [[ -z "${FROM_REF}" ]]; then
         FROM_REF=$(git describe --tags --abbrev=0 ${TO_COMMIT})
       fi
-    - python3 continuousintegration/release/preview_changelog.py --api-url ${CI_SERVER_URL}
-                                                                 --project-id ${CI_PROJECT_ID}
-                                                                 --api-token ${CI_API_TOKEN}
-                                                                 --from ${FROM_REF}
-                                                                 --to ${TO_COMMIT}
-                                                                 --release-version ${RELEASE_VERSION}
-                                                                 --markdown-output changelog_report.md
-                                                                 --verbose
-                                                                 --preview
+    - python3 ci/release/preview_changelog.py --api-url ${CI_SERVER_URL}
+                                              --project-id ${CI_PROJECT_ID}
+                                              --api-token ${CI_API_TOKEN}
+                                              --from ${FROM_REF}
+                                              --to ${TO_COMMIT}
+                                              --release-version ${RELEASE_VERSION}
+                                              --markdown-output changelog_report.md
+                                              --verbose
+                                              --preview
     # Pass on variables so that the update_changelog job does not have to re-initialise them
     - echo -e "ENV_TO_COMMIT=${TO_COMMIT}\nENV_FROM_REF=${FROM_REF}\nENV_RELEASE_VERSION=${RELEASE_VERSION}" > vars.env
   artifacts:
@@ -74,16 +74,16 @@ changelog-update:
         echo "No source branch provided. Using default branch: ${CI_DEFAULT_BRANCH}"
         SOURCE_BRANCH=${CI_DEFAULT_BRANCH}
       fi
-    - python3 continuousintegration/release/update_changelog.py --api-url ${CI_SERVER_URL}
-                                                                --project-id ${CI_PROJECT_ID}
-                                                                --api-token ${CI_API_TOKEN}
-                                                                --from ${FROM_REF}
-                                                                --to ${TO_COMMIT}
-                                                                --release-version ${RELEASE_VERSION}
-                                                                --reviewer ${GITLAB_USER_ID}
-                                                                --source-branch ${SOURCE_BRANCH}
-                                                                --description-file changelog_report.md
-                                                                --verbose
+    - python3 ci/release/update_changelog.py --api-url ${CI_SERVER_URL}
+                                             --project-id ${CI_PROJECT_ID}
+                                             --api-token ${CI_API_TOKEN}
+                                             --from ${FROM_REF}
+                                             --to ${TO_COMMIT}
+                                             --release-version ${RELEASE_VERSION}
+                                             --reviewer ${GITLAB_USER_ID}
+                                             --source-branch ${SOURCE_BRANCH}
+                                             --description-file changelog_report.md
+                                             --verbose
 
 internal-release-cta:
   stage: release
@@ -96,11 +96,11 @@ internal-release-cta:
   image: $IMAGE_RELEASE
   script:
     - echo "Publishing to internal CTA repository"
-    - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
-                                                       --eos-password ${DOCKER_LOGIN_PASSWORD}
-                                                       --local-source-dir build_rpm/RPM/RPMS
-                                                       --eos-target-dir /eos/user/c/ctareg/www/cta-repo
-                                                       --hook /eos/user/c/ctareg/www/cta-repo/update_repos.sh
+    - ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                    --eos-password ${DOCKER_LOGIN_PASSWORD}
+                                    --local-source-dir build_rpm/RPM/RPMS
+                                    --eos-target-dir /eos/user/c/ctareg/www/cta-repo
+                                    --hook /eos/user/c/ctareg/www/cta-repo/update_repos.sh
 
 public-release-cta-unstable:
   stage: release
@@ -114,14 +114,14 @@ public-release-cta-unstable:
   script:
     - export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
     - echo "Publishing CTA version ${CTA_VERSION} to unstable CTA repository"
-    - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
-                                                       --eos-password ${DOCKER_LOGIN_PASSWORD}
-                                                       --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                                       --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-5/${PLATFORM}/cta
-                                                       --hook /eos/user/c/ctareg/www/public/update_repos.sh
-                                                       --cta-version ${CTA_VERSION}
+    - ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                    --eos-password ${DOCKER_LOGIN_PASSWORD}
+                                    --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
+                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/unstable/cta-5/${PLATFORM}/cta
+                                    --hook /eos/user/c/ctareg/www/public/update_repos.sh
+                                    --cta-version ${CTA_VERSION}
     - REPO_URL="https://cta-public-repo.web.cern.ch/unstable/cta-5/el9/cta/x86_64"
-    - ./continuousintegration/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
+    - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
 public-release-cta-testing:
   stage: release
@@ -135,14 +135,14 @@ public-release-cta-testing:
   script:
     - export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
     - echo "Publishing CTA version ${CTA_VERSION} to testing CTA repository"
-    - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
-                                                       --eos-password ${DOCKER_LOGIN_PASSWORD}
-                                                       --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                                       --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/${PLATFORM}/cta
-                                                       --hook /eos/user/c/ctareg/www/public/update_repos.sh
-                                                       --cta-version ${CTA_VERSION}
+    - ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                    --eos-password ${DOCKER_LOGIN_PASSWORD}
+                                    --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
+                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/testing/cta-5/${PLATFORM}/cta
+                                    --hook /eos/user/c/ctareg/www/public/update_repos.sh
+                                    --cta-version ${CTA_VERSION}
     - REPO_URL="https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64"
-    - ./continuousintegration/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
+    - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
 
 public-release-cta-stable:
   stage: release
@@ -159,11 +159,11 @@ public-release-cta-stable:
   script:
     - export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
     - echo "Publishing CTA version ${CTA_VERSION} to public CTA repository"
-    - ./continuousintegration/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
-                                                       --eos-password ${DOCKER_LOGIN_PASSWORD}
-                                                       --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
-                                                       --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/${PLATFORM}/cta
-                                                       --hook /eos/user/c/ctareg/www/public/update_repos.sh
-                                                       --cta-version ${CTA_VERSION}
+    - ./ci/release/upload_to_eos.sh --eos-username ${DOCKER_LOGIN_USERNAME}
+                                    --eos-password ${DOCKER_LOGIN_PASSWORD}
+                                    --eos-source-dir /eos/user/c/ctareg/www/cta-repo/RPMS
+                                    --eos-target-dir /eos/user/c/ctareg/www/public/cta-public-repo/stable/cta-5/${PLATFORM}/cta
+                                    --hook /eos/user/c/ctareg/www/public/update_repos.sh
+                                    --cta-version ${CTA_VERSION}
     - REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/el9/cta/x86_64"
-    - ./continuousintegration/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"
+    - ./ci/release/check_rpm_available.sh --repository-url "$REPO_URL" --package "cta-taped" --version "$CTA_VERSION"

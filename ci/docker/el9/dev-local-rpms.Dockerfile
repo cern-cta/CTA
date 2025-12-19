@@ -6,7 +6,7 @@ FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
 ENV CTAREPODIR="/opt/repo"
 
-COPY continuousintegration/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d-internal/
+COPY ci/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d-internal/
 
 # Install necessary packages
 RUN dnf install -y \

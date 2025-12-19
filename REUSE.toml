@@ -20,7 +20,7 @@ SPDX-License-Identifier = "GPL-3.0-or-later"
 
 # Test-related files
 [[annotations]]
-path = "continuousintegration/orchestration/tests/error_whitelists/*.txt"
+path = "ci/orchestration/tests/error_whitelists/*.txt"
 SPDX-FileCopyrightText = "2025 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 

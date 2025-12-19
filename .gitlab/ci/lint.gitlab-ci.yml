@@ -115,7 +115,7 @@ lint-yaml:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
   script:
-    - python3 continuousintegration/checks/check_gitlab_ci_key_order.py .gitlab/
+    - python3 ci/checks/check_gitlab_ci_key_order.py .gitlab/
     - yamllint .
 
 lint-licenses:
@@ -272,7 +272,7 @@ danger-review:
     DANGER_GITLAB_USE_THREADS: 1
   script:
     - exit_code=0
-    - danger --verbose --dangerfile=continuousintegration/danger/Dangerfile --fail-on-errors=true || exit_code=$?
+    - danger --verbose --dangerfile=ci/danger/Dangerfile --fail-on-errors=true || exit_code=$?
     - echo $exit_code > danger_status.txt
   artifacts:
     paths:

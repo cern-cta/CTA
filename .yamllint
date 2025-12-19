@@ -12,7 +12,7 @@ rules:
 ignore: |
   .git/
   build_*/
-  continuousintegration/orchestration/helm/**/templates
+  ci/orchestration/helm/**/templates
   common/jwt-cpp/
   catalogue/cta-catalogue-schema/
   eos_cta/grpc-proto/
