@@ -329,7 +329,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   count = 0;
 #endif
   while (!done) {
-    auto aj = am->getNextJobBatch(1, 1, lc);
+    auto aj = am->getNextJobBatch(1, 1000, lc);
     if (!aj.empty()) {
       std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> jobBatch;
       jobBatch.emplace_back(std::move(aj.front()));
