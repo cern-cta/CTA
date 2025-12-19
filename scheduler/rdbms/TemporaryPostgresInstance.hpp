@@ -5,20 +5,21 @@
 
 #pragma once
 
-#include <gtest/gtest.h>
+#include "rdbms/ConnPool.hpp"
+#include "rdbms/Login.hpp"
+#include "scheduler/rdbms/schema/PostgresSchedulerSchema.hpp"
+
+#include <atomic>
+#include <chrono>
 #include <cstdlib>
+#include <fstream>
+#include <gtest/gtest.h>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
-#include <chrono>
-#include <iostream>
-#include <stdexcept>
-#include <fstream>
-#include <sstream>
-#include <atomic>
 #include <unistd.h>
-#include "rdbms/Login.hpp"
-#include "rdbms/ConnPool.hpp"
-#include "scheduler/rdbms/schema/PostgresSchedulerSchema.hpp"
 
 namespace cta::schedulerdb {
 
@@ -66,11 +67,11 @@ namespace cta::schedulerdb {
 class TemporaryPostgresEnvironment : public ::testing::Environment {
 public:
   TemporaryPostgresEnvironment()
-    : m_port(0),  // Will be auto-assigned
-      m_username("cta_test"),
-      m_database("cta_scheduler"),
-      m_namespace("public"),
-      m_useShm(false)  // Use /tmp instead of /dev/shm (containers often have small shm)
+      : m_port(0),  // Will be auto-assigned
+        m_username("cta_test"),
+        m_database("cta_scheduler"),
+        m_namespace("public"),
+        m_useShm(false)  // Use /tmp instead of /dev/shm (containers often have small shm)
   {
     // Generate unique temp directory name
     char tmpTemplate[] = "/tmp/cta-pg-test-XXXXXX";
@@ -175,14 +176,13 @@ public:
    * @param schemaName Optional schema name. If not provided, uses "public".
    */
   rdbms::Login getLogin(const std::string& schemaName = "public") const {
-    return rdbms::Login(
-      rdbms::Login::DBTYPE_POSTGRESQL,
-      m_username,
-      "",  // No password needed for local Unix socket or trust auth
-      m_database,
-      "localhost",
-      m_port,
-      schemaName  // Schema name as namespace
+    return rdbms::Login(rdbms::Login::DBTYPE_POSTGRESQL,
+                        m_username,
+                        "",  // No password needed for local Unix socket or trust auth
+                        m_database,
+                        "localhost",
+                        m_port,
+                        schemaName  // Schema name as namespace
     );
   }
 
@@ -190,12 +190,13 @@ public:
    * Get connection string
    */
   std::string getConnectionString() const {
-    return "postgresql://" + m_username + "@localhost:" +
-           std::to_string(m_port) + "/" + m_database;
+    return "postgresql://" + m_username + "@localhost:" + std::to_string(m_port) + "/" + m_database;
   }
 
   int getPort() const { return m_port; }
+
   std::string getDatabase() const { return m_database; }
+
   std::string getDataDir() const { return m_dataDir; }
 
   /**
@@ -203,7 +204,7 @@ public:
    * Each call returns a different schema name.
    */
   std::string generateUniqueSchemaName() {
-    static std::atomic<uint64_t> counter{0};
+    static std::atomic<uint64_t> counter {0};
     uint64_t id = counter.fetch_add(1);
 
     std::stringstream ss;
@@ -229,8 +230,7 @@ public:
 
       return schemaName;
     } catch (const std::exception& e) {
-      throw std::runtime_error(
-        "Failed to create schema " + schemaName + ": " + e.what());
+      throw std::runtime_error("Failed to create schema " + schemaName + ": " + e.what());
     }
   }
 
@@ -253,8 +253,7 @@ public:
 
       conn.commit();
     } catch (const std::exception& e) {
-      std::cerr << "Warning: Failed to drop schema " << schemaName
-                << ": " << e.what() << std::endl;
+      std::cerr << "Warning: Failed to drop schema " << schemaName << ": " << e.what() << std::endl;
       // Don't throw - this is cleanup
     }
   }
@@ -280,16 +279,14 @@ private:
    */
   void findPostgresBinaries() {
     // Try common PostgreSQL binary locations
-    const char* pgCtlPaths[] = {
-      "/usr/bin/pg_ctl",
-      "/usr/local/bin/pg_ctl",
-      "/usr/pgsql-15/bin/pg_ctl",
-      "/usr/pgsql-14/bin/pg_ctl",
-      "/usr/pgsql-13/bin/pg_ctl",
-      "/usr/lib/postgresql/15/bin/pg_ctl",
-      "/usr/lib/postgresql/14/bin/pg_ctl",
-      nullptr
-    };
+    const char* pgCtlPaths[] = {"/usr/bin/pg_ctl",
+                                "/usr/local/bin/pg_ctl",
+                                "/usr/pgsql-15/bin/pg_ctl",
+                                "/usr/pgsql-14/bin/pg_ctl",
+                                "/usr/pgsql-13/bin/pg_ctl",
+                                "/usr/lib/postgresql/15/bin/pg_ctl",
+                                "/usr/lib/postgresql/14/bin/pg_ctl",
+                                nullptr};
 
     // First try to find in PATH
     if (system("which pg_ctl >/dev/null 2>&1") == 0) {
@@ -309,16 +306,14 @@ private:
         m_initdb = binDir + "/initdb";
         m_psql = binDir + "/psql";
 
-        if (access(m_initdb.c_str(), X_OK) == 0 &&
-            access(m_psql.c_str(), X_OK) == 0) {
+        if (access(m_initdb.c_str(), X_OK) == 0 && access(m_psql.c_str(), X_OK) == 0) {
           return;
         }
       }
     }
 
-    throw std::runtime_error(
-      "PostgreSQL binaries not found. Please install PostgreSQL or ensure "
-      "pg_ctl, initdb, and psql are in PATH.");
+    throw std::runtime_error("PostgreSQL binaries not found. Please install PostgreSQL or ensure "
+                             "pg_ctl, initdb, and psql are in PATH.");
   }
 
   /**
@@ -332,10 +327,8 @@ private:
     std::string chownCmd = "chown -R postgres:postgres " + m_dataDir + " 2>/dev/null";
     system(chownCmd.c_str());
 
-    std::string cmd = "runuser -u postgres -- " + m_initdb + " -D " + m_dataDir +
-                      " -U " + m_username +
-                      " --no-locale --encoding=UTF8" +
-                      " -A trust" +  // Trust authentication for localhost
+    std::string cmd = "runuser -u postgres -- " + m_initdb + " -D " + m_dataDir + " -U " + m_username
+                      + " --no-locale --encoding=UTF8" + " -A trust" +  // Trust authentication for localhost
                       " >/dev/null 2>&1";
 
     int result = system(cmd.c_str());
@@ -367,8 +360,7 @@ private:
     // Simple approach: try ports starting from 15432
     // In production you might want to bind to port 0 and let OS assign
     for (int port = 15432; port < 15532; ++port) {
-      std::string checkCmd = "nc -z localhost " + std::to_string(port) +
-                             " >/dev/null 2>&1";
+      std::string checkCmd = "nc -z localhost " + std::to_string(port) + " >/dev/null 2>&1";
       if (system(checkCmd.c_str()) != 0) {
         return port;  // Port is available
       }
@@ -385,10 +377,8 @@ private:
     std::cout << "  Starting PostgreSQL on port " << m_port << "..." << std::endl;
 
     // PostgreSQL must be started as the postgres user
-    std::string cmd = "runuser -u postgres -- " + m_pgCtl + " -D " + m_dataDir +
-                      " -o \"-p " + std::to_string(m_port) + "\"" +
-                      " -l " + m_logFile +
-                      " start >/dev/null 2>&1";
+    std::string cmd = "runuser -u postgres -- " + m_pgCtl + " -D " + m_dataDir + " -o \"-p " + std::to_string(m_port)
+                      + "\"" + " -l " + m_logFile + " start >/dev/null 2>&1";
 
     std::cout << "Ran command to start postgres: " << cmd << std::endl;
 
@@ -396,10 +386,8 @@ private:
     if (result != 0) {
       // Try to get log contents for debugging
       std::ifstream log(m_logFile);
-      std::string logContents((std::istreambuf_iterator<char>(log)),
-                               std::istreambuf_iterator<char>());
-      throw std::runtime_error(
-        "Failed to start PostgreSQL. Log:\n" + logContents);
+      std::string logContents((std::istreambuf_iterator<char>(log)), std::istreambuf_iterator<char>());
+      throw std::runtime_error("Failed to start PostgreSQL. Log:\n" + logContents);
     }
 
     std::cout << "  ✓ PostgreSQL started" << std::endl;
@@ -414,10 +402,8 @@ private:
     const int maxAttempts = 30;
     for (int i = 0; i < maxAttempts; ++i) {
       // Run psql as postgres user
-      std::string checkCmd = "runuser -u postgres -- " + m_psql + " -h localhost -p " +
-                             std::to_string(m_port) +
-                             " -U " + m_username +
-                             " -d postgres -c 'SELECT 1;' >/dev/null 2>&1";
+      std::string checkCmd = "runuser -u postgres -- " + m_psql + " -h localhost -p " + std::to_string(m_port) + " -U "
+                             + m_username + " -d postgres -c 'SELECT 1;' >/dev/null 2>&1";
 
       if (system(checkCmd.c_str()) == 0) {
         std::cout << "  ✓ PostgreSQL ready after ~" << i << " second(s)" << std::endl;
@@ -432,11 +418,9 @@ private:
 
     // Failed to connect - get logs
     std::ifstream log(m_logFile);
-    std::string logContents((std::istreambuf_iterator<char>(log)),
-                             std::istreambuf_iterator<char>());
+    std::string logContents((std::istreambuf_iterator<char>(log)), std::istreambuf_iterator<char>());
 
-    throw std::runtime_error(
-      "PostgreSQL failed to become ready. Log:\n" + logContents);
+    throw std::runtime_error("PostgreSQL failed to become ready. Log:\n" + logContents);
   }
 
   /**
@@ -444,21 +428,14 @@ private:
    */
   void createTestDatabase() {
     // Run psql as postgres user to create database
-    std::string cmd = "runuser -u postgres -- " + m_psql + " -h localhost -p " +
-                      std::to_string(m_port) +
-                      " -U " + m_username +
-                      " -d postgres -c 'CREATE DATABASE " + m_database + ";' " +
-                      ">/dev/null 2>&1";
+    std::string cmd = "runuser -u postgres -- " + m_psql + " -h localhost -p " + std::to_string(m_port) + " -U "
+                      + m_username + " -d postgres -c 'CREATE DATABASE " + m_database + ";' " + ">/dev/null 2>&1";
 
     int result = system(cmd.c_str());
     if (result != 0) {
       // Database might already exist, that's ok
     }
   }
-
-  
-
-  
 
   /**
    * Stop PostgreSQL server
@@ -470,8 +447,7 @@ private:
     }
 
     // Stop PostgreSQL as the postgres user
-    std::string cmd = "runuser -u postgres -- " + m_pgCtl + " -D " + m_dataDir +
-                      " stop -m fast >/dev/null 2>&1";
+    std::string cmd = "runuser -u postgres -- " + m_pgCtl + " -D " + m_dataDir + " stop -m fast >/dev/null 2>&1";
 
     std::cout << "about to shut down postgres with the following command " << cmd << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(30));
@@ -509,4 +485,4 @@ private:
  */
 inline TemporaryPostgresEnvironment* g_tempPostgresEnv = nullptr;
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb

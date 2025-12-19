@@ -533,7 +533,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    bool doSleep = false; // set to true to debug entrypoint with gdb
+    bool doSleep = false;  // set to true to debug entrypoint with gdb
     size_t archiveFileSize = sizeof(data);
     castor::tape::SCSI::Structures::zeroStruct(&data);
     for (int fseq = 1; fseq <= 10; fseq++) {
@@ -1085,8 +1085,8 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
 
   // 8) Run the data transfer session
-  sess.execute(); // we are stuck here, there is nothing in the archive queue
-  // there is also nothing in the retrieve queue (the RETRIEVE_QUEUE_SUMMARY, 
+  sess.execute();  // we are stuck here, there is nothing in the archive queue
+  // there is also nothing in the retrieve queue (the RETRIEVE_QUEUE_SUMMARY,
   // there is a record in retrieve_pending_queue)
 
   // 9) Check the session git the correct VID
@@ -1288,7 +1288,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
     sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
 
   // 8) Run the data transfer session
-  sess.execute(); // again it seems we are sleeping forever in here....
+  sess.execute();  // again it seems we are sleeping forever in here....
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());

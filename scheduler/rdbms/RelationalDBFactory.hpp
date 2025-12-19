@@ -9,11 +9,10 @@
 #include "common/log/DummyLogger.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/LogicalLibrary.hpp"
-#include "scheduler/rdbms/RelationalDB.hpp"
-#include "scheduler/rdbms/TemporaryPostgresInstance.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
 #include "scheduler/rdbms/RelationalDB.hpp"
+#include "scheduler/rdbms/TemporaryPostgresInstance.hpp"
 
 #include <memory>
 #include <string>
@@ -35,22 +34,22 @@ private:
   std::unique_ptr<cta::log::Logger> m_logger;
   cta::catalogue::Catalogue& m_catalogue;
   RelationalDB m_RelationalDB;
-    std::string m_schemaName;
+  std::string m_schemaName;
 
 public:
-  RelationalDBWrapper(const std::string &ownerId,
-                         std::unique_ptr<cta::log::Logger> logger,
-                         catalogue::Catalogue &catalogue,
-                         const rdbms::Login &login,
-                         const uint64_t nbConns,
-                         const std::string &schemaName = "public") :
-      SchedulerDatabaseDecorator(m_RelationalDB),
-      m_logger(std::move(logger)), m_catalogue(catalogue),
-      m_RelationalDB(ownerId, *m_logger, catalogue, login, nbConns),
-      m_schemaName(schemaName)
-   {
-     // empty
-   }
+  RelationalDBWrapper(const std::string& ownerId,
+                      std::unique_ptr<cta::log::Logger> logger,
+                      catalogue::Catalogue& catalogue,
+                      const rdbms::Login& login,
+                      const uint64_t nbConns,
+                      const std::string& schemaName = "public")
+      : SchedulerDatabaseDecorator(m_RelationalDB),
+        m_logger(std::move(logger)),
+        m_catalogue(catalogue),
+        m_RelationalDB(ownerId, *m_logger, catalogue, login, nbConns),
+        m_schemaName(schemaName) {
+    // empty
+  }
 
   ~RelationalDBWrapper() noexcept {
     // Drop the schema we created for test isolation
@@ -119,18 +118,17 @@ public:
       cta::rdbms::Login login = schedulerdb::g_tempPostgresEnv->getLogin(schemaName);
 
       // Create wrapper that will drop the schema on destruction
-      auto pgwrapper = std::make_unique<RelationalDBWrapper>(
-        "UnitTest", std::move(logger), *catalogue, login, 5, schemaName);
+      auto pgwrapper =
+        std::make_unique<RelationalDBWrapper>("UnitTest", std::move(logger), *catalogue, login, 5, schemaName);
 
       return std::unique_ptr<SchedulerDatabase>(std::move(pgwrapper));
 
     } else {
       // Fallback to dummy credentials (tests will fail)
-      cta::rdbms::Login login(cta::rdbms::Login::DBTYPE_POSTGRESQL,
-                              "user", "password", "", "host", 0, "public");
+      cta::rdbms::Login login(cta::rdbms::Login::DBTYPE_POSTGRESQL, "user", "password", "", "host", 0, "public");
 
-      auto pgwrapper = std::make_unique<RelationalDBWrapper>(
-        "UnitTest", std::move(logger), *catalogue, login, 5, "public");
+      auto pgwrapper =
+        std::make_unique<RelationalDBWrapper>("UnitTest", std::move(logger), *catalogue, login, 5, "public");
 
       return std::unique_ptr<SchedulerDatabase>(std::move(pgwrapper));
     }

@@ -54,8 +54,7 @@ void TemporaryPostgresEnvironment::createSchedulerSchemaInSchema(const std::stri
     conn.commit();
 
   } catch (const std::exception& e) {
-    throw std::runtime_error(
-      "Failed to create scheduler schema in " + schemaName + ": " + e.what());
+    throw std::runtime_error("Failed to create scheduler schema in " + schemaName + ": " + e.what());
   }
 }
 
@@ -81,4 +80,4 @@ void TemporaryPostgresEnvironment::executeNonQueries(rdbms::Conn& conn, const st
   }
 }
 
-} // namespace cta::schedulerdb
+}  // namespace cta::schedulerdb
