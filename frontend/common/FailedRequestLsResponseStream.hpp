@@ -41,8 +41,8 @@ private:
   bool m_archiveJobItorExhausted = false;
 
   // Helper methods
-  std::optional<cta::xrd::Data> getNextArchiveJobsData();
-  std::optional<cta::xrd::Data> getNextRetrieveJobsData();
+  cta::xrd::Data getNextArchiveJobsData();
+  cta::xrd::Data getNextRetrieveJobsData();
 
   void collectSummaryData(bool hasArchive, bool hasRetrieve);
 };

@@ -57,11 +57,7 @@ FailedRequestLsResponseStream::FailedRequestLsResponseStream(cta::catalogue::Cat
   }
 }
 
-std::optional<cta::xrd::Data> FailedRequestLsResponseStream::getNextArchiveJobsData() {
-  if (!m_archiveJobQueueItorPtr || m_archiveJobQueueItorPtr->end()) {
-    return std::nullopt;
-  }
-
+cta::xrd::Data FailedRequestLsResponseStream::getNextArchiveJobsData() {
   auto& tapePoolName = m_archiveJobQueueItorPtr->qid();
   const auto& item = **m_archiveJobQueueItorPtr;
 
@@ -95,11 +91,7 @@ std::optional<cta::xrd::Data> FailedRequestLsResponseStream::getNextArchiveJobsD
   return data;
 }
 
-std::optional<cta::xrd::Data> FailedRequestLsResponseStream::getNextRetrieveJobsData() {
-  if (!m_retrieveJobQueueItorPtr || m_retrieveJobQueueItorPtr->end()) {
-    return std::nullopt;
-  }
-
+cta::xrd::Data FailedRequestLsResponseStream::getNextRetrieveJobsData() {
   auto& vid = m_retrieveJobQueueItorPtr->qid();
   const auto& item = **m_retrieveJobQueueItorPtr;
 
@@ -198,19 +190,11 @@ cta::xrd::Data FailedRequestLsResponseStream::next() {
     return data;
   }
 
-  if (!m_archiveJobItorExhausted) {
-    if (auto dataOpt = getNextArchiveJobsData(); dataOpt.has_value()) {
-      return dataOpt.value();
-    } else {
-      m_archiveJobItorExhausted = true;
-    }
+  if (m_archiveJobQueueItorPtr && !m_archiveJobQueueItorPtr->end()) {
+    return getNextArchiveJobsData();
+  } else {
+    return getNextRetrieveJobsData();
   }
-
-  if (auto dataOpt = getNextRetrieveJobsData(); dataOpt.has_value()) {
-    return dataOpt.value();
-  }
-
-  throw std::runtime_error("Stream is exhausted");
 }
 
 }  // namespace cta::frontend
