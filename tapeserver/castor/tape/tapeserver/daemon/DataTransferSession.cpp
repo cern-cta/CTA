@@ -363,7 +363,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
 
       // If the disk thread finished the last, it leaves the drive in DrainingToDisk state
       // Return the drive back to UP state
-      if (m_scheduler.getDriveState(m_driveInfo.driveName, &logContext)->driveStatus
+      if (m_scheduler.getDriveStatus(m_driveInfo.driveName, &logContext)
           == cta::common::dataStructures::DriveStatus::DrainingToDisk) {
         m_scheduler.reportDriveStatus(m_driveInfo,
                                       cta::common::dataStructures::MountType::NoMount,

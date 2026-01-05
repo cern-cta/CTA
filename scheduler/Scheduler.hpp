@@ -270,18 +270,12 @@ public:
                          log::LogContext& lc) override;
 
   /**
-   * Dumps the state of an specifig drive
+   * Returns the status of a specific drive
    * @param tapeDriveName
-   * @return An optional drive state structures.
+   * @return An optional drive status structures.
    */
-  std::optional<cta::common::dataStructures::TapeDrive> getDriveState(const std::string& tapeDriveName,
-                                                                      log::LogContext* lc) const;
-
-  /**
-   * Dumps the states of all drives for display
-   * @return A list of drive state structures.
-   */
-  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext& lc) const;
+  std::optional<cta::common::dataStructures::DriveStatus> getDriveStatus(const std::string& tapeDriveName,
+                                                                         log::LogContext* lc) const;
 
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
