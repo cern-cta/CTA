@@ -51,7 +51,22 @@ DriveStateCatalogueRetryWrapper::getTapeDrive(const std::string& tapeDriveName) 
 std::unordered_map<std::string, std::optional<uint64_t>> DriveStateCatalogueRetryWrapper::getTapeDriveMountIDs() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->DriveState()->getTapeDriveMountIDs(); },
+    [this] { return m_catalogue->DriveState()->getTapeDriveMountIDs(); },    m_maxTriesToConnect);
+}
+
+std::optional<common::dataStructures::DriveStatus>
+DriveStateCatalogueRetryWrapper::getTapeDriveStatus(const std::string& tapeDriveName) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &tapeDriveName] { return m_catalogue->DriveState()->getTapeDriveStatus(tapeDriveName); },
+    m_maxTriesToConnect);
+}
+
+std::optional<common::dataStructures::MountType>
+DriveStateCatalogueRetryWrapper::getMountType(const std::string& tapeDriveName) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &tapeDriveName] { return m_catalogue->DriveState()->getMountType(tapeDriveName); },
     m_maxTriesToConnect);
 }
 

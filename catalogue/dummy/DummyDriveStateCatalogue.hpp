@@ -34,6 +34,11 @@ public:
 
   std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string& tapeDriveName) const override;
 
+  std::optional<common::dataStructures::DriveStatus>
+  getTapeDriveStatus(const std::string& tapeDriveName) const override;
+
+  std::optional<common::dataStructures::MountType> getMountType(const std::string& tapeDriveName) const override;
+
   void setDesiredTapeDriveState(const std::string& tapeDriveName,
                                 const common::dataStructures::DesiredDriveState& desiredState) override;
 
