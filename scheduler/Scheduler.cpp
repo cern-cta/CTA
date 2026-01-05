@@ -959,26 +959,18 @@ void Scheduler::RepackReportBatch::report(log::LogContext& lc) {
 common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const std::string& driveName,
                                                                           log::LogContext& lc) {
   utils::Timer t;
-  const auto driveStates = m_catalogue.DriveState()->getTapeDrives();
-  for (const auto& driveState : driveStates) {
-    lc.log(log::DEBUG,
-           "In Scheduler::getDesiredDriveState(): checking driveName: " + driveName
-             + " against existing: " + driveState.driveName);
-    if (driveState.driveName == driveName) {
-      if (const auto schedulerDbTime = t.secs(); schedulerDbTime > 1) {
-        log::ScopedParamContainer spc(lc);
-        spc.add("drive", driveName).add("schedulerDbTime", schedulerDbTime);
-        lc.log(log::DEBUG, "In Scheduler::getDesiredDriveState(): success.");
-      }
-      common::dataStructures::DesiredDriveState desiredDriveState;
-      desiredDriveState.up = driveState.desiredUp;
-      desiredDriveState.forceDown = driveState.desiredForceDown;
-      desiredDriveState.reason = driveState.reasonUpDown;
-      desiredDriveState.comment = driveState.userComment;
-      return desiredDriveState;
-    }
+  const auto optionalDriveState = m_catalogue.DriveState()->getTapeDrive(driveName);
+  if (!optionalDriveState.has_value()) {
+    throw NoSuchDrive("In Scheduler::getDesiredDriveState(): no such drive");
   }
-  throw NoSuchDrive("In Scheduler::getDesiredDriveState(): no such drive");
+  const auto driveState = optionalDriveState.value();
+
+  common::dataStructures::DesiredDriveState desiredDriveState;
+  desiredDriveState.up = driveState.desiredUp;
+  desiredDriveState.forceDown = driveState.desiredForceDown;
+  desiredDriveState.reason = driveState.reasonUpDown;
+  desiredDriveState.comment = driveState.userComment;
+  return desiredDriveState;
 }
 
 //------------------------------------------------------------------------------

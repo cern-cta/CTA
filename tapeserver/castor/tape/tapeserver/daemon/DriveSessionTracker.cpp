@@ -25,11 +25,11 @@ static void ObserveSessionState(opentelemetry::metrics::ObserverResult observer_
     return;
   }
 
-  const auto optionalTapeDrive = driveSessionTracker->queryTapeDrive();
+  const auto optionalTapeDrive = driveSessionTracker->getCurrentDriveStatus();
   if (!optionalTapeDrive.has_value()) {
     return;
   }
-  const auto actualDriveStatus = optionalTapeDrive.value().driveStatus;
+  const auto actualDriveStatus = optionalTapeDrive.value();
 
   if (std::holds_alternative<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result)) {
     auto typed_observer = std::get<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result);
@@ -52,11 +52,11 @@ static void ObserveMountType(opentelemetry::metrics::ObserverResult observer_res
     return;
   }
 
-  const auto optionalTapeDrive = driveSessionTracker->queryTapeDrive();
+  const auto optionalTapeDrive = driveSessionTracker->getCurrentMountType();
   if (!optionalTapeDrive.has_value()) {
     return;
   }
-  const auto actualMountType = optionalTapeDrive.value().mountType;
+  const auto actualMountType = optionalTapeDrive.value();
 
   if (std::holds_alternative<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result)) {
     auto typed_observer = std::get<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result);
@@ -90,8 +90,12 @@ DriveSessionTracker::~DriveSessionTracker() {
   telemetry::metrics::ctaTapedMountType->RemoveCallback(ObserveMountType, this);
 }
 
-std::optional<common::dataStructures::TapeDrive> DriveSessionTracker::queryTapeDrive() const {
-  return m_catalogue->DriveState()->getTapeDrive(m_driveName);
+std::optional<common::dataStructures::MountType> DriveSessionTracker::getCurrentMountType() const {
+  return m_catalogue->DriveState()->getMountType(m_driveName);
+}
+
+std::optional<common::dataStructures::DriveStatus> DriveSessionTracker::getCurrentDriveStatus() const {
+  return m_catalogue->DriveState()->getTapeDriveStatus(m_driveName);
 }
 
 }  // namespace castor::tape::tapeserver::daemon

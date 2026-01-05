@@ -61,6 +61,16 @@ std::list<common::dataStructures::TapeDrive> DummyDriveStateCatalogue::getTapeDr
   return tapeDrives;
 }
 
+std::optional<common::dataStructures::DriveStatus>
+DummyDriveStateCatalogue::getTapeDriveStatus(const std::string& tapeDriveName) const {
+  return common::dataStructures::DriveStatus::Down;
+}
+
+std::optional<common::dataStructures::MountType>
+DummyDriveStateCatalogue::getMountType(const std::string& tapeDriveName) const {
+  return common::dataStructures::MountType::NoMount;
+}
+
 void DummyDriveStateCatalogue::setDesiredTapeDriveState(const std::string&,
                                                         const common::dataStructures::DesiredDriveState& desiredState) {
   m_tapeDriveStatus.desiredUp = desiredState.up;
