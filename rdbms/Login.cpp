@@ -240,7 +240,8 @@ void Login::setSqliteConnectionString(const std::string& filename) {
 // parsePostgresql
 //------------------------------------------------------------------------------
 Login Login::parsePostgresql(const std::string& connectionDetails) {
-  Login login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0, getPostgresqlDbNamespace(connectionDetails));
+  /* If we want a specific schema to be searched first, the way to do this is through SET search_path T0 ... */
+  Login login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0, "public");
   login.setPostgresqlConnectionString(connectionDetails);
   return login;
 }
@@ -283,7 +284,7 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
  * For the namespace, we simple take "[hostspec][/dbname][?paramspec]".
  * Note that technically [?paramspec] should not be included, but support for this is missing from the rest of the login methods as well.
  */
-std::string Login::getPostgresqlDbNamespace(const std::string& connectionDetails) {
+std::string Login::getPostgresqlHostAndDbName(const std::string& connectionDetails) {
   if (connectionDetails.find("@") == std::string::npos) {
     cta::utils::Regex regex("postgresql://(.*)");
     const std::vector<std::string> result = regex.exec(connectionDetails);
