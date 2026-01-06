@@ -6,6 +6,7 @@
 #include "catalogue/retrywrappers/TapeCatalogueRetryWrapper.hpp"
 
 #include "catalogue/Catalogue.hpp"
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
@@ -33,6 +34,13 @@ void TapeCatalogueRetryWrapper::deleteTape(const std::string& vid) {
   return retryOnLostConnection(
     m_log,
     [this, &vid] { return m_catalogue->Tape()->deleteTape(vid); },
+    m_maxTriesToConnect);
+}
+
+TapeItor TapeCatalogueRetryWrapper::getTapesItor(const TapeSearchCriteria& searchCriteria) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &searchCriteria] { return m_catalogue->Tape()->getTapesItor(searchCriteria); },
     m_maxTriesToConnect);
 }
 

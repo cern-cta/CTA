@@ -5,11 +5,12 @@
 
 #include "catalogue/rdbms/RdbmsTapeCatalogue.hpp"
 
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
-#include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
+#include "catalogue/rdbms/RdbmsCatalogueGetTapesItor.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsLogicalLibraryCatalogue.hpp"
@@ -260,6 +261,13 @@ void RdbmsTapeCatalogue::deleteTape(const std::string& vid) {
       throw UserSpecifiedANonExistentTape(std::string("Cannot delete tape ") + vid + " because it does not exist");
     }
   }
+}
+
+TapeItor RdbmsTapeCatalogue::getTapesItor(const TapeSearchCriteria& searchCriteria) const {
+  auto conn = m_rdbmsCatalogue->m_archiveFileListingConnPool->getConn();
+  checkTapeSearchCriteria(conn, searchCriteria);
+  auto impl = new RdbmsCatalogueGetTapesItor(m_log, std::move(conn), searchCriteria);
+  return TapeItor(impl);
 }
 
 std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(const TapeSearchCriteria& searchCriteria) const {
@@ -1875,6 +1883,42 @@ void RdbmsTapeCatalogue::executeGetVidToLogicalLibraryBy100StmtAndCollectResults
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     vidToLogicalLibrary[rset.columnString("VID")] = rset.columnString("LOGICAL_LIBRARY_NAME");
+  }
+}
+
+void RdbmsTapeCatalogue::checkTapeSearchCriteria(rdbms::Conn& conn, const TapeSearchCriteria& searchCriteria) const {
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vid)) {
+    throw exception::UserError("VID cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.mediaType)) {
+    throw exception::UserError("Media type cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vendor)) {
+    throw exception::UserError("Vendor cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.logicalLibrary)) {
+    throw exception::UserError("Logical library cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.tapePool)) {
+    throw exception::UserError("Tape pool cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vo)) {
+    throw exception::UserError("Virtual organisation cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.purchaseOrder)) {
+    throw exception::UserError("Purchase order cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.diskFileIds)) {
+    throw exception::UserError("Disk file ID list cannot be empty");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.physicalLibraryName)) {
+    throw exception::UserError("Physical library name cannot be empty");
+  }
+
+  if (searchCriteria.vid && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
+    cta::exception::UserError ex;
+    ex.getMessage() << "Cannot list tapes because tape with vid " + searchCriteria.vid.value() + " does not exist";
+    throw ex;
   }
 }
 

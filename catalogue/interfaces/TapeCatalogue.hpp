@@ -40,6 +40,11 @@ CTA_GENERATE_EXCEPTION_CLASS(TapeNotFound);
 class CreateTapeAttributes;
 class TapeForWriting;
 
+template<typename Item>
+class CatalogueItor;
+
+using TapeItor = CatalogueItor<common::dataStructures::Tape>;
+
 class TapeCatalogue {
 public:
   virtual ~TapeCatalogue() = default;
@@ -53,6 +58,14 @@ public:
   virtual void createTape(const common::dataStructures::SecurityIdentity& admin, const CreateTapeAttributes& tape) = 0;
 
   virtual void deleteTape(const std::string& vid) = 0;
+
+  /**
+   * Returns an iterator for the list of tapes that meet the specified search criteria.
+   *
+   * @param searchCriteria The search criteria.
+   * @return The iterator object.
+   */
+  virtual TapeItor getTapesItor(const TapeSearchCriteria& searchCriteria = TapeSearchCriteria()) const = 0;
 
   /**
    * Returns the list of tapes that meet the specified search criteria.
