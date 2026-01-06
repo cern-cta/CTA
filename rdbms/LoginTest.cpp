@@ -366,34 +366,34 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Postgresql) {
   }
 }
 
-TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_normal) {
+TEST_F(cta_rdbms_LoginTest, getPostgresqlHostAndDbName_normal) {
   using namespace cta::rdbms;
   std::string connectionDetails = "postgresql://u@db/mydb";
-  ASSERT_EQ("db/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
+  ASSERT_EQ("db/mydb", Login::getPostgresqlHostAndDbName(connectionDetails));
 }
 
-TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_ipv6) {
+TEST_F(cta_rdbms_LoginTest, getPostgresqlHostAndDbName_ipv6) {
   using namespace cta::rdbms;
   std::string connectionDetails = "postgresql://u@[2001:db8::1]:5432/mydb";
-  ASSERT_EQ("[2001:db8::1]:5432/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
+  ASSERT_EQ("[2001:db8::1]:5432/mydb", Login::getPostgresqlHostAndDbName(connectionDetails));
 }
 
-TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_unix_socket) {
+TEST_F(cta_rdbms_LoginTest, getPostgresqlHostAndDbName_unix_socket) {
   using namespace cta::rdbms;
   std::string connectionDetails = "postgresql://u@%2Fvar%2Frun%2Fpostgresql/mydb";
-  ASSERT_EQ("%2Fvar%2Frun%2Fpostgresql/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
+  ASSERT_EQ("%2Fvar%2Frun%2Fpostgresql/mydb", Login::getPostgresqlHostAndDbName(connectionDetails));
 }
 
-TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_no_dbname) {
+TEST_F(cta_rdbms_LoginTest, getPostgresqlHostAndDbName_no_dbname) {
   using namespace cta::rdbms;
   std::string connectionDetails = "postgresql://u@db";
-  ASSERT_EQ("db", Login::getPostgresqlDbNamespace(connectionDetails));
+  ASSERT_EQ("db", Login::getPostgresqlHostAndDbName(connectionDetails));
 }
 
-TEST_F(cta_rdbms_LoginTest, getPostgresqlDbNamespace_empty_password_with_colon) {
+TEST_F(cta_rdbms_LoginTest, getPostgresqlHostAndDbName_empty_password_with_colon) {
   using namespace cta::rdbms;
   std::string connectionDetails = "postgresql://user:@db/mydb";
-  ASSERT_EQ("db/mydb", Login::getPostgresqlDbNamespace(connectionDetails));
+  ASSERT_EQ("db/mydb", Login::getPostgresqlHostAndDbName(connectionDetails));
 }
 
 }  // namespace unitTests
