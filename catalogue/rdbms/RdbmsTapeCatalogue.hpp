@@ -136,7 +136,7 @@ private:
   std::shared_ptr<rdbms::ConnPool> m_connPool;
   RdbmsCatalogue* m_rdbmsCatalogue;
 
-  std::list<common::dataStructures::Tape> getTapes(rdbms::Conn& conn, const TapeSearchCriteria& searchCriteria) const;
+  common::dataStructures::VidToTapeMap getTapesByVid(rdbms::Conn& conn, const std::string& vid) const;
 
   std::string getSelectTapesBy100VidsSql() const;
 

@@ -279,7 +279,7 @@ RdbmsCatalogueGetTapesItor::RdbmsCatalogueGetTapesItor(log::Logger& log,
       sql += R"SQL(:DISK_FID)SQL";
       sql += std::to_string(i);
     }
-    sql += R"SQL())SQL";
+    sql += R"SQL()))SQL";
 
     addedAWhereConstraint = true;
   }
@@ -396,7 +396,7 @@ RdbmsCatalogueGetTapesItor::RdbmsCatalogueGetTapesItor(log::Logger& log,
     m_stmt.bindUint64(":MAX_CREATION_TIME", max_creation_time);
   }
 
-  if (m_searchCriteria.diskFileIds) {
+  if (m_searchCriteria.diskFileIds.has_value()) {
     std::size_t diskFileIdsPerQuery = std::min(m_searchCriteria.diskFileIds->size(), MAX_DISK_FILE_ID_IN_QUERY);
     for (std::size_t i = 0; i < diskFileIdsPerQuery; ++i) {
       m_stmt.bindString(":DISK_FID" + std::to_string(i), m_searchCriteria.diskFileIds->at(i));
