@@ -447,6 +447,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
+    request.archiveReportURL = "test://archive-report-url";
+    request.archiveErrorReportURL = "test://error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -662,6 +664,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
+    request.archiveReportURL = "test://archive-report-url";
+    request.archiveErrorReportURL = "test://error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1021,6 +1025,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = dualCopyStorageClassName;
+    request.archiveReportURL = "test://archive-report-url";
+    request.archiveErrorReportURL = "test://error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1362,6 +1368,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
+    request.archiveReportURL = "test://archive-report-url";
+    request.archiveErrorReportURL = "test://error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1605,6 +1613,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
+    request.archiveReportURL = "test://archive-report-url";
+    request.archiveErrorReportURL = "test://error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1933,6 +1943,7 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     request.dstURL = "dstURL";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
+    request.retrieveReportURL = "test://retrieve-report-url";
     ASSERT_THROW(scheduler.queueRetrieve("disk_instance", request, lc), cta::exception::Exception);
   }
 }
@@ -1970,6 +1981,8 @@ TEST_P(SchedulerTest, showqueues) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
+    request.archiveReportURL = "test://archive-report-url";
+    request.archiveErrorReportURL = "test://error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -2894,6 +2907,8 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
   request.requester = requester;
   request.srcURL = "srcURL";
   request.storageClass = s_storageClassName;
+  request.archiveReportURL = "test://archive-report-url";
+  request.archiveErrorReportURL = "test://error-report-url";
   archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
 
@@ -3314,6 +3329,8 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount) {
   request.requester = requester;
   request.srcURL = "srcURL";
   request.storageClass = s_storageClassName;
+  request.archiveReportURL = "test://archive-report-url";
+  request.archiveErrorReportURL = "test://error-report-url";
 
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
@@ -3395,6 +3412,8 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled) {
   request.requester = requester;
   request.srcURL = "srcURL";
   request.storageClass = s_storageClassName;
+  request.archiveReportURL = "test://archive-report-url";
+  request.archiveErrorReportURL = "test://error-report-url";
 
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
