@@ -525,9 +525,16 @@ void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdent
 void RdbmsTapeCatalogue::checkTapeForLabel(const std::string& vid) {
   auto conn = m_connPool->getConn();
 
-  if (const auto tapes = getTapesByVid(conn, vid); tapes.empty()) {
+  if (vid.empty()) {
+    throw exception::UserError("VID cannot be an empty string");
+  }
+
+  try {
+    const auto tapes = getTapesByVid(conn, vid);
+  } catch (TapeNotFound&) {
     throw exception::UserError(std::string("Cannot label tape ") + vid + " because it does not exist");
   }
+
   //The tape exists checks any files on it
   const uint64_t nbFilesOnTape = getNbFilesOnTape(conn, vid);
   if (0 != nbFilesOnTape) {

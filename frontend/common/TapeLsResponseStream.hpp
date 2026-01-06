@@ -6,10 +6,8 @@
 #pragma once
 
 #include "CtaAdminResponseStream.hpp"
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
-#include "common/dataStructures/Tape.hpp"
-
-#include <list>
 
 #include "cta_admin.pb.h"
 
@@ -27,8 +25,7 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<common::dataStructures::Tape> m_tapes;
-  uint64_t m_missingFileCopiesMinAgeSecs;
+  catalogue::TapeItor m_tapesItor;
   cta::catalogue::TapeSearchCriteria m_searchCriteria;
   void validateSearchCriteria(bool hasAllFlag, bool hasAnySearchOption) const;
 };
