@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "common/process/threading/SocketPair.hpp"
-
 #include <memory>
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
@@ -15,9 +13,6 @@
 #endif
 #include "scheduler/Scheduler.hpp"
 #include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
-#include "tapeserver/daemon/ProcessManager.hpp"
-#include "tapeserver/daemon/SubprocessHandler.hpp"
-#include "tapeserver/daemon/TapedProxy.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tapeserver/session/SessionState.hpp"
 #include "tapeserver/session/SessionType.hpp"
@@ -38,13 +33,11 @@ class MediaChangerFacade;
 
 namespace tape::daemon {
 
-class DriveHandlerProxy;
-
 /**
  * Handler for tape drive session subprocesses. On process/session will handle
  * at most one tape mount. Child process will either return a clean/unclean
  */
-class DriveHandler : public SubprocessHandler {
+class DriveHandler {
 public:
   // Possible outcomes of the previous session/child process
   enum class PreviousSession {
@@ -54,7 +47,7 @@ public:
     Crashed      ///< The previous process was killed or crashed. The next session will be a cleanup.
   };
 
-  DriveHandler(const common::TapedConfiguration& tapedConfig, const DriveConfigEntry& driveConfig, ProcessManager& pm);
+  DriveHandler(const common::TapedConfiguration& tapedConfig, const DriveConfigEntry& driveConfig, LogContext& lc);
   ~DriveHandler() override = default;
 
   ProcessingStatus getInitialStatus() override;

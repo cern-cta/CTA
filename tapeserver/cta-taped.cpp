@@ -80,7 +80,7 @@ static int exceptionThrowingMain(const cta::common::CmdLineParams& commandLine, 
   cta::tape::daemon::TapeDaemon daemon(commandLine, log, globalConfig);
 
   // Run the tapeserverd daemon
-  return daemon.mainImpl();
+  return daemon.run();
 }
 
 }  // namespace cta::taped
@@ -203,8 +203,7 @@ int main(const int argc, char** const argv) {
           .metricsOtlpBasicAuth(otlpBasicAuthUsername, otlpBasicAuthPassword)
           .metricsFileEndpoint(globalConfig.metricsFileEndpoint.value())
           .build();
-      // taped is a special case where we only do initTelemetry after the process name has been set
-      cta::telemetry::initTelemetryConfig(telemetryConfig);
+      cta::telemetry::initTelemetry(telemetryConfig);
     } catch (exception::Exception& ex) {
       std::list<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
       log(log::ERR, "Failed to instantiate OpenTelemetry", params);

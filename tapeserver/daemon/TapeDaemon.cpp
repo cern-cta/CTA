@@ -26,75 +26,25 @@ TapeDaemon::TapeDaemon(const cta::common::CmdLineParams& commandLine,
                        log::Logger& log,
                        const common::TapedConfiguration& globalConfig)
     : cta::server::Daemon(log),
-      m_globalConfiguration(globalConfig) {
-  setCommandLineHasBeenParsed(commandLine.foreground);
-}
-
-TapeDaemon::~TapeDaemon() {
-  google::protobuf::ShutdownProtobufLibrary();
-}
+      m_globalConfiguration(globalConfig) {}
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int TapeDaemon::mainImpl() {
-  try {
-    exceptionThrowingMain();
-  } catch (cta::exception::NoSuchObject& ex) {
-    m_log(log::ERR, "Aborting cta-taped. Not starting because: " + ex.getMessage().str());
-    return EXIT_FAILURE;
-  } catch (cta::exception::Exception& ex) {
-    // Log the error
-    m_log(log::ERR,
-          "Aborting cta-taped on uncaught exception. Stack trace follows.",
-          {
-            {"exceptionMessage", ex.getMessage().str()}
-    });
-    log::LogContext lc(m_log);
-    lc.logBacktrace(log::INFO, ex.backtrace());
-    return EXIT_FAILURE;
-  }
-  return EXIT_SUCCESS;
-}
-
-//------------------------------------------------------------------------------
-// exceptionThrowingMain
-//------------------------------------------------------------------------------
-void cta::tape::daemon::TapeDaemon::exceptionThrowingMain() {
-  daemonizeIfNotRunInForeground();
+void TapeDaemon::run() {
   setDumpable();
-  mainEventLoop();
-}
-
-//------------------------------------------------------------------------------
-// mainEventLoop
-//------------------------------------------------------------------------------
-void cta::tape::daemon::TapeDaemon::mainEventLoop() {
   // Create the log context
   log::LogContext lc(m_log);
   // Set process name
-  const auto processName = m_globalConfiguration.constructProcessName(lc, "parent");
+  const auto processName = m_globalConfiguration.constructProcessName(lc, "taped");
   prctl(PR_SET_NAME, processName.c_str());
-  // Initialise telemetry only after the process name is available
-  cta::telemetry::reinitTelemetry(lc);
-  // Create the process manager and signal handler
-  ProcessManager pm(lc);
-  auto sh = std::make_unique<SignalHandler>(pm);
-  pm.addHandler(std::move(sh));
-  // Create the drive handler
   const DriveConfigEntry dce {m_globalConfiguration.driveName.value(),
                               m_globalConfiguration.driveLogicalLibrary.value(),
                               m_globalConfiguration.driveDevice.value(),
                               m_globalConfiguration.driveControlPath.value()};
-  auto dh = std::make_unique<DriveHandler>(m_globalConfiguration, dce, pm);
-  pm.addHandler(std::move(dh));
 
-  // And run the process manager
-  int ret = pm.run();
-  {
-    log::ScopedParamContainer param(lc);
-    param.add("returnValue", ret);
-  }
+  DriveHandler driveHandler(m_globalConfiguration, dce);
+  driveHandler.run();
   lc.log(log::INFO, "cta-taped exiting.");
   ::exit(ret);
 }

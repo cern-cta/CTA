@@ -14,7 +14,7 @@ namespace cta::tape::daemon {
 /** Daemon responsible for reading and writing data from and to one or more tape
  * drives drives connected to a tape server. */
 
-class TapeDaemon : public cta::server::Daemon {
+class TapeDaemon {
 public:
   /** Constructor.
    * @param commandLine The parameters extracted from the command line.
@@ -24,23 +24,12 @@ public:
              cta::log::Logger& log,
              const common::TapedConfiguration& globalConfig);
 
-  ~TapeDaemon() final;
-
-  /** The main entry function of the daemon.
-   * @return The return code of the process. */
-  int mainImpl();
+  /** Runs the daemon. */
+  void run();
 
 protected:
-  /** Exception throwing main() function. */
-  void exceptionThrowingMain();
-
   /** Sets the dumpable attribute of the current process to true. */
   void setDumpable();
-
-  /**
-   * The main event loop of the daemon.
-   */
-  void mainEventLoop();
 
   /** The tape server's configuration */
   const common::TapedConfiguration& m_globalConfiguration;
