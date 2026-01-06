@@ -87,3 +87,21 @@ SPDX-License-Identifier: GPL-3.0-or-later
   {{- end }}
   {{- toYaml $drivesList }}
 {{- end }}
+
+{{/*
+    Helper to get a list of all unique library IDs across tapeServers as a list.
+*/}}
+{{- define "tpsrv.allLibraries" -}}
+  {{- $uniqueLibs := dict -}}
+  {{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
+  {{- range $name, $tapeServerConfig := $tapeServers -}}
+    {{- if not (hasKey $uniqueLibs $tapeServerConfig.libraryId) -}}
+      {{- $_ := set $uniqueLibs $tapeServerConfig.libraryId true -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $libsList := list -}}
+  {{- range $libId, $_ := $uniqueLibs -}}
+    {{- $libsList = append $libsList $libId -}}
+  {{- end -}}
+  {{- toYaml $libsList -}}
+{{- end -}}

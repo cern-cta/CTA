@@ -13,6 +13,7 @@ ignore: |
   .git/
   build_*/
   ci/orchestration/helm/**/templates
+  ci/orchestration/helm/**/crds
   common/jwt-cpp/
   catalogue/cta-catalogue-schema/
   eos_cta/grpc-proto/
