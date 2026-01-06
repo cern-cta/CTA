@@ -380,6 +380,9 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.requester = requester;
   request.srcURL = "srcURL";
   request.storageClass = s_storageClassName;
+  // archive report url should have a value otherwise exception
+  request.archiveReportURL = "test://archive-report-url";
+  request.archiveErrorReportURL = "test://error-report-url";
 
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
