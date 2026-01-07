@@ -142,11 +142,135 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
 }
 
 std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> RelationalDB::getArchiveJobs() const {
-  throw cta::exception::NotImplementedException();
+  std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> ret;
+
+  // Get a connection
+  auto conn = m_connPool.getConn();
+
+  // Query all archive jobs from ARCHIVE_PENDING_QUEUE
+  std::string sql = R"SQL(
+    SELECT
+      TAPE_POOL,
+      ARCHIVE_FILE_ID,
+      COPY_NB,
+      CREATION_TIME,
+      ARCHIVE_REPORT_URL,
+      ARCHIVE_ERROR_REPORT_URL,
+      DISK_FILE_ID,
+      DISK_FILE_PATH,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      SIZE_IN_BYTES,
+      CHECKSUMBLOB,
+      STORAGE_CLASS,
+      SRC_URL,
+      REQUESTER_NAME,
+      REQUESTER_GROUP
+    FROM ARCHIVE_PENDING_QUEUE
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+
+  while (rset.next()) {
+    common::dataStructures::ArchiveJob job;
+
+    // Extract tape pool
+    std::string tapePool = rset.columnString("TAPE_POOL");
+    job.tapePool = tapePool;
+
+    // Extract archive file ID and copy number
+    job.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+    job.copyNumber = rset.columnUint64("COPY_NB");
+
+    // Fill in the request fields
+    job.request.creationLog.time = rset.columnUint64("CREATION_TIME");
+    job.request.archiveReportURL = rset.columnString("ARCHIVE_REPORT_URL");
+    job.request.archiveErrorReportURL = rset.columnString("ARCHIVE_ERROR_REPORT_URL");
+    job.request.diskFileID = rset.columnString("DISK_FILE_ID");
+    job.request.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
+    job.request.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_OWNER_UID");
+    job.request.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
+    job.request.fileSize = rset.columnUint64("SIZE_IN_BYTES");
+    job.request.storageClass = rset.columnString("STORAGE_CLASS");
+    job.request.srcURL = rset.columnString("SRC_URL");
+    job.request.requester.name = rset.columnString("REQUESTER_NAME");
+    job.request.requester.group = rset.columnString("REQUESTER_GROUP");
+
+    // Extract checksum blob
+    std::string checksumBlobStr = rset.columnBlob("CHECKSUMBLOB");
+
+    // Add to the map
+    ret[tapePool].push_back(job);
+  }
+
+  return ret;
 }
 
 std::list<cta::common::dataStructures::ArchiveJob> RelationalDB::getArchiveJobs(const std::string& tapePoolName) const {
-  throw cta::exception::NotImplementedException();
+  std::list<cta::common::dataStructures::ArchiveJob> ret;
+
+  // Get a connection
+  auto conn = m_connPool.getConn();
+
+  // Query archive jobs for specific tape pool from ARCHIVE_PENDING_QUEUE
+  std::string sql = R"SQL(
+    SELECT
+      TAPE_POOL,
+      ARCHIVE_FILE_ID,
+      COPY_NB,
+      CREATION_TIME,
+      ARCHIVE_REPORT_URL,
+      ARCHIVE_ERROR_REPORT_URL,
+      DISK_FILE_ID,
+      DISK_FILE_PATH,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      SIZE_IN_BYTES,
+      CHECKSUMBLOB,
+      STORAGE_CLASS,
+      SRC_URL,
+      REQUESTER_NAME,
+      REQUESTER_GROUP
+    FROM ARCHIVE_PENDING_QUEUE
+    WHERE TAPE_POOL = :TAPE_POOL
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":TAPE_POOL", tapePoolName);
+  auto rset = stmt.executeQuery();
+
+  while (rset.next()) {
+    common::dataStructures::ArchiveJob job;
+
+    // Extract tape pool
+    job.tapePool = rset.columnString("TAPE_POOL");
+
+    // Extract archive file ID and copy number
+    job.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+    job.copyNumber = rset.columnUint64("COPY_NB");
+
+    // Fill in the request fields
+    job.request.creationLog.time = rset.columnUint64("CREATION_TIME");
+    job.request.archiveReportURL = rset.columnString("ARCHIVE_REPORT_URL");
+    job.request.archiveErrorReportURL = rset.columnString("ARCHIVE_ERROR_REPORT_URL");
+    job.request.diskFileID = rset.columnString("DISK_FILE_ID");
+    job.request.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
+    job.request.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_OWNER_UID");
+    job.request.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
+    job.request.fileSize = rset.columnUint64("SIZE_IN_BYTES");
+    job.request.storageClass = rset.columnString("STORAGE_CLASS");
+    job.request.srcURL = rset.columnString("SRC_URL");
+    job.request.requester.name = rset.columnString("REQUESTER_NAME");
+    job.request.requester.group = rset.columnString("REQUESTER_GROUP");
+
+    // Extract checksum blob
+    std::string checksumBlobStr = rset.columnBlob("CHECKSUMBLOB");
+
+    ret.push_back(job);
+  }
+
+  return ret;
 }
 
 std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor>
