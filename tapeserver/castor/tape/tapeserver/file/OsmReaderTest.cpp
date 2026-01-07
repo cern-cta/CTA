@@ -81,10 +81,10 @@ protected:
         str->erase(std::remove_if(str->begin(), str->end(), [](uint8_t x) { return std::isspace(x); }), str->end());
         return *str;
       };
-      ASSERT_EQ("STK", removeWhiteSpaces(&devInfo.vendor));
-      ASSERT_EQ("MHVTL", removeWhiteSpaces(&devInfo.product));
+      ASSERT_EQ("IBM", removeWhiteSpaces(&devInfo.vendor));
+      ASSERT_EQ("ULT3580-TD8", removeWhiteSpaces(&devInfo.product));
       ASSERT_EQ("0107", devInfo.productRevisionLevel);
-      ASSERT_EQ("S001L01D01", removeWhiteSpaces(&devInfo.serialNumber));
+      ASSERT_EQ("MHVTL_A1", removeWhiteSpaces(&devInfo.serialNumber));
     } catch (cta::exception::Exception& ex) {
       FAIL() << "The drive couldn't be created. " << ex.getMessageValue();
     }
