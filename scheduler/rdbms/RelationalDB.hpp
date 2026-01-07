@@ -437,7 +437,7 @@ private:
   bool deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, log::LogContext& lc);
   std::list<common::dataStructures::RepackInfo> fetchRepackInfo(const std::string& vid);
   std::string m_ownerId;
-  rdbms::ConnPool m_connPool;
+  mutable rdbms::ConnPool m_connPool;
   catalogue::Catalogue& m_catalogue;
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
