@@ -1,11 +1,11 @@
 Aborting recall mount startup: empty mount
 Notified client of end session with error
 In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.
-In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/V00101/ directory
-In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/V00102/ directory
-In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/V00103/ directory
-In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/V00104/ directory
-In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/V00105/ directory
-In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/V00106/ directory
-In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/V00107/ directory
-In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/V00108/ directory
+In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/ULT101/ directory
+In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/ULT102/ directory
+In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/ULT103/ directory
+In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/ULT104/ directory
+In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/ULT105/ directory
+In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/ULT106/ directory
+In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/ULT107/ directory
+In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the root://ctaeos//eos/ctaeos/repack/ULT108/ directory

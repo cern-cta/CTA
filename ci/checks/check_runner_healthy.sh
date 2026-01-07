@@ -53,11 +53,7 @@ if kubectl get secret $ctageneric_secret_name >/dev/null 2>&1; then
   echo "SUCCESS: Secret $ctageneric_secret_name exists"
 else
   echo "ERROR: Secret $ctageneric_secret_name is not present. Without this, pulling CTA images from the private ctageneric registry is not possible."
-  if kubectl get secret ctaregsecret >/dev/null 2>&1; then
-    echo "WARNING: an alternative valid secret \"ctaregsecret\" was found. Note that this secret name is deprecated. Please update the runner configuration."
-  else
-    errors=$((errors + 1))
-  fi
+  errors=$((errors + 1))
 fi
 
 cta_operations_secret_name="reg-eoscta-operations"

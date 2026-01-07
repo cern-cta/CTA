@@ -6,7 +6,6 @@ resetImage:
   tag: "latest"
   pullPolicy: IfNotPresent
   pullSecrets:
-    - ctaregsecret
     - reg-ctageneric
 
 resetCatalogue: false
