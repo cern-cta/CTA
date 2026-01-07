@@ -14,6 +14,14 @@
 #include <iomanip>
 #include <iostream>
 
+extern "C" {
+// isatty()
+#include <unistd.h>
+
+// fileno() and stdout
+#include <stdio.h>
+}
+
 namespace cta::admin {
 
 TextFormatter::~TextFormatter() {
@@ -102,6 +110,8 @@ std::string TextFormatter::dataSizeToStr(uint64_t value) {
 }
 
 void TextFormatter::flush() {
+  static bool is_terminal = isatty((fileno(stdout)));
+
   if (m_outputBuffer.empty()) {
     return;
   }
@@ -132,7 +142,7 @@ void TextFormatter::flush() {
 
   // Output columns
   for (auto& l : m_outputBuffer) {
-    if (is_header) {
+    if (is_header && is_terminal) {
       std::cout << TEXT_RED;
     }
     for (size_t c = 0; c < l.size(); ++c) {
@@ -146,7 +156,7 @@ void TextFormatter::flush() {
       std::cout << std::setfill(' ') << std::setw(m_colSize.at(c)) << flush
                 << (l.at(c).empty() || l.at(c) == "NoMount" ? "-" : l.at(c)) << ' ';
     }
-    if (is_header) {
+    if (is_header && is_terminal) {
       std::cout << TEXT_NORMAL;
       is_header = false;
     }
