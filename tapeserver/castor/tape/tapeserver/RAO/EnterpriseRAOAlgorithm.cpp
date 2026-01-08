@@ -21,12 +21,12 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
   for (uint32_t i = 0; i < njobs; i++) {
     cta::RetrieveJob* job = jobs.at(i).get();
     castor::tape::SCSI::Structures::RAO::blockLims lims;
-    lims.fseq[sizeof(lims.fseq) - 1] = '\0';
-    strncpy(reinterpret_cast<char*>(lims.fseq), std::to_string(i).c_str(), sizeof(lims.fseq));
-    if (lims.fseq[sizeof(lims.fseq) - 1] != '\0') {
+    int n = std::snprintf(reinterpret_cast<char*>(lims.fseq), sizeof(lims.fseq), "%d", i);
+    if (n < 0 || static_cast<size_t>(n) >= sizeof(lims.fseq)) {
       throw cta::exception::Exception("In EnterpriseRAOAlgorithm::performRAO: fSeq " + std::to_string(i)
                                       + " too long for buffer length " + std::to_string(sizeof(lims.fseq)));
     }
+
     lims.begin = job->selectedTapeFile().blockId;
     lims.end = job->selectedTapeFile().blockId + 8 +
                /* ceiling the number of blocks */
