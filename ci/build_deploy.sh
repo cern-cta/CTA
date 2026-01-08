@@ -403,9 +403,13 @@ build_deploy() {
       echo $current_build_id >$build_iteration_file
 
       if [[ ${image_cleanup} = true ]]; then
-        # When deploying an entirely new instance, this is a nice time to clean up old images
         echo "Cleaning up unused ctageneric images..."
-        minikube image ls | grep "localhost/ctageneric:dev" | xargs -r minikube image rm >/dev/null 2>&1
+        if command -v minikube >/dev/null 2>&1; then
+          minikube image ls | grep "localhost/ctageneric:dev" | xargs -r minikube image rm >/dev/null 2>&1
+        fi
+        if command -v k3s >/dev/null 2>&1; then
+          sudo k3s ctr images ls -q | grep '^localhost/ctageneric:dev$' | xargs -r sudo k3s ctr images rm
+        fi
       fi
     else
       # This continuoully increments the image tag from previous upgrades
@@ -430,7 +434,7 @@ build_deploy() {
       --rpm-src "${rpm_src}" \
       --rpm-version "${cta_version}-${vcs_version}" \
       --container-runtime "${container_runtime}" \
-      --load-into-minikube \
+      --load-into-k8s \
       ${extra_image_build_options}
     if [[ ${image_cleanup} = true ]]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
