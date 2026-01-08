@@ -54,11 +54,10 @@ void castor::tape::tapeFile::osm::LABEL::decode() {
   if (volLabel.m_pcVolName == nullptr) {
     throw cta::exception::Exception(std::string("Invalid label format - no volume name"));
   }
-  m_tcName[LIMITS::VOLNAMELEN] = 0;
-  strncpy(m_tcName, volLabel.m_pcVolName, LIMITS::VOLNAMELEN + 1);
-  if (m_tcName[LIMITS::VOLNAMELEN] != 0) {
+  if (strnlen(volLabel.m_pcVolName, LIMITS::VOLNAMELEN + 1) > LIMITS::VOLNAMELEN) {
     throw cta::exception::Exception(std::string("label ") + std::string(volLabel.m_pcVolName) + " is too long");
   }
+  strncpy(m_tcName, volLabel.m_pcVolName, LIMITS::VOLNAMELEN);
   m_ulCreateTime = volLabel.m_ulCreateTime;
   m_ulExpireTime = volLabel.m_ulExpireTime;
   m_ulRecSize = volLabel.m_ulRecSize;
