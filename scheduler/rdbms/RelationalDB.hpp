@@ -287,8 +287,19 @@ public:
                                         const std::vector<std::string>& expiredDiskSystemNames);
 
   std::unordered_map<std::string, DiskSleepEntry> getDiskSystemSleepStatus(rdbms::Conn& conn);
+
   // MountQueueCleanup routine methods
-  uint64_t cleanInactiveMountQueues(std::vector<uint64_t> activeMountIds, size_t batchSize);
+
+  /*
+   * Get list of distinct Mount IDs for which there exist entries in the Scheduler DB
+   * (PENDING and ACTIVE) tables.
+   *
+   * @param queueTypePrefix shall be either of "ARCHIVE_", "RETRIEVE_", "REPACK_RETRIEVE_", "REPACK_ARCHIVE_"
+   * @return vector of mount ID as numbers
+   */
+  std::vector <uint64_t> getScheduledMountIDs(std::string queueTypePrefix);
+
+  void handleInactiveMountQueues(const std::vector<uint64_t>& deadMountIds, const std::string &queueTypePrefix, size_t batchSize);
   std::vector<uint64_t> getExistingMountIDs();
 
 private:
