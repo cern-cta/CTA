@@ -53,6 +53,10 @@
 %define ccacheFlags -UCMAKE_CXX_COMPILER_LAUNCHER -UCMAKE_C_COMPILER_LAUNCHER
 %endif
 
+# Setting linker options (for developers)
+#-------------------------------------
+%define linkerOptions -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" -DCMAKE_SHARED_LINKER_FLAGS="-fuse-ld=lld" -DCMAKE_MODULE_LINKER_FLAGS="-fuse-ld=lld"
+
 # Utility for reloading systemctl when needed
 #--------------------------------------------
 %define systemdDaemonReload() if [ -e /usr/bin/systemctl ] ; then /usr/bin/systemctl daemon-reload; fi
@@ -91,7 +95,7 @@ The CTA project is the CERN Tape Archive system.
 mkdir -p build
 cd build
 # ccacheFlags will be empty if ccache is not enabled
-CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. %{ccacheFlags} -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt} %{asanOptions}
+CTA_VERSION=%{ctaVersion} cmake3 -G "%{buildGenerator}" .. %{ccacheFlags} -DCOMPILE_PACKAGING:STRING=0 -DVCS_VERSION=%{ctaRelease} %{schedOpt} %{oracleOpt} %{asanOptions} %{linkerOptions}
 cmake --build . -j@JOBS_COUNT@
 
 %install
