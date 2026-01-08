@@ -40,7 +40,12 @@ public:
   ~SqliteStmt() override;
 
   /**
-   * Clears the prepared statement so that it is ready to be reused.
+   * Clears the prepared statement so that it is ready to be reused, without the need to bind new variables.
+   */
+  void resetQuery() override;
+
+  /**
+   * Clears the prepared statement so that it is ready to be reused. Variables will need to be bound again.
    */
   void clear() override;
 

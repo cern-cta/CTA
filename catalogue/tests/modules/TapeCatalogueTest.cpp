@@ -3968,6 +3968,90 @@ TEST_P(cta_catalogue_TapeTest, getVidToLogicalLibrary_310_tapes) {
   }
 }
 
+TEST_P(cta_catalogue_TapeTest, getTapesByFxid_310_tapes) {
+  const bool logicalLibraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  const uint64_t nbPartialTapes = 2;
+  const std::string encryptionKeyName = "encryption_key_name";
+  const std::list<std::string> supply;
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
+  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  const uint32_t nbTapes = 310;
+  const uint32_t nbFilesPerTape = 4;
+  std::set<std::string, std::less<>> allVids;
+  std::set<std::string, std::less<>> allDiskFileIds;
+  uint64_t nextArchiveFileId = 0;
+
+  for (uint32_t i = 0; i < nbTapes; i++) {
+    std::ostringstream vid;
+    vid << "V" << std::setfill('0') << std::setw(5) << i;
+    const std::string tapeComment = "Create tape " + vid.str();
+
+    auto tape = m_tape1;
+    tape.vid = vid.str();
+    m_catalogue->Tape()->createTape(m_admin, tape);
+    allVids.insert(vid.str());
+
+    for (uint32_t j = 0; j < nbFilesPerTape; j++) {
+      // 'allDiskFileIds' will be ordered by 'j', followed by tape ID
+      // This is on purpose,to force a pseudo-shuffle of the implicit list of requested VIDs.
+      std::string diskFileId = std::to_string(j) + "_" + vid.str();
+      allDiskFileIds.insert(diskFileId);
+
+      auto file1WrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+      auto& file1Written = *file1WrittenUP;
+      std::set<cta::catalogue::TapeItemWrittenPointer> file1WrittenSet;
+      file1WrittenSet.insert(file1WrittenUP.release());
+      file1Written.archiveFileId = nextArchiveFileId++;
+      file1Written.diskInstance = m_diskInstance.name;
+      file1Written.diskFileId = diskFileId;
+      file1Written.diskFileOwnerUid = PUBLIC_DISK_USER;
+      file1Written.diskFileGid = PUBLIC_DISK_GROUP;
+      file1Written.size = 1024;
+      file1Written.checksumBlob.insert(cta::checksum::ADLER32, 0x1000);  // tests checksum with embedded zeros
+      file1Written.storageClassName = m_storageClassSingleCopy.name;
+      file1Written.vid = tape.vid;
+      file1Written.fSeq = j + 1;
+      file1Written.blockId = j + 4321;
+      file1Written.copyNb = 1;
+      file1Written.tapeDrive = "tape_drive";
+      m_catalogue->TapeFile()->filesWrittenToTape(file1WrittenSet);
+    }
+  }
+
+  cta::catalogue::TapeSearchCriteria searchCriteria;
+  searchCriteria.diskFileIds = std::vector(allDiskFileIds.begin(), allDiskFileIds.end());
+
+  // Validate with getTapes
+  std::list<cta::common::dataStructures::Tape> vidToTapeData_fromGetTapes =
+    m_catalogue->Tape()->getTapes(searchCriteria);
+  ASSERT_EQ(nbTapes, vidToTapeData_fromGetTapes.size());
+
+  // Validate with iterator
+  std::list<cta::common::dataStructures::Tape> vidToTapeData_fromItor;
+  auto tapeData_Itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+  while (tapeData_Itor.hasMore()) {
+    vidToTapeData_fromItor.emplace_back(tapeData_Itor.next());
+  }
+  ASSERT_EQ(nbTapes, vidToTapeData_fromItor.size());
+}
+
 TEST_P(cta_catalogue_TapeTest, getNbFilesOnTape_no_tape_files) {
   const bool logicalLibraryIsDisabled = false;
   std::optional<std::string> physicalLibraryName;

@@ -109,7 +109,12 @@ public:
   void bindDouble(const std::string& paramName, const std::optional<double>& paramValue) override;
 
   /**
-   * Clears the prepared statement so that it is ready to be reused.
+   * Clears the prepared statement so that it is ready to be reused, without the need to bind new variables.
+   */
+  void resetQuery() override;
+
+  /**
+   * Clears the prepared statement so that it is ready to be reused. Variables will need to be bound again.
    */
   void clear() override;
 

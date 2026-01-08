@@ -466,6 +466,7 @@ common::dataStructures::Tape RdbmsCatalogueGetTapesItor::next() {
 
   if (m_rsetIsEmpty && m_searchCriteria.diskFileIds.has_value()
       && m_diskFileIdIdx < m_searchCriteria.diskFileIds->size()) {
+    m_stmt.resetQuery();
     std::size_t i = 0;
     for (; i < MAX_DISK_FILE_ID_IN_QUERY && m_diskFileIdIdx < m_searchCriteria.diskFileIds->size();
          ++i, ++m_diskFileIdIdx) {
