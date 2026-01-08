@@ -3,7 +3,7 @@
 cmake_minimum_required (VERSION 3.17)
 
 add_library(ctardbroutines
-        MountQueueCleanup.cpp
+		InactiveMountQueueRoutines.cpp
 )
 
 target_link_libraries(ctardbroutines
