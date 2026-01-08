@@ -40,7 +40,7 @@ echo "Using device: ${device}; name ${device_name}"
 
 # Copy and run the above a script to the rmcd pod to load osm tape
 kubectl -n ${NAMESPACE} cp read_osm_tape.sh ${CTA_TPSRV_POD}:/root/read_osm_tape.sh -c cta-rmcd
-kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-rmcd -- bash -c "/bin/bash /root/read_osm_tape.sh ${device}"
+kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-rmcd -- bash /root/read_osm_tape.sh ${device}
 
 # Run the test
 kubectl -n ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0 -- cta-osmReaderTest ${device_name} ${device} || exit 1
