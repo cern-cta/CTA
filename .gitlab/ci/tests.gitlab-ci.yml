@@ -56,8 +56,8 @@ integration-test-cta:
     - /usr/bin/cta-integrationTests
 
 unit-test-cta:
-  stage: test
   interruptible: false
+  stage: test
   needs:
     - job: build-cta-rpms
   rules:
