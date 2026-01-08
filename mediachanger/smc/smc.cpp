@@ -497,15 +497,14 @@ int main(const int argc, char** argv) {
           errflg++;
         }
         break;
-      case 'V': /* vid */
-        size_t max = sizeof(vid) - 1;
-        size_t len = strnlen(optarg, max + 1);
-        if (len > max) {
+      case 'V':                                 /* vid */
+        const size_t maxLen = sizeof(vid) - 1;  // don't count null terminator
+        if (strnlen(optarg, maxLen + 1) > maxLen) {
           fprintf(stderr, SR004, optarg);
           errflg++;
         }
-        memcpy(vid, optarg, len);
-        vid[len] = '\0';
+        strncpy(vid, optarg, maxLen);
+        vid[maxLen] = '\0';
         smc_str_upper(vid);
         break;
       case 'j':
