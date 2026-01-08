@@ -212,7 +212,7 @@ run_systemtest() {
   cd $(dirname "${systemtest_script}")
   systemtest_script_basename=$(basename -- "$systemtest_script")
   execute_cmd_with_log "./${systemtest_script_basename} -n ${namespace} ${extra_test_options}" \
-                       "${log_dir}/${systemtest_script_basename} | cut -d. -f1).log" \
+                       "${log_dir}/${systemtest_script_basename}.log" \
                        ${systemtestscript_timeout}
   cd "${orchestration_dir}"
 
