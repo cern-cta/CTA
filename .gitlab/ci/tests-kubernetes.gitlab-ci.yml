@@ -113,8 +113,6 @@ test-client:
   variables:
     TEST_SCRIPT: "tests/test_client.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400"
-    # While the telemetry is not actually consumed, we need to ensure enabling it doesn't break anything
-    EXTRA_SPAWN_ARGS: "--local-telemetry"
 
 test-client-gfal2:
   extends:
@@ -123,6 +121,8 @@ test-client-gfal2:
   variables:
     TEST_SCRIPT: "tests/test_client_gfal2.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400"
+    # While the telemetry is not actually consumed, we need to ensure enabling it doesn't break anything
+    EXTRA_SPAWN_ARGS: "--local-telemetry"
 
 test-repack:
   # test is flaky and we want to prevent cancelling everything

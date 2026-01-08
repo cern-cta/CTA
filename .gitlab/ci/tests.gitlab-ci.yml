@@ -12,7 +12,7 @@
     if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
       cp -f ci/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     fi
-  - dnf -y --nogpgcheck install cta-integrationtests cta-debuginfo cta-debugsource
+  - dnf -y --nogpgcheck install cta-integrationtests
 
 test-cta-valgrind:
   stage: test

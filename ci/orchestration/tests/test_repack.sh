@@ -495,7 +495,6 @@ repackMoveAndAddCopies() {
   echo "Creating the repack buffer directory for VID (${REPACK_BUFFER_URL}/${VID_TO_REPACK})"
   kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${REPACK_BUFFER_URL}/${VID_TO_REPACK}
   kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 ${REPACK_BUFFER_URL}/${VID_TO_REPACK}
-  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -la /eos/ctaeos/repack/${VID_TO_REPACK}
 
   echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
   modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
@@ -546,14 +545,12 @@ repackMoveAndAddCopies() {
     echo "Found $tapepoolDestination2_repack in repack archive destination pools."
   fi
 
-  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -la /eos/ctaeos/repack/${VID_TO_REPACK}
   echo "----"
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE
   echo "Reclaimimg tape ${VID_TO_REPACK}"
   kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
-  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos ls -la /eos/ctaeos/repack/${VID_TO_REPACK}
 
   echo
   echo "***************************************************************"

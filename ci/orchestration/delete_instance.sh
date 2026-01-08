@@ -45,8 +45,16 @@ save_logs() {
   # Iterate over pods
   for pod in $(echo "${pods}" | jq -r '.items[] | .metadata.name'); do
     # Check if logs are accessible
-    if ! kubectl --namespace "${namespace}" logs "${pod}" > /dev/null 2>&1; then
-      echo "Pod: ${pod} failed to start. Logging describe output"
+    container_ready=$(echo "${pods}" | jq -r \
+                        ".items[]
+                        | select(.metadata.name == \"${pod}\")
+                        | .status.containerStatuses[]
+                        | select(.name == \"${container}\")
+                        | (.state.running != null)"
+                      )
+
+    if [[ "${container_ready}" != "true" ]]; then
+      echo "Pod: ${pod} container ${container} not running. Logging describe output"
       kubectl --namespace "${namespace}" describe pod "${pod}" > "${tmpdir}/${pod}-describe.log"
       continue
     fi
