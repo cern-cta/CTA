@@ -73,7 +73,7 @@ variables:
 
   CMAKE_BUILD_TYPE:
     description: "Specifies the build type used to compile the CTA RPMs"
-    value: "Debug"
+    value: "RelWithDebInfo"
     options:
       - "Release"
       - "Debug"
