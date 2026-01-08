@@ -76,7 +76,7 @@ variables:
   # TODO: Once this default switches from Debug to RelWithDebInfo, the build-cta-rpms-relwithdebinfo should be updated accordingly to a debug build
   CMAKE_BUILD_TYPE:
     description: "Specifies the build type used to compile the CTA RPMs"
-    value: "Debug"
+    value: "RelWithDebInfo"
     options:
       - "Release"
       - "Debug"
