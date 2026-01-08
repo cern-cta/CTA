@@ -26,7 +26,7 @@ get_credentials() {
       shift
   done
 
-  local secrets=(ctaregsecret reg-ctageneric)
+  local secrets=(reg-ctageneric)
 
   local registry_name="cta/ctageneric"
   local gitlab_server="gitlab.cern.ch"

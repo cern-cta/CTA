@@ -29,4 +29,4 @@ dd if=/osm-tape.img of=$device bs=32768 count=2
 dd if=/osm-mhvtl/L08033/file1 of=$device bs=262144 count=202
 dd if=/osm-mhvtl/L08033/file2 of=$device bs=262144 count=202
 
-mt -f \$device rewind
+mt -f $device rewind

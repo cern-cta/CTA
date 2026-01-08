@@ -140,12 +140,6 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin vir
 
 # add the media types of the tapes in production
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mediatype add \
-  --name T10K500G  \
-  --capacity 500000000000 \
-  --primarydensitycode 74 \
-  --cartridge "T10000" \
-  --comment "Oracle T10000 cartridge formated at 500 GB (for developers only)"
-kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mediatype add \
   --name 3592JC7T \
   --capacity 7000000000000 \
   --primarydensitycode 84 \
