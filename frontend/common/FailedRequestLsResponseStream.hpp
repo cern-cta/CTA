@@ -35,11 +35,14 @@ private:
   std::optional<std::string> m_schedulerBackendName;
 
   // Data storage
-  std::list<cta::xrd::Data> m_items;
+  std::list<cta::xrd::Data> m_summaryData;  // Only 3 items max
+  std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> m_archiveJobQueueItorPtr;
+  std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor> m_retrieveJobQueueItorPtr;
 
   // Helper methods
-  void collectArchiveJobs(const std::optional<std::string>& tapepool);
-  void collectRetrieveJobs(const std::optional<std::string>& vid);
+  cta::xrd::Data getNextArchiveJobsData();
+  cta::xrd::Data getNextRetrieveJobsData();
+
   void collectSummaryData(bool hasArchive, bool hasRetrieve);
 };
 
