@@ -12,7 +12,9 @@ namespace unitTests {
 
 class testVOL1 : public castor::tape::tapeFile::VOL1 {
 public:
-  void backdoorSetLBPMethodString(const std::string& LBPString) { strcpy(m_LBPMethod, LBPString.c_str()); }
+  void backdoorSetLBPMethodString(const std::string& LBPString) {
+    strncpy(m_LBPMethod, LBPString.c_str(), sizeof(m_LBPMethod));
+  }
 };
 
 TEST(castor_tape_AULFile, VOL1) {
@@ -58,7 +60,9 @@ TEST(castor_tape_AULFile, VOL1) {
 
 class testVOL1withCRC : public castor::tape::tapeFile::VOL1withCrc {
 public:
-  void backdoorSetLBPMethodString(const std::string& LBPString) { strcpy(m_LBPMethod, LBPString.c_str()); }
+  void backdoorSetLBPMethodString(const std::string& LBPString) {
+    strncpy(m_LBPMethod, LBPString.c_str(), sizeof(m_LBPMethod));
+  }
 };
 
 TEST(castor_tape_AULFile, VOL1WithCRC) {
