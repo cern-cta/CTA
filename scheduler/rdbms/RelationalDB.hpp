@@ -287,6 +287,9 @@ public:
                                         const std::vector<std::string>& expiredDiskSystemNames);
 
   std::unordered_map<std::string, DiskSleepEntry> getDiskSystemSleepStatus(rdbms::Conn& conn);
+  // MountQueueCleanup routine methods
+  uint64_t cleanInactiveMountQueues(std::vector<uint64_t> activeMountIds, size_t batchSize);
+  std::vector<uint64_t> getExistingMountIDs();
 
 private:
   /*

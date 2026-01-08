@@ -1647,4 +1647,93 @@ RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& lc) {
   return diskSystemSleepMap;
 }
 
+// MountQueueCleanup routine methods
+std::vector<uint64_t> RelationalDB::getExistingMountIDs(){
+  schedulerdb::Transaction txn(m_connPool, lc);
+  std::string sql = "SELECT MOUNT_ID\n"
+                    "FROM ARCHIVE_PENDING_QUEUE\n"
+                    "WHERE MOUNT_ID IS NOT NULL\n"
+                    "\n"
+                    "UNION\n"
+                    "\n"
+                    "SELECT MOUNT_ID\n"
+                    "FROM ARCHIVE_ACTIVE_QUEUE\n"
+                    "WHERE MOUNT_ID IS NOT NULL;";
+  for (size_t i = 0; i < expiredDiskSystemNames.size(); ++i) {
+    sql += ":DISKNAME" + std::to_string(i);
+    if (i < expiredDiskSystemNames.size() - 1) {
+      sql += ", ";
+    }
+  }
+  sql += ")";
+
+  auto stmt = txn.getConn().createStmt(sql);
+}
+
+uint64_t RelationalDB::cleanInactiveMountQueues(std::vector<uint64_t> activeMountIds, size_t batchSize) {
+
+  schedulerdb::Transaction txn(m_connPool, lc);
+  txn.takeNamedLock("cleanInactiveMountQueues");
+
+  pending
+    // Insert temporary table with active mounts to Scheduler DB;
+    // bind vector<int64_t> as a BIGINT[] parameter
+    execute(
+      "INSERT INTO active_mounts (mount_id) "
+      "SELECT unnest($1::bigint[])",
+      activeMountIds
+    );
+    /*
+    CREATE TEMP TABLE active_mounts (
+      mount_id BIGINT PRIMARY KEY
+    ) ON COMMIT PRESERVE ROWS;
+     SELECT p.*
+FROM pending p
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM active_mounts a
+    WHERE a.mount_id = p.mount_id
+);
+     SELECT p.*
+FROM pending p
+LEFT JOIN active_mounts a
+    ON a.mount_id = p.mount_id
+WHERE a.mount_id IS NULL;
+     WITH batch AS (
+    SELECT p.id
+    FROM pending p
+    WHERE p.updated_at > :last_processed
+      AND NOT EXISTS (
+          SELECT 1
+          FROM active_mounts a
+          WHERE a.mount_id = p.mount_id
+      )
+    ORDER BY p.updated_at
+    LIMIT 10000
+)
+UPDATE pending
+SET status = 'INACTIVE'
+WHERE id IN (SELECT id FROM batch);
+    */
+    //std::string sql = "DELETE FROM ARCHIVE_ACTIVE_QUEUE WHERE STATUS = :STATUS";
+    //auto stmt = m_conn.createStmt(sql);
+    //stmt.bindString(":STATUS", to_string(cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion));
+    //stmt.executeNonQuery();
+    try {
+      m_conn.commit();
+    } catch (exception::Exception &ex) {
+      lc.log(log::ERR, "In RelationalDBQCR::execute(): failed to delete rows of ARCHIVE_ACTIVE_QUEUE" +
+                     ex.getMessageValue());
+      m_conn.rollback();
+    }
+    auto ndelrows = stmt.getNbAffectedRows();
+    auto tdelsec = timer.secs(cta::utils::Timer::resetCounter);
+    lc.log(log::INFO, std::string("In RelationalDBQCR::execute(): Deleted ") +
+                      std::to_string(ndelrows) +
+                      std::string(" rows from the ARCHIVE_ACTIVE_QUEUE. Operation took ") +
+                      std::to_string(tdelsec) + std::string(" seconds."));
+    */
+}
+
+
 }  // namespace cta
