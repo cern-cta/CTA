@@ -21,7 +21,7 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
   for (uint32_t i = 0; i < njobs; i++) {
     cta::RetrieveJob* job = jobs.at(i).get();
     castor::tape::SCSI::Structures::RAO::blockLims lims;
-    int n = std::snprintf(reinterpret_cast<char*>(lims.fseq), sizeof(lims.fseq), "%d", i);
+    int n = std::snprintf(reinterpret_cast<char*>(lims.fseq), sizeof(lims.fseq), "%u", i);
     if (n < 0 || static_cast<size_t>(n) >= sizeof(lims.fseq)) {
       throw cta::exception::Exception("In EnterpriseRAOAlgorithm::performRAO: fSeq " + std::to_string(i)
                                       + " too long for buffer length " + std::to_string(sizeof(lims.fseq)));
