@@ -498,13 +498,14 @@ int main(const int argc, char** argv) {
         }
         break;
       case 'V': /* vid */
-        vid[sizeof(vid) - 1] = '\0';
-        strncpy(vid, optarg, sizeof(vid));
-        if (vid[sizeof(vid) - 1] != '\0') {
+        size_t max = sizeof(vid) - 1;
+        size_t len = strnlen(optarg, max + 1);
+        if (len > max) {
           fprintf(stderr, SR004, optarg);
           errflg++;
-          vid[sizeof(vid) - 1] = '\0';
         }
+        memcpy(vid, optarg, len);
+        vid[len] = '\0';
         smc_str_upper(vid);
         break;
       case 'j':
