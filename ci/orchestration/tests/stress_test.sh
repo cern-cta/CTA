@@ -70,9 +70,9 @@ kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mp ch --name
 
 kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin vo ch --vo vo --writemaxdrives ${NB_DRIVES} --readmaxdrives ${NB_DRIVES}
 
-kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mp ls
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin mp ls
 
-kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr ls
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin dr ls
 
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 1 scaninterval=0
 

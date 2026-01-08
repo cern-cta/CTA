@@ -212,7 +212,7 @@ done
 echo "Setting drive up: ${DRIVE_NAME}"
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive up ${DRIVE_NAME}
 sleep 5
-kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive ls
+kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin drive ls
 
 # Super client capabilities
 echo "Adding super client capabilities"

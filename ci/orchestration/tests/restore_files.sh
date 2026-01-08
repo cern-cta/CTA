@@ -86,8 +86,8 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/delete_file.s
 
 echo
 echo "VALIDATE THAT THE FILE IS IN THE RECYCLE BIN"
-echo "kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin rtf ls --fxid ${FXID} || exit 1"
-kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin rtf ls --fxid ${FXID} || exit 1
+echo "kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin rtf ls --fxid ${FXID} || exit 1"
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin rtf ls --fxid ${FXID} || exit 1
 
 echo
 echo "COPY REQUIRED FILES TO FRONTEND POD"

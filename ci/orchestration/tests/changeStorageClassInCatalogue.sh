@@ -48,7 +48,7 @@ kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- bash -c "mkdir -p ${TM
 
 ############## ADD STORAGE CLASS WITH TWO COPIES ##############
 kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin sc add --name ${NEW_STORAGE_CLASS_NAME} --numberofcopies 2 --virtualorganisation vo --comment "comment"
-kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin sc ls
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin sc ls
 
 ############## COPY REQUIRED FILES TO FRONTEND POD ##############
 echo "kubectl cp ${NAMESPACE}/${CTA_CLI_POD}:/etc/cta/cta-cli.conf ${TMP_DIR}/cta-cli.conf"
