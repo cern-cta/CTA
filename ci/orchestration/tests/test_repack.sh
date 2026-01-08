@@ -101,7 +101,7 @@ roundTripRepack() {
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
     echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK} (with backpressure)"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack -p -n repack_ctasystest || exit 1
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step1-RoundTripRepack -p -n repack_ctasystest || exit 1
   else
     echo "No vid found to repack"
     exit 1
@@ -121,7 +121,7 @@ roundTripRepack() {
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
     echo "Launching the repack \"just move\" test on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RoundTripRepack -n repack_ctasystest  || exit 1
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RoundTripRepack -n repack_ctasystest  || exit 1
   else
     echo "No vid found to repack"
     exit 1
@@ -152,22 +152,22 @@ repackNonRepackingTape() {
     echo "Marking the tape ${VID_TO_REPACK} as DISABLED"
     modifyTapeState ${VID_TO_REPACK} DISABLED "Repack disabled tape test"
     echo "Launching the repack request test on VID ${VID_TO_REPACK} with DISABLED state"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest && echo "The repack command should have failed as the tape is DISABLED" && exit 1 || echo "The repack submission has failed, test OK"
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest && echo "The repack command should have failed as the tape is DISABLED" && exit 1 || echo "The repack submission has failed, test OK"
 
     echo "Marking the tape ${VID_TO_REPACK} as BROKEN"
     modifyTapeStateAndWait ${VID_TO_REPACK} BROKEN "Repack broken tape test"
     echo "Launching the repack request test on VID ${VID_TO_REPACK} with BROKEN state"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest && echo "The repack command should have failed as the tape is BROKEN" && exit 1 || echo "The repack submission has failed, test OK"
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest && echo "The repack command should have failed as the tape is BROKEN" && exit 1 || echo "The repack submission has failed, test OK"
 
     echo "Marking the tape ${VID_TO_REPACK} as EXPORTED"
     modifyTapeStateAndWait ${VID_TO_REPACK} EXPORTED "Repack exported tape test"
     echo "Launching the repack request test on VID ${VID_TO_REPACK} with EXPORTED state"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest && echo "The repack command should have failed as the tape is EXPORTED" && exit 1 || echo "The repack submission has failed, test OK"
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest && echo "The repack command should have failed as the tape is EXPORTED" && exit 1 || echo "The repack submission has failed, test OK"
 
     echo "Marking the tape ${VID_TO_REPACK} as ACTIVE"
     modifyTapeState ${VID_TO_REPACK} ACTIVE "Repack active tape test"
     echo "Launching the repack request test on VID ${VID_TO_REPACK} with ACTIVE state"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest && echo "The repack command should have failed as the tape is ACTIVE" && exit 1 || echo "The repack submission has failed, test OK"
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest && echo "The repack command should have failed as the tape is ACTIVE" && exit 1 || echo "The repack submission has failed, test OK"
   else
     echo "No vid found to repack"
     exit 1
@@ -177,7 +177,7 @@ repackNonRepackingTape() {
   echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
   modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING "Repack repacking tape test"
   echo "Launching the repack request test on VID ${VID_TO_REPACK} with REPACKING state"
-  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest  || exit 1
+  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackDisabledTape -n repack_ctasystest  || exit 1
 
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
@@ -204,7 +204,7 @@ repackJustMove() {
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
     echo "Launching the repack test \"just move\" on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMove -n repack_ctasystest  || exit 1
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMove -n repack_ctasystest  || exit 1
   else
     echo "No vid found to repack"
     exit 1
@@ -243,7 +243,7 @@ repackJustMoveWithMaxFiles() {
   echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
   modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
   echo "Launching the repack test \"just move\", with only ${NUMBER_OF_FILES_TO_REPACK}/${TOTAL_FILES_ON_TAPE} files, on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMoveWithMaxFiles -n repack_ctasystest -f ${NUMBER_OF_FILES_TO_REPACK} || exit 1
+  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMoveWithMaxFiles -n repack_ctasystest -f ${NUMBER_OF_FILES_TO_REPACK} || exit 1
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE
@@ -262,7 +262,7 @@ repackJustMoveWithMaxFiles() {
   echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
   modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
   echo "Launching the repack test \"just move\", for all its ${TOTAL_FILES_ON_TAPE} files, on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMoveWithMaxFiles -n repack_ctasystest -f ${TOTAL_FILES_ON_TAPE} || exit 1
+  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackJustMoveWithMaxFiles -n repack_ctasystest -f ${TOTAL_FILES_ON_TAPE} || exit 1
   removeRepackRequest ${VID_TO_REPACK}
   echo "Setting the tape ${VID_TO_REPACK} back to ACTIVE"
   modifyTapeState ${VID_TO_REPACK} ACTIVE
@@ -293,7 +293,7 @@ repackJustAddCopies() {
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
     echo "Launching the repack \"just add copies\" test on VID ${VID_TO_REPACK} with all copies already on CTA"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -a -r ${BASE_REPORT_DIRECTORY}/Step$1-JustAddCopiesAllCopiesInCTA -n repack_ctasystest
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -a -r ${BASE_REPORT_DIRECTORY}/Step$1-JustAddCopiesAllCopiesInCTA -n repack_ctasystest
   else
     echo "No vid found to repack"
     exit 1
@@ -339,7 +339,7 @@ repackCancellation() {
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
     echo "Launching a repack request on VID ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackCancellation -n repack_ctasystest & 2>/dev/null
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackCancellation -n repack_ctasystest & 2>/dev/null
   else
     echo "No vid found to repack"
     exit 1
@@ -499,7 +499,7 @@ repackMoveAndAddCopies() {
   echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
   modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
   echo "Launching the repack \"Move and add copies\" test on VID ${VID_TO_REPACK}"
-  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies -n repack_ctasystest  || exit 1
+  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -r ${BASE_REPORT_DIRECTORY}/Step$1-MoveAndAddCopies -n repack_ctasystest  || exit 1
 
   repackLsResult=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq ". [0]")
   totalFilesToRetrieve=$(echo $repackLsResult | jq -r ".totalFilesToRetrieve")
@@ -610,7 +610,7 @@ repackTapeRepair() {
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
     echo "Launching a repack request on the vid ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepair -n repack_ctasystest  ||      exit 1
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepair -n repack_ctasystest  ||      exit 1
 
     repackLsResult=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0]")
     userProvidedFiles=$(echo $repackLsResult | jq -r ".userProvidedFiles")
@@ -722,7 +722,7 @@ repackTapeRepairNoRecall() {
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
 
     echo "Launching a repack request on the vid ${VID_TO_REPACK}"
-    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -d -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepairNoRecall -n repack_ctasystest -u ||      exit 1
+    kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/repack_systemtest.sh -v ${VID_TO_REPACK} -b ${REPACK_BUFFER_URL} -m -r ${BASE_REPORT_DIRECTORY}/Step$1-RepackTapeRepairNoRecall -n repack_ctasystest -u ||      exit 1
 
     repackLsResult=$(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0]")
     userProvidedFiles=$(echo $repackLsResult | jq -r ".userProvidedFiles")
