@@ -29,6 +29,7 @@ test-cta-valgrind:
       allow_failure: true
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
     - *setup-cta-install
@@ -49,6 +50,7 @@ integration-test-cta:
     - when: on_success
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
     - *setup-cta-install
@@ -68,6 +70,7 @@ unit-test-cta:
     - when: on_success
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
     - *setup-cta-install
@@ -87,6 +90,7 @@ unit-test-postgresql:
     - when: on_success
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
     - *setup-cta-install
@@ -132,6 +136,7 @@ unit-test-oracle:
     - when: on_success
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
     ORACLE_USERNAME: cta_dev04
     ORACLE_PASSWORD: $CI_ORACLE_UNIT_TEST_DB_PASSWORD
@@ -168,6 +173,7 @@ test-cta-release:
     - when: on_success
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     GIT_STRATEGY: none  # We don't need the repo clone here
     CTAREPODIR: /tmp/repo
   script:

@@ -34,6 +34,8 @@ validate-pipeline-variables:
   needs: []  # Ensure no artifacts are downloaded
   rules:
     - when: on_success
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
     - cp -f ci/docker/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     - |

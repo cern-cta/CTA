@@ -13,6 +13,8 @@ danger-review-gate:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
     - when: never
+  variables:
+    GIT_STRATEGY: "none" # Don't need anything from the repo for this job
   script:
     - status=$(cat danger_status.txt)
     - if [[ "$status" -ne 0 ]]; then

@@ -22,6 +22,8 @@ lint-cpp:
   image:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
     - cppcheck --xml
                --force
@@ -61,6 +63,8 @@ lint-bash:
   image:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
     - all_shell_scripts=( **/*.sh )
     - if [ ${#all_shell_scripts[@]} -eq 0 ]; then echo "No shell scripts"; exit 0; fi
@@ -88,6 +92,8 @@ lint-python:
   image:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
     - ruff check --output-format gitlab | tee ruff.json | jq -C
   artifacts:
@@ -114,6 +120,8 @@ lint-yaml:
   image:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
     - python3 ci/checks/check_gitlab_ci_key_order.py .gitlab/
     - yamllint .
@@ -130,6 +138,8 @@ lint-licenses:
   image:
     name: $IMAGE_LICENSE_CHECK
     entrypoint: [""]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
     - reuse lint
 
@@ -145,6 +155,8 @@ lint-secrets:
   image:
     name: $IMAGE_LINT
     entrypoint: [""]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
     - detect-secrets scan --baseline .secrets.baseline
 
@@ -162,6 +174,7 @@ lint-secrets:
     - when: always
   image: $IMAGE_LINT
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for these job
     FORMAT_DIFF:
   before_script:
     - exit 1  # The jobs that extend this job should override this
@@ -248,6 +261,7 @@ trigger-sonarcloud:
       when: manual
   image: $IMAGE_LINT
   variables:
+    GIT_STRATEGY: "none" # Don't need anything from the repo for this job
     TARGET_URL: https://api.github.com/repos/cern-cta/CTA/actions/workflows/sonar-source.yml/dispatches
     BRANCH_NAME: $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME
   script:
@@ -269,6 +283,7 @@ danger-review:
     - when: never
   image: $IMAGE_DANGER
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     DANGER_GITLAB_USE_THREADS: 1
   script:
     - exit_code=0
