@@ -447,8 +447,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
-    request.archiveReportURL = "test://archive-report-url";
-    request.archiveErrorReportURL = "test://error-report-url";
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -525,8 +525,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
-    ASSERT_NE(nullptr, archiveJobBatch.front().get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc); // maybe bytesRequested (the second number) is too low?
+    ASSERT_NE(nullptr, archiveJobBatch.front().get()); // now it's here
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
@@ -552,7 +552,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     log::TimingList timings;
     utils::Timer t;
     scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc);
-    ASSERT_EQ(0, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());
+    ASSERT_EQ(0, scheduler.getNextArchiveJobsToReportBatch(10, lc).size()); // now here
   }
 
   {
@@ -616,7 +616,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE(nullptr, retrieveMount.get());
     std::unique_ptr<cta::RetrieveJob> retrieveJob;
-    auto jobBatch = retrieveMount->getNextJobBatch(1, 1, lc);
+    auto jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(1, jobBatch.size());
     retrieveJob.reset(jobBatch.front().release());
     ASSERT_NE(nullptr, retrieveJob.get());
@@ -624,7 +624,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     std::queue<std::unique_ptr<cta::RetrieveJob>> jobQueue;
     jobQueue.push(std::move(retrieveJob));
     retrieveMount->setJobBatchTransferred(jobQueue, lc);
-    jobBatch = retrieveMount->getNextJobBatch(1, 1, lc);
+    jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, jobBatch.size());
   }
 }
@@ -667,8 +667,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
-    request.archiveReportURL = "test://archive-report-url";
-    request.archiveErrorReportURL = "test://error-report-url";
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1028,8 +1028,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = dualCopyStorageClassName;
-    request.archiveReportURL = "test://archive-report-url";
-    request.archiveErrorReportURL = "test://error-report-url";
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1371,8 +1371,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
-    request.archiveReportURL = "test://archive-report-url";
-    request.archiveErrorReportURL = "test://error-report-url";
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1616,8 +1616,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
-    request.archiveReportURL = "test://archive-report-url";
-    request.archiveErrorReportURL = "test://error-report-url";
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1985,8 +1985,8 @@ TEST_P(SchedulerTest, showqueues) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
-    request.archiveReportURL = "test://archive-report-url";
-    request.archiveErrorReportURL = "test://error-report-url";
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
