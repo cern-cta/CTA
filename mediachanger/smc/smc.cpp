@@ -497,7 +497,8 @@ int main(const int argc, char** argv) {
           errflg++;
         }
         break;
-      case 'V':                                 /* vid */
+      case 'V': /* vid */
+      {
         const size_t maxLen = sizeof(vid) - 1;  // don't count null terminator
         if (strnlen(optarg, maxLen + 1) > maxLen) {
           fprintf(stderr, SR004, optarg);
@@ -507,6 +508,7 @@ int main(const int argc, char** argv) {
         vid[maxLen] = '\0';
         smc_str_upper(vid);
         break;
+      }
       case 'j':
         isJsonEnabled = 1;
         break;
