@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
+set -o pipefail
 
 die() {
   echo "$@" 1>&2
@@ -45,16 +46,8 @@ save_logs() {
   # Iterate over pods
   for pod in $(echo "${pods}" | jq -r '.items[] | .metadata.name'); do
     # Check if logs are accessible
-    container_ready=$(echo "${pods}" | jq -r \
-                        ".items[]
-                        | select(.metadata.name == \"${pod}\")
-                        | .status.containerStatuses[]
-                        | select(.name == \"${container}\")
-                        | (.state.running != null)"
-                      )
-
-    if [[ "${container_ready}" != "true" ]]; then
-      echo "Pod: ${pod} container ${container} not running. Logging describe output"
+    if ! kubectl --namespace "${namespace}" logs "${pod}" | head -n 1 >/dev/null 2>&1; then
+      echo "Pod: ${pod} failed to start. Logging describe output"
       kubectl --namespace "${namespace}" describe pod "${pod}" > "${tmpdir}/${pod}-describe.log"
       continue
     fi
