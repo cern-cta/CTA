@@ -9,6 +9,9 @@ conf:
     watchdogIdleSessionTimer: 2  # Make tape servers more responsive, thus improving CI test speed
     logMask: "INFO"
     useEncryption: "no"
+    # Reduce number of threads to reduce contention
+    nbDiskThreads: 4
+    # Decrease schedulerDB cache timeout for tests
     tapeCacheMaxAgeSecs: 1
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"

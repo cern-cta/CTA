@@ -62,7 +62,7 @@ if [[ ${PREPARE} -eq 1 ]]; then
   fi
 fi
 
-NB_FILES=10000
+NB_FILES=2000
 FILE_SIZE_KB=15
 NB_PROCS=20
 

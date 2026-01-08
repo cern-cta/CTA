@@ -27,7 +27,7 @@ data:
     taped DriveDevice /dev/{{ $drive.device }}
     taped DriveControlPath smc{{ $driveSlot }}
     taped LogMask {{ $.Values.conf.taped.logMask }}
-    # Decrease schedulerDB cache timeout for tests
+    taped NbDiskThreads {{ $.Values.conf.taped.nbDiskThreads }}
     taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
     taped RetrieveQueueCacheMaxAgeSecs {{ $.Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}
     # Objectstore
