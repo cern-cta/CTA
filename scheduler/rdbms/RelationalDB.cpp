@@ -624,11 +624,152 @@ void RelationalDB::deleteFailed(const std::string& objectId, log::LogContext& lc
 
 std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
 RelationalDB::getRetrieveJobs() const {
-  throw cta::exception::NotImplementedException();
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> ret;
+
+  // Get a connection
+  auto conn = m_connPool.getConn();
+
+  // Query all retrieve jobs from RETRIEVE_PENDING_QUEUE
+  std::string sql = R"SQL(
+    SELECT
+      VID,
+      ARCHIVE_FILE_ID,
+      COPY_NB,
+      SIZE_IN_BYTES,
+      CREATION_TIME,
+      DST_URL,
+      RETRIEVE_ERROR_REPORT_URL,
+      DISK_FILE_ID,
+      DISK_FILE_PATH,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      CHECKSUMBLOB,
+      STORAGE_CLASS,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      DISK_INSTANCE
+    FROM RETRIEVE_PENDING_QUEUE
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+
+  while (rset.next()) {
+    common::dataStructures::RetrieveJob job;
+    std::string vid = rset.columnString("VID");
+
+    // Fill in the request fields
+    job.request.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+    job.request.creationLog.time = rset.columnUint64("CREATION_TIME");
+    job.request.dstURL = rset.columnString("DST_URL");
+    job.request.errorReportURL = rset.columnString("RETRIEVE_ERROR_REPORT_URL");
+    job.request.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
+    job.request.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_OWNER_UID");
+    job.request.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
+    job.request.requester.name = rset.columnString("REQUESTER_NAME");
+    job.request.requester.group = rset.columnString("REQUESTER_GROUP");
+
+    // Fill in other fields
+    job.fileSize = rset.columnUint64("SIZE_IN_BYTES");
+    job.diskInstance = rset.columnString("DISK_INSTANCE");
+    job.storageClass = rset.columnString("STORAGE_CLASS");
+    job.diskFileId = rset.columnString("DISK_FILE_ID");
+
+    // Extract checksum blob
+    std::string checksumBlobStr = rset.columnBlob("CHECKSUMBLOB");
+
+    // Create tape copy entry
+    uint32_t copyNb = rset.columnUint32("COPY_NB");
+    common::dataStructures::TapeFile tf;
+    tf.vid = vid;
+    tf.fSeq = 0;  // Not available in pending queue
+    tf.blockId = 0;  // Not available in pending queue
+    tf.fileSize = job.fileSize;
+    tf.copyNb = copyNb;
+    tf.creationTime = job.request.creationLog.time;
+    tf.checksumBlob.deserialize(checksumBlobStr);
+
+    job.tapeCopies[vid] = std::make_pair(copyNb, tf);
+
+    ret[vid].push_back(job);
+  }
+
+  return ret;
 }
 
 std::list<cta::common::dataStructures::RetrieveJob> RelationalDB::getRetrieveJobs(const std::string& vid) const {
-  throw cta::exception::NotImplementedException();
+  std::list<cta::common::dataStructures::RetrieveJob> ret;
+  // Get a connection
+  auto conn = m_connPool.getConn();
+
+  // Query all retrieve jobs from RETRIEVE_PENDING_QUEUE
+  std::string sql = R"SQL(
+    SELECT
+      VID,
+      ARCHIVE_FILE_ID,
+      COPY_NB,
+      SIZE_IN_BYTES,
+      CREATION_TIME,
+      DST_URL,
+      RETRIEVE_ERROR_REPORT_URL,
+      DISK_FILE_ID,
+      DISK_FILE_PATH,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      CHECKSUMBLOB,
+      STORAGE_CLASS,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      DISK_INSTANCE
+    FROM RETRIEVE_PENDING_QUEUE
+    WHERE VID = :VID
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":VID", vid);
+  auto rset = stmt.executeQuery();
+
+  while (rset.next()) {
+    common::dataStructures::RetrieveJob job;
+    std::string vid = rset.columnString("VID");
+
+    // Fill in the request fields
+    job.request.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
+    job.request.creationLog.time = rset.columnUint64("CREATION_TIME");
+    job.request.dstURL = rset.columnString("DST_URL");
+    job.request.errorReportURL = rset.columnString("RETRIEVE_ERROR_REPORT_URL");
+    job.request.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
+    job.request.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_OWNER_UID");
+    job.request.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
+    job.request.requester.name = rset.columnString("REQUESTER_NAME");
+    job.request.requester.group = rset.columnString("REQUESTER_GROUP");
+
+    // Fill in other fields
+    job.fileSize = rset.columnUint64("SIZE_IN_BYTES");
+    job.diskInstance = rset.columnString("DISK_INSTANCE");
+    job.storageClass = rset.columnString("STORAGE_CLASS");
+    job.diskFileId = rset.columnString("DISK_FILE_ID");
+
+    // Extract checksum blob
+    std::string checksumBlobStr = rset.columnBlob("CHECKSUMBLOB");
+
+    // Create tape copy entry
+    uint32_t copyNb = rset.columnUint32("COPY_NB");
+    common::dataStructures::TapeFile tf;
+    tf.vid = vid;
+    tf.fSeq = 0;  // Not available in pending queue
+    tf.blockId = 0;  // Not available in pending queue
+    tf.fileSize = job.fileSize;
+    tf.copyNb = copyNb;
+    tf.creationTime = job.request.creationLog.time;
+    tf.checksumBlob.deserialize(checksumBlobStr);
+
+    job.tapeCopies[vid] = std::make_pair(copyNb, tf);
+
+    ret.push_back(job);
+  }
+
+  return ret;
 }
 
 std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor>
