@@ -516,6 +516,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
