@@ -38,7 +38,6 @@ private:
   std::list<cta::xrd::Data> m_summaryData;  // Only 3 items max
   std::unique_ptr<SchedulerDatabase::IArchiveJobQueueItor> m_archiveJobQueueItorPtr;
   std::unique_ptr<SchedulerDatabase::IRetrieveJobQueueItor> m_retrieveJobQueueItorPtr;
-  bool m_archiveJobItorExhausted = false;
 
   // Helper methods
   cta::xrd::Data getNextArchiveJobsData();
