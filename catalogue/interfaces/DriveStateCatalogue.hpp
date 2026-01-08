@@ -46,6 +46,12 @@ public:
   virtual std::vector<std::string> getTapeDriveNames() const = 0;
 
   /**
+   * Gets the Mount IDs (SESSION_IDs) for all stored Tape Drives
+   * @return Map of tape drive names to mount IDs.
+   */
+  virtual std::unordered_map<std::string, std::optional<uint64_t>> getTapeDriveMountIDs() const = 0;
+
+  /**
    * Gets the information of all Tape Drives
    * @return Parameters of all Tape Drives.
    */
