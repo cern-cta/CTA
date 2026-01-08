@@ -505,13 +505,15 @@ FrontendService::FrontendService(const std::string& configFilename) {
     std::istringstream protocolStream(admAuthProtocolsStr.value());
     std::string protocol;
 
-    while(protocolStream.good()) {
+    while (protocolStream.good()) {
       std::string substr;
       getline(protocolStream, substr, ',');
-      if (substr == "krb5" || substr == "jwt")
+      if (substr == "krb5" || substr == "jwt") {
         m_adminAuthProtocols.push_back(substr);
-      else
-        throw exception::UserError("Unrecognized authentication method " + substr + " for cta-admin. Allowed values are krb5, jwt");
+      } else {
+        throw exception::UserError("Unrecognized authentication method " + substr
+                                   + " for cta-admin. Allowed values are krb5, jwt");
+      }
     }
 
     // Log the configured authentication protocols
@@ -521,7 +523,9 @@ FrontendService::FrontendService(const std::string& configFilename) {
     params.emplace_back("key", "protocols");
     std::string protocolsList;
     for (size_t i = 0; i < m_adminAuthProtocols.size(); ++i) {
-      if (i > 0) protocolsList += ", ";
+      if (i > 0) {
+        protocolsList += ", ";
+      }
       protocolsList += m_adminAuthProtocols[i];
     }
     params.emplace_back("value", protocolsList);
