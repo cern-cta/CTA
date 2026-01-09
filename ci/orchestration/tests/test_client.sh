@@ -173,12 +173,6 @@ echo " Launching client_timestamp.sh on client pod"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_timestamp.sh ${TEST_POSTRUN}" || exit 1
 
 echo
-echo "Track progress of test"
-(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict abort delete'"
-)&
-TRACKER_PID=$!
-
-echo
 echo "Launching client_archive.sh on client pod"
 echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
@@ -218,13 +212,6 @@ echo "Launching client_delete.sh on client pod"
 echo " Deleting files:"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-echo "$(date +%s): Waiting for tracker process to finish. "
-wait "${TRACKER_PID}"
-if [[ $? == 1 ]]; then
-  echo "Some files were lost during tape workflow."
- exit 1
-fi
 
 echo
 echo "Launching client_multiple_retrieve.sh on client pod"

@@ -7,7 +7,6 @@
 EOS_MGM_HOST=ctaeos
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
-DATA_SOURCE=/dev/urandom
 ARCHIVEONLY=0 # Only archive files or do the full test?
 DONOTARCHIVE=0 # files were already archived in a previous run NEED TARGETDIR
 TARGETDIR=''
@@ -50,7 +49,7 @@ die() {
 
 
 usage() { cat <<EOF 1>&2
-Usage: $0 [-n <nb_files_perdir>] [-N <nb_dir>] [-s <file_kB_size>] [-p <# parallel procs>] [-d <eos_dest_dir>] [-e <eos_instance>] [-S <data_source_file>] [-r]
+Usage: $0 [-n <nb_files_perdir>] [-N <nb_dir>] [-s <file_kB_size>] [-p <# parallel procs>] [-d <eos_dest_dir>] [-e <eos_instance>] [-r]
   -r		Remove files at the end: launches the delete workflow on the files that were deleted. WARNING: THIS CAN BE FATAL TO THE NAMESPACE IF THERE ARE TOO MANY FILES AND XROOTD STARTS TO TIMEOUT.
   -a		Archiveonly mode: exits after file archival
   -g		Tape aware GC?
@@ -186,9 +185,6 @@ while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q" o; do
             ;;
         v)
             VERBOSE=1
-            ;;
-        S)
-            DATA_SOURCE=${OPTARG}
             ;;
         r)
             REMOVE=1
