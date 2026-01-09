@@ -15,8 +15,7 @@ TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
                                            const std::string& instanceName,
                                            const admin::AdminCmd& adminCmd,
                                            uint64_t missingFileCopiesMinAgeSecs)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
-      m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs) {
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {
   const admin::AdminCmd& admincmd = adminCmd;
   using namespace cta::admin;
 
@@ -40,7 +39,7 @@ TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
   // Handle missing file copies (this is not handled by the requestMessage as it is the Frontend that provides this option)
   m_searchCriteria.checkMissingFileCopies = request.getOptional(OptionBoolean::MISSING_FILE_COPIES, &has_any);
   if (m_searchCriteria.checkMissingFileCopies.value_or(false)) {
-    m_searchCriteria.missingFileCopiesMinAgeSecs = m_missingFileCopiesMinAgeSecs;
+    m_searchCriteria.missingFileCopiesMinAgeSecs = missingFileCopiesMinAgeSecs;
   }
 
   // Handle state option
@@ -53,11 +52,11 @@ TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
   validateSearchCriteria(hasAllFlag, has_any);
 
   // Execute the search and get the tapes
-  m_tapes = m_catalogue.Tape()->getTapes(m_searchCriteria);
+  m_tapesItor = m_catalogue.Tape()->getTapesItor(m_searchCriteria);
 }
 
 bool TapeLsResponseStream::isDone() {
-  return m_tapes.empty();
+  return !m_tapesItor.hasMore();
 }
 
 cta::xrd::Data TapeLsResponseStream::next() {
@@ -65,8 +64,7 @@ cta::xrd::Data TapeLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto tape = m_tapes.front();
-  m_tapes.pop_front();
+  const auto tape = m_tapesItor.next();
 
   cta::xrd::Data data;
   auto tapeItem = data.mutable_tals_item();

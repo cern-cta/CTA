@@ -26,6 +26,8 @@ public:
 
   void deleteTape(const std::string& vid) override;
 
+  TapeItor getTapesItor(const TapeSearchCriteria& searchCriteria) const override;
+
   std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria& searchCriteria) const override;
 
   common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const override;

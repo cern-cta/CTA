@@ -77,6 +77,24 @@ SqliteStmt::~SqliteStmt() {
 }
 
 //------------------------------------------------------------------------------
+// resetQuery
+//------------------------------------------------------------------------------
+void SqliteStmt::resetQuery() {
+  try {
+    threading::MutexLocker locker(m_mutex);
+
+    if (nullptr != m_stmt) {
+      if (const int resetRc = sqlite3_reset(m_stmt); SQLITE_OK != resetRc) {
+        exception::Exception ex;
+        ex.getMessage() << "sqlite3_reset failed: " << Sqlite::rcToStr(resetRc);
+      }
+    }
+  } catch (exception::Exception& ex) {
+    throw exception::Exception("Failed: " + ex.getMessage().str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // clear
 //------------------------------------------------------------------------------
 void SqliteStmt::clear() {

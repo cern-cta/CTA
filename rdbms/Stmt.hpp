@@ -165,6 +165,11 @@ public:
   void bindString(const std::string& paramName, const std::optional<std::string>& paramValue);
 
   /**
+   *  Clears the prepared statement so that it is ready to be reused, without the need to bind new variables.
+   */
+  void resetQuery();
+
+  /**
    *  Executes the statement and returns the result set.
    *
    *  @return The result set.

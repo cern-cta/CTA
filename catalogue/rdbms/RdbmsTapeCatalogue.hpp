@@ -33,6 +33,8 @@ public:
 
   void deleteTape(const std::string& vid) override;
 
+  TapeItor getTapesItor(const TapeSearchCriteria& searchCriteria) const override;
+
   std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria& searchCriteria) const override;
 
   common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const override;
@@ -134,7 +136,7 @@ private:
   std::shared_ptr<rdbms::ConnPool> m_connPool;
   RdbmsCatalogue* m_rdbmsCatalogue;
 
-  std::list<common::dataStructures::Tape> getTapes(rdbms::Conn& conn, const TapeSearchCriteria& searchCriteria) const;
+  common::dataStructures::VidToTapeMap getTapesByVid(rdbms::Conn& conn, const std::string& vid) const;
 
   std::string getSelectTapesBy100VidsSql() const;
 
@@ -146,6 +148,15 @@ private:
   void executeGetVidToLogicalLibraryBy100StmtAndCollectResults(
     rdbms::Stmt& stmt,
     std::map<std::string, std::string, std::less<>>& vidToLogicalLibrary) const;
+
+  /**
+   * Throws a UserError exception if the specified searchCriteria is not valid
+   * due to a user error.
+   *
+   * @param conn The database connection.
+   * @param searchCriteria The search criteria.
+   */
+  void checkTapeSearchCriteria(rdbms::Conn& conn, const TapeSearchCriteria& searchCriteria) const;
 
   /**
    * Returns the number of any files contained in the tape identified by its vid

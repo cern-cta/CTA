@@ -5,11 +5,12 @@
 
 #include "catalogue/rdbms/RdbmsTapeCatalogue.hpp"
 
+#include "catalogue/CatalogueItor.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/TapeForWriting.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
-#include "catalogue/rdbms/CommonExceptions.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
+#include "catalogue/rdbms/RdbmsCatalogueGetTapesItor.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsLogicalLibraryCatalogue.hpp"
@@ -262,12 +263,29 @@ void RdbmsTapeCatalogue::deleteTape(const std::string& vid) {
   }
 }
 
-std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(const TapeSearchCriteria& searchCriteria) const {
+TapeItor RdbmsTapeCatalogue::getTapesItor(const TapeSearchCriteria& searchCriteria) const {
   auto conn = m_connPool->getConn();
-  return getTapes(conn, searchCriteria);
+  checkTapeSearchCriteria(conn, searchCriteria);
+  auto impl = new RdbmsCatalogueGetTapesItor(m_log, std::move(conn), searchCriteria);
+  return TapeItor(impl);
+}
+
+std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(const TapeSearchCriteria& searchCriteria) const {
+  std::list<common::dataStructures::Tape> tapes;
+  auto itor = getTapesItor(searchCriteria);
+  while (itor.hasMore()) {
+    tapes.push_back(itor.next());
+  }
+  return tapes;
 }
 
 common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std::string& vid) const {
+  auto conn = m_connPool->getConn();
+  return getTapesByVid(conn, vid);
+}
+
+common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(rdbms::Conn& conn,
+                                                                       const std::string& vid) const {
   const char* const sql = R"SQL(
     SELECT
       TAPE.VID AS VID,
@@ -323,7 +341,6 @@ common::dataStructures::VidToTapeMap RdbmsTapeCatalogue::getTapesByVid(const std
 
   common::dataStructures::VidToTapeMap vidToTapeMap;
 
-  auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":VID", vid);
   executeGetTapesByVidStmtAndCollectResults(stmt, vidToTapeMap);
@@ -468,16 +485,14 @@ void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdent
   utils::Timer t;
   auto conn = m_connPool->getConn();
 
-  TapeSearchCriteria searchCriteria;
-  searchCriteria.vid = vid;
-  const auto tapes = getTapes(conn, searchCriteria);
+  const auto tapes = getTapesByVid(conn, vid);
   tl.insertAndReset("getTapesTime", t);
 
   if (tapes.empty()) {
     throw exception::UserError(std::string("Cannot reclaim tape ") + vid + " because it does not exist");
   }
 
-  if (auto& tape = tapes.front();
+  if (auto& tape = tapes.at(vid);
       tape.state != Tape::State::ACTIVE && tape.state != Tape::State::DISABLED && tape.state != Tape::State::BROKEN) {
     throw exception::UserError(std::string("Cannot reclaim tape ") + vid
                                + " because it is not on ACTIVE, DISABLED or BROKEN state");
@@ -510,12 +525,16 @@ void RdbmsTapeCatalogue::reclaimTape(const common::dataStructures::SecurityIdent
 void RdbmsTapeCatalogue::checkTapeForLabel(const std::string& vid) {
   auto conn = m_connPool->getConn();
 
-  TapeSearchCriteria searchCriteria;
-  searchCriteria.vid = vid;
+  if (vid.empty()) {
+    throw exception::UserError("VID cannot be an empty string");
+  }
 
-  if (const auto tapes = getTapes(conn, searchCriteria); tapes.empty()) {
+  try {
+    const auto tapes = getTapesByVid(conn, vid);
+  } catch (TapeNotFound&) {
     throw exception::UserError(std::string("Cannot label tape ") + vid + " because it does not exist");
   }
+
   //The tape exists checks any files on it
   const uint64_t nbFilesOnTape = getNbFilesOnTape(conn, vid);
   if (0 != nbFilesOnTape) {
@@ -1224,396 +1243,6 @@ void RdbmsTapeCatalogue::tapeMountedForRetrieve(const std::string& vid, const st
   lc.log(log::INFO, "Catalogue - system modified tape - mountedForRetrieve");
 }
 
-std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(rdbms::Conn& conn,
-                                                                     const TapeSearchCriteria& searchCriteria) const {
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vid)) {
-    throw exception::UserError("VID cannot be an empty string");
-  }
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.mediaType)) {
-    throw exception::UserError("Media type cannot be an empty string");
-  }
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vendor)) {
-    throw exception::UserError("Vendor cannot be an empty string");
-  }
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.logicalLibrary)) {
-    throw exception::UserError("Logical library cannot be an empty string");
-  }
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.tapePool)) {
-    throw exception::UserError("Tape pool cannot be an empty string");
-  }
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vo)) {
-    throw exception::UserError("Virtual organisation cannot be an empty string");
-  }
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.purchaseOrder)) {
-    throw exception::UserError("Purchase order cannot be an empty string");
-  }
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.diskFileIds)) {
-    throw exception::UserError("Disk file ID list cannot be empty");
-  }
-  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.physicalLibraryName)) {
-    throw exception::UserError("Physical library name cannot be empty");
-  }
-
-  if (searchCriteria.vid && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
-    cta::exception::UserError ex;
-    ex.getMessage() << "Cannot list tapes because tape with vid " + searchCriteria.vid.value() + " does not exist";
-    throw ex;
-  }
-
-  std::list<common::dataStructures::Tape> tapes;
-  std::string sql = R"SQL(
-    SELECT
-      TAPE.VID AS VID,
-      MEDIA_TYPE.MEDIA_TYPE_NAME AS MEDIA_TYPE,
-      TAPE.VENDOR AS VENDOR,
-      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,
-      TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
-      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VO,
-      TAPE.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,
-      MEDIA_TYPE.CAPACITY_IN_BYTES AS CAPACITY_IN_BYTES,
-      TAPE.DATA_IN_BYTES AS DATA_IN_BYTES,
-      TAPE.NB_MASTER_FILES AS NB_MASTER_FILES,
-      TAPE.MASTER_DATA_IN_BYTES AS MASTER_DATA_IN_BYTES,
-      TAPE.LAST_FSEQ AS LAST_FSEQ,
-      TAPE.IS_FULL AS IS_FULL,
-      TAPE.DIRTY AS DIRTY,
-      TAPE.PURCHASE_ORDER AS PURCHASE_ORDER,
-      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,
-
-      TAPE.IS_FROM_CASTOR AS IS_FROM_CASTOR,
-
-      TAPE.LABEL_FORMAT AS LABEL_FORMAT,
-
-      TAPE.LABEL_DRIVE AS LABEL_DRIVE,
-      TAPE.LABEL_TIME AS LABEL_TIME,
-
-      TAPE.LAST_READ_DRIVE AS LAST_READ_DRIVE,
-      TAPE.LAST_READ_TIME AS LAST_READ_TIME,
-
-      TAPE.LAST_WRITE_DRIVE AS LAST_WRITE_DRIVE,
-      TAPE.LAST_WRITE_TIME AS LAST_WRITE_TIME,
-
-      TAPE.READ_MOUNT_COUNT AS READ_MOUNT_COUNT,
-      TAPE.WRITE_MOUNT_COUNT AS WRITE_MOUNT_COUNT,
-
-      TAPE.VERIFICATION_STATUS AS VERIFICATION_STATUS,
-
-      TAPE.USER_COMMENT AS USER_COMMENT,
-
-      TAPE.TAPE_STATE AS TAPE_STATE,
-      TAPE.STATE_REASON AS STATE_REASON,
-      TAPE.STATE_UPDATE_TIME AS STATE_UPDATE_TIME,
-      TAPE.STATE_MODIFIED_BY AS STATE_MODIFIED_BY,
-
-      TAPE.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
-      TAPE.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
-      TAPE.CREATION_LOG_TIME AS CREATION_LOG_TIME,
-
-      TAPE.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
-      TAPE.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
-      TAPE.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
-    FROM
-      TAPE
-    INNER JOIN TAPE_POOL ON
-      TAPE.TAPE_POOL_ID = TAPE_POOL.TAPE_POOL_ID
-    INNER JOIN LOGICAL_LIBRARY ON
-      TAPE.LOGICAL_LIBRARY_ID = LOGICAL_LIBRARY.LOGICAL_LIBRARY_ID
-    LEFT JOIN PHYSICAL_LIBRARY ON
-      LOGICAL_LIBRARY.PHYSICAL_LIBRARY_ID = PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_ID
-    INNER JOIN MEDIA_TYPE ON
-      TAPE.MEDIA_TYPE_ID = MEDIA_TYPE.MEDIA_TYPE_ID
-    INNER JOIN VIRTUAL_ORGANIZATION ON
-      TAPE_POOL.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID
-  )SQL";
-
-  if (searchCriteria.vid.has_value() || searchCriteria.mediaType.has_value() || searchCriteria.vendor.has_value()
-      || searchCriteria.logicalLibrary.has_value() || searchCriteria.tapePool.has_value()
-      || searchCriteria.vo.has_value() || searchCriteria.capacityInBytes.has_value() || searchCriteria.full.has_value()
-      || searchCriteria.diskFileIds.has_value() || searchCriteria.state.has_value()
-      || searchCriteria.fromCastor.has_value() || searchCriteria.purchaseOrder.has_value()
-      || searchCriteria.physicalLibraryName.has_value() || searchCriteria.checkMissingFileCopies.has_value()) {
-    sql += R"SQL( WHERE )SQL";
-  }
-
-  bool addedAWhereConstraint = false;
-
-  if (searchCriteria.vid.has_value()) {
-    sql += R"SQL(
-      TAPE.VID = :VID
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.mediaType.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      MEDIA_TYPE.MEDIA_TYPE_NAME = :MEDIA_TYPE
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.vendor.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      TAPE.VENDOR = :VENDOR
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.logicalLibrary.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      LOGICAL_LIBRARY.LOGICAL_LIBRARY_NAME = :LOGICAL_LIBRARY_NAME
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.tapePool.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      TAPE_POOL.TAPE_POOL_NAME = :TAPE_POOL_NAME
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.vo.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME = :VO
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.capacityInBytes.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      MEDIA_TYPE.CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.full.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      TAPE.IS_FULL = :IS_FULL
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.diskFileIds.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      VID IN (
-        SELECT DISTINCT A.VID
-        FROM
-          TAPE_FILE A, ARCHIVE_FILE B
-        WHERE
-          A.ARCHIVE_FILE_ID = B.ARCHIVE_FILE_ID AND
-          B.DISK_FILE_ID IN (:DISK_FID0)
-      )
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-
-  if (searchCriteria.state.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      TAPE.TAPE_STATE = :TAPE_STATE
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.fromCastor.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      TAPE.IS_FROM_CASTOR = :FROM_CASTOR
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.purchaseOrder.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      TAPE.PURCHASE_ORDER = :PURCHASE_ORDER
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.physicalLibraryName.has_value()) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      PHYSICAL_LIBRARY.PHYSICAL_LIBRARY_NAME = :PHYSICAL_LIBRARY_NAME
-    )SQL";
-    addedAWhereConstraint = true;
-  }
-  if (searchCriteria.checkMissingFileCopies.value_or(false)) {
-    if (addedAWhereConstraint) {
-      sql += R"SQL( AND )SQL";
-    }
-    sql += R"SQL(
-      VID IN (
-        SELECT TF.VID FROM (
-          SELECT AF.ARCHIVE_FILE_ID, SC.NB_COPIES, COUNT(TF.ARCHIVE_FILE_ID) AS NB_TAPE_COPIES
-          FROM
-            ARCHIVE_FILE AF
-            INNER JOIN STORAGE_CLASS SC ON AF.STORAGE_CLASS_ID = SC.STORAGE_CLASS_ID
-            INNER JOIN TAPE_FILE TF ON AF.ARCHIVE_FILE_ID = TF.ARCHIVE_FILE_ID
-          WHERE
-            SC.NB_COPIES > 1 AND AF.CREATION_TIME <= :MAX_CREATION_TIME
-          GROUP BY
-            AF.ARCHIVE_FILE_ID, SC.NB_COPIES
-          HAVING
-            SC.NB_COPIES <> COUNT(TF.ARCHIVE_FILE_ID)
-        ) MISSING_COPIES
-        INNER JOIN TAPE_FILE TF ON MISSING_COPIES.ARCHIVE_FILE_ID = TF.ARCHIVE_FILE_ID
-      )
-    )SQL";
-  }
-
-  sql += R"SQL( ORDER BY TAPE.VID )SQL";
-
-  auto stmt = conn.createStmt(sql);
-
-  if (searchCriteria.vid.has_value()) {
-    stmt.bindString(":VID", searchCriteria.vid.value());
-  }
-  if (searchCriteria.mediaType.has_value()) {
-    stmt.bindString(":MEDIA_TYPE", searchCriteria.mediaType.value());
-  }
-  if (searchCriteria.vendor.has_value()) {
-    stmt.bindString(":VENDOR", searchCriteria.vendor.value());
-  }
-  if (searchCriteria.logicalLibrary.has_value()) {
-    stmt.bindString(":LOGICAL_LIBRARY_NAME", searchCriteria.logicalLibrary.value());
-  }
-  if (searchCriteria.tapePool.has_value()) {
-    stmt.bindString(":TAPE_POOL_NAME", searchCriteria.tapePool.value());
-  }
-  if (searchCriteria.vo.has_value()) {
-    stmt.bindString(":VO", searchCriteria.vo.value());
-  }
-  if (searchCriteria.capacityInBytes.has_value()) {
-    stmt.bindUint64(":CAPACITY_IN_BYTES", searchCriteria.capacityInBytes.value());
-  }
-  if (searchCriteria.full.has_value()) {
-    stmt.bindBool(":IS_FULL", searchCriteria.full.value());
-  }
-  if (searchCriteria.fromCastor.has_value()) {
-    stmt.bindBool(":FROM_CASTOR", searchCriteria.fromCastor.value());
-  }
-  if (searchCriteria.purchaseOrder.has_value()) {
-    stmt.bindString(":PURCHASE_ORDER", searchCriteria.purchaseOrder.value());
-  }
-  if (searchCriteria.physicalLibraryName.has_value()) {
-    stmt.bindString(":PHYSICAL_LIBRARY_NAME", searchCriteria.physicalLibraryName.value());
-  }
-  try {
-    if (searchCriteria.state) {
-      stmt.bindString(":TAPE_STATE", cta::common::dataStructures::Tape::stateToString(searchCriteria.state.value()));
-    }
-  } catch (cta::exception::Exception&) {
-    throw cta::exception::UserError(std::string("The state provided does not exist. Possible values are: ")
-                                    + cta::common::dataStructures::Tape::getAllPossibleStates());
-  }
-  if (searchCriteria.checkMissingFileCopies.value_or(false)) {
-    uint64_t max_creation_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    max_creation_time -= searchCriteria.missingFileCopiesMinAgeSecs;
-    stmt.bindUint64(":MAX_CREATION_TIME", max_creation_time);
-  }
-
-  // Disk file ID lookup requires multiple queries
-  std::vector<std::string>::const_iterator diskFileId_it;
-  std::set<std::string, std::less<>> vidsInList;
-  if (searchCriteria.diskFileIds) {
-    diskFileId_it = searchCriteria.diskFileIds.value().begin();
-  }
-  int num_queries = searchCriteria.diskFileIds ? static_cast<int>(searchCriteria.diskFileIds.value().size()) : 1;
-
-  for (int i = 0; i < num_queries; ++i) {
-    if (searchCriteria.diskFileIds) {
-      stmt.bindString(":DISK_FID0", *diskFileId_it++);
-    }
-
-    auto rset = stmt.executeQuery();
-    while (rset.next()) {
-      auto vid = rset.columnString("VID");
-      if (vidsInList.contains(vid)) {
-        continue;
-      }
-      vidsInList.insert(vid);
-
-      common::dataStructures::Tape tape;
-
-      tape.vid = vid;
-      tape.mediaType = rset.columnString("MEDIA_TYPE");
-      tape.vendor = rset.columnString("VENDOR");
-      tape.logicalLibraryName = rset.columnString("LOGICAL_LIBRARY_NAME");
-      tape.tapePoolName = rset.columnString("TAPE_POOL_NAME");
-      tape.vo = rset.columnString("VO");
-      tape.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
-      tape.purchaseOrder = rset.columnOptionalString("PURCHASE_ORDER");
-      tape.physicalLibraryName = rset.columnOptionalString("PHYSICAL_LIBRARY_NAME");
-      tape.capacityInBytes = rset.columnUint64("CAPACITY_IN_BYTES");
-      tape.dataOnTapeInBytes = rset.columnUint64("DATA_IN_BYTES");
-      tape.nbMasterFiles = rset.columnUint64("NB_MASTER_FILES");
-      tape.masterDataInBytes = rset.columnUint64("MASTER_DATA_IN_BYTES");
-      tape.lastFSeq = rset.columnUint64("LAST_FSEQ");
-      tape.full = rset.columnBool("IS_FULL");
-      tape.dirty = rset.columnBool("DIRTY");
-      tape.isFromCastor = rset.columnBool("IS_FROM_CASTOR");
-
-      tape.labelFormat = common::dataStructures::Label::validateFormat(rset.columnOptionalUint8("LABEL_FORMAT"),
-                                                                       "[RdbmsCatalogue::getTapes()]");
-
-      tape.labelLog = getTapeLogFromRset(rset, "LABEL_DRIVE", "LABEL_TIME");
-      tape.lastReadLog = getTapeLogFromRset(rset, "LAST_READ_DRIVE", "LAST_READ_TIME");
-      tape.lastWriteLog = getTapeLogFromRset(rset, "LAST_WRITE_DRIVE", "LAST_WRITE_TIME");
-
-      tape.readMountCount = rset.columnUint64("READ_MOUNT_COUNT");
-      tape.writeMountCount = rset.columnUint64("WRITE_MOUNT_COUNT");
-
-      tape.verificationStatus = rset.columnOptionalString("VERIFICATION_STATUS");
-
-      auto optionalComment = rset.columnOptionalString("USER_COMMENT");
-      tape.comment = optionalComment.value_or("");
-
-      tape.setState(rset.columnString("TAPE_STATE"));
-      tape.stateReason = rset.columnOptionalString("STATE_REASON");
-      tape.stateUpdateTime = rset.columnUint64("STATE_UPDATE_TIME");
-      tape.stateModifiedBy = rset.columnString("STATE_MODIFIED_BY");
-
-      tape.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
-      tape.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
-      tape.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
-      tape.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
-      tape.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
-      tape.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-
-      tapes.push_back(tape);
-    }
-  }
-  if (searchCriteria.diskFileIds) {
-    // When searching by diskFileId, results are not guaranteed to be in sorted order
-    tapes.sort(
-      [](const common::dataStructures::Tape& a, const common::dataStructures::Tape& b) { return a.vid < b.vid; });
-  }
-
-  return tapes;
-}
-
 void RdbmsTapeCatalogue::setTapeLastFSeq(rdbms::Conn& conn, const std::string& vid, const uint64_t lastFSeq) {
   threading::MutexLocker locker(m_rdbmsCatalogue->m_mutex);
 
@@ -1875,6 +1504,42 @@ void RdbmsTapeCatalogue::executeGetVidToLogicalLibraryBy100StmtAndCollectResults
   auto rset = stmt.executeQuery();
   while (rset.next()) {
     vidToLogicalLibrary[rset.columnString("VID")] = rset.columnString("LOGICAL_LIBRARY_NAME");
+  }
+}
+
+void RdbmsTapeCatalogue::checkTapeSearchCriteria(rdbms::Conn& conn, const TapeSearchCriteria& searchCriteria) const {
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vid)) {
+    throw exception::UserError("VID cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.mediaType)) {
+    throw exception::UserError("Media type cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vendor)) {
+    throw exception::UserError("Vendor cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.logicalLibrary)) {
+    throw exception::UserError("Logical library cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.tapePool)) {
+    throw exception::UserError("Tape pool cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.vo)) {
+    throw exception::UserError("Virtual organisation cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.purchaseOrder)) {
+    throw exception::UserError("Purchase order cannot be an empty string");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.diskFileIds)) {
+    throw exception::UserError("Disk file ID list cannot be empty");
+  }
+  if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.physicalLibraryName)) {
+    throw exception::UserError("Physical library name cannot be empty");
+  }
+
+  if (searchCriteria.vid && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
+    cta::exception::UserError ex;
+    ex.getMessage() << "Cannot list tapes because tape with vid " + searchCriteria.vid.value() + " does not exist";
+    throw ex;
   }
 }
 

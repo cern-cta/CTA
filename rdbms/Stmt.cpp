@@ -178,6 +178,17 @@ void Stmt::bindString(const std::string& paramName, const std::optional<std::str
 }
 
 //-----------------------------------------------------------------------------
+// resetQuery
+//-----------------------------------------------------------------------------
+void Stmt::resetQuery() {
+  if (nullptr != m_stmt) {
+    return m_stmt->resetQuery();
+  } else {
+    throw exception::Exception("Stmt does not contain a cached statement");
+  }
+}
+
+//-----------------------------------------------------------------------------
 // executeQuery
 //-----------------------------------------------------------------------------
 Rset Stmt::executeQuery() {

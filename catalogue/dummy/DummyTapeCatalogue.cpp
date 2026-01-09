@@ -5,6 +5,7 @@
 
 #include "catalogue/dummy/DummyTapeCatalogue.hpp"
 
+#include "catalogue/CatalogueItor.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
@@ -23,6 +24,10 @@ void DummyTapeCatalogue::createTape(const common::dataStructures::SecurityIdenti
 }
 
 void DummyTapeCatalogue::deleteTape(const std::string& vid) {
+  throw exception::NotImplementedException();
+}
+
+TapeItor DummyTapeCatalogue::getTapesItor(const TapeSearchCriteria& searchCriteria) const {
   throw exception::NotImplementedException();
 }
 
