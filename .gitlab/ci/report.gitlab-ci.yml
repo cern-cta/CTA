@@ -3,7 +3,8 @@
 
 danger-review:
   stage: report
-  needs: []  # Ensure no artifacts are downloaded
+  # Note that we rely on the stage ordering here instead of job ordering via needs
+  # This is because the review stage is last, which ensures that this job is always executed last
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: always
