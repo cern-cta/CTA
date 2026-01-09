@@ -25,7 +25,7 @@ validate-catalogue-schema-version:
     # For all other scenarios, manual run only
     - when: on_success
       variables:
-        CATALOGUE_SCHEMA_CHECK_PARAMS: ""
+        CATALOGUE_SCHEMA_CHECK_PARAMS: "-t"
   script:
     - ./ci/checks/check_catalogue_schema_version.sh ${CATALOGUE_SCHEMA_CHECK_PARAMS} .
 
