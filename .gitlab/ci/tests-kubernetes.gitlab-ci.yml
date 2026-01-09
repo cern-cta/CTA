@@ -348,7 +348,7 @@ stress-test-python:
                   --timeout 5m
     # Run the actual stress test
     - cd ../system_tests
-    - pytest tests/test_stress.py --namespace ${NAMESPACE}
+    - pytest tests/stress_test.py --namespace ${NAMESPACE}
                                   --no-cleanup
                                   --color=yes
                                   ${EXTRA_TEST_ARGS}
