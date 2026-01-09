@@ -116,9 +116,6 @@ variables:
       - "TRUE"
       - "FALSE"
 
-  # Tests
-  BASH_LOGGING_ENABLED: 1
-
   SKIP_UNIT_TESTS:
     description: "Skips the CTA unit tests. Should only be disabled if there is a very good reason to do so."
     value: "FALSE"
