@@ -141,20 +141,18 @@ build_deploy() {
         eos_image_tag="$2"
         shift
       else
-        echo "Error: --eos-image-tag requires an argument"
-        usage
+        error_usage "--eos-image-tag requires an argument"
       fi
       ;;
     --platform)
       if [[ $# -gt 1 ]]; then
         if [[ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]]; then
-            echo "Error: platform $2 not supported. Please check the project.json for supported platforms."
+            error_usage "platform $2 not supported. Please check the project.json for supported platforms."
         fi
         platform="$2"
         shift
       else
-        echo "Error: --platform requires an argument"
-        usage
+        error_usage "--platform requires an argument"
       fi
       ;;
     --build-generator)
@@ -162,34 +160,29 @@ build_deploy() {
         build_generator="$2"
         shift
       else
-        echo "Error: --build-generator requires an argument"
-        usage
+        error_usage "--build-generator requires an argument"
       fi
       ;;
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "Release" ]] && [[ "$2" != "Debug" ]] && [[ "$2" != "RelWithDebInfo" ]] && [[ "$2" != "MinSizeRel" ]]; then
-          echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
-          exit 1
+          die "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
         fi
         cmake_build_type="$2"
         shift
       else
-        echo "Error: --cmake-build-type requires an argument"
-        usage
+        error_usage "--cmake-build-type requires an argument"
       fi
       ;;
     -c | --container-runtime)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "docker" ]] && [[ "$2" != "podman" ]]; then
-          echo "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
-          exit 1
+          die "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
         fi
         container_runtime="$2"
         shift
       else
-        echo "Error: -c | --container-runtime requires an argument"
-        usage
+        error_usage "-c | --container-runtime requires an argument"
       fi
       ;;
     --scheduler-type)
@@ -197,8 +190,7 @@ build_deploy() {
         scheduler_type="$2"
         shift
       else
-        echo "Error: --scheduler-type requires an argument"
-        usage
+        error_usage "--scheduler-type requires an argument"
       fi
       ;;
     --catalogue-config)
@@ -206,8 +198,7 @@ build_deploy() {
         catalogue_config="$2"
         shift
       else
-        echo "Error: --catalogue-config requires an argument"
-        exit 1
+        error_usage "--catalogue-config requires an argument"
       fi
       ;;
     --scheduler-config)
@@ -215,8 +206,7 @@ build_deploy() {
         scheduler_config="$2"
         shift
       else
-        echo "Error: --scheduler-config requires an argument"
-        exit 1
+        error_usage "--scheduler-config requires an argument"
       fi
       ;;
     --tapeservers-config)
@@ -224,8 +214,7 @@ build_deploy() {
         tapeservers_config="$2"
         shift
       else
-        echo "Error: --tapeservers-config requires an argument"
-        exit 1
+        error_usage "--tapeservers-config requires an argument"
       fi
       ;;
     --cta-config)
@@ -233,8 +222,7 @@ build_deploy() {
         cta_config="$2"
         shift
       else
-        echo "Error: --cta-config requires an argument"
-        usage
+        error_usage "--cta-config requires an argument"
       fi
       ;;
     --eos-config)
@@ -242,8 +230,7 @@ build_deploy() {
         eos_config="$2"
         shift
       else
-        echo "Error: --eos-config requires an argument"
-        usage
+        error_usage "--eos-config requires an argument"
       fi
       ;;
     --spawn-options)
@@ -251,8 +238,7 @@ build_deploy() {
         extra_spawn_options+=" $2"
         shift
       else
-        echo "Error: --spawn-options requires an argument"
-        exit 1
+        error_usage "--spawn-options requires an argument"
       fi
       ;;
     --image-build-options)
@@ -260,8 +246,7 @@ build_deploy() {
         extra_image_build_options+=" $2"
         shift
       else
-        echo "Error: ---imagebuild-options requires an argument"
-        exit 1
+        error_usage "---imagebuild-options requires an argument"
       fi
       ;;
     --deploy-namespace)
@@ -269,13 +254,11 @@ build_deploy() {
         deploy_namespace="$2"
         shift
       else
-        echo "Error: ---deploy-namespace requires an argument"
-        exit 1
+        error_usage "---deploy-namespace requires an argument"
       fi
       ;;
     *)
-      echo "Unsupported argument: $1"
-      usage
+      die_usage "Unsupported argument: $1"
       ;;
     esac
     shift
@@ -414,8 +397,7 @@ build_deploy() {
     else
       # This continuoully increments the image tag from previous upgrades
       if [[ ! -f "$build_iteration_file" ]]; then
-        echo "Failed to find $build_iteration_file to retrieve build iteration."
-        exit 1
+        die "Failed to find $build_iteration_file to retrieve build iteration."
       fi
       local current_build_id
       current_build_id=$(cat "$build_iteration_file")
@@ -443,8 +425,7 @@ build_deploy() {
     fi
   else
     if [[ ! -f "$build_iteration_file" ]]; then
-      echo "Failed to find $build_iteration_file to retrieve build iteration. Unable to identify which image to spawn/upgrade the instance with."
-      exit 1
+      die "Failed to find $build_iteration_file to retrieve build iteration. Unable to identify which image to spawn/upgrade the instance with."
     fi
     # If we are not building a new image, use the latest one
     image_tag=dev-$(cat "$build_iteration_file")

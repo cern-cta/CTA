@@ -6,11 +6,6 @@
 set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
-die() {
-  echo "$@" 1>&2
-  exit 1
-}
-
 log_run() {
   echo "Running: $*"
   "$@"
@@ -179,8 +174,7 @@ create_instance() {
         shift ;;
       --publish-telemetry) publish_telemetry=true ;;
       *)
-        echo "Unsupported argument: $1"
-        usage
+        die_usage "Unsupported argument: $1"
         ;;
     esac
     shift
@@ -188,12 +182,10 @@ create_instance() {
 
   # Argument checks
   if [[ -z "${namespace}" ]]; then
-    echo "Missing mandatory argument: -n | --namespace"
-    usage
+    die_usage "Missing mandatory argument: -n | --namespace"
   fi
   if [[ -z "${cta_image_tag}" ]]; then
-    echo "Missing mandatory argument: -i | --cta-image-tag"
-    usage
+    die_usage "Missing mandatory argument: -i | --cta-image-tag"
   fi
   if [[ -z "${catalogue_schema_version}" ]]; then
     echo "No catalogue schema version provided: using project.json value"

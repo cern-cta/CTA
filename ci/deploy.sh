@@ -52,8 +52,7 @@ deploy() {
           cta_image_tag="$2"
           shift
         else
-          echo "Error: --cta-image-tag requires an argument"
-          usage
+          error_usage "--cta-image-tag requires an argument"
         fi
         ;;
       --eos-image-tag)
@@ -61,8 +60,7 @@ deploy() {
           eos_image_tag="$2"
           shift
         else
-          echo "Error: --eos-image-tag requires an argument"
-          usage
+          error_usage "--eos-image-tag requires an argument"
         fi
         ;;
       --catalogue-config)
@@ -70,8 +68,7 @@ deploy() {
           catalogue_config="$2"
           shift
         else
-          echo "Error: --catalogue-config requires an argument"
-          exit 1
+          error_usage "--catalogue-config requires an argument"
         fi
         ;;
       --scheduler-config)
@@ -79,8 +76,7 @@ deploy() {
           scheduler_config="$2"
           shift
         else
-          echo "Error: --scheduler-config requires an argument"
-          exit 1
+          error_usage "--scheduler-config requires an argument"
         fi
         ;;
       --tapeservers-config)
@@ -88,8 +84,7 @@ deploy() {
           tapeservers_config="$2"
           shift
         else
-          echo "Error: --tapeservers-config requires an argument"
-          exit 1
+          error_usage "--tapeservers-config requires an argument"
         fi
         ;;
       --cta-config)
@@ -97,8 +92,7 @@ deploy() {
           cta_config="$2"
           shift
         else
-          echo "Error: --cta-config requires an argument"
-          usage
+          error_usage "--cta-config requires an argument"
         fi
         ;;
       --eos-config)
@@ -106,8 +100,7 @@ deploy() {
           eos_config="$2"
           shift
         else
-          echo "Error: --eos-config requires an argument"
-          usage
+          error_usage "--eos-config requires an argument"
         fi
         ;;
       --spawn-options)
@@ -115,21 +108,18 @@ deploy() {
           extra_spawn_options+=" $2"
           shift
         else
-          echo "Error: --spawn-options requires an argument"
-          exit 1
+          error_usage "--spawn-options requires an argument"
         fi
         ;;
       *)
-        echo "Unsupported argument: $1"
-        usage
+        die_usage "Unsupported argument: $1"
         ;;
     esac
     shift
   done
 
   if [[ -z "${cta_image_tag}" ]]; then
-    echo "Missing mandatory argument: --cta-image-tag"
-    usage
+    die_usage "Missing mandatory argument: --cta-image-tag"
   fi
 
   # Navigate to root directory

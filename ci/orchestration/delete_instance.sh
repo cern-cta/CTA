@@ -5,7 +5,7 @@
 
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
-die() {
+local_die() {
   echo "$@" 1>&2
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Finished $0 "
   echo "================================================================================"
@@ -176,12 +176,11 @@ delete_instance() {
       --keep-pvs) wipe_pvs=false ;;
       -l|--log-dir)
         log_dir="$2"
-        test -d "${log_dir}" || die "ERROR: Log directory ${log_dir} does not exist"
-        test -w "${log_dir}" || die "ERROR: Canot write to log directory ${log_dir}"
+        test -d "${log_dir}" || local_die "ERROR: Log directory ${log_dir} does not exist"
+        test -w "${log_dir}" || local_die "ERROR: Canot write to log directory ${log_dir}"
         shift ;;
       *)
-        echo "Unsupported argument: $1"
-        usage
+        die_usage "Unsupported argument: $1"
         ;;
     esac
     shift
@@ -189,8 +188,7 @@ delete_instance() {
 
   # Argument checks
   if [[ -z "${namespace}" ]]; then
-    echo "Missing mandatory argument: -n | --namespace"
-    usage
+    die_usage "Missing mandatory argument: -n | --namespace"
   fi
 
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then

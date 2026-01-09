@@ -60,8 +60,7 @@ deploy() {
         eos_config="$2"
         shift ;;
       *)
-        echo "Unsupported argument: $1"
-        usage
+        die_usage "Unsupported argument: $1"
         ;;
     esac
     shift
@@ -69,8 +68,7 @@ deploy() {
 
   # Argument checks
   if [[ -z "${namespace}" ]]; then
-    echo "Missing mandatory argument: -n | --namespace"
-    usage
+    die_usage "Missing mandatory argument: -n | --namespace"
   fi
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
     die "Namespace $namespace does not exist. Upgrade failed"

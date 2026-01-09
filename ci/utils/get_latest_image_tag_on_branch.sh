@@ -3,10 +3,7 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-die() {
-  echo "$@" 1>&2
-  exit 1
-}
+source "$(dirname "${BASH_SOURCE[0]}")/log_wrapper.sh"
 
 usage() {
   echo
@@ -29,8 +26,7 @@ while [[ "$#" -gt 0 ]]; do
       branch="$2"
       shift ;;
     *)
-      echo "Unsupported argument: $1"
-      usage
+      die_usage "Unsupported argument: $1"
       ;;
   esac
   shift

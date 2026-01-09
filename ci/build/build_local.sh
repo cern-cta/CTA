@@ -72,8 +72,7 @@ build_local() {
           install_platform="$2"
           shift
         else
-          echo "Error: --install requires an argument"
-          usage
+          error_usage "--install requires an argument"
         fi
         ;;
       --build-generator)
@@ -81,21 +80,18 @@ build_local() {
           build_generator="$2"
           shift
         else
-          echo "Error: --build-generator requires an argument"
-          usage
+          error_usage "--build-generator requires an argument"
         fi
         ;;
       --cmake-build-type)
         if [[ $# -gt 1 ]]; then
           if [[ "$2" != "Release" ]] && [[ "$2" != "Debug" ]] && [[ "$2" != "RelWithDebInfo" ]] && [[ "$2" != "MinSizeRel" ]]; then
-            echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
-            exit 1
+            die "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
           fi
           cmake_build_type="$2"
           shift
         else
-          echo "Error: --cmake-build-type requires an argument"
-          usage
+          error_usage "--cmake-build-type requires an argument"
         fi
         ;;
       --scheduler-type)
@@ -103,13 +99,11 @@ build_local() {
           scheduler_type="$2"
           shift
         else
-          echo "Error: --scheduler-type requires an argument"
-          usage
+          error_usage "--scheduler-type requires an argument"
         fi
         ;;
       *)
-        echo "Unsupported argument: $1"
-        usage
+        die_usage "Unsupported argument: $1"
         ;;
     esac
     shift

@@ -9,10 +9,7 @@ set +e
 # http://stackoverflow.com/questions/6871859/piping-command-output-to-tee-but-also-save-exit-code-of-command
 set -o pipefail
 
-die() {
-  echo "$@" 1>&2
-  exit 1;
-}
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
 usage() {
   echo
@@ -152,24 +149,19 @@ run_systemtest() {
 
   # Argument checks
   if [[ -z "${namespace}" ]]; then
-    echo "Missing mandatory argument: -n | --namespace"
-    usage
+    die_usage "Missing mandatory argument: -n | --namespace"
   fi
   if [[ -z "${systemtest_script}" ]]; then
-    echo "Missing mandatory argument: -s | --test-script"
-    usage
+    die_usage "Missing mandatory argument: -s | --test-script"
   fi
   if [[ -z "${cta_image_tag}" ]]; then
-    echo "Missing mandatory argument: -i | --cta-image-tag"
-    usage
+    die_usage "Missing mandatory argument: -i | --cta-image-tag"
   fi
   if [[ -z "${scheduler_config}" ]]; then
-    echo "Missing mandatory argument: -o | --scheduler-config"
-    usage
+    die_usage "Missing mandatory argument: -o | --scheduler-config"
   fi
   if [[ -z "${catalogue_config}" ]]; then
-    echo "Missing mandatory argument: -d | --catalogue-config"
-    usage
+    die_usage "Missing mandatory argument: -d | --catalogue-config"
   fi
 
   log_dir="${orchestration_dir}/../../pod_logs/${namespace}"
@@ -188,8 +180,7 @@ run_systemtest() {
   elif kubectl get namespace ${namespace} > /dev/null 2>&1; then
     die "Namespace ${namespace} already exists"
   elif [[ -n "$old_namespaces" ]]; then
-    echo "Error: Other namespaces exist: $old_namespaces"
-    exit 1
+    error_usage "Other namespaces exist: $old_namespaces"
   fi
 
 
