@@ -2923,8 +2923,8 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
   request.requester = requester;
   request.srcURL = "srcURL";
   request.storageClass = s_storageClassName;
-  request.archiveReportURL = "test://archive-report-url";
-  request.archiveErrorReportURL = "test://error-report-url";
+  request.archiveReportURL = "null:";
+  request.archiveErrorReportURL = "null:";
   archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
 
@@ -2989,7 +2989,7 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
@@ -3003,7 +3003,7 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
-    archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
