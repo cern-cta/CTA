@@ -1205,7 +1205,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
@@ -1219,7 +1219,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
-    archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
