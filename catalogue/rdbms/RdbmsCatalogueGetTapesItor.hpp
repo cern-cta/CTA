@@ -88,8 +88,9 @@ private:
   rdbms::Rset m_rset;
 
   /**
-   * When selecting by disk file ID we may be forced to split into several queries
+   * When selecting by disk file ID we may be forced to split the query into several parts
    */
+  const bool m_splitByDiskFileId;
   static constexpr std::size_t MAX_DISK_FILE_ID_IN_QUERY = 100;
   std::size_t m_diskFileIdIdx = 0;
 

@@ -109,7 +109,8 @@ RdbmsCatalogueGetTapesItor::RdbmsCatalogueGetTapesItor(log::Logger& log,
                                                        const TapeSearchCriteria& searchCriteria)
     : m_log(log),
       m_searchCriteria(searchCriteria),
-      m_conn(std::move(conn)) {
+      m_conn(std::move(conn)),
+      m_splitByDiskFileId(searchCriteria.diskFileIds.has_value()) {
   std::list<common::dataStructures::Tape> tapes;
   std::string sql = R"SQL(
     SELECT
@@ -442,9 +443,15 @@ bool RdbmsCatalogueGetTapesItor::hasMore() {
 
 bool RdbmsCatalogueGetTapesItor::nextValidRset() {
   while (m_rset.next()) {
-    auto vid = m_rset.columnString("VID");
-    if (!m_vidsInList.contains(vid)) {
+    if (m_splitByDiskFileId) {
+      auto vid = m_rset.columnString("VID");
+      if (!m_vidsInList.contains(vid)) {
+        return true;
+      }
+      // Else, continue the loop
+    } else {
       return true;
+      // Return immediately
     }
   }
   return false;
@@ -462,30 +469,29 @@ common::dataStructures::Tape RdbmsCatalogueGetTapesItor::next() {
   auto tape = populateTape(m_rset);
   m_rsetIsEmpty = !nextValidRset();
 
-  // TODO: Add unit-test searching a long list of tapes by diskFileID
+  if (m_splitByDiskFileId) {
+    if (m_rsetIsEmpty && m_diskFileIdIdx < m_searchCriteria.diskFileIds->size()) {
+      m_stmt.resetQuery();
+      std::size_t i = 0;
+      for (; i < MAX_DISK_FILE_ID_IN_QUERY && m_diskFileIdIdx < m_searchCriteria.diskFileIds->size();
+           ++i, ++m_diskFileIdIdx) {
+        m_stmt.bindString(":DISK_FID" + std::to_string(i), m_searchCriteria.diskFileIds->at(m_diskFileIdIdx));
+      }
+      // If we have reached the end of the list of disk file IDs, fill the remaining parameters with the same value
+      for (; i < MAX_DISK_FILE_ID_IN_QUERY; ++i) {
+        m_stmt.bindString(":DISK_FID" + std::to_string(i), m_searchCriteria.diskFileIds->back());
+      }
 
-  if (m_rsetIsEmpty && m_searchCriteria.diskFileIds.has_value()
-      && m_diskFileIdIdx < m_searchCriteria.diskFileIds->size()) {
-    m_stmt.resetQuery();
-    std::size_t i = 0;
-    for (; i < MAX_DISK_FILE_ID_IN_QUERY && m_diskFileIdIdx < m_searchCriteria.diskFileIds->size();
-         ++i, ++m_diskFileIdIdx) {
-      m_stmt.bindString(":DISK_FID" + std::to_string(i), m_searchCriteria.diskFileIds->at(m_diskFileIdIdx));
+      m_rset = m_stmt.executeQuery();
+      m_rsetIsEmpty = !nextValidRset();
     }
-    // If we have reached the end of the list of disk file IDs, fill the remaining parameters with the same value
-    for (; i < MAX_DISK_FILE_ID_IN_QUERY; ++i) {
-      m_stmt.bindString(":DISK_FID" + std::to_string(i), m_searchCriteria.diskFileIds->back());
-    }
-
-    m_rset = m_stmt.executeQuery();
-    m_rsetIsEmpty = !nextValidRset();
+    m_vidsInList.insert(tape.vid);
   }
 
   if (m_rsetIsEmpty) {
     releaseDbResources();
   }
 
-  m_vidsInList.insert(tape.vid);
   return tape;
 }
 

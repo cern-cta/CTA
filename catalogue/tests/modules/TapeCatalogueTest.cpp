@@ -3713,6 +3713,370 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   }
 }
 
+TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
+  const bool logicalLibraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  const uint64_t nbPartialTapes = 2;
+  const std::string encryptionKeyName = "encryption_key_name";
+  const std::list<std::string> supply;
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
+  {
+    const auto pools = m_catalogue->TapePool()->getTapePools();
+    ASSERT_EQ(1, pools.size());
+
+    const auto& pool = pools.front();
+    ASSERT_EQ(m_tape1.tapePoolName, pool.name);
+    ASSERT_EQ(m_vo.name, pool.vo.name);
+    ASSERT_EQ(0, pool.nbTapes);
+    ASSERT_EQ(0, pool.capacityBytes);
+    ASSERT_EQ(0, pool.dataBytes);
+    ASSERT_EQ(0, pool.nbPhysicalFiles);
+  }
+
+  const uint64_t nbTapes = 10;
+
+  // Effectively clone the tapes from m_tape1 but give each one its own VID
+  for (uint64_t i = 1; i <= nbTapes; i++) {
+    std::ostringstream vid;
+    vid << "VID" << i;
+
+    auto tape = m_tape1;
+    tape.vid = vid.str();
+    m_catalogue->Tape()->createTape(m_admin, tape);
+
+    {
+      const auto pools = m_catalogue->TapePool()->getTapePools();
+      ASSERT_EQ(1, pools.size());
+
+      const auto& pool = pools.front();
+      ASSERT_EQ(m_tape1.tapePoolName, pool.name);
+      ASSERT_EQ(m_vo.name, pool.vo.name);
+      ASSERT_EQ(i, pool.nbTapes);
+      ASSERT_EQ(i * m_mediaType.capacityInBytes, pool.capacityBytes);
+      ASSERT_EQ(0, pool.dataBytes);
+      ASSERT_EQ(0, pool.nbPhysicalFiles);
+    }
+  }
+
+  {
+    auto itor = m_catalogue->Tape()->getTapesItor();
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+
+    for (uint64_t i = 1; i <= nbTapes; i++) {
+      std::ostringstream vid;
+      vid << "VID" << i;
+
+      auto vidAndTapeItor = vidToTape.find(vid.str());
+      ASSERT_NE(vidToTape.end(), vidAndTapeItor);
+
+      const cta::common::dataStructures::Tape tape = vidAndTapeItor->second;
+      ASSERT_EQ(vid.str(), tape.vid);
+      ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
+      ASSERT_EQ(m_tape1.vendor, tape.vendor);
+      ASSERT_EQ(m_tape1.logicalLibraryName, tape.logicalLibraryName);
+      ASSERT_EQ(m_tape1.tapePoolName, tape.tapePoolName);
+      ASSERT_EQ(m_vo.name, tape.vo);
+      ASSERT_EQ(m_mediaType.capacityInBytes, tape.capacityInBytes);
+      ASSERT_EQ(m_tape1.state, tape.state);
+      ASSERT_EQ(m_tape1.full, tape.full);
+
+      ASSERT_FALSE(tape.isFromCastor);
+      ASSERT_EQ(m_tape1.comment, tape.comment);
+      ASSERT_FALSE(tape.labelLog);
+      ASSERT_FALSE(tape.lastReadLog);
+      ASSERT_FALSE(tape.lastWriteLog);
+
+      const cta::common::dataStructures::EntryLog creationLog = tape.creationLog;
+      ASSERT_EQ(m_admin.username, creationLog.username);
+      ASSERT_EQ(m_admin.host, creationLog.host);
+
+      const cta::common::dataStructures::EntryLog lastModificationLog = tape.lastModificationLog;
+      ASSERT_EQ(creationLog, lastModificationLog);
+    }
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = "";
+    ASSERT_THROW(m_catalogue->Tape()->getTapesItor(searchCriteria), cta::exception::UserError);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.mediaType = "";
+    ASSERT_THROW(m_catalogue->Tape()->getTapesItor(searchCriteria), cta::exception::UserError);
+    searchCriteria.mediaType = "nonexistent";
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_FALSE(itor.hasMore());
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vendor = "";
+    ASSERT_THROW(m_catalogue->Tape()->getTapesItor(searchCriteria), cta::exception::UserError);
+    searchCriteria.vendor = "nonexistent";
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_FALSE(itor.hasMore());
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.logicalLibrary = "";
+    ASSERT_THROW(m_catalogue->Tape()->getTapesItor(searchCriteria), cta::exception::UserError);
+    searchCriteria.logicalLibrary = "nonexistent";
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_FALSE(itor.hasMore());
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.tapePool = "";
+    ASSERT_THROW(m_catalogue->Tape()->getTapesItor(searchCriteria), cta::exception::UserError);
+    searchCriteria.tapePool = "nonexistent";
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_FALSE(itor.hasMore());
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vo = "";
+    ASSERT_THROW(m_catalogue->Tape()->getTapesItor(searchCriteria), cta::exception::UserError);
+    searchCriteria.vo = "nonexistent";
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_FALSE(itor.hasMore());
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.diskFileIds = std::vector<std::string>();
+    ASSERT_THROW(m_catalogue->Tape()->getTapesItor(searchCriteria), cta::exception::UserError);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.state = (cta::common::dataStructures::Tape::State) 42;
+    ASSERT_THROW(m_catalogue->Tape()->getTapesItor(searchCriteria), cta::exception::UserError);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = "VID1";
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_TRUE(itor.hasMore());
+
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    ASSERT_EQ(1, tapes.size());
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
+    ASSERT_EQ("VID1", vidToTape.begin()->first);
+    ASSERT_EQ("VID1", vidToTape.begin()->second.vid);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.mediaType = m_tape1.mediaType;
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_TRUE(itor.hasMore());
+
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(m_tape1.mediaType, vidToTape.begin()->second.mediaType);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vendor = m_tape1.vendor;
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_TRUE(itor.hasMore());
+
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(m_tape1.vendor, vidToTape.begin()->second.vendor);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.logicalLibrary = m_tape1.logicalLibraryName;
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_TRUE(itor.hasMore());
+
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(m_tape1.logicalLibraryName, vidToTape.begin()->second.logicalLibraryName);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.tapePool = m_tape1.tapePoolName;
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_TRUE(itor.hasMore());
+
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(m_tape1.tapePoolName, vidToTape.begin()->second.tapePoolName);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vo = m_vo.name;
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_TRUE(itor.hasMore());
+
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(m_vo.name, vidToTape.begin()->second.vo);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.capacityInBytes = m_mediaType.capacityInBytes;
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_TRUE(itor.hasMore());
+
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(m_mediaType.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.state = m_tape1.state;
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_TRUE(itor.hasMore());
+
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(m_tape1.state, vidToTape.begin()->second.state);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.full = m_tape1.full;
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_TRUE(itor.hasMore());
+
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    ASSERT_EQ(nbTapes, tapes.size());
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(nbTapes, vidToTape.size());
+    ASSERT_EQ(m_tape1.full, vidToTape.begin()->second.full);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = "non_existent_vid";
+    ASSERT_THROW(m_catalogue->Tape()->getTapesItor(searchCriteria), cta::exception::Exception);
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    std::vector<std::string> diskFileIds;
+    diskFileIds.push_back("non_existent_fid");
+    searchCriteria.diskFileIds = diskFileIds;
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_FALSE(itor.hasMore());
+  }
+
+  {
+    cta::catalogue::TapeSearchCriteria searchCriteria;
+    searchCriteria.vid = "VID1";
+    searchCriteria.logicalLibrary = m_tape1.logicalLibraryName;
+    searchCriteria.tapePool = m_tape1.tapePoolName;
+    searchCriteria.capacityInBytes = m_mediaType.capacityInBytes;
+    searchCriteria.state = m_tape1.state;
+    searchCriteria.full = m_tape1.full;
+    auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
+    ASSERT_TRUE(itor.hasMore());
+
+    std::list<cta::common::dataStructures::Tape> tapes;
+    while (itor.hasMore()) {
+      tapes.push_back(itor.next());
+    }
+
+    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    ASSERT_EQ(1, vidToTape.size());
+    ASSERT_EQ("VID1", vidToTape.begin()->first);
+    ASSERT_EQ("VID1", vidToTape.begin()->second.vid);
+    ASSERT_EQ(m_tape1.logicalLibraryName, vidToTape.begin()->second.logicalLibraryName);
+    ASSERT_EQ(m_tape1.tapePoolName, vidToTape.begin()->second.tapePoolName);
+    ASSERT_EQ(m_mediaType.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
+    ASSERT_EQ(m_tape1.state, vidToTape.begin()->second.state);
+    ASSERT_EQ(m_tape1.full, vidToTape.begin()->second.full);
+  }
+}
+
 TEST_P(cta_catalogue_TapeTest, getTapesByVid_non_existent_tape_set) {
   std::set<std::string, std::less<>> vids = {{"non_existent_tape"}};
   ASSERT_THROW(m_catalogue->Tape()->getTapesByVid(vids), cta::exception::Exception);
