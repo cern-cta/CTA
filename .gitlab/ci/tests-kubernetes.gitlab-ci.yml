@@ -244,7 +244,7 @@ stress-test:
     EXTRA_ARGS: ""
     EXTRA_SPAWN_ARGS: ""
   before_script:
-    - bash ./continuousintegration/checks/check_runner_healthy.sh
+    - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
     - |
@@ -260,7 +260,7 @@ stress-test:
         EXTRA_STRESS_TEST_OPTIONS+=" -Q"
       fi
     # Set up stress test
-    - cd continuousintegration/orchestration/
+    - cd ci/orchestration/
     # We don't clean up old namespace so this will fail (deliberately) when another test is running there
     # This is because we check for the libraries in use before we start
     - ./run_systemtest.sh --namespace ${NAMESPACE}
@@ -287,7 +287,7 @@ stress-test:
         exit 0
       fi
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
-    - cd continuousintegration/orchestration/
+    - cd ci/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
   tags:
     - stress
@@ -315,6 +315,7 @@ stress-test-python:
     EXTRA_TEST_ARGS: ""
   before_script:
     - bash ./ci/checks/check_runner_healthy.sh
+    - python3 -m ensurepip && python3 -m venv venv && source venv/bin/activate && pip install pytest
     - *setup-k8s-test-variables
   script:
     - |
@@ -330,7 +331,7 @@ stress-test-python:
       fi
     # Set up stress test
     - cd ci/orchestration/
-    # We don't clean up old namespace so this will fail (deliberately) when another test is running there
+    # We don't clean up old namespace so this will fail (deliberately) when another namespace still exist
     # This is because we check for the libraries in use before we start
     - ./create_instance.sh --namespace ${NAMESPACE}
                            --reset-catalogue
@@ -365,3 +366,7 @@ stress-test-python:
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
+  tags:
+    - stress
+  # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time
+  resource_group: stress-test
