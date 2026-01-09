@@ -168,7 +168,7 @@ if [[ "$load_into_k8s" == "true" ]]; then
   # Load into k3s (stream into containerd, no temp file)
   if command -v k3s >/dev/null 2>&1; then
     echo "k3s detected -> loading image into k3s/containerd"
-    ${container_runtime} save "${image_ref}" | sudo k3s ctr images import -
+    ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
   fi
 fi
 

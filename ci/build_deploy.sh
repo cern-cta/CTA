@@ -408,7 +408,7 @@ build_deploy() {
           minikube image ls | grep "localhost/ctageneric:dev" | xargs -r minikube image rm >/dev/null 2>&1
         fi
         if command -v k3s >/dev/null 2>&1; then
-          sudo k3s ctr images ls -q | grep '^localhost/ctageneric:dev$' | xargs -r sudo k3s ctr images rm
+          sudo /usr/local/bin/k3s ctr images ls -q | grep '^localhost/ctageneric:dev$' | xargs -r sudo /usr/local/bin/k3s ctr images rm
         fi
       fi
     else

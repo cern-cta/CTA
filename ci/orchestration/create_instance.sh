@@ -256,7 +256,7 @@ create_instance() {
   echo "---"
 
   if [[ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]]; then
-    if kubectl get pods -n local-path-storage -l app=local-path-provisioner 2>/dev/null | grep -q Running; then
+    if kubectl get sc local-path >/dev/null 2>&1; then
       echo "Local path provisioning is enabled. Using VFS scheduler is okay."
     else
       echo "==============================================================================="
