@@ -70,7 +70,7 @@ spec:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
           capabilities:
-            add: ["CAP_SYS_PTRACE"]
+            add: ["SYS_PTRACE"]
         env:
         - name: MY_NAME
           value: {{ $name }}

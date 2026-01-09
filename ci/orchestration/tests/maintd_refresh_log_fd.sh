@@ -19,7 +19,7 @@ log_file=$(find ${log_dir} -type f)
 dnf -y install strace lsof
 
 
-# Get PID of all taped processes
+# Get PID of maintd process
 pid=$(pgrep "$process_name" -u cta)
 
 if [ -z "${pid}" ]; then
