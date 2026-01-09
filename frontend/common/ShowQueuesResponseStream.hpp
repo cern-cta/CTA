@@ -26,8 +26,9 @@ public:
 
 private:
   cta::log::LogContext& m_lc;
-  std::list<cta::common::dataStructures::QueueAndMountSummary> m_queuesAndMountsList;
   std::optional<std::string> m_schedulerBackendName;
+  std::vector<cta::common::dataStructures::QueueAndMountSummary> m_queuesAndMountsVector;
+  std::size_t m_queuesAndMountsVectorIdx = 0;
 };
 
 }  // namespace cta::frontend

@@ -2428,9 +2428,9 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
 //------------------------------------------------------------------------------
 // getQueuesAndMountSummaries
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
+std::vector<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndMountSummaries(log::LogContext& lc) {
   using Tape = common::dataStructures::Tape;
-  std::list<common::dataStructures::QueueAndMountSummary> ret;
+  std::vector<common::dataStructures::QueueAndMountSummary> ret;
 
   // Extract relevant information from the object store.
   utils::Timer schedulerDbTimer;
@@ -2489,6 +2489,8 @@ std::list<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAndM
   utils::Timer catalogueVidToLogicalLibraryTimer;
   const auto vid_to_logical_library = m_catalogue.Tape()->getVidToLogicalLibrary(tapesWithAQueue);
   const auto catalogueVidToLogicalLibraryTime = catalogueVidToLogicalLibraryTimer.secs();
+
+  ret.reserve(mountDecisionInfo->potentialMounts.size() + mountDecisionInfo->existingOrNextMounts.size());
 
   for (auto& pm : mountDecisionInfo->potentialMounts) {
     // Find or create the relevant entry.

@@ -10,7 +10,7 @@
 namespace cta::common::dataStructures {
 
 QueueAndMountSummary*
-QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary>& summaryList,
+QueueAndMountSummary::getOrCreateEntry(std::vector<QueueAndMountSummary>& summaryList,
                                        MountType mountType,
                                        const std::string& tapePool,
                                        const std::string& vid,
@@ -26,7 +26,7 @@ QueueAndMountSummary::getOrCreateEntry(std::list<QueueAndMountSummary>& summaryL
     case MountType::ArchiveForUser:
     case MountType::Retrieve:
     case MountType::ArchiveForRepack:
-      summaryList.push_back(QueueAndMountSummary());
+      summaryList.emplace_back();
       summaryList.back().mountType = mountType;
       summaryList.back().tapePool = tapePool;
       if (MountType::ArchiveForUser == mountType || MountType::ArchiveForRepack == mountType) {
