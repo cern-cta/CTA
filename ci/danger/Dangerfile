@@ -110,7 +110,7 @@ end
 
 # --- General message ---
 
-danger_review_job_url = "#{ENV['CI_PROJECT_URL']}/-/jobs/#{ENV['CI_JOB_ID']}"
+danger_review_job_retry_url = "#{ENV['CI_PROJECT_URL']}/-/jobs/#{ENV['CI_JOB_ID']}/retry"
 
 markdown <<~MSG
   ## 🤖 This merge request was automatically reviewed by [Danger](https://danger.systems/ruby/)
@@ -119,7 +119,7 @@ markdown <<~MSG
   Please address all messages before merging.
   If any warning is intentional, acknowledge it by replying to this comment.
 
-  🔁 Retry the [`danger-review`](#{danger_review_job_url}) job if needed to refresh these results. Retry the `danger-review-gate` job afterwards to update the pipeline status accordingly.
+  🔁 [Retry the `danger-review` job](#{danger_review_job_retry_url}) if needed to refresh these results.
 
   ---
 MSG

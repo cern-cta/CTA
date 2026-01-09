@@ -11,7 +11,7 @@ stages:
   - system-test
   - sbom
   - release
-  - gate
+  - report
 
 variables:
 

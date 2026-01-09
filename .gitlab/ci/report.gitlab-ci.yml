@@ -1,0 +1,16 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+danger-review:
+  stage: report
+  needs: []  # Ensure no artifacts are downloaded
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: always
+    - when: never
+  image: $IMAGE_DANGER
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
+    DANGER_GITLAB_USE_THREADS: 1
+  script:
+    - danger --verbose --dangerfile=ci/danger/Dangerfile --fail-on-errors=true
