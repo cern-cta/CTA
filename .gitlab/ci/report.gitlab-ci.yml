@@ -19,7 +19,7 @@ danger-review:
 issue-bot:
   stage: report
   rules:
-    # For now trigger only on push events. Once we solve the flakiness issues with the scheduler pipeline, we can remove this
+    # For now trigger only on push events. Once we solve the flakiness issues with the scheduled pipelines, we can remove this
     - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
       when: on_failure
   image: registry.gitlab.com/gitlab-org/distribution/issue-bot:latest
