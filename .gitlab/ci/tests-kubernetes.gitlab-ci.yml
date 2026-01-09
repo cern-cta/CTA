@@ -349,7 +349,7 @@ stress-test-python:
     # Run the actual stress test
     - cd ../system_tests
     - pytest tests/test_stress.py --namespace ${NAMESPACE}
-                                  --no-teardown
+                                  --no-cleanup
                                   --color=yes
                                   ${EXTRA_TEST_ARGS}
   after_script:
