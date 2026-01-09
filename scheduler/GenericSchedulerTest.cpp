@@ -2843,7 +2843,7 @@ TEST_P(SchedulerTest, DISABLED_expandRepackRequestShouldFailIfArchiveRouteMissin
   ASSERT_EQ(0, 1);
 }
 
-TEST_P(SchedulerTest, DISBALED_expandRepackRequestMoveAndAddCopies) {
+TEST_P(SchedulerTest, DISABLED_expandRepackRequestMoveAndAddCopies) {
   ASSERT_EQ(0, 1);
 }
 
