@@ -17,6 +17,7 @@
     name: $IMAGE_DOCKER_IMAGE_BUILDER
     entrypoint: [""]
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for these jobs
     DOCKERFILE:
     IMAGE_NAME:
     EXTRA_BUILD_ARGS:

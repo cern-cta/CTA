@@ -274,9 +274,6 @@ then
   { echo -e $header; echo $destinationInfos | jq -r ".[] | [(.vid),(.files),(.bytes)] | @tsv"; } | column -t
 fi
 
-echo "Repack ls --vid ${VID_TO_REPACK}"
-admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq
-
 amountArchivedFiles=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .archivedFiles")
 amountFilesToRetrieve=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .totalFilesToRetrieve")
 amountRecyleTapeFilesNew=$(admin_cta --json recycletf ls --vid ${VID_TO_REPACK} | jq "length")

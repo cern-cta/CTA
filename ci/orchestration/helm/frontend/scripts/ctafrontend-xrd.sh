@@ -6,7 +6,7 @@
 echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
 
 # Install missing RPMs
-dnf install -y cta-frontend cta-catalogueutils cta-debuginfo cta-debugsource
+dnf install -y cta-frontend cta-catalogueutils
 if [[ "$SCHEDULER_BACKEND" == "ceph" ]]; then
   dnf config-manager --enable ceph
   dnf install -y ceph-common

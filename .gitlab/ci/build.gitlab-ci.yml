@@ -69,8 +69,8 @@ build-cta-rpms:
     # RPMS
     - BUILD_OPTIONS=""
     - |
-      if [[ "${SKIP_UNIT_TESTS}" == "TRUE" ]]; then
-        BUILD_OPTIONS+=" --skip-unit-tests"
+      if [[ "$ENABLE_DEBUG_INFO" == "FALSE" ]]; then
+        BUILD_OPTIONS+=" --skip-debug-packages"
       fi
     - |
       if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
@@ -93,6 +93,7 @@ build-cta-rpms:
                               --jobs $(nproc --ignore=1)
                               --install-srpms
                               --platform ${PLATFORM}
+                              --skip-unit-tests
                               ${BUILD_OPTIONS}
   artifacts:
     expire_in: 30 days

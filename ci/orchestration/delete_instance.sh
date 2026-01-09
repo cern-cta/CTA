@@ -43,17 +43,25 @@ save_logs() {
   pods=$(kubectl --namespace "${namespace}" get pods -o json)
 
   # Iterate over pods
-  for pod in $(echo "${pods}" | jq -r '.items[] | .metadata.name'); do
-    # Check if logs are accessible
-    if ! kubectl --namespace "${namespace}" logs "${pod}" > /dev/null 2>&1; then
+  echo "${pods}" | jq -r '
+    .items[]
+    | [
+        .metadata.name,
+        (.metadata.labels["app.kubernetes.io/instance"] // ""),
+        (.spec.containers | map(.name) | join(" "))
+      ]
+    | @tsv
+  ' | while IFS=$'\t' read -r pod instance containers; do
+
+    # Pod-level probe: cheap and avoids SIGPIPE/pipefail issues
+    if ! kubectl -n "${namespace}" logs "${pod}" --limit-bytes=1 >/dev/null 2>&1; then
       echo "Pod: ${pod} failed to start. Logging describe output"
-      kubectl --namespace "${namespace}" describe pod "${pod}" > "${tmpdir}/${pod}-describe.log"
+      kubectl -n "${namespace}" describe pod "${pod}" > "${tmpdir}/${pod}-describe.log"
       continue
     fi
 
-    # Get containers for the pod
-    containers=$(echo "${pods}" | jq -r ".items[] | select(.metadata.name==\"${pod}\") | .spec.containers[].name")
-    num_containers=$(echo "${containers}" | wc -w)
+    set -- ${containers}
+    num_containers=$#
 
     for container in ${containers}; do
       # Name of the (sub)directory to output logs to
@@ -62,36 +70,33 @@ save_logs() {
 
       max_allowed_size=$((2 * 1024 * 1024 * 1024)) # 2 GB
       var_log_size=$(
-        kubectl --namespace "$namespace" exec "$pod" -c "$container" -- \
+        kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
           du -sb /var/log 2>/dev/null | awk '{print $1}'
       )
 
       if (( var_log_size > max_allowed_size )); then
         echo "Contents of /var/log are too big: ${var_log_size} bytes" >&2
-        kubectl --namespace "$namespace" exec "$pod" -c "$container" -- du -h /var/log >&2
+        kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- du -h /var/log >&2
         echo "Failed to collect /var/log from pod ${pod}, container ${container}" >&2
         continue
       fi
 
-
       # Collect stdout logs
-      kubectl --namespace "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
+      kubectl -n "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
 
       # Collect /var/log for any pod part of the eos or cta instances
-      if echo "${pods}" | jq -e \
-        ".items[]
-        | select(.metadata.name == \"${pod}\")
-        | .metadata.labels[\"app.kubernetes.io/instance\"]
-        | select(. == \"cta\" or . == \"eos\")" > /dev/null; then
+      if [[ "${instance}" == "cta" || "${instance}" == "eos" ]]; then
         echo "Collecting /var/log from ${pod} - ${container}"
         mkdir -p "${tmpdir}/varlogs/${output_dir}"
         # Only tar part of the logs
         subdirs_to_tar=("cta" "eos" "tmp" "xrootd" "*/xrd_errors")
-        existing_dirs=$(kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- \
-            bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true")
-        kubectl exec -n "${namespace}" "${pod}" -c "${container}" -- \
-          tar --warning=no-file-removed --ignore-failed-read -C /var/log \
-              -cf - ${existing_dirs} \
+        existing_dirs=$(
+          kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
+            bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true"
+        )
+
+        kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
+          tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - ${existing_dirs} \
           | tar -C "${tmpdir}/varlogs/${output_dir}" -xf - \
           || echo "Failed to collect /var/log from pod ${pod}, container ${container}" >&2
         # Remove empty files and directories to prevent polluting the output logs

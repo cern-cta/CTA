@@ -66,6 +66,12 @@ spec:
         stdin: true
         command: ["bash", "/scripts/rmcd.sh"]
         args: []
+        startupProbe:
+          exec:
+            command: ["rpm", "-q", "cta-rmcd"]
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 60
         readinessProbe:
           exec:
             command: ["sh", "-c", "pgrep -f /usr/bin/cta-rmcd > /dev/null"]
@@ -107,6 +113,12 @@ spec:
               - SYS_RAWIO
         command: ["/bin/bash", "-c"]
         args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/taped.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        startupProbe:
+          exec:
+            command: ["rpm", "-q", "cta-taped"]
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 60
         readinessProbe:
           exec:
             command: ["sh", "-c", "pgrep -f /usr/bin/cta-taped > /dev/null"]

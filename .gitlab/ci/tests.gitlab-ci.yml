@@ -12,7 +12,7 @@
     if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
       cp -f ci/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     fi
-  - dnf -y --nogpgcheck install cta-integrationtests cta-debuginfo cta-debugsource
+  - dnf -y --nogpgcheck install cta-integrationtests
 
 test-cta-valgrind:
   stage: test
@@ -29,6 +29,7 @@ test-cta-valgrind:
       allow_failure: true
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
     - *setup-cta-install
@@ -49,11 +50,35 @@ integration-test-cta:
     - when: on_success
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
     - *setup-cta-install
   script:
     - /usr/bin/cta-integrationTests
+
+unit-test-cta:
+  interruptible: false
+  stage: test
+  needs:
+    - job: build-cta-rpms
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - if: $SKIP_UNIT_TESTS == "TRUE"
+      when: never
+    - when: on_success
+  image: $IMAGE_TEST
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
+    CTAREPODIR: /tmp/repo
+  before_script:
+    - *setup-cta-install
+  script:
+    - /usr/bin/cta-unitTests
+    - /usr/bin/cta-unitTests-multiProcess
 
 unit-test-postgresql:
   stage: test
@@ -67,6 +92,7 @@ unit-test-postgresql:
     - when: on_success
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
   before_script:
     - *setup-cta-install
@@ -112,6 +138,7 @@ unit-test-oracle:
     - when: on_success
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     CTAREPODIR: /tmp/repo
     ORACLE_USERNAME: cta_dev04
     ORACLE_PASSWORD: $CI_ORACLE_UNIT_TEST_DB_PASSWORD
@@ -148,6 +175,7 @@ test-cta-release:
     - when: on_success
   image: $IMAGE_TEST
   variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
     GIT_STRATEGY: none  # We don't need the repo clone here
     CTAREPODIR: /tmp/repo
   script:
