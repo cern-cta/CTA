@@ -20,7 +20,7 @@ template<typename T>
 class JobPool : public std::enable_shared_from_this<JobPool<T>> {
 public:
   // Constructor initializes the pool with a connection pool reference or other parameters
-  explicit JobPool(rdbms::ConnPool& connPool, size_t poolSize = 100000);
+  explicit JobPool(rdbms::ConnPool& connPool, size_t poolSize = 10000);
 
   // Acquire a job from the pool (or create a new one if the pool is empty)
   std::unique_ptr<T> acquireJob();

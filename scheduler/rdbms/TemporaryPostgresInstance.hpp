@@ -345,7 +345,7 @@ private:
       conf << "synchronous_commit = off\n";
       conf << "full_page_writes = off\n";
       conf << "max_connections = 100\n";
-      conf << "shared_buffers = 128MB\n";
+      conf << "shared_buffers = 64MB\n";
       conf << "unix_socket_directories = '" << m_dataDir << "'\n";
       conf.close();
     }
@@ -450,7 +450,6 @@ private:
     std::string cmd = "runuser -u postgres -- " + m_pgCtl + " -D " + m_dataDir + " stop -m fast >/dev/null 2>&1";
 
     std::cout << "about to shut down postgres with the following command " << cmd << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(30));
 
     system(cmd.c_str());
 
