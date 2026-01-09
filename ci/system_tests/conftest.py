@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import pytest
 from pathlib import Path
 from .helpers.test_env import TestEnv
@@ -107,7 +110,6 @@ def pytest_configure(config):
         config.env = create_test_env_from_commandline_options(config)
     except Exception as e:
         raise pytest.UsageError(f"Failed to create test environment: {e}")
-
 
 
 #####################################################################################################################

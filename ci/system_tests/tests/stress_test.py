@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import pytest
 import time
 from dataclasses import dataclass
@@ -43,8 +46,11 @@ def test_hosts_present_stress(env):
 def test_update_setup_for_max_powerrrr(env):
     num_drives: int = len(env.cta_taped)
     env.cta_cli[0].exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
-    env.cta_cli[0].exec("cta-admin mp ch --name ctasystest --minarchiverequestage 100 --minretrieverequestage 100 --comment \"Longer min ages\"")
+    env.cta_cli[0].exec(
+        'cta-admin mp ch --name ctasystest --minarchiverequestage 100 --minretrieverequestage 100 --comment "Longer min ages"'
+    )
     env.eos_mgm[0].exec("eos fs config 1 scaninterval=0")
+
 
 @pytest.mark.eos
 def test_generate_and_copy_files(env, stress_params):
@@ -117,11 +123,10 @@ def test_generate_and_copy_files(env, stress_params):
 @pytest.mark.eos
 def test_wait_for_archival(env):
     archive_directory = env.disk_instance[0].base_dir_path + "/cta/stress"
-    timeout_secs = 300
+    timeout_secs = 300  # Rather arbitrary for now
     disk_instance: DiskInstanceHost = env.disk_instance[0]
 
     num_missing_files = disk_instance.wait_for_archival_in_directory(
-        archive_dir_path=archive_directory,
-        timeout_secs=timeout_secs
+        archive_dir_path=archive_directory, timeout_secs=timeout_secs
     )
-
+    print(f"Missing files: {num_missing_files}")
