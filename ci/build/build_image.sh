@@ -18,7 +18,7 @@ usage() {
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --name:                         The Docker image name. Defaults to ctageneric"
-  echo "  -l, --load-into-minikube:           Takes the image from the podman registry and ensures that it is present in the image registry used by minikube."
+  echo "  -l, --load-into-k8s:                Takes the image from the podman registry and ensures that it is present in the image registry used by the local K8s setup."
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/{defaultplatform}/dev-local-rpms.Dockerfile'). Should be relative to the repository root."
   echo "      --use-internal-repos:           Use the internal yum repos instead of the public repos."
@@ -37,7 +37,7 @@ buildImage() {
   local rpm_default_src="image_rpms"
   local defaultPlatform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
   local dockerfile="ci/docker/${defaultPlatform}/dev-local-rpms.Dockerfile"
-  local load_into_minikube=false
+  local load_into_k8s=false
   # Note that the capitalization here is intentional as this is passed directly as a build arg
   local use_internal_repos="FALSE"
   local rpm_version=""
@@ -94,8 +94,8 @@ buildImage() {
         exit 1
       fi
       ;;
-    -l | --load-into-minikube)
-      load_into_minikube=true
+    -l | --load-into-k8s)
+      load_into_k8s=true
       ;;
     --use-internal-repos)
       use_internal_repos="TRUE"
@@ -155,13 +155,23 @@ buildImage() {
   # Clean up again
   rm -rf "${rpm_default_src}"
 
-  if [[ "$load_into_minikube" == "true" ]]; then
-    # This step is necessary because atm the container runtime and minikube don't share the same docker runtime and local registry
-    tmpfile=$(mktemp) && add_trap 'rm -f $tmpfile' EXIT
-    ${container_runtime} save -o $tmpfile localhost/${image_name}:${image_tag} >/dev/null 2>&1
-    echo "Loading new image into minikube"
-    minikube image load $tmpfile --overwrite
+if [[ "$load_into_k8s" == "true" ]]; then
+  image_ref="localhost/${image_name}:${image_tag}"
+  # Note that the below checks are rather crude (for speed)
+
+  # Load into minikube (use stdin to avoid a temp file)
+  if command -v minikube >/dev/null 2>&1; then
+    echo "Minikube detected -> loading image into minikube"
+    ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
   fi
+
+  # Load into k3s (stream into containerd, no temp file)
+  if command -v k3s >/dev/null 2>&1; then
+    echo "k3s detected -> loading image into k3s/containerd"
+    ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
+  fi
+fi
+
 }
 
 buildImage "$@"
