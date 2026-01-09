@@ -73,6 +73,7 @@ CTA_SUB_REPO__CATALOGUE_MINOR_VERSION=$(extract_cmake_set_val ${cta_repo_dir}/ca
 # Get all tags from current commit of submodule 'cta-catalogue-schema', separated by whitespaces, and extract MAJOR version
 CTA_SUB_REPO__TAGS=$(
   cd ${cta_repo_dir}/catalogue/cta-catalogue-schema
+  git fetch --tags --force
   git tag
 )
 
