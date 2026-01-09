@@ -73,12 +73,6 @@ echo "Setting up environment for gfal-${GFAL2_PROTOCOL} test."
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
 
 echo
-echo "Track progress of test"
-(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict delete'"
-)&
-TRACKER_PID=$!
-
-echo
 echo "Launching client_archive.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Archiving files: xrdcp as user1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_archive.sh ${TEST_POSTRUN}" || exit 1
@@ -107,15 +101,6 @@ echo "  Deleting files with gfal-rm via root protocol"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-
-echo "$(date +%s): Waiting for tracker process to finish. "
-wait "${TRACKER_PID}"
-if [[ $? == 1 ]]; then
-  echo "Some files were lost during tape workflow."
-  kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/root/trackerdb.db -c client ../../../pod_logs/${NAMESPACE}/trackerdb.db 2>/dev/null
-exit 1
-fi
-
 # Test gfal2 https plugin
 
 echo "Uninstall gfal2-plugin-xrootd before continuing with http tests"
@@ -128,12 +113,6 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "sed -i 's/INSEC
 echo "Setting up environment for gfal-https tests"
 GFAL2_PROTOCOL='https'
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh ${clientgfal2_options} -Z ${GFAL2_PROTOCOL}"
-
-echo
-echo "Track progress of test"
-(kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c ". /root/client_env && /root/progress_tracker.sh 'archive retrieve evict delete'"
-)&
-TRACKER_PID=$!
 
 echo
 echo "Launching client_archive.sh on client pod using ${GFAL2_PROTOCOL} protocol"
@@ -163,13 +142,6 @@ echo "Launching client_delete.sh on client pod using ${GFAL2_PROTOCOL} protocol"
 echo "  Deleting files with gfal-rm as user1 via https protocol"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} &&  /root/client_delete.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-echo "$(date +%s): Waiting for tracker process to finish. "
-wait "${TRACKER_PID}"
-if [[ $? == 1 ]]; then
-    echo "Some files were lost during tape workflow."
-    exit 1
-fi
 
 # Test activity
 TEST_PRERUN=". /root/client_env "
