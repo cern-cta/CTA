@@ -14,12 +14,6 @@ CTA_STORAGE_CLASS="ctaStorageClass"
 
 # add the media types of the tapes in production
 cta-admin mediatype add \
-    --name T10K500G \
-    --capacity 500000000000 \
-    --primarydensitycode 74 \
-    --cartridge "T10000" \
-    --comment "Oracle T10000 cartridge formatted at 500 GB (for developers only)"
-cta-admin mediatype add \
     --name 3592JC7T \
     --capacity 7000000000000 \
     --primarydensitycode 84 \
