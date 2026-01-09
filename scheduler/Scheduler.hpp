@@ -457,7 +457,7 @@ public:
    * @param lc
    * @return
    */
-  std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext& lc);
+  std::vector<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext& lc);
 
   /**
    * @brief Updates the tape state for a given tape identified by its VID if it is currently in a PENDING state.
