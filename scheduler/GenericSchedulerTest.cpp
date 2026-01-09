@@ -1919,7 +1919,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     ASSERT_NE(nullptr, archiveMount.get());
     // The file should be retried twice
     for (int i = 0; i <= 1; i++) {
-      std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobList = archiveMount->getNextJobBatch(1, 1, lc);
+      std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobList = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
       if (!archiveJobList.front().get()) {
         int __attribute__((__unused__)) debugI = i;
       }
@@ -1929,7 +1929,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
       archiveJobList.front()->transferFailed("Archive failed", lc);
     }
     // Then the request should be gone
-    ASSERT_EQ(0, archiveMount->getNextJobBatch(1, 1, lc).size());
+    ASSERT_EQ(0, archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc).size());
   }
 }
 
