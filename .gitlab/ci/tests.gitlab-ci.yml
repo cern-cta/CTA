@@ -67,6 +67,8 @@ unit-test-cta:
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
+    - if: $SKIP_UNIT_TESTS == "TRUE"
+      when: never
     - when: on_success
   image: $IMAGE_TEST
   variables:
