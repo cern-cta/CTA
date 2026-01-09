@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 import json
 from typing import Any, List
 import subprocess
@@ -91,25 +94,21 @@ class TestEnv:
     @staticmethod
     def fromNamespace(namespace: str):
         try:
-          TestEnv.execLocal(f"kubectl get ns {namespace} > /dev/null")
+            TestEnv.execLocal(f"kubectl get ns {namespace} > /dev/null")
         except RuntimeError:
-          raise RuntimeError(f"Namespace {namespace} does not exist")
+            raise RuntimeError(f"Namespace {namespace} does not exist")
         return TestEnv(
             # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these concepts
             # Something to be changed once we move them over....
             eos_client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
-            cta_cli_conns=TestEnv.get_k8s_connections_by_label(
-                namespace, "app.kubernetes.io/name", "cta-cli"
-            ),
+            cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"),
             cta_frontend_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-frontend"
             ),
             cta_rmcd_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-rmcd", allow_partial_label_value_match=True
             ),
-            cta_maintd_conns=TestEnv.get_k8s_connections_by_label(
-                namespace, "app.kubernetes.io/name", "cta-maintd"
-            ),
+            cta_maintd_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-maintd"),
             cta_taped_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-tpsrv", "cta-taped", allow_partial_label_value_match=True
             ),
@@ -137,6 +136,7 @@ class TestEnv:
             raise RuntimeError("Install pyyaml to use TestEnv.fromConfig()")
         with open(path, "r") as f:
             config = yaml.safe_load(f)
+
         def create_connections(config: Any, host: str) -> list:
             """Creates a list of RemoteConnection objects for a given host."""
             if host not in config:
