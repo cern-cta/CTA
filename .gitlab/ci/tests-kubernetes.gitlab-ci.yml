@@ -58,9 +58,6 @@
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - when: on_success
-  tags:  # Used to indicate that these jobs should run on our own runners
-    - kubernetes
-    - mhvtl
   variables:
     BASH_LOGGING_ENABLED: 1
     TEST_SCRIPT:
@@ -99,6 +96,9 @@
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE}
+  tags:  # Used to indicate that these jobs should run on our own runners
+    - kubernetes
+    - mhvtl
   artifacts:
     when: always
     expire_in: 30 days
@@ -208,9 +208,6 @@ test-regression-dCache:
       allow_failure: true
     - if: $DCACHE_REGRESSION_TESTS == "TRUE"
       when: on_success
-  tags:
-    - kubernetes
-    - xlarge
   variables:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400 --skip-preflight"
@@ -235,8 +232,6 @@ stress-test:
       when: never
     - when: manual
       allow_failure: true  # Otherwise this blocks the pipeline
-  tags:
-    - stress
   variables:
     BASH_LOGGING_ENABLED: 1
     NAMESPACE: stress-${CI_JOB_ID}
@@ -295,9 +290,9 @@ stress-test:
   resource_group: stress-test
 
 stress-test-python:
-  timeout: 12 hours
   allow_failure: true
   interruptible: false
+  timeout: 12 hours
   stage: system-test
   needs:
     - job: modify-project-json
