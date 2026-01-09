@@ -23,7 +23,22 @@ add_trap() {
   fi
 }
 
+# This function is invoked on fatal failures.
+die() {
+  echo "$@" >&2
+  exit 1
+}
 
+# This function displays some error and exits with failure.
+die_usage() {
+  echo "$@" >&2
+  usage
+}
+
+# Like die_usage() but with "Error: " prefix in the message.
+error_usage() {
+  die_usage "Error: $@"
+}
 
 # Note that these functions are not meant to be used directly outside of this script; just use echo (and redirect to stderr if necessary)
 # The reason is twofold: first the existing file descriptor redirection will cause it two prepend twice.
@@ -77,7 +92,6 @@ __log_end() {
   __log_info "Elapsed time: $((10#${elapsed_time:0:-9})).${elapsed_time: -9:2} seconds"
 
 }
-
 
 if [[ $BASH_LOGGING_ENABLED -eq 1 ]]; then
   current_script=$(basename "$0")

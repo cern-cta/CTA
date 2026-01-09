@@ -6,11 +6,6 @@
 set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
-die() {
-  echo "$@" 1>&2
-  exit 1
-}
-
 log_run() {
   echo "Running: $*"
   "$@"
@@ -56,8 +51,7 @@ deploy() {
         dcache_config="$2"
         shift ;;
       *)
-        echo "Unsupported argument: $1"
-        usage
+        die_usage "Unsupported argument: $1"
         ;;
     esac
     shift
@@ -65,8 +59,7 @@ deploy() {
 
   # Argument checks
   if [[ -z "${namespace}" ]]; then
-    echo "Missing mandatory argument: -n | --namespace"
-    usage
+    die_usage "Missing mandatory argument: -n | --namespace"
   fi
   if ! kubectl get namespace "$namespace" >/dev/null 2>&1; then
     die "Namespace $namespace does not exist. Upgrade failed"

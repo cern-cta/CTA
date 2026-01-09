@@ -4,6 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
 usage() {
   echo
@@ -50,8 +51,7 @@ build_srpm() {
         build_dir=$(realpath "$2")
         shift
       else
-        echo "Error: --build-dir requires an argument"
-        usage
+        error_usage "--build-dir requires an argument"
       fi
       ;;
     --build-generator)
@@ -62,8 +62,7 @@ build_srpm() {
         build_generator="$2"
         shift
       else
-        echo "Error: --build-generator requires an argument"
-        usage
+        error_usage "--build-generator requires an argument"
       fi
       ;;
     --clean-build-dir) clean_build_dir=true ;;
@@ -73,21 +72,18 @@ build_srpm() {
         cta_version="$2"
         shift
       else
-        echo "Error: --cta-version requires an argument"
-        usage
+        error_usage "--cta-version requires an argument"
       fi
       ;;
     --scheduler-type)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "objectstore" ]] && [[ "$2" != "pgsched" ]]; then
-          echo "Error: scheduler type $2 is not one of [objectstore, pgsched]."
-          exit 1
+          error_usage "scheduler type $2 is not one of [objectstore, pgsched]."
         fi
         scheduler_type="$2"
         shift
       else
-        echo "Error: --scheduler-type requires an argument"
-        usage
+        error_usage "--scheduler-type requires an argument"
       fi
       ;;
     --vcs-version)
@@ -95,8 +91,7 @@ build_srpm() {
         vcs_version="$2"
         shift
       else
-        echo "Error: --vcs-version requires an argument"
-        usage
+        error_usage "--vcs-version requires an argument"
       fi
       ;;
     -j | --jobs)
@@ -104,8 +99,7 @@ build_srpm() {
         num_jobs="$2"
         shift
       else
-        echo "Error: --jobs requires an argument"
-        usage
+        error_usage "--jobs requires an argument"
       fi
       ;;
     --oracle-support)
@@ -119,47 +113,39 @@ build_srpm() {
     --cmake-build-type)
       if [[ $# -gt 1 ]]; then
         if [[ "$2" != "Release" ]] && [[ "$2" != "Debug" ]] && [[ "$2" != "RelWithDebInfo" ]] && [[ "$2" != "MinSizeRel" ]]; then
-          echo "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
-          exit 1
+          die "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
         fi
         cmake_build_type="$2"
         shift
       else
-        echo "Error: -j|--jobs requires an argument"
-        usage
+        error_usage "-j|--jobs requires an argument"
       fi
       ;;
     *)
       echo "Invalid argument: $1"
-      usage
       ;;
     esac
     shift
   done
 
   if [[ -z "${build_dir}" ]]; then
-    echo "Failure: Missing mandatory argument --build-dir"
-    usage
+    die_usage "Missing mandatory argument --build-dir"
   fi
 
   if [[ -z "${scheduler_type}" ]]; then
-    echo "Failure: Missing mandatory argument --scheduler-type"
-    usage
+    die_usage "Missing mandatory argument --scheduler-type"
   fi
 
   if [[ -z "${vcs_version}" ]]; then
-    echo "Failure: Missing mandatory argument --vcs-version"
-    usage
+    die_usage "Missing mandatory argument --vcs-version"
   fi
 
   if [[ -z "${build_generator}" ]]; then
-    echo "Failure: Missing mandatory argument --build-generator"
-    usage
+    die_usage "Missing mandatory argument --build-generator"
   fi
 
   if [[ -z "${cmake_build_type}" ]]; then
-    echo "Failure: Missing mandatory argument --cmake-build-type"
-    usage
+    die_usage "Missing mandatory argument --cmake-build-type"
   fi
 
   cd "${project_root}"
