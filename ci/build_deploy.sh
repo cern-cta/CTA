@@ -55,6 +55,7 @@ usage() {
   echo "      --local-telemetry:                Spawns a local collector and Prometheus backends to which metrics will be sent."
   echo "      --publish-telemetry:              Publishes telemetry to a pre-configured central observability backend."
   echo "      --deploy-namespace <namespace>:   Deploy the CTA instance in a given namespace. Defaults to dev."
+  echo "      --no-setup:                       Skip the setup scripts in create_instance.sh (required for the new Python tests)."
   exit 1
 }
 
@@ -86,6 +87,7 @@ build_deploy() {
   local skip_image_reload=false
   local local_telemetry=false
   local publish_telemetry=false
+  local no_setup=false
   local build_generator="Ninja"
   local cmake_build_type
   cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
@@ -135,6 +137,7 @@ build_deploy() {
     --use-public-repos) use_internal_repos=false ;;
     --local-telemetry) local_telemetry=true ;;
     --publish-telemetry) publish_telemetry=true ;;
+    --no-setup) no_setup=true ;;
     --enable-address-sanitizer) enable_address_sanitizer=true ;;
     --eos-image-tag)
       if [[ $# -gt 1 ]]; then
@@ -474,6 +477,9 @@ build_deploy() {
       fi
       if [[ "$publish_telemetry" = true ]]; then
         extra_spawn_options+=" --publish-telemetry"
+      fi
+      if [[ "$no_setup" = true ]]; then
+        extra_spawn_options+=" --no-setup"
       fi
 
       if [[ -z "${scheduler_config}" ]]; then

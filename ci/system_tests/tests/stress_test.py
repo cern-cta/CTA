@@ -66,7 +66,8 @@ def test_generate_and_copy_files(env, stress_params):
     print(f"\tFiles per directory: {stress_params.num_files_per_dir}")
     print(f"\tFile size: {stress_params.file_size}")
 
-    # For performance reasons, we should probably stick with the old stress script (just make it a lot smaller and focused)
+    # For performance reasons, we should probably stick with the old stress script (just make it a lot smaller, focused and well defined)
+    # Essentially something like ./archive_files --num-files A --num-dirs B --num-files-per-dir C --file-size D ...
     # For now I'll keep this
     print("Creating a single directory locally")
     local_buffer_dir = "/dev/shm/_buffer"
@@ -121,7 +122,6 @@ def test_wait_for_archival(env):
 
     num_missing_files = disk_instance.wait_for_archival_in_directory(
         archive_dir_path=archive_directory,
-        timeout_secs=timeout_secs,
-        strict=False,
+        timeout_secs=timeout_secs
     )
 
