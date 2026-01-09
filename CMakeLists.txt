@@ -187,7 +187,9 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(disk)
   add_subdirectory(mediachanger)
 
-  add_subdirectory(objectstore)
+  if (NOT CTA_USE_PGSCHED)
+    add_subdirectory(objectstore)
+  endif()
 
   add_subdirectory(rdbms)
   add_subdirectory(scheduler)
