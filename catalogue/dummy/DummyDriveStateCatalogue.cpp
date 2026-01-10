@@ -64,7 +64,7 @@ std::vector<common::dataStructures::TapeDrive> DummyDriveStateCatalogue::getTape
 std::unordered_map<std::string, std::optional<uint64_t>> DummyDriveStateCatalogue::getTapeDriveMountIDs() const {
   std::list<common::dataStructures::TapeDrive> tapeDrives = getTapeDrives();
   std::unordered_map<std::string, std::optional<uint64_t>> tapeDriveMountIDs;
-  for (auto drive: tapeDrives) {
+  for (auto drive : tapeDrives) {
     tapeDriveMountIDs[drive.driveName] = drive.sessionId;
   }
   return tapeDriveMountIDs;
