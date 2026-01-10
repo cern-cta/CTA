@@ -19,6 +19,7 @@
 #include "routines/repack/RepackReportRoutine.hpp"
 #include "routines/scheduler/objectstore/GarbageCollectRoutine.hpp"
 #include "routines/scheduler/objectstore/QueueCleanupRoutine.hpp"
+#include "routines/scheduler/rdbms/InactiveMountQueueRoutines.hpp"
 
 #include <chrono>
 #include <signal.h>
