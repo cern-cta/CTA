@@ -1773,7 +1773,8 @@ void RelationalDB::handleInactiveMountQueues(const std::vector<uint64_t>& deadMo
     }
     uint64_t nrows = 0;
     if (isArchive) {
-      auto status = isRepack ? schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack : schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser;
+      auto status = isRepack ? schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack :
+                               schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser;
       nrows = schedulerdb::postgres::ArchiveJobQueueRow::requeueJobBatch(txn, status, jobIDsList, isRepack);
     } else {
       auto status = schedulerdb::RetrieveJobStatus::RJS_ToTransfer;
@@ -1785,7 +1786,9 @@ void RelationalDB::handleInactiveMountQueues(const std::vector<uint64_t>& deadMo
       .add("queueTypePrefix", queueTypePrefix)
       .log(cta::log::INFO, "In RelationalDB::cleanInactiveMountQueues(): Requeued rows from ACTIVE to PENDING queue.");
   } catch (exception::Exception& ex) {
-    lc.log(log::ERR, "In RelationalDB::cleanInactiveMountQueues(): failed to requeue rows from ACTIVE to PENDING queue." + ex.getMessageValue());
+    lc.log(log::ERR,
+           "In RelationalDB::cleanInactiveMountQueues(): failed to requeue rows from ACTIVE to PENDING queue."
+             + ex.getMessageValue());
     txn.abort();
   }
   // Cleaning up the FAILED table
