@@ -1688,7 +1688,7 @@ void RelationalDB::handleInactiveMountQueues(const std::vector<uint64_t>& deadMo
   // MOUNT_ID to NULL freeing them to be requeued to new drive queues
   // Getting the JOB IDs of dead mounts to requeue from ACTIVE to PENDING TABLE
   schedulerdb::Transaction txn_p(m_connPool, lc);
-  txn_p.takeNamedLock(queueTypePrefix + "cleanInactivePendingMountQueues");
+  txn_p.takeNamedLock(queueTypePrefix + "handleInactivePendingMountQueues");
   std::string mount_ids_array = "";
   for (size_t i = 0; i < deadMountIds.size(); ++i) {
     const auto& deadMountId = deadMountIds[i];
@@ -1724,16 +1724,16 @@ void RelationalDB::handleInactiveMountQueues(const std::vector<uint64_t>& deadMo
     cta::log::ScopedParamContainer(lc)
       .add("nrows", njobs)
       .add("queueTypePrefix", queueTypePrefix)
-      .log(cta::log::INFO, "In RelationalDB::cleanInactiveMountQueues(): Cleaned up PENDING table.");
+      .log(cta::log::INFO, "In RelationalDB::handleInactiveMountQueues(): Cleaned up PENDING table.");
   } catch (exception::Exception& ex) {
     lc.log(log::ERR,
-           "In RelationalDB::cleanInactiveMountQueues(): Failed cleaned up PENDING table." + ex.getMessageValue());
+           "In RelationalDB::handleInactiveMountQueues(): Failed cleaned up PENDING table." + ex.getMessageValue());
     txn_p.abort();
   }
 
   // Getting the JOB IDs of dead mounts to requeue from ACTIVE to PENDING TABLE
   schedulerdb::Transaction txn(m_connPool, lc);
-  txn.takeNamedLock(queueTypePrefix + "cleanInactiveMountActiveQueues");
+  txn.takeNamedLock(queueTypePrefix + "handleInactiveMountActiveQueues");
   try {
     std::string sql = R"SQL(
       WITH TMP_INACTIVE_MOUNT_IDS(MOUNT_ID) AS (
@@ -1743,7 +1743,7 @@ void RelationalDB::handleInactiveMountQueues(const std::vector<uint64_t>& deadMo
       ) SELECT a.job_id AS JOB_ID
           FROM
     )SQL";
-    sql += queueTypePrefix + R"SQL(ACTIVE_QUEUE a
+    sql += queueTypePrefix + R"SQL(ACTIVE_QUEUE a WHERE a.IS_REPORTING IS FALSE
         JOIN TMP_INACTIVE_MOUNT_IDS t
           ON a.mount_id = t.mount_id
         ORDER BY a.job_id
@@ -1762,7 +1762,7 @@ void RelationalDB::handleInactiveMountQueues(const std::vector<uint64_t>& deadMo
     cta::log::ScopedParamContainer(lc)
       .add("nrows", njobs)
       .add("queueTypePrefix", queueTypePrefix)
-      .log(cta::log::INFO, "In RelationalDB::cleanInactiveMountQueues(): Selected rows for cleaning up ACTIVE table.");
+      .log(cta::log::INFO, "In RelationalDB::handleInactiveMountQueues(): Selected rows for cleaning up ACTIVE table.");
     bool isRepack = false;
     bool isArchive = false;
     if (queueTypePrefix.find("REPACK") != std::string::npos) {
@@ -1784,10 +1784,10 @@ void RelationalDB::handleInactiveMountQueues(const std::vector<uint64_t>& deadMo
     cta::log::ScopedParamContainer(lc)
       .add("nrows", nrows)
       .add("queueTypePrefix", queueTypePrefix)
-      .log(cta::log::INFO, "In RelationalDB::cleanInactiveMountQueues(): Requeued rows from ACTIVE to PENDING queue.");
+      .log(cta::log::INFO, "In RelationalDB::handleInactiveMountQueues(): Requeued rows from ACTIVE to PENDING queue.");
   } catch (exception::Exception& ex) {
     lc.log(log::ERR,
-           "In RelationalDB::cleanInactiveMountQueues(): failed to requeue rows from ACTIVE to PENDING queue."
+           "In RelationalDB::handleInactiveMountQueues(): failed to requeue rows from ACTIVE to PENDING queue."
              + ex.getMessageValue());
     txn.abort();
   }
