@@ -116,6 +116,12 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   // Add Queue Cleanup
   if (m_config.getOptionValueBool("cta.routines.queue_cleanup.enabled").value_or(true)) {
 #ifndef CTA_PGSCHED
+    routineRunner->registerRoutine(std::make_unique<maintd::QueueCleanupRoutine>(
+      m_lc,
+      *m_schedDb,
+      *m_catalogue,
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
+#else
     routineRunner->registerRoutine(std::make_unique<maintd::ArchiveInactiveMountQueueRoutine>(
       m_lc,
       *m_catalogue,
