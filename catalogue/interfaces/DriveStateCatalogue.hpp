@@ -13,7 +13,6 @@
 #include <string>
 #include <unordered_map>
 
-
 namespace cta {
 
 namespace common::dataStructures {
