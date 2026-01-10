@@ -600,8 +600,8 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
 
 uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn,
                                              ArchiveJobStatus newStatus,
-                                             bool isRepack,
-                                             const std::list<std::string>& jobIDs) {
+                                             const std::list<std::string>& jobIDs,
+                                             bool isRepack) {
   std::string repack_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (

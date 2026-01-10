@@ -297,9 +297,12 @@ public:
    * @param queueTypePrefix shall be either of "ARCHIVE_", "RETRIEVE_", "REPACK_RETRIEVE_", "REPACK_ARCHIVE_"
    * @return vector of mount ID as numbers
    */
-  std::vector <uint64_t> getScheduledMountIDs(std::string queueTypePrefix);
+  std::vector<uint64_t> getScheduledMountIDs(std::string queueTypePrefix, log::LogContext& lc);
 
-  void handleInactiveMountQueues(const std::vector<uint64_t>& deadMountIds, const std::string &queueTypePrefix, size_t batchSize);
+  void handleInactiveMountQueues(const std::vector<uint64_t>& deadMountIds,
+                                 const std::string& queueTypePrefix,
+                                 size_t batchSize,
+                                 log::LogContext& lc);
   std::vector<uint64_t> getExistingMountIDs();
 
 private:

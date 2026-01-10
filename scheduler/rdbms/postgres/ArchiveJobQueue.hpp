@@ -662,7 +662,7 @@ public:
    * @return                     Number of updated rows
    */
   static uint64_t
-  requeueJobBatch(Transaction& txn, ArchiveJobStatus newStatus, bool isRepack, const std::list<std::string>& jobIDs);
+  requeueJobBatch(Transaction& txn, ArchiveJobStatus newStatus, const std::list<std::string>& jobIDs, bool isRepack);
 
   /**
    * Update job status when job report failed

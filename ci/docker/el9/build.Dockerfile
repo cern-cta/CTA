@@ -7,3 +7,5 @@ RUN dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-v
 
 RUN dnf install -y gcc gcc-c++ cmake3 rpm-build dnf-utils make ninja-build ccache systemd-devel clang-tools-extra libasan && \
     dnf clean all --enablerepo=\*
+# ENV PATH=/opt/rh/gcc-toolset-14/root/usr/bin:$PATH
+# ENV LD_LIBRARY_PATH=/opt/rh/gcc-toolset-14/root/usr/lib64:$LD_LIBRARY_PATH

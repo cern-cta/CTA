@@ -35,6 +35,8 @@ public:
 
   std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string& tapeDriveName) const override;
 
+  std::unordered_map<std::string, std::optional<uint64_t>> getTapeDriveMountIDs() const override;
+
   void setDesiredTapeDriveState(const std::string& tapeDriveName,
                                 const common::dataStructures::DesiredDriveState& desiredState) override;
 
