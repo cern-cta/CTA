@@ -1657,7 +1657,8 @@ std::vector<uint64_t> RelationalDB::getScheduledMountIDs(std::string queueTypePr
     sql += queueTypePrefix + R"SQL(PENDING_QUEUE
       WHERE MOUNT_ID IS NOT NULL
       UNION
-      SELECT MOUNT_ID FROM {0}ACTIVE_QUEUE
+      SELECT MOUNT_ID FROM
+    )SQL" + queueTypePrefix + R"SQL(ACTIVE_QUEUE
       WHERE MOUNT_ID IS NOT NULL
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
