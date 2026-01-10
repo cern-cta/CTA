@@ -11,7 +11,7 @@ InactiveMountQueueRoutineBase::InactiveMountQueueRoutineBase(log::LogContext& lc
                                                              catalogue::Catalogue& catalogue,
                                                              RelationalDB& pgs,
                                                              size_t batchSize,
-                                                             std::string& routineName)
+                                                             const std::string& routineName)
     : m_lc(lc),
       m_catalogue(catalogue),
       m_RelationalDB(pgs),

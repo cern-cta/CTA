@@ -28,7 +28,7 @@ protected:
                                 catalogue::Catalogue& catalogue,
                                 RelationalDB& pgs,
                                 size_t batchSize,
-                                std::string& routineName);
+                                const std::string& routineName);
 
   cta::log::LogContext& m_lc;
   catalogue::Catalogue& m_catalogue;
