@@ -17,59 +17,63 @@ namespace cta::maintd {
 
 class InactiveMountQueueRoutineBase : public IRoutine {
 public:
-
   std::string getName() const final { return m_routineName; };
 
-  void handleInactiveMountQueueRoutine(const std::string &queueTypePrefix);
+  void handleInactiveMountQueueRoutine(const std::string& queueTypePrefix);
 
   virtual ~InactiveMountQueueRoutineBase() = default;
 
 protected:
+  InactiveMountQueueRoutineBase(log::LogContext& lc,
+                                catalogue::Catalogue& catalogue,
+                                RelationalDB& pgs,
+                                size_t batchSize,
+                                std::string routineName);
 
-  InactiveMountQueueRoutineBase(log::LogContext &lc, catalogue::Catalogue &catalogue, RelationalDB &pgs,
-                                size_t batchSize, std::string routineName);
-
-  cta::log::LogContext &m_lc;
-  catalogue::Catalogue &m_catalogue;
-  cta::RelationalDB &m_RelationalDB;
+  cta::log::LogContext& m_lc;
+  catalogue::Catalogue& m_catalogue;
+  cta::RelationalDB& m_RelationalDB;
   size_t m_batchSize;
   std::string m_routineName;
 };
 
 class ArchiveInactiveMountQueueRoutine : public InactiveMountQueueRoutineBase {
 public:
-  ArchiveInactiveMountQueueRoutine(log::LogContext &lc, catalogue::Catalogue &catalogue, RelationalDB &pgs,
+  ArchiveInactiveMountQueueRoutine(log::LogContext& lc,
+                                   catalogue::Catalogue& catalogue,
+                                   RelationalDB& pgs,
                                    size_t batchSize);
 
   void execute();
-
 };
 
 class RetrieveInactiveMountQueueRoutine : public InactiveMountQueueRoutineBase {
 public:
-  RetrieveInactiveMountQueueRoutine(log::LogContext &lc, catalogue::Catalogue &catalogue, RelationalDB &pgs,
+  RetrieveInactiveMountQueueRoutine(log::LogContext& lc,
+                                    catalogue::Catalogue& catalogue,
+                                    RelationalDB& pgs,
                                     size_t batchSize);
 
   void execute();
-
 };
 
 class RepackRetrieveInactiveMountQueueRoutine : public InactiveMountQueueRoutineBase {
 public:
-  RepackRetrieveInactiveMountQueueRoutine(log::LogContext &lc, catalogue::Catalogue &catalogue, RelationalDB &pgs,
+  RepackRetrieveInactiveMountQueueRoutine(log::LogContext& lc,
+                                          catalogue::Catalogue& catalogue,
+                                          RelationalDB& pgs,
                                           size_t batchSize);
 
   void execute();
-
 };
 
 class RepackArchiveInactiveMountQueueRoutine : public InactiveMountQueueRoutineBase {
 public:
-  RepackArchiveInactiveMountQueueRoutine(log::LogContext &lc, catalogue::Catalogue &catalogue, RelationalDB &pgs,
+  RepackArchiveInactiveMountQueueRoutine(log::LogContext& lc,
+                                         catalogue::Catalogue& catalogue,
+                                         RelationalDB& pgs,
                                          size_t batchSize);
 
   void execute();
-
 };
-
 }  // namespace cta::maintd
