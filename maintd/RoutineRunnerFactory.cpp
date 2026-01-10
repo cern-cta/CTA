@@ -20,6 +20,8 @@
 #ifndef CTA_PGSCHED
 #include "routines/scheduler/objectstore/GarbageCollectRoutine.hpp"
 #include "routines/scheduler/objectstore/QueueCleanupRoutine.hpp"
+#else
+#include "routines/scheduler/rdbms/InactiveMountQueueRoutines.hpp"
 #endif
 
 #include <chrono>
