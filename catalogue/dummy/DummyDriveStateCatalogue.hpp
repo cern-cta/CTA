@@ -8,6 +8,7 @@
 #include "catalogue/interfaces/DriveStateCatalogue.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <memory>
@@ -28,6 +29,8 @@ public:
   std::vector<std::string> getTapeDriveNames() const override;
 
   std::vector<common::dataStructures::TapeDrive> getTapeDrives() const override;
+
+  std::unordered_map<std::string, std::optional<uint64_t>> getTapeDriveMountIDs() const override;
 
   std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string& tapeDriveName) const override;
 

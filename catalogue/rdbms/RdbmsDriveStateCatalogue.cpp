@@ -330,15 +330,15 @@ std::vector<std::string> RdbmsDriveStateCatalogue::getTapeDriveNames() const {
   return tapeDriveNames;
 }
 
-std::unordered_map<std::string, std::optional<uint64_t>> RdbmsDriveStateCatalogue::getTapeDriveMountIDs() const {
-  std::unordered_map<std::string, std::optional<uint64_t>> tapeDriveMountIDs;
-  const char* const sql = R"SQL(
-    SELECT
-      DRIVE_NAME AS DRIVE_NAME,
-      SESSION_ID AS SESSION_ID
-    FROM
-      DRIVE_STATE
-  )SQL";
+std::unordered_map <std::string, std::optional<uint64_t>> RdbmsDriveStateCatalogue::getTapeDriveMountIDs() const {
+  std::unordered_map <std::string, std::optional<uint64_t>> tapeDriveMountIDs;
+  const char *const sql = R"SQL(
+  SELECT
+    DRIVE_NAME AS DRIVE_NAME,
+    SESSION_ID AS SESSION_ID
+  FROM
+    DRIVE_STATE
+)SQL";
 
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
@@ -346,7 +346,7 @@ std::unordered_map<std::string, std::optional<uint64_t>> RdbmsDriveStateCatalogu
 
   while (rset.next()) {
     const std::string driveName = rset.columnString("DRIVE_NAME");
-    const std::optional<uint64_t> mountId = rset.columnOptionalUint64("SESSION_ID");
+    const std::optional <uint64_t> mountId = rset.columnOptionalUint64("SESSION_ID");
     // duplicate DRIVE_NAMES are not expected (last one wins)
     tapeDriveMountIDs[driveName] = mountId;
   }

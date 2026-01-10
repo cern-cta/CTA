@@ -152,7 +152,7 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
   auto status = m_isRepack ? ArchiveJobStatus::AJS_ToTransferForRepack : ArchiveJobStatus::AJS_ToTransferForUser;
 
   try {
-    nrows = postgres::ArchiveJobQueueRow::requeueJobBatch(txn, status, m_isRepack, jobIDsList);
+    nrows = postgres::ArchiveJobQueueRow::requeueJobBatch(txn, status, jobIDsList, m_isRepack);
     if (nrows != jobIDsList.size()) {
       cta::log::ScopedParamContainer params(lc);
       params.add("jobsToRequeue", jobIDsList.size());
