@@ -315,6 +315,7 @@ public:
                                        bool isRepack,
                                        log::LogContext& lc);
   void deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
+  void cleanOldMountHeartbeats(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
 
 private:
   /*

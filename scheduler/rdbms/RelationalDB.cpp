@@ -1846,6 +1846,11 @@ void RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& 
       .add("queueTypePrefix", queueTypePrefix)
       .log(cta::log::INFO,
            "In RelationalDB::handleInactiveMountActiveQueues(): Requeued rows from ACTIVE to PENDING queue.");
+    if (nrows != njobs) {
+      lc.log(cta::log::ERR,
+             "In RelationalDB::handleInactiveMountActiveQueues(): Number of jobs selected for requeueing does not "
+             "correspond to number of jobs requeued !");
+    }
   } catch (exception::Exception& ex) {
     lc.log(log::ERR,
            "In RelationalDB::handleInactiveMountActiveQueues(): failed to requeue rows from ACTIVE to PENDING queue."
@@ -1894,6 +1899,46 @@ void RelationalDB::deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSiz
                + ex.getMessageValue());
       txn.abort();
     }
+  }
+}
+
+void RelationalDB::cleanOldMountHeartbeats(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc) {
+  auto dfqMutex = std::make_unique<cta::threading::Mutex>();
+  cta::threading::MutexLocker dfqMutexLock(*dfqMutex);
+
+  std::string sql;
+  uint64_t olderThanTimestamp = (uint64_t) cta::utils::getCurrentEpochTime() - deletionAge;
+  schedulerdb::Transaction txn(m_connPool, lc);
+  txn.takeNamedLock("MOUNT_HEARTBEAT_cleanOldMountHeartbeats");
+  try {
+    sql = R"SQL(
+        WITH ROWS_TO_DELETE AS (
+          SELECT MOUNT_ID, QUEUE_TYPE
+          FROM MOUNT_HEARTBEAT
+          WHERE LAST_UPDATE_TIME < :OLDER_THAN_TIMESTAMP
+          ORDER BY LAST_UPDATE_TIME
+          LIMIT :LIMIT
+          FOR UPDATE SKIP LOCKED
+        )
+        DELETE FROM MOUNT_HEARTBEAT mh
+        USING ROWS_TO_DELETE r
+        WHERE (mh.MOUNT_ID, mh.QUEUE_TYPE) = (r.MOUNT_ID, r.QUEUE_TYPE);
+       )SQL";
+    auto stmt = txn.getConn().createStmt(sql);
+    stmt.bindUint64(":OLDER_THAN_TIMESTAMP", olderThanTimestamp);
+    stmt.bindUint64(":LIMIT", batchSize);
+    stmt.executeNonQuery();
+    auto nrows = stmt.getNbAffectedRows();
+    txn.commit();
+    cta::log::ScopedParamContainer(lc)
+      .add("deletedRows", nrows)
+      .add("olderThanTimestamp", olderThanTimestamp)
+      .log(cta::log::INFO, "In RelationalDB::cleanOldMountHeartbeats(): Deleted old rows from mount heartbeat table.");
+  } catch (exception::Exception& ex) {
+    lc.log(log::ERR,
+           "In RelationalDB::cleanOldMountHeartbeats(): Failed to delete old rows from mount heartbeat table: "
+             + ex.getMessageValue());
+    txn.abort();
   }
 }
 

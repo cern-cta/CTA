@@ -258,4 +258,16 @@ void DeleteOldFailedQueuesRoutine::execute() {
   m_RelationalDB.deleteOldFailedQueues(m_inactiveTimeLimit, m_batchSize, m_lc);
 };
 
+CleanMountHeartbeatRoutine::CleanMountHeartbeatRoutine(log::LogContext& lc,
+                                                       catalogue::Catalogue& catalogue,
+                                                       RelationalDB& pgs,
+                                                       size_t batchSize,
+                                                       uint64_t inactiveTimeLimit)
+    : InactiveMountQueueRoutineBase(lc, catalogue, pgs, batchSize, "CleanMountHeartbeatRoutine", inactiveTimeLimit) {}
+
+void CleanMountHeartbeatRoutine::execute() {
+  // Cleaning MOUNT_HEARTBEAT table from MOUNT IDs which were inactive for more than m_inactiveTimeLimit
+  m_RelationalDB.cleanOldMountHeartbeats(m_inactiveTimeLimit, m_batchSize, m_lc);
+};
+
 }  // namespace cta::maintd
