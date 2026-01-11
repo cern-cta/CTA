@@ -50,7 +50,8 @@ public:
   ArchiveInactiveMountActiveQueueRoutine(log::LogContext& lc,
                                          catalogue::Catalogue& catalogue,
                                          RelationalDB& pgs,
-                                         size_t batchSize);
+                                         size_t batchSize,
+                                         uint64_t inactiveTimeLimit);
 
   void execute();
 };
@@ -60,7 +61,8 @@ public:
   RetrieveInactiveMountActiveQueueRoutine(log::LogContext& lc,
                                           catalogue::Catalogue& catalogue,
                                           RelationalDB& pgs,
-                                          size_t batchSize);
+                                          size_t batchSize,
+                                          uint64_t inactiveTimeLimit);
 
   void execute();
 };
@@ -70,7 +72,8 @@ public:
   RepackRetrieveInactiveMountActiveQueueRoutine(log::LogContext& lc,
                                                 catalogue::Catalogue& catalogue,
                                                 RelationalDB& pgs,
-                                                size_t batchSize);
+                                                size_t batchSize,
+                                                uint64_t inactiveTimeLimit);
 
   void execute();
 };
@@ -80,7 +83,8 @@ public:
   RepackArchiveInactiveMountActiveQueueRoutine(log::LogContext& lc,
                                                catalogue::Catalogue& catalogue,
                                                RelationalDB& pgs,
-                                               size_t batchSize);
+                                               size_t batchSize,
+                                               uint64_t inactiveTimeLimit);
 
   void execute();
 };
@@ -90,7 +94,8 @@ public:
   ArchiveInactiveMountPendingQueueRoutine(log::LogContext& lc,
                                           catalogue::Catalogue& catalogue,
                                           RelationalDB& pgs,
-                                          size_t batchSize);
+                                          size_t batchSize,
+                                          uint64_t inactiveTimeLimit);
 
   void execute();
 };
@@ -100,7 +105,8 @@ public:
   RetrieveInactiveMountPendingQueueRoutine(log::LogContext& lc,
                                            catalogue::Catalogue& catalogue,
                                            RelationalDB& pgs,
-                                           size_t batchSize);
+                                           size_t batchSize,
+                                           uint64_t inactiveTimeLimit);
 
   void execute();
 };
@@ -110,7 +116,8 @@ public:
   RepackRetrieveInactiveMountPendingQueueRoutine(log::LogContext& lc,
                                                  catalogue::Catalogue& catalogue,
                                                  RelationalDB& pgs,
-                                                 size_t batchSize);
+                                                 size_t batchSize,
+                                                 uint64_t inactiveTimeLimit);
 
   void execute();
 };
@@ -120,7 +127,8 @@ public:
   RepackArchiveInactiveMountPendingQueueRoutine(log::LogContext& lc,
                                                 catalogue::Catalogue& catalogue,
                                                 RelationalDB& pgs,
-                                                size_t batchSize);
+                                                size_t batchSize,
+                                                uint64_t inactiveTimeLimit);
 
   void execute();
 };
@@ -130,7 +138,8 @@ public:
   DeleteOldFailedQueuesRoutine(log::LogContext& lc,
                                catalogue::Catalogue& catalogue,
                                RelationalDB& pgs,
-                               size_t batchSize);
+                               size_t batchSize,
+                               uint64_t inactiveTimeLimit);
 
   void execute();
 };
