@@ -50,8 +50,6 @@ build-cta-rpms:
     CCACHE_COMPILERCHECK: content
     CCACHE_MAXSIZE: "1G"
   before_script:
-    - echo "policy $BUILD_CACHE_POLICY"
-    - echo "ccache:${CI_PROJECT_ID}:${CACHE_BRANCH}"
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
         export VCS_VERSION=$CTA_BUILD_ID
