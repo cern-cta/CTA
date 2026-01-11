@@ -110,6 +110,12 @@ variables:
       - "push"
       - "pull-push"
 
+  GENERATE_SBOM:
+    description: "Whether to generate a Software Bill of Materials in the pipeline"
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
 
   # CTA Configuration
   SCHEDULER_TYPE:
@@ -126,13 +132,7 @@ variables:
       - "TRUE"
       - "FALSE"
 
-  GENERATE_SBOM:
-    description: "Whether to generate a Software Bill of Materials in the pipeline"
-    value: "FALSE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
+  # Tests
   SKIP_UNIT_TESTS:
     description: "Skips the CTA unit tests. Should only be disabled if there is a very good reason to do so."
     value: "FALSE"
@@ -157,6 +157,13 @@ variables:
   KEEP_STRESS_TEST_NAMESPACE:
     description: "Keep the stress-test namespace alive after it has been created to allow for manual debugging. In this case, the namespace must be manually deleted at some point."
     value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
+  PUBLISH_TELEMETRY_METRICS:
+    description: "Whether to publish telemetry metrics for the stress test"
+    value: "TRUE"
     options:
       - "TRUE"
       - "FALSE"
@@ -188,12 +195,6 @@ variables:
       - "presets/stress-eos-xrd-values.yaml"
       - "presets/stress-eos-grpc-values.yaml"
 
-  PUBLISH_TELEMETRY_METRICS:
-    description: "Whether to publish telemetry metrics for the stress test"
-    value: "TRUE"
-    options:
-      - "TRUE"
-      - "FALSE"
 
   # Meta CI
   CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
@@ -241,6 +242,7 @@ workflow:
       auto_cancel:
         on_new_commit: none
       variables:
+        ENABLE_CCACHE: "TRUE"
         BUILD_CACHE_POLICY: push # Only for push events do we rebuild the main cache
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:

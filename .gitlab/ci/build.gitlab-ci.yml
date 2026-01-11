@@ -129,6 +129,7 @@ build-cta-rpms-no-cache:
   variables:
     ENABLE_CCACHE: "FALSE"
     ENABLE_DEBUG_INFO: "FALSE"
+  cache: [] # Explicitly disable the cache
 
 
 # This is not (and ideally should not) be used further down the pipeline; this is just a compilation check
@@ -141,6 +142,7 @@ build-cta-rpms-pgsched:
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
     ENABLE_CCACHE: "FALSE"
+  cache: [] # Explicitly disable the cache
 
 reset-ccache:
   allow_failure: true
@@ -154,15 +156,14 @@ reset-ccache:
   image: $IMAGE_BUILD
   variables:
     GIT_STRATEGY: none  # We don't need the repo clone here
+    BUILD_CACHE_POLICY: push
   script:
     - rm -rf .ccache
     - mkdir -p .ccache
     # upload an empty cache
     - touch .ccache/.keep
   cache:
-    key: "ccache:${CI_PROJECT_ID}:${CI_JOB_IMAGE}:${CI_COMMIT_BRANCH}"
-    paths: [.ccache/]
-    policy: push
+    - !reference [build-cta-rpms, cache]
 
 # Documentation export
 export-docs:
