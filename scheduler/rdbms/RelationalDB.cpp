@@ -1802,9 +1802,10 @@ void RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& 
           FROM
     )SQL";
     sql += queueTypePrefix + R"SQL(ACTIVE_QUEUE a
-          WHERE a.IS_REPORTING IS FALSE AND STATUS = :STATUS
         JOIN TMP_INACTIVE_MOUNT_IDS t
           ON a.mount_id = t.mount_id
+        WHERE a.IS_REPORTING IS FALSE
+          AND a.STATUS = :STATUS
         ORDER BY a.job_id
         LIMIT :LIMIT
         FOR UPDATE SKIP LOCKED
