@@ -124,22 +124,47 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       *m_catalogue,
       m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
 #else
-    routineRunner->registerRoutine(std::make_unique<maintd::ArchiveInactiveMountQueueRoutine>(
+    routineRunner->registerRoutine(std::make_unique<maintd::ArchiveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
-    routineRunner->registerRoutine(std::make_unique<maintd::RetrieveInactiveMountQueueRoutine>(
+    routineRunner->registerRoutine(std::make_unique<maintd::RetrieveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
-    routineRunner->registerRoutine(std::make_unique<maintd::RepackArchiveInactiveMountQueueRoutine>(
+    routineRunner->registerRoutine(std::make_unique<maintd::RepackArchiveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
-    routineRunner->registerRoutine(std::make_unique<maintd::RepackRetrieveInactiveMountQueueRoutine>(
+    routineRunner->registerRoutine(std::make_unique<maintd::RepackRetrieveInactiveMountActiveQueueRoutine>(
+      m_lc,
+      *m_catalogue,
+      *m_schedDb,
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
+    routineRunner->registerRoutine(std::make_unique<maintd::ArchiveInactiveMountPendingQueueRoutine>(
+      m_lc,
+      *m_catalogue,
+      *m_schedDb,
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
+    routineRunner->registerRoutine(std::make_unique<maintd::RetrieveInactiveMountPendingQueueRoutine>(
+      m_lc,
+      *m_catalogue,
+      *m_schedDb,
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
+    routineRunner->registerRoutine(std::make_unique<maintd::RepackArchiveInactiveMountPendingQueueRoutine>(
+      m_lc,
+      *m_catalogue,
+      *m_schedDb,
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
+    routineRunner->registerRoutine(std::make_unique<maintd::RepackRetrieveInactiveMountPendingQueueRoutine>(
+      m_lc,
+      *m_catalogue,
+      *m_schedDb,
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
+    routineRunner->registerRoutine(std::make_unique<maintd::DeleteOldFailedQueuesRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,

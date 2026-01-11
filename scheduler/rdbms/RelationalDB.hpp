@@ -18,6 +18,7 @@
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
+#include "common/dataStructures/DeadMountCandidates.hpp"
 #include "common/log/Logger.hpp"
 #include "common/process/threading/Mutex.hpp"
 #include "common/utils/utils.hpp"
@@ -270,6 +271,7 @@ public:
   };
 
   cta::threading::Mutex m_diskSystemSleepMutex;
+  cta::threading::Mutex m_inactiveMountRoutineMutex;
   /*
    * Get list of diskSystemNames for which the system should
    * not be picking up jobs for retrieve
@@ -291,19 +293,28 @@ public:
   // MountQueueCleanup routine methods
 
   /*
-   * Get list of distinct Mount IDs for which there exist entries in the Scheduler DB
-   * (PENDING and ACTIVE) tables.
+   * Get list of distinct Mount IDs which were inactive
+   * since a long time, i.e. they had no jobs fetched since mount_gc_delay seconds ago
+   * from the Scheduler DB
    *
-   * @param queueTypePrefix shall be either of "ARCHIVE_", "RETRIEVE_", "REPACK_RETRIEVE_", "REPACK_ARCHIVE_"
-   * @return vector of mount ID as numbers
+   * @param mount_gc_delay  Looking at activity older than the number of seconds in this parameter
+   * @param ls                     Log context
+   * @return DeadMountCandidateIDs object containing vectors of Mount IDs sorted by queue type
    */
-  std::vector<uint64_t> getScheduledMountIDs(std::string queueTypePrefix, log::LogContext& lc);
-
-  void handleInactiveMountQueues(const std::vector<uint64_t>& deadMountIds,
-                                 const std::string& queueTypePrefix,
-                                 size_t batchSize,
-                                 log::LogContext& lc);
-  std::vector<uint64_t> getExistingMountIDs();
+  cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandidates(uint64_t mount_gc_delay,
+                                                                            log::LogContext& lc);
+  std::string getQueueTypePrefix(bool isArchive, bool isRepack);
+  void handleInactiveMountPendingQueues(const std::vector<uint64_t>& deadMountIds,
+                                        size_t batchSize,
+                                        bool isArchive,
+                                        bool isRepack,
+                                        log::LogContext& lc);
+  void handleInactiveMountActiveQueues(const std::vector<uint64_t>& deadMountIds,
+                                       size_t batchSize,
+                                       bool isArchive,
+                                       bool isRepack,
+                                       log::LogContext& lc);
+  void deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
 
 private:
   /*
