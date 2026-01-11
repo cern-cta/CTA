@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 stages:
-  - prepare
+  - .pre
   - validate
   - lint
   - build
@@ -12,6 +12,7 @@ stages:
   - sbom
   - release
   - report
+  - .post
 
 variables:
 
@@ -208,7 +209,6 @@ default:
 workflow:
   name: $CTA_PIPELINE_NAME
   auto_cancel:
-    on_job_failure: all
     on_new_commit: interruptible
   rules:
     # If we are in a merge request and there are no changes, don't run the pipeline
@@ -221,7 +221,6 @@ workflow:
         ENABLE_DEBUG_INFO: "FALSE"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
-        on_job_failure: none
         on_new_commit: none
     # Push events to main will still trigger the pipeline as per the previous rule
     # But we want to prevent dual pipelines on MRs

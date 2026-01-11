@@ -1,0 +1,19 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+.cancel-on-failure:
+  stage: .post
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: on_failure
+    - when: never
+  script:
+    - curl -sS -X POST
+                --header "JOB-TOKEN: ${CI_JOB_TOKEN}"
+                "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/pipelines/${CI_PIPELINE_ID}/cancel"
+
+cancel-on-job-failure:danger-review:
+  extends:
+    - .cancel-on-failure
+  needs:
+    - job: danger-review
