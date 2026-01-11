@@ -111,7 +111,7 @@ build-cta-rpms:
     - key: "ccache:${CI_PROJECT_ID}:${CI_COMMIT_BRANCH}"
       fallback_keys:
         - "ccache:${CI_PROJECT_ID}:main"
-      policy: $BUILD_CACHE_POLICY
+      policy: pull-push
       paths: [.ccache/]
 
 
@@ -138,7 +138,7 @@ build-cta-rpms-pgsched:
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
 
-reset-branch-cache:
+reset-branch-ccache:
   stage: build
   allow_failure: true
   needs:
@@ -155,7 +155,7 @@ reset-branch-cache:
     - rm -rf .ccache
     - mkdir -p .ccache
     # ensure the archive isn't empty on all runners/backends
-    - : > .ccache/.keep
+    - touch .ccache/.keep
 
 # Documentation export
 export-docs:
