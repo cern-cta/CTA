@@ -116,13 +116,14 @@ void InactiveMountQueueRoutineBase::handleInactiveMountPendingQueueRoutine(bool 
 ArchiveInactiveMountActiveQueueRoutine::ArchiveInactiveMountActiveQueueRoutine(log::LogContext& lc,
                                                                                catalogue::Catalogue& catalogue,
                                                                                RelationalDB& pgs,
-                                                                               size_t batchSize)
+                                                                               size_t batchSize,
+                                                                               uint64_t ageForCollection)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "ArchiveInactiveMountActiveQueueRoutine",
-                                    300 /* ageForCollection */) {}
+                                    ageForCollection) {}
 
 void ArchiveInactiveMountActiveQueueRoutine::execute() {
   handleInactiveMountActiveQueueRoutine(true /* isArchive */, false /* isRepack */);
@@ -131,13 +132,14 @@ void ArchiveInactiveMountActiveQueueRoutine::execute() {
 RetrieveInactiveMountActiveQueueRoutine::RetrieveInactiveMountActiveQueueRoutine(log::LogContext& lc,
                                                                                  catalogue::Catalogue& catalogue,
                                                                                  RelationalDB& pgs,
-                                                                                 size_t batchSize)
+                                                                                 size_t batchSize,
+                                                                                 uint64_t ageForCollection)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RetrieveInactiveMountActiveQueueRoutine",
-                                    300 /* ageForCollection */) {}
+                                    ageForCollection) {}
 
 void RetrieveInactiveMountActiveQueueRoutine::execute() {
   handleInactiveMountActiveQueueRoutine(false /* isArchive */, false /* isRepack */);
@@ -147,13 +149,14 @@ RepackRetrieveInactiveMountActiveQueueRoutine::RepackRetrieveInactiveMountActive
   log::LogContext& lc,
   catalogue::Catalogue& catalogue,
   RelationalDB& pgs,
-  size_t batchSize)
+  size_t batchSize,
+  uint64_t ageForCollection)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RepackRetrieveInactiveMountActiveQueueRoutine",
-                                    300 /* ageForCollection */) {}
+                                    ageForCollection) {}
 
 void RepackRetrieveInactiveMountActiveQueueRoutine::execute() {
   handleInactiveMountActiveQueueRoutine(false /* isArchive */, true /* isRepack */);
@@ -163,13 +166,14 @@ RepackArchiveInactiveMountActiveQueueRoutine::RepackArchiveInactiveMountActiveQu
   log::LogContext& lc,
   catalogue::Catalogue& catalogue,
   RelationalDB& pgs,
-  size_t batchSize)
+  size_t batchSize,
+  uint64_t ageForCollection)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RepackArchiveInactiveMountActiveQueueRoutine",
-                                    300 /* ageForCollection */) {}
+                                    ageForCollection) {}
 
 void RepackArchiveInactiveMountActiveQueueRoutine::execute() {
   handleInactiveMountActiveQueueRoutine(true /* isArchive */, true /* isRepack */);
@@ -178,13 +182,14 @@ void RepackArchiveInactiveMountActiveQueueRoutine::execute() {
 ArchiveInactiveMountPendingQueueRoutine::ArchiveInactiveMountPendingQueueRoutine(log::LogContext& lc,
                                                                                  catalogue::Catalogue& catalogue,
                                                                                  RelationalDB& pgs,
-                                                                                 size_t batchSize)
+                                                                                 size_t batchSize,
+                                                                                 uint64_t ageForCollection)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "ArchiveInactiveMountPendingQueueRoutine",
-                                    300 /* ageForCollection */) {}
+                                    ageForCollection) {}
 
 void ArchiveInactiveMountPendingQueueRoutine::execute() {
   handleInactiveMountPendingQueueRoutine(true /* isArchive */, false /* isRepack */);
@@ -193,13 +198,14 @@ void ArchiveInactiveMountPendingQueueRoutine::execute() {
 RetrieveInactiveMountPendingQueueRoutine::RetrieveInactiveMountPendingQueueRoutine(log::LogContext& lc,
                                                                                    catalogue::Catalogue& catalogue,
                                                                                    RelationalDB& pgs,
-                                                                                   size_t batchSize)
+                                                                                   size_t batchSize,
+                                                                                   uint64_t ageForCollection)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RetrieveInactiveMountPendingQueueRoutine",
-                                    300 /* ageForCollection */) {}
+                                    ageForCollection) {}
 
 void RetrieveInactiveMountPendingQueueRoutine::execute() {
   handleInactiveMountPendingQueueRoutine(false /* isArchive */, false /* isRepack */);
@@ -209,13 +215,14 @@ RepackRetrieveInactiveMountPendingQueueRoutine::RepackRetrieveInactiveMountPendi
   log::LogContext& lc,
   catalogue::Catalogue& catalogue,
   RelationalDB& pgs,
-  size_t batchSize)
+  size_t batchSize,
+  uint64_t ageForCollection)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RepackRetrieveInactiveMountPendingQueueRoutine",
-                                    300 /* ageForCollection */) {}
+                                    ageForCollection) {}
 
 void RepackRetrieveInactiveMountPendingQueueRoutine::execute() {
   handleInactiveMountPendingQueueRoutine(false /* isArchive */, true /* isRepack */);
@@ -225,13 +232,14 @@ RepackArchiveInactiveMountPendingQueueRoutine::RepackArchiveInactiveMountPending
   log::LogContext& lc,
   catalogue::Catalogue& catalogue,
   RelationalDB& pgs,
-  size_t batchSize)
+  size_t batchSize,
+  uint64_t ageForCollection)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RepackArchiveInactiveMountPendingQueueRoutine",
-                                    300 /* ageForCollection */) {}
+                                    ageForCollection) {}
 
 void RepackArchiveInactiveMountPendingQueueRoutine::execute() {
   handleInactiveMountPendingQueueRoutine(true /* isArchive */, true /* isRepack */);
@@ -240,17 +248,13 @@ void RepackArchiveInactiveMountPendingQueueRoutine::execute() {
 DeleteOldFailedQueuesRoutine::DeleteOldFailedQueuesRoutine(log::LogContext& lc,
                                                            catalogue::Catalogue& catalogue,
                                                            RelationalDB& pgs,
-                                                           size_t batchSize)
-    : InactiveMountQueueRoutineBase(lc,
-                                    catalogue,
-                                    pgs,
-                                    batchSize,
-                                    "DeleteOldFailedQueuesRoutine",
-                                    1209600 /* ageForCollection */) {}
+                                                           size_t batchSize,
+                                                           uint64_t ageForCollection)
+    : InactiveMountQueueRoutineBase(lc, catalogue, pgs, batchSize, "DeleteOldFailedQueuesRoutine", ageForCollection) {}
 
 void DeleteOldFailedQueuesRoutine::execute() {
   // only rows older than 2 weeks will be deleted from the FAILED tables
-  m_RelationalDB.deleteOldFailedQueues(1209600, m_batchSize, m_lc);
+  m_RelationalDB.deleteOldFailedQueues(m_ageForCollection, m_batchSize, m_lc);
 };
 
 }  // namespace cta::maintd
