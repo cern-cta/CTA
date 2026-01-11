@@ -77,3 +77,11 @@ The routines are defined in `routines/`. Which routines are run depend on whethe
   - Expands repack requests into separate archive/retrieve jobs.
 - `RepackReportRoutine`
   - Takes care of the repack reporting.
+- `ArchiveInactiveMountActiveQueueRoutine`
+  - Handles jobs owned by dead archive mounts. It reactivates dead jobs in pending queue for scheduling and requeues dead jobs in active queue.
+- `RetrieveInactiveMountActiveQueueRoutine`
+  - Handles jobs owned by dead retrieve mounts. It reactivates dead jobs in pending queue for scheduling and requeues dead jobs in active queue.
+- `RepackArchiveInactiveMountActiveQueueRoutine`
+  - Handles jobs owned by dead repack archive mounts. It reactivates dead jobs in pending queue for scheduling and requeues dead jobs in active queue.
+- `RepackRetrieveInactiveMountActiveQueueRoutine`
+  - Handles jobs owned by dead repack repack retrieve mounts. It reactivates dead jobs in pending queue for scheduling and requeues dead jobs in active queue.

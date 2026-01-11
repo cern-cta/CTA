@@ -19,7 +19,13 @@ class InactiveMountQueueRoutineBase : public IRoutine {
 public:
   std::string getName() const final { return m_routineName; };
 
-  void handleInactiveMountQueueRoutine(const std::string& queueTypePrefix);
+  cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandicateIDs();
+  std::vector<uint64_t>& getDeadMountVector(cta::common::dataStructures::DeadMountCandidateIDs& deadMounts,
+                                            bool isArchive,
+                                            bool isRepack,
+                                            bool isPending);
+  void handleInactiveMountActiveQueueRoutine(bool isArchive, bool isRepack);
+  void handleInactiveMountPendingQueueRoutine(bool isArchive, bool isRepack);
 
   virtual ~InactiveMountQueueRoutineBase() = default;
 
@@ -28,38 +34,30 @@ protected:
                                 catalogue::Catalogue& catalogue,
                                 RelationalDB& pgs,
                                 size_t batchSize,
-                                const std::string& routineName);
+                                const std::string& routineName,
+                                uint64_t ageForCollection);
 
   cta::log::LogContext& m_lc;
   catalogue::Catalogue& m_catalogue;
   cta::RelationalDB& m_RelationalDB;
   size_t m_batchSize;
   std::string m_routineName;
+  uint64_t m_ageForCollection;
 };
 
-class ArchiveInactiveMountQueueRoutine : public InactiveMountQueueRoutineBase {
+class ArchiveInactiveMountActiveQueueRoutine : public InactiveMountQueueRoutineBase {
 public:
-  ArchiveInactiveMountQueueRoutine(log::LogContext& lc,
-                                   catalogue::Catalogue& catalogue,
-                                   RelationalDB& pgs,
-                                   size_t batchSize);
+  ArchiveInactiveMountActiveQueueRoutine(log::LogContext& lc,
+                                         catalogue::Catalogue& catalogue,
+                                         RelationalDB& pgs,
+                                         size_t batchSize);
 
   void execute();
 };
 
-class RetrieveInactiveMountQueueRoutine : public InactiveMountQueueRoutineBase {
+class RetrieveInactiveMountActiveQueueRoutine : public InactiveMountQueueRoutineBase {
 public:
-  RetrieveInactiveMountQueueRoutine(log::LogContext& lc,
-                                    catalogue::Catalogue& catalogue,
-                                    RelationalDB& pgs,
-                                    size_t batchSize);
-
-  void execute();
-};
-
-class RepackRetrieveInactiveMountQueueRoutine : public InactiveMountQueueRoutineBase {
-public:
-  RepackRetrieveInactiveMountQueueRoutine(log::LogContext& lc,
+  RetrieveInactiveMountActiveQueueRoutine(log::LogContext& lc,
                                           catalogue::Catalogue& catalogue,
                                           RelationalDB& pgs,
                                           size_t batchSize);
@@ -67,13 +65,74 @@ public:
   void execute();
 };
 
-class RepackArchiveInactiveMountQueueRoutine : public InactiveMountQueueRoutineBase {
+class RepackRetrieveInactiveMountActiveQueueRoutine : public InactiveMountQueueRoutineBase {
 public:
-  RepackArchiveInactiveMountQueueRoutine(log::LogContext& lc,
-                                         catalogue::Catalogue& catalogue,
-                                         RelationalDB& pgs,
-                                         size_t batchSize);
+  RepackRetrieveInactiveMountActiveQueueRoutine(log::LogContext& lc,
+                                                catalogue::Catalogue& catalogue,
+                                                RelationalDB& pgs,
+                                                size_t batchSize);
 
   void execute();
 };
+
+class RepackArchiveInactiveMountActiveQueueRoutine : public InactiveMountQueueRoutineBase {
+public:
+  RepackArchiveInactiveMountActiveQueueRoutine(log::LogContext& lc,
+                                               catalogue::Catalogue& catalogue,
+                                               RelationalDB& pgs,
+                                               size_t batchSize);
+
+  void execute();
+};
+
+class ArchiveInactiveMountPendingQueueRoutine : public InactiveMountQueueRoutineBase {
+public:
+  ArchiveInactiveMountPendingQueueRoutine(log::LogContext& lc,
+                                          catalogue::Catalogue& catalogue,
+                                          RelationalDB& pgs,
+                                          size_t batchSize);
+
+  void execute();
+};
+
+class RetrieveInactiveMountPendingQueueRoutine : public InactiveMountQueueRoutineBase {
+public:
+  RetrieveInactiveMountPendingQueueRoutine(log::LogContext& lc,
+                                           catalogue::Catalogue& catalogue,
+                                           RelationalDB& pgs,
+                                           size_t batchSize);
+
+  void execute();
+};
+
+class RepackRetrieveInactiveMountPendingQueueRoutine : public InactiveMountQueueRoutineBase {
+public:
+  RepackRetrieveInactiveMountPendingQueueRoutine(log::LogContext& lc,
+                                                 catalogue::Catalogue& catalogue,
+                                                 RelationalDB& pgs,
+                                                 size_t batchSize);
+
+  void execute();
+};
+
+class RepackArchiveInactiveMountPendingQueueRoutine : public InactiveMountQueueRoutineBase {
+public:
+  RepackArchiveInactiveMountPendingQueueRoutine(log::LogContext& lc,
+                                                catalogue::Catalogue& catalogue,
+                                                RelationalDB& pgs,
+                                                size_t batchSize);
+
+  void execute();
+};
+
+class DeleteOldFailedQueuesRoutine : public InactiveMountQueueRoutineBase {
+public:
+  DeleteOldFailedQueuesRoutine(log::LogContext& lc,
+                               catalogue::Catalogue& catalogue,
+                               RelationalDB& pgs,
+                               size_t batchSize);
+
+  void execute();
+};
+
 }  // namespace cta::maintd
