@@ -54,7 +54,7 @@ build-cta-rpms:
         exit 1
       fi
   script:
-    # SRPMS
+      # SRPMS
     - ./ci/build/build_srpm.sh --build-dir build_srpm
                                --build-generator "${BUILD_GENERATOR}"
                                --create-build-dir
