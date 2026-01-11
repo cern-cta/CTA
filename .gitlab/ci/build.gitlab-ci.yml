@@ -26,13 +26,19 @@ build-cta-rpms:
         # To be safe, all files in all sub-directories
         # Once we have a src/ directory, we can be a bit more specific without having to specify a long list here
         - '*/**/*'
+      variables:
+        CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
       when: on_success
     # If only "trivial" changes were done and we are in a MR, set this job to manual
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true  # Ensures the pipeline counts as "passed" instead of "blocked"
+      variables:
+        CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
     # Ensure we cover any other cases that might trigger this
     - when: on_success
+      variables:
+        CACHE_BRANCH: '$CI_COMMIT_BRANCH'
   image: $IMAGE_BUILD
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
@@ -111,7 +117,7 @@ build-cta-rpms:
     paths:
       - ${BUILD_PATH}
   cache:
-    - key: "ccache:${CI_PROJECT_ID}:${CI_JOB_IMAGE}:${CI_COMMIT_BRANCH}"
+    - key: "ccache:${CI_PROJECT_ID}:${CACHE_BRANCH}"
       fallback_keys:
         - "ccache:${CI_PROJECT_ID}:main"
       policy: $BUILD_CACHE_POLICY
