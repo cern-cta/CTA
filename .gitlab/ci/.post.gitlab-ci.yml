@@ -1,0 +1,20 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+cancel-on-failure:
+  stage: .post
+  needs:
+    - job: $[[ matrix.JOB_NAME ]]
+      artifacts: false
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: on_failure
+    - when: never
+  image: $IMAGE_LINT # comes with curl installed
+  variables:
+    GIT_STRATEGY: "none" # Don't need anything from the repo for this job
+  script:
+    - 'curl -s -X POST --header "PRIVATE-TOKEN: ${CI_API_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/pipelines/${CI_PIPELINE_ID}/cancel"'
+  parallel:
+    matrix:
+      - JOB_NAME: [validate-pipeline-variables, validate-project-json, unit-test-cta]

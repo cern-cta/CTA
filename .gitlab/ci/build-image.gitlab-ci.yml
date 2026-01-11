@@ -62,7 +62,6 @@ build-ctageneric-from-remote-rpms:
   extends:
     - .build-image
   needs:
-    - job: validate-pipeline-variables
     - job: modify-project-json
       optional: true
   rules:
