@@ -26,24 +26,36 @@ build-cta-rpms:
         # To be safe, all files in all sub-directories
         # Once we have a src/ directory, we can be a bit more specific without having to specify a long list here
         - '*/**/*'
+      variables:
+        CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
       when: on_success
     # If only "trivial" changes were done and we are in a MR, set this job to manual
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true  # Ensures the pipeline counts as "passed" instead of "blocked"
+      variables:
+        CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
     # Ensure we cover any other cases that might trigger this
     - when: on_success
+      variables:
+        CACHE_BRANCH: '$CI_COMMIT_BRANCH'
   image: $IMAGE_BUILD
   variables:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     RPM_SIZE_METRICS_ID: "relwithdebinfo" # Default build is a relwithdebinfo build
+    # Will only be used if ccache is enabled
+    CCACHE_BASEDIR: "/builds/cta"
+    CCACHE_NOHASHDIR: "true"
+    CCACHE_DIR: "$CI_PROJECT_DIR/.ccache"
+    CCACHE_COMPRESS: "true"
+    CCACHE_MAXSIZE: "2G"
   before_script:
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
-        export VCS_VERSION=$CTA_BUILD_ID
         export CTA_VERSION=$BUILD_CTA_VERSION
+        export VCS_VERSION=$CTA_BUILD_ID
       else
         export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
         export VCS_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
@@ -56,13 +68,16 @@ build-cta-rpms:
         echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
         exit 1
       fi
+    - ccache --zero-stats
+    - echo "CCache enabled ${ENABLE_CCACHE}"
+    - echo "CCache policy ${BUILD_CACHE_POLICY}"
   script:
     # SRPMS
     - ./ci/build/build_srpm.sh --build-dir build_srpm
                                --build-generator "${BUILD_GENERATOR}"
                                --create-build-dir
                                --cta-version ${BUILD_CTA_VERSION}
-                               --vcs-version ${CTA_BUILD_ID}
+                               --vcs-version ${VCS_VERSION}
                                --scheduler-type ${SCHEDULER_TYPE}
                                --oracle-support ${ORACLE_SUPPORT}
                                --cmake-build-type "${CMAKE_BUILD_TYPE}"
@@ -70,13 +85,15 @@ build-cta-rpms:
     # RPMS
     - BUILD_OPTIONS=""
     - |
-      if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
-        BUILD_OPTIONS+=" --use-internal-repos"
+      if [[ "$ENABLE_CCACHE" == "TRUE" ]]; then
+        BUILD_OPTIONS+=" --enable-ccache"
+        # Necessary to ensure builds in different jobs don't cause all kinds of cache misses
+        CXXFLAGS="-fdebug-prefix-map=/builds/cta=. -ffile-prefix-map=/builds/cta=."
+        # debugsource packages are not happy with the cxxflags above, so skip for now
+        RPMDEFS="--define '_debugsource_packages 0'"
       fi
-    - |
-      if [[ "$ENABLE_ADDRESS_SANITIZER" == "TRUE" ]]; then
-        BUILD_OPTIONS+=" --enable-address-sanitizer"
-      fi
+    - if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then BUILD_OPTIONS+=" --use-internal-repos"; fi
+    - if [[ "$ENABLE_ADDRESS_SANITIZER" == "TRUE" ]]; then BUILD_OPTIONS+=" --enable-address-sanitizer"; fi
     - ./ci/build/build_rpm.sh --build-dir build_rpm
                               --build-generator "${BUILD_GENERATOR}"
                               --create-build-dir
@@ -93,6 +110,8 @@ build-cta-rpms:
                               --skip-unit-tests
                               ${BUILD_OPTIONS}
     - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_mb $(find ${BUILD_PATH} -type f -name '*.rpm' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n", s/1000000}' | cut -f1)" > metrics.txt
+  after_script:
+    - if [[ "$ENABLE_CCACHE" == "TRUE" ]]; then ccache --show-stats --verbose; fi
   artifacts:
     expire_in: 30 days
     paths:
@@ -100,7 +119,31 @@ build-cta-rpms:
     reports:
       metrics: metrics.txt
 
-# These are not (and ideally should not) be used further down the pipeline; just a compilation checks
+  cache:
+    - key: "build-cache:${CI_PROJECT_ID}:${CACHE_BRANCH}"
+      fallback_keys:
+        - "build-cache:${CI_PROJECT_ID}:${CI_DEFAULT_BRANCH}"
+      policy: $BUILD_CACHE_POLICY
+      paths:
+        - .ccache/
+
+# These build jobs are not (and ideally should not) be used further down the pipeline; just compilation checks
+# All builds below don't use the cache as they are not on the critical part anyway (and they may pollute the cache)
+
+# Specifically to build CTA without ccache and with debug packages enabled
+build-cta-rpms-no-cache:
+  extends:
+    - build-cta-rpms
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+      when: never
+    - !reference [.build-image, rules]
+  variables:
+    ENABLE_CCACHE: "FALSE"
+    ENABLE_DEBUG_INFO: "FALSE"
+    RPM_SIZE_METRICS_ID: "relwithdebinfo_no_cache"
+  cache: [] # Explicitly disable the cache
+
 
 build-cta-rpms-pgsched:
   extends:
@@ -110,6 +153,9 @@ build-cta-rpms-pgsched:
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
+    ENABLE_CCACHE: "FALSE"
+    RPM_SIZE_METRICS_ID: "relwithdebinfo_pgsched_no_cache"
+  cache: [] # Explicitly disable the cache
   # Disable artifacts
   artifacts:
     paths: []
@@ -124,14 +170,38 @@ build-cta-rpms-debug:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true
-    - !reference [.build-image, rules]
+    - !reference [build-cta-rpms, rules]
   variables:
     CMAKE_BUILD_TYPE: "Debug"
+    RPM_SIZE_METRICS_ID: "debug_no_cache"
+    ENABLE_CCACHE: "FALSE"
+  cache: [] # Explicitly disable the cache
   # Disable artifacts
   artifacts:
     paths: []
     reports:
       metrics: []
+
+reset-ccache:
+  allow_failure: true
+  stage: build
+  needs: []
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+    - when: never
+  image: $IMAGE_BUILD
+  variables:
+    GIT_STRATEGY: none  # We don't need the repo clone here
+    BUILD_CACHE_POLICY: push
+    CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
+  script:
+    - rm -rf .ccache
+    - mkdir -p .ccache
+    # upload an empty cache
+    - touch .ccache/.keep
+  cache:
+    - !reference [build-cta-rpms, cache]
 
 # Documentation export
 export-docs:

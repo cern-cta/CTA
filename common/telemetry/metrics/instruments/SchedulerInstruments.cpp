@@ -8,7 +8,7 @@
 #include "common/semconv/Metrics.hpp"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
 #include "common/telemetry/metrics/MetricsUtils.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <opentelemetry/metrics/provider.h>
 

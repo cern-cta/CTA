@@ -14,7 +14,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "taped/daemon/DriveConfigEntry.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <algorithm>
 #include <list>

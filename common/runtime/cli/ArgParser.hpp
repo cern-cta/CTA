@@ -8,7 +8,7 @@
 #include "CommonCliOptions.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/utils/utils.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <algorithm>
 #include <cassert>

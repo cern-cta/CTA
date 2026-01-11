@@ -4,7 +4,7 @@
  */
 #include "MetricsUtils.hpp"
 
-#include "version.h"
+#include "version.hpp"
 
 #include <opentelemetry/metrics/provider.h>
 #include <opentelemetry/sdk/metrics/meter_provider.h>

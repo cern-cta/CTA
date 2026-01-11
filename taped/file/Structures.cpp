@@ -6,7 +6,7 @@
 #include "Structures.hpp"
 
 #include "common/exception/Exception.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <stdio.h>
 #include <time.h>

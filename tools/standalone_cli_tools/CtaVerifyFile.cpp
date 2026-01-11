@@ -10,7 +10,7 @@
 #include "common/utils/utils.hpp"
 #include "tools/standalone_cli_tools/common/CatalogueFetch.hpp"
 #include "tools/standalone_cli_tools/common/ConnectionConfiguration.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <iostream>
 #include <map>

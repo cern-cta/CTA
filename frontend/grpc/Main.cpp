@@ -14,7 +14,7 @@
 #include "common/log/Logger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "rdbms/Login.hpp"
-#include "version.h"
+#include "version.hpp"
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else

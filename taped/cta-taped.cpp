@@ -14,7 +14,7 @@
 #include "common/telemetry/config/TelemetryConfig.hpp"
 #include "daemon/TapeDaemon.hpp"
 #include "daemon/common/TapedConfiguration.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <google/protobuf/stubs/common.h>
 #include <iostream>
