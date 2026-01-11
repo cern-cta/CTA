@@ -107,7 +107,7 @@ build-cta-rpms:
     expire_in: 30 days
     paths:
       - ${BUILD_PATH}
-    cache:
+  cache:
     - key: "ccache:${CI_PROJECT_ID}:${CI_COMMIT_BRANCH}"
       fallback_keys:
         - "ccache:${CI_PROJECT_ID}:main"
@@ -139,23 +139,23 @@ build-cta-rpms-pgsched:
     SKIP_UNIT_TESTS: "TRUE"
 
 reset-branch-ccache:
-  stage: build
   allow_failure: true
+  stage: build
   needs:
     - job: build-cta-rpms
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
     - when: never
-  cache:
-    key: "ccache:${CI_PROJECT_ID}:${CI_COMMIT_BRANCH}"
-    paths: [.ccache/]
-    policy: push
   script:
     - rm -rf .ccache
     - mkdir -p .ccache
     # ensure the archive isn't empty on all runners/backends
     - touch .ccache/.keep
+  cache:
+    key: "ccache:${CI_PROJECT_ID}:${CI_COMMIT_BRANCH}"
+    paths: [.ccache/]
+    policy: push
 
 # Documentation export
 export-docs:
