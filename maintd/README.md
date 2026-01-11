@@ -78,10 +78,20 @@ The routines are defined in `routines/`. Which routines are run depend on whethe
 - `RepackReportRoutine`
   - Takes care of the repack reporting.
 - `ArchiveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead archive mounts. It reactivates dead jobs in pending queue for scheduling and requeues dead jobs in active queue.
+  - Handles jobs owned by dead archive mounts. The routine requeues dead jobs from active queue table to the pending queue table. Only jobs for which reporting did not start yet are selected. Jobs in reporting stage, will be picked up again for reporting automatically.
 - `RetrieveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead retrieve mounts. It reactivates dead jobs in pending queue for scheduling and requeues dead jobs in active queue.
+  - Handles jobs owned by dead retrieve mounts. The routine requeues dead jobs from active queue table to the pending queue table. Only jobs for which reporting did not start yet are selected. Jobs in reporting stage, will be picked up again for reporting automatically.
 - `RepackArchiveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead repack archive mounts. It reactivates dead jobs in pending queue for scheduling and requeues dead jobs in active queue.
+  - Handles jobs owned by dead repack archive mounts. The routine requeues dead jobs from active queue table to the pending queue table. 
 - `RepackRetrieveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead repack repack retrieve mounts. It reactivates dead jobs in pending queue for scheduling and requeues dead jobs in active queue.
+  - Handles jobs owned by dead repack repack retrieve mounts. The routine requeues dead jobs from active queue table to the pending queue table.
+- `ArchiveInactiveMountPendingQueueRoutine`
+  - Handles jobs owned by dead archive mounts. The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+- `RetrieveInactiveMountPendingQueueRoutine`
+  - Handles jobs owned by dead retrieve mounts. The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+- `RepackArchiveInactiveMountPendingQueueRoutine`
+  - Handles jobs owned by dead repack archive mounts. The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+- `RepackRetrieveInactiveMountPendingQueueRoutine`
+  - Handles jobs owned by dead repack repack retrieve mounts. The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+- `DeleteOldFailedQueuesRoutine`
+  - Deletes all jobs which hang in the failed queue tables for too long (2 weeks). 
