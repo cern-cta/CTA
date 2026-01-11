@@ -54,7 +54,7 @@ build-cta-rpms:
         exit 1
       fi
   script:
-      # SRPMS
+    # SRPMS
     - ./ci/build/build_srpm.sh --build-dir build_srpm
                                --build-generator "${BUILD_GENERATOR}"
                                --create-build-dir
@@ -64,7 +64,6 @@ build-cta-rpms:
                                --oracle-support ${ORACLE_SUPPORT}
                                --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                --jobs $(nproc --ignore=1)
-                               --use-zstd
     # RPMS
     - BUILD_OPTIONS=""
     - |
