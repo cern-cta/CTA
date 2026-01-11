@@ -17,4 +17,4 @@ cancel-on-failure:
     - 'curl -s -X POST --header "PRIVATE-TOKEN: ${CI_API_TOKEN}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/pipelines/${CI_PIPELINE_ID}/cancel"'
   parallel:
     matrix:
-      - JOB_NAME: [validate-pipeline-variables, validate-project-json, unit-test-cta]
+      - JOB_NAME: [validate-pipeline-variables, validate-project-json, unit-test-cta, build-cta-rpms-no-cache]
