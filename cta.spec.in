@@ -64,7 +64,7 @@ Name: %{name}
 Summary: %{ctaSummary}
 Version: %{ctaVersion}
 Release: %{ctaRelease}%{mydist}
-Source: %{name}-%{ctaVersion}-%{ctaRelease}.tar.gz
+Source: %{name}-%{ctaVersion}-%{ctaRelease}.tar.zst
 License: %{ctaLicense}
 Group: Application/cta
 Vendor: CERN

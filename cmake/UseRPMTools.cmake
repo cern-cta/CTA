@@ -7,7 +7,7 @@
 #   on Linux systems and defines macro that helps to
 #   build source or binary RPM, the MACRO assumes
 #   CMake 2.4.x which includes CPack support.
-#   CPack is used to build tar.gz source tarball
+#   CPack is used to build tar.zst source tarball
 #   which may be used by a custom user-made spec file.
 #
 # - Define RPMTools_ADD_RPM_TARGETS which defines
@@ -98,7 +98,7 @@ Version:        ${PACKAGE_VERSION}
 Release:        1
 License:        Unknown
 Group:          Unknown
-Source:         ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
+Source:         ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.zst
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
 BuildRequires:	cmake
 
@@ -163,14 +163,14 @@ rm -rf build_tree
       ENDIF("${ARGV1}" STREQUAL "")
 
       ADD_CUSTOM_TARGET(${RPMNAME}_srpm
-	COMMAND cpack3 -G TGZ --config CPackSourceConfig.cmake
-	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES
+	COMMAND cpack3 -G TZST --config CPackSourceConfig.cmake
+	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.zst ${RPM_ROOTDIR}/SOURCES
 	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bs --define=\"_topdir ${RPM_ROOTDIR}\"  --define '_source_filedigest_algorithm md5' --define '_binary_filedigest_algorithm md5' --define 'neutralpackage 1' --nodeps --buildroot=${RPM_ROOTDIR}/tmp ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME}
 	)
 
       ADD_CUSTOM_TARGET(${RPMNAME}_rpm
-	COMMAND cpack3 -G TGZ --config CPackSourceConfig.cmake
-	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES
+	COMMAND cpack3 -G TZST --config CPackSourceConfig.cmake
+	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.zst ${RPM_ROOTDIR}/SOURCES
 	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bb --define=\"_topdir ${RPM_ROOTDIR}\" $ENV{RPMDEFS} --buildroot=${RPM_ROOTDIR}/tmp ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME}
   JOB_POOL console
 	)

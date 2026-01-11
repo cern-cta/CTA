@@ -38,6 +38,7 @@ build_srpm() {
 
   local create_build_dir=false
   local clean_build_dir=false
+  local use_zstd=false
   local num_jobs=$(nproc --ignore=2)
   local oracle_support=true
   local cmake_build_type=""
@@ -67,6 +68,7 @@ build_srpm() {
       ;;
     --clean-build-dir) clean_build_dir=true ;;
     --create-build-dir) create_build_dir=true ;;
+    --use-zstd) use_zstd=true ;;
     --cta-version)
       if [[ $# -gt 1 ]]; then
         cta_version="$2"
@@ -146,6 +148,13 @@ build_srpm() {
 
   if [[ -z "${cmake_build_type}" ]]; then
     die_usage "Missing mandatory argument --cmake-build-type"
+  fi
+
+  if [[ ${use_zstd} = true ]]; then
+    {
+      echo '%_binary_payload w3.zstdio'
+      echo '%_source_payload w3.zstdio'
+    } > ~/.rpmmacros
   fi
 
   cd "${project_root}"
