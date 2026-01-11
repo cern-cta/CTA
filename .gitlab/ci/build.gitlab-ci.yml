@@ -50,6 +50,8 @@ build-cta-rpms:
     CCACHE_COMPILERCHECK: content
     CCACHE_MAXSIZE: "1G"
   before_script:
+    - echo "policy $BUILD_CACHE_POLICY"
+    - echo "ccache:${CI_PROJECT_ID}:${CACHE_BRANCH}"
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
         export VCS_VERSION=$CTA_BUILD_ID
@@ -119,7 +121,7 @@ build-cta-rpms:
   cache:
     - key: "ccache:${CI_PROJECT_ID}:${CACHE_BRANCH}"
       fallback_keys:
-        - "ccache:${CI_PROJECT_ID}:main"
+        - "ccache:${CI_PROJECT_ID}:${CI_DEFAULT_BRANCH}"
       policy: $BUILD_CACHE_POLICY
       paths: [.ccache/]
 
