@@ -37,6 +37,12 @@ build-cta-rpms:
   variables:
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
+    BUILD_CACHE_POLICY: pull-push
+    # Will only be used if ccache is enabled
+    CCACHE_BASEDIR: $CI_PROJECT_DIR
+    CCACHE_DIR: $CI_PROJECT_DIR/.ccache
+    CCACHE_COMPILERCHECK: content
+    CCACHE_MAXSIZE: "2G"
   before_script:
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
@@ -66,6 +72,10 @@ build-cta-rpms:
                                --jobs $(nproc --ignore=1)
     # RPMS
     - BUILD_OPTIONS=""
+    - |
+      if [[ "$ENABLE_CCACHE" == "TRUE" ]]; then
+        BUILD_OPTIONS+=" --enable-ccache"
+      fi
     - |
       if [[ "$ENABLE_DEBUG_INFO" == "FALSE" ]]; then
         BUILD_OPTIONS+=" --skip-debug-packages"
@@ -97,6 +107,26 @@ build-cta-rpms:
     expire_in: 30 days
     paths:
       - ${BUILD_PATH}
+    cache:
+    - key: "ccache:${CI_PROJECT_ID}:${CI_COMMIT_BRANCH}"
+      fallback_keys:
+        - "ccache:${CI_PROJECT_ID}:main"
+      policy: $BUILD_CACHE_POLICY
+      paths: [.ccache/]
+
+
+# Specifically to build CTA without ccache and with debug packages enabled
+build-cta-rpms-no-cache:
+  extends:
+    - build-cta-rpms
+  rules:
+    - if: $CI_PIPELINE_SOURCE != "merge_request_event"
+      when: never
+    - !reference [.build-image, rules]
+  variables:
+    ENABLE_CCACHE: "FALSE"
+    ENABLE_DEBUG_INFO: "FALSE"
+
 
 # This is not (and ideally should not) be used further down the pipeline; this is just a compilation check
 build-cta-rpms-pgsched:
@@ -107,6 +137,25 @@ build-cta-rpms-pgsched:
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
+
+reset-branch-cache:
+  stage: build
+  allow_failure: true
+  needs:
+    - job: build-cta-rpms
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: manual
+    - when: never
+  cache:
+    key: "ccache:${CI_PROJECT_ID}:${CI_COMMIT_BRANCH}"
+    paths: [.ccache/]
+    policy: push
+  script:
+    - rm -rf .ccache
+    - mkdir -p .ccache
+    # ensure the archive isn't empty on all runners/backends
+    - : > .ccache/.keep
 
 # Documentation export
 export-docs:
