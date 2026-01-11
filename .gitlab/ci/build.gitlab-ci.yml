@@ -42,7 +42,7 @@ build-cta-rpms:
     CCACHE_BASEDIR: $CI_PROJECT_DIR
     CCACHE_DIR: $CI_PROJECT_DIR/.ccache
     CCACHE_COMPILERCHECK: content
-    CCACHE_MAXSIZE: "2G"
+    CCACHE_MAXSIZE: "1G"
   before_script:
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
@@ -111,10 +111,10 @@ build-cta-rpms:
     paths:
       - ${BUILD_PATH}
   cache:
-    - key: "ccache:${CI_PROJECT_ID}:${CI_COMMIT_BRANCH}"
+    - key: "ccache:${CI_PROJECT_ID}:${CI_JOB_IMAGE}:${CI_COMMIT_BRANCH}"
       fallback_keys:
         - "ccache:${CI_PROJECT_ID}:main"
-      policy: pull-push
+      policy: $BUILD_CACHE_POLICY
       paths: [.ccache/]
 
 
@@ -140,8 +140,9 @@ build-cta-rpms-pgsched:
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
+    ENABLE_CCACHE: "FALSE"
 
-reset-branch-ccache:
+reset-ccache:
   allow_failure: true
   stage: build
   needs:
@@ -150,13 +151,16 @@ reset-branch-ccache:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
     - when: never
+  image: $IMAGE_BUILD
+  variables:
+    GIT_STRATEGY: none  # We don't need the repo clone here
   script:
     - rm -rf .ccache
     - mkdir -p .ccache
-    # ensure the archive isn't empty on all runners/backends
+    # upload an empty cache
     - touch .ccache/.keep
   cache:
-    key: "ccache:${CI_PROJECT_ID}:${CI_COMMIT_BRANCH}"
+    key: "ccache:${CI_PROJECT_ID}:${CI_JOB_IMAGE}:${CI_COMMIT_BRANCH}"
     paths: [.ccache/]
     policy: push
 
