@@ -20,7 +20,7 @@
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for these jobs
     DOCKERFILE:
     IMAGE_NAME:
-    EXTRA_BUILD_ARGS
+    EXTRA_BUILD_ARGS:
   script:
     - echo "Authenticating against repo"
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
