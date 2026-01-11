@@ -27,7 +27,7 @@
     - echo "Building ${DOCKERFILE} and pushing resulting image to ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}"
     - /kaniko/executor --context $CI_PROJECT_DIR
                        --cache=true \
-                       --cache-copy-layers=true \
+                       --cache-copy-layers \
                        --cache-ttl=48h \
                        --dockerfile $DOCKERFILE
                        --destination ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}
