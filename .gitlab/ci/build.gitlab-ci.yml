@@ -52,8 +52,8 @@ build-cta-rpms:
   before_script:
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
+        export CTA_VERSION=dev
         export VCS_VERSION=$CTA_BUILD_ID
-        export CTA_VERSION=$BUILD_CTA_VERSION
       else
         export CTA_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '[v-]' '{print $2}')
         export VCS_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
@@ -72,7 +72,7 @@ build-cta-rpms:
                                --build-generator "${BUILD_GENERATOR}"
                                --create-build-dir
                                --cta-version ${BUILD_CTA_VERSION}
-                               --vcs-version ${CTA_BUILD_ID}
+                               --vcs-version ${VCS_VERSION}
                                --scheduler-type ${SCHEDULER_TYPE}
                                --oracle-support ${ORACLE_SUPPORT}
                                --cmake-build-type "${CMAKE_BUILD_TYPE}"
