@@ -13,7 +13,7 @@ This directory contains all the files necessary for development and automation w
 
 # Typical helper functions and their meaning
 
-```
+```sh
 # Local script defined function which displays usage information.
 usage() {
   echo
