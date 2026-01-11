@@ -12,15 +12,16 @@ InactiveMountQueueRoutineBase::InactiveMountQueueRoutineBase(log::LogContext& lc
                                                              RelationalDB& pgs,
                                                              size_t batchSize,
                                                              const std::string& routineName,
-                                                             uint64_t ageForCollection)
+                                                             uint64_t inactiveTimeLimit)
     : m_lc(lc),
       m_catalogue(catalogue),
       m_RelationalDB(pgs),
       m_batchSize(batchSize),
       m_routineName(routineName),
-      m_ageForCollection(ageForCollection) {
+      m_inactiveTimeLimit(inactiveTimeLimit) {
   log::ScopedParamContainer params(m_lc);
   params.add("batchSize", m_batchSize);
+  params.add("inactiveTimeLimit", m_inactiveTimeLimit);
   m_lc.log(cta::log::INFO, "Created " + std::string(m_routineName));
 };
 
@@ -42,7 +43,7 @@ cta::common::dataStructures::DeadMountCandidateIDs InactiveMountQueueRoutineBase
   m_lc.log(cta::log::INFO, "Fetched mounts registered in catalogue for active drives.");
   // Get all active mount IDs from the Scheduler DB
   cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs =
-    m_RelationalDB.getDeadMountCandidates(m_ageForCollection, m_lc);
+    m_RelationalDB.getDeadMountCandidates(m_inactiveTimeLimit, m_lc);
   params.add("archivePendingDeadMountIdsCount", scheduledMountIDs.archivePending.size());
   params.add("archiveActiveDeadMountIdsCount", scheduledMountIDs.archiveActive.size());
   params.add("retrievePendingDeadMountIdsCount", scheduledMountIDs.retrievePending.size());
@@ -117,13 +118,13 @@ ArchiveInactiveMountActiveQueueRoutine::ArchiveInactiveMountActiveQueueRoutine(l
                                                                                catalogue::Catalogue& catalogue,
                                                                                RelationalDB& pgs,
                                                                                size_t batchSize,
-                                                                               uint64_t ageForCollection)
+                                                                               uint64_t inactiveTimeLimit)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "ArchiveInactiveMountActiveQueueRoutine",
-                                    ageForCollection) {}
+                                    inactiveTimeLimit) {}
 
 void ArchiveInactiveMountActiveQueueRoutine::execute() {
   handleInactiveMountActiveQueueRoutine(true /* isArchive */, false /* isRepack */);
@@ -133,13 +134,13 @@ RetrieveInactiveMountActiveQueueRoutine::RetrieveInactiveMountActiveQueueRoutine
                                                                                  catalogue::Catalogue& catalogue,
                                                                                  RelationalDB& pgs,
                                                                                  size_t batchSize,
-                                                                                 uint64_t ageForCollection)
+                                                                                 uint64_t inactiveTimeLimit)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RetrieveInactiveMountActiveQueueRoutine",
-                                    ageForCollection) {}
+                                    inactiveTimeLimit) {}
 
 void RetrieveInactiveMountActiveQueueRoutine::execute() {
   handleInactiveMountActiveQueueRoutine(false /* isArchive */, false /* isRepack */);
@@ -150,13 +151,13 @@ RepackRetrieveInactiveMountActiveQueueRoutine::RepackRetrieveInactiveMountActive
   catalogue::Catalogue& catalogue,
   RelationalDB& pgs,
   size_t batchSize,
-  uint64_t ageForCollection)
+  uint64_t inactiveTimeLimit)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RepackRetrieveInactiveMountActiveQueueRoutine",
-                                    ageForCollection) {}
+                                    inactiveTimeLimit) {}
 
 void RepackRetrieveInactiveMountActiveQueueRoutine::execute() {
   handleInactiveMountActiveQueueRoutine(false /* isArchive */, true /* isRepack */);
@@ -167,13 +168,13 @@ RepackArchiveInactiveMountActiveQueueRoutine::RepackArchiveInactiveMountActiveQu
   catalogue::Catalogue& catalogue,
   RelationalDB& pgs,
   size_t batchSize,
-  uint64_t ageForCollection)
+  uint64_t inactiveTimeLimit)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RepackArchiveInactiveMountActiveQueueRoutine",
-                                    ageForCollection) {}
+                                    inactiveTimeLimit) {}
 
 void RepackArchiveInactiveMountActiveQueueRoutine::execute() {
   handleInactiveMountActiveQueueRoutine(true /* isArchive */, true /* isRepack */);
@@ -183,13 +184,13 @@ ArchiveInactiveMountPendingQueueRoutine::ArchiveInactiveMountPendingQueueRoutine
                                                                                  catalogue::Catalogue& catalogue,
                                                                                  RelationalDB& pgs,
                                                                                  size_t batchSize,
-                                                                                 uint64_t ageForCollection)
+                                                                                 uint64_t inactiveTimeLimit)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "ArchiveInactiveMountPendingQueueRoutine",
-                                    ageForCollection) {}
+                                    inactiveTimeLimit) {}
 
 void ArchiveInactiveMountPendingQueueRoutine::execute() {
   handleInactiveMountPendingQueueRoutine(true /* isArchive */, false /* isRepack */);
@@ -199,13 +200,13 @@ RetrieveInactiveMountPendingQueueRoutine::RetrieveInactiveMountPendingQueueRouti
                                                                                    catalogue::Catalogue& catalogue,
                                                                                    RelationalDB& pgs,
                                                                                    size_t batchSize,
-                                                                                   uint64_t ageForCollection)
+                                                                                   uint64_t inactiveTimeLimit)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RetrieveInactiveMountPendingQueueRoutine",
-                                    ageForCollection) {}
+                                    inactiveTimeLimit) {}
 
 void RetrieveInactiveMountPendingQueueRoutine::execute() {
   handleInactiveMountPendingQueueRoutine(false /* isArchive */, false /* isRepack */);
@@ -216,13 +217,13 @@ RepackRetrieveInactiveMountPendingQueueRoutine::RepackRetrieveInactiveMountPendi
   catalogue::Catalogue& catalogue,
   RelationalDB& pgs,
   size_t batchSize,
-  uint64_t ageForCollection)
+  uint64_t inactiveTimeLimit)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RepackRetrieveInactiveMountPendingQueueRoutine",
-                                    ageForCollection) {}
+                                    inactiveTimeLimit) {}
 
 void RepackRetrieveInactiveMountPendingQueueRoutine::execute() {
   handleInactiveMountPendingQueueRoutine(false /* isArchive */, true /* isRepack */);
@@ -233,13 +234,13 @@ RepackArchiveInactiveMountPendingQueueRoutine::RepackArchiveInactiveMountPending
   catalogue::Catalogue& catalogue,
   RelationalDB& pgs,
   size_t batchSize,
-  uint64_t ageForCollection)
+  uint64_t inactiveTimeLimit)
     : InactiveMountQueueRoutineBase(lc,
                                     catalogue,
                                     pgs,
                                     batchSize,
                                     "RepackArchiveInactiveMountPendingQueueRoutine",
-                                    ageForCollection) {}
+                                    inactiveTimeLimit) {}
 
 void RepackArchiveInactiveMountPendingQueueRoutine::execute() {
   handleInactiveMountPendingQueueRoutine(true /* isArchive */, true /* isRepack */);
@@ -249,12 +250,12 @@ DeleteOldFailedQueuesRoutine::DeleteOldFailedQueuesRoutine(log::LogContext& lc,
                                                            catalogue::Catalogue& catalogue,
                                                            RelationalDB& pgs,
                                                            size_t batchSize,
-                                                           uint64_t ageForCollection)
-    : InactiveMountQueueRoutineBase(lc, catalogue, pgs, batchSize, "DeleteOldFailedQueuesRoutine", ageForCollection) {}
+                                                           uint64_t inactiveTimeLimit)
+    : InactiveMountQueueRoutineBase(lc, catalogue, pgs, batchSize, "DeleteOldFailedQueuesRoutine", inactiveTimeLimit) {}
 
 void DeleteOldFailedQueuesRoutine::execute() {
   // only rows older than 2 weeks will be deleted from the FAILED tables
-  m_RelationalDB.deleteOldFailedQueues(m_ageForCollection, m_batchSize, m_lc);
+  m_RelationalDB.deleteOldFailedQueues(m_inactiveTimeLimit, m_batchSize, m_lc);
 };
 
 }  // namespace cta::maintd

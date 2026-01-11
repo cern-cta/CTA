@@ -35,14 +35,14 @@ protected:
                                 RelationalDB& pgs,
                                 size_t batchSize,
                                 const std::string& routineName,
-                                uint64_t ageForCollection);
+                                uint64_t inactiveTimeLimit);
 
   cta::log::LogContext& m_lc;
   catalogue::Catalogue& m_catalogue;
   cta::RelationalDB& m_RelationalDB;
   size_t m_batchSize;
   std::string m_routineName;
-  uint64_t m_ageForCollection;
+  uint64_t m_inactiveTimeLimit;
 };
 
 class ArchiveInactiveMountActiveQueueRoutine : public InactiveMountQueueRoutineBase {
