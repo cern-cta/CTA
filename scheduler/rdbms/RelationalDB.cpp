@@ -1658,7 +1658,7 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
       SELECT MOUNT_ID, QUEUE_TYPE FROM MOUNT_HEARTBEAT WHERE LAST_UPDATE_TIME < :OLDER_THAN_TIMESTAMP
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
-    stmt.bindUint64(":OLDER_THAN_TIMESTAMP",mount_gc_timestamp);
+    stmt.bindUint64(":OLDER_THAN_TIMESTAMP", mount_gc_timestamp);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
       std::string queueType = rset.columnString("QUEUE_TYPE");
@@ -1714,7 +1714,8 @@ void RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64_t>&
     return;
   }
   auto imMutex = std::make_unique<cta::threading::Mutex>();
-  cta::threading::MutexLocker imMutexLock(*imMutex);;
+  cta::threading::MutexLocker imMutexLock(*imMutex);
+  ;
   std::string queueTypePrefix = getQueueTypePrefix(isArchive, isRepack);
   // Cleaning up the PENDING tables
   // TO-DO look at the ARCHIVE_PENDING_QUEUE for
