@@ -88,6 +88,13 @@ variables:
       - "TRUE"
       - "FALSE"
 
+  ENABLE_DEBUG_INFO:
+    description: "Whether to the extraction and building of debuginfo and debugsource"
+    value: "TRUE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
   ENABLE_CCACHE:
     description: "Whether to the enable ccache during the RPM building"
     value: "FALSE"
@@ -95,12 +102,14 @@ variables:
       - "TRUE"
       - "FALSE"
 
-  ENABLE_DEBUG_INFO:
-    description: "Whether to the extraction and building of debuginfo and debugsource"
-    value: "TRUE"
+  BUILD_CACHE_POLICY:
+    description: "Policy for populating/consuming the cache in the build-cta-rpms job"
+    value: "pull"
     options:
-      - "TRUE"
-      - "FALSE"
+      - "pull"
+      - "push"
+      - "pull-push"
+
 
   # CTA Configuration
   SCHEDULER_TYPE:
@@ -227,6 +236,11 @@ workflow:
       variables:
         ENABLE_DEBUG_INFO: "FALSE"
         ENABLE_CCACHE: "TRUE"
+        BUILD_CACHE_POLICY: pull-push
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+      auto_cancel:
+        on_new_commit: none
+        BUILD_CACHE_POLICY: push # Only for push events do we rebuild the main cache
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_new_commit: none
