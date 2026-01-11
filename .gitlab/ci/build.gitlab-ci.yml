@@ -59,6 +59,7 @@ build-cta-rpms:
         echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
         exit 1
       fi
+    - ccache --zero-stats
   script:
     # SRPMS
     - ./ci/build/build_srpm.sh --build-dir build_srpm
@@ -103,6 +104,8 @@ build-cta-rpms:
                               --platform ${PLATFORM}
                               --skip-unit-tests
                               ${BUILD_OPTIONS}
+  after_script:
+    - ccache --show-stats
   artifacts:
     expire_in: 30 days
     paths:
