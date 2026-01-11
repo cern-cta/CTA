@@ -1,34 +1,6 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# List of jobs we want to block the pipeline on
-.lint-jobs:
-  needs:
-    - job: format-cpp
-      optional: true # The job may not exist in the pipeline
-      artifacts: false
-    - job: format-python
-      optional: true
-      artifacts: false
-    - job: lint-bash
-      optional: true
-      artifacts: false
-    - job: lint-cpp
-      optional: true
-      artifacts: false
-    - job: lint-licenses
-      optional: true
-      artifacts: false
-    - job: lint-python
-      optional: true
-      artifacts: false
-    - job: lint-secrets
-      optional: true
-      artifacts: false
-    - job: lint-yaml
-      optional: true
-      artifacts: false
-
 .build-image:
   stage: build:image
   rules:
@@ -66,8 +38,6 @@ build-ctageneric-from-local-rpms:
     - job: build-cta-rpms
     - job: modify-project-json
       optional: true
-    # These dependencies are not strictly necessary for this job, but this is where we stop the pipeline if any lint/format jobs fail
-    - !reference [.lint-jobs, needs]
   rules:
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
