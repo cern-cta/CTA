@@ -144,4 +144,15 @@ public:
   void execute();
 };
 
+class CleanMountHeartbeatRoutine : public InactiveMountQueueRoutineBase {
+public:
+  CleanMountHeartbeatRoutine(log::LogContext& lc,
+                             catalogue::Catalogue& catalogue,
+                             RelationalDB& pgs,
+                             size_t batchSize,
+                             uint64_t inactiveTimeLimit);
+
+  void execute();
+};
+
 }  // namespace cta::maintd
