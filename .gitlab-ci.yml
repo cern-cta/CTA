@@ -88,6 +88,13 @@ variables:
       - "TRUE"
       - "FALSE"
 
+  ENABLE_CCACHE:
+    description: "Whether to the enable ccache during the RPM building"
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
   ENABLE_DEBUG_INFO:
     description: "Whether to the extraction and building of debuginfo and debugsource"
     value: "TRUE"
@@ -219,6 +226,7 @@ workflow:
           - '**/*'
       variables:
         ENABLE_DEBUG_INFO: "FALSE"
+        ENABLE_CCACHE: "TRUE"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_new_commit: none
