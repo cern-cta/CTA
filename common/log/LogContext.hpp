@@ -7,8 +7,8 @@
 
 #include "common/log/Logger.hpp"
 
-#include <ostream>
 #include <set>
+#include <vector>
 
 namespace cta::log {
 
@@ -45,14 +45,6 @@ public:
    * @param param
    */
   void pushOrReplace(const Param& param) noexcept;
-
-  /**
-   * Move a parameter with a given name to the end of the container it it
-   * present.
-   *
-   * @param paramName  The name of the parameter to check and move.
-   */
-  void moveToTheEndIfPresent(const std::string& paramName) noexcept;
 
   /**
    * Removes a parameter from the list.
@@ -111,7 +103,7 @@ public:
 
 private:
   Logger& m_log;
-  std::list<Param> m_params;
+  std::vector<Param> m_params;
 };  // class LogContext
 
 class ScopedParamContainer {

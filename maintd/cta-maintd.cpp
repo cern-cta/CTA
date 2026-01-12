@@ -37,7 +37,7 @@ static int setUserAndGroup(const std::string& userName, const std::string& group
     });
     cta::System::setUserAndGroup(userName, groupName);
   } catch (exception::Exception& ex) {
-    std::list<log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
+    std::vector<log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
     logger(log::ERR, "Caught an unexpected CTA, exiting cta-maintd", params);
     return EXIT_FAILURE;
   }
@@ -198,11 +198,11 @@ int main(const int argc, char** const argv) {
     log(log::INFO, "Launching cta-maintd", cmdLineParams.toLogParams());
     programRc = maintd::exceptionThrowingMain(config, log);
   } catch (exception::Exception& ex) {
-    std::list<cta::log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
+    std::vector<cta::log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
     log(log::ERR, "Caught an unexpected CTA exception.", params);
     sleep(1);
   } catch (std::exception& se) {
-    std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
+    std::vector<cta::log::Param> params = {cta::log::Param("what", se.what())};
     log(log::ERR, "Caught an unexpected standard exception.", params);
     sleep(1);
   } catch (...) {

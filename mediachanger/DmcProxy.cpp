@@ -7,6 +7,8 @@
 
 #include "mediachanger/DummyLibrarySlot.hpp"
 
+#include <vector>
+
 namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------
@@ -18,7 +20,7 @@ DmcProxy::DmcProxy(log::Logger& log) : m_log(log) {}
 // mountTapeReadOnly
 //------------------------------------------------------------------------------
 void DmcProxy::mountTapeReadOnly(const std::string& vid, const LibrarySlot& librarySlot) {
-  std::list<log::Param> params = {log::Param("tapeVid", vid), log::Param("librarySlot", librarySlot.str())};
+  std::vector<log::Param> params = {log::Param("tapeVid", vid), log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Dummy mount for read-only access", params);
 }
 
@@ -26,7 +28,7 @@ void DmcProxy::mountTapeReadOnly(const std::string& vid, const LibrarySlot& libr
 // mountTapeReadWrite
 //------------------------------------------------------------------------------
 void DmcProxy::mountTapeReadWrite(const std::string& vid, const LibrarySlot& librarySlot) {
-  std::list<log::Param> params = {log::Param("tapeVid", vid), log::Param("librarySlot", librarySlot.str())};
+  std::vector<log::Param> params = {log::Param("tapeVid", vid), log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Dummy mount for read/write access", params);
 }
 
@@ -34,7 +36,7 @@ void DmcProxy::mountTapeReadWrite(const std::string& vid, const LibrarySlot& lib
 // dismountTape
 //------------------------------------------------------------------------------
 void DmcProxy::dismountTape(const std::string& vid, const LibrarySlot& librarySlot) {
-  std::list<log::Param> params = {log::Param("tapeVid", vid), log::Param("librarySlot", librarySlot.str())};
+  std::vector<log::Param> params = {log::Param("tapeVid", vid), log::Param("librarySlot", librarySlot.str())};
   m_log(log::WARNING, "Dummy dismount", params);
 }
 

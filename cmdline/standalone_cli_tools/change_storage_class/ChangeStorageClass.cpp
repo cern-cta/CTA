@@ -219,7 +219,7 @@ void ChangeStorageClass::storageClassExists(const std::string& storageClass) con
   stream_future.wait();
 
   for (const auto& storageClass : g_storageClasses) {
-    std::list<cta::log::Param> params;
+    std::vector<cta::log::Param> params;
     params.emplace_back("storageClass", storageClass);
     m_log(cta::log::INFO, "Storage class found", params);
   }

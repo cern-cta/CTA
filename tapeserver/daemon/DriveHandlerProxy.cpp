@@ -32,7 +32,7 @@ DriveHandlerProxy::~DriveHandlerProxy() {
   }
 }
 
-void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param>& params) {
+void DriveHandlerProxy::addLogParams(const std::vector<cta::log::Param>& params) {
   serializers::WatchdogMessage watchdogMessage;
   watchdogMessage.set_reportingstate(false);
   watchdogMessage.set_reportingbytes(false);
@@ -57,7 +57,7 @@ void DriveHandlerProxy::addLogParams(const std::list<cta::log::Param>& params) {
   }
 }
 
-void DriveHandlerProxy::deleteLogParams(const std::list<std::string>& paramNames) {
+void DriveHandlerProxy::deleteLogParams(const std::vector<std::string>& paramNames) {
   serializers::WatchdogMessage watchdogMessage;
   watchdogMessage.set_reportingstate(false);
   watchdogMessage.set_reportingbytes(false);

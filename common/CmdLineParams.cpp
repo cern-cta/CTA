@@ -88,8 +88,8 @@ CmdLineParams::CmdLineParams(int argc, char** argv, const std::string& procName)
   }
 }
 
-std::list<cta::log::Param> CmdLineParams::toLogParams() const {
-  std::list<cta::log::Param> ret;
+std::vector<cta::log::Param> CmdLineParams::toLogParams() const {
+  std::vector<cta::log::Param> ret;
   ret.emplace_back("foreground", foreground);
   ret.emplace_back("logToStdout", logToStdout);
   ret.emplace_back("logToFile", logToFile);

@@ -7,8 +7,8 @@
 
 #include "common/log/Param.hpp"
 
-#include <list>
 #include <string>
+#include <vector>
 
 namespace cta::common {
 
@@ -20,12 +20,12 @@ struct CmdLineParams {
   bool foreground = false;  ///< Prevents daemonisation
   bool logToStdout =
     false;  ///< Log to stdout instead. Foreground is required. Logging to stdout is the default, but this option is kept for compatibility reasons
-  bool logToFile = false;                          ///< Log to file intead of stdout.
-  std::string logFilePath;                         ///< Path to log file
-  std::string logFormat;                           ///< Format of log messages [default|json]
-  std::string configFileLocation;                  ///< Location of the configuration file
-  bool helpRequested = false;                      ///< Print help message and exit
-  std::list<cta::log::Param> toLogParams() const;  ///< Convert command line into set of parameters for logging
+  bool logToFile = false;                            ///< Log to file intead of stdout.
+  std::string logFilePath;                           ///< Path to log file
+  std::string logFormat;                             ///< Format of log messages [default|json]
+  std::string configFileLocation;                    ///< Location of the configuration file
+  bool helpRequested = false;                        ///< Print help message and exit
+  std::vector<cta::log::Param> toLogParams() const;  ///< Convert command line into set of parameters for logging
 };
 
 }  // namespace cta::common
