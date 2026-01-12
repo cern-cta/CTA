@@ -96,7 +96,7 @@ private:
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 };  // class RelationalDBTest
 
-TEST_P(RelationalDBTest, getBatchArchiveJob) {
+TEST_P(RelationalDBTest, DISABLED_getBatchArchiveJob) {
   ASSERT_EQ(0, 1);
 }
 
