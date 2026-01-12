@@ -38,7 +38,7 @@ public:
 
   void checkHeartbeats();
 
-  void cleanupDeadAgent(const std::string& name, const std::vector<cta::log::Param>& agentDetails);
+  void cleanupDeadAgent(const std::string& name, const std::list<cta::log::Param>& agentDetails);
 
   /** Structure allowing the sorting of owned objects, so they can be requeued in batches,
     * one batch per queue. */

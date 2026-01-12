@@ -43,8 +43,8 @@ public:
     return true;
   }
 
-  std::vector<log::Param> getDeadAgentDetails() {
-    std::vector<log::Param> ret;
+  std::list<log::Param> getDeadAgentDetails() {
+    std::list<log::Param> ret;
     auto gcData = readGCData();
     ret.emplace_back("currentHeartbeat", gcData.heartbeat);
     ret.emplace_back("GCRequested", gcData.needsGC ? "true" : "false");
