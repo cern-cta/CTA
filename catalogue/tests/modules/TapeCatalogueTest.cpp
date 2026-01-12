@@ -3718,7 +3718,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -3775,13 +3775,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
 
   {
     auto itor = m_catalogue->Tape()->getTapesItor();
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
 
     for (uint64_t i = 1; i <= nbTapes; i++) {
@@ -3886,13 +3886,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
     auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
     ASSERT_TRUE(itor.hasMore());
 
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
     ASSERT_EQ(1, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
     ASSERT_EQ("VID1", vidToTape.begin()->first);
     ASSERT_EQ("VID1", vidToTape.begin()->second.vid);
@@ -3904,13 +3904,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
     auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
     ASSERT_TRUE(itor.hasMore());
 
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.mediaType, vidToTape.begin()->second.mediaType);
   }
@@ -3921,13 +3921,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
     auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
     ASSERT_TRUE(itor.hasMore());
 
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.vendor, vidToTape.begin()->second.vendor);
   }
@@ -3938,13 +3938,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
     auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
     ASSERT_TRUE(itor.hasMore());
 
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.logicalLibraryName, vidToTape.begin()->second.logicalLibraryName);
   }
@@ -3955,13 +3955,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
     auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
     ASSERT_TRUE(itor.hasMore());
 
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.tapePoolName, vidToTape.begin()->second.tapePoolName);
   }
@@ -3972,13 +3972,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
     auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
     ASSERT_TRUE(itor.hasMore());
 
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_vo.name, vidToTape.begin()->second.vo);
   }
@@ -3989,13 +3989,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
     auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
     ASSERT_TRUE(itor.hasMore());
 
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_mediaType.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
   }
@@ -4006,13 +4006,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
     auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
     ASSERT_TRUE(itor.hasMore());
 
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.state, vidToTape.begin()->second.state);
   }
@@ -4023,13 +4023,13 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
     auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
     ASSERT_TRUE(itor.hasMore());
 
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.full, vidToTape.begin()->second.full);
   }
@@ -4060,12 +4060,12 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes_with_itor) {
     auto itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
     ASSERT_TRUE(itor.hasMore());
 
-    std::list<cta::common::dataStructures::Tape> tapes;
+    std::vector<cta::common::dataStructures::Tape> tapes;
     while (itor.hasMore()) {
       tapes.push_back(itor.next());
     }
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
     ASSERT_EQ("VID1", vidToTape.begin()->first);
     ASSERT_EQ("VID1", vidToTape.begin()->second.vid);
@@ -4337,7 +4337,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesByFxid_310_tapes) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4403,12 +4403,11 @@ TEST_P(cta_catalogue_TapeTest, getTapesByFxid_310_tapes) {
   searchCriteria.diskFileIds = std::vector(allDiskFileIds.begin(), allDiskFileIds.end());
 
   // Validate with getTapes
-  std::list<cta::common::dataStructures::Tape> vidToTapeData_fromGetTapes =
-    m_catalogue->Tape()->getTapes(searchCriteria);
+  auto vidToTapeData_fromGetTapes = m_catalogue->Tape()->getTapes(searchCriteria);
   ASSERT_EQ(nbTapes, vidToTapeData_fromGetTapes.size());
 
   // Validate with iterator
-  std::list<cta::common::dataStructures::Tape> vidToTapeData_fromItor;
+  std::vector<cta::common::dataStructures::Tape> vidToTapeData_fromItor;
   auto tapeData_Itor = m_catalogue->Tape()->getTapesItor(searchCriteria);
   while (tapeData_Itor.hasMore()) {
     vidToTapeData_fromItor.emplace_back(tapeData_Itor.next());
