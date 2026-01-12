@@ -7,9 +7,9 @@
 
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -44,7 +44,7 @@ public:
    * Get all the Virtual Organizations from the Catalogue
    * @return the list of all the Virtual Organizations
    */
-  virtual std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const = 0;
+  virtual std::vector<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const = 0;
 
   /**
    * Get the virtual organization corresponding to the tapepool passed in parameter

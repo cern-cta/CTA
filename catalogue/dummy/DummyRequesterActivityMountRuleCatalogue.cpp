@@ -8,8 +8,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
-#include <list>
-#include <optional>
 #include <string>
 
 namespace cta::catalogue {
@@ -42,7 +40,7 @@ void DummyRequesterActivityMountRuleCatalogue::createRequesterActivityMountRule(
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::RequesterActivityMountRule>
+std::vector<common::dataStructures::RequesterActivityMountRule>
 DummyRequesterActivityMountRuleCatalogue::getRequesterActivityMountRules() const {
   throw exception::NotImplementedException();
 }

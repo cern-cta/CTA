@@ -7,7 +7,7 @@
 
 #include "common/dataStructures/MountPolicy.hpp"
 
-#include <list>
+#include <vector>
 
 namespace cta::catalogue {
 
@@ -19,17 +19,17 @@ struct RequesterAndGroupMountPolicies {
   /**
    * List of requester activity mount-policies.
    */
-  std::list<common::dataStructures::MountPolicy> requesterActivityMountPolicies;
+  std::vector<common::dataStructures::MountPolicy> requesterActivityMountPolicies;
 
   /**
    * List of requester mount-policies.
    */
-  std::list<common::dataStructures::MountPolicy> requesterMountPolicies;
+  std::vector<common::dataStructures::MountPolicy> requesterMountPolicies;
 
   /**
    * List of requester-group mount-policies.
    */
-  std::list<common::dataStructures::MountPolicy> requesterGroupMountPolicies;
+  std::vector<common::dataStructures::MountPolicy> requesterGroupMountPolicies;
 
 };  // struct RequesterAndGroupMountPolicies
 

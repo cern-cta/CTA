@@ -9,6 +9,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <vector>
 
 namespace cta {
 namespace catalogue {
@@ -75,22 +76,19 @@ public:
   static cta::catalogue::CreateMountPolicyAttributes getMountPolicy2();
 
   static std::map<std::string, cta::catalogue::TapePool>
-  tapePoolListToMap(const std::list<cta::catalogue::TapePool>& listOfTapePools);
-
-  static std::map<std::string, cta::common::dataStructures::LogicalLibrary>
-  logicalLibraryListToMap(const std::list<cta::common::dataStructures::LogicalLibrary>& listOfLibs);
+  tapePoolVectorToMap(const std::vector<cta::catalogue::TapePool>& vectorOfTapePools);
 
   static std::map<std::string, cta::common::dataStructures::Tape>
-  tapeListToMap(const std::list<cta::common::dataStructures::Tape>& listOfTapes);
+  tapeVectorToMap(const std::vector<cta::common::dataStructures::Tape>& vectorOfTapes);
 
   static std::map<uint64_t, cta::common::dataStructures::ArchiveFile>
   archiveFileItorToMap(cta::catalogue::CatalogueItor<cta::common::dataStructures::ArchiveFile>& itor);
 
   static std::map<uint64_t, cta::common::dataStructures::ArchiveFile>
-  archiveFileListToMap(const std::list<cta::common::dataStructures::ArchiveFile>& listOfArchiveFiles);
+  archiveFileVectorToMap(const std::vector<cta::common::dataStructures::ArchiveFile>& vectorOfArchiveFiles);
 
   static std::map<std::string, cta::common::dataStructures::AdminUser>
-  adminUserListToMap(const std::list<cta::common::dataStructures::AdminUser>& listOfAdminUsers);
+  adminUserVectorToMap(const std::vector<cta::common::dataStructures::AdminUser>& vectorOfAdminUsers);
 
 private:
   static void wipeDatabase(cta::catalogue::Catalogue* catalogue, cta::log::LogContext* lc);

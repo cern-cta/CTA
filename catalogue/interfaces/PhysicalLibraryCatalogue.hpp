@@ -7,8 +7,8 @@
 
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -33,7 +33,7 @@ public:
 
   virtual void deletePhysicalLibrary(const std::string& name) = 0;
 
-  virtual std::list<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const = 0;
+  virtual std::vector<common::dataStructures::PhysicalLibrary> getPhysicalLibraries() const = 0;
 
   virtual void modifyPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin,
                                      const common::dataStructures::UpdatePhysicalLibrary& pl) = 0;

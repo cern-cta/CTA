@@ -320,9 +320,9 @@ public:
 
     catalogue.MountPolicy()->createMountPolicy(s_adminOnAdminHost, mountPolicy);
 
-    const std::list<common::dataStructures::MountPolicy> groups = catalogue.MountPolicy()->getMountPolicies();
+    const auto groups = catalogue.MountPolicy()->getMountPolicies();
     ASSERT_EQ(1, groups.size());
-    const common::dataStructures::MountPolicy group = groups.front();
+    auto& group = groups.front();
     ASSERT_EQ(mountPolicyName, group.name);
     ASSERT_EQ(archivePriority, group.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, group.archiveMinRequestAge);
@@ -340,11 +340,10 @@ public:
                                                              s_userName,
                                                              ruleComment);
 
-    const std::list<common::dataStructures::RequesterMountRule> rules =
-      catalogue.RequesterMountRule()->getRequesterMountRules();
+    const auto rules = catalogue.RequesterMountRule()->getRequesterMountRules();
     ASSERT_EQ(1, rules.size());
 
-    const common::dataStructures::RequesterMountRule rule = rules.front();
+    auto& rule = rules.front();
 
     ASSERT_EQ(s_userName, rule.name);
     ASSERT_EQ(mountPolicyName, rule.mountPolicy);
@@ -366,7 +365,7 @@ public:
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
     const std::optional<std::string> encryptionKeyName = std::nullopt;
-    const std::list<std::string> tapePoolSupplyList;
+    const std::vector<std::string> tapePoolSupplyList;
 
     ASSERT_NO_THROW(catalogue.TapePool()->createTapePool(s_adminOnAdminHost,
                                                          s_tapePoolName,

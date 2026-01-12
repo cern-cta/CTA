@@ -33,7 +33,7 @@ public:
 
   void deleteAdminUser(const std::string& username) override;
 
-  std::list<common::dataStructures::AdminUser> getAdminUsers() const override;
+  std::vector<common::dataStructures::AdminUser> getAdminUsers() const override;
 
   void modifyAdminUserComment(const common::dataStructures::SecurityIdentity& admin,
                               const std::string& username,

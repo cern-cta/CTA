@@ -9,6 +9,7 @@
 #include "common/checksum/ChecksumBlob.hpp"
 
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -70,7 +71,7 @@ private:
    * @param conn The database connection.
    * @returns the list of inserted fileRecycleLog
    */
-  std::list<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn);
+  std::vector<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn);
 
 };  // class OracleTapeFileCatalogue
 

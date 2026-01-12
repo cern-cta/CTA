@@ -29,7 +29,7 @@ public:
 
   void deleteMediaType(const std::string& name) override;
 
-  std::list<MediaTypeWithLogs> getMediaTypes() const override;
+  std::vector<MediaTypeWithLogs> getMediaTypes() const override;
 
   MediaType getMediaTypeByVid(const std::string& vid) const override;
 

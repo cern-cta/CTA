@@ -14,7 +14,7 @@ AdminLsResponseStream::AdminLsResponseStream(cta::catalogue::Catalogue& catalogu
       m_adminUsers(catalogue.AdminUser()->getAdminUsers()) {}
 
 bool AdminLsResponseStream::isDone() {
-  return m_adminUsers.empty();
+  return m_adminUsersIdx >= m_adminUsers.size();
 }
 
 cta::xrd::Data AdminLsResponseStream::next() {
@@ -22,8 +22,7 @@ cta::xrd::Data AdminLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto ad = m_adminUsers.front();
-  m_adminUsers.pop_front();
+  const auto ad = m_adminUsers[m_adminUsersIdx++];
 
   cta::xrd::Data data;
   auto ad_item = data.mutable_adls_item();

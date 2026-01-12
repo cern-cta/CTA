@@ -20,7 +20,7 @@ void DummyStorageClassCatalogue::deleteStorageClass(const std::string& storageCl
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::StorageClass> DummyStorageClassCatalogue::getStorageClasses() const {
+std::vector<common::dataStructures::StorageClass> DummyStorageClassCatalogue::getStorageClasses() const {
   throw exception::NotImplementedException();
 }
 

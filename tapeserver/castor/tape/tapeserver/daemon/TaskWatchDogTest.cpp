@@ -78,7 +78,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   tapeserver::daemon::RecallWatchDog
     watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
 
-  std::list<cta::log::Param> paramsToAdd {
+  std::vector<cta::log::Param> paramsToAdd {
     {"param1", 10},
     {"param1", 11}, // Will override the first param1 entry
     {"param2", 20},
@@ -97,8 +97,8 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   }
 
   // Capture the parameters sent by TapedProxyMock with addLogParams() and deleteLogParams()
-  std::list<cta::log::Param> capturedParamsToAdd;
-  std::list<std::string> capturedParamsToDelete;
+  std::vector<cta::log::Param> capturedParamsToAdd;
+  std::vector<std::string> capturedParamsToDelete;
 
   EXPECT_CALL(dummyInitialProcess, addLogParams(_)).WillOnce(testing::SaveArg<0>(&capturedParamsToAdd));
   EXPECT_CALL(dummyInitialProcess, deleteLogParams(_)).WillOnce(testing::SaveArg<0>(&capturedParamsToDelete));
@@ -111,10 +111,8 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   {
     ASSERT_EQ(capturedParamsToAdd.size(), 2);
     std::map<std::string, cta::log::Param> paramsToAddMap;
-    paramsToAddMap.emplace(capturedParamsToAdd.front().getName(), capturedParamsToAdd.front());
-    capturedParamsToAdd.pop_front();
-    paramsToAddMap.emplace(capturedParamsToAdd.front().getName(), capturedParamsToAdd.front());
-    capturedParamsToAdd.pop_front();
+    paramsToAddMap.emplace(capturedParamsToAdd[0].getName(), capturedParamsToAdd[0]);
+    paramsToAddMap.emplace(capturedParamsToAdd[1].getName(), capturedParamsToAdd[1]);
     ASSERT_TRUE(paramsToAddMap.contains("param3"));
     ASSERT_EQ(std::get<int64_t>(paramsToAddMap.at("param3").getValueVariant().value()), 31);
     ASSERT_TRUE(paramsToAddMap.contains("param4"));
@@ -124,7 +122,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   // Should only be adding "param0" (only one that was not added before)
   {
     ASSERT_EQ(capturedParamsToDelete.size(), 1);
-    auto paramA = capturedParamsToDelete.front();
+    auto paramA = capturedParamsToDelete[0];
     ASSERT_EQ(paramA, "param0");
   }
 }

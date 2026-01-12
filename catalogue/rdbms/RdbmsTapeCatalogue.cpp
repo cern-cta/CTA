@@ -270,8 +270,8 @@ TapeItor RdbmsTapeCatalogue::getTapesItor(const TapeSearchCriteria& searchCriter
   return TapeItor(impl);
 }
 
-std::list<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(const TapeSearchCriteria& searchCriteria) const {
-  std::list<common::dataStructures::Tape> tapes;
+std::vector<common::dataStructures::Tape> RdbmsTapeCatalogue::getTapes(const TapeSearchCriteria& searchCriteria) const {
+  std::vector<common::dataStructures::Tape> tapes;
   auto itor = getTapesItor(searchCriteria);
   while (itor.hasMore()) {
     tapes.push_back(itor.next());
@@ -1021,8 +1021,8 @@ void RdbmsTapeCatalogue::noSpaceLeftOnTape(const std::string& vid) {
   lc.log(log::INFO, "Catalogue - system modified tape - isFull");
 }
 
-std::list<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::string& logicalLibraryName) const {
-  std::list<TapeForWriting> tapes;
+std::vector<TapeForWriting> RdbmsTapeCatalogue::getTapesForWriting(const std::string& logicalLibraryName) const {
+  std::vector<TapeForWriting> tapes;
   const char* const sql = R"SQL(
     SELECT
       TAPE.VID AS VID,

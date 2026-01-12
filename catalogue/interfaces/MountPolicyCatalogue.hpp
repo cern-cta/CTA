@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <list>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -32,7 +32,7 @@ public:
    *
    * @return the list of all existing mount policies.
    */
-  virtual std::list<common::dataStructures::MountPolicy> getMountPolicies() const = 0;
+  virtual std::vector<common::dataStructures::MountPolicy> getMountPolicies() const = 0;
 
   /**
    * Returns the mount policy with the specified name.
@@ -47,7 +47,7 @@ public:
    *
    * @return the list of all existing mount policies.
    */
-  virtual std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const = 0;
+  virtual std::vector<common::dataStructures::MountPolicy> getCachedMountPolicies() const = 0;
 
   /**
    * Deletes the specified mount policy.

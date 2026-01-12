@@ -109,7 +109,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn& conn) {
   while (droppedAtLeastOneTable) {
     droppedAtLeastOneTable = false;
     auto tables = conn.getTableNames();
-    tables.remove("CTA_SCHEDULER");  // Remove CTA_SCHEDULER to drop it at the end
+    tables.erase(std::ranges::remove(tables, "CTA_SCHEDULER").begin(), tables.end());
     for (const auto& table : tables) {
       conn.executeNonQuery(std::string("DROP TABLE IF EXISTS ") + table + std::string(" CASCADE"));
       m_out << "Dropped table " << table << std::endl;
@@ -135,7 +135,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn& conn) {
 // dropDatabaseSequences
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn& conn) {
-  std::list<std::string> sequences = conn.getSequenceNames();
+  auto sequences = conn.getSequenceNames();
   for (const auto& sequence : sequences) {
     conn.executeNonQuery(std::string("DROP SEQUENCE IF EXISTS ") + sequence + std::string(" CASCADE"));
     m_out << "Dropped sequence " << sequence << std::endl;
@@ -146,7 +146,7 @@ void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn& conn) {
 // dropDatabaseSequences
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropDatabaseViews(rdbms::Conn& conn) {
-  std::list<std::string> dbviews = conn.getViewNames();
+  auto dbviews = conn.getViewNames();
   for (const auto& dbview : dbviews) {
     conn.executeNonQuery(std::string("DROP VIEW IF EXISTS ") + dbview + std::string(" CASCADE"));
     m_out << "Dropped view " << dbview << std::endl;
@@ -157,7 +157,7 @@ void DropSchemaCmd::dropDatabaseViews(rdbms::Conn& conn) {
 // dropDatabaseSequences
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropDatabaseTypes(rdbms::Conn& conn) {
-  std::list<std::string> dbtypes = conn.getTypeNames();
+  auto dbtypes = conn.getTypeNames();
   for (const auto& dbtype : dbtypes) {
     conn.executeNonQuery(std::string("DROP TYPE IF EXISTS ") + dbtype + std::string(" CASCADE"));
     m_out << "Dropped type " << dbtype << std::endl;

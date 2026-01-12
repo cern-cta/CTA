@@ -7,9 +7,9 @@
 
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -36,7 +36,7 @@ public:
 
   virtual void deleteLogicalLibrary(const std::string& name) = 0;
 
-  virtual std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const = 0;
+  virtual std::vector<common::dataStructures::LogicalLibrary> getLogicalLibraries() const = 0;
 
   /**
    * Modifies the name of the specified logical library.

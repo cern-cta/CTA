@@ -36,12 +36,11 @@ TEST_P(cta_catalogue_MountPolicyTest, createMountPolicy) {
   std::string mountPolicyName = mountPolicyToAdd.name;
   m_catalogue->MountPolicy()->createMountPolicy(m_admin, mountPolicyToAdd);
 
-  const std::list<cta::common::dataStructures::MountPolicy> mountPolicies =
-    m_catalogue->MountPolicy()->getMountPolicies();
+  const auto mountPolicies = m_catalogue->MountPolicy()->getMountPolicies();
 
   ASSERT_EQ(1, mountPolicies.size());
 
-  const cta::common::dataStructures::MountPolicy mountPolicy = mountPolicies.front();
+  auto& mountPolicy = mountPolicies.front();
 
   ASSERT_EQ(mountPolicyName, mountPolicy.name);
 

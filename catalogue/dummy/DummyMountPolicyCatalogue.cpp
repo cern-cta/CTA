@@ -20,8 +20,8 @@ void DummyMountPolicyCatalogue::createMountPolicy(const common::dataStructures::
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getMountPolicies() const {
-  std::list<common::dataStructures::MountPolicy> mountPolicies;
+std::vector<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getMountPolicies() const {
+  std::vector<common::dataStructures::MountPolicy> mountPolicies;
   common::dataStructures::MountPolicy mp1;
   mp1.name = "mountPolicy";
   mp1.archivePriority = 1;
@@ -45,8 +45,8 @@ DummyMountPolicyCatalogue::getMountPolicy(const std::string& mountPolicyName) co
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getCachedMountPolicies() const {
-  std::list<common::dataStructures::MountPolicy> mountPolicies;
+std::vector<common::dataStructures::MountPolicy> DummyMountPolicyCatalogue::getCachedMountPolicies() const {
+  std::vector<common::dataStructures::MountPolicy> mountPolicies;
   common::dataStructures::MountPolicy mp1;
   mp1.name = "mountPolicy";
   mp1.archivePriority = 1;

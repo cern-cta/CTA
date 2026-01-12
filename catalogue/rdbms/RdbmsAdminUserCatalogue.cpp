@@ -113,8 +113,8 @@ void RdbmsAdminUserCatalogue::deleteAdminUser(const std::string& username) {
   }
 }
 
-std::list<common::dataStructures::AdminUser> RdbmsAdminUserCatalogue::getAdminUsers() const {
-  std::list<common::dataStructures::AdminUser> admins;
+std::vector<common::dataStructures::AdminUser> RdbmsAdminUserCatalogue::getAdminUsers() const {
+  std::vector<common::dataStructures::AdminUser> admins;
   const char* const sql = R"SQL(
     SELECT
       ADMIN_USER_NAME AS ADMIN_USER_NAME,

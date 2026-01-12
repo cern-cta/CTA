@@ -10,8 +10,8 @@
 
 #include <atomic>
 #include <chrono>
-#include <list>
 #include <map>
+#include <vector>
 
 namespace cta::log {
 
@@ -108,7 +108,7 @@ public:
    * @param params   optional parameters of the message
    */
   virtual void
-  operator()(int priority, std::string_view msg, const std::list<Param>& params = std::list<Param>()) noexcept;
+  operator()(int priority, std::string_view msg, const std::vector<Param>& params = std::vector<Param>()) noexcept;
 
   /**
    * Sets the log mask
@@ -286,7 +286,7 @@ private:
    * @return            Message body
    */
   std::string
-  createMsgBody(std::string_view logLevel, std::string_view msg, const std::list<Param>& params, int pid) const;
+  createMsgBody(std::string_view logLevel, std::string_view msg, const std::vector<Param>& params, int pid) const;
 };
 
 }  // namespace cta::log

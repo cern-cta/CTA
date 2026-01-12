@@ -81,11 +81,10 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_no_archive_ro
                                                               requesterName,
                                                               comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
-    m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
-  const cta::common::dataStructures::RequesterMountRule rule = rules.front();
+  auto& rule = rules.front();
 
   ASSERT_EQ(diskInstanceName, rule.diskInstance);
   ASSERT_EQ(requesterName, rule.name);
@@ -122,7 +121,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_no_mount_rule
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -140,11 +139,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_no_mount_rule
                                                   tapePoolName,
                                                   archiveRouteComment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  auto& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -185,11 +184,10 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
                                                               requesterName,
                                                               comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
-    m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
-  const cta::common::dataStructures::RequesterMountRule rule = rules.front();
+  auto& rule = rules.front();
 
   ASSERT_EQ(diskInstanceName, rule.diskInstance);
   ASSERT_EQ(requesterName, rule.name);
@@ -205,7 +203,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -223,11 +221,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_after_cached_
                                                   tapePoolName,
                                                   archiveRouteComment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  auto& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -282,11 +280,10 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
                                                               requesterName,
                                                               comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
-    m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
-  const cta::common::dataStructures::RequesterMountRule rule = rules.front();
+  auto& rule = rules.front();
 
   ASSERT_EQ(diskInstanceName, rule.diskInstance);
   ASSERT_EQ(requesterName, rule.name);
@@ -302,7 +299,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -320,11 +317,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
                                                   tapePoolName,
                                                   archiveRouteComment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  auto& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -387,7 +384,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_gro
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -405,11 +402,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_gro
                                                   tapePoolName,
                                                   archiveRouteComment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  auto& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -474,7 +471,7 @@ TEST_P(cta_catalogue_ArchiveFileTest,
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -492,11 +489,11 @@ TEST_P(cta_catalogue_ArchiveFileTest,
                                                   tapePoolName,
                                                   archiveRouteComment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  auto& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -589,7 +586,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -607,11 +604,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, checkAndGetNextArchiveFileId_requester_mou
                                                   tapePoolName,
                                                   archiveRouteComment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  auto& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -657,11 +654,10 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_no_archive_rou
                                                               requesterName,
                                                               comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
-    m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
-  const cta::common::dataStructures::RequesterMountRule rule = rules.front();
+  auto& rule = rules.front();
 
   ASSERT_EQ(diskInstanceName, rule.diskInstance);
   ASSERT_EQ(requesterName, rule.name);
@@ -701,11 +697,10 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
                                                               requesterName,
                                                               comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
-    m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
-  const cta::common::dataStructures::RequesterMountRule rule = rules.front();
+  auto& rule = rules.front();
 
   ASSERT_EQ(diskInstanceName, rule.diskInstance);
   ASSERT_EQ(requesterName, rule.name);
@@ -721,7 +716,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -739,11 +734,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
                                                   tapePoolName,
                                                   archiveRouteComment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  auto& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -799,7 +794,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_grou
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -817,11 +812,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_grou
                                                   tapePoolName,
                                                   archiveRouteComment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  auto& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -897,7 +892,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -915,11 +910,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_requester_moun
                                                   tapePoolName,
                                                   archiveRouteComment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  auto& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -974,8 +969,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFiles_existent_storage_class_wit
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
-  const std::list<cta::common::dataStructures::StorageClass> storageClasses =
-    m_catalogue->StorageClass()->getStorageClasses();
+  const auto storageClasses = m_catalogue->StorageClass()->getStorageClasses();
 
   ASSERT_EQ(1, storageClasses.size());
 
@@ -1010,7 +1004,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -1034,11 +1028,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -1099,7 +1093,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, updateDiskFileId) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -1165,7 +1159,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -1184,7 +1178,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(1, pools.size());
 
-    auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -1202,7 +1196,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -1222,7 +1216,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -1247,7 +1241,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -1269,7 +1263,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
 
     ASSERT_EQ(2, tapes.size());
 
-    const auto vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(tape1.vid);
       ASSERT_NE(vidToTape.end(), it);
@@ -1363,7 +1357,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    const auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -1381,8 +1375,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto tapes = m_catalogue->Tape()->getTapes();
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(2, tapes.size());
     {
       auto it = vidToTape.find(tape1.vid);
@@ -1427,7 +1421,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    const auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -1445,8 +1439,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto tapes = m_catalogue->Tape()->getTapes();
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(2, tapes.size());
     {
       auto it = vidToTape.find(tape1.vid);
@@ -1800,7 +1794,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles;
     const auto archiveFiles = m_catalogue->ArchiveFile()->getFilesForRepack(vid, startFseq, maxNbFiles);
-    const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
+    const auto m = CatalogueTestUtils::archiveFileVectorToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
     for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
@@ -1858,7 +1852,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
     const auto archiveFiles = m_catalogue->ArchiveFile()->getFilesForRepack(vid, startFseq, maxNbFiles);
-    const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
+    const auto m = CatalogueTestUtils::archiveFileVectorToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles / 2, m.size());
 
     for (uint64_t i = 1; i <= nbArchiveFiles / 2; i++) {
@@ -1916,7 +1910,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const uint64_t startFseq = nbArchiveFiles / 2 + 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
     const auto archiveFiles = m_catalogue->ArchiveFile()->getFilesForRepack(vid, startFseq, maxNbFiles);
-    const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
+    const auto m = CatalogueTestUtils::archiveFileVectorToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles / 2, m.size());
 
     for (uint64_t i = nbArchiveFiles / 2 + 1; i <= nbArchiveFiles; i++) {
@@ -2054,7 +2048,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    const auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2081,7 +2075,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    const auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2107,7 +2101,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    const auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2129,7 +2123,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    const auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2151,7 +2145,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_many_archive_files) {
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    const auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2324,7 +2318,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -2343,7 +2337,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(1, pools.size());
 
-    auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2361,7 +2355,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2381,7 +2375,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2401,7 +2395,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2418,7 +2412,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
 
     ASSERT_EQ(2, tapes.size());
 
-    const auto vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(vid1);
       ASSERT_NE(vidToTape.end(), it);
@@ -2524,7 +2518,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    const auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName1);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2537,8 +2531,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto tapes = m_catalogue->Tape()->getTapes();
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(2, tapes.size());
     {
       auto it = vidToTape.find(tape1.vid);
@@ -2558,7 +2552,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const auto pools = m_catalogue->TapePool()->getTapePools();
     ASSERT_EQ(2, pools.size());
 
-    const auto tapePoolMap = CatalogueTestUtils::tapePoolListToMap(pools);
+    const auto tapePoolMap = CatalogueTestUtils::tapePoolVectorToMap(pools);
     auto tapePoolMapItor = tapePoolMap.find(tapePoolName2);
     ASSERT_NE(tapePoolMapItor, tapePoolMap.end());
     const auto& pool = tapePoolMapItor->second;
@@ -2571,8 +2565,8 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto tapes = m_catalogue->Tape()->getTapes();
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(2, tapes.size());
     {
       auto it = vidToTape.find(tape1.vid);
@@ -2776,7 +2770,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles;
     const auto archiveFiles = m_catalogue->ArchiveFile()->getFilesForRepack(vid, startFseq, maxNbFiles);
-    const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
+    const auto m = CatalogueTestUtils::archiveFileVectorToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles, m.size());
 
     for (uint64_t i = 1; i <= nbArchiveFiles; i++) {
@@ -2837,7 +2831,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const uint64_t startFseq = 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
     const auto archiveFiles = m_catalogue->ArchiveFile()->getFilesForRepack(vid, startFseq, maxNbFiles);
-    const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
+    const auto m = CatalogueTestUtils::archiveFileVectorToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles / 2, m.size());
 
     for (uint64_t i = 1; i <= nbArchiveFiles / 2; i++) {
@@ -2898,7 +2892,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, DISABLED_concurrent_filesWrittenToTape_man
     const uint64_t startFseq = nbArchiveFiles / 2 + 1;
     const uint64_t maxNbFiles = nbArchiveFiles / 2;
     const auto archiveFiles = m_catalogue->ArchiveFile()->getFilesForRepack(vid, startFseq, maxNbFiles);
-    const auto m = CatalogueTestUtils::archiveFileListToMap(archiveFiles);
+    const auto m = CatalogueTestUtils::archiveFileVectorToMap(archiveFiles);
     ASSERT_EQ(nbArchiveFiles / 2, m.size());
 
     for (uint64_t i = nbArchiveFiles / 2 + 1; i <= nbArchiveFiles; i++) {
@@ -3054,7 +3048,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -3076,11 +3070,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -3143,7 +3137,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -3181,7 +3175,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -3203,11 +3197,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -3270,7 +3264,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_1_tape_c
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -3315,7 +3309,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_file_recycle_log_dele
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -3337,7 +3331,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_file_recycle_log_dele
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
     ASSERT_EQ(1, tapes.size());
   }
 
@@ -3374,7 +3368,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_file_recycle_log_dele
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -3413,7 +3407,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -3437,11 +3431,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(2, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -3531,7 +3525,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -3587,7 +3581,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(2, m_catalogue->Tape()->getTapes().size());
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file2Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -3634,7 +3628,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -3657,11 +3651,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(2, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -3747,7 +3741,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -3803,7 +3797,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(2, m_catalogue->Tape()->getTapes().size());
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file2Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -3844,7 +3838,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -3867,11 +3861,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -3932,7 +3926,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -3988,7 +3982,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
     ASSERT_EQ(1, m_catalogue->Tape()->getTapes().size());
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file2Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(2, tape.lastFSeq);
@@ -4029,7 +4023,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -4052,11 +4046,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -4116,7 +4110,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -4173,7 +4167,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -4197,11 +4191,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(2, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -4287,7 +4281,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -4346,7 +4340,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -4370,11 +4364,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(2, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -4462,7 +4456,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -4519,7 +4513,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -4543,11 +4537,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(2, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -4631,7 +4625,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, filesWrittenToTape_1_archive_file_2_tape_c
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -4688,7 +4682,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -4712,11 +4706,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(2, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -4802,7 +4796,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -4889,7 +4883,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile) {
     ASSERT_EQ(2, m_catalogue->Tape()->getTapes().size());
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file2Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -4985,7 +4979,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -5009,11 +5003,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(2, tapes.size());
 
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     {
       auto it = vidToTape.find(m_tape1.vid);
       const cta::common::dataStructures::Tape& tape = it->second;
@@ -5097,7 +5091,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file1Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -5184,7 +5178,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, deleteArchiveFile_by_archive_file_id_of_an
     ASSERT_EQ(2, m_catalogue->Tape()->getTapes().size());
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = file2Written.vid;
-    std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
     const cta::common::dataStructures::Tape& tape = tapes.front();
     ASSERT_EQ(1, tape.lastFSeq);
@@ -5306,7 +5300,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_ignore_repack_
   const std::string tapePoolName_default_2 = "tape_pool_default_2";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           tapePoolName_default_1,
                                           m_vo.name,
@@ -5352,7 +5346,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getArchiveFileQueueCriteria_ignore_repack_
                                                   tapePoolName_default_2,
                                                   "Create archive route for default 2");
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(3, routes.size());
 
@@ -5403,7 +5397,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -5491,11 +5485,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.checkMissingFileCopies = true;
     searchCriteria.missingFileCopiesMinAgeSecs = 0;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
     ASSERT_EQ(2, tapes.size());
 
-    const auto vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     const cta::common::dataStructures::Tape& tape_1 = vidToTape.at(m_tape1.vid);
     ASSERT_EQ(m_tape1.vid, tape_1.vid);
     const cta::common::dataStructures::Tape& tape_2 = vidToTape.at(m_tape2.vid);
@@ -5533,11 +5527,11 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.checkMissingFileCopies = true;
     searchCriteria.missingFileCopiesMinAgeSecs = 0;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
     ASSERT_EQ(1, tapes.size());
 
-    const auto vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     const cta::common::dataStructures::Tape& tape_2 = vidToTape.at(m_tape2.vid);
     ASSERT_EQ(m_tape2.vid, tape_2.vid);
   }
@@ -5573,7 +5567,7 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.checkMissingFileCopies = true;
     searchCriteria.missingFileCopiesMinAgeSecs = 0;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
     ASSERT_TRUE(tapes.empty());
   }

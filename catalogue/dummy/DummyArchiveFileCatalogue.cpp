@@ -37,7 +37,7 @@ DummyArchiveFileCatalogue::getArchiveFileCopyForDeletion(const TapeFileSearchCri
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::ArchiveFile>
+std::vector<common::dataStructures::ArchiveFile>
 DummyArchiveFileCatalogue::getFilesForRepack(const std::string& vid,
                                              const uint64_t startFSeq,
                                              const uint64_t maxNbFiles) const {

@@ -8,8 +8,6 @@
 #include "CtaAdminResponseStream.hpp"
 #include "common/dataStructures/QueueAndMountSummary.hpp"
 
-#include <list>
-
 #include "cta_admin.pb.h"
 
 namespace cta::frontend {
@@ -27,8 +25,8 @@ public:
 private:
   cta::log::LogContext& m_lc;
   std::optional<std::string> m_schedulerBackendName;
-  std::vector<cta::common::dataStructures::QueueAndMountSummary> m_queuesAndMountsVector;
-  std::size_t m_queuesAndMountsVectorIdx = 0;
+  std::vector<cta::common::dataStructures::QueueAndMountSummary> m_queuesAndMounts;
+  std::size_t m_queuesAndMountsIdx = 0;
 };
 
 }  // namespace cta::frontend

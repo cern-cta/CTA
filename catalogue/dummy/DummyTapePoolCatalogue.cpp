@@ -20,7 +20,7 @@ void DummyTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
                                             const std::string& vo,
                                             const uint64_t nbPartialTapes,
                                             const std::optional<std::string>& encryptionKeyNameOpt,
-                                            const std::list<std::string>& supply_list,
+                                            const std::vector<std::string>& supply_list,
                                             const std::string& comment) {
   throw exception::NotImplementedException();
 }
@@ -29,7 +29,7 @@ void DummyTapePoolCatalogue::deleteTapePool(const std::string& name) {
   throw exception::NotImplementedException();
 }
 
-std::list<TapePool> DummyTapePoolCatalogue::getTapePools(const TapePoolSearchCriteria& searchCriteria) const {
+std::vector<TapePool> DummyTapePoolCatalogue::getTapePools(const TapePoolSearchCriteria& searchCriteria) const {
   throw exception::NotImplementedException();
 }
 
@@ -63,7 +63,7 @@ void DummyTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
 
 void DummyTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                                   const std::string& name,
-                                                  const std::list<std::string>& supply_list) {
+                                                  const std::vector<std::string>& supply_list) {
   throw exception::NotImplementedException();
 }
 

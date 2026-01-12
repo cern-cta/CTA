@@ -143,8 +143,8 @@ void RdbmsStorageClassCatalogue::deleteStorageClass(const std::string& storageCl
   }
 }
 
-std::list<common::dataStructures::StorageClass> RdbmsStorageClassCatalogue::getStorageClasses() const {
-  std::list<common::dataStructures::StorageClass> storageClasses;
+std::vector<common::dataStructures::StorageClass> RdbmsStorageClassCatalogue::getStorageClasses() const {
+  std::vector<common::dataStructures::StorageClass> storageClasses;
   const char* const sql = R"SQL(
     SELECT
       STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,

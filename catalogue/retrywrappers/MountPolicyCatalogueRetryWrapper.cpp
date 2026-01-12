@@ -33,7 +33,7 @@ void MountPolicyCatalogueRetryWrapper::createMountPolicy(const common::dataStruc
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::MountPolicy> MountPolicyCatalogueRetryWrapper::getMountPolicies() const {
+std::vector<common::dataStructures::MountPolicy> MountPolicyCatalogueRetryWrapper::getMountPolicies() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->MountPolicy()->getMountPolicies(); },
@@ -48,7 +48,7 @@ MountPolicyCatalogueRetryWrapper::getMountPolicy(const std::string& mountPolicyN
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::MountPolicy> MountPolicyCatalogueRetryWrapper::getCachedMountPolicies() const {
+std::vector<common::dataStructures::MountPolicy> MountPolicyCatalogueRetryWrapper::getCachedMountPolicies() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->MountPolicy()->getCachedMountPolicies(); },

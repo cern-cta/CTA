@@ -279,7 +279,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                               SchedulerDatabase::PurposeGetMountInfo /* not used */,
                               log::LogContext& logContext) {
   utils::Timer t, t2;
-  std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
+  const auto mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
   // Walk the archive queues for USER for statistics
   for (auto& aqp : re.dumpArchiveQueues(common::dataStructures::JobQueueType::JobsToTransferForUser)) {
     objectstore::ArchiveQueue aqueue(aqp.address, m_objectStore);

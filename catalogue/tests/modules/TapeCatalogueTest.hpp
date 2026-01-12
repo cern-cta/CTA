@@ -43,7 +43,7 @@ protected:
   const cta::catalogue::CreateTapeAttributes m_tape3;
 
   std::map<std::string, cta::common::dataStructures::Tape>
-  tapeListToMap(const std::list<cta::common::dataStructures::Tape>& listOfTapes);
+  tapeVectorToMap(const std::vector<cta::common::dataStructures::Tape>& listOfTapes);
 };
 
 }  // namespace unitTests

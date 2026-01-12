@@ -7,8 +7,6 @@
 
 #include "CtaAdminResponseStream.hpp"
 
-#include <list>
-
 #include "cta_admin.pb.h"
 
 namespace cta::frontend {
@@ -25,7 +23,8 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<cta::xrd::Data> m_repackItems;
+  std::vector<cta::xrd::Data> m_repackItems;
+  std::size_t m_repackItemsIdx = 0;
   std::string m_schedulerBackendName;
 
   void collectRepacks(const std::optional<std::string>& vid);

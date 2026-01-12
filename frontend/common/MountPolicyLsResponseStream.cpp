@@ -14,7 +14,7 @@ MountPolicyLsResponseStream::MountPolicyLsResponseStream(cta::catalogue::Catalog
       m_mountPolicies(catalogue.MountPolicy()->getMountPolicies()) {}
 
 bool MountPolicyLsResponseStream::isDone() {
-  return m_mountPolicies.empty();
+  return m_mountPoliciesIdx >= m_mountPolicies.size();
 }
 
 cta::xrd::Data MountPolicyLsResponseStream::next() {
@@ -22,8 +22,7 @@ cta::xrd::Data MountPolicyLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto mp = m_mountPolicies.front();
-  m_mountPolicies.pop_front();
+  const auto mp = m_mountPolicies[m_mountPoliciesIdx++];
 
   cta::xrd::Data data;
   auto mpItem = data.mutable_mpls_item();

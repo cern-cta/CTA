@@ -7,8 +7,8 @@
 
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -46,7 +46,7 @@ public:
    */
   virtual void deleteStorageClass(const std::string& storageClassName) = 0;
 
-  virtual std::list<common::dataStructures::StorageClass> getStorageClasses() const = 0;
+  virtual std::vector<common::dataStructures::StorageClass> getStorageClasses() const = 0;
 
   virtual common::dataStructures::StorageClass getStorageClass(const std::string& name) const = 0;
 

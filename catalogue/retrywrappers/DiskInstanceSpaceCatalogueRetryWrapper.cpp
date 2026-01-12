@@ -49,7 +49,7 @@ void DiskInstanceSpaceCatalogueRetryWrapper::createDiskInstanceSpace(
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::DiskInstanceSpace>
+std::vector<common::dataStructures::DiskInstanceSpace>
 DiskInstanceSpaceCatalogueRetryWrapper::getAllDiskInstanceSpaces() const {
   return retryOnLostConnection(
     m_log,

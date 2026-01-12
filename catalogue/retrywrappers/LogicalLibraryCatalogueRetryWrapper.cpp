@@ -41,7 +41,7 @@ void LogicalLibraryCatalogueRetryWrapper::deleteLogicalLibrary(const std::string
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::LogicalLibrary> LogicalLibraryCatalogueRetryWrapper::getLogicalLibraries() const {
+std::vector<common::dataStructures::LogicalLibrary> LogicalLibraryCatalogueRetryWrapper::getLogicalLibraries() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->LogicalLibrary()->getLogicalLibraries(); },

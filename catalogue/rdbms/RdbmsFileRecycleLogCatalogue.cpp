@@ -288,11 +288,11 @@ void RdbmsFileRecycleLogCatalogue::copyArchiveFileToFileRecycleLog(
   }
 }
 
-std::list<InsertFileRecycleLog> RdbmsFileRecycleLogCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(
+std::vector<InsertFileRecycleLog> RdbmsFileRecycleLogCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(
   rdbms::Conn& conn,
   const common::dataStructures::TapeFile& tapefile,
   const uint64_t archiveFileId) const {
-  std::list<InsertFileRecycleLog> fileRecycleLogsToInsert;
+  std::vector<InsertFileRecycleLog> fileRecycleLogsToInsert;
   //First, get the file to insert on the FILE_RECYCLE_LOG table
   const char* const sql = R"SQL(
     SELECT

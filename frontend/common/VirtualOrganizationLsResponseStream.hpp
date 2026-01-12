@@ -8,8 +8,6 @@
 #include "CtaAdminResponseStream.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 
-#include <list>
-
 #include "cta_admin.pb.h"
 
 namespace cta::frontend {
@@ -24,7 +22,8 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<cta::common::dataStructures::VirtualOrganization> m_virtualOrganizations;
+  std::vector<cta::common::dataStructures::VirtualOrganization> m_virtualOrganizations;
+  std::size_t m_virtualOrganizationsIdx = 0;
 };
 
 }  // namespace cta::frontend

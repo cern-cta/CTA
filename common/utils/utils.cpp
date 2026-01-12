@@ -608,13 +608,13 @@ std::string getEnv(const std::string& variableName) {
   return std::string(envVarC);
 }
 
-std::list<std::string> commaSeparatedStringToList(const std::string& commaSeparated) {
+std::vector<std::string> commaSeparatedStringToVector(const std::string& commaSeparated) {
   // Parse the elements between commas, while trimming any whitespaces before and after each string
   std::regex pattern_between_commas(R"rgx(\s*([^,]*[^\s,])\s*,?)rgx");
   auto it_begin = std::sregex_iterator(commaSeparated.begin(), commaSeparated.end(), pattern_between_commas);
   auto it_end = std::sregex_iterator();
 
-  std::list<std::string> result;
+  std::vector<std::string> result;
   for (std::sregex_iterator it = it_begin; it != it_end; ++it) {
     std::smatch match = *it;
     result.emplace_back(match[1]);
@@ -622,7 +622,7 @@ std::list<std::string> commaSeparatedStringToList(const std::string& commaSepara
   return result;
 }
 
-std::string listToCommaSeparatedString(const std::list<std::string>& list) {
+std::string toCommaSeparatedString(const std::vector<std::string>& list) {
   std::ostringstream oss;
   bool is_first_value = true;
   for (const auto& value : list) {

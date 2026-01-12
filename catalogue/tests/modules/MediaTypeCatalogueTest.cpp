@@ -39,8 +39,8 @@ void cta_catalogue_MediaTypeTest::TearDown() {
   m_catalogue.reset();
 }
 
-std::map<std::string, cta::catalogue::MediaTypeWithLogs> cta_catalogue_MediaTypeTest::mediaTypeWithLogsListToMap(
-  const std::list<cta::catalogue::MediaTypeWithLogs>& listOfMediaTypes) {
+std::map<std::string, cta::catalogue::MediaTypeWithLogs> cta_catalogue_MediaTypeTest::mediaTypeWithLogsVectorToMap(
+  const std::vector<cta::catalogue::MediaTypeWithLogs>& listOfMediaTypes) {
   std::map<std::string, cta::catalogue::MediaTypeWithLogs> m;
 
   for (auto& mediaType : listOfMediaTypes) {
@@ -150,7 +150,7 @@ TEST_P(cta_catalogue_MediaTypeTest, deleteMediaType_usedByTapes) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -243,7 +243,7 @@ TEST_P(cta_catalogue_MediaTypeTest, modifyMediaTypeName_newNameAlreadyExists) {
 
     ASSERT_EQ(2, mediaTypes.size());
 
-    const auto mediaTypeMap = mediaTypeWithLogsListToMap(mediaTypes);
+    const auto mediaTypeMap = mediaTypeWithLogsVectorToMap(mediaTypes);
 
     ASSERT_EQ(2, mediaTypeMap.size());
 
@@ -754,7 +754,7 @@ TEST_P(cta_catalogue_MediaTypeTest, getMediaTypeByVid) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);

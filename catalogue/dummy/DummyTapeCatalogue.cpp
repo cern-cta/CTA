@@ -10,7 +10,6 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
-#include <list>
 #include <map>
 #include <memory>
 #include <set>
@@ -31,7 +30,7 @@ TapeItor DummyTapeCatalogue::getTapesItor(const TapeSearchCriteria& searchCriter
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::Tape> DummyTapeCatalogue::getTapes(const TapeSearchCriteria& searchCriteria) const {
+std::vector<common::dataStructures::Tape> DummyTapeCatalogue::getTapes(const TapeSearchCriteria& searchCriteria) const {
   throw exception::NotImplementedException();
 }
 
@@ -165,7 +164,7 @@ void DummyTapeCatalogue::noSpaceLeftOnTape(const std::string& vid) {
   throw exception::NotImplementedException();
 }
 
-std::list<TapeForWriting> DummyTapeCatalogue::getTapesForWriting(const std::string& logicalLibraryName) const {
+std::vector<TapeForWriting> DummyTapeCatalogue::getTapesForWriting(const std::string& logicalLibraryName) const {
   throw exception::NotImplementedException();
 }
 

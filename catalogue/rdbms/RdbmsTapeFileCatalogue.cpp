@@ -133,7 +133,7 @@ void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn& conn,
                                             const uint64_t archiveFileId) {
   const auto fileRecycleLogCatalogue =
     static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
-  std::list<InsertFileRecycleLog> insertedFilesRecycleLog =
+  auto insertedFilesRecycleLog =
     fileRecycleLogCatalogue->insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn, tapeFile, archiveFileId);
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -231,27 +231,27 @@ RdbmsTapeFileCatalogue::prepareToRetrieveFile(const std::string& diskInstanceNam
     // if the archive file was not found on tape in state ACTIVE or DISABLED, check if it is temporarily unavailable
     if (nullptr == archiveFile.get()) {
       exception::UserError ex;
-      auto tapeFileStateList = archiveFileCatalogue->getTapeFileStateListForArchiveFileId(conn, archiveFileId);
-      if (tapeFileStateList.empty()) {
+      auto tapeFileStates = archiveFileCatalogue->getTapeFileStatesForArchiveFileId(conn, archiveFileId);
+      if (tapeFileStates.empty()) {
         ex.getMessage() << "File with archive file ID " << archiveFileId << " does not exist in CTA namespace";
         throw ex;
       }
       {
         const auto nonBrokenState =
-          std::find_if(std::begin(tapeFileStateList),
-                       std::end(tapeFileStateList),
+          std::find_if(std::begin(tapeFileStates),
+                       std::end(tapeFileStates),
                        [](const std::pair<std::string, std::string>& state) {
                          return (state.second != "BROKEN") && (state.second != "BROKEN_PENDING")
                                 && (state.second != "EXPORTED") && (state.second != "EXPORTED_PENDING");
                        });
-        if (nonBrokenState != std::end(tapeFileStateList)) {
+        if (nonBrokenState != std::end(tapeFileStates)) {
           ex.getMessage() << "WARNING: The requested file is on tape " << nonBrokenState->first
                           << ", which is temporarily unavailable (" << nonBrokenState->second
                           << "). Please retry later.";
           throw ex;
         }
       }
-      const auto& [brokenTape, brokenState] = tapeFileStateList.front();
+      const auto& [brokenTape, brokenState] = tapeFileStates.front();
       //All tape files are on broken tapes, just generate an error about the first
       ex.getMessage() << "ERROR: The requested file is on tape " << brokenTape << ", which is permanently unavailable ("
                       << brokenState << ").";

@@ -144,8 +144,8 @@ void RdbmsMediaTypeCatalogue::deleteMediaType(const std::string& name) {
   }
 }
 
-std::list<MediaTypeWithLogs> RdbmsMediaTypeCatalogue::getMediaTypes() const {
-  std::list<MediaTypeWithLogs> mediaTypes;
+std::vector<MediaTypeWithLogs> RdbmsMediaTypeCatalogue::getMediaTypes() const {
+  std::vector<MediaTypeWithLogs> mediaTypes;
   const char* const sql = R"SQL(
     SELECT
       MEDIA_TYPE_NAME AS MEDIA_TYPE_NAME,

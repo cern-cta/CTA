@@ -7,8 +7,8 @@
 
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -31,7 +31,7 @@ public:
 
   virtual void deleteAdminUser(const std::string& username) = 0;
 
-  virtual std::list<common::dataStructures::AdminUser> getAdminUsers() const = 0;
+  virtual std::vector<common::dataStructures::AdminUser> getAdminUsers() const = 0;
 
   virtual void modifyAdminUserComment(const common::dataStructures::SecurityIdentity& admin,
                                       const std::string& username,

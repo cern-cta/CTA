@@ -88,7 +88,7 @@ void CatalogueTestUtils::wipeDatabase(cta::catalogue::Catalogue* catalogue, cta:
   // an SQLite file database, so copy all of its results into a list in
   // order to release the lock before moving on to deleting database rows
   auto afItor = catalogue->ArchiveFile()->getArchiveFilesItor();
-  std::list<cta::common::dataStructures::ArchiveFile> archiveFiles;
+  std::vector<cta::common::dataStructures::ArchiveFile> archiveFiles;
   while (afItor.hasMore()) {
     archiveFiles.push_back(afItor.next());
   }
@@ -427,12 +427,12 @@ cta::catalogue::CreateMountPolicyAttributes CatalogueTestUtils::getMountPolicy2(
 }
 
 std::map<std::string, cta::catalogue::TapePool>
-CatalogueTestUtils::tapePoolListToMap(const std::list<cta::catalogue::TapePool>& listOfTapePools) {
+CatalogueTestUtils::tapePoolVectorToMap(const std::vector<cta::catalogue::TapePool>& vectorOfTapePools) {
   using namespace cta;
 
   std::map<std::string, cta::catalogue::TapePool> m;
 
-  for (auto& tapePool : listOfTapePools) {
+  for (auto& tapePool : vectorOfTapePools) {
     if (m.contains(tapePool.name)) {
       exception::Exception ex;
       ex.getMessage() << "Tape pool " << tapePool.name << " is a duplicate";
@@ -445,12 +445,12 @@ CatalogueTestUtils::tapePoolListToMap(const std::list<cta::catalogue::TapePool>&
 }
 
 std::map<std::string, cta::common::dataStructures::Tape>
-CatalogueTestUtils::tapeListToMap(const std::list<cta::common::dataStructures::Tape>& listOfTapes) {
+CatalogueTestUtils::tapeVectorToMap(const std::vector<cta::common::dataStructures::Tape>& vectorOfTapes) {
   using namespace cta;
 
   std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
 
-  for (auto& tape : listOfTapes) {
+  for (auto& tape : vectorOfTapes) {
     if (vidToTape.contains(tape.vid)) {
       throw exception::Exception(std::string("Duplicate VID: value=") + tape.vid);
     }
@@ -477,13 +477,13 @@ CatalogueTestUtils::archiveFileItorToMap(cta::catalogue::ArchiveFileItor& itor) 
   return m;
 }
 
-std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils::archiveFileListToMap(
-  const std::list<cta::common::dataStructures::ArchiveFile>& listOfArchiveFiles) {
+std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils::archiveFileVectorToMap(
+  const std::vector<cta::common::dataStructures::ArchiveFile>& vectorOfArchiveFiles) {
   using namespace cta;
 
   std::map<uint64_t, common::dataStructures::ArchiveFile> archiveIdToArchiveFile;
 
-  for (auto& archiveFile : listOfArchiveFiles) {
+  for (auto& archiveFile : vectorOfArchiveFiles) {
     if (archiveIdToArchiveFile.contains(archiveFile.archiveFileID)) {
       throw exception::Exception(std::string("Duplicate archive file ID: value=")
                                  + std::to_string(archiveFile.archiveFileID));
@@ -494,13 +494,13 @@ std::map<uint64_t, cta::common::dataStructures::ArchiveFile> CatalogueTestUtils:
   return archiveIdToArchiveFile;
 }
 
-std::map<std::string, cta::common::dataStructures::AdminUser>
-CatalogueTestUtils::adminUserListToMap(const std::list<cta::common::dataStructures::AdminUser>& listOfAdminUsers) {
+std::map<std::string, cta::common::dataStructures::AdminUser> CatalogueTestUtils::adminUserVectorToMap(
+  const std::vector<cta::common::dataStructures::AdminUser>& vectorOfAdminUsers) {
   using namespace cta;
 
   std::map<std::string, common::dataStructures::AdminUser> m;
 
-  for (auto& adminUser : listOfAdminUsers) {
+  for (auto& adminUser : vectorOfAdminUsers) {
     if (m.contains(adminUser.name)) {
       exception::Exception ex;
       ex.getMessage() << "Admin user " << adminUser.name << " is a duplicate";

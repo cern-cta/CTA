@@ -8,7 +8,6 @@
 #include "CtaAdminResponseStream.hpp"
 #include "common/dataStructures/TapeDrive.hpp"
 
-#include <list>
 #include <unordered_map>
 
 #include "cta_admin.pb.h"
@@ -29,7 +28,8 @@ public:
 private:
   cta::log::LogContext& m_lc;
 
-  std::list<common::dataStructures::TapeDrive> m_tapeDrives;
+  std::vector<common::dataStructures::TapeDrive> m_tapeDrives;
+  std::size_t m_tapeDrivesIdx = 0;
   std::unordered_map<std::string, std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>>
     m_tapeDriveNameConfigMap;
   bool m_listAllDrives = false;

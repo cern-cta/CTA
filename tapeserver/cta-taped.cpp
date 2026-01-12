@@ -44,8 +44,8 @@ static int exceptionThrowingMain(const cta::common::CmdLineParams& commandLine, 
   using namespace cta::tape::daemon::common;
 
   {
-    std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
-    params.splice(params.end(), commandLine.toLogParams());
+    auto params = commandLine.toLogParams();
+    params.emplace_back("version", CTA_VERSION);
     log(log::INFO, "Starting cta-taped", params);
   }
 
@@ -72,7 +72,7 @@ static int exceptionThrowingMain(const cta::common::CmdLineParams& commandLine, 
   // Adjust log mask to the log level potentionally set in the configuration file
   log.setLogMask(globalConfig.logMask.value());
   {
-    std::list<cta::log::Param> params = {cta::log::Param("logMask", globalConfig.logMask.value())};
+    std::vector<cta::log::Param> params = {cta::log::Param("logMask", globalConfig.logMask.value())};
     log(log::INFO, "Set log mask", params);
   }
 
@@ -114,7 +114,7 @@ int main(const int argc, char** const argv) {
     globalConfig =
       tape::daemon::common::TapedConfiguration::createFromConfigPath(commandLine->configFileLocation, *logPtr);
   } catch (const exception::Exception& ex) {
-    std::list<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
+    std::vector<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
     (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
     return EXIT_FAILURE;
   }
@@ -130,7 +130,7 @@ int main(const int argc, char** const argv) {
                 {"capabilites", cta::server::ProcessCap::getProcText()}
     });
   } catch (const cta::exception::Exception& ex) {
-    std::list<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
+    std::vector<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
     (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
     return EXIT_FAILURE;
   }
@@ -153,7 +153,7 @@ int main(const int argc, char** const argv) {
     cta::server::ProcessCap::setProcText("cap_sys_rawio+p");
 
   } catch (exception::Exception& ex) {
-    std::list<log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
+    std::vector<log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
     (*logPtr)(log::ERR, "Caught an unexpected CTA, cta-taped cannot start", params);
     return EXIT_FAILURE;
   }
@@ -206,7 +206,7 @@ int main(const int argc, char** const argv) {
       // taped is a special case where we only do initTelemetry after the process name has been set
       cta::telemetry::initTelemetryConfig(telemetryConfig);
     } catch (exception::Exception& ex) {
-      std::list<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
+      std::vector<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
       log(log::ERR, "Failed to instantiate OpenTelemetry", params);
       cta::log::LogContext lc(log);
       cta::telemetry::shutdownTelemetry(lc);
@@ -217,11 +217,11 @@ int main(const int argc, char** const argv) {
   try {
     programRc = cta::taped::exceptionThrowingMain(*commandLine, log);
   } catch (exception::Exception& ex) {
-    std::list<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
+    std::vector<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
     log(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
     sleep(1);
   } catch (std::exception& se) {
-    std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
+    std::vector<cta::log::Param> params = {cta::log::Param("what", se.what())};
     log(log::ERR, "Caught an unexpected standard exception, cta-taped cannot start", params);
     sleep(1);
   } catch (...) {

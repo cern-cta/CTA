@@ -51,7 +51,7 @@ void cta_catalogue_TapeTest::TearDown() {
 }
 
 std::map<std::string, cta::common::dataStructures::Tape>
-cta_catalogue_TapeTest::tapeListToMap(const std::list<cta::common::dataStructures::Tape>& listOfTapes) {
+cta_catalogue_TapeTest::tapeVectorToMap(const std::vector<cta::common::dataStructures::Tape>& listOfTapes) {
   std::map<std::string, cta::common::dataStructures::Tape> vidToTape;
 
   for (auto& tape : listOfTapes) {
@@ -74,7 +74,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_1_tape_with_write_log_1_tape_without) 
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -106,7 +106,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_1_tape_with_write_log_1_tape_without) 
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const auto tapes = tapeListToMap(m_catalogue->Tape()->getTapes());
+    const auto tapes = tapeVectorToMap(m_catalogue->Tape()->getTapes());
     ASSERT_EQ(1, tapes.size());
 
     const auto tapeItor = tapes.find(m_tape1.vid);
@@ -179,9 +179,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_1_tape_with_write_log_1_tape_without) 
     std::vector<std::string> diskFileIds;
     diskFileIds.push_back("5678");
     searchCriteria.diskFileIds = diskFileIds;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = tapeListToMap(tapes);
+    const auto vidToTape = tapeVectorToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
     ASSERT_EQ(m_tape1.vid, vidToTape.begin()->first);
     ASSERT_EQ(m_tape1.vid, vidToTape.begin()->second.vid);
@@ -203,7 +203,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_1_tape_with_write_log_1_tape_without) 
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
 
   {
-    const auto tapes = tapeListToMap(m_catalogue->Tape()->getTapes());
+    const auto tapes = tapeVectorToMap(m_catalogue->Tape()->getTapes());
     ASSERT_EQ(2, tapes.size());
 
     const auto tapeItor = tapes.find(m_tape2.vid);
@@ -253,7 +253,7 @@ TEST_P(cta_catalogue_TapeTest, deleteTape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -273,7 +273,7 @@ TEST_P(cta_catalogue_TapeTest, deleteTape) {
 
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+  const auto tapes = m_catalogue->Tape()->getTapes();
 
   ASSERT_EQ(1, tapes.size());
 
@@ -315,7 +315,7 @@ TEST_P(cta_catalogue_TapeTest, writeToTapeAndCheckMasterBytesAndFiles) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -335,7 +335,7 @@ TEST_P(cta_catalogue_TapeTest, writeToTapeAndCheckMasterBytesAndFiles) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -406,7 +406,7 @@ TEST_P(cta_catalogue_TapeTest, writeToTapeAndCheckMasterBytesAndFiles) {
   m_catalogue->TapeFile()->filesWrittenToTape(fileWrittenSet);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -449,7 +449,7 @@ TEST_P(cta_catalogue_TapeTest, deleteNonEmptyTape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -469,7 +469,7 @@ TEST_P(cta_catalogue_TapeTest, deleteNonEmptyTape) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -523,7 +523,7 @@ TEST_P(cta_catalogue_TapeTest, deleteNonEmptyTape) {
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -590,7 +590,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeMediaType) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
@@ -618,7 +618,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeMediaType) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -649,7 +649,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeMediaType) {
   m_catalogue->Tape()->modifyTapeMediaType(m_admin, m_tape1.vid, anotherMediaType.name);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -683,7 +683,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVendor) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -705,7 +705,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVendor) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -736,7 +736,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVendor) {
   m_catalogue->Tape()->modifyTapeVendor(m_admin, m_tape1.vid, anotherVendor);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -769,7 +769,7 @@ TEST_P(cta_catalogue_TapeTest, modifyPurchaseOrder) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -793,7 +793,7 @@ TEST_P(cta_catalogue_TapeTest, modifyPurchaseOrder) {
   m_catalogue->Tape()->modifyPurchaseOrder(m_admin, m_tape1.vid, anotherPurchaseOrder);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -810,7 +810,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByEmptyPurchaseOrder) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -851,7 +851,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByPurchaseOrder) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -892,7 +892,7 @@ TEST_P(cta_catalogue_TapeTest, modifyToEmptyPurchaseOrder) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -916,7 +916,7 @@ TEST_P(cta_catalogue_TapeTest, modifyToEmptyPurchaseOrder) {
   m_catalogue->Tape()->modifyPurchaseOrder(m_admin, m_tape1.vid, emptyPurchaseOrder);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -934,7 +934,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeLogicalLibraryName) {
   const std::string anotherLogicalLibraryName = "another_logical_library_name";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -961,7 +961,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeLogicalLibraryName) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -992,7 +992,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeLogicalLibraryName) {
   m_catalogue->Tape()->modifyTapeLogicalLibraryName(m_admin, m_tape1.vid, anotherLogicalLibraryName);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1037,7 +1037,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeTapePoolName) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string anotherTapePoolName = "another_tape_pool_name";
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -1067,7 +1067,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeTapePoolName) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1098,7 +1098,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeTapePoolName) {
   m_catalogue->Tape()->modifyTapeTapePoolName(m_admin, m_tape1.vid, anotherTapePoolName);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1129,7 +1129,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeTapePoolName_nonExistentTape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
                                                       m_tape1.logicalLibraryName,
@@ -1155,7 +1155,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1177,7 +1177,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1209,7 +1209,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName) {
   m_catalogue->Tape()->modifyTapeEncryptionKeyName(m_admin, m_tape1.vid, modifiedEncryptionKeyName);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1241,7 +1241,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName_emptyStringEncryption
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1263,7 +1263,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName_emptyStringEncryption
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1295,7 +1295,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName_emptyStringEncryption
   m_catalogue->Tape()->modifyTapeEncryptionKeyName(m_admin, m_tape1.vid, modifiedEncryptionKeyName);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1327,7 +1327,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVerificationStatus) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1349,7 +1349,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVerificationStatus) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1382,7 +1382,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVerificationStatus) {
   m_catalogue->Tape()->modifyTapeVerificationStatus(m_admin, m_tape1.vid, modifiedVerificationStatus);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1411,7 +1411,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVerificationStatus) {
   // Clear verification status
   m_catalogue->Tape()->modifyTapeVerificationStatus(m_admin, m_tape1.vid, "");
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1439,7 +1439,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeState_nonExistentState) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1470,7 +1470,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeState_nonExistentPrevState) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
                                                       m_tape1.logicalLibraryName,
@@ -1498,7 +1498,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeState_wrongPrevState) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
                                                       m_tape1.logicalLibraryName,
@@ -1529,7 +1529,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeState_noReasonWhenNotActive) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1571,7 +1571,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeState) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1643,7 +1643,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeStateResetReasonWhenBackToActiveState) 
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1695,7 +1695,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesSearchCriteriaByState) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1766,7 +1766,7 @@ TEST_P(cta_catalogue_TapeTest, tapeLabelled) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1788,7 +1788,7 @@ TEST_P(cta_catalogue_TapeTest, tapeLabelled) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1820,7 +1820,7 @@ TEST_P(cta_catalogue_TapeTest, tapeLabelled) {
   m_catalogue->Tape()->tapeLabelled(m_tape1.vid, labelDrive);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1858,7 +1858,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForArchive) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1880,7 +1880,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForArchive) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1914,7 +1914,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForArchive) {
   m_catalogue->Tape()->tapeMountedForArchive(m_tape1.vid, modifiedDrive);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1947,7 +1947,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForArchive) {
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -1987,7 +1987,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForRetrieve) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2009,7 +2009,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForRetrieve) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2043,7 +2043,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForRetrieve) {
   m_catalogue->Tape()->tapeMountedForRetrieve(m_tape1.vid, modifiedDrive);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2076,7 +2076,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForRetrieve) {
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2116,7 +2116,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeFull) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2138,7 +2138,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeFull) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2169,7 +2169,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeFull) {
   m_catalogue->Tape()->setTapeFull(m_admin, m_tape1.vid, true);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2204,7 +2204,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeDirty) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2226,7 +2226,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeDirty) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2258,7 +2258,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeDirty) {
   m_catalogue->Tape()->setTapeDirty(m_admin, m_tape1.vid, false);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2294,7 +2294,7 @@ TEST_P(cta_catalogue_TapeTest, noSpaceLeftOnTape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2316,7 +2316,7 @@ TEST_P(cta_catalogue_TapeTest, noSpaceLeftOnTape) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2347,7 +2347,7 @@ TEST_P(cta_catalogue_TapeTest, noSpaceLeftOnTape) {
   m_catalogue->Tape()->noSpaceLeftOnTape(m_tape1.vid);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2382,7 +2382,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeIsFromCastorInUnitTests) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2404,7 +2404,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeIsFromCastorInUnitTests) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2435,7 +2435,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeIsFromCastorInUnitTests) {
   m_catalogue->Tape()->setTapeIsFromCastorInUnitTests(m_tape1.vid);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2464,7 +2464,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeIsFromCastorInUnitTests) {
   m_catalogue->Tape()->setTapeIsFromCastorInUnitTests(m_tape1.vid);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -2499,7 +2499,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesForWriting) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2541,7 +2541,7 @@ TEST_P(cta_catalogue_TapeTest, getTapeLabelFormat) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2561,7 +2561,7 @@ TEST_P(cta_catalogue_TapeTest, getTapeLabelFormat) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   // Get Tape
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+  const auto tapes = m_catalogue->Tape()->getTapes();
   ASSERT_EQ(1, tapes.size());
   const cta::common::dataStructures::Tape tape = tapes.front();
   ASSERT_EQ(m_tape1.vid, tape.vid);
@@ -2576,7 +2576,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesForWritingOrderedByDataInBytesDesc) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2648,7 +2648,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesForWriting_disabled_tape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2683,7 +2683,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesForWriting_full_tape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   auto tape1 = m_tape1;
   tape1.full = true;
@@ -2719,7 +2719,7 @@ TEST_P(cta_catalogue_TapeTest, DISABLED_getTapesForWriting_no_labelled_tapes) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2750,7 +2750,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeActiveState) {
   const std::string tapePoolName1 = "tape_pool_name_1";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
 
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -2788,7 +2788,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeDisabledState) {
   const std::string tapePoolName1 = "tape_pool_name_1";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
 
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -2826,7 +2826,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeBrokenState) {
   const std::string tapePoolName1 = "tape_pool_name_1";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
 
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -2864,7 +2864,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTapeNotAllowedStates) {
   const std::string tapePoolName1 = "tape_pool_name_1";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
 
   cta::log::LogContext dummyLc(m_dummyLog);
@@ -2942,7 +2942,7 @@ TEST_P(cta_catalogue_TapeTest, getTapes_non_existent_tape_pool) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -2978,7 +2978,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_emptyStringVid) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -3018,7 +3018,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_emptyStringVid) {
 TEST_P(cta_catalogue_TapeTest, createTape_emptyStringMediaType) {
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -3050,7 +3050,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_emptyStringMediaType) {
 TEST_P(cta_catalogue_TapeTest, createTape_emptyStringVendor) {
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
@@ -3084,7 +3084,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_emptyStringVendor) {
 TEST_P(cta_catalogue_TapeTest, createTape_emptyStringLogicalLibraryName) {
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
@@ -3134,7 +3134,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_emptyStringTapePoolName) {
 TEST_P(cta_catalogue_TapeTest, createTape_non_existent_logical_library) {
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -3166,7 +3166,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_9_exabytes_capacity) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -3249,7 +3249,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_same_twice) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -3316,7 +3316,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_StateDoesNotExist) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -3345,7 +3345,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_StateNotActiveWithoutReasonShouldThrow
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -3391,7 +3391,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -3447,9 +3447,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
 
     for (uint64_t i = 1; i <= nbTapes; i++) {
@@ -3546,9 +3546,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vid = "VID1";
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(1, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
     ASSERT_EQ("VID1", vidToTape.begin()->first);
     ASSERT_EQ("VID1", vidToTape.begin()->second.vid);
@@ -3557,9 +3557,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.mediaType = m_tape1.mediaType;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.mediaType, vidToTape.begin()->second.mediaType);
   }
@@ -3567,9 +3567,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vendor = m_tape1.vendor;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.vendor, vidToTape.begin()->second.vendor);
   }
@@ -3577,9 +3577,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.logicalLibrary = m_tape1.logicalLibraryName;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.logicalLibraryName, vidToTape.begin()->second.logicalLibraryName);
   }
@@ -3587,9 +3587,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.tapePool = m_tape1.tapePoolName;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.tapePoolName, vidToTape.begin()->second.tapePoolName);
   }
@@ -3597,9 +3597,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.vo = m_vo.name;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_vo.name, vidToTape.begin()->second.vo);
   }
@@ -3607,9 +3607,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.capacityInBytes = m_mediaType.capacityInBytes;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_mediaType.capacityInBytes, vidToTape.begin()->second.capacityInBytes);
   }
@@ -3617,9 +3617,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.state = m_tape1.state;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.state, vidToTape.begin()->second.state);
   }
@@ -3627,9 +3627,9 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
   {
     cta::catalogue::TapeSearchCriteria searchCriteria;
     searchCriteria.full = m_tape1.full;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_EQ(nbTapes, tapes.size());
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(nbTapes, vidToTape.size());
     ASSERT_EQ(m_tape1.full, vidToTape.begin()->second.full);
   }
@@ -3645,7 +3645,7 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
     std::vector<std::string> diskFileIds;
     diskFileIds.push_back("non_existent_fid");
     searchCriteria.diskFileIds = diskFileIds;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
     ASSERT_TRUE(tapes.empty());
   }
 
@@ -3657,8 +3657,8 @@ TEST_P(cta_catalogue_TapeTest, createTape_many_tapes) {
     searchCriteria.capacityInBytes = m_mediaType.capacityInBytes;
     searchCriteria.state = m_tape1.state;
     searchCriteria.full = m_tape1.full;
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
     ASSERT_EQ("VID1", vidToTape.begin()->first);
     ASSERT_EQ("VID1", vidToTape.begin()->second.vid);
@@ -4098,7 +4098,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesByVid_1_tape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4163,7 +4163,7 @@ TEST_P(cta_catalogue_TapeTest, getTapesByVid_350_tapes) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4233,7 +4233,7 @@ TEST_P(cta_catalogue_TapeTest, getVidToLogicalLibrary_1_tape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4285,7 +4285,7 @@ TEST_P(cta_catalogue_TapeTest, getVidToLogicalLibrary_310_tapes) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4421,7 +4421,7 @@ TEST_P(cta_catalogue_TapeTest, getNbFilesOnTape_no_tape_files) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4442,7 +4442,7 @@ TEST_P(cta_catalogue_TapeTest, getNbFilesOnTape_no_tape_files) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -4481,7 +4481,7 @@ TEST_P(cta_catalogue_TapeTest, getNbFilesOnTape_one_tape_file) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4502,7 +4502,7 @@ TEST_P(cta_catalogue_TapeTest, getNbFilesOnTape_one_tape_file) {
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -4593,7 +4593,7 @@ TEST_P(cta_catalogue_TapeTest, checkTapeForLabel_no_tape_files) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4614,7 +4614,7 @@ TEST_P(cta_catalogue_TapeTest, checkTapeForLabel_no_tape_files) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -4653,7 +4653,7 @@ TEST_P(cta_catalogue_TapeTest, checkTapeForLabel_one_tape_file) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4674,7 +4674,7 @@ TEST_P(cta_catalogue_TapeTest, checkTapeForLabel_one_tape_file) {
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -4766,7 +4766,7 @@ TEST_P(cta_catalogue_TapeTest, checkTapeForLabel_one_tape_file_reclaimed_tape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4787,7 +4787,7 @@ TEST_P(cta_catalogue_TapeTest, checkTapeForLabel_one_tape_file_reclaimed_tape) {
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -4897,7 +4897,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -4918,7 +4918,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -4951,7 +4951,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
   m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -4987,7 +4987,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_not_full_lastFSeq_0_no_tape_files) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -5008,7 +5008,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_not_full_lastFSeq_0_no_tape_files) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -5048,7 +5048,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -5069,8 +5069,8 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto tapes = m_catalogue->Tape()->getTapes();
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
 
     auto it = vidToTape.find(m_tape1.vid);
@@ -5155,8 +5155,8 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto tapes = m_catalogue->Tape()->getTapes();
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
 
     auto it = vidToTape.find(m_tape1.vid);
@@ -5193,8 +5193,8 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto tapes = m_catalogue->Tape()->getTapes();
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
 
     auto it = vidToTape.find(m_tape1.vid);
@@ -5228,7 +5228,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
   m_catalogue->Tape()->reclaimTape(m_admin, m_tape1.vid, dummyLc);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+    const auto tapes = m_catalogue->Tape()->getTapes();
 
     ASSERT_EQ(1, tapes.size());
 
@@ -5265,7 +5265,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -5286,8 +5286,8 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto tapes = m_catalogue->Tape()->getTapes();
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
 
     auto it = vidToTape.find(m_tape1.vid);
@@ -5372,8 +5372,8 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_one_tape_file) {
   }
 
   {
-    const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-    const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+    const auto tapes = m_catalogue->Tape()->getTapes();
+    const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
     ASSERT_EQ(1, vidToTape.size());
 
     auto it = vidToTape.find(m_tape1.vid);
@@ -5414,7 +5414,7 @@ TEST_P(cta_catalogue_TapeTest, get_tape_with_related_physical_library) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const auto physicalLibrary1 = CatalogueTestUtils::getPhysicalLibrary1();
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -5436,7 +5436,7 @@ TEST_P(cta_catalogue_TapeTest, get_tape_with_related_physical_library) {
 
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+  const auto tapes = m_catalogue->Tape()->getTapes();
 
   ASSERT_EQ(1, tapes.size());
 
@@ -5472,7 +5472,7 @@ TEST_P(cta_catalogue_TapeTest, get_tape_with_physical_library_search_criteria) {
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const auto physicalLibrary1 = CatalogueTestUtils::getPhysicalLibrary1();
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -5496,7 +5496,7 @@ TEST_P(cta_catalogue_TapeTest, get_tape_with_physical_library_search_criteria) {
 
   cta::catalogue::TapeSearchCriteria searchCriteria;
   searchCriteria.physicalLibraryName = physicalLibrary1.name;
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+  const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
   ASSERT_EQ(1, tapes.size());
 
@@ -5532,7 +5532,7 @@ TEST_P(cta_catalogue_TapeTest, get_no_tape_with_non_existent_physical_library_se
   const bool logicalLibraryIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   std::optional<std::string> physicalLibraryName;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
@@ -5555,7 +5555,7 @@ TEST_P(cta_catalogue_TapeTest, get_no_tape_with_non_existent_physical_library_se
 
   cta::catalogue::TapeSearchCriteria searchCriteria;
   searchCriteria.physicalLibraryName = "DoesNotExist";
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes(searchCriteria);
+  const auto tapes = m_catalogue->Tape()->getTapes(searchCriteria);
 
   ASSERT_EQ(0, tapes.size());
 

@@ -25,11 +25,11 @@ void DummyArchiveRouteCatalogue::deleteArchiveRoute(const std::string& storageCl
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::ArchiveRoute> DummyArchiveRouteCatalogue::getArchiveRoutes() const {
+std::vector<common::dataStructures::ArchiveRoute> DummyArchiveRouteCatalogue::getArchiveRoutes() const {
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::ArchiveRoute>
+std::vector<common::dataStructures::ArchiveRoute>
 DummyArchiveRouteCatalogue::getArchiveRoutes(const std::string& storageClassName,
                                              const std::string& tapePoolName) const {
   throw exception::NotImplementedException();

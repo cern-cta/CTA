@@ -8,8 +8,6 @@
 #include "CtaAdminResponseStream.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 
-#include <list>
-
 #include "cta_admin.pb.h"
 
 namespace cta::frontend {
@@ -25,7 +23,8 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<cta::common::dataStructures::LogicalLibrary> m_logicalLibraries;
+  std::vector<cta::common::dataStructures::LogicalLibrary> m_logicalLibraries;
+  std::size_t m_logicalLibrariesIdx = 0;
 };
 
 }  // namespace cta::frontend

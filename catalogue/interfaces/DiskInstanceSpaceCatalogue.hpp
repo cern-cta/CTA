@@ -7,8 +7,8 @@
 
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -56,7 +56,7 @@ public:
    *
    * @return The disk instance spaces in the CTA catalogue.
    */
-  virtual std::list<common::dataStructures::DiskInstanceSpace> getAllDiskInstanceSpaces() const = 0;
+  virtual std::vector<common::dataStructures::DiskInstanceSpace> getAllDiskInstanceSpaces() const = 0;
 
   virtual void modifyDiskInstanceSpaceComment(const common::dataStructures::SecurityIdentity& admin,
                                               const std::string& name,

@@ -8,8 +8,6 @@
 #include "CtaAdminResponseStream.hpp"
 #include "common/dataStructures/DiskInstanceSpace.hpp"
 
-#include <list>
-
 #include "cta_admin.pb.h"
 
 namespace cta::frontend {
@@ -24,7 +22,8 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<cta::common::dataStructures::DiskInstanceSpace> m_diskInstanceSpaces;
+  std::vector<cta::common::dataStructures::DiskInstanceSpace> m_diskInstanceSpaces;
+  std::size_t m_diskInstanceSpacesIdx = 0;
 };
 
 }  // namespace cta::frontend

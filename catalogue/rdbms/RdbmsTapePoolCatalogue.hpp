@@ -34,12 +34,12 @@ public:
                       const std::string& vo,
                       const uint64_t nbPartialTapes,
                       const std::optional<std::string>& encryptionKeyNameOpt,
-                      const std::list<std::string>& supply_list,
+                      const std::vector<std::string>& supply_list,
                       const std::string& comment) override;
 
   void deleteTapePool(const std::string& name) override;
 
-  std::list<TapePool> getTapePools(const TapePoolSearchCriteria& searchCriteria) const override;
+  std::vector<TapePool> getTapePools(const TapePoolSearchCriteria& searchCriteria) const override;
 
   std::optional<TapePool> getTapePool(const std::string& tapePoolName) const override;
 
@@ -61,7 +61,7 @@ public:
 
   void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                             const std::string& name,
-                            const std::list<std::string>& supply_list) override;
+                            const std::vector<std::string>& supply_list) override;
 
   void modifyTapePoolName(const common::dataStructures::SecurityIdentity& admin,
                           const std::string& currentName,
@@ -93,7 +93,7 @@ private:
    */
   virtual uint64_t getNextTapePoolId(rdbms::Conn& conn) const = 0;
 
-  std::list<TapePool> getTapePools(rdbms::Conn& conn, const TapePoolSearchCriteria& searchCriteria) const;
+  std::vector<TapePool> getTapePools(rdbms::Conn& conn, const TapePoolSearchCriteria& searchCriteria) const;
 
   /**
    * Returns true if the specified tape pool is used in an archive route.
@@ -123,7 +123,7 @@ private:
   std::pair<std::set<std::string>, std::set<std::string>>
   getTapePoolSupplySourcesAndDestinations(rdbms::Conn& conn, const std::string& tapePoolName) const;
 
-  void populateSupplyTable(rdbms::Conn& conn, std::string tapePoolName, std::list<std::string> supply_list);
+  void populateSupplyTable(rdbms::Conn& conn, std::string tapePoolName, const std::vector<std::string>& supply_list);
   void deleteAllTapePoolSupplyEntries(rdbms::Conn& conn);
 };
 

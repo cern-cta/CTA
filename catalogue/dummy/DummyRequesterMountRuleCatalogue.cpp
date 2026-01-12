@@ -38,7 +38,8 @@ void DummyRequesterMountRuleCatalogue::createRequesterMountRule(const common::da
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::RequesterMountRule> DummyRequesterMountRuleCatalogue::getRequesterMountRules() const {
+std::vector<common::dataStructures::RequesterMountRule>
+DummyRequesterMountRuleCatalogue::getRequesterMountRules() const {
   throw exception::NotImplementedException();
 }
 

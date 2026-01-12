@@ -39,7 +39,7 @@ void DummyRequesterGroupMountRuleCatalogue::createRequesterGroupMountRule(
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::RequesterGroupMountRule>
+std::vector<common::dataStructures::RequesterGroupMountRule>
 DummyRequesterGroupMountRuleCatalogue::getRequesterGroupMountRules() const {
   throw exception::NotImplementedException();
 }

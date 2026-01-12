@@ -65,7 +65,7 @@ ArchiveFileCatalogueRetryWrapper::getArchiveFileCopyForDeletion(const TapeFileSe
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::ArchiveFile>
+std::vector<common::dataStructures::ArchiveFile>
 ArchiveFileCatalogueRetryWrapper::getFilesForRepack(const std::string& vid,
                                                     const uint64_t startFSeq,
                                                     const uint64_t maxNbFiles) const {

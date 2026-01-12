@@ -30,7 +30,7 @@ public:
                                 const std::string& requesterName,
                                 const std::string& comment) override;
 
-  std::list<common::dataStructures::RequesterMountRule> getRequesterMountRules() const override;
+  std::vector<common::dataStructures::RequesterMountRule> getRequesterMountRules() const override;
 
   void deleteRequesterMountRule(const std::string& diskInstanceName, const std::string& requesterName) override;
 };

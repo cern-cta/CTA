@@ -28,7 +28,7 @@ StorageClassLsResponseStream::StorageClassLsResponseStream(cta::catalogue::Catal
 }
 
 bool StorageClassLsResponseStream::isDone() {
-  return m_storageClasses.empty();
+  return m_storageClassesIdx >= m_storageClasses.size();
 }
 
 cta::xrd::Data StorageClassLsResponseStream::next() {
@@ -36,8 +36,7 @@ cta::xrd::Data StorageClassLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto sc = m_storageClasses.front();
-  m_storageClasses.pop_front();
+  const auto sc = m_storageClasses[m_storageClassesIdx++];
 
   cta::xrd::Data data;
   auto scItem = data.mutable_scls_item();

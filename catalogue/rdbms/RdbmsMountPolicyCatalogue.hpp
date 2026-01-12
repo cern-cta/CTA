@@ -37,11 +37,11 @@ public:
   void createMountPolicy(const common::dataStructures::SecurityIdentity& admin,
                          const CreateMountPolicyAttributes& mountPolicy) override;
 
-  std::list<common::dataStructures::MountPolicy> getMountPolicies() const override;
+  std::vector<common::dataStructures::MountPolicy> getMountPolicies() const override;
 
   std::optional<common::dataStructures::MountPolicy> getMountPolicy(const std::string& mountPolicyName) const override;
 
-  std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override;
+  std::vector<common::dataStructures::MountPolicy> getCachedMountPolicies() const override;
 
   void deleteMountPolicy(const std::string& name) override;
 
@@ -77,7 +77,7 @@ private:
   std::optional<common::dataStructures::MountPolicy> getMountPolicy(rdbms::Conn& conn,
                                                                     const std::string& mountPolicyName) const;
 
-  std::list<common::dataStructures::MountPolicy> getMountPolicies(rdbms::Conn& conn) const;
+  std::vector<common::dataStructures::MountPolicy> getMountPolicies(rdbms::Conn& conn) const;
 
   /**
    * Returns the specified requester mount-policy or std::nullopt if one does not

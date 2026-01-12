@@ -147,8 +147,8 @@ void RdbmsDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
   }
 }
 
-std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getAllDiskInstances() const {
-  std::list<common::dataStructures::DiskInstance> diskInstanceList;
+std::vector<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getAllDiskInstances() const {
+  std::vector<common::dataStructures::DiskInstance> diskInstances;
   const char* const sql = R"SQL(
     SELECT
       DISK_INSTANCE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
@@ -180,9 +180,9 @@ std::list<common::dataStructures::DiskInstance> RdbmsDiskInstanceCatalogue::getA
     diskInstance.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
     diskInstance.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
     diskInstance.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-    diskInstanceList.push_back(diskInstance);
+    diskInstances.push_back(diskInstance);
   }
-  return diskInstanceList;
+  return diskInstances;
 }
 
 }  // namespace cta::catalogue

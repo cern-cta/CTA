@@ -7,10 +7,10 @@
 
 #include "common/dataStructures/DiskSpaceReservationRequest.hpp"
 
-#include <list>
 #include <map>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -43,13 +43,13 @@ public:
    * Gets the names of all stored Tape Drive
    * @return List of tape drive names
    */
-  virtual std::list<std::string> getTapeDriveNames() const = 0;
+  virtual std::vector<std::string> getTapeDriveNames() const = 0;
 
   /**
    * Gets the information of all Tape Drives
    * @return Parameters of all Tape Drives.
    */
-  virtual std::list<common::dataStructures::TapeDrive> getTapeDrives() const = 0;
+  virtual std::vector<common::dataStructures::TapeDrive> getTapeDrives() const = 0;
 
   /**
    * Gets the information of the specified Tape Drive

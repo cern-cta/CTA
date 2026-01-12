@@ -33,7 +33,7 @@ public:
                                         const std::string& activityRegex,
                                         const std::string& comment) override;
 
-  std::list<common::dataStructures::RequesterActivityMountRule> getRequesterActivityMountRules() const override;
+  std::vector<common::dataStructures::RequesterActivityMountRule> getRequesterActivityMountRules() const override;
 
   void deleteRequesterActivityMountRule(const std::string& diskInstanceName,
                                         const std::string& requesterName,

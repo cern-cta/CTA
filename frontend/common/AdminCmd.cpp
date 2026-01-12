@@ -866,9 +866,8 @@ void AdminCmd::processRepack_Add(xrd::Response& response) {
   //Get the mountpolicy from the catalogue
   common::dataStructures::MountPolicy mountPolicy;
   {
-    using MountPolicyList = std::list<common::dataStructures::MountPolicy>;
-    MountPolicyList mountPolicies = m_catalogue.MountPolicy()->getMountPolicies();
-    MountPolicyList::const_iterator repackMountPolicyItor =
+    const auto mountPolicies = m_catalogue.MountPolicy()->getMountPolicies();
+    auto repackMountPolicyItor =
       std::find_if(mountPolicies.begin(),
                    mountPolicies.end(),
                    [&mountPolicyProvidedByUser](const common::dataStructures::MountPolicy& mp) {
@@ -1251,9 +1250,9 @@ void AdminCmd::processTapePool_Add(xrd::Response& response) {
     throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
   }
 
-  std::list<std::string> supply_list;
+  std::vector<std::string> supply_list;
   if (supply.has_value()) {
-    supply_list = cta::utils::commaSeparatedStringToList(supply.value());
+    supply_list = cta::utils::commaSeparatedStringToVector(supply.value());
   }
 
   if (encryptionKeyName.has_value() && encryptionKeyName.value().empty()) {
@@ -1293,7 +1292,7 @@ void AdminCmd::processTapePool_Ch(xrd::Response& response) {
   if (supply.has_value()) {
     m_catalogue.TapePool()->modifyTapePoolSupply(m_cliIdentity,
                                                  name,
-                                                 cta::utils::commaSeparatedStringToList(supply.value()));
+                                                 cta::utils::commaSeparatedStringToVector(supply.value()));
   }
 
   response.set_type(xrd::Response::RSP_SUCCESS);

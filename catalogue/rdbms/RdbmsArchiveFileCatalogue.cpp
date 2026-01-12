@@ -249,7 +249,7 @@ RdbmsArchiveFileCatalogue::getArchiveFileCopyForDeletion(const TapeFileSearchCri
   return af;
 }
 
-std::list<common::dataStructures::ArchiveFile>
+std::vector<common::dataStructures::ArchiveFile>
 RdbmsArchiveFileCatalogue::getFilesForRepack(const std::string& vid,
                                              const uint64_t startFSeq,
                                              const uint64_t maxNbFiles) const {
@@ -295,7 +295,7 @@ RdbmsArchiveFileCatalogue::getFilesForRepack(const std::string& vid,
   stmt.bindUint64(":START_FSEQ", startFSeq);
   auto rset = stmt.executeQuery();
 
-  std::list<common::dataStructures::ArchiveFile> archiveFiles;
+  std::vector<common::dataStructures::ArchiveFile> archiveFiles;
   while (rset.next()) {
     common::dataStructures::ArchiveFile archiveFile;
 
@@ -1083,8 +1083,8 @@ RdbmsArchiveFileCatalogue::getArchiveFileToRetrieveByArchiveFileId(rdbms::Conn& 
 //------------------------------------------------------------------------------
 // getArchiveFileToRetrieveByArchiveFileId
 //------------------------------------------------------------------------------
-std::list<std::pair<std::string, std::string>>
-RdbmsArchiveFileCatalogue::getTapeFileStateListForArchiveFileId(rdbms::Conn& conn, const uint64_t archiveFileId) const {
+std::vector<std::pair<std::string, std::string>>
+RdbmsArchiveFileCatalogue::getTapeFileStatesForArchiveFileId(rdbms::Conn& conn, const uint64_t archiveFileId) const {
   const char* const sql = R"SQL(
     SELECT
       TAPE_FILE.VID AS VID,
@@ -1102,7 +1102,7 @@ RdbmsArchiveFileCatalogue::getTapeFileStateListForArchiveFileId(rdbms::Conn& con
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
   auto rset = stmt.executeQuery();
-  std::list<std::pair<std::string, std::string>> ret;
+  std::vector<std::pair<std::string, std::string>> ret;
   while (rset.next()) {
     const auto& vid = rset.columnString("VID");
     const auto& state = rset.columnString("STATE");

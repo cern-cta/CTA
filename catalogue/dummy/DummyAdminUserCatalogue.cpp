@@ -20,7 +20,7 @@ void DummyAdminUserCatalogue::deleteAdminUser(const std::string& username) {
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::AdminUser> DummyAdminUserCatalogue::getAdminUsers() const {
+std::vector<common::dataStructures::AdminUser> DummyAdminUserCatalogue::getAdminUsers() const {
   throw exception::NotImplementedException();
 }
 

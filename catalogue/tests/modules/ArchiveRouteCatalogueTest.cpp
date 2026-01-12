@@ -43,7 +43,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -62,11 +62,11 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute) {
                                                   comment);
 
   {
-    const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+    const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
     ASSERT_EQ(1, routes.size());
 
-    const cta::common::dataStructures::ArchiveRoute route = routes.front();
+    auto& route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -81,12 +81,11 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute) {
   }
 
   {
-    const std::list<cta::common::dataStructures::ArchiveRoute> routes =
-      m_catalogue->ArchiveRoute()->getArchiveRoutes(m_storageClassSingleCopy.name, tapePoolName);
+    const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes(m_storageClassSingleCopy.name, tapePoolName);
 
     ASSERT_EQ(1, routes.size());
 
-    const cta::common::dataStructures::ArchiveRoute route = routes.front();
+    auto& route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -112,7 +111,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_emptyStringStorageClas
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -140,7 +139,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_zeroCopyNb) {
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -185,7 +184,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_emptyStringComment) {
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -210,7 +209,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_non_existent_storage_c
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
   m_catalogue->TapePool()->createTapePool(m_admin,
@@ -258,7 +257,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_same_twice) {
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -291,7 +290,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_two_routes_same_pool) 
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -327,7 +326,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, deleteArchiveRoute) {
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -345,11 +344,11 @@ TEST_P(cta_catalogue_ArchiveRouteTest, deleteArchiveRoute) {
                                                   m_tape1.tapePoolName,
                                                   comment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  const cta::common::dataStructures::ArchiveRoute& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
@@ -383,7 +382,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_deleteStorageClass) {
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -401,11 +400,11 @@ TEST_P(cta_catalogue_ArchiveRouteTest, createArchiveRoute_deleteStorageClass) {
                                                   m_tape1.tapePoolName,
                                                   comment);
 
-  const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+  const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
   ASSERT_EQ(1, routes.size());
 
-  const cta::common::dataStructures::ArchiveRoute route = routes.front();
+  auto& route = routes.front();
   ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
   ASSERT_EQ(copyNb, route.copyNb);
   ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
@@ -431,7 +430,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName) {
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -459,11 +458,11 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName) {
                                                   comment);
 
   {
-    const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+    const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
     ASSERT_EQ(1, routes.size());
 
-    const cta::common::dataStructures::ArchiveRoute route = routes.front();
+    auto& route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
@@ -484,11 +483,11 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName) {
                                                               anotherTapePoolName);
 
   {
-    const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+    const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
     ASSERT_EQ(1, routes.size());
 
-    const cta::common::dataStructures::ArchiveRoute route = routes.front();
+    auto& route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(anotherTapePoolName, route.tapePoolName);
@@ -507,7 +506,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName_nonExisten
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -535,11 +534,11 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName_nonExisten
                                                   comment);
 
   {
-    const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+    const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
     ASSERT_EQ(1, routes.size());
 
-    const cta::common::dataStructures::ArchiveRoute route = routes.front();
+    auto& route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
@@ -569,7 +568,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteTapePoolName_nonExisten
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -595,7 +594,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteComment) {
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -614,11 +613,11 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteComment) {
                                                   comment);
 
   {
-    const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+    const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
     ASSERT_EQ(1, routes.size());
 
-    const cta::common::dataStructures::ArchiveRoute route = routes.front();
+    auto& route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
@@ -640,11 +639,11 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteComment) {
                                                          modifiedComment);
 
   {
-    const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+    const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
     ASSERT_EQ(1, routes.size());
 
-    const cta::common::dataStructures::ArchiveRoute route = routes.front();
+    auto& route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(m_tape1.tapePoolName, route.tapePoolName);
@@ -663,7 +662,7 @@ TEST_P(cta_catalogue_ArchiveRouteTest, modifyArchiveRouteComment_nonExistentArch
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,

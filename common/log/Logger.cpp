@@ -34,7 +34,7 @@ Logger::~Logger() = default;
 //-----------------------------------------------------------------------------
 // operator()
 //-----------------------------------------------------------------------------
-void Logger::operator()(int priority, std::string_view msg, const std::list<Param>& params) noexcept {
+void Logger::operator()(int priority, std::string_view msg, const std::vector<Param>& params) noexcept {
   // Ignore messages whose priority is not of interest
   if (priority > m_logMask) {
     return;
@@ -223,8 +223,10 @@ std::ostream& operator<<(std::ostream& oss, const Logger::stringFormattingJSON& 
 //-----------------------------------------------------------------------------
 // createMsgBody
 //-----------------------------------------------------------------------------
-std::string
-Logger::createMsgBody(std::string_view logLevel, std::string_view msg, const std::list<Param>& params, int pid) const {
+std::string Logger::createMsgBody(std::string_view logLevel,
+                                  std::string_view msg,
+                                  const std::vector<Param>& params,
+                                  int pid) const {
   std::ostringstream os;
 
   const int tid = syscall(__NR_gettid);

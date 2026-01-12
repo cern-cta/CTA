@@ -29,7 +29,7 @@ public:
                                  const std::string& name,
                                  const std::string& comment) override;
 
-  std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const override;
+  std::vector<common::dataStructures::DiskInstance> getAllDiskInstances() const override;
 
 private:
   std::map<std::string, common::dataStructures::DiskInstance, std::less<>> m_diskInstances;

@@ -17,7 +17,7 @@ TapePoolLsResponseStream::TapePoolLsResponseStream(cta::catalogue::Catalogue& ca
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_tapePools(buildTapePoolList(adminCmd)) {}
 
-std::list<cta::catalogue::TapePool> TapePoolLsResponseStream::buildTapePoolList(const admin::AdminCmd& admincmd) {
+std::vector<cta::catalogue::TapePool> TapePoolLsResponseStream::buildTapePoolList(const admin::AdminCmd& admincmd) {
   cta::frontend::AdminCmdOptions request(admincmd);
 
   cta::catalogue::TapePoolSearchCriteria searchCriteria;
@@ -34,7 +34,7 @@ std::list<cta::catalogue::TapePool> TapePoolLsResponseStream::buildTapePoolList(
 }
 
 bool TapePoolLsResponseStream::isDone() {
-  return m_tapePools.empty();
+  return m_tapePoolsIdx >= m_tapePools.size();
 }
 
 cta::xrd::Data TapePoolLsResponseStream::next() {
@@ -42,8 +42,7 @@ cta::xrd::Data TapePoolLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto tp = m_tapePools.front();
-  m_tapePools.pop_front();
+  const auto tp = m_tapePools[m_tapePoolsIdx++];
 
   cta::xrd::Data data;
   auto tp_item = data.mutable_tpls_item();

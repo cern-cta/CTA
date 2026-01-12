@@ -39,7 +39,7 @@ void MediaTypeCatalogueRetryWrapper::deleteMediaType(const std::string& name) {
     m_maxTriesToConnect);
 }
 
-std::list<MediaTypeWithLogs> MediaTypeCatalogueRetryWrapper::getMediaTypes() const {
+std::vector<MediaTypeWithLogs> MediaTypeCatalogueRetryWrapper::getMediaTypes() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->MediaType()->getMediaTypes(); },

@@ -104,7 +104,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, deleteVirtualOrganizationUsedByTap
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -137,25 +137,29 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getVirtualOrganizations) {
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   ASSERT_NO_THROW(m_catalogue->VO()->createVirtualOrganization(m_admin, vo));
 
-  std::list<cta::common::dataStructures::VirtualOrganization> vos = m_catalogue->VO()->getVirtualOrganizations();
-  ASSERT_EQ(1, vos.size());
+  {
+    const auto vos = m_catalogue->VO()->getVirtualOrganizations();
+    ASSERT_EQ(1, vos.size());
 
-  auto& voRetrieved = vos.front();
-  ASSERT_EQ(vo.name, voRetrieved.name);
-  ASSERT_EQ(vo.readMaxDrives, voRetrieved.readMaxDrives);
-  ASSERT_EQ(vo.writeMaxDrives, voRetrieved.writeMaxDrives);
-  ASSERT_EQ(vo.diskInstanceName, voRetrieved.diskInstanceName);
-  ASSERT_EQ(vo.comment, voRetrieved.comment);
-  ASSERT_EQ(vo.isRepackVo, voRetrieved.isRepackVo);
+    auto& voRetrieved = vos.front();
+    ASSERT_EQ(vo.name, voRetrieved.name);
+    ASSERT_EQ(vo.readMaxDrives, voRetrieved.readMaxDrives);
+    ASSERT_EQ(vo.writeMaxDrives, voRetrieved.writeMaxDrives);
+    ASSERT_EQ(vo.diskInstanceName, voRetrieved.diskInstanceName);
+    ASSERT_EQ(vo.comment, voRetrieved.comment);
+    ASSERT_EQ(vo.isRepackVo, voRetrieved.isRepackVo);
 
-  ASSERT_EQ(m_admin.host, voRetrieved.creationLog.host);
-  ASSERT_EQ(m_admin.username, voRetrieved.creationLog.username);
-  ASSERT_EQ(m_admin.host, voRetrieved.lastModificationLog.host);
-  ASSERT_EQ(m_admin.username, voRetrieved.lastModificationLog.username);
+    ASSERT_EQ(m_admin.host, voRetrieved.creationLog.host);
+    ASSERT_EQ(m_admin.username, voRetrieved.creationLog.username);
+    ASSERT_EQ(m_admin.host, voRetrieved.lastModificationLog.host);
+    ASSERT_EQ(m_admin.username, voRetrieved.lastModificationLog.username);
+  }
 
-  ASSERT_NO_THROW(m_catalogue->VO()->deleteVirtualOrganization(vo.name));
-  vos = m_catalogue->VO()->getVirtualOrganizations();
-  ASSERT_EQ(0, vos.size());
+  {
+    ASSERT_NO_THROW(m_catalogue->VO()->deleteVirtualOrganization(vo.name));
+    const auto vos = m_catalogue->VO()->getVirtualOrganizations();
+    ASSERT_EQ(0, vos.size());
+  }
 }
 
 TEST_P(cta_catalogue_VirtualOrganizationTest, modifyVirtualOrganizationName) {
@@ -305,7 +309,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, modifyVirtualOrganizationDiskInsta
 TEST_P(cta_catalogue_VirtualOrganizationTest, getVirtualOrganizationOfTapepool) {
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   cta::common::dataStructures::VirtualOrganization vo = CatalogueTestUtils::getVo();
 
@@ -329,7 +333,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getVirtualOrganizationOfTapepool) 
 TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRepacking) {
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   cta::common::dataStructures::VirtualOrganization repackVo = CatalogueTestUtils::getDefaultRepackVo();
   cta::common::dataStructures::VirtualOrganization userVo1 = CatalogueTestUtils::getVo();
@@ -368,7 +372,7 @@ TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRe
 TEST_P(cta_catalogue_VirtualOrganizationTest, getDefaultVirtualOrganizationForRepackingNoValue) {
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   cta::common::dataStructures::VirtualOrganization userVo1 = CatalogueTestUtils::getVo();
   cta::common::dataStructures::VirtualOrganization userVo2 = CatalogueTestUtils::getAnotherVo();

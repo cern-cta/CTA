@@ -37,7 +37,7 @@ void VirtualOrganizationCatalogueRetryWrapper::deleteVirtualOrganization(const s
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::VirtualOrganization>
+std::vector<common::dataStructures::VirtualOrganization>
 VirtualOrganizationCatalogueRetryWrapper::getVirtualOrganizations() const {
   return retryOnLostConnection(
     m_log,

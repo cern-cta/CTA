@@ -39,7 +39,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
                                             const std::string& vo,
                                             const uint64_t nbPartialTapes,
                                             const std::optional<std::string>& encryptionKeyNameOpt,
-                                            const std::list<std::string>& supply_list,
+                                            const std::vector<std::string>& supply_list,
                                             const std::string& comment) {
   if (name.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName(
@@ -55,7 +55,7 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   }
   const auto trimmedComment = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(comment, &m_log);
   std::optional<std::string> optionalSupplyString =
-    supply_list.empty() ? std::optional<std::string>() : cta::utils::listToCommaSeparatedString(supply_list);
+    supply_list.empty() ? std::optional<std::string>() : cta::utils::toCommaSeparatedString(supply_list);
 
   auto conn = m_connPool->getConn();
 
@@ -243,13 +243,13 @@ void RdbmsTapePoolCatalogue::deleteTapePool(const std::string& name) {
   }
 }
 
-std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(const TapePoolSearchCriteria& searchCriteria) const {
+std::vector<TapePool> RdbmsTapePoolCatalogue::getTapePools(const TapePoolSearchCriteria& searchCriteria) const {
   auto conn = m_connPool->getConn();
   return getTapePools(conn, searchCriteria);
 }
 
-std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn& conn,
-                                                         const TapePoolSearchCriteria& searchCriteria) const {
+std::vector<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn& conn,
+                                                           const TapePoolSearchCriteria& searchCriteria) const {
   if (RdbmsCatalogueUtils::isSetAndEmpty(searchCriteria.name)) {
     throw exception::UserError("Pool name cannot be an empty string");
   }
@@ -270,7 +270,7 @@ std::list<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn& conn,
     throw ex;
   }
 
-  std::list<TapePool> pools;
+  std::vector<TapePool> pools;
   std::string sql = R"SQL(
     SELECT
       TAPE_POOL.TAPE_POOL_NAME AS TAPE_POOL_NAME,
@@ -693,7 +693,7 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
 
 void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn& conn,
                                                  std::string tapePoolName,
-                                                 std::list<std::string> supply_list) {
+                                                 const std::vector<std::string>& supply_list) {
   /* wipe the previous supply sources for this tapepool, as we are resetting them now */
   std::string sql_drop_old = "DELETE FROM TAPE_POOL_SUPPLY WHERE SUPPLY_DESTINATION_TAPE_POOL_ID = "
                              "(SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME)";
@@ -718,7 +718,7 @@ void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn& conn,
 
 void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                                   const std::string& name,
-                                                  const std::list<std::string>& supply_list) {
+                                                  const std::vector<std::string>& supply_list) {
   if (name.empty()) {
     throw UserSpecifiedAnEmptyStringTapePoolName("Cannot modify tape pool because the tape pool name is an empty"
                                                  " string");
@@ -740,7 +740,7 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
   }
 
   std::optional<std::string> optionalSupplyString =
-    supply_list.empty() ? std::optional<std::string>() : cta::utils::listToCommaSeparatedString(supply_list);
+    supply_list.empty() ? std::optional<std::string>() : cta::utils::toCommaSeparatedString(supply_list);
 
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(

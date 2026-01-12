@@ -58,7 +58,7 @@ public:
   common::dataStructures::ArchiveFile
   getArchiveFileCopyForDeletion(const TapeFileSearchCriteria& searchCriteria = TapeFileSearchCriteria()) const override;
 
-  std::list<common::dataStructures::ArchiveFile>
+  std::vector<common::dataStructures::ArchiveFile>
   getFilesForRepack(const std::string& vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const override;
 
   ArchiveFileItor getArchiveFilesForRepackItor(const std::string& vid, const uint64_t startFSeq) const override;
@@ -322,8 +322,8 @@ private:
    * @param archiveFileId The identifier of the archive file.
    * @return A list of tape file vid and corresponding tape state pairs
    */
-  std::list<std::pair<std::string, std::string>>
-  getTapeFileStateListForArchiveFileId(rdbms::Conn& conn, const uint64_t archiveFileId) const;
+  std::vector<std::pair<std::string, std::string>>
+  getTapeFileStatesForArchiveFileId(rdbms::Conn& conn, const uint64_t archiveFileId) const;
 };
 
 }  // namespace catalogue

@@ -562,8 +562,8 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   using RepackType = cta::common::dataStructures::RepackInfo::Type;
 
   //We need to get the ArchiveRoutes to allow the retrieval of the tapePool in which the
-  //tape where the file is is located
-  std::list<common::dataStructures::ArchiveRoute> routes = m_catalogue.ArchiveRoute()->getArchiveRoutes();
+  //tape where the file is located
+  auto routes = m_catalogue.ArchiveRoute()->getArchiveRoutes();
   timingList.insertAndReset("catalogueGetArchiveRoutesTime", t);
   //To identify the routes, we need to have both the dist instance name and the storage class name
   //thus, the key of the map is a pair of string
@@ -616,7 +616,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
     }
   }
 
-  std::list<common::dataStructures::StorageClass> storageClasses = m_catalogue.StorageClass()->getStorageClasses();
+  const auto storageClasses = m_catalogue.StorageClass()->getStorageClasses();
   lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): before  setExpandStartedAndChangeStatus().");
   if (!repackRequest || !repackRequest->m_dbReq) {
     lc.log(log::ERR, "In Scheduler::expandRepackRequest():  m_dbReq is null!");
@@ -1154,19 +1154,6 @@ std::optional<cta::common::dataStructures::TapeDrive> Scheduler::getDriveState(c
 }
 
 //------------------------------------------------------------------------------
-// getDriveStates
-//------------------------------------------------------------------------------
-std::list<common::dataStructures::TapeDrive> Scheduler::getDriveStates(log::LogContext& lc) const {
-  utils::Timer t;
-  const auto ret = m_catalogue.DriveState()->getTapeDrives();
-  auto schedulerDbTime = t.secs();
-  log::ScopedParamContainer spc(lc);
-  spc.add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Scheduler::getDriveStates(): success.");
-  return ret;
-}
-
-//------------------------------------------------------------------------------
 // sortAndGetTapesForMountInfo
 //------------------------------------------------------------------------------
 void Scheduler::sortAndGetTapesForMountInfo(
@@ -1177,7 +1164,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
   ExistingMountSummaryPerTapepool& existingMountsDistinctTypeSummaryPerTapepool,
   ExistingMountSummaryPerVo& existingMountsBasicTypeSummaryPerVo,
   std::set<std::string, std::less<>>& tapesInUse,
-  std::list<catalogue::TapeForWriting>& tapeList,
+  std::vector<catalogue::TapeForWriting>& tapesForWritting,
   double& getTapeInfoTime,
   double& candidateSortingTime,
   double& getTapeForWriteTime,
@@ -1597,15 +1584,15 @@ void Scheduler::sortAndGetTapesForMountInfo(
   if (std::count_if(mountInfo->potentialMounts.cbegin(), mountInfo->potentialMounts.cend(), [](const auto& m) {
         return common::dataStructures::getMountBasicType(m.type) == common::dataStructures::MountType::ArchiveAllTypes;
       })) {
-    tapeList = m_catalogue.Tape()->getTapesForWriting(logicalLibraryName);
+    tapesForWritting = m_catalogue.Tape()->getTapesForWriting(logicalLibraryName);
     getTapeForWriteTime = timer.secs(utils::Timer::resetCounter);
   }
 
   // Remove from the tape list the ones already or soon to be mounted
-  auto t = tapeList.begin();
-  while (t != tapeList.end()) {
+  auto t = tapesForWritting.begin();
+  while (t != tapesForWritting.end()) {
     if (tapesInUse.count(t->vid)) {
-      t = tapeList.erase(t);
+      t = tapesForWritting.erase(t);
     } else {
       t++;
     }
@@ -1729,8 +1716,8 @@ void Scheduler::checkNeededEnvironmentVariables() {
 //------------------------------------------------------------------------------
 // Scheduler::getArchiveMountPolicyMaxPriorityMinAge()
 //------------------------------------------------------------------------------
-std::pair<uint64_t, uint64_t>
-Scheduler::getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+std::pair<uint64_t, uint64_t> Scheduler::getArchiveMountPolicyMaxPriorityMinAge(
+  const std::vector<common::dataStructures::MountPolicy>& mountPolicies) {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception("In Scheduler::getArchiveMountPolicyMaxPriorityMinAge(), empty mount policy list.");
   }
@@ -1747,7 +1734,7 @@ Scheduler::getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataSt
 // Scheduler::getRetrieveMountPolicyMaxPriorityMinAge()
 //------------------------------------------------------------------------------
 std::pair<uint64_t, uint64_t> Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(
-  const std::list<common::dataStructures::MountPolicy>& mountPolicies) {
+  const std::vector<common::dataStructures::MountPolicy>& mountPolicies) {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception(
       "In Scheduler::getRetrieveMountPolicyMaxPriorityMinAge(), empty mount policy list.");
@@ -1765,7 +1752,7 @@ std::pair<uint64_t, uint64_t> Scheduler::getRetrieveMountPolicyMaxPriorityMinAge
 // Scheduler::getHighestPriorityArchiveMountPolicyName()
 //------------------------------------------------------------------------------
 std::string Scheduler::getHighestPriorityArchiveMountPolicyName(
-  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  const std::vector<common::dataStructures::MountPolicy>& mountPolicies) const {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception(
       "In Scheduler::getHighestPriorityArchiveMountPolicyName(), empty mount policy list.");
@@ -1789,7 +1776,7 @@ std::string Scheduler::getHighestPriorityArchiveMountPolicyName(
 // Scheduler::getLowestRequestAgeArchiveMountPolicyName()
 //------------------------------------------------------------------------------
 std::string Scheduler::getLowestRequestAgeArchiveMountPolicyName(
-  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  const std::vector<common::dataStructures::MountPolicy>& mountPolicies) const {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception(
       "In Scheduler::getLowestRequestAgeArchiveMountPolicyName(), empty mount policy list.");
@@ -1813,7 +1800,7 @@ std::string Scheduler::getLowestRequestAgeArchiveMountPolicyName(
 // Scheduler::getHighestPriorityRetrieveMountPolicyName()
 //------------------------------------------------------------------------------
 std::string Scheduler::getHighestPriorityRetrieveMountPolicyName(
-  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  const std::vector<common::dataStructures::MountPolicy>& mountPolicies) const {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception(
       "In Scheduler::getHighestPriorityRetrieveMountPolicyName(), empty mount policy list.");
@@ -1837,7 +1824,7 @@ std::string Scheduler::getHighestPriorityRetrieveMountPolicyName(
 // Scheduler::getLowestRequestAgeRetrieveMountPolicyName()
 //------------------------------------------------------------------------------
 std::string Scheduler::getLowestRequestAgeRetrieveMountPolicyName(
-  const std::list<common::dataStructures::MountPolicy>& mountPolicies) const {
+  const std::vector<common::dataStructures::MountPolicy>& mountPolicies) const {
   if (mountPolicies.empty()) {
     throw cta::exception::Exception(
       "In Scheduler::getLowestRequestAgeRetrieveMountPolicyName(), empty mount policy list.");
@@ -1860,10 +1847,10 @@ std::string Scheduler::getLowestRequestAgeRetrieveMountPolicyName(
 //------------------------------------------------------------------------------
 // getMountPoliciesInQueue()
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::MountPolicy>
-Scheduler::getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
+std::vector<common::dataStructures::MountPolicy>
+Scheduler::getMountPoliciesInQueue(const std::vector<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
                                    const std::map<std::string, uint64_t>& queueMountPolicyMap) {
-  std::list<cta::common::dataStructures::MountPolicy> mountPolicyRet;
+  std::vector<cta::common::dataStructures::MountPolicy> mountPolicyRet;
   std::copy_if(mountPoliciesInCatalogue.begin(),
                mountPoliciesInCatalogue.end(),
                std::back_inserter(mountPolicyRet),
@@ -1878,7 +1865,7 @@ Scheduler::getMountPoliciesInQueue(const std::list<common::dataStructures::Mount
 //------------------------------------------------------------------------------
 void Scheduler::fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                                                        log::LogContext& logContext) {
-  std::list<common::dataStructures::MountPolicy> mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
+  auto mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
 
   // Walk the all PotentialMounts and check Mount Policies agains the catalogue
   for (auto& m : tmdi.potentialMounts) {
@@ -2042,7 +2029,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
   ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
   ExistingMountSummaryPerVo existingMountBasicTypeSummaryPerVo;
   std::set<std::string, std::less<>> tapesInUse;
-  std::list<catalogue::TapeForWriting> tapeList;
+  std::vector<catalogue::TapeForWriting> tapesForWritting;
 
   sortAndGetTapesForMountInfo(mountInfo,
                               logicalLibraryName,
@@ -2051,7 +2038,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
                               existingMountsDistinctTypeSummaryPerTapepool,
                               existingMountBasicTypeSummaryPerVo,
                               tapesInUse,
-                              tapeList,
+                              tapesForWritting,
                               getTapeInfoTime,
                               candidateSortingTime,
                               getTapeForWriteTime,
@@ -2065,7 +2052,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
       // tape pool and in the drive's logical library
       // The first tape matching will go for a prototype.
       // TODO: improve to reuse already partially written tapes and randomization
-      for (auto& t : tapeList) {
+      for (auto& t : tapesForWritting) {
         if (t.tapePool == m->tapePool) {
           // We have our tape. That's enough.
           decisionTime += timer.secs(utils::Timer::resetCounter);
@@ -2234,7 +2221,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
   ExistingMountSummaryPerVo existingMountBasicTypeSummaryPerVo;
   std::set<std::string, std::less<>> tapesInUse;
-  std::list<catalogue::TapeForWriting> tapeList;
+  std::vector<catalogue::TapeForWriting> tapesForWritting;
 
   sortAndGetTapesForMountInfo(mountInfo,
                               logicalLibraryName,
@@ -2243,7 +2230,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
                               existingMountsDistinctTypeSummaryPerTapepool,
                               existingMountBasicTypeSummaryPerVo,
                               tapesInUse,
-                              tapeList,
+                              tapesForWritting,
                               getTapeInfoTime,
                               candidateSortingTime,
                               getTapeForWriteTime,
@@ -2258,7 +2245,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
       // tape pool and in the drive's logical library
       // The first tape matching will go for a prototype.
       // TODO: improve to reuse already partially written tapes and randomization
-      for (auto& t : tapeList) {
+      for (auto& t : tapesForWritting) {
         if (t.tapePool == m->tapePool) {
           // We have our tape. Try to create the session. Prepare a return value
           // for it.

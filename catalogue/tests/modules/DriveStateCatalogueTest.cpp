@@ -107,7 +107,7 @@ void cta_catalogue_DriveStateTest::TearDown() {
 }
 
 TEST_P(cta_catalogue_DriveStateTest, getTapeDriveNames) {
-  const std::list<std::string> tapeDriveNames = {"VDSTK11", "VDSTK12", "VDSTK21", "VDSTK22"};
+  const std::vector<std::string> tapeDriveNames = {"VDSTK11", "VDSTK12", "VDSTK21", "VDSTK22"};
   for (const auto& name : tapeDriveNames) {
     const auto tapeDrive = getTapeDriveWithMandatoryElements(name);
     m_catalogue->DriveState()->createTapeDrive(tapeDrive);
@@ -135,10 +135,8 @@ TEST_P(cta_catalogue_DriveStateTest, getAllTapeDrives) {
   }
   auto storedTapeDrives = m_catalogue->DriveState()->getTapeDrives();
   ASSERT_EQ(tapeDriveNames.size(), storedTapeDrives.size());
-  while (!storedTapeDrives.empty()) {
-    const auto storedTapeDrive = storedTapeDrives.front();
+  for (auto& storedTapeDrive : storedTapeDrives) {
     const auto tapeDrive = tapeDrives.front();
-    storedTapeDrives.pop_front();
     tapeDrives.pop_front();
     ASSERT_EQ(tapeDrive, storedTapeDrive);
   }

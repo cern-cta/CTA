@@ -49,7 +49,7 @@ void DiskInstanceCatalogueRetryWrapper::modifyDiskInstanceComment(const common::
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::DiskInstance> DiskInstanceCatalogueRetryWrapper::getAllDiskInstances() const {
+std::vector<common::dataStructures::DiskInstance> DiskInstanceCatalogueRetryWrapper::getAllDiskInstances() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->DiskInstance()->getAllDiskInstances(); },

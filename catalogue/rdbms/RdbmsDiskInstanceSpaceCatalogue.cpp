@@ -146,8 +146,9 @@ void RdbmsDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::data
   stmt.executeNonQuery();
 }
 
-std::list<common::dataStructures::DiskInstanceSpace> RdbmsDiskInstanceSpaceCatalogue::getAllDiskInstanceSpaces() const {
-  std::list<common::dataStructures::DiskInstanceSpace> diskInstanceSpaceList;
+std::vector<common::dataStructures::DiskInstanceSpace>
+RdbmsDiskInstanceSpaceCatalogue::getAllDiskInstanceSpaces() const {
+  std::vector<common::dataStructures::DiskInstanceSpace> diskInstanceSpaces;
   const char* const sql = R"SQL(
     SELECT
       DISK_INSTANCE_SPACE.DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,
@@ -189,9 +190,9 @@ std::list<common::dataStructures::DiskInstanceSpace> RdbmsDiskInstanceSpaceCatal
     diskInstanceSpace.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
     diskInstanceSpace.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
     diskInstanceSpace.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
-    diskInstanceSpaceList.push_back(diskInstanceSpace);
+    diskInstanceSpaces.push_back(diskInstanceSpace);
   }
-  return diskInstanceSpaceList;
+  return diskInstanceSpaces;
 }
 
 void RdbmsDiskInstanceSpaceCatalogue::modifyDiskInstanceSpaceComment(

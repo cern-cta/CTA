@@ -25,15 +25,6 @@ void LogContext::pushOrReplace(const Param& param) noexcept {
   }
 }
 
-void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
-  auto i = std::ranges::find_if(m_params, [&paramName](const Param& p) { return p.getName() == paramName; });
-  if (i != m_params.end()) {
-    const Param param(paramName, i->getValueVariant());
-    m_params.erase(i);
-    m_params.push_back(param);
-  }
-}
-
 void LogContext::erase(const std::set<std::string>& paramNamesSet) noexcept {
   auto toEraseRange =
     std::ranges::remove_if(m_params, [&paramNamesSet](const Param& p) { return paramNamesSet.contains(p.getName()); });
@@ -91,7 +82,7 @@ LogContext::ScopedParam::~ScopedParam() noexcept {
 
 std::ostream& operator<<(std::ostream& os, const LogContext& lc) {
   bool first = true;
-  for (std::list<Param>::const_iterator p = lc.m_params.begin(); p != lc.m_params.end(); ++p) {
+  for (auto p = lc.m_params.cbegin(); p != lc.m_params.cend(); ++p) {
     if (!first) {
       os << " ";
     } else {

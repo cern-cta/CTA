@@ -8,9 +8,9 @@
 #include "catalogue/TapePoolSearchCriteria.hpp"
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -36,12 +36,12 @@ public:
                               const std::string& vo,
                               const uint64_t nbPartialTapes,
                               const std::optional<std::string>& encryptionKeyNameOpt,
-                              const std::list<std::string>& supply_list,
+                              const std::vector<std::string>& supply_list,
                               const std::string& comment) = 0;
 
   virtual void deleteTapePool(const std::string& name) = 0;
 
-  virtual std::list<TapePool>
+  virtual std::vector<TapePool>
   getTapePools(const TapePoolSearchCriteria& searchCriteria = TapePoolSearchCriteria()) const = 0;
 
   virtual std::optional<TapePool> getTapePool(const std::string& tapePoolName) const = 0;
@@ -64,7 +64,7 @@ public:
 
   virtual void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                     const std::string& name,
-                                    const std::list<std::string>& supply_list) = 0;
+                                    const std::vector<std::string>& supply_list) = 0;
 
   virtual void modifyTapePoolName(const common::dataStructures::SecurityIdentity& admin,
                                   const std::string& currentName,
