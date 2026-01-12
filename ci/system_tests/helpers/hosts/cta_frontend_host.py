@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from ..remote_host import RemoteHost
+from .remote_host import RemoteHost
 from functools import cached_property
 
 

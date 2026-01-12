@@ -4,7 +4,7 @@
 import json
 import time
 
-from ..remote_host import RemoteHost
+from .remote_host import RemoteHost
 
 
 class CtaCliHost(RemoteHost):

@@ -1,9 +1,8 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from ...helpers.hosts.cta.cta_rmcd_host import CtaRmcdHost
+from ...helpers.hosts.cta_rmcd_host import CtaRmcdHost
 from concurrent.futures import ThreadPoolExecutor
-from itertools import cycle
 
 
 #####################################################################################################################
@@ -128,11 +127,14 @@ def test_label_tapes(env):
     tapes: list[str] = CtaRmcdHost.list_all_tapes_in_libraries(env.cta_rmcd)
     max_workers = len(env.cta_taped)
 
-    # Run labeling on every drive
+    # Run labeling on every drive in parallel
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
         futures = []
-        for tape, taped in zip(tapes, cycle(env.cta_taped)):
-            futures.append(pool.submit(taped.label_tape, tape))
+        num_drives = len(env.cta_taped)
+        for idx, taped in enumerate(env.cta_taped):
+            # Give each drive a set of tapes to label
+            tapes_to_label = tapes[idx::num_drives]
+            futures.append(pool.submit(taped.label_tapes, tapes_to_label))
 
         # force errors to surface
         for f in futures:

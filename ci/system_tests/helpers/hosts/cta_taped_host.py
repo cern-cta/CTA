@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from ..remote_host import RemoteHost
+from .remote_host import RemoteHost
 from functools import cached_property
 
 
@@ -30,6 +30,10 @@ class CtaTapedHost(RemoteHost):
         if not device.startswith("/dev/"):
             device = "/dev/" + device
         return device
+
+    def label_tapes(self, tapes: list[str]) -> None:
+        for tape in tapes:
+            self.label_tape(tape)
 
     def label_tape(self, tape: str) -> None:
         self.exec(f"cta-tape-label --vid {tape} --force")

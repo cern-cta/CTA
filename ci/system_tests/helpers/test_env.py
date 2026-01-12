@@ -5,11 +5,11 @@ import json
 from typing import Any, List
 import subprocess
 
-from .hosts.cta.cta_cli_host import CtaCliHost
-from .hosts.cta.cta_frontend_host import CtaFrontendHost
-from .hosts.cta.cta_rmcd_host import CtaRmcdHost
-from .hosts.cta.cta_taped_host import CtaTapedHost
-from .hosts.cta.cta_maintd_host import CtaMaintdHost
+from .hosts.cta_cli_host import CtaCliHost
+from .hosts.cta_frontend_host import CtaFrontendHost
+from .hosts.cta_rmcd_host import CtaRmcdHost
+from .hosts.cta_taped_host import CtaTapedHost
+from .hosts.cta_maintd_host import CtaMaintdHost
 from .hosts.disk.eos_client_host import EosClientHost
 from .hosts.disk.eos_mgm_host import EosMgmHost
 from .hosts.disk.disk_instance_host import DiskInstanceHost
