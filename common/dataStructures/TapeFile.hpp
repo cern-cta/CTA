@@ -6,9 +6,9 @@
 #pragma once
 
 #include <common/checksum/ChecksumBlob.hpp>
-#include <list>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace cta::common::dataStructures {
 

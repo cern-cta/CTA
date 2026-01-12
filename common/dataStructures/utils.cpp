@@ -7,7 +7,7 @@
 
 namespace cta::common::dataStructures {
 
-std::ostream& operator<<(std::ostream& os, const std::list<TapeFile>& list) {
+std::ostream& operator<<(std::ostream& os, const std::vector<TapeFile>& list) {
   os << "(";
   for (auto& af : list) {
     os << af << " ";

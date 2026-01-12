@@ -28,8 +28,8 @@ public:
 private:
   catalogue::ArchiveFileItor m_tapeFileItor;
   std::optional<common::dataStructures::ArchiveFile> m_currentArchiveFile;
-  std::list<common::dataStructures::TapeFile>::const_iterator m_currentTapeFileIter;
-  std::list<common::dataStructures::TapeFile>::const_iterator m_currentTapeFileEnd;
+  std::vector<common::dataStructures::TapeFile>::const_iterator m_currentTapeFileIter;
+  std::vector<common::dataStructures::TapeFile>::const_iterator m_currentTapeFileEnd;
 
   void validateSearchCriteria(bool hasAnySearchOption) const;
   void populateDataItem(cta::xrd::Data& data,

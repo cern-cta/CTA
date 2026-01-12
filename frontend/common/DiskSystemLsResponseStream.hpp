@@ -23,6 +23,7 @@ public:
 
 private:
   cta::disk::DiskSystemList m_diskSystems;
+  std::size_t m_diskSystemsIdx = 0;
 };
 
 }  // namespace cta::frontend

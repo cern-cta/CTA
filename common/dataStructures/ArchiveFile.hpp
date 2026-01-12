@@ -9,9 +9,9 @@
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 
-#include <list>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace cta::common::dataStructures {
 
@@ -45,9 +45,9 @@ struct ArchiveFile {
    * to be listed by the operator. For example, if the listing requested is
    * for a single tape, the map will contain only one element.
    */
-  class TapeFilesList : public std::list<TapeFile> {
+  class TapeFilesList : public std::vector<TapeFile> {
   public:
-    using std::list<TapeFile>::list;
+    using std::vector<TapeFile>::vector;
     TapeFile& at(uint8_t copyNb);
     const TapeFile& at(uint8_t copyNb) const;
     TapeFilesList::iterator find(uint8_t copyNb);
