@@ -83,6 +83,15 @@ else
 fi
 
 echo
+echo "Checking if zstd is available"
+if command -v zstd >/dev/null 2>&1; then
+  echo "SUCCESS: zstd is available"
+else
+  echo "ERROR: zstd does not seem to be installed"
+  errors=$((errors + 1))
+fi
+
+echo
 if [[ "${errors}" -gt 0 ]]; then
   echo "FAILURE: not all conditions were satisfied. The runner is not configured correctly"
   exit 1

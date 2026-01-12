@@ -34,6 +34,7 @@
                        --cache=true
                        --cache-copy-layers
                        --cache-ttl=48h
+                       --compression zstd
                        --dockerfile $DOCKERFILE
                        --destination ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}
                        ${EXTRA_BUILD_ARGS}

@@ -95,10 +95,13 @@ save_logs() {
             bash -c "cd /var/log && find ${subdirs_to_tar[*]} -maxdepth 0 -type d 2>/dev/null || true"
         )
 
-        kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
-          tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - ${existing_dirs} \
+        kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- sh -c '
+          tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - '"${existing_dirs}"' \
+          | zstd -T0 -1 -q
+        ' | zstd -d -q \
           | tar -C "${tmpdir}/varlogs/${output_dir}" -xf - \
           || echo "Failed to collect /var/log from pod ${pod}, container ${container}" >&2
+
         # Remove empty files and directories to prevent polluting the output logs
         find "${tmpdir}/varlogs/${output_dir}" -type d -empty -delete -o -type f -empty -delete
       fi
@@ -107,7 +110,7 @@ save_logs() {
 
   # Compress /var/log contents
   echo "Compressing all /var/log contents into single archive"
-  XZ_OPT='-0 -T0' tar --warning=no-file-removed --ignore-failed-read -C "${tmpdir}/varlogs" -Jcf "${tmpdir}/varlog.tar.xz" .
+  tar -I 'zstd -3 -T0' --warning=no-file-removed --ignore-failed-read -C "${tmpdir}/varlogs" -Jcf "${tmpdir}/varlog.tar.zst" .
   # Clean up uncompressed files
   rm -rf "${tmpdir}/varlogs"
 
@@ -117,8 +120,6 @@ save_logs() {
     # Note that this directory must be in the repository so that they can be properly saved as artifacts
     mkdir -p "../../pod_logs/${namespace}"
     cp -r "${tmpdir}"/* "../../pod_logs/${namespace}"
-    local CLIENT_POD="cta-client-0"
-    kubectl -n "${namespace}" cp ${CLIENT_POD}:/root/trackerdb.db "../../pod_logs/${namespace}/trackerdb.db" -c client || echo "Failed to copy trackerdb.db"
   fi
 }
 
