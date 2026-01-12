@@ -35,6 +35,8 @@ namespace unitTests {
 
 const uint32_t DISK_FILE_OWNER_UID = 9751;
 const uint32_t DISK_FILE_GID = 9752;
+const uint32_t PUBLIC_OWNER_UID = 9753;
+const uint32_t PUBLIC_GID = 9754;
 
 /**
  * This structure is used to parameterize scheduler database tests.
@@ -71,7 +73,7 @@ public:
     using namespace cta;
     cta::log::DummyLogger logger("", "");
     const SchedulerDatabaseFactory& factory = GetParam().dbFactory;
-    //m_catalogue = std::make_unique<cta::catalogue::InMemoryCatalogue>(logger, 1, 1);
+    // m_catalogue = std::make_unique<cta::catalogue::InMemoryCatalogue>(logger, 1, 1);
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
 
     m_db.reset(factory.create(m_catalogue).release());
@@ -102,6 +104,7 @@ public:
   static const std::string s_system;
   static const std::string s_admin;
   static const std::string s_user;
+  static const std::string s_storageClassName;
 
   static const cta::common::dataStructures::SecurityIdentity s_systemOnSystemHost;
 
@@ -130,6 +133,7 @@ const std::string SchedulerDatabaseTest::s_userHost = "userhost";
 const std::string SchedulerDatabaseTest::s_system = "systemuser";
 const std::string SchedulerDatabaseTest::s_admin = "adminuser";
 const std::string SchedulerDatabaseTest::s_user = "user";
+const std::string SchedulerDatabaseTest::s_storageClassName = "TestStorageClass";
 
 const cta::common::dataStructures::SecurityIdentity
   SchedulerDatabaseTest::s_systemOnSystemHost(SchedulerDatabaseTest::s_system, SchedulerDatabaseTest::s_systemHost);
@@ -394,11 +398,27 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
     rfqc.archiveFile.tapeFiles.emplace_back();
     rfqc.archiveFile.tapeFiles.back().fSeq = 0;
     rfqc.archiveFile.tapeFiles.back().vid = "vid";
+    rfqc.archiveFile.archiveFileID = 1;
+    rfqc.archiveFile.tapeFiles.back().copyNb = 1;
+    rfqc.archiveFile.tapeFiles.back().fileSize = 1000;
+    rfqc.archiveFile.storageClass = s_storageClassName;
+    rfqc.archiveFile.tapeFiles.back().blockId = 1;
+    rfqc.archiveFile.tapeFiles.back().checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+    rfqc.archiveFile.checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+    rfqc.archiveFile.diskInstance = "dis-A";
+    rfqc.archiveFile.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+    rfqc.archiveFile.diskFileInfo.gid = DISK_FILE_GID;
+
+    rr.archiveFileID = 1;
     rr.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
     uuid_t fileUUID;
     uuid_generate(fileUUID);
     char fileUUIDStr[37];
     uuid_unparse(fileUUID, fileUUIDStr);
+
+    rfqc.archiveFile.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
+    rfqc.archiveFile.diskFileId = std::string(fileUUIDStr);
+
     rr.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
     rr.requester = {"user", "group"};
     rr.dstURL = std::string("root://") + "a" + ".disk.system/" + std::to_string(0);
@@ -657,6 +677,10 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   const size_t filesToDo = 10;
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
+  // bool doSleep=true;
+  // while (doSleep) {
+  //   sleep(2);
+  // }
   auto creationTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   for (size_t id = 0; id < filesToDo; id++) {
     lambdas.emplace_back([id, &db, &lc, creationTime, diskSystemList]() {
@@ -675,15 +699,32 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
       rfqc.archiveFile.tapeFiles.emplace_back();
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
+      rfqc.archiveFile.archiveFileID = id + 1;
+      rfqc.archiveFile.tapeFiles.back().copyNb = 1;
+      rfqc.archiveFile.tapeFiles.back().fileSize = 1000;
+      rfqc.archiveFile.storageClass = s_storageClassName;
+      rfqc.archiveFile.tapeFiles.back().blockId = id;
+      rfqc.archiveFile.tapeFiles.back().checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+      rfqc.archiveFile.checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+      rfqc.archiveFile.diskInstance = "dis-A";
+      rfqc.archiveFile.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      rfqc.archiveFile.diskFileInfo.gid = DISK_FILE_GID;
+
+      rr.archiveFileID = id + 1;
       rr.creationLog = {"user", "host", creationTime};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
+
+      rfqc.archiveFile.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
+      rfqc.archiveFile.diskFileId = std::string(fileUUIDStr);
+
       rr.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
       rr.requester = {"user", "group"};
       std::string dsName = "ds-A";
       rr.dstURL = std::string("root://") + "a" + ".disk.system/" + std::to_string(0);
+      rr.retrieveReportURL = "null:";
       db.queueRetrieve(rr, rfqc, dsName, locallc);
     });
     jobInsertions.emplace_back(std::async(std::launch::async, lambdas.back()));
@@ -698,7 +739,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   // Then load all retrieve jobs into memory
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
-  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+  ASSERT_EQ(1, mountInfo->potentialMounts.size()); // this fails
   auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
   {
     auto rjb = rm->getNextJobBatch(10, 20 * 1000, lc);
@@ -788,14 +829,18 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
       rfqc.archiveFile.tapeFiles.emplace_back();
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
+
+      rr.archiveFileID = id + 1;
       rr.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
+
       rr.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
       rr.requester = {"user", "group"};
       rr.dstURL = std::string("root://") + (id % 2 ? "b" : "a") + ".disk.system/" + std::to_string(id);
+      rr.retrieveReportURL = "null:";
       std::string dsName = (id % 2 ? "ds-B" : "ds-A");
       db.queueRetrieve(rr, rfqc, dsName, locallc);
     });
@@ -894,13 +939,30 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
       rfqc.archiveFile.tapeFiles.emplace_back();
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
+      rfqc.archiveFile.archiveFileID = id + 1;
+      rfqc.archiveFile.tapeFiles.back().copyNb = 1;
+      rfqc.archiveFile.tapeFiles.back().fileSize = 1000;
+      rfqc.archiveFile.storageClass = s_storageClassName;
+      rfqc.archiveFile.tapeFiles.back().blockId = id;
+      rfqc.archiveFile.tapeFiles.back().checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+      rfqc.archiveFile.checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+      rfqc.archiveFile.diskInstance = "dis-A";
+      rfqc.archiveFile.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      rfqc.archiveFile.diskFileInfo.gid = DISK_FILE_GID;
+
+      rr.archiveFileID = id + 1;
       rr.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
+
+      rfqc.archiveFile.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
+      rfqc.archiveFile.diskFileId = std::string(fileUUIDStr);
+
       rr.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
       rr.requester = {"user", "group"};
+      rr.retrieveReportURL = "null:";
       std::string dsName;
       rr.dstURL = std::string("root://a.disk.system/") + std::to_string(id);
       dsName = "ds-A";
@@ -998,6 +1060,14 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       rfqc.archiveFile.tapeFiles.emplace_back();
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
+      rfqc.archiveFile.archiveFileID = id + 1;
+      rfqc.archiveFile.tapeFiles.back().copyNb = 1;
+      rfqc.archiveFile.tapeFiles.back().fileSize = 1000;
+      rfqc.archiveFile.storageClass = s_storageClassName;
+      rfqc.archiveFile.tapeFiles.back().blockId = id;
+      rfqc.archiveFile.tapeFiles.back().checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+      rr.archiveFileID = id + 1;
+      rr.retrieveReportURL = "null:";
       rr.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
