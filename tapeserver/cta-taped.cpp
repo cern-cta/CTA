@@ -44,8 +44,8 @@ static int exceptionThrowingMain(const cta::common::CmdLineParams& commandLine, 
   using namespace cta::tape::daemon::common;
 
   {
-    auto params = commandLine.toLogParams();
-    params.emplace_back("version", CTA_VERSION);
+    std::list<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
+    params.splice(params.end(), commandLine.toLogParams());
     log(log::INFO, "Starting cta-taped", params);
   }
 

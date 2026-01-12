@@ -241,7 +241,8 @@ protected:
 
     // Flush the one-of parameters to delete
     if (!paramsToDelete.empty()) {
-      m_initialProcess.deleteLogParams({paramsToDelete.begin(), paramsToDelete.end()});
+      std::list<std::string> paramsToDeleteList {paramsToDelete.begin(), paramsToDelete.end()};
+      m_initialProcess.deleteLogParams(paramsToDeleteList);
     }
   }
 

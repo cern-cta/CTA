@@ -47,6 +47,14 @@ public:
   void pushOrReplace(const Param& param) noexcept;
 
   /**
+   * Move a parameter with a given name to the end of the container it it
+   * present.
+   *
+   * @param paramName  The name of the parameter to check and move.
+   */
+  void moveToTheEndIfPresent(const std::string& paramName) noexcept;
+
+  /**
    * Removes a parameter from the list.
    * @param paramNamesSet set of values of param.getName();
    */
