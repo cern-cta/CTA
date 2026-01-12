@@ -1561,7 +1561,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
                                                 lc);
       }
       // Then the request should be gone
-      ASSERT_EQ(0, retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc).size());
+      ASSERT_EQ(0, retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc).size()); // why does this fail? 0 vs 1
     }  // end of retries
   }  // end of pass
 
@@ -1693,13 +1693,16 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
@@ -1713,7 +1716,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
-    archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
@@ -1794,7 +1797,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
       ASSERT_NE(nullptr, retrieveMount.get());
       // The file should be retried three times
       for (int i = 0; i < 3; ++i) {
-        std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList = retrieveMount->getNextJobBatch(1, 1, lc);
+        std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
         if (!retrieveJobList.front().get()) {
           int __attribute__((__unused__)) debugI = i;
         }
@@ -1806,7 +1809,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
                                                 lc);
       }
       // Then the request should be gone
-      ASSERT_EQ(0, retrieveMount->getNextJobBatch(1, 1, lc).size());
+      ASSERT_EQ(0, retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc).size());
     }  // end of retries
   }  // end of pass
 
