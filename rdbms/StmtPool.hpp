@@ -70,7 +70,7 @@ private:
    * The cached database statements.
    *
    * Please note that for a single key there maybe more than one cached
-   * statement, hence the map to list of statements.
+   * statement, hence the map to vector of statements.
    */
   std::map<std::string, std::vector<std::unique_ptr<wrapper::StmtWrapper>>> m_stmts;
 
