@@ -13,6 +13,7 @@ RUN dnf install -y \
       python3-dnf-plugin-versionlock \
       dnf-utils \
       createrepo \
+      zstd \
       epel-release \
       jq \
       bc \
