@@ -195,9 +195,9 @@ public:
 
     catalogue.MountPolicy()->createMountPolicy(s_adminOnAdminHost, mountPolicy);
 
-    const std::list<common::dataStructures::MountPolicy> groups = catalogue.MountPolicy()->getMountPolicies();
+    const auto groups = catalogue.MountPolicy()->getMountPolicies();
     ASSERT_EQ(1, groups.size());
-    const common::dataStructures::MountPolicy group = groups.front();
+    auto& group = groups.front();
     ASSERT_EQ(mountPolicyName, group.name);
     ASSERT_EQ(archivePriority, group.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, group.archiveMinRequestAge);
@@ -247,7 +247,7 @@ public:
     const std::string tapePoolComment = "Tape-pool comment";
     // const bool tapePoolEncryption = false;
     const std::optional<std::string>& tapePoolEncryptionOpt = std::nullopt;
-    const std::list<std::string> tapePoolSupply;
+    const std::vector<std::string> tapePoolSupply;
     catalogue.TapePool()->createTapePool(s_adminOnAdminHost,
                                          s_tapePoolName,
                                          vo.name,
@@ -733,7 +733,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    auto archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
@@ -884,7 +884,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
 
     catalogue.MountPolicy()->createMountPolicy(s_adminOnAdminHost, mountPolicy);
 
-    const std::list<common::dataStructures::MountPolicy> groups = catalogue.MountPolicy()->getMountPolicies();
+    const auto groups = catalogue.MountPolicy()->getMountPolicies();
     ASSERT_EQ(1, groups.size());
     const common::dataStructures::MountPolicy group = groups.front();
     ASSERT_EQ(mountPolicyName, group.name);
@@ -940,7 +940,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     const std::string tapePool2Comment = "Tape-pool for copy number 2";
     // const bool tapePoolEncryption = false;
     const std::optional<std::string>& tapePoolEncryptionOpt = std::nullopt;
-    const std::list<std::string> tapePoolSupply;
+    const std::vector<std::string> tapePoolSupply;
     catalogue.TapePool()->createTapePool(s_adminOnAdminHost,
                                          tapePool1Name,
                                          vo.name,
