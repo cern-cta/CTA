@@ -54,12 +54,12 @@ public:
    * transfer session is over.
    * @param params: a vector of log parameters
    */
-  virtual void addLogParams(const std::vector<cta::log::Param>& params) = 0;
+  virtual void addLogParams(const std::list<cta::log::Param>& params) = 0;
 
   /**
    * Sends a list of parameters to remove from the end of session logging.
    */
-  virtual void deleteLogParams(const std::vector<std::string>& paramNames) = 0;
+  virtual void deleteLogParams(const std::list<std::string>& paramNames) = 0;
 
   /**
    * Sends a list of parameters to remove from the end of session logging.

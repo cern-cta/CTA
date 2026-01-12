@@ -97,8 +97,8 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   }
 
   // Capture the parameters sent by TapedProxyMock with addLogParams() and deleteLogParams()
-  std::vector<cta::log::Param> capturedParamsToAdd;
-  std::vector<std::string> capturedParamsToDelete;
+  std::list<cta::log::Param> capturedParamsToAdd;
+  std::list<std::string> capturedParamsToDelete;
 
   EXPECT_CALL(dummyInitialProcess, addLogParams(_)).WillOnce(testing::SaveArg<0>(&capturedParamsToAdd));
   EXPECT_CALL(dummyInitialProcess, deleteLogParams(_)).WillOnce(testing::SaveArg<0>(&capturedParamsToDelete));
@@ -111,8 +111,10 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   {
     ASSERT_EQ(capturedParamsToAdd.size(), 2);
     std::map<std::string, cta::log::Param> paramsToAddMap;
-    paramsToAddMap.emplace(capturedParamsToAdd[0].getName(), capturedParamsToAdd[0]);
-    paramsToAddMap.emplace(capturedParamsToAdd[1].getName(), capturedParamsToAdd[1]);
+    paramsToAddMap.emplace(capturedParamsToAdd.front().getName(), capturedParamsToAdd.front());
+    capturedParamsToAdd.pop_front();
+    paramsToAddMap.emplace(capturedParamsToAdd.front().getName(), capturedParamsToAdd.front());
+    capturedParamsToAdd.pop_front();
     ASSERT_TRUE(paramsToAddMap.contains("param3"));
     ASSERT_EQ(std::get<int64_t>(paramsToAddMap.at("param3").getValueVariant().value()), 31);
     ASSERT_TRUE(paramsToAddMap.contains("param4"));
@@ -122,7 +124,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   // Should only be adding "param0" (only one that was not added before)
   {
     ASSERT_EQ(capturedParamsToDelete.size(), 1);
-    auto paramA = capturedParamsToDelete[0];
+    auto paramA = capturedParamsToDelete.front();
     ASSERT_EQ(paramA, "param0");
   }
 }

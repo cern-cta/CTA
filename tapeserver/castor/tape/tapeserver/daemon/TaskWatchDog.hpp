@@ -142,7 +142,7 @@ protected:
     using Param = cta::log::Param;
     if (m_statsSet) {
       // Build the statistics to be logged
-      std::vector<Param> paramList;
+      std::list<Param> paramList;
       // for delivery time we estimate it ourselves before getting the
       // final stats at the end of the last disk thread. This allows proper
       // estimation of statistics for data transfer sessions that get killed
@@ -232,7 +232,7 @@ protected:
 
     // Flush the one-of parameters to add
     if (!paramsToAdd.empty()) {
-      std::vector<Param> paramsToAddList;
+      std::list<Param> paramsToAddList;
       std::transform(paramsToAdd.begin(), paramsToAdd.end(), std::back_inserter(paramsToAddList), [](auto& keyPair) {
         return keyPair.second;
       });

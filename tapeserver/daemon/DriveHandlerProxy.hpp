@@ -30,8 +30,8 @@ public:
                    const cta::tape::session::SessionType type,
                    const std::string& vid) override;
   void reportHeartbeat(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved) override;
-  void addLogParams(const std::vector<cta::log::Param>& params) override;
-  void deleteLogParams(const std::vector<std::string>& paramNames) override;
+  void addLogParams(const std::list<cta::log::Param>& params) override;
+  void deleteLogParams(const std::list<std::string>& paramNames) override;
   void resetLogParams() override;
   void labelError(const std::string& unitName, const std::string& message) override;
   void setRefreshLoggerHandler(std::function<void()> handler) override;

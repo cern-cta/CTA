@@ -61,7 +61,7 @@ void prepareForFork();
    */
 void write(const int priority,
            std::string_view msg,
-           const std::vector<cta::log::Param>& params = std::vector<cta::log::Param>());
+           const std::list<cta::log::Param>& params = std::vector<cta::log::Param>());
 
 /**
    * Writes a message into the CASTOR logging system. Note that no exception

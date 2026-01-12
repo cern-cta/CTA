@@ -57,7 +57,7 @@ void cta::log::prepareForFork() {
 //------------------------------------------------------------------------------
 // write
 //------------------------------------------------------------------------------
-void cta::log::write(const int priority, std::string_view msg, const std::vector<cta::log::Param>& params) {
+void cta::log::write(const int priority, std::string_view msg, const std::list<cta::log::Param>& params) {
   if (s_logger) {
     (*s_logger)(priority, msg, params);
   }
