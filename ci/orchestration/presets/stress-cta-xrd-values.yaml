@@ -29,9 +29,13 @@ global:
       - name: logstorage
         persistentVolumeClaim:
           claimName: logstorage-pvc
+      - name: coredumps
+        emptyDir: {}
     volumeMounts:
       - name: logstorage
         mountPath: /mnt/logs
+      - name: coredumps
+        mountPath: /var/log/tmp
 
 frontend:
   preRun:
