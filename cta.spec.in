@@ -58,13 +58,18 @@
 %define systemdDaemonReload() if [ -e /usr/bin/systemctl ] ; then /usr/bin/systemctl daemon-reload; fi
 %define systemdTryRestart() if [ -e /usr/bin/systemctl ] ; then /usr/bin/systemctl try-restart %1; fi
 
+# Use zstd for compression instead of gzip (which is incredibly slow)
+#--------------------------------------------
+%global _binary_payload w3.zstdio
+%global _source_payload w3.zstdio
+
 # General settings
 #-----------------
 Name: %{name}
 Summary: %{ctaSummary}
 Version: %{ctaVersion}
 Release: %{ctaRelease}%{mydist}
-Source: %{name}-%{ctaVersion}-%{ctaRelease}.tar.gz
+Source: %{name}-%{ctaVersion}-%{ctaRelease}.tar.zst
 License: %{ctaLicense}
 Group: Application/cta
 Vendor: CERN
