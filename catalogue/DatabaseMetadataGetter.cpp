@@ -14,36 +14,27 @@ namespace cta::catalogue {
 // Default destructor for abstract base class
 MetadataGetter::~MetadataGetter() = default;
 
-void MetadataGetter::removeObjectNameContaining(std::list<std::string>& objects,
-                                                const std::list<std::string>& wordsToTriggerRemoval) const {
-  objects.remove_if([&wordsToTriggerRemoval](const std::string& object) {
-    return std::find_if(wordsToTriggerRemoval.begin(),
-                        wordsToTriggerRemoval.end(),
-                        [&object](std::string_view wordTriggeringRemoval) {
-                          return object.find(wordTriggeringRemoval) != std::string::npos;
-                        })
-           != wordsToTriggerRemoval.end();
+void MetadataGetter::removeObjectNameContaining(std::vector<std::string>& objects,
+                                                std::span<const std::string_view> wordsToTriggerRemoval) const {
+  std::erase_if(objects, [&wordsToTriggerRemoval](const std::string& object) {
+    return std::ranges::find(wordsToTriggerRemoval, object) != wordsToTriggerRemoval.end();
   });
 }
 
-void MetadataGetter::removeObjectNameNotContaining(std::list<std::string>& objects,
-                                                   const std::list<std::string>& wordsNotToTriggerRemoval) const {
-  objects.remove_if([&wordsNotToTriggerRemoval](const std::string& object) {
-    return std::find_if(wordsNotToTriggerRemoval.begin(),
-                        wordsNotToTriggerRemoval.end(),
-                        [&object](std::string_view wordsNotToTriggeringRemoval) {
-                          return object.find(wordsNotToTriggeringRemoval) == std::string::npos;
-                        })
-           != wordsNotToTriggerRemoval.end();
+void MetadataGetter::removeObjectNameNotContaining(std::vector<std::string>& objects,
+                                                   std::span<const std::string_view> wordsNotToTriggerRemoval) const {
+  std::erase_if(objects, [&wordsNotToTriggerRemoval](const std::string& object) {
+    return std::ranges::find(wordsNotToTriggerRemoval, object) == wordsNotToTriggerRemoval.end();
   });
 }
 
-void MetadataGetter::removeObjectNameNotMatches(std::list<std::string>& objects, const cta::utils::Regex& regex) const {
-  objects.remove_if([&regex](const std::string& object) { return !regex.has_match(object); });
+void MetadataGetter::removeObjectNameNotMatches(std::vector<std::string>& objects,
+                                                const cta::utils::Regex& regex) const {
+  std::erase_if(objects, [&regex](const std::string& object) { return !regex.has_match(object); });
 }
 
-void MetadataGetter::removeObjectNameMatches(std::list<std::string>& objects, const cta::utils::Regex& regex) const {
-  objects.remove_if([&regex](const std::string& object) { return regex.has_match(object); });
+void MetadataGetter::removeObjectNameMatches(std::vector<std::string>& objects, const cta::utils::Regex& regex) const {
+  std::erase_if(objects, [&regex](const std::string& object) { return regex.has_match(object); });
 }
 
 DatabaseMetadataGetter::DatabaseMetadataGetter(cta::rdbms::Conn& conn) : m_conn(conn) {}
@@ -100,16 +91,17 @@ SchemaVersion DatabaseMetadataGetter::getCatalogueVersion() {
   }
 }
 
-std::list<std::string> DatabaseMetadataGetter::getTableNames() {
-  std::list<std::string> tableNames = m_conn.getTableNames();
-  removeObjectNameContaining(tableNames, {"DATABASECHANGELOG", "DATABASECHANGELOGLOCK"});
+std::vector<std::string> DatabaseMetadataGetter::getTableNames() {
+  static constexpr std::array<std::string_view, 2> toRemove = {"DATABASECHANGELOG", "DATABASECHANGELOGLOCK"};
+  auto tableNames = m_conn.getTableNames();
+  removeObjectNameContaining(tableNames, toRemove);
   return tableNames;
 }
 
-std::list<std::string> DatabaseMetadataGetter::getIndexNames() {
-  std::list<std::string> indexNames = m_conn.getIndexNames();
+std::vector<std::string> DatabaseMetadataGetter::getIndexNames() {
   //We just want indexes created by the user, their name are finishing by _IDX or by _I
-  cta::utils::Regex regexIndexes("(.*_IDX$)|(.*_I$)");
+  static cta::utils::Regex regexIndexes("(.*_IDX$)|(.*_I$)");
+  auto indexNames = m_conn.getIndexNames();
   removeObjectNameNotMatches(indexNames, regexIndexes);
   return indexNames;
 }
@@ -118,49 +110,52 @@ std::map<std::string, std::string, std::less<>> DatabaseMetadataGetter::getColum
   return m_conn.getColumns(tableName);
 }
 
-std::list<std::string> DatabaseMetadataGetter::getConstraintNames(const std::string& tableName) {
-  std::list<std::string> constraintNames = m_conn.getConstraintNames(tableName);
+std::vector<std::string> DatabaseMetadataGetter::getConstraintNames(const std::string& tableName) {
+  static constexpr std::array<std::string_view, 1> toRemove = {"CATALOGUE_STATUS_CONTENT_CK"};
+  auto constraintNames = m_conn.getConstraintNames(tableName);
   //This constraint is added by ALTER TABLE, we can't check its existence for now
-  removeObjectNameContaining(constraintNames, {"CATALOGUE_STATUS_CONTENT_CK"});
+  removeObjectNameContaining(constraintNames, toRemove);
   return constraintNames;
 }
 
-std::list<std::string> DatabaseMetadataGetter::getParallelTableNames() {
+std::vector<std::string> DatabaseMetadataGetter::getParallelTableNames() {
   return m_conn.getParallelTableNames();
 }
 
-std::list<std::string> DatabaseMetadataGetter::getStoredProcedures() {
+std::vector<std::string> DatabaseMetadataGetter::getStoredProcedures() {
   return m_conn.getStoredProcedureNames();
 }
 
-std::list<std::string> DatabaseMetadataGetter::getSynonyms() {
+std::vector<std::string> DatabaseMetadataGetter::getSynonyms() {
   return m_conn.getSynonymNames();
 }
 
-std::list<std::string> DatabaseMetadataGetter::getTypes() {
+std::vector<std::string> DatabaseMetadataGetter::getTypes() {
   return m_conn.getTypeNames();
 }
 
-std::list<std::string> DatabaseMetadataGetter::getErrorLoggingTables() {
-  std::list<std::string> tableNames = DatabaseMetadataGetter::getTableNames();
-  cta::utils::Regex regex("(^ERR\\$_)");
+std::vector<std::string> DatabaseMetadataGetter::getErrorLoggingTables() {
+  static cta::utils::Regex regex("(^ERR\\$_)");
+  auto tableNames = DatabaseMetadataGetter::getTableNames();
   removeObjectNameNotMatches(tableNames, regex);
   return tableNames;
 }
 
 SQLiteDatabaseMetadataGetter::SQLiteDatabaseMetadataGetter(cta::rdbms::Conn& conn) : DatabaseMetadataGetter(conn) {}
 
-std::list<std::string> SQLiteDatabaseMetadataGetter::getIndexNames() {
-  std::list<std::string> indexNames = DatabaseMetadataGetter::getIndexNames();
+std::vector<std::string> SQLiteDatabaseMetadataGetter::getIndexNames() {
+  static constexpr std::array<std::string_view, 1> toRemove = {"sqlite_autoindex"};
+  auto indexNames = DatabaseMetadataGetter::getIndexNames();
   //We do not want the sqlite_autoindex created automatically by SQLite
-  removeObjectNameContaining(indexNames, {"sqlite_autoindex"});
+  removeObjectNameContaining(indexNames, toRemove);
   return indexNames;
 }
 
-std::list<std::string> SQLiteDatabaseMetadataGetter::getTableNames() {
-  std::list<std::string> tableNames = DatabaseMetadataGetter::getTableNames();
+std::vector<std::string> SQLiteDatabaseMetadataGetter::getTableNames() {
+  static constexpr std::array<std::string_view, 1> toRemove = {"sqlite_sequence"};
+  auto tableNames = DatabaseMetadataGetter::getTableNames();
   //We do not want the sqlite_sequence tables created automatically by SQLite
-  removeObjectNameContaining(tableNames, {"sqlite_sequence"});
+  removeObjectNameContaining(tableNames, toRemove);
   return tableNames;
 }
 
@@ -180,10 +175,11 @@ cta::rdbms::Login::DbType OracleDatabaseMetadataGetter::getDbType() {
   return cta::rdbms::Login::DbType::DBTYPE_ORACLE;
 }
 
-std::list<std::string> OracleDatabaseMetadataGetter::getTableNames() {
-  std::list<std::string> tableNames = DatabaseMetadataGetter::getTableNames();
+std::vector<std::string> OracleDatabaseMetadataGetter::getTableNames() {
+  static cta::utils::Regex regex("(^ERR\\$_)");
+  auto tableNames = DatabaseMetadataGetter::getTableNames();
   //Ignore error logging tables
-  removeObjectNameMatches(tableNames, cta::utils::Regex("(^ERR\\$_)"));
+  removeObjectNameMatches(tableNames, regex);
   return tableNames;
 }
 
@@ -288,11 +284,11 @@ SchemaMetadataGetter::SchemaMetadataGetter(std::unique_ptr<SQLiteDatabaseMetadat
     : m_sqliteDatabaseMetadataGetter(std::move(sqliteCatalogueMetadataGetter)),
       m_dbType(dbType) {}
 
-std::list<std::string> SchemaMetadataGetter::getIndexNames() {
+std::vector<std::string> SchemaMetadataGetter::getIndexNames() {
   return m_sqliteDatabaseMetadataGetter->getIndexNames();
 }
 
-std::list<std::string> SchemaMetadataGetter::getTableNames() {
+std::vector<std::string> SchemaMetadataGetter::getTableNames() {
   return m_sqliteDatabaseMetadataGetter->getTableNames();
 }
 
@@ -300,12 +296,13 @@ std::map<std::string, std::string, std::less<>> SchemaMetadataGetter::getColumns
   return m_sqliteDatabaseMetadataGetter->getColumns(tableName);
 }
 
-std::list<std::string> SchemaMetadataGetter::getConstraintNames(const std::string& tableName) {
-  std::list<std::string> constraintNames = m_sqliteDatabaseMetadataGetter->getConstraintNames(tableName);
+std::vector<std::string> SchemaMetadataGetter::getConstraintNames(const std::string& tableName) {
+  static cta::utils::Regex regex("(^NN_)|(_NN$)");
+  auto constraintNames = m_sqliteDatabaseMetadataGetter->getConstraintNames(tableName);
   if (m_dbType == cta::rdbms::Login::DbType::DBTYPE_POSTGRESQL) {
     //If the database to compare is POSTGRESQL, we cannot compare NOT NULL CONSTRAINT names
     //indeed, POSTGRESQL can not give the NOT NULL constraint names
-    removeObjectNameMatches(constraintNames, cta::utils::Regex("(^NN_)|(_NN$)"));
+    removeObjectNameMatches(constraintNames, regex);
   }
   return constraintNames;
 }

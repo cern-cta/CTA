@@ -72,7 +72,7 @@ public:
    * @return a SchemaCheckerResult containing the errors
    */
   SchemaCheckerResult checkTableContainsColumns(const std::string& tableName,
-                                                const std::list<std::string>& columnNames);
+                                                const std::vector<std::string>& columnNames);
 
   /**
    * Checks if there are stored procedures in the database.

@@ -142,7 +142,7 @@ std::map<std::string, std::string, std::less<>> Conn::getColumns(const std::stri
 //------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getTableNames() const {
+std::vector<std::string> Conn::getTableNames() const {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getTableNames();
   } else {
@@ -153,7 +153,7 @@ std::list<std::string> Conn::getTableNames() const {
 //------------------------------------------------------------------------------
 // getIndexNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getIndexNames() const {
+std::vector<std::string> Conn::getIndexNames() const {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getIndexNames();
   } else {
@@ -187,7 +187,7 @@ bool Conn::isOpen() const {
 //------------------------------------------------------------------------------
 // getSequenceNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getSequenceNames() {
+std::vector<std::string> Conn::getSequenceNames() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getSequenceNames();
   } else {
@@ -198,7 +198,7 @@ std::list<std::string> Conn::getSequenceNames() {
 //------------------------------------------------------------------------------
 // getTriggerNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getTriggerNames() {
+std::vector<std::string> Conn::getTriggerNames() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getTriggerNames();
   } else {
@@ -209,7 +209,7 @@ std::list<std::string> Conn::getTriggerNames() {
 //------------------------------------------------------------------------------
 // getParallelTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getParallelTableNames() {
+std::vector<std::string> Conn::getParallelTableNames() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getParallelTableNames();
   } else {
@@ -220,7 +220,7 @@ std::list<std::string> Conn::getParallelTableNames() {
 //------------------------------------------------------------------------------
 // getConstraintNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getConstraintNames(const std::string& tableName) {
+std::vector<std::string> Conn::getConstraintNames(const std::string& tableName) {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getConstraintNames(tableName);
   } else {
@@ -231,7 +231,7 @@ std::list<std::string> Conn::getConstraintNames(const std::string& tableName) {
 //------------------------------------------------------------------------------
 // getStoredProcedureNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getStoredProcedureNames() {
+std::vector<std::string> Conn::getStoredProcedureNames() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getStoredProcedureNames();
   } else {
@@ -242,7 +242,7 @@ std::list<std::string> Conn::getStoredProcedureNames() {
 //------------------------------------------------------------------------------
 // getSynonymNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getSynonymNames() {
+std::vector<std::string> Conn::getSynonymNames() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getSynonymNames();
   } else {
@@ -253,7 +253,7 @@ std::list<std::string> Conn::getSynonymNames() {
 //------------------------------------------------------------------------------
 // getTypeNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getTypeNames() {
+std::vector<std::string> Conn::getTypeNames() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getTypeNames();
   } else {
@@ -264,7 +264,7 @@ std::list<std::string> Conn::getTypeNames() {
 //------------------------------------------------------------------------------
 // getViewNames
 //------------------------------------------------------------------------------
-std::list<std::string> Conn::getViewNames() {
+std::vector<std::string> Conn::getViewNames() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     return m_connAndStmts->conn->getViewNames();
   } else {

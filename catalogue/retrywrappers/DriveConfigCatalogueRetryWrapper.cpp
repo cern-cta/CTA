@@ -32,7 +32,7 @@ void DriveConfigCatalogueRetryWrapper::createTapeDriveConfig(const std::string& 
     m_maxTriesToConnect);
 }
 
-std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>
+std::vector<cta::catalogue::DriveConfigCatalogue::DriveConfig>
 DriveConfigCatalogueRetryWrapper::getTapeDriveConfigs() const {
   return retryOnLostConnection(
     m_log,
@@ -40,7 +40,7 @@ DriveConfigCatalogueRetryWrapper::getTapeDriveConfigs() const {
     m_maxTriesToConnect);
 }
 
-std::list<std::string>
+std::vector<std::string>
 DriveConfigCatalogueRetryWrapper::getTapeDriveNamesForSchedulerBackend(const std::string& schedulerBackendName) const {
   return retryOnLostConnection(
     m_log,
@@ -50,7 +50,7 @@ DriveConfigCatalogueRetryWrapper::getTapeDriveNamesForSchedulerBackend(const std
     m_maxTriesToConnect);
 }
 
-std::list<std::pair<std::string, std::string>>
+std::vector<std::pair<std::string, std::string>>
 DriveConfigCatalogueRetryWrapper::getTapeDriveConfigNamesAndKeys() const {
   return retryOnLostConnection(
     m_log,

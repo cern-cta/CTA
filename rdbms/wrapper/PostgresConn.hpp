@@ -81,7 +81,7 @@ public:
    * @return The names of all the sequences in the database schema in
    * alphabetical order.
    */
-  std::list<std::string> getSequenceNames() override;
+  std::vector<std::string> getSequenceNames() override;
 
   /**
    * Returns the names of all the triggers in the database schema in
@@ -93,7 +93,7 @@ public:
    * @return The names of all the triggers in the database schema in
    * alphabetical order.
    */
-  std::list<std::string> getTriggerNames() override;
+  std::vector<std::string> getTriggerNames() override;
 
   /**
    * Returns the names of all the tables that have been set as PARALLEL
@@ -105,14 +105,14 @@ public:
    * @return the names of all the tables that have been set as PARALLEL
    * in alphabetical order.
    */
-  std::list<std::string> getParallelTableNames() override;
+  std::vector<std::string> getParallelTableNames() override;
 
   /**
    * Returns the Constraint names of a given table in the database schema
    * @param tableName the table name to get the constraint names from
    * @return the list of the names of the constraints that the given table has.
    */
-  std::list<std::string> getConstraintNames(const std::string& tableName) override;
+  std::vector<std::string> getConstraintNames(const std::string& tableName) override;
 
   /**
    *
@@ -123,7 +123,7 @@ public:
    *
    * @return the list of the names of the stored procedures in the database
    */
-  std::list<std::string> getStoredProcedureNames() override;
+  std::vector<std::string> getStoredProcedureNames() override;
 
   /**
    * Returns the synonym names of the database
@@ -133,7 +133,7 @@ public:
    *
    * @return the list of the names of the synonyms in the database
    */
-  std::list<std::string> getSynonymNames() override;
+  std::vector<std::string> getSynonymNames() override;
 
   /**
    * Returns the type names of the database (in the public schema)
@@ -143,7 +143,7 @@ public:
    *
    * @return the list of the names of the types in the database
    */
-  std::list<std::string> getTypeNames() override;
+  std::vector<std::string> getTypeNames() override;
 
   /**
  * Returns the view names of the database (in the public schema)
@@ -153,7 +153,7 @@ public:
  *
  * @return the list of the names of the views in the database
  */
-  std::list<std::string> getViewNames() override;
+  std::vector<std::string> getViewNames() override;
 
   /**
    * Returns the names of all the column and their type as a map for the given
@@ -171,7 +171,7 @@ public:
    * @return The names of all the tables in the database schema in alphabetical
    * order.
    */
-  std::list<std::string> getTableNames() override;
+  std::vector<std::string> getTableNames() override;
 
   /**
    * Returns the names of all the indices in the database schema in alphabetical
@@ -180,7 +180,7 @@ public:
    * @return The names of all the indices in the database schema in alphabetical
    * order and in upper case.
    */
-  std::list<std::string> getIndexNames() override;
+  std::vector<std::string> getIndexNames() override;
 
   /**
    * Returns true if this connection is open.

@@ -104,7 +104,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
     {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
-      std::list<std::string> names;
+      std::vector<std::string> names;
       while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
@@ -119,7 +119,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
     {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
-      std::list<std::string> names;
+      std::vector<std::string> names;
       while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
@@ -138,7 +138,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
     {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
-      std::list<std::string> names;
+      std::vector<std::string> names;
       while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }
@@ -153,7 +153,7 @@ TEST_F(cta_rdbms_StmtPoolTest, createSameTableInTwoSeparateInMemoryDatabases) {
     {
       Stmt stmt = pool.getStmt(*conn, selectTableNamesSql);
       auto rset = stmt.executeQuery();
-      std::list<std::string> names;
+      std::vector<std::string> names;
       while (rset.next()) {
         names.push_back(rset.columnString("NAME"));
       }

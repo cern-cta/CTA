@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include <list>
 #include <map>
 #include <string>
+#include <vector>
 
 namespace cta::catalogue {
 
@@ -39,7 +39,7 @@ struct CatalogueSchema {
    *
    * @return The names of all the tables in the catalogue schema.
    */
-  std::list<std::string> getSchemaTableNames() const;
+  std::vector<std::string> getSchemaTableNames() const;
 
   /**
    * Returns the names of all the column and their type as a map for the given
@@ -55,7 +55,7 @@ struct CatalogueSchema {
    *
    * @return The names of all the indexes in the catalogue schema.
    */
-  std::list<std::string> getSchemaIndexNames() const;
+  std::vector<std::string> getSchemaIndexNames() const;
 
   /**
    * Returns the names of all the sequences in the catalogue schema.
@@ -65,7 +65,7 @@ struct CatalogueSchema {
    *
    * @return The names of all the sequences in the catalogue schema.
    */
-  std::list<std::string> getSchemaSequenceNames() const;
+  std::vector<std::string> getSchemaSequenceNames() const;
 
   /**
    * Returns the map of strings to uint64 for the catalogue SCHEMA_VERSION_MAJOR

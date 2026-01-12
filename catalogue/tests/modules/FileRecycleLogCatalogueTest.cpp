@@ -266,7 +266,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, filesArePutInTheFileRecycleLogInsteadOf
     ASSERT_TRUE(hasArchiveFilesItor);
   }
   //Check that the old files are in the file recycle logs
-  std::list<common::dataStructures::FileRecycleLog> fileRecycleLogs;
+  std::vector<common::dataStructures::FileRecycleLog> fileRecycleLogs;
   {
     auto fileRecycleLogItor = m_catalogue->FileRecycleLog()->getFileRecycleLogItor();
     while (fileRecycleLogItor.hasMore()) {

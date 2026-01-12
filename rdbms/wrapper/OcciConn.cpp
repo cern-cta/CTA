@@ -165,8 +165,8 @@ std::map<std::string, std::string, std::less<>> OcciConn::getColumns(const std::
 //------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getTableNames() {
-  std::list<std::string> names;
+std::vector<std::string> OcciConn::getTableNames() {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       TABLE_NAME
@@ -190,8 +190,8 @@ std::list<std::string> OcciConn::getTableNames() {
 //------------------------------------------------------------------------------
 // getIndexNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getIndexNames() {
-  std::list<std::string> names;
+std::vector<std::string> OcciConn::getIndexNames() {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       INDEX_NAME
@@ -215,8 +215,8 @@ std::list<std::string> OcciConn::getIndexNames() {
 //------------------------------------------------------------------------------
 // getSequenceNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getSequenceNames() {
-  std::list<std::string> names;
+std::vector<std::string> OcciConn::getSequenceNames() {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       SEQUENCE_NAME
@@ -238,15 +238,15 @@ std::list<std::string> OcciConn::getSequenceNames() {
 //------------------------------------------------------------------------------
 // getTriggerNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getTriggerNames() {
-  return std::list<std::string>();
+std::vector<std::string> OcciConn::getTriggerNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getParallelTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getParallelTableNames() {
-  std::list<std::string> names;
+std::vector<std::string> OcciConn::getParallelTableNames() {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       TABLE_NAME
@@ -270,8 +270,8 @@ std::list<std::string> OcciConn::getParallelTableNames() {
 //------------------------------------------------------------------------------
 // getConstraintNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName) {
-  std::list<std::string> names;
+std::vector<std::string> OcciConn::getConstraintNames(const std::string& tableName) {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       CONSTRAINT_NAME
@@ -293,8 +293,8 @@ std::list<std::string> OcciConn::getConstraintNames(const std::string& tableName
 //------------------------------------------------------------------------------
 // getStoredProcedureNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getStoredProcedureNames() {
-  std::list<std::string> names;
+std::vector<std::string> OcciConn::getStoredProcedureNames() {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       OBJECT_NAME
@@ -313,8 +313,8 @@ std::list<std::string> OcciConn::getStoredProcedureNames() {
 //------------------------------------------------------------------------------
 // getSynonymNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getSynonymNames() {
-  std::list<std::string> names;
+std::vector<std::string> OcciConn::getSynonymNames() {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       SYNONYM_NAME
@@ -333,8 +333,8 @@ std::list<std::string> OcciConn::getSynonymNames() {
 //------------------------------------------------------------------------------
 // getTypeNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getTypeNames() {
-  std::list<std::string> names;
+std::vector<std::string> OcciConn::getTypeNames() {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       TYPE_NAME
@@ -353,8 +353,8 @@ std::list<std::string> OcciConn::getTypeNames() {
 //------------------------------------------------------------------------------
 // getViewNames
 //------------------------------------------------------------------------------
-std::list<std::string> OcciConn::getViewNames() {
-  return std::list<std::string>();
+std::vector<std::string> OcciConn::getViewNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------

@@ -11,10 +11,10 @@
 #include "rdbms/Stmt.hpp"
 
 #include <iostream>
-#include <list>
 #include <map>
 #include <memory>
 #include <stdint.h>
+#include <vector>
 
 namespace cta::rdbms {
 
@@ -72,7 +72,7 @@ private:
    * Please note that for a single key there maybe more than one cached
    * statement, hence the map to list of statements.
    */
-  std::map<std::string, std::list<std::unique_ptr<wrapper::StmtWrapper>>> m_stmts;
+  std::map<std::string, std::vector<std::unique_ptr<wrapper::StmtWrapper>>> m_stmts;
 
 };  // class StmtPool
 

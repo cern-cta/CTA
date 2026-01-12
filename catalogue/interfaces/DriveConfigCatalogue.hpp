@@ -5,11 +5,11 @@
 
 #pragma once
 
-#include <list>
 #include <optional>
 #include <string>
 #include <tuple>
 #include <utility>
+#include <vector>
 
 namespace cta::catalogue {
 
@@ -49,7 +49,7 @@ public:
    * Gets all Drive Configurations of all TapeDrives.
    * @return Drive Configurations of all TapeDrives.
    */
-  virtual std::list<DriveConfig> getTapeDriveConfigs() const = 0;
+  virtual std::vector<DriveConfig> getTapeDriveConfigs() const = 0;
 
   /**
    * Gets all Drive Names of Drive Configurations with given
@@ -58,14 +58,14 @@ public:
    * @param schedulerBackendName name of the scheduler backend
    * @return list of drive names
    */
-  virtual std::list<std::string>
+  virtual std::vector<std::string>
   getTapeDriveNamesForSchedulerBackend(const std::string& schedulerBackendName) const = 0;
 
   /**
    * Gets the Key and Names of configurations of all TapeDrives
    * @return Keys and Names of configurations.
    */
-  virtual std::list<std::pair<std::string, std::string>> getTapeDriveConfigNamesAndKeys() const = 0;
+  virtual std::vector<std::pair<std::string, std::string>> getTapeDriveConfigNamesAndKeys() const = 0;
 
   /**
    * Modifies a specified parameter of the configuration for a certain Tape Drive

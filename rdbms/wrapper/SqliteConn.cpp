@@ -252,7 +252,7 @@ std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std
 //------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getTableNames() {
+std::vector<std::string> SqliteConn::getTableNames() {
   const char* const sql = R"SQL(
     SELECT
       NAME AS NAME
@@ -269,7 +269,7 @@ std::list<std::string> SqliteConn::getTableNames() {
   )SQL";
   auto stmt = createStmt(sql);
   auto rset = stmt->executeQuery();
-  std::list<std::string> names;
+  std::vector<std::string> names;
   while (rset->next()) {
     auto name = rset->columnOptionalString("NAME");
     if (name) {
@@ -282,7 +282,7 @@ std::list<std::string> SqliteConn::getTableNames() {
 //------------------------------------------------------------------------------
 // getIndexNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getIndexNames() {
+std::vector<std::string> SqliteConn::getIndexNames() {
   const char* const sql = R"SQL(
     SELECT
       NAME AS NAME
@@ -299,7 +299,7 @@ std::list<std::string> SqliteConn::getIndexNames() {
   )SQL";
   auto stmt = createStmt(sql);
   auto rset = stmt->executeQuery();
-  std::list<std::string> names;
+  std::vector<std::string> names;
   while (rset->next()) {
     auto name = rset->columnOptionalString("NAME");
     if (name) {
@@ -319,29 +319,29 @@ bool SqliteConn::isOpen() const {
 //------------------------------------------------------------------------------
 // getSequenceNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getSequenceNames() {
-  return std::list<std::string>();
+std::vector<std::string> SqliteConn::getSequenceNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getTriggerNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getTriggerNames() {
-  return std::list<std::string>();
+std::vector<std::string> SqliteConn::getTriggerNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getParallelTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getParallelTableNames() {
-  return std::list<std::string>();
+std::vector<std::string> SqliteConn::getParallelTableNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getConstraintNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getConstraintNames(const std::string& tableName) {
-  std::list<std::string> constraintNames;
+std::vector<std::string> SqliteConn::getConstraintNames(const std::string& tableName) {
+  std::vector<std::string> constraintNames;
   const char* const sql = R"SQL(
     SELECT
       SQL AS SQL
@@ -381,29 +381,29 @@ std::list<std::string> SqliteConn::getConstraintNames(const std::string& tableNa
 //------------------------------------------------------------------------------
 // getStoredProcedureNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getStoredProcedureNames() {
-  return std::list<std::string>();
+std::vector<std::string> SqliteConn::getStoredProcedureNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getSynonymNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getSynonymNames() {
-  return std::list<std::string>();
+std::vector<std::string> SqliteConn::getSynonymNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getTypeNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getTypeNames() {
-  return std::list<std::string>();
+std::vector<std::string> SqliteConn::getTypeNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getViewNames
 //------------------------------------------------------------------------------
-std::list<std::string> SqliteConn::getViewNames() {
-  return std::list<std::string>();
+std::vector<std::string> SqliteConn::getViewNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------

@@ -18,16 +18,16 @@ public:
 
   SchemaSqlStatementsReader(const SchemaSqlStatementsReader& orig) = default;
   virtual ~SchemaSqlStatementsReader() = default;
-  virtual std::list<std::string> getStatements();
+  virtual std::vector<std::string> getStatements();
 
 protected:
   cta::rdbms::Login::DbType m_dbType;
   /**
-  * Separates the statements and put them in a std::list<std::string>
+  * Separates the statements and put them in a std::vector<std::string>
   * @param schema the sql statements put all together
   * @return a list containing separated statements from the schema passed in parameter
   */
-  std::list<std::string> getAllStatementsFromSchema(const std::string& schema) const;
+  std::vector<std::string> getAllStatementsFromSchema(const std::string& schema) const;
   /**
   * Returns the string corresponding to the database type
   * @return the string corresponding to the database type
@@ -58,7 +58,7 @@ public:
 
   ~DirectoryVersionsSqlStatementsReader() final = default;
 
-  std::list<std::string> getStatements() final { return getAllStatementsFromSchema(readSchemaFromFile()); }
+  std::vector<std::string> getStatements() final { return getAllStatementsFromSchema(readSchemaFromFile()); }
 
 private:
   std::string m_catalogueVersion;
@@ -84,7 +84,7 @@ public:
 
   MapSqlStatementsReader(const MapSqlStatementsReader& orig) = default;
   ~MapSqlStatementsReader() final = default;
-  std::list<std::string> getStatements() final;
+  std::vector<std::string> getStatements() final;
 
 private:
   std::string m_catalogueVersion;
@@ -93,7 +93,7 @@ private:
 class CppSchemaStatementsReader : public SchemaSqlStatementsReader {
 public:
   explicit CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema);
-  std::list<std::string> getStatements() final;
+  std::vector<std::string> getStatements() final;
 
 private:
   const cta::catalogue::CatalogueSchema m_schema;

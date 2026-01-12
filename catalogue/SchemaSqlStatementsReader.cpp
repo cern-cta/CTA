@@ -26,7 +26,7 @@ namespace cta::catalogue {
 //////////////////////////////////////////////////////////////////
 // SchemaSqlStatementsReader
 //////////////////////////////////////////////////////////////////
-std::list<std::string> SchemaSqlStatementsReader::getStatements() {
+std::vector<std::string> SchemaSqlStatementsReader::getStatements() {
   std::unique_ptr<CatalogueSchema> schema;
   switch (m_dbType) {
     case rdbms::Login::DBTYPE_IN_MEMORY:
@@ -49,8 +49,8 @@ std::list<std::string> SchemaSqlStatementsReader::getStatements() {
   return getAllStatementsFromSchema(schema->sql);
 }
 
-std::list<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(const std::string& schema) const {
-  std::list<std::string> statements;
+std::vector<std::string> SchemaSqlStatementsReader::getAllStatementsFromSchema(const std::string& schema) const {
+  std::vector<std::string> statements;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
   while (std::string::npos != (findResult = schema.find(';', searchPos))) {
@@ -105,7 +105,7 @@ std::string DirectoryVersionsSqlStatementsReader::readSchemaFromFile() const {
 //////////////////////////////////////////////////////////////////
 // MapSqlStatementsReader
 //////////////////////////////////////////////////////////////////
-std::list<std::string> MapSqlStatementsReader::getStatements() {
+std::vector<std::string> MapSqlStatementsReader::getStatements() {
   std::map<std::string, std::string, std::less<>> mapVersionSchemas;
   try {
     mapVersionSchemas = AllCatalogueSchema::mapSchema.at(m_catalogueVersion);
@@ -127,7 +127,7 @@ std::list<std::string> MapSqlStatementsReader::getStatements() {
 CppSchemaStatementsReader::CppSchemaStatementsReader(const cta::catalogue::CatalogueSchema& schema)
     : m_schema(schema) {}
 
-std::list<std::string> CppSchemaStatementsReader::getStatements() {
+std::vector<std::string> CppSchemaStatementsReader::getStatements() {
   return getAllStatementsFromSchema(m_schema.sql);
 }
 

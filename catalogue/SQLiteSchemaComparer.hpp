@@ -38,12 +38,12 @@ private:
 
   enum Level { Warn, Error };
 
-  using Items = std::list<std::string>;
+  using Items = std::vector<std::string>;
   using LoggedItems = std::tuple<Items, Level>;
   SchemaCheckerResult
   compareItems(const std::string& itemType, const LoggedItems& fromDatabase, const LoggedItems& fromSQLite) const;
-  SchemaCheckerResult compareTables(const std::list<std::string>& databaseTables,
-                                    const std::list<std::string>& schemaTables);
+  SchemaCheckerResult compareTables(const std::vector<std::string>& databaseTables,
+                                    const std::vector<std::string>& schemaTables);
   using TableColumns = std::map<std::string, std::map<std::string, std::string, std::less<>>, std::less<>>;
   SchemaCheckerResult compareTableColumns(const TableColumns& schema1TableColumns,
                                           const std::string& schema1Type,

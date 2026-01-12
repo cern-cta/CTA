@@ -28,8 +28,8 @@ Stmt StmtPool::getStmt(wrapper::ConnWrapper& conn, const std::string& sql) {
     if (stmtList.empty()) {
       throw exception::Exception("Unexpected empty list of cached statements");
     }
-    auto stmt = std::move(stmtList.front());
-    stmtList.pop_front();
+    auto stmt = std::move(stmtList.back());
+    stmtList.pop_back();
 
     // If there are no more cached prepared statements then remove the empty list from the cache
     if (stmtList.empty()) {

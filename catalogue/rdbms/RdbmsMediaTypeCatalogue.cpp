@@ -200,7 +200,7 @@ std::vector<MediaTypeWithLogs> RdbmsMediaTypeCatalogue::getMediaTypes() const {
 }
 
 MediaType RdbmsMediaTypeCatalogue::getMediaTypeByVid(const std::string& vid) const {
-  std::list<MediaTypeWithLogs> mediaTypes;
+  std::vector<MediaTypeWithLogs> mediaTypes;
   const char* const sql = R"SQL(
     SELECT
       MEDIA_TYPE_NAME AS MEDIA_TYPE_NAME,

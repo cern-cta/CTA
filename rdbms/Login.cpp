@@ -78,7 +78,7 @@ Login Login::parseFile(const std::string& filename) {
 // parseStream
 //------------------------------------------------------------------------------
 Login Login::parseStream(std::istream& inputStream) {
-  const std::list<std::string> lines = readNonEmptyLines(inputStream);
+  const std::vector<std::string> lines = readNonEmptyLines(inputStream);
 
   if (1 != lines.size()) {
     throw exception::Exception("There should only be one and only one line containing a connection string");
@@ -132,8 +132,8 @@ Login::DbTypeAndConnectionDetails Login::parseDbTypeAndConnectionDetails(const s
 //------------------------------------------------------------------------------
 // readNonEmptyLines
 //------------------------------------------------------------------------------
-std::list<std::string> Login::readNonEmptyLines(std::istream& inputStream) {
-  std::list<std::string> lines;
+std::vector<std::string> Login::readNonEmptyLines(std::istream& inputStream) {
+  std::vector<std::string> lines;
   std::string line;
 
   while (std::getline(inputStream, line)) {
