@@ -78,7 +78,7 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndD
   tapeserver::daemon::RecallWatchDog
     watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
 
-  std::vector<cta::log::Param> paramsToAdd {
+  std::list<cta::log::Param> paramsToAdd {
     {"param1", 10},
     {"param1", 11}, // Will override the first param1 entry
     {"param2", 20},

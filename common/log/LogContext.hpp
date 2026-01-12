@@ -103,7 +103,7 @@ public:
 
 private:
   Logger& m_log;
-  std::vector<Param> m_params;
+  std::list<Param> m_params;
 };  // class LogContext
 
 class ScopedParamContainer {
