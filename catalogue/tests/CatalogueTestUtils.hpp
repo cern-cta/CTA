@@ -76,19 +76,19 @@ public:
   static cta::catalogue::CreateMountPolicyAttributes getMountPolicy2();
 
   static std::map<std::string, cta::catalogue::TapePool>
-  tapePoolVectorToMap(const std::vector<cta::catalogue::TapePool>& vectorOfTapePools);
+  tapePoolVectorToMap(const std::vector<cta::catalogue::TapePool>& tapePools);
 
   static std::map<std::string, cta::common::dataStructures::Tape>
-  tapeVectorToMap(const std::vector<cta::common::dataStructures::Tape>& vectorOfTapes);
+  tapeVectorToMap(const std::vector<cta::common::dataStructures::Tape>& tapes);
 
   static std::map<uint64_t, cta::common::dataStructures::ArchiveFile>
   archiveFileItorToMap(cta::catalogue::CatalogueItor<cta::common::dataStructures::ArchiveFile>& itor);
 
   static std::map<uint64_t, cta::common::dataStructures::ArchiveFile>
-  archiveFileVectorToMap(const std::vector<cta::common::dataStructures::ArchiveFile>& vectorOfArchiveFiles);
+  archiveFileVectorToMap(const std::vector<cta::common::dataStructures::ArchiveFile>& archiveFiles);
 
   static std::map<std::string, cta::common::dataStructures::AdminUser>
-  adminUserVectorToMap(const std::vector<cta::common::dataStructures::AdminUser>& vectorOfAdminUsers);
+  adminUserVectorToMap(const std::vector<cta::common::dataStructures::AdminUser>& adminUsers);
 
 private:
   static void wipeDatabase(cta::catalogue::Catalogue* catalogue, cta::log::LogContext* lc);

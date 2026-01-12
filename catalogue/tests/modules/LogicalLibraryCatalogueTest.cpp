@@ -466,7 +466,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary_non_empty) {
 
   ASSERT_EQ(1, tapes.size());
 
-  const cta::common::dataStructures::Tape tape = tapes.front();
+  auto& tape = tapes.front();
   ASSERT_EQ(m_tape1.vid, tape.vid);
   ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
   ASSERT_EQ(m_tape1.vendor, tape.vendor);

@@ -277,7 +277,7 @@ TEST_P(cta_catalogue_TapeTest, deleteTape) {
 
   ASSERT_EQ(1, tapes.size());
 
-  const cta::common::dataStructures::Tape tape = tapes.front();
+  auto& tape = tapes.front();
   ASSERT_EQ(m_tape1.vid, tape.vid);
   ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
   ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -339,7 +339,7 @@ TEST_P(cta_catalogue_TapeTest, writeToTapeAndCheckMasterBytesAndFiles) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -410,7 +410,7 @@ TEST_P(cta_catalogue_TapeTest, writeToTapeAndCheckMasterBytesAndFiles) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -473,7 +473,7 @@ TEST_P(cta_catalogue_TapeTest, deleteNonEmptyTape) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -527,7 +527,7 @@ TEST_P(cta_catalogue_TapeTest, deleteNonEmptyTape) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -622,7 +622,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeMediaType) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -653,7 +653,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeMediaType) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(anotherMediaType.name, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -709,7 +709,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVendor) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -740,7 +740,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVendor) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(anotherVendor, tape.vendor);
@@ -797,7 +797,7 @@ TEST_P(cta_catalogue_TapeTest, modifyPurchaseOrder) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(anotherPurchaseOrder, tape.purchaseOrder);
   }
 
@@ -920,7 +920,7 @@ TEST_P(cta_catalogue_TapeTest, modifyToEmptyPurchaseOrder) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(std::nullopt, tape.purchaseOrder);
   }
 
@@ -965,7 +965,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeLogicalLibraryName) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -996,7 +996,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeLogicalLibraryName) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1071,7 +1071,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeTapePoolName) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1102,7 +1102,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeTapePoolName) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1181,7 +1181,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1213,7 +1213,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1267,7 +1267,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName_emptyStringEncryption
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1299,7 +1299,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName_emptyStringEncryption
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1353,7 +1353,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVerificationStatus) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1386,7 +1386,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVerificationStatus) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1415,7 +1415,7 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeVerificationStatus) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_FALSE(tape.verificationStatus);
   }
@@ -1792,7 +1792,7 @@ TEST_P(cta_catalogue_TapeTest, tapeLabelled) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1824,7 +1824,7 @@ TEST_P(cta_catalogue_TapeTest, tapeLabelled) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1884,7 +1884,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForArchive) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1918,7 +1918,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForArchive) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -1951,7 +1951,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForArchive) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2013,7 +2013,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForRetrieve) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2047,7 +2047,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForRetrieve) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2080,7 +2080,7 @@ TEST_P(cta_catalogue_TapeTest, tapeMountedForRetrieve) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2142,7 +2142,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeFull) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2173,7 +2173,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeFull) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2230,7 +2230,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeDirty) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2262,7 +2262,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeDirty) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2320,7 +2320,7 @@ TEST_P(cta_catalogue_TapeTest, noSpaceLeftOnTape) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2351,7 +2351,7 @@ TEST_P(cta_catalogue_TapeTest, noSpaceLeftOnTape) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2408,7 +2408,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeIsFromCastorInUnitTests) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2439,7 +2439,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeIsFromCastorInUnitTests) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2468,7 +2468,7 @@ TEST_P(cta_catalogue_TapeTest, setTapeIsFromCastorInUnitTests) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -2563,7 +2563,7 @@ TEST_P(cta_catalogue_TapeTest, getTapeLabelFormat) {
   // Get Tape
   const auto tapes = m_catalogue->Tape()->getTapes();
   ASSERT_EQ(1, tapes.size());
-  const cta::common::dataStructures::Tape tape = tapes.front();
+  auto& tape = tapes.front();
   ASSERT_EQ(m_tape1.vid, tape.vid);
 
   // Get label format and compare
@@ -4445,7 +4445,7 @@ TEST_P(cta_catalogue_TapeTest, getNbFilesOnTape_no_tape_files) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -4505,7 +4505,7 @@ TEST_P(cta_catalogue_TapeTest, getNbFilesOnTape_one_tape_file) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -4617,7 +4617,7 @@ TEST_P(cta_catalogue_TapeTest, checkTapeForLabel_no_tape_files) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -4677,7 +4677,7 @@ TEST_P(cta_catalogue_TapeTest, checkTapeForLabel_one_tape_file) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -4790,7 +4790,7 @@ TEST_P(cta_catalogue_TapeTest, checkTapeForLabel_one_tape_file_reclaimed_tape) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -4921,7 +4921,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -4954,7 +4954,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_0_no_tape_files) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -5011,7 +5011,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_not_full_lastFSeq_0_no_tape_files) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -5231,7 +5231,7 @@ TEST_P(cta_catalogue_TapeTest, reclaimTape_full_lastFSeq_1_no_tape_files) {
 
     ASSERT_EQ(1, tapes.size());
 
-    const cta::common::dataStructures::Tape tape = tapes.front();
+    auto& tape = tapes.front();
     ASSERT_EQ(m_tape1.vid, tape.vid);
     ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
     ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -5439,7 +5439,7 @@ TEST_P(cta_catalogue_TapeTest, get_tape_with_related_physical_library) {
 
   ASSERT_EQ(1, tapes.size());
 
-  const cta::common::dataStructures::Tape tape = tapes.front();
+  auto& tape = tapes.front();
   ASSERT_EQ(m_tape1.vid, tape.vid);
   ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
   ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -5499,7 +5499,7 @@ TEST_P(cta_catalogue_TapeTest, get_tape_with_physical_library_search_criteria) {
 
   ASSERT_EQ(1, tapes.size());
 
-  const cta::common::dataStructures::Tape tape = tapes.front();
+  auto& tape = tapes.front();
   ASSERT_EQ(m_tape1.vid, tape.vid);
   ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
   ASSERT_EQ(m_tape1.vendor, tape.vendor);
