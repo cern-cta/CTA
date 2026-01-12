@@ -22,9 +22,10 @@
     IMAGE_NAME:
     EXTRA_BUILD_ARGS:
   script:
+    # image comes with sh instead of bash, so no bash syntax allowed
     - |
-      if [[ $CI_PIPELINE_SOURCE == "merge_request_event" ]]; then
-        EXTRA_BUILD_ARGS+=" --no-push-cache"
+      if [ $CI_PIPELINE_SOURCE = "merge_request_event" ]; then
+        EXTRA_BUILD_ARGS="$EXTRA_BUILD_ARGS --no-push-cache"
       fi
     - echo "Authenticating against repo"
     - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json

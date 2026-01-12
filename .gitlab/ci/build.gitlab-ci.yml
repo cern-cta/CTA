@@ -75,7 +75,7 @@ build-cta-rpms:
         BUILD_OPTIONS+=" --use-internal-repos"
       fi
     - |
-      if [ "$ENABLE_ADDRESS_SANITIZER" == "TRUE" ]; then
+      if [[ "$ENABLE_ADDRESS_SANITIZER" == "TRUE" ]]; then
         BUILD_OPTIONS+=" --enable-address-sanitizer"
       fi
     - ./ci/build/build_rpm.sh --build-dir build_rpm
