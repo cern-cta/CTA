@@ -17,10 +17,11 @@ except ModuleNotFoundError:
 #####################################################################################################################
 
 
-# The only purpose of this fixture is to make the test output easier to read
-# in particular by more clearly visually separating different test cases
 @pytest.fixture(autouse=True)
 def make_tests_look_pretty(request):
+    """The only purpose of this fixture is to make the test output easier to read
+    in particular by more clearly visually separating different test cases
+    """
     terminal_writer = request.config.get_terminal_writer()
     terminal_width = shutil.get_terminal_size().columns
 
@@ -36,22 +37,22 @@ def make_tests_look_pretty(request):
     terminal_writer.write(f"\n\n{separator}", cyan=True)
 
 
-# This is how all the tests get access to the different hosts (cli, frontend, taped, etc)
 @pytest.fixture(scope="session", autouse=True)
 def env(request):
+    """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
     return request.config.env
 
 
-# Mutable whitelist that individual test cases can add errors to
 @pytest.fixture(scope="session")
 def error_whitelist(request):
+    """Mutable whitelist that individual test cases can add errors to"""
     whitelist = set()  # mutable whitelist shared between all tests
     return whitelist
 
 
-# Kerberos realm used in the tests
 @pytest.fixture()
 def krb5_realm(request):
+    """Kerberos realm used in the tests"""
     return request.config.test_config["tests"]["krb5_realm"]
 
 
@@ -79,8 +80,8 @@ def create_test_env_from_commandline_options(config):
         return TestEnv.fromConfig(connection_config)
 
 
-# Pytest hook that allows for adding custom commandline arguments
 def pytest_addoption(parser):
+    """Pytest hook that allows for adding custom commandline arguments"""
     parser.addoption("--namespace", action="store", help="Namespace for tests")
     parser.addoption(
         "--connection-config", action="store", help="A yaml connection file specifying how to connect to each host"
@@ -98,8 +99,8 @@ def pytest_addoption(parser):
     )
 
 
-# Pytest hook that allows us to augment the config object with additional info after commandline parsing
 def pytest_configure(config):
+    """Pytest hook that allows us to augment the config object with additional info after commandline parsing"""
     config_path: str = config.getoption("--test-config")
     try:
         with open(config_path, "rb") as f:
