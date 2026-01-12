@@ -112,7 +112,7 @@ void Config::parse(log::Logger& log) {
 
       if (!values.empty()) {
         m_configuration[key] = values;
-        std::list<log::Param> params;
+        std::vector<log::Param> params;
         params.emplace_back("config_key", key);
         params.emplace_back("config_value",
                             std::accumulate(std::next(values.begin()),

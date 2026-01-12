@@ -74,8 +74,8 @@ public:
                     const cta::tape::session::SessionType type,
                     const std::string& vid));
   MOCK_METHOD2(reportHeartbeat, void(uint64_t totalTapeBytesMoved, uint64_t totalDiskBytesMoved));
-  MOCK_METHOD1(addLogParams, void(const std::list<cta::log::Param>& params));
-  MOCK_METHOD1(deleteLogParams, void(const std::list<std::string>& paramNames));
+  MOCK_METHOD1(addLogParams, void(const std::vector<cta::log::Param>& params));
+  MOCK_METHOD1(deleteLogParams, void(const std::vector<std::string>& paramNames));
   MOCK_METHOD0(resetLogParams, void());
   MOCK_METHOD2(labelError, void(const std::string& unitName, const std::string& message));
   MOCK_METHOD(void, setRefreshLoggerHandler, (std::function<void()> handler));

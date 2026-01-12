@@ -89,7 +89,7 @@ CatalogueFetch::getInstanceAndFid(const std::string& archiveFileId,
                                   std::unique_ptr<XrdSsiPbServiceType>& serviceProviderPtr,
                                   cta::log::StdoutLogger& log) {
   {
-    std::list<cta::log::Param> params;
+    std::vector<cta::log::Param> params;
     params.emplace_back("archiveFileId", archiveFileId);
     log(cta::log::DEBUG, "getInstanceAndFidFromCTA() ", params);
   }
@@ -114,7 +114,7 @@ CatalogueFetch::getInstanceAndFid(const std::string& archiveFileId,
   auto listedTapeFile = g_listedTapeFiles.back();
   g_listedTapeFiles.clear();
   {
-    std::list<cta::log::Param> params;
+    std::vector<cta::log::Param> params;
     params.emplace_back("diskInstance", listedTapeFile.first);
     params.emplace_back("diskFileId", listedTapeFile.second);
     log(cta::log::DEBUG, "Obtained file metadata from CTA", params);

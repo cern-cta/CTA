@@ -40,7 +40,7 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char* const* const argv)
   } else {
     m_force = false;
   }
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", getUsername());
   params.emplace_back("tapeVid", cmdLineArgs.m_vid);
   params.emplace_back("tapeOldLabel", cmdLineArgs.m_oldLabel);
@@ -133,7 +133,7 @@ bool TapeLabelCmd::isDriveSupportLbp(castor::tape::tapeserver::drive::DriveInter
 void TapeLabelCmd::setLbpMode(castor::tape::tapeserver::drive::DriveInterface& drive,
                               const bool useLbp,
                               const bool driveSupportLbp) {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeOldLabel", m_oldLabel);
@@ -176,7 +176,7 @@ void TapeLabelCmd::writeTapeLabel(castor::tape::tapeserver::drive::DriveInterfac
 //------------------------------------------------------------------------------
 void TapeLabelCmd::checkTapeLabel(castor::tape::tapeserver::drive::DriveInterface& drive,
                                   const std::string& labelToCheck) {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeOldLabel", m_oldLabel);
@@ -247,7 +247,7 @@ void TapeLabelCmd::dismountTape(const std::string& vid) {
   librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
   const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
 
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeOldLabel", m_oldLabel);
@@ -273,7 +273,7 @@ void TapeLabelCmd::dismountTape(const std::string& vid) {
 // writeLabelWithLbpToTape
 //------------------------------------------------------------------------------
 void TapeLabelCmd::writeLabelWithLbpToTape(castor::tape::tapeserver::drive::DriveInterface& drive) {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeOldLabel", m_oldLabel);
@@ -295,7 +295,7 @@ void TapeLabelCmd::writeLabelWithLbpToTape(castor::tape::tapeserver::drive::Driv
 // writeLabelToTape
 //------------------------------------------------------------------------------
 void TapeLabelCmd::writeLabelToTape(castor::tape::tapeserver::drive::DriveInterface& drive) {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeOldLabel", m_oldLabel);
@@ -322,7 +322,7 @@ void TapeLabelCmd::unloadTape([[maybe_unused]] const std::string& vid,
   librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
   const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr;
 
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeOldLabel", m_oldLabel);
@@ -348,7 +348,7 @@ void TapeLabelCmd::unloadTape([[maybe_unused]] const std::string& vid,
 // rewindDrive
 //------------------------------------------------------------------------------
 void TapeLabelCmd::rewindDrive(castor::tape::tapeserver::drive::DriveInterface& drive) {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeOldLabel", m_oldLabel);
@@ -368,7 +368,7 @@ void TapeLabelCmd::rewindDrive(castor::tape::tapeserver::drive::DriveInterface& 
 //------------------------------------------------------------------------------
 void TapeLabelCmd::setProcessCapabilities(const std::string& capabilities) {
   cta::server::ProcessCap::setProcText(capabilities);
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("capabilities", capabilities);
   m_log(cta::log::INFO, "Label session set process capabilities", params);
 }
@@ -409,7 +409,7 @@ void TapeLabelCmd::readAndSetConfiguration(const std::string& userName,
     cta::catalogue::CatalogueFactoryFactory::create(m_log, catalogueLogin, nbConns, nbArchiveFileListingConns);
   m_catalogue = catalogueFactory->create();
 
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("catalogueDbType", catalogueLogin.dbTypeToString(catalogueLogin.dbType));
   params.emplace_back("connectionString", catalogueLogin.connectionString);
   params.emplace_back("devFilename", m_devFilename);
@@ -427,7 +427,7 @@ void TapeLabelCmd::mountTape(const std::string& vid) {
   librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
   const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
 
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", vid);
   params.emplace_back("tapeOldLabel", m_oldLabel);
@@ -468,7 +468,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> TapeLabelCmd::c
 //------------------------------------------------------------------------------
 void TapeLabelCmd::waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface& drive,
                                        const int timeoutSecond) {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeOldLabel", m_oldLabel);
