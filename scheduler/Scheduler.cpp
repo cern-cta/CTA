@@ -1164,7 +1164,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
   ExistingMountSummaryPerTapepool& existingMountsDistinctTypeSummaryPerTapepool,
   ExistingMountSummaryPerVo& existingMountsBasicTypeSummaryPerVo,
   std::set<std::string, std::less<>>& tapesInUse,
-  std::vector<catalogue::TapeForWriting>& tapesForWritting,
+  std::vector<catalogue::TapeForWriting>& tapesForWriting,
   double& getTapeInfoTime,
   double& candidateSortingTime,
   double& getTapeForWriteTime,
@@ -1584,15 +1584,15 @@ void Scheduler::sortAndGetTapesForMountInfo(
   if (std::count_if(mountInfo->potentialMounts.cbegin(), mountInfo->potentialMounts.cend(), [](const auto& m) {
         return common::dataStructures::getMountBasicType(m.type) == common::dataStructures::MountType::ArchiveAllTypes;
       })) {
-    tapesForWritting = m_catalogue.Tape()->getTapesForWriting(logicalLibraryName);
+    tapesForWriting = m_catalogue.Tape()->getTapesForWriting(logicalLibraryName);
     getTapeForWriteTime = timer.secs(utils::Timer::resetCounter);
   }
 
   // Remove from the tape list the ones already or soon to be mounted
-  auto t = tapesForWritting.begin();
-  while (t != tapesForWritting.end()) {
+  auto t = tapesForWriting.begin();
+  while (t != tapesForWriting.end()) {
     if (tapesInUse.count(t->vid)) {
-      t = tapesForWritting.erase(t);
+      t = tapesForWriting.erase(t);
     } else {
       t++;
     }
@@ -2029,7 +2029,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
   ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
   ExistingMountSummaryPerVo existingMountBasicTypeSummaryPerVo;
   std::set<std::string, std::less<>> tapesInUse;
-  std::vector<catalogue::TapeForWriting> tapesForWritting;
+  std::vector<catalogue::TapeForWriting> tapesForWriting;
 
   sortAndGetTapesForMountInfo(mountInfo,
                               logicalLibraryName,
@@ -2038,7 +2038,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
                               existingMountsDistinctTypeSummaryPerTapepool,
                               existingMountBasicTypeSummaryPerVo,
                               tapesInUse,
-                              tapesForWritting,
+                              tapesForWriting,
                               getTapeInfoTime,
                               candidateSortingTime,
                               getTapeForWriteTime,
@@ -2052,7 +2052,7 @@ bool Scheduler::getNextMountDryRun(const std::string& logicalLibraryName,
       // tape pool and in the drive's logical library
       // The first tape matching will go for a prototype.
       // TODO: improve to reuse already partially written tapes and randomization
-      for (auto& t : tapesForWritting) {
+      for (auto& t : tapesForWriting) {
         if (t.tapePool == m->tapePool) {
           // We have our tape. That's enough.
           decisionTime += timer.secs(utils::Timer::resetCounter);
@@ -2221,7 +2221,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
   ExistingMountSummaryPerVo existingMountBasicTypeSummaryPerVo;
   std::set<std::string, std::less<>> tapesInUse;
-  std::vector<catalogue::TapeForWriting> tapesForWritting;
+  std::vector<catalogue::TapeForWriting> tapesForWriting;
 
   sortAndGetTapesForMountInfo(mountInfo,
                               logicalLibraryName,
@@ -2230,7 +2230,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
                               existingMountsDistinctTypeSummaryPerTapepool,
                               existingMountBasicTypeSummaryPerVo,
                               tapesInUse,
-                              tapesForWritting,
+                              tapesForWriting,
                               getTapeInfoTime,
                               candidateSortingTime,
                               getTapeForWriteTime,
@@ -2245,7 +2245,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
       // tape pool and in the drive's logical library
       // The first tape matching will go for a prototype.
       // TODO: improve to reuse already partially written tapes and randomization
-      for (auto& t : tapesForWritting) {
+      for (auto& t : tapesForWriting) {
         if (t.tapePool == m->tapePool) {
           // We have our tape. Try to create the session. Prepare a return value
           // for it.

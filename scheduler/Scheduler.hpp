@@ -230,8 +230,8 @@ public:
   void removeDrive(const std::string& driveName, log::LogContext& lc);
 
   /**
-   * Reports the state of the drive to the object store. This function
-   * any necessary field in the drive's state. The drive entry will be created if necessary.
+   * Reports the state of the drive to the object store. This function fills
+   * any necessary fields in the drive's state. The drive entry will be created if necessary.
    * @param defaultState a drive state containing all the default values
    * @param type the type of the session, if any
    * @param status the state of the drive. Reporting the state to down will also
@@ -307,7 +307,7 @@ private:
                                    ExistingMountSummaryPerTapepool& existingMountsDistinctTypeSummaryPerTapepool,
                                    ExistingMountSummaryPerVo& existingMountBasicTypeSummaryPerVo,
                                    std::set<std::string, std::less<>>& tapesInUse,
-                                   std::vector<catalogue::TapeForWriting>& tapesForWritting,
+                                   std::vector<catalogue::TapeForWriting>& tapesForWriting,
                                    double& getTapeInfoTime,
                                    double& candidateSortingTime,
                                    double& getTapeForWriteTime,
