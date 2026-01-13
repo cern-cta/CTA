@@ -143,71 +143,15 @@ std::string RelationalDB::queueArchive(const std::string& instanceName,
 
 std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> RelationalDB::getArchiveJobs() const {
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> ret;
-
-  // Get a connection
-  auto conn = m_connPool.getConn();
-
-  // Query all archive jobs from ARCHIVE_PENDING_QUEUE
-  std::string sql = R"SQL(
-    SELECT
-      TAPE_POOL,
-      ARCHIVE_FILE_ID,
-      COPY_NB,
-      CREATION_TIME,
-      ARCHIVE_REPORT_URL,
-      ARCHIVE_ERROR_REPORT_URL,
-      DISK_FILE_ID,
-      DISK_FILE_PATH,
-      DISK_FILE_OWNER_UID,
-      DISK_FILE_GID,
-      SIZE_IN_BYTES,
-      CHECKSUMBLOB,
-      STORAGE_CLASS,
-      SRC_URL,
-      REQUESTER_NAME,
-      REQUESTER_GROUP
-    FROM ARCHIVE_PENDING_QUEUE
-  )SQL";
-
-  auto stmt = conn.createStmt(sql);
-  auto rset = stmt.executeQuery();
-
-  while (rset.next()) {
-    common::dataStructures::ArchiveJob job;
-
-    // Extract tape pool
-    std::string tapePool = rset.columnString("TAPE_POOL");
-    job.tapePool = tapePool;
-
-    // Extract archive file ID and copy number
-    job.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
-    job.copyNumber = rset.columnUint64("COPY_NB");
-
-    // Fill in the request fields
-    job.request.creationLog.time = rset.columnUint64("CREATION_TIME");
-    job.request.archiveReportURL = rset.columnString("ARCHIVE_REPORT_URL");
-    job.request.archiveErrorReportURL = rset.columnString("ARCHIVE_ERROR_REPORT_URL");
-    job.request.diskFileID = rset.columnString("DISK_FILE_ID");
-    job.request.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-    job.request.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_OWNER_UID");
-    job.request.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
-    job.request.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-    job.request.storageClass = rset.columnString("STORAGE_CLASS");
-    job.request.srcURL = rset.columnString("SRC_URL");
-    job.request.requester.name = rset.columnString("REQUESTER_NAME");
-    job.request.requester.group = rset.columnString("REQUESTER_GROUP");
-
-    // Extract checksum blob
-    std::string checksumBlobStr = rset.columnBlob("CHECKSUMBLOB");
-
-    // Add to the map
-    ret[tapePool].push_back(job);
+  std::list<cta::common::dataStructures::ArchiveJob> archiveJobData = RelationalDB::getArchiveJobs(std::nullopt);
+  for (auto job : archiveJobData) {
+    ret[job.tapePool].push_back(job);
   }
-
   return ret;
 }
 
-std::list<cta::common::dataStructures::ArchiveJob> RelationalDB::getArchiveJobs(const std::string& tapePoolName) const {
+std::list<cta::common::dataStructures::ArchiveJob>
+RelationalDB::getArchiveJobs(std::optional<std::string> tapePoolName) const {
   std::list<cta::common::dataStructures::ArchiveJob> ret;
 
   // Get a connection
@@ -233,11 +177,16 @@ std::list<cta::common::dataStructures::ArchiveJob> RelationalDB::getArchiveJobs(
       REQUESTER_NAME,
       REQUESTER_GROUP
     FROM ARCHIVE_PENDING_QUEUE
+  )SQL";
+  if (tapePoolName.has_value()) {
+    sql += R"SQL(
     WHERE TAPE_POOL = :TAPE_POOL
   )SQL";
-
+  }
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":TAPE_POOL", tapePoolName);
+  if (tapePoolName.has_value()) {
+    stmt.bindString(":TAPE_POOL", tapePoolName.value());
+  }
   auto rset = stmt.executeQuery();
 
   while (rset.next()) {
@@ -535,6 +484,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq.setDiskSystemName(diskSystemName);
     rreqMutex.release();
     rReq.insert();
+    std::cout << "queued retrieve" << std::endl;
     log::ScopedParamContainer(lc)
       .add("totalTime", timeTotal.secs())
       .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
@@ -623,81 +573,22 @@ void RelationalDB::deleteFailed(const std::string& objectId, log::LogContext& lc
 }
 
 std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
-RelationalDB::getRetrieveJobs() const {
+RelationalDB::getPendingRetrieveJobs() const {
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> ret;
+  std::list<cta::common::dataStructures::RetrieveJob> ret_list = getPendingRetrieveJobs(std::nullopt);
+  for (auto& job : ret_list) {
+    std::string vid = "";
 
-  // Get a connection
-  auto conn = m_connPool.getConn();
-
-  // Query all retrieve jobs from RETRIEVE_PENDING_QUEUE
-  std::string sql = R"SQL(
-    SELECT
-      VID,
-      ARCHIVE_FILE_ID,
-      COPY_NB,
-      SIZE_IN_BYTES,
-      CREATION_TIME,
-      DST_URL,
-      RETRIEVE_ERROR_REPORT_URL,
-      DISK_FILE_ID,
-      DISK_FILE_PATH,
-      DISK_FILE_OWNER_UID,
-      DISK_FILE_GID,
-      CHECKSUMBLOB,
-      STORAGE_CLASS,
-      REQUESTER_NAME,
-      REQUESTER_GROUP,
-      DISK_INSTANCE
-    FROM RETRIEVE_PENDING_QUEUE
-  )SQL";
-
-  auto stmt = conn.createStmt(sql);
-  auto rset = stmt.executeQuery();
-
-  while (rset.next()) {
-    common::dataStructures::RetrieveJob job;
-    std::string vid = rset.columnString("VID");
-
-    // Fill in the request fields
-    job.request.archiveFileID = rset.columnUint64("ARCHIVE_FILE_ID");
-    job.request.creationLog.time = rset.columnUint64("CREATION_TIME");
-    job.request.dstURL = rset.columnString("DST_URL");
-    job.request.errorReportURL = rset.columnString("RETRIEVE_ERROR_REPORT_URL");
-    job.request.diskFileInfo.path = rset.columnString("DISK_FILE_PATH");
-    job.request.diskFileInfo.owner_uid = rset.columnUint64("DISK_FILE_OWNER_UID");
-    job.request.diskFileInfo.gid = rset.columnUint64("DISK_FILE_GID");
-    job.request.requester.name = rset.columnString("REQUESTER_NAME");
-    job.request.requester.group = rset.columnString("REQUESTER_GROUP");
-
-    // Fill in other fields
-    job.fileSize = rset.columnUint64("SIZE_IN_BYTES");
-    job.diskInstance = rset.columnString("DISK_INSTANCE");
-    job.storageClass = rset.columnString("STORAGE_CLASS");
-    job.diskFileId = rset.columnString("DISK_FILE_ID");
-
-    // Extract checksum blob
-    std::string checksumBlobStr = rset.columnBlob("CHECKSUMBLOB");
-
-    // Create tape copy entry
-    uint32_t copyNb = rset.columnUint32("COPY_NB");
-    common::dataStructures::TapeFile tf;
-    tf.vid = vid;
-    tf.fSeq = 0;  // Not available in pending queue
-    tf.blockId = 0;  // Not available in pending queue
-    tf.fileSize = job.fileSize;
-    tf.copyNb = copyNb;
-    tf.creationTime = job.request.creationLog.time;
-    tf.checksumBlob.deserialize(checksumBlobStr);
-
-    job.tapeCopies[vid] = std::make_pair(copyNb, tf);
-
+    if (!job.tapeCopies.empty()) {
+      vid = job.tapeCopies.begin()->first;
+    }
     ret[vid].push_back(job);
   }
-
   return ret;
 }
 
-std::list<cta::common::dataStructures::RetrieveJob> RelationalDB::getRetrieveJobs(const std::string& vid) const {
+std::list<cta::common::dataStructures::RetrieveJob>
+RelationalDB::getPendingRetrieveJobs(std::optional<std::string> vid) const {
   std::list<cta::common::dataStructures::RetrieveJob> ret;
   // Get a connection
   auto conn = m_connPool.getConn();
@@ -722,11 +613,16 @@ std::list<cta::common::dataStructures::RetrieveJob> RelationalDB::getRetrieveJob
       REQUESTER_GROUP,
       DISK_INSTANCE
     FROM RETRIEVE_PENDING_QUEUE
-    WHERE VID = :VID
   )SQL";
-
+  if (vid) {
+    sql += R"SQL(
+      WHERE VID = :VID
+    )SQL";
+  }
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":VID", vid);
+  if (vid) {
+    stmt.bindString(":VID", vid.value());
+  }
   auto rset = stmt.executeQuery();
 
   while (rset.next()) {
@@ -757,7 +653,7 @@ std::list<cta::common::dataStructures::RetrieveJob> RelationalDB::getRetrieveJob
     uint32_t copyNb = rset.columnUint32("COPY_NB");
     common::dataStructures::TapeFile tf;
     tf.vid = vid;
-    tf.fSeq = 0;  // Not available in pending queue
+    tf.fSeq = 0;     // Not available in pending queue
     tf.blockId = 0;  // Not available in pending queue
     tf.fileSize = job.fileSize;
     tf.copyNb = copyNb;
@@ -1078,8 +974,34 @@ RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::Log
 }
 
 std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
+RelationalDB::getRetrieveJobs(uint64_t filesRequested, bool fetchFailed, log::LogContext& lc) const {
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
+  schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    auto resultSet = schedulerdb::postgres::RetrieveJobQueueRow::getRetrieveJobs(txn, filesRequested, fetchFailed);
+    if (resultSet.isEmpty()) {
+      lc.log(cta::log::INFO, "In RelationalDB::getRetrieveJobs(): no jobs found.");
+      return ret;
+    }
+    while (resultSet.next()) {
+      // last parameter is false = signaling that this is not for a repack workflow
+      ret.emplace_back(std::make_unique<schedulerdb::RetrieveRdbJob>(m_connPool, resultSet, false /* isRepack */));
+    }
+    txn.commit();
+    lc.log(cta::log::INFO, "Successfully fetched jobs for unit test.");
+  } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
+    lc.log(cta::log::ERR, "In RelationalDB::getRetrieveJobs(): fetched retrieve jobs for unit test.");
+    txn.abort();
+    return ret;
+  }
+  return ret;
+}
+
+std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
 RelationalDB::getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContext& lc) {
-  throw cta::exception::NotImplementedException();
+  return getRetrieveJobs(filesRequested, true, lc);
 }
 
 std::unique_ptr<SchedulerDatabase::RepackReportBatch> RelationalDB::getNextRepackReportBatch(log::LogContext& lc) {
@@ -1580,17 +1502,22 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMount
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> RelationalDB::getMountInfo(log::LogContext& lc,
                                                                                      uint64_t timeout_us) {
-  return RelationalDB::getMountInfo("all", lc, timeout_us);
+  return RelationalDB::getMountInfo(std::nullopt, lc, timeout_us);
 }
 
 std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
-RelationalDB::getMountInfo(std::string_view logicalLibraryName, log::LogContext& lc, uint64_t timeout_us) {
+RelationalDB::getMountInfo(std::optional<std::string_view> logicalLibraryName,
+                           log::LogContext& lc,
+                           uint64_t timeout_us) {
   utils::Timer t;
   // Allocate the getMountInfostructure to return.
   auto privateRet = std::make_unique<schedulerdb::TapeMountDecisionInfo>(*this, m_ownerId, m_tapeDrivesState.get(), lc);
   TapeMountDecisionInfo& tmdi = *privateRet;
-
-  privateRet->lock(logicalLibraryName);
+  std::string lockValue = "all";
+  if (logicalLibraryName.has_value()) {
+    lockValue = logicalLibraryName.value();
+  }
+  privateRet->lock(lockValue);
 
   // Get all the tape pools and tapes with queues (potential mounts)
   auto lockSchedGlobalTime = t.secs(utils::Timer::resetCounter);
@@ -1745,15 +1672,17 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.labelFormat = std::nullopt;  // The labelFormat is not known here, and may be determined by the caller.
     m.mountPolicyCountMap[rjsr.mountPolicy] = rjsr.jobsCount;
     if (rjsr.diskSystemName) {
+      //std::cout << "rjsr.diskSystemName: " << rjsr.diskSystemName.value() << std::endl;
       auto it = diskSystemSleepMap.find(rjsr.diskSystemName.value());
       if (it != diskSystemSleepMap.end()) {
+        //std::cout << "FOUND IN SLEEP MAP rjsr.diskSystemName" << std::endl;
         const auto& entry = it->second;
         auto now = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
         if (now < (entry.timestamp + entry.sleepTime)) {
           m.sleepingMount = true;
           m.sleepStartTime = entry.timestamp;
-          m.diskSystemSleptFor = now - entry.timestamp;
+          m.diskSystemSleptFor = rjsr.diskSystemName.value();
           m.sleepTime = entry.sleepTime;
         } else {
           m.sleepingMount = false;

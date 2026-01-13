@@ -210,7 +210,7 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         M.LIFECYCLE_COMPLETED_TIME,
         M.DISK_SYSTEM_NAME
     FROM MOVED_ROWS M
-    RETURNING *;
+    RETURNING *
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":VID", mountInfo.vid);
@@ -231,7 +231,7 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.bindString(":DRIVE", mountInfo.drive);
   stmt.bindString(":HOST", mountInfo.host);
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
-  stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
+  stmt.bindString(":TAPE_POOL", mountInfo.tapePool.empty() ? "NOT_PROVIDED" : mountInfo.tapePool);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
   auto result = stmt.executeQuery();
   auto nrows = stmt.getNbAffectedRows();
@@ -258,22 +258,24 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   // DISABLE DELETION FOR DEBUGGING
   if (newStatus == RetrieveJobStatus::RJS_Complete || newStatus == RetrieveJobStatus::RJS_Failed
       || newStatus == RetrieveJobStatus::ReadyForDeletion) {
-    if (newStatus == RetrieveJobStatus::RJS_Failed) {
-      return RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs, isRepack);
-    } else {
-      std::string sql = R"SQL(
+    // all these job statuses mean that the report to disk was done successfully,
+    // we do not need to move the job to failed job table
+    //if (newStatus == RetrieveJobStatus::RJS_Failed) {
+    //  return RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs, isRepack);
+    //} else {
+    std::string sql = R"SQL(
         DELETE FROM
       )SQL";
-      sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
-      sql += R"SQL(
+    sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
+    sql += R"SQL(
         WHERE
           JOB_ID IN (
         )SQL";
-      sql += sqlpart + std::string(")");
-      auto stmt2 = txn.getConn().createStmt(sql);
-      stmt2.executeNonQuery();
-      return stmt2.getNbAffectedRows();
-    }
+    sql += sqlpart + std::string(")");
+    auto stmt2 = txn.getConn().createStmt(sql);
+    stmt2.executeNonQuery();
+    return stmt2.getNbAffectedRows();
+    //}
   }
   // END OF DISABLE DELETION FOR DEBUGGING
   // the following is here for debugging purposes (row deletion gets disabled)
@@ -703,7 +705,7 @@ uint64_t RetrieveJobQueueRow::requeueJobBatch(Transaction& txn,
       M.LAST_MOUNT_WITH_FAILURE,
       :STATUS AS STATUS,
       NULL AS MOUNT_ID
-        FROM MOVED_ROWS M;
+        FROM MOVED_ROWS M
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
@@ -1054,7 +1056,7 @@ uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Tran
       M.LAST_MOUNT_WITH_FAILURE,
       :STATUS AS STATUS,
       NULL AS MOUNT_ID
-    FROM TO_MOVE M;
+    FROM TO_MOVE M
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
@@ -1076,7 +1078,7 @@ uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
         DELETE FROM RETRIEVE_ACTIVE_QUEUE
           WHERE JOB_ID = :JOB_ID
         RETURNING *
-    ) INSERT INTO RETRIEVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;
+    ) INSERT INTO RETRIEVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":JOB_ID", jobId);
@@ -1110,7 +1112,7 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
   )SQL";
   sql += repack_table_name_prefix + "RETRIEVE_FAILED_QUEUE ";
   sql += R"SQL(
-  SELECT * FROM MOVED_ROWS;
+  SELECT * FROM MOVED_ROWS
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.executeNonQuery();
@@ -1150,18 +1152,13 @@ rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Tran
 }
 
 uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, RetrieveJobStatus newStatus) {
-  // if this was the final reporting failure,
-  // move the row to failed jobs and delete the entry from the queue
-  if (status == RetrieveJobStatus::ReadyForDeletion) {
-    return RetrieveJobQueueRow::moveJobToFailedQueueTable(txn);
-  }
   // otherwise update the statistics and requeue the job
   std::string sql = R"SQL(
       UPDATE RETRIEVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
         TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
         IS_REPORTING =:IS_REPORTING,
-        REPORT_FAILURE_LOG = REPORT_FAILURE_LOG || :REPORT_FAILURE_LOG
+        REPORT_FAILURE_LOG = :REPORT_FAILURE_LOG
       WHERE JOB_ID = :JOB_ID
     )SQL";
 
@@ -1172,8 +1169,29 @@ uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, R
   stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
   stmt.bindUint64(":JOB_ID", jobId);
   stmt.executeNonQuery();
+  // if this was the final reporting failure,
+  // move the row to failed jobs and delete the entry from the queue
+  if (newStatus == RetrieveJobStatus::ReadyForDeletion) {
+    return RetrieveJobQueueRow::moveJobToFailedQueueTable(txn);
+  }
   return stmt.getNbAffectedRows();
 };
+
+rdbms::Rset RetrieveJobQueueRow::getRetrieveJobs(Transaction& txn, uint64_t filesRequested, bool fetchFailed) {
+  std::string sql = "SELECT * FROM RETRIEVE_";
+  if (fetchFailed) {
+    sql += "FAILED";
+  } else {
+    sql += "PENDING";
+  }
+  sql += R"SQL(_QUEUE
+    ORDER BY PRIORITY DESC, JOB_ID
+    LIMIT :LIMIT
+  )SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  stmt.bindUint64(":LIMIT", filesRequested);
+  return stmt.executeQuery();
+}
 
 rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
                                                            std::list<RetrieveJobStatus> statusList,

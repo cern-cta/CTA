@@ -42,7 +42,24 @@ DummyVirtualOrganizationCatalogue::getCachedVirtualOrganizationOfTapepool(const 
 
 std::optional<common::dataStructures::VirtualOrganization>
 DummyVirtualOrganizationCatalogue::getDefaultVirtualOrganizationForRepack() const {
-  throw exception::NotImplementedException();
+  std::optional<common::dataStructures::VirtualOrganization> dummyVO;
+
+  dummyVO.emplace();
+  dummyVO->name = "dummy_vo";
+  dummyVO->comment = "Dummy Virtual Organization for unit tests";
+  dummyVO->readMaxDrives = 1;
+  dummyVO->writeMaxDrives = 1;
+  dummyVO->maxFileSize = 1024 * 1024 * 1024;  // 1 GiB
+  dummyVO->diskInstanceName = "dummy_disk_instance";
+  dummyVO->isRepackVo = true;
+
+  // Creation log
+  dummyVO->creationLog.username = "unit-test";
+  dummyVO->creationLog.host = "localhost";
+
+  // Last modification log
+  dummyVO->lastModificationLog = dummyVO->creationLog;
+  return dummyVO;
 }
 
 void DummyVirtualOrganizationCatalogue::modifyVirtualOrganizationName(

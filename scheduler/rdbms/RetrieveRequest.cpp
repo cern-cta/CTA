@@ -26,6 +26,7 @@ std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() con
   rjr->srrUsername = m_schedRetrieveReq.creationLog.username;
   rjr->srrHost = m_schedRetrieveReq.creationLog.host;
   rjr->srrTime = m_schedRetrieveReq.creationLog.time;
+  rjr->creationTime = m_schedRetrieveReq.creationLog.time;
   rjr->lifecycleTimings_creation_time = m_schedRetrieveReq.lifecycleTimings.creation_time;
   rjr->lifecycleTimings_first_selected_time = m_schedRetrieveReq.lifecycleTimings.first_selected_time;
   rjr->lifecycleTimings_completed_time = m_schedRetrieveReq.lifecycleTimings.completed_time;

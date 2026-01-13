@@ -683,6 +683,8 @@ public:
 
   /**
    * Move the job rows to the ARCHIVE FAILED JOB TABLE
+   * (unused at the moment but shall be used for
+   * batched failed reports to disk)
    *
    * @param txn                  Transaction to use for this query
    * @param jobIDs               List of job IDs as strings for the query

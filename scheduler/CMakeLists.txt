@@ -81,7 +81,7 @@ else()
   add_library (ctaschedulerunittests SHARED
     SchedulerDatabaseFactory.cpp
     SchedulerDatabaseTest.cpp
-    GenericSchedulerTest.cpp
+    RelationalDBSchedulerTest.cpp
     rdbms/RelationalDBTest.cpp)
 endif()
 
