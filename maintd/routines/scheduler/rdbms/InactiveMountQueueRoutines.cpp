@@ -25,63 +25,6 @@ InactiveMountQueueRoutineBase::InactiveMountQueueRoutineBase(log::LogContext& lc
   m_lc.log(cta::log::INFO, "Created " + std::string(m_routineName));
 };
 
-cta::common::dataStructures::DeadMountCandidateIDs InactiveMountQueueRoutineBase::getDeadMountCandicateIDs() {
-  // Get all active mount IDs for drives which do have an active mount registered in the catalogue
-  std::unordered_map<std::string, std::optional<uint64_t>> driveNameMountIdOpt =
-    m_catalogue.DriveState()->getTapeDriveMountIDs();
-  log::ScopedParamContainer params(m_lc);
-  params.add("routineName", m_routineName);
-  std::unordered_set<uint64_t> activeMountIds;
-  activeMountIds.reserve(driveNameMountIdOpt.size());
-
-  for (const auto& kv : driveNameMountIdOpt) {
-    if (kv.second) {
-      activeMountIds.insert(*kv.second);
-    }
-  }
-  params.add("activeCatalogueMountIdCount", activeMountIds.size());
-  m_lc.log(cta::log::INFO, "Fetched mounts registered in catalogue for active drives.");
-  // Get all active mount IDs from the Scheduler DB
-  cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs =
-    m_RelationalDB.getDeadMountCandidates(m_inactiveTimeLimit, m_lc);
-  params.add("archivePendingDeadMountIdsCount", scheduledMountIDs.archivePending.size());
-  params.add("archiveActiveDeadMountIdsCount", scheduledMountIDs.archiveActive.size());
-  params.add("retrievePendingDeadMountIdsCount", scheduledMountIDs.retrievePending.size());
-  params.add("retrieveActiveDeadMountIdsCount", scheduledMountIDs.retrieveActive.size());
-  params.add("archiveRepackPendingDeadMountIdsCount", scheduledMountIDs.archiveRepackPending.size());
-  params.add("archiveRepackActiveDeadMountIdsCount", scheduledMountIDs.archiveRepackActive.size());
-  params.add("retrieveRepackPendingDeadMountIdsCount", scheduledMountIDs.retrieveRepackPending.size());
-  params.add("retrieveRepackActiveDeadMountIdsCount", scheduledMountIDs.retrieveRepackActive.size());
-  m_lc.log(cta::log::INFO, "Fetched dead mounts from scheduler DB.");
-
-  /* We will now filter out all Mount IDs which are still reported as alive in the catalogue
-   * in order to be sure no active processes from the mount will be changing the DB rows
-   * (in case of wrong timeout input e.g.)
-   */
-  // Helper lambda to remove IDs present in activeSet
-  auto removeActiveIds = [&activeMountIds](std::vector<uint64_t>& vec) {
-    std::erase_if(vec, [&activeMountIds](uint64_t id) { return activeMountIds.count(id) > 0; });
-  };
-  removeActiveIds(scheduledMountIDs.archivePending);
-  removeActiveIds(scheduledMountIDs.archiveActive);
-  removeActiveIds(scheduledMountIDs.retrievePending);
-  removeActiveIds(scheduledMountIDs.retrieveActive);
-  removeActiveIds(scheduledMountIDs.archiveRepackPending);
-  removeActiveIds(scheduledMountIDs.archiveRepackActive);
-  removeActiveIds(scheduledMountIDs.retrieveRepackPending);
-  removeActiveIds(scheduledMountIDs.retrieveRepackActive);
-  params.add("archivePendingDeadMountIdsCount", scheduledMountIDs.archivePending.size());
-  params.add("archiveActiveDeadMountIdsCount", scheduledMountIDs.archiveActive.size());
-  params.add("retrievePendingDeadMountIdsCount", scheduledMountIDs.retrievePending.size());
-  params.add("retrieveActiveDeadMountIdsCount", scheduledMountIDs.retrieveActive.size());
-  params.add("archiveRepackPendingDeadMountIdsCount", scheduledMountIDs.archiveRepackPending.size());
-  params.add("archiveRepackActiveDeadMountIdsCount", scheduledMountIDs.archiveRepackActive.size());
-  params.add("retrieveRepackPendingDeadMountIdsCount", scheduledMountIDs.retrieveRepackPending.size());
-  params.add("retrieveRepackActiveDeadMountIdsCount", scheduledMountIDs.retrieveRepackActive.size());
-  m_lc.log(cta::log::INFO, "Found dead mounts which need job rescheduling.");
-  return scheduledMountIDs;
-};
-
 std::vector<uint64_t>&
 InactiveMountQueueRoutineBase::getDeadMountVector(cta::common::dataStructures::DeadMountCandidateIDs& deadMounts,
                                                   bool isArchive,
@@ -103,13 +46,13 @@ InactiveMountQueueRoutineBase::getDeadMountVector(cta::common::dataStructures::D
 }
 
 void InactiveMountQueueRoutineBase::handleInactiveMountActiveQueueRoutine(bool isArchive, bool isRepack) {
-  cta::common::dataStructures::DeadMountCandidateIDs deadCandidates = getDeadMountCandicateIDs();
+  cta::common::dataStructures::DeadMountCandidateIDs deadCandidates = m_RelationalDB.getDeadMountCandicateIDs();
   std::vector<uint64_t> deadMountIds = getDeadMountVector(deadCandidates, isArchive, isRepack, false /* isPending */);
   m_RelationalDB.handleInactiveMountActiveQueues(deadMountIds, m_batchSize, isArchive, isRepack, m_lc);
 }
 
 void InactiveMountQueueRoutineBase::handleInactiveMountPendingQueueRoutine(bool isArchive, bool isRepack) {
-  cta::common::dataStructures::DeadMountCandidateIDs deadCandidates = getDeadMountCandicateIDs();
+  cta::common::dataStructures::DeadMountCandidateIDs deadCandidates = m_RelationalDB.getDeadMountCandicateIDs();
   std::vector<uint64_t> deadMountIds = getDeadMountVector(deadCandidates, isArchive, isRepack, true /* isPending */);
   m_RelationalDB.handleInactiveMountPendingQueues(deadMountIds, m_batchSize, isArchive, isRepack, m_lc);
 }
@@ -266,7 +209,7 @@ CleanMountHeartbeatRoutine::CleanMountHeartbeatRoutine(log::LogContext& lc,
     : InactiveMountQueueRoutineBase(lc, catalogue, pgs, batchSize, "CleanMountHeartbeatRoutine", inactiveTimeLimit) {}
 
 void CleanMountHeartbeatRoutine::execute() {
-  // Cleaning MOUNT_HEARTBEAT table from MOUNT IDs which were inactive for more than m_inactiveTimeLimit
+  // Cleaning MOUNT_QUEUE_LAST_FETCH table from MOUNT IDs which were inactive for more than m_inactiveTimeLimit
   m_RelationalDB.cleanOldMountHeartbeats(m_inactiveTimeLimit, m_batchSize, m_lc);
 };
 

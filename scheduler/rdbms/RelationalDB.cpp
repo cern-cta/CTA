@@ -329,10 +329,11 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
            "the DB.");
 
   } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR,
            "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): failed to update job status. "
-           "Aborting the transaction."
-             + ex.getMessageValue());
+           "Aborting the transaction.");
     txn.abort();
   }
   return;
@@ -441,9 +442,10 @@ void RelationalDB::cancelRetrieve(const std::string& instanceName,
     }
     txn.commit();
   } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-           "In RelationalDB::cancelRetrieve(): failed to cancel retrieve job. Aborting the transaction."
-             + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR,
+           "In RelationalDB::cancelRetrieve(): failed to cancel retrieve job. Aborting the transaction.");
     txn.abort();
     throw;
   }
@@ -571,7 +573,9 @@ std::list<common::dataStructures::RepackInfo> RelationalDB::fetchRepackInfo(cons
       ret.emplace_back(std::move(kv.second));
     }
   } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR, "In RelationalDB::getRepackInfo(): failed to get repack info." + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR, "In RelationalDB::getRepackInfo(): failed to get repack info.");
     throw;
   }
   sqlconn.commit();
@@ -660,10 +664,11 @@ auto RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForEx
     ret.pendingAfter = ret.pendingBefore - nrows;
     ret.toExpandAfter = ret.toExpandBefore + nrows;
   } catch (exception::Exception& ex) {
-    lc.log(
-      cta::log::ERR,
-      "In RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(): failed to update rows."
-        + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR,
+           "In RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(): failed to update "
+           "rows.");
     txn.abort();
   }
   txn.commit();
@@ -796,9 +801,9 @@ RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::Log
     timings.addToLog(logParams);
     lc.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
   } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-           "In RelationalDB::getNextRetrieveJobsToReportBatch(): failed to flagReportingJobsByStatus: "
-             + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR, "In RelationalDB::getNextRetrieveJobsToReportBatch(): failed to flagReportingJobsByStatus: ");
     txn.abort();
     return ret;
   }
@@ -888,9 +893,10 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
            "to archive.");
     txn2.commit();
   } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to updateRepackRequestsProgress(): "
-             + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR,
+           "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to updateRepackRequestsProgress(): ");
     txn2.abort();
   }
   // return empty report batch since the rest of the original OStoreDB logic is not needed here
@@ -942,10 +948,11 @@ bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, 
         lc.log(log::WARNING,
                "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not found anymore.");
       } else {
-        lc.log(
-          log::ERR,
-          "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not deleted. Exception thrown: "
-            + ex.getMessageValue());
+        log::ScopedParamContainer(lc)
+          .add("exceptionMessage", ex.getMessageValue())
+          .log(
+            log::ERR,
+            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not deleted. Exception thrown: ");
         return false;
       }
     }
@@ -1010,9 +1017,9 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       txn.commit();
       timings.insertAndReset("deletedArchiveRepackJobs", t);
     } catch (exception::Exception& ex) {
-      lc.log(cta::log::ERR,
-             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: "
-               + ex.getMessageValue());
+      log::ScopedParamContainer(lc)
+        .add("exceptionMessage", ex.getMessageValue())
+        .log(cta::log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: ");
       txn.abort();
       return ret;
     }
@@ -1103,9 +1110,9 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
       flbytes.emplace_back(batch_rset.columnUint64NoOpt("FILE_BYTES"));
     }
   } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-           "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): Failed to move failed jobs: "
-             + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR, "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): Failed to move failed jobs: ");
     txn.abort();
     return ret;
   }
@@ -1158,9 +1165,9 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
       flbytes.emplace_back(summaryFlBytesMap[reqId]);  // safe lookup
     }
   } catch (exception::Exception& ex) {
-    lc.log(cta::log::ERR,
-           "In RelationalDB::getNextFailedArchiveRepackReportBatch(): Failed to move failed jobs: "
-             + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(cta::log::ERR, "In RelationalDB::getNextFailedArchiveRepackReportBatch(): Failed to move failed jobs: ");
     txn.abort();
     return ret;
   }
@@ -1651,11 +1658,11 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
                                                                                         log::LogContext& lc) {
   cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs;
   schedulerdb::Transaction txn(m_connPool, lc);
-  uint64_t mount_gc_timestamp = (uint64_t) cta::utils::getCurrentEpochTime() - mount_gc_delay;
+  uint64_t mount_gc_timestamp = static_cast<uint64_t>(cta::utils::getCurrentEpochTime()) - mount_gc_delay;
   try {
     // get candidates for dead mount sessions - no more jobs to fetch since at least gc_delay
     std::string sql = R"SQL(
-      SELECT MOUNT_ID, QUEUE_TYPE FROM MOUNT_HEARTBEAT WHERE LAST_UPDATE_TIME < :OLDER_THAN_TIMESTAMP
+      SELECT MOUNT_ID, QUEUE_TYPE FROM MOUNT_QUEUE_LAST_FETCH WHERE LAST_UPDATE_TIME < :OLDER_THAN_TIMESTAMP
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindUint64(":OLDER_THAN_TIMESTAMP", mount_gc_timestamp);
@@ -1685,11 +1692,68 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
     }
     txn.commit();
   } catch (exception::Exception& ex) {
-    lc.log(log::ERR,
-           "In RelationalDB::getDeadMountCandidates(): failed to get distinct MOUNT_IDs from the queues."
-             + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(log::ERR, "In RelationalDB::getDeadMountCandidates(): failed to get distinct MOUNT_IDs from the queues.");
     txn.abort();
   }
+  return scheduledMountIDs;
+}
+
+cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCandicateIDs() {
+  // Get all active mount IDs for drives which do have an active mount registered in the catalogue
+  std::unordered_map<std::string, std::optional<uint64_t>> driveNameMountIdOpt =
+    m_catalogue.DriveState()->getTapeDriveMountIDs();
+  log::ScopedParamContainer params(m_lc);
+  params.add("routineName", m_routineName);
+  std::unordered_set<uint64_t> activeMountIds;
+  activeMountIds.reserve(driveNameMountIdOpt.size());
+
+  for (const auto& kv : driveNameMountIdOpt) {
+    if (kv.second) {
+      activeMountIds.insert(*kv.second);
+    }
+  }
+  params.add("activeCatalogueMountIdCount", activeMountIds.size());
+  m_lc.log(cta::log::INFO, "Fetched mounts registered in catalogue for active drives.");
+  // Get all active mount IDs from the Scheduler DB
+  cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs =
+    m_RelationalDB.getDeadMountCandidates(m_inactiveTimeLimit, m_lc);
+  params.add("archivePendingDeadMountIdsCount", scheduledMountIDs.archivePending.size());
+  params.add("archiveActiveDeadMountIdsCount", scheduledMountIDs.archiveActive.size());
+  params.add("retrievePendingDeadMountIdsCount", scheduledMountIDs.retrievePending.size());
+  params.add("retrieveActiveDeadMountIdsCount", scheduledMountIDs.retrieveActive.size());
+  params.add("archiveRepackPendingDeadMountIdsCount", scheduledMountIDs.archiveRepackPending.size());
+  params.add("archiveRepackActiveDeadMountIdsCount", scheduledMountIDs.archiveRepackActive.size());
+  params.add("retrieveRepackPendingDeadMountIdsCount", scheduledMountIDs.retrieveRepackPending.size());
+  params.add("retrieveRepackActiveDeadMountIdsCount", scheduledMountIDs.retrieveRepackActive.size());
+  m_lc.log(cta::log::INFO, "Fetched dead mounts from scheduler DB.");
+
+  /* We will now filter out all Mount IDs which are still reported as alive in the catalogue
+   * in order to be sure no active processes from the mount will be changing the DB rows
+   * (in case of wrong timeout input e.g.)
+   */
+  // Helper lambda to remove IDs present in activeSet
+  auto removeActiveIds = [&activeMountIds](std::vector<uint64_t>& vec) {
+    std::erase_if(vec, [&activeMountIds](uint64_t id) { return activeMountIds.count(id) > 0; });
+  };
+  removeActiveIds(scheduledMountIDs.archivePending);
+  removeActiveIds(scheduledMountIDs.archiveActive);
+  removeActiveIds(scheduledMountIDs.retrievePending);
+  removeActiveIds(scheduledMountIDs.retrieveActive);
+  removeActiveIds(scheduledMountIDs.archiveRepackPending);
+  removeActiveIds(scheduledMountIDs.archiveRepackActive);
+  removeActiveIds(scheduledMountIDs.retrieveRepackPending);
+  removeActiveIds(scheduledMountIDs.retrieveRepackActive);
+  params.add("archivePendingDeadMountIdsCount", scheduledMountIDs.archivePending.size());
+  params.add("archiveActiveDeadMountIdsCount", scheduledMountIDs.archiveActive.size());
+  params.add("retrievePendingDeadMountIdsCount", scheduledMountIDs.retrievePending.size());
+  params.add("retrieveActiveDeadMountIdsCount", scheduledMountIDs.retrieveActive.size());
+  params.add("archiveRepackPendingDeadMountIdsCount", scheduledMountIDs.archiveRepackPending.size());
+  params.add("archiveRepackActiveDeadMountIdsCount", scheduledMountIDs.archiveRepackActive.size());
+  params.add("retrieveRepackPendingDeadMountIdsCount", scheduledMountIDs.retrieveRepackPending.size());
+  params.add("retrieveRepackActiveDeadMountIdsCount", scheduledMountIDs.retrieveRepackActive.size());
+  m_lc.log(cta::log::INFO, "Found dead mounts which need job rescheduling.");
   return scheduledMountIDs;
 }
 
@@ -1713,9 +1777,6 @@ void RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64_t>&
   if (deadMountIds.empty()) {
     return;
   }
-  auto imMutex = std::make_unique<cta::threading::Mutex>();
-  cta::threading::MutexLocker imMutexLock(*imMutex);
-  ;
   std::string queueTypePrefix = getQueueTypePrefix(isArchive, isRepack);
   // Cleaning up the PENDING tables
   // TO-DO look at the ARCHIVE_PENDING_QUEUE for
@@ -1763,8 +1824,9 @@ void RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64_t>&
       .add("queueTypePrefix", queueTypePrefix)
       .log(cta::log::INFO, "In RelationalDB::handleInactiveMountQueues(): Cleaned up PENDING table.");
   } catch (exception::Exception& ex) {
-    lc.log(log::ERR,
-           "In RelationalDB::handleInactiveMountQueues(): Failed cleaned up PENDING table." + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(log::ERR, "In RelationalDB::handleInactiveMountQueues(): Failed cleaned up PENDING table.");
     txn.abort();
   }
 }
@@ -1777,8 +1839,6 @@ void RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& 
   if (deadMountIds.empty()) {
     return;
   }
-  auto imMutex = std::make_unique<cta::threading::Mutex>();
-  cta::threading::MutexLocker imMutexLock(*imMutex);
   std::string queueTypePrefix = getQueueTypePrefix(isArchive, isRepack);
 
   // Getting the JOB IDs of dead mounts to requeue from ACTIVE to PENDING TABLE
@@ -1852,16 +1912,15 @@ void RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& 
              "correspond to number of jobs requeued !");
     }
   } catch (exception::Exception& ex) {
-    lc.log(log::ERR,
-           "In RelationalDB::handleInactiveMountActiveQueues(): failed to requeue rows from ACTIVE to PENDING queue."
-             + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(log::ERR,
+           "In RelationalDB::handleInactiveMountActiveQueues(): failed to requeue rows from ACTIVE to PENDING queue.");
     txn.abort();
   }
 }
 
 void RelationalDB::deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc) {
-  auto dfqMutex = std::make_unique<cta::threading::Mutex>();
-  cta::threading::MutexLocker dfqMutexLock(*dfqMutex);
   std::vector<std::string> failedTables = {"ARCHIVE_FAILED_QUEUE",
                                            "REPACK_ARCHIVE_FAILED_QUEUE",
                                            "REPACK_RETRIEVE_FAILED_QUEUE",
@@ -1894,33 +1953,31 @@ void RelationalDB::deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSiz
         .log(cta::log::INFO,
              "In RelationalDB::deleteOldFailedQueues(): Deleted old rows from failed queue tables successfully.");
     } catch (exception::Exception& ex) {
-      lc.log(log::ERR,
-             "In RelationalDB::deleteOldFailedQueues(): Failed to delete old rows from failed queue tables: "
-               + ex.getMessageValue());
+      log::ScopedParamContainer(lc)
+        .add("exceptionMessage", ex.getMessageValue())
+        .log(log::ERR,
+             "In RelationalDB::deleteOldFailedQueues(): Failed to delete old rows from failed queue tables: ");
       txn.abort();
     }
   }
 }
 
 void RelationalDB::cleanOldMountHeartbeats(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc) {
-  auto dfqMutex = std::make_unique<cta::threading::Mutex>();
-  cta::threading::MutexLocker dfqMutexLock(*dfqMutex);
-
   std::string sql;
   uint64_t olderThanTimestamp = (uint64_t) cta::utils::getCurrentEpochTime() - deletionAge;
   schedulerdb::Transaction txn(m_connPool, lc);
-  txn.takeNamedLock("MOUNT_HEARTBEAT_cleanOldMountHeartbeats");
+  txn.takeNamedLock("MOUNT_QUEUE_LAST_FETCH_cleanOldMountHeartbeats");
   try {
     sql = R"SQL(
         WITH ROWS_TO_DELETE AS (
           SELECT MOUNT_ID, QUEUE_TYPE
-          FROM MOUNT_HEARTBEAT
+          FROM MOUNT_QUEUE_LAST_FETCH
           WHERE LAST_UPDATE_TIME < :OLDER_THAN_TIMESTAMP
           ORDER BY LAST_UPDATE_TIME
           LIMIT :LIMIT
           FOR UPDATE SKIP LOCKED
         )
-        DELETE FROM MOUNT_HEARTBEAT mh
+        DELETE FROM MOUNT_QUEUE_LAST_FETCH mh
         USING ROWS_TO_DELETE r
         WHERE (mh.MOUNT_ID, mh.QUEUE_TYPE) = (r.MOUNT_ID, r.QUEUE_TYPE);
        )SQL";
