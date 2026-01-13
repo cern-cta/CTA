@@ -107,13 +107,13 @@ private:
   /// A log param list representation of the sourced parameter.
   void addLogParams(log::LogContext& lc) {
     if (m_category.size()) {
-      lc.pushOrReplace({"category", m_category});
+      lc.push({"category", m_category});
     }
     if (m_key.size()) {
-      lc.pushOrReplace({"key", m_key});
+      lc.push({"key", m_key});
     }
     addLogParamForValue(lc);
-    lc.pushOrReplace({"source", m_source});
+    lc.push({"source", m_source});
   }
 };
 

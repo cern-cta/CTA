@@ -33,7 +33,7 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
       m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
       m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
-  m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
+  m_lc.push({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
 
   m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
 }

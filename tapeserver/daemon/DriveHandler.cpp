@@ -383,7 +383,7 @@ void DriveHandler::processLogs(serializers::WatchdogMessage& message) {
   // Accumulate the logs added (if any)
   for (auto& log : message.addedlogparams()) {
     m_watchdogLogParams.insert(log.name());
-    m_lc.pushOrReplace({log.name(), log.value()});
+    m_lc.push({log.name(), log.value()});
   }
   for (auto& logName : message.deletedlogparams()) {
     m_watchdogLogParams.erase(logName);

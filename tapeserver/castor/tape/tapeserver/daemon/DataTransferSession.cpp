@@ -70,8 +70,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // 1) Prepare the logging environment
   cta::log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
-  lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
-  lc.pushOrReplace(cta::log::Param("tapeDrive", m_driveConfig.unitName));
+  lc.push(cta::log::Param("thread", "MainThread"));
+  lc.push(cta::log::Param("tapeDrive", m_driveConfig.unitName));
 
   // Make effective the raw I/O process capability.
   try {

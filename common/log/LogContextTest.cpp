@@ -17,7 +17,7 @@ namespace unitTests {
 TEST(cta_log_LogContextTest, additionScopedRemove) {
   DummyLogger dl("dummy", "cta_log_LogContextTest");
   LogContext lc(dl);
-  lc.pushOrReplace(Param("MigrationRequestId", 123));
+  lc.push(Param("MigrationRequestId", 123));
   ASSERT_EQ(1U, lc.size());
   {
     // Create an anonymous variable (for its scope)
@@ -41,7 +41,7 @@ TEST(cta_log_LogContextTest, additionScopedRemove) {
 TEST(cta_log_LogContextTest, paramsFound) {
   StringLogger sl("dummy", "cta_log_LogContextTest", DEBUG);
   LogContext lc(sl);
-  lc.pushOrReplace(Param("MigrationRequestId", 123));
+  lc.push(Param("MigrationRequestId", 123));
   lc.log(INFO, "First log");
   std::string first = sl.getLog();
   ASSERT_NE(std::string::npos, first.find("MigrationRequestId"));
@@ -70,7 +70,7 @@ TEST(cta_log_LogContextTest, logMessageEscaping) {
 
   // Set a param with a character to be escaped.
   LogContext lc(sl);
-  lc.pushOrReplace(Param(R"(valid_"key)", "Valid \n out"));
+  lc.push(Param(R"(valid_"key)", "Valid \n out"));
   lc.log(INFO, "Split message\n by newline");
 
   std::regex regex_pattern(

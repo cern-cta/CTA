@@ -10,18 +10,27 @@
 
 #include <algorithm>
 #include <bfd.h>
-#include <list>
+#include <ranges>
 
 namespace cta::log {
 
 LogContext::LogContext(Logger& logger) noexcept : m_log(logger) {}
 
-void LogContext::pushOrReplace(const Param& param) noexcept {
+void LogContext::push(const Param& param) noexcept {
   auto i = std::ranges::find_if(m_params, [&param](const Param& p) { return p.getName() == param.getName(); });
   if (i != m_params.end()) {
     i->setValue(param.getValueVariant());
   } else {
     m_params.push_back(param);
+  }
+}
+
+void LogContext::push(Param&& param) noexcept {
+  auto i = std::ranges::find_if(m_params, [&param](const Param& p) { return p.getName() == param.getName(); });
+  if (i != m_params.end()) {
+    i->setValue(param.getValueVariant());
+  } else {
+    m_params.push_back(std::move(param));
   }
 }
 
@@ -73,7 +82,13 @@ void LogContext::logBacktrace(const int priority, std::string_view backtrace) no
 LogContext::ScopedParam::ScopedParam(LogContext& context, const Param& param) noexcept
     : m_context(context),
       m_name(param.getName()) {
-  m_context.pushOrReplace(param);
+  m_context.push(param);
+}
+
+LogContext::ScopedParam::ScopedParam(LogContext& context, Param&& param) noexcept
+    : m_context(context),
+      m_name(param.getName()) {
+  m_context.push(std::move(param));
 }
 
 LogContext::ScopedParam::~ScopedParam() noexcept {

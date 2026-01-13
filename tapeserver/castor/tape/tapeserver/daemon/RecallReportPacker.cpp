@@ -231,7 +231,7 @@ RecallReportPacker::WorkerThread::WorkerThread(RecallReportPacker& parent) : m_p
 //WorkerThread::run
 //------------------------------------------------------------------------------
 void RecallReportPacker::WorkerThread::run() {
-  m_parent.m_lc.pushOrReplace(Param("thread", "RecallReportPacker"));
+  m_parent.m_lc.push(Param("thread", "RecallReportPacker"));
   m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallReportPacker thread");
   bool endFound = false;
 

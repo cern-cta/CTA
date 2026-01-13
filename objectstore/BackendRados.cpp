@@ -628,8 +628,8 @@ BackendRados::RadosWorkerThreadAndContext::RadosWorkerThreadAndContext(BackendRa
     : m_parentBackend(parentBackend),
       m_lc(logger) {
   log::ScopedParamContainer params(m_lc);
-  m_lc.pushOrReplace(log::Param("thread", "radosWorker"));
-  m_lc.pushOrReplace(log::Param("threadID", threadID));
+  m_lc.push(log::Param("thread", "radosWorker"));
+  m_lc.push(log::Param("threadID", threadID));
   m_lc.log(log::INFO, "Started Rados worker thread");
 }
 
