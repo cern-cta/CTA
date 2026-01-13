@@ -24,17 +24,26 @@ size_t WriteCallback(char* contents, size_t size, size_t nmemb, std::string* out
   return totalSize;
 };
 
+CurlJwksFetcher::CurlJwksFetcher(int totalTimeoutSecs) : m_totalTimeoutSecs(totalTimeoutSecs) {
+  curl_global_init(CURL_GLOBAL_DEFAULT);
+}
+
+CurlJwksFetcher::~CurlJwksFetcher() {
+  curl_global_cleanup();
+}
+
 std::string CurlJwksFetcher::fetchJWKS(const std::string& jwksUrl) {
   CURL* curl;
   CURLcode res;
   std::string readBuffer;
 
-  curl_global_init(CURL_GLOBAL_DEFAULT);
   curl = curl_easy_init();
   if (curl) {
     curl_easy_setopt(curl, CURLOPT_URL, jwksUrl.c_str());
     // use TLS 1.2 or later
     curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
+    // Set timeouts to prevent indefinite hangs
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, static_cast<long>(m_totalTimeoutSecs));
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
     res = curl_easy_perform(curl);
@@ -45,7 +54,6 @@ std::string CurlJwksFetcher::fetchJWKS(const std::string& jwksUrl) {
   } else {
     throw CurlException("CURL failed to call curl_easy_init()");
   }
-  curl_global_cleanup();
 
   return readBuffer;
 }

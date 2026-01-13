@@ -481,6 +481,13 @@ FrontendService::FrontendService(const std::string& configFilename) {
   }
   m_pubkeyTimeout = pubkeyTimeout;
 
+  auto jwksTotalTimeout = config.getOptionValueInt("grpc.jwks.total_timeout");
+  if (jwksTotalTimeout.has_value() && jwksTotalTimeout.value() < 0) {
+    throw exception::UserError("grpc.jwks.total_timeout is set to a negative value in configuration file "
+                               + configFilename);
+  }
+  m_jwksTotalTimeout = jwksTotalTimeout;
+
   if (m_jwtAuth) {
     if (!m_cacheRefreshInterval.has_value()) {
       log(log::WARNING, "No value set for grpc.jwks.cache.refresh_interval_secs, using default value");
@@ -495,6 +502,10 @@ FrontendService::FrontendService(const std::string& configFilename) {
           "Cannot use a value for grpc.jwks.cache.timeout_secs that is less than grpc.jwks.cache.refresh_interval_secs."
           "Setting timeout_secs equal to cache_refresh_interval_secs.");
       m_pubkeyTimeout = std::optional<int>(m_cacheRefreshInterval.value());
+    }
+    if (!m_jwksTotalTimeout.has_value()) {
+      log(log::INFO, "No value set for grpc.jwks.total_timeout, using default value of 60 seconds");
+      m_jwksTotalTimeout = 60;
     }
   }
 

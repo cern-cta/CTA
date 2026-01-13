@@ -162,6 +162,11 @@ public:
   std::optional<int> getPubkeyTimeout() const { return m_pubkeyTimeout; }
 
   /*
+   * Get the total timeout (in seconds) for JWKS endpoint
+   */
+  std::optional<int> getJwksTotalTimeout() const { return m_jwksTotalTimeout; }
+
+  /*
    * Get the jwtAuth value
    */
   bool getJwtAuth() const { return m_jwtAuth; }
@@ -212,6 +217,7 @@ private:
   std::optional<std::string>                    m_jwksUri;                      //!< The endpoint to obtain public keys from, for validating tokens
   std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
   std::optional<int>                            m_pubkeyTimeout;        //!< The number of seconds after which to update the cache entry for a cached key
+  std::optional<int>                            m_jwksTotalTimeout;             //!< The total timeout in seconds for JWKS endpoint (default 60)
   bool                                          m_jwtAuth;                      //!< Feature flag to guard JWT auth when TLS is enabled
   bool                                          m_enableCtaAdminCommands;      //!< Feature flag to disable CTA admin commands
   // clang-format on
