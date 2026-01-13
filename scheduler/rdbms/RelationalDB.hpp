@@ -303,7 +303,7 @@ public:
    */
   cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandidates(uint64_t mount_gc_delay,
                                                                             log::LogContext& lc);
-  cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandicateIDs();
+  cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandicateIDs(log::LogContext& lc);
   std::string getQueueTypePrefix(bool isArchive, bool isRepack);
   void handleInactiveMountPendingQueues(const std::vector<uint64_t>& deadMountIds,
                                         size_t batchSize,

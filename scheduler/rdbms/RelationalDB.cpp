@@ -1700,11 +1700,11 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
   return scheduledMountIDs;
 }
 
-cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCandicateIDs() {
+cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCandicateIDs(log::LogContext& lc) {
   // Get all active mount IDs for drives which do have an active mount registered in the catalogue
   std::unordered_map<std::string, std::optional<uint64_t>> driveNameMountIdOpt =
     m_catalogue.DriveState()->getTapeDriveMountIDs();
-  log::ScopedParamContainer params(m_lc);
+  log::ScopedParamContainer params(lc);
   params.add("routineName", m_routineName);
   std::unordered_set<uint64_t> activeMountIds;
   activeMountIds.reserve(driveNameMountIdOpt.size());
@@ -1715,10 +1715,10 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
     }
   }
   params.add("activeCatalogueMountIdCount", activeMountIds.size());
-  m_lc.log(cta::log::INFO, "Fetched mounts registered in catalogue for active drives.");
+  lc.log(cta::log::INFO, "Fetched mounts registered in catalogue for active drives.");
   // Get all active mount IDs from the Scheduler DB
   cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs =
-    m_RelationalDB.getDeadMountCandidates(m_inactiveTimeLimit, m_lc);
+    m_RelationalDB.getDeadMountCandidates(m_inactiveTimeLimit, lc);
   params.add("archivePendingDeadMountIdsCount", scheduledMountIDs.archivePending.size());
   params.add("archiveActiveDeadMountIdsCount", scheduledMountIDs.archiveActive.size());
   params.add("retrievePendingDeadMountIdsCount", scheduledMountIDs.retrievePending.size());
@@ -1727,7 +1727,7 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
   params.add("archiveRepackActiveDeadMountIdsCount", scheduledMountIDs.archiveRepackActive.size());
   params.add("retrieveRepackPendingDeadMountIdsCount", scheduledMountIDs.retrieveRepackPending.size());
   params.add("retrieveRepackActiveDeadMountIdsCount", scheduledMountIDs.retrieveRepackActive.size());
-  m_lc.log(cta::log::INFO, "Fetched dead mounts from scheduler DB.");
+  lc.log(cta::log::INFO, "Fetched dead mounts from scheduler DB.");
 
   /* We will now filter out all Mount IDs which are still reported as alive in the catalogue
    * in order to be sure no active processes from the mount will be changing the DB rows
@@ -1753,7 +1753,7 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
   params.add("archiveRepackActiveDeadMountIdsCount", scheduledMountIDs.archiveRepackActive.size());
   params.add("retrieveRepackPendingDeadMountIdsCount", scheduledMountIDs.retrieveRepackPending.size());
   params.add("retrieveRepackActiveDeadMountIdsCount", scheduledMountIDs.retrieveRepackActive.size());
-  m_lc.log(cta::log::INFO, "Found dead mounts which need job rescheduling.");
+  lc.log(cta::log::INFO, "Found dead mounts which need job rescheduling.");
   return scheduledMountIDs;
 }
 
