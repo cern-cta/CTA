@@ -141,7 +141,7 @@ public:
    * @param tapePoolName The name of the tape pool.
    * @return The queued requests.
    */
-  virtual std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const = 0;
+  virtual std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(std::optional<std::string> tapePoolName) const = 0;
 
   /**
    * Class holding necessary repack request elements for queueing
@@ -455,7 +455,7 @@ public:
    * @return The queued jobs.
    */
   virtual std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
-  getRetrieveJobs() const = 0;
+  getPendingRetrieveJobs() const = 0;
 
   /**
    * Returns the list of queued jobs queued on the specified tape pool.
@@ -465,7 +465,7 @@ public:
    * @return The queued requests.
    */
   virtual std::list<cta::common::dataStructures::RetrieveJob>
-  getRetrieveJobs(const std::string& tapePoolName) const = 0;
+  getPendingRetrieveJobs(std::optional<std::string> vid) const = 0;
 
   /*============ Retrieve management: tape server side ======================*/
 
@@ -916,7 +916,7 @@ public:
   virtual std::unique_ptr<TapeMountDecisionInfo> getMountInfo(log::LogContext& logContext, uint64_t timeout_us) = 0;
   // following method is used by RDBMS Scheduler DB type only
   virtual std::unique_ptr<TapeMountDecisionInfo>
-  getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) = 0;
+  getMountInfo(std::optional<std::string_view> logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) = 0;
 
   /**
    * A function running a queue trim. This should be called if the corresponding

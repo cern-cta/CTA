@@ -193,7 +193,7 @@ public:
                                                                            log::LogContext& lc) const;
   std::map<std::string, std::list<cta::common::dataStructures::RetrieveJob>, std::less<>>
   getPendingRetrieveJobs(log::LogContext& lc) const;
-  std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(const std::string& vid,
+  std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(std::optional<std::string> vid,
                                                                              log::LogContext& lc) const;
 
   /*============== Drive state management ====================================*/

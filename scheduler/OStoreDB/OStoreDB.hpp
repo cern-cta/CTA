@@ -389,7 +389,7 @@ public:
 
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> getArchiveJobs() const override;
 
-  std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
+  std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(std::optional<std::string> tapePoolName) const override;
 
   class ArchiveJobQueueItor : public IArchiveJobQueueItor {
   public:
@@ -467,9 +467,9 @@ public:
 
   void deleteFailed(const std::string& objectId, log::LogContext& lc) override;
 
-  std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& vid) const override;
+  std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(std::optional<std::string> vid) const override;
 
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> getRetrieveJobs() const override;
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> getPendingRetrieveJobs() const override;
 
   class RetrieveJobQueueItor : public IRetrieveJobQueueItor {
   public:

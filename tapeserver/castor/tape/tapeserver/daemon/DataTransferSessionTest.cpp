@@ -886,11 +886,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
 }
 
 // disk_file_path throws an exception in this test
-/* 
- * $1 = "Failed for SQL statement INSERT INTO\n
- *  RETRIEVE_PENDING_QUEUE (\n", ' ' <repeats 11 times>, "RETRIEVE_REQUEST_ID,\n ...:
- * Optional string parameter :DISK_FILE_PATH is an empty string. An optional string parameter sh"...
- */
+
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // This test is the same as DataTransferSessionGooddayRecall, with
   // wrong parameters set for the recall, so that we fail
@@ -3668,7 +3664,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
 #ifdef CTA_PGSCHED
-INSTANTIATE_TEST_CASE_P(MockSchedulerTest, GenericSchedulerTest, ::testing::Values(SchedulerTestParam(mockDbFactory)));
+INSTANTIATE_TEST_CASE_P(MockSchedulerTest, RelationalDBSchedulerTest, ::testing::Values(SchedulerTestParam(mockDbFactory)));
 #else
 INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest, ::testing::Values(SchedulerTestParam(mockDbFactory)));
 #endif

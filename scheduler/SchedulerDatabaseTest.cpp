@@ -427,7 +427,6 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
     std::string dsName = "ds-A";
     db.queueRetrieve(rr, rfqc, dsName, locallc);
   };
-
   std::future<void> jobInsertion = std::async(std::launch::async, lambda);
   jobInsertion.get();
   db.waitSubthreadsComplete();
@@ -514,6 +513,7 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
   rm->putQueueToSleep(diskSystem.name, diskSystem.sleepTime, lc);
 
   // Inject a retrieve job to the db (so we can retrieve it)
+  // to the same disk system which has been put to sleep
   std::function<void()> lambda = [&db, &lc, diskSystemList]() {
     cta::common::dataStructures::RetrieveRequest rr;
     cta::log::LogContext locallc = lc;
@@ -532,26 +532,50 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
     rfqc.archiveFile.tapeFiles.emplace_back();
     rfqc.archiveFile.tapeFiles.back().fSeq = 0;
     rfqc.archiveFile.tapeFiles.back().vid = "vid";
+    // the following block of information was needed for postgres to queue the job, not for objectstore
+    // it shall be investigated which missing parameter(s) blocked the queueing
+    rfqc.archiveFile.archiveFileID = 1;
+    rfqc.archiveFile.tapeFiles.back().copyNb = 1;
+    rfqc.archiveFile.tapeFiles.back().fileSize = 1000;
+    rfqc.archiveFile.storageClass = s_storageClassName;
+    rfqc.archiveFile.tapeFiles.back().blockId = 1;
+    rfqc.archiveFile.tapeFiles.back().checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+    rfqc.archiveFile.checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+    rfqc.archiveFile.diskInstance = "dis-A";
+    rfqc.archiveFile.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+    rfqc.archiveFile.diskFileInfo.gid = DISK_FILE_GID;
+    // end of the additional data block for postgres
+
     rr.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
     uuid_t fileUUID;
     uuid_generate(fileUUID);
     char fileUUIDStr[37];
     uuid_unparse(fileUUID, fileUUIDStr);
+    // the following block of information was needed for postgres to queue the job, not for objectstore
+    // it shall be investigated which missing parameter(s) blocked the queueing
+    rfqc.archiveFile.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
+    rfqc.archiveFile.diskFileId = std::string(fileUUIDStr);
+    // end of the additional data block for postgres
+
     rr.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
     rr.requester = {"user", "group"};
     rr.dstURL = std::string("root://") + "a" + ".disk.system/" + std::to_string(0);
     std::string dsName = "ds-A";
     db.queueRetrieve(rr, rfqc, dsName, locallc);
   };
-
   std::future<void> jobInsertion = std::async(std::launch::async, lambda);
   jobInsertion.get();
   db.waitSubthreadsComplete();
 
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, lc);
+
+  // expecting 0 potential mounts since the job is on a sleeping queue
   ASSERT_EQ(1, mi->potentialMounts.size());
+  std::cout << "mount found as expected" << std::endl;
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
+  std::cout << "mount is sleeping all ok" << std::endl;
   ASSERT_EQ("ds-A", mi->potentialMounts.begin()->diskSystemSleptFor);
+  std::cout << "the right disk system" << std::endl;
 }
 
 TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
@@ -712,6 +736,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
 
       rr.archiveFileID = id + 1;
       rr.creationLog = {"user", "host", creationTime};
+      rr.lifecycleTimings.creation_time = creationTime;
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
@@ -739,13 +764,13 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   // Then load all retrieve jobs into memory
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
-  ASSERT_EQ(1, mountInfo->potentialMounts.size()); // this fails
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());  // this fails
   auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
   {
     auto rjb = rm->getNextJobBatch(10, 20 * 1000, lc);
     //Files with successful fetch should be popped
     ASSERT_EQ(10, rjb.size());
-    //jobs retain their creation time after being popped
+    //jobs retain their creation time after being popped - lifecycleTimings are not used for postgres scheduler at all
     for (auto& rj : rjb) {
       ASSERT_EQ(creationTime, rj->retrieveRequest.lifecycleTimings.creation_time);
     }
@@ -761,7 +786,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   }
 }
 
-TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
+TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksystem) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
   cta::log::DummyLogger dl("", "");
@@ -830,12 +855,31 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
       rfqc.archiveFile.tapeFiles.back().fSeq = id;
       rfqc.archiveFile.tapeFiles.back().vid = "vid";
 
+      // the following block of information was needed for postgres to queue the job, not for objectstore
+      // it shall be investigated which missing parameter(s) blocked the queueing
+      rfqc.archiveFile.archiveFileID = 1;
+      rfqc.archiveFile.tapeFiles.back().copyNb = 1;
+      rfqc.archiveFile.tapeFiles.back().fileSize = 1000;
+      rfqc.archiveFile.storageClass = s_storageClassName;
+      rfqc.archiveFile.tapeFiles.back().blockId = 1;
+      rfqc.archiveFile.tapeFiles.back().checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+      rfqc.archiveFile.checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+      rfqc.archiveFile.diskInstance = (id % 2 ? "dis-B" : "dis-A");
+      rfqc.archiveFile.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      rfqc.archiveFile.diskFileInfo.gid = DISK_FILE_GID;
+      // end of the additional data block for postgres
+
       rr.archiveFileID = id + 1;
       rr.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
+      // the following block of information was needed for postgres to queue the job, not for objectstore
+      // it shall be investigated which missing parameter(s) blocked the queueing
+      rfqc.archiveFile.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
+      rfqc.archiveFile.diskFileId = std::string(fileUUIDStr);
+      // end of the additional data block for postgres
 
       rr.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
       rr.requester = {"user", "group"};
@@ -852,11 +896,17 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDisksytem) {
   jobInsertions.clear();
   lambdas.clear();
   db.waitSubthreadsComplete();
-
-  // Then load all archive jobs into memory
+  // Then load all retrieve jobs into memory
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
+#ifdef CTA_PGSCHED
+  // Postgres scheduler does consides disk system as another distinct parameter of the mount queue,
+  // therefore there are 2 potential queues expected, onefor each disk system. In this way in case
+  // one disk system goes out of space the second queue can still go on (would be blocked by the objectstore way)
+  ASSERT_EQ(2, mountInfo->potentialMounts.size());
+#else
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
+#endif
   auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> rjb = rm->getNextJobBatch(20, 20 * 1000, lc);
   ASSERT_EQ(filesToDo, rjb.size());
@@ -1066,15 +1116,26 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
       rfqc.archiveFile.storageClass = s_storageClassName;
       rfqc.archiveFile.tapeFiles.back().blockId = id;
       rfqc.archiveFile.tapeFiles.back().checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+      rfqc.archiveFile.checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
+      rfqc.archiveFile.diskInstance = "dis-error";
+      rfqc.archiveFile.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+      rfqc.archiveFile.diskFileInfo.gid = DISK_FILE_GID;
       rr.archiveFileID = id + 1;
-      rr.retrieveReportURL = "null:";
       rr.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
+
+      // the following block of information was needed for postgres to queue the job, not for objectstore
+      // it shall be investigated which missing parameter(s) blocked the queueing
+      rfqc.archiveFile.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
+      rfqc.archiveFile.diskFileId = std::string(fileUUIDStr);
+      // end of the additional data block for postgres
+
       rr.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
       rr.requester = {"user", "group"};
+      rr.retrieveReportURL = "null:";
       std::string dsName;
       rr.dstURL = std::string("root://error.disk.system/") + std::to_string(id);
       dsName = "ds-Error";

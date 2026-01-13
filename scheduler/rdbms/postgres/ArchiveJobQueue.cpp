@@ -249,19 +249,21 @@ uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction& txn,
   }
   if (newStatus == ArchiveJobStatus::AJS_Complete || newStatus == ArchiveJobStatus::AJS_Failed
       || newStatus == ArchiveJobStatus::ReadyForDeletion) {
-    if (newStatus == ArchiveJobStatus::AJS_Failed) {
-      return ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs);
-    } else {
-      std::string sql = R"SQL(
+    // all these job statuses mean that the report to disk was done successfully,
+    // we do not need to move the job to failed job table
+    //if (newStatus == ArchiveJobStatus::AJS_Failed) {
+    //  return ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs);
+    //} else {
+    std::string sql = R"SQL(
         DELETE FROM ARCHIVE_ACTIVE_QUEUE
         WHERE
           JOB_ID IN (
         )SQL";
-      sql += sqlpart + std::string(")");
-      auto stmt1 = txn.getConn().createStmt(sql);
-      stmt1.executeNonQuery();
-      return stmt1.getNbAffectedRows();
-    }
+    sql += sqlpart + std::string(")");
+    auto stmt1 = txn.getConn().createStmt(sql);
+    stmt1.executeNonQuery();
+    return stmt1.getNbAffectedRows();
+    //}
   }
   std::string sql =
     "UPDATE ARCHIVE_ACTIVE_QUEUE SET STATUS = :NEWSTATUS1::ARCHIVE_JOB_STATUS WHERE JOB_ID IN (" + sqlpart + ")";
@@ -835,20 +837,13 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
 }
 
 uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, ArchiveJobStatus newStatus) {
-  /* if this was the final reporting failure,
-   * move the row to failed jobs and delete the entry from the queue
-   * for multi-copy archive requests, all requests will be handled via the moveJobToFailedQueueTable()
-   */
-  if (status == ArchiveJobStatus::ReadyForDeletion) {
-    return ArchiveJobQueueRow::moveJobToFailedQueueTable(txn);
-  }
   // otherwise update the statistics and requeue the job
   std::string sql = R"SQL(
       UPDATE ARCHIVE_ACTIVE_QUEUE SET
         STATUS = :STATUS,
         TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
         IS_REPORTING =:IS_REPORTING,
-        REPORT_FAILURE_LOG = REPORT_FAILURE_LOG || :REPORT_FAILURE_LOG
+        REPORT_FAILURE_LOG = :REPORT_FAILURE_LOG
       WHERE JOB_ID = :JOB_ID
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
@@ -858,6 +853,13 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
   stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
   stmt.bindUint64(":JOB_ID", jobId);
   stmt.executeNonQuery();
+  /* if this was the final reporting failure,
+   * move the row to failed jobs and delete the entry from the queue
+   * for multi-copy archive requests, all requests will be handled via the moveJobToFailedQueueTable()
+   */
+  if (status == ArchiveJobStatus::ReadyForDeletion) {
+    return ArchiveJobQueueRow::moveJobToFailedQueueTable(txn);
+  }
   return stmt.getNbAffectedRows();
 };
 

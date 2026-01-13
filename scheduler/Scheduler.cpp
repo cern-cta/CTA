@@ -1117,7 +1117,7 @@ std::list<common::dataStructures::ArchiveJob> Scheduler::getPendingArchiveJobs(c
 std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
 Scheduler::getPendingRetrieveJobs(log::LogContext& lc) const {
   utils::Timer t;
-  auto ret = m_db.getRetrieveJobs();
+  auto ret = m_db.getPendingRetrieveJobs();
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("schedulerDbTime", schedulerDbTime);
@@ -1128,10 +1128,10 @@ Scheduler::getPendingRetrieveJobs(log::LogContext& lc) const {
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs(const std::string& vid,
+std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs(std::optional<std::string> vid,
                                                                                  log::LogContext& lc) const {
   utils::Timer t;
-  auto ret = m_db.getRetrieveJobs(vid);
+  auto ret = m_db.getPendingRetrieveJobs(vid);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("schedulerDbTime", schedulerDbTime);
