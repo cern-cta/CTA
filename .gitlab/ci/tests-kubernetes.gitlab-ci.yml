@@ -361,7 +361,7 @@ stress-test-python:
       fi
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
-    # - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
+    - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
   tags:
     - stress
   # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time
