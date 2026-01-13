@@ -30,7 +30,7 @@ DiskReadThreadPool::DiskReadThreadPool(int nbThread,
   for (int i = 0; i < nbThread; i++) {
     DiskReadWorkerThread* thr = new DiskReadWorkerThread(*this);
     m_threads.push_back(thr);
-    m_lc.pushOrReplace(cta::log::Param("threadID", i));
+    m_lc.push(cta::log::Param("threadID", i));
     m_lc.log(cta::log::DEBUG, "DiskReadWorkerThread created");
   }
 }

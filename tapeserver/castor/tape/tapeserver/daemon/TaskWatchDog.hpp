@@ -340,7 +340,7 @@ public:
         m_mount(mount),
         m_driveUnitName(driveUnitName),
         m_lc(lc) {
-    m_lc.pushOrReplace(cta::log::Param("thread", "Watchdog"));
+    m_lc.push(cta::log::Param("thread", "Watchdog"));
   }
 
   /**

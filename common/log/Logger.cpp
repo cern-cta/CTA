@@ -10,9 +10,8 @@
 #include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
 
-#include <algorithm>
 #include <iomanip>
-#include <sys/syscall.h>
+#include <ranges>
 #include <sys/time.h>
 #include <variant>
 

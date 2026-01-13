@@ -149,7 +149,7 @@ void MigrationTaskInjector::signalEndDataMovement() {
 //WorkerThread::run
 //------------------------------------------------------------------------------
 void MigrationTaskInjector::WorkerThread::run() {
-  m_parent.m_lc.pushOrReplace(Param("thread", "MigrationTaskInjector"));
+  m_parent.m_lc.push(Param("thread", "MigrationTaskInjector"));
   m_parent.m_lc.log(cta::log::INFO, "Starting MigrationTaskInjector thread");
   try {
     while (true) {

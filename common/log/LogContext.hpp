@@ -7,6 +7,7 @@
 
 #include "common/log/Logger.hpp"
 
+#include <ostream>
 #include <set>
 #include <vector>
 
@@ -44,7 +45,8 @@ public:
    * name. Does not throw exceptions (fails silently).
    * @param param
    */
-  void pushOrReplace(const Param& param) noexcept;
+  void push(const Param& param) noexcept;
+  void push(Param&& param) noexcept;
 
   /**
    * Removes a parameter from the list.
@@ -94,6 +96,7 @@ public:
   class ScopedParam {
   public:
     ScopedParam(LogContext& context, const Param& param) noexcept;
+    ScopedParam(LogContext& context, Param&& param) noexcept;
     ~ScopedParam() noexcept;
 
   private:
@@ -112,10 +115,11 @@ public:
 
   ~ScopedParamContainer() { m_context.erase(m_names); }
 
-  template<class T>
-  ScopedParamContainer& add(const std::string& s, const T& t) {
-    m_context.pushOrReplace(Param(s, t));
-    m_names.insert(s);
+  template<typename S, typename T>
+    requires std::constructible_from<std::string, S&&>
+  ScopedParamContainer& add(S&& s, T&& t) {
+    m_names.emplace(s);
+    m_context.push(Param(std::forward<S>(s), std::forward<T>(t)));
     return *this;
   }
 

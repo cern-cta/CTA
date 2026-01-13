@@ -10,7 +10,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <list>
 #include <map>
 #include <vector>
 

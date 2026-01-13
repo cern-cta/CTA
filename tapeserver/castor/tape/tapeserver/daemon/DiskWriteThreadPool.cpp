@@ -26,7 +26,7 @@ DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
       m_reporter(report),
       m_watchdog(recallWatchDog),
       m_lc(lc) {
-  m_lc.pushOrReplace(cta::log::Param("threadCount", nbThread));
+  m_lc.push(cta::log::Param("threadCount", nbThread));
   for (int i = 0; i < nbThread; i++) {
     auto* thr = new DiskWriteWorkerThread(*this);
     m_threads.push_back(thr);

@@ -396,7 +396,7 @@ void RecallTaskInjector::WorkerThread::popRecalls() {
 //------------------------------------------------------------------------------
 void RecallTaskInjector::WorkerThread::run() {
   using cta::log::LogContext;
-  m_parent.m_lc.pushOrReplace(Param("thread", "RecallTaskInjector"));
+  m_parent.m_lc.push(Param("thread", "RecallTaskInjector"));
   m_parent.m_lc.log(cta::log::DEBUG, "Starting RecallTaskInjector thread");
   if (m_parent.m_raoManager.useRAO()) {
     /* RecallTaskInjector is waiting to have access to the drive in order

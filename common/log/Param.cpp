@@ -46,9 +46,4 @@ std::string Param::getValueStr() const noexcept {
   return oss.str();
 }
 
-template<>
-void Param::setValue<ParamValType>(const ParamValType& value) noexcept {
-  m_value = value;
-}
-
 }  // namespace cta::log
