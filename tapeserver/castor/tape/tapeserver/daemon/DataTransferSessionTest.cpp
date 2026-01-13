@@ -3664,7 +3664,9 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
 #ifdef TEST_MOCK_DB
 static cta::MockSchedulerDatabaseFactory mockDbFactory;
 #ifdef CTA_PGSCHED
-INSTANTIATE_TEST_CASE_P(MockSchedulerTest, RelationalDBSchedulerTest, ::testing::Values(SchedulerTestParam(mockDbFactory)));
+INSTANTIATE_TEST_CASE_P(MockSchedulerTest,
+                        RelationalDBSchedulerTest,
+                        ::testing::Values(SchedulerTestParam(mockDbFactory)));
 #else
 INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest, ::testing::Values(SchedulerTestParam(mockDbFactory)));
 #endif

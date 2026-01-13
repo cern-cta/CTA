@@ -182,7 +182,9 @@ public:
 
   // Only for RDBMS Scheduler backend
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
-  getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override {
+  getMountInfo(std::optional<std::string_view> logicalLibraryName,
+               log::LogContext& logContext,
+               uint64_t timeout_us) override {
     throw cta::exception::Exception("Not supported for OStoreDB implementation.");
   }
 
@@ -389,7 +391,8 @@ public:
 
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> getArchiveJobs() const override;
 
-  std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(std::optional<std::string> tapePoolName) const override;
+  std::list<cta::common::dataStructures::ArchiveJob>
+  getArchiveJobs(std::optional<std::string> tapePoolName) const override;
 
   class ArchiveJobQueueItor : public IArchiveJobQueueItor {
   public:
@@ -467,9 +470,11 @@ public:
 
   void deleteFailed(const std::string& objectId, log::LogContext& lc) override;
 
-  std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(std::optional<std::string> vid) const override;
+  std::list<cta::common::dataStructures::RetrieveJob>
+  getPendingRetrieveJobs(std::optional<std::string> vid) const override;
 
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> getPendingRetrieveJobs() const override;
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
+  getPendingRetrieveJobs() const override;
 
   class RetrieveJobQueueItor : public IRetrieveJobQueueItor {
   public:
