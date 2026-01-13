@@ -1700,12 +1700,12 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
   return scheduledMountIDs;
 }
 
-cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCandicateIDs(log::LogContext& lc) {
+cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCandicateIDs(uint64_t inactiveTimeLimit,
+                                                                                          log::LogContext& lc) {
   // Get all active mount IDs for drives which do have an active mount registered in the catalogue
   std::unordered_map<std::string, std::optional<uint64_t>> driveNameMountIdOpt =
     m_catalogue.DriveState()->getTapeDriveMountIDs();
   log::ScopedParamContainer params(lc);
-  params.add("routineName", m_routineName);
   std::unordered_set<uint64_t> activeMountIds;
   activeMountIds.reserve(driveNameMountIdOpt.size());
 
@@ -1717,8 +1717,7 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
   params.add("activeCatalogueMountIdCount", activeMountIds.size());
   lc.log(cta::log::INFO, "Fetched mounts registered in catalogue for active drives.");
   // Get all active mount IDs from the Scheduler DB
-  cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs =
-    m_RelationalDB.getDeadMountCandidates(m_inactiveTimeLimit, lc);
+  cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs = getDeadMountCandidates(inactiveTimeLimit, lc);
   params.add("archivePendingDeadMountIdsCount", scheduledMountIDs.archivePending.size());
   params.add("archiveActiveDeadMountIdsCount", scheduledMountIDs.archiveActive.size());
   params.add("retrievePendingDeadMountIdsCount", scheduledMountIDs.retrievePending.size());
@@ -1769,13 +1768,14 @@ std::string RelationalDB::getQueueTypePrefix(bool isArchive, bool isRepack) {
   return prefix;
 }
 
-void RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64_t>& deadMountIds,
+uint64_t RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64_t>& deadMountIds,
                                                     size_t batchSize,
                                                     bool isArchive,
                                                     bool isRepack,
                                                     log::LogContext& lc) {
+  uint64_t njobs = 0;
   if (deadMountIds.empty()) {
-    return;
+    return njobs;
   }
   std::string queueTypePrefix = getQueueTypePrefix(isArchive, isRepack);
   // Cleaning up the PENDING tables
@@ -1816,31 +1816,34 @@ void RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64_t>&
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindUint64(":LIMIT", batchSize);
     stmt.executeQuery();
-    auto njobs = stmt.getNbAffectedRows();
+    njobs = stmt.getNbAffectedRows();
     txn.commit();
 
     cta::log::ScopedParamContainer(lc)
       .add("nrows", njobs)
       .add("queueTypePrefix", queueTypePrefix)
       .log(cta::log::INFO, "In RelationalDB::handleInactiveMountQueues(): Cleaned up PENDING table.");
+    return njobs;
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
       .add("exceptionMessage", ex.getMessageValue())
       .log(log::ERR, "In RelationalDB::handleInactiveMountQueues(): Failed cleaned up PENDING table.");
     txn.abort();
   }
+  return njobs;
 }
 
-void RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& deadMountIds,
-                                                   size_t batchSize,
-                                                   bool isArchive,
-                                                   bool isRepack,
-                                                   log::LogContext& lc) {
+uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& deadMountIds,
+                                                       size_t batchSize,
+                                                       bool isArchive,
+                                                       bool isRepack,
+                                                       log::LogContext& lc) {
+
+  uint64_t njobs = 0;
   if (deadMountIds.empty()) {
-    return;
+    return njobs;
   }
   std::string queueTypePrefix = getQueueTypePrefix(isArchive, isRepack);
-
   // Getting the JOB IDs of dead mounts to requeue from ACTIVE to PENDING TABLE
   std::string mount_ids_array = "";
   for (size_t i = 0; i < deadMountIds.size(); ++i) {
@@ -1881,14 +1884,13 @@ void RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& 
     }
     stmt.bindUint64(":LIMIT", batchSize);
     auto rset = stmt.executeQuery();
-    uint64_t njobs = 0;
     std::list<std::string> jobIDsList;
     while (rset.next()) {
       jobIDsList.emplace_back(std::to_string(rset.columnUint64("JOB_ID")));
       ++njobs;
     }
     cta::log::ScopedParamContainer(lc)
-      .add("nrows", njobs)
+      .add("njobs_found", njobs)
       .add("queueTypePrefix", queueTypePrefix)
       .log(cta::log::INFO, "In RelationalDB::handleInactiveMountQueues(): Selected rows for cleaning up ACTIVE table.");
     uint64_t nrows = 0;
@@ -1902,7 +1904,7 @@ void RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& 
     }
     txn.commit();
     cta::log::ScopedParamContainer(lc)
-      .add("nrows", nrows)
+      .add("nrows_requeued", nrows)
       .add("queueTypePrefix", queueTypePrefix)
       .log(cta::log::INFO,
            "In RelationalDB::handleInactiveMountActiveQueues(): Requeued rows from ACTIVE to PENDING queue.");
@@ -1911,6 +1913,7 @@ void RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& 
              "In RelationalDB::handleInactiveMountActiveQueues(): Number of jobs selected for requeueing does not "
              "correspond to number of jobs requeued !");
     }
+    return njobs;
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
       .add("exceptionMessage", ex.getMessageValue())
@@ -1918,6 +1921,7 @@ void RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_t>& 
            "In RelationalDB::handleInactiveMountActiveQueues(): failed to requeue rows from ACTIVE to PENDING queue.");
     txn.abort();
   }
+  return njobs;
 }
 
 void RelationalDB::deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc) {
@@ -1962,11 +1966,11 @@ void RelationalDB::deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSiz
   }
 }
 
-void RelationalDB::cleanOldMountHeartbeats(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc) {
+void RelationalDB::cleanOldMountLastFetchTimes(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc) {
   std::string sql;
   uint64_t olderThanTimestamp = (uint64_t) cta::utils::getCurrentEpochTime() - deletionAge;
   schedulerdb::Transaction txn(m_connPool, lc);
-  txn.takeNamedLock("MOUNT_QUEUE_LAST_FETCH_cleanOldMountHeartbeats");
+  txn.takeNamedLock("MOUNT_QUEUE_LAST_FETCH_cleanOldMountLastFetchTimes");
   try {
     sql = R"SQL(
         WITH ROWS_TO_DELETE AS (
@@ -1990,10 +1994,60 @@ void RelationalDB::cleanOldMountHeartbeats(uint64_t deletionAge, uint64_t batchS
     cta::log::ScopedParamContainer(lc)
       .add("deletedRows", nrows)
       .add("olderThanTimestamp", olderThanTimestamp)
-      .log(cta::log::INFO, "In RelationalDB::cleanOldMountHeartbeats(): Deleted old rows from mount heartbeat table.");
+      .log(cta::log::INFO, "In RelationalDB::cleanOldMountLastFetchTimes(): Deleted old rows from mount last fetch time table.");
   } catch (exception::Exception& ex) {
     lc.log(log::ERR,
-           "In RelationalDB::cleanOldMountHeartbeats(): Failed to delete old rows from mount heartbeat table: "
+           "In RelationalDB::cleanOldMountLastFetchTimes(): Failed to delete old rows from mount last fetch time table: "
+             + ex.getMessageValue());
+    txn.abort();
+  }
+}
+
+void RelationalDB::cleanMountLastFetchTimes(std::vector<uint64_t> deadMountIds,
+                                            bool isArchive,
+                                            bool isRepack,
+                                            bool isPending,
+                                            log::LogContext& lc) {
+  std::string queue_type = getQueueTypePrefix(isArchive, isRepack);
+  if (isPending) {
+    queue_type += "_PENDING";
+  } else {
+    queue_type += "_ACTIVE";
+  }
+  std::string mount_ids_array = "";
+  for (size_t i = 0; i < deadMountIds.size(); ++i) {
+    const auto& deadMountId = deadMountIds[i];
+    mount_ids_array += std::to_string(deadMountId);
+    if (i < deadMountIds.size() - 1) {
+      mount_ids_array += ", ";
+    }
+  }
+  std::string sql;
+  schedulerdb::Transaction txn(m_connPool, lc);
+  txn.takeNamedLock("MOUNT_QUEUE_LAST_FETCH_cleanMountLastFetchTimes");
+  try {
+    sql = R"SQL(
+      WITH TMP_MOUNT_IDS(MOUNT_ID) AS (
+        SELECT unnest(ARRAY[
+    )SQL";
+    sql += mount_ids_array + R"SQL( ]::BIGINT[]) AS MOUNT_ID
+      ) DELETE FROM MOUNT_QUEUE_LAST_FETCH
+          WHERE MOUNT_ID IN (SELECT MOUNT_ID FROM TMP_MOUNT_IDS)
+            AND QUEUE_TYPE = :QUEUE_TYPE
+       )SQL";
+    auto stmt = txn.getConn().createStmt(sql);
+    stmt.bindString(":QUEUE_TYPE", queue_type);
+    stmt.executeNonQuery();
+    auto nrows = stmt.getNbAffectedRows();
+    txn.commit();
+    cta::log::ScopedParamContainer(lc)
+      .add("deletedRows", nrows)
+      .add("mountIDs", mount_ids_array)
+      .log(cta::log::INFO,
+           "In RelationalDB::cleanMountLastFetchTimes(): Deleted rows from mount last fetch time table.");
+  } catch (exception::Exception& ex) {
+    lc.log(log::ERR,
+           "In RelationalDB::cleanMountLastFetchTimes(): Failed to delete old rows from mount last fetch time table: "
              + ex.getMessageValue());
     txn.abort();
   }

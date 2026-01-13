@@ -46,15 +46,24 @@ InactiveMountQueueRoutineBase::getDeadMountVector(cta::common::dataStructures::D
 }
 
 void InactiveMountQueueRoutineBase::handleInactiveMountActiveQueueRoutine(bool isArchive, bool isRepack) {
-  cta::common::dataStructures::DeadMountCandidateIDs deadCandidates = m_RelationalDB.getDeadMountCandicateIDs();
+  cta::common::dataStructures::DeadMountCandidateIDs deadCandidates =
+    m_RelationalDB.getDeadMountCandicateIDs(m_inactiveTimeLimit, m_lc);
   std::vector<uint64_t> deadMountIds = getDeadMountVector(deadCandidates, isArchive, isRepack, false /* isPending */);
-  m_RelationalDB.handleInactiveMountActiveQueues(deadMountIds, m_batchSize, isArchive, isRepack, m_lc);
+  uint64_t njobs = m_RelationalDB.handleInactiveMountActiveQueues(deadMountIds, m_batchSize, isArchive, isRepack, m_lc);
+  if (njobs == 0 && !deadMountIds.empty()) {
+    m_RelationalDB.cleanMountLastFetchTimes(deadMountIds, isArchive, isRepack, false /* isPending */, m_lc);
+  }
 }
 
 void InactiveMountQueueRoutineBase::handleInactiveMountPendingQueueRoutine(bool isArchive, bool isRepack) {
-  cta::common::dataStructures::DeadMountCandidateIDs deadCandidates = m_RelationalDB.getDeadMountCandicateIDs();
+  cta::common::dataStructures::DeadMountCandidateIDs deadCandidates =
+    m_RelationalDB.getDeadMountCandicateIDs(m_inactiveTimeLimit, m_lc);
   std::vector<uint64_t> deadMountIds = getDeadMountVector(deadCandidates, isArchive, isRepack, true /* isPending */);
-  m_RelationalDB.handleInactiveMountPendingQueues(deadMountIds, m_batchSize, isArchive, isRepack, m_lc);
+  uint64_t njobs =
+    m_RelationalDB.handleInactiveMountPendingQueues(deadMountIds, m_batchSize, isArchive, isRepack, m_lc);
+  if (njobs == 0 && !deadMountIds.empty()) {
+    m_RelationalDB.cleanMountLastFetchTimes(deadMountIds, isArchive, isRepack, true /* isPending */, m_lc);
+  }
 }
 
 ArchiveInactiveMountActiveQueueRoutine::ArchiveInactiveMountActiveQueueRoutine(log::LogContext& lc,
@@ -187,30 +196,6 @@ RepackArchiveInactiveMountPendingQueueRoutine::RepackArchiveInactiveMountPending
 
 void RepackArchiveInactiveMountPendingQueueRoutine::execute() {
   handleInactiveMountPendingQueueRoutine(true /* isArchive */, true /* isRepack */);
-};
-
-DeleteOldFailedQueuesRoutine::DeleteOldFailedQueuesRoutine(log::LogContext& lc,
-                                                           catalogue::Catalogue& catalogue,
-                                                           RelationalDB& pgs,
-                                                           size_t batchSize,
-                                                           uint64_t inactiveTimeLimit)
-    : InactiveMountQueueRoutineBase(lc, catalogue, pgs, batchSize, "DeleteOldFailedQueuesRoutine", inactiveTimeLimit) {}
-
-void DeleteOldFailedQueuesRoutine::execute() {
-  // only rows older than 2 weeks will be deleted from the FAILED tables
-  m_RelationalDB.deleteOldFailedQueues(m_inactiveTimeLimit, m_batchSize, m_lc);
-};
-
-CleanMountHeartbeatRoutine::CleanMountHeartbeatRoutine(log::LogContext& lc,
-                                                       catalogue::Catalogue& catalogue,
-                                                       RelationalDB& pgs,
-                                                       size_t batchSize,
-                                                       uint64_t inactiveTimeLimit)
-    : InactiveMountQueueRoutineBase(lc, catalogue, pgs, batchSize, "CleanMountHeartbeatRoutine", inactiveTimeLimit) {}
-
-void CleanMountHeartbeatRoutine::execute() {
-  // Cleaning MOUNT_QUEUE_LAST_FETCH table from MOUNT IDs which were inactive for more than m_inactiveTimeLimit
-  m_RelationalDB.cleanOldMountHeartbeats(m_inactiveTimeLimit, m_batchSize, m_lc);
 };
 
 }  // namespace cta::maintd

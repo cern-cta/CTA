@@ -22,6 +22,7 @@
 #include "routines/scheduler/objectstore/QueueCleanupRoutine.hpp"
 #else
 #include "routines/scheduler/rdbms/InactiveMountQueueRoutines.hpp"
+#include "routines/scheduler/rdbms/AncientRowRoutines.hpp"
 #endif
 
 #include <chrono>
@@ -174,13 +175,11 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(300)));
     routineRunner->registerRoutine(std::make_unique<maintd::DeleteOldFailedQueuesRoutine>(
       m_lc,
-      *m_catalogue,
       *m_schedDb,
       m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
       m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_deletion_of_failed_jobs").value_or(1209600)));
-    routineRunner->registerRoutine(std::make_unique<maintd::CleanMountHeartbeatRoutine>(
+    routineRunner->registerRoutine(std::make_unique<maintd::CleanMountLastFetchTimeRoutine>(
       m_lc,
-      *m_catalogue,
       *m_schedDb,
       m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
       m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_deletion_of_mount_heartbeart").value_or(2419200)));

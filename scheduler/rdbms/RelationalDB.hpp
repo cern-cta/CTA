@@ -303,20 +303,22 @@ public:
    */
   cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandidates(uint64_t mount_gc_delay,
                                                                             log::LogContext& lc);
-  cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandicateIDs(log::LogContext& lc);
+  cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandicateIDs(uint64_t inactiveTimeLimit,
+                                                                              log::LogContext& lc);
   std::string getQueueTypePrefix(bool isArchive, bool isRepack);
-  void handleInactiveMountPendingQueues(const std::vector<uint64_t>& deadMountIds,
-                                        size_t batchSize,
-                                        bool isArchive,
-                                        bool isRepack,
-                                        log::LogContext& lc);
-  void handleInactiveMountActiveQueues(const std::vector<uint64_t>& deadMountIds,
-                                       size_t batchSize,
-                                       bool isArchive,
-                                       bool isRepack,
-                                       log::LogContext& lc);
+  uint64_t handleInactiveMountPendingQueues(const std::vector<uint64_t>& deadMountIds,
+                                            size_t batchSize,
+                                            bool isArchive,
+                                            bool isRepack,
+                                            log::LogContext& lc);
+  uint64_t handleInactiveMountActiveQueues(const std::vector<uint64_t>& deadMountIds,
+                                           size_t batchSize,
+                                           bool isArchive,
+                                           bool isRepack,
+                                           log::LogContext& lc);
   void deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
-  void cleanOldMountHeartbeats(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
+  void cleanOldMountLastFetchTimes(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
+  void cleanMountLastFetchTimes(std::vector<uint64_t> deadMountIds, bool isArchive, bool isRepack, bool isPending, log::LogContext& lc);
 
 private:
   /*

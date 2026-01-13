@@ -95,5 +95,5 @@ The routines are defined in `routines/`. Which routines are run depend on whethe
   - Handles jobs owned by dead repack repack retrieve mounts. The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
 - `DeleteOldFailedQueuesRoutine`
   - Deletes all jobs which hang in the failed queue tables for too long (2 weeks).
-- `CleanMountHeartbeatRoutine`
+- `CleanMountLastFetchTimeRoutine`
   - Deletes all mount heartbeat entries for which the mount was not active since a very long time (e.g. 4 weeks; longer than the time limit defined for the collection routines). 

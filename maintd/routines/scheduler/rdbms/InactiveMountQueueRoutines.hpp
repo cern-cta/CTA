@@ -19,7 +19,6 @@ class InactiveMountQueueRoutineBase : public IRoutine {
 public:
   std::string getName() const final { return m_routineName; };
 
-  cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandicateIDs();
   std::vector<uint64_t>& getDeadMountVector(cta::common::dataStructures::DeadMountCandidateIDs& deadMounts,
                                             bool isArchive,
                                             bool isRepack,
@@ -129,28 +128,6 @@ public:
                                                 RelationalDB& pgs,
                                                 size_t batchSize,
                                                 uint64_t inactiveTimeLimit);
-
-  void execute();
-};
-
-class DeleteOldFailedQueuesRoutine : public InactiveMountQueueRoutineBase {
-public:
-  DeleteOldFailedQueuesRoutine(log::LogContext& lc,
-                               catalogue::Catalogue& catalogue,
-                               RelationalDB& pgs,
-                               size_t batchSize,
-                               uint64_t inactiveTimeLimit);
-
-  void execute();
-};
-
-class CleanMountHeartbeatRoutine : public InactiveMountQueueRoutineBase {
-public:
-  CleanMountHeartbeatRoutine(log::LogContext& lc,
-                             catalogue::Catalogue& catalogue,
-                             RelationalDB& pgs,
-                             size_t batchSize,
-                             uint64_t inactiveTimeLimit);
 
   void execute();
 };
