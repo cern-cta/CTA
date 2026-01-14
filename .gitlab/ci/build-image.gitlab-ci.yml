@@ -1,126 +1,112 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-.build-image:
+.build-cta-image:
   stage: build:image
+  needs:
+    - job: build-cta-rpms
+      optional: true # We don't need this in every pipeline type
+    - job: modify-project-json
+      optional: true
   rules:
     - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never
-    # For pivot CTA releases: vX.Y.0
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG =~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: on_success
-    # For non-pivot CTA releases
-    - if: $CI_COMMIT_TAG && $CI_COMMIT_TAG !~ /^.*\.0\.[0-9]+-[^-]*$/
-      when: manual
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+      when: never
     - when: on_success
   image:
     name: $IMAGE_DOCKER_IMAGE_BUILDER
     entrypoint: [""]
   variables:
+    CONTAINER_STORAGE: "/builds/container-storage"
+    TARGET_NAME: # Should be overwritten by one of the child jobs
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for these jobs
-    DOCKERFILE:
-    IMAGE_NAME:
-    EXTRA_BUILD_ARGS:
-  script:
-    # image comes with sh instead of bash, so no bash syntax allowed
-    - |
-      if [ $CI_PIPELINE_SOURCE = "merge_request_event" ]; then
-        EXTRA_BUILD_ARGS="$EXTRA_BUILD_ARGS --no-push-cache"
-      fi
-    - echo "Authenticating against repo"
-    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"${DOCKER_LOGIN_USERNAME}\",\"password\":\"${DOCKER_LOGIN_PASSWORD}\"}}}" > /kaniko/.docker/config.json
-    - echo "Building ${DOCKERFILE} and pushing resulting image to ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}"
-    - /kaniko/executor --context $CI_PROJECT_DIR
-                       --cache=true
-                       --cache-copy-layers
-                       --cache-ttl=48h
-                       --dockerfile $DOCKERFILE
-                       --destination ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}
-                       ${EXTRA_BUILD_ARGS}
-    - echo "Image pushed successfully to ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}"
-
-build-ctageneric-from-local-rpms:
-  extends:
-    - .build-image
-  needs:
-    - job: build-cta-rpms
-    - job: modify-project-json
-      optional: true
-  rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
-      when: never
-    - !reference [.build-image, rules]
-  variables:
-    DOCKERFILE: ci/docker/${PLATFORM}/dev-local-rpms.Dockerfile
-    IMAGE_NAME: ctageneric
-    EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS}"
-  before_script:
-    # The RPMs come from the artifacts which come as a symbolic link
-    # that points outside of the build context. We need to copy them
-    # to a reachable place from the build context.
-    - mkdir -p image_rpms
-    - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
-
-build-ctageneric-from-remote-rpms:
-  extends:
-    - .build-image
-  needs:
-    - job: modify-project-json
-      artifacts: true
-  rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
-    - when: never
-  variables:
-    DOCKERFILE: ci/docker/${PLATFORM}/dev-remote-rpms.Dockerfile
-    IMAGE_NAME: ctageneric
-  before_script:
-    # CUSTOM_CTA_VERSION can be populated in the dotenv file provided by the modify-project-json
-    - |
-      if [[ -z "$CUSTOM_CTA_VERSION" ]]; then
-        CUSTOM_CTA_VERSION="$CUSTOM_CTA_VERSION_ENV"
-      fi
-    - echo "Current value of CUSTOM_CTA_VERSION $CUSTOM_CTA_VERSION"
-    # We do the export here instead of in the variables: as GitLab evaluates the variables section before it parses the dotenv report
-    - export EXTRA_BUILD_ARGS="--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --build-arg PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"
-
-###############################################
-# Immutable images
-###############################################
-
-build-images:
-  extends:
-    - .build-image
-  allow_failure: true  # Don't block the pipeline
-  needs:
-    - job: build-cta-rpms
-    - job: modify-project-json
-      optional: true
-  rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
-      when: never
-    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
-      when: never
-    - when: manual
-  variables:
-    TARGET_NAME:
     DOCKERFILE: ci/docker/${PLATFORM}/prod.Dockerfile
-    EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --target ${TARGET_NAME}"
-    # Note that this ctageneric is important here: it ensures the images end up in a private registry
-    # These images must absolutely not end up in a public registry, as they contain Oracle RPMs (which we cannot distribute)
-    IMAGE_NAME: ctageneric/${TARGET_NAME}
+    IMAGE_NAME: ctageneric/${TARGET_NAME} # ctageneric is important because that's the private repo.
+    IMAGE_REF: ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}
+    # Important that this matches the artifact path from the build job
+    RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
+    EXTRA_BUILD_ARGS: ""
   before_script:
-    # For the Postgres scheduler, choose a different Dockerfile and add the "-pg" suffix to the image
+    # Configure storage
+    - mkdir -p ${CONTAINER_STORAGE}
+    - mkdir -p ~/.config/containers/
     - |
-      if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
-        DOCKERFILE="ci/docker/${PLATFORM}/prod-pg.Dockerfile"
-        IMAGE_NAME="${IMAGE_NAME}-pg"
-      fi
-    # The RPMs come from the artifacts which come as a symbolic link
-    # that points outside of the build context. We need to copy them
-    # to a reachable place from the build context.
-    - mkdir -p image_rpms
-    - cp -r build_rpm/RPM/RPMS/x86_64 image_rpms
-  parallel:
-    matrix:
-      - TARGET_NAME: [cta-taped, cta-rmcd, cta-maintd, cta-frontend-xrd, cta-frontend-grpc, cta-tools-xrd, cta-tools-grpc]
+      cat > ~/.config/containers/storage.conf << EOF
+      [storage]
+       driver = "overlay"
+       runroot = "${CONTAINER_STORAGE}/run/containers/storage"
+       graphroot = "${CONTAINER_STORAGE}/.local/share/containers/storage"
+       rootless_storage_path = "${CONTAINER_STORAGE}/.local/share/containers/storage"
+       [storage.options]
+       pull_options = {enable_partial_images = "true", use_hard_links = "false", ostree_repos=""}
+       [storage.options.overlay]
+      EOF
+    - cp ~/.config/containers/storage.conf /etc/containers/storage.conf || true
+    - echo "$DOCKER_LOGIN_PASSWORD" | buildah login -u "$DOCKER_LOGIN_USERNAME" --password-stdin $CI_REGISTRY
+  script:
+    - echo "Building target ${TARGET_NAME}"
+    # TODO: dnf caching
+    # TODO: internal repo and oracle flag
+    # ensure build context is correct
+    - cd "$(dirname "${DOCKERFILE}")"
+    - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"
+    - BUILDAH_ARGS=(
+        --target "${TARGET_NAME}"
+        --file "${DOCKERFILE_NAME}"
+        --tag "${IMAGE_REF}"
+        --build-context rpm_context="${RPM_CONTEXT}"
+        --build-arg USE_INTERNAL_REPOS=1
+        --build-arg USE_ORACLE_CATALOGUE=1
+      )
+    # TODO: check if caching makes sense. Not many layers to cache though so it may just hurt speed and caching /var/cache/dnf may be enough
+    - if [ -n "$EXTRA_BUILD_ARGS" ]; then BUILDAH_ARGS+=($EXTRA_BUILD_ARGS); fi
+    - buildah bud "${BUILDAH_ARGS[@]}" .
+    # TODO: add a sanity check here if oracle is in the image and if the registry is public
+    # if so, fail the job so that we prevent accidentally pushing oracle rpms somewhere public
+    # TODO: image size metric?
+    - echo "Pushing to ${IMAGE_REF}"
+    - buildah push "${IMAGE_REF}"
+
+###############################################
+# Image Targets
+###############################################
+
+build-image-taped:
+  extends:
+    - .build-cta-image
+  variables:
+    TARGET_NAME: "cta-taped"
+
+build-image-rmcd:
+  extends:
+    - .build-cta-image
+  variables:
+    TARGET_NAME: "cta-rmcd"
+
+build-image-maintd:
+  extends:
+    - .build-cta-image
+  variables:
+    TARGET_NAME: "cta-maintd"
+
+# TODO: conditionally switch the variable to -grpc
+build-image-frontend:
+  extends:
+    - .build-cta-image
+  variables:
+    TARGET_NAME: "cta-frontend-xrd"
+
+build-image-tools:
+  extends:
+    - .build-cta-image
+  variables:
+    TARGET_NAME: "cta-tools-xrd"
+
+###############################################
+# Publishing
+###############################################
+
+# TODO: add job that uses buildah to retag images. This way we can publish them
+# We'll need the usual checks

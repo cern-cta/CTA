@@ -48,7 +48,7 @@
         "eosServerChartVersion",
         "eosImageTag",
         "eosImageRepository",
-        "ctaImageRepository",
+        "ctaImageRegistry",
         "dCacheChartVersion",
         "dCacheImageTag",
         "defaultPlatform"
@@ -88,8 +88,8 @@
           "type": "string",
           "minLength": 1
         },
-        "ctaImageRepository": {
-          "description": "CTA image repository to use in CI.",
+        "ctaImageRegistry": {
+          "description": "CTA image registry to use in CI.",
           "type": "string",
           "minLength": 1
         },

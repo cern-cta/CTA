@@ -390,24 +390,26 @@ build_deploy() {
   build_iteration_file=/tmp/.build_iteration
   if [[ "$skip_image_reload" == "false" ]]; then
     print_header "BUILDING CONTAINER IMAGE"
+    # Cleanup
+    if [[ ${image_cleanup} = true ]]; then
+      echo "Cleaning up unused images..."
+      ${container_runtime} image prune -f
+      if command -v minikube >/dev/null 2>&1; then
+        minikube ssh -- "${container_runtime} image prune -f"
+      fi
+      if command -v k3s >/dev/null 2>&1; then
+        sudo /usr/local/bin/k3s crictl rmi --prune || true
+      fi
+    fi
+    # Determine tag
     if [[ "$upgrade_cta" == "false" ]]; then
       # Start with the tag dev-0
       local current_build_id=0
       image_tag="dev-$current_build_id"
       touch $build_iteration_file
       echo $current_build_id >$build_iteration_file
-
-      if [[ ${image_cleanup} = true ]]; then
-        echo "Cleaning up unused ctageneric images..."
-        if command -v minikube >/dev/null 2>&1; then
-          minikube image ls | grep "localhost/ctageneric:dev" | xargs -r minikube image rm >/dev/null 2>&1
-        fi
-        if command -v k3s >/dev/null 2>&1; then
-          sudo /usr/local/bin/k3s ctr images ls -q | grep '^localhost/ctageneric:dev$' | xargs -r sudo /usr/local/bin/k3s ctr images rm
-        fi
-      fi
     else
-      # This continuoully increments the image tag from previous upgrades
+      # This continuously increments the image tag from previous upgrades
       if [[ ! -f "$build_iteration_file" ]]; then
         die "Failed to find $build_iteration_file to retrieve build iteration."
       fi
@@ -417,24 +419,19 @@ build_deploy() {
       image_tag="dev-$new_build_id"
       echo $new_build_id >$build_iteration_file
     fi
+    # Build
+    local rpm_src="build_rpm/RPM/RPMS/x86_64"
+    echo "Building image from ${rpm_src}"
     if [[ ${use_internal_repos} = true ]]; then
       extra_image_build_options+=" --use-internal-repos"
     fi
-    ## Create and load the new image
-    local rpm_src=build_rpm/RPM/RPMS/x86_64
-    echo "Building image from ${rpm_src}"
     # shellcheck disable=SC2086
-    ./ci/build/build_image.sh --tag ${image_tag} \
+    ./ci/build/build_images.sh \
+      --tag ${image_tag} \
       --rpm-src "${rpm_src}" \
-      --rpm-version "${cta_version}-${vcs_version}" \
       --container-runtime "${container_runtime}" \
       --load-into-k8s \
       ${extra_image_build_options}
-    if [[ ${image_cleanup} = true ]]; then
-      # Pruning of unused images is done after image building to ensure we maintain caching
-      podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true
-      podman image prune -f >/dev/null
-    fi
   else
     if [[ ! -f "$build_iteration_file" ]]; then
       die "Failed to find $build_iteration_file to retrieve build iteration. Unable to identify which image to spawn/upgrade the instance with."
@@ -452,7 +449,7 @@ build_deploy() {
       cd ci/orchestration
       upgrade_options=""
       if [[ "$skip_image_reload" == "false" ]]; then
-        upgrade_options+=" --cta-image-repository localhost/ctageneric --cta-image-tag ${image_tag}"
+        upgrade_options+=" --cta-image-registry localhost --cta-image-tag ${image_tag}"
       fi
        # shellcheck disable=SC2086
       ./upgrade_cta_instance.sh --namespace "${deploy_namespace}" "${upgrade_options}" ${extra_spawn_options}
@@ -462,8 +459,7 @@ build_deploy() {
       ./deploy_eos.sh --namespace "${deploy_namespace}" --eos-image-repository "${eos_image_repository}" --eos-image-tag "${eos_image_tag}"
     else
       print_header "DELETING OLD CTA INSTANCES"
-      # By default we discard the logs from deletion as this is not very useful during development
-      # and polutes the dev machine
+      # By default we discard the logs from deletion as this is not very useful during development and pollutes the dev machine
       ./ci/orchestration/delete_instance.sh -n "${deploy_namespace}" --discard-logs
       print_header "DEPLOYING CTA INSTANCE"
       if [[ -n "${tapeservers_config}" ]]; then
@@ -507,7 +503,7 @@ build_deploy() {
       cd ci/orchestration
        # shellcheck disable=SC2086
       ./create_instance.sh --namespace "${deploy_namespace}" \
-        --cta-image-repository localhost/ctageneric \
+        --cta-image-registry localhost \
         --cta-image-tag "${image_tag}" \
         --catalogue-config "${catalogue_config}" \
         --scheduler-config "${scheduler_config}" \

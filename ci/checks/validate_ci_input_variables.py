@@ -48,7 +48,7 @@ def exit_if_not_defined(env_var_name, ci_input_vars):
 
 def run_cmd(cmd: str):
     """
-    Run a command in console. The function checks that the commands succeds.
+    Run a command in console. The function checks that the commands succeeds.
     If the command fails the error will be printed and the script will exit.
     :param cmd: String representing the command to execute.
     :return: Stripped stdout of the command execution.
