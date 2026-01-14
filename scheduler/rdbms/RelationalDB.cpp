@@ -1811,7 +1811,8 @@ uint64_t RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64
           FOR UPDATE SKIP LOCKED
       ) UPDATE
     )SQL";
-    sql += queueTypePrefix + R"SQL(PENDING_QUEUE SET MOUNT_ID = NULL WHERE JOB_ID IN JOB_IDS_FOR_UPDATE
+    sql += queueTypePrefix + R"SQL(PENDING_QUEUE pq SET MOUNT_ID = NULL
+      FROM JOB_IDS_FOR_UPDATE jid WHERE pq.JOB_ID = jid.JOB_ID
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindUint64(":LIMIT", batchSize);
@@ -1941,7 +1942,10 @@ void RelationalDB::deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSiz
       sql += R"SQL(
           WHERE JOB_ID IN ( SELECT JOB_ID FROM )SQL"
              + tbl;
-      sql += R"SQL( WHERE LAST_UPDATE_TIME < :OLDER_THAN_TIMESTAMP LIMIT :LIMIT FOR UPDATE SKIP LOCKED )
+      sql += R"SQL( WHERE LAST_UPDATE_TIME < :OLDER_THAN_TIMESTAMP
+                     ORDER BY PRIORITY DESC, JOB_ID
+                     LIMIT :LIMIT
+                     FOR UPDATE SKIP LOCKED )
        )SQL";
       auto stmt = txn.getConn().createStmt(sql);
       stmt.bindUint64(":OLDER_THAN_TIMESTAMP", olderThanTimestamp);
@@ -1982,7 +1986,7 @@ void RelationalDB::cleanOldMountLastFetchTimes(uint64_t deletionAge, uint64_t ba
         )
         DELETE FROM MOUNT_QUEUE_LAST_FETCH mh
         USING ROWS_TO_DELETE r
-        WHERE (mh.MOUNT_ID, mh.QUEUE_TYPE) = (r.MOUNT_ID, r.QUEUE_TYPE);
+        WHERE (mh.MOUNT_ID, mh.QUEUE_TYPE) = (r.MOUNT_ID, r.QUEUE_TYPE)
        )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindUint64(":OLDER_THAN_TIMESTAMP", olderThanTimestamp);
@@ -2032,9 +2036,10 @@ void RelationalDB::cleanMountLastFetchTimes(std::vector<uint64_t> deadMountIds,
         SELECT unnest(ARRAY[
     )SQL";
     sql += mount_ids_array + R"SQL( ]::BIGINT[]) AS MOUNT_ID
-      ) DELETE FROM MOUNT_QUEUE_LAST_FETCH
-          WHERE MOUNT_ID IN (SELECT MOUNT_ID FROM TMP_MOUNT_IDS)
-            AND QUEUE_TYPE = :QUEUE_TYPE
+      ) DELETE FROM MOUNT_QUEUE_LAST_FETCH mf
+          USING TMP_MOUNT_IDS tm
+          WHERE mf.MOUNT_ID = tm.MOUNT_ID
+            AND mf.QUEUE_TYPE = :QUEUE_TYPE
        )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":QUEUE_TYPE", queue_type);
