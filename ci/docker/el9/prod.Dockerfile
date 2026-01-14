@@ -3,11 +3,9 @@
 
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest AS base
 
+# This will be cleaned later, but for now this /opt/repo is expected to be mounted
+# in the podman build command. That way we don't need to clean it up
 ENV CTA_REPO_DIR="/opt/repo"
-ENV LOCAL_RPM_DIR="image_rpms"
-
-# Common repo configuration
-COPY ci/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d/
 
 # Core dependencies
 RUN dnf install -y \
@@ -15,15 +13,17 @@ RUN dnf install -y \
       dnf-utils \
       createrepo \
       epel-release \
-      gdb \
-      jq \
-      krb5-workstation && \
+      jq && \
     chmod 0644 /etc/logrotate.d/*
 
 RUN dnf config-manager --enable epel --setopt="epel.priority=4"
 
 # User
 RUN useradd -m -u 1000 -g tape cta
+
+# Common repo configuration
+# TODO: we can probably do this over a mount as well
+COPY ci/docker/el9/etc/yum.repos.d-internal/* /etc/yum.repos.d/
 
 # Bring in prebuilt RPMs
 COPY ${LOCAL_RPM_DIR} ${CTA_REPO_DIR}/RPMS/x86_64
@@ -41,9 +41,7 @@ priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
 
 RUN dnf config-manager --enable ceph
 RUN dnf install -y \
-      ceph-common \
-      cta-debuginfo \
-      cta-debugsource
+      ceph-common
 
 
 ###############################################
@@ -59,12 +57,10 @@ RUN dnf install -y \
       sg3_utils \
       cta-taped \
       cta-tape-label \
-      cta-eosdf \
-      cta-taped-debuginfo && \
-    dnf clean all
+      cta-eosdf  && \
+    dnf clean all --enablerepo=\*
 
-# Remove the local RPMs to reduce size
-RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
+RUN rm -rf "${CTA_REPO_DIR}"
 
 # TODO: can this run as non-root?
 CMD ["/bin/bash", "-c", "runuser -c \"/usr/bin/cta-taped -c /etc/cta/cta-taped.conf --foreground --log-format=json --log-to-file=/var/log/cta/cta-taped.log\""]
@@ -83,10 +79,9 @@ RUN dnf install -y \
       cta-rmcd \
       cta-smc \
       cta-rmcd-debuginfo && \
-    dnf clean all
+    dnf clean all --enablerepo=\*
 
-# Remove the local RPMs to reduce size
-RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
+RUN rm -rf "${CTA_REPO_DIR}"
 
 # TODO: can this can run as non-root?
 CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
@@ -99,10 +94,9 @@ FROM base AS cta-maintd
 RUN dnf install -y \
       cta-maintd \
       cta-maintd-debuginfo && \
-    dnf clean all
+    dnf clean all --enablerepo=\*
 
-# Remove the local RPMs to reduce size
-RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
+RUN rm -rf "${CTA_REPO_DIR}"
 
 USER cta
 CMD ["/usr/bin/cta-maintd", "--foreground", "--log-to-file=/var/log/cta/cta-maintd.log", "--log-format json", "--config /etc/cta/cta-maintd.conf"]
@@ -114,11 +108,11 @@ FROM base AS cta-frontend-grpc
 
 RUN dnf install -y \
       cta-frontend-grpc \
-      cta-frontend-grpc-debuginfo && \
-    dnf clean all
+      cta-frontend-grpc-debuginfo \
+      krb5-workstation && \
+    dnf clean all --enablerepo=\*
 
-# Remove the local RPMs to reduce size
-RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
+RUN rm -rf "${CTA_REPO_DIR}"
 
 USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log"]
@@ -131,11 +125,11 @@ FROM base AS cta-frontend-xrd
 
 RUN dnf install -y \
       cta-frontend \
-      cta-frontend-debuginfo && \
-    dnf clean all
+      cta-frontend-debuginfo \
+      krb5-workstation && \
+    dnf clean all --enablerepo=\*
 
-# Remove the local RPMs to reduce size
-RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
+RUN rm -rf "${CTA_REPO_DIR}"
 
 USER cta
 CMD ["/bin/bash", "-c", "cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4"]
@@ -149,12 +143,13 @@ FROM base AS cta-tools-grpc
 RUN dnf install -y \
       cta-admin-grpc \
       cta-catalogueutils \
-      cta-objectstore-tools && \
-    dnf clean all
+      cta-objectstore-tools \
+      krb5-workstation && \
+    dnf clean all --enablerepo=\*
 
-# Remove the local RPMs to reduce size
-RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
+RUN rm -rf "${CTA_REPO_DIR}"
 
+USER cta
 ENTRYPOINT ["/bin/bash"]
 
 ###############################################
@@ -165,10 +160,11 @@ FROM base AS cta-tools-xrd
 RUN dnf install -y \
       cta-cli \
       cta-catalogueutils \
-      cta-objectstore-tools && \
-    dnf clean all
+      cta-objectstore-tools \
+      krb5-workstation && \
+    dnf clean all --enablerepo=\*
 
-# Remove the local RPMs to reduce size
-RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
+RUN rm -rf "${CTA_REPO_DIR}"
 
+USER cta
 ENTRYPOINT ["/bin/bash"]

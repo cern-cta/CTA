@@ -22,6 +22,7 @@ usage() {
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/{defaultplatform}/dev-local-rpms.Dockerfile'). Should be relative to the repository root."
   echo "      --use-internal-repos:           Use the internal yum repos instead of the public repos."
+  echo "      --target <target>:              Set the target build stage to build."
   echo
   exit 1
 }
@@ -32,15 +33,15 @@ buildImage() {
   # Default values
   local rpm_src=""
   local image_tag=""
-  local image_name="ctageneric"
   local container_runtime="podman"
   local rpm_default_src="image_rpms"
   local defaultPlatform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
-  local dockerfile="ci/docker/${defaultPlatform}/dev-local-rpms.Dockerfile"
+  local dockerfile="ci/docker/${defaultPlatform}/prod.Dockerfile"
   local load_into_k8s=false
   # Note that the capitalization here is intentional as this is passed directly as a build arg
   local use_internal_repos="FALSE"
   local rpm_version=""
+  local target=""
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -80,12 +81,12 @@ buildImage() {
         error_usage "-t|--tag requires an argument"
       fi
       ;;
-    -n | --name)
+    --target)
       if [[ $# -gt 1 ]]; then
-        image_name="$2"
+        target="$2"
         shift
       else
-        error_usage "-n | --name requires an argument"
+        error_usage "--target requires an argument"
       fi
       ;;
     -l | --load-into-k8s)
@@ -133,33 +134,48 @@ buildImage() {
   # (as the provided location might be outside of the project root)
   cp -r ${rpm_src}/*${rpm_version}*.rpm "${rpm_default_src}"
 
-  echo "Building image ${image_name}:${image_tag}"
-  (
-    set -x
-    ${container_runtime} build . -f ${dockerfile} \
-      -t ${image_name}:${image_tag} \
-      --network host \
-      --build-arg USE_INTERNAL_REPOS=${use_internal_repos}
+  # TODO: handle grpc
+  targets=(
+    "cta-taped"
+    "cta-maintd"
+    "cta-rmcd"
+    "cta-frontend-xrd"
+    "cta-tools-xrd"
   )
+
+  for target in "${targets[@]}"; do
+    image_ref="${target}:${image_tag}"
+
+    echo "Building ${tag} from $dockerfile --target $target"
+
+    (
+      set -x
+      ${container_runtime} build . -f ${dockerfile} \
+        -t ${image_ref} \
+        --network host \
+        --build-arg USE_INTERNAL_REPOS=${use_internal_repos} \
+        --target $target
+    )
+
+    if [[ "$load_into_k8s" == "true" ]]; then
+      # Note that the below checks are rather crude (for speed)
+
+      # Load into minikube (use stdin to avoid a temp file)
+      if command -v minikube >/dev/null 2>&1; then
+        echo "Minikube detected -> loading image into minikube"
+        ${container_runtime} save "localhost/${image_ref}" | minikube image load --overwrite -
+      fi
+
+      # Load into k3s (stream into containerd, no temp file)
+      if command -v k3s >/dev/null 2>&1; then
+        echo "k3s detected -> loading image into k3s/containerd"
+        ${container_runtime} save "localhost/${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
+      fi
+    fi
+  done
+
   # Clean up again
   rm -rf "${rpm_default_src}"
-
-if [[ "$load_into_k8s" == "true" ]]; then
-  image_ref="localhost/${image_name}:${image_tag}"
-  # Note that the below checks are rather crude (for speed)
-
-  # Load into minikube (use stdin to avoid a temp file)
-  if command -v minikube >/dev/null 2>&1; then
-    echo "Minikube detected -> loading image into minikube"
-    ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
-  fi
-
-  # Load into k3s (stream into containerd, no temp file)
-  if command -v k3s >/dev/null 2>&1; then
-    echo "k3s detected -> loading image into k3s/containerd"
-    ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
-  fi
-fi
 
 }
 
