@@ -78,22 +78,38 @@ The routines are defined in `routines/`. Which routines are run depend on whethe
 - `RepackReportRoutine`
   - Takes care of the repack reporting.
 - `ArchiveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead archive mounts. The routine requeues dead jobs from active queue table to the pending queue table. Only jobs for which reporting did not start yet are selected. Jobs in reporting stage, will be picked up again for reporting automatically.
+  - Handles jobs owned by dead archive mounts. The routine requeues dead jobs from active queue table to the pending queue table. 
+  - Only jobs for which reporting did not start yet are selected. Jobs in reporting stage, will be picked up again for reporting automatically. 
+  - After all cleanup has been done, the respective (MOUNT_ID, QUEUE_TYPE) row will be deleted from MOUNT_QUEUE_LAST_FETCH tracking table and further cleanup will be prevented.
 - `RetrieveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead retrieve mounts. The routine requeues dead jobs from active queue table to the pending queue table. Only jobs for which reporting did not start yet are selected. Jobs in reporting stage, will be picked up again for reporting automatically.
+  - Handles jobs owned by dead retrieve mounts. The routine requeues dead jobs from active queue table to the pending queue table. 
+  - Only jobs for which reporting did not start yet are selected. Jobs in reporting stage, will be picked up again for reporting automatically.
+  - After all cleanup has been done, the respective (MOUNT_ID, QUEUE_TYPE) row will be deleted from MOUNT_QUEUE_LAST_FETCH tracking table and further cleanup will be prevented.
 - `RepackArchiveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead repack archive mounts. The routine requeues dead jobs from active queue table to the pending queue table. 
+  - Handles jobs owned by dead repack archive mounts. 
+  - The routine requeues dead jobs from active queue table to the pending queue table. 
+  - After all cleanup has been done, the respective (MOUNT_ID, QUEUE_TYPE) row will be deleted from MOUNT_QUEUE_LAST_FETCH tracking table and further cleanup will be prevented.
 - `RepackRetrieveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead repack repack retrieve mounts. The routine requeues dead jobs from active queue table to the pending queue table.
+  - Handles jobs owned by dead repack repack retrieve mounts. 
+  - The routine requeues dead jobs from active queue table to the pending queue table.
+  - After all cleanup has been done, the respective (MOUNT_ID, QUEUE_TYPE) row will be deleted from MOUNT_QUEUE_LAST_FETCH tracking table and further cleanup will be prevented.
 - `ArchiveInactiveMountPendingQueueRoutine`
-  - Handles jobs owned by dead archive mounts. The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+  - Handles jobs owned by dead archive mounts. 
+  - The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+  - After all cleanup has been done, the respective (MOUNT_ID, QUEUE_TYPE) row will be deleted from MOUNT_QUEUE_LAST_FETCH tracking table and further cleanup will be prevented.
 - `RetrieveInactiveMountPendingQueueRoutine`
-  - Handles jobs owned by dead retrieve mounts. The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+  - Handles jobs owned by dead retrieve mounts. 
+  - The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+  - After all cleanup has been done, the respective (MOUNT_ID, QUEUE_TYPE) row will be deleted from MOUNT_QUEUE_LAST_FETCH tracking table and further cleanup will be prevented.
 - `RepackArchiveInactiveMountPendingQueueRoutine`
-  - Handles jobs owned by dead repack archive mounts. The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+  - Handles jobs owned by dead repack archive mounts. 
+  - The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+  - After all cleanup has been done, the respective (MOUNT_ID, QUEUE_TYPE) row will be deleted from MOUNT_QUEUE_LAST_FETCH tracking table and further cleanup will be prevented.
 - `RepackRetrieveInactiveMountPendingQueueRoutine`
-  - Handles jobs owned by dead repack repack retrieve mounts. The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+  - Handles jobs owned by dead repack repack retrieve mounts. 
+  - The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
+  - After all cleanup has been done, the respective (MOUNT_ID, QUEUE_TYPE) row will be deleted from MOUNT_QUEUE_LAST_FETCH tracking table and further cleanup will be prevented.
 - `DeleteOldFailedQueuesRoutine`
   - Deletes all jobs which hang in the failed queue tables for too long (2 weeks).
 - `CleanMountLastFetchTimeRoutine`
-  - Deletes all mount heartbeat entries for which the mount was not active since a very long time (e.g. 4 weeks; longer than the time limit defined for the collection routines). 
+  - Deletes all tracking MOUNT_QUEUE_LAST_FETCH entries for which the mount was not active since a very long time (e.g. 4 weeks; longer than the time limit defined for the collection routines). 
