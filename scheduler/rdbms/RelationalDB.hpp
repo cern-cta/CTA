@@ -318,7 +318,11 @@ public:
                                            log::LogContext& lc);
   void deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
   void cleanOldMountLastFetchTimes(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
-  void cleanMountLastFetchTimes(std::vector<uint64_t> deadMountIds, bool isArchive, bool isRepack, bool isPending, log::LogContext& lc);
+  void cleanMountLastFetchTimes(std::vector<uint64_t> deadMountIds,
+                                bool isArchive,
+                                bool isRepack,
+                                bool isPending,
+                                log::LogContext& lc);
 
 private:
   /*
