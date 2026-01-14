@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Dockerfile used for building CTA rpms
+
 FROM gitlab-registry.cern.ch/linuxsupport/alma9-base:latest
 
 RUN dnf install -y epel-release almalinux-release-devel git python3-dnf-plugin-versionlock

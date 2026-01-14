@@ -71,12 +71,6 @@ spec:
         stdin: true
         command: ["/bin/bash", "-c"]
         args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-grpc.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
-        startupProbe:
-          exec:
-            command: ["rpm", "-q", "cta-frontend-grpc"]
-          initialDelaySeconds: 0
-          periodSeconds: 5
-          failureThreshold: 60
         readinessProbe:
           exec:
             command:
@@ -91,6 +85,8 @@ spec:
           successThreshold: 1
           failureThreshold: 60
         securityContext:
+          runAsUser: 1000 # cta
+          runAsGroup: 2000 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
         env:

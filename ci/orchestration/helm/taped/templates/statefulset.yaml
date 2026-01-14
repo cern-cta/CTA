@@ -55,6 +55,9 @@ spec:
         image: {{ include "taped.image" $ }}
         imagePullPolicy: {{ include "taped.imagePullPolicy" $ }}
         securityContext:
+          # Can uncommented after https://gitlab.cern.ch/cta/CTA/-/work_items/1652 is solved
+          # runAsUser: 1000 # cta
+          # runAsGroup: 2000 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
           capabilities:
@@ -62,18 +65,6 @@ spec:
               - SYS_RAWIO
         command: ["/bin/bash", "-c"]
         args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/taped.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
-        startupProbe:
-          exec:
-            command: ["rpm", "-q", "cta-taped"]
-          initialDelaySeconds: 0
-          periodSeconds: 2
-          failureThreshold: 60
-        readinessProbe:
-          exec:
-            command: ["pgrep", "-f", "/usr/bin/cta-taped"]
-          initialDelaySeconds: 2
-          periodSeconds: 5
-          failureThreshold: 10
         stdin: true
         env:
         - name: MY_NAME

@@ -110,7 +110,9 @@ class TestEnv:
         return TestEnv(
             # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these concepts
             # Something to be changed once we move them over....
-            eos_client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
+            eos_client_conns=TestEnv.get_k8s_connections_by_label(
+                namespace, "app.kubernetes.io/name", "cta-eos-client"
+            ),
             cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"),
             # TODO: this should also be split into WFE/ADMIN
             cta_frontend_conns=TestEnv.get_k8s_connections_by_label(
@@ -135,7 +137,7 @@ class TestEnv:
         eosclient:
           - k8s:
               namespace: dev
-              pod: client-0
+              pod: cta-eos-client-0
               container: client
         ctafrontend:
           - ssh:
