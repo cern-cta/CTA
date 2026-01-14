@@ -92,6 +92,8 @@ def test_create_archive_directory(env) -> None:
     archive_dir: str = f"{base_dir}/cta"
     # TODO: can we somehow pass values from one test to the next?
     # Ideally I don't want to redefine this workflow_dir all over the place
+    # Because if you change this workflow_dir here (or in another place)
+    # it will break tests if you don't change everything
     workflow_dir: str = f"{base_dir}/proc/cta/workflow"
     env.eos_mgm[0].exec(f"eos mkdir -p {archive_dir}")
     # Must be writable by eosusers and powerusers

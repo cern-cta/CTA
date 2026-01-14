@@ -91,6 +91,10 @@ def test_generate_and_copy_files(env, stress_params):
         destination_dir = f"{archive_directory}/dir_{i}"
         eos_client.exec(f"eos root://{disk_instance_name} mkdir {destination_dir}")
         # now copy that buffer to a bunch of different files
+        # Note that right file names are unique within a given subdirectory, but not across subdirectories. I.e.
+        #   directory1: file1-file100, directory2: file1-file100
+        # We might want change this so that the file names are globally unique:
+        #   directory1: file1-file100, directory2: file101-file200
         eos_client.exec(
             f"xrdcp --parallel {stress_params.io_threads} --recursive {local_buffer_dir}/* root://{disk_instance_name}/{destination_dir}/"
         )
@@ -123,10 +127,15 @@ def test_generate_and_copy_files(env, stress_params):
 @pytest.mark.eos
 def test_wait_for_archival(env):
     archive_directory = env.disk_instance[0].base_dir_path + "/cta/stress"
-    timeout_secs = 300  # Rather arbitrary for now
+    # This timeout is rather arbitrary for now
+    # This is the max amount of time to wait for all files to be archived
+    # This should probably be some function of the total number of files
+    timeout_secs = 300
     disk_instance: DiskInstanceHost = env.disk_instance[0]
 
     num_missing_files = disk_instance.wait_for_archival_in_directory(
         archive_dir_path=archive_directory, timeout_secs=timeout_secs
     )
+    # Future tests should work with the number of archived files
+    # So missing files should be ignored when e.g. retrieving
     print(f"Missing files: {num_missing_files}")
