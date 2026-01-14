@@ -1769,10 +1769,10 @@ std::string RelationalDB::getQueueTypePrefix(bool isArchive, bool isRepack) {
 }
 
 uint64_t RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64_t>& deadMountIds,
-                                                    size_t batchSize,
-                                                    bool isArchive,
-                                                    bool isRepack,
-                                                    log::LogContext& lc) {
+                                                        size_t batchSize,
+                                                        bool isArchive,
+                                                        bool isRepack,
+                                                        log::LogContext& lc) {
   uint64_t njobs = 0;
   if (deadMountIds.empty()) {
     return njobs;
@@ -1838,7 +1838,6 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
                                                        bool isArchive,
                                                        bool isRepack,
                                                        log::LogContext& lc) {
-
   uint64_t njobs = 0;
   if (deadMountIds.empty()) {
     return njobs;
@@ -1994,11 +1993,13 @@ void RelationalDB::cleanOldMountLastFetchTimes(uint64_t deletionAge, uint64_t ba
     cta::log::ScopedParamContainer(lc)
       .add("deletedRows", nrows)
       .add("olderThanTimestamp", olderThanTimestamp)
-      .log(cta::log::INFO, "In RelationalDB::cleanOldMountLastFetchTimes(): Deleted old rows from mount last fetch time table.");
+      .log(cta::log::INFO,
+           "In RelationalDB::cleanOldMountLastFetchTimes(): Deleted old rows from mount last fetch time table.");
   } catch (exception::Exception& ex) {
-    lc.log(log::ERR,
-           "In RelationalDB::cleanOldMountLastFetchTimes(): Failed to delete old rows from mount last fetch time table: "
-             + ex.getMessageValue());
+    lc.log(
+      log::ERR,
+      "In RelationalDB::cleanOldMountLastFetchTimes(): Failed to delete old rows from mount last fetch time table: "
+        + ex.getMessageValue());
     txn.abort();
   }
 }
