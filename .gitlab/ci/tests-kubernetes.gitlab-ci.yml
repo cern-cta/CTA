@@ -58,9 +58,6 @@
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - when: on_success
-  tags:  # Used to indicate that these jobs should run on our own runners
-    - kubernetes
-    - mhvtl
   variables:
     BASH_LOGGING_ENABLED: 1
     TEST_SCRIPT:
@@ -99,6 +96,9 @@
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE}
+  tags:  # Used to indicate that these jobs should run on our own runners
+    - kubernetes
+    - mhvtl
   artifacts:
     when: always
     expire_in: 30 days
@@ -208,9 +208,6 @@ test-regression-dCache:
       allow_failure: true
     - if: $DCACHE_REGRESSION_TESTS == "TRUE"
       when: on_success
-  tags:
-    - kubernetes
-    - xlarge
   variables:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400 --skip-preflight"
@@ -235,8 +232,6 @@ stress-test:
       when: never
     - when: manual
       allow_failure: true  # Otherwise this blocks the pipeline
-  tags:
-    - stress
   variables:
     BASH_LOGGING_ENABLED: 1
     NAMESPACE: stress-${CI_JOB_ID}
@@ -282,6 +277,83 @@ stress-test:
     - ./stress_test.sh -n ${NAMESPACE} ${EXTRA_STRESS_TEST_OPTIONS}
   after_script:
     - |
+      if [ "${KEEP_STRESS_TEST_NAMESPACE}" == "TRUE" ]; then
+        echo "Skipping deletion of stress test namespace ${NAMESPACE}"
+        exit 0
+      fi
+    # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
+    - cd ci/orchestration/
+    - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
+  tags:
+    - stress
+  # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time
+  resource_group: stress-test
+
+stress-test-python:
+  allow_failure: true
+  interruptible: false
+  timeout: 12 hours
+  stage: system-test
+  needs:
+    - job: modify-project-json
+      optional: true
+    - job: build-ctageneric-from-local-rpms
+      optional: true # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
+    - job: build-ctageneric-from-remote-rpms
+      optional: true
+  rules:
+    - when: manual
+      allow_failure: true # Otherwise this blocks the pipeline
+  variables:
+    NAMESPACE: stress-${CI_JOB_ID}
+    EXTRA_SPAWN_ARGS: ""
+    EXTRA_TEST_ARGS: ""
+  before_script:
+    - bash ./ci/checks/check_runner_healthy.sh
+    - *setup-k8s-test-variables
+  script:
+    - |
+      EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_FILE} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
+      if [[ $PUBLISH_TELEMETRY_METRICS == "TRUE" ]]; then
+        EXTRA_SPAWN_ARGS+=" --publish-telemetry"
+      fi
+      extra_args=($EXTRA_ARGS)
+      if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
+      EXTRA_STRESS_TEST_OPTIONS=""
+      if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
+        SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
+      fi
+    # Set up stress test
+    - cd ci/orchestration/
+    # We don't clean up old namespace so this will fail (deliberately) when another namespace still exist
+    # This is because we check for the libraries in use before we start
+    - ./create_instance.sh --namespace ${NAMESPACE}
+                           --reset-catalogue
+                           --reset-scheduler
+                           --no-setup
+                           --cta-image-tag ${IMAGE_TAG}
+                           --cta-config ${STRESS_CTA_VALUES_FILE}
+                           --eos-config ${STRESS_EOS_VALUES_FILE}
+                           --catalogue-config ${CATALOGUE_CONFIG}
+                           --scheduler-config ${SCHEDULER_CONFIG}
+                           ${EXTRA_SPAWN_ARGS}
+    # Set up monitoring
+    - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
+    - helm install ci-monitoring ci_monitoring/ci-monitoring
+                  --namespace ${NAMESPACE}
+                  --set logsClaimName=logstorage-pvc
+                  --set image.pullSecrets={reg-eoscta-operations}
+                  --wait
+                  --timeout 5m
+    # Run the actual stress test
+    - cd ../system_tests
+    - pytest tests/stress_test.py --namespace ${NAMESPACE}
+                                  --no-cleanup
+                                  --color=yes
+                                  ${EXTRA_TEST_ARGS}
+                                  2>&1 # Gitlab screws the ordering of stdout and stderr. See https://gitlab.com/gitlab-org/gitlab/-/issues/440824
+  after_script:
+    - |
       if [[ "${KEEP_STRESS_TEST_NAMESPACE}" == "TRUE" ]]; then
         echo "Skipping deletion of stress test namespace ${NAMESPACE}"
         exit 0
@@ -289,3 +361,7 @@ stress-test:
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
     - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
+  tags:
+    - stress
+  # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time
+  resource_group: stress-test

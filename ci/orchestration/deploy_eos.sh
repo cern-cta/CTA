@@ -28,6 +28,7 @@ usage() {
   echo "  -r, --eos-image-repository <repo>:  The EOS Docker image name."
   echo "  -i, --eos-image-tag <tag>:          The EOS Docker image tag."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-xrd-values.yaml."
+  echo "      --setup-enabled <true|false>:   Whether to run the setup scripts or not."
   echo
   exit 1
 }
@@ -42,6 +43,7 @@ check_helm_installed() {
 deploy() {
   project_json_path="../../project.json"
   eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
+  setup_enabled=true
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -58,6 +60,9 @@ deploy() {
         shift ;;
       --eos-config)
         eos_config="$2"
+        shift ;;
+      --setup-enabled)
+        setup_enabled="$2"
         shift ;;
       *)
         die_usage "Unsupported argument: $1"
@@ -92,9 +97,11 @@ deploy() {
                       --reuse-values \
                       ${helm_flags}
 
-  EOS_MGM_POD=eos-mgm-0
-  kubectl cp --namespace "${namespace}" ./setup/configure_eoscta_tape.sh ${EOS_MGM_POD}:/tmp -c eos-mgm
-  kubectl exec --namespace "${namespace}" ${EOS_MGM_POD} -c eos-mgm -- /bin/bash -c "chmod +x /tmp/configure_eoscta_tape.sh && /tmp/configure_eoscta_tape.sh"
+  if [[ "$setup_enabled" == "true" ]]; then
+    EOS_MGM_POD=eos-mgm-0
+    kubectl cp --namespace "${namespace}" ./setup/configure_eoscta_tape.sh ${EOS_MGM_POD}:/tmp -c eos-mgm
+    kubectl exec --namespace "${namespace}" ${EOS_MGM_POD} -c eos-mgm -- /bin/bash -c "chmod +x /tmp/configure_eoscta_tape.sh && /tmp/configure_eoscta_tape.sh"
+  fi
 }
 
 check_helm_installed

@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+import pytest
+
+#####################################################################################################################
+# EOS Teardown
+#####################################################################################################################
+
+
+@pytest.mark.eos
+def test_cleanup_eos_directories(env):
+    env.eos_mgm[0].force_remove_directory(env.eos_mgm[0].base_dir_path + "/*")

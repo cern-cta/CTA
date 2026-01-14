@@ -82,6 +82,21 @@ else
   errors=$((errors + 1))
 fi
 
+MIN_PYTEST_VERSION="8.0.0"
+echo "Checking that pytest version is at least $MIN_PYTEST_VERSION"
+if command -v pytest >/dev/null 2>&1; then
+  INSTALLED_PYTEST_VERSION="$(pytest --version | awk '{print $2}')"
+  if [ "$(printf '%s\n' "$MIN_PYTEST_VERSION" "$INSTALLED_PYTEST_VERSION" | sort -V | head -n1)" = "$MIN_PYTEST_VERSION" ]; then
+    echo "SUCCESS: pytest version $INSTALLED_PYTEST_VERSION is at least $MIN_PYTEST_VERSION"
+  else
+    echo "ERROR: pytest version $INSTALLED_PYTEST_VERSION is less than required $MIN_PYTEST_VERSION"
+    errors=$((errors + 1))
+  fi
+else
+  echo "ERROR: pytest does not seem to be installed"
+  errors=$((errors + 1))
+fi
+
 echo
 if [[ "${errors}" -gt 0 ]]; then
   echo "FAILURE: not all conditions were satisfied. The runner is not configured correctly"

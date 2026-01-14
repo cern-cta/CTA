@@ -50,11 +50,12 @@ usage() {
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-xrd-values.yaml"
   echo "      --use-public-repos:               Use the public yum repos instead of the internal yum repos. Use when you do not have access to the CERN network."
   echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
-  echo "      --eos-enabled <true|false>:       Whether to spawn an EOS or not. Defaults to true."
-  echo "      --dcache-enabled <true|false>:    Whether to spawn a dCache or not. Defaults to false."
+  echo "      --disable-eos:                    Skips spawning EOS in the system tests."
+  echo "      --enable-dcache:                  Spawns dCache in the system tests."
   echo "      --local-telemetry:                Spawns a local collector and Prometheus backends to which metrics will be sent."
   echo "      --publish-telemetry:              Publishes telemetry to a pre-configured central observability backend."
   echo "      --deploy-namespace <namespace>:   Deploy the CTA instance in a given namespace. Defaults to dev."
+  echo "      --no-setup:                       Skip the setup scripts in create_instance.sh (required for the new Python tests)."
   exit 1
 }
 
@@ -86,6 +87,7 @@ build_deploy() {
   local skip_image_reload=false
   local local_telemetry=false
   local publish_telemetry=false
+  local no_setup=false
   local build_generator="Ninja"
   local cmake_build_type
   cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
@@ -135,6 +137,7 @@ build_deploy() {
     --use-public-repos) use_internal_repos=false ;;
     --local-telemetry) local_telemetry=true ;;
     --publish-telemetry) publish_telemetry=true ;;
+    --no-setup) no_setup=true ;;
     --enable-address-sanitizer) enable_address_sanitizer=true ;;
     --eos-image-tag)
       if [[ $# -gt 1 ]]; then
@@ -474,6 +477,9 @@ build_deploy() {
       fi
       if [[ "$publish_telemetry" = true ]]; then
         extra_spawn_options+=" --publish-telemetry"
+      fi
+      if [[ "$no_setup" = true ]]; then
+        extra_spawn_options+=" --no-setup"
       fi
 
       if [[ -z "${scheduler_config}" ]]; then

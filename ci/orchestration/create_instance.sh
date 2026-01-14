@@ -31,6 +31,7 @@ usage() {
   echo "      --max-drives-per-tpsrv <n>:     If no tapeservers-config is provided, this will specifiy how many drives a single tape server (pod) can be responsible for."
   echo "      --max-tapeservers <n>:          If no tapeservers-config is provided, this will specifiy the limit of the number of tape servers (pods)."
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
+  echo "      --no-setup:                     Skip the setup scripts for EOS and tape resets."
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-xrd-values.yaml."
@@ -91,6 +92,7 @@ create_instance() {
   # default should not make user loose data if he forgot the option
   reset_catalogue=false
   reset_scheduler=false
+  setup_enabled=true
   cta_image_repository=$(jq -r .dev.ctaImageRepository ${project_json_path}) # Used for the ctageneric pod image(s)
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
   num_library_devices=1 # For the auto-generated tapeservers config
@@ -147,6 +149,7 @@ create_instance() {
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
+      --no-setup) setup_enabled=false ;;
       --local-telemetry) local_telemetry=true ;;
       --dry-run) dry_run=1 ;;
       --eos-config)
@@ -352,7 +355,8 @@ create_instance() {
     ./deploy_eos.sh --namespace "${namespace}" \
                     --eos-config "${eos_config}" \
                     --eos-image-repository "${eos_image_repository}" \
-                    --eos-image-tag "${eos_image_tag}" &
+                    --eos-image-tag "${eos_image_tag}" \
+                    --setup-enabled "${setup_enabled}" &
     eos_pid=$!
   fi
 
@@ -400,15 +404,14 @@ create_instance() {
   if [[ $dry_run == 1 ]]; then
     exit 0
   fi
-}
 
-setup_system() {
-  ./setup/reset_tapes.sh -n "${namespace}"
-  ./setup/kinit_clients.sh -n "${namespace}"
+  if [[ "$setup_enabled" == "true" ]]; then
+    ./setup/reset_tapes.sh -n "${namespace}"
+    ./setup/kinit_clients.sh -n "${namespace}"
+  fi
 }
 
 check_helm_installed
 create_instance "$@"
-setup_system
 echo "Instance ${namespace} successfully created:"
 kubectl --namespace "${namespace}" get pods
