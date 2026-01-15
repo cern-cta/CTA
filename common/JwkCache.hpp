@@ -46,7 +46,7 @@ public:
   std::string fetchJWKS(const std::string& jwksUrl) override;
 
 private:
-  int m_totalTimeoutSecs;  //!< Total timeout in seconds
+  long m_totalTimeoutSecs;  //!< Total timeout in seconds
 };
 
 class JwkCache {

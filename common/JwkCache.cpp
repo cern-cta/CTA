@@ -43,7 +43,7 @@ std::string CurlJwksFetcher::fetchJWKS(const std::string& jwksUrl) {
     // use TLS 1.2 or later
     curl_easy_setopt(curl, CURLOPT_SSLVERSION, CURL_SSLVERSION_TLSv1_2);
     // Set timeouts to prevent indefinite hangs
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, static_cast<long>(m_totalTimeoutSecs));
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, m_totalTimeoutSecs);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &readBuffer);
     res = curl_easy_perform(curl);
