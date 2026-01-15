@@ -778,7 +778,7 @@ public:
     bool sleepingMount = false;   /**< Is the mount being slept due to lack of disk space? */
     time_t sleepStartTime = 0;    /**< Start time for the sleeping for lack of disk space. */
     std::string
-      diskSystemSleptFor;   /**< Name of (one of) the disk system(s) that could was too full to start more retrieves. */
+      diskSystemName; /**< Name of (one of) the disk system(s) that could was too full to start more retrieves. */
     uint64_t sleepTime = 0; /**< Length of time to be slept for for this disk system. */
     uint32_t
       mountCount; /**< The number of mounts for this tape pool (which is the current "chargeable" entity for quotas. */

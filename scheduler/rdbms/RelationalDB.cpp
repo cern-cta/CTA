@@ -1679,7 +1679,7 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
         if (now < (entry.timestamp + entry.sleepTime)) {
           m.sleepingMount = true;
           m.sleepStartTime = entry.timestamp;
-          m.diskSystemSleptFor = rjsr.diskSystemName.value();
+          m.diskSystemName = rjsr.diskSystemName.value();
           m.sleepTime = entry.sleepTime;
         } else {
           m.sleepingMount = false;

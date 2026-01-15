@@ -441,7 +441,7 @@ TEST_P(SchedulerDatabaseTest, putExistingQueueToSleep) {
   auto mi = db.getMountInfoNoLock(cta::SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, lc);
   ASSERT_EQ(1, mi->potentialMounts.size());
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
-  ASSERT_EQ("ds-A", mi->potentialMounts.begin()->diskSystemSleptFor);
+  ASSERT_EQ("ds-A", mi->potentialMounts.begin()->diskSystemName);
 }
 
 TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
@@ -574,7 +574,7 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
   std::cout << "mount found as expected" << std::endl;
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
   std::cout << "mount is sleeping all ok" << std::endl;
-  ASSERT_EQ("ds-A", mi->potentialMounts.begin()->diskSystemSleptFor);
+  ASSERT_EQ("ds-A", mi->potentialMounts.begin()->diskSystemName);
   std::cout << "the right disk system" << std::endl;
 }
 
@@ -1054,7 +1054,7 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithBackpressure) {
   //did not requeue the job batch (the retrive mount normally does this, but cannot do it in the tests due to BackendVFS)
   ASSERT_EQ(1, mi->potentialMounts.begin()->filesQueued);
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
-  ASSERT_EQ("ds-A", mi->potentialMounts.begin()->diskSystemSleptFor);
+  ASSERT_EQ("ds-A", mi->potentialMounts.begin()->diskSystemName);
 }
 
 TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
@@ -1179,8 +1179,8 @@ TEST_P(SchedulerDatabaseTest, popRetrieveRequestsWithDiskSystemNotFetcheable) {
   ASSERT_EQ(1, mi->potentialMounts.begin()->filesQueued);
   // not a sleeping mount because we do not apply backpressure when we can't get the free disk space
   ASSERT_FALSE(mi->potentialMounts.begin()->sleepingMount);
-  // diskSystemSleptFor is set in putQueuesToSleep, as we do not call this function anymore, value is not set
-  ASSERT_EQ("", mi->potentialMounts.begin()->diskSystemSleptFor);
+  // diskSystemName is set in putQueuesToSleep, as we do not call this function anymore, value is not set
+  ASSERT_EQ("", mi->potentialMounts.begin()->diskSystemName);
 }
 
 #undef TEST_MOCK_DB

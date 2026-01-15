@@ -64,7 +64,7 @@ Body dump:
  "mapsrebuildcount": "0",
  "maxshardsize": "25000",
  "sleepForFreeSpaceSince": "0",
- "diskSystemSleptFor": "",
+ "diskSystemName": "",
  "sleepTime": "0"
 }
 
@@ -187,7 +187,7 @@ Let's have a look at the object:
   "mapsrebuildcount": "0",
   "maxshardsize": "25000",
   "sleepForFreeSpaceSince": "0",
-  "diskSystemSleptFor": "",
+  "diskSystemName": "",
   "sleepTime": "0"
 }
 ```
