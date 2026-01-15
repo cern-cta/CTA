@@ -114,7 +114,7 @@ int main(const int argc, char* const* const argv) {
   log::LogContext lc = frontendService->getLogContext();
 
   // Build the shared JWK cache here even if JWT is disabled, in this case it will never be populated
-  CurlJwksFetcher jwksFetcher;
+  CurlJwksFetcher jwksFetcher(frontendService->getJwksTotalTimeout().value_or(60));
   std::shared_ptr<JwkCache> jwkCache = std::make_shared<JwkCache>(jwksFetcher,
                                                                   frontendService->getJwksUri().value_or(""),
                                                                   frontendService->getPubkeyTimeout().value_or(0),

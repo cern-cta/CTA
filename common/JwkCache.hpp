@@ -34,7 +34,19 @@ public:
 
 class CurlJwksFetcher : public JwksFetcher {
 public:
+  CurlJwksFetcher(int totalTimeoutSecs = 30);
+  ~CurlJwksFetcher() override;
+
+  // Delete copy/move to ensure single instance manages curl global state
+  CurlJwksFetcher(const CurlJwksFetcher&) = delete;
+  CurlJwksFetcher& operator=(const CurlJwksFetcher&) = delete;
+  CurlJwksFetcher(CurlJwksFetcher&&) = delete;
+  CurlJwksFetcher& operator=(CurlJwksFetcher&&) = delete;
+
   std::string fetchJWKS(const std::string& jwksUrl) override;
+
+private:
+  long m_totalTimeoutSecs;  //!< Total timeout in seconds
 };
 
 class JwkCache {
