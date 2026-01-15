@@ -249,11 +249,6 @@ uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction& txn,
   }
   if (newStatus == ArchiveJobStatus::AJS_Complete || newStatus == ArchiveJobStatus::AJS_Failed
       || newStatus == ArchiveJobStatus::ReadyForDeletion) {
-    // all these job statuses mean that the report to disk was done successfully,
-    // we do not need to move the job to failed job table
-    //if (newStatus == ArchiveJobStatus::AJS_Failed) {
-    //  return ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs);
-    //} else {
     std::string sql = R"SQL(
         DELETE FROM ARCHIVE_ACTIVE_QUEUE
         WHERE

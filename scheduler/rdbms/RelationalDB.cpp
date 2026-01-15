@@ -484,7 +484,6 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
     rReq.setDiskSystemName(diskSystemName);
     rreqMutex.release();
     rReq.insert();
-    std::cout << "queued retrieve" << std::endl;
     log::ScopedParamContainer(lc)
       .add("totalTime", timeTotal.secs())
       .log(cta::log::INFO, "In RelationalDB::queueRetrieve(): Finished enqueueing request.");
@@ -1672,10 +1671,8 @@ void RelationalDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi
     m.labelFormat = std::nullopt;  // The labelFormat is not known here, and may be determined by the caller.
     m.mountPolicyCountMap[rjsr.mountPolicy] = rjsr.jobsCount;
     if (rjsr.diskSystemName) {
-      //std::cout << "rjsr.diskSystemName: " << rjsr.diskSystemName.value() << std::endl;
       auto it = diskSystemSleepMap.find(rjsr.diskSystemName.value());
       if (it != diskSystemSleepMap.end()) {
-        //std::cout << "FOUND IN SLEEP MAP rjsr.diskSystemName" << std::endl;
         const auto& entry = it->second;
         auto now = static_cast<uint64_t>(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
