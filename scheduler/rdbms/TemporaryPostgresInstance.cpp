@@ -4,6 +4,7 @@
  */
 
 #include "scheduler/rdbms/TemporaryPostgresInstance.hpp"
+
 #include "common/utils/utils.hpp"
 
 namespace cta::schedulerdb {
