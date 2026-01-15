@@ -1655,7 +1655,7 @@ RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& lc) {
 
 // MountQueueCleanup routine methods
 cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::fetchDeadMountCandidates(uint64_t mount_gc_delay,
-                                                                                        log::LogContext& lc) {
+                                                                                          log::LogContext& lc) {
   cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs;
   schedulerdb::Transaction txn(m_connPool, lc);
   uint64_t mount_gc_timestamp = static_cast<uint64_t>(cta::utils::getCurrentEpochTime()) - mount_gc_delay;
@@ -1701,7 +1701,7 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::fetchDeadMountC
 }
 
 cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMounts(uint64_t inactiveTimeLimit,
-                                                                                          log::LogContext& lc) {
+                                                                               log::LogContext& lc) {
   // Get all active mount IDs for drives which do have an active mount registered in the catalogue
   std::unordered_map<std::string, std::optional<uint64_t>> driveNameMountIdOpt =
     m_catalogue.DriveState()->getTapeDriveMountIDs();
@@ -1717,7 +1717,8 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMounts(u
   params.add("activeCatalogueMountIdCount", activeMountIds.size());
   lc.log(cta::log::INFO, "Fetched mounts registered in catalogue for active drives.");
   // Get all active mount IDs from the Scheduler DB
-  cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs = fetchDeadMountCandidates(inactiveTimeLimit, lc);
+  cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs =
+    fetchDeadMountCandidates(inactiveTimeLimit, lc);
   params.add("archivePendingDeadMountIdsCount", scheduledMountIDs.archivePending.size());
   params.add("archiveActiveDeadMountIdsCount", scheduledMountIDs.archiveActive.size());
   params.add("retrievePendingDeadMountIdsCount", scheduledMountIDs.retrievePending.size());

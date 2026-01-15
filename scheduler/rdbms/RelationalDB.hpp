@@ -305,7 +305,7 @@ public:
    * @return DeadMountCandidateIDs containing mount IDs grouped by queue type.
    */
   cta::common::dataStructures::DeadMountCandidateIDs fetchDeadMountCandidates(uint64_t mount_gc_delay,
-                                                                            log::LogContext& lc);
+                                                                              log::LogContext& lc);
 
   /**
    * @brief Determines dead mounts that require cleanup and job rescheduling.
@@ -320,8 +320,7 @@ public:
    * @return DeadMountCandidateIDs containing confirmed dead mount IDs
    *         grouped by queue type.
    */
-  cta::common::dataStructures::DeadMountCandidateIDs getDeadMounts(uint64_t inactiveTimeLimit,
-                                                                              log::LogContext& lc);
+  cta::common::dataStructures::DeadMountCandidateIDs getDeadMounts(uint64_t inactiveTimeLimit, log::LogContext& lc);
   /**
    * @brief Builds the queue type prefix for archive/retrieve and repack modes.
    *
