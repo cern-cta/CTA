@@ -17,35 +17,30 @@ namespace cta::log {
 LogContext::LogContext(Logger& logger) noexcept : m_log(logger) {}
 
 void LogContext::push(const Param& param) noexcept {
-  auto i = std::ranges::find_if(m_params, [&param](const Param& p) { return p.getName() == param.getName(); });
-  if (i != m_params.end()) {
-    i->setValue(param.getValueVariant());
-  } else {
-    m_params.push_back(param);
-  }
+  m_paramsMap[param.getName()].push_back(param);
 }
 
 void LogContext::push(Param&& param) noexcept {
-  auto i = std::ranges::find_if(m_params, [&param](const Param& p) { return p.getName() == param.getName(); });
-  if (i != m_params.end()) {
-    i->setValue(param.getValueVariant());
-  } else {
-    m_params.push_back(std::move(param));
-  }
+  m_paramsMap[param.getName()].push_back(std::move(param));
 }
 
 void LogContext::erase(const std::set<std::string>& paramNamesSet) noexcept {
-  auto toEraseRange =
-    std::ranges::remove_if(m_params, [&paramNamesSet](const Param& p) { return paramNamesSet.contains(p.getName()); });
-  m_params.erase(toEraseRange.begin(), toEraseRange.end());
+  for (const auto& paramName : paramNamesSet) {
+    if (auto it = m_paramsMap.find(paramName); it != m_paramsMap.end()) {
+      it->second.pop_back();
+      if (it->second.empty()) {
+        m_paramsMap.erase(it);
+      }
+    }
+  }
 }
 
 void LogContext::clear() {
-  m_params.clear();
+  m_paramsMap.clear();
 }
 
 void LogContext::log(int priority, std::string_view msg) noexcept {
-  m_log(priority, msg, m_params);
+  m_log.logInternal(priority, msg, m_paramsMap);
 }
 
 void LogContext::logBacktrace(const int priority, std::string_view backtrace) noexcept {
@@ -97,13 +92,13 @@ LogContext::ScopedParam::~ScopedParam() noexcept {
 
 std::ostream& operator<<(std::ostream& os, const LogContext& lc) {
   bool first = true;
-  for (auto& p : lc.m_params) {
+  for (auto& p : lc.m_paramsMap | std::views::values) {
     if (!first) {
       os << " ";
     } else {
       first = false;
     }
-    os << p.getName() << "=" << p.getValueStr();
+    os << p.back().getName() << "=" << p.back().getValueStr();
   }
   return os;
 }
