@@ -49,7 +49,7 @@ SchemaCheckerResult SchemaChecker::displayingCompareSchema(std::ostream& stdOut,
 
 SchemaCheckerResult SchemaChecker::warnParallelTables() {
   SchemaCheckerResult res;
-  std::list<std::string> parallelTables = m_databaseMetadataGetter->getParallelTableNames();
+  auto parallelTables = m_databaseMetadataGetter->getParallelTableNames();
   for (const auto& table : parallelTables) {
     std::string warning = "TABLE " + table + " is set as PARALLEL";
     res.addWarning(warning);
@@ -75,7 +75,7 @@ SchemaCheckerResult SchemaChecker::compareTablesLocatedInSchema() {
 }
 
 SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& tableName,
-                                                             const std::list<std::string>& columnNames) {
+                                                             const std::vector<std::string>& columnNames) {
   std::map<std::string, std::string, std::less<>> mapColumnsTypes = m_databaseMetadataGetter->getColumns(tableName);
   SchemaCheckerResult res;
   if (mapColumnsTypes.empty()) {
@@ -94,7 +94,7 @@ SchemaCheckerResult SchemaChecker::checkTableContainsColumns(const std::string& 
 
 SchemaCheckerResult SchemaChecker::warnProcedures() {
   SchemaCheckerResult res;
-  std::list<std::string> procedureNames = m_databaseMetadataGetter->getStoredProcedures();
+  auto procedureNames = m_databaseMetadataGetter->getStoredProcedures();
   for (const auto& procedure : procedureNames) {
     std::string warning = "PROCEDURE " + procedure + " exists in the " + m_databaseToCheckName + " database";
     res.addWarning(warning);
@@ -104,7 +104,7 @@ SchemaCheckerResult SchemaChecker::warnProcedures() {
 
 SchemaCheckerResult SchemaChecker::warnSynonyms() {
   SchemaCheckerResult res;
-  std::list<std::string> synonymsNames = m_databaseMetadataGetter->getSynonyms();
+  auto synonymsNames = m_databaseMetadataGetter->getSynonyms();
   for (const auto& synonym : synonymsNames) {
     std::string warning = "SYNONYM " + synonym + " exists in the " + m_databaseToCheckName + " database";
     res.addWarning(warning);
@@ -114,7 +114,7 @@ SchemaCheckerResult SchemaChecker::warnSynonyms() {
 
 SchemaCheckerResult SchemaChecker::warnTypes() {
   SchemaCheckerResult res;
-  std::list<std::string> typeNames = m_databaseMetadataGetter->getTypes();
+  auto typeNames = m_databaseMetadataGetter->getTypes();
   for (const auto& type : typeNames) {
     std::string warning = "TYPE " + type + " exists in the " + m_databaseToCheckName + " database";
     res.addWarning(warning);
@@ -124,7 +124,7 @@ SchemaCheckerResult SchemaChecker::warnTypes() {
 
 SchemaCheckerResult SchemaChecker::warnErrorLoggingTables() {
   SchemaCheckerResult res;
-  std::list<std::string> errorTables = m_databaseMetadataGetter->getErrorLoggingTables();
+  auto errorTables = m_databaseMetadataGetter->getErrorLoggingTables();
   for (const auto& errorTable : errorTables) {
     std::string warning = "Error logging table " + errorTable + " exists in the " + m_databaseToCheckName + " database";
     res.addWarning(warning);

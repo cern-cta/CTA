@@ -175,10 +175,7 @@ int exceptionThrowingMain(int argc, char* const* const argv) {
   }
 
   if (cmdLineArgs.m_archiveFileId) {
-    const std::list<std::string> ids = cta::utils::commaSeparatedStringToList(cmdLineArgs.m_archiveFileId.value());
-    for (const auto& id : ids) {
-      archiveFileIds.push_back(id);
-    }
+    archiveFileIds = cta::utils::commaSeparatedStringToVector(cmdLineArgs.m_archiveFileId.value());
   }
 
   if (cmdLineArgs.m_archiveFileIds) {

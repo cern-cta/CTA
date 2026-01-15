@@ -116,7 +116,9 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn& conn) {
   while (droppedAtLeastOneTable) {
     droppedAtLeastOneTable = false;
     auto tables = conn.getTableNames();
-    tables.remove("CTA_CATALOGUE");  // Remove CTA_CATALOGUE to drop it at the end
+    std::erase_if(tables, [](const std::string& tableName) {
+      return tableName == "CTA_CATALOGUE";
+    });  // Remove CTA_CATALOGUE to drop it at the end
     for (const auto& table : tables) {
       droppedAtLeastOneTable |= dropSingleTable(conn, table);
     }
@@ -139,7 +141,7 @@ void DropSchemaCmd::dropDatabaseTables(rdbms::Conn& conn) {
 // dropDatabaseSequences
 //------------------------------------------------------------------------------
 void DropSchemaCmd::dropDatabaseSequences(rdbms::Conn& conn) {
-  std::list<std::string> sequences = conn.getSequenceNames();
+  auto sequences = conn.getSequenceNames();
   for (const auto& sequence : sequences) {
     conn.executeNonQuery(std::string("DROP SEQUENCE ") + sequence);
     m_out << "Dropped sequence " << sequence << std::endl;

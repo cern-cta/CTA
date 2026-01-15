@@ -21,8 +21,8 @@ protected:
     Argcv() : argc(0), argv(nullptr) {}
   };
 
-  using ArgcvList = std::list<Argcv*>;
-  ArgcvList m_argsList;
+  using ArgcvVect = std::vector<Argcv*>;
+  ArgcvVect m_args;
 
   /**
    * Creates a duplicate string using the new operator.
@@ -44,7 +44,7 @@ protected:
     // Allow getopt_long to be called again
     optind = 0;
 
-    for (ArgcvList::const_iterator itor = m_argsList.begin(); itor != m_argsList.end(); itor++) {
+    for (ArgcvVect::const_iterator itor = m_args.begin(); itor != m_args.end(); itor++) {
       for (int i = 0; i < (*itor)->argc; i++) {
         delete[] (*itor)->argv[i];
       }
@@ -58,7 +58,7 @@ TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, help_short) {
   using namespace cta::catalogue;
 
   Argcv* args = new Argcv();
-  m_argsList.push_back(args);
+  m_args.push_back(args);
   args->argc = 2;
   args->argv = new char*[3];
   args->argv[0] = dupString("cta-catalogue-schema-drop");
@@ -75,7 +75,7 @@ TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, help_long) {
   using namespace cta::catalogue;
 
   Argcv* args = new Argcv();
-  m_argsList.push_back(args);
+  m_args.push_back(args);
   args->argc = 2;
   args->argv = new char*[3];
   args->argv[0] = dupString("cta-catalogue-schema-drop");
@@ -92,7 +92,7 @@ TEST_F(cta_catalogue_DropSchemaCmdLineArgsTest, dbConfigPath) {
   using namespace cta::catalogue;
 
   Argcv* args = new Argcv();
-  m_argsList.push_back(args);
+  m_args.push_back(args);
   args->argc = 2;
   args->argv = new char*[3];
   args->argv[0] = dupString("cta-catalogue-schema-drop");

@@ -7,8 +7,8 @@
 
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -37,7 +37,7 @@ public:
                                          const std::string& name,
                                          const std::string& comment) = 0;
 
-  virtual std::list<common::dataStructures::DiskInstance> getAllDiskInstances() const = 0;
+  virtual std::vector<common::dataStructures::DiskInstance> getAllDiskInstances() const = 0;
 };
 
 }  // namespace catalogue

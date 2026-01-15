@@ -24,7 +24,8 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<cta::catalogue::MediaTypeWithLogs> m_mediaTypes;
+  std::vector<cta::catalogue::MediaTypeWithLogs> m_mediaTypes;
+  std::size_t m_mediaTypesIdx = 0;
 };
 
 }  // namespace cta::frontend

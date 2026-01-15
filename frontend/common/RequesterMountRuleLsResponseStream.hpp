@@ -8,8 +8,6 @@
 #include "CtaAdminResponseStream.hpp"
 #include "common/dataStructures/RequesterMountRule.hpp"
 
-#include <list>
-
 #include "cta_admin.pb.h"
 
 namespace cta::frontend {
@@ -23,7 +21,8 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<cta::common::dataStructures::RequesterMountRule> m_requesterMountRules;
+  std::vector<cta::common::dataStructures::RequesterMountRule> m_requesterMountRules;
+  std::size_t m_requesterMountRulesIdx = 0;
 };
 
 }  // namespace cta::frontend

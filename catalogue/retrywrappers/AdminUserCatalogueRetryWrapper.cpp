@@ -36,7 +36,7 @@ void AdminUserCatalogueRetryWrapper::deleteAdminUser(const std::string& username
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::AdminUser> AdminUserCatalogueRetryWrapper::getAdminUsers() const {
+std::vector<common::dataStructures::AdminUser> AdminUserCatalogueRetryWrapper::getAdminUsers() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->AdminUser()->getAdminUsers(); },

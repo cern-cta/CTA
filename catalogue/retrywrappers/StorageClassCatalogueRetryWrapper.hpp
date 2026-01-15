@@ -28,7 +28,7 @@ public:
 
   void deleteStorageClass(const std::string& storageClassName) override;
 
-  std::list<common::dataStructures::StorageClass> getStorageClasses() const override;
+  std::vector<common::dataStructures::StorageClass> getStorageClasses() const override;
 
   common::dataStructures::StorageClass getStorageClass(const std::string& name) const override;
 

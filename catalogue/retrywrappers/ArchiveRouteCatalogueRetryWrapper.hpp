@@ -38,10 +38,10 @@ public:
                           const uint32_t copyNb,
                           const common::dataStructures::ArchiveRouteType& archiveRouteType) override;
 
-  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
+  std::vector<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
 
-  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName,
-                                                                   const std::string& tapePoolName) const override;
+  std::vector<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName,
+                                                                     const std::string& tapePoolName) const override;
 
   void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity& admin,
                                       const std::string& storageClassName,

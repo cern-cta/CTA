@@ -33,7 +33,7 @@ protected:
   const cta::common::dataStructures::PhysicalLibrary m_physicalLibrary3;
 
   std::map<std::string, cta::common::dataStructures::PhysicalLibrary>
-  physicalLibraryListToMap(const std::list<cta::common::dataStructures::PhysicalLibrary>& listOfLibs) const;
+  physicalLibraryListToMap(const std::vector<cta::common::dataStructures::PhysicalLibrary>& listOfLibs) const;
 };
 
 }  // namespace unitTests

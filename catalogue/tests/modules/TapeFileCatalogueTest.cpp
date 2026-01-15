@@ -54,7 +54,7 @@ TEST_P(cta_catalogue_TapeFileTest, moveFilesToRecycleLog) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
 
@@ -186,7 +186,7 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyUsingArchiveID) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -333,7 +333,7 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyWithDisallowedTapeStates) {
   const std::string tapePoolName3 = "tape_pool_name_3";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -577,7 +577,7 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyDoesNotExist) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -622,7 +622,7 @@ TEST_P(cta_catalogue_TapeFileTest, DeleteTapeFileCopyUsingFXID) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -772,7 +772,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_repac
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   std::string repackingReason = "repackingReason";
 
@@ -795,8 +795,8 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_repac
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
 
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-  const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+  const auto tapes = m_catalogue->Tape()->getTapes();
+  const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
   {
     auto it = vidToTape.find(m_tape1.vid);
     ASSERT_TRUE(it != vidToTape.end());
@@ -1069,7 +1069,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1091,8 +1091,8 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId) {
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
 
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-  const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+  const auto tapes = m_catalogue->Tape()->getTapes();
+  const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
   {
     auto it = vidToTape.find(m_tape1.vid);
     ASSERT_TRUE(it != vidToTape.end());
@@ -1265,11 +1265,10 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId) {
                                                               requesterName,
                                                               comment);
 
-  const std::list<cta::common::dataStructures::RequesterMountRule> rules =
-    m_catalogue->RequesterMountRule()->getRequesterMountRules();
+  const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
   ASSERT_EQ(1, rules.size());
 
-  const cta::common::dataStructures::RequesterMountRule rule = rules.front();
+  auto& rule = rules.front();
 
   ASSERT_EQ(diskInstanceName1, rule.diskInstance);
   ASSERT_EQ(requesterName, rule.name);
@@ -1308,7 +1307,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   std::string disabledReason = "disabledReason";
 
@@ -1331,8 +1330,8 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_disab
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
 
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-  const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+  const auto tapes = m_catalogue->Tape()->getTapes();
+  const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
   {
     auto it = vidToTape.find(m_tape1.vid);
     ASSERT_TRUE(it != vidToTape.end());
@@ -1607,7 +1606,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_retur
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1628,8 +1627,8 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_retur
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
 
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-  const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+  const auto tapes = m_catalogue->Tape()->getTapes();
+  const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
 
   const uint64_t archiveFileId = 1234;
 
@@ -1747,7 +1746,7 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_Activ
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
   m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
@@ -1768,8 +1767,8 @@ TEST_P(cta_catalogue_TapeFileTest, prepareToRetrieveFileUsingArchiveFileId_Activ
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
   m_catalogue->Tape()->createTape(m_admin, m_tape2);
 
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
-  const std::map<std::string, cta::common::dataStructures::Tape> vidToTape = CatalogueTestUtils::tapeListToMap(tapes);
+  const auto tapes = m_catalogue->Tape()->getTapes();
+  const auto vidToTape = CatalogueTestUtils::tapeVectorToMap(tapes);
   {
     auto it = vidToTape.find(m_tape1.vid);
     ASSERT_TRUE(it != vidToTape.end());

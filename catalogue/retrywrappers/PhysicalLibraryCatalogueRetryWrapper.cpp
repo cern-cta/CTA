@@ -36,7 +36,8 @@ void PhysicalLibraryCatalogueRetryWrapper::deletePhysicalLibrary(const std::stri
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::PhysicalLibrary> PhysicalLibraryCatalogueRetryWrapper::getPhysicalLibraries() const {
+std::vector<common::dataStructures::PhysicalLibrary>
+PhysicalLibraryCatalogueRetryWrapper::getPhysicalLibraries() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->PhysicalLibrary()->getPhysicalLibraries(); },

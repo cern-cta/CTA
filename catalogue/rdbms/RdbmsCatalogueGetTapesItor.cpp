@@ -111,7 +111,7 @@ RdbmsCatalogueGetTapesItor::RdbmsCatalogueGetTapesItor(log::Logger& log,
       m_searchCriteria(searchCriteria),
       m_conn(std::move(conn)),
       m_splitByDiskFileId(searchCriteria.diskFileIds.has_value()) {
-  std::list<common::dataStructures::Tape> tapes;
+  std::vector<common::dataStructures::Tape> tapes;
   std::string sql = R"SQL(
     SELECT
       TAPE.VID AS VID,

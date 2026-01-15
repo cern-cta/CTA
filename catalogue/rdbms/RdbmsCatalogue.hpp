@@ -134,7 +134,7 @@ protected:
   /**
    * Cached versions of all mount policies
    */
-  mutable TimeBasedCache<std::string, std::list<common::dataStructures::MountPolicy>> m_allMountPoliciesCache {60};
+  mutable TimeBasedCache<std::string, std::vector<common::dataStructures::MountPolicy>> m_allMountPoliciesCache {60};
 
   friend class RdbmsVirtualOrganizationCatalogue;
   friend class RdbmsTapePoolCatalogue;

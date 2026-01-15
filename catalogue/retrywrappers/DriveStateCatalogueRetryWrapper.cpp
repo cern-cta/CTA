@@ -26,14 +26,14 @@ void DriveStateCatalogueRetryWrapper::createTapeDrive(const common::dataStructur
     m_maxTriesToConnect);
 }
 
-std::list<std::string> DriveStateCatalogueRetryWrapper::getTapeDriveNames() const {
+std::vector<std::string> DriveStateCatalogueRetryWrapper::getTapeDriveNames() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->DriveState()->getTapeDriveNames(); },
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::TapeDrive> DriveStateCatalogueRetryWrapper::getTapeDrives() const {
+std::vector<common::dataStructures::TapeDrive> DriveStateCatalogueRetryWrapper::getTapeDrives() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->DriveState()->getTapeDrives(); },

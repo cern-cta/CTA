@@ -40,8 +40,8 @@ void cta_catalogue_LogicalLibraryTest::TearDown() {
 }
 
 std::map<std::string, cta::common::dataStructures::LogicalLibrary>
-cta_catalogue_LogicalLibraryTest::logicalLibraryListToMap(
-  const std::list<cta::common::dataStructures::LogicalLibrary>& listOfLibs) const {
+cta_catalogue_LogicalLibraryTest::logicalLibraryVectorToMap(
+  const std::vector<cta::common::dataStructures::LogicalLibrary>& listOfLibs) const {
   std::map<std::string, cta::common::dataStructures::LogicalLibrary> nameToLib;
 
   for (auto& lib : listOfLibs) {
@@ -200,12 +200,11 @@ TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_true) {
                                                       comment);
 
   {
-    const std::list<cta::common::dataStructures::LogicalLibrary> libs =
-      m_catalogue->LogicalLibrary()->getLogicalLibraries();
+    const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
 
     ASSERT_EQ(1, libs.size());
 
-    const cta::common::dataStructures::LogicalLibrary lib = libs.front();
+    auto& lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_FALSE(lib.isDisabled);
     ASSERT_EQ(comment, lib.comment);
@@ -224,12 +223,11 @@ TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_true) {
                                                            modifiedLogicalLibraryIsDisabled);
 
   {
-    const std::list<cta::common::dataStructures::LogicalLibrary> libs =
-      m_catalogue->LogicalLibrary()->getLogicalLibraries();
+    const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
 
     ASSERT_EQ(1, libs.size());
 
-    const cta::common::dataStructures::LogicalLibrary lib = libs.front();
+    auto& lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_EQ(modifiedLogicalLibraryIsDisabled, lib.isDisabled);
     ASSERT_EQ(comment, lib.comment);
@@ -254,12 +252,11 @@ TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_false) {
                                                       comment);
 
   {
-    const std::list<cta::common::dataStructures::LogicalLibrary> libs =
-      m_catalogue->LogicalLibrary()->getLogicalLibraries();
+    const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
 
     ASSERT_EQ(1, libs.size());
 
-    const cta::common::dataStructures::LogicalLibrary lib = libs.front();
+    auto& lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_FALSE(lib.isDisabled);
     ASSERT_EQ(comment, lib.comment);
@@ -278,12 +275,11 @@ TEST_P(cta_catalogue_LogicalLibraryTest, setLogicalLibraryDisabled_false) {
                                                            modifiedLogicalLibraryIsDisabled);
 
   {
-    const std::list<cta::common::dataStructures::LogicalLibrary> libs =
-      m_catalogue->LogicalLibrary()->getLogicalLibraries();
+    const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
 
     ASSERT_EQ(1, libs.size());
 
-    const cta::common::dataStructures::LogicalLibrary lib = libs.front();
+    auto& lib = libs.front();
     ASSERT_EQ(logicalLibraryName, lib.name);
     ASSERT_EQ(modifiedLogicalLibraryIsDisabled, lib.isDisabled);
     ASSERT_EQ(comment, lib.comment);
@@ -298,7 +294,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary) {
   const bool libNotToDeleteIsDisabled = false;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string libNotToDeleteComment = "Create logical library to NOT be deleted";
   std::optional<std::string> physicalLibraryName;
 
@@ -386,7 +382,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary) {
   {
     const auto libs = m_catalogue->LogicalLibrary()->getLogicalLibraries();
     ASSERT_EQ(2, libs.size());
-    const auto nameToLib = logicalLibraryListToMap(libs);
+    const auto nameToLib = logicalLibraryVectorToMap(libs);
     ASSERT_EQ(2, nameToLib.size());
 
     {
@@ -445,7 +441,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary_non_empty) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
@@ -466,11 +462,11 @@ TEST_P(cta_catalogue_LogicalLibraryTest, deleteLogicalLibrary_non_empty) {
 
   m_catalogue->Tape()->createTape(m_admin, m_tape1);
 
-  const std::list<cta::common::dataStructures::Tape> tapes = m_catalogue->Tape()->getTapes();
+  const auto tapes = m_catalogue->Tape()->getTapes();
 
   ASSERT_EQ(1, tapes.size());
 
-  const cta::common::dataStructures::Tape tape = tapes.front();
+  auto& tape = tapes.front();
   ASSERT_EQ(m_tape1.vid, tape.vid);
   ASSERT_EQ(m_tape1.mediaType, tape.mediaType);
   ASSERT_EQ(m_tape1.vendor, tape.vendor);
@@ -879,7 +875,7 @@ TEST_P(cta_catalogue_LogicalLibraryTest, createTape) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 

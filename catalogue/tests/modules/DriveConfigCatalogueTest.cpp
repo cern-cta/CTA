@@ -49,7 +49,7 @@ TEST_P(cta_catalogue_DriveConfigTest, getTapeDriveConfig) {
 }
 
 TEST_P(cta_catalogue_DriveConfigTest, getAllDrivesConfigs) {
-  std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> tapeDriveConfigs;
+  std::vector<cta::catalogue::DriveConfigCatalogue::DriveConfig> tapeDriveConfigs;
   // Create 100 tape drives
   for (size_t i = 0; i < 100; i++) {
     std::stringstream ss;

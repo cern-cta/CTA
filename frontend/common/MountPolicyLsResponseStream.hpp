@@ -24,7 +24,8 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<common::dataStructures::MountPolicy> m_mountPolicies;
+  std::vector<common::dataStructures::MountPolicy> m_mountPolicies;
+  std::size_t m_mountPoliciesIdx = 0;
 };
 
 }  // namespace cta::frontend

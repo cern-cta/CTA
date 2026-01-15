@@ -133,14 +133,14 @@ public:
    *
    * @return The names of all the tables in the database schema in alphabetical order
    */
-  std::list<std::string> getTableNames() const;
+  std::vector<std::string> getTableNames() const;
 
   /**
    * Returns the names of all the indices  in the database schema in alphabetical order
    *
    * @return The names of all the indices in the database schema in alphabetical order
    */
-  std::list<std::string> getIndexNames() const;
+  std::vector<std::string> getIndexNames() const;
 
   /**
    * Closes the underlying cached database statements and their connection
@@ -162,7 +162,7 @@ public:
    *
    * @return The names of all the sequences in the database schema in alphabetical order
    */
-  std::list<std::string> getSequenceNames();
+  std::vector<std::string> getSequenceNames();
 
   /**
    * Returns the names of all the triggers in the database schema in alphabetical order
@@ -171,7 +171,7 @@ public:
    *
    * @return The names of all the triggers in the database schema in alphabetical order
    */
-  std::list<std::string> getTriggerNames();
+  std::vector<std::string> getTriggerNames();
 
   /**
    * Returns the names of all the tables that have been set as PARALLEL in alphabetical order
@@ -180,7 +180,7 @@ public:
    *
    * @return the names of all the tables that have been set as PARALLEL in alphabetical order
    */
-  std::list<std::string> getParallelTableNames();
+  std::vector<std::string> getParallelTableNames();
 
   /**
    * Returns the Constraint names of a given table in the database schema
@@ -190,7 +190,7 @@ public:
    * @param tableName the table name to get the constraint names from
    * @return the list of the names of the constraints that the given table has
    */
-  std::list<std::string> getConstraintNames(const std::string& tableName);
+  std::vector<std::string> getConstraintNames(const std::string& tableName);
 
   /**
    * Returns the stored procedure names of the database
@@ -199,7 +199,7 @@ public:
    *
    * @return the list of the names of the stored procedures in the database
    */
-  std::list<std::string> getStoredProcedureNames();
+  std::vector<std::string> getStoredProcedureNames();
 
   /**
    * Returns the synonym names of the database
@@ -208,7 +208,7 @@ public:
    *
    * @return the list of the names of the synonyms in the database
    */
-  std::list<std::string> getSynonymNames();
+  std::vector<std::string> getSynonymNames();
 
   /**
    * Returns the type names of the database
@@ -217,7 +217,7 @@ public:
    *
    * @return the list of the names of the types in the database
    */
-  std::list<std::string> getTypeNames();
+  std::vector<std::string> getTypeNames();
 
   /**
    * Returns the view names of the database
@@ -226,7 +226,7 @@ public:
    *
    * @return the list of the names of the views in the database
    */
-  std::list<std::string> getViewNames();
+  std::vector<std::string> getViewNames();
 
   /**
    * Get a pointer to the connection wrapper implementation

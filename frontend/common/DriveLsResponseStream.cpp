@@ -100,7 +100,7 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
 }
 
 bool DriveLsResponseStream::isDone() {
-  return m_tapeDrives.empty();
+  return m_tapeDrivesIdx >= m_tapeDrives.size();
 }
 
 cta::xrd::Data DriveLsResponseStream::next() {
@@ -108,8 +108,7 @@ cta::xrd::Data DriveLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto dr = m_tapeDrives.front();
-  m_tapeDrives.pop_front();
+  const auto dr = m_tapeDrives[m_tapeDrivesIdx++];
 
   const auto& driveConfigs = m_tapeDriveNameConfigMap[dr.driveName];
 

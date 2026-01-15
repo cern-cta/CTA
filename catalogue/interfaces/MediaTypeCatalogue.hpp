@@ -7,9 +7,9 @@
 
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -52,7 +52,7 @@ public:
    *
    * @return All tape media types.
    */
-  virtual std::list<MediaTypeWithLogs> getMediaTypes() const = 0;
+  virtual std::vector<MediaTypeWithLogs> getMediaTypes() const = 0;
 
   /**
    * Return the media type associated to the tape corresponding to the

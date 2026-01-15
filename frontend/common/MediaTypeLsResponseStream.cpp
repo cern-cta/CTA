@@ -14,7 +14,7 @@ MediaTypeLsResponseStream::MediaTypeLsResponseStream(cta::catalogue::Catalogue& 
       m_mediaTypes(catalogue.MediaType()->getMediaTypes()) {}
 
 bool MediaTypeLsResponseStream::isDone() {
-  return m_mediaTypes.empty();
+  return m_mediaTypesIdx >= m_mediaTypes.size();
 }
 
 cta::xrd::Data MediaTypeLsResponseStream::next() {
@@ -22,8 +22,7 @@ cta::xrd::Data MediaTypeLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto mt = m_mediaTypes.front();
-  m_mediaTypes.pop_front();
+  const auto mt = m_mediaTypes[m_mediaTypesIdx++];
 
   cta::xrd::Data data;
   auto mt_item = data.mutable_mtls_item();

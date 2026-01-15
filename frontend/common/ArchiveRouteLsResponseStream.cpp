@@ -16,7 +16,7 @@ ArchiveRouteLsResponseStream::ArchiveRouteLsResponseStream(cta::catalogue::Catal
       m_archiveRoutes(catalogue.ArchiveRoute()->getArchiveRoutes()) {}
 
 bool ArchiveRouteLsResponseStream::isDone() {
-  return m_archiveRoutes.empty();
+  return m_archiveRoutesIdx >= m_archiveRoutes.size();
 }
 
 cta::xrd::Data ArchiveRouteLsResponseStream::next() {
@@ -24,8 +24,7 @@ cta::xrd::Data ArchiveRouteLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto ar = m_archiveRoutes.front();
-  m_archiveRoutes.pop_front();
+  const auto ar = m_archiveRoutes[m_archiveRoutesIdx++];
 
   cta::xrd::Data data;
   auto ar_item = data.mutable_arls_item();

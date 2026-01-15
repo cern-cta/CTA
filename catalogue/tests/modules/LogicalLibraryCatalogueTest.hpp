@@ -37,7 +37,7 @@ protected:
   const cta::catalogue::CreateTapeAttributes m_tape1;
 
   std::map<std::string, cta::common::dataStructures::LogicalLibrary>
-  logicalLibraryListToMap(const std::list<cta::common::dataStructures::LogicalLibrary>& listOfLibs) const;
+  logicalLibraryVectorToMap(const std::vector<cta::common::dataStructures::LogicalLibrary>& listOfLibs) const;
 };
 
 }  // namespace unitTests

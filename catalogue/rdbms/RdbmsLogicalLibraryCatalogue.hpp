@@ -39,7 +39,7 @@ public:
 
   void deleteLogicalLibrary(const std::string& name) override;
 
-  std::list<common::dataStructures::LogicalLibrary> getLogicalLibraries() const override;
+  std::vector<common::dataStructures::LogicalLibrary> getLogicalLibraries() const override;
 
   void modifyLogicalLibraryName(const common::dataStructures::SecurityIdentity& admin,
                                 const std::string& currentName,

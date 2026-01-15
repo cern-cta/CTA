@@ -35,8 +35,7 @@ TEST_P(cta_catalogue_AdminUserTest, createAdminUser) {
   m_catalogue->AdminUser()->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
 
   {
-    std::list<cta::common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->AdminUser()->getAdminUsers();
+    auto admins = m_catalogue->AdminUser()->getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const auto& a = admins.front();
@@ -62,8 +61,7 @@ TEST_P(cta_catalogue_AdminUserTest, deleteAdminUser) {
   m_catalogue->AdminUser()->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
 
   {
-    std::list<cta::common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->AdminUser()->getAdminUsers();
+    auto admins = m_catalogue->AdminUser()->getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const auto& a = admins.front();
@@ -103,8 +101,7 @@ TEST_P(cta_catalogue_AdminUserTest, modifyAdminUserComment) {
   m_catalogue->AdminUser()->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
 
   {
-    std::list<cta::common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->AdminUser()->getAdminUsers();
+    auto admins = m_catalogue->AdminUser()->getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const auto& a = admins.front();
@@ -121,8 +118,7 @@ TEST_P(cta_catalogue_AdminUserTest, modifyAdminUserComment) {
   m_catalogue->AdminUser()->modifyAdminUserComment(m_localAdmin, m_admin.username, modifiedComment);
 
   {
-    std::list<cta::common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->AdminUser()->getAdminUsers();
+    auto admins = m_catalogue->AdminUser()->getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const auto& a = admins.front();
@@ -148,8 +144,7 @@ TEST_P(cta_catalogue_AdminUserTest, modifyAdminUserComment_emptyStringComment) {
   m_catalogue->AdminUser()->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
 
   {
-    std::list<cta::common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->AdminUser()->getAdminUsers();
+    auto admins = m_catalogue->AdminUser()->getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const cta::common::dataStructures::AdminUser a = admins.front();
@@ -182,8 +177,7 @@ TEST_P(cta_catalogue_AdminUserTest, isAdmin_true) {
   m_catalogue->AdminUser()->createAdminUser(m_localAdmin, m_admin.username, createAdminUserComment);
 
   {
-    std::list<cta::common::dataStructures::AdminUser> admins;
-    admins = m_catalogue->AdminUser()->getAdminUsers();
+    auto admins = m_catalogue->AdminUser()->getAdminUsers();
     ASSERT_EQ(1, admins.size());
 
     const auto& a = admins.front();

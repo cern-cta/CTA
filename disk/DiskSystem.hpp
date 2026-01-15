@@ -11,10 +11,10 @@
 #include "common/log/LogContext.hpp"
 #include "common/utils/Regex.hpp"
 
-#include <list>
 #include <optional>
 #include <set>
 #include <string>
+#include <vector>
 
 namespace cta {
 namespace catalogue {
@@ -51,8 +51,8 @@ struct DiskSystem {
   std::string comment;
 };
 
-class DiskSystemList : public std::list<DiskSystem> {
-  using std::list<DiskSystem>::list;
+class DiskSystemList : public std::vector<DiskSystem> {
+  using std::vector<DiskSystem>::vector;
 
 public:
   /** Get the filesystem for a given destination URL */

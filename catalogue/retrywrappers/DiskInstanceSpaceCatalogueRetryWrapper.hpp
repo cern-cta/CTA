@@ -36,7 +36,7 @@ public:
                                const uint64_t refreshInterval,
                                const std::string& comment) override;
 
-  std::list<common::dataStructures::DiskInstanceSpace> getAllDiskInstanceSpaces() const override;
+  std::vector<common::dataStructures::DiskInstanceSpace> getAllDiskInstanceSpaces() const override;
 
   void modifyDiskInstanceSpaceComment(const common::dataStructures::SecurityIdentity& admin,
                                       const std::string& name,

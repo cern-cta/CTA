@@ -74,7 +74,7 @@ void RequesterGroupMountRuleCatalogueRetryWrapper::createRequesterGroupMountRule
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::RequesterGroupMountRule>
+std::vector<common::dataStructures::RequesterGroupMountRule>
 RequesterGroupMountRuleCatalogueRetryWrapper::getRequesterGroupMountRules() const {
   return retryOnLostConnection(
     m_log,

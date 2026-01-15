@@ -28,7 +28,7 @@ public:
 
   TapeItor getTapesItor(const TapeSearchCriteria& searchCriteria) const override;
 
-  std::list<common::dataStructures::Tape> getTapes(const TapeSearchCriteria& searchCriteria) const override;
+  std::vector<common::dataStructures::Tape> getTapes(const TapeSearchCriteria& searchCriteria) const override;
 
   common::dataStructures::VidToTapeMap getTapesByVid(const std::string& vid) const override;
 
@@ -108,7 +108,7 @@ public:
 
   void noSpaceLeftOnTape(const std::string& vid) override;
 
-  std::list<TapeForWriting> getTapesForWriting(const std::string& logicalLibraryName) const override;
+  std::vector<TapeForWriting> getTapesForWriting(const std::string& logicalLibraryName) const override;
 
   common::dataStructures::Label::Format getTapeLabelFormat(const std::string& vid) const override;
 

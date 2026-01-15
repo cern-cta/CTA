@@ -8,9 +8,9 @@
 #include "common/dataStructures/ArchiveRoute.hpp"
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -45,7 +45,7 @@ public:
                                   const uint32_t copyNb,
                                   const common::dataStructures::ArchiveRouteType& archiveRouteType) = 0;
 
-  virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const = 0;
+  virtual std::vector<common::dataStructures::ArchiveRoute> getArchiveRoutes() const = 0;
 
   /**
    * @return the archive routes of the given storage class and destination tape
@@ -58,8 +58,8 @@ public:
    * @param storageClassName The name of the storage class.
    * @param tapePoolName The name of the tape pool.
    */
-  virtual std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName,
-                                                                           const std::string& tapePoolName) const = 0;
+  virtual std::vector<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName,
+                                                                             const std::string& tapePoolName) const = 0;
 
   /**
    * Modifies the tape pool of the specified archive route.

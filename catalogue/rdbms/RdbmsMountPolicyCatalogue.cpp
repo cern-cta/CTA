@@ -121,13 +121,13 @@ void RdbmsMountPolicyCatalogue::deleteMountPolicy(const std::string& name) {
   m_rdbmsCatalogue->m_allMountPoliciesCache.invalidate();
 }
 
-std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMountPolicies() const {
+std::vector<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMountPolicies() const {
   auto conn = m_connPool->getConn();
   return getMountPolicies(conn);
 }
 
-std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMountPolicies(rdbms::Conn& conn) const {
-  std::list<common::dataStructures::MountPolicy> policies;
+std::vector<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getMountPolicies(rdbms::Conn& conn) const {
+  std::vector<common::dataStructures::MountPolicy> policies;
   const char* const sql = R"SQL(
     SELECT
       MOUNT_POLICY_NAME AS MOUNT_POLICY_NAME,
@@ -241,7 +241,7 @@ RdbmsMountPolicyCatalogue::getMountPolicy(rdbms::Conn& conn, const std::string& 
   return std::nullopt;
 }
 
-std::list<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getCachedMountPolicies() const {
+std::vector<common::dataStructures::MountPolicy> RdbmsMountPolicyCatalogue::getCachedMountPolicies() const {
   auto l_getNonCachedValue = [this] {
     auto conn = m_connPool->getConn();
     return getMountPolicies(conn);

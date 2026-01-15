@@ -25,7 +25,7 @@ void DummyVirtualOrganizationCatalogue::deleteVirtualOrganization(const std::str
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::VirtualOrganization>
+std::vector<common::dataStructures::VirtualOrganization>
 DummyVirtualOrganizationCatalogue::getVirtualOrganizations() const {
   throw exception::NotImplementedException();
 }

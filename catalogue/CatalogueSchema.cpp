@@ -83,8 +83,8 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
 //------------------------------------------------------------------------------
 // getSchemaTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> CatalogueSchema::getSchemaTableNames() const {
-  std::list<std::string> schemaTables;
+std::vector<std::string> CatalogueSchema::getSchemaTableNames() const {
+  std::vector<std::string> schemaTables;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
   while (std::string::npos != (findResult = sql.find(';', searchPos))) {
@@ -107,8 +107,8 @@ std::list<std::string> CatalogueSchema::getSchemaTableNames() const {
 //------------------------------------------------------------------------------
 // getSchemaIndexNames
 //------------------------------------------------------------------------------
-std::list<std::string> CatalogueSchema::getSchemaIndexNames() const {
-  std::list<std::string> schemaIndices;
+std::vector<std::string> CatalogueSchema::getSchemaIndexNames() const {
+  std::vector<std::string> schemaIndices;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
   while (std::string::npos != (findResult = sql.find(';', searchPos))) {
@@ -131,8 +131,8 @@ std::list<std::string> CatalogueSchema::getSchemaIndexNames() const {
 //------------------------------------------------------------------------------
 // getSchemaSequenceNames
 //------------------------------------------------------------------------------
-std::list<std::string> CatalogueSchema::getSchemaSequenceNames() const {
-  std::list<std::string> schemaSequences;
+std::vector<std::string> CatalogueSchema::getSchemaSequenceNames() const {
+  std::vector<std::string> schemaSequences;
   std::string::size_type searchPos = 0;
   std::string::size_type findResult = std::string::npos;
   while (std::string::npos != (findResult = sql.find(';', searchPos))) {

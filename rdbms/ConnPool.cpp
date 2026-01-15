@@ -46,8 +46,8 @@ Conn ConnPool::getConn() {
       connAndStmts->conn = m_connFactory->create();
       connAndStmts->stmtPool = std::make_unique<StmtPool>();
     } else {
-      connAndStmts = std::move(m_connsAndStmts.front());
-      m_connsAndStmts.pop_front();
+      connAndStmts = std::move(m_connsAndStmts.back());
+      m_connsAndStmts.pop_back();
     }
     addNbConnsOnLoan(1);
   }
@@ -84,9 +84,7 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
       // currently in the pool because their underlying TCP/IP connections may
       // also have been lost.
       threading::MutexLocker locker(m_connsAndStmtsMutex);
-      while (!m_connsAndStmts.empty()) {
-        m_connsAndStmts.pop_front();
-      }
+      m_connsAndStmts.clear();
       removeNbConnsOnLoan(1);
       m_connsAndStmtsCv.signal();
       return;
@@ -108,9 +106,7 @@ void ConnPool::returnConn(std::unique_ptr<ConnAndStmts> connAndStmts) {
     // currently in the pool because their underlying TCP/IP connections may
     // also have been lost.
     threading::MutexLocker locker(m_connsAndStmtsMutex);
-    while (!m_connsAndStmts.empty()) {
-      m_connsAndStmts.pop_front();
-    }
+    m_connsAndStmts.clear();
     removeNbConnsOnLoan(1);
     m_connsAndStmtsCv.signal();
   }

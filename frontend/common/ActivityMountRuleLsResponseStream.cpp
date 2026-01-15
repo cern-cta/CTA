@@ -14,7 +14,7 @@ ActivityMountRuleLsResponseStream::ActivityMountRuleLsResponseStream(cta::catalo
       m_activityMountRules(catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules()) {}
 
 bool ActivityMountRuleLsResponseStream::isDone() {
-  return m_activityMountRules.empty();
+  return m_activityMountRulesIdx >= m_activityMountRules.size();
 }
 
 cta::xrd::Data ActivityMountRuleLsResponseStream::next() {
@@ -22,8 +22,7 @@ cta::xrd::Data ActivityMountRuleLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto amr = m_activityMountRules.front();
-  m_activityMountRules.pop_front();
+  const auto amr = m_activityMountRules[m_activityMountRulesIdx++];
 
   cta::xrd::Data data;
   auto amr_item = data.mutable_amrls_item();

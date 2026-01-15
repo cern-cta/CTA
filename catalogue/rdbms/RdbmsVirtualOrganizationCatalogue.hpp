@@ -29,7 +29,7 @@ public:
                                  const common::dataStructures::VirtualOrganization& vo) override;
 
   void deleteVirtualOrganization(const std::string& voName) override;
-  std::list<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const override;
+  std::vector<common::dataStructures::VirtualOrganization> getVirtualOrganizations() const override;
 
   common::dataStructures::VirtualOrganization
   getVirtualOrganizationOfTapepool(const std::string& tapepoolName) const override;

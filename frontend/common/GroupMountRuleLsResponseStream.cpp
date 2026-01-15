@@ -14,7 +14,7 @@ GroupMountRuleLsResponseStream::GroupMountRuleLsResponseStream(cta::catalogue::C
       m_groupMountRules(catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules()) {}
 
 bool GroupMountRuleLsResponseStream::isDone() {
-  return m_groupMountRules.empty();
+  return m_groupMountRulesIdx >= m_groupMountRules.size();
 }
 
 cta::xrd::Data GroupMountRuleLsResponseStream::next() {
@@ -22,8 +22,7 @@ cta::xrd::Data GroupMountRuleLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto gmr = m_groupMountRules.front();
-  m_groupMountRules.pop_front();
+  const auto gmr = m_groupMountRules[m_groupMountRulesIdx++];
 
   cta::xrd::Data data;
   auto gmr_item = data.mutable_gmrls_item();

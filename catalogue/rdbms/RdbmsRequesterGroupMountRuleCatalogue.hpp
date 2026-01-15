@@ -44,7 +44,7 @@ public:
                                      const std::string& requesterGroupName,
                                      const std::string& comment) override;
 
-  std::list<common::dataStructures::RequesterGroupMountRule> getRequesterGroupMountRules() const override;
+  std::vector<common::dataStructures::RequesterGroupMountRule> getRequesterGroupMountRules() const override;
 
   void deleteRequesterGroupMountRule(const std::string& diskInstanceName,
                                      const std::string& requesterGroupName) override;

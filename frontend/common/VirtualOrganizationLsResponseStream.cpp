@@ -14,7 +14,7 @@ VirtualOrganizationLsResponseStream::VirtualOrganizationLsResponseStream(cta::ca
       m_virtualOrganizations(catalogue.VO()->getVirtualOrganizations()) {}
 
 bool VirtualOrganizationLsResponseStream::isDone() {
-  return m_virtualOrganizations.empty();
+  return m_virtualOrganizationsIdx >= m_virtualOrganizations.size();
 }
 
 cta::xrd::Data VirtualOrganizationLsResponseStream::next() {
@@ -22,8 +22,7 @@ cta::xrd::Data VirtualOrganizationLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto vo = m_virtualOrganizations.front();
-  m_virtualOrganizations.pop_front();
+  const auto vo = m_virtualOrganizations[m_virtualOrganizationsIdx++];
 
   cta::xrd::Data data;
   auto vo_item = data.mutable_vols_item();

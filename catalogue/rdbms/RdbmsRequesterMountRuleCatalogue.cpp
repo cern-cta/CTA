@@ -168,8 +168,9 @@ void RdbmsRequesterMountRuleCatalogue::createRequesterMountRule(const common::da
   m_rdbmsCatalogue->m_userMountPolicyCache.invalidate();
 }
 
-std::list<common::dataStructures::RequesterMountRule> RdbmsRequesterMountRuleCatalogue::getRequesterMountRules() const {
-  std::list<common::dataStructures::RequesterMountRule> rules;
+std::vector<common::dataStructures::RequesterMountRule>
+RdbmsRequesterMountRuleCatalogue::getRequesterMountRules() const {
+  std::vector<common::dataStructures::RequesterMountRule> rules;
   const char* const sql = R"SQL(
     SELECT
       DISK_INSTANCE_NAME AS DISK_INSTANCE_NAME,

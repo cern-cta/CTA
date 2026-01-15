@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <list>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -59,7 +59,7 @@ public:
    * @return the rules that specify which mount policy is be used for which
    * requester group.
    */
-  virtual std::list<common::dataStructures::RequesterGroupMountRule> getRequesterGroupMountRules() const = 0;
+  virtual std::vector<common::dataStructures::RequesterGroupMountRule> getRequesterGroupMountRules() const = 0;
 
   /**
    * Deletes the specified mount rule.

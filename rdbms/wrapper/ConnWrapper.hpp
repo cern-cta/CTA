@@ -9,9 +9,9 @@
 #include "rdbms/wrapper/StmtWrapper.hpp"
 
 #include <atomic>
-#include <list>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace cta::rdbms::wrapper {
 
@@ -87,7 +87,7 @@ public:
    * @return The names of all the tables in the database schema in alphabetical
    * order.
    */
-  virtual std::list<std::string> getTableNames() = 0;
+  virtual std::vector<std::string> getTableNames() = 0;
 
   /**
    * Returns the names of all the indices in the database schema in alphabetical
@@ -96,7 +96,7 @@ public:
    * @return The names of all the indices in the database schema in alphabetical
    * order.
    */
-  virtual std::list<std::string> getIndexNames() = 0;
+  virtual std::vector<std::string> getIndexNames() = 0;
 
   /**
    * Returns true if this connection is open.
@@ -113,7 +113,7 @@ public:
    * @return The names of all the sequences in the database schema in
    * alphabetical order.
    */
-  virtual std::list<std::string> getSequenceNames() = 0;
+  virtual std::vector<std::string> getSequenceNames() = 0;
 
   /**
    * Returns the names of all the triggers in the database schema in
@@ -125,7 +125,7 @@ public:
    * @return The names of all the triggers in the database schema in
    * alphabetical order.
    */
-  virtual std::list<std::string> getTriggerNames() = 0;
+  virtual std::vector<std::string> getTriggerNames() = 0;
 
   /**
    * Returns the names of all the tables that have been set as PARALLEL
@@ -137,7 +137,7 @@ public:
    * @return the names of all the tables that have been set as PARALLEL
    * in alphabetical order.
    */
-  virtual std::list<std::string> getParallelTableNames() = 0;
+  virtual std::vector<std::string> getParallelTableNames() = 0;
 
   /**
    * Returns the Constraint names of a given table in the database schema
@@ -148,7 +148,7 @@ public:
    * @param tableName the table name to get the constraint names from
    * @return the list of the names of the constraints that the given table has.
    */
-  virtual std::list<std::string> getConstraintNames(const std::string& tableName) = 0;
+  virtual std::vector<std::string> getConstraintNames(const std::string& tableName) = 0;
 
   /**
    *
@@ -159,7 +159,7 @@ public:
    *
    * @return the list of the names of the stored procedures in the database
    */
-  virtual std::list<std::string> getStoredProcedureNames() = 0;
+  virtual std::vector<std::string> getStoredProcedureNames() = 0;
 
   /**
    * Returns the synonym names of the database
@@ -169,7 +169,7 @@ public:
    *
    * @return the list of the names of the synonyms in the database
    */
-  virtual std::list<std::string> getSynonymNames() = 0;
+  virtual std::vector<std::string> getSynonymNames() = 0;
 
   /**
    * Returns the type names of the database
@@ -179,7 +179,7 @@ public:
    *
    * @return the list of the names of the types in the database
    */
-  virtual std::list<std::string> getTypeNames() = 0;
+  virtual std::vector<std::string> getTypeNames() = 0;
 
   /**
    * Returns the view names of the database
@@ -189,7 +189,7 @@ public:
    *
    * @return the list of the names of the views in the database
    */
-  virtual std::list<std::string> getViewNames() = 0;
+  virtual std::vector<std::string> getViewNames() = 0;
 
   /**
    * @brief Get the logical database namespace.

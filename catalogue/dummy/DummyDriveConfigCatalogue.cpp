@@ -20,13 +20,13 @@ void DummyDriveConfigCatalogue::createTapeDriveConfig(const std::string& tapeDri
   m_driveConfigs.emplace_back(DriveConfig {tapeDriveName, category, keyName, value, source});
 }
 
-std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> DummyDriveConfigCatalogue::getTapeDriveConfigs() const {
+std::vector<cta::catalogue::DriveConfigCatalogue::DriveConfig> DummyDriveConfigCatalogue::getTapeDriveConfigs() const {
   return m_driveConfigs;
 }
 
-std::list<std::string>
+std::vector<std::string>
 DummyDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::string& schedulerBackendName) const {
-  std::list<std::string> validTapeDrives;
+  std::vector<std::string> validTapeDrives;
   for (const auto& config : m_driveConfigs) {
     if (config.keyName == SCHEDULER_NAME_CONFIG_KEY && config.value == schedulerBackendName) {
       validTapeDrives.emplace_back(config.tapeDriveName);
@@ -35,8 +35,8 @@ DummyDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::strin
   return validTapeDrives;
 }
 
-std::list<std::pair<std::string, std::string>> DummyDriveConfigCatalogue::getTapeDriveConfigNamesAndKeys() const {
-  std::list<std::pair<std::string, std::string>> result;
+std::vector<std::pair<std::string, std::string>> DummyDriveConfigCatalogue::getTapeDriveConfigNamesAndKeys() const {
+  std::vector<std::pair<std::string, std::string>> result;
   for (auto& config : m_driveConfigs) {
     result.emplace_back(config.tapeDriveName, config.keyName);
   }

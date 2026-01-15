@@ -47,7 +47,7 @@ protected:
    * @return Map from tape media type name to tape media type.
    */
   std::map<std::string, cta::catalogue::MediaTypeWithLogs>
-  mediaTypeWithLogsListToMap(const std::list<cta::catalogue::MediaTypeWithLogs>& listOfMediaTypes);
+  mediaTypeWithLogsVectorToMap(const std::vector<cta::catalogue::MediaTypeWithLogs>& listOfMediaTypes);
 };
 
 }  // namespace unitTests

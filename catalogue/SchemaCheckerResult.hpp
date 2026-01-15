@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include <list>
 #include <string>
+#include <vector>
 
 namespace cta::catalogue {
 
@@ -67,8 +67,8 @@ public:
   void addWarning(const std::string& warning);
 
 private:
-  std::list<std::string> m_errors;
-  std::list<std::string> m_warnings;
+  std::vector<std::string> m_errors;
+  std::vector<std::string> m_warnings;
   Status m_status = Status::SUCCESS;
 };
 

@@ -135,8 +135,8 @@ AutocommitMode PostgresConn::getAutocommitMode() const noexcept {
 //------------------------------------------------------------------------------
 // getSequenceNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getSequenceNames() {
-  std::list<std::string> names;
+std::vector<std::string> PostgresConn::getSequenceNames() {
+  std::vector<std::string> names;
 
   threading::RWLockWrLocker locker(m_lock);
 
@@ -209,8 +209,8 @@ std::map<std::string, std::string, std::less<>> PostgresConn::getColumns(const s
 //------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getTableNames() {
-  std::list<std::string> names;
+std::vector<std::string> PostgresConn::getTableNames() {
+  std::vector<std::string> names;
 
   threading::RWLockWrLocker locker(m_lock);
 
@@ -250,8 +250,8 @@ std::list<std::string> PostgresConn::getTableNames() {
 //------------------------------------------------------------------------------
 // getIndexNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getIndexNames() {
-  std::list<std::string> names;
+std::vector<std::string> PostgresConn::getIndexNames() {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       INDEXNAME
@@ -278,22 +278,22 @@ std::list<std::string> PostgresConn::getIndexNames() {
 //------------------------------------------------------------------------------
 // getTriggerNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getTriggerNames() {
-  return std::list<std::string>();
+std::vector<std::string> PostgresConn::getTriggerNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getParallelTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getParallelTableNames() {
-  return std::list<std::string>();
+std::vector<std::string> PostgresConn::getParallelTableNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getConstraintNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getConstraintNames(const std::string& tableName) {
-  std::list<std::string> names;
+std::vector<std::string> PostgresConn::getConstraintNames(const std::string& tableName) {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       CON.CONNAME AS CONSTRAINT_NAME
@@ -325,22 +325,22 @@ std::list<std::string> PostgresConn::getConstraintNames(const std::string& table
 //------------------------------------------------------------------------------
 // getStoredProcedureNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getStoredProcedureNames() {
-  return std::list<std::string>();
+std::vector<std::string> PostgresConn::getStoredProcedureNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getSynonymNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getSynonymNames() {
-  return std::list<std::string>();
+std::vector<std::string> PostgresConn::getSynonymNames() {
+  return std::vector<std::string>();
 }
 
 //------------------------------------------------------------------------------
 // getTypeNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getTypeNames() {
-  std::list<std::string> names;
+std::vector<std::string> PostgresConn::getTypeNames() {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       TYPNAME
@@ -360,8 +360,8 @@ std::list<std::string> PostgresConn::getTypeNames() {
 //------------------------------------------------------------------------------
 // getTypeNames
 //------------------------------------------------------------------------------
-std::list<std::string> PostgresConn::getViewNames() {
-  std::list<std::string> names;
+std::vector<std::string> PostgresConn::getViewNames() {
+  std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
       TABLE_NAME

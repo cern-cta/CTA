@@ -157,8 +157,8 @@ void RdbmsPhysicalLibraryCatalogue::deletePhysicalLibrary(const std::string& nam
   }
 }
 
-std::list<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraries() const {
-  std::list<common::dataStructures::PhysicalLibrary> libs;
+std::vector<common::dataStructures::PhysicalLibrary> RdbmsPhysicalLibraryCatalogue::getPhysicalLibraries() const {
+  std::vector<common::dataStructures::PhysicalLibrary> libs;
   const char* const sql = R"SQL(
     SELECT
       PHYSICAL_LIBRARY_NAME AS PHYSICAL_LIBRARY_NAME,

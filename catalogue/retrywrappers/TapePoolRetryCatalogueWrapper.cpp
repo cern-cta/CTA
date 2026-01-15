@@ -25,7 +25,7 @@ void TapePoolCatalogueRetryWrapper::createTapePool(const common::dataStructures:
                                                    const std::string& vo,
                                                    const uint64_t nbPartialTapes,
                                                    const std::optional<std::string>& encryptionKeyNameOpt,
-                                                   const std::list<std::string>& supply_list,
+                                                   const std::vector<std::string>& supply_list,
                                                    const std::string& comment) {
   return retryOnLostConnection(
     m_log,
@@ -43,7 +43,7 @@ void TapePoolCatalogueRetryWrapper::deleteTapePool(const std::string& name) {
     m_maxTriesToConnect);
 }
 
-std::list<TapePool> TapePoolCatalogueRetryWrapper::getTapePools(const TapePoolSearchCriteria& searchCriteria) const {
+std::vector<TapePool> TapePoolCatalogueRetryWrapper::getTapePools(const TapePoolSearchCriteria& searchCriteria) const {
   return retryOnLostConnection(
     m_log,
     [this, &searchCriteria] { return m_catalogue->TapePool()->getTapePools(searchCriteria); },
@@ -99,7 +99,7 @@ void TapePoolCatalogueRetryWrapper::setTapePoolEncryption(const common::dataStru
 
 void TapePoolCatalogueRetryWrapper::modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                                                          const std::string& name,
-                                                         const std::list<std::string>& supply_list) {
+                                                         const std::vector<std::string>& supply_list) {
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &supply_list] {

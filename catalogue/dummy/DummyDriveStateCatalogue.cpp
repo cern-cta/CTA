@@ -23,7 +23,7 @@ void DummyDriveStateCatalogue::deleteTapeDrive(const std::string& tapeDriveName)
   throw exception::NotImplementedException();
 }
 
-std::list<std::string> DummyDriveStateCatalogue::getTapeDriveNames() const {
+std::vector<std::string> DummyDriveStateCatalogue::getTapeDriveNames() const {
   return {m_tapeDriveStatus.driveName};
 }
 
@@ -53,8 +53,8 @@ DummyDriveStateCatalogue::getTapeDrive(const std::string& tapeDriveName) const {
   return tapeDriveStatus;
 }
 
-std::list<common::dataStructures::TapeDrive> DummyDriveStateCatalogue::getTapeDrives() const {
-  std::list<common::dataStructures::TapeDrive> tapeDrives;
+std::vector<common::dataStructures::TapeDrive> DummyDriveStateCatalogue::getTapeDrives() const {
+  std::vector<common::dataStructures::TapeDrive> tapeDrives;
   if (const auto tapeDrive = getTapeDrive(m_tapeDriveStatus.driveName); tapeDrive.has_value()) {
     tapeDrives.push_back(tapeDrive.value());
   }

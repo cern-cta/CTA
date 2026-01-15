@@ -76,7 +76,7 @@ void RequesterActivityMountRuleCatalogueRetryWrapper::createRequesterActivityMou
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::RequesterActivityMountRule>
+std::vector<common::dataStructures::RequesterActivityMountRule>
 RequesterActivityMountRuleCatalogueRetryWrapper::getRequesterActivityMountRules() const {
   return retryOnLostConnection(
     m_log,

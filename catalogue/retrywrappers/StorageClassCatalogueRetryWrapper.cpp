@@ -36,7 +36,7 @@ void StorageClassCatalogueRetryWrapper::deleteStorageClass(const std::string& st
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::StorageClass> StorageClassCatalogueRetryWrapper::getStorageClasses() const {
+std::vector<common::dataStructures::StorageClass> StorageClassCatalogueRetryWrapper::getStorageClasses() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->StorageClass()->getStorageClasses(); },

@@ -6,8 +6,8 @@
 #pragma once
 
 #include <istream>
-#include <list>
 #include <string>
+#include <vector>
 
 namespace cta::rdbms {
 
@@ -160,7 +160,7 @@ struct Login {
    * @param is The input stream.
    * @return A list of the non-empty lines.
    */
-  static std::list<std::string> readNonEmptyLines(std::istream& inputStream);
+  static std::vector<std::string> readNonEmptyLines(std::istream& inputStream);
 
   /**
    * Structure containing two strings: the database type string and the
@@ -241,7 +241,7 @@ struct Login {
    */
   static std::string getPostgresqlDbNamespace(const std::string& connectionDetails);
 
-  static const std::list<std::string> dbTypeStr;
+  static const std::vector<std::string> dbTypeStr;
 
   /**
    * Human readable description of the format of the database

@@ -135,8 +135,8 @@ void RdbmsLogicalLibraryCatalogue::deleteLogicalLibrary(const std::string& name)
   }
 }
 
-std::list<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::getLogicalLibraries() const {
-  std::list<common::dataStructures::LogicalLibrary> libs;
+std::vector<common::dataStructures::LogicalLibrary> RdbmsLogicalLibraryCatalogue::getLogicalLibraries() const {
+  std::vector<common::dataStructures::LogicalLibrary> libs;
   const char* const sql = R"SQL(
     SELECT
       LOGICAL_LIBRARY_NAME AS LOGICAL_LIBRARY_NAME,

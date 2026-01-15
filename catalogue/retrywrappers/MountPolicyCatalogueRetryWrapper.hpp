@@ -30,11 +30,11 @@ public:
   void createMountPolicy(const common::dataStructures::SecurityIdentity& admin,
                          const CreateMountPolicyAttributes& mountPolicy) override;
 
-  std::list<common::dataStructures::MountPolicy> getMountPolicies() const override;
+  std::vector<common::dataStructures::MountPolicy> getMountPolicies() const override;
 
   std::optional<common::dataStructures::MountPolicy> getMountPolicy(const std::string& mountPolicyName) const override;
 
-  std::list<common::dataStructures::MountPolicy> getCachedMountPolicies() const override;
+  std::vector<common::dataStructures::MountPolicy> getCachedMountPolicies() const override;
 
   void deleteMountPolicy(const std::string& name) override;
 

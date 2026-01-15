@@ -20,7 +20,7 @@ LogicalLibraryLsResponseStream::LogicalLibraryLsResponseStream(cta::catalogue::C
   m_logicalLibraries = m_catalogue.LogicalLibrary()->getLogicalLibraries();
 
   if (disabled.has_value()) {
-    std::list<cta::common::dataStructures::LogicalLibrary>::iterator next_ll = m_logicalLibraries.begin();
+    auto next_ll = m_logicalLibraries.begin();
     while (next_ll != m_logicalLibraries.end()) {
       if (disabled.value() != (*next_ll).isDisabled) {
         next_ll = m_logicalLibraries.erase(next_ll);
@@ -32,7 +32,7 @@ LogicalLibraryLsResponseStream::LogicalLibraryLsResponseStream(cta::catalogue::C
 }
 
 bool LogicalLibraryLsResponseStream::isDone() {
-  return m_logicalLibraries.empty();
+  return m_logicalLibrariesIdx >= m_logicalLibraries.size();
 }
 
 cta::xrd::Data LogicalLibraryLsResponseStream::next() {
@@ -40,8 +40,7 @@ cta::xrd::Data LogicalLibraryLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto ll = m_logicalLibraries.front();
-  m_logicalLibraries.pop_front();
+  const auto ll = m_logicalLibraries[m_logicalLibrariesIdx++];
 
   cta::xrd::Data data;
   auto ll_item = data.mutable_llls_item();

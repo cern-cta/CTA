@@ -50,7 +50,7 @@ struct QueueAndMountSummary {
   std::list<std::string> mountPolicies;
 
   static QueueAndMountSummary*
-  getOrCreateEntry(std::list<QueueAndMountSummary>& summaryList,
+  getOrCreateEntry(std::vector<QueueAndMountSummary>& summaryList,
                    MountType mountType,
                    const std::string& tapePool,
                    const std::string& vid,

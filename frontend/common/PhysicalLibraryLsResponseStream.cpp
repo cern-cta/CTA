@@ -14,7 +14,7 @@ PhysicalLibraryLsResponseStream::PhysicalLibraryLsResponseStream(cta::catalogue:
       m_physicalLibraries(catalogue.PhysicalLibrary()->getPhysicalLibraries()) {}
 
 bool PhysicalLibraryLsResponseStream::isDone() {
-  return m_physicalLibraries.empty();
+  return m_physicalLibrariesIdx >= m_physicalLibraries.size();
 }
 
 cta::xrd::Data PhysicalLibraryLsResponseStream::next() {
@@ -22,8 +22,7 @@ cta::xrd::Data PhysicalLibraryLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto pl = m_physicalLibraries.front();
-  m_physicalLibraries.pop_front();
+  const auto pl = m_physicalLibraries[m_physicalLibrariesIdx++];
 
   cta::xrd::Data data;
   auto pl_item = data.mutable_plls_item();

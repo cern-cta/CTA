@@ -44,7 +44,7 @@ TapeItor TapeCatalogueRetryWrapper::getTapesItor(const TapeSearchCriteria& searc
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::Tape>
+std::vector<common::dataStructures::Tape>
 TapeCatalogueRetryWrapper::getTapes(const TapeSearchCriteria& searchCriteria) const {
   return retryOnLostConnection(
     m_log,
@@ -268,7 +268,7 @@ void TapeCatalogueRetryWrapper::noSpaceLeftOnTape(const std::string& vid) {
     m_maxTriesToConnect);
 }
 
-std::list<TapeForWriting> TapeCatalogueRetryWrapper::getTapesForWriting(const std::string& logicalLibraryName) const {
+std::vector<TapeForWriting> TapeCatalogueRetryWrapper::getTapesForWriting(const std::string& logicalLibraryName) const {
   return retryOnLostConnection(
     m_log,
     [this, &logicalLibraryName] { return m_catalogue->Tape()->getTapesForWriting(logicalLibraryName); },

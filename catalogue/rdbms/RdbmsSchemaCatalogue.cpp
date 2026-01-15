@@ -91,7 +91,7 @@ void RdbmsSchemaCatalogue::ping() {
 //------------------------------------------------------------------------------
 // getTableNames
 //------------------------------------------------------------------------------
-std::list<std::string> RdbmsSchemaCatalogue::getTableNames() const {
+std::vector<std::string> RdbmsSchemaCatalogue::getTableNames() const {
   auto conn = m_connPool->getConn();
   return conn.getTableNames();
 }

@@ -154,9 +154,9 @@ void RdbmsVirtualOrganizationCatalogue::deleteVirtualOrganization(const std::str
   m_rdbmsCatalogue->m_tapepoolVirtualOrganizationCache.invalidate();
 }
 
-std::list<common::dataStructures::VirtualOrganization>
+std::vector<common::dataStructures::VirtualOrganization>
 RdbmsVirtualOrganizationCatalogue::getVirtualOrganizations() const {
-  std::list<common::dataStructures::VirtualOrganization> virtualOrganizations;
+  std::vector<common::dataStructures::VirtualOrganization> virtualOrganizations;
   const char* const sql = R"SQL(
     SELECT
       VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,

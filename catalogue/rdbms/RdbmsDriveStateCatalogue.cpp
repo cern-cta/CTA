@@ -310,8 +310,8 @@ void RdbmsDriveStateCatalogue::deleteTapeDrive(const std::string& tapeDriveName)
   stmt.executeNonQuery();
 }
 
-std::list<std::string> RdbmsDriveStateCatalogue::getTapeDriveNames() const {
-  std::list<std::string> tapeDriveNames;
+std::vector<std::string> RdbmsDriveStateCatalogue::getTapeDriveNames() const {
+  std::vector<std::string> tapeDriveNames;
   const char* const sql = R"SQL(
     SELECT
       DRIVE_NAME AS DRIVE_NAME
@@ -418,8 +418,8 @@ common::dataStructures::TapeDrive RdbmsDriveStateCatalogue::gettingSqlTapeDriveV
   return tapeDrive;
 }
 
-std::list<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDrives() const {
-  std::list<common::dataStructures::TapeDrive> tapeDrives;
+std::vector<common::dataStructures::TapeDrive> RdbmsDriveStateCatalogue::getTapeDrives() const {
+  std::vector<common::dataStructures::TapeDrive> tapeDrives;
   const char* const sql = R"SQL(
     SELECT
       DRIVE_STATE.DRIVE_NAME AS DRIVE_NAME,

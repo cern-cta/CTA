@@ -8,8 +8,6 @@
 #include "CtaAdminResponseStream.hpp"
 #include "catalogue/TapePool.hpp"
 
-#include <list>
-
 #include "cta_admin.pb.h"
 
 namespace cta::frontend {
@@ -25,8 +23,10 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<cta::catalogue::TapePool> m_tapePools;
-  std::list<cta::catalogue::TapePool> buildTapePoolList(const admin::AdminCmd& admincmd);
+  std::vector<cta::catalogue::TapePool> buildTapePoolList(const admin::AdminCmd& admincmd);
+
+  std::vector<cta::catalogue::TapePool> m_tapePools;
+  std::size_t m_tapePoolsIdx = 0;
 };
 
 }  // namespace cta::frontend

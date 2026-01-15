@@ -230,9 +230,8 @@ public:
   void removeDrive(const std::string& driveName, log::LogContext& lc);
 
   /**
-   * Reports the state of the drive to the object store. This information is then reported
-   * to the user through the command line interface, via getDriveStates(). This function
-   * any necessary field in the drive's state. The drive entry will be created if necessary.
+   * Reports the state of the drive to the object store. This function fills
+   * any necessary fields in the drive's state. The drive entry will be created if necessary.
    * @param defaultState a drive state containing all the default values
    * @param type the type of the session, if any
    * @param status the state of the drive. Reporting the state to down will also
@@ -277,12 +276,6 @@ public:
   std::optional<cta::common::dataStructures::TapeDrive> getDriveState(const std::string& tapeDriveName,
                                                                       log::LogContext* lc) const;
 
-  /**
-   * Dumps the states of all drives for display
-   * @return A list of drive state structures.
-   */
-  std::list<cta::common::dataStructures::TapeDrive> getDriveStates(log::LogContext& lc) const;
-
   /*============== Actual mount scheduling and queue status reporting ========*/
 private:
   using TapePoolMountPair = std::pair<std::string, common::dataStructures::MountType>;
@@ -314,7 +307,7 @@ private:
                                    ExistingMountSummaryPerTapepool& existingMountsDistinctTypeSummaryPerTapepool,
                                    ExistingMountSummaryPerVo& existingMountBasicTypeSummaryPerVo,
                                    std::set<std::string, std::less<>>& tapesInUse,
-                                   std::list<catalogue::TapeForWriting>& tapeList,
+                                   std::vector<catalogue::TapeForWriting>& tapesForWriting,
                                    double& getTapeInfoTime,
                                    double& candidateSortingTime,
                                    double& getTapeForWriteTime,
@@ -356,7 +349,7 @@ public:
    * @return the archive mount policy with highest priority
    */
   std::string
-  getHighestPriorityArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
+  getHighestPriorityArchiveMountPolicyName(const std::vector<common::dataStructures::MountPolicy>& mountPolicies) const;
 
   /**
    * Return the name of the archive mount policy with lowest request age from the mountPolicies passed in parameter
@@ -364,8 +357,8 @@ public:
    * @param mountPolicies the list of mount policies in order to create the best one.
    * @return the archive mount policy with lowest request age
    */
-  std::string
-  getLowestRequestAgeArchiveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
+  std::string getLowestRequestAgeArchiveMountPolicyName(
+    const std::vector<common::dataStructures::MountPolicy>& mountPolicies) const;
 
   /**
    * Return the name of the retrieve mount policy with highest priority from the mountPolicies passed in parameter
@@ -373,8 +366,8 @@ public:
    * @param mountPolicies the list of mount policies in order to create the best one.
    * @return the retrieve mount policy with highest priority
    */
-  std::string
-  getHighestPriorityRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
+  std::string getHighestPriorityRetrieveMountPolicyName(
+    const std::vector<common::dataStructures::MountPolicy>& mountPolicies) const;
 
   /**
    * Return the name of the retrieve mount policy with lowest request age from the mountPolicies passed in parameter
@@ -382,8 +375,8 @@ public:
    * @param mountPolicies the list of mount policies in order to create the best one.
    * @return the retrieve mount policy with lowest request age
    */
-  std::string
-  getLowestRequestAgeRetrieveMountPolicyName(const std::list<common::dataStructures::MountPolicy>& mountPolicies) const;
+  std::string getLowestRequestAgeRetrieveMountPolicyName(
+    const std::vector<common::dataStructures::MountPolicy>& mountPolicies) const;
 
   /**
    * Given a list of mount policies, it compares all of them to extract both the maximum archive priority and the minimum
@@ -392,7 +385,7 @@ public:
    * @return a pair with the max retrieve priority and minimum archive age
    */
   static std::pair<uint64_t, uint64_t>
-  getArchiveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
+  getArchiveMountPolicyMaxPriorityMinAge(const std::vector<common::dataStructures::MountPolicy>& mountPolicies);
 
   /**
    * Given a list of mount policies, it compares all of them to extract both the maximum retrieve priority and the minimum
@@ -401,7 +394,7 @@ public:
    * @return a pair with the max retrieve priority and minimum retrieve age
    */
   static std::pair<uint64_t, uint64_t>
-  getRetrieveMountPolicyMaxPriorityMinAge(const std::list<common::dataStructures::MountPolicy>& mountPolicies);
+  getRetrieveMountPolicyMaxPriorityMinAge(const std::vector<common::dataStructures::MountPolicy>& mountPolicies);
 
   /**
    * After TapeMountDecisionInfo is received from the Scheduler Database
@@ -425,8 +418,8 @@ public:
    * @return the list of MountPolicies that are in the map
    */
 
-  std::list<common::dataStructures::MountPolicy>
-  getMountPoliciesInQueue(const std::list<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
+  std::vector<common::dataStructures::MountPolicy>
+  getMountPoliciesInQueue(const std::vector<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
                           const std::map<std::string, uint64_t>& queueMountPolicyMap);
 
   /**
@@ -457,7 +450,7 @@ public:
    * @param lc
    * @return
    */
-  std::list<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext& lc);
+  std::vector<common::dataStructures::QueueAndMountSummary> getQueuesAndMountSummaries(log::LogContext& lc);
 
   /**
    * @brief Updates the tape state for a given tape identified by its VID if it is currently in a PENDING state.

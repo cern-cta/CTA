@@ -7,9 +7,9 @@
 
 #include "catalogue/TapeFileSearchCriteria.hpp"
 
-#include <list>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -105,7 +105,7 @@ public:
    * @param maxNbFiles The maximum number of files to be returned.
    * @return The specified files in tape file sequence order.
    */
-  virtual std::list<common::dataStructures::ArchiveFile>
+  virtual std::vector<common::dataStructures::ArchiveFile>
   getFilesForRepack(const std::string& vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const = 0;
 
   /**

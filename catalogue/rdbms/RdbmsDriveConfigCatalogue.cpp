@@ -77,8 +77,8 @@ void RdbmsDriveConfigCatalogue::createTapeDriveConfig(const std::string& tapeDri
   lc.log(log::INFO, "Catalogue - created drive configuration");
 }
 
-std::list<std::pair<std::string, std::string>> RdbmsDriveConfigCatalogue::getTapeDriveConfigNamesAndKeys() const {
-  std::list<std::pair<std::string, std::string>> namesAndKeys;
+std::vector<std::pair<std::string, std::string>> RdbmsDriveConfigCatalogue::getTapeDriveConfigNamesAndKeys() const {
+  std::vector<std::pair<std::string, std::string>> namesAndKeys;
   const char* const sql = R"SQL(
     SELECT
       DRIVE_NAME AS DRIVE_NAME,
@@ -99,7 +99,7 @@ std::list<std::pair<std::string, std::string>> RdbmsDriveConfigCatalogue::getTap
   return namesAndKeys;
 }
 
-std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> RdbmsDriveConfigCatalogue::getTapeDriveConfigs() const {
+std::vector<cta::catalogue::DriveConfigCatalogue::DriveConfig> RdbmsDriveConfigCatalogue::getTapeDriveConfigs() const {
   const char* const sql = R"SQL(
     SELECT
       DRIVE_NAME AS DRIVE_NAME,
@@ -113,7 +113,7 @@ std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> RdbmsDriveConfigCat
   auto conn = m_connPool->getConn();
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
-  std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> drivesConfigs;
+  std::vector<cta::catalogue::DriveConfigCatalogue::DriveConfig> drivesConfigs;
   while (rset.next()) {
     const std::string tapeDriveName = rset.columnString("DRIVE_NAME");
     const std::string category = rset.columnString("CATEGORY");
@@ -132,7 +132,7 @@ std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig> RdbmsDriveConfigCat
   return drivesConfigs;
 }
 
-std::list<std::string>
+std::vector<std::string>
 RdbmsDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::string& schedulerBackendName) const {
   const char* const sql = R"SQL(
     SELECT
@@ -145,7 +145,7 @@ RdbmsDriveConfigCatalogue::getTapeDriveNamesForSchedulerBackend(const std::strin
   stmt.bindString(":KEY_NAME", SCHEDULER_NAME_CONFIG_KEY);
   stmt.bindString(":VALUE", schedulerBackendName);
   auto rset = stmt.executeQuery();
-  std::list<std::string> tapeDriveNames;
+  std::vector<std::string> tapeDriveNames;
   while (rset.next()) {
     const std::string driveName = rset.columnString("DRIVE_NAME");
     tapeDriveNames.push_back(driveName);

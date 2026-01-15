@@ -351,18 +351,18 @@ std::string removePrefix(const std::string& input, char prefixChar);
 std::string getEnv(const std::string& variableName);
 
 /**
- * Transforms a comma separated list to a std::list
+ * Transforms a comma separated list to a std::vector
  * @param commaSeparated the string that will be transformed to a list
  * @return the transformed vector
  */
-std::list<std::string> commaSeparatedStringToList(const std::string& commaSeparated);
+std::vector<std::string> commaSeparatedStringToVector(const std::string& commaSeparated);
 
 /**
- * Transforms a list to a comma separated string
+ * Transforms a vector to a comma separated string
  * @param list the list that will be transformed to a comma separated string
  * @return the transformed string
  */
-std::string listToCommaSeparatedString(const std::list<std::string>& list);
+std::string toCommaSeparatedString(const std::vector<std::string>& list);
 
 /**
  * Converts a number from decimal to hexadecimal representation

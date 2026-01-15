@@ -59,7 +59,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, reclaimTapeRemovesFilesFromRecycleLog) 
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   std::optional<std::string> physicalLibraryName;
 
@@ -179,7 +179,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, filesArePutInTheFileRecycleLogInsteadOf
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   std::optional<std::string> physicalLibraryName;
@@ -266,7 +266,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, filesArePutInTheFileRecycleLogInsteadOf
     ASSERT_TRUE(hasArchiveFilesItor);
   }
   //Check that the old files are in the file recycle logs
-  std::list<common::dataStructures::FileRecycleLog> fileRecycleLogs;
+  std::vector<common::dataStructures::FileRecycleLog> fileRecycleLogs;
   {
     auto fileRecycleLogItor = m_catalogue->FileRecycleLog()->getFileRecycleLogItor();
     while (fileRecycleLogItor.hasMore()) {
@@ -417,7 +417,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, sameFileWrittenToSameTapePutThePrevious
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   std::optional<std::string> physicalLibraryName;
@@ -499,7 +499,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopy) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -655,7 +655,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreRewrittenTapeFileCopyFails) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -834,7 +834,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreTapeFileCopyDeletedTwice) {
   const std::string tapePoolNameB = "tape_pool_name_B";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -1058,7 +1058,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreVariousDeletedTapeFileCopies) {
   const std::string tapePoolName3 = "tape_pool_name_3";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";
@@ -1250,7 +1250,7 @@ TEST_P(cta_catalogue_FileRecycleLogTest, RestoreArchiveFileAndCopy) {
   const std::string tapePoolName2 = "tape_pool_name_2";
   const uint64_t nbPartialTapes = 1;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string diskInstance = m_diskInstance.name;
   const std::string tapeDrive = "tape_drive";
   const std::string reason = "reason";

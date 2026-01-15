@@ -25,7 +25,7 @@ void DummyMediaTypeCatalogue::deleteMediaType(const std::string& name) {
   throw exception::NotImplementedException();
 }
 
-std::list<MediaTypeWithLogs> DummyMediaTypeCatalogue::getMediaTypes() const {
+std::vector<MediaTypeWithLogs> DummyMediaTypeCatalogue::getMediaTypes() const {
   throw exception::NotImplementedException();
 }
 

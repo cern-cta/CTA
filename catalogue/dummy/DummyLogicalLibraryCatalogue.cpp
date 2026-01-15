@@ -22,7 +22,7 @@ void DummyLogicalLibraryCatalogue::deleteLogicalLibrary(const std::string& name)
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::LogicalLibrary> DummyLogicalLibraryCatalogue::getLogicalLibraries() const {
+std::vector<common::dataStructures::LogicalLibrary> DummyLogicalLibraryCatalogue::getLogicalLibraries() const {
   throw exception::NotImplementedException();
 }
 

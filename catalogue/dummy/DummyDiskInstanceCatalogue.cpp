@@ -31,7 +31,7 @@ void DummyDiskInstanceCatalogue::modifyDiskInstanceComment(const common::dataStr
   throw exception::NotImplementedException();
 }
 
-std::list<common::dataStructures::DiskInstance> DummyDiskInstanceCatalogue::getAllDiskInstances() const {
+std::vector<common::dataStructures::DiskInstance> DummyDiskInstanceCatalogue::getAllDiskInstances() const {
   throw exception::NotImplementedException();
 }
 

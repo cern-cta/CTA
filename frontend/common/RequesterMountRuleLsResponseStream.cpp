@@ -14,7 +14,7 @@ RequesterMountRuleLsResponseStream::RequesterMountRuleLsResponseStream(cta::cata
       m_requesterMountRules(catalogue.RequesterMountRule()->getRequesterMountRules()) {}
 
 bool RequesterMountRuleLsResponseStream::isDone() {
-  return m_requesterMountRules.empty();
+  return m_requesterMountRulesIdx >= m_requesterMountRules.size();
 }
 
 cta::xrd::Data RequesterMountRuleLsResponseStream::next() {
@@ -22,8 +22,7 @@ cta::xrd::Data RequesterMountRuleLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto rmr = m_requesterMountRules.front();
-  m_requesterMountRules.pop_front();
+  const auto rmr = m_requesterMountRules[m_requesterMountRulesIdx++];
 
   cta::xrd::Data data;
   auto rmr_item = data.mutable_rmrls_item();

@@ -42,7 +42,7 @@ public:
   common::dataStructures::ArchiveFile
   getArchiveFileCopyForDeletion(const TapeFileSearchCriteria& searchCriteria = TapeFileSearchCriteria()) const override;
 
-  std::list<common::dataStructures::ArchiveFile>
+  std::vector<common::dataStructures::ArchiveFile>
   getFilesForRepack(const std::string& vid, const uint64_t startFSeq, const uint64_t maxNbFiles) const override;
 
   ArchiveFileItor getArchiveFilesForRepackItor(const std::string& vid, const uint64_t startFSeq) const override;

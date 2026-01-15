@@ -168,8 +168,8 @@ void RdbmsArchiveRouteCatalogue::deleteArchiveRoute(const std::string& storageCl
   }
 }
 
-std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getArchiveRoutes() const {
-  std::list<common::dataStructures::ArchiveRoute> routes;
+std::vector<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getArchiveRoutes() const {
+  std::vector<common::dataStructures::ArchiveRoute> routes;
   const char* const sql = R"SQL(
     SELECT
       STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
@@ -219,18 +219,18 @@ std::list<common::dataStructures::ArchiveRoute> RdbmsArchiveRouteCatalogue::getA
   return routes;
 }
 
-std::list<common::dataStructures::ArchiveRoute>
+std::vector<common::dataStructures::ArchiveRoute>
 RdbmsArchiveRouteCatalogue::getArchiveRoutes(const std::string& storageClassName,
                                              const std::string& tapePoolName) const {
   auto conn = m_connPool->getConn();
   return getArchiveRoutes(conn, storageClassName, tapePoolName);
 }
 
-std::list<common::dataStructures::ArchiveRoute>
+std::vector<common::dataStructures::ArchiveRoute>
 RdbmsArchiveRouteCatalogue::getArchiveRoutes(rdbms::Conn& conn,
                                              const std::string& storageClassName,
                                              const std::string& tapePoolName) const {
-  std::list<common::dataStructures::ArchiveRoute> routes;
+  std::vector<common::dataStructures::ArchiveRoute> routes;
   const char* const sql = R"SQL(
     SELECT
       STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,

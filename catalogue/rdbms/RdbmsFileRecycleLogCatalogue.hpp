@@ -10,6 +10,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace cta {
 
@@ -159,7 +160,7 @@ private:
    * @param conn The database connection.
    * @returns the list of inserted fileRecycleLog
    */
-  std::list<cta::catalogue::InsertFileRecycleLog>
+  std::vector<cta::catalogue::InsertFileRecycleLog>
   insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn,
                                               const common::dataStructures::TapeFile& tapeFile,
                                               const uint64_t archiveFileId) const;

@@ -65,7 +65,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -132,7 +132,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_null_supply) {
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -170,7 +170,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_same_twice) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -186,7 +186,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_vo_does_not_exist) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   ASSERT_THROW(
     m_catalogue->TapePool()
@@ -199,7 +199,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_tapes_of_mixed_state) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
@@ -347,7 +347,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
   const std::string encryptionKeyName = "encryption_key_name";
   const std::string tapePoolComment = "Create tape pool";
   {
-    const std::list<std::string> supply;
+    const std::vector<std::string> supply;
     m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
     m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
     m_catalogue->TapePool()->createTapePool(m_admin,
@@ -393,7 +393,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
   const std::optional<std::string> encryptionKeyNull = std::nullopt;
   {
     m_catalogue->StorageClass()->createStorageClass(m_admin, m_anotherStorageClass);
-    const std::list<std::string> supply;
+    const std::vector<std::string> supply;
     m_catalogue->VO()->createVirtualOrganization(m_admin, m_anotherVo);
     m_catalogue->TapePool()->createTapePool(m_admin,
                                             anotherTapePoolName,
@@ -413,7 +413,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool) {
   }
 
   {
-    const auto pools = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
+    const auto pools = CatalogueTestUtils::tapePoolVectorToMap(m_catalogue->TapePool()->getTapePools());
 
     ASSERT_EQ(2, pools.size());
 
@@ -476,7 +476,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_notEmpty) {
   std::optional<std::string> physicalLibraryName;
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
 
   m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
 
@@ -562,7 +562,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringTapePoolName) {
   const std::string tapePoolName = "";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -575,7 +575,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringVO) {
   const std::string vo = "";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   ASSERT_THROW(
     m_catalogue->TapePool()
@@ -590,7 +590,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_emptyStringComment) {
 
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -612,7 +612,7 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_used_in_an_archive_route) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   m_catalogue->TapePool()->createTapePool(m_admin,
                                           m_tape1.tapePoolName,
                                           m_vo.name,
@@ -631,11 +631,11 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_used_in_an_archive_route) {
                                                   comment);
 
   {
-    const std::list<cta::common::dataStructures::ArchiveRoute> routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
+    const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes();
 
     ASSERT_EQ(1, routes.size());
 
-    const cta::common::dataStructures::ArchiveRoute route = routes.front();
+    auto& route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -650,12 +650,11 @@ TEST_P(cta_catalogue_TapePoolTest, deleteTapePool_used_in_an_archive_route) {
   }
 
   {
-    const std::list<cta::common::dataStructures::ArchiveRoute> routes =
-      m_catalogue->ArchiveRoute()->getArchiveRoutes(m_storageClassSingleCopy.name, tapePoolName);
+    const auto routes = m_catalogue->ArchiveRoute()->getArchiveRoutes(m_storageClassSingleCopy.name, tapePoolName);
 
     ASSERT_EQ(1, routes.size());
 
-    const cta::common::dataStructures::ArchiveRoute route = routes.front();
+    auto& route = routes.front();
     ASSERT_EQ(m_storageClassSingleCopy.name, route.storageClassName);
     ASSERT_EQ(copyNb, route.copyNb);
     ASSERT_EQ(tapePoolName, route.tapePoolName);
@@ -677,7 +676,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -749,7 +748,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_emptyStringVo) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -790,7 +789,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolVo_VoDoesNotExist) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -829,7 +828,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolNbPartialTapes) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -904,7 +903,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -972,7 +971,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolComment_emptyStringComment) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1019,7 +1018,7 @@ TEST_P(cta_catalogue_TapePoolTest, setTapePoolEncryption) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1085,7 +1084,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
   const std::string tapePoolName_2 = "tape_pool_2";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;  // empty string is acceptable value
+  const std::vector<std::string> supply;  // empty string is acceptable value
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1114,10 +1113,10 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
   }
 
   // fails because we want to disallow specifying itself as its supply tapepool
-  const std::list<std::string> modifiedSupply_wrong = {"does_not_exist"};
+  const std::vector<std::string> modifiedSupply_wrong = {"does_not_exist"};
   ASSERT_ANY_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName_1, modifiedSupply_wrong));
 
-  const std::list<std::string> modifiedSupply = {tapePoolName_2};
+  const std::vector<std::string> modifiedSupply = {tapePoolName_2};
   m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName_1, modifiedSupply);
 
   {
@@ -1141,7 +1140,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringTapePoolName) {
   const std::string tapePoolName = "";
-  const std::list<std::string> modifiedSupply = {"Modified_supply"};
+  const std::vector<std::string> modifiedSupply = {"Modified_supply"};
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply),
                cta::catalogue::UserSpecifiedAnEmptyStringTapePoolName);
 }
@@ -1150,7 +1149,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1182,7 +1181,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
     ASSERT_EQ(creationLog, lastModificationLog);
   }
 
-  const std::list<std::string> modifiedSupply;
+  const std::vector<std::string> modifiedSupply;
   m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, modifiedSupply);
 
   {
@@ -1211,7 +1210,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
 
 TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_nonExistentTapePool) {
   const std::string tapePoolName = "tape_pool";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   ASSERT_THROW(m_catalogue->TapePool()->modifyTapePoolSupply(m_admin, tapePoolName, supply), cta::exception::UserError);
 }
 
@@ -1225,8 +1224,8 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
   const std::optional<std::string> firstPoolEncryptionKeyName = "encryption_key_name";
   const std::optional<std::string> secondPoolEncryptionKeyNull = std::nullopt;
 
-  const std::list<std::string> firstPoolSupply;
-  const std::list<std::string> secondPoolSupply;
+  const std::vector<std::string> firstPoolSupply;
+  const std::vector<std::string> secondPoolSupply;
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -1323,8 +1322,8 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
   const std::optional<std::string> firstPoolEncryptionKeyName = "encryption_key_name";
   const std::optional<std::string> secondPoolEncryptionKeyNull = std::nullopt;
 
-  const std::list<std::string> firstPoolSupply;
-  const std::list<std::string> secondPoolSupply;
+  const std::vector<std::string> firstPoolSupply;
+  const std::vector<std::string> secondPoolSupply;
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -1421,8 +1420,8 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
   const std::optional<std::string> firstPoolEncryptionKeyName = "encryption_key_name";
   const std::optional<std::string> secondPoolEncryptionKeyNull = std::nullopt;
 
-  const std::list<std::string> firstPoolSupply;
-  const std::list<std::string> secondPoolSupply;
+  const std::vector<std::string> firstPoolSupply;
+  const std::vector<std::string> secondPoolSupply;
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -1505,8 +1504,8 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncryptionKeyName) {
   const std::optional<std::string> firstPoolEncryptionKeyName = "encryption_key_name";
   const std::optional<std::string> secondPoolEncryptionKeyNull = std::nullopt;
 
-  const std::list<std::string> firstPoolSupply;
-  const std::list<std::string> secondPoolSupply;
+  const std::vector<std::string> firstPoolSupply;
+  const std::vector<std::string> secondPoolSupply;
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -1583,7 +1582,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName) {
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1652,7 +1651,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolName_emptyStringNewTapePoolName
   const std::string tapePoolName = "tape_pool";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply;
+  const std::vector<std::string> supply;
   const std::string comment = "Create tape pool";
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
   m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
@@ -1699,8 +1698,8 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
   const std::optional<std::string> firstPoolEncryptionKeyName = "encryption_key_name";
   const std::optional<std::string> secondPoolEncryptionKeyNull = std::nullopt;
 
-  const std::list<std::string> firstPoolSupply;
-  const std::list<std::string> secondPoolSupply = {"tape_pool"};
+  const std::vector<std::string> firstPoolSupply;
+  const std::vector<std::string> secondPoolSupply = {"tape_pool"};
 
   const std::string firstPoolComment = "Create first tape pool";
   const std::string secondPoolComment = "Create second tape pool";
@@ -1725,7 +1724,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
                                           secondPoolSupply,
                                           secondPoolComment);
 
-  auto pools_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
+  auto pools_map = CatalogueTestUtils::tapePoolVectorToMap(m_catalogue->TapePool()->getTapePools());
   auto pools = m_catalogue->TapePool()->getTapePools();
   ASSERT_EQ(2, pools.size());
 
@@ -1754,7 +1753,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
   }
   // create a third tapepool to test multiple entries
   std::string thirdTapePoolName("tape_pool_3");
-  std::list<std::string> thirdTapePoolSupply = {"tape_pool", "tape_pool_2"};
+  std::vector<std::string> thirdTapePoolSupply = {"tape_pool", "tape_pool_2"};
   const uint64_t nbThirdPoolPartialTapes = 3;
   const std::optional<std::string> thirdPoolEncryptionKeyNull = std::nullopt;
   const std::string thirdPoolComment = "Create third tape pool";
@@ -1767,7 +1766,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
                                           thirdPoolComment);
 
   {
-    const auto pools3_map = CatalogueTestUtils::tapePoolListToMap(m_catalogue->TapePool()->getTapePools());
+    const auto pools3_map = CatalogueTestUtils::tapePoolVectorToMap(m_catalogue->TapePool()->getTapePools());
     const auto pools3 = m_catalogue->TapePool()->getTapePools();
 
     ASSERT_EQ(3, pools3.size());

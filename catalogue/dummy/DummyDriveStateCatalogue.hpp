@@ -25,9 +25,9 @@ public:
 
   void createTapeDrive(const common::dataStructures::TapeDrive& tapeDrive) override;
 
-  std::list<std::string> getTapeDriveNames() const override;
+  std::vector<std::string> getTapeDriveNames() const override;
 
-  std::list<common::dataStructures::TapeDrive> getTapeDrives() const override;
+  std::vector<common::dataStructures::TapeDrive> getTapeDrives() const override;
 
   std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string& tapeDriveName) const override;
 

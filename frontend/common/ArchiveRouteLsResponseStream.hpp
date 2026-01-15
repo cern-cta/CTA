@@ -8,8 +8,6 @@
 #include "CtaAdminResponseStream.hpp"
 #include "common/dataStructures/ArchiveRoute.hpp"
 
-#include <list>
-
 #include "cta_admin.pb.h"
 
 namespace cta::frontend {
@@ -24,7 +22,8 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<cta::common::dataStructures::ArchiveRoute> m_archiveRoutes;
+  std::vector<cta::common::dataStructures::ArchiveRoute> m_archiveRoutes;
+  std::size_t m_archiveRoutesIdx = 0;
 };
 
 }  // namespace cta::frontend

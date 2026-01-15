@@ -29,12 +29,12 @@ public:
                       const std::string& vo,
                       const uint64_t nbPartialTapes,
                       const std::optional<std::string>& encryptionKeyNameOpt,
-                      const std::list<std::string>& supply_list,
+                      const std::vector<std::string>& supply_list,
                       const std::string& comment) override;
 
   void deleteTapePool(const std::string& name) override;
 
-  std::list<TapePool> getTapePools(const TapePoolSearchCriteria& searchCriteria) const override;
+  std::vector<TapePool> getTapePools(const TapePoolSearchCriteria& searchCriteria) const override;
 
   std::optional<TapePool> getTapePool(const std::string& tapePoolName) const override;
 
@@ -56,7 +56,7 @@ public:
 
   void modifyTapePoolSupply(const common::dataStructures::SecurityIdentity& admin,
                             const std::string& name,
-                            const std::list<std::string>& supply_list) override;
+                            const std::vector<std::string>& supply_list) override;
 
   void modifyTapePoolName(const common::dataStructures::SecurityIdentity& admin,
                           const std::string& currentName,

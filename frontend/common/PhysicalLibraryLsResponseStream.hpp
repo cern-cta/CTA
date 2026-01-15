@@ -8,8 +8,6 @@
 #include "CtaAdminResponseStream.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
 
-#include <list>
-
 #include "cta_admin.pb.h"
 
 namespace cta::frontend {
@@ -24,7 +22,8 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::list<cta::common::dataStructures::PhysicalLibrary> m_physicalLibraries;
+  std::vector<cta::common::dataStructures::PhysicalLibrary> m_physicalLibraries;
+  std::size_t m_physicalLibrariesIdx = 0;
 };
 
 }  // namespace cta::frontend

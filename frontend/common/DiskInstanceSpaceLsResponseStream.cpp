@@ -14,7 +14,7 @@ DiskInstanceSpaceLsResponseStream::DiskInstanceSpaceLsResponseStream(cta::catalo
       m_diskInstanceSpaces(catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces()) {}
 
 bool DiskInstanceSpaceLsResponseStream::isDone() {
-  return m_diskInstanceSpaces.empty();
+  return m_diskInstanceSpacesIdx >= m_diskInstanceSpaces.size();
 }
 
 cta::xrd::Data DiskInstanceSpaceLsResponseStream::next() {
@@ -22,8 +22,7 @@ cta::xrd::Data DiskInstanceSpaceLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto dis = m_diskInstanceSpaces.front();
-  m_diskInstanceSpaces.pop_front();
+  const auto dis = m_diskInstanceSpaces[m_diskInstanceSpacesIdx++];
 
   cta::xrd::Data data;
   auto dis_item = data.mutable_disls_item();

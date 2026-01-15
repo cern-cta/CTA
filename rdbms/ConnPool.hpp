@@ -120,7 +120,7 @@ private:
   /**
    * The database connections within the pool.
    */
-  std::list<std::unique_ptr<ConnAndStmts>> m_connsAndStmts;
+  std::vector<std::unique_ptr<ConnAndStmts>> m_connsAndStmts;
 };  // class ConnPool
 
 }  // namespace cta::rdbms

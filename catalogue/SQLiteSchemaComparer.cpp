@@ -44,21 +44,18 @@ SchemaCheckerResult SQLiteSchemaComparer::compareAll() {
 
 SchemaCheckerResult SQLiteSchemaComparer::compareTables() {
   insertSchemaInSQLite();
-  std::list<std::string> catalogueTables = m_databaseMetadataGetter.getTableNames();
-  std::list<std::string> schemaTables = m_schemaMetadataGetter->getTableNames();
+  auto catalogueTables = m_databaseMetadataGetter.getTableNames();
+  auto schemaTables = m_schemaMetadataGetter->getTableNames();
   SchemaCheckerResult res = compareTables(catalogueTables, schemaTables);
   return res;
 }
 
 SchemaCheckerResult SQLiteSchemaComparer::compareTablesLocatedInSchema() {
   insertSchemaInSQLite();
-  std::list<std::string> databaseTables = m_databaseMetadataGetter.getTableNames();
-  std::list<std::string> schemaTables = m_schemaMetadataGetter->getTableNames();
-  databaseTables.remove_if([&schemaTables](const std::string& catalogueTable) {
-    return std::find_if(schemaTables.begin(),
-                        schemaTables.end(),
-                        [&catalogueTable](std::string_view schemaTable) { return schemaTable == catalogueTable; })
-           == schemaTables.end();
+  auto databaseTables = m_databaseMetadataGetter.getTableNames();
+  auto schemaTables = m_schemaMetadataGetter->getTableNames();
+  std::erase_if(databaseTables, [&schemaTables](const auto& catalogueTable) {
+    return std::ranges::find(schemaTables, catalogueTable) == schemaTables.end();
   });
   SchemaCheckerResult res = compareTables(databaseTables, schemaTables);
   return res;
@@ -118,13 +115,13 @@ SchemaCheckerResult SQLiteSchemaComparer::compareItems(const std::string& itemTy
   return result;
 }
 
-SchemaCheckerResult SQLiteSchemaComparer::compareTables(const std::list<std::string>& databaseTables,
-                                                        const std::list<std::string>& schemaTables) {
+SchemaCheckerResult SQLiteSchemaComparer::compareTables(const std::vector<std::string>& databaseTables,
+                                                        const std::vector<std::string>& schemaTables) {
   SchemaCheckerResult result;
   std::map<std::string, std::map<std::string, std::string, std::less<>>, std::less<>> databaseTableColumns;
   std::map<std::string, std::map<std::string, std::string, std::less<>>, std::less<>> schemaTableColumns;
-  std::map<std::string, std::list<std::string>, std::less<>> databaseTableConstraints;
-  std::map<std::string, std::list<std::string>, std::less<>> schemaTableConstraints;
+  std::map<std::string, std::vector<std::string>, std::less<>> databaseTableConstraints;
+  std::map<std::string, std::vector<std::string>, std::less<>> schemaTableConstraints;
 
   for (auto& databaseTable : databaseTables) {
     databaseTableColumns[databaseTable] = m_databaseMetadataGetter.getColumns(databaseTable);

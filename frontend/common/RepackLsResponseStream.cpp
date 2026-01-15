@@ -117,7 +117,7 @@ void RepackLsResponseStream::collectRepacks(const std::optional<std::string>& vi
 }
 
 bool RepackLsResponseStream::isDone() {
-  return m_repackItems.empty();
+  return m_repackItemsIdx >= m_repackItems.size();
 }
 
 cta::xrd::Data RepackLsResponseStream::next() {
@@ -125,8 +125,7 @@ cta::xrd::Data RepackLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  cta::xrd::Data data = std::move(m_repackItems.front());
-  m_repackItems.pop_front();
+  cta::xrd::Data data = std::move(m_repackItems[m_repackItemsIdx++]);
 
   return data;
 }

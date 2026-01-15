@@ -49,14 +49,14 @@ void ArchiveRouteCatalogueRetryWrapper::deleteArchiveRoute(
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::ArchiveRoute> ArchiveRouteCatalogueRetryWrapper::getArchiveRoutes() const {
+std::vector<common::dataStructures::ArchiveRoute> ArchiveRouteCatalogueRetryWrapper::getArchiveRoutes() const {
   return retryOnLostConnection(
     m_log,
     [this] { return m_catalogue->ArchiveRoute()->getArchiveRoutes(); },
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::ArchiveRoute>
+std::vector<common::dataStructures::ArchiveRoute>
 ArchiveRouteCatalogueRetryWrapper::getArchiveRoutes(const std::string& storageClassName,
                                                     const std::string& tapePoolName) const {
   return retryOnLostConnection(

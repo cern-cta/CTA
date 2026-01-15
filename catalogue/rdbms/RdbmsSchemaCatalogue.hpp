@@ -9,6 +9,7 @@
 #include "common/log/Logger.hpp"
 
 #include <memory>
+#include <vector>
 
 namespace cta {
 
@@ -37,7 +38,7 @@ public:
    * @return The names of all the tables in the database schema in alphabetical
    * order.
    */
-  std::list<std::string> getTableNames() const;
+  std::vector<std::string> getTableNames() const;
 
 private:
   log::Logger& m_log;

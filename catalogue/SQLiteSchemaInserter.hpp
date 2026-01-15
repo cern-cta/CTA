@@ -4,8 +4,11 @@
  */
 
 #pragma once
+
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
+
+#include <vector>
 
 namespace cta::catalogue {
 
@@ -25,7 +28,7 @@ public:
      * Transform and insert the schema statements passed in parameter into the
      * InMemory SQLite database
      */
-  void insert(const std::list<std::string>& schemaStatements);
+  void insert(const std::vector<std::string>& schemaStatements);
   virtual ~SQLiteSchemaInserter() = default;
 
 private:
@@ -34,7 +37,7 @@ private:
      * Execute all the statements passed in parameter against the InMemory SQLite database
      * @param statements the statements to execute in the InMemory SQLite database
      */
-  void executeStatements(const std::list<std::string>& statements);
+  void executeStatements(const std::vector<std::string>& statements);
 };
 
 }  // namespace cta::catalogue

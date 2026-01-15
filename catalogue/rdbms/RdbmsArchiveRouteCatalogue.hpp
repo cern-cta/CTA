@@ -35,10 +35,10 @@ public:
                           const uint32_t copyNb,
                           const common::dataStructures::ArchiveRouteType& archiveRouteType) override;
 
-  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
+  std::vector<common::dataStructures::ArchiveRoute> getArchiveRoutes() const override;
 
-  std::list<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName,
-                                                                   const std::string& tapePoolName) const override;
+  std::vector<common::dataStructures::ArchiveRoute> getArchiveRoutes(const std::string& storageClassName,
+                                                                     const std::string& tapePoolName) const override;
 
   void modifyArchiveRouteTapePoolName(const common::dataStructures::SecurityIdentity& admin,
                                       const std::string& storageClassName,
@@ -74,7 +74,7 @@ private:
    * guaranteed to be unique within its disk instance.
    * @param tapePoolName The name of the tape pool.
    */
-  std::list<common::dataStructures::ArchiveRoute>
+  std::vector<common::dataStructures::ArchiveRoute>
   getArchiveRoutes(rdbms::Conn& conn, const std::string& storageClassName, const std::string& tapePoolName) const;
 };
 

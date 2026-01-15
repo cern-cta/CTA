@@ -202,9 +202,9 @@ public:
 
     catalogue.MountPolicy()->createMountPolicy(s_adminOnAdminHost, mountPolicy);
 
-    const std::list<common::dataStructures::MountPolicy> groups = catalogue.MountPolicy()->getMountPolicies();
+    const auto groups = catalogue.MountPolicy()->getMountPolicies();
     ASSERT_EQ(1, groups.size());
-    const common::dataStructures::MountPolicy group = groups.front();
+    auto& group = groups.front();
     ASSERT_EQ(mountPolicyName, group.name);
     ASSERT_EQ(archivePriority, group.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, group.archiveMinRequestAge);
@@ -265,7 +265,7 @@ public:
     const uint16_t nbPartialTapes = 1;
     const std::string tapePoolComment = "Tape-pool comment";
     const std::optional<std::string> encryptionKeyNull = std::nullopt;
-    const std::list<std::string> tapePoolSupply;
+    const std::vector<std::string> tapePoolSupply;
     const uint32_t copyNb = 1;
 
     // Tape pool for default archive route
@@ -1235,7 +1235,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
 }
 
 TEST_P(SchedulerTest, getArchiveMountPolicyMaxPriorityMinAge) {
-  std::list<cta::common::dataStructures::MountPolicy> mountPolicies;
+  std::vector<cta::common::dataStructures::MountPolicy> mountPolicies;
 
   mountPolicies.emplace_back();
   mountPolicies.back().archivePriority = 1;
@@ -1260,7 +1260,7 @@ TEST_P(SchedulerTest, getArchiveMountPolicyMaxPriorityMinAge) {
 }
 
 TEST_P(SchedulerTest, getRetrieveMountPolicyMaxPriorityMinAge) {
-  std::list<cta::common::dataStructures::MountPolicy> mountPolicies;
+  std::vector<cta::common::dataStructures::MountPolicy> mountPolicies;
 
   mountPolicies.emplace_back();
   mountPolicies.back().retrievePriority = 1;
@@ -1316,9 +1316,9 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
 
     catalogue.MountPolicy()->createMountPolicy(s_adminOnAdminHost, mountPolicy);
 
-    const std::list<common::dataStructures::MountPolicy> groups = catalogue.MountPolicy()->getMountPolicies();
+    const auto groups = catalogue.MountPolicy()->getMountPolicies();
     ASSERT_EQ(1, groups.size());
-    const common::dataStructures::MountPolicy group = groups.front();
+    auto& group = groups.front();
     ASSERT_EQ(mountPolicyName, group.name);
     ASSERT_EQ(archivePriority, group.archivePriority);
     ASSERT_EQ(minArchiveRequestAge, group.archiveMinRequestAge);
@@ -1371,7 +1371,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     const std::string tapePool1Comment = "Tape-pool for copy number 1";
     const std::string tapePool2Comment = "Tape-pool for copy number 2";
     const std::optional<std::string> encryptionKeyNull = std::nullopt;
-    const std::list<std::string> tapePoolSupplyList;
+    const std::vector<std::string> tapePoolSupplyList;
     catalogue.TapePool()->createTapePool(s_adminOnAdminHost,
                                          tapePool1Name,
                                          vo.name,
@@ -5062,7 +5062,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
 
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
-  const std::list<std::string> supplyList;
+  const std::vector<std::string> supplyList;
   catalogue.TapePool()->createTapePool(admin, tapepool2Name, "vo", 1, std::nullopt, supplyList, "comment");
 
   std::string tapepool3Name = "tapepool3";
@@ -5333,7 +5333,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
 
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
-  const std::list<std::string> supplyList;
+  const std::vector<std::string> supplyList;
   catalogue.TapePool()->createTapePool(admin, tapepool2Name, "vo", 1, std::nullopt, supplyList, "comment");
 
   //Create a storage class in the catalogue
@@ -5531,7 +5531,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies) {
 
   //Create two different destination tapepool
   std::string tapepool2Name = "tapepool2";
-  const std::list<std::string> supplyList;
+  const std::vector<std::string> supplyList;
   catalogue.TapePool()->createTapePool(admin, tapepool2Name, "vo", 1, std::nullopt, supplyList, "comment");
 
   std::string tapepool3Name = "tapepool3";
@@ -7262,7 +7262,7 @@ TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMo
   //Create a new tapepool on the same VO
   std::string newTapepool = "new_tapepool";
   catalogue.TapePool()
-    ->createTapePool(s_adminOnAdminHost, newTapepool, s_vo, 1, std::nullopt, std::list<std::string>(), "Test");
+    ->createTapePool(s_adminOnAdminHost, newTapepool, s_vo, 1, std::nullopt, std::vector<std::string>(), "Test");
 
   //Create the third tape in the new tapepool
   std::string vid3 = "VID_3";

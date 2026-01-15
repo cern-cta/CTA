@@ -14,7 +14,7 @@ DiskSystemLsResponseStream::DiskSystemLsResponseStream(cta::catalogue::Catalogue
       m_diskSystems(catalogue.DiskSystem()->getAllDiskSystems()) {}
 
 bool DiskSystemLsResponseStream::isDone() {
-  return m_diskSystems.empty();
+  return m_diskSystemsIdx >= m_diskSystems.size();
 }
 
 cta::xrd::Data DiskSystemLsResponseStream::next() {
@@ -22,8 +22,7 @@ cta::xrd::Data DiskSystemLsResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  const auto ds = m_diskSystems.front();
-  m_diskSystems.pop_front();
+  const auto ds = m_diskSystems[m_diskSystemsIdx++];
 
   cta::xrd::Data data;
   auto ds_item = data.mutable_dsls_item();

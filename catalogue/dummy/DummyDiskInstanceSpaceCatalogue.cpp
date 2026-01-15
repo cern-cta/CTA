@@ -41,7 +41,8 @@ void DummyDiskInstanceSpaceCatalogue::createDiskInstanceSpace(const common::data
                                 common::dataStructures::EntryLog()};
 }
 
-std::list<common::dataStructures::DiskInstanceSpace> DummyDiskInstanceSpaceCatalogue::getAllDiskInstanceSpaces() const {
+std::vector<common::dataStructures::DiskInstanceSpace>
+DummyDiskInstanceSpaceCatalogue::getAllDiskInstanceSpaces() const {
   throw exception::NotImplementedException();
 }
 

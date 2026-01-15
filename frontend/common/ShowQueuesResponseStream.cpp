@@ -22,11 +22,11 @@ ShowQueuesResponseStream::ShowQueuesResponseStream(cta::catalogue::Catalogue& ca
              "ShowQueuesStream constructor, the cta.scheduler_backend_name is not set in the frontend configuration.");
   }
 
-  m_queuesAndMountsList = m_scheduler.getQueuesAndMountSummaries(m_lc);
+  m_queuesAndMounts = m_scheduler.getQueuesAndMountSummaries(m_lc);
 }
 
 bool ShowQueuesResponseStream::isDone() {
-  return m_queuesAndMountsList.empty();
+  return m_queuesAndMountsIdx >= m_queuesAndMounts.size();
 }
 
 cta::xrd::Data ShowQueuesResponseStream::next() {
@@ -34,8 +34,7 @@ cta::xrd::Data ShowQueuesResponseStream::next() {
     throw std::runtime_error("Stream is exhausted");
   }
 
-  auto sq = m_queuesAndMountsList.front();
-  m_queuesAndMountsList.pop_front();
+  const auto sq = m_queuesAndMounts[m_queuesAndMountsIdx++];
 
   cta::xrd::Data data;
   auto sq_item = data.mutable_sq_item();

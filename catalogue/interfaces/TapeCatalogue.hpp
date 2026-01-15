@@ -9,7 +9,6 @@
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/exception/UserError.hpp"
 
-#include <list>
 #include <map>
 #include <optional>
 #include <set>
@@ -75,7 +74,7 @@ public:
    * @throw UserSpecifiedANonExistentTapePool if the user specified a
    * non-existent tape pool.
    */
-  virtual std::list<common::dataStructures::Tape>
+  virtual std::vector<common::dataStructures::Tape>
   getTapes(const TapeSearchCriteria& searchCriteria = TapeSearchCriteria()) const = 0;
 
   /**
@@ -300,7 +299,7 @@ public:
    * @param logicalLibraryName The name of the logical library.
    * @return The list of tapes for writing.
    */
-  virtual std::list<TapeForWriting> getTapesForWriting(const std::string& logicalLibraryName) const = 0;
+  virtual std::vector<TapeForWriting> getTapesForWriting(const std::string& logicalLibraryName) const = 0;
 
   virtual common::dataStructures::Label::Format getTapeLabelFormat(const std::string& vid) const = 0;
 };

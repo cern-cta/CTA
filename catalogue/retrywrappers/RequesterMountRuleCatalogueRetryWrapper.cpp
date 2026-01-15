@@ -71,7 +71,7 @@ void RequesterMountRuleCatalogueRetryWrapper::createRequesterMountRule(
     m_maxTriesToConnect);
 }
 
-std::list<common::dataStructures::RequesterMountRule>
+std::vector<common::dataStructures::RequesterMountRule>
 RequesterMountRuleCatalogueRetryWrapper::getRequesterMountRules() const {
   return retryOnLostConnection(
     m_log,

@@ -334,7 +334,7 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
     fileSizeAndChecksum.checksumBlob.validate(event.checksumBlob);
   }
 
-  std::list<InsertFileRecycleLog> recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
+  auto recycledFiles = insertOldCopiesOfFilesIfAnyOnFileRecycleLog(conn);
 
   {
     const char* const sql = R"SQL(
@@ -525,9 +525,9 @@ void OracleTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn& con
   }
 }
 
-std::list<cta::catalogue::InsertFileRecycleLog>
+std::vector<cta::catalogue::InsertFileRecycleLog>
 OracleTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn) {
-  std::list<cta::catalogue::InsertFileRecycleLog> fileRecycleLogsToInsert;
+  std::vector<cta::catalogue::InsertFileRecycleLog> fileRecycleLogsToInsert;
   //Get the TAPE_FILE entry to put on the file recycle log
   const char* const sql = R"SQL(
     SELECT
