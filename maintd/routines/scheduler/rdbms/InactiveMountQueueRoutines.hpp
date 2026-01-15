@@ -40,7 +40,7 @@ public:
    * @brief Selects the appropriate dead mount ID vector for a given queue type.
    *
    * Extracts and returns a reference to the vector of dead mount IDs matching
-   * the requested archive/retrieve, repack, and pending/active combination.
+   * the requested archive/retrieve/repack_pending/active combination.
    *
    * @param deadMounts  Dead mount IDs grouped by queue type.
    * @param isArchive   True for archive queues, false for retrieve queues.
