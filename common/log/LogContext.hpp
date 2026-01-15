@@ -41,15 +41,23 @@ public:
   Logger& logger() const noexcept { return m_log; }
 
   /**
-   * Add a parameter to the container. Replaces any parameter going by the same
-   * name. Does not throw exceptions (fails silently).
+   * Pushes a parameter to the container.
+   * Will stack over previous parameters with the same name.
+   * Does not throw exceptions (fails silently).
    * @param param
    */
   void push(const Param& param) noexcept;
   void push(Param&& param) noexcept;
 
   /**
-   * Removes a parameter from the list.
+    * Pops a parameter from the container, exposing any previous parameters with the same name.
+    * Does not throw exceptions (fails silently).
+    * @param paramName
+    */
+  void pop(const std::string& paramName) noexcept;
+
+  /**
+   * Erases all parameters with a name from the list.
    * @param paramNamesSet set of values of param.getName();
    */
   void erase(const std::set<std::string>& paramNamesSet) noexcept;
