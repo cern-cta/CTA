@@ -24,14 +24,18 @@ void LogContext::push(Param&& param) noexcept {
   m_paramsMap[param.getName()].push_back(std::move(param));
 }
 
+void LogContext::pop(const std::string& paramName) noexcept {
+  if (auto it = m_paramsMap.find(paramName); it != m_paramsMap.end()) {
+    it->second.pop_back();
+    if (it->second.empty()) {
+      m_paramsMap.erase(it);
+    }
+  }
+}
+
 void LogContext::erase(const std::set<std::string>& paramNamesSet) noexcept {
   for (const auto& paramName : paramNamesSet) {
-    if (auto it = m_paramsMap.find(paramName); it != m_paramsMap.end()) {
-      it->second.pop_back();
-      if (it->second.empty()) {
-        m_paramsMap.erase(it);
-      }
-    }
+    m_paramsMap.erase(paramName);
   }
 }
 
@@ -87,7 +91,7 @@ LogContext::ScopedParam::ScopedParam(LogContext& context, Param&& param) noexcep
 }
 
 LogContext::ScopedParam::~ScopedParam() noexcept {
-  m_context.erase({m_name});
+  m_context.pop(m_name);
 }
 
 std::ostream& operator<<(std::ostream& os, const LogContext& lc) {
