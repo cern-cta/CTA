@@ -4,8 +4,29 @@
  */
 
 #include "scheduler/rdbms/TemporaryPostgresInstance.hpp"
+#include "common/utils/utils.hpp"
 
 namespace cta::schedulerdb {
+
+/**
+ * Execute multiple SQL statements separated by semicolons.
+ * This is copied from CreateSchemaCmd::executeNonQueries.
+ */
+static void executeNonQueries(rdbms::Conn& conn, const std::string& sqlStmts) {
+  std::string::size_type searchPos = 0;
+  std::string::size_type findResult = std::string::npos;
+
+  while (std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
+    // Calculate the length of the current statement without the trailing ';'
+    const std::string::size_type stmtLen = findResult - searchPos;
+    const std::string sqlStmt = utils::trimString(sqlStmts.substr(searchPos, stmtLen));
+    searchPos = findResult + 1;
+
+    if (0 < sqlStmt.size()) {  // Ignore empty statements
+      conn.executeNonQuery(sqlStmt);
+    }
+  }
+}
 
 /**
   * Create CTA scheduler schema in the test database
@@ -54,28 +75,6 @@ void TemporaryPostgresEnvironment::createSchedulerSchemaInSchema(const std::stri
 
   } catch (const std::exception& e) {
     throw std::runtime_error("Failed to create scheduler schema in " + schemaName + ": " + e.what());
-  }
-}
-
-/**
- * Execute multiple SQL statements separated by semicolons
- */
-void TemporaryPostgresEnvironment::executeNonQueries(rdbms::Conn& conn, const std::string& sqlStmts) {
-  std::string::size_type searchPos = 0;
-  std::string::size_type findResult = std::string::npos;
-
-  std::cout << "In TemporaryPostgresEnvironment::executeNonQueries" << std::endl;
-
-  while (std::string::npos != (findResult = sqlStmts.find(';', searchPos))) {
-    const std::string sqlStmt = sqlStmts.substr(searchPos, findResult - searchPos);
-
-    // Only execute non-empty statements
-    if (!sqlStmt.empty() && sqlStmt.find_first_not_of(" \t\n\r") != std::string::npos) {
-      auto stmt = conn.createStmt(sqlStmt);
-      stmt.executeNonQuery();
-    }
-
-    searchPos = findResult + 1;
   }
 }
 
