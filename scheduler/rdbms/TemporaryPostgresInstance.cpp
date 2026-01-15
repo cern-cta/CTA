@@ -27,11 +27,10 @@ void TemporaryPostgresEnvironment::createSchedulerSchema() {
 
     conn.commit();
 
-    std::cout << "  ✓ Schema created successfully" << std::endl;
+    std::cout << "  Schema created successfully" << std::endl;
 
   } catch (const std::exception& e) {
-    std::cerr << "  ⚠ Warning: Failed to create schema: " << e.what() << std::endl;
-    std::cerr << "  Tests may fail if they require the schema." << std::endl;
+    std::cerr << "  Warning: Failed to create schema: " << e.what() << std::endl;
     // Don't throw - let tests handle missing schema
   }
 }

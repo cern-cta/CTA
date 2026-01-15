@@ -29,19 +29,13 @@ namespace cta::schedulerdb {
  * This environment:
  * 1. Creates a temporary data directory
  * 2. Initializes a fresh PostgreSQL database (initdb)
- * 3. Starts PostgreSQL on a free port
+ * 3. Starts PostgreSQL on port 15432
  * 4. Provides connection info to tests
  * 5. Stops PostgreSQL and cleans up after tests
  *
  * Requirements:
  * - PostgreSQL must be installed (pg_ctl, initdb, psql in PATH or at known locations)
  * - Write access to /tmp or /dev/shm
- *
- * Advantages over Docker:
- * - No Docker dependency
- * - Faster startup
- * - Uses system PostgreSQL installation
- * - Easier debugging
  *
  * Usage:
  *
@@ -64,10 +58,22 @@ namespace cta::schedulerdb {
  *     m_db = std::make_unique<RelationalDB>(..., login, ...);
  *   }
  */
+
+/* 
+  * While this is in reality an integration test, several of our unit tests require a scheduler backend to run.
+  * Therefore, in order to run them with the PostgreSQL scheduler, we need to have a Postgres server running.
+  * We considered the alternative of launching the Postgres instance outside of the unit test binary, and providing it
+  * just the connection string, as is the case for example for the unit-test-postgresql.
+  * However, it was not clear what was the appropriate place for doing the setup outside the unit tests.
+  * Having the unit test setup the Postgres instance seems more contained and the only prerequisite is that
+  * postgres server binaries are installed.
+  * In the future we could/should revise this decision, and try to further separate what are essentially integration
+  * tests from our "unit" tests.
+  */
 class TemporaryPostgresEnvironment : public ::testing::Environment {
 public:
   TemporaryPostgresEnvironment()
-      : m_port(0),  // Will be auto-assigned
+      : m_port(15432),
         m_username("cta_test"),
         m_database("cta_scheduler"),
         m_namespace("public"),
@@ -77,12 +83,8 @@ public:
     char tmpTemplate[] = "/tmp/cta-pg-test-XXXXXX";
     char shmTemplate[] = "/dev/shm/cta-pg-test-XXXXXX";
 
-    char* tmpDir = mkdtemp(m_useShm ? shmTemplate : tmpTemplate);
-    if (!tmpDir) {
-      // Fallback to /tmp if /dev/shm fails
-      tmpDir = mkdtemp(tmpTemplate);
-      m_useShm = false;
-    }
+    char* tmpDir = mkdtemp(
+      m_useShm ? shmTemplate : tmpTemplate);  // mkdtemp will replace the Xs with actual values to make dir unique
 
     if (!tmpDir) {
       throw std::runtime_error("Failed to create temporary directory");
@@ -124,9 +126,6 @@ public:
       // Initialize database cluster
       initializeDatabase();
 
-      // Find available port
-      m_port = findAvailablePort();
-
       // Start PostgreSQL server
       startPostgres();
 
@@ -139,7 +138,7 @@ public:
       // Create CTA scheduler schema
       createSchedulerSchema();
 
-      std::cout << "✓ Temporary Postgres ready" << std::endl;
+      std::cout << "  Temporary Postgres ready" << std::endl;
       std::cout << "  Host: localhost" << std::endl;
       std::cout << "  Port: " << m_port << std::endl;
       std::cout << "  Database: " << m_database << std::endl;
@@ -166,7 +165,7 @@ public:
     stopPostgres();
     cleanup();
 
-    std::cout << "✓ Cleanup complete" << std::endl;
+    std::cout << "Cleanup complete" << std::endl;
     std::cout << "==========================================\n" << std::endl;
   }
 
@@ -278,38 +277,11 @@ private:
    * Find PostgreSQL binaries (pg_ctl, initdb, psql)
    */
   void findPostgresBinaries() {
-    // Try common PostgreSQL binary locations
-    const char* pgCtlPaths[] = {"/usr/bin/pg_ctl",
-                                "/usr/local/bin/pg_ctl",
-                                "/usr/pgsql-15/bin/pg_ctl",
-                                "/usr/pgsql-14/bin/pg_ctl",
-                                "/usr/pgsql-13/bin/pg_ctl",
-                                "/usr/lib/postgresql/15/bin/pg_ctl",
-                                "/usr/lib/postgresql/14/bin/pg_ctl",
-                                nullptr};
-
-    // First try to find in PATH
     if (system("which pg_ctl >/dev/null 2>&1") == 0) {
       m_pgCtl = "pg_ctl";
       m_initdb = "initdb";
       m_psql = "psql";
       return;
-    }
-
-    // Try known locations
-    for (int i = 0; pgCtlPaths[i] != nullptr; ++i) {
-      if (access(pgCtlPaths[i], X_OK) == 0) {
-        m_pgCtl = pgCtlPaths[i];
-
-        // Derive initdb and psql from same directory
-        std::string binDir = m_pgCtl.substr(0, m_pgCtl.rfind('/'));
-        m_initdb = binDir + "/initdb";
-        m_psql = binDir + "/psql";
-
-        if (access(m_initdb.c_str(), X_OK) == 0 && access(m_psql.c_str(), X_OK) == 0) {
-          return;
-        }
-      }
     }
 
     throw std::runtime_error("PostgreSQL binaries not found. Please install PostgreSQL or ensure "
@@ -350,24 +322,7 @@ private:
       conf.close();
     }
 
-    std::cout << "  ✓ Database cluster initialized" << std::endl;
-  }
-
-  /**
-   * Find an available port for PostgreSQL
-   */
-  int findAvailablePort() {
-    // Simple approach: try ports starting from 15432
-    // In production you might want to bind to port 0 and let OS assign
-    for (int port = 15432; port < 15532; ++port) {
-      std::string checkCmd = "nc -z localhost " + std::to_string(port) + " >/dev/null 2>&1";
-      if (system(checkCmd.c_str()) != 0) {
-        return port;  // Port is available
-      }
-    }
-
-    // Fallback: just use 15432 and hope for the best
-    return 15432;
+    std::cout << "  Database cluster initialized" << std::endl;
   }
 
   /**
@@ -390,7 +345,7 @@ private:
       throw std::runtime_error("Failed to start PostgreSQL. Log:\n" + logContents);
     }
 
-    std::cout << "  ✓ PostgreSQL started" << std::endl;
+    std::cout << "  PostgreSQL started" << std::endl;
   }
 
   /**
@@ -406,7 +361,7 @@ private:
                              + m_username + " -d postgres -c 'SELECT 1;' >/dev/null 2>&1";
 
       if (system(checkCmd.c_str()) == 0) {
-        std::cout << "  ✓ PostgreSQL ready after ~" << i << " second(s)" << std::endl;
+        std::cout << "  PostgreSQL ready after ~" << i << " second(s)" << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         return;
       }
