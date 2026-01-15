@@ -14,7 +14,7 @@ DiskSystemLsResponseStream::DiskSystemLsResponseStream(cta::catalogue::Catalogue
       m_diskSystems(catalogue.DiskSystem()->getAllDiskSystems()) {}
 
 bool DiskSystemLsResponseStream::isDone() {
-  return m_diskSystems.empty();
+  return m_diskSystemsIdx >= m_diskSystems.size();
 }
 
 cta::xrd::Data DiskSystemLsResponseStream::next() {
