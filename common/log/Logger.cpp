@@ -34,6 +34,27 @@ Logger::~Logger() = default;
 // operator()
 //-----------------------------------------------------------------------------
 void Logger::operator()(int priority, std::string_view msg, const std::vector<Param>& params) noexcept {
+  std::map<std::string, std::vector<Param>> paramsMap;
+  for (auto& param : params) {
+    paramsMap[param.getName()].push_back(param);
+  }
+  logInternal(priority, msg, paramsMap);
+}
+
+void Logger::operator()(int priority, std::string_view msg, std::vector<Param>&& params) noexcept {
+  std::map<std::string, std::vector<Param>> paramsMap;
+  for (auto& param : params) {
+    paramsMap[param.getName()].push_back(std::move(param));
+  }
+  logInternal(priority, msg, paramsMap);
+}
+
+//-----------------------------------------------------------------------------
+// logInternal()
+//-----------------------------------------------------------------------------
+void Logger::logInternal(int priority,
+                         std::string_view msg,
+                         const std::map<std::string, std::vector<Param>>& paramsMap) noexcept {
   // Ignore messages whose priority is not of interest
   if (priority > m_logMask) {
     return;
@@ -52,7 +73,7 @@ void Logger::operator()(int priority, std::string_view msg, const std::vector<Pa
   }
 
   const std::string header = createMsgHeader(timeStamp);
-  const std::string body = createMsgBody(priorityTextPair->second, msg, params, pid);
+  const std::string body = createMsgBody(priorityTextPair->second, msg, paramsMap, pid);
 
   writeMsgToUnderlyingLoggingSystem(header, body);
 }
@@ -224,7 +245,7 @@ std::ostream& operator<<(std::ostream& oss, const Logger::stringFormattingJSON& 
 //-----------------------------------------------------------------------------
 std::string Logger::createMsgBody(std::string_view logLevel,
                                   std::string_view msg,
-                                  const std::vector<Param>& params,
+                                  const std::map<std::string, std::vector<Param>>& paramsMap,
                                   int pid) const {
   std::ostringstream os;
 
@@ -246,12 +267,13 @@ std::string Logger::createMsgBody(std::string_view logLevel,
   os << m_staticParamsStr;
 
   // Process parameters
-  for (auto& param : params) {
+  for (const auto& paramVector : paramsMap | std::views::values) {
+    auto& param = paramVector.back();
     // Write the name and value to the buffer
     switch (m_logFormat) {
       case LogFormat::DEFAULT: {
         // If parameter name is an empty string, set the value to "Undefined"
-        const std::string name_str = param.getName() == "" ? "Undefined" : cleanString(param.getName(), true);
+        const std::string name_str = param.getName().empty() ? "Undefined" : cleanString(param.getName(), true);
         const std::string value_str = cleanString(param.getValueStr(), false);
         os << name_str << "=\"" << value_str << "\" ";
       } break;

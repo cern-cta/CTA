@@ -87,7 +87,7 @@ public:
    * Small introspection function to help in tests
    * @return size
    */
-  size_t size() const { return m_params.size(); }
+  size_t size() const { return m_paramsMap.size(); }
 
   /**
    * Scoped parameter addition to the context. Constructor adds the parameter,
@@ -106,7 +106,7 @@ public:
 
 private:
   Logger& m_log;
-  std::vector<Param> m_params;
+  std::map<std::string, std::vector<Param>> m_paramsMap;
 };  // class LogContext
 
 class ScopedParamContainer {
