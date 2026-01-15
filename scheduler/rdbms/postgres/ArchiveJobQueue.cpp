@@ -48,6 +48,14 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         FROM SELECTION_WITH_CUMULATIVE_SUMS
         WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
     ),
+    UPDATED_MOUNT_QUEUE_LAST_FETCH AS (
+       INSERT INTO MOUNT_QUEUE_LAST_FETCH (MOUNT_ID, LAST_UPDATE_TIME, QUEUE_TYPE)
+         VALUES (:MOUNT_ID_HB, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER, :QUEUE_TYPE)
+       ON CONFLICT (MOUNT_ID, QUEUE_TYPE)
+         DO UPDATE SET
+           LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME,
+           QUEUE_TYPE = EXCLUDED.QUEUE_TYPE
+    ),
     MOVED_ROWS AS (
         DELETE FROM
       )SQL";
@@ -152,8 +160,11 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
   stmt.bindString(":STATUS", to_string(newStatus));
+  std::string queueType = isRepack ? "REPACK_ARCHIVE_ACTIVE" : "ARCHIVE_ACTIVE";
+  stmt.bindString(":QUEUE_TYPE", queueType);
   stmt.bindUint32(":LIMIT", limit);
   stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
+  stmt.bindUint64(":MOUNT_ID_HB", mountInfo.mountId);
   stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
   stmt.bindString(":VID", mountInfo.vid);
   stmt.bindString(":DRIVE", mountInfo.drive);
@@ -485,6 +496,23 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
   sql += R"SQL(
         RETURNING *
     )
+  )SQL";
+  if (keepMountId) {
+    sql += R"SQL(
+      , UPDATED_MOUNT_QUEUE_LAST_FETCH AS (
+       INSERT INTO MOUNT_QUEUE_LAST_FETCH (MOUNT_ID, LAST_UPDATE_TIME, QUEUE_TYPE)
+         SELECT DISTINCT
+           M.MOUNT_ID,
+           EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
+           :QUEUE_TYPE
+         FROM MOVED_ROWS M
+       ON CONFLICT (MOUNT_ID, QUEUE_TYPE)
+         DO UPDATE SET
+           LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME,
+           QUEUE_TYPE = EXCLUDED.QUEUE_TYPE
+    ) )SQL";
+  }
+  sql += R"SQL(
     INSERT INTO
     )SQL";
   sql += repack_prefix + "ARCHIVE_PENDING_QUEUE ( ";
@@ -586,6 +614,10 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
           FROM MOVED_ROWS M;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
+  if (keepMountId) {
+    std::string queueType = isRepack ? "REPACK_ARCHIVE_PENDING" : "ARCHIVE_PENDING";
+    stmt.bindString(":QUEUE_TYPE", queueType);
+  }
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
@@ -600,8 +632,8 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
 
 uint64_t ArchiveJobQueueRow::requeueJobBatch(Transaction& txn,
                                              ArchiveJobStatus newStatus,
-                                             bool isRepack,
-                                             const std::list<std::string>& jobIDs) {
+                                             const std::list<std::string>& jobIDs,
+                                             bool isRepack) {
   std::string repack_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
