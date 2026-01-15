@@ -8,7 +8,6 @@
 #include "catalogue/interfaces/FileRecycleLogCatalogue.hpp"
 #include "common/log/LogContext.hpp"
 
-#include <list>
 #include <memory>
 #include <string>
 #include <vector>
