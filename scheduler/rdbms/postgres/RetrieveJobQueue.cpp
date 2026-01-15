@@ -258,11 +258,6 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   // DISABLE DELETION FOR DEBUGGING
   if (newStatus == RetrieveJobStatus::RJS_Complete || newStatus == RetrieveJobStatus::RJS_Failed
       || newStatus == RetrieveJobStatus::ReadyForDeletion) {
-    // all these job statuses mean that the report to disk was done successfully,
-    // we do not need to move the job to failed job table
-    //if (newStatus == RetrieveJobStatus::RJS_Failed) {
-    //  return RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(txn, jobIDs, isRepack);
-    //} else {
     std::string sql = R"SQL(
         DELETE FROM
       )SQL";

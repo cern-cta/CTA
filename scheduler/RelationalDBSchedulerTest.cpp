@@ -1555,29 +1555,22 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
       // The file should be retried three times for the same mount and 3 times on new mount
       // For objectstore, the requeueing on new mount after retries on the same mount does not happen
       // immediately as it does for the postgres backend.
-      std::cout << "mountPass number:" << mountPass << std::endl;
       for (int i = 0; i < 3; ++i) {
-        std::cout << "retry number:" << i << std::endl;
         std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList =
           retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
         if (!retrieveJobList.front().get()) {
           int __attribute__((__unused__)) debugI = i;
         }
-        std::cout << "retry got a job?: " << i << std::endl;
         ASSERT_NE(0, retrieveJobList.size());
-        std::cout << "retry got a job: " << i << std::endl;
         // Validate we got the right file
         ASSERT_EQ(archiveFileId, retrieveJobList.front()->archiveFile.archiveFileID);
-        std::cout << "archive file ID OK: " << i << std::endl;
         retrieveJobList.front()->transferFailed("Retrieve failed (mount " + std::to_string(mountPass) + ", attempt "
                                                   + std::to_string(i) + ")",
                                                 lc);
-        std::cout << "retry end: " << i << std::endl;
       }
       if (mountPass == 1) {
         // Then the request should be gone
         ASSERT_EQ(0, retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc).size());
-        std::cout << "passed as expected end of mountPass: " << mountPass << std::endl;
       }
     }  // end of retries
   }  // end of pass
