@@ -409,13 +409,16 @@ public:
     size_t i = 0;
     for (size_t endPos, logPos = 0; logPos != std::string::npos; logPos = endPos) {
       if (log.find("Recall order of FSEQs") == std::string::npos) {
+        endPos = log.find('\n', logPos);
         continue;
       };
       if (log.find("useRAO=\"true\"") == std::string::npos) {
+        endPos = log.find('\n', logPos);
         continue;
       };
       logPos = log.find("recallOrder=", logPos);
       if (logPos == std::string::npos) {
+        endPos = logPos;
         continue;
       }
       logPos = log.find('\"', logPos);
@@ -424,10 +427,13 @@ public:
       }
       endPos = log.find('\"', ++logPos);
       if (endPos == logPos) {
+        endPos = log.find('\n', logPos);
         continue;
       }
       auto strFseq = log.substr(logPos, endPos - logPos);
       cta::utils::splitString(strFseq, ' ', ret[i++]);
+      // Move to next line
+      endPos = log.find('\n', logPos);
     }
     return ret;
   }
