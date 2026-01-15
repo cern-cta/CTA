@@ -243,6 +243,14 @@ void splitString(const std::string& str, const char separator, std::vector<std::
 }
 
 //-----------------------------------------------------------------------------
+// containsAllSubStrings
+//-----------------------------------------------------------------------------
+bool containsAllSubStrings(std::string_view str, const std::vector<std::string_view>& subStrArray) {
+  return std::ranges::all_of(subStrArray,
+                             [&str](const std::string_view s) { return str.find(s) != std::string::npos; });
+}
+
+//-----------------------------------------------------------------------------
 // trimString
 //-----------------------------------------------------------------------------
 std::string trimString(std::string_view s) {

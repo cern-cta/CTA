@@ -44,6 +44,7 @@
 #include <fcntl.h>
 #include <gtest/gtest.h>
 #include <inttypes.h>
+#include <ranges>
 #include <stdexcept>
 #include <stdint.h>
 #include <sys/mman.h>
@@ -407,9 +408,16 @@ public:
     std::map<size_t, std::vector<std::string>> ret;
     size_t i = 0;
     for (size_t endPos, logPos = 0; logPos != std::string::npos; logPos = endPos) {
-      logPos = log.find("Recall order of FSEQs", logPos);
-      logPos = log.find("useRAO=\"true\"", logPos);
+      if (log.find("Recall order of FSEQs") == std::string::npos) {
+        continue;
+      };
+      if (log.find("useRAO=\"true\"") == std::string::npos) {
+        continue;
+      };
       logPos = log.find("recallOrder=", logPos);
+      if (logPos == std::string::npos) {
+        continue;
+      }
       logPos = log.find('\"', logPos);
       if (logPos == std::string::npos) {
         break;
@@ -638,24 +646,59 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   }
 
   // 10) Check logs
+  // 10) Check logs
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
-  ASSERT_NE(std::string::npos,
-            logToCheck.find(
-              "MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TSTVID\" "
-              "mountId=\"1\" vo=\"vo\" tapePool=\"TestTapePool\" mediaType=\"LTO7M\" "
-              "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" labelFormat=\"0000\" vendor=\"TestVendor\" "
-              "capacityInBytes=\"12345678\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
-                            "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
+
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(MSG="Tape session started for read")",
+                                               R"(thread="TapeRead")",
+                                               R"(tapeDrive="T10D6116")",
+                                               R"(tapeVid="TSTVID")",
+                                               R"(mountId="1")",
+                                               R"(vo="vo")",
+                                               R"(tapePool="TestTapePool")",
+                                               R"(mediaType="LTO7M")",
+                                               R"(logicalLibrary="TestLogicalLibrary")",
+                                               R"(mountType="Retrieve")",
+                                               R"(labelFormat="0000")",
+                                               R"(vendor="TestVendor")",
+                                               R"(capacityInBytes="12345678")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedReadErrors="5")",
+                                               R"(mountTotalReadBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedReadErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
@@ -848,23 +891,57 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
 
   // 10) Check logs
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
-  ASSERT_NE(std::string::npos,
-            logToCheck.find(
-              "MSG=\"Tape session started for read\" thread=\"TapeRead\" tapeDrive=\"T10D6116\" tapeVid=\"TSTVID\" "
-              "mountId=\"1\" vo=\"vo\" tapePool=\"TestTapePool\" mediaType=\"LTO7M\" "
-              "logicalLibrary=\"TestLogicalLibrary\" mountType=\"Retrieve\" labelFormat=\"0000\" vendor=\"TestVendor\" "
-              "capacityInBytes=\"12345678\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
-                            "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
+
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(MSG="Tape session started for read")",
+                                               R"(thread="TapeRead")",
+                                               R"(tapeDrive="T10D6116")",
+                                               R"(tapeVid="TSTVID")",
+                                               R"(mountId="1")",
+                                               R"(vo="vo")",
+                                               R"(tapePool="TestTapePool")",
+                                               R"(mediaType="LTO7M")",
+                                               R"(logicalLibrary="TestLogicalLibrary")",
+                                               R"(mountType="Retrieve")",
+                                               R"(labelFormat="0000")",
+                                               R"(vendor="TestVendor")",
+                                               R"(capacityInBytes="12345678")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedReadErrors="5")",
+                                               R"(mountTotalReadBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedReadErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
@@ -1064,17 +1141,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 
   // 11) Check logs for drive statistics
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
-                            "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
+
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedReadErrors="5")",
+                                               R"(mountTotalReadBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedReadErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
@@ -1263,17 +1361,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
   // 10) Check logs
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
-                            "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
+
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedReadErrors="5")",
+                                               R"(mountTotalReadBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedReadErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 
   ASSERT_EQ(expectedRAOFseqOrder, getRAOFseqs(logToCheck));
 }
@@ -1462,17 +1581,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
 
   // 10) Check logs
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
-                            "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
+
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedReadErrors="5")",
+                                               R"(mountTotalReadBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedReadErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 
   ASSERT_EQ(expectedRAOOrder, getRAOFseqs(logToCheck));
 }
@@ -1662,17 +1802,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
 
   // 10) Check logs
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
-                            "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
+
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedReadErrors="5")",
+                                               R"(mountTotalReadBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedReadErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 
   ASSERT_NE(std::string::npos,
             logToCheck.find(
@@ -1866,17 +2027,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
 
   // 10) Check logs
   std::string logToCheck = logger.getLog();
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
 
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
-                            "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedReadErrors="5")",
+                                               R"(mountTotalReadBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedReadErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 
   ASSERT_NE(std::string::npos, logToCheck.find("In RAOManager::queryRAO(), successfully performed RAO."));
   ASSERT_NE(std::string::npos, logToCheck.find("executedRAOAlgorithm=\"sltf\""));
@@ -2203,17 +2385,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
   // 10) Check logs for drive statistics
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedReadErrors=\"5\" mountTotalReadBytesProcessed=\"4096\" "
-                            "mountTotalUncorrectedReadErrors=\"1\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
+
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedReadErrors="5")",
+                                               R"(mountTotalReadBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedReadErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
@@ -2350,7 +2553,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();
   for (const auto& sf : sourceFiles) {
@@ -2364,17 +2566,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   }
 
   // Check logs for drive statistics
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
-                            "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
 
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedWriteErrors="5")",
+                                               R"(mountTotalWriteBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedWriteErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
@@ -2516,7 +2739,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
 
   auto afiiter = archiveFileIds.begin();
@@ -2536,17 +2758,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   }
 
   // Check logs for drive statistics
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
-                            "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
 
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedWriteErrors="5")",
+                                               R"(mountTotalWriteBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedWriteErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
@@ -2694,7 +2937,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
 
   // We don't have any guarantee that the order the files were enqueued in
@@ -2722,17 +2964,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   }
 
   // Check logs for drive statistics
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
-                            "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
 
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedWriteErrors="5")",
+                                               R"(mountTotalWriteBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedWriteErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchMigration) {
@@ -2874,7 +3137,6 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
   ASSERT_EQ(s_vid, sess.getVid());
   auto afiiter = archiveFileIds.begin();
   uint64_t fseq = 1;
@@ -2895,17 +3157,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   }
 
   // Check logs for drive statistics
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
-                            "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
 
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedWriteErrors="5")",
+                                               R"(mountTotalWriteBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedWriteErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 //
@@ -3075,18 +3358,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
-                            "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
 
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedWriteErrors="5")",
+                                               R"(mountTotalWriteBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedWriteErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 //
@@ -3260,24 +3563,56 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   }
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
-  ASSERT_NE(
-    std::string::npos,
-    logToCheck.find(
-      "MSG=\"Tape session started for write\" thread=\"TapeWrite\" tapeDrive=\"T10D6116\" tapeVid=\"TSTVID\" "
-      "mountId=\"1\" vo=\"vo\" tapePool=\"TestTapePool\" mediaType=\"LTO7M\" logicalLibrary=\"TestLogicalLibrary\" "
-      "mountType=\"ArchiveForUser\" vendor=\"TestVendor\" capacityInBytes=\"12345678\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
-                            "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
 
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(MSG="Tape session started for write")",
+                                               R"(thread="TapeWrite")",
+                                               R"(tapeDrive="T10D6116")",
+                                               R"(tapeVid="TSTVID")",
+                                               R"(mountId="1")",
+                                               R"(vo="vo")",
+                                               R"(tapePool="TestTapePool")",
+                                               R"(mediaType="LTO7M")",
+                                               R"(logicalLibrary="TestLogicalLibrary")",
+                                               R"(mountType="ArchiveForUser")",
+                                               R"(vendor="TestVendor")",
+                                               R"(capacityInBytes="12345678")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedWriteErrors="5")",
+                                               R"(mountTotalWriteBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedWriteErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
@@ -3446,17 +3781,38 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   }
   // Check logs for drive statistics
   std::string logToCheck = logger.getLog();
-  logToCheck += "";
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" "
-                            "mountTotalCorrectedWriteErrors=\"5\" mountTotalUncorrectedWriteErrors=\"1\" "
-                            "mountTotalWriteBytesProcessed=\"4096\" mountTotalNonMediumErrorCounts=\"2\""));
-  ASSERT_NE(std::string::npos,
-            logToCheck.find("firmwareVersion=\"123A\" serialNumber=\"123456\" lifetimeMediumEfficiencyPrct=\"100.0\" "
-                            "mountReadEfficiencyPrct=\"100.0\" mountWriteEfficiencyPrct=\"100.0\" "
-                            "mountReadTransients=\"10\" "
-                            "mountServoTemps=\"10\" mountServoTransients=\"5\" mountTemps=\"100\" "
-                            "mountTotalReadRetries=\"25\" mountTotalWriteRetries=\"25\" mountWriteTransients=\"10\""));
+  auto logLines = cta::utils::splitStringToVector(logToCheck, '\n');
+
+  // Check if any of the lines contains all of these substrings
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(mountTotalCorrectedWriteErrors="5")",
+                                               R"(mountTotalWriteBytesProcessed="4096")",
+                                               R"(mountTotalUncorrectedWriteErrors="1")",
+                                               R"(mountTotalNonMediumErrorCounts="2")",
+                                             });
+  }));
+
+  ASSERT_TRUE(std::ranges::any_of(logLines, [](std::string_view line) {
+    return cta::utils::containsAllSubStrings(line,
+                                             {
+                                               R"(firmwareVersion="123A")",
+                                               R"(serialNumber="123456")",
+                                               R"(lifetimeMediumEfficiencyPrct="100.0")",
+                                               R"(mountReadEfficiencyPrct="100.0")",
+                                               R"(mountWriteEfficiencyPrct="100.0")",
+                                               R"(mountReadTransients="10)",
+                                               R"(mountServoTemps="10")",
+                                               R"(mountServoTransients="5")",
+                                               R"(mountTemps="100")",
+                                               R"(mountTotalReadRetries="25")",
+                                               R"(mountTotalWriteRetries="25")",
+                                               R"(mountWriteTransients="10")",
+                                             });
+  }));
 }
 
 TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {

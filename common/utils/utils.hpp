@@ -121,6 +121,15 @@ std::string trimFinalSlashes(const std::string& s);
 void splitString(const std::string& str, const char separator, std::vector<std::string>& result);
 
 /**
+ * Checks if a string contains all the substrings passes as an argument
+ *
+ * @param str The string to be checked agains.
+ * @param subStrArray The vector which all the substrings to be checked against
+ * stored.
+ */
+bool containsAllSubStrings(std::string_view str, const std::vector<std::string_view>& subStrArray);
+
+/**
  * Trims left and right white-space from the specified string
  *
  * @param s The string to be trimmed
