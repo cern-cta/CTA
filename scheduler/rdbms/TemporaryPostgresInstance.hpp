@@ -24,51 +24,36 @@
 namespace cta::schedulerdb {
 
 /**
- * GoogleTest Environment that manages a temporary PostgreSQL instance for tests.
- *
- * This environment:
- * 1. Creates a temporary data directory
- * 2. Initializes a fresh PostgreSQL database (initdb)
- * 3. Starts PostgreSQL on port 15432
- * 4. Provides connection info to tests
- * 5. Stops PostgreSQL and cleans up after tests
- *
- * Requirements:
- * - PostgreSQL must be installed (pg_ctl, initdb, psql in PATH or at known locations)
- * - Write access to /tmp or /dev/shm
- *
- * Usage:
- *
- *   In your test main (e.g., tests/unit_tests.cpp):
- *
- *   int main(int argc, char **argv) {
- *     ::testing::InitGoogleTest(&argc, argv);
- *
- *     cta::schedulerdb::g_tempPostgresEnv =
- *         new cta::schedulerdb::TemporaryPostgresEnvironment();
- *     ::testing::AddGlobalTestEnvironment(g_tempPostgresEnv);
- *
- *     return RUN_ALL_TESTS();
- *   }
- *
- *   In your test fixtures:
- *
- *   void SetUp() override {
- *     auto login = g_tempPostgresEnv->getLogin();
- *     m_db = std::make_unique<RelationalDB>(..., login, ...);
- *   }
- */
+  * GoogleTest Environment that manages a temporary PostgreSQL instance for tests.
+  *
+  * This environment:
+  * 1. Creates a temporary data directory
+  * 2. Initializes a fresh PostgreSQL database (initdb)
+  * 3. Starts PostgreSQL on port 15432
+  * 4. Provides connection info to tests
+  * 5. Stops PostgreSQL and cleans up after tests
+  *
+  * Requirements:
+  * - PostgreSQL must be installed (pg_ctl, initdb, psql in PATH or at known locations)
+  * - Write access to /tmp or /dev/shm
 
-/* 
-  * While this is in reality an integration test, several of our unit tests require a scheduler backend to run.
-  * Therefore, in order to run them with the PostgreSQL scheduler, we need to have a Postgres server running.
-  * We considered the alternative of launching the Postgres instance outside of the unit test binary, and providing it
-  * just the connection string, as is the case for example for the unit-test-postgresql.
-  * However, it was not clear what was the appropriate place for doing the setup outside the unit tests.
-  * Having the unit test setup the Postgres instance seems more contained and the only prerequisite is that
-  * postgres server binaries are installed.
-  * In the future we could/should revise this decision, and try to further separate what are essentially integration
-  * tests from our "unit" tests.
+  * We decided to start a separate PostgreSQL instance as part of the unit test binary.
+  * Managing the PostgreSQL instance within the test binary itself, rather than externally
+  * via a provided connection string, simplifies unit test execution and maintenance when
+  * switching between Objectstore and PostgreSQL compilation options for the backend.
+  * 
+  * Many of the existing unit tests already have external dependencies and therefore
+  * function more as integration tests than pure unit tests. This is consistent with the
+  * current testing approach: the Objectstore backend depends on VFS, the Catalogue depends
+  * on SQLite, and we are now adding PostgreSQL for the relational database scheduler backend
+  * within the same framework.
+  * 
+  * Avoiding this additional dependency by using an in-memory SQLite database, as done for the
+  * Catalogue, would require a substantial amount of work. Most queries would need to be rewritten
+  * for SQLite, and it would not be possible to test the same production logic because the scheduler
+  * relies on PostgreSQL-specific features not available in SQLite. Given the small size of the
+  * development team, introducing a new, fully isolated unit testing framework without these dependencies
+  * is not feasible at this time.
   */
 class TemporaryPostgresEnvironment : public ::testing::Environment {
 public:
