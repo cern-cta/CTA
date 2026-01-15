@@ -8,7 +8,6 @@
 #include "catalogue/interfaces/SchemaCatalogue.hpp"
 #include "common/log/Logger.hpp"
 
-#include <list>
 #include <memory>
 #include <vector>
 
