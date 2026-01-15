@@ -34,8 +34,106 @@ TEST(cta_log_LogContextTest, additionScopedRemove) {
   }
   ASSERT_EQ(1U, lc.size());
   lc.log(DEBUG, "One param message");
-  lc.erase({"MigrationRequestId"});
+  lc.pop("MigrationRequestId");
   ASSERT_EQ(0U, lc.size());
+}
+
+TEST(cta_log_LogContextTest, paramPushPopErase) {
+  StringLogger sl("dummy", "cta_log_LogContextTest", DEBUG);
+  LogContext lc(sl);
+  // Push 1st
+  lc.push(Param("MigrationRequestId", 111));
+  {
+    lc.log(INFO, "First log");
+    std::string str = sl.getLog();
+    ASSERT_NE(std::string::npos, str.find(R"(MigrationRequestId="111")"));
+    sl.clearLog();
+  }
+  // Push 2nd
+  lc.push(Param("MigrationRequestId", 222));
+  {
+    lc.log(INFO, "Second log");
+    std::string str = sl.getLog();
+    ASSERT_NE(std::string::npos, str.find(R"(MigrationRequestId="222")"));
+    sl.clearLog();
+  }
+  // Push 3rd
+  lc.push(Param("MigrationRequestId", 333));
+  {
+    lc.log(INFO, "Third log");
+    std::string str = sl.getLog();
+    ASSERT_NE(std::string::npos, str.find(R"(MigrationRequestId="333")"));
+    sl.clearLog();
+  }
+  // Pop 3rd
+  lc.pop("MigrationRequestId");
+  {
+    lc.log(INFO, "Second log again");
+    std::string str = sl.getLog();
+    ASSERT_NE(std::string::npos, str.find(R"(MigrationRequestId="222")"));
+    sl.clearLog();
+  }
+  // Erase all
+  lc.erase({"MigrationRequestId"});
+  {
+    lc.log(INFO, "Erase all");
+    std::string str = sl.getLog();
+    ASSERT_EQ(std::string::npos, str.find(R"(MigrationRequestId)"));
+    sl.clearLog();
+  }
+}
+
+TEST(cta_log_LogContextTest, paramScopes) {
+  StringLogger sl("dummy", "cta_log_LogContextTest", DEBUG);
+  LogContext lc(sl);
+  {
+    // 1st scope
+    ScopedParamContainer sp1(lc);
+    sp1.add("MigrationRequestId", 111);
+
+    lc.log(INFO, "Test");
+    std::string str1a = sl.getLog();
+    sl.clearLog();
+    ASSERT_NE(std::string::npos, str1a.find(R"(MigrationRequestId="111")"));
+
+    {
+      // 2nd scope
+      ScopedParamContainer sp2(lc);
+      sp2.add("MigrationRequestId", 222);
+
+      lc.log(INFO, "Test");
+      std::string str2a = sl.getLog();
+      sl.clearLog();
+      ASSERT_NE(std::string::npos, str2a.find(R"(MigrationRequestId="222")"));
+
+      {
+        // 3rd scope
+        ScopedParamContainer sp3(lc);
+        sp3.add("MigrationRequestId", 333);
+
+        lc.log(INFO, "Test");
+        std::string str3a = sl.getLog();
+        sl.clearLog();
+        ASSERT_NE(std::string::npos, str3a.find(R"(MigrationRequestId="333")"));
+      }
+
+      // 2nd scope again
+      lc.log(INFO, "Test");
+      std::string str2b = sl.getLog();
+      sl.clearLog();
+      ASSERT_NE(std::string::npos, str2b.find(R"(MigrationRequestId="222")"));
+    }
+    // 1st scope again
+    lc.log(INFO, "Test");
+    std::string str1b = sl.getLog();
+    sl.clearLog();
+    ASSERT_NE(std::string::npos, str1b.find(R"(MigrationRequestId="111")"));
+  }
+  // Out of scope
+  lc.log(INFO, "Test");
+  std::string str0b = sl.getLog();
+  ASSERT_EQ(std::string::npos, str0b.find(R"(MigrationRequestId)"));
+  sl.clearLog();
 }
 
 TEST(cta_log_LogContextTest, paramsFound) {
