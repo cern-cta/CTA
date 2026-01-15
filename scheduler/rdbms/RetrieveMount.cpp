@@ -120,9 +120,10 @@ uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList
     }
     txn.commit();
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to update job status for failed task queue."
-             + ex.getMessageValue());
+           "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to update job status for failed task queue.");
     txn.abort();
     return 0;
   }
@@ -226,10 +227,11 @@ void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string
         .log(log::INFO, "In RetrieveMount::updateRetrieveJobStatusWrapper(): updated job statuses.");
     }
   } catch (const exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
            "In RetrieveMount::updateRetrieveJobStatusWrapper(): Exception while updating job status. Aborting "
-           "transaction. "
-             + ex.getMessageValue());
+           "transaction.");
     txn.abort();
   }
 }
@@ -293,10 +295,11 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uin
       txn.commit();
 
     } catch (const exception::Exception& ex) {
+      cta::log::ScopedParamContainer params(lc);
+      params.add("exceptionMessage", ex.getMessageValue());
       lc.log(cta::log::ERR,
              "In RetrieveMount::putQueueToSleep(): Exception while updating job status. Aborting "
-             "transaction. "
-               + ex.getMessageValue());
+             "transaction. ");
       txn.abort();
     }
   }
@@ -317,10 +320,10 @@ void RetrieveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDa
       }
     }
   } catch (const exception::Exception& ex) {
-
+    cta::log::ScopedParamContainer params(lc);
+    params.add("exceptionMessage", ex.getMessageValue());
     lc.log(cta::log::ERR,
-           "In RetrieveMount::recycleTransferredJobs(): Failed to recycle all job objects for the job pool: "
-             + ex.getMessageValue());
+           "In RetrieveMount::recycleTransferredJobs(): Failed to recycle all job objects for the job pool.");
   }
   jobsBatch.clear();
 }
