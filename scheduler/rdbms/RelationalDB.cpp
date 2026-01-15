@@ -1643,7 +1643,7 @@ RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& lc) {
           "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Removed disk system sleep entries from the DB.");
     } catch (const std::exception& ex) {
       cta::log::ScopedParamContainer(lc)
-        .add("exceptionWhat", ex.what())
+        .add("exceptionMessage", ex.getMessageValue())
         .log(cta::log::ERR,
              "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Failed to remove disk system sleep entries "
              "from DB.");
@@ -2001,10 +2001,11 @@ void RelationalDB::cleanOldMountLastFetchTimes(uint64_t deletionAge, uint64_t ba
       .log(cta::log::INFO,
            "In RelationalDB::cleanOldMountLastFetchTimes(): Deleted old rows from mount last fetch time table.");
   } catch (exception::Exception& ex) {
-    lc.log(
-      log::ERR,
-      "In RelationalDB::cleanOldMountLastFetchTimes(): Failed to delete old rows from mount last fetch time table: "
-        + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(
+        log::ERR,
+        "In RelationalDB::cleanOldMountLastFetchTimes(): Failed to delete old rows from mount last fetch time table.");
     txn.abort();
   }
 }
@@ -2053,9 +2054,10 @@ void RelationalDB::cleanMountLastFetchTimes(std::vector<uint64_t> deadMountIds,
       .log(cta::log::INFO,
            "In RelationalDB::cleanMountLastFetchTimes(): Deleted rows from mount last fetch time table.");
   } catch (exception::Exception& ex) {
-    lc.log(log::ERR,
-           "In RelationalDB::cleanMountLastFetchTimes(): Failed to delete old rows from mount last fetch time table: "
-             + ex.getMessageValue());
+    log::ScopedParamContainer(lc)
+      .add("exceptionMessage", ex.getMessageValue())
+      .log(log::ERR,
+           "In RelationalDB::cleanMountLastFetchTimes(): Failed to delete old rows from mount last fetch time table.");
     txn.abort();
   }
 }

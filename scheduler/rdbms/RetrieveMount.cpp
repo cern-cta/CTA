@@ -317,6 +317,7 @@ void RetrieveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDa
       }
     }
   } catch (const exception::Exception& ex) {
+
     lc.log(cta::log::ERR,
            "In RetrieveMount::recycleTransferredJobs(): Failed to recycle all job objects for the job pool: "
              + ex.getMessageValue());
