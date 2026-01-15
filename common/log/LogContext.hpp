@@ -121,7 +121,11 @@ class ScopedParamContainer {
 public:
   explicit ScopedParamContainer(LogContext& context) : m_context(context) {}
 
-  ~ScopedParamContainer() { m_context.erase(m_names); }
+  ~ScopedParamContainer() {
+    for (auto& name : m_names) {
+      m_context.pop(name);
+    }
+  }
 
   template<typename S, typename T>
     requires std::constructible_from<std::string, S&&>
