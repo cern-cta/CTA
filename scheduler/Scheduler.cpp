@@ -1517,7 +1517,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
         .add("voWriteMaxDrives", voOfThisPotentialMount.writeMaxDrives)
         .add("maxDrives", maxDrives);
       if (sleepingMount) {
-        params.add("fullDiskSystem", m->diskSystemSleptFor);
+        params.add("fullDiskSystem", m->diskSystemName);
       }
       lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): Removing potential mount not passing criteria");
       toFilterSet.insert(m);
@@ -2541,7 +2541,7 @@ std::vector<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAn
         if (pm.sleepingMount) {
           common::dataStructures::QueueAndMountSummary::SleepForSpaceInfo sfsi;
           sfsi.startTime = pm.sleepStartTime;
-          sfsi.diskSystemName = pm.diskSystemSleptFor;
+          sfsi.diskSystemName = pm.diskSystemName;
           sfsi.sleepTime = pm.sleepTime;
           summary->sleepForSpaceInfo = sfsi;
         }

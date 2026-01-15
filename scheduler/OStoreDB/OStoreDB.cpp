@@ -457,7 +457,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                   < (rqSummary.sleepInfo.value().sleepStartTime + (int64_t) rqSummary.sleepInfo.value().sleepTime))) {
             m.sleepingMount = true;
             m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
-            m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
+            m.diskSystemName = rqSummary.sleepInfo.value().diskSystemName;
             m.sleepTime = rqSummary.sleepInfo.value().sleepTime;
           }
         }
@@ -488,7 +488,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                 < (rqSummary.sleepInfo.value().sleepStartTime + (int64_t) rqSummary.sleepInfo.value().sleepTime))) {
           m.sleepingMount = true;
           m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
-          m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
+          m.diskSystemName = rqSummary.sleepInfo.value().diskSystemName;
           m.sleepTime = rqSummary.sleepInfo.value().sleepTime;
         }
       }
