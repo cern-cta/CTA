@@ -15,20 +15,81 @@
 
 namespace cta::maintd {
 
+/**
+ * @brief Base class for routines handling inactive (dead) mount queues.
+ *
+ * Provides common helpers and state for routines that clean up scheduler
+ * queues associated with mounts that have been inactive for longer than
+ * a configured time limit. Derived classes specialize by queue type
+ * (archive/retrieve/repack_active/pending).
+ *
+ * The routine logic typically:
+ *  - Identifies dead mounts using the scheduler DB and catalogue
+ *  - Cleans up ACTIVE or PENDING queues for those mounts
+ *  - Removes corresponding entries from the MOUNT_QUEUE_LAST_FETCH table
+ *    if no more cleanup needs to be done
+ */
 class InactiveMountQueueRoutineBase : public IRoutine {
 public:
+  /**
+   * @brief Returns the routine name.
+   */
   std::string getName() const final { return m_routineName; };
 
+  /**
+   * @brief Selects the appropriate dead mount ID vector for a given queue type.
+   *
+   * Extracts and returns a reference to the vector of dead mount IDs matching
+   * the requested archive/retrieve, repack, and pending/active combination.
+   *
+   * @param deadMounts  Dead mount IDs grouped by queue type.
+   * @param isArchive   True for archive queues, false for retrieve queues.
+   * @param isRepack    True for repack queues.
+   * @param isPending   True for pending queues, false for active queues.
+   *
+   * @return Reference to the corresponding vector of dead mount IDs.
+   */
   std::vector<uint64_t>& getDeadMountVector(cta::common::dataStructures::DeadMountCandidateIDs& deadMounts,
                                             bool isArchive,
                                             bool isRepack,
                                             bool isPending);
+
+  /**
+   * @brief Handles cleanup of ACTIVE queues for inactive mounts.
+   *
+   * Requeues jobs owned by inactive mounts from ACTIVE queues back to the
+   * corresponding PENDING queues. Only jobs that have not entered the
+   * reporting phase are requeued.
+   *
+   * @param isArchive  True for archive queues, false for retrieve queues.
+   * @param isRepack   True for repack queues.
+   */
   void handleInactiveMountActiveQueueRoutine(bool isArchive, bool isRepack);
+
+  /**
+   * @brief Handles cleanup of PENDING queues for inactive mounts.
+   *
+   * Clears mount assignments for jobs in PENDING queues that still reference
+   * inactive mounts, allowing them to be rescheduled to new mounts.
+   *
+   * @param isArchive  True for archive queues, false for retrieve queues.
+   * @param isRepack   True for repack queues.
+   */
   void handleInactiveMountPendingQueueRoutine(bool isArchive, bool isRepack);
 
   virtual ~InactiveMountQueueRoutineBase() = default;
 
 protected:
+  /**
+   * @brief Constructs a base inactive-mount queue cleanup routine.
+   *
+   * @param lc                 Logging context.
+   * @param catalogue          CTA catalogue interface.
+   * @param pgs                Scheduler relational database interface.
+   * @param batchSize          Maximum number of jobs processed per iteration.
+   * @param routineName        Name of the routine.
+   * @param inactiveTimeLimit  Inactivity threshold in seconds.
+   */
   InactiveMountQueueRoutineBase(log::LogContext& lc,
                                 catalogue::Catalogue& catalogue,
                                 RelationalDB& pgs,

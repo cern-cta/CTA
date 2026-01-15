@@ -14,6 +14,12 @@
 
 namespace cta::maintd {
 
+/**
+ * @brief Periodic routine that deletes stale jobs from failed queue tables.
+ *
+ * Removes jobs that have remained in archive/retrieve/repack failed queues
+ * longer than the configured inactivity limit (e.g. two weeks).
+ */
 class DeleteOldFailedQueuesRoutine : public IRoutine {
 public:
   std::string getName() const final { return m_routineName; };
@@ -32,6 +38,13 @@ private:
   uint64_t m_inactiveTimeLimit;
 };
 
+/**
+ * @brief Periodic routine that cleans stale mount last-fetch tracking entries.
+ *
+ * Deletes entries from the MOUNT_QUEUE_LAST_FETCH table for mounts that
+ * have been inactive for a very long time (e.g. several weeks), exceeding
+ * the inactivity limits used by inactive mount cleanup routines.
+ */
 class CleanMountLastFetchTimeRoutine : public IRoutine {
 public:
   std::string getName() const final { return m_routineName; };

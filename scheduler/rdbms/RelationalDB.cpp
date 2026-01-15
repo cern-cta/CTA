@@ -1654,7 +1654,7 @@ RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& lc) {
 }
 
 // MountQueueCleanup routine methods
-cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCandidates(uint64_t mount_gc_delay,
+cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::fetchDeadMountCandidates(uint64_t mount_gc_delay,
                                                                                         log::LogContext& lc) {
   cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs;
   schedulerdb::Transaction txn(m_connPool, lc);
@@ -1687,20 +1687,20 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
       } else if (queueType == "REPACK_RETRIEVE_ACTIVE") {
         scheduledMountIDs.retrieveRepackActive.emplace_back(mountId);
       } else {
-        lc.log(log::WARNING, "In RelationalDB::getDeadMountCandidates(): Unknown QUEUE_TYPE: " + queueType);
+        lc.log(log::WARNING, "In RelationalDB::fetchDeadMountCandidates(): Unknown QUEUE_TYPE: " + queueType);
       }
     }
     txn.commit();
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
       .add("exceptionMessage", ex.getMessageValue())
-      .log(log::ERR, "In RelationalDB::getDeadMountCandidates(): failed to get distinct MOUNT_IDs from the queues.");
+      .log(log::ERR, "In RelationalDB::fetchDeadMountCandidates(): failed to get distinct MOUNT_IDs from the queues.");
     txn.abort();
   }
   return scheduledMountIDs;
 }
 
-cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCandicateIDs(uint64_t inactiveTimeLimit,
+cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMounts(uint64_t inactiveTimeLimit,
                                                                                           log::LogContext& lc) {
   // Get all active mount IDs for drives which do have an active mount registered in the catalogue
   std::unordered_map<std::string, std::optional<uint64_t>> driveNameMountIdOpt =
@@ -1717,7 +1717,7 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
   params.add("activeCatalogueMountIdCount", activeMountIds.size());
   lc.log(cta::log::INFO, "Fetched mounts registered in catalogue for active drives.");
   // Get all active mount IDs from the Scheduler DB
-  cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs = getDeadMountCandidates(inactiveTimeLimit, lc);
+  cta::common::dataStructures::DeadMountCandidateIDs scheduledMountIDs = fetchDeadMountCandidates(inactiveTimeLimit, lc);
   params.add("archivePendingDeadMountIdsCount", scheduledMountIDs.archivePending.size());
   params.add("archiveActiveDeadMountIdsCount", scheduledMountIDs.archiveActive.size());
   params.add("retrievePendingDeadMountIdsCount", scheduledMountIDs.retrievePending.size());
@@ -1752,7 +1752,7 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::getDeadMountCan
   params.add("archiveRepackActiveDeadMountIdsCount", scheduledMountIDs.archiveRepackActive.size());
   params.add("retrieveRepackPendingDeadMountIdsCount", scheduledMountIDs.retrieveRepackPending.size());
   params.add("retrieveRepackActiveDeadMountIdsCount", scheduledMountIDs.retrieveRepackActive.size());
-  lc.log(cta::log::INFO, "Found dead mounts which need job rescheduling.");
+  lc.log(cta::log::INFO, "In RelationalDB::getDeadMounts(): Found dead mounts which need job rescheduling.");
   return scheduledMountIDs;
 }
 

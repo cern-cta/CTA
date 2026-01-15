@@ -292,32 +292,131 @@ public:
 
   // MountQueueCleanup routine methods
 
-  /*
-   * Get list of distinct Mount IDs which were inactive
-   * since a long time, i.e. they had no jobs fetched since mount_gc_delay seconds ago
-   * from the Scheduler DB
+  /**
+   * @brief Fetches mount IDs that have been inactive for longer than the given GC delay.
    *
-   * @param mount_gc_delay  Looking at activity older than the number of seconds in this parameter
-   * @param ls                     Log context
-   * @return DeadMountCandidateIDs object containing vectors of Mount IDs sorted by queue type
+   * Queries the Scheduler DB for mount/queue combinations whose last fetch time
+   * is older than the provided threshold. The resulting mount IDs are grouped
+   * by queue type (archive/retrieve/repack, pending/active).
+   *
+   * @param mount_gc_delay  Inactivity threshold in seconds.
+   * @param lc              Logging context.
+   *
+   * @return DeadMountCandidateIDs containing mount IDs grouped by queue type.
    */
-  cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandidates(uint64_t mount_gc_delay,
+  cta::common::dataStructures::DeadMountCandidateIDs fetchDeadMountCandidates(uint64_t mount_gc_delay,
                                                                             log::LogContext& lc);
-  cta::common::dataStructures::DeadMountCandidateIDs getDeadMountCandicateIDs(uint64_t inactiveTimeLimit,
+
+  /**
+   * @brief Determines dead mounts that require cleanup and job rescheduling.
+   *
+   * Retrieves inactive mount IDs from the Scheduler DB and filters out mounts
+   * that are still reported as active in the catalogue. This ensures that
+   * only mounts with no active drive association are considered dead.
+   *
+   * @param inactiveTimeLimit  Inactivity threshold in seconds.
+   * @param lc                 Logging context.
+   *
+   * @return DeadMountCandidateIDs containing confirmed dead mount IDs
+   *         grouped by queue type.
+   */
+  cta::common::dataStructures::DeadMountCandidateIDs getDeadMounts(uint64_t inactiveTimeLimit,
                                                                               log::LogContext& lc);
+  /**
+   * @brief Builds the queue type prefix for archive/retrieve and repack modes.
+   *
+   * Constructs the common queue name prefix used in scheduler tables,
+   * e.g. "ARCHIVE_", "RETRIEVE_", "REPACK_ARCHIVE_", etc.
+   *
+   * @param isArchive  True for archive queues, false for retrieve queues.
+   * @param isRepack   True for repack queues.
+   *
+   * @return Queue type prefix string.
+   */
   std::string getQueueTypePrefix(bool isArchive, bool isRepack);
+
+  /**
+   * @brief Cleans up pending queues for inactive mounts.
+   *
+   * For jobs in PENDING queues that are still assigned to inactive mounts,
+   * clears the MOUNT_ID field so that jobs can be rescheduled to new mounts.
+   * Processing is done in batches and protected by a named DB lock.
+   *
+   * @param deadMountIds  List of inactive mount IDs.
+   * @param batchSize    Maximum number of jobs to process in one batch.
+   * @param isArchive    True for archive queues, false for retrieve queues.
+   * @param isRepack     True for repack queues.
+   * @param lc           Logging context.
+   *
+   * @return Number of jobs updated.
+   */
   uint64_t handleInactiveMountPendingQueues(const std::vector<uint64_t>& deadMountIds,
                                             size_t batchSize,
                                             bool isArchive,
                                             bool isRepack,
                                             log::LogContext& lc);
+
+  /**
+   * @brief Requeues jobs from active queues associated with inactive mounts.
+   *
+   * Selects jobs from ACTIVE queues that belong to inactive mounts and are
+   * in a transferable state, then requeues them back to the corresponding
+   * PENDING queues. Operations are performed in batches and guarded by
+   * named DB locks.
+   *
+   * @param deadMountIds  List of inactive mount IDs.
+   * @param batchSize    Maximum number of jobs to process in one batch.
+   * @param isArchive    True for archive queues, false for retrieve queues.
+   * @param isRepack     True for repack queues.
+   * @param lc           Logging context.
+   *
+   * @return Number of jobs selected for requeueing.
+   */
   uint64_t handleInactiveMountActiveQueues(const std::vector<uint64_t>& deadMountIds,
                                            size_t batchSize,
                                            bool isArchive,
                                            bool isRepack,
                                            log::LogContext& lc);
+
+  /**
+   * @brief Deletes old entries from failed job queue tables.
+   *
+   * Removes jobs from ARCHIVE/RETRIEVE/REPACK failed queue tables whose last update
+   * time is older than the specified age. Deletion is performed in batches
+   * and uses row-level locking to avoid contention.
+   *
+   * @param deletionAge  Age threshold in seconds.
+   * @param batchSize    Maximum number of rows to delete per batch.
+   * @param lc           Logging context.
+   */
   void deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
+
+  /**
+   * @brief Removes stale mount last-fetch records.
+   *
+   * Deletes entries from the MOUNT_QUEUE_LAST_FETCH table that are older
+   * than the specified age. Used as a general garbage-collection mechanism
+   * for obsolete mount activity records.
+   *
+   * @param deletionAge  Age threshold in seconds.
+   * @param batchSize    Maximum number of rows to delete per batch.
+   * @param lc           Logging context.
+   */
   void cleanOldMountLastFetchTimes(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
+
+  /**
+   * @brief Deletes mount last-fetch records for specific dead mounts and queue types.
+   *
+   * Removes entries from the MOUNT_QUEUE_LAST_FETCH table corresponding to
+   * the provided mount IDs and the specified queue type (archive/retrieve/repack,
+   * pending/active).
+   *
+   * @param deadMountIds  List of inactive mount IDs.
+   * @param isArchive    True for archive queues, false for retrieve queues.
+   * @param isRepack     True for repack queues.
+   * @param isPending    True for pending queues, false for active queues.
+   * @param lc           Logging context.
+   */
   void cleanMountLastFetchTimes(std::vector<uint64_t> deadMountIds,
                                 bool isArchive,
                                 bool isRepack,

@@ -47,7 +47,7 @@ InactiveMountQueueRoutineBase::getDeadMountVector(cta::common::dataStructures::D
 
 void InactiveMountQueueRoutineBase::handleInactiveMountActiveQueueRoutine(bool isArchive, bool isRepack) {
   cta::common::dataStructures::DeadMountCandidateIDs deadCandidates =
-    m_RelationalDB.getDeadMountCandicateIDs(m_inactiveTimeLimit, m_lc);
+    m_RelationalDB.getDeadMounts(m_inactiveTimeLimit, m_lc);
   std::vector<uint64_t> deadMountIds = getDeadMountVector(deadCandidates, isArchive, isRepack, false /* isPending */);
   uint64_t njobs = m_RelationalDB.handleInactiveMountActiveQueues(deadMountIds, m_batchSize, isArchive, isRepack, m_lc);
   if (njobs == 0 && !deadMountIds.empty()) {
@@ -57,7 +57,7 @@ void InactiveMountQueueRoutineBase::handleInactiveMountActiveQueueRoutine(bool i
 
 void InactiveMountQueueRoutineBase::handleInactiveMountPendingQueueRoutine(bool isArchive, bool isRepack) {
   cta::common::dataStructures::DeadMountCandidateIDs deadCandidates =
-    m_RelationalDB.getDeadMountCandicateIDs(m_inactiveTimeLimit, m_lc);
+    m_RelationalDB.getDeadMounts(m_inactiveTimeLimit, m_lc);
   std::vector<uint64_t> deadMountIds = getDeadMountVector(deadCandidates, isArchive, isRepack, true /* isPending */);
   uint64_t njobs =
     m_RelationalDB.handleInactiveMountPendingQueues(deadMountIds, m_batchSize, isArchive, isRepack, m_lc);
