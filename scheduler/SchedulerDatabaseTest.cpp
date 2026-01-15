@@ -571,11 +571,8 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
 
   // expecting 0 potential mounts since the job is on a sleeping queue
   ASSERT_EQ(1, mi->potentialMounts.size());
-  std::cout << "mount found as expected" << std::endl;
   ASSERT_TRUE(mi->potentialMounts.begin()->sleepingMount);
-  std::cout << "mount is sleeping all ok" << std::endl;
   ASSERT_EQ("ds-A", mi->potentialMounts.begin()->diskSystemName);
-  std::cout << "the right disk system" << std::endl;
 }
 
 TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
