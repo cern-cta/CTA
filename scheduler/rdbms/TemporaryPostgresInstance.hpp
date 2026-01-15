@@ -267,11 +267,6 @@ public:
    */
   void createSchedulerSchemaInSchema(const std::string& schemaName);
 
-  /**
-   * Execute multiple SQL statements separated by semicolons
-   */
-  void executeNonQueries(rdbms::Conn& conn, const std::string& sqlStmts);
-
 private:
   /**
    * Find PostgreSQL binaries (pg_ctl, initdb, psql)
