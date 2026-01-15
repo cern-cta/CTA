@@ -44,7 +44,7 @@ void TemporaryPostgresEnvironment::createSchedulerSchemaInSchema(const std::stri
     auto conn = connPool.getConn();
 
     // Set search_path to our schema
-    auto setPathStmt = conn.createStmt("SET search_path TO " + schemaName);
+    auto setPathStmt = conn.createStmt("SET search_path TO " + std::string("'") + schemaName + std::string("'"));
     setPathStmt.executeNonQuery();
 
     // Execute schema creation SQL
