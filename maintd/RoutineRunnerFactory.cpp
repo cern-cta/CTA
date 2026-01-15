@@ -129,59 +129,59 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(600)));
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(1000),
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(900)));
     routineRunner->registerRoutine(std::make_unique<maintd::RetrieveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(600)));
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(1000),
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(900)));
     routineRunner->registerRoutine(std::make_unique<maintd::RepackArchiveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(600)));
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(1000),
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(900)));
     routineRunner->registerRoutine(std::make_unique<maintd::RepackRetrieveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(600)));
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(1000),
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(900)));
     routineRunner->registerRoutine(std::make_unique<maintd::ArchiveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(600)));
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(1000),
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(900)));
     routineRunner->registerRoutine(std::make_unique<maintd::RetrieveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(600)));
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(1000),
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(900)));
     routineRunner->registerRoutine(std::make_unique<maintd::RepackArchiveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(600)));
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(1000),
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(900)));
     routineRunner->registerRoutine(std::make_unique<maintd::RepackRetrieveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(600)));
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(1000),
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_collection").value_or(900)));
     routineRunner->registerRoutine(std::make_unique<maintd::DeleteOldFailedQueuesRoutine>(
       m_lc,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(1000),
       m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_deletion_of_failed_jobs").value_or(1209600)));
     routineRunner->registerRoutine(std::make_unique<maintd::CleanMountLastFetchTimeRoutine>(
       m_lc,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500),
+      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(1000),
       m_config.getOptionValueInt("cta.routines.queue_cleanup.age_for_deletion_of_mount_queue_last_fetch_table")
         .value_or(1209600)));
 #endif
