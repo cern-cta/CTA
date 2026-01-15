@@ -1643,7 +1643,7 @@ RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& lc) {
           "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Removed disk system sleep entries from the DB.");
     } catch (const std::exception& ex) {
       cta::log::ScopedParamContainer(lc)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add("exceptionMessage", ex.what())
         .log(cta::log::ERR,
              "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Failed to remove disk system sleep entries "
              "from DB.");
