@@ -12,6 +12,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
+#include <errno.h>
 #include <fcntl.h>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -19,6 +20,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <system_error>
 #include <thread>
 #include <unistd.h>
 
@@ -65,7 +67,7 @@ public:
     }
     pid_t pid = fork();
     if (pid < 0) {
-      throw std::runtime_error("Failed to fork!");
+      throw std::system_error(errno, std::generic_category(), "failed to fork");
     }
     if (pid == 0) {
       /* child process, execute command */
@@ -108,7 +110,7 @@ public:
       m_useShm ? shmTemplate : tmpTemplate);  // mkdtemp will replace the Xs with actual values to make dir unique
 
     if (!tmpDir) {
-      throw std::runtime_error("Failed to create temporary directory");
+      throw std::system_error(errno, std::generic_category(), "failed to create temporary directory");
     }
 
     m_dataDir = tmpDir;
