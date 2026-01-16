@@ -9,8 +9,6 @@ if(CTA_USE_PGSCHED)
 endif()
 
 add_executable(cta-unitTests ${CTA_UNIT_TEST_SOURCES})
-# add_executable(cta-unitTests
-#   unit_tests.cpp)
 
 # link with TemporaryPostgresInstance if the pg scheduler is requested
 if(CTA_USE_PGSCHED)

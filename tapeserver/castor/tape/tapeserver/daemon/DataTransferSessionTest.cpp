@@ -1081,9 +1081,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
 
   // 8) Run the data transfer session
-  sess.execute();  // we are stuck here, there is nothing in the archive queue
-  // there is also nothing in the retrieve queue (the RETRIEVE_QUEUE_SUMMARY,
-  // there is a record in retrieve_pending_queue)
+  sess.execute();
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());
@@ -1284,7 +1282,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
     sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
 
   // 8) Run the data transfer session
-  sess.execute();  // again it seems we are sleeping forever in here....
+  sess.execute();
 
   // 9) Check the session git the correct VID
   ASSERT_EQ(s_vid, sess.getVid());
