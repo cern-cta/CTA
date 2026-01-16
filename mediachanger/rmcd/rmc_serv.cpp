@@ -175,9 +175,13 @@ int rmc_main(const char* const robot) {
   if (!listen_scope) {
     listen_scope = getconfent_fromfile("RMC", "LISTEN_SCOPE", 0);
   }
-  if (listen_scope && std::string(listen_scope) == "any") {
+  const auto listen_scope_str = listen_scope ? std::string(listen_scope) : "loopback";
+  if (listen_scope_str == "any") {
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
-  } else {  // Default to localhost only
+  } else if (listen_scope_str == "loopback") {
+    sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+  } else {
+    rmc_logit(func, "Received unsupported listen scope: %s. Defaulting to loopback.\n", listen_scope_str.c_str());
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   }
   if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char*) &on, sizeof(on)) < 0) {
