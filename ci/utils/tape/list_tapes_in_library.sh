@@ -40,7 +40,7 @@ if [[ -z "$library_device" ]]; then
 fi
 
 # Get the tapes currently in the library
-mtx -f "/dev/${library_device}" status | \
+mtx -f "${library_device}" status | \
     grep "Storage Element" | \
     grep "Full" | \
     grep -o 'VolumeTag *= *[^ ]*' | \
