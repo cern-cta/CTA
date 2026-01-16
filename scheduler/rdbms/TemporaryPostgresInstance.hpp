@@ -60,6 +60,9 @@ class TemporaryPostgresEnvironment : public ::testing::Environment {
 public:
   /* This is used to avoid shell injection */
   int runCommand(const std::vector<std::string>& args) {
+    if (args.empty()) {
+      throw std::invalid_argument("No arguments provided to runCommand!");
+    }
     pid_t pid = fork();
     if (pid < 0) {
       throw std::runtime_error("Failed to fork!");
@@ -67,10 +70,12 @@ public:
     if (pid == 0) {
       /* child process, execute command */
       int fd = open("/dev/null", O_WRONLY);
+      if (fd < 0) {
+        _exit(126);  // 126: command invoked cannot execute
+      }
 
       dup2(fd, STDOUT_FILENO);  // stdout -> /dev/null
       dup2(fd, STDERR_FILENO);  // stderr -> /dev/null
-
       close(fd);
       // convert args to char* for exec
       std::vector<char*> argv;
