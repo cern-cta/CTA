@@ -963,7 +963,8 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
 DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
   // Mounting management.
-  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcPort.value(),
+  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
+                                       m_tapedConfig.rmcPort.value(),
                                        m_tapedConfig.rmcNetTimeout.value(),
                                        m_tapedConfig.rmcRequestAttempts.value());
   cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc.logger());
@@ -1074,7 +1075,8 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
 
   // Mounting management.
-  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcPort.value(),
+  cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
+                                       m_tapedConfig.rmcPort.value(),
                                        m_tapedConfig.rmcNetTimeout.value(),
                                        m_tapedConfig.rmcRequestAttempts.value());
   cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc.logger());
