@@ -45,7 +45,6 @@ CTA_FRONTEND_POD=$(get_pods_by_type frontend $NAMESPACE | head -1)
 CLIENT_POD=$(get_pods_by_type client $NAMESPACE | head -1)
 CTA_CLI_POD=$(get_pods_by_type cli $NAMESPACE | head -1)
 
-set -x
 # List tapes
 echo "Reading library configuration from ${CTA_RMCD_POD}"
 LIBRARY_DEVICE=$(kubectl exec -n ${NAMESPACE} ${CTA_RMCD_POD} -c cta-rmcd -- printenv LIBRARY_DEVICE)
@@ -54,7 +53,6 @@ mapfile -t TAPES < <(${SCRIPT_DIR}/../../utils/tape/list_tapes_in_library.sh -d 
 echo "Using tapes:"
 for VID in "${TAPES[@]}"; do
   echo "- $VID"
-set +x
 done
 
 # Get list of tape drives that have a tape server

@@ -211,6 +211,7 @@ for VID in "${TAPES[@]}"; do
   fi
 done
 
+DRIVE_NAME=$(kubectl --namespace ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- printenv DRIVE_NAME)
 echo "Setting drive up: ${DRIVE_NAME}"
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive up ${DRIVE_NAME}
 sleep 5
