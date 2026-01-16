@@ -294,7 +294,6 @@ build_deploy() {
       ${container_runtime} build --no-cache -t "${build_image_name}" -f ci/docker/"${platform}"/build.Dockerfile .
       echo "Starting new build container: ${build_container_name}"
       ${container_runtime} run -dit --rm --name "${build_container_name}" \
-        --cap-add=SYS_PTRACE \
         -v "${project_root}:/shared/CTA:z" \
         "${build_image_name}" \
         /bin/bash
