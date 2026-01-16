@@ -10,5 +10,6 @@
 # Listener port
 # RMC PORT 5014
 
-# Whether to accept connections from outside localhost
+# By default, rmcd only accepts connections from localhost
+# Set to "any" for rmcd to accept connections outside localhost
 # RMC LISTEN_SCOPE loopback
