@@ -45,3 +45,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {{- define "common.names.release" -}}
 {{- printf "%s-%s" .Release.Name .Chart.Name | trunc 63 | trimSuffix "-" -}}
 {{- end }}
+
+{{- define "common.slugify" -}}
+{{- regexReplaceAll "[^a-z0-9-]+" (lower .) "-" | trimAll "-" | trunc 63 -}}
+{{- end -}}

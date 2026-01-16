@@ -4,33 +4,30 @@ SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
-{{- $tapeServers := include "tpsrv.tapeServers" . | fromYaml -}}
-{{ include "validate.tapeServers" . }}
-{{ range $name,$tapeServerConfig := $tapeServers }}
-{{- $tpsrvName := printf "%s-%s" $.Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- $libraryDevice := .libraryDevice -}}
+{{ range .Values.drives -}}
+{{- $driveNameSlug := include "common.slugify" .name }}
+{{- $tapedName := printf "%s-%s-%s" $.Release.Name "taped" $driveNameSlug | trunc 63 | trimSuffix "-" }}
 apiVersion: apps/v1
 kind: StatefulSet # StatefulSets enforce at most x pods semantics (in our case x=1)
 metadata:
-  name: {{ $tpsrvName }}
+  name: {{ $tapedName }}
   namespace: {{ $.Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" $ | nindent 4 }}
 spec:
-  serviceName: {{ $tpsrvName }}  # Ensure a headless service exists with this name; allows for stable DNS entries
+  serviceName: {{ $tapedName }}  # Ensure a headless service exists with this name; allows for stable DNS entries
   replicas: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ $tpsrvName }}
+      app.kubernetes.io/name: {{ $tapedName }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ $tpsrvName }}
+        app.kubernetes.io/name: {{ $tapedName }}
         {{- include "common.labels.withoutname" $ | nindent 8 }}
-        cta/library-device: {{ .libraryDevice | quote }}
     spec:
       imagePullSecrets:
-      {{- include "tpsrv.imagePullSecrets" $ | nindent 6 }}
+      {{- include "taped.imagePullSecrets" $ | nindent 6 }}
       {{- if $.Values.pod.extraSpec }}
       {{ $.Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
@@ -42,69 +39,20 @@ spec:
         command: ["sh", "-c"]
         args:
         - |
-          cp /root/sss_keytab/input/tpsrv.keytab /root/sss_keytab/output/cta-taped.sss.keytab;
+          cp /root/sss_keytab/input/taped.keytab /root/sss_keytab/output/cta-taped.sss.keytab;
           chmod 400 /root/sss_keytab/output/cta-taped.sss.keytab;
           # Make CTA user owner (group 33 is tape)
           chown -R 1000:33 /root/sss_keytab/output/cta-taped.sss.keytab
         volumeMounts:
-          - name: tpsrv-sss-keytab
-            mountPath: /root/sss_keytab/input/tpsrv.keytab
+          - name: taped-sss-keytab
+            mountPath: /root/sss_keytab/input/taped.keytab
             subPath: {{ $.Values.keytab.subPath }}
-          - name: tpsrv-sss-keytab-fixedownership
+          - name: taped-sss-keytab-fixedownership
             mountPath: /root/sss_keytab/output
       containers:
-      # RMCD container
-      - name: cta-rmcd
-        image: {{ include "tpsrv.image" $ }}
-        imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
-        securityContext:
-          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
-          privileged: {{ include "common.securityContext.privileged" $ }}
-          capabilities:
-            add:
-              - SYS_RAWIO
-        stdin: true
-        command: ["bash", "/scripts/rmcd.sh"]
-        args: []
-        startupProbe:
-          exec:
-            command: ["rpm", "-q", "cta-rmcd"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          failureThreshold: 60
-        readinessProbe:
-          exec:
-            command: ["pgrep", "-f", "/usr/bin/cta-rmcd"]
-          initialDelaySeconds: 2
-          periodSeconds: 5
-          failureThreshold: 10
-        env:
-        - name: MY_NAME
-          value: {{ $tpsrvName }}
-        - name: MY_NAMESPACE
-          value: {{ $.Release.Namespace | quote }}
-        - name: INSTANCE_NAME
-          value: {{ $.Release.Namespace | quote }}
-        - name: LIBRARY_DEVICE
-          value: {{ $libraryDevice | quote }}
-        - name: MY_CONTAINER
-          value: "cta-rmcd"
-        - name: TERM
-          value: "xterm"
-        {{- with $.Values.extraEnv }}
-        {{- include "common.extraEnv" . | nindent 8 }}
-        {{- end }}
-        volumeMounts:
-        - name: scripts-volume
-          mountPath: /scripts
-        - name: smcdev
-          mountPath: /dev/smc
-        {{ include "common.extraVolumeMounts" $ | nindent 8 }}
-      # For each drive, spawn a separate taped container
-      {{- range $index, $drive := .drives }}
-      - name: "cta-taped-{{ $index }}"
-        image: {{ include "tpsrv.image" $ }}
-        imagePullPolicy: {{ include "tpsrv.imagePullPolicy" $ }}
+      - name: "cta-taped"
+        image: {{ include "taped.image" $ }}
+        imagePullPolicy: {{ include "taped.imagePullPolicy" $ }}
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
@@ -128,21 +76,19 @@ spec:
         stdin: true
         env:
         - name: MY_NAME
-          value: {{ $tpsrvName }}
+          value: {{ $tapedName }}
         - name: MY_NAMESPACE
           value: {{ $.Release.Namespace | quote }}
         - name: INSTANCE_NAME
           value: {{ $.Release.Namespace | quote }}
         - name: MY_CONTAINER
-          value: "cta-taped-{{ $index }}"
+          value: "cta-taped"
         - name: TERM
           value: "xterm"
         - name: DRIVE_NAME
-          value: {{ $drive.name }}
+          value: {{ .name }}
         - name: DRIVE_DEVICE
-          value: {{ $drive.device }}
-        - name: LIBRARY_DEVICE
-          value: {{ $libraryDevice | quote }}
+          value: {{ .device }}
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote }}
         - name: XrdSecPROTOCOL
@@ -170,7 +116,7 @@ spec:
           mountPath: /etc/cta/cta-objectstore-tools.conf
           subPath: cta-objectstore-tools.conf
         {{- end }}
-        - name: tpsrv-sss-keytab-fixedownership
+        - name: taped-sss-keytab-fixedownership
           mountPath: /etc/cta/cta-taped.sss.keytab
           subPath: cta-taped.sss.keytab
         {{- if eq $schedulerConfig.backend "ceph" }}
@@ -191,15 +137,10 @@ spec:
           subPath: otlp-basic-auth-pwd.conf
         {{- end }}
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
-      {{- end }} # End of containers loop
       volumes:
-      - name: smcdev
-        hostPath:
-          path: /dev/{{ $libraryDevice }}
-          type: CharDevice
       - name: scripts-volume
         configMap:
-          name: scripts-tpsrv
+          name: scripts-taped
           defaultMode: 0777
       - name: catalogue-config
         configMap:
@@ -223,15 +164,13 @@ spec:
         persistentVolumeClaim:
           claimName: scheduler-vfs-pvc
       {{- end }}
-      {{- range $index, $drive := .drives }} # configmap for each drive in the tape server
       - name: cta-taped-config
         configMap:
-          name: cta-taped-{{ lower $drive.name }}-conf
-      {{- end }} # End of drive-specific configmaps loop
-      - name: tpsrv-sss-keytab
+          name: cta-taped-{{ $driveNameSlug }}-conf
+      - name: taped-sss-keytab
         secret:
           secretName: {{ $.Values.keytab.secretName }}
-      - name: tpsrv-sss-keytab-fixedownership
+      - name: taped-sss-keytab-fixedownership
         emptyDir: {}
       {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       - name: otlp-basic-auth-pwd

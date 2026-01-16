@@ -21,7 +21,7 @@ frontend:
       echo "Process crashed. Sleeping..."
       sleep infinity
 
-tpsrv:
+taped:
   # Enabled to allow debugging after a crash
   postRun:
     enabled: true

@@ -37,7 +37,7 @@ keytab:
   secretName: eos-keytab
   subPath: eos.keytab
 
-# Script to execute in the main container before starting the tpsrv/rmcd services
+# Script to execute in the main container before starting the taped services
 preRun:
   enabled: false
   script: |
@@ -49,25 +49,18 @@ postRun:
   script: |
     #!/usr/bin/bash
 
-# tapeServers: {}
-# The following is an example format of tapeServers
+# The following is an example format of drives
 #
-# tpsrv01:
-#   libraryType: "MHVTL"
-#   libraryDevice: "sg0"
-#   libraryName: "VLSTK10"
-#   drives:
-#     - name: "VDSTK01"
-#       device: "nst2"
-#     - name: "VDSTK02"
-#       device: "nst0"
-# tpsrv02:
-#   libraryType: "MHVTL"
-#   libraryDevice: "sg0"
-#   libraryName: "VLSTK10"
-#   drives:
-#     - name: "VDSTK03"
-#       device: "nst1"
+# drives:
+#   - name: "VDSTK01"
+#     device: "/dev/nst2"
+#     logicalLibraryName: lib1
+#     controlPath smc0
+#   - name: "VDSTK02"
+#     device: "/dev/nst0"
+#     logicalLibraryName: lib2
+#     controlPath smc1
+drives: {}
 
 # We need to be privileged to handle the tape drives
 securityContext:

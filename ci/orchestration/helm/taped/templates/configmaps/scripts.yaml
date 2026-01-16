@@ -6,10 +6,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: scripts-tpsrv
+  name: scripts-taped
 data:
-  rmcd.sh: |
-    {{ .Files.Get "scripts/rmcd.sh" | nindent 4 }}
   taped.sh: |
     {{ .Files.Get "scripts/taped.sh" | nindent 4 }}
   pre_run.sh: {{ .Values.preRun.script | toYaml | nindent 4 }}

@@ -21,7 +21,6 @@ usage() {
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
-  echo "      --tapeservers-config <file>:    Path to the tapeservers configuration values file. If not provided, this file will be auto-generated."
   echo "  -r, --cta-image-repository <repo>:  Docker image name for the CTA chart. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
   echo "  -i, --cta-image-tag <tag>:          Docker image tag for the CTA chart."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
@@ -42,6 +41,32 @@ usage() {
   echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-http-values.yaml"
   echo "      --extra-cta-values:            Extra verbatim values for the CTA chart. These will override any previous values from files."
   exit 1
+}
+
+# This should all go once we have auto-discovery and auto-scaling of hardware resources
+generate_tape_values_files() {
+  echo "Auto-generating rmcd config..."
+  rmcd_config=$(mktemp "/tmp/${namespace}-rmcd-XXXXXX-values.yaml")
+  library_device=$(./../utils/tape/list_libraries_on_host.sh | jq -r .[0].device)
+  cat <<EOF > $rmcd_config
+rmcd:
+  libraryDevice: $library_device
+EOF
+
+  echo "---"
+  cat "$rmcd_config"
+  echo "---"
+
+  echo "Auto-generating taped config..."
+  # This file is cleaned up again by delete_instance.sh
+  taped_config=$(mktemp "/tmp/${namespace}-taped-XXXXXX-values.yaml")
+  drives_json=$(./../utils/tape/list_drives_in_library.sh --library-device "$library_device" --max-drives max_drives)
+  echo "taped:" > $taped_config
+  echo "  drives:" >> $taped_config
+  echo $drives_json | jq -r '.[] | "    - name: \(.name)\n      device: \(.device)\n      logicalLibraryName: \(.logicalLibraryName)\n      controlPath: \(.controlPath)"' >> $taped_config
+  echo "---"
+  cat "$taped_config"
+  echo "---"
 }
 
 check_helm_installed() {
@@ -67,7 +92,8 @@ update_local_cta_chart_dependencies() {
     "client"
     "cli"
     "frontend"
-    "tpsrv"
+    "taped"
+    "rmcd"
     "maintd"
     "cta"
   )
@@ -95,9 +121,7 @@ create_instance() {
   setup_enabled=true
   cta_image_repository=$(jq -r .dev.ctaImageRepository ${project_json_path}) # Used for the ctageneric pod image(s)
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
-  num_library_devices=1 # For the auto-generated tapeservers config
-  max_drives_per_tpsrv=1
-  max_tapeservers=2
+  max_drives=2
   # EOS related
   eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
   eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
@@ -123,9 +147,6 @@ create_instance() {
         catalogue_config="$2"
         test -f "${catalogue_config}" || die "catalogue config file ${catalogue_config} does not exist"
         shift ;;
-      --tapeservers-config)
-        tapeservers_config="$2"
-        shift ;;
       -n|--namespace)
         namespace="$2"
         shift ;;
@@ -138,14 +159,8 @@ create_instance() {
       -c|--catalogue-version)
         catalogue_schema_version="$2"
         shift ;;
-      --num-libraries)
-        num_library_devices="$2"
-        shift ;;
-      --max-drives-per-tpsrv)
-        max_drives_per_tpsrv="$2"
-        shift ;;
-      --max-tapeservers)
-        max_tapeservers="$2"
+      --max-drives)
+        max_drives="$2"
         shift ;;
       -O|--reset-scheduler) reset_scheduler=true ;;
       -D|--reset-catalogue) reset_catalogue=true ;;
@@ -219,36 +234,10 @@ create_instance() {
 
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
-  devices_all=$(./../utils/tape/list_all_libraries.sh)
-  devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
-  unused_devices=$(comm -23 <(echo "$devices_all") <(echo "$devices_in_use"))
-  if [[ -z "$unused_devices" ]]; then
-    die "No unused library devices available. All the following libraries are in use: $devices_in_use"
-  fi
-
   # Determine the library config to use
   if [[ -z "${tapeservers_config}" ]]; then
-    echo "Library configuration not provided. Auto-generating..."
-    # This file is cleaned up again by delete_instance.sh
-    tapeservers_config=$(mktemp "/tmp/${namespace}-tapeservers-XXXXXX-values.yaml")
-    # Generate a comma separated list of library devices based on the number of library devices the user wants to generate
-    library_devices=$(echo "$unused_devices" | head -n "$num_library_devices" | paste -sd ',' -)
-    ./../utils/tape/generate_tapeservers_config.sh --target-file "${tapeservers_config}" \
-                                                        --library-type "mhvtl" \
-                                                        --library-devices "${library_devices}" \
-                                                        --max-drives-per-tpsrv "${max_drives_per_tpsrv}" \
-                                                        --max-tapeservers "${max_tapeservers}"
-  else
-    # Check that all devices in the provided config are available
-    for library_device in $(awk '/libraryDevice:/ {gsub("\"","",$2); print $2}' "$tapeservers_config"); do
-      if ! echo "$unused_devices" | grep -qw "$library_device"; then
-        die "provided library config specifies a device that is already in use: $library_device"
-      fi
-    done
+    generate_tape_values_files
   fi
-  echo "---"
-  cat "$tapeservers_config"
-  echo "---"
 
   if [[ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]]; then
     if kubectl get sc local-path >/dev/null 2>&1; then
@@ -389,7 +378,8 @@ create_instance() {
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
-                                --set-file tpsrv.tapeServers="${tapeservers_config}" \
+                                -f "${taped_config}" \
+                                -f "${rmcd_config}" \
                                 --wait --timeout 5m ${extra_cta_chart_flags}
 
   # At this point the disk buffer(s) should also be ready

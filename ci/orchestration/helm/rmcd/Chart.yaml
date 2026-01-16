@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 apiVersion: v2
-name: tpsrv
-description: Spawns a set of tape servers consisting of taped and rmcd processes.
+name: rmcd
+description: Spawns a set of rmcd processes.
 type: application
 version: 0.2.0
 appVersion: "5.11.10.1"
