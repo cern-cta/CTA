@@ -15,6 +15,7 @@ metadata:
 spec:
   backoffLimit: 0
   ttlSecondsAfterFinished: 300
+  terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
   template:
     spec:
       automountServiceAccountToken: false
@@ -23,7 +24,7 @@ spec:
         - name: kcadm
           image: {{ .Values.keycloak.image }}
           securityContext:
-            allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+            allowPrivilegeEscalation: false
           {{- if $.Values.resources }}
           resources:
             {{-  toYaml $.Values.resources | nindent 10 }}

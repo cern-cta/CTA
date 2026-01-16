@@ -3,45 +3,44 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- $name := include "kdc.fullname" . }}
 apiVersion: v1
 kind: Pod
 metadata:
-  name: {{ $name }}
+  name: {{ include "kdc.fullname" . }}
   namespace: {{ .Release.Namespace | quote }}
   labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
+    app.kubernetes.io/name: {{ include "kdc.fullname" . }}
 spec:
   automountServiceAccountToken: false
   restartPolicy: Never
-  {{- if .Values.pod.extraSpec }}
-  {{ .Values.pod.extraSpec | toYaml | nindent 2 }}
-  {{- end }}
+  terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
   containers:
   - name: auth-kdc
-    image: {{ include "kdc.image" . }}
-    imagePullPolicy: {{ include "kdc.imagePullPolicy" . }}
+    image: {{ .Values.kerberos.image }}
+    imagePullPolicy: IfNotPresent
     stdin: true
     command: ["bash", "/scripts/kdc.sh"]
     args: []
+    startupProbe:
+      tcpSocket:
+        port: 749
+      initialDelaySeconds: 0
+      periodSeconds: 1
+      timeoutSeconds: 2
+      failureThreshold: 60
     readinessProbe:
       tcpSocket:
         port: 749
-      initialDelaySeconds: 5
-      periodSeconds: 2
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      failureThreshold: 4
     securityContext:
-      allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+      allowPrivilegeEscalation: false
     {{- if $.Values.kerberos.resources }}
     resources:
       {{-  toYaml $.Values.kerberos.resources | nindent 10 }}
     {{- end }}
     env:
-    - name: MY_NAME
-      value: {{ $name }}
-    - name: MY_NAMESPACE
-      value: {{ .Release.Namespace | quote }}
-    - name: INSTANCE_NAME
-      value: {{ .Release.Namespace | quote }}
     - name: TERM
       value: "xterm"
     - name: KRB5_REALM
@@ -52,9 +51,6 @@ spec:
       value: {{ .Values.kerberos.adminPrinc.name }}
     - name: KRB5_ADMIN_PRINC_PWD
       value: {{ .Values.kerberos.adminPrinc.password }}
-    {{- with .Values.extraEnv }}
-    {{- include "common.extraEnv" . | nindent 4 }}
-    {{- end }}
     volumeMounts:
     - name: scripts-volume
       mountPath: /scripts
@@ -67,13 +63,11 @@ spec:
   volumes:
   - name: scripts-volume
     configMap:
-      name: scripts-auth
+      name: {{ .Release.Name }}-kdc-scripts
       defaultMode: 0777
   - name: krb5-conf
     configMap:
       name: krb5-conf
   - name: kadm5-acl
     configMap:
-      name: kadm5-acl
-  imagePullSecrets:
-  {{- include "kdc.imagePullSecrets" . | nindent 2 }}
+      name: {{ .Release.Name }}-kadm5-acl

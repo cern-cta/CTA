@@ -31,10 +31,6 @@ postgresql:postgresql://{{ $catalogueConfig.postgresConfig.username }}:{{ $catal
   {{ include "common.images.image" (dict "imageRoot" .Values.resetImage ) }}
 {{- end }}
 
-{{- define "catalogueReset.imagePullPolicy" -}}
-  {{ include "common.images.pullPolicy" (dict "imageRoot" .Values.resetImage ) }}
-{{- end }}
-
 {{- define "catalogueReset.imagePullSecrets" -}}
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.resetImage ) }}
 {{- end }}

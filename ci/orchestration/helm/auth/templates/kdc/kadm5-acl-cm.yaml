@@ -3,11 +3,10 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- $svcName := include "kdc.fullname" . }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: kadm5-acl
+  name: {{ .Release.Name }}-kadm5-acl
   namespace: {{ .Release.Namespace }}
 data:
   kadm5.acl: |

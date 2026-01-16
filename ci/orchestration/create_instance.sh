@@ -323,10 +323,8 @@ create_instance() {
   # See README.md for details on the order
   echo "Installing Authentication, Catalogue and Scheduler charts..."
   log_run helm ${helm_command} auth helm/auth \
-                                --set image.repository="${cta_image_repository}" \
-                                --set image.tag="${cta_image_tag}" \
                                 --namespace "${namespace}" \
-                                --wait --timeout 2m &
+                                --wait --wait-for-jobs --timeout 2m &
   auth_pid=$!
 
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"

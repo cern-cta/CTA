@@ -11,8 +11,6 @@ kind: Job
 metadata:
   name: {{ $name }}-job
   namespace: {{ .Release.Namespace | quote }}
-  labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
   annotations:
     {{- if eq $catalogueConfig.backend "postgres" }}
     "helm.sh/hook": post-install   # Note that we need to be sure the postgres pod has been started before we do anything with it
@@ -29,11 +27,11 @@ spec:
       containers:
         - name: catalogue-reset
           image: {{ include "catalogueReset.image" . }}
-          imagePullPolicy: {{ include "catalogueReset.imagePullPolicy" . }}
+          imagePullPolicy: IfNotPresent
           command: ["bash", "/scripts/reset_catalogue.sh"]
           args: []
           securityContext:
-            allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+            allowPrivilegeEscalation: false
           {{- if $.Values.resources }}
           resources:
             {{-  toYaml $.Values.resources | nindent 10 }}
@@ -53,9 +51,6 @@ spec:
           volumeMounts:
           - name: scripts-volume
             mountPath: /scripts
-          - name: purge-database-ext
-            mountPath: /opt/ci/purge_database.ext
-            subPath: purge_database.ext
           - name: purge-recyclebin-ext
             mountPath: /opt/ci/purge_recyclebin.ext
             subPath: purge_recyclebin.ext
@@ -67,9 +62,6 @@ spec:
         configMap:
           name: scripts-catalogue
           defaultMode: 0777
-      - name: purge-database-ext
-        configMap:
-          name: purge-database-ext
       - name: purge-recyclebin-ext
         configMap:
           name: purge-recyclebin-ext

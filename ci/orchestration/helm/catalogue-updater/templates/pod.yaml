@@ -57,9 +57,6 @@ spec:
       value: {{ .Release.Namespace | quote }}
     - name: TERM
       value: "xterm"
-    {{- with .Values.extraEnv }}
-    {{- include "common.extraEnv" . | nindent 4 }}
-    {{- end }}
     volumeMounts:
     {{- if .Values.customRepoFiles }}
     - name: yum-repos
