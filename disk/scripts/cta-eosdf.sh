@@ -12,9 +12,10 @@ spaceName=${2:-retrieve}
 
 freespace=$(
   XrdSecSSSKT=$XrdSecSSSKT XrdSecPROTOCOL=$XrdSecPROTOCOL \
-  eos -j root://$diskInstance space ls \
-  | jq  -c ".result[] | select (.name==\"$spaceName\") | .sum.stat.statfs.freebytes | tonumber | floor"
+  xrdfs root://$diskInstance query space /?eos.space=${spaceName} \
+  | sed -e 's/.*oss.space=//;s/&.*//'
 )
+
 if [[ $? -ne 0 ]]; then
   exit 1
 fi

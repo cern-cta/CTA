@@ -649,10 +649,8 @@ This package contains .repo files, gpg keys and versionlock configuration for CT
 %package -n cta-eosdf
 Summary: External script that allows cta-taped to gather free disk space for CTA disksystem concept for EOS managed buffers
 Group: Application/CTA
-# Don't need a stricly version-controlled version of eos-client,
-# we just require eos-client for getting disk stats
-Requires: eos-client
-Requires: jq
+Requires: xrootd-client %{xrootdVersionConstraint}
+Requires: sed
 %description -n cta-eosdf
 eosdf is a script that runs on taped and returns
 the free disk space in the defalut namespace
