@@ -258,7 +258,6 @@ uint64_t ArchiveJobQueueRow::updateJobStatus(Transaction& txn,
     auto stmt1 = txn.getConn().createStmt(sql);
     stmt1.executeNonQuery();
     return stmt1.getNbAffectedRows();
-    //}
   }
   std::string sql =
     "UPDATE ARCHIVE_ACTIVE_QUEUE SET STATUS = :NEWSTATUS1::ARCHIVE_JOB_STATUS WHERE JOB_ID IN (" + sqlpart + ")";

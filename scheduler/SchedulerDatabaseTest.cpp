@@ -190,7 +190,6 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
                                                 std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
         afqc.mountPolicy.comment = "comment";
         afqc.fileId = i;
-        // ar.archiveReportURL=""; // this cannot be an empty string for the PG scheduler... check with Jaro if this can be changed
         ar.archiveReportURL = "test://archive-report-url";
         ar.archiveErrorReportURL = "test://error-report-url";
         ar.checksumBlob.insert(cta::checksum::NONE, "");
@@ -326,7 +325,7 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   auto done = false;
   auto count = 0;
 #else
-  mountInfo = db.getMountInfo(lc);  // now stuck in here
+  mountInfo = db.getMountInfo(lc);
   ASSERT_EQ(1, mountInfo->potentialMounts.size());
   am = mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw, "drive", "library", "host");
   done = false;
@@ -609,7 +608,6 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
                                               std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
       afqc.mountPolicy.comment = "comment";
       afqc.fileId = id;
-      // ar.archiveReportURL="";
       ar.archiveReportURL = "test://archive-report-url";
       ar.archiveErrorReportURL = "test://error-report-url";
       ar.checksumBlob.insert(cta::checksum::NONE, "");
@@ -698,10 +696,6 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   const size_t filesToDo = 10;
   std::list<std::future<void>> jobInsertions;
   std::list<std::function<void()>> lambdas;
-  // bool doSleep=true;
-  // while (doSleep) {
-  //   sleep(2);
-  // }
   auto creationTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   for (size_t id = 0; id < filesToDo; id++) {
     lambdas.emplace_back([id, &db, &lc, creationTime, diskSystemList]() {
@@ -761,7 +755,7 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueRetrieveRequests) {
   // Then load all retrieve jobs into memory
   // Create mount.
   auto mountInfo = db.getMountInfo(lc);
-  ASSERT_EQ(1, mountInfo->potentialMounts.size());  // this fails
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
   auto rm = mountInfo->createRetrieveMount(mountInfo->potentialMounts.front(), "drive", "library", "host");
   {
     auto rjb = rm->getNextJobBatch(10, 20 * 1000, lc);

@@ -270,7 +270,6 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
     auto stmt2 = txn.getConn().createStmt(sql);
     stmt2.executeNonQuery();
     return stmt2.getNbAffectedRows();
-    //}
   }
   // END OF DISABLE DELETION FOR DEBUGGING
   // the following is here for debugging purposes (row deletion gets disabled)

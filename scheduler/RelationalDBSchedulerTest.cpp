@@ -553,7 +553,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     log::TimingList timings;
     utils::Timer t;
     scheduler.reportArchiveJobsBatch(jobsToReport, factory, timings, t, lc);
-    ASSERT_EQ(0, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());  // now here
+    ASSERT_EQ(0, scheduler.getNextArchiveJobsToReportBatch(10, lc).size());
   }
 
   {
