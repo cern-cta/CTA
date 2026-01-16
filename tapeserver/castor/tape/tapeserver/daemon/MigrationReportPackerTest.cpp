@@ -139,7 +139,7 @@ TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportP
   std::optional<std::string> physicalLibraryName;
   const std::string tapePoolName = "tape_pool_name";
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply_list;
+  const std::vector<std::string> supply_list;
   const bool fullValue = false;
   const std::string createTapeComment = "Create tape";
   cta::common::dataStructures::VirtualOrganization vo = getDefaultVo();
@@ -313,7 +313,7 @@ TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportP
   const std::string tapePoolName = "tape_pool_name";
   const uint64_t nbPartialTapes = 2;
   const std::string encryptionKeyName = "encryption_key_name";
-  const std::list<std::string> supply_list;
+  const std::vector<std::string> supply_list;
   const bool fullValue = false;
   const std::string createTapeComment = "Create tape";
   cta::common::dataStructures::SecurityIdentity admin =
