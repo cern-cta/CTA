@@ -30,6 +30,15 @@ taped:
       echo "Process crashed. Sleeping..."
       sleep infinity
 
+rmcd:
+  # Enabled to allow debugging after a crash
+  postRun:
+    enabled: true
+    script: |
+      #!/usr/bin/bash
+      echo "Process crashed. Sleeping..."
+      sleep infinity
+
 maintd:
   # Enabled to allow debugging after a crash
   postRun:

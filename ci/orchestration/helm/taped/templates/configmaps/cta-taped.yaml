@@ -36,6 +36,9 @@ data:
     general SchedulerBackendName {{ $schedulerConfig.backend }}
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
 
+    # Rmcd
+    taped RmcHost {{ $.Values.conf.taped.rmcHost }}
+
     # Telemetry
     experimental telemetryEnabled {{ $.Values.conf.telemetry.enabled }}
 

@@ -20,6 +20,9 @@ securityContext:
 
 libraryDevice: /dev/smc
 
+service:
+  enabled: true # Set to false if relying on hostnetwork/localhost
+
 pod:
   extraSpec:
     terminationGracePeriodSeconds: 1

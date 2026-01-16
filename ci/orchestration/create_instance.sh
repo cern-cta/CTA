@@ -60,7 +60,7 @@ EOF
   echo "Auto-generating taped config..."
   # This file is cleaned up again by delete_instance.sh
   taped_config=$(mktemp "/tmp/${namespace}-taped-XXXXXX-values.yaml")
-  drives_json=$(./../utils/tape/list_drives_in_library.sh --library-device "$library_device" --max-drives max_drives)
+  drives_json=$(./../utils/tape/list_drives_in_library.sh --library-device "$library_device" --max-drives $max_drives)
   echo "taped:" > $taped_config
   echo "  drives:" >> $taped_config
   echo $drives_json | jq -r '.[] | "    - name: \(.name)\n      device: \(.device)\n      logicalLibraryName: \(.logicalLibraryName)\n      controlPath: \(.controlPath)"' >> $taped_config
