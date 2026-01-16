@@ -12,6 +12,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
+#include <fcntl.h>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <iostream>
@@ -57,6 +58,36 @@ namespace cta::schedulerdb {
   */
 class TemporaryPostgresEnvironment : public ::testing::Environment {
 public:
+  /* This is used to avoid shell injection */
+  int runCommand(const std::vector<std::string>& args) {
+    pid_t pid = fork();
+    if (pid < 0) {
+      throw std::runtime_error("Failed to fork!");
+    }
+    if (pid == 0) {
+      /* child process, execute command */
+      int fd = open("/dev/null", O_WRONLY);
+
+      dup2(fd, STDOUT_FILENO);  // stdout -> /dev/null
+      dup2(fd, STDERR_FILENO);  // stderr -> /dev/null
+
+      close(fd);
+      // convert args to char* for exec
+      std::vector<char*> argv;
+      for (const auto& arg : args) {
+        argv.push_back(const_cast<char*>(arg.c_str()));
+      }
+      argv.push_back(nullptr);       // null-terminated
+      execvp(argv[0], argv.data());  // will not return unless error occurs
+      _exit(EXIT_FAILURE);
+    } else {
+      // parent
+      int status;
+      waitpid(pid, &status, 0);
+      return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+    }
+  }
+
   TemporaryPostgresEnvironment()
       : m_port(15432),
         m_username("cta_test"),
@@ -91,11 +122,11 @@ public:
 
     // Clean up any leftovers from previous failed tests BEFORE creating new temp dir
     std::cout << "Cleaning up leftovers from previous tests..." << std::endl;
-    system("pkill -9 -f \"postgres.*cta-pg-test\" 2>/dev/null || true");
+    runCommand({"pkill", "-9", "-f", "postgres.*cta-pg-test"});
     if (m_useShm) {
-      system("rm -rf /dev/shm/cta-pg-test-* 2>/dev/null || true");
+      runCommand({"rm", "-rf", "/dev/shm/cta-pg-test-*"});
     } else {
-      system("rm -rf /tmp/cta-pg-test-* 2>/dev/null || true");
+      runCommand({"rm", "-rf", "/tmp/cta-pg-test-*"});
     }
 
     std::cout << "Data directory: " << m_dataDir;
@@ -276,21 +307,28 @@ private:
 
     // initdb must be run as the postgres user
     // Change ownership of data directory to postgres user first
-    std::string chownCmd = "chown -R postgres:postgres " + m_dataDir + " 2>/dev/null";
-    system(chownCmd.c_str());
+    runCommand({"chown", "-R", "postgres:postgres", m_dataDir});
 
-    std::string cmd = "runuser -u postgres -- " + m_initdb + " -D " + m_dataDir + " -U " + m_username
-                      + " --no-locale --encoding=UTF8" + " -A trust" +  // Trust authentication for localhost
-                      " >/dev/null 2>&1";
-
-    int result = system(cmd.c_str());
+    int result = runCommand({"runuser",
+                             "-u",
+                             "postgres",
+                             "--",
+                             m_initdb,
+                             "-D",
+                             m_dataDir,
+                             "-U",
+                             m_username,
+                             "--no-locale",
+                             "--encoding=UTF8",
+                             "-A",
+                             "trust"});  // Trust authentication for localhost
     if (result != 0) {
       throw std::runtime_error("initdb failed with code " + std::to_string(result));
     }
 
     // Configure PostgreSQL for testing (speed over durability)
     std::string confFile = m_dataDir + "/postgresql.conf";
-    std::ofstream conf(confFile, std::ios::app);
+    std::ofstream conf(confFile, std::ios::app);  // append to the config file
     if (conf.is_open()) {
       conf << "\n# Test optimizations\n";
       conf << "fsync = off\n";
@@ -312,17 +350,21 @@ private:
     std::cout << "  Starting PostgreSQL on port " << m_port << "..." << std::endl;
 
     // PostgreSQL must be started as the postgres user
-    std::string cmd = "runuser -u postgres -- " + m_pgCtl + " -D " + m_dataDir + " -o \"-p " + std::to_string(m_port)
-                      + "\"" + " -l " + m_logFile + " start >/dev/null 2>&1";
+    int result = runCommand({"runuser",
+                             "-u",
+                             "postgres",
+                             "--",
+                             m_pgCtl,
+                             "-D",
+                             m_dataDir,
+                             "-o",
+                             "\"-p" + std::to_string(m_port) + "\"",
+                             "-l",
+                             m_logFile,
+                             "start"});
 
-    std::cout << "Ran command to start postgres: " << cmd << std::endl;
-
-    int result = system(cmd.c_str());
     if (result != 0) {
-      // Try to get log contents for debugging
-      std::ifstream log(m_logFile);
-      std::string logContents((std::istreambuf_iterator<char>(log)), std::istreambuf_iterator<char>());
-      throw std::runtime_error("Failed to start PostgreSQL. Log:\n" + logContents);
+      throw std::runtime_error("Failed to start PostgreSQL.");
     }
 
     std::cout << "  PostgreSQL started" << std::endl;
@@ -335,12 +377,26 @@ private:
     std::cout << "  Waiting for PostgreSQL to accept connections..." << std::endl;
 
     const int maxAttempts = 30;
+    int result;
     for (int i = 0; i < maxAttempts; ++i) {
       // Run psql as postgres user
-      std::string checkCmd = "runuser -u postgres -- " + m_psql + " -h localhost -p " + std::to_string(m_port) + " -U "
-                             + m_username + " -d postgres -c 'SELECT 1;' >/dev/null 2>&1";
+      result = runCommand({"runuser",
+                           "-u",
+                           "postgres",
+                           "--",
+                           m_psql,
+                           "-h",
+                           "localhost",
+                           "-p",
+                           std::to_string(m_port),
+                           "-U",
+                           m_username,
+                           "-d",
+                           "postgres",
+                           "-c",
+                           "SELECT 1;"});
 
-      if (system(checkCmd.c_str()) == 0) {
+      if (result == 0) {
         std::cout << "  PostgreSQL ready after ~" << i << " second(s)" << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         return;
@@ -351,11 +407,7 @@ private:
       }
     }
 
-    // Failed to connect - get logs
-    std::ifstream log(m_logFile);
-    std::string logContents((std::istreambuf_iterator<char>(log)), std::istreambuf_iterator<char>());
-
-    throw std::runtime_error("PostgreSQL failed to become ready. Log:\n" + logContents);
+    throw std::runtime_error("PostgreSQL failed to become ready.");
   }
 
   /**
@@ -363,12 +415,26 @@ private:
    */
   void createTestDatabase() {
     // Run psql as postgres user to create database
-    std::string cmd = "runuser -u postgres -- " + m_psql + " -h localhost -p " + std::to_string(m_port) + " -U "
-                      + m_username + " -d postgres -c 'CREATE DATABASE " + m_database + ";' " + ">/dev/null 2>&1";
 
-    int result = system(cmd.c_str());
+    int result = runCommand({"runuser",
+                             "-u",
+                             "postgres",
+                             "--",
+                             m_psql,
+                             "-h",
+                             "localhost",
+                             "-p",
+                             std::to_string(m_port),
+                             "-U",
+                             m_username,
+                             "-d",
+                             "postgres",
+                             "-c",
+                             "CREATE DATABASE " + m_database + ";"});
+
     if (result != 0) {
       // Database might already exist, that's ok
+      std::cout << "database not created" << std::endl;
     }
   }
 
@@ -382,12 +448,10 @@ private:
     }
 
     // Stop PostgreSQL as the postgres user
-    std::string cmd = "runuser -u postgres -- " + m_pgCtl + " -D " + m_dataDir + " stop -m fast >/dev/null 2>&1";
-
-    std::cout << "about to shut down postgres with the following command " << cmd << std::endl;
-
-    system(cmd.c_str());
-
+    int result = runCommand({"runuser", "-u", "postgres", "--", m_pgCtl, "-D", m_dataDir, "stop", "-m", "fast"});
+    if (result != 0) {
+      throw std::runtime_error("Failed to shutdown postgres");
+    }
     // Give it a moment to shut down
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
@@ -397,8 +461,7 @@ private:
    */
   void cleanup() {
     if (!m_dataDir.empty() && m_dataDir.find("/cta-pg-test-") != std::string::npos) {
-      std::string cmd = "rm -rf " + m_dataDir;
-      system(cmd.c_str());
+      runCommand({"rm", "-rf", m_dataDir});
     }
   }
 
