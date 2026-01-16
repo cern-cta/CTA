@@ -747,8 +747,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    auto archiveJobBatch =
-      archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
+    auto archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
