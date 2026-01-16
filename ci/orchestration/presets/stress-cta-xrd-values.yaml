@@ -57,7 +57,7 @@ frontend:
       echo "Mounting logs volume ${PV_PATH} in /var/log"
       mount --bind ${PV_PATH} /var/log
 
-tpsrv:
+taped:
   preRun:
     enabled: true
     # Mount /var/log contents in /mnt/logs so that the fluentd can consume it

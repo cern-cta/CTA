@@ -8,9 +8,6 @@ import subprocess
 import json
 import sys
 
-CTA_TPSRV_POD = "cta-tpsrv01-0"
-CTA_CLI_POD = "cta-cli-0"
-
 KEY_SKIP_LIST = ["MountCriteria"]
 
 
@@ -28,13 +25,18 @@ def main():
 
     ns = args.namespace
 
-    taped_config = run(
-        f"kubectl -n {ns} exec {CTA_TPSRV_POD} -c cta-taped-0 -- " "bash -c 'cat /etc/cta/cta-taped.conf'"
+    cta_taped_pod = run(
+        f'kubectl get pod -l app.kubernetes.io/component=taped -n {ns} --no-headers -o custom-columns=":metadata.name" | head -1'
+    )
+    cta_cli_pod = run(
+        f'kubectl get pod -l app.kubernetes.io/component=cli -n {ns} --no-headers -o custom-columns=":metadata.name" | head -1'
     )
 
-    drive_name = run(f"kubectl -n {ns} exec {CTA_TPSRV_POD} -c cta-taped-0 -- printenv DRIVE_NAME").strip()
+    taped_config = run(f"kubectl -n {ns} exec {cta_taped_pod} -c cta-taped -- " "bash -c 'cat /etc/cta/cta-taped.conf'")
 
-    drive_json = run(f"kubectl -n {ns} exec {CTA_CLI_POD} -c cta-cli -- " "cta-admin --json dr ls")
+    drive_name = run(f"kubectl -n {ns} exec {cta_taped_pod} -c cta-taped -- printenv DRIVE_NAME").strip()
+
+    drive_json = run(f"kubectl -n {ns} exec {cta_cli_pod} -c cta-cli -- " "cta-admin --json dr ls")
 
     entries = [e for e in json.loads(drive_json) if e.get("driveName") == drive_name]
 

@@ -27,7 +27,7 @@ frontend:
           otlp:
             endpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
 
-tpsrv:
+taped:
   conf:
     telemetry:
       enabled: true

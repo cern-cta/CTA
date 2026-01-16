@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+apiVersion: v2
+name: taped
+description: Spawns a set of taped processes.
+type: application
+version: 0.2.0
+appVersion: "5.11.10.1"
+
+dependencies:
+  - name: common
+    version: 0.1.1
+    repository: "file://../common"
