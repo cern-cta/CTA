@@ -194,6 +194,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   ret.authenticationProtocol.set(cta::utils::getEnv("XrdSecPROTOCOL"), "Environment variable");
   ret.authenticationSSSKeytab.set(cta::utils::getEnv("XrdSecSSSKT"), "Environment variable");
   // rmcd connection options
+  ret.rmcHost.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.rmcPort.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.rmcNetTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.rmcRequestAttempts.setFromConfigurationFile(cf, driveTapedConfigPath);
@@ -254,6 +255,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
 
   ret.tapeLoadTimeout.log(log);
 
+  ret.rmcHost.log(log);
   ret.rmcPort.log(log);
   ret.rmcNetTimeout.log(log);
   ret.rmcRequestAttempts.log(log);

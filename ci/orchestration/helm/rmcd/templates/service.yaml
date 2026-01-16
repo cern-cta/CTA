@@ -1,0 +1,23 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- if .Values.service.enabled }}
+# TODO: extract this name somewhere common
+{{- $rmcdName := printf "%s-%s" $.Release.Name "rmcd" | trunc 63 | trimSuffix "-" }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $rmcdName }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ $rmcdName }}
+  clusterIP: None
+  ports:
+  - name: {{ $rmcdName }}
+    port: 5014
+    protocol: TCP
+{{- end }}

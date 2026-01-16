@@ -27,13 +27,15 @@ public:
   /**
    * Constructor.
    *
+   * @param rmcHost The host on which the rmcd daemon is running.
    * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    * @parm maxRqstAttempts The maximum number of attempts a retriable RMC
    * request should be issued.
    */
-  explicit RmcProxy(const uint16_t rmcPort = RMC_PORT,
+  explicit RmcProxy(const std::string& rmcHost = "localhost",
+                    const uint16_t rmcPort = RMC_PORT,
                     const uint32_t netTimeout = RMC_NET_TIMEOUT,
                     const uint32_t maxRqstAttempts = RMC_MAX_RQST_ATTEMPTS);
 
@@ -77,6 +79,11 @@ protected:
    * The size of buffer used to marshal or unmarshal RMC messages.
    */
   static const int RMC_MSGBUFSIZ = 256;
+
+  /**
+   * The host the rmcd daemon resides on.
+   */
+  const std::string m_rmcHost;
 
   /**
    * The TCP/IP port on which the rmcd daemon is listening.

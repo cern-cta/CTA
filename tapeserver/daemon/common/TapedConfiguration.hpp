@@ -200,6 +200,8 @@ struct TapedConfiguration {
   //----------------------------------------------------------------------------
   // RMC Connection Options
   //----------------------------------------------------------------------------
+  cta::SourcedParameter<std::string> rmcHost {"taped", "RmcHost", "localhost", "Compile time default"};
+
   cta::SourcedParameter<uint16_t> rmcPort {"taped", "RmcPort", 5014, "Compile time default"};
 
   cta::SourcedParameter<uint32_t> rmcNetTimeout {"taped", "RmcNetTimeout", 600, "Compile time default"};

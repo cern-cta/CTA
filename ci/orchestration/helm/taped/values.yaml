@@ -15,6 +15,7 @@ conf:
     tapeCacheMaxAgeSecs: 1
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
+    rmcHost: "cta-rmcd" # override with localhost if using hostnetwork
   telemetry:
     enabled: false
     retainInstanceIdOnRestart: false
