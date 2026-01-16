@@ -42,7 +42,7 @@ kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "dnf -y in
 # Get the device to be used.
 echo "Obtaining drive device and name"
 device_name=$(kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- printenv DRIVE_NAME)
-device=/dev/$(kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- printenv DRIVE_DEVICE)
+device=$(kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- printenv DRIVE_DEVICE)
 echo "Using device: ${device}; name ${device_name}"
 
 # Copy and run the above a script to the rmcd pod to load osm tape

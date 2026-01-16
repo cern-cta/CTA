@@ -9,3 +9,6 @@
 
 # Listener port
 # RMC PORT 5014
+
+# Whether to accept connections from outside localhost
+# RMC LISTEN_SCOPE loopback
