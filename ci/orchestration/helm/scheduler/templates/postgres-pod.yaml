@@ -40,6 +40,10 @@ spec:
       failureThreshold: 5
     securityContext:
       allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+    volumeMounts:
+      - name: scheduler-init
+        mountPath: /docker-entrypoint-initdb.d
+        readOnly: true
     {{- if $.Values.resources }}
     resources:
       {{-  toYaml $.Values.resources | nindent 10 }}
@@ -62,4 +66,8 @@ spec:
     {{- with .Values.extraEnv }}
     {{- include "common.extraEnv" . | nindent 4 }}
     {{- end }}
+  volumes:
+    - name: scheduler-init
+      configMap:
+        name: cta-scheduler-init
 {{- end }}
