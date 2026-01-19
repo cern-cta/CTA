@@ -468,6 +468,7 @@ public:
     if (!srrActivity.empty()) {
       stmt.bindString(":SRR_ACTIVITY", srrActivity);
     }
+    conn.setDbQuerySummary("insert retrieve");
     stmt.executeNonQuery();
   }
 
@@ -698,7 +699,6 @@ public:
     }
 
     auto stmt = conn.createStmt(sql);
-
     // Bind values for each row with distinct names
     for (size_t i = 0; i < rows.size(); ++i) {
       const auto& row = *rows[i];
@@ -777,7 +777,7 @@ public:
         stmt.bindString(":SRR_ACTIVITY" + std::to_string(i), row.srrActivity);
       }
     }
-
+    conn.setDbQuerySummary("insert retrieve");
     stmt.executeNonQuery();
   }
 
@@ -824,14 +824,13 @@ public:
   *
   * @return  result set containing job IDs of the rows which were updated
   */
-  static std::pair<rdbms::Rset, uint64_t>
-  moveJobsToDbActiveQueue(Transaction& txn,
-                          RetrieveJobStatus newStatus,
-                          const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
-                          std::vector<std::string>& noSpaceDiskSystemNames,
-                          uint64_t maxBytesRequested,
-                          uint64_t limit,
-                          bool isRepack);
+  static rdbms::Rset moveJobsToDbActiveQueue(Transaction& txn,
+                                             RetrieveJobStatus newStatus,
+                                             const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
+                                             std::vector<std::string>& noSpaceDiskSystemNames,
+                                             uint64_t maxBytesRequested,
+                                             uint64_t limit,
+                                             bool isRepack);
 
   /**
   * Update job status

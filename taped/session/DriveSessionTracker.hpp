@@ -8,6 +8,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/MountType.hpp"
+#include "common/dataStructures/TapeDrive.hpp"
 
 #include <memory>
 #include <optional>

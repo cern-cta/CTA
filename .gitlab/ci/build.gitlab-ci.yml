@@ -13,6 +13,8 @@ spec:
       type: string
     enable-address-sanitizer:
       type: boolean
+    compile-with-extra-telemetry:
+      type: boolean
 ---
 
 build-cta-rpms:
@@ -47,6 +49,7 @@ build-cta-rpms:
   variables:
     # These inputs are available as variables as certain jobs below override them
     CMAKE_BUILD_TYPE: "$[[ inputs.cmake-build-type ]]"
+    COMPILE_WITH_EXTRA_TELEMETRY: "$[[ inputs.compile-with-extra-telemetry ]]"
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     DNF_CACHE_DIR: "$CI_PROJECT_DIR/.dnf_cache"
@@ -100,6 +103,10 @@ build-cta-rpms:
       fi
     - if $[[ inputs.enable-internal-repos ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
     - if $[[ inputs.enable-address-sanitizer ]]; then BUILD_OPTIONS+=" --enable-address-sanitizer"; fi
+    - |
+      if $[[ inputs.compile-with-extra-telemetry ]]; then
+        BUILD_OPTIONS+=" --extra-telemetry"
+      fi
     - ./ci/build/build_rpm.sh --build-dir build_rpm
                               --build-generator "$[[ inputs.build-generator ]]"
                               --create-build-dir

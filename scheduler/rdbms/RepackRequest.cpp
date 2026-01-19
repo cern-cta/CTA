@@ -56,6 +56,7 @@ void RepackRequest::reportRetrieveCreationFailures(const uint64_t failedToRetrie
       .log(log::INFO,
            "In RepackRequest::reportRetrieveCreationFailures(): updateRRRetrieveCreationFailures() called successfully "
            "after expansion.");
+    txn.setRowCountForTelemetry(nrows);
     txn.commit();
   } catch (cta::exception::Exception& e) {
     log::ScopedParamContainer(m_lc)
@@ -366,6 +367,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
       .log(log::INFO,
            "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequestWithExpansionStats() called "
            "successfully after expansion.");
+    txn.setRowCountForTelemetry(nrows);
     txn.commit();
   } catch (cta::exception::Exception& e) {
     log::ScopedParamContainer params(lc);
@@ -397,6 +399,7 @@ void RepackRequest::fail() {
       .add("nrows", nrows)
       .add("newStatus", to_string(RepackJobStatus::RRS_Failed))
       .log(log::INFO, "In RepackRequest::fail(): marked repack request as failed.");
+    txn.setRowCountForTelemetry(nrows);
     txn.commit();
   } catch (cta::exception::Exception& e) {
     log::ScopedParamContainer(m_lc)
@@ -434,7 +437,7 @@ void RepackRequest::setExpandStartedAndChangeStatus() {
                                                                              repackInfo.isExpandFinished);
 
     log::ScopedParamContainer(m_lc).add("nrows", nrows).log(log::INFO, "updateRepackRequestExpansionStatus finished");
-
+    txn.setRowCountForTelemetry(nrows);
     txn.commit();
   } catch (cta::exception::Exception& e) {
     log::ScopedParamContainer(m_lc)

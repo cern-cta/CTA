@@ -74,6 +74,11 @@ spec:
           options: ["pgsched", "objectstore"]
           default: "objectstore"
 
+    compile-with-extra-telemetry:
+      description: "Compile with telemetry instrumentation for stress test performance measurements."
+      type: boolean
+      default: false
+
     enable-oracle-support:
       description: "Enable Oracle support."
       # Boolean values cannot be conditionally hidden yet. See https://gitlab.com/gitlab-org/gitlab/-/issues/587643
@@ -312,6 +317,7 @@ include:
       enable-sbom-generation: $[[ inputs.enable-sbom-generation ]]
       scheduler-type: $[[ inputs.scheduler-type ]]
       enable-oracle-support: $[[ inputs.enable-oracle-support ]]
+      compile-with-extra-telemetry: $[[ inputs.compile-with-extra-telemetry ]]
       workflow-api-authentication: $[[ inputs.workflow-api-authentication ]]
       enable-valgrind: $[[ inputs.enable-valgrind ]]
       enable-dcache-tests: $[[ inputs.enable-dcache-tests ]]
@@ -334,6 +340,7 @@ include:
       build-generator: $[[ inputs.build-generator ]]
       cmake-build-type: $[[ inputs.cmake-build-type ]]
       enable-address-sanitizer: $[[ inputs.enable-address-sanitizer ]]
+      compile-with-extra-telemetry: $[[ inputs.compile-with-extra-telemetry ]]
   - local: .gitlab/ci/build-image.gitlab-ci.yml
     rules:
       - if: '"$[[ inputs.pipeline-type ]]" != "REGR_AGAINST_CTA_VERSION"'

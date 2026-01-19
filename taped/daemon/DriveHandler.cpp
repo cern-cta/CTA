@@ -778,6 +778,10 @@ int DriveHandler::runChild() {
   driveHandlerProxy->setRefreshLoggerHandler([this]() { m_processManager.logContext().logger().refresh(); });
 
   resetLogParams(driveHandlerProxy.get());
+  cta::telemetry::metrics::ctaTapedMountAttempt->Add(1,
+                                                     {
+                                                       {cta::semconv::attr::kTapeDriveName, m_driveInfo.driveName}
+  });
   auto ret = executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
 
   // Shutdown the scheduler to prevent a race condition with shutting down telemetry

@@ -56,6 +56,8 @@ public:
    */
   void lockGlobal();
 
+  void setRowCountForTelemetry(uint64_t row_count);
+
   /**
    * Commit the transaction
    */

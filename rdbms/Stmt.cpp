@@ -199,8 +199,9 @@ Rset Stmt::executeQuery() {
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
         {
-          {cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()},
-          {cta::semconv::attr::kDbNamespace,  m_stmt->getDbNamespace() }
+          {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
+          {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+          {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
       return result;
@@ -211,9 +212,10 @@ Rset Stmt::executeQuery() {
     cta::telemetry::metrics::dbClientOperationDuration->Record(
       timer.msecs(),
       {
-        {cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()                      },
-        {cta::semconv::attr::kDbNamespace,  m_stmt->getDbNamespace()                       },
-        {cta::semconv::attr::kErrorType,    cta::semconv::attr::ErrorTypeValues::kException}
+        {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
+        {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+        {cta::semconv::attr::kErrorType,       cta::semconv::attr::ErrorTypeValues::kException        },
+        {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     throw;
@@ -231,10 +233,21 @@ void Stmt::executeNonQuery() {
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
         {
-          {cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()},
-          {cta::semconv::attr::kDbNamespace,  m_stmt->getDbNamespace() }
+          {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
+          {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+          {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
+      uint64_t nrows = m_stmt->getNbAffectedRows();
+      cta::telemetry::metrics::dbClientResponseReturnedRows->Record(
+        nrows,
+        {
+          {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
+          {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+          {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
+
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
     }
@@ -242,9 +255,10 @@ void Stmt::executeNonQuery() {
     cta::telemetry::metrics::dbClientOperationDuration->Record(
       timer.msecs(),
       {
-        {cta::semconv::attr::kDbSystemName, m_stmt->getDbSystemName()                      },
-        {cta::semconv::attr::kDbNamespace,  m_stmt->getDbNamespace()                       },
-        {cta::semconv::attr::kErrorType,    cta::semconv::attr::ErrorTypeValues::kException}
+        {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
+        {cta::semconv::attr::kDbNamespace,     m_stmt->getDbNamespace()                               },
+        {cta::semconv::attr::kErrorType,       cta::semconv::attr::ErrorTypeValues::kException        },
+        {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kTransaction}
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     throw;
@@ -271,6 +285,13 @@ wrapper::StmtWrapper& Stmt::getStmt() {
   } else {
     throw exception::Exception("Stmt does not contain a cached statement");
   }
+}
+
+//------------------------------------------------------------------------------
+// setDbQuerySummary
+//------------------------------------------------------------------------------
+void Stmt::setDbQuerySummary(const std::string& optQuerySummary) {
+  m_stmt->setDbQuerySummary(optQuerySummary);
 }
 
 }  // namespace cta::rdbms
