@@ -311,7 +311,8 @@ std::string Login::getPostgresqlDbUsername(const std::string& connectionDetails)
   cta::utils::Regex regex("postgresql://(.*)@");
   std::vector<std::string> result = regex.exec(connectionDetails);
   if (result.size() < 2) {
-    throw exception::Exception(std::string("In Login::getPostgresqlDbUsername(): Invalid connection string: Correct format is ") + s_fileFormat);
+    throw exception::Exception(
+      std::string("In Login::getPostgresqlDbUsername(): Invalid connection string: Correct format is ") + s_fileFormat);
   }
   if (std::string usernamePassword = result[1]; usernamePassword.find(":") == std::string::npos) {
     // No password provided, no need to hide it
