@@ -39,7 +39,7 @@
 #include <utility>
 
 #ifdef CTA_PGSCHED
-#include "scheduler/rdbms/RelationalDBFactory.hpp"
+#include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 #endif
 
 #ifdef STDOUT_LOGGING
@@ -3564,11 +3564,11 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, DISABLED_triggerTapeStateCh
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SchedulerTestTriggerTapeStateChangeBehaviour);
 
 #ifdef CTA_PGSCHED
-static cta::RelationalDBFactory RelationalDBFactoryStatic;
+static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
 
 INSTANTIATE_TEST_CASE_P(PostgresSchedulerDBPlusMockRelationalDBSchedulerTest,
                         SchedulerTest,
-                        ::testing::Values(SchedulerTestParam(RelationalDBFactoryStatic)));
+                        ::testing::Values(SchedulerTestParam(RelationalDBTestFactoryStatic)));
 #else
 #error Generic SchedulerTest not configured for current scheduler type
 #endif

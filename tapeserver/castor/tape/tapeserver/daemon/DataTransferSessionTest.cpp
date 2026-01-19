@@ -53,7 +53,7 @@
 #include <zlib.h>
 
 #ifdef CTA_PGSCHED
-#include "scheduler/rdbms/RelationalDBFactory.hpp"
+#include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 #else
 #include "objectstore/BackendRadosTestSwitch.hpp"
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
@@ -3671,11 +3671,11 @@ INSTANTIATE_TEST_CASE_P(MockSchedulerTest, SchedulerTest, ::testing::Values(Sche
 #endif
 
 #ifdef CTA_PGSCHED
-static cta::RelationalDBFactory RelationalDBFactoryStatic;
+static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
 
 INSTANTIATE_TEST_CASE_P(RelationalDBPlusMockSchedulerTest,
                         DataTransferSessionTest,
-                        ::testing::Values(DataTransferSessionTestParam(RelationalDBFactoryStatic)));
+                        ::testing::Values(DataTransferSessionTestParam(RelationalDBTestFactoryStatic)));
 #else
 #define TEST_VFS
 #ifdef TEST_VFS

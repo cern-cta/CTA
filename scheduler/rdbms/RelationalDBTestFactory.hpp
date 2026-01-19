@@ -29,7 +29,7 @@ namespace cta {
  * Each instance gets its own PostgreSQL schema, providing test isolation
  * similar to how ObjectStore creates a fresh backend per test.
  */
-class RelationalDBWrapper : public SchedulerDatabaseDecorator {
+class RelationalDBTestWrapper : public SchedulerDatabaseDecorator {
 private:
   std::unique_ptr<cta::log::Logger> m_logger;
   cta::catalogue::Catalogue& m_catalogue;
@@ -37,12 +37,12 @@ private:
   std::string m_schemaName;
 
 public:
-  RelationalDBWrapper(const std::string& ownerId,
-                      std::unique_ptr<cta::log::Logger> logger,
-                      catalogue::Catalogue& catalogue,
-                      const rdbms::Login& login,
-                      const uint64_t nbConns,
-                      const std::string& schemaName = "public")
+  RelationalDBTestWrapper(const std::string& ownerId,
+                          std::unique_ptr<cta::log::Logger> logger,
+                          catalogue::Catalogue& catalogue,
+                          const rdbms::Login& login,
+                          const uint64_t nbConns,
+                          const std::string& schemaName = "public")
       : SchedulerDatabaseDecorator(m_RelationalDB),
         m_logger(std::move(logger)),
         m_catalogue(catalogue),
@@ -51,7 +51,7 @@ public:
     // empty
   }
 
-  ~RelationalDBWrapper() noexcept {
+  ~RelationalDBTestWrapper() noexcept {
     // Drop the schema we created for test isolation
     // (but never drop "public" schema)
     if (!m_schemaName.empty() && m_schemaName != "public") {
@@ -71,21 +71,21 @@ public:
  * This factory provides test isolation through per-test PostgreSQL schemas:
  * - Each call to create() generates a unique schema
  * - The schema is automatically created with scheduler tables
- * - The schema is dropped when the RelationalDBWrapper is destroyed
+ * - The schema is dropped when the RelationalDBTestWrapper is destroyed
  *
  * This mimics the ObjectStore approach where each test gets a fresh backend.
  */
-class RelationalDBFactory : public SchedulerDatabaseFactory {
+class RelationalDBTestFactory : public SchedulerDatabaseFactory {
 public:
   /**
    * Constructor
    */
-  explicit RelationalDBFactory(const std::string& URL = "") : m_URL(URL) {}
+  explicit RelationalDBTestFactory(const std::string& URL = "") : m_URL(URL) {}
 
   /**
    * Destructor.
    */
-  ~RelationalDBFactory() noexcept {}
+  ~RelationalDBTestFactory() noexcept {}
 
   /**
    * Returns a newly created scheduler database object with its own isolated schema.
@@ -119,7 +119,7 @@ public:
 
       // Create wrapper that will drop the schema on destruction
       auto pgwrapper =
-        std::make_unique<RelationalDBWrapper>("UnitTest", std::move(logger), *catalogue, login, 5, schemaName);
+        std::make_unique<RelationalDBTestWrapper>("UnitTest", std::move(logger), *catalogue, login, 5, schemaName);
 
       return std::unique_ptr<SchedulerDatabase>(std::move(pgwrapper));
 
@@ -128,7 +128,7 @@ public:
       cta::rdbms::Login login(cta::rdbms::Login::DBTYPE_POSTGRESQL, "user", "password", "", "host", 0, "public");
 
       auto pgwrapper =
-        std::make_unique<RelationalDBWrapper>("UnitTest", std::move(logger), *catalogue, login, 5, "public");
+        std::make_unique<RelationalDBTestWrapper>("UnitTest", std::move(logger), *catalogue, login, 5, "public");
 
       return std::unique_ptr<SchedulerDatabase>(std::move(pgwrapper));
     }
@@ -136,6 +136,6 @@ public:
 
 private:
   std::string m_URL;
-};  // class RelationalDBFactory
+};  // class RelationalDBTestFactory
 
 }  // namespace cta

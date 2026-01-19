@@ -20,7 +20,7 @@
 #include <uuid/uuid.h>
 
 #ifdef CTA_PGSCHED
-#include "scheduler/rdbms/RelationalDBFactory.hpp"
+#include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 #else
 #include "OStoreDB/OStoreDBFactory.hpp"
 #include "objectstore/BackendRados.hpp"
@@ -1184,10 +1184,10 @@ INSTANTIATE_TEST_CASE_P(MockSchedulerDatabaseTest,
 #endif
 
 #ifdef CTA_PGSCHED
-static cta::RelationalDBFactory RelationalDBFactoryStatic;
+static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
 INSTANTIATE_TEST_CASE_P(RelationalDBSchedulerDatabaseTest,
                         SchedulerDatabaseTest,
-                        ::testing::Values(SchedulerDatabaseTestParam(RelationalDBFactoryStatic)));
+                        ::testing::Values(SchedulerDatabaseTestParam(RelationalDBTestFactoryStatic)));
 #else
 #define TEST_VFS
 #ifdef TEST_VFS
