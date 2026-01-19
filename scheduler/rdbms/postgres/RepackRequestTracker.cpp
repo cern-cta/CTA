@@ -24,6 +24,7 @@ uint64_t RepackRequestTrackingRow::cancelRepack(Transaction& txn, const std::str
       AND STATUS = ANY(ARRAY['RRS_Pending','RRS_ToExpand','RRS_Starting','RRS_Complete','RRS_Failed']::REPACK_REQ_STATUS[])
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("cancelRepack");
   stmt.bindString(":VID", vid);
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
@@ -45,6 +46,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestForExpansion(Transaction& 
     )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("updateRepackRequestForExpansion");
   stmt.bindUint64(":REQUEST_COUNT", requestCount);
   stmt.bindString(":STATUS", "RRS_ToExpand");
   stmt.executeNonQuery();
@@ -75,6 +77,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequest(
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("updateRepackRequestAfterExpansion");
 
   // Bind job status
   stmt.bindString(":STATUS", to_string(newStatus));
@@ -199,6 +202,7 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(Transaction& 
     )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("updateRepackRequestsProgress");
 
   // Bind each row's values
   for (size_t i = 0; i < updates.size(); ++i) {
@@ -241,6 +245,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailures(Transaction& txn,
     )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("updateRepackRequestFailures");
   stmt.bindUint64(":FAILED_FILES", failedFilesToRetrieve);
   stmt.bindUint64(":FAILED_BYTES", failedBytesToRetrieve);
   stmt.bindUint64(":FAILED_ARCH_REQS", failedToCreateArchiveReq);
@@ -303,6 +308,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
           )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("updateRepackRequestFailures");
 
   // Bind each row's values
   for (size_t i = 0; i < reqIds.size(); ++i) {
@@ -338,6 +344,7 @@ rdbms::Rset RepackRequestTrackingRow::markStartOfExpansion(Transaction& txn) {
     RETURNING *
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("markStartOfExpansion");
   stmt.bindString(":STATUS", "RRS_ToExpand");
   auto result = stmt.executeQuery();
   return result;
@@ -359,6 +366,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestStatusAndFinishTime(Transa
   sql += " WHERE REPACK_REQUEST_ID = :REQID";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("updateRepackRequestStatusAndFinishTime");
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint64(":REPACK_FINISHED_TIME", finishTime);
   stmt.bindUint64(":REQID", reqId);
@@ -381,6 +389,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestStatus(Transaction& txn,
   sql += " WHERE REPACK_REQUEST_ID = :REQID";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("updateRepackRequestStatus");
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint64(":REQID", reqId);
 
