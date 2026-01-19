@@ -1732,6 +1732,7 @@ uint64_t RelationalDB::insertOrUpdateDiskSleepEntry(schedulerdb::Transaction& tx
     )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("diskSleepTracking");
 
   stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName);
   stmt.bindUint64(":SLEEP_TIME", entry.sleepTime);
@@ -1751,6 +1752,7 @@ RelationalDB::getDiskSystemSleepStatus(rdbms::Conn& conn) {
   )SQL";
 
   auto stmt = conn.createStmt(sql);
+  stmt.setDbQuerySummary("diskSleepTracking");
   auto rset = stmt.executeQuery();
 
   std::unordered_map<std::string, RelationalDB::DiskSleepEntry> sleepEntries;
@@ -1781,6 +1783,8 @@ uint64_t RelationalDB::removeDiskSystemSleepEntries(schedulerdb::Transaction& tx
   sql += ")";
 
   auto stmt = txn.getConn().createStmt(sql);
+  stmt.setDbQuerySummary("diskSleepTracking");
+
 
   // Bind each disk name to its corresponding placeholder
   for (size_t i = 0; i < expiredDiskSystemNames.size(); ++i) {
@@ -1856,6 +1860,7 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::fetchDeadMountC
       SELECT MOUNT_ID, QUEUE_TYPE FROM MOUNT_QUEUE_LAST_FETCH WHERE LAST_UPDATE_TIME < :OLDER_THAN_TIMESTAMP
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
+    stmt.setDbQuerySummary("fetchDeadMountCandidates");
     stmt.bindUint64(":OLDER_THAN_TIMESTAMP", mount_gc_timestamp);
     auto rset = stmt.executeQuery();
     while (rset.next()) {
@@ -2007,6 +2012,7 @@ uint64_t RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64
       FROM JOB_IDS_FOR_UPDATE jid WHERE pq.JOB_ID = jid.JOB_ID
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
+    stmt.setDbQuerySummary("handleInactiveMountPendingQueues");
     stmt.bindUint64(":LIMIT", batchSize);
     stmt.executeQuery();
     njobs = stmt.getNbAffectedRows();
@@ -2066,6 +2072,7 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
         FOR UPDATE SKIP LOCKED
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
+    stmt.setDbQuerySummary("handleInactiveMountActiveQueues");
     if (isArchive) {
       auto status = isRepack ? schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack :
                                schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser;
@@ -2140,6 +2147,7 @@ void RelationalDB::deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSiz
                      FOR UPDATE SKIP LOCKED )
        )SQL";
       auto stmt = txn.getConn().createStmt(sql);
+      stmt.setDbQuerySummary("deleteOldFailedQueues");
       stmt.bindUint64(":OLDER_THAN_TIMESTAMP", olderThanTimestamp);
       stmt.bindUint64(":LIMIT", batchSize);
       stmt.executeNonQuery();
@@ -2181,6 +2189,7 @@ void RelationalDB::cleanOldMountLastFetchTimes(uint64_t deletionAge, uint64_t ba
         WHERE (mh.MOUNT_ID, mh.QUEUE_TYPE) = (r.MOUNT_ID, r.QUEUE_TYPE)
        )SQL";
     auto stmt = txn.getConn().createStmt(sql);
+    stmt.setDbQuerySummary("cleanOldMountLastFetchTimes");
     stmt.bindUint64(":OLDER_THAN_TIMESTAMP", olderThanTimestamp);
     stmt.bindUint64(":LIMIT", batchSize);
     stmt.executeNonQuery();
@@ -2235,6 +2244,7 @@ void RelationalDB::cleanMountLastFetchTimes(std::vector<uint64_t> deadMountIds,
             AND mf.QUEUE_TYPE = :QUEUE_TYPE
        )SQL";
     auto stmt = txn.getConn().createStmt(sql);
+    stmt.setDbQuerySummary("cleanMountLastFetchTimes");
     stmt.bindString(":QUEUE_TYPE", queue_type);
     stmt.executeNonQuery();
     auto nrows = stmt.getNbAffectedRows();
