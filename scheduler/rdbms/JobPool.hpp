@@ -20,6 +20,10 @@ template<typename T>
 class JobPool : public std::enable_shared_from_this<JobPool<T>> {
 public:
   // Constructor initializes the pool with a connection pool reference or other parameters
+  // We choose a default value of 10k jobs, as we are fetching 4k jobs at once in the CI.
+  // Therefore this is a reasonable default. The pool can grow if it needs to.
+  // In addition, the pool size is the main contributor to the unit test memor consumption
+  // and this pool size keeps the unit test memory consumption reasonable.
   explicit JobPool(rdbms::ConnPool& connPool, size_t poolSize = 10000);
 
   // Acquire a job from the pool (or create a new one if the pool is empty)
