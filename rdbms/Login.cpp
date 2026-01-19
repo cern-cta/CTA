@@ -240,7 +240,15 @@ void Login::setSqliteConnectionString(const std::string& filename) {
 // parsePostgresql
 //------------------------------------------------------------------------------
 Login Login::parsePostgresql(const std::string& connectionDetails) {
-  Login login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0, getPostgresqlDbNamespace(connectionDetails));
+  static const cta::utils::Regex re("^postgresql://([^:/]+):([^@]+)@.*");
+  std::vector<std::string> matches = re.exec(connectionDetails);
+  std::string username;
+  if (matches.size() > 1) {
+    username = matches[1];
+  } else {
+    throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
+  }
+  Login login(DBTYPE_POSTGRESQL, username, "", connectionDetails, "", 0, getPostgresqlDbNamespace(connectionDetails));
   login.setPostgresqlConnectionString(connectionDetails);
   return login;
 }
