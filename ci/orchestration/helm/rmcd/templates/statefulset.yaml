@@ -1,0 +1,94 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+# TODO: we need to think about how we eventually want to deploy rmcd
+# Because this current implementation has the following limitations:
+# - a single deployment of the chart cannot handle multiple mediumchangers on a single node
+# - Doesn't work on multiple nodes (would need either auto-discovery or some fancy node-label, device combo)
+{{- $rmcdName := printf "%s-%s" $.Release.Name "rmcd" | trunc 63 | trimSuffix "-" }}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $rmcdName }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  serviceName: {{ $rmcdName }}  # Ensure a headless service exists with this name; allows for stable DNS entries
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $rmcdName }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $rmcdName }}
+        {{- include "common.labels.withoutname" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+      {{- include "rmcd.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.pod.extraSpec }}
+      {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
+      {{- end }}
+      containers:
+      - name: cta-rmcd
+        image: {{ include "rmcd.image" . }}
+        imagePullPolicy: {{ include "rmcd.imagePullPolicy" . }}
+        securityContext:
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+          privileged: {{ include "common.securityContext.privileged" . }}
+          capabilities:
+            add:
+              - SYS_RAWIO
+        stdin: true
+        command: ["bash", "/scripts/rmcd.sh"]
+        args: []
+        startupProbe:
+          exec:
+            command: ["rpm", "-q", "cta-rmcd"]
+          initialDelaySeconds: 5
+          periodSeconds: 2
+          failureThreshold: 60
+        readinessProbe:
+          exec:
+            command: ["pgrep", "-f", "/usr/bin/cta-rmcd"]
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          failureThreshold: 10
+        env:
+        - name: MY_NAME
+          value: {{ $rmcdName }}
+        - name: MY_NAMESPACE
+          value: {{ $.Release.Namespace | quote }}
+        - name: INSTANCE_NAME
+          value: {{ $.Release.Namespace | quote }}
+        - name: LIBRARY_DEVICE
+          value: {{ .Values.libraryDevice | quote }}
+        - name: MY_CONTAINER
+          value: "cta-rmcd"
+        - name: TERM
+          value: "xterm"
+        - name: RMC_LISTEN_SCOPE
+          value: {{ .Values.listenScope | quote }}
+        {{- with .Values.extraEnv }}
+        {{- include "common.extraEnv" . | nindent 8 }}
+        {{- end }}
+        volumeMounts:
+        - name: scripts-volume
+          mountPath: /scripts
+        - name: smcdev
+          mountPath: /dev/smc
+        {{ include "common.extraVolumeMounts" . | nindent 8 }}
+      volumes:
+      - name: smcdev
+        hostPath:
+          path: {{ .Values.libraryDevice }}
+          type: CharDevice
+      - name: scripts-volume
+        configMap:
+          name: scripts-rmcd
+          defaultMode: 0777
+      {{ include "common.extraVolumes" . | nindent 6 }}
+---

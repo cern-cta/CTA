@@ -58,7 +58,8 @@ update_local_cta_chart_dependencies() {
     "client"
     "cli"
     "frontend"
-    "tpsrv"
+    "taped"
+    "rmcd"
     "maintd"
     "cta"
   )

@@ -18,8 +18,11 @@ dependencies:
   - name: client
     repository: "file://../client"
     version: 0.2.0
-  - name: tpsrv
-    repository: "file://../tpsrv"
+  - name: taped
+    repository: "file://../taped"
+    version: 0.2.0
+  - name: rmcd
+    repository: "file://../rmcd"
     version: 0.2.0
   - name: maintd
     repository: "file://../maintd"

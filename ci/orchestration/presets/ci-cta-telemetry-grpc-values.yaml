@@ -37,7 +37,7 @@ frontend:
                 username: it_sd_tab_ci
                 passwordSecret: monit-it-sd-tab-ci-pwd
 
-tpsrv:
+taped:
   conf:
     telemetry:
       enabled: true

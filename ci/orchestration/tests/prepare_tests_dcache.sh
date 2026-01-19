@@ -9,6 +9,12 @@ EOF
 exit 1
 }
 
+get_pods_by_type() {
+  local type="$1"
+  local namespace="$2"
+  kubectl get pod -l app.kubernetes.io/component=$type -n $namespace --no-headers -o custom-columns=":metadata.name"
+}
+
 while getopts "n:" o; do
     case "${o}" in
         n)
@@ -25,21 +31,19 @@ if [[ -z "${NAMESPACE}" ]]; then
     usage
 fi
 
-CLIENT_POD="cta-client-0"
-CTA_CLI_POD="cta-cli-0"
-CTA_FRONTEND_POD="cta-frontend-0"
-
 DCACHE_INSTANCE_NAME="dcache"
 
-CTA_TPSRV_POD="cta-tpsrv01-0"
+CTA_RMCD_POD=$(get_pods_by_type rmcd $NAMESPACE | head -1)
+CTA_TAPED_POD=$(get_pods_by_type taped $NAMESPACE | head -1)
+CTA_FRONTEND_POD=$(get_pods_by_type frontend $NAMESPACE | head -1)
+CLIENT_POD=$(get_pods_by_type client $NAMESPACE | head -1)
+CTA_CLI_POD=$(get_pods_by_type cli $NAMESPACE | head -1)
 
-# Set the TAPES and DRIVE_NAME based on the config in CTA_TPSRV_POD
-echo "Reading library configuration from ${CTA_TPSRV_POD}"
-DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c cta-taped-0 -- printenv DRIVE_NAME)
-LIBRARY_DEVICE=$(kubectl exec -n ${NAMESPACE} ${CTA_TPSRV_POD} -c cta-taped-0 -- printenv LIBRARY_DEVICE)
+# List tapes
+echo "Reading library configuration from ${CTA_RMCD_POD}"
+LIBRARY_DEVICE=$(kubectl exec -n ${NAMESPACE} ${CTA_RMCD_POD} -c cta-rmcd -- printenv LIBRARY_DEVICE)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-mapfile -t TAPES < <(${SCRIPT_DIR}/../../utils/tape/list_all_tapes_in_library.sh -d $LIBRARY_DEVICE)
-echo "Using drive: $DRIVE_NAME"
+mapfile -t TAPES < <(${SCRIPT_DIR}/../../utils/tape/list_tapes_in_library.sh -d $LIBRARY_DEVICE)
 echo "Using tapes:"
 for VID in "${TAPES[@]}"; do
   echo "- $VID"
@@ -47,8 +51,8 @@ done
 
 # Get list of tape drives that have a tape server
 TAPEDRIVES_IN_USE=()
-for tapeserver in $(kubectl --namespace ${NAMESPACE} get pods | grep tpsrv | awk '{print $1}'); do
-  TAPEDRIVES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${tapeserver} -c cta-taped-0 -- bash -c "find /etc/cta | grep cta-taped- | xargs cat" | grep LogicalLibrary | awk 'NR==1 {print $3}'))
+for taped in $(get_pods_by_type taped $NAMESPACE); do
+  TAPEDRIVES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${taped} -c cta-taped -- printenv DRIVE_NAME))
 done
 NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
 
@@ -198,17 +202,16 @@ echo "Labeling tapes:"
 # add all tapes
 for VID in "${TAPES[@]}"; do
   echo "  cta-tape-label --vid ${VID} --force"
-  # for debug use
-  # kubectl --namespace ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0  -- cta-tape-label --vid ${VID} --debug
   # The external tape format test leaves data inside of the tape, then the tapes for labeling are not empty between
   # tests. That's why we need to force cta-tape-label, but only for CI testing.
-  kubectl --namespace ${NAMESPACE} exec ${CTA_TPSRV_POD} -c cta-taped-0  -- cta-tape-label --vid ${VID} --force
+  kubectl --namespace ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped  -- cta-tape-label --vid ${VID} --force
   if [[ $? -ne 0 ]]; then
     echo "ERROR: failed to label the tape ${VID}"
     exit 1
   fi
 done
 
+DRIVE_NAME=$(kubectl --namespace ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- printenv DRIVE_NAME)
 echo "Setting drive up: ${DRIVE_NAME}"
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive up ${DRIVE_NAME}
 sleep 5

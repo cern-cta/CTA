@@ -4,14 +4,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
-{{- $allDrives := include "tpsrv.allDrives" . | fromYamlArray }}
-{{- range $driveSlot, $drive := $allDrives }}
+{{ range .Values.drives }}
+{{- $driveNameSlug := include "common.slugify" .name }}
 # Generate unique config map for each tape drive
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  # The name cannot use the drivename as this contains uppercase letters
-  name: cta-taped-{{ lower $drive.name }}-conf
+  name: cta-taped-{{ $driveNameSlug }}-conf
   labels:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
@@ -22,10 +21,10 @@ data:
     taped MountCriteria {{ $.Values.conf.taped.mountCriteria }}
     taped WatchdogIdleSessionTimer {{ $.Values.conf.taped.watchdogIdleSessionTimer }}
     taped UseEncryption {{ $.Values.conf.taped.useEncryption }}
-    taped DriveName {{ $drive.name }}
-    taped DriveLogicalLibrary {{ $drive.name }}
-    taped DriveDevice /dev/{{ $drive.device }}
-    taped DriveControlPath smc{{ $driveSlot }}
+    taped DriveName {{ .name }}
+    taped DriveLogicalLibrary {{ .logicalLibraryName }}
+    taped DriveDevice {{ .device }}
+    taped DriveControlPath {{ .controlPath }}
     taped LogMask {{ $.Values.conf.taped.logMask }}
     taped NbDiskThreads {{ $.Values.conf.taped.nbDiskThreads }}
     taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
@@ -36,6 +35,9 @@ data:
     general InstanceName {{ $.Release.Namespace }}
     general SchedulerBackendName {{ $schedulerConfig.backend }}
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
+
+    # Rmcd
+    taped RmcHost {{ $.Values.conf.taped.rmcHost }}
 
     # Telemetry
     experimental telemetryEnabled {{ $.Values.conf.telemetry.enabled }}
