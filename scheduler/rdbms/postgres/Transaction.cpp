@@ -41,6 +41,7 @@ void Transaction::lockGlobal() {
   try {
     std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:LOCK_ID::bigint)";
     auto stmt = m_conn->createStmt(sql);
+    stmt.setDbQuerySummary("globalDbLock");
     stmt.bindUint64(":LOCK_ID", 0);
     stmt.executeQuery();
   } catch (const cta::exception::Exception& e) {
@@ -60,6 +61,7 @@ void Transaction::takeNamedLock(std::string_view tapePoolString) {
 
     std::string sql = "SELECT PG_ADVISORY_XACT_LOCK(:HASH32::bigint)";
     auto stmt = m_conn->createStmt(sql);
+    stmt.setDbQuerySummary("advisoryDbLock");
     stmt.bindUint64(":HASH32", hash32);
     stmt.executeQuery();
   } catch (const cta::exception::Exception& e) {

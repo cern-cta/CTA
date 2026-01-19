@@ -28,6 +28,7 @@ static constexpr const char* kLockType = "lock.type";
 
 static constexpr const char* kDbSystemName = "db.system.name";
 static constexpr const char* kDbNamespace = "db.namespace";
+static constexpr const char* kDbQuerySummary = "db.query.summary";
 
 // Non-standard -- CTA-specific
 static constexpr const char* kSchedulerNamespace = "cta.scheduler.namespace";  // schedulerBackendName but better
