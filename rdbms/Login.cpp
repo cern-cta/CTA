@@ -314,7 +314,8 @@ std::string Login::getPostgresqlDbUsername(const std::string& connectionDetails)
     throw exception::Exception(
       std::string("In Login::getPostgresqlDbUsername(): Invalid connection string: Correct format is ") + s_fileFormat);
   }
-  if (std::string usernamePassword = result[1]; usernamePassword.find(":") == std::string::npos) {
+  std::string usernamePassword = result[1];
+  if (usernamePassword.find(":") == std::string::npos) {
     // No password provided, no need to hide it
     return usernamePassword;
   }
