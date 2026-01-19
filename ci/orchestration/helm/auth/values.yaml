@@ -1,16 +1,6 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-component: kdc
-partOf: auth
-
-image:
-  repository: gitlab-registry.cern.ch/cta/ctageneric
-  tag: "latest"
-  pullPolicy: IfNotPresent
-  pullSecrets:
-    - reg-ctageneric
-
 keycloak:
   image: registry.cern.ch/quay.io/keycloak/keycloak:26.1
   adminUsername: admin
@@ -20,14 +10,8 @@ keycloak:
   ssoSessionMaxLifespan: 36000
 
 kerberos:
+  image: registry.cern.ch/docker.io/almalinux/9-minimal:9.7
   defaultRealm: TEST.CTA
   adminPrinc:
     name: root
     password: "defaultcipassword"
-
-pod:
-  extraSpec:
-    terminationGracePeriodSeconds: 1  # This is low on purpose as the current process has no gracefull shutdown process
-
-# Additional Extra environment variables
-extraEnv:

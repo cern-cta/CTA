@@ -11,13 +11,10 @@ metadata:
   namespace: {{ .Release.Namespace | quote }}
   labels:
     app.kubernetes.io/name: {{ $name }}
-    {{- include "common.labels.withoutname" $ | nindent 4 }}
 spec:
   automountServiceAccountToken: false
   restartPolicy: Never
-  {{- if .Values.pod.extraSpec }}
-  {{ .Values.pod.extraSpec | toYaml | nindent 2 }}
-  {{- end }}
+  terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
   containers:
     - name: keycloak
       image: {{ .Values.keycloak.image }}
@@ -28,16 +25,22 @@ spec:
           /opt/keycloak/bin/kc.sh start-dev --http-port=8080
       ports:
         - containerPort: 8080
+      startupProbe:
+        httpGet:
+          path: /health/ready
+          port: 9000
+        initialDelaySeconds: 0
+        periodSeconds: 1
+        failureThreshold: 60
       readinessProbe:
         httpGet:
-          path: /realms/master
-          port: 8080
-        initialDelaySeconds: 3
-        periodSeconds: 1
-        timeoutSeconds: 2
-        failureThreshold: 6
+          path: /health/ready
+          port: 9000
+        initialDelaySeconds: 0
+        periodSeconds: 5
+        failureThreshold: 4
       securityContext:
-        allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+        allowPrivilegeEscalation: false
       {{- if $.Values.keycloak.resources }}
       resources:
         {{-  toYaml $.Values.keycloak.resources | nindent 10 }}
@@ -53,4 +56,8 @@ spec:
             secretKeyRef:
               name: keycloak-admin-credentials
               key: password
+        - name: KC_HEALTH_ENABLED
+          value: "true"
+        - name: KC_MANAGEMENT_ENABLED
+          value: "true"
 

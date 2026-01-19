@@ -38,5 +38,3 @@ pod:
   extraSpec:
     # We want to know if something went wrong in CI
     restartPolicy: Never
-
-extraEnv:

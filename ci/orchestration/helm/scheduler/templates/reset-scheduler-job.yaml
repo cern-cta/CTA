@@ -11,8 +11,6 @@ kind: Job
 metadata:
   name: {{ $name }}-job
   namespace: {{ .Release.Namespace | quote }}
-  labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
   annotations:
     {{- if eq $schedulerConfig.backend "postgres" }}
     "helm.sh/hook": post-install   # Note that we need to be sure the postgres pod has been started before we do anything with it
@@ -33,7 +31,7 @@ spec:
           command: ["bash", "/scripts/reset_scheduler.sh"]
           args: []
           securityContext:
-            allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+            allowPrivilegeEscalation: false
           stdin: true
           resources:
             requests:

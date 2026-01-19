@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: scripts-auth
+  name: {{ .Release.Name }}-kdc-scripts
 data:
   kdc.sh: |
     {{ .Files.Get "scripts/kdc.sh" | nindent 4 }}

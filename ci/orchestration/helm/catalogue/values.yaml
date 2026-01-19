@@ -18,9 +18,6 @@ pod:
     # We want to know if something went wrong in CI
     restartPolicy: Never
 
-extraEnv:
-
-
 # This can either be provided via --set-file or specified directly here
 # configuration:
 #   backend: "" # Can be oracle or postgres.

@@ -12,7 +12,7 @@ set -e
 
 # See: https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/6/html/managing_smart_cards/configuring_a_kerberos_5_server
 # We only look in a single repo, as we want this script to run as fast as possible since the rest of the chart installations depend on this chart
-dnf install -y --disablerepo=* --enablerepo=baseos krb5-server
+microdnf install -y --disablerepo=* --enablerepo=baseos --setopt=install_weak_deps=0 krb5-server
 
 echo "Initialising key distribution center... "
 KRB5_DB_MASTER_KEY=$(openssl rand -base64 32)
