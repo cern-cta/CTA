@@ -15,7 +15,6 @@ metadata:
 spec:
   backoffLimit: 0
   ttlSecondsAfterFinished: 300
-  terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
   template:
     spec:
       automountServiceAccountToken: false
