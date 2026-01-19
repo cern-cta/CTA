@@ -285,6 +285,8 @@ private:
    * @return  true if the Postgresql connectionDetails contains a password, false otherwise
    */
   static bool postgresqlHasPassword(const std::string& connectionDetails);
+
+  std::string getPostgresqlDbUsername(const std::string& connectionDetails)
 };  // class Login
 
 }  // namespace cta::rdbms
