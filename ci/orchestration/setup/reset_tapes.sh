@@ -38,9 +38,10 @@ if [[ -z "$namespace" ]]; then
   exit 1
 fi
 
-devices=$(kubectl get all --namespace $namespace -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
+rmcd_pods=$(kubectl get pods --namespace $namespace -l app.kubernetes.io/component=rmcd --no-headers -o custom-columns=":metadata.name")
 
-for library_device in $devices; do
+for rmcd_pod in $rmcd_pods; do
+  library_device=$(kubectl exec --namespace $namespace $rmcd_pod -- printenv LIBRARY_DEVICE)
   echo "Unloading tapes that could be remaining in the drives from previous runs for library device: $library_device"
   mtx -f ${library_device} status
   for unload in $(mtx -f ${library_device}  status | grep '^Data Transfer Element' | grep -vi ':empty' | sed -e 's/Data Transfer Element /drive/;s/:.*Storage Element /-slot/;s/ .*//'); do

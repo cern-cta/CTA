@@ -26,7 +26,6 @@ usage() {
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file."
-  echo "      --tapeservers-config <file>:    Path to the tapeservers configuration values file."
   echo "  -r, --cta-image-repository <repo>:  The CTA Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
   echo "  -i, --cta-image-tag <tag>:          The CTA Docker image tag."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version."
@@ -79,10 +78,6 @@ upgrade_instance() {
         scheduler_config="$2"
         test -f "${scheduler_config}" || die "Scheduler config file ${scheduler_config} does not exist"
         shift ;;
-      --tapeservers-config)
-        tapeservers_config="$2"
-        test -f "${tapeservers_config}" || die "Scheduler config file ${tapeservers_config} does not exist"
-        shift ;;
       -n|--namespace)
         namespace="$2"
         shift ;;
@@ -129,16 +124,6 @@ upgrade_instance() {
   fi
   if [[ -n "$scheduler_config" ]]; then
     helm_flags+=" --set-file global.configuration.scheduler=${scheduler_config}"
-  fi
-  if [[ -n "$tapeservers_config" ]]; then
-    devices_in_use=$(kubectl get all --all-namespaces -l cta/library-device -o jsonpath='{.items[*].metadata.labels.cta/library-device}' | tr ' ' '\n' | sort | uniq)
-    # Check that all devices in the provided config are already in use
-    for library_device in $(awk '/libraryDevice:/ {gsub("\"","",$2); print $2}' "$tapeservers_config"); do
-      if ! echo "$devices_in_use" | grep -qw "$library_device"; then
-        die "provided library config specifies a device that is not yet in use by the current deployment: $library_device"
-      fi
-    done
-    helm_flags+=" --set-file tpsrv.tapeServers=${tapeservers_config}"
   fi
 
   update_local_cta_chart_dependencies
