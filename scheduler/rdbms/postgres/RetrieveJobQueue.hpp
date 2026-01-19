@@ -402,6 +402,7 @@ public:
     sql += R"(    ) )";
 
     auto stmt = conn.createStmt(sql);
+    stmt.setDbQuerySummary("insertRetrieveJob");
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":CREATION_TIME", static_cast<uint64_t>(creationTime));
@@ -688,7 +689,7 @@ public:
     }
 
     auto stmt = conn.createStmt(sql);
-
+    stmt.setDbQuerySummary("insertRetrieveJobBatch");
     // Bind values for each row with distinct names
     for (size_t i = 0; i < rows.size(); ++i) {
       const auto& row = *rows[i];
