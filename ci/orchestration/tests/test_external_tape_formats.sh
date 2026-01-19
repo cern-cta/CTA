@@ -16,8 +16,6 @@ get_pods_by_type() {
 }
 
 NAMESPACE=""
-CTA_RMCD_POD=$(get_pods_by_type rmcd $NAMESPACE | head -1)
-CTA_TAPED_POD=$(get_pods_by_type taped $NAMESPACE | head -1)
 
 while getopts "n:" o; do
   case "${o}" in
@@ -34,6 +32,9 @@ shift $((OPTIND-1))
 if [[ -z "${NAMESPACE}" ]]; then
   usage
 fi
+
+CTA_RMCD_POD=$(get_pods_by_type rmcd $NAMESPACE | head -1)
+CTA_TAPED_POD=$(get_pods_by_type taped $NAMESPACE | head -1)
 
 # Install systest rpm that contains the osm reader test.
 echo "Installing cta systest rpms in ${CTA_TAPED_POD} - taped container... "
