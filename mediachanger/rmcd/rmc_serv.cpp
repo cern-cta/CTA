@@ -159,7 +159,7 @@ int rmc_main(const char* const robot) {
   sin.sin_family = AF_INET;
   {
     const char* p;
-    p = getenv("RMC_PORT");
+    p = std::getenv("RMC_PORT");
     if (!p) {
       p = getconfent_fromfile("RMC", "PORT", 0);
     }
@@ -171,17 +171,19 @@ int rmc_main(const char* const robot) {
     }
   }
   // rmcd should only accept connections from the loopback interface by default
-  auto listen_scope = getenv("RMC_LISTEN_SCOPE");
+  auto listen_scope = std::getenv("RMC_LISTEN_SCOPE");
   if (!listen_scope) {
     listen_scope = getconfent_fromfile("RMC", "LISTEN_SCOPE", 0);
   }
   const auto listen_scope_str = listen_scope ? std::string(listen_scope) : "loopback";
   if (listen_scope_str == "any") {
+    rmc_logit(func,
+              "Listen scope set to \"any\" (0.0.0.0); this exposes rmcd to unauthenticated remote connections.\n");
     sin.sin_addr.s_addr = htonl(INADDR_ANY);
   } else if (listen_scope_str == "loopback") {
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   } else {
-    rmc_logit(func, "Received unsupported listen scope: %s. Defaulting to loopback.\n", listen_scope_str.c_str());
+    rmc_logit(func, "Received unsupported listen scope: \"%s\". Defaulting to loopback.\n", listen_scope_str.c_str());
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   }
   if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char*) &on, sizeof(on)) < 0) {
