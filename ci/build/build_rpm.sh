@@ -33,6 +33,8 @@ usage() {
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
   echo "      --enable-internal-repos                      Use the internal yum repos instead of the public yum repos."
+  echo "      --extra-telemetry                          Compile with telemetry instrumentation for performance measurements."\
+
   echo
   exit 1
 }
@@ -61,6 +63,7 @@ build_rpm() {
   local oracle_support=true
   local use_internal_repos=false
   local enable_address_sanitizer=false
+  local extra_telemetry=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -147,6 +150,7 @@ build_rpm() {
       ;;
     --install-srpms) install_srpms=true ;;
     --enable-internal-repos) use_internal_repos=true ;;
+    --extra-telemetry) extra_telemetry=true ;;
     -j | --jobs)
       if [[ $# -gt 1 ]]; then
         num_jobs="$2"
@@ -331,6 +335,11 @@ build_rpm() {
     else
       # unset it
       cmake_options+=" -D CTA_USE_PGSCHED:BOOL=FALSE"
+    fi
+
+    if [[ ${extra_telemetry} = true ]]; then
+      echo "Building with telemetry instrumentation for performance measurements."
+      cmake_options+=" -D CTA_USE_EXTRA_TELEMETRY:BOOL=TRUE"
     fi
 
     cd "${build_dir}"

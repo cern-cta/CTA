@@ -53,16 +53,15 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
     cta::log::ScopedParamContainer params(lc);
     try {
-      auto [queuedJobs, nrows] = postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue(txn,
-                                                                                       queriedJobStatus,
-                                                                                       mountInfo,
-                                                                                       bytesRequested,
-                                                                                       filesRequested,
-                                                                                       m_isRepack);
+      auto queuedJobs = postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue(txn,
+                                                                              queriedJobStatus,
+                                                                              mountInfo,
+                                                                              bytesRequested,
+                                                                              filesRequested,
+                                                                              m_isRepack);
       timings.insertAndReset("mountUpdateBatchTime", t);
-      params.add("updateMountInfoRowCount", nrows);
       params.add("MountID", mountInfo.mountId);
-      retVector.reserve(nrows);
+      retVector.reserve(filesRequested);
       // Fetch job info only in case there were jobs found and updated
       if (!queuedJobs.isEmpty()) {
         // Construct the return value
@@ -80,6 +79,9 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
           tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
           tapeFile.blockId = maxBlockId;
         }
+        // TESTING getNbRowsRetrieved()
+        //txn.setRowCountForTelemetry(queuedJobs.getNbRowsRetrieved());
+        txn.setRowCountForTelemetry(retVector.size());
         txn.commit();
         params.add("queuedJobCount", retVector.size());
         timings.insertAndReset("mountJobInitBatchTime", t);
@@ -87,6 +89,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
                "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
       } else {
         lc.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
+        txn.setRowCountForTelemetry(0);
         txn.commit();
         return ret;
       }
@@ -233,11 +236,13 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
   }
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
+    auto totalRows = 0;
     // all jobs for which setJobBatchTransferred is called shall be reported as successful
     auto status = ArchiveJobStatus::AJS_ToReportToUserForSuccess;
     if (!jobIDsList_single_copy.empty()) {
       uint64_t nrows = 0;
       nrows = postgres::ArchiveJobQueueRow::updateJobStatus(txn, status, jobIDsList_single_copy);
+      totalRows += nrows;
       if (nrows != jobIDsList_single_copy.size()) {
         log::ScopedParamContainer(lc)
           .add("updatedRows", nrows)
@@ -250,6 +255,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
     if (!jobIDsList_multi_copy.empty()) {
       uint64_t nrows = 0;
       nrows = postgres::ArchiveJobQueueRow::updateMultiCopyJobSuccess(txn, jobIDsList_multi_copy);
+      totalRows += nrows;
       log::ScopedParamContainer(lc)
         .add("updatedRows", nrows)
         .add("jobListSize", jobIDsList_multi_copy.size())
@@ -257,6 +263,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
              "In ArchiveMount::setJobBatchTransferred(): Finished ArchiveJobQueueRow::updateJobStatus() for "
              "the job list provided.");
     }
+    txn.setRowCountForTelemetry(totalRows);
     txn.commit();
     // After processing, return the job object to the job pool for re-use
     recycleTransferredJobs(jobsBatch, lc);

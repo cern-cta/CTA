@@ -58,19 +58,18 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       for (const auto& pair : noSpaceDiskSystemNamesMap) {
         noSpaceDiskSystemNames.push_back(pair.first);
       }
-      auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue(txn,
-                                                                                        queriedJobStatus,
-                                                                                        mountInfo,
-                                                                                        noSpaceDiskSystemNames,
-                                                                                        bytesRequested,
-                                                                                        filesRequested,
-                                                                                        m_isRepack);
+      auto queuedJobs = postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue(txn,
+                                                                               queriedJobStatus,
+                                                                               mountInfo,
+                                                                               noSpaceDiskSystemNames,
+                                                                               bytesRequested,
+                                                                               filesRequested,
+                                                                               m_isRepack);
       timings.insertAndReset("mountUpdateBatchTime", t);
-      params.add("updateMountInfoRowCount", nrows);
       params.add("MountID", mountInfo.mountId);
       lc.log(cta::log::INFO,
              "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully assigned Mount ID to DB jobs.");
-      retVector.reserve(nrows);
+      retVector.reserve(filesRequested);
       // Fetch job info only in case there were jobs found and updated
       if (!queuedJobs.isEmpty()) {
         while (queuedJobs.next()) {
@@ -81,6 +80,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
           retVector.emplace_back(std::move(job));
           retVector.back()->initialize(queuedJobs, m_isRepack);
         }
+        txn.setRowCountForTelemetry(queuedJobs.getNbRowsRetrieved());
         txn.commit();
         params.add("queuedJobCount", retVector.size());
         timings.insertAndReset("mountJobInitBatchTime", t);
@@ -88,6 +88,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
                "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
       } else {
         lc.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
+        txn.setRowCountForTelemetry(0);
         txn.commit();
         return ret;
       }
@@ -244,7 +245,6 @@ void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string
         // ignore these cases.
         return;
       }
-
       txn.commit();
       log::ScopedParamContainer(lc)
         .add("rowUpdateCount", nrows)
@@ -318,7 +318,6 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uin
     try {
       m_RelationalDB.insertOrUpdateDiskSleepEntry(txn, diskSystemName, dse);
       txn.commit();
-
     } catch (const exception::Exception& ex) {
       cta::log::ScopedParamContainer params(lc);
       params.add(semconv::log::exceptionMessage, ex.getMessageValue());

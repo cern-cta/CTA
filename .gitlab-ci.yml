@@ -109,6 +109,13 @@ variables:
   # =========================================================================
   # 3. Component & Subsystem Architecture
   # =========================================================================
+  COMPILE_WITH_PERF_TELEMETRY:
+    description: "Compile with telemetry instrumentation for stress test performance measurements."
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
   SCHEDULER_TYPE:
     description: "Specifies what scheduler should be used to build CTA and run the tests"
     value: "objectstore"

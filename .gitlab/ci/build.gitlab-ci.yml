@@ -84,6 +84,10 @@ build-cta-rpms:
         RPMDEFS="--define '_debugsource_packages 0'"
       fi
     - if [[ "$ENABLE_INTERNAL_REPOS" == "TRUE" ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
+    - |
+      if [[ "$COMPILE_WITH_PERF_TELEMETRY" == "TRUE" ]]; then
+        BUILD_OPTIONS+=" --extra-telemetry"
+      fi
     - if [[ "$ENABLE_ADDRESS_SANITIZER" == "TRUE" ]]; then BUILD_OPTIONS+=" --enable-address-sanitizer"; fi
     - ./ci/build/build_rpm.sh --build-dir build_rpm
                               --build-generator "${BUILD_GENERATOR}"

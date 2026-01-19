@@ -316,6 +316,7 @@ public:
     stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
     stmt.bindUint16(":TOTAL_REPORT_RETRIES", totalReportRetries);
     stmt.bindUint16(":MAX_REPORT_RETRIES", maxReportRetries);
+    conn.setDbQuerySummary("insert archive");
     stmt.executeNonQuery();
   }
 
@@ -547,7 +548,6 @@ VALUES )SQL";
 )SQL";
 
     auto stmt = conn.createStmt(sql);
-
     // Bind values for each row with distinct names
     for (size_t i = 0; i < rows.size(); ++i) {
       const auto& row = *rows[i];
@@ -586,7 +586,7 @@ VALUES )SQL";
       stmt.bindUint16(":TOTAL_REPORT_RETRIES" + idx, row.totalReportRetries);
       stmt.bindUint16(":MAX_REPORT_RETRIES" + idx, row.maxReportRetries);
     }
-
+    conn.setDbQuerySummary("insert archive");
     stmt.executeNonQuery();
   }
 
@@ -665,13 +665,12 @@ VALUES )SQL";
    *
    * @return  result set containing job IDs of the rows which were updated
    */
-  static std::pair<rdbms::Rset, uint64_t>
-  moveJobsToDbActiveQueue(Transaction& txn,
-                          ArchiveJobStatus newStatus,
-                          const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
-                          uint64_t maxBytesRequested,
-                          uint64_t limit,
-                          bool isRepack);
+  static rdbms::Rset moveJobsToDbActiveQueue(Transaction& txn,
+                                             ArchiveJobStatus newStatus,
+                                             const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
+                                             uint64_t maxBytesRequested,
+                                             uint64_t limit,
+                                             bool isRepack);
 
   /**
    * Update job status for jobs from single-copy user request

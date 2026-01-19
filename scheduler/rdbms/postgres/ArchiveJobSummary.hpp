@@ -95,6 +95,7 @@ struct ArchiveJobSummaryRow {
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);
+    txn.getConn().setDbQuerySummary("select summary");
     return stmt.executeQuery();
   }
 
@@ -116,6 +117,7 @@ struct ArchiveJobSummaryRow {
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
     stmt.bindString(":STATUS", "AJS_Failed");
+    txn.getConn().setDbQuerySummary("select failed archive summary");
     return stmt.executeQuery();
   }
 };

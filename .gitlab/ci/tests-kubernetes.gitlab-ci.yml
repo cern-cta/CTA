@@ -397,7 +397,6 @@ stress-test-python:
       else
         STRESS_CTA_VALUES_CHAIN="${DEFAULT_CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
-    - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     # Set up stress test
     - cd ci/orchestration/
     # We don't clean up old namespace so this will fail (deliberately) when another namespace still exist

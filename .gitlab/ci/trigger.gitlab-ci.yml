@@ -22,6 +22,13 @@ trigger-postgres-scheduler-pipeline:
   variables:
     SCHEDULER_TYPE: "pgsched"
 
+trigger-postgres-scheduler-with-extra-telemetry-pipeline:
+  extends:
+    - .trigger-child-pipeline
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+    COMPILE_WITH_PERF_TELEMETRY: "TRUE"
+
 trigger-oracle-disabled-pipeline:
   extends:
     - .trigger-child-pipeline

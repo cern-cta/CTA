@@ -27,17 +27,21 @@ static constexpr const char* kState = "state";
 static constexpr const char* kLockType = "lock.type";
 
 static constexpr const char* kDbSystemName = "db.system.name";
+static constexpr const char* kDbOperationName = "db.operation.name";
 static constexpr const char* kDbNamespace = "db.namespace";
+static constexpr const char* kDbQuerySummary = "db.query.summary";
 
 // Non-standard -- CTA-specific
 static constexpr const char* kSchedulerNamespace = "cta.scheduler.namespace";  // schedulerBackendName but better
 static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.name";
+static constexpr const char* kSchedulerOperationWorkflow = "cta.scheduler.operation.workflow";
 static constexpr const char* kFrontendRequesterName = "cta.frontend.requester.name";
 static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";
 static constexpr const char* kCtaIoDirection = "cta.io.direction";  // similar to disk.io.direction
 static constexpr const char* kCtaIoMedium = "cta.io.medium";
 static constexpr const char* kCtaTapedDriveState = "cta.taped.drive.state";
 static constexpr const char* kCtaTapedMountType = "cta.taped.mount.type";
+static constexpr const char* kCtaTapedMountId = "cta.taped.mount.id";
 static constexpr const char* kTapeDriveName = "tape.drive.name";
 static constexpr const char* kTapeLibraryLogicalName = "tape.library.logical.name";
 static constexpr const char* kCtaRoutineName = "cta.routine.name";
@@ -50,6 +54,13 @@ static constexpr const char* kCtaFrontend = "cta.frontend";
 static constexpr const char* kCtaTaped = "cta.taped";
 static constexpr const char* kCtaMaintd = "cta.maintd";
 }  // namespace ServiceNameValues
+
+namespace SchedulerOperationWorkflowValues {
+static constexpr const char* kArchive = "archive";
+static constexpr const char* kRetrieve = "retrieve";
+static constexpr const char* kRepack = "repack";
+static constexpr const char* kMount = "mount";
+}  // namespace SchedulerOperationWorkflowValues
 
 namespace CtaTransferDirectionValues {
 static constexpr const char* kArchive = "archive";
@@ -89,12 +100,18 @@ static constexpr const char* kScopedExclusive = "exclusive";
 }  // namespace LockTypeValues
 
 namespace SchedulerOperationNameValues {
-static constexpr const char* kEnqueueArchive = "enqueue_archive";
-static constexpr const char* kEnqueueRetrieve = "enqueue_retrieve";
-static constexpr const char* kEnqueueRepack = "enqueue_repack";
-static constexpr const char* kCancelArchive = "cancel_archive";
-static constexpr const char* kCancelRetrieve = "cancel_retrieve";
-static constexpr const char* kCancelRepack = "cancel_repack";
+static constexpr const char* kSelectCatalogueDB =
+  "select catalogue db";  // happens during retrieve queue insert so not used for the moment
+static constexpr const char* kEnqueue = "queue insert";
+static constexpr const char* kGetNextMount = "select work summary";
+static constexpr const char* kInsertForProcessing = "insert for processing";
+static constexpr const char* kUpdateFinishedTransfer = "update finished tranfer";
+static constexpr const char* kUpdateSchedulerDB = "update tranfer in scheduler db";
+static constexpr const char* kUpdateInsertCatalogueDB = "update tranfer in catalogue db";
+static constexpr const char* kSelectToReportToUser = "select to report to user";
+static constexpr const char* kReportToUserAndDeleteSchedulerDB = "report and delete";
+static constexpr const char* kDeleteSchedulerDB = "delete";
+static constexpr const char* kCancel = "cancel";
 }  // namespace SchedulerOperationNameValues
 
 namespace DbSystemNameValues {
@@ -102,5 +119,10 @@ static constexpr const char* kOracle = "oracle";
 static constexpr const char* kPostgres = "postgres";
 static constexpr const char* kSqlite = "sqlite";
 }  // namespace DbSystemNameValues
+
+namespace DbOperationNameValues {
+static constexpr const char* kTransaction = "TRANSACTION";
+static constexpr const char* kCommit = "COMMIT";
+}  // namespace DbOperationNameValues
 
 }  // namespace cta::semconv::attr

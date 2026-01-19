@@ -75,6 +75,7 @@ echo
   echo "Telemetry & Observability:"
   echo "      --local-telemetry                 Spawns a local collector and Prometheus backends for metrics."
   echo "      --publish-telemetry               Publishes telemetry to a pre-configured central backend."
+  echo "      --extra-telemetry:                Compile with performance metric instrumentation for stress test measurements."
   echo
   exit 1
 }
@@ -132,6 +133,7 @@ build_deploy() {
   local eos_enabled=true
   local dcache_enabled=false
   local enable_address_sanitizer=false
+  local extra_telemetry=false
   local cta_config=""
   local eos_config=""
 
@@ -170,6 +172,7 @@ build_deploy() {
       --publish-telemetry)          publish_telemetry=true ;;
       --no-setup)                   no_setup=true ;;
       --enable-address-sanitizer)   enable_address_sanitizer=true ;;
+      --extra-telemetry) extra_telemetry=true ;;
       --eos-image-repository)       eos_image_repository="$2"; shift ;;
       --eos-image-tag)              eos_image_tag="$2"; shift ;;
       --cta-image-tag)              cta_image_tag="$2"; shift ;;
@@ -250,6 +253,10 @@ build_deploy() {
         build_srpm_flags+=" --clean-build-dir"
       fi
 
+      if [[ "${extra_telemetry}" = true ]]; then
+        build_srpm_flags+=" --extra-telemetry"
+      fi
+
       # shellcheck disable=SC2086
       ${container_runtime} exec -it "${build_container_name}" \
         ./shared/CTA/ci/build/build_srpm.sh \
@@ -297,6 +304,10 @@ build_deploy() {
 
     if [[ ${enable_address_sanitizer} = true ]]; then
       build_rpm_flags+=" --enable-address-sanitizer"
+    fi
+
+    if [[ "${extra_telemetry}" = true ]]; then
+      build_rpm_flags+=" --extra-telemetry"
     fi
 
     print_header "BUILDING RPMS"

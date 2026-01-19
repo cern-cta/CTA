@@ -8,6 +8,10 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "common/exception/NoSuchObject.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -152,10 +156,30 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
   }
   log::ScopedParamContainer(logContext)
     .add("filesRequested", filesRequested)
-    .add("filesFetched", dbJobBatch.size())
+    .add("filesFetched", ret.size())
     .add("bytesRequested", bytesRequested)
     .add("getNextJobBatchTime", t.secs())
     .log(log::INFO, "In SchedulerDB::ArchiveMount::getNextJobBatch(): Finished getting next job batch.");
+  auto tteltime = t.msecs();
+  auto retsize = ret.size();
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    tteltime,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive        }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    retsize,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive        }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   return ret;
 }
 
@@ -187,6 +211,9 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
   std::unique_ptr<cta::ArchiveJob> job;
   std::string failedValidationJobReportURL;
   bool catalogue_updated = false;
+  double catalogueTimeMSecs = 0;
+  utils::Timer ttel_total;
+  uint64_t total_files = 0;
   try {
     uint64_t files = 0;
     uint64_t bytes = 0;
@@ -207,7 +234,9 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
         .add("type", "ReportSuccessful");
       logContext.log(cta::log::INFO, "In cta::ArchiveMount::reportJobsBatchTransferred(): archive job successful");
       try {
+        utils::Timer ttel_catalogue;
         tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
+        catalogueTimeMSecs += ttel_catalogue.msecs(utils::Timer::resetCounter);
       } catch (const cta::exception::Exception&) {
         //We put the not validated job into this list in order to insert the job
         //into the failedToReportArchiveJobs list in the exception catching block
@@ -220,6 +249,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));
       job.reset();
     }
+    total_files = files;
     while (!skippedFiles.empty()) {
       auto tiwup = std::make_unique<cta::catalogue::TapeItemWritten>();
       *tiwup = skippedFiles.front();
@@ -237,7 +267,26 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
 
     updateCatalogueWithTapeFilesWritten(tapeItemsWritten);
     catalogue_updated = true;
-    catalogueTime = t.secs(utils::Timer::resetCounter);
+    catalogueTimeMSecs += t.msecs();
+    catalogueTime = t.secs(utils::Timer::resetCounter) + catalogueTimeMSecs / 1000.;
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      catalogueTimeMSecs,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kUpdateInsertCatalogueDB},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive            }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+      files,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kUpdateInsertCatalogueDB},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive            }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
     {
       cta::log::ScopedParamContainer params(logContext);
       params.add("tapeFilesWritten", tapeItemsWritten.size())
@@ -249,7 +298,27 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
 
     // We can now pass the validatedSuccessfulArchiveJobs list for the dbMount to process. We are done at that point.
     // Reporting to client will be queued if needed and done in another process.
+    uint64_t njobs = validatedSuccessfulDBArchiveJobs.size();
     m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext);
+    auto tteltime = t.msecs();
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      tteltime,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive      }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+      njobs,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive      }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
     schedulerDbTime = t.secs(utils::Timer::resetCounter);
     cta::log::ScopedParamContainer params(logContext);
     params.add("files", files)
@@ -324,6 +393,25 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
       throw cta::ArchiveMount::FailedReportCatalogueUpdate(msg_error);
     }
   }
+  auto tteltime = ttel_total.msecs();
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    tteltime,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive           }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    total_files,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive           }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
 //------------------------------------------------------------------------------

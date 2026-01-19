@@ -145,11 +145,20 @@ public:
 
   /**
    * Returns the number of rows affected by the last execution of this
-   * statement.
+   * statement. Works only as part of executeNonQuery
+   * (query not returning rows e.g. UPDATE, DELETE, INSERT).
    *
    * @return The number of affected rows.
    */
   uint64_t getNbAffectedRows() const override;
+
+  /**
+   * Returns the number of rows after last executeQuery
+   * (queries returning rows)
+   *
+   * @return The number of affected rows.
+   */
+  uint64_t getNbAffectedRows(PGresult* pgRes) const;
 
   /**
    * Sets the specified column data for a batch-based database access.

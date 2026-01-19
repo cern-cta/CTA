@@ -23,6 +23,7 @@
 #include "common/log/Logger.hpp"
 #include "common/process/ProcessCap.hpp"
 #include "common/process/threading/System.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/rao/RAOParams.hpp"

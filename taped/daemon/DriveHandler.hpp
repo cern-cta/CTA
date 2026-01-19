@@ -76,6 +76,7 @@ private:
   const TapedConfiguration& m_tapedConfig;
   // This drive's parameters
   const DriveConfigEntry& m_driveConfig;
+
   // The log context
   cta::log::LogContext& m_lc;
   // Log parameter reported using the watchdog
