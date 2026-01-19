@@ -117,7 +117,10 @@ public:
     m_logFile = m_dataDir + "/postgres.log";
   }
 
-  ~TemporaryPostgresEnvironment() override = default;
+  ~TemporaryPostgresEnvironment() override {
+    stopPostgres();
+    cleanup();
+  }
 
   /**
    * Called before any tests run.
@@ -179,18 +182,9 @@ public:
 
   /**
    * Called after all tests complete.
-   * Stops PostgreSQL and removes temporary files.
+   * Cleanup is handled by the destructor (RAII).
    */
-  void TearDown() override {
-    std::cout << "\n=== TemporaryPostgresEnvironment Teardown ===" << std::endl;
-    std::cout << "Stopping temporary PostgreSQL instance..." << std::endl;
-
-    stopPostgres();
-    cleanup();
-
-    std::cout << "Cleanup complete" << std::endl;
-    std::cout << "==========================================\n" << std::endl;
-  }
+  void TearDown() override { std::cout << "\n=== TemporaryPostgresEnvironment Teardown ===" << std::endl; }
 
   /**
    * Get a Login object configured to connect to the test database.
@@ -373,7 +367,6 @@ private:
     if (result != 0) {
       throw std::runtime_error("Failed to start PostgreSQL.");
     }
-
     std::cout << "  PostgreSQL started" << std::endl;
   }
 
@@ -446,29 +439,29 @@ private:
   }
 
   /**
-   * Stop PostgreSQL server
+   * Stop PostgreSQL server (noexcept so safe to call from destructor)
    */
-  void stopPostgres() {
-    if (m_pgCtl.empty()) {
-      std::cout << "PostgreSQL was never started" << std::endl;
-      return;  // Never started
-    }
-
+  void stopPostgres() noexcept {
     // Stop PostgreSQL as the postgres user
-    int result = runCommand({"runuser", "-u", "postgres", "--", m_pgCtl, "-D", m_dataDir, "stop", "-m", "fast"});
-    if (result != 0) {
-      throw std::runtime_error("Failed to shutdown postgres");
+    try {
+      runCommand({"runuser", "-u", "postgres", "--", m_pgCtl, "-D", m_dataDir, "stop", "-m", "fast"});
+    } catch (const std::exception& e) {
+      std::cerr << "Warning: failed to stop PostgreSQL: " << e.what() << std::endl;
     }
     // Give it a moment to shut down
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 
   /**
-   * Clean up temporary directory
+   * Clean up temporary directory (noexcept - safe to call from destructor)
    */
-  void cleanup() {
+  void cleanup() noexcept {
     if (!m_dataDir.empty() && m_dataDir.find("/cta-pg-test-") != std::string::npos) {
-      runCommand({"rm", "-rf", m_dataDir});
+      try {
+        runCommand({"rm", "-rf", m_dataDir});
+      } catch (const std::exception& e) {
+        std::cerr << "Warning: failed to cleanup " << m_dataDir << ": " << e.what() << std::endl;
+      }
     }
   }
 
