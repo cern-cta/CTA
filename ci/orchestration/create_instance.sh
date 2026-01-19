@@ -232,6 +232,11 @@ create_instance() {
 
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
+  # As we have no nice way of locking resources, just fail if another CTA release already exists
+  if [[ $(helm list --all-namespaces | grep cta | wc -l) -ge 1 ]]; then
+    die "Another CTA release was found. Currently, installing multiple CTA releases on the same machine is not supported."
+  fi
+
   # Determine the library config to use
   if [[ -z "${tapeservers_config}" ]]; then
     generate_tape_values_files
