@@ -65,19 +65,22 @@ public:
     m_SchedDB->deleteRetrieveRequest(cliIdentity, remoteFile);
   }
 
-  std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& tapePoolName) const override {
-    return m_SchedDB->getRetrieveJobs(tapePoolName);
+  std::list<cta::common::dataStructures::RetrieveJob>
+  getPendingRetrieveJobs(std::optional<std::string> vid) const override {
+    return m_SchedDB->getPendingRetrieveJobs(vid);
   }
 
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> getRetrieveJobs() const override {
-    return m_SchedDB->getRetrieveJobs();
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
+  getPendingRetrieveJobs() const override {
+    return m_SchedDB->getPendingRetrieveJobs();
   }
 
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> getArchiveJobs() const override {
     return m_SchedDB->getArchiveJobs();
   }
 
-  std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override {
+  std::list<cta::common::dataStructures::ArchiveJob>
+  getArchiveJobs(std::optional<std::string> tapePoolName) const override {
     return m_SchedDB->getArchiveJobs(tapePoolName);
   }
 
@@ -206,7 +209,7 @@ public:
   }
 
   std::unique_ptr<TapeMountDecisionInfo>
-  getMountInfo(std::string_view driveName, log::LogContext& logContext, uint64_t timeout_us) override {
+  getMountInfo(std::optional<std::string_view> driveName, log::LogContext& logContext, uint64_t timeout_us) override {
     return m_SchedDB->getMountInfo(driveName, logContext, timeout_us);
   }
 

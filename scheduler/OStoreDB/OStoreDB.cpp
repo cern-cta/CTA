@@ -457,7 +457,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                   < (rqSummary.sleepInfo.value().sleepStartTime + (int64_t) rqSummary.sleepInfo.value().sleepTime))) {
             m.sleepingMount = true;
             m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
-            m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
+            m.diskSystemName = rqSummary.sleepInfo.value().diskSystemName;
             m.sleepTime = rqSummary.sleepInfo.value().sleepTime;
           }
         }
@@ -488,7 +488,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
                 < (rqSummary.sleepInfo.value().sleepStartTime + (int64_t) rqSummary.sleepInfo.value().sleepTime))) {
           m.sleepingMount = true;
           m.sleepStartTime = rqSummary.sleepInfo.value().sleepStartTime;
-          m.diskSystemSleptFor = rqSummary.sleepInfo.value().diskSystemSleptFor;
+          m.diskSystemName = rqSummary.sleepInfo.value().diskSystemName;
           m.sleepTime = rqSummary.sleepInfo.value().sleepTime;
         }
       }
@@ -870,10 +870,14 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
 //------------------------------------------------------------------------------
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::ArchiveJob> OStoreDB::getArchiveJobs(const std::string& tapePoolName) const {
+std::list<cta::common::dataStructures::ArchiveJob>
+OStoreDB::getArchiveJobs(std::optional<std::string> tapePoolName) const {
   std::list<cta::common::dataStructures::ArchiveJob> ret;
+  if (!tapePoolName) {
+    return ret;
+  }
   using common::dataStructures::JobQueueType;
-  for (ArchiveJobQueueItor q_it(&m_objectStore, JobQueueType::JobsToTransferForUser, tapePoolName); !q_it.end();
+  for (ArchiveJobQueueItor q_it(&m_objectStore, JobQueueType::JobsToTransferForUser, tapePoolName.value()); !q_it.end();
        ++q_it) {
     ret.push_back(*q_it);
   }
@@ -1642,12 +1646,17 @@ void OStoreDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::getRetrieveJobs()
+// OStoreDB::getPendingRetrieveJobs()
 //------------------------------------------------------------------------------
-std::list<cta::common::dataStructures::RetrieveJob> OStoreDB::getRetrieveJobs(const std::string& vid) const {
+std::list<cta::common::dataStructures::RetrieveJob>
+OStoreDB::getPendingRetrieveJobs(std::optional<std::string> vid) const {
   std::list<common::dataStructures::RetrieveJob> ret;
+  if (!vid) {
+    return ret;
+  }
   using common::dataStructures::JobQueueType;
-  for (RetrieveJobQueueItor q_it(&m_objectStore, JobQueueType::JobsToTransferForUser, vid); !q_it.end(); ++q_it) {
+  for (RetrieveJobQueueItor q_it(&m_objectStore, JobQueueType::JobsToTransferForUser, vid.value()); !q_it.end();
+       ++q_it) {
     ret.push_back(*q_it);
   }
 
@@ -1655,9 +1664,10 @@ std::list<cta::common::dataStructures::RetrieveJob> OStoreDB::getRetrieveJobs(co
 }
 
 //------------------------------------------------------------------------------
-// OStoreDB::getRetrieveJobs()
+// OStoreDB::getPendingRetrieveJobs()
 //------------------------------------------------------------------------------
-std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> OStoreDB::getRetrieveJobs() const {
+std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
+OStoreDB::getPendingRetrieveJobs() const {
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> ret;
   using common::dataStructures::JobQueueType;
   for (RetrieveJobQueueItor q_it(&m_objectStore, JobQueueType::JobsToTransferForUser); !q_it.end(); ++q_it) {
@@ -5199,7 +5209,9 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
         Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, lc);
 
       auto tf_it = af.tapeFiles.begin();
-      for (; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it);
+      while (tf_it != af.tapeFiles.end() && tf_it->vid != bestVid) {
+        ++tf_it;
+      }
       if (tf_it == af.tapeFiles.end()) {
         std::stringstream err;
         err << "In OStoreDB::RetrieveJob::failTransfer(): no tape file for requested vid."
@@ -5272,7 +5284,9 @@ void OStoreDB::RetrieveJob::failTransfer(const std::string& failureReason, log::
         Helpers::selectBestRetrieveQueue(candidateVids, m_oStoreDB.m_catalogue, m_oStoreDB.m_objectStore, lc, isRepack);
 
       auto tf_it = af.tapeFiles.begin();
-      for (; tf_it != af.tapeFiles.end() && tf_it->vid != bestVid; ++tf_it);
+      while (tf_it != af.tapeFiles.end() && tf_it->vid != bestVid) {
+        ++tf_it;
+      }
       if (tf_it == af.tapeFiles.end()) {
         std::stringstream err;
         err << "In OStoreDB::RetrieveJob::failTransfer(): no tape file for requested vid."

@@ -39,7 +39,7 @@
 #include <utility>
 
 #ifdef CTA_PGSCHED
-#include "scheduler/rdbms/RelationalDBFactory.hpp"
+#include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 #endif
 
 #ifdef STDOUT_LOGGING
@@ -380,6 +380,9 @@ TEST_P(SchedulerTest, archive_to_new_file) {
   request.requester = requester;
   request.srcURL = "srcURL";
   request.storageClass = s_storageClassName;
+  // archive report url should have a value otherwise exception
+  request.archiveReportURL = "test://archive-report-url";
+  request.archiveErrorReportURL = "test://error-report-url";
 
   log::DummyLogger dl("", "");
   log::LogContext lc(dl);
@@ -444,6 +447,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -511,14 +516,18 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
-    ASSERT_NE(nullptr, archiveJobBatch.front().get());
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch =
+      archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);  // maybe bytesRequested (the second number) is too low?
+    ASSERT_NE(nullptr, archiveJobBatch.front().get());          // now it's here
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
     archiveJob->tapeFile.fSeq = 1;
@@ -608,7 +617,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE(nullptr, retrieveMount.get());
     std::unique_ptr<cta::RetrieveJob> retrieveJob;
-    auto jobBatch = retrieveMount->getNextJobBatch(1, 1, lc);
+    auto jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(1, jobBatch.size());
     retrieveJob.reset(jobBatch.front().release());
     ASSERT_NE(nullptr, retrieveJob.get());
@@ -616,7 +625,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file) {
     std::queue<std::unique_ptr<cta::RetrieveJob>> jobQueue;
     jobQueue.push(std::move(retrieveJob));
     retrieveMount->setJobBatchTransferred(jobQueue, lc);
-    jobBatch = retrieveMount->getNextJobBatch(1, 1, lc);
+    jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, jobBatch.size());
   }
 }
@@ -659,6 +668,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -727,13 +738,16 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    auto archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    auto archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
@@ -747,7 +761,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
-    archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
@@ -839,7 +853,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE(nullptr, retrieveMount.get());
     std::unique_ptr<cta::RetrieveJob> retrieveJob;
-    auto jobBatch = retrieveMount->getNextJobBatch(1, 1, lc);
+    auto jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(1, jobBatch.size());
     retrieveJob.reset(jobBatch.front().release());
     ASSERT_NE(nullptr, retrieveJob.get());
@@ -847,7 +861,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_file_with_specific_mount_p
     std::queue<std::unique_ptr<cta::RetrieveJob>> jobQueue;
     jobQueue.push(std::move(retrieveJob));
     retrieveMount->setJobBatchTransferred(jobQueue, lc);
-    jobBatch = retrieveMount->getNextJobBatch(1, 1, lc);
+    jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, jobBatch.size());
   }
 }
@@ -1018,6 +1032,8 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = dualCopyStorageClassName;
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1100,13 +1116,17 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ(tapePool1Name, mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ(copy1TapeVid, mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch =
+      archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
@@ -1120,7 +1140,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
-    archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
@@ -1178,13 +1198,17 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ(tapePool2Name, mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ(copy2TapeVid, mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch =
+      archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
@@ -1198,7 +1222,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
-    archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
@@ -1309,7 +1333,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
     ASSERT_NE(nullptr, retrieveMount.get());
     std::unique_ptr<cta::RetrieveJob> retrieveJob;
-    auto jobBatch = retrieveMount->getNextJobBatch(1, 1, lc);
+    auto jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(1, jobBatch.size());
     retrieveJob.reset(jobBatch.front().release());
     ASSERT_NE(nullptr, retrieveJob.get());
@@ -1317,7 +1341,7 @@ TEST_P(SchedulerTest, archive_report_and_retrieve_new_dual_copy_file) {
     std::queue<std::unique_ptr<cta::RetrieveJob>> jobQueue;
     jobQueue.push(std::move(retrieveJob));
     retrieveMount->setJobBatchTransferred(jobQueue, lc);
-    jobBatch = retrieveMount->getNextJobBatch(1, 1, lc);
+    jobBatch = retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, jobBatch.size());
   }
 }
@@ -1359,6 +1383,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1422,13 +1448,17 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch =
+      archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
@@ -1442,7 +1472,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
-    archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
@@ -1521,9 +1551,12 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
       std::unique_ptr<cta::RetrieveMount> retrieveMount;
       retrieveMount.reset(dynamic_cast<cta::RetrieveMount*>(mount.release()));
       ASSERT_NE(nullptr, retrieveMount.get());
-      // The file should be retried three times
+      // The file should be retried three times for the same mount and 3 times on new mount
+      // For objectstore, the requeueing on new mount after retries on the same mount does not happen
+      // immediately as it does for the postgres backend.
       for (int i = 0; i < 3; ++i) {
-        std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList = retrieveMount->getNextJobBatch(1, 1, lc);
+        std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList =
+          retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
         if (!retrieveJobList.front().get()) {
           int __attribute__((__unused__)) debugI = i;
         }
@@ -1534,8 +1567,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_failure) {
                                                   + std::to_string(i) + ")",
                                                 lc);
       }
-      // Then the request should be gone
-      ASSERT_EQ(0, retrieveMount->getNextJobBatch(1, 1, lc).size());
+      if (mountPass == 1) {
+        // Then the request should be gone
+        ASSERT_EQ(0, retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc).size());
+      }
     }  // end of retries
   }  // end of pass
 
@@ -1602,6 +1637,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1665,13 +1702,17 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     mount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
     auto& osdb = getSchedulerDB();
     auto mi = osdb.getMountInfo(lc);
+    SchedulerDatabase::TapeMountDecisionInfo& tmdi = *mi;
+    scheduler.fillMountPolicyNamesForPotentialMounts(tmdi, lc);
+    scheduler.getExistingAndNextMounts(tmdi, lc);
     ASSERT_EQ(1, mi->existingOrNextMounts.size());
     ASSERT_EQ("TapePool", mi->existingOrNextMounts.front().tapePool);
     ASSERT_EQ("TESTVID", mi->existingOrNextMounts.front().vid);
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch =
+      archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
@@ -1685,7 +1726,7 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
-    archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
@@ -1766,7 +1807,8 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
       ASSERT_NE(nullptr, retrieveMount.get());
       // The file should be retried three times
       for (int i = 0; i < 3; ++i) {
-        std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList = retrieveMount->getNextJobBatch(1, 1, lc);
+        std::list<std::unique_ptr<cta::RetrieveJob>> retrieveJobList =
+          retrieveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
         if (!retrieveJobList.front().get()) {
           int __attribute__((__unused__)) debugI = i;
         }
@@ -1777,8 +1819,10 @@ TEST_P(SchedulerTest, archive_and_retrieve_report_failure) {
                                                   + std::to_string(i) + ")",
                                                 lc);
       }
-      // Then the request should be gone
-      ASSERT_EQ(0, retrieveMount->getNextJobBatch(1, 1, lc).size());
+      if (mountPass == 1) {
+        // Then the request should be gone
+        ASSERT_EQ(0, retrieveMount->getNextJobBatch(1, 1, lc).size());
+      }
     }  // end of retries
   }  // end of pass
 
@@ -1850,6 +1894,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
     request.archiveErrorReportURL = "null:";
+    request.archiveReportURL = "test://archive-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -1890,7 +1935,8 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
     ASSERT_NE(nullptr, archiveMount.get());
     // The file should be retried twice
     for (int i = 0; i <= 1; i++) {
-      std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobList = archiveMount->getNextJobBatch(1, 1, lc);
+      std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobList =
+        archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
       if (!archiveJobList.front().get()) {
         int __attribute__((__unused__)) debugI = i;
       }
@@ -1900,7 +1946,7 @@ TEST_P(SchedulerTest, retry_archive_until_max_reached) {
       archiveJobList.front()->transferFailed("Archive failed", lc);
     }
     // Then the request should be gone
-    ASSERT_EQ(0, archiveMount->getNextJobBatch(1, 1, lc).size());
+    ASSERT_EQ(0, archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc).size());
   }
 }
 
@@ -1930,6 +1976,7 @@ TEST_P(SchedulerTest, retrieve_non_existing_file) {
     request.dstURL = "dstURL";
     request.requester.name = s_userName;
     request.requester.group = "userGroup";
+    request.retrieveReportURL = "test://retrieve-report-url";
     ASSERT_THROW(scheduler.queueRetrieve("disk_instance", request, lc), cta::exception::Exception);
   }
 }
@@ -1967,6 +2014,8 @@ TEST_P(SchedulerTest, showqueues) {
     request.requester = requester;
     request.srcURL = "srcURL";
     request.storageClass = s_storageClassName;
+    request.archiveReportURL = "null:archive-report-url";
+    request.archiveErrorReportURL = "null:error-report-url";
     archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
     scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
   }
@@ -2811,7 +2860,7 @@ TEST_P(SchedulerTest, DISABLED_expandRepackRequestShouldFailIfArchiveRouteMissin
   ASSERT_EQ(0, 1);
 }
 
-TEST_P(SchedulerTest, DISBALED_expandRepackRequestMoveAndAddCopies) {
+TEST_P(SchedulerTest, DISABLED_expandRepackRequestMoveAndAddCopies) {
   ASSERT_EQ(0, 1);
 }
 
@@ -2891,6 +2940,8 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
   request.requester = requester;
   request.srcURL = "srcURL";
   request.storageClass = s_storageClassName;
+  request.archiveReportURL = "null:";
+  request.archiveErrorReportURL = "null:";
   archiveFileId = scheduler.checkAndGetNextArchiveFileId(s_diskInstance, request.storageClass, request.requester, lc);
   scheduler.queueArchiveWithGivenId(archiveFileId, s_diskInstance, request, lc);
 
@@ -2955,7 +3006,8 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
     std::unique_ptr<cta::ArchiveMount> archiveMount;
     archiveMount.reset(dynamic_cast<cta::ArchiveMount*>(mount.release()));
     ASSERT_NE(nullptr, archiveMount.get());
-    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    std::list<std::unique_ptr<cta::ArchiveJob>> archiveJobBatch =
+      archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_NE(nullptr, archiveJobBatch.front().get());
     std::unique_ptr<ArchiveJob> archiveJob = std::move(archiveJobBatch.front());
     archiveJob->tapeFile.blockId = 1;
@@ -2969,7 +3021,7 @@ TEST_P(SchedulerTest, getNextMountTapeStatesThatShouldNotReturnAMount) {
     std::queue<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>> failedToReportArchiveJobs;
     sDBarchiveJobBatch.emplace(std::move(archiveJob));
     archiveMount->reportJobsBatchTransferred(sDBarchiveJobBatch, sTapeItems, failedToReportArchiveJobs, lc);
-    archiveJobBatch = archiveMount->getNextJobBatch(1, 1, lc);
+    archiveJobBatch = archiveMount->getNextJobBatch(1, 100 * 1000 * 1000, lc);
     ASSERT_EQ(0, archiveJobBatch.size());
     archiveMount->complete();
   }
@@ -3311,6 +3363,8 @@ TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount) {
   request.requester = requester;
   request.srcURL = "srcURL";
   request.storageClass = s_storageClassName;
+  request.archiveReportURL = "test://archive-report-url";
+  request.archiveErrorReportURL = "test://error-report-url";
 
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
@@ -3392,6 +3446,8 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled) {
   request.requester = requester;
   request.srcURL = "srcURL";
   request.storageClass = s_storageClassName;
+  request.archiveReportURL = "test://archive-report-url";
+  request.archiveErrorReportURL = "test://error-report-url";
 
   // Create the environment for the migration to happen (library + tape)
   const std::string libraryComment = "Library comment";
@@ -3466,6 +3522,7 @@ TEST_P(SchedulerTest, getNextMountPhysicalLibraryDisabled) {
     pl.nbPhysicalDriveSlots = physicalLibrary.nbPhysicalDriveSlots;
     pl.comment = physicalLibrary.comment.value();
     pl.isDisabled = true;
+    pl.disabledReason = "testing";
 
     catalogue.PhysicalLibrary()->modifyPhysicalLibrary(s_adminOnAdminHost, pl);
     catalogue.LogicalLibrary()->setLogicalLibraryDisabled(s_adminOnAdminHost, s_libraryName, false);
@@ -3504,12 +3561,14 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, DISABLED_triggerTapeStateCh
   ASSERT_EQ(0, 1);
 }
 
-#ifdef CTA_PGSCHED
-static cta::RelationalDBFactory RelationalDBFactoryStatic;
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(SchedulerTestTriggerTapeStateChangeBehaviour);
 
-INSTANTIATE_TEST_CASE_P(PostgresSchedulerDBPlusMockGenericSchedulerTest,
+#ifdef CTA_PGSCHED
+static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
+
+INSTANTIATE_TEST_CASE_P(PostgresSchedulerDBPlusMockRelationalDBSchedulerTest,
                         SchedulerTest,
-                        ::testing::Values(SchedulerTestParam(RelationalDBFactoryStatic)));
+                        ::testing::Values(SchedulerTestParam(RelationalDBTestFactoryStatic)));
 #else
 #error Generic SchedulerTest not configured for current scheduler type
 #endif

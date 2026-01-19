@@ -94,7 +94,8 @@ public:
    */
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> getArchiveJobs() const override;
 
-  std::list<cta::common::dataStructures::ArchiveJob> getArchiveJobs(const std::string& tapePoolName) const override;
+  std::list<cta::common::dataStructures::ArchiveJob>
+  getArchiveJobs(std::optional<std::string> tapePoolName) const override;
 
   std::unique_ptr<IArchiveJobQueueItor>
   getArchiveJobQueueItor(const std::string& tapePoolName,
@@ -186,9 +187,14 @@ public:
 
   void deleteFailed(const std::string& objectId, log::LogContext& lc) override;
 
-  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>> getRetrieveJobs() const override;
+  std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
+  getPendingRetrieveJobs() const override;
 
-  std::list<cta::common::dataStructures::RetrieveJob> getRetrieveJobs(const std::string& vid) const override;
+  std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
+  getRetrieveJobs(uint64_t filesRequested, bool fetchFailed, log::LogContext& lc) const;
+
+  std::list<cta::common::dataStructures::RetrieveJob>
+  getPendingRetrieveJobs(std::optional<std::string> vid) const override;
 
   std::unique_ptr<IRetrieveJobQueueItor>
   getRetrieveJobQueueItor(const std::string& vid, common::dataStructures::JobQueueType queueType) const override;
@@ -243,7 +249,9 @@ public:
                                                                          uint64_t timeout_us) override;
 
   std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo>
-  getMountInfo(std::string_view logicalLibraryName, log::LogContext& logContext, uint64_t timeout_us) override;
+  getMountInfo(std::optional<std::string_view> logicalLibraryName,
+               log::LogContext& logContext,
+               uint64_t timeout_us) override;
   std::optional<common::dataStructures::VirtualOrganization> getDefaultRepackVo();
 
   void trimEmptyQueues(log::LogContext& lc) override;
@@ -437,7 +445,7 @@ private:
   bool deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, log::LogContext& lc);
   std::list<common::dataStructures::RepackInfo> fetchRepackInfo(const std::string& vid);
   std::string m_ownerId;
-  rdbms::ConnPool m_connPool;
+  mutable rdbms::ConnPool m_connPool;
   catalogue::Catalogue& m_catalogue;
   log::Logger& m_logger;
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;

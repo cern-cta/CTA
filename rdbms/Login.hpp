@@ -239,7 +239,7 @@ struct Login {
    * @param connectionDetails The connectionDetails retrieved from the configuration file.
    * @return The database namespace.
    */
-  static std::string getPostgresqlDbNamespace(const std::string& connectionDetails);
+  static std::string getPostgresqlHostAndDbName(const std::string& connectionDetails);
 
   static const std::vector<std::string> dbTypeStr;
 

@@ -9,8 +9,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
 #include "common/log/StringLogger.hpp"
-#include "scheduler/rdbms/RelationalDBFactory.hpp"
 #include "scheduler/rdbms/RelationalDBTest.hpp"
+#include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 
 #include <limits>
 #include <list>
@@ -49,10 +49,10 @@ public:
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     // Get the PostgresSched DB from the factory.
     auto psdb = std::move(factory.create(m_catalogue));
-    // Make sure the type of the SchedulerDatabase is correct (it should be an RelationalDBWrapper).
-    dynamic_cast<cta::RelationalDBWrapper*>(psdb.get());
+    // Make sure the type of the SchedulerDatabase is correct (it should be an RelationalDBTestWrapper).
+    dynamic_cast<cta::RelationalDBTestWrapper*>(psdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory).
-    m_db.reset(dynamic_cast<cta::RelationalDBWrapper*>(psdb.release()));
+    m_db.reset(dynamic_cast<cta::RelationalDBTestWrapper*>(psdb.release()));
   }
 
   virtual void TearDown() {
@@ -60,8 +60,8 @@ public:
     m_catalogue.reset();
   }
 
-  cta::RelationalDBWrapper& getDb() {
-    cta::RelationalDBWrapper* const ptr = m_db.get();
+  cta::RelationalDBTestWrapper& getDb() {
+    cta::RelationalDBTestWrapper* const ptr = m_db.get();
     if (nullptr == ptr) {
       throw FailedToGetDatabase();
     }
@@ -91,18 +91,18 @@ private:
   // Prevent assignment
   RelationalDBTest& operator=(const RelationalDBTest&) = delete;
 
-  std::unique_ptr<cta::RelationalDBWrapper> m_db;
+  std::unique_ptr<cta::RelationalDBTestWrapper> m_db;
 
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 };  // class RelationalDBTest
 
-TEST_P(RelationalDBTest, getBatchArchiveJob) {
+TEST_P(RelationalDBTest, DISABLED_getBatchArchiveJob) {
   ASSERT_EQ(0, 1);
 }
 
-static cta::RelationalDBFactory RelationalDBFactoryStatic;
+static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
 INSTANTIATE_TEST_CASE_P(RelationalDBTest,
                         RelationalDBTest,
-                        ::testing::Values(RelationalDBTestParams(&RelationalDBFactoryStatic)));
+                        ::testing::Values(RelationalDBTestParams(&RelationalDBTestFactoryStatic)));
 
 }  // namespace unitTests

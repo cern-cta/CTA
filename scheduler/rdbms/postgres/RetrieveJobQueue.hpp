@@ -298,6 +298,7 @@ public:
            DISK_FILE_ID,
            DISK_FILE_GID,
            DISK_FILE_OWNER_UID,
+           TAPE_POOL,
            MOUNT_POLICY,
            VID,
            ALTERNATE_VIDS,
@@ -356,6 +357,7 @@ public:
            :DISK_FILE_ID,
            :DISK_FILE_GID,
            :DISK_FILE_OWNER_UID,
+           :TAPE_POOL,
            :MOUNT_POLICY,
            :VID,
            :ALTERNATE_VIDS,
@@ -403,18 +405,19 @@ public:
     stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
-    stmt.bindUint64(":CREATION_TIME", creationTime);
+    stmt.bindUint64(":CREATION_TIME", static_cast<uint64_t>(creationTime));
     stmt.bindString(":STORAGE_CLASS", storageClass);
     stmt.bindUint64(":SIZE_IN_BYTES", fileSize);
     stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
     stmt.bindBlob(":CHECKSUMBLOB", checksumBlob.serialize());
     stmt.bindUint64(":FSEQ", fSeq);
     stmt.bindUint64(":BLOCK_ID", blockId);
-    stmt.bindString(":DISK_INSTANCE", diskInstance);
+    stmt.bindString(":DISK_INSTANCE", diskInstance.empty() ? "NOT_PROVIDED" : diskInstance);
     stmt.bindString(":DISK_FILE_PATH", diskFileInfoPath);
     stmt.bindString(":DISK_FILE_ID", diskFileId);
     stmt.bindUint32(":DISK_FILE_GID", diskFileInfoGid);
     stmt.bindUint32(":DISK_FILE_OWNER_UID", diskFileInfoOwnerUid);
+    stmt.bindString(":TAPE_POOL", tapePool == "" ? "NOT_PROVIDED" : tapePool);
     stmt.bindString(":MOUNT_POLICY", mountPolicy);
     stmt.bindUint32(":PRIORITY", priority);
     stmt.bindUint32(":MIN_RETRIEVE_REQUEST_AGE", minRetrieveRequestAge);
@@ -422,7 +425,7 @@ public:
     stmt.bindString(":ALTERNATE_COPY_NBS", alternateCopyNbs);
     stmt.bindString(":ALTERNATE_FSEQS", alternateFSeq);
     stmt.bindString(":ALTERNATE_BLOCK_IDS", alternateBlockId);
-    stmt.bindUint64(":START_TIME", startTime);
+    stmt.bindUint64(":START_TIME", static_cast<uint64_t>(startTime));
     stmt.bindString(":REQUESTER_NAME", requesterName);
     stmt.bindString(":REQUESTER_GROUP", requesterGroup);
     stmt.bindString(":DST_URL", dstURL);
@@ -439,11 +442,11 @@ public:
     stmt.bindString(":ALTERNATE_VIDS", alternateVids);
     stmt.bindString(":SRR_USERNAME", srrUsername);
     stmt.bindString(":SRR_HOST", srrHost);
-    stmt.bindUint64(":SRR_TIME", srrTime);
+    stmt.bindUint64(":SRR_TIME", static_cast<uint64_t>(srrTime));
     stmt.bindString(":SRR_MOUNT_POLICY", srrMountPolicy);
-    stmt.bindUint64(":LIFECYCLE_CREATION_TIME", lifecycleTimings_creation_time);
-    stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME", lifecycleTimings_first_selected_time);
-    stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME", lifecycleTimings_completed_time);
+    stmt.bindUint64(":LIFECYCLE_CREATION_TIME", static_cast<uint64_t>(lifecycleTimings_creation_time));
+    stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME", static_cast<uint64_t>(lifecycleTimings_first_selected_time));
+    stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME", static_cast<uint64_t>(lifecycleTimings_completed_time));
     if (diskSystemName.has_value()) {
       stmt.bindString(":DISK_SYSTEM_NAME", diskSystemName.value());
     }
@@ -513,7 +516,6 @@ public:
     params.add("creationTime", creationTime);
     params.add("storageClass", storageClass);
 
-    params.add("retrieveErrorReportURL", retrieveErrorReportURL);
     params.add("failureLogs", failureLogs.value_or(""));
 
     /* Columns to be replaced by other DB columns than protobuf filled columns
@@ -578,6 +580,7 @@ public:
       DISK_FILE_ID,
       DISK_FILE_GID,
       DISK_FILE_OWNER_UID,
+      TAPE_POOL,
       MOUNT_POLICY,
       VID,
       ALTERNATE_VIDS,
@@ -645,6 +648,7 @@ public:
       sql += ":DISK_FILE_ID" + std::to_string(i) + ",";
       sql += ":DISK_FILE_GID" + std::to_string(i) + ",";
       sql += ":DISK_FILE_OWNER_UID" + std::to_string(i) + ",";
+      sql += ":TAPE_POOL" + std::to_string(i) + ",";
       sql += ":MOUNT_POLICY" + std::to_string(i) + ",";
       sql += ":VID" + std::to_string(i) + ",";
       sql += ":ALTERNATE_VIDS" + std::to_string(i) + ",";
@@ -697,14 +701,15 @@ public:
       stmt.bindUint64(":RETRIEVE_REQUEST_ID" + std::to_string(i), row.retrieveRequestId);
       stmt.bindUint32(":REQUEST_JOB_COUNT" + std::to_string(i), row.reqJobCount);
       stmt.bindString(":STATUS" + std::to_string(i), to_string(row.status));
-      stmt.bindUint64(":CREATION_TIME" + std::to_string(i), row.creationTime);
+      stmt.bindUint64(":CREATION_TIME" + std::to_string(i), static_cast<uint64_t>(row.creationTime));
       stmt.bindString(":STORAGE_CLASS" + std::to_string(i), row.storageClass);
       stmt.bindUint64(":SIZE_IN_BYTES" + std::to_string(i), row.fileSize);
       stmt.bindUint64(":ARCHIVE_FILE_ID" + std::to_string(i), row.archiveFileID);
       stmt.bindBlob(":CHECKSUMBLOB" + std::to_string(i), row.checksumBlob.serialize());
       stmt.bindUint64(":FSEQ" + std::to_string(i), row.fSeq);
       stmt.bindUint64(":BLOCK_ID" + std::to_string(i), row.blockId);
-      stmt.bindString(":DISK_INSTANCE" + std::to_string(i), row.diskInstance);
+      stmt.bindString(":DISK_INSTANCE" + std::to_string(i),
+                      row.diskInstance.empty() ? "NOT_PROVIDED" : row.diskInstance);
       // for Repack the following columns are not populated
       stmt.bindString(":DISK_FILE_PATH" + std::to_string(i),
                       !row.diskFileInfoPath.empty() ? row.diskFileInfoPath : "NOT_PROVIDED");
@@ -717,7 +722,8 @@ public:
       stmt.bindString(":SRR_USERNAME" + std::to_string(i), !row.srrUsername.empty() ? row.srrUsername : "NOT_PROVIDED");
       stmt.bindString(":SRR_HOST" + std::to_string(i), !row.srrHost.empty() ? row.srrHost : "NOT_PROVIDED");
       stmt.bindUint64(":SRR_TIME" + std::to_string(i),
-                      row.srrTime != 0 ? row.srrTime : 0);  // keep 0 as sentinel for "NOT_PROVIDED"
+                      row.srrTime != 0 ? static_cast<uint64_t>(row.srrTime) :
+                                         0);  // keep 0 as sentinel for "NOT_PROVIDED"
       stmt.bindString(":SRR_MOUNT_POLICY" + std::to_string(i),
                       !row.srrMountPolicy.empty() ? row.srrMountPolicy : "NOT_PROVIDED");
       stmt.bindString(":RETRIEVE_REPORT_URL" + std::to_string(i),
@@ -725,6 +731,7 @@ public:
       stmt.bindString(":DISK_FILE_ID" + std::to_string(i), row.diskFileId);
       stmt.bindUint32(":DISK_FILE_GID" + std::to_string(i), row.diskFileInfoGid);
       stmt.bindUint32(":DISK_FILE_OWNER_UID" + std::to_string(i), row.diskFileInfoOwnerUid);
+      stmt.bindString(":TAPE_POOL" + std::to_string(i), row.tapePool == "" ? "NOT_PROVIDED" : row.tapePool);
       stmt.bindString(":MOUNT_POLICY" + std::to_string(i), row.mountPolicy);
       stmt.bindString(":VID" + std::to_string(i), row.vid);
       stmt.bindString(":ALTERNATE_VIDS" + std::to_string(i), row.alternateVids);
@@ -734,7 +741,7 @@ public:
       stmt.bindString(":ALTERNATE_COPY_NBS" + std::to_string(i), row.alternateCopyNbs);
       stmt.bindString(":ALTERNATE_FSEQS" + std::to_string(i), row.alternateFSeq);
       stmt.bindString(":ALTERNATE_BLOCK_IDS" + std::to_string(i), row.alternateBlockId);
-      stmt.bindUint64(":START_TIME" + std::to_string(i), row.startTime);
+      stmt.bindUint64(":START_TIME" + std::to_string(i), static_cast<uint64_t>(row.startTime));
       stmt.bindString(":DST_URL" + std::to_string(i), row.dstURL);
       stmt.bindUint32(":RETRIES_WITHIN_MOUNT" + std::to_string(i), row.retriesWithinMount);
       stmt.bindUint32(":TOTAL_RETRIES" + std::to_string(i), row.totalRetries);
@@ -745,9 +752,12 @@ public:
       stmt.bindUint32(":TOTAL_REPORT_RETRIES" + std::to_string(i), row.totalReportRetries);
       stmt.bindBool(":IS_VERIFY_ONLY" + std::to_string(i), row.isVerifyOnly);
       stmt.bindBool(":IS_REPORTING" + std::to_string(i), row.isReporting);
-      stmt.bindUint64(":LIFECYCLE_CREATION_TIME" + std::to_string(i), row.lifecycleTimings_creation_time);
-      stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME" + std::to_string(i), row.lifecycleTimings_first_selected_time);
-      stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME" + std::to_string(i), row.lifecycleTimings_completed_time);
+      stmt.bindUint64(":LIFECYCLE_CREATION_TIME" + std::to_string(i),
+                      static_cast<uint64_t>(row.lifecycleTimings_creation_time));
+      stmt.bindUint64(":LIFECYCLE_FIRST_SELECTED_TIME" + std::to_string(i),
+                      static_cast<uint64_t>(row.lifecycleTimings_first_selected_time));
+      stmt.bindUint64(":LIFECYCLE_COMPLETED_TIME" + std::to_string(i),
+                      static_cast<uint64_t>(row.lifecycleTimings_completed_time));
 
       if (hasDiskSystemName) {
         stmt.bindString(":DISK_SYSTEM_NAME" + std::to_string(i), row.diskSystemName.value());
@@ -788,6 +798,10 @@ public:
                                                std::list<RetrieveJobStatus> statusList,
                                                uint64_t gc_delay,
                                                uint64_t limit);
+  /*
+   * Getting pending or failed retrieve jobs for unit tests only
+   */
+  static rdbms::Rset getRetrieveJobs(Transaction& txn, uint64_t filesRequested, bool fetchFailed);
 
   /**
   * Assign a mount ID and VID to a selection of rows
@@ -914,6 +928,8 @@ public:
 
   /**
   * Move the job rows to the ARCHIVE FAILED JOB TABLE (static alternate for multiple jobs)
+  * (unused at the moment but shall be used for
+  * batched failed reports to disk)
   *
   * @param txn                  Transaction to use for this query
   * @param jobIDs               The jobIDs to be moved

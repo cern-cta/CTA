@@ -1117,7 +1117,7 @@ std::list<common::dataStructures::ArchiveJob> Scheduler::getPendingArchiveJobs(c
 std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
 Scheduler::getPendingRetrieveJobs(log::LogContext& lc) const {
   utils::Timer t;
-  auto ret = m_db.getRetrieveJobs();
+  auto ret = m_db.getPendingRetrieveJobs();
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("schedulerDbTime", schedulerDbTime);
@@ -1128,10 +1128,10 @@ Scheduler::getPendingRetrieveJobs(log::LogContext& lc) const {
 //------------------------------------------------------------------------------
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
-std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs(const std::string& vid,
+std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs(std::optional<std::string> vid,
                                                                                  log::LogContext& lc) const {
   utils::Timer t;
-  auto ret = m_db.getRetrieveJobs(vid);
+  auto ret = m_db.getPendingRetrieveJobs(vid);
   auto schedulerDbTime = t.secs();
   log::ScopedParamContainer spc(lc);
   spc.add("schedulerDbTime", schedulerDbTime);
@@ -1517,7 +1517,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
         .add("voWriteMaxDrives", voOfThisPotentialMount.writeMaxDrives)
         .add("maxDrives", maxDrives);
       if (sleepingMount) {
-        params.add("fullDiskSystem", m->diskSystemSleptFor);
+        params.add("fullDiskSystem", m->diskSystemName);
       }
       lc.log(log::DEBUG, "In Scheduler::sortAndGetTapesForMountInfo(): Removing potential mount not passing criteria");
       toFilterSet.insert(m);
@@ -2541,7 +2541,7 @@ std::vector<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAn
         if (pm.sleepingMount) {
           common::dataStructures::QueueAndMountSummary::SleepForSpaceInfo sfsi;
           sfsi.startTime = pm.sleepStartTime;
-          sfsi.diskSystemName = pm.diskSystemSleptFor;
+          sfsi.diskSystemName = pm.diskSystemName;
           sfsi.sleepTime = pm.sleepTime;
           summary->sleepForSpaceInfo = sfsi;
         }

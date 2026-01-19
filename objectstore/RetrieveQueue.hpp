@@ -74,7 +74,7 @@ public:
 
     struct SleepInfo {
       time_t sleepStartTime;
-      std::string diskSystemSleptFor;
+      std::string diskSystemName;
       uint64_t sleepTime;
     };
 

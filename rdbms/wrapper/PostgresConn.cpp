@@ -25,7 +25,38 @@ namespace cta::rdbms::wrapper {
 PostgresConn::PostgresConn(const rdbms::Login& login) : m_dbNamespace(login.dbNamespace) {
   // establish the connection and create the PGconn data structure
 
-  m_pgsqlConn = PQconnectdb(login.database.c_str());
+  // Build connection string from Login fields
+  // If hostname is set, construct a libpq connection string from individual fields
+  // Otherwise, use login.database as-is (for backward compatibility with parsed connection strings)
+  std::string connectionString;
+  if (!login.hostname.empty()) {
+    // Construct connection string from individual fields
+    std::ostringstream connStr;
+    connStr << "host=" << login.hostname;
+    if (login.port > 0) {
+      connStr << " port=" << login.port;
+    }
+    if (!login.database.empty()) {
+      connStr << " dbname=" << login.database;
+    }
+    if (!login.username.empty()) {
+      connStr << " user=" << login.username;
+    }
+    if (!login.password.empty()) {
+      connStr << " password=" << login.password;
+    }
+    // Set search_path via connection string for reliability with prepared statements
+    // This ensures the search_path is set at PostgreSQL session level before any statements are prepared
+    if (!m_dbNamespace.empty() && m_dbNamespace != "public") {
+      connStr << " options='-c search_path=" << m_dbNamespace << ",public'";
+    }
+    connectionString = connStr.str();
+  } else {
+    // Use login.database as connection string (for backward compatibility)
+    connectionString = login.database;
+  }
+
+  m_pgsqlConn = PQconnectdb(connectionString.c_str());
 
   if (PQstatus(m_pgsqlConn) != CONNECTION_OK) {
     const std::string pqmsgstr = PQerrorMessage(m_pgsqlConn);
@@ -45,6 +76,18 @@ PostgresConn::PostgresConn(const rdbms::Login& login) : m_dbNamespace(login.dbNa
   }
 
   PQsetNoticeProcessor(m_pgsqlConn, PostgresConn::noticeProcessor, nullptr);
+
+  // Set search_path to the specified schema for test isolation
+  if (!m_dbNamespace.empty() && m_dbNamespace != "public") {
+    std::string setSearchPathSQL = "SET search_path TO '" + m_dbNamespace + "', public";
+    Postgres::Result res(PQexec(m_pgsqlConn, setSearchPathSQL.c_str()));
+    if (PQresultStatus(res.get()) != PGRES_COMMAND_OK) {
+      const std::string pqmsgstr = PQerrorMessage(m_pgsqlConn);
+      PQfinish(m_pgsqlConn);
+      m_pgsqlConn = nullptr;
+      throw exception::Exception("Failed to set search_path to " + m_dbNamespace + ": " + pqmsgstr);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------

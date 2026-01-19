@@ -473,7 +473,7 @@ bool ContainerTraits<RetrieveQueue, C>::trimContainerIfNeeded(Container& cont,
       log::ScopedParamContainer params(lc);
       params.add("tapeVid", cId)
         .add("queueObject", cont.getAddressIfSet())
-        .add("diskSystemSleptFor", si.value().diskSystemSleptFor);
+        .add("diskSystemName", si.value().diskSystemName);
       lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): non-empty queue is sleeping");
       // We fake the fact that we trimed the queue for compatibility with previous algorithms (a sleeping queue is like gone at this point).
       return true;
