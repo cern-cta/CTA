@@ -17,8 +17,12 @@ namespace cta::mediachanger {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RmcProxy::RmcProxy(const uint16_t rmcPort, const uint32_t netTimeout, const uint32_t maxRqstAttempts)
-    : m_rmcPort(rmcPort),
+RmcProxy::RmcProxy(const std::string& rmcHost,
+                   const uint16_t rmcPort,
+                   const uint32_t netTimeout,
+                   const uint32_t maxRqstAttempts)
+    : m_rmcHost(rmcHost),
+      m_rmcPort(rmcPort),
       m_netTimeout(netTimeout),
       m_maxRqstAttempts(maxRqstAttempts) {}
 
@@ -79,13 +83,12 @@ void RmcProxy::dismountTape(const std::string& vid, const LibrarySlot& librarySl
 // connectToRmc
 //-----------------------------------------------------------------------------
 int RmcProxy::connectToRmc() const {
-  const std::string rmcHost = "localhost";
   cta::SmartFd smartConnectSock;
   try {
-    smartConnectSock.reset(connectWithTimeout(rmcHost, m_rmcPort, m_netTimeout));
+    smartConnectSock.reset(connectWithTimeout(m_rmcHost, m_rmcPort, m_netTimeout));
   } catch (cta::exception::Exception& ne) {
     cta::exception::Exception ex;
-    ex.getMessage() << "Failed to connect to rmcd: rmcHost=" << rmcHost << " rmcPort=" << RMC_PORT << ": "
+    ex.getMessage() << "Failed to connect to rmcd: rmcHost=" << m_rmcHost << " rmcPort=" << RMC_PORT << ": "
                     << ne.getMessage().str();
     throw ex;
   }

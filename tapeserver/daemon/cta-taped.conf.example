@@ -206,6 +206,9 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 # RMC Connection Options
 #
 
+# The host on which the rmcd daemon is running. Defaults to localhost.
+# taped RmcHost localhost
+#
 # The default TCP/IP port on which the CASTOR rmcd daemon listens for incoming\
 # TCP/IP connections from the tape server.
 # taped RmcPort 5014
