@@ -240,8 +240,7 @@ void Login::setSqliteConnectionString(const std::string& filename) {
 // parsePostgresql
 //------------------------------------------------------------------------------
 Login Login::parsePostgresql(const std::string& connectionDetails) {
-  std::string username = getPostgresqlDbUsername(connectionDetails);
-  Login login(DBTYPE_POSTGRESQL, username, "", connectionDetails, "", 0, getPostgresqlDbNamespace(connectionDetails));
+  Login login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0, getPostgresqlDbNamespace(connectionDetails));
   login.setPostgresqlConnectionString(connectionDetails);
   return login;
 }
@@ -271,10 +270,13 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
   if (result.size() < 2) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
-  if (std::string usernamePassword = result[1]; usernamePassword.find(":") == std::string::npos) {
+  std::string usernamePassword = result[1];
+  if (usernamePassword.find(":") == std::string::npos) {
     // No password provided, no need to hide it
+    username = usernamePassword;
     return false;
   }
+  username = usernamePassword.substr(0, usernamePassword.find(':'));
   return true;
 }
 
@@ -302,24 +304,6 @@ std::string Login::getPostgresqlDbNamespace(const std::string& connectionDetails
     return result[1];
   }
   return {};
-}
-
-std::string Login::getPostgresqlDbUsername(const std::string& connectionDetails) {
-  if (connectionDetails.find("@") == std::string::npos) {
-    return "";
-  }
-  cta::utils::Regex regex("postgresql://(.*)@");
-  std::vector<std::string> result = regex.exec(connectionDetails);
-  if (result.size() < 2) {
-    throw exception::Exception(
-      std::string("In Login::getPostgresqlDbUsername(): Invalid connection string: Correct format is ") + s_fileFormat);
-  }
-  std::string usernamePassword = result[1];
-  if (usernamePassword.find(":") == std::string::npos) {
-    // No password provided, no need to hide it
-    return usernamePassword;
-  }
-  return usernamePassword.substr(0, usernamePassword.find(':'));
 }
 
 }  // namespace cta::rdbms
