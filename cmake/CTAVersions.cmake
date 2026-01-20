@@ -9,6 +9,7 @@ set(XROOTD_SSI_PROTOBUF_INTERFACE_VERSION "v0.0")
 include(catalogue/cta-catalogue-schema/CTACatalogueSchemaVersion.cmake)
 
 # Scheduler Schema Version
+set(CTA_SCHEDULER_SCHEMA_NAME "scheduler")
 set(CTA_SCHEDULER_SCHEMA_VERSION_MAJOR 1)
 set(CTA_SCHEDULER_SCHEMA_VERSION_MINOR 0)
 

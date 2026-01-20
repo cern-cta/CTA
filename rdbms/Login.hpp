@@ -281,10 +281,12 @@ private:
 
   /**
    * Returns true if the Postgresql connectionDetails contains a password, false otherwise
+   * It also sets the username member value accordingly.
    * @param connectionDetails the connectionDetails retrieved from the configuration file
    * @return  true if the Postgresql connectionDetails contains a password, false otherwise
    */
-  static bool postgresqlHasPassword(const std::string& connectionDetails);
+  bool postgresqlHasPassword(const std::string& connectionDetails);
+
 };  // class Login
 
 }  // namespace cta::rdbms
