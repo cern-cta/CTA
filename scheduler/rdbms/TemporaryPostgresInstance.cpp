@@ -399,7 +399,7 @@ void TemporaryPostgresEnvironment::createSchedulerSchema() {
 
   try {
     // Get the schema SQL
-    PostgresSchedulerSchema schema;
+    PostgresSchedulerSchema schema("");
 
     // Connect to database and create schema
     auto login = getLogin();
@@ -421,7 +421,7 @@ void TemporaryPostgresEnvironment::createSchedulerSchema() {
 
 void TemporaryPostgresEnvironment::createSchedulerSchemaInSchema(const std::string& schemaName) {
   try {
-    PostgresSchedulerSchema schema;
+    PostgresSchedulerSchema schema("");
 
     auto login = getLogin(schemaName);
     rdbms::ConnPool connPool(login, 1);
