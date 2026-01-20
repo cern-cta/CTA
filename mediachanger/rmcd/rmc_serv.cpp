@@ -109,9 +109,9 @@ int rmc_main(const char* const robot) {
 
   g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] = '\0';
   if (*robot == '/') {
-    strncpy(g_extended_robot_info.smc_ldr, robot, CA_MAXRBTNAMELEN + 1);
+    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "%s", robot);
   } else {
-    snprintf(g_extended_robot_info.smc_ldr, CA_MAXRBTNAMELEN + 1, "/dev/%s", robot);
+    snprintf(g_extended_robot_info.smc_ldr, sizeof(g_extended_robot_info.smc_ldr), "/dev/%s", robot);
   }
   if (g_extended_robot_info.smc_ldr[CA_MAXRBTNAMELEN] != '\0') {
     rmc_logit(func, RMC06, "robot");
