@@ -82,3 +82,6 @@ Pipfile.lock
 
 # OS-specific files
 .DS_Store
+.vscode
+.gitignore
+samples/

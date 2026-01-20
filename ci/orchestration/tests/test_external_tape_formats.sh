@@ -53,4 +53,30 @@ kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_osm_
 # Run the test
 kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- cta-osmReaderTest ${device_name} ${device} || exit 1
 
+# Prepare and validate Enstore tape sample
+kubectl -n ${NAMESPACE} cp read_enstore_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_tape.sh -c cta-rmcd
+enstore_env=(env)
+if [[ -n "${ENSTORE_SAMPLE_DIR:-}" ]]; then
+  enstore_env+=("ENSTORE_SAMPLE_DIR=${ENSTORE_SAMPLE_DIR}")
+fi
+if [[ -n "${ENSTORE_PAYLOAD_BLOCK_SIZE:-}" ]]; then
+  enstore_env+=("ENSTORE_PAYLOAD_BLOCK_SIZE=${ENSTORE_PAYLOAD_BLOCK_SIZE}")
+fi
+enstore_env+=("/bin/bash" "/root/read_enstore_tape.sh" "${device}")
+kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- "${enstore_env[@]}"
+kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- cta-enstoreReaderTest ${device_name} ${device} || exit 1
+
+# Prepare and validate EnstoreLarge tape sample
+kubectl -n ${NAMESPACE} cp read_enstore_large_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_large_tape.sh -c cta-rmcd
+enstore_large_env=(env)
+if [[ -n "${ENSTORE_LARGE_SAMPLE_DIR:-}" ]]; then
+  enstore_large_env+=("ENSTORE_LARGE_SAMPLE_DIR=${ENSTORE_LARGE_SAMPLE_DIR}")
+fi
+if [[ -n "${ENSTORE_LARGE_BLOCK_SIZE:-}" ]]; then
+  enstore_large_env+=("ENSTORE_LARGE_BLOCK_SIZE=${ENSTORE_LARGE_BLOCK_SIZE}")
+fi
+enstore_large_env+=("/bin/bash" "/root/read_enstore_large_tape.sh" "${device}")
+kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- "${enstore_large_env[@]}"
+kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- cta-enstoreLargeReaderTest ${device_name} ${device} || exit 1
+
 exit 0

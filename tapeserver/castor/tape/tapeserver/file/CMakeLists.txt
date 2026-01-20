@@ -77,3 +77,27 @@ target_link_libraries(cta-osmReaderTest
 )
 
 install(TARGETS cta-osmReaderTest DESTINATION usr/bin)
+
+add_executable(cta-enstoreReaderTest
+  EnstoreReaderTest.cpp)
+
+target_link_libraries(cta-enstoreReaderTest
+  ctacommon
+  ctaTapeServerDaemon
+  File
+  gtest
+)
+
+install(TARGETS cta-enstoreReaderTest DESTINATION usr/bin)
+
+add_executable(cta-enstoreLargeReaderTest
+  EnstoreLargeReaderTest.cpp)
+
+target_link_libraries(cta-enstoreLargeReaderTest
+  ctacommon
+  ctaTapeServerDaemon
+  File
+  gtest
+)
+
+install(TARGETS cta-enstoreLargeReaderTest DESTINATION usr/bin)
