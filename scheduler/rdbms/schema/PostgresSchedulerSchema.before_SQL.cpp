@@ -5,6 +5,9 @@
 
 #include "scheduler/rdbms/schema/PostgresSchedulerSchema.hpp"
 
+#include <iostream>
+#include <sstream>
+
 namespace cta::schedulerdb {
 
 //------------------------------------------------------------------------------
