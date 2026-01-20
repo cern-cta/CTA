@@ -60,8 +60,8 @@ TEST(castor_tape_AULFile, VOL1) {
 
 class testVOL1withCRC : public castor::tape::tapeFile::VOL1withCrc {
 public:
-  void backdoorSetLBPMethodString(const std::string& LBPString) {
-    strncpy(m_LBPMethod, LBPString.c_str(), sizeof(m_LBPMethod));
+  void backdoorSetLBPMethodString(const char (&value)[sizeof(m_LBPMethod) + 1]) {
+    memcpy(m_LBPMethod, value, sizeof(m_LBPMethod));
   }
 };
 
