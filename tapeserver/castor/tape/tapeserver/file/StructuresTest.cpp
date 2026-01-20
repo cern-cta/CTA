@@ -12,8 +12,8 @@ namespace unitTests {
 
 class testVOL1 : public castor::tape::tapeFile::VOL1 {
 public:
-  void backdoorSetLBPMethodString(const char (&value)[sizeof(m_LBPMethod)]) {
-    strncpy(m_LBPMethod, value, sizeof(m_LBPMethod));
+  void backdoorSetLBPMethodString(const char (&value)[sizeof(m_LBPMethod) + 1]) {
+    memcpy(m_LBPMethod, value, sizeof(m_LBPMethod));
   }
 };
 
@@ -34,27 +34,27 @@ TEST(castor_tape_AULFile, VOL1) {
   uint8_t* buf = (uint8_t*) &vol1Label;
   ASSERT_EQ(buf[77], '0');
   ASSERT_EQ(buf[78], '0');
-  vol1Label.backdoorSetLBPMethodString({' ', ' '});
+  vol1Label.backdoorSetLBPMethodString("  ");
   ASSERT_NO_THROW(vol1Label.getLBPMethod());
   ASSERT_EQ((int) LBPM::DoNotUse, (int) vol1Label.getLBPMethod());
   ASSERT_EQ(buf[77], ' ');
   ASSERT_EQ(buf[78], ' ');
-  vol1Label.backdoorSetLBPMethodString({'0', '1'});
+  vol1Label.backdoorSetLBPMethodString("01");
   ASSERT_NO_THROW(vol1Label.getLBPMethod());
   ASSERT_EQ((int) LBPM::ReedSolomon, (int) vol1Label.getLBPMethod());
   ASSERT_EQ(buf[77], '0');
   ASSERT_EQ(buf[78], '1');
-  vol1Label.backdoorSetLBPMethodString({'0', '0'});
+  vol1Label.backdoorSetLBPMethodString("00");
   ASSERT_NO_THROW(vol1Label.getLBPMethod());
   ASSERT_EQ((int) LBPM::DoNotUse, (int) vol1Label.getLBPMethod());
-  vol1Label.backdoorSetLBPMethodString({'0', '2'});
+  vol1Label.backdoorSetLBPMethodString("02");
   ASSERT_NO_THROW(vol1Label.getLBPMethod());
   ASSERT_EQ((int) LBPM::CRC32C, (int) vol1Label.getLBPMethod());
   ASSERT_EQ(buf[77], '0');
   ASSERT_EQ(buf[78], '2');
-  vol1Label.backdoorSetLBPMethodString({'0', '3'});
+  vol1Label.backdoorSetLBPMethodString("03");
   ASSERT_THROW(vol1Label.getLBPMethod(), cta::exception::Exception);
-  vol1Label.backdoorSetLBPMethodString({'X', 'Y'});
+  vol1Label.backdoorSetLBPMethodString("XY");
   ASSERT_THROW(vol1Label.getLBPMethod(), cta::exception::Exception);
 }
 
