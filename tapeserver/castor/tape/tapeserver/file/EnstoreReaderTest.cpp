@@ -56,8 +56,7 @@ protected:
       castor::tape::tapeserver::drive::deviceInfo devInfo;
       devInfo = m_drive->getDeviceInfo();
       auto removeWhiteSpaces = [](std::string* str) -> std::string {
-        str->erase(std::remove_if(str->begin(), str->end(), [](uint8_t x) { return std::isspace(x); }),
-                   str->end());
+        str->erase(std::remove_if(str->begin(), str->end(), [](uint8_t x) { return std::isspace(x); }), str->end());
         return *str;
       };
       ASSERT_EQ("STK", removeWhiteSpaces(&devInfo.vendor));
