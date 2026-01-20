@@ -11,15 +11,15 @@ include_directories (${POSTGRES_INCLUDE_DIRS})
 # Compiled protocol buffers (for ChecksumBlob)
 #
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_scheduler_version.sql.in insert_cta_scheduler_version.sql)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/insert_cta_scheduler_version.sql.in insert_cta_scheduler_version.sql.filled.in)
 
-add_custom_command(OUTPUT postgres_scheduler_schema.cpp
-  COMMAND sed 's/^/\ \ \"/' insert_cta_scheduler_version.sql ${CMAKE_CURRENT_SOURCE_DIR}/postgres_scheduler_schema.sql | sed 's/$$/\"/' > postgres_scheduler_schema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/postgres_scheduler_schema.sql insert_cta_scheduler_version.sql)
+add_custom_command(OUTPUT postgres_scheduler_schema.cpp.in
+  COMMAND sed 's/^/\ \ \"/' insert_cta_scheduler_version.sql.filled.in ${CMAKE_CURRENT_SOURCE_DIR}/postgres_scheduler_schema.sql | sed 's/$$/\"/' > postgres_scheduler_schema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/postgres_scheduler_schema.sql insert_cta_scheduler_version.sql.filled.in)
 
 add_custom_command(OUTPUT PostgresSchedulerSchema.cpp
-  COMMAND sed -e '/CTA_SQL_SCHEMA/r postgres_scheduler_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresSchedulerSchema.before_SQL.cpp > PostgresSchedulerSchema.cpp
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/PostgresSchedulerSchema.before_SQL.cpp postgres_scheduler_schema.cpp)
+  COMMAND sed -e '/CTA_SQL_SCHEMA/r postgres_scheduler_schema.cpp.in' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresSchedulerSchema.before_SQL.cpp > PostgresSchedulerSchema.cpp
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/PostgresSchedulerSchema.before_SQL.cpp postgres_scheduler_schema.cpp.in)
 
 # Create a library for the schema sources so they can be reused
 add_library(ctaschedulerschema

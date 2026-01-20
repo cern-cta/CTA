@@ -32,6 +32,7 @@ struct PostgresSchedulerSchema : public SchedulerSchema {
    */
   PostgresSchedulerSchema(const std::string& username);
 
+private:
   std::string replaceUsername(const std::string& username);
 };
 

@@ -14,42 +14,51 @@ PostgresSchedulerSchema::PostgresSchedulerSchema(const std::string& username)
     : SchedulerSchema(PostgresSchedulerSchema::replaceUsername(username)) {}
 
 std::string PostgresSchedulerSchema::replaceUsername(const std::string& username) {
-  std::string sql = std::string(  // CTA_SQL_SCHEMA - The contents of postgres_scheduler_schema.cpp go here
+  /* The postgres_scheduler_schema.cpp.in is a file pre-created via CMake
+   * as a concatenation of insert_cta_scheduler_version.sql.filled.in
+   * and postgres_scheduler_schema.sql. The insert_cta_scheduler_version.sql.filled.in
+   * is created by CMake from insert_cta_scheduler_version.sql.in file
+   * while filling in the version and schema name
+   */
+  std::string sql = std::string(  // CTA_SQL_SCHEMA - The contents of postgres_scheduler_schema.cpp.in go here
   );
   // Replace all occurrences of __USERNAME__ with username
   std::string token = "__USERNAME__";
-  size_t pos = 0;
+  std::ostringstream out;
+
   if (!username.empty()) {
-    while ((pos = sql.find(token, pos)) != std::string::npos) {
-      sql.replace(pos, token.length(), username);
-      pos += username.length();  // move past the replacement
+    std::size_t pos = 0;
+    std::size_t prev = 0;
+    while ((pos = sql.find(token, prev)) != std::string::npos) {
+      out << sql.substr(prev, pos - prev);
+      out << username;
+      prev = pos + token.size();
     }
-    return sql;
+    out << sql.substr(prev);
+    return out.str();
   }
   // No username → remove whole SQL statements containing token
-  pos = 0;
-  while ((pos = sql.find(token, pos)) != std::string::npos) {
-    // find beginning of statement
-    size_t stmtStart = sql.rfind(';', pos);
-    if (stmtStart == std::string::npos) {
-      stmtStart = 0;
-    } else {
-      stmtStart += 1;  // move past ';'
-    }
-
-    // find end of statement
-    size_t stmtEnd = sql.find(';', pos);
+  std::size_t pos = 0;
+  while (pos < sql.size()) {
+    // Find end of current statement
+    std::size_t stmtEnd = sql.find(';', pos);
     if (stmtEnd == std::string::npos) {
       stmtEnd = sql.size();
     } else {
-      stmtEnd += 1;  // include ';'
+      ++stmtEnd;  // include ';'
     }
 
-    sql.erase(stmtStart, stmtEnd - stmtStart);
-    pos = stmtStart;
+    const std::string_view statement(sql.data() + pos, stmtEnd - pos);
+
+    // Only append statements that do NOT contain the token
+    if (statement.find(token) == std::string_view::npos) {
+      out << statement;
+    }
+
+    pos = stmtEnd;
   }
 
-  return sql;
+  return out.str();
 }
 
 }  // namespace cta::schedulerdb
