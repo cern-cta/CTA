@@ -942,7 +942,7 @@ void drive::DriveGeneric::receiveRAO(std::list<SCSI::Structures::RAO::blockLims>
   for (int f = 0; f < file_cnt; ++f, ++ud) {
     SCSI::Structures::RAO::blockLims bl;
     // udsName and fseq are both 10 characters including terminating NULL
-    strncpy(reinterpret_cast<char*>(bl.fseq), reinterpret_cast<const char*>(ud->udsName), sizeof(bl.fseq));
+    memcpy(bl.fseq, ud->udsName, sizeof(bl.fseq));
     bl.begin = SCSI::Structures::toU64(ud->beginLogicalObjID);
     bl.end = SCSI::Structures::toU64(ud->endLogicalObjID);
     files.emplace_back(bl);
