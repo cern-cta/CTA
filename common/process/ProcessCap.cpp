@@ -80,7 +80,7 @@ namespace cta::server::ProcessCap {
 // getProcText
 //------------------------------------------------------------------------------
 std::string getProcText() {
-  cap_t cap;
+  cap_t cap = nullptr;
 
   try {
     cap = getProc();
@@ -100,7 +100,7 @@ std::string getProcText() {
 // setProcText
 //------------------------------------------------------------------------------
 void setProcText(const std::string& text) {
-  cap_t cap;
+  cap_t cap = nullptr;
   try {
     cap = fromText(text);
     setProc(cap);
