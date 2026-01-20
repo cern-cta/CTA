@@ -113,7 +113,9 @@ public:
      */
 inline uint64_t toU64(const unsigned char (&t)[8]) {
   /* Like network, SCSI is BigEndian */
-  return (uint64_t) ntohl((*(uint64_t*) t << 32) >> 32) << 32 | ntohl(*(uint64_t*) t >> 32);
+  uint64_t v = 0;
+  std::memcpy(&v, t, 8);
+  return be64toh(v);
 }
 
 /**
@@ -128,7 +130,9 @@ inline uint64_t toU64(const unsigned char (&t)[8]) {
      */
 inline uint64_t toU64(const unsigned char (&t)[6]) {
   /* Like network, SCSI is BigEndian */
-  return (uint64_t) ntohl((*(uint64_t*) t << 32) >> 16) << 32 | ntohl(*(uint64_t*) t >> 16);
+  uint64_t v = 0;
+  std::memcpy(reinterpret_cast<unsigned char*>(&v) + 2, t, 6);
+  return be64toh(v);
 }
 
 /**
@@ -138,7 +142,9 @@ inline uint64_t toU64(const unsigned char (&t)[6]) {
      */
 inline uint32_t toU32(const unsigned char (&t)[4]) {
   /* Like network, SCSI is BigEndian */
-  return ntohl(*((uint32_t*) t));
+  uint32_t v = 0;
+  std::memcpy(&v, t, 4);
+  return ntohl(v);
 }
 
 /**
@@ -148,18 +154,10 @@ inline uint32_t toU32(const unsigned char (&t)[4]) {
      * @return
      */
 inline uint32_t toU32(const unsigned char (&t)[3]) {
-  union {
-    unsigned char tmp[4];
-    uint32_t val;
-  } u;
-
-  u.tmp[0] = 0;
-  u.tmp[1] = t[0];
-  u.tmp[2] = t[1];
-  u.tmp[3] = t[2];
-
   /* Like network, SCSI is BigEndian */
-  return ntohl(u.val);
+  uint32_t v = 0;
+  std::memcpy(reinterpret_cast<unsigned char*>(&v) + 1, t, 3);
+  return ntohl(v);
 }
 
 /**
@@ -170,7 +168,9 @@ inline uint32_t toU32(const unsigned char (&t)[3]) {
      */
 inline int32_t toS32(const unsigned char (&t)[4]) {
   /* Like network, SCSI is BigEndian */
-  return (int32_t) (ntohl(*((uint32_t*) t)));
+  int32_t v = 0;
+  std::memcpy(&v, t, 4);
+  return ntohl(v);
 }
 
 /**
@@ -180,7 +180,9 @@ inline int32_t toS32(const unsigned char (&t)[4]) {
      */
 inline uint16_t toU16(const unsigned char (&t)[2]) {
   /* Like network, SCSI is BigEndian */
-  return ntohs(*((uint16_t*) t));
+  uint16_t v = 0;
+  std::memcpy(&v, t, 2);
+  return ntohs(v);
 }
 
 /**
@@ -190,7 +192,8 @@ inline uint16_t toU16(const unsigned char (&t)[2]) {
      * @param val the value.
      */
 inline void setU32(unsigned char (&t)[4], uint32_t val) {
-  *((uint32_t*) t) = htonl(val);
+  const uint32_t v = htonl(val);
+  std::memcpy(t, &v, 4);
 }
 
 /**
@@ -200,7 +203,8 @@ inline void setU32(unsigned char (&t)[4], uint32_t val) {
      * @param val the value.
      */
 inline void setU16(unsigned char (&t)[2], uint16_t val) {
-  *((uint16_t*) t) = htons(val);
+  const uint16_t v = htons(val);
+  std::memcpy(t, &v, 2);
 }
 
 /**
@@ -210,7 +214,8 @@ inline void setU16(unsigned char (&t)[2], uint16_t val) {
      * @param val the value.
      */
 inline void setU64(unsigned char (&t)[8], uint64_t val) {
-  *((uint64_t*) t) = htobe64(val);
+  const uint64_t v = htobe64(val);
+  std::memcpy(t, &v, 8);
 }
 
 /**
