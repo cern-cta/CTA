@@ -215,7 +215,7 @@ int TemporaryPostgresEnvironment::runCommand(const std::vector<std::string>& arg
  * Find PostgreSQL binaries (pg_ctl, initdb, psql)
  */
 void TemporaryPostgresEnvironment::findPostgresBinaries() {
-  if (system("which pg_ctl >/dev/null 2>&1") == 0) {
+  if (system("command -v pg_ctl >/dev/null 2>&1") == 0) {
     m_pgCtl = "pg_ctl";
     m_initdb = "initdb";
     m_psql = "psql";
