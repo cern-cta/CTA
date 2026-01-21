@@ -78,7 +78,7 @@ PostgresConn::PostgresConn(const rdbms::Login& login) : m_dbNamespace(login.dbNa
   PQsetNoticeProcessor(m_pgsqlConn, PostgresConn::noticeProcessor, nullptr);
 
   // Set search_path to the specified schema for test isolation
-  if (!m_dbNamespace.empty() && m_dbNamespace != "public") {
+  if (!m_dbNamespace.empty() && m_dbNamespace != "public" && m_dbNamespace != "scheduler") {
     std::string setSearchPathSQL = "SET search_path TO '" + m_dbNamespace + "', public";
     Postgres::Result res(PQexec(m_pgsqlConn, setSearchPathSQL.c_str()));
     if (PQresultStatus(res.get()) != PGRES_COMMAND_OK) {
@@ -301,7 +301,7 @@ std::vector<std::string> PostgresConn::getIndexNames() {
     FROM
       PG_INDEXES
     WHERE
-      SCHEMANAME = 'public'
+      SCHEMANAME = current_schema()
     ORDER BY
       INDEXNAME
   )SQL";
@@ -386,10 +386,12 @@ std::vector<std::string> PostgresConn::getTypeNames() {
   std::vector<std::string> names;
   const char* const sql = R"SQL(
     SELECT
-      TYPNAME
+      t.typname
     FROM
-      PG_TYPE
-    WHERE typnamespace = (SELECT oid FROM pg_namespace WHERE nspname = 'public')
+      pg_type t
+      JOIN pg_namespace n ON n.oid = t.typnamespace
+    WHERE
+      n.nspname = current_schema()
   )SQL";
   auto stmt = createStmt(sql);
   auto rset = stmt->executeQuery();
@@ -410,7 +412,7 @@ std::vector<std::string> PostgresConn::getViewNames() {
       TABLE_NAME
     FROM
       INFORMATION_SCHEMA.VIEWS
-    WHERE table_schema = 'public'
+    WHERE table_schema = current_schema()
   )SQL";
   auto stmt = createStmt(sql);
   auto rset = stmt->executeQuery();
