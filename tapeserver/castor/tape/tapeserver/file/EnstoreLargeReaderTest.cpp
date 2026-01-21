@@ -78,6 +78,7 @@ protected:
 
   std::string readTapeVid(const cta::common::dataStructures::Label::Format labelFormat) {
     m_drive->rewind();
+    m_drive->waitUntilReady(5);
     return castor::tape::tapeFile::HeaderChecker::checkVolumeLabel(*m_drive, labelFormat);
   }
 
