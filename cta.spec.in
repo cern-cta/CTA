@@ -417,6 +417,10 @@ Requires: moreutils
 Requires: libtirpc-devel
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires: gtest-devel %{gtestDevelVersionConstraint}
+# PostgreSQL server binaries needed for unit tests when using pgsched
+%if "%{schedOpt}" == "-DCTA_USE_PGSCHED:Bool=TRUE"
+Requires: postgresql-server
+%endif
 %description -n cta-integrationtests
 CERN Tape Archive:
 Unit tests and integration tests with virtual tape drives
