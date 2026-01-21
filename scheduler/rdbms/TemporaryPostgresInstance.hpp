@@ -68,9 +68,9 @@ public:
   /**
    * Get a Login object configured to connect to the test database.
    *
-   * @param schemaName Optional schema name. If not provided, uses "public".
+   * @param schemaName Optional schema name. If not provided, uses "scheduler".
    */
-  rdbms::Login getLogin(const std::string& schemaName = "public") const;
+  rdbms::Login getLogin(const std::string& schemaName = "scheduler") const;
 
   /**
    * Get connection string
@@ -92,12 +92,6 @@ public:
   std::string generateUniqueSchemaName();
 
   /**
-   * Create a new schema in the database.
-   * Returns the schema name.
-   */
-  std::string createSchema(const std::string& schemaName);
-
-  /**
    * Drop a schema from the database.
    */
   void dropSchema(const std::string& schemaName);
@@ -105,12 +99,7 @@ public:
   /**
    * Create CTA scheduler schema in the test database
    */
-  void createSchedulerSchema();
-
-  /**
-   * Create scheduler schema tables in a specific schema.
-   */
-  void createSchedulerSchemaInSchema(const std::string& schemaName);
+  void createSchedulerSchema(const std::string& username, const std::string& schemaName);
 
 private:
   /**

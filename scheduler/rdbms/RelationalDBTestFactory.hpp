@@ -42,7 +42,7 @@ public:
                           catalogue::Catalogue& catalogue,
                           const rdbms::Login& login,
                           const uint64_t nbConns,
-                          const std::string& schemaName = "public")
+                          const std::string& schemaName = "scheduler")
       : SchedulerDatabaseDecorator(m_RelationalDB),
         m_logger(std::move(logger)),
         m_catalogue(catalogue),
@@ -53,8 +53,8 @@ public:
 
   ~RelationalDBTestWrapper() noexcept {
     // Drop the schema we created for test isolation
-    // (but never drop "public" schema)
-    if (!m_schemaName.empty() && m_schemaName != "public") {
+    // (but never drop "public" and "scheduler" schema)
+    if (!m_schemaName.empty() && m_schemaName != "public" && m_schemaName != "scheduler") {
       if (schedulerdb::g_tempPostgresEnv) {
         schedulerdb::g_tempPostgresEnv->dropSchema(m_schemaName);
       }
@@ -108,14 +108,11 @@ public:
       // Create a unique schema for this test (like ObjectStore creates a fresh backend)
       std::string schemaName = schedulerdb::g_tempPostgresEnv->generateUniqueSchemaName();
 
-      // Create the schema
-      schedulerdb::g_tempPostgresEnv->createSchema(schemaName);
-
-      // Create scheduler tables in this schema
-      schedulerdb::g_tempPostgresEnv->createSchedulerSchemaInSchema(schemaName);
-
       // Get login with this schema as the namespace
       cta::rdbms::Login login = schedulerdb::g_tempPostgresEnv->getLogin(schemaName);
+
+      // Create scheduler tables in this schema
+      schedulerdb::g_tempPostgresEnv->createSchedulerSchema(login.username, schemaName);
 
       // Create wrapper that will drop the schema on destruction
       auto pgwrapper =
