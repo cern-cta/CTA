@@ -368,7 +368,7 @@ void TemporaryPostgresEnvironment::cleanup() noexcept {
 /**
   * Create CTA scheduler schema in the test database
   */
-void TemporaryPostgresEnvironment::createSchedulerSchema(const std::string& username,const std::string& schemaName) {
+void TemporaryPostgresEnvironment::createSchedulerSchema(const std::string& username, const std::string& schemaName) {
   std::cout << "  Creating CTA scheduler schema..." << std::endl;
 
   try {

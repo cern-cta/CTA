@@ -281,7 +281,6 @@ private:
    */
   void setPostgresqlDbNamespace(const std::string& connectionDetails);
 
-
   /**
    * Sets the connection string of a sqlite database
    * @param filename

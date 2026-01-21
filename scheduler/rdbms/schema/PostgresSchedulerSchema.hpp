@@ -33,11 +33,8 @@ struct PostgresSchedulerSchema : public SchedulerSchema {
   PostgresSchedulerSchema(const std::string& username, const std::string& schemaname);
 
 private:
-  std::string replaceUserAndSchemaName(const std::string& username,
-                                                                const std::string& schemaname);
-  void replaceTokenWithString(std::string& sql,
-                                                       const std::string& token,
-                                                       const std::string& username);
+  std::string replaceUserAndSchemaName(const std::string& username, const std::string& schemaname);
+  void replaceTokenWithString(std::string& sql, const std::string& token, const std::string& username);
   void removeAllStatementsContainingToken(std::string& sql, const std::string& token);
 };
 
