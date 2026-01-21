@@ -15,6 +15,26 @@ get_pods_by_type() {
   kubectl get pod -l app.kubernetes.io/component=$type -n $namespace --no-headers -o custom-columns=":metadata.name"
 }
 
+unload_loaded_tape() {
+  local namespace="$1"
+  local pod="$2"
+  local changer="${3:-/dev/smc}"
+  local drive_slot="${4:-0}"
+  local status
+  status=$(kubectl -n "$namespace" exec "$pod" -c cta-rmcd -- mtx -f "$changer" status 2>/dev/null || true)
+  echo "$status"
+  local loaded_slot
+  loaded_slot=$(echo "$status" | awk -v drive="$drive_slot" '
+    match($0, /Data Transfer Element ([0-9]+):Full/, m) {
+      if (m[1] == drive && match($0, /Storage Element ([0-9]+)/, s)) {
+        print s[1]
+      }
+    }')
+  if [[ -n "$loaded_slot" ]]; then
+    kubectl -n "$namespace" exec "$pod" -c cta-rmcd -- mtx -f "$changer" unload "$loaded_slot" "$drive_slot" || true
+  fi
+}
+
 NAMESPACE=""
 
 while getopts "n:" o; do
@@ -54,11 +74,13 @@ kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_osm_
 kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- cta-osmReaderTest ${device_name} ${device} || exit 1
 
 # Prepare Enstore tape sample
+unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}"
 kubectl -n ${NAMESPACE} cp read_enstore_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_tape.sh -c cta-rmcd
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_tape.sh ${device}
 kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- cta-enstoreReaderTest ${device_name} ${device} || exit 1
 
 # Prepare EnstoreLarge tape sample
+unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}"
 kubectl -n ${NAMESPACE} cp read_enstore_large_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_large_tape.sh -c cta-rmcd
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_large_tape.sh ${device}
 kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- cta-enstoreLargeReaderTest ${device_name} ${device} || exit 1
