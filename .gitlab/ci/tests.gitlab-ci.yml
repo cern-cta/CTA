@@ -77,7 +77,6 @@ unit-test-cta:
   before_script:
     - *setup-cta-install
   script:
-    - dnf -y install postgresql-server  # Needed for TemporaryPostgresEnvironment in pgsched builds
     - /usr/bin/cta-unitTests
     - /usr/bin/cta-unitTests-multiProcess
 
