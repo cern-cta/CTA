@@ -112,7 +112,7 @@ public:
       cta::rdbms::Login login = schedulerdb::g_tempPostgresEnv->getLogin(schemaName);
 
       // Create scheduler tables in this schema
-      schedulerdb::g_tempPostgresEnv->createSchedulerSchema(login.username, schemaName);
+      schedulerdb::g_tempPostgresEnv->createSchedulerSchema(login);
 
       // Create wrapper that will drop the schema on destruction
       auto pgwrapper =

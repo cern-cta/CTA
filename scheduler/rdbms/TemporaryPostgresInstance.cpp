@@ -54,7 +54,7 @@ void TemporaryPostgresEnvironment::dropSchema(const std::string& schemaName) {
   }
 
   try {
-    auto login = getLogin();
+    auto login = getLogin(schemaName);
     rdbms::ConnPool connPool(login, 1);
     auto conn = connPool.getConn();
 
@@ -368,15 +368,15 @@ void TemporaryPostgresEnvironment::cleanup() noexcept {
 /**
   * Create CTA scheduler schema in the test database
   */
-void TemporaryPostgresEnvironment::createSchedulerSchema(const std::string& username, const std::string& schemaName) {
-  std::cout << "  Creating CTA scheduler schema..." << std::endl;
+void TemporaryPostgresEnvironment::createSchedulerSchema(cta::rdbms::Login& login) {
+  std::cout << "  Creating CTA scheduler schema " << login.dbNamespace << "for user " << login.username << "..."
+            << std::endl;
 
   try {
     // Get the schema SQL
-    PostgresSchedulerSchema schema(username, schemaName);
+    PostgresSchedulerSchema schema(login.username, login.dbNamespace);
 
     // Connect to database and create schema
-    auto login = getLogin();
     rdbms::ConnPool connPool(login, 1);
     auto conn = connPool.getConn();
 

@@ -99,7 +99,7 @@ public:
   /**
    * Create CTA scheduler schema in the test database
    */
-  void createSchedulerSchema(const std::string& username, const std::string& schemaName);
+  void createSchedulerSchema(cta::rdbms::Login& login);
 
 private:
   /**

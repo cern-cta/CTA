@@ -44,14 +44,14 @@ std::string PostgresSchedulerSchema::replaceUserAndSchemaName(const std::string&
 
 void PostgresSchedulerSchema::replaceTokenWithString(std::string& sql,
                                                      const std::string& token,
-                                                     const std::string& username) {
-  // Replace all occurrences of __USERNAME__ with username
+                                                     const std::string& value) {
+  // Replace all occurrences of __TOKEN__ with VALUE
   std::ostringstream out;
   std::size_t pos = 0;
   std::size_t prev = 0;
   while ((pos = sql.find(token, prev)) != std::string::npos) {
     out << sql.substr(prev, pos - prev);
-    out << username;
+    out << value;
     prev = pos + token.size();
   }
   out << sql.substr(prev);

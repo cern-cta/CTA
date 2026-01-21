@@ -9,7 +9,7 @@ SET search_path TO __SCHEDULER_SCHEMA_NAME__ /* we mention __USERNAME__ in this 
 /* the following statement will change the search_path for future sessions only
  * see (https://stackoverflow.com/questions/57726737/postgres-finding-search-path-for-given-user-and-modifying-it-permanently)
  * the change does not take effect in the current session. That is why we still need the previous statement */
-ALTER ROLE __USERNAME__ SET search_path TO @CTA_SCHEDULER_SCHEMA_NAME@, public, pg_catalog;
+ALTER ROLE __USERNAME__ SET search_path TO __SCHEDULER_SCHEMA_NAME__, public, pg_catalog;
 
 CREATE TABLE CTA_SCHEDULER(
   SCHEMA_VERSION_MAJOR    NUMERIC(20, 0) CONSTRAINT CTA_SCHEDULER_SVM1_NN NOT NULL,
