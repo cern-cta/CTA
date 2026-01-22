@@ -15,6 +15,7 @@
 namespace cta::telemetry::metrics {
 
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> dbClientOperationDuration;
+std::unique_ptr<opentelemetry::metrics::Histogram<int64_t>> dbClientOperationReturnedRows;
 std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> dbClientConnectionCount;
 
 }  // namespace cta::telemetry::metrics
@@ -27,6 +28,11 @@ void initInstruments() {
     meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricDbClientOperationDuration,
                                  cta::semconv::metrics::descrDbClientOperationDuration,
                                  cta::semconv::metrics::unitDbClientOperationDuration);
+
+  cta::telemetry::metrics::dbClientOperationReturnedRows =
+    meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricDbClientOperationReturnedRows,
+                                 cta::semconv::metrics::descrDbClientOperationReturnedRows,
+                                 cta::semconv::metrics::unitDbClientOperationReturnedRows);
 
   cta::telemetry::metrics::dbClientConnectionCount =
     meter->CreateInt64UpDownCounter(cta::semconv::metrics::kMetricDbClientConnectionCount,

@@ -85,7 +85,7 @@ struct RetrieveJobSummaryRow {
     )SQL";
 
     auto stmt = conn.createStmt(sql);
-    stmt.setDbQuerySummary("selectRetrieveJobSummaryForVid");
+    stmt.setDbQuerySummary("select retrieve job summary for vid");
     stmt.bindString(":VID", vid);
     return stmt.executeQuery();
   }
@@ -115,7 +115,7 @@ struct RetrieveJobSummaryRow {
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);
-    stmt.setDbQuerySummary("selectRetrieveJobSummary");
+    stmt.setDbQuerySummary("select retrieve job summary");
     return stmt.executeQuery();
   }
 
@@ -144,7 +144,7 @@ struct RetrieveJobSummaryRow {
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);
-    stmt.setDbQuerySummary("selectRepackRetrieveJobSummary");
+    stmt.setDbQuerySummary("select repack retrieve job summary");
     return stmt.executeQuery();
   }
 };
