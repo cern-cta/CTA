@@ -17,7 +17,7 @@ extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> dbClientOper
 /**
  * The actual number of records returned by the database operation.
  */
-extern std::unique_ptr<opentelemetry::metrics::Histogram<int64_t>> dbClientOperationReturnedRows;
+extern std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> dbClientOperationReturnedRows;
 
 /**
  * The number of connections that are currently in state described by the state attribute.
