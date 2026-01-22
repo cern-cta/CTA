@@ -28,7 +28,7 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
       m_zeroLengthFilesDisallowed(frontendService.getDisallowZeroLengthFiles()),
       m_zeroLengthFilesDisallowedExceptions {frontendService.getDisallowZeroLengthFilesExemptions().begin(),
                                              frontendService.getDisallowZeroLengthFilesExemptions().end()} {
-  m_lc.push({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
+  m_lc.push({"user", m_cliIdentity.username});
 
   // Log event before processing. This corresponds to the entry in WFE.log in EOS.
   const std::string& eventTypeName = Workflow_EventType_Name(event.wf().event());
