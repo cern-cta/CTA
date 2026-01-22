@@ -213,7 +213,7 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
     RETURNING *
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("moveRetrieveJobsToDbActiveQueue");
+  stmt.setDbQuerySummary("move retrieve jobs to active queue");
   stmt.bindString(":VID", mountInfo.vid);
   stmt.bindString(":STATUS", to_string(newStatus));
   std::string queueType = isRepack ? "REPACK_RETRIEVE_ACTIVE" : "RETRIEVE_ACTIVE";
@@ -269,7 +269,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
         )SQL";
       sql += sqlpart + std::string(")");
       auto stmt2 = txn.getConn().createStmt(sql);
-      stmt2.setDbQuerySummary("deleteRetrieveJobs");
+      stmt2.setDbQuerySummary("delete retrieve jobs");
       stmt2.executeNonQuery();
       return stmt2.getNbAffectedRows();
     }
@@ -286,7 +286,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
   sql += " SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
   auto stmt1 = txn.getConn().createStmt(sql);
-  stmt1.setDbQuerySummary("updateRetrieveJobStatus");
+  stmt1.setDbQuerySummary("update retrieve job status");
   stmt1.bindString(":STATUS", to_string(newStatus));
   stmt1.executeNonQuery();
   return stmt1.getNbAffectedRows();
@@ -312,7 +312,7 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRep
         WHERE JOB_ID = :JOB_ID
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("updateFailedRetrieveJobStatus");
+  stmt.setDbQuerySummary("update failed retrieve job status");
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint32(":TOTAL_RETRIES", totalRetries);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT", retriesWithinMount);
@@ -533,7 +533,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
           FROM MOVED_ROWS M;
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("requeueFailedRetrieveJob");
+  stmt.setDbQuerySummary("requeue failed retrieve job");
   if (keepMountId) {
     std::string queueType = isRepack ? "REPACK_RETRIEVE_PENDING" : "RETRIEVE_PENDING";
     stmt.bindString(":QUEUE_TYPE", queueType);
@@ -709,7 +709,7 @@ uint64_t RetrieveJobQueueRow::requeueJobBatch(Transaction& txn,
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("requeueRetrieveJobBatch");
+  stmt.setDbQuerySummary("requeue retrieve job batch");
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
   stmt.executeNonQuery();
@@ -923,7 +923,7 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   //  WHERE MOVED_ROWS.ALTERNATE_COPY_NBS LIKE '%,%';
 
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("transformRetrieveJobBatchToArchive");
+  stmt.setDbQuerySummary("transform retrieve job batch to archive");
   stmt.bindString(":RETRIEVESTATUS", to_string(RetrieveJobStatus::RJS_ToReportToRepackForSuccess));
   stmt.bindString(":STATUS_BASE", to_string(ArchiveJobStatus::AJS_ToTransferForRepack));
   stmt.bindString(":STATUS_ALTERNATE", to_string(ArchiveJobStatus::AJS_ToTransferForRepack));
@@ -1062,7 +1062,7 @@ uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Tran
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("handlePendingRetrieveJobsAfterTapeStateChange");
+  stmt.setDbQuerySummary("handle pending retrieve jobs after tape state change");
   stmt.bindString(":DRIVE", "NONE");
   stmt.bindString(":HOST", "NONE");
   stmt.bindString(":LOGICAL_LIBRARY", "NONE");
@@ -1084,7 +1084,7 @@ uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
     ) INSERT INTO RETRIEVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("moveRetrieveJobToFailedQueueTable");
+  stmt.setDbQuerySummary("move retrieve job to failed queue");
   stmt.bindUint64(":JOB_ID", jobId);
   stmt.executeQuery();
   return stmt.getNbAffectedRows();
@@ -1119,7 +1119,7 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
   SELECT * FROM MOVED_ROWS
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("moveRetrieveJobBatchToFailedQueueTable");
+  stmt.setDbQuerySummary("move retrieve job batch to failed queue");
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
 }
@@ -1151,7 +1151,7 @@ rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Tran
     GROUP BY REPACK_REQUEST_ID
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("moveFailedRepackRetrieveJobBatchToFailedQueueTable");
+  stmt.setDbQuerySummary("move failed repack retrieve job batch to failed queue table");
   stmt.bindUint64(":LIMIT", limit);
   auto rset = stmt.executeQuery();
   return rset;
@@ -1169,7 +1169,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, R
     )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("updateRetrieveJobStatusForFailedReport");
+  stmt.setDbQuerySummary("update retrieve job status for failed report");
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint32(":TOTAL_REPORT_RETRIES", totalReportRetries);
   stmt.bindBool(":IS_REPORTING", isReporting);
@@ -1236,7 +1236,7 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
       RETURNING RETRIEVE_ACTIVE_QUEUE.*
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  stmt.setDbQuerySummary("fetchRetrieveJobsForReporting");
+  stmt.setDbQuerySummary("fetch retrieve jobs for reporting");
   // we can move the array binding to new bindArray method for STMT
   size_t sz = statusVec.size();
   for (size_t i = 0; i < sz; ++i) {
@@ -1253,7 +1253,6 @@ uint64_t RetrieveJobQueueRow::getNextRetrieveRequestID(rdbms::Conn& conn) {
         SELECT NEXTVAL('RETRIEVE_REQUEST_ID_SEQ') AS RETRIEVE_REQUEST_ID
       )SQL";
   auto stmt = conn.createStmt(sql);
-  stmt.setDbQuerySummary("getNextRetrieveRequestID");
   auto rset = stmt.executeQuery();
   if (!rset.next()) {
     throw exception::Exception("Result set is unexpectedly empty");
@@ -1272,7 +1271,7 @@ uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archi
       ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
   )SQL";
   auto stmt = txn.getConn().createStmt(sqlActive);
-  stmt.setDbQuerySummary("cancelRetrieveJob");
+  stmt.setDbQuerySummary("cancel retrieve job");
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
   stmt.executeNonQuery();
   return stmt.getNbAffectedRows();
