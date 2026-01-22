@@ -201,7 +201,7 @@ struct RepackRequestTrackingRow {
     )SQL";
 
     auto stmt = conn.createStmt(sql);
-    stmt.setDbQuerySummary("insertRepackRequest");
+    stmt.setDbQuerySummary("insert repack request");
     stmt.bindString(":VID", vid);
     stmt.bindString(":BUFFER_URL", bufferUrl);
     stmt.bindString(":STATUS", to_string(status));
@@ -307,7 +307,7 @@ struct RepackRequestTrackingRow {
     )SQL";
 
     auto stmt = conn.createStmt(sql);
-    stmt.setDbQuerySummary("getRepackRequestStatistics");
+    stmt.setDbQuerySummary("get repack request statistics");
     return stmt.executeQuery();
   }
 
@@ -377,7 +377,7 @@ struct RepackRequestTrackingRow {
       ORDER BY trk.REPACK_REQUEST_ID, dst.VID;
     )SQL";
     auto stmt = conn.createStmt(sql);
-    stmt.setDbQuerySummary("selectRepackRows");
+    stmt.setDbQuerySummary("select repack jobs for processing");
     if (vid != "all") {
       stmt.bindString(":VID", vid);
     }
