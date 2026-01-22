@@ -15,7 +15,7 @@
 namespace cta::telemetry::metrics {
 
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> dbClientOperationDuration;
-std::unique_ptr<opentelemetry::metrics::Histogram<int64_t>> dbClientOperationReturnedRows;
+std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> dbClientOperationReturnedRows;
 std::unique_ptr<opentelemetry::metrics::UpDownCounter<int64_t>> dbClientConnectionCount;
 
 }  // namespace cta::telemetry::metrics
