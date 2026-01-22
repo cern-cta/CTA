@@ -50,7 +50,7 @@ static void executeNonQueries(rdbms::Conn& conn, const std::string& sqlStmts) {
  */
 void TemporaryPostgresEnvironment::dropSchema(const std::string& schemaName) {
   if (schemaName.empty() || schemaName == "public" || schemaName == "scheduler") {
-    return;  // Don't drop public schema
+    return;  // Don't drop public or scheduler schema
   }
 
   try {
