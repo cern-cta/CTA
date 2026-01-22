@@ -30,10 +30,12 @@ struct PostgresSchedulerSchema : public SchedulerSchema {
   /**
    * Constructor.
    */
-  PostgresSchedulerSchema(const std::string& username);
+  PostgresSchedulerSchema(const std::string& username, const std::string& schemaname);
 
 private:
-  std::string replaceUsername(const std::string& username);
+  std::string replaceUserAndSchemaName(const std::string& username, const std::string& schemaname);
+  void replaceTokenWithString(std::string& sql, const std::string& token, const std::string& username);
+  void removeAllStatementsContainingToken(std::string& sql, const std::string& token);
 };
 
 }  // namespace cta::schedulerdb

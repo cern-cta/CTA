@@ -13,10 +13,11 @@ namespace cta::schedulerdb {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-PostgresSchedulerSchema::PostgresSchedulerSchema(const std::string& username)
-    : SchedulerSchema(PostgresSchedulerSchema::replaceUsername(username)) {}
+PostgresSchedulerSchema::PostgresSchedulerSchema(const std::string& username, const std::string& schemaname)
+    : SchedulerSchema(PostgresSchedulerSchema::replaceUserAndSchemaName(username, schemaname)) {}
 
-std::string PostgresSchedulerSchema::replaceUsername(const std::string& username) {
+std::string PostgresSchedulerSchema::replaceUserAndSchemaName(const std::string& username,
+                                                              const std::string& schemaname) {
   /* The postgres_scheduler_schema.cpp.in is a file pre-created via CMake
    * as a concatenation of insert_cta_scheduler_version.sql.filled.in
    * and postgres_scheduler_schema.sql. The insert_cta_scheduler_version.sql.filled.in
@@ -25,22 +26,41 @@ std::string PostgresSchedulerSchema::replaceUsername(const std::string& username
    */
   std::string sql = std::string(  // CTA_SQL_SCHEMA - The contents of postgres_scheduler_schema.cpp.in go here
   );
-  // Replace all occurrences of __USERNAME__ with username
-  std::string token = "__USERNAME__";
-  std::ostringstream out;
-
   if (!username.empty()) {
-    std::size_t pos = 0;
-    std::size_t prev = 0;
-    while ((pos = sql.find(token, prev)) != std::string::npos) {
-      out << sql.substr(prev, pos - prev);
-      out << username;
-      prev = pos + token.size();
-    }
-    out << sql.substr(prev);
-    return out.str();
+    // Replace all occurrences of __USERNAME__ with username
+    replaceTokenWithString(sql, "__USERNAME__", username);
+  } else {
+    // No username → remove whole SQL statements containing token
+    removeAllStatementsContainingToken(sql, "__USERNAME__");
   }
-  // No username → remove whole SQL statements containing token
+  // Replace all occurrences of __SCHEDULER_SCHEMA_NAME__ with schemaname
+  if (schemaname.empty() || schemaname == "public") {
+    replaceTokenWithString(sql, "__SCHEDULER_SCHEMA_NAME__", "scheduler");
+  } else {
+    replaceTokenWithString(sql, "__SCHEDULER_SCHEMA_NAME__", schemaname);
+  }
+  return sql;
+}
+
+void PostgresSchedulerSchema::replaceTokenWithString(std::string& sql,
+                                                     const std::string& token,
+                                                     const std::string& value) {
+  // Replace all occurrences of __TOKEN__ with VALUE
+  std::ostringstream out;
+  std::size_t pos = 0;
+  std::size_t prev = 0;
+  while ((pos = sql.find(token, prev)) != std::string::npos) {
+    out << sql.substr(prev, pos - prev);
+    out << value;
+    prev = pos + token.size();
+  }
+  out << sql.substr(prev);
+  sql = out.str();
+}
+
+void PostgresSchedulerSchema::removeAllStatementsContainingToken(std::string& sql, const std::string& token) {
+  // Replace all occurrences of __USERNAME__ with username
+  std::ostringstream out;
   std::size_t pos = 0;
   while (pos < sql.size()) {
     // Find end of current statement
@@ -61,7 +81,7 @@ std::string PostgresSchedulerSchema::replaceUsername(const std::string& username
     pos = stmtEnd;
   }
 
-  return out.str();
+  sql = out.str();
 }
 
 }  // namespace cta::schedulerdb

@@ -49,12 +49,12 @@ static void executeNonQueries(rdbms::Conn& conn, const std::string& sqlStmts) {
  * Drop a schema from the database.
  */
 void TemporaryPostgresEnvironment::dropSchema(const std::string& schemaName) {
-  if (schemaName.empty() || schemaName == "public") {
-    return;  // Don't drop public schema
+  if (schemaName.empty() || schemaName == "public" || schemaName == "scheduler") {
+    return;  // Don't drop public or scheduler schema
   }
 
   try {
-    auto login = getLogin();
+    auto login = getLogin(schemaName);
     rdbms::ConnPool connPool(login, 1);
     auto conn = connPool.getConn();
 
@@ -69,33 +69,11 @@ void TemporaryPostgresEnvironment::dropSchema(const std::string& schemaName) {
   }
 }
 
-/**
- * Create a new schema in the database.
- * Returns the schema name.
- */
-std::string TemporaryPostgresEnvironment::createSchema(const std::string& schemaName) {
-  try {
-    auto login = getLogin();
-    rdbms::ConnPool connPool(login, 1);
-    auto conn = connPool.getConn();
-
-    // Create the schema
-    auto stmt = conn.createStmt("CREATE SCHEMA " + schemaName);
-    stmt.executeNonQuery();
-
-    conn.commit();
-
-    return schemaName;
-  } catch (const std::exception& e) {
-    throw std::runtime_error("Failed to create schema " + schemaName + ": " + e.what());
-  }
-}
-
 TemporaryPostgresEnvironment::TemporaryPostgresEnvironment()
     : m_port(15432),
       m_username("cta_test"),
       m_database("cta_scheduler"),
-      m_namespace("public"),
+      m_namespace("scheduler"),
       m_useShm(false)  // Use /tmp instead of /dev/shm (containers often have small shm)
 {
   // Generate unique temp directory name
@@ -153,16 +131,12 @@ void TemporaryPostgresEnvironment::SetUp() {
     // Create test database
     createTestDatabase();
 
-    // Create CTA scheduler schema
-    createSchedulerSchema();
-
     std::cout << "  Temporary Postgres ready" << std::endl;
     std::cout << "  Host: localhost" << std::endl;
     std::cout << "  Port: " << m_port << std::endl;
     std::cout << "  Database: " << m_database << std::endl;
     std::cout << "  User: " << m_username << std::endl;
     std::cout << "  Storage: " << (m_useShm ? "tmpfs (RAM)" : "disk") << std::endl;
-    std::cout << "  Schema: CTA Scheduler (created)" << std::endl;
     std::cout << "======================================\n" << std::endl;
 
   } catch (const std::exception& e) {
@@ -394,15 +368,15 @@ void TemporaryPostgresEnvironment::cleanup() noexcept {
 /**
   * Create CTA scheduler schema in the test database
   */
-void TemporaryPostgresEnvironment::createSchedulerSchema() {
-  std::cout << "  Creating CTA scheduler schema..." << std::endl;
+void TemporaryPostgresEnvironment::createSchedulerSchema(cta::rdbms::Login& login) {
+  std::cout << "  Creating CTA scheduler schema " << login.dbNamespace << "for user " << login.username << "..."
+            << std::endl;
 
   try {
     // Get the schema SQL
-    PostgresSchedulerSchema schema("");
+    PostgresSchedulerSchema schema(login.username, login.dbNamespace);
 
     // Connect to database and create schema
-    auto login = getLogin();
     rdbms::ConnPool connPool(login, 1);
     auto conn = connPool.getConn();
 
@@ -416,28 +390,6 @@ void TemporaryPostgresEnvironment::createSchedulerSchema() {
   } catch (const std::exception& e) {
     std::cerr << "  Warning: Failed to create schema: " << e.what() << std::endl;
     // Don't throw - let tests handle missing schema
-  }
-}
-
-void TemporaryPostgresEnvironment::createSchedulerSchemaInSchema(const std::string& schemaName) {
-  try {
-    PostgresSchedulerSchema schema("");
-
-    auto login = getLogin(schemaName);
-    rdbms::ConnPool connPool(login, 1);
-    auto conn = connPool.getConn();
-
-    // Set search_path to our schema
-    auto setPathStmt = conn.createStmt("SET search_path TO " + std::string("'") + schemaName + std::string("'"));
-    setPathStmt.executeNonQuery();
-
-    // Execute schema creation SQL
-    executeNonQueries(conn, schema.sql);
-
-    conn.commit();
-
-  } catch (const std::exception& e) {
-    throw std::runtime_error("Failed to create scheduler schema in " + schemaName + ": " + e.what());
   }
 }
 
