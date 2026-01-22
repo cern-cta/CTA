@@ -33,7 +33,7 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
       m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
       m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
-  m_lc.push({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
+  m_lc.push({"user", m_cliIdentity.username});
 
   m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
 }
@@ -345,7 +345,7 @@ void AdminCmd::logAdminCmd(const AdminCmdStatus status, const std::string& reaso
     }  // end switch
   }  // end for
   params.add("adminTime", t.secs());
-  params.add("user", m_cliIdentity.username + "@" + m_cliIdentity.host);
+  params.add("user", m_cliIdentity.username);
   m_lc.log(cta::log::INFO, "Admin command succeeded");
 }
 
