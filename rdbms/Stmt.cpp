@@ -244,6 +244,19 @@ void Stmt::executeNonQuery() {
   try {
     if (nullptr != m_stmt) {
       m_stmt->executeNonQuery();
+      // If the query returns more than 10 rows, we measure the row count
+      // to be able to get row rates from the monitoring
+      uint64_t nrows = m_stmt->getNbAffectedRows();
+      if (nrows > 10) {
+        cta::telemetry::metrics::dbClientOperationReturnedRows->Record(
+          nrows,
+          {
+            {cta::semconv::attr::kDbSystemName,   m_stmt->getDbSystemName()  },
+            {cta::semconv::attr::kDbNamespace,    m_stmt->getDbNamespace()   },
+            {cta::semconv::attr::kDbQuerySummary, m_stmt->getDbQuerySummary()}
+        },
+          opentelemetry::context::RuntimeContext::GetCurrent());
+      }
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
         {
@@ -304,6 +317,5 @@ void Stmt::setDbQuerySummary(const std::string& optQuerySummary) {
 const std::string Stmt::getDbQuerySummary() const {
   return m_stmt->getDbQuerySummary();
 }
-
 
 }  // namespace cta::rdbms
