@@ -286,7 +286,7 @@ public:
      )
     )SQL";
     auto stmt = conn.createStmt(sql);
-    stmt.setDbQuerySummary("insertArchiveJob");
+    stmt.setDbQuerySummary("insert archive job");
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindString(":TAPE_POOL", tapePool);
@@ -548,7 +548,7 @@ VALUES )SQL";
 )SQL";
 
     auto stmt = conn.createStmt(sql);
-    stmt.setDbQuerySummary("insertArchiveJobBatch");
+    stmt.setDbQuerySummary("insert archive job batch");
 
     // Bind values for each row with distinct names
     for (size_t i = 0; i < rows.size(); ++i) {
