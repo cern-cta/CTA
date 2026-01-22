@@ -1785,7 +1785,6 @@ uint64_t RelationalDB::removeDiskSystemSleepEntries(schedulerdb::Transaction& tx
   auto stmt = txn.getConn().createStmt(sql);
   stmt.setDbQuerySummary("disk sleep tracking");
 
-
   // Bind each disk name to its corresponding placeholder
   for (size_t i = 0; i < expiredDiskSystemNames.size(); ++i) {
     stmt.bindString(":DISKNAME" + std::to_string(i), expiredDiskSystemNames[i]);
