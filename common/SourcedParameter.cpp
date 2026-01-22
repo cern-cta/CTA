@@ -92,32 +92,32 @@ void SourcedParameter<std::string>::set(const std::string& value, const std::str
 
 template<>
 void SourcedParameter<time_t>::addLogParamForValue(log::LogContext& lc) {
-  lc.pushOrReplace({"value", m_value});
+  lc.push({"value", m_value});
 }
 
 template<>
 void SourcedParameter<uint16_t>::addLogParamForValue(log::LogContext& lc) {
-  lc.pushOrReplace({"value", m_value});
+  lc.push({"value", m_value});
 }
 
 template<>
 void SourcedParameter<uint32_t>::addLogParamForValue(log::LogContext& lc) {
-  lc.pushOrReplace({"value", m_value});
+  lc.push({"value", m_value});
 }
 
 template<>
 void SourcedParameter<uint64_t>::addLogParamForValue(log::LogContext& lc) {
-  lc.pushOrReplace({"value", m_value});
+  lc.push({"value", m_value});
 }
 
 template<>
 void SourcedParameter<std::string>::addLogParamForValue(log::LogContext& lc) {
-  lc.pushOrReplace({"value", m_value});
+  lc.push({"value", m_value});
 }
 
 template<>
 void SourcedParameter<bool>::addLogParamForValue(log::LogContext& lc) {
-  lc.pushOrReplace({"value", m_value});
+  lc.push({"value", m_value});
 }
 
 }  // namespace cta

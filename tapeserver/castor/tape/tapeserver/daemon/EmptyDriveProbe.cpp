@@ -34,8 +34,8 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() noexcept 
 
   m_probeErrorMsg = std::string("EmptyDriveProbe: ") + errorMessage;
   // Reaching this point means the probe failed and an exception was thrown
-  std::list<cta::log::Param> params = {cta::log::Param("tapeDrive", m_driveConfig.unitName),
-                                       cta::log::Param("exceptionMessage", errorMessage)};
+  std::vector<cta::log::Param> params = {cta::log::Param("tapeDrive", m_driveConfig.unitName),
+                                         cta::log::Param("exceptionMessage", errorMessage)};
   m_log(cta::log::ERR, "Probe failed", params);
   return false;
 }
@@ -51,7 +51,7 @@ std::optional<std::string> castor::tape::tapeserver::daemon::EmptyDriveProbe::ge
 // exceptionThrowingDriveIsEmpty
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::EmptyDriveProbe::exceptionThrowingDriveIsEmpty() {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("tapeDrive", m_driveConfig.unitName);
 
   std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();

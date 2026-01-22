@@ -18,8 +18,8 @@ namespace cta {
 //------------------------------------------------------------------------------
 template<>
 void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext& lc) {
-  lc.pushOrReplace({"maxBytes", m_value.maxBytes});
-  lc.pushOrReplace({"maxFiles", m_value.maxFiles});
+  lc.push({"maxBytes", m_value.maxBytes});
+  lc.push({"maxFiles", m_value.maxFiles});
 }  // namespace cta
 
 //------------------------------------------------------------------------------

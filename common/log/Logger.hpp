@@ -10,8 +10,8 @@
 
 #include <atomic>
 #include <chrono>
-#include <list>
 #include <map>
+#include <vector>
 
 namespace cta::log {
 
@@ -107,8 +107,8 @@ public:
    * @param msg      the message
    * @param params   optional parameters of the message
    */
-  virtual void
-  operator()(int priority, std::string_view msg, const std::list<Param>& params = std::list<Param>()) noexcept;
+  void operator()(int priority, std::string_view msg, const std::vector<Param>& params) noexcept;
+  void operator()(int priority, std::string_view msg, std::vector<Param>&& params = std::vector<Param>()) noexcept;
 
   /**
    * Sets the log mask
@@ -237,6 +237,20 @@ protected:
   virtual void writeMsgToUnderlyingLoggingSystem(std::string_view header, std::string_view body) = 0;
 
   /**
+   * Writes a message into the CTA logging system.
+   *
+   * Exceptions are not thrown in case of failure. Failures are silently ignored in order to not impact the processing.
+   *
+   * It implicitly uses the current time as the time stamp of the message.
+   *
+   * @param priority the priority of the message as defined by the syslog API
+   * @param msg      the message
+   * @param params   parameters of the message, will select last value for each entry
+   */
+  void
+  logInternal(int priority, std::string_view msg, const std::map<std::string, std::vector<Param>>& paramsMap) noexcept;
+
+  /**
    * Generates and returns the mapping between syslog priorities and their textual representations
    */
   static std::map<int, std::string> generatePriorityToTextMap();
@@ -247,6 +261,7 @@ protected:
   static std::map<std::string, int> generateConfigTextToPriorityMap();
 
 private:
+  friend class LogContext;
   /**
    * Timestamp type
    */
@@ -285,8 +300,10 @@ private:
    * @param pid         Process ID of the process logging the message
    * @return            Message body
    */
-  std::string
-  createMsgBody(std::string_view logLevel, std::string_view msg, const std::list<Param>& params, int pid) const;
+  std::string createMsgBody(std::string_view logLevel,
+                            std::string_view msg,
+                            const std::map<std::string, std::vector<Param>>& params,
+                            int pid) const;
 };
 
 }  // namespace cta::log

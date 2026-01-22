@@ -98,7 +98,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
 
   {
     // Log starting message
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("version", CTA_VERSION);
     params.emplace_back("configFilename", configFilename);
     params.emplace_back("logToStdout", std::to_string(logToStdout));
@@ -146,7 +146,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
       cta::log::LogContext lc(log);  // temporary log context
       cta::telemetry::initTelemetry(telemetryConfig, lc);
     } catch (exception::Exception& ex) {
-      std::list<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
+      std::vector<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
       log(log::ERR, "Failed to instantiate OpenTelemetry", params);
       cta::log::LogContext lc(log);
       cta::telemetry::shutdownTelemetry(lc);
@@ -158,7 +158,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
 
   {
     // Log cta.catalogue.missing_file_copies_min_age_secs
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("source", missingFileCopiesMinAgeSecs.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.catalogue");
     params.emplace_back("key", "missingFileCopiesMinAgeSecs");
@@ -177,7 +177,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
 
   {
     // Log catalogue.numberofconnections
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("source", configFilename);
     params.emplace_back("category", "cta.catalogue");
     params.emplace_back("key", "numberofconnections");
@@ -186,7 +186,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
   }
   {
     // Log catalogue number of archive file listing connections
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("source", "Compile time default");
     params.emplace_back("category", "cta.catalogue");
     params.emplace_back("key", "nbArchiveFileListingConns");
@@ -220,7 +220,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
 
   {
     // Log cta.objectstore.backendpath
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("source", configFilename);
     params.emplace_back("category", "cta.objectstore");
     params.emplace_back("key", "backendpath");
@@ -246,7 +246,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
 
   // Log cta.schedulerdb.numberofthreads
   if (osThreadPoolSize.has_value()) {
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("source", configFilename);
     params.emplace_back("category", "cta.schedulerdb");
     params.emplace_back("key", "numberofthreads");
@@ -256,7 +256,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
 
   // Log cta.schedulerdb.threadstacksize_mb
   if (osThreadStackSize.has_value()) {
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("source", configFilename);
     params.emplace_back("category", "cta.schedulerdb");
     params.emplace_back("key", "threadstacksize_mb");
@@ -276,7 +276,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
 
   {
     // Log cta.archivefile.max_size_gb
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("source", archiveFileMaxSize.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.archivefile");
     params.emplace_back("key", "max_size_gb");
@@ -289,7 +289,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
   m_zeroLengthFilesForbidden = zeroLengthFilesForbidden.value_or(true);  // disallow 0-length files by default
   {
     // Log cta.archivefile.zero_length_files_forbidden
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("source", zeroLengthFilesForbidden.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.archivefile");
     params.emplace_back("key", "zero_length_files_forbidden");
@@ -302,7 +302,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
     config.getOptionValueStrVector("cta.archivefile.zero_length_files_forbidden_vo_exception_list");
   {
     // Log cta.archivefile.zero_length_files_forbidden_vo_exception_list
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.push_back(
       log::Param("source", m_zeroLengthFilesForbidden_voExceptions.empty() ? "Compile time default" : configFilename));
     params.emplace_back("category", "cta.archivefile");
@@ -340,7 +340,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
   {
     // Log cta.repack.repack_buffer_url
     if (repackBufferURLConf.has_value()) {
-      std::list<log::Param> params;
+      std::vector<log::Param> params;
       params.emplace_back("source", configFilename);
       params.emplace_back("category", "cta.repack");
       params.emplace_back("key", "repack_buffer_url");
@@ -359,7 +359,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
           "cta.schedulerdb.disable_repack_requests is not set in configuration file, using default value false");
     }
 
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("source", disableRepackRequests.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.schedulerdb");
     params.emplace_back("key", "disable_repack_requests");
@@ -378,7 +378,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
           "cta.schedulerdb.disable_user_requests is not set in configuration file, using default value false");
     }
 
-    std::list<log::Param> params;
+    std::vector<log::Param> params;
     params.emplace_back("source", disableUserRequests.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.schedulerdb");
     params.emplace_back("key", "disable_user_requests");
@@ -393,7 +393,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
     auto tapeCacheMaxAgeSecsConf = config.getOptionValueUInt("cta.schedulerdb.tape_cache_max_age_secs");
     if (tapeCacheMaxAgeSecsConf.has_value()) {
       m_tapeCacheMaxAgeSecs = tapeCacheMaxAgeSecsConf.value();
-      std::list<log::Param> params;
+      std::vector<log::Param> params;
       params.emplace_back("source", configFilename);
       params.emplace_back("category", "cta.schedulerdb");
       params.emplace_back("key", "tape_cache_max_age_secs");
@@ -407,7 +407,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
       config.getOptionValueUInt("cta.schedulerdb.retrieve_queue_cache_max_age_secs");
     if (retrieveQueueCacheMaxAgeSecsConf.has_value()) {
       m_retrieveQueueCacheMaxAgeSecs = retrieveQueueCacheMaxAgeSecsConf.value();
-      std::list<log::Param> params;
+      std::vector<log::Param> params;
       params.emplace_back("source", configFilename);
       params.emplace_back("category", "cta.schedulerdb");
       params.emplace_back("key", "retrieve_queue_cache_max_age_secs");

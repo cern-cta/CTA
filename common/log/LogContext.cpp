@@ -10,42 +10,41 @@
 
 #include <algorithm>
 #include <bfd.h>
-#include <list>
+#include <ranges>
 
 namespace cta::log {
 
 LogContext::LogContext(Logger& logger) noexcept : m_log(logger) {}
 
-void LogContext::pushOrReplace(const Param& param) noexcept {
-  auto i = std::ranges::find_if(m_params, [&param](const Param& p) { return p.getName() == param.getName(); });
-  if (i != m_params.end()) {
-    i->setValue(param.getValueVariant());
-  } else {
-    m_params.push_back(param);
-  }
+void LogContext::push(const Param& param) noexcept {
+  m_paramsMap[param.getName()].push_back(param);
 }
 
-void LogContext::moveToTheEndIfPresent(const std::string& paramName) noexcept {
-  auto i = std::ranges::find_if(m_params, [&paramName](const Param& p) { return p.getName() == paramName; });
-  if (i != m_params.end()) {
-    const Param param(paramName, i->getValueVariant());
-    m_params.erase(i);
-    m_params.push_back(param);
+void LogContext::push(Param&& param) noexcept {
+  m_paramsMap[param.getName()].push_back(std::move(param));
+}
+
+void LogContext::pop(const std::string& paramName) noexcept {
+  if (auto it = m_paramsMap.find(paramName); it != m_paramsMap.end()) {
+    it->second.pop_back();
+    if (it->second.empty()) {
+      m_paramsMap.erase(it);
+    }
   }
 }
 
 void LogContext::erase(const std::set<std::string>& paramNamesSet) noexcept {
-  auto toEraseRange =
-    std::ranges::remove_if(m_params, [&paramNamesSet](const Param& p) { return paramNamesSet.contains(p.getName()); });
-  m_params.erase(toEraseRange.begin(), toEraseRange.end());
+  for (const auto& paramName : paramNamesSet) {
+    m_paramsMap.erase(paramName);
+  }
 }
 
 void LogContext::clear() {
-  m_params.clear();
+  m_paramsMap.clear();
 }
 
 void LogContext::log(int priority, std::string_view msg) noexcept {
-  m_log(priority, msg, m_params);
+  m_log.logInternal(priority, msg, m_paramsMap);
 }
 
 void LogContext::logBacktrace(const int priority, std::string_view backtrace) noexcept {
@@ -82,22 +81,28 @@ void LogContext::logBacktrace(const int priority, std::string_view backtrace) no
 LogContext::ScopedParam::ScopedParam(LogContext& context, const Param& param) noexcept
     : m_context(context),
       m_name(param.getName()) {
-  m_context.pushOrReplace(param);
+  m_context.push(param);
+}
+
+LogContext::ScopedParam::ScopedParam(LogContext& context, Param&& param) noexcept
+    : m_context(context),
+      m_name(param.getName()) {
+  m_context.push(std::move(param));
 }
 
 LogContext::ScopedParam::~ScopedParam() noexcept {
-  m_context.erase({m_name});
+  m_context.pop(m_name);
 }
 
 std::ostream& operator<<(std::ostream& os, const LogContext& lc) {
   bool first = true;
-  for (std::list<Param>::const_iterator p = lc.m_params.begin(); p != lc.m_params.end(); ++p) {
+  for (auto& p : lc.m_paramsMap | std::views::values) {
     if (!first) {
       os << " ";
     } else {
       first = false;
     }
-    os << p->getName() << "=" << p->getValueStr();
+    os << p.back().getName() << "=" << p.back().getValueStr();
   }
   return os;
 }

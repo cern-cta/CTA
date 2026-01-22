@@ -9,6 +9,7 @@
 
 #include <ostream>
 #include <set>
+#include <vector>
 
 namespace cta::log {
 
@@ -40,22 +41,23 @@ public:
   Logger& logger() const noexcept { return m_log; }
 
   /**
-   * Add a parameter to the container. Replaces any parameter going by the same
-   * name. Does not throw exceptions (fails silently).
+   * Pushes a parameter to the container.
+   * Will stack over previous parameters with the same name.
+   * Does not throw exceptions (fails silently).
    * @param param
    */
-  void pushOrReplace(const Param& param) noexcept;
+  void push(const Param& param) noexcept;
+  void push(Param&& param) noexcept;
 
   /**
-   * Move a parameter with a given name to the end of the container it it
-   * present.
-   *
-   * @param paramName  The name of the parameter to check and move.
-   */
-  void moveToTheEndIfPresent(const std::string& paramName) noexcept;
+    * Pops a parameter from the container, exposing any previous parameters with the same name.
+    * Does not throw exceptions (fails silently).
+    * @param paramName
+    */
+  void pop(const std::string& paramName) noexcept;
 
   /**
-   * Removes a parameter from the list.
+   * Erases all parameters with a name from the list.
    * @param paramNamesSet set of values of param.getName();
    */
   void erase(const std::set<std::string>& paramNamesSet) noexcept;
@@ -93,7 +95,7 @@ public:
    * Small introspection function to help in tests
    * @return size
    */
-  size_t size() const { return m_params.size(); }
+  size_t size() const { return m_paramsMap.size(); }
 
   /**
    * Scoped parameter addition to the context. Constructor adds the parameter,
@@ -102,6 +104,7 @@ public:
   class ScopedParam {
   public:
     ScopedParam(LogContext& context, const Param& param) noexcept;
+    ScopedParam(LogContext& context, Param&& param) noexcept;
     ~ScopedParam() noexcept;
 
   private:
@@ -111,19 +114,24 @@ public:
 
 private:
   Logger& m_log;
-  std::list<Param> m_params;
+  std::map<std::string, std::vector<Param>> m_paramsMap;
 };  // class LogContext
 
 class ScopedParamContainer {
 public:
   explicit ScopedParamContainer(LogContext& context) : m_context(context) {}
 
-  ~ScopedParamContainer() { m_context.erase(m_names); }
+  ~ScopedParamContainer() {
+    for (auto& name : m_names) {
+      m_context.pop(name);
+    }
+  }
 
-  template<class T>
-  ScopedParamContainer& add(const std::string& s, const T& t) {
-    m_context.pushOrReplace(Param(s, t));
-    m_names.insert(s);
+  template<typename S, typename T>
+    requires std::constructible_from<std::string, S&&>
+  ScopedParamContainer& add(S&& s, T&& t) {
+    m_names.emplace(s);
+    m_context.push(Param(std::forward<S>(s), std::forward<T>(t)));
     return *this;
   }
 
