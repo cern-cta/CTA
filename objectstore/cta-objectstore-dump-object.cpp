@@ -67,7 +67,7 @@ int main(int argc, char** argv) {
 
   if (nbArgs != 1 && nbArgs != 2) {
     print_help(argv[0]);
-    std::cout << "Wrong number of positional arguments: expected 1 or 2: [objectstoreURL] objectname" << std::endl;
+    std::cerr << "Wrong number of positional arguments: expected 1 or 2: [objectstoreURL] objectname" << std::endl;
     ::exit(EXIT_FAILURE);
   }
 
