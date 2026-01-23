@@ -4,91 +4,66 @@ SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $allRoutines := .Values.routines -}}
+{{- range $routineName, $routineConf := $allRoutines }}
+{{- $routineNameSlug := include "common.slugify" $routineName }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cta-maintd-conf
+  name: cta-maintd-{{ $routineNameSlug }}-conf
   labels:
-    {{-  include "common.labels.standard" . | nindent 4 }}
+    {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
   cta-maintd.conf: |-
     # General
     cta.instance_name {{ $.Release.Namespace }}
     cta.scheduler_backend_name {{ $schedulerConfig.backend }}
-    cta.daemon_user {{ .Values.conf.general.user }}
-    cta.daemon_group {{ .Values.conf.general.group }}
+    cta.daemon_user cta
+    cta.daemon_group tape
 
-    cta.log.level {{ .Values.conf.log.level }}
-    cta.log.format {{ .Values.conf.log.format }}
+    cta.log.level {{ $.Values.conf.logLevel }}
+    cta.log.format json
 
-    cta.catalogue.config_file {{ .Values.conf.maintd.catalogueConfigPath }}
+    cta.catalogue.config_file /etc/cta/cta-catalogue.conf
     cta.objectstore.backendpath {{ include "global.schedulerUrl" $ }}
 
-    cta.schedulerdb.tape_cache_max_age_secs {{ .Values.conf.maintd.tapeCacheMaxAgeSecs }}
-    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.conf.maintd.retrieveQueueCacheMaxAgeSecs }}
+    cta.schedulerdb.tape_cache_max_age_secs {{ $.Values.conf.tapeCacheMaxAgeSecs }}
+    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ $.Values.conf.retrieveQueueCacheMaxAgeSecs }}
 
-    cta.routines.sleep_interval {{ .Values.conf.routines.sleep_interval }}
+    cta.routines.sleep_interval {{ $routineConf.sleepInterval }}
 
-    cta.routines.disk_report_archive.enabled {{ .Values.conf.routines.disk_report_archive.enabled }}
-    cta.routines.disk_report_archive.batch_size {{ .Values.conf.routines.disk_report_archive.batchSize  }}
-    cta.routines.disk_report_archive.soft_timeout {{ .Values.conf.routines.disk_report_archive.softTimeout }}
+    {{- /* First enable only the routine in the outer loop */}}
+    {{- range $name, $_ := $allRoutines }}
+    cta.routines.{{ include "common.toSnakeCase" $name }}.enabled {{ ternary "true" "false" (eq $name $routineName) }}
+    {{- end }}
 
-    cta.routines.disk_report_retrieve.enabled {{ .Values.conf.routines.disk_report_retrieve.enabled }}
-    cta.routines.disk_report_retrieve.batch_size {{ .Values.conf.routines.disk_report_retrieve.batchSize  }}
-    cta.routines.disk_report_retrieve.soft_timeout {{ .Values.conf.routines.disk_report_retrieve.softTimeout }}
-
-    cta.routines.garbage_collect.enabled {{ .Values.conf.routines.garbage_collect.enabled }}
-
-    cta.routines.queue_cleanup.enabled {{ .Values.conf.routines.queue_cleanup.enabled }}
-    cta.routines.queue_cleanup.batch_size {{ .Values.conf.routines.queue_cleanup.batchSize }}
-  
-    cta.routines.user_active_queue_cleanup.enabled {{ .Values.conf.routines.user_active_queue_cleanup.enabled }}
-    cta.routines.user_active_queue_cleanup.batch_size {{ .Values.conf.routines.user_active_queue_cleanup.batchSize }}
-    cta.routines.user_active_queue_cleanup.age_for_collection {{ .Values.conf.routines.user_active_queue_cleanup.ageForCollection }}
-
-    cta.routines.repack_active_queue_cleanup.enabled {{ .Values.conf.routines.repack_active_queue_cleanup.enabled }}
-    cta.routines.repack_active_queue_cleanup.batch_size {{ .Values.conf.routines.repack_active_queue_cleanup.batchSize }}
-    cta.routines.repack_active_queue_cleanup.age_for_collection {{ .Values.conf.routines.repack_active_queue_cleanup.ageForCollection }}
-
-    cta.routines.user_pending_queue_cleanup.enabled {{ .Values.conf.routines.user_pending_queue_cleanup.enabled }}
-    cta.routines.user_pending_queue_cleanup.batch_size {{ .Values.conf.routines.user_pending_queue_cleanup.batchSize }}
-    cta.routines.user_pending_queue_cleanup.age_for_collection {{ .Values.conf.routines.user_pending_queue_cleanup.ageForCollection }}
-    
-    cta.routines.repack_pending_queue_cleanup.enabled {{ .Values.conf.routines.repack_pending_queue_cleanup.enabled }}
-    cta.routines.repack_pending_queue_cleanup.batch_size {{ .Values.conf.routines.repack_pending_queue_cleanup.batchSize }}
-    cta.routines.repack_pending_queue_cleanup.age_for_collection {{ .Values.conf.routines.repack_pending_queue_cleanup.ageForCollection }}
-
-    cta.routines.scheduler_maintenance_cleanup.enabled {{ .Values.conf.routines.scheduler_maintenance_cleanup.enabled }}
-    cta.routines.scheduler_maintenance_cleanup.batch_size {{ .Values.conf.routines.scheduler_maintenance_cleanup.batchSize }}
-    cta.routines.scheduler_maintenance_cleanup.age_for_deletion {{ .Values.conf.routines.scheduler_maintenance_cleanup.ageForDeletion }}
-    
-    cta.routines.repack_expand.enabled {{ .Values.conf.routines.repack_expand.enabled }}
-    cta.routines.repack_expand.max_to_toexpand {{ .Values.conf.routines.repack_expand.maxToToExpand }}
-
-    cta.routines.repack_report.enabled {{ .Values.conf.routines.repack_report.enabled }}
-    cta.routines.repack_report.soft_timeout {{ .Values.conf.routines.repack_report.softTimeout }}
+    {{- /* Next set all routine-specific config fields (minus the replicas field) */}}
+    {{- range $k, $v := (omit $routineConf "replicas") }}
+    cta.routines.{{ include "common.toSnakeCase" $routineName }}.{{ include "common.toSnakeCase" $k }} {{ $v }}
+    {{- end }}
 
     # Telemetry
-    cta.experimental.telemetry.enabled {{ .Values.conf.telemetry.enabled }}
+    cta.experimental.telemetry.enabled {{ $.Values.telemetry.enabled }}
 
-    cta.telemetry.retain_instance_id_on_restart {{ .Values.conf.telemetry.retainInstanceIdOnRestart }}
-    cta.telemetry.metrics.backend {{ .Values.conf.telemetry.metrics.backend }}
-    {{- if .Values.conf.telemetry.metrics.exportInterval }}
-    cta.telemetry.metrics.export.interval {{ .Values.conf.telemetry.metrics.exportInterval }}
+    cta.telemetry.retain_instance_id_on_restart {{ $.Values.telemetry.retainInstanceIdOnRestart }}
+    cta.telemetry.metrics.backend {{ $.Values.telemetry.metrics.backend }}
+    {{- if $.Values.telemetry.metrics.exportInterval }}
+    cta.telemetry.metrics.export.interval {{ $.Values.telemetry.metrics.exportInterval }}
     {{- end }}
-    {{- if .Values.conf.telemetry.metrics.exportTimeout }}
-    cta.telemetry.metrics.export.timeout {{ .Values.conf.telemetry.metrics.exportTimeout }}
+    {{- if $.Values.telemetry.metrics.exportTimeout }}
+    cta.telemetry.metrics.export.timeout {{ $.Values.telemetry.metrics.exportTimeout }}
     {{- end }}
-    {{- if .Values.conf.telemetry.metrics.otlp.endpoint }}
-    cta.telemetry.metrics.otlp.endpoint {{ .Values.conf.telemetry.metrics.otlp.endpoint }}
+    {{- if $.Values.telemetry.metrics.otlp.endpoint }}
+    cta.telemetry.metrics.otlp.endpoint {{ $.Values.telemetry.metrics.otlp.endpoint }}
     {{- end }}
-    {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.username }}
-    cta.telemetry.metrics.otlp.auth.basic.username {{ .Values.conf.telemetry.metrics.otlp.auth.basic.username }}
+    {{- if $.Values.telemetry.metrics.otlp.auth.basic.username }}
+    cta.telemetry.metrics.otlp.auth.basic.username {{ $.Values.telemetry.metrics.otlp.auth.basic.username }}
     {{- end }}
-    {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+    {{- if $.Values.telemetry.metrics.otlp.auth.basic.passwordSecret }}
     cta.telemetry.metrics.otlp.auth.basic.password_file /etc/cta/otlp-basic-auth-pwd.conf
     {{- end }}
-    {{- if .Values.conf.telemetry.metrics.file.endpoint }}
-    cta.telemetry.metrics.file.endpoint {{ .Values.conf.telemetry.metrics.file.endpoint }}
+    {{- if $.Values.telemetry.metrics.file.endpoint }}
+    cta.telemetry.metrics.file.endpoint {{ $.Values.telemetry.metrics.file.endpoint }}
     {{- end }}
-
+---
+{{- end }}
