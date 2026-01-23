@@ -369,6 +369,11 @@ create_instance() {
   if [[ "$publish_telemetry" == "true" ]]; then
     extra_cta_chart_flags+="--values presets/ci-cta-telemetry-http-values.yaml"
   fi
+  # This is a bit hacky, but will be removed when either the objectstore is gone or when I get around to cleaning up all the values files (hopefully soon TM)
+  if grep -q "postgres" "$scheduler_config"; then
+    extra_cta_chart_flags+="dev-cta-maintd-postgres-values.yaml"
+
+  fi
   if [ "$extra_cta_values" ]; then
     extra_cta_chart_flags+=" ${extra_cta_values} "
   fi
