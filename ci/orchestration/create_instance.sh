@@ -371,7 +371,7 @@ create_instance() {
   fi
   # This is a bit hacky, but will be removed when either the objectstore is gone or when I get around to cleaning up all the values files (hopefully soon TM)
   if grep -q "postgres" "$scheduler_config"; then
-    extra_cta_chart_flags+="dev-cta-maintd-postgres-values.yaml"
+    extra_cta_chart_flags+="--values presets/dev-cta-maintd-postgres-values.yaml"
 
   fi
   if [ "$extra_cta_values" ]; then
