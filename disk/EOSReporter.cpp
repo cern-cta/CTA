@@ -26,7 +26,7 @@ void EOSReporter::asyncReport() {
 //------------------------------------------------------------------------------
 //EOSReporter::AsyncQueryHandler::HandleResponse
 //------------------------------------------------------------------------------
-void EOSReporter::(XrdCl::XRootDStatus* status, XrdCl::AnyObject* response) {
+void EOSReporter::HandleResponse(XrdCl::XRootDStatus* status, XrdCl::AnyObject* response) {
   auto statusPtr = std::unique_ptr<XrdCl::XRootDStatus>(status);
   auto responsePtr = std::unique_ptr<XrdCl::AnyObject>(response);
   try {
