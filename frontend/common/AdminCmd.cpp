@@ -32,7 +32,9 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_repackBufferURL(frontendService.getRepackBufferURL()),
       m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
       m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
-      m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
+      m_schedulerBackendName(m_scheduler.getSchedulerBackendName()),
+      m_acceptUserRequests(frontendService.getUserRequestsAllowed()),
+      m_acceptRepackRequests(frontendService.getRepackRequestsAllowed()) {
   m_lc.push({"user", m_cliIdentity.username});
 
   m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
@@ -1169,6 +1171,33 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
     m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());
   }
   if (state.has_value()) {
+    if (!m_acceptUserRequests || !m_acceptRepackRequests) {
+      // We need to validate if we can modify the state of this tape
+      auto tapeToVid = m_catalogue.Tape()->getTapesByVid(vid);
+      if (!tapeToVid.contains(vid)) {
+        throw cta::exception::UserError("The VID " + vid + " does not exist");
+      }
+      auto tapeState = tapeToVid[vid].state;
+      using Tape = common::dataStructures::Tape;
+      if (!m_acceptUserRequests && (tapeState == Tape::State::ACTIVE || tapeState == Tape::State::DISABLED)) {
+        std::ostringstream oss;
+        oss << "Unable to modify state of VID " << vid << ": ";
+        oss << "Disabled user requests forbids changing tapes currently in ";
+        oss << Tape::stateToString(Tape::State::ACTIVE) + " or " + Tape::stateToString(Tape::State::DISABLED)
+            << " state";
+        throw cta::exception::UserError(oss.str());
+      }
+      if (!m_acceptRepackRequests
+          && (tapeState == Tape::State::REPACKING || tapeState == Tape::State::REPACKING_DISABLED)) {
+        std::ostringstream oss;
+        oss << "Unable to modify state of VID " << vid << ": ";
+        oss << "Disabled repack requests forbids changing tapes currently in ";
+        oss << Tape::stateToString(Tape::State::REPACKING) + " or "
+                 + Tape::stateToString(Tape::State::REPACKING_DISABLED)
+            << " state";
+        throw cta::exception::UserError(oss.str());
+      }
+    }
     auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value(), true);
     m_scheduler.triggerTapeStateChange(m_cliIdentity, vid, stateEnumValue, stateReason, m_lc);
   }
