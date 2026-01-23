@@ -29,6 +29,10 @@ public:
 
   void reload();
 
+  bool isLive();
+
+  bool isReady();
+
 private:
   cta::common::Config& m_config;
   cta::log::LogContext& m_lc;

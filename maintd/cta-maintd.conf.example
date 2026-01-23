@@ -115,6 +115,15 @@ cta.routines.scheduler_maintenance_cleanup.enabled true
 cta.routines.scheduler_maintenance_cleanup.batch_size 1000
 cta.routines.scheduler_maintenance_cleanup.age_for_deletion 1209600
 
+
+#
+# Health endpoints. Spins up a local http server with /health/ready and /health/live endpoints
+#
+
+cta.health_server.enabled false
+cta.health_server.port 8080
+
+
 ####################################
 # Telemetry
 ####################################

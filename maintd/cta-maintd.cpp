@@ -9,6 +9,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/process/health/HealthServer.hpp"
 #include "common/process/signals/SignalReactor.hpp"
 #include "common/process/signals/SignalReactorBuilder.hpp"
 #include "common/process/threading/System.hpp"
@@ -119,6 +120,18 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
 
   // Telemetry spawns some threads, so the SignalReactor must have started before this to correctly block signals
   initTelemetry(config, lc);
+
+  common::HealthServer healthServer = common::HealthServer(
+    lc,
+    config.getOptionValueInt("cta.health_server.port").value_or(8080),
+    [&maintenanceDaemon]() { return maintenanceDaemon.isReady(); },
+    [&maintenanceDaemon]() { return maintenanceDaemon.isLive(); });
+
+  if (config.getOptionValueBool("cta.health_server.enabled").value_or(false)) {
+    // We only start it if it's enabled. We explicitly construct the object outside the scope of this if statement
+    // Otherwise, healthServer will go out of scope and be destructed immediately
+    healthServer.start();
+  }
 
   // Run the maintenance daemon
   maintenanceDaemon.run();

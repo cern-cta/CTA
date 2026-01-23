@@ -98,6 +98,7 @@ set (COMMON_LIB_SRC_FILES
   process/signals/SignalReactor.cpp
   process/signals/SignalReactorBuilder.cpp
   process/signals/SignalUtils.cpp
+  process/health/HealthServer.cpp
   process/ProcessCap.cpp
   process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp

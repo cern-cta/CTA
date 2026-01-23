@@ -67,4 +67,27 @@ void MaintenanceDaemon::reload() {
   m_routineRunner->stop();
 }
 
+/**
+ * The maintenance daemon is considered ready when:
+ * - a routine runner is running
+ * - the catalogue is reachable (not implemented yet)
+ * - the scheduler is reachable (not implemented yet)
+ */
+bool MaintenanceDaemon::isReady() {
+  return m_routineRunner && m_routineRunner->isRunning();
+}
+
+/**
+ * The maintenance daemon is considered alive when:
+ * - a routine has executed in the last 2 minutes
+ */
+bool MaintenanceDaemon::isLive() {
+  // Not having a routine runner does not mean the process is not alive
+  if (!m_routineRunner) {
+    return true;
+  }
+  // TODO: do we want to make this configurable?
+  return m_routineRunner->didRecentlyFinishRoutine(120);
+}
+
 }  // namespace cta::maintd

@@ -63,5 +63,10 @@ data:
     {{- if $.Values.telemetry.metrics.file.endpoint }}
     cta.telemetry.metrics.file.endpoint {{ $.Values.telemetry.metrics.file.endpoint }}
     {{- end }}
+
+    cta.health_server.enabled true
+    cta.health_server.port 8080
+
 ---
 {{- end }}
+
