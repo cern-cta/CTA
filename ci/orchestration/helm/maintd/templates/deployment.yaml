@@ -15,6 +15,7 @@ metadata:
   namespace: {{ $.Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" $ | nindent 4 }}
+automountServiceAccountToken: false
 spec:
   replicas: {{ $routineConf.replicas }}
   selector:
