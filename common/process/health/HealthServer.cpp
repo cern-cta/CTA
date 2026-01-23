@@ -11,10 +11,12 @@ namespace cta::common {
 // constructor
 //------------------------------------------------------------------------------
 HealthServer::HealthServer(cta::log::LogContext& lc,
+                           const std::string& host,
                            int port,
                            const std::function<bool()>& readinessFunc,
                            const std::function<bool()>& livenessFunc)
     : m_lc(lc),
+      m_host(host),
       m_port(port),
       m_readinessFunc(readinessFunc),
       m_livenessFunc(livenessFunc) {}
@@ -31,7 +33,7 @@ HealthServer::~HealthServer() {
 // HealthServer::start
 //------------------------------------------------------------------------------
 void HealthServer::start() {
-  m_thread = std::jthread(&HealthServer::run, this);
+  m_thread = std::jthread([this](std::stop_token st) { run(st); });
 }
 
 //------------------------------------------------------------------------------
@@ -40,14 +42,8 @@ void HealthServer::start() {
 void HealthServer::stop() noexcept {
   m_lc.log(log::INFO, "In HealthServer::stop(): stopping health server");
   if (m_thread.joinable()) {
+    m_thread.request_stop();
     m_server.stop();
-    try {
-      m_thread.join();
-    } catch (std::system_error& e) {
-      log::ScopedParamContainer params(m_lc);
-      params.add("exceptionMessage", e.what());
-      m_lc.log(log::ERR, "In HealthServer::stop(): failed to join thread");
-    }
   }
   m_lc.log(log::INFO, "In HealthServer::stop(): health server stopped");
 }
@@ -55,7 +51,7 @@ void HealthServer::stop() noexcept {
 //------------------------------------------------------------------------------
 // HealthServer::run
 //------------------------------------------------------------------------------
-void HealthServer::run() {
+void HealthServer::run(std::stop_token st) {
   try {
     m_server.Get("/health/ready", [readinessFunc = m_readinessFunc](const httplib::Request&, httplib::Response& res) {
       if (readinessFunc()) {
@@ -76,9 +72,13 @@ void HealthServer::run() {
         res.set_content("not live\n", "text/plain");
       }
     });
-
+    // Don't start listening if stop was requested before we could even start
+    if (st.stop_requested()) {
+      return;
+    }
     m_lc.log(log::INFO, "In HealthServer::run(): starting health server");
-    m_server.listen("0.0.0.0", m_port);
+    // 127.0.0.1 ensures we only accept connections coming from localhost
+    m_server.listen(m_host, m_port);
   } catch (std::exception& ex) {
     log::ScopedParamContainer exParams(m_lc);
     exParams.add("exceptionMessage", ex.what());

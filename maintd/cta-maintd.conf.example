@@ -120,8 +120,15 @@ cta.routines.scheduler_maintenance_cleanup.age_for_deletion 1209600
 # Health endpoints. Spins up a local http server with /health/ready and /health/live endpoints
 #
 
+# Whether to enable the health server or not
 cta.health_server.enabled false
+# Where to accept connections from. By default accept only from localhost (127.0.0.1)
+# Set to 0.0.0.0 to accept connections from anywhere
+cta.health_server.host 127.0.0.1
+# What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port
 cta.health_server.port 8080
+# If the number of seconds since the last routine finished executing exceeds this value, the process is no longer considered alive.
+cta.health_server.liveness_window 120
 
 
 ####################################

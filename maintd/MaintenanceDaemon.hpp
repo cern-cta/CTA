@@ -37,6 +37,7 @@ private:
   cta::common::Config& m_config;
   cta::log::LogContext& m_lc;
   std::unique_ptr<RoutineRunner> m_routineRunner;
+  int64_t m_livenessWindow;
 
   std::atomic<bool> m_stopRequested;
 };

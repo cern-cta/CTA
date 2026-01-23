@@ -16,7 +16,9 @@ namespace cta::maintd {
 //------------------------------------------------------------------------------
 MaintenanceDaemon::MaintenanceDaemon(cta::common::Config& config, cta::log::LogContext& lc)
     : m_config(config),
-      m_lc(lc) {}
+      m_lc(lc) {
+  m_livenessWindow = m_config.getOptionValueInt("cta.health_server.liveness_window").value_or(120);
+}
 
 void MaintenanceDaemon::stop() {
   if (!m_routineRunner) {
@@ -86,8 +88,7 @@ bool MaintenanceDaemon::isLive() {
   if (!m_routineRunner) {
     return true;
   }
-  // TODO: do we want to make this configurable?
-  return m_routineRunner->didRecentlyFinishRoutine(120);
+  return m_routineRunner->didRecentlyFinishRoutine(m_livenessWindow);
 }
 
 }  // namespace cta::maintd

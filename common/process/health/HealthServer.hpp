@@ -20,6 +20,7 @@ namespace cta::common {
 class HealthServer {
 public:
   HealthServer(cta::log::LogContext& lc,
+               const std::string& host,
                int port,
                const std::function<bool()>& readinessFunc,
                const std::function<bool()>& livenessFunc);
@@ -34,7 +35,7 @@ public:
   /**
    * Starts a lightweight HTTP server that listens to /health/readiness and /health/liveness endpoints
    */
-  void run();
+  void run(std::stop_token st);
 
   /**
    * Stop the HealthServer
@@ -47,6 +48,7 @@ private:
   std::jthread m_thread;
 
   httplib::Server m_server;
+  std::string m_host;
   int m_port;
   std::function<bool()> m_readinessFunc;
   std::function<bool()> m_livenessFunc;

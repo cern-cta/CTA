@@ -123,6 +123,7 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
 
   common::HealthServer healthServer = common::HealthServer(
     lc,
+    config.getOptionValueStr("cta.health_server.host").value_or("127.0.0.1"),
     config.getOptionValueInt("cta.health_server.port").value_or(8080),
     [&maintenanceDaemon]() { return maintenanceDaemon.isReady(); },
     [&maintenanceDaemon]() { return maintenanceDaemon.isLive(); });
