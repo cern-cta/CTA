@@ -57,8 +57,7 @@ void HealthServer::stop() noexcept {
 //------------------------------------------------------------------------------
 void HealthServer::run() {
   try {
-    auto readinessFunc = m_readinessFunc;
-    m_server.Get("/health/ready", [readinessFunc](const httplib::Request&, httplib::Response& res) {
+    m_server.Get("/health/ready", [readinessFunc = m_readinessFunc](const httplib::Request&, httplib::Response& res) {
       if (readinessFunc()) {
         res.status = 200;
         res.set_content("ok\n", "text/plain");
@@ -68,8 +67,7 @@ void HealthServer::run() {
       }
     });
 
-    auto livenessFunc = m_livenessFunc;
-    m_server.Get("/health/live", [livenessFunc](const httplib::Request&, httplib::Response& res) {
+    m_server.Get("/health/live", [livenessFunc = m_livenessFunc](const httplib::Request&, httplib::Response& res) {
       if (livenessFunc()) {
         res.status = 200;
         res.set_content("ok\n", "text/plain");
