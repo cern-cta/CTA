@@ -41,7 +41,27 @@ data:
 
     cta.routines.queue_cleanup.enabled {{ .Values.conf.routines.queue_cleanup.enabled }}
     cta.routines.queue_cleanup.batch_size {{ .Values.conf.routines.queue_cleanup.batchSize }}
+  
+    cta.routines.user_active_queue_cleanup.enabled {{ .Values.conf.routines.user_active_queue_cleanup.enabled }}
+    cta.routines.user_active_queue_cleanup.batch_size {{ .Values.conf.routines.user_active_queue_cleanup.batchSize }}
+    cta.routines.user_active_queue_cleanup.age_for_collection {{ .Values.conf.routines.user_active_queue_cleanup.ageForCollection }}
 
+    cta.routines.repack_active_queue_cleanup.enabled {{ .Values.conf.routines.repack_active_queue_cleanup.enabled }}
+    cta.routines.repack_active_queue_cleanup.batch_size {{ .Values.conf.routines.repack_active_queue_cleanup.batchSize }}
+    cta.routines.repack_active_queue_cleanup.age_for_collection {{ .Values.conf.routines.repack_active_queue_cleanup.ageForCollection }}
+
+    cta.routines.user_pending_queue_cleanup.enabled {{ .Values.conf.routines.user_pending_queue_cleanup.enabled }}
+    cta.routines.user_pending_queue_cleanup.batch_size {{ .Values.conf.routines.user_pending_queue_cleanup.batchSize }}
+    cta.routines.user_pending_queue_cleanup.age_for_collection {{ .Values.conf.routines.user_pending_queue_cleanup.ageForCollection }}
+    
+    cta.routines.repack_pending_queue_cleanup.enabled {{ .Values.conf.routines.repack_pending_queue_cleanup.enabled }}
+    cta.routines.repack_pending_queue_cleanup.batch_size {{ .Values.conf.routines.repack_pending_queue_cleanup.batchSize }}
+    cta.routines.repack_pending_queue_cleanup.age_for_collection {{ .Values.conf.routines.repack_pending_queue_cleanup.ageForCollection }}
+
+    cta.routines.scheduler_maintenance_cleanup.enabled {{ .Values.conf.routines.scheduler_maintenance_cleanup.enabled }}
+    cta.routines.scheduler_maintenance_cleanup.batch_size {{ .Values.conf.routines.scheduler_maintenance_cleanup.batchSize }}
+    cta.routines.scheduler_maintenance_cleanup.age_for_deletion {{ .Values.conf.routines.scheduler_maintenance_cleanup.ageForDeletion }}
+    
     cta.routines.repack_expand.enabled {{ .Values.conf.routines.repack_expand.enabled }}
     cta.routines.repack_expand.max_to_toexpand {{ .Values.conf.routines.repack_expand.maxToToExpand }}
 
