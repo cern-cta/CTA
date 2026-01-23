@@ -111,14 +111,13 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack);
     txn.commit();
     if (nmountrows < 1) {
-      lc.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(): did not update any row.");
+      lc.log(cta::log::WARNING,
+             "In postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(): did not update any row.");
     }
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(
-      cta::log::WARNING,
-      "In postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(): failed to update table.");
+    lc.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(): failed to update table.");
     txn.abort();
   }
   return ret;
