@@ -1271,13 +1271,8 @@ void AdminCmd::processTapePool_Add(xrd::Response& response) {
   auto& vo = getRequired(OptionString::VO);
   auto& ptn = getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
   auto& comment = getRequired(OptionString::COMMENT);
-  auto encrypted = getOptional(OptionBoolean::ENCRYPTED);
   auto encryptionKeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
   auto supply = getOptional(OptionString::SUPPLY);
-
-  if (encrypted) {
-    throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
-  }
 
   std::vector<std::string> supply_list;
   if (supply.has_value()) {
@@ -1299,13 +1294,9 @@ void AdminCmd::processTapePool_Ch(xrd::Response& response) {
   auto vo = getOptional(OptionString::VO);
   auto ptn = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
   auto comment = getOptional(OptionString::COMMENT);
-  auto encrypted = getOptional(OptionBoolean::ENCRYPTED);
   auto encryptionKeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
   auto supply = getOptional(OptionString::SUPPLY);
 
-  if (encrypted.has_value()) {
-    throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
-  }
   if (comment.has_value()) {
     m_catalogue.TapePool()->modifyTapePoolComment(m_cliIdentity, name, comment.value());
   }
