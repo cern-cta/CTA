@@ -46,9 +46,9 @@ data:
     cta.routines.user_active_queue_cleanup.batch_size {{ .Values.conf.routines.user_active_queue_cleanup.batchSize }}
     cta.routines.user_active_queue_cleanup.age_for_collection {{ .Values.conf.routines.user_active_queue_cleanup.ageForCollection }}
 
-    cta.routines.repack_active_queue_cleanup.enabled {{ .Values.conf.routines.repackActiveQueueCleanup.enabled }}
-    cta.routines.repack_active_queue_cleanup.batch_size {{ .Values.conf.routines.repackActiveQueueCleanup.batchSize }}
-    cta.routines.repack_active_queue_cleanup.age_for_collection {{ .Values.conf.routines.repackActiveQueueCleanup.ageForCollection }}
+    cta.routines.repack_active_queue_cleanup.enabled {{ .Values.conf.routines.repack_active_queue_cleanup.enabled }}
+    cta.routines.repack_active_queue_cleanup.batch_size {{ .Values.conf.routines.repack_active_queue_cleanup.batchSize }}
+    cta.routines.repack_active_queue_cleanup.age_for_collection {{ .Values.conf.routines.repack_active_queue_cleanup.ageForCollection }}
 
     cta.routines.user_pending_queue_cleanup.enabled {{ .Values.conf.routines.user_pending_queue_cleanup.enabled }}
     cta.routines.user_pending_queue_cleanup.batch_size {{ .Values.conf.routines.user_pending_queue_cleanup.batchSize }}
