@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Helm performs a merge, so we cannot just overwrite the entire routines object from the base maintd chart
+# Any routines specific here, will run IN ADDITION TO whatever is specified in the values.yaml of the maintd chart
+maintd:
+  routines:
+    userActiveQueueCleanup:
+      replicas: 1
+      sleepInterval: 900000
+      batchSize: 1000
+      ageForCollection: 1800
+    repackActiveQueueCleanup:
+      replicas: 1
+      sleepInterval: 900000
+      batchSize: 1000
+      ageForCollection: 1800
+    userPendingQueueCleanup:
+      replicas: 1
+      sleepInterval: 60000
+      batchSize: 1000
+      ageForCollection: 120
+    repackPendingQueueCleanup:
+      replicas: 1
+      sleepInterval: 60000
+      batchSize: 1000
+      ageForCollection: 120
+    schedulerMaintenanceCleanup:
+      replicas: 1
+      sleepInterval: 86400000
+      batchSize: 1000
+      ageForDeletion: 1209600
+
+  # The remainder of the values are inherited from the default values.yaml
