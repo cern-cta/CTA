@@ -7,6 +7,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {{- $allRoutines := .Values.routines -}}
 {{- range $routineName, $routineConf := $allRoutines }}
 {{- $routineNameSlug := include "common.slugify" $routineName }}
+{{- if not (and (eq $routineName "garbageCollect") (eq $schedulerConfig.backend "postgres")) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -32,15 +33,13 @@ data:
 
     cta.routines.sleep_interval {{ $routineConf.sleepInterval }}
 
-    {{- /* First enable only the routine in the outer loop */}}
-    {{- range $name, $_ := $allRoutines }}
+    {{- /* We should set the options for ALL routines here, but we only enable the "current" routine */ -}}
+    {{- range $name, $conf := $allRoutines }}
     cta.routines.{{ include "common.toSnakeCase" $name }}.enabled {{ ternary "true" "false" (eq $name $routineName) }}
+    {{- range $k, $v := (omit $conf "replicas") }}
+    cta.routines.{{ include "common.toSnakeCase" $name }}.{{ include "common.toSnakeCase" $k }} {{ $v }}
     {{- end }}
-
-    {{- /* Next set all routine-specific config fields (minus the replicas field) */}}
-    {{- range $k, $v := (omit $routineConf "replicas") }}
-    cta.routines.{{ include "common.toSnakeCase" $routineName }}.{{ include "common.toSnakeCase" $k }} {{ $v }}
-    {{- end }}
+    {{ end }}
 
     # Telemetry
     cta.experimental.telemetry.enabled {{ $.Values.telemetry.enabled }}
@@ -66,4 +65,5 @@ data:
     cta.telemetry.metrics.file.endpoint {{ $.Values.telemetry.metrics.file.endpoint }}
     {{- end }}
 ---
+{{- end }}
 {{- end }}

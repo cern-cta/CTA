@@ -4,6 +4,7 @@
 routines:
   # Note that the snake_case version of all these options (including the names)
   # should match the corresponding names in the maintd conf file
+  # So diskReportArchive:softTimeout will map to cta.routines.disk_report_archive.soft_timeout
   # To disable a routine, set replicas to 0
   diskReportArchive:
     replicas: 2
@@ -15,7 +16,7 @@ routines:
     sleepInterval: 1000
     batchSize: 500
     softTimeout: 30
-  garbageCollect:
+  garbageCollect: # This one will be skipped when the PG scheduler is used as it has no routines
     replicas: 1
     sleepInterval: 1000
   queueCleanup:

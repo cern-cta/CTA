@@ -6,6 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {{- $schedulerConfig := include "scheduler.config" $ | fromYaml -}}
 {{- $allRoutines := $.Values.routines -}}
 {{- range $routineName, $routineConf := $allRoutines }}
+{{- if not (and (eq $routineName "garbageCollect") (eq $schedulerConfig.backend "postgres")) }}
 {{- $routineNameSlug := include "common.slugify" $routineName }}
 {{- $podName := printf "%s-%s-%s" $.Release.Name "rt" $routineNameSlug | trunc 63 | trimSuffix "-" }}
 apiVersion: apps/v1
@@ -15,7 +16,6 @@ metadata:
   namespace: {{ $.Release.Namespace | quote }}
   labels:
     {{- include "common.labels.standard" $ | nindent 4 }}
-automountServiceAccountToken: false
 spec:
   replicas: {{ $routineConf.replicas }}
   selector:
@@ -172,4 +172,5 @@ spec:
       {{- end }}
       {{ include "common.extraVolumes" $ | nindent 6 }}
 ---
+{{- end }}
 {{- end }}
