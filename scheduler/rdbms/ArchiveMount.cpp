@@ -113,9 +113,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(
-      cta::log::WARNING,
-      "In postgres::ArchiveJobQueueRow::updateMountQueueLastFetch: failed to update table.");
+    lc.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::updateMountQueueLastFetch: failed to update table.");
     txn.abort();
   }
   return ret;
