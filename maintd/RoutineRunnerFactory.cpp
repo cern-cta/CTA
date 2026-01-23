@@ -206,7 +206,6 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   }
 #endif
 
-
   // Add Repack Expansion
   if (m_config.getOptionValueBool("cta.routines.repack_expand.enabled").value_or(true)) {
     routineRunner->registerRoutine(std::make_unique<RepackExpandRoutine>(
