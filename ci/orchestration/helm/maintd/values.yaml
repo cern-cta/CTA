@@ -39,31 +39,26 @@ conf:
     repack_report:
       enabled: "true"
       softTimeout: 30
-  user_active_queue_cleanup:
-    enabled: "true"
-    sleepInterval: 900000
-    batchSize: 1000
-    ageForCollection: 1800
-  repack_active_queue_cleanup:
-    enabled: "true"
-    sleepInterval: 900000
-    batchSize: 1000
-    ageForCollection: 1800
-  user_pending_queue_cleanup:
-    enabled: "true"
-    sleepInterval: 60000
-    batchSize: 1000
-    ageForCollection: 120
-  repack_pending_queue_cleanup:
-    enabled: "true"
-    sleepInterval: 60000
-    batchSize: 1000
-    ageForCollection: 120
-  scheduler_maintenance_cleanup:
-    enabled: "true"
-    sleepInterval: 86400000
-    batchSize: 1000
-    ageForDeletion: 1209600
+    user_active_queue_cleanup:
+      enabled: "true"
+      batchSize: 1000
+      ageForCollection: 1800
+    repack_active_queue_cleanup:
+      enabled: "true"
+      batchSize: 1000
+      ageForCollection: 1800
+    user_pending_queue_cleanup:
+      enabled: "true"
+      batchSize: 1000
+      ageForCollection: 120
+    repack_pending_queue_cleanup:
+      enabled: "true"
+      batchSize: 1000
+      ageForCollection: 120
+    scheduler_maintenance_cleanup:
+      enabled: "true"
+      batchSize: 1000
+      ageForDeletion: 1209600
   telemetry:
     enabled: false
     retainInstanceIdOnRestart: false

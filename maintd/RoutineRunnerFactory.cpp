@@ -106,15 +106,15 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       m_config.getOptionValueInt("cta.routines.disk_report_retrieve.soft_timeout").value_or(30)));
   }
 
+#ifndef CTA_PGSCHED
   // Add Garbage Collector
   if (m_config.getOptionValueBool("cta.routines.garbage_collect.enabled").value_or(true)) {
-#ifndef CTA_PGSCHED
     routineRunner->registerRoutine(std::make_unique<maintd::GarbageCollectRoutine>(m_lc,
                                                                                    m_schedDbInit->getBackend(),
                                                                                    m_schedDbInit->getAgentReference(),
                                                                                    *m_catalogue));
-#endif
   }
+#endif
 /*
  * If we enable all routines in 1 process they will all be running sequentially
  * and with the same sleep_interval configured for the maintd process itself.
@@ -134,7 +134,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
   }
 #else
-  // Add Archive and Retrieve Active Queue Cleanup
+  // Add User Archive and Retrieve Active Queue Cleanup
   if (m_config.getOptionValueBool("cta.routines.user_active_queue_cleanup.enabled").value_or(true)) {
     routineRunner->registerRoutine(std::make_unique<maintd::ArchiveInactiveMountActiveQueueRoutine>(
       m_lc,
@@ -149,7 +149,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       m_config.getOptionValueInt("cta.routines.user_active_queue_cleanup.batch_size").value_or(1000),
       m_config.getOptionValueInt("cta.routines.user_active_queue_cleanup.age_for_collection").value_or(900)));
   }
-  // Add Archive and Retrieve Active Queue Cleanup
+  // Add Repack Archive and Repack Retrieve Active Queue Cleanup
   if (m_config.getOptionValueBool("cta.routines.repack_active_queue_cleanup.enabled").value_or(true)) {
     routineRunner->registerRoutine(std::make_unique<maintd::RepackArchiveInactiveMountActiveQueueRoutine>(
       m_lc,
@@ -164,6 +164,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       m_config.getOptionValueInt("cta.routines.repack_active_queue_cleanup.batch_size").value_or(1000),
       m_config.getOptionValueInt("cta.routines.repack_active_queue_cleanup.age_for_collection").value_or(900)));
   }
+  // Add User Archive and Repack Retrieve Pending Queue Cleanup
   if (m_config.getOptionValueBool("cta.routines.user_pending_queue_cleanup.enabled").value_or(true)) {
     routineRunner->registerRoutine(std::make_unique<maintd::ArchiveInactiveMountPendingQueueRoutine>(
       m_lc,
@@ -178,6 +179,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       m_config.getOptionValueInt("cta.routines.user_pending_queue_cleanup.batch_size").value_or(1000),
       m_config.getOptionValueInt("cta.routines.user_pending_queue_cleanup.age_for_collection").value_or(900)));
   }
+  // Add Repack Archive and Repack Retrieve Pending Queue Cleanup
   if (m_config.getOptionValueBool("cta.routines.repack_pending_queue_cleanup.enabled").value_or(true)) {
     routineRunner->registerRoutine(std::make_unique<maintd::RepackArchiveInactiveMountPendingQueueRoutine>(
       m_lc,
@@ -192,6 +194,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       m_config.getOptionValueInt("cta.routines.repack_pending_queue_cleanup.batch_size").value_or(1000),
       m_config.getOptionValueInt("cta.routines.repack_pending_queue_cleanup.age_for_collection").value_or(900)));
   }
+  // Add Scheduler Maintenance Cleanup
   if (m_config.getOptionValueBool("cta.routines.scheduler_maintenance_cleanup.enabled").value_or(true)) {
     routineRunner->registerRoutine(std::make_unique<maintd::DeleteOldFailedQueuesRoutine>(
       m_lc,
