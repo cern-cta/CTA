@@ -36,71 +36,91 @@ std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>>
 RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, log::LogContext& lc) {
   lc.log(cta::log::DEBUG, "Entering RetrieveMount::getNextJobBatch()");
   RetrieveJobStatus queriedJobStatus = RetrieveJobStatus::RJS_ToTransfer;
-
-  // start a new transaction
-  cta::schedulerdb::Transaction txn(m_connPool, lc);
-  // require VID named lock in order to minimise tapePool fragmentation of the rows
-  txn.takeNamedLock(mountInfo.vid);
-
-  cta::log::TimingList timings;
-  cta::utils::Timer t;
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
-  std::vector<std::unique_ptr<SchedulerDatabase::RetrieveJob>> retVector;
-  cta::log::ScopedParamContainer params(lc);
-  try {
-    auto noSpaceDiskSystemNamesMap = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter(lc);
-    std::vector<std::string> noSpaceDiskSystemNames;
-    noSpaceDiskSystemNames.reserve(noSpaceDiskSystemNamesMap.size());
-    for (const auto& pair : noSpaceDiskSystemNamesMap) {
-      noSpaceDiskSystemNames.push_back(pair.first);
-    }
-    auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue(txn,
-                                                                                      queriedJobStatus,
-                                                                                      mountInfo,
-                                                                                      noSpaceDiskSystemNames,
-                                                                                      bytesRequested,
-                                                                                      filesRequested,
-                                                                                      m_isRepack);
-    timings.insertAndReset("mountUpdateBatchTime", t);
-    params.add("updateMountInfoRowCount", nrows);
-    params.add("MountID", mountInfo.mountId);
-    lc.log(cta::log::INFO,
-           "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully assigned Mount ID to DB jobs.");
-    retVector.reserve(nrows);
-    // Fetch job info only in case there were jobs found and updated
-    if (!queuedJobs.isEmpty()) {
-      while (queuedJobs.next()) {
-        auto job = m_jobPool->acquireJob();
-        if (!job) {
-          throw exception::Exception("In RetrieveMount::getNextJobBatch(): Failed to acquire job from pool.");
-        }
-        retVector.emplace_back(std::move(job));
-        retVector.back()->initialize(queuedJobs, m_isRepack);
+
+  {
+    // new scope to destroy the transaction before recreating new one
+    // (to get the connection back to pool)
+    // start a new transaction
+    cta::schedulerdb::Transaction txn(m_connPool, lc);
+    // require VID named lock in order to minimise tapePool fragmentation of the rows
+    txn.takeNamedLock(mountInfo.vid);
+
+    cta::log::TimingList timings;
+    cta::utils::Timer t;
+    std::vector<std::unique_ptr<SchedulerDatabase::RetrieveJob>> retVector;
+    cta::log::ScopedParamContainer params(lc);
+    try {
+      auto noSpaceDiskSystemNamesMap = m_RelationalDB.getActiveSleepDiskSystemNamesToFilter(lc);
+      std::vector<std::string> noSpaceDiskSystemNames;
+      noSpaceDiskSystemNames.reserve(noSpaceDiskSystemNamesMap.size());
+      for (const auto& pair : noSpaceDiskSystemNamesMap) {
+        noSpaceDiskSystemNames.push_back(pair.first);
       }
-      txn.commit();
-      params.add("queuedJobCount", retVector.size());
-      timings.insertAndReset("mountJobInitBatchTime", t);
+      auto [queuedJobs, nrows] = postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue(txn,
+                                                                                        queriedJobStatus,
+                                                                                        mountInfo,
+                                                                                        noSpaceDiskSystemNames,
+                                                                                        bytesRequested,
+                                                                                        filesRequested,
+                                                                                        m_isRepack);
+      timings.insertAndReset("mountUpdateBatchTime", t);
+      params.add("updateMountInfoRowCount", nrows);
+      params.add("MountID", mountInfo.mountId);
       lc.log(cta::log::INFO,
-             "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
-    } else {
-      lc.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
-      txn.commit();
-      return ret;
+             "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully assigned Mount ID to DB jobs.");
+      retVector.reserve(nrows);
+      // Fetch job info only in case there were jobs found and updated
+      if (!queuedJobs.isEmpty()) {
+        while (queuedJobs.next()) {
+          auto job = m_jobPool->acquireJob();
+          if (!job) {
+            throw exception::Exception("In RetrieveMount::getNextJobBatch(): Failed to acquire job from pool.");
+          }
+          retVector.emplace_back(std::move(job));
+          retVector.back()->initialize(queuedJobs, m_isRepack);
+        }
+        txn.commit();
+        params.add("queuedJobCount", retVector.size());
+        timings.insertAndReset("mountJobInitBatchTime", t);
+        lc.log(cta::log::INFO,
+               "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
+      } else {
+        lc.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
+        txn.commit();
+        return ret;
+      }
+    } catch (exception::Exception& ex) {
+      params.add("exceptionMessage", ex.getMessageValue());
+      lc.log(
+        cta::log::ERR,
+        "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs. Aborting the transaction.");
+      txn.abort();
+      throw;
+    }
+    // Convert vector to list (which is expected as return type)
+    ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
+    cta::log::ScopedParamContainer logParams(lc);
+    timings.insertAndReset("mountTransformBatchTime", t);
+    timings.addToLog(logParams);
+    lc.log(cta::log::INFO, "In RetrieveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
+  }
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    auto nmountrows =
+      postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack);
+    txn.commit();
+    if (nmountrows < 1) {
+      lc.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(): did not update any row.");
     }
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", ex.getMessageValue());
     lc.log(
-      cta::log::ERR,
-      "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs. Aborting the transaction.");
+      cta::log::WARNING,
+      "In postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(): failed to update table.");
     txn.abort();
-    throw;
   }
-  // Convert vector to list (which is expected as return type)
-  ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
-  cta::log::ScopedParamContainer logParams(lc);
-  timings.insertAndReset("mountTransformBatchTime", t);
-  timings.addToLog(logParams);
-  lc.log(cta::log::INFO, "In RetrieveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
   return ret;
 }
 

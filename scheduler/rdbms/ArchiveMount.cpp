@@ -38,66 +38,86 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
                                         ArchiveJobStatus::AJS_ToTransferForUser :
                                         ArchiveJobStatus::AJS_ToTransferForRepack;
   std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
-  // start a new transaction
-  cta::schedulerdb::Transaction txn(m_connPool, lc);
-  // require tapePool named lock in order to minimise tapePool fragmentation of the rows
-  txn.takeNamedLock(mountInfo.tapePool);
-  cta::log::TimingList timings;
-  cta::utils::Timer t;
-  // using vector instead of list, since we can preallocate the size,
-  // better cache locality for search/loop, faster insertion (less pointer manipulations)
-  std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
-  cta::log::ScopedParamContainer params(lc);
-  try {
-    auto [queuedJobs, nrows] = postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue(txn,
-                                                                                     queriedJobStatus,
-                                                                                     mountInfo,
-                                                                                     bytesRequested,
-                                                                                     filesRequested,
-                                                                                     m_isRepack);
-    timings.insertAndReset("mountUpdateBatchTime", t);
-    params.add("updateMountInfoRowCount", nrows);
-    params.add("MountID", mountInfo.mountId);
-    retVector.reserve(nrows);
-    // Fetch job info only in case there were jobs found and updated
-    if (!queuedJobs.isEmpty()) {
-      // Construct the return value
-      // Precompute the maximum value before the loop
-      common::dataStructures::TapeFile tpfile;
-      auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
-      while (queuedJobs.next()) {
-        auto job = m_jobPool->acquireJob();
-        if (!job) {
-          throw exception::Exception("In ArchiveMount::getNextJobBatch(): Failed to acquire job from pool.");
+  {
+    // new scope to destroy the transaction before recreating new one
+    // (to get the connection back to pool)
+    // start a new transaction
+    cta::schedulerdb::Transaction txn(m_connPool, lc);
+    // require tapePool named lock in order to minimise tapePool fragmentation of the rows
+    txn.takeNamedLock(mountInfo.tapePool);
+    cta::log::TimingList timings;
+    cta::utils::Timer t;
+    // using vector instead of list, since we can preallocate the size,
+    // better cache locality for search/loop, faster insertion (less pointer manipulations)
+    std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
+    cta::log::ScopedParamContainer params(lc);
+    try {
+      auto [queuedJobs, nrows] = postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue(txn,
+                                                                                       queriedJobStatus,
+                                                                                       mountInfo,
+                                                                                       bytesRequested,
+                                                                                       filesRequested,
+                                                                                       m_isRepack);
+      timings.insertAndReset("mountUpdateBatchTime", t);
+      params.add("updateMountInfoRowCount", nrows);
+      params.add("MountID", mountInfo.mountId);
+      retVector.reserve(nrows);
+      // Fetch job info only in case there were jobs found and updated
+      if (!queuedJobs.isEmpty()) {
+        // Construct the return value
+        // Precompute the maximum value before the loop
+        common::dataStructures::TapeFile tpfile;
+        auto maxBlockId = std::numeric_limits<decltype(tpfile.blockId)>::max();
+        while (queuedJobs.next()) {
+          auto job = m_jobPool->acquireJob();
+          if (!job) {
+            throw exception::Exception("In ArchiveMount::getNextJobBatch(): Failed to acquire job from pool.");
+          }
+          retVector.emplace_back(std::move(job));
+          retVector.back()->initialize(queuedJobs, m_isRepack);
+          auto& tapeFile = retVector.back()->tapeFile;
+          tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
+          tapeFile.blockId = maxBlockId;
         }
-        retVector.emplace_back(std::move(job));
-        retVector.back()->initialize(queuedJobs, m_isRepack);
-        auto& tapeFile = retVector.back()->tapeFile;
-        tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
-        tapeFile.blockId = maxBlockId;
+        txn.commit();
+        params.add("queuedJobCount", retVector.size());
+        timings.insertAndReset("mountJobInitBatchTime", t);
+        lc.log(cta::log::INFO,
+               "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
+      } else {
+        lc.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
+        txn.commit();
+        return ret;
       }
-      txn.commit();
-      params.add("queuedJobCount", retVector.size());
-      timings.insertAndReset("mountJobInitBatchTime", t);
-      lc.log(cta::log::INFO,
-             "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
-    } else {
-      lc.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
-      txn.commit();
-      return ret;
+    } catch (exception::Exception& ex) {
+      params.add("exceptionMessage", ex.getMessageValue());
+      lc.log(cta::log::ERR, "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs.");
+      txn.abort();
+      throw;
+    }
+    // Convert vector to list (which is expected as return type)
+    ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
+    cta::log::ScopedParamContainer logParams(lc);
+    timings.insertAndReset("mountTransformBatchTime", t);
+    timings.addToLog(logParams);
+    lc.log(cta::log::INFO, "In ArchiveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
+  }
+  cta::schedulerdb::Transaction txn(m_connPool, lc);
+  try {
+    auto nmountrows =
+      postgres::ArchiveJobQueueRow::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack);
+    txn.commit();
+    if (nmountrows < 1) {
+      lc.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::updateMountQueueLastFetch: did not update any row.");
     }
   } catch (exception::Exception& ex) {
+    cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(cta::log::ERR, "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs.");
+    lc.log(
+      cta::log::WARNING,
+      "In postgres::ArchiveJobQueueRow::updateMountQueueLastFetch: failed to update table.");
     txn.abort();
-    throw;
   }
-  // Convert vector to list (which is expected as return type)
-  ret.assign(std::make_move_iterator(retVector.begin()), std::make_move_iterator(retVector.end()));
-  cta::log::ScopedParamContainer logParams(lc);
-  timings.insertAndReset("mountTransformBatchTime", t);
-  timings.addToLog(logParams);
-  lc.log(cta::log::INFO, "In ArchiveMount::getNextJobBatch(): Finished fetching new jobs for execution.");
   return ret;
 }
 

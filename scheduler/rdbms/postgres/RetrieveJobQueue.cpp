@@ -11,6 +11,28 @@
 
 namespace cta::schedulerdb::postgres {
 
+uint64_t
+RetrieveJobQueueRow::updateMountQueueLastFetch(Transaction& txn, uint64_t mountId, bool isActive, bool isRepack) {
+  std::string sql = R"SQL(
+       INSERT INTO MOUNT_QUEUE_LAST_FETCH (MOUNT_ID, LAST_UPDATE_TIME, QUEUE_TYPE)
+         VALUES (:MOUNT_ID, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER, :QUEUE_TYPE)
+       ON CONFLICT (MOUNT_ID, QUEUE_TYPE)
+         DO UPDATE SET
+           LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME,
+           QUEUE_TYPE = EXCLUDED.QUEUE_TYPE
+             WHERE MOUNT_QUEUE_LAST_FETCH.LAST_UPDATE_TIME
+             < EXCLUDED.LAST_UPDATE_TIME - 5
+)SQL";
+  auto stmt = txn.getConn().createStmt(sql);
+  std::string queueType = isRepack ? "REPACK_RETRIEVE" : "RETRIEVE";
+  queueType += isActive ? "_ACTIVE" : "_PENDING";
+  stmt.bindString(":QUEUE_TYPE", queueType);
+  stmt.bindUint64(":MOUNT_ID", mountId);
+  stmt.executeQuery();
+  auto nrows = stmt.getNbAffectedRows();
+  return nrows;
+}
+
 std::pair<rdbms::Rset, uint64_t>
 RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
                                              RetrieveJobStatus newStatus,
@@ -68,14 +90,6 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
         SELECT JOB_ID, PRIORITY, CUMULATIVE_SIZE
         FROM SELECTION_WITH_CUMULATIVE_SUMS
         WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
-    ),
-    UPDATED_MOUNT_QUEUE_LAST_FETCH AS (
-       INSERT INTO MOUNT_QUEUE_LAST_FETCH (MOUNT_ID, LAST_UPDATE_TIME, QUEUE_TYPE)
-         VALUES (:MOUNT_ID_HB, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER, :QUEUE_TYPE)
-       ON CONFLICT (MOUNT_ID, QUEUE_TYPE)
-         DO UPDATE SET
-           LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME,
-           QUEUE_TYPE = EXCLUDED.QUEUE_TYPE
     ),
     MOVED_ROWS AS (
         DELETE FROM
@@ -216,11 +230,8 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.setDbQuerySummary("move retrieve jobs to active queue");
   stmt.bindString(":VID", mountInfo.vid);
   stmt.bindString(":STATUS", to_string(newStatus));
-  std::string queueType = isRepack ? "REPACK_RETRIEVE_ACTIVE" : "RETRIEVE_ACTIVE";
-  stmt.bindString(":QUEUE_TYPE", queueType);
   stmt.bindUint32(":LIMIT", limit);
   stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
-  stmt.bindUint64(":MOUNT_ID_HB", mountInfo.mountId);
   stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
   size_t j = 1;
   for (const auto& dsn : noSpaceDiskSystemNames) {
@@ -354,6 +365,8 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
                                                bool keepMountId,
                                                bool isRepack,
                                                std::optional<std::list<std::string>> jobIDs) {
+  // To optimise this query, one shall call updateMountQueueLastFetch
+  // separatelly and remove UPDATED_MOUNT_QUEUE_LAST_FETCH
   std::string repack_table_name_prefix = isRepack ? "REPACK_" : "";
   std::string sql = R"SQL(
     WITH MOVED_ROWS AS (
@@ -393,6 +406,8 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
          DO UPDATE SET
            LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME,
            QUEUE_TYPE = EXCLUDED.QUEUE_TYPE
+             WHERE MOUNT_QUEUE_LAST_FETCH.LAST_UPDATE_TIME
+               < EXCLUDED.LAST_UPDATE_TIME - 5
     ) )SQL";
   }
   sql += R"SQL(
