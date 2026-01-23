@@ -25,16 +25,8 @@ routines:
     sleepInterval: 1000
     softTimeout: 30
 
-  # Note that these routines only work for the objectstore values
-  # For the routine configuration of postgres, see dev-cta-maintd-postgres-values.yaml
-  garbageCollect:
-    replicas: 1
-    sleepInterval: 1000
-  queueCleanup:
-    replicas: 1
-    sleepInterval: 1000
-    batchSize: 500
-
+  # Note that by default this chart does not enable any routines for the objectstore/scheduler cleanup
+  # To do this, enable these explicitly by passing in another values file (see e.g. presets/dev-cta-maintd-*-values.yaml)
 
 conf:
   logLevel: "INFO"

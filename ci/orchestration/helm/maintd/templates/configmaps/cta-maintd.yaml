@@ -30,13 +30,13 @@ data:
     cta.schedulerdb.tape_cache_max_age_secs {{ $.Values.conf.tapeCacheMaxAgeSecs }}
     cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ $.Values.conf.retrieveQueueCacheMaxAgeSecs }}
 
-    cta.routines.sleep_interval {{ $routineConf.sleepInterval }}
+    cta.routines.sleep_interval {{ int64 $routineConf.sleepInterval | toString }}
 
     {{- /* We should set the options for ALL routines here, but we only enable the "current" routine */ -}}
     {{- range $name, $conf := $allRoutines }}
     cta.routines.{{ include "common.toSnakeCase" $name }}.enabled {{ ternary "true" "false" (eq $name $routineName) }}
-    {{- range $k, $v := (omit $conf "replicas") }}
-    cta.routines.{{ include "common.toSnakeCase" $name }}.{{ include "common.toSnakeCase" $k }} {{ $v }}
+    {{- range $k, $v := (omit $conf "replicas" "sleepInterval") }}
+    cta.routines.{{ include "common.toSnakeCase" $name }}.{{ include "common.toSnakeCase" $k }} {{ include "common.stringOrNumber" $v }}
     {{- end }}
     {{ end }}
 
