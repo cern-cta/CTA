@@ -28,7 +28,7 @@ RetrieveJobQueueRow::updateMountQueueLastFetch(Transaction& txn, uint64_t mountI
   queueType += isActive ? "_ACTIVE" : "_PENDING";
   stmt.bindString(":QUEUE_TYPE", queueType);
   stmt.bindUint64(":MOUNT_ID", mountId);
-  stmt.executeQuery();
+  stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   return nrows;
 }
