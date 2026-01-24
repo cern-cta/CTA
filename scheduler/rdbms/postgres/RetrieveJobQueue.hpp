@@ -342,7 +342,7 @@ public:
     }
     sql += R"(
        ) VALUES (
-           :RETRIEVE_REQUEST_ID,
+            nextval('retrieve_request_id_seq'),
            :REQUEST_JOB_COUNT,
            :STATUS,
            :CREATION_TIME,
@@ -403,7 +403,7 @@ public:
 
     auto stmt = conn.createStmt(sql);
     stmt.setDbQuerySummary("insert retrieve job");
-    stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
+    //stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":CREATION_TIME", static_cast<uint64_t>(creationTime));
@@ -627,7 +627,7 @@ public:
         sql += ":REPACK_REARCHIVE_COPY_NBS" + std::to_string(i) + ",";
         sql += ":REPACK_REARCHIVE_TAPE_POOLS" + std::to_string(i) + ",";
       }
-      sql += ":RETRIEVE_REQUEST_ID" + std::to_string(i) + ",";
+      sql += "nextval('retrieve_request_id_seq'),";
       sql += ":REQUEST_JOB_COUNT" + std::to_string(i) + ",";
       sql += ":STATUS" + std::to_string(i) + ",";
       sql += ":CREATION_TIME" + std::to_string(i) + ",";
@@ -699,7 +699,7 @@ public:
         stmt.bindString(":REPACK_REARCHIVE_COPY_NBS" + std::to_string(i), row.rearchiveCopyNbs);
         stmt.bindString(":REPACK_REARCHIVE_TAPE_POOLS" + std::to_string(i), row.rearchiveTapePools);
       }
-      stmt.bindUint64(":RETRIEVE_REQUEST_ID" + std::to_string(i), row.retrieveRequestId);
+      //stmt.bindUint64(":RETRIEVE_REQUEST_ID" + std::to_string(i), row.retrieveRequestId);
       stmt.bindUint32(":REQUEST_JOB_COUNT" + std::to_string(i), row.reqJobCount);
       stmt.bindString(":STATUS" + std::to_string(i), to_string(row.status));
       stmt.bindUint64(":CREATION_TIME" + std::to_string(i), static_cast<uint64_t>(row.creationTime));
