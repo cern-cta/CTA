@@ -28,6 +28,29 @@ public:
     if (login.dbType != rdbms::Login::DBTYPE_POSTGRESQL) {
       std::runtime_error("scheduler dbconnect string must specify postgres.");
     }
+    login.dbNamespace = getSchemaName();
+  }
+
+  /*============ Gets SCHEMA_NAME from the CTA_SCHEDULER table ===============*/
+  std::string getSchemaName() {
+    rdbms::ConnPool tmpPool(login, 1);
+    auto conn = tmpPool.getConn();
+    std::string schemaName = "";
+    try {
+      std::string sql = R"SQL(
+        SELECT SCHEMA_NAME FROM CTA_SCHEDULER LIMIT 1
+      )SQL";
+      auto stmt = conn.createStmt(sql);
+      auto rset = stmt.executeQuery();
+      while (rset.next()) {
+        common::dataStructures::RetrieveJob job;
+        schemaName = rset.columnString("SCHEMA_NAME");
+      }
+      return schemaName;
+    } catch (exception::Exception& ex) {
+      conn.rollback();
+      throw;
+    }
   }
 
   std::unique_ptr<RelationalDB> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
