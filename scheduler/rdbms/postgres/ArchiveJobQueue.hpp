@@ -415,8 +415,7 @@ VALUES )SQL";
       if (isRepack) {
         sql += ":REPACK_REQUEST_ID" + idx + "::BIGINT,";
       }
-      sql += ":REQUEST_JOB_COUNT"
-             + idx
+      sql += ":REQUEST_JOB_COUNT" + idx
              + "::SMALLINT,"
                ":STATUS"
              + idx
