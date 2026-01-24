@@ -250,8 +250,9 @@ public:
         LAST_MOUNT_WITH_FAILURE,
         MAX_TOTAL_RETRIES,
         TOTAL_REPORT_RETRIES,
-        MAX_REPORT_RETRIES) VALUES (
-        :ARCHIVE_REQUEST_ID,
+        MAX_REPORT_RETRIES)
+    VALUES (
+         nextval('archive_request_id_seq'),
         :REQUEST_JOB_COUNT,
         :STATUS,
         :TAPE_POOL,
@@ -277,16 +278,16 @@ public:
         :STORAGE_CLASS,
         :RETRIES_WITHIN_MOUNT,
         :MAX_RETRIES_WITHIN_MOUNT,
-        :TOTAL_RETRIES,
+        :TOTAL_RETRIES::SMALLINT,
         :LAST_MOUNT_WITH_FAILURE,
         :MAX_TOTAL_RETRIES,
         :TOTAL_REPORT_RETRIES,
-        :MAX_REPORT_RETRIES)
+        :MAX_REPORT_RETRIES
+     )
     )SQL";
-
     auto stmt = conn.createStmt(sql);
     stmt.setDbQuerySummary("insert archive job");
-    stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
+    //stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindString(":TAPE_POOL", tapePool);
@@ -362,110 +363,191 @@ public:
       LAST_MOUNT_WITH_FAILURE,
       MAX_TOTAL_RETRIES,
       TOTAL_REPORT_RETRIES,
-      MAX_REPORT_RETRIES) VALUES )SQL";
-
+      MAX_REPORT_RETRIES)
+    SELECT
+    )SQL";
+    if (isRepack) {
+      sql += "v.repack_request_id,";
+    }
+    sql += R"SQL(
+       req.archive_request_id,
+       v.request_job_count,
+       v.status,
+       v.tape_pool,
+       v.mount_policy,
+       v.priority,
+       v.min_archive_request_age,
+       v.archive_file_id,
+       v.size_in_bytes,
+       v.copy_nb,
+       v.start_time,
+       v.checksumblob,
+       v.creation_time,
+       v.disk_instance,
+       v.disk_file_id,
+       v.disk_file_owner_uid,
+       v.disk_file_gid,
+       v.disk_file_path,
+       v.archive_report_url,
+       v.archive_error_report_url,
+       v.requester_name,
+       v.requester_group,
+       v.src_url,
+       v.storage_class,
+       v.retries_within_mount,
+       v.max_retries_within_mount,
+       v.total_retries,
+       v.last_mount_with_failure,
+       v.max_total_retries,
+       v.total_report_retries,
+       v.max_report_retries
+  FROM
+    (SELECT nextval('archive_request_id_seq') AS archive_request_id) req
+  CROSS JOIN
+    (
+VALUES )SQL";
+    // the cross join is required to get the archive request ID from the sequence and
+    // for multi-copy inserts to have same archive request ID
     // Generate VALUES placeholders for each row
     for (size_t i = 0; i < rows.size(); ++i) {
       std::string idx = std::to_string(i);
       sql += "(";
       if (isRepack) {
-        sql += ":REPACK_REQUEST_ID" + idx + ",";
+        sql += ":REPACK_REQUEST_ID" + idx + "::BIGINT,";
       }
-      sql += ":ARCHIVE_REQUEST_ID" + idx
-             + ","
-               ":REQUEST_JOB_COUNT"
+      sql += ":REQUEST_JOB_COUNT"
              + idx
-             + ","
+             + "::SMALLINT,"
                ":STATUS"
              + idx
-             + ","
+             + "::ARCHIVE_JOB_STATUS,"
                ":TAPE_POOL"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":MOUNT_POLICY"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":PRIORITY"
              + idx
-             + ","
+             + "::SMALLINT,"
                ":MIN_ARCHIVE_REQUEST_AGE"
              + idx
-             + ","
+             + "::INTEGER,"
                ":ARCHIVE_FILE_ID"
              + idx
-             + ","
+             + "::BIGINT,"
                ":SIZE_IN_BYTES"
              + idx
-             + ","
+             + "::BIGINT,"
                ":COPY_NB"
              + idx
-             + ","
+             + "::NUMERIC,"
                ":START_TIME"
              + idx
-             + ","
+             + "::BIGINT,"
                ":CHECKSUMBLOB"
              + idx
-             + ","
+             + "::BYTEA,"
                ":CREATION_TIME"
              + idx
-             + ","
+             + "::BIGINT,"
                ":DISK_INSTANCE"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":DISK_FILE_ID"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":DISK_FILE_OWNER_UID"
              + idx
-             + ","
+             + "::INTEGER,"
                ":DISK_FILE_GID"
              + idx
-             + ","
+             + "::INTEGER,"
                ":DISK_FILE_PATH"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":ARCHIVE_REPORT_URL"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":ARCHIVE_ERROR_REPORT_URL"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":REQUESTER_NAME"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":REQUESTER_GROUP"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":SRC_URL"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":STORAGE_CLASS"
              + idx
-             + ","
+             + "::VARCHAR,"
                ":RETRIES_WITHIN_MOUNT"
              + idx
-             + ","
+             + "::SMALLINT,"
                ":MAX_RETRIES_WITHIN_MOUNT"
              + idx
-             + ","
+             + "::SMALLINT,"
                ":TOTAL_RETRIES"
              + idx
-             + ","
+             + "::SMALLINT,"
                ":LAST_MOUNT_WITH_FAILURE"
              + idx
-             + ","
+             + "::BIGINT,"
                ":MAX_TOTAL_RETRIES"
              + idx
-             + ","
+             + "::SMALLINT,"
                ":TOTAL_REPORT_RETRIES"
              + idx
-             + ","
+             + "::SMALLINT,"
                ":MAX_REPORT_RETRIES"
-             + idx + ")";
+             + idx + "::SMALLINT)";
       if (i < rows.size() - 1) {
         sql += ",";
       }
     }
+    sql += R"SQL(
+       ) AS v (
+    )SQL";
+    if (isRepack) {
+      sql += "repack_request_id,";
+    }
+    sql += R"SQL(
+       request_job_count,
+       status,
+       tape_pool,
+       mount_policy,
+       priority,
+       min_archive_request_age,
+       archive_file_id,
+       size_in_bytes,
+       copy_nb,
+       start_time,
+       checksumblob,
+       creation_time,
+       disk_instance,
+       disk_file_id,
+       disk_file_owner_uid,
+       disk_file_gid,
+       disk_file_path,
+       archive_report_url,
+       archive_error_report_url,
+       requester_name,
+       requester_group,
+       src_url,
+       storage_class,
+       retries_within_mount,
+       max_retries_within_mount,
+       total_retries,
+       last_mount_with_failure,
+       max_total_retries,
+       total_report_retries,
+       max_report_retries
+     )
+
+)SQL";
 
     auto stmt = conn.createStmt(sql);
     stmt.setDbQuerySummary("insert archive job batch");
@@ -477,7 +559,7 @@ public:
       if (isRepack) {
         stmt.bindUint64(":REPACK_REQUEST_ID" + idx, row.repackRequestId);
       }
-      stmt.bindUint64(":ARCHIVE_REQUEST_ID" + idx, row.reqId);
+      //stmt.bindUint64(":ARCHIVE_REQUEST_ID" + idx, row.reqId);
       stmt.bindUint32(":REQUEST_JOB_COUNT" + idx, row.reqJobCount);
       stmt.bindString(":STATUS" + idx, to_string(row.status));
       stmt.bindString(":TAPE_POOL" + idx, row.tapePool);
