@@ -199,7 +199,7 @@ Rset Stmt::executeQuery() {
       // If the query returns more than 10 rows, we measure the row count
       // to be able to get row rates from the monitoring
       uint64_t nrows = m_stmt->getNbAffectedRows();
-      if (nrows > 10) {
+      if (nrows > 1) {
         cta::telemetry::metrics::dbClientOperationReturnedRows->Record(
           nrows,
           {
@@ -247,7 +247,7 @@ void Stmt::executeNonQuery() {
       // If the query returns more than 10 rows, we measure the row count
       // to be able to get row rates from the monitoring
       uint64_t nrows = m_stmt->getNbAffectedRows();
-      if (nrows > 10) {
+      if (nrows > 1) {
         cta::telemetry::metrics::dbClientOperationReturnedRows->Record(
           nrows,
           {
