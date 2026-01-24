@@ -356,7 +356,7 @@ rdbms::Rset ArchiveJobQueueRow::getNextSuccessfulArchiveRepackReportBatch(Transa
   std::string sql = R"SQL(
         SELECT SRC_URL, JOB_ID FROM REPACK_ARCHIVE_ACTIVE_QUEUE
             WHERE STATUS = :STATUS
-                ORDER BY JOB_ID
+                ORDER BY PRIORITY DESC, JOB_ID
                 LIMIT :LIMIT FOR UPDATE SKIP LOCKED
   )SQL";
 
@@ -838,7 +838,7 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
             SELECT JOB_ID
             FROM REPACK_ARCHIVE_ACTIVE_QUEUE
             WHERE STATUS = 'AJS_ToReportToRepackForFailure'
-            ORDER BY JOB_ID
+            ORDER BY PRIORITY DESC, JOB_ID
             LIMIT :LIMIT
             FOR UPDATE SKIP LOCKED
         )
