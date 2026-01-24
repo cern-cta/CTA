@@ -375,9 +375,13 @@ std::unique_ptr<RsetWrapper> PostgresStmt::executeQuery() {
 
     m_nbAffectedRows = 0;
     m_conn.setAsyncInProgress(true);
-    if (PQresultStatus(resItr.get()) == PGRES_TUPLES_OK) {
-      // query returning rows
-      m_nbAffectedRows = PQntuples(resItr.get());
+    // Advance iterator to first result
+    if (resItr->next()) {
+      PGresult* pgRes = resItr->getResult();
+      if (PQresultStatus(pgRes) == PGRES_TUPLES_OK) {
+        // Query returning rows
+        m_nbAffectedRows = PQntuples(pgRes);
+      }
     }
 
     return std::make_unique<PostgresRset>(m_conn, *this, std::move(resItr));
