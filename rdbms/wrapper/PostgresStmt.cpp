@@ -375,6 +375,10 @@ std::unique_ptr<RsetWrapper> PostgresStmt::executeQuery() {
 
     m_nbAffectedRows = 0;
     m_conn.setAsyncInProgress(true);
+    if (PQresultStatus(resItr.get()) == PGRES_TUPLES_OK) {
+      // query returning rows
+      m_nbAffectedRows = PQntuples(resItr.get());
+    }
 
     return std::make_unique<PostgresRset>(m_conn, *this, std::move(resItr));
   } catch (exception::LostDatabaseConnection& ex) {
