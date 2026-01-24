@@ -741,7 +741,7 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
         SELECT JOB_ID
         FROM REPACK_RETRIEVE_ACTIVE_QUEUE
         WHERE STATUS = :RETRIEVESTATUS
-        ORDER BY JOB_ID
+        ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT
         FOR UPDATE SKIP LOCKED
     )
@@ -1143,7 +1143,7 @@ rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Tran
             SELECT JOB_ID
             FROM REPACK_RETRIEVE_ACTIVE_QUEUE
             WHERE STATUS = 'RJS_ToReportToRepackForFailure'
-            ORDER BY JOB_ID
+            ORDER BY PRIORITY DESC, JOB_ID
             LIMIT :LIMIT
             FOR UPDATE SKIP LOCKED
         )
@@ -1236,8 +1236,8 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
     j++;
   }
   sql += R"SQL(
-        ]::RETRIEVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
-        OR (IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY)
+        ]::RETRIEVE_JOB_STATUS[]) AND (IS_REPORTING IS FALSE
+        OR (IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY))
         ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
       UPDATE RETRIEVE_ACTIVE_QUEUE SET
