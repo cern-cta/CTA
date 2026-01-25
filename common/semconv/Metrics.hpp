@@ -63,6 +63,10 @@ static constexpr const char* kMetricCtaSchedulerOperationDuration = "cta.schedul
 static constexpr const char* descrCtaSchedulerOperationDuration = "Duration of a CTA scheduling operation";
 static constexpr const char* unitCtaSchedulerOperationDuration = "ms";
 
+static constexpr const char* kMetricCtaSchedulerOperationJobCount = "cta.scheduler.operation.job_count";
+static constexpr const char* descrCtaSchedulerOperationJobCount = "Number of processed jobs by CTA scheduling operation";
+static constexpr const char* unitCtaSchedulerOperationJobCount = "1";
+
 static constexpr const char* kMetricCtaSchedulerDiskReportCount = "cta.scheduler.disk.report.count";
 static constexpr const char* descrCtaSchedulerDiskReportCount = "Number of files reported to disk";
 static constexpr const char* unitCtaSchedulerDiskReportCount = "1";
