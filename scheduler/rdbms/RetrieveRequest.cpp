@@ -11,8 +11,9 @@ namespace cta::schedulerdb {
 
 std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() const {
   auto rjr = std::make_unique<postgres::RetrieveJobQueueRow>();
-  rjr->retrieveRequestId = 0;  // bogus id, it will be given automatically by the insert
-    // to avoid separate trip to the DB like cta::schedulerdb::postgres::RetrieveJobQueueRow::getNextRetrieveRequestID(m_conn);
+  // we provide bogus retrieveRequestId, it will be given automatically by the insert
+  // to avoid separate trip to the DB like cta::schedulerdb::postgres::RetrieveJobQueueRow::getNextRetrieveRequestID(m_conn);
+  rjr->retrieveRequestId = 0;
   rjr->repackRequestId = m_repackInfo.repackRequestId;
   rjr->reqJobCount = m_jobs.size();
 
