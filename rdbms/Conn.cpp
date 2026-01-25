@@ -144,7 +144,7 @@ void Conn::commit() {
       {
         {cta::semconv::attr::kDbSystemName,   m_pool->m_connFactory->getDbSystemName()},
         {cta::semconv::attr::kDbNamespace,    m_pool->m_connFactory->getDbNamespace() },
-        {cta::semconv::attr::kDbQuerySummary, m_querySummary           }
+        {cta::semconv::attr::kDbQuerySummary, m_querySummary                          }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
   } else {
