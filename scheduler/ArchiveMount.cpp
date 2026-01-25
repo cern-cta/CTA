@@ -8,6 +8,10 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "common/exception/NoSuchObject.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
+
+#include <opentelemetry/context/runtime_context.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -147,15 +151,31 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
   auto dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, logContext);
   std::list<std::unique_ptr<ArchiveJob>> ret;
   // We prepare the response
+  uint64_t count = 0;
   for (auto& sdaj : dbJobBatch) {
     ret.emplace_back(std::make_unique<ArchiveJob>(this, m_catalogue, std::move(sdaj)));
+    count++;
   }
   log::ScopedParamContainer(logContext)
     .add("filesRequested", filesRequested)
-    .add("filesFetched", dbJobBatch.size())
+    .add("filesFetched", count)
     .add("bytesRequested", bytesRequested)
     .add("getNextJobBatchTime", t.secs())
     .log(log::INFO, "In SchedulerDB::ArchiveMount::getNextJobBatch(): Finished getting next job batch.");
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    t.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kScheduleArchive}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    count,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kScheduleArchive}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   return ret;
 }
 
