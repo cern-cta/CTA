@@ -235,12 +235,44 @@ public:
    */
   wrapper::ConnWrapper* getConnWrapperPtr() { return m_connAndStmts->conn.get(); }
 
+  /**
+   * @brief Set the query summary string describing the query type
+   * and the start time before the stmt execution was called.
+   *
+   * This should set m_queryType and m_executionStartTime to be later
+   * used for the OpenTelemetry. The OpenTelemetry semantic convention attribute `db.query.summary`.
+   * It identifies the query type being executed and allows to measure the DB operation duration.
+   */
+  void setDbQuerySummary(const std::string& optQuerySummary);
+
+  void setRowCountForTelemetry(uint64_t row_count);
+
 private:
   /**
    * The database connection and its pool of prepared statements
    */
   std::unique_ptr<ConnAndStmts> m_connAndStmts;
 
+  /**
+   * The last time createStmt was called
+   * This is used for OpenTelemetry measurements of the time
+   * the stmt execution + commit took.
+   * It does contain the overhead of parameter binding time
+   * but with the current rdbms design,
+   * this seems acceptable price to pay at the moment.
+   */
+  std::chrono::steady_clock::time_point  m_executionStartTime;
+
+  /**
+   * The last time createStmt was called
+   * This is used for OpenTelemetry measurements of the time
+   * the stmt execution + commit took.
+   * It does contain the overhead of parameter binding time
+   * but with the current rdbms design,
+   * this seems acceptable price to pay at the moment.
+   */
+  std::string m_querySummary;
+  uint64_t m_rowCount;
   /**
    * The database connection pool to which the m_conn should be returned
    */
