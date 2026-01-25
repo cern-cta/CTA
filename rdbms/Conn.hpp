@@ -261,7 +261,7 @@ private:
    * but with the current rdbms design,
    * this seems acceptable price to pay at the moment.
    */
-  std::chrono::steady_clock::time_point  m_executionStartTime;
+  std::chrono::steady_clock::time_point m_executionStartTime;
 
   /**
    * The last time createStmt was called
