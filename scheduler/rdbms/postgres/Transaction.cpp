@@ -108,6 +108,10 @@ void Transaction::startWithRetry(cta::rdbms::ConnPool& connPool) {
   }
 }
 
+void Transaction::setRowCountForTelemetry(uint64_t row_count) {
+  m_conn->setRowCountForTelemetry(row_count);
+}
+
 void Transaction::commit() {
   m_conn->commit();
   m_begin = false;
