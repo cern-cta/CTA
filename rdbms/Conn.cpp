@@ -6,9 +6,14 @@
 #include "rdbms/Conn.hpp"
 
 #include "common/exception/Exception.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/RdbmsInstruments.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/rdbms.hpp"
+
+#include <chrono>
+#include <opentelemetry/context/runtime_context.h>
 
 namespace cta::rdbms {
 
@@ -107,18 +112,48 @@ void Conn::executeNonQuery(const std::string& sql) {
 }
 
 //------------------------------------------------------------------------------
+// setDbQuerySummary
+//------------------------------------------------------------------------------
+void Conn::setDbQuerySummary(const std::string& optQuerySummary) {
+  m_executionStartTime = std::chrono::steady_clock::now();
+  m_querySummary = optQuerySummary;
+};
+
+void Conn::setRowCountForTelemetry(uint64_t row_count) {
+  m_rowCount = row_count;
+}
+
+//------------------------------------------------------------------------------
 // commit
 //------------------------------------------------------------------------------
 void Conn::commit() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     m_connAndStmts->conn->commit();
+    auto end = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - m_executionStartTime).count();
+    cta::telemetry::metrics::dbClientOperationDuration->Record(
+      duration,
+      {
+        {cta::semconv::attr::kDbSystemName,   m_pool->m_connFactory->getDbSystemName()},
+        {cta::semconv::attr::kDbNamespace,    m_pool->m_connFactory->getDbNamespace() },
+        {cta::semconv::attr::kDbQuerySummary, m_querySummary                          }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    cta::telemetry::metrics::dbClientOperationReturnedRows->Record(
+      m_rowCount,
+      {
+        {cta::semconv::attr::kDbSystemName,   m_pool->m_connFactory->getDbSystemName()},
+        {cta::semconv::attr::kDbNamespace,    m_pool->m_connFactory->getDbNamespace() },
+        {cta::semconv::attr::kDbQuerySummary, m_querySummary           }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
   } else {
     throw exception::Exception("Conn does not contain a connection");
   }
 }
 
 //------------------------------------------------------------------------------
-// commit
+// rollback
 //------------------------------------------------------------------------------
 void Conn::rollback() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {

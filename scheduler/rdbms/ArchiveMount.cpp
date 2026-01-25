@@ -79,6 +79,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
           tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
           tapeFile.blockId = maxBlockId;
         }
+        txn.setRowCountForTelemetry(retVector.size());
         txn.commit();
         params.add("queuedJobCount", retVector.size());
         timings.insertAndReset("mountJobInitBatchTime", t);

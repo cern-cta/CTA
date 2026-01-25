@@ -181,6 +181,8 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(mountInfo.mountType));
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
+  // testing telemetry measurement of duration including conn commit time !
+  txn.getConn().setDbQuerySummary("move archive jobs to active queue with commit");
   auto result = stmt.executeQuery();
   auto nrows = stmt.getNbAffectedRows();
   return std::make_pair(std::move(result), nrows);
