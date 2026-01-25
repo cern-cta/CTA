@@ -15,6 +15,7 @@
 namespace cta::telemetry::metrics {
 
 std::unique_ptr<opentelemetry::metrics::Histogram<uint64_t>> ctaSchedulerOperationDuration;
+std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaSchedulerOperationJobCount;
 std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaSchedulerDiskReportCount;
 std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaSchedulerRepackReportCount;
 std::unique_ptr<opentelemetry::metrics::Counter<uint64_t>> ctaSchedulerRepackExpandCount;
@@ -30,6 +31,11 @@ void initInstruments() {
     meter->CreateUInt64Histogram(cta::semconv::metrics::kMetricCtaSchedulerOperationDuration,
                                  cta::semconv::metrics::descrCtaSchedulerOperationDuration,
                                  cta::semconv::metrics::unitCtaSchedulerOperationDuration);
+
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount =
+    meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaSchedulerOperationJobCount,
+                               cta::semconv::metrics::descrCtaSchedulerOperationJobCount,
+                               cta::semconv::metrics::unitCtaSchedulerOperationJobCount);
 
   cta::telemetry::metrics::ctaSchedulerDiskReportCount =
     meter->CreateUInt64Counter(cta::semconv::metrics::kMetricCtaSchedulerDiskReportCount,
