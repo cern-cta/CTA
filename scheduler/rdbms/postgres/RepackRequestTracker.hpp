@@ -380,7 +380,7 @@ struct RepackRequestTrackingRow {
     if (vid != "all") {
       stmt.bindString(":VID", vid);
     }
-    txn.getConn().setDbQuerySummary("select repack jobs for processing");
+    conn.setDbQuerySummary("select repack jobs for processing");
     return stmt.executeQuery();
   }
 
