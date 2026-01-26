@@ -2315,9 +2315,9 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
               ttel.msecs(),
               {
                 {cta::semconv::attr::kSchedulerOperationName,
-                 cta::semconv::attr::SchedulerOperationNameValues::kCheckWorkForPotentialMount},
+                 cta::semconv::attr::SchedulerOperationNameValues::kGetNextPotentialMount},
                 {cta::semconv::attr::kSchedulerOperationWorkflow,
-                 cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive               }
+                 cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive          }
             },
               opentelemetry::context::RuntimeContext::GetCurrent());
             return std::unique_ptr<TapeMount>(internalRet.release());
@@ -3119,7 +3119,6 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
-      ,
       {cta::semconv::attr::kSchedulerOperationWorkflow,
        cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                     }
   },
@@ -3129,7 +3128,6 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
-      ,
       {cta::semconv::attr::kSchedulerOperationWorkflow,
        cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                     }
   },
