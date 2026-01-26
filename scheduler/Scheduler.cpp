@@ -2909,12 +2909,29 @@ std::list<std::unique_ptr<ArchiveJob>> Scheduler::getNextArchiveJobsToReportBatc
                                                                                   log::LogContext& logContext) {
   // We need to go through the queues of archive jobs to report
   std::list<std::unique_ptr<ArchiveJob>> ret;
+  utils::Timer t;
   // Get the list of jobs to report from the scheduler db
   auto dbRet = m_db.getNextArchiveJobsToReportBatch(filesRequested, logContext);
+  uint64_t count = 0;
   for (auto& j : dbRet) {
     ret.emplace_back(new ArchiveJob(nullptr, m_catalogue, j->archiveFile, j->srcURL, j->tapeFile));
     ret.back()->m_dbJob.reset(j.release());
+    count++;
   }
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    t.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kArchiveSelectToReportToUser}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    count,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kArchiveSelectToReportToUser}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   return ret;
 }
 
@@ -2932,14 +2949,31 @@ std::list<std::unique_ptr<RetrieveJob>> Scheduler::getNextRetrieveJobsToReportBa
                                                                                     log::LogContext& logContext) {
   // We need to go through the queues of retrieve jobs to report
   std::list<std::unique_ptr<RetrieveJob>> ret;
+  utils::Timer t;
   // Get the list of jobs to report from the scheduler db
   auto dbRet = m_db.getNextRetrieveJobsToReportBatch(filesRequested, logContext);
+  uint64_t count = 0;
   for (auto& j : dbRet) {
     ret.emplace_back(
       new RetrieveJob(nullptr, j->retrieveRequest, j->archiveFile, j->selectedCopyNb, PositioningMethod::ByFSeq));
 
     ret.back()->m_dbJob.reset(j.release());
+    count++;
   }
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    t.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveSelectToReportToUser}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    count,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveSelectToReportToUser}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   return ret;
 }
 
@@ -2975,6 +3009,8 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
                                        log::TimingList& timingList,
                                        utils::Timer& t,
                                        log::LogContext& lc) {
+  utils::Timer ttel;
+
   // Create the reporters
   struct JobAndReporter {
     std::unique_ptr<disk::DiskReporter> reporter;
@@ -3043,6 +3079,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
     reportedDbJobs.push_back(j->m_dbJob.get());
   }
   timingList.insertAndReset("reportCompletionTime", t);
+
   m_db.setArchiveJobBatchReported(reportedDbJobs, timingList, t, lc);
   timingList.insertAndReset("reportRecordInSchedDbTime", t);
   // Log the successful reports.
@@ -3068,6 +3105,20 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
       {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive},
       {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException         }
   });
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    ttel.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveReportToUserAndDeleteSchedulerDB}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    reportedJobs.size(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveReportToUserAndDeleteSchedulerDB}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
 //------------------------------------------------------------------------------
@@ -3078,6 +3129,8 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
                                         log::TimingList& timingList,
                                         utils::Timer& t,
                                         log::LogContext& lc) {
+  utils::Timer ttel;
+
   // Create the reporters
   struct JobAndReporter {
     std::unique_ptr<disk::DiskReporter> reporter;
@@ -3153,6 +3206,20 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
       {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve},
       {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException          }
   });
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    ttel.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveReportToUserAndDeleteSchedulerDB}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    reportedJobs.size(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveReportToUserAndDeleteSchedulerDB}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
 cta::catalogue::Catalogue& Scheduler::getCatalogue() {

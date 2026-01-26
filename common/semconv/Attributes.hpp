@@ -90,20 +90,20 @@ static constexpr const char* kScopedExclusive = "exclusive";
 }  // namespace LockTypeValues
 
 namespace SchedulerOperationNameValues {
-static constexpr const char* kEnqueueArchive = "enqueue_archive";
-static constexpr const char* kEnqueueRetrieve = "enqueue_retrieve";
-static constexpr const char* kEnqueueRepack = "enqueue_repack";
-static constexpr const char* kPollQueueSummary = "poll_queue_summary";
-static constexpr const char* kScheduleArchive = "schedule_archive";
-static constexpr const char* kScheduleRetrieve = "schedule_retrieve";
-static constexpr const char* kArchiveMountReport = "archive_mount_report";
-static constexpr const char* kRetrieveMountReport = "retrieve_mount_report";
-static constexpr const char* kFetchArchiveJobsToReport = "fetch_archive_jobs_to_report";
-static constexpr const char* kFetchRetrieveJobsToReport = "fetch_retrieve_jobs_to_report";
-static constexpr const char* kFinaliseArchiveJobsInSchedulderDB = "finalise_archive_in_scheduler_db";
-static constexpr const char* kFinaliseArchiveJobsInCatalogueDB = "finalise_archive_in_catalogue_db";
-static constexpr const char* kFinaliseRetrieveJobsInSchedulderDB = "finalise_retrieve_in_scheduler_db";
-static constexpr const char* kFinaliseRetrieveJobsInCatalogueDB = "finalise_retrieve_in_catalogue_db";
+static constexpr const char* kRetrieveSelectCatalogueDB = "retrieve_select_catalogue_db"; // happens during retrieve_queue_insert so not used for the moment
+static constexpr const char* kEnqueueArchive = "archive_queue_insert";
+static constexpr const char* kEnqueueRetrieve = "retrieve_queue_insert";
+static constexpr const char* kEnqueueRepack = "repack_queue_insert";
+static constexpr const char* kArchiveSelectJobSummary = "archive_summary_select";
+static constexpr const char* kArchiveInsertForProcessing = "archive_move_insert_for_processing";
+static constexpr const char* kRetrieveInsertForProcessing = "retrieve_move_insert_for_processing";
+static constexpr const char* kArchiveUpdateSchedulerDB = "archive_done_update_scheduler_db";
+static constexpr const char* kRetrieveUpdateSchedulerDB = "retrieve_done_update_scheduler_db";
+static constexpr const char* kArchiveUpdateInsertCatalogueDB = "archive_done_update_insert_catalogue_db";
+static constexpr const char* kArchiveSelectToReportToUser = "archive_report_to_user_select";
+static constexpr const char* kRetrieveSelectToReportToUser = "retrieve_report_to_user_select";
+static constexpr const char* kArchiveReportToUserAndDeleteSchedulerDB = "archive_report_and_delete_scheduler_db";
+static constexpr const char* kRetrieveReportToUserAndDeleteSchedulerDB = "retrieve_report_and_delete_scheduler_db";
 static constexpr const char* kCancelArchive = "cancel_archive";
 static constexpr const char* kCancelRetrieve = "cancel_retrieve";
 static constexpr const char* kCancelRepack = "cancel_repack";
