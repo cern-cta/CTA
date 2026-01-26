@@ -171,6 +171,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/LoggerParamTypeTest.cpp
   remoteFS/RemotePathTest.cpp
   CRCTest.cpp
+  process/health/HealthServerTest.cpp
   process/threading/CondVarTest.cpp
   process/threading/DaemonTest.cpp
   process/threading/RWLockTest.cpp

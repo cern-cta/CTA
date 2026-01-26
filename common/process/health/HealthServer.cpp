@@ -7,6 +7,8 @@
 
 #include "common/exception/Errnum.hpp"
 
+#include <httplib.h>
+
 namespace cta::common {
 
 //------------------------------------------------------------------------------
@@ -45,9 +47,21 @@ void HealthServer::stop() noexcept {
   m_lc.log(log::INFO, "In HealthServer::stop(): stopping health server");
   if (m_thread.joinable()) {
     m_thread.request_stop();
-    m_server.stop();
+    if (m_server) {
+      m_server->stop();
+    }
   }
   m_lc.log(log::INFO, "In HealthServer::stop(): health server stopped");
+}
+
+//------------------------------------------------------------------------------
+// HealthServer::isRunning
+//------------------------------------------------------------------------------
+bool HealthServer::isRunning() const {
+  if (!m_server) {
+    return false;
+  }
+  return m_server->is_running();
 }
 
 //------------------------------------------------------------------------------
@@ -55,7 +69,8 @@ void HealthServer::stop() noexcept {
 //------------------------------------------------------------------------------
 void HealthServer::run(std::stop_token st) {
   try {
-    m_server.Get("/health/ready", [readinessFunc = m_readinessFunc](const httplib::Request&, httplib::Response& res) {
+    m_server = std::make_unique<httplib::Server>();
+    m_server->Get("/health/ready", [readinessFunc = m_readinessFunc](const httplib::Request&, httplib::Response& res) {
       if (readinessFunc()) {
         res.status = 200;
         res.set_content("ok\n", "text/plain");
@@ -65,7 +80,7 @@ void HealthServer::run(std::stop_token st) {
       }
     });
 
-    m_server.Get("/health/live", [livenessFunc = m_livenessFunc](const httplib::Request&, httplib::Response& res) {
+    m_server->Get("/health/live", [livenessFunc = m_livenessFunc](const httplib::Request&, httplib::Response& res) {
       if (livenessFunc()) {
         res.status = 200;
         res.set_content("ok\n", "text/plain");
@@ -77,7 +92,7 @@ void HealthServer::run(std::stop_token st) {
 
     // Prevent multiple processes being able to listen on the same port
     // So explicitly disable SO_REUSEPORT
-    m_server.set_socket_options([](int sock) {
+    m_server->set_socket_options([](int sock) {
       int opt = 0;
       cta::exception::Errnum::throwOnNonZero(::setsockopt(sock, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt)),
                                              "Failed to disable SO_REUSEPORT");
@@ -88,7 +103,7 @@ void HealthServer::run(std::stop_token st) {
       return;
     }
     m_lc.log(log::INFO, "In HealthServer::run(): starting health server");
-    if (!m_server.listen(m_host, m_port)) {
+    if (!m_server->listen(m_host, m_port)) {
       log::ScopedParamContainer params(m_lc);
       params.add("host", m_host);
       params.add("port", m_port);

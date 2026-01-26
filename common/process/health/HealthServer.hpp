@@ -9,8 +9,11 @@
 #include "common/log/LogContext.hpp"
 
 #include <functional>
-#include <httplib.h>
 #include <thread>
+
+namespace httplib {
+class Server;
+}
 
 namespace cta::common {
 
@@ -42,12 +45,16 @@ public:
    */
   void stop() noexcept;
 
+  bool isRunning() const;
+
 private:
   cta::log::LogContext& m_lc;
   // The thread the HealthServer will run on when start() is called
   std::jthread m_thread;
 
-  httplib::Server m_server;
+  // From a functional perspective, this doesn't need to be a pointer
+  // However, it allows us to forward declare httplib::Server, preventing the expensive include in this header file
+  std::unique_ptr<httplib::Server> m_server;
   std::string m_host;
   int m_port;
   std::function<bool()> m_readinessFunc;
