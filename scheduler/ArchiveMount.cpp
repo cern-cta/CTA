@@ -166,14 +166,18 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
     t.msecs(),
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kArchiveInsertForProcessing}
+       cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive        }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
     count,
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kArchiveInsertForProcessing}
+       cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive               }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   return ret;
@@ -264,14 +268,18 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
       catalogueTimeMSecs,
       {
         {cta::semconv::attr::kSchedulerOperationName,
-         cta::semconv::attr::SchedulerOperationNameValues::kArchiveUpdateInsertCatalogueDB}
+         cta::semconv::attr::SchedulerOperationNameValues::kUpdateInsertCatalogueDB},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive            }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
       tapeItemsWrittenCount,
       {
         {cta::semconv::attr::kSchedulerOperationName,
-         cta::semconv::attr::SchedulerOperationNameValues::kArchiveUpdateInsertCatalogueDB}
+         cta::semconv::attr::SchedulerOperationNameValues::kUpdateInsertCatalogueDB},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive            }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     {
@@ -291,14 +299,18 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
       catalogueTimeMSecs,
       {
         {cta::semconv::attr::kSchedulerOperationName,
-         cta::semconv::attr::SchedulerOperationNameValues::kArchiveUpdateSchedulerDB}
+         cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive      }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
       tapeItemsWrittenCount,
       {
         {cta::semconv::attr::kSchedulerOperationName,
-         cta::semconv::attr::SchedulerOperationNameValues::kArchiveUpdateSchedulerDB}
+         cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive      }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     cta::log::ScopedParamContainer params(logContext);
