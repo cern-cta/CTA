@@ -29,6 +29,11 @@ data:
     taped NbDiskThreads {{ $.Values.conf.taped.nbDiskThreads }}
     taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
     taped RetrieveQueueCacheMaxAgeSecs {{ $.Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}
+    # specific to stress test configuration to aligning the 
+    # buffer size 8000 files with the fetch and flush sizes of 4000 files pin a bunch
+    taped ArchiveFetchBytesFiles 80000000000,4000
+    taped ArchiveFlushBytesFiles 80000000000,4000
+    taped RetrieveFetchBytesFiles 80000000000,4000
     # Objectstore
     ObjectStore BackendPath {{ include "global.schedulerUrl" $ }}
     # General
