@@ -189,7 +189,9 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     schedulerDbTimeMSecs,
     {
-      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kEnqueueArchive}
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   return archiveReqAddr;
@@ -294,8 +296,9 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     schedulerDbTimeMSecs,
     {
-      {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kEnqueueRetrieve}
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                                            }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   return requestInfo.requestId;
@@ -319,8 +322,9 @@ void Scheduler::deleteArchive([[maybe_unused]] std::string_view instanceName,
     cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
       t.msecs(),
       {
-        {cta::semconv::attr::kSchedulerOperationName,
-         cta::semconv::attr::SchedulerOperationNameValues::kCancelArchive}
+        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kCancel},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                            }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
   }
@@ -344,7 +348,9 @@ void Scheduler::abortRetrieve(const std::string& instanceName,
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     schedulerDbTimeMSecs,
     {
-      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelRetrieve}
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kCancel},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                                           }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
@@ -443,7 +449,8 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     schedulerDbTimeMSecs,
     {
-      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kEnqueueRepack}
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue   },
+      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kRepack}
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
@@ -459,7 +466,8 @@ void Scheduler::cancelRepack([[maybe_unused]] const common::dataStructures::Secu
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     t.msecs(),
     {
-      {cta::semconv::attr::kSchedulerOperationName, cta::semconv::attr::SchedulerOperationNameValues::kCancelRepack}
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kCancel    },
+      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kRepack}
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
@@ -2176,6 +2184,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   // implemented in the scheduler itself.
   // First, get the mount-related info from the DB
   utils::Timer timer;
+  utils::Timer ttel;
   double getMountInfoTime = 0;
   double queueTrimingTime = 0;
   double getTapeInfoTime = 0;
@@ -2294,6 +2303,15 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
               .add("schedulerDbTime", schedulerDbTime)
               .add("catalogueTime", catalogueTime);
             lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (archive)");
+            cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+              ttel.msecs(),
+              {
+                {cta::semconv::attr::kSchedulerOperationName,
+                 cta::semconv::attr::SchedulerOperationNameValues::kCheckWorkForPotentialMount},
+                {cta::semconv::attr::kSchedulerOperationWorkflow,
+                 cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive               }
+            },
+              opentelemetry::context::RuntimeContext::GetCurrent());
             return std::unique_ptr<TapeMount>(internalRet.release());
           } catch (cta::exception::Exception& ex) {
             log::ScopedParamContainer params(lc);
@@ -2374,6 +2392,15 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
           .add("schedulerDbTime", schedulerDbTime)
           .add("catalogueTime", catalogueTime);
         lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (retrieve)");
+        cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+          ttel.msecs(),
+          {
+            {cta::semconv::attr::kSchedulerOperationName,
+             cta::semconv::attr::SchedulerOperationNameValues::kGetNextPotentialMount},
+            {cta::semconv::attr::kSchedulerOperationWorkflow,
+             cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve         }
+        },
+          opentelemetry::context::RuntimeContext::GetCurrent());
         return std::unique_ptr<TapeMount>(internalRet.release());
       } catch (exception::Exception& ex) {
         log::ScopedParamContainer params(lc);
@@ -2888,14 +2915,18 @@ std::list<std::unique_ptr<ArchiveJob>> Scheduler::getNextArchiveJobsToReportBatc
     t.msecs(),
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kArchiveSelectToReportToUser}
+       cta::semconv::attr::SchedulerOperationNameValues::kSelectToReportToUser},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive         }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
     count,
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kArchiveSelectToReportToUser}
+       cta::semconv::attr::SchedulerOperationNameValues::kSelectToReportToUser},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive         }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   return ret;
@@ -2930,14 +2961,18 @@ std::list<std::unique_ptr<RetrieveJob>> Scheduler::getNextRetrieveJobsToReportBa
     t.msecs(),
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveSelectToReportToUser}
+       cta::semconv::attr::SchedulerOperationNameValues::kSelectToReportToUser},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve        }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
     count,
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveSelectToReportToUser}
+       cta::semconv::attr::SchedulerOperationNameValues::kSelectToReportToUser},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve        }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   return ret;
@@ -3075,14 +3110,20 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
     ttel.msecs(),
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveReportToUserAndDeleteSchedulerDB}
+       cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
+      ,
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                     }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
     reportedJobs.size(),
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveReportToUserAndDeleteSchedulerDB}
+       cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
+      ,
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                     }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
@@ -3176,14 +3217,18 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
     ttel.msecs(),
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveReportToUserAndDeleteSchedulerDB}
+       cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                    }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
     reportedJobs.size(),
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveReportToUserAndDeleteSchedulerDB}
+       cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                    }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
