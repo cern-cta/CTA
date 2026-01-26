@@ -186,14 +186,19 @@ cta::RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReque
     t.msecs(),
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveInsertForProcessing}
+       cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve       }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
     count,
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveInsertForProcessing}
+       cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
+      ,
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve       }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   log::ScopedParamContainer(logContext)
@@ -410,14 +415,18 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
       ttel.msecs(),
       {
         {cta::semconv::attr::kSchedulerOperationName,
-         cta::semconv::attr::SchedulerOperationNameValues::kRetrieveUpdateSchedulerDB}
+         cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve     }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
       validatedSuccessfulRetrieveJobs.size(),
       {
         {cta::semconv::attr::kSchedulerOperationName,
-         cta::semconv::attr::SchedulerOperationNameValues::kRetrieveUpdateSchedulerDB}
+         cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve     }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
 
