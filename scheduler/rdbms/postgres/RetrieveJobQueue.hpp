@@ -402,7 +402,6 @@ public:
     sql += R"(    ) )";
 
     auto stmt = conn.createStmt(sql);
-    stmt.setDbQuerySummary("insert retrieve job");
     //stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
@@ -470,6 +469,7 @@ public:
     if (!srrActivity.empty()) {
       stmt.bindString(":SRR_ACTIVITY", srrActivity);
     }
+    conn.setDbQuerySummary("insert retrieve job");
     stmt.executeNonQuery();
   }
 
@@ -690,7 +690,6 @@ public:
     }
 
     auto stmt = conn.createStmt(sql);
-    stmt.setDbQuerySummary("insert retrieve job batch");
     // Bind values for each row with distinct names
     for (size_t i = 0; i < rows.size(); ++i) {
       const auto& row = *rows[i];
@@ -770,7 +769,7 @@ public:
         stmt.bindString(":SRR_ACTIVITY" + std::to_string(i), row.srrActivity);
       }
     }
-
+    conn.setDbQuerySummary("insert retrieve job batch");
     stmt.executeNonQuery();
   }
 
