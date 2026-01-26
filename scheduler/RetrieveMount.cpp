@@ -8,12 +8,15 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "disk/DiskSystem.hpp"
 
 #include <algorithm>
 #include <iterator>
 #include <numeric>
+#include <opentelemetry/context/runtime_context.h>
 
 //------------------------------------------------------------------------------
 // constructor
