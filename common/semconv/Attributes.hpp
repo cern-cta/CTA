@@ -33,6 +33,7 @@ static constexpr const char* kDbQuerySummary = "db.query.summary";
 // Non-standard -- CTA-specific
 static constexpr const char* kSchedulerNamespace = "cta.scheduler.namespace";  // schedulerBackendName but better
 static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.name";
+static constexpr const char* SchedulerOperationWorkflow = "cta.scheduler.operation.workflow";
 static constexpr const char* kFrontendRequesterName = "cta.frontend.requester.name";
 static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";
 static constexpr const char* kCtaIoDirection = "cta.io.direction";  // similar to disk.io.direction
@@ -51,6 +52,12 @@ static constexpr const char* kCtaFrontend = "cta.frontend";
 static constexpr const char* kCtaTaped = "cta.taped";
 static constexpr const char* kCtaMaintd = "cta.maintd";
 }  // namespace ServiceNameValues
+
+namespace SchedulerOperationWorkflowValues {
+static constexpr const char* kArchive = "archive";
+static constexpr const char* kRetrieve = "retrieve";
+static constexpr const char* kRepack = "repack";
+}  // namespace SchedulerOperationDirectionValues
 
 namespace CtaTransferDirectionValues {
 static constexpr const char* kArchive = "archive";
@@ -92,22 +99,14 @@ static constexpr const char* kScopedExclusive = "exclusive";
 namespace SchedulerOperationNameValues {
 static constexpr const char* kRetrieveSelectCatalogueDB =
   "retrieve_select_catalogue_db";  // happens during retrieve_queue_insert so not used for the moment
-static constexpr const char* kEnqueueArchive = "archive_queue_insert";
-static constexpr const char* kEnqueueRetrieve = "retrieve_queue_insert";
-static constexpr const char* kEnqueueRepack = "repack_queue_insert";
-static constexpr const char* kArchiveSelectJobSummary = "archive_summary_select";
-static constexpr const char* kArchiveInsertForProcessing = "archive_move_insert_for_processing";
-static constexpr const char* kRetrieveInsertForProcessing = "retrieve_move_insert_for_processing";
-static constexpr const char* kArchiveUpdateSchedulerDB = "archive_done_update_scheduler_db";
-static constexpr const char* kRetrieveUpdateSchedulerDB = "retrieve_done_update_scheduler_db";
-static constexpr const char* kArchiveUpdateInsertCatalogueDB = "archive_done_update_insert_catalogue_db";
-static constexpr const char* kArchiveSelectToReportToUser = "archive_report_to_user_select";
-static constexpr const char* kRetrieveSelectToReportToUser = "retrieve_report_to_user_select";
-static constexpr const char* kArchiveReportToUserAndDeleteSchedulerDB = "archive_report_and_delete_scheduler_db";
-static constexpr const char* kRetrieveReportToUserAndDeleteSchedulerDB = "retrieve_report_and_delete_scheduler_db";
-static constexpr const char* kCancelArchive = "cancel_archive";
-static constexpr const char* kCancelRetrieve = "cancel_retrieve";
-static constexpr const char* kCancelRepack = "cancel_repack";
+static constexpr const char* kEnqueue = "queue_insert";
+static constexpr const char* kGetNextPotentialMount = "get_next_potential_mount";
+static constexpr const char* kInsertForProcessing = "move_insert_for_processing";
+static constexpr const char* kUpdateSchedulerDB = "update_tranfer_in_scheduler_db";
+static constexpr const char* kUpdateInsertCatalogueDB = "update_tranfer_in_catalogue_db";
+static constexpr const char* kSelectToReportToUser = "select_to_report_to_user";
+static constexpr const char* kReportToUserAndDeleteSchedulerDB = "report_and_delete";
+static constexpr const char* kCancel = "cancel";
 }  // namespace SchedulerOperationNameValues
 
 namespace DbSystemNameValues {
