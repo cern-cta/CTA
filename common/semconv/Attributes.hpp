@@ -33,7 +33,7 @@ static constexpr const char* kDbQuerySummary = "db.query.summary";
 // Non-standard -- CTA-specific
 static constexpr const char* kSchedulerNamespace = "cta.scheduler.namespace";  // schedulerBackendName but better
 static constexpr const char* kSchedulerOperationName = "cta.scheduler.operation.name";
-static constexpr const char* SchedulerOperationWorkflow = "cta.scheduler.operation.workflow";
+static constexpr const char* kSchedulerOperationWorkflow = "cta.scheduler.operation.workflow";
 static constexpr const char* kFrontendRequesterName = "cta.frontend.requester.name";
 static constexpr const char* kCtaTransferDirection = "cta.transfer.direction";
 static constexpr const char* kCtaIoDirection = "cta.io.direction";  // similar to disk.io.direction
