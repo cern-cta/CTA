@@ -47,6 +47,8 @@ public:
 
   bool isRunning() const;
 
+  bool usesUDS() const;
+
 private:
   cta::log::LogContext& m_lc;
   // The thread the HealthServer will run on when start() is called
@@ -55,10 +57,10 @@ private:
   // From a functional perspective, this doesn't need to be a pointer
   // However, it allows us to forward declare httplib::Server, preventing the expensive include in this header file
   std::unique_ptr<httplib::Server> m_server;
-  std::string m_host;
+  const std::string m_host;
   int m_port;
-  std::function<bool()> m_readinessFunc;
-  std::function<bool()> m_livenessFunc;
+  const std::function<bool()> m_readinessFunc;
+  const std::function<bool()> m_livenessFunc;
 };
 
 }  // namespace cta::common

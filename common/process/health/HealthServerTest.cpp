@@ -8,6 +8,7 @@
 #include "common/exception/TimeOut.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/log/StdoutLogger.hpp"
 
 #include <chrono>
 #include <functional>
@@ -73,6 +74,18 @@ int getFreePort() {
   int port = ntohs(addr.sin_port);
   ::close(fd);
   return port;
+}
+
+void assertUDSReady(const std::string& socketPath) {
+  httplib::Client cli(socketPath);
+  cli.set_address_family(AF_UNIX);
+  cli.set_connection_timeout(1);
+  cli.set_read_timeout(5);
+  cli.set_write_timeout(5);
+  auto res = cli.Get("/health/ready");
+  ASSERT_TRUE(res) << "connection failed";
+  EXPECT_EQ(res->status, 200);
+  EXPECT_NE(res->body.find("ok"), std::string::npos);
 }
 
 //------------------------------------------------------------------------------
@@ -227,6 +240,53 @@ TEST(HealthServer, StopsCorrectly) {
   waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
   hs.stop();
   waitForCondition([&]() { return !hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
+}
+
+TEST(HealthServer, CanStartUnixDomainSocket) {
+  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::LogContext lc(dl);
+
+  const std::string socketPath = "/tmp/health_test.sock";
+  ::unlink(socketPath.c_str());
+  cta::common::HealthServer hs(lc, socketPath, 80, []() { return true; }, []() { return true; });
+  hs.start();
+  waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
+
+  assertUDSReady(socketPath);
+}
+
+TEST(HealthServer, CanStartUnixDomainSocketWithNon80Port) {
+  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::LogContext lc(dl);
+
+  const std::string socketPath = "/tmp/health_test.sock";
+  ::unlink(socketPath.c_str());
+  cta::common::HealthServer hs(lc, socketPath, 8080, []() { return true; }, []() { return true; });
+  hs.start();
+  waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
+
+  assertUDSReady(socketPath);
+}
+
+TEST(HealthServer, CanStartUnixDomainSocketOnSamePort) {
+  cta::log::DummyLogger dl("dummy", "unitTest");
+  cta::log::LogContext lc(dl);
+
+  const std::string socketPath1 = "/tmp/health_test1.sock";
+  ::unlink(socketPath1.c_str());
+  cta::common::HealthServer hs1(lc, socketPath1, 80, []() { return true; }, []() { return true; });
+  hs1.start();
+  waitForCondition([&]() { return hs1.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
+
+  const std::string socketPath2 = "/tmp/health_test2.sock";
+  ::unlink(socketPath2.c_str());
+  cta::common::HealthServer hs2(lc, socketPath2, 80, []() { return true; }, []() { return true; });
+  hs2.start();
+  waitForCondition([&]() { return hs2.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
+
+  assertUDSReady(socketPath1);
+
+  assertUDSReady(socketPath2);
 }
 
 }  // namespace unitTests

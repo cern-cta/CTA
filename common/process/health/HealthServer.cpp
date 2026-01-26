@@ -23,7 +23,12 @@ HealthServer::HealthServer(cta::log::LogContext& lc,
       m_host(host),
       m_port(port),
       m_readinessFunc(readinessFunc),
-      m_livenessFunc(livenessFunc) {}
+      m_livenessFunc(livenessFunc) {
+  if (usesUDS()) {
+    m_lc.log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Setting port to 80.");
+    m_port = 80;  // UDS always listens on port 80
+  }
+}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -31,6 +36,13 @@ HealthServer::HealthServer(cta::log::LogContext& lc,
 HealthServer::~HealthServer() {
   // Gracefully shutdown the server
   stop();
+}
+
+//------------------------------------------------------------------------------
+// HealthServer::usesUDS
+//------------------------------------------------------------------------------
+bool HealthServer::usesUDS() const {
+  return m_host.ends_with(".sock");
 }
 
 //------------------------------------------------------------------------------
@@ -103,7 +115,15 @@ void HealthServer::run(std::stop_token st) {
       return;
     }
     m_lc.log(log::INFO, "In HealthServer::run(): starting health server");
-    if (!m_server->listen(m_host, m_port)) {
+    bool listenSuccess;
+    if (usesUDS()) {
+      // Unix domain socket
+      listenSuccess = m_server->set_address_family(AF_UNIX).listen(m_host, m_port);
+    } else {
+      // Regular server
+      listenSuccess = m_server->listen(m_host, m_port);
+    }
+    if (!listenSuccess) {
       log::ScopedParamContainer params(m_lc);
       params.add("host", m_host);
       params.add("port", m_port);
