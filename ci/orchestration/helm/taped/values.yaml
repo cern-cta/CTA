@@ -4,7 +4,7 @@
 conf:
   taped:
     bufferSizeBytes: 262144
-    bufferCount: 200
+    bufferCount: 8000
     mountCriteria: "2000000, 100"
     watchdogIdleSessionTimer: 1  # Make tape servers more responsive, thus improving CI test speed
     logMask: "INFO"
