@@ -177,7 +177,7 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
-       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive               }
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive        }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   return ret;
