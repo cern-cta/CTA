@@ -257,8 +257,8 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
 
     updateCatalogueWithTapeFilesWritten(tapeItemsWritten);
     catalogue_updated = true;
-    catalogueTimeMSecs = t.msecs();
-    tapeItemsWrittenCount = tapeItemsWritten.size();
+    auto catalogueTimeMSecs = t.msecs();
+    auto tapeItemsWrittenCount = tapeItemsWritten.size();
     catalogueTime = t.secs(utils::Timer::resetCounter);
     cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
       catalogueTimeMSecs,
