@@ -286,7 +286,6 @@ public:
      )
     )SQL";
     auto stmt = conn.createStmt(sql);
-    stmt.setDbQuerySummary("insert archive job");
     //stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
@@ -318,6 +317,7 @@ public:
     stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
     stmt.bindUint16(":TOTAL_REPORT_RETRIES", totalReportRetries);
     stmt.bindUint16(":MAX_REPORT_RETRIES", maxReportRetries);
+    conn.setDbQuerySummary("insert archive job");
     stmt.executeNonQuery();
   }
 
@@ -549,8 +549,6 @@ VALUES )SQL";
 )SQL";
 
     auto stmt = conn.createStmt(sql);
-    stmt.setDbQuerySummary("insert archive job batch");
-
     // Bind values for each row with distinct names
     for (size_t i = 0; i < rows.size(); ++i) {
       const auto& row = *rows[i];
@@ -590,7 +588,7 @@ VALUES )SQL";
       stmt.bindUint16(":TOTAL_REPORT_RETRIES" + idx, row.totalReportRetries);
       stmt.bindUint16(":MAX_REPORT_RETRIES" + idx, row.maxReportRetries);
     }
-
+    conn.setDbQuerySummary("insert archive job batch");
     stmt.executeNonQuery();
   }
 

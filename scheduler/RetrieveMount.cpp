@@ -172,11 +172,27 @@ cta::RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReque
   auto dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, logContext);
   std::list<std::unique_ptr<RetrieveJob>> ret;
   // We prepare the response
+  uint64_t count = 0;
   for (auto& sdrj : dbJobBatch) {
     ret.emplace_back(std::make_unique<RetrieveJob>(this, std::move(sdrj)));
     // ret.back()->m_dbJob.reset(sdrj.release());
     // ret.back()->m_dbJob = std::move(sdrj);
+    count++;
   }
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    t.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveInsertForProcessing}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    count,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kRetrieveInsertForProcessing}
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   log::ScopedParamContainer(logContext)
     .add("filesRequested", filesRequested)
     .add("filesFetched", dbJobBatch.size())
@@ -360,6 +376,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
   uint64_t files = 0;
   uint64_t bytes = 0;
   utils::Timer t;
+  utils::Timer ttel;
   log::TimingList tl;
   try {
     while (!successfulRetrieveJobs.empty()) {
@@ -386,6 +403,20 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
 #else
     m_dbMount->flushAsyncSuccessReports(validatedSuccessfulDBRetrieveJobs, logContext);
 #endif
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      ttel.msecs(),
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kRetrieveUpdateSchedulerDB}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+      validatedSuccessfulRetrieveJobs.size(),
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kRetrieveUpdateSchedulerDB}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
 
     jobBatchFinishingTime = t.secs();
     tl.insertOrIncrement("jobBatchFinishingTime", jobBatchFinishingTime);
