@@ -166,14 +166,14 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
     t.msecs(),
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kScheduleArchive}
+       cta::semconv::attr::SchedulerOperationNameValues::kArchiveInsertForProcessing}
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
     count,
     {
       {cta::semconv::attr::kSchedulerOperationName,
-       cta::semconv::attr::SchedulerOperationNameValues::kScheduleArchive}
+       cta::semconv::attr::SchedulerOperationNameValues::kArchiveInsertForProcessing}
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   return ret;
@@ -257,7 +257,23 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
 
     updateCatalogueWithTapeFilesWritten(tapeItemsWritten);
     catalogue_updated = true;
+    catalogueTimeMSecs = t.msecs();
+    tapeItemsWrittenCount = tapeItemsWritten.size();
     catalogueTime = t.secs(utils::Timer::resetCounter);
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      catalogueTimeMSecs,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kArchiveUpdateInsertCatalogueDB}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+      tapeItemsWrittenCount,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kArchiveUpdateInsertCatalogueDB}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
     {
       cta::log::ScopedParamContainer params(logContext);
       params.add("tapeFilesWritten", tapeItemsWritten.size())
@@ -271,6 +287,20 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     // Reporting to client will be queued if needed and done in another process.
     m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext);
     schedulerDbTime = t.secs(utils::Timer::resetCounter);
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      catalogueTimeMSecs,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kArchiveUpdateSchedulerDB}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+      tapeItemsWrittenCount,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,
+         cta::semconv::attr::SchedulerOperationNameValues::kArchiveUpdateSchedulerDB}
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
     cta::log::ScopedParamContainer params(logContext);
     params.add("files", files)
       .add("bytes", bytes)
