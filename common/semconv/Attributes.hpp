@@ -57,7 +57,7 @@ namespace SchedulerOperationWorkflowValues {
 static constexpr const char* kArchive = "archive";
 static constexpr const char* kRetrieve = "retrieve";
 static constexpr const char* kRepack = "repack";
-}  // namespace SchedulerOperationDirectionValues
+}  // namespace SchedulerOperationWorkflowValues
 
 namespace CtaTransferDirectionValues {
 static constexpr const char* kArchive = "archive";
