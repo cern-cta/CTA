@@ -196,7 +196,6 @@ cta::RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReque
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
-      ,
       {cta::semconv::attr::kSchedulerOperationWorkflow,
        cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve       }
   },
