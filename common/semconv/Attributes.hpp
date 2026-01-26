@@ -90,7 +90,8 @@ static constexpr const char* kScopedExclusive = "exclusive";
 }  // namespace LockTypeValues
 
 namespace SchedulerOperationNameValues {
-static constexpr const char* kRetrieveSelectCatalogueDB = "retrieve_select_catalogue_db"; // happens during retrieve_queue_insert so not used for the moment
+static constexpr const char* kRetrieveSelectCatalogueDB =
+  "retrieve_select_catalogue_db";  // happens during retrieve_queue_insert so not used for the moment
 static constexpr const char* kEnqueueArchive = "archive_queue_insert";
 static constexpr const char* kEnqueueRetrieve = "retrieve_queue_insert";
 static constexpr const char* kEnqueueRepack = "repack_queue_insert";
