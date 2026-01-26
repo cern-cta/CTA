@@ -95,7 +95,7 @@ struct ArchiveJobSummaryRow {
     )SQL";
 
     auto stmt = txn.getConn().createStmt(sql);
-    stmt.setDbQuerySummary("select new archive jobs from summary");
+    txn.getConn().setDbQuerySummary("select new archive jobs from summary");
     return stmt.executeQuery();
   }
 
@@ -116,8 +116,8 @@ struct ArchiveJobSummaryRow {
         STATUS = :STATUS::ARCHIVE_JOB_STATUS
     )SQL";
     auto stmt = txn.getConn().createStmt(sql);
-    stmt.setDbQuerySummary("get summary of archive failed jobs");
     stmt.bindString(":STATUS", "AJS_Failed");
+    txn.getConn().setDbQuerySummary("select failed archive job summary");
     return stmt.executeQuery();
   }
 };
