@@ -294,9 +294,8 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     // We can now pass the validatedSuccessfulArchiveJobs list for the dbMount to process. We are done at that point.
     // Reporting to client will be queued if needed and done in another process.
     m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext);
-    schedulerDbTime = t.secs(utils::Timer::resetCounter);
     cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-      catalogueTimeMSecs,
+      t.msecs(),
       {
         {cta::semconv::attr::kSchedulerOperationName,
          cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
@@ -313,6 +312,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
          cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive      }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
+    schedulerDbTime = t.secs(utils::Timer::resetCounter);
     cta::log::ScopedParamContainer params(logContext);
     params.add("files", files)
       .add("bytes", bytes)
