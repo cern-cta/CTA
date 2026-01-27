@@ -32,8 +32,9 @@ conf:
   tapeCacheMaxAgeSecs: 600
   retrieveQueueCacheMaxAgeSecs: 10
 
-# The entire contents of the telemetry objects are used for the declarative configuration of telemetry
-telemetry: |
+# OpenTelemetry is entirely configured through declarative configuration
+# Simply put the config verbatim here under telemetryConfig:
+telemetryConfig: |
   disabled: true
 
 # SSS keytab to communicate to the disk buffer

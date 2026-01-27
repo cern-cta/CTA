@@ -11,4 +11,4 @@ metadata:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
   cta-otel.yaml: |-
-{{ tpl .Values.telemetry . | nindent 4 }}
+{{ tpl .Values.telemetryConfig . | nindent 4 }}
