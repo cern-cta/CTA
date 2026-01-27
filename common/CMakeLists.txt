@@ -115,8 +115,9 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
-  telemetry/CtaTelemetryLogHandler.cpp
+  telemetry/CtaOtelLogHandler.cpp
   telemetry/TelemetryInit.cpp
+  telemetry/OtelInit.cpp
   telemetry/config/TelemetryConfig.cpp
   telemetry/metrics/MetricsUtils.cpp
   telemetry/metrics/InstrumentRegistry.cpp

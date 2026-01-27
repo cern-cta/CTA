@@ -99,6 +99,9 @@ spec:
           value: sss
         - name: XrdSecSSSKT
           value: /etc/cta/cta-maintd.sss.keytab
+        {{- with $.Values.extraEnv }}
+        {{- include "common.extraEnv" . | nindent 8 }}
+        {{- end }}
         volumeMounts:
         - name: scripts-volume
           mountPath: /scripts
@@ -126,11 +129,9 @@ spec:
         {{- if $.Values.global.volumeMounts }}
         {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
-        {{- if $.Values.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-        - name: otlp-basic-auth-pwd
-          mountPath: /etc/cta/otlp-basic-auth-pwd.conf
-          subPath: otlp-basic-auth-pwd.conf
-        {{- end }}
+        - name: opentelemetry-config
+          mountPath: /etc/cta/cta-otel.yaml
+          subPath: cta-otel.yaml
       {{- if eq $schedulerConfig.backend "vfs" }}
         - name: vfs-storage-volume
           mountPath: /objectstore
@@ -166,6 +167,9 @@ spec:
       - name: cta-maintd-config
         configMap:
           name: cta-maintd-{{ $routineNameSlug }}-conf
+      - name: opentelemetry-config
+        configMap:
+          name: cta-maintd-otel-conf
       - name: maintd-sss-keytab
         secret:
           secretName: {{ $.Values.keytab.secretName }}
@@ -173,11 +177,6 @@ spec:
         emptyDir: {}
       {{- if $.Values.global.volumes }}
       {{ $.Values.global.volumes | toYaml | nindent 6 }}
-      {{- end }}
-      {{- if $.Values.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-      - name: otlp-basic-auth-pwd
-        secret:
-          secretName: {{ $.Values.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       {{- end }}
       {{ include "common.extraVolumes" $ | nindent 6 }}
 ---

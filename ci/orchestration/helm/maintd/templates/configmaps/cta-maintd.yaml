@@ -49,29 +49,8 @@ data:
     cta.health_server.liveness_window 120
 
     # Telemetry
-    cta.experimental.telemetry.enabled {{ $.Values.telemetry.enabled }}
-
-    cta.telemetry.retain_instance_id_on_restart {{ $.Values.telemetry.retainInstanceIdOnRestart }}
-    cta.telemetry.metrics.backend {{ $.Values.telemetry.metrics.backend }}
-    {{- if $.Values.telemetry.metrics.exportInterval }}
-    cta.telemetry.metrics.export.interval {{ $.Values.telemetry.metrics.exportInterval }}
-    {{- end }}
-    {{- if $.Values.telemetry.metrics.exportTimeout }}
-    cta.telemetry.metrics.export.timeout {{ $.Values.telemetry.metrics.exportTimeout }}
-    {{- end }}
-    {{- if $.Values.telemetry.metrics.otlp.endpoint }}
-    cta.telemetry.metrics.otlp.endpoint {{ $.Values.telemetry.metrics.otlp.endpoint }}
-    {{- end }}
-    {{- if $.Values.telemetry.metrics.otlp.auth.basic.username }}
-    cta.telemetry.metrics.otlp.auth.basic.username {{ $.Values.telemetry.metrics.otlp.auth.basic.username }}
-    {{- end }}
-    {{- if $.Values.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-    cta.telemetry.metrics.otlp.auth.basic.password_file /etc/cta/otlp-basic-auth-pwd.conf
-    {{- end }}
-    {{- if $.Values.telemetry.metrics.file.endpoint }}
-    cta.telemetry.metrics.file.endpoint {{ $.Values.telemetry.metrics.file.endpoint }}
-    {{- end }}
-
+    cta.experimental.telemetry.enabled true
+    cta.telemetry.config /etc/cta/cta-otel.yaml
 ---
 {{- end }}
 

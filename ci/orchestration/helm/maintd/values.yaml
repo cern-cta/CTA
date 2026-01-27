@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# Note that by default this chart does not enable any routines for the objectstore/scheduler cleanup
+# To do this, enable these explicitly by passing in another values file (see e.g. presets/dev-cta-maintd-*-values.yaml)
 routines:
   # Note that the snake_case version of all these options (including the names)
   # should match the corresponding names in the maintd conf file
@@ -25,29 +27,14 @@ routines:
     sleepInterval: 1000
     softTimeout: 30
 
-  # Note that by default this chart does not enable any routines for the objectstore/scheduler cleanup
-  # To do this, enable these explicitly by passing in another values file (see e.g. presets/dev-cta-maintd-*-values.yaml)
-
 conf:
   logLevel: "INFO"
   tapeCacheMaxAgeSecs: 600
   retrieveQueueCacheMaxAgeSecs: 10
 
-telemetry:
-  enabled: false
-  retainInstanceIdOnRestart: false
-  metrics:
-    backend: "NOOP"
-    exportInterval: 1000
-    exportTimeout: 500
-    otlp:
-      endpoint: ""
-      auth:
-        basic:
-          username: ""
-          passwordSecret: ""
-    file:
-      endpoint: ""
+# The entire contents of the telemetry objects are used for the declarative configuration of telemetry
+telemetry: |
+  disabled: true
 
 # SSS keytab to communicate to the disk buffer
 keytab:
