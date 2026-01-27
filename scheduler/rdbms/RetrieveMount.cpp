@@ -81,6 +81,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
           retVector.emplace_back(std::move(job));
           retVector.back()->initialize(queuedJobs, m_isRepack);
         }
+        txn.setRowCountForTelemetry(retVector.size());
         txn.commit();
         params.add("queuedJobCount", retVector.size());
         timings.insertAndReset("mountJobInitBatchTime", t);
@@ -88,6 +89,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
                "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
       } else {
         lc.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
+        txn.setRowCountForTelemetry(0);
         txn.commit();
         return ret;
       }
@@ -113,6 +115,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
                                                           true /* isActive */,
                                                           m_isRepack,
                                                           false /* isArchive */);
+    txn.setRowCountForTelemetry(nmountrows);
     txn.commit();
     if (nmountrows < 1) {
       lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch(): did not update any row.");
@@ -134,6 +137,7 @@ uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList
   try {
     nrows =
       postgres::RetrieveJobQueueRow::requeueJobBatch(txn, RetrieveJobStatus::RJS_ToTransfer, jobIDsList, m_isRepack);
+    txn.setRowCountForTelemetry(nrows);
     if (nrows != jobIDsList.size()) {
       cta::log::ScopedParamContainer params(lc);
       params.add("jobsToRequeue", jobIDsList.size());
@@ -240,7 +244,7 @@ void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string
         txn.abort();
         return;
       }
-
+      txn.setRowCountForTelemetry(nrows);
       txn.commit();
       log::ScopedParamContainer(lc)
         .add("rowUpdateCount", nrows)
@@ -314,6 +318,7 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uin
     cta::schedulerdb::Transaction txn(m_connPool, lc);
     try {
       m_RelationalDB.insertOrUpdateDiskSleepEntry(txn, diskSystemName, dse);
+      txn.setRowCountForTelemetry(1);
       txn.commit();
 
     } catch (const exception::Exception& ex) {
