@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "MaintdConfig.hpp"
 #include "MaintenanceDaemon.hpp"
 #include "common/CmdLineParams.hpp"
 #include "common/config/Config.hpp"
@@ -21,6 +22,8 @@
 #include <getopt.h>
 #include <iostream>
 #include <memory>
+#include <rfl.hpp>
+#include <rfl/toml.hpp>
 #include <signal.h>
 #include <string>
 #include <thread>
@@ -58,7 +61,7 @@ void initTelemetry(const common::Config& config, cta::log::LogContext& lc) {
  * @param log The logging system
  * @return integer representing the exit code. Only used if we are gracefully shutting down.
  */
-static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
+static int exceptionThrowingMain(MaintdConfig config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
 
   MaintenanceDaemon maintenanceDaemon(config, lc);
@@ -72,8 +75,11 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
       .build();
   signalReactor.start();
 
-  // Telemetry spawns some threads, so the SignalReactor must have started before this to correctly block signals
-  initTelemetry(config, lc);
+  if (!config.experimental.telemetry) {
+    // Telemetry spawns some threads, so the SignalReactor must have started before this to correctly block signals
+    initTelemetry(config.telemetry, lc);
+    return;
+  }
 
   common::HealthServer healthServer = common::HealthServer(
     lc,
@@ -133,26 +139,20 @@ int main(const int argc, char** const argv) {
   log::Logger& log = *logPtr;
 
   // Read the config file
-  common::Config config(cmdLineParams.configFileLocation, &(*logPtr));
+  cta::maintd::MaintdConfig config = rfl::toml::read<cta::maintd::MaintdConfig>(cmdLineParams.configFileLocation);
 
-  // Some logger configuration is only available after we get the config file, so update the logger here
-  if (!cmdLineParams.logFormat.empty()) {
-    log.setLogFormat(config.getOptionValueStr("cta.log.format").value_or(defaultLogFormat));
-  }
-  log.setLogMask(config.getOptionValueStr("cta.log.level").value_or("INFO"));
-  if (!config.getOptionValueStr("cta.instance_name").has_value()) {
-    log(log::CRIT, "cta.instance_name is not set in configuration file " + cmdLineParams.configFileLocation);
-    return EXIT_FAILURE;
-  }
-  if (!config.getOptionValueStr("cta.scheduler_backend_name").has_value()) {
-    log(log::CRIT, "cta.scheduler_backend_name is not set in configuration file " + cmdLineParams.configFileLocation);
-    return EXIT_FAILURE;
-  }
-  std::map<std::string, std::string> staticParamMap;
-  staticParamMap["instance"] = config.getOptionValueStr("cta.instance_name").value();
-  staticParamMap["sched_backend"] = config.getOptionValueStr("cta.scheduler_backend_name").value();
-  log.setStaticParams(staticParamMap);
+  log.setLogMask(config.logging.level);
+  log.setStaticParams(config.logging.attributes);
 
+<<<<<<< HEAD
+=======
+  // Change user and group
+  // TODO: will be fully removed in the next MR
+  if (int rc = cta::maintd::setUserAndGroup("cta", "tape", log)) {
+    return rc;
+  }
+
+>>>>>>> 8c694f5d39 (Initial PoC for new maintd config)
   // Start
   int programRc = EXIT_FAILURE;
   try {
