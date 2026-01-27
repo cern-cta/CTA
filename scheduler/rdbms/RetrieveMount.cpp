@@ -111,7 +111,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   try {
     auto nmountrows =
       postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack);
-    txn.setRowCountForTelemetry(nrows);
+    txn.setRowCountForTelemetry(nmountrows);
     txn.commit();
     if (nmountrows < 1) {
       lc.log(cta::log::WARNING,
