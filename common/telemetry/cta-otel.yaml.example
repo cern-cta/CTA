@@ -74,7 +74,7 @@ meter_provider:
             # Configure compression.
             # Values include: gzip, none.
             # If omitted or null, none is used.
-            compression: gzip
+            compression: none
             # Configure max time (in milliseconds) to wait for each export.
             # Value must be non-negative. A value of 0 indicates no limit (infinity).
             # If omitted or null, 10000 is used.
