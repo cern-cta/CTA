@@ -588,7 +588,7 @@ VALUES )SQL";
       stmt.bindUint16(":TOTAL_REPORT_RETRIES" + idx, row.totalReportRetries);
       stmt.bindUint16(":MAX_REPORT_RETRIES" + idx, row.maxReportRetries);
     }
-    conn.setDbQuerySummary("insert archive job batch");
+    conn.setDbQuerySummary("insert archive job");
     stmt.executeNonQuery();
   }
 
