@@ -87,6 +87,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
                "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: successfully queued to the DB.");
       } else {
         lc.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: no jobs queued.");
+        txn.setRowCountForTelemetry(0);
         txn.commit();
         return ret;
       }
@@ -107,6 +108,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   try {
     auto nmountrows =
       postgres::ArchiveJobQueueRow::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack);
+    txn.setRowCountForTelemetry(nmountrows);
     txn.commit();
     if (nmountrows < 1) {
       lc.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::updateMountQueueLastFetch: did not update any row.");
@@ -178,6 +180,7 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
       params.add("jobsRequeued", nrows);
       lc.log(cta::log::ERR, "In schedulerdb::ArchiveMount::requeueJobBatch(): failed to requeue all jobs !");
     }
+    txn.setRowCountForTelemetry(nrows);
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer(lc)
@@ -230,11 +233,13 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
   }
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
+    auto totalRows = 0;
     // all jobs for which setJobBatchTransferred is called shall be reported as successful
     auto status = ArchiveJobStatus::AJS_ToReportToUserForSuccess;
     if (!jobIDsList_single_copy.empty()) {
       uint64_t nrows = 0;
       nrows = postgres::ArchiveJobQueueRow::updateJobStatus(txn, status, jobIDsList_single_copy);
+      totalRows += nrows;
       if (nrows != jobIDsList_single_copy.size()) {
         log::ScopedParamContainer(lc)
           .add("updatedRows", nrows)
@@ -247,6 +252,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
     if (!jobIDsList_multi_copy.empty()) {
       uint64_t nrows = 0;
       nrows = postgres::ArchiveJobQueueRow::updateMultiCopyJobSuccess(txn, jobIDsList_multi_copy);
+      totalRows += nrows;
       log::ScopedParamContainer(lc)
         .add("updatedRows", nrows)
         .add("jobListSize", jobIDsList_multi_copy.size())
@@ -254,6 +260,7 @@ void ArchiveMount::setJobBatchTransferred(std::list<std::unique_ptr<SchedulerDat
              "In ArchiveMount::setJobBatchTransferred(): Finished ArchiveJobQueueRow::updateJobStatus() for "
              "the job list provided.");
     }
+    txn.setRowCountForTelemetry(totalRows);
     txn.commit();
     // After processing, return the job object to the job pool for re-use
     recycleTransferredJobs(jobsBatch, lc);
@@ -307,6 +314,7 @@ void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<Schedu
       .add("updatedRows", nrows)
       .add("jobListSize", jobIDsList.size())
       .log(log::INFO, "In ArchiveMount::updateRepackJobSuccess(): Finished DB report for job list provided.");
+    txn.setRowCountForTelemetry(nrows);
     txn.commit();
     // After processing, return the job object to the job pool for re-use
     recycleTransferredJobs(jobsBatch, lc);
