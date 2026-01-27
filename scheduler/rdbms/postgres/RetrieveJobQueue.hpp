@@ -469,7 +469,7 @@ public:
     if (!srrActivity.empty()) {
       stmt.bindString(":SRR_ACTIVITY", srrActivity);
     }
-    conn.setDbQuerySummary("insert retrieve job");
+    conn.setDbQuerySummary("insert retrieve");
     stmt.executeNonQuery();
   }
 
@@ -769,7 +769,7 @@ public:
         stmt.bindString(":SRR_ACTIVITY" + std::to_string(i), row.srrActivity);
       }
     }
-    conn.setDbQuerySummary("insert retrieve job batch");
+    conn.setDbQuerySummary("insert retrieve job");
     stmt.executeNonQuery();
   }
 

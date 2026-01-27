@@ -57,6 +57,7 @@ void RepackRequest::reportRetrieveCreationFailures(const uint64_t failedToRetrie
       .log(log::INFO,
            "In RepackRequest::reportRetrieveCreationFailures(): updateRepackRequestFailures() called successfully "
            "after expansion.");
+    txn.setRowCountForTelemetry(nrows);
     txn.commit();
   } catch (cta::exception::Exception& e) {
     std::string bt = e.backtrace();
@@ -356,6 +357,7 @@ RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequ
       .log(
         log::INFO,
         "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequest() called successfully after expansion.");
+    txn.setRowCountForTelemetry(nrows);
     txn.commit();
   } catch (cta::exception::Exception& e) {
     std::string bt = e.backtrace();
@@ -386,6 +388,7 @@ void RepackRequest::fail() {
       .add("nrows", nrows)
       .add("newStatus", to_string(RepackJobStatus::RRS_Failed))
       .log(log::INFO, "In RepackRequest::fail(): marked repack request as failed.");
+    txn.setRowCountForTelemetry(nrows);
     txn.commit();
   } catch (cta::exception::Exception& e) {
     log::ScopedParamContainer(m_lc)
@@ -429,6 +432,7 @@ void RepackRequest::setExpandStartedAndChangeStatus() {
         repackInfo.isExpandFinished,
         mapRepackInfoStatusToJobStatus(newStatus),
         repackInfo.repackFinishedTime);
+      txn.setRowCountForTelemetry(nrows);
 
       log::ScopedParamContainer(m_lc)
         .add("nrows", nrows)
@@ -440,7 +444,7 @@ void RepackRequest::setExpandStartedAndChangeStatus() {
                                                                       repackInfo.repackReqId,
                                                                       repackInfo.isExpandFinished,
                                                                       mapRepackInfoStatusToJobStatus(newStatus));
-
+      txn.setRowCountForTelemetry(nrows);
       log::ScopedParamContainer(m_lc).add("nrows", nrows).log(log::INFO, "updateRepackRequestStatus finished");
     }
     txn.commit();
