@@ -125,6 +125,7 @@ void RetrieveRequest::insert() {
     row->addParamsToLogContext(params);
     row->insert(m_conn);
     m_lc.log(log::INFO, "In RetrieveRequest::insert(): added jobs to queue.");
+    m_conn.commit();
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(m_lc).add("exceptionMessage", ex.getMessageValue());
     m_lc.log(log::ERR, "In RetrieveRequest::insert(): failed to queue job.");
