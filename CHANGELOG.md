@@ -1,3 +1,41 @@
+## 5.11.16.0-1
+
+### New Features
+
+- [CI] Add health endpoints to maintd (cta/CTA!1243)
+- [frontend] Implement user/repack domain separation on tape ch command (cta/CTA!1241)
+- [scheduler] Enable unit tests for the pgsched (cta/CTA!1077)
+- [rmcd] Allow rmcd to accept connections outside of localhost (cta/CTA!1229)
+
+### Changes
+
+- [Misc] Simplify only user name reporting in logs (cta/CTA!1239)
+- [Tools] Enable cta-admin colors only for terminal output (cta/CTA!1203)
+
+
+### Bug Fixes
+
+- [Tools] Prevent cta-objectstore-dump-object from crashing when using wrong arguments (cta/CTA!1238)
+- [Misc] Improve CTA Logger performance and scoping of parameters (cta/CTA!1222)
+- [CI] Fix grpc pipeline failure for test-repack (cta/CTA!1232)
+- [frontend] Enable streaming behaviour on the 'cta-admin fr ls' command (cta/CTA!1187)
+- [frontend] Enable streaming behaviour on the 'cta-admin tape ls' command (cta/CTA!1202)
+- [frontend] Fix curl call to jwks endpoint hanging (cta/CTA!1224)
+- [scheduler] Do not increment RETRIES_WITHIN_MOUNT when moving archive jobs to...
+
+### Deprecations
+
+- [frontend] Finalize deprecation of --encrypted in cta-admin tapepool add (cta/CTA!1240)
+
+### Performance Improvements
+
+- [catalogue] Improve choice of std containers in the CTA Catalogue (cta/CTA!1210)
+
+### Other
+
+- [taped] Remove eos client dependency in 'cta-eosdf' (cta/CTA!1227)
+
+
 ## 5.11.15.0-1
 
 ### Changes
