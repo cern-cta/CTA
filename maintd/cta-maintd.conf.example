@@ -125,6 +125,7 @@ cta.health_server.enabled false
 # Where to accept connections from. By default accept only from localhost (127.0.0.1)
 # Set to 0.0.0.0 to accept connections from anywhere. Set to the socket path if using Unix Domain Sockets (*.sock)
 # When using Unix Domain Sockets, the port value will be unused
+# cta.health_server.host /run/cta/cta-maintd/health.sock
 cta.health_server.host 127.0.0.1
 # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port
 cta.health_server.port 8080

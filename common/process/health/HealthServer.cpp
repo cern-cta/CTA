@@ -25,8 +25,8 @@ HealthServer::HealthServer(cta::log::LogContext& lc,
       m_readinessFunc(readinessFunc),
       m_livenessFunc(livenessFunc) {
   if (usesUDS()) {
-    m_lc.log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Setting port to 80.");
-    m_port = 80;  // UDS always listens on port 80
+    m_lc.log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Ignoring port value.");
+    m_port = 80;  // technically the port shouldn't be used but the httplib example uses port 80
   }
 }
 
