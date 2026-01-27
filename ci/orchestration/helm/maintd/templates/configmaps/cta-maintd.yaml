@@ -40,6 +40,14 @@ data:
     {{- end }}
     {{ end }}
 
+    ## Health
+
+    cta.health_server.enabled true
+    # For k8s health probes to work, this cannot only accept connections from localhost
+    cta.health_server.host 0.0.0.0
+    cta.health_server.port 8080
+    cta.health_server.liveness_window 120
+
     # Telemetry
     cta.experimental.telemetry.enabled {{ $.Values.telemetry.enabled }}
 
@@ -63,5 +71,7 @@ data:
     {{- if $.Values.telemetry.metrics.file.endpoint }}
     cta.telemetry.metrics.file.endpoint {{ $.Values.telemetry.metrics.file.endpoint }}
     {{- end }}
+
 ---
 {{- end }}
+

@@ -85,6 +85,7 @@ BuildRoot: %{_builddir}/%{name}-%{version}-root
 BuildRequires: systemd
 
 # PostgreSQL server binaries needed for unit tests when using pgsched
+# Note that this should eventually move to project.json once the objectstore is removed
 %if "%{schedOpt}" == "-DCTA_USE_PGSCHED:Bool=TRUE"
 BuildRequires: postgresql-server
 %endif

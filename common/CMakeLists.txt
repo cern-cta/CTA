@@ -98,6 +98,7 @@ set (COMMON_LIB_SRC_FILES
   process/signals/SignalReactor.cpp
   process/signals/SignalReactorBuilder.cpp
   process/signals/SignalUtils.cpp
+  process/health/HealthServer.cpp
   process/ProcessCap.cpp
   process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp
@@ -170,6 +171,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/LoggerParamTypeTest.cpp
   remoteFS/RemotePathTest.cpp
   CRCTest.cpp
+  process/health/HealthServerTest.cpp
   process/threading/CondVarTest.cpp
   process/threading/DaemonTest.cpp
   process/threading/RWLockTest.cpp
