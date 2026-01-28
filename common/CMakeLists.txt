@@ -115,8 +115,9 @@ set (COMMON_LIB_SRC_FILES
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
   remoteFS/RemotePathAndStatus.cpp
-  telemetry/CtaTelemetryLogHandler.cpp
+  telemetry/CtaOtelLogHandler.cpp
   telemetry/TelemetryInit.cpp
+  telemetry/OtelInit.cpp
   telemetry/config/TelemetryConfig.cpp
   telemetry/metrics/MetricsUtils.cpp
   telemetry/metrics/InstrumentRegistry.cpp
@@ -142,6 +143,10 @@ set_property(TARGET ctacommon PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacommon PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 install (TARGETS ctacommon DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+install (FILES telemetry/cta-otel.yaml.example
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
 target_include_directories(ctacommon PRIVATE ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
 

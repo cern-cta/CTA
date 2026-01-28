@@ -1,0 +1,14 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cta-maintd-otel-conf
+  labels:
+    {{-  include "common.labels.standard" $ | nindent 4 }}
+data:
+  cta-otel.yaml: |-
+{{ tpl .Values.telemetryConfig . | nindent 4 }}

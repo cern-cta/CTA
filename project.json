@@ -157,7 +157,7 @@
         "group-eosxrootd": "5.8.4-1.el9",
         "group-xrootd": "1:5.8.4-1.el9",
         "group-oracle-instantclient": "23.6.0.24.10-1.el9",
-        "opentelemetry-cpp": "1:1.22.0-1.el9"
+        "opentelemetry-cpp": "1:1.24.0-1.el9"
       },
       "runRequires": {
         "xrootd": ">= 1:5.7.1",
@@ -165,10 +165,10 @@
         "rados": "= 2:17.2.8",
         "valgrind": ">= 3.8.1",
         "gtest": ">= 1.11.0",
-        "opentelemetry-cpp": ">= 1.21.0"
+        "opentelemetry-cpp": ">= 1.24.0"
       },
       "buildRequires": {
-        "opentelemetry-cpp": ">= 1.21.0",
+        "opentelemetry-cpp": ">= 1.24.0",
         "group-xrootd-devel": ">= 1:5.7.1-1",
         "group-protobuf": ">= 3.3.1",
         "group-ceph-devel": "= 2:17.2.8",
