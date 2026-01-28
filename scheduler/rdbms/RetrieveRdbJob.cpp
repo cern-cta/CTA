@@ -153,7 +153,6 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
 
   try {
     uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, isRepack);
-    txn.setRowCountForTelemetry(nrows);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING,
@@ -191,7 +190,6 @@ void RetrieveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
   try {
     // requeue to the same mount simply by moving it to PENDING QUEUE and updating all other stat fields
     uint64_t nrows = m_jobRow.requeueFailedJob(txn, RetrieveJobStatus::RJS_ToTransfer, keepMountId, isRepack);
-    txn.setRowCountForTelemetry(nrows);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::ERR, log_msg + std::string(" failed. Job not found in DB."));
@@ -247,7 +245,6 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
       // the job will be moved to FAILED_QUEUE table, and delted from the ACTIVE_QUEUE.
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, RetrieveJobStatus::ReadyForDeletion);
       nrowsdeleted = nrows;
-      txn.setRowCountForTelemetry(nrows);
       if (nrows != 1) {
         log::ScopedParamContainer(lc)
           .add("jobID", jobID)
@@ -265,7 +262,6 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
       // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
       m_jobRow.isReporting = false;
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
-      txn.setRowCountForTelemetry(nrows);
       if (nrows != 1) {
         log::ScopedParamContainer(lc)
           .add("jobID", jobID)

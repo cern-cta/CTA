@@ -317,7 +317,7 @@ public:
     stmt.bindUint16(":MAX_TOTAL_RETRIES", maxTotalRetries);
     stmt.bindUint16(":TOTAL_REPORT_RETRIES", totalReportRetries);
     stmt.bindUint16(":MAX_REPORT_RETRIES", maxReportRetries);
-    conn.setDbQuerySummary("insert archive job");
+    conn.setDbQuerySummary("insert archive");
     stmt.executeNonQuery();
   }
 
@@ -588,7 +588,7 @@ VALUES )SQL";
       stmt.bindUint16(":TOTAL_REPORT_RETRIES" + idx, row.totalReportRetries);
       stmt.bindUint16(":MAX_REPORT_RETRIES" + idx, row.maxReportRetries);
     }
-    conn.setDbQuerySummary("insert archive job");
+    conn.setDbQuerySummary("insert archive");
     stmt.executeNonQuery();
   }
 

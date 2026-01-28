@@ -124,6 +124,7 @@ void RetrieveRequest::insert() {
     log::ScopedParamContainer params(m_lc);
     row->addParamsToLogContext(params);
     row->insert(m_conn);
+    m_conn.setRowCountForTelemetry(1);
     m_lc.log(log::INFO, "In RetrieveRequest::insert(): added jobs to queue.");
     m_conn.commit();
   } catch (exception::Exception& ex) {
