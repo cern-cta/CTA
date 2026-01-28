@@ -32,6 +32,38 @@ wait_for_device_ready() {
   done
 }
 
+retry_dd_on_busy() {
+  local max_attempts=6
+  local attempt=1
+  local err_file
+
+  while true; do
+    err_file=$(mktemp)
+    if dd "$@" 2>"$err_file"; then
+      cat "$err_file" >&2
+      rm -f "$err_file"
+      return 0
+    fi
+
+    if grep -qi "resource busy" "$err_file"; then
+      rm -f "$err_file"
+      if (( attempt >= max_attempts )); then
+        echo "dd failed with EBUSY after ${attempt} attempts" >&2
+        return 1
+      fi
+      echo "Tape device busy, retrying dd (${attempt}/${max_attempts})..." >&2
+      wait_for_device_ready "${device}" || true
+      sleep 2
+      attempt=$((attempt + 1))
+      continue
+    fi
+
+    cat "$err_file" >&2
+    rm -f "$err_file"
+    return 1
+  done
+}
+
 # Load tape in a tapedrive
 mtx -f ${changer} status
 mtx -f ${changer} load 3 0
@@ -45,17 +77,17 @@ wait_for_device_ready "${device}" || exit 1
 
 # Write EnstoreLarge label, header, payload, and trailer to tape.
 wait_for_device_ready "${device}" || exit 1
-dd if=/ens-mhvtl/enstorelarge/FL1587_f1/vol1_FL1587.bin of=$device bs=80
-mt -f $device weof
+retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/vol1_FL1587.bin of=$device bs=80 || exit 1
+mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
-dd if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_header.bin of=$device bs=262144
-mt -f $device weof
+retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_header.bin of=$device bs=262144 || exit 1
+mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
-dd if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_payload.bin of=$device bs=262144
-mt -f $device weof
+retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_payload.bin of=$device bs=262144 || exit 1
+mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
-dd if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_trailer.bin of=$device bs=262144
-mt -f $device weof
+retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_trailer.bin of=$device bs=262144 || exit 1
+mt -f $device weof || exit 1
 
 wait_for_device_ready "${device}" || exit 1
 mt -f $device rewind
