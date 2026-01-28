@@ -160,8 +160,10 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
     .add("bytesRequested", bytesRequested)
     .add("getNextJobBatchTime", t.secs())
     .log(log::INFO, "In SchedulerDB::ArchiveMount::getNextJobBatch(): Finished getting next job batch.");
+  auto tteltime = t.msecs();
+  auto retsize = ret.size();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    t.msecs(),
+    tteltime,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
@@ -170,7 +172,7 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-    ret.size(),
+    retsize,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
@@ -296,9 +298,11 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
 
     // We can now pass the validatedSuccessfulArchiveJobs list for the dbMount to process. We are done at that point.
     // Reporting to client will be queued if needed and done in another process.
+    uint64_t njobs = validatedSuccessfulDBArchiveJobs.size();
     m_dbMount->setJobBatchTransferred(validatedSuccessfulDBArchiveJobs, logContext);
+    auto tteltime = t.msecs();
     cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-      t.msecs(),
+      tteltime,
       {
         {cta::semconv::attr::kSchedulerOperationName,
          cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
@@ -307,7 +311,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-      validatedSuccessfulDBArchiveJobs.size(),
+      njobs,
       {
         {cta::semconv::attr::kSchedulerOperationName,
          cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
@@ -389,8 +393,9 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
       throw cta::ArchiveMount::FailedReportCatalogueUpdate(msg_error);
     }
   }
+  auto tteltime = ttel_total.msecs();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    ttel_total.msecs(),
+    tteltime,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
