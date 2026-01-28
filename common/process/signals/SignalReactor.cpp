@@ -38,7 +38,6 @@ SignalReactor::~SignalReactor() {
 // SignalReactor::start
 //------------------------------------------------------------------------------
 void SignalReactor::start() {
-  m_stopRequested = false;
   cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, nullptr),
                                          "In SignalReactor::start(): pthread_sigmask() failed");
   m_thread = std::jthread([this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_lc.logger()); });
@@ -100,7 +99,7 @@ void SignalReactor::run(std::stop_token st,
         continue;
       }
 
-      signalFunctions[signal]();
+      signalFunctions.at(signal)();
     }
   } catch (std::exception& ex) {
     log::ScopedParamContainer exParams(lc);

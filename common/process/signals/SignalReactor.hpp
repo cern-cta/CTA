@@ -12,6 +12,11 @@
 #include <thread>
 #include <unordered_map>
 
+namespace unitTests {
+// See SignalReactorTest.cpp
+struct SignalReactorTestAccess;
+}  // namespace unitTests
+
 namespace cta::process {
 
 /**
