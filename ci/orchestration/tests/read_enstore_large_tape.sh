@@ -80,6 +80,21 @@ wait_for_write_ready() {
   done
 }
 
+position_to_file() {
+  local device_path="$1"
+  local file_number="$2"
+
+  mt -f "$device_path" rewind
+  wait_for_device_ready "$device_path" || return 1
+  wait_for_file_number_at_least "$device_path" 0 || return 1
+
+  if (( file_number > 0 )); then
+    mt -f "$device_path" fsf "$file_number"
+    wait_for_device_ready "$device_path" || return 1
+    wait_for_file_number_at_least "$device_path" "$file_number" || return 1
+  fi
+}
+
 retry_dd_on_busy() {
   local max_attempts=6
   local attempt=1
@@ -120,9 +135,7 @@ mtx -f ${changer} status
 # Get the device status where the tape is loaded and rewind it.
 mt -f ${device} status
 wait_for_device_ready "${device}" || exit 1
-mt -f ${device} rewind
-wait_for_device_ready "${device}" || exit 1
-wait_for_file_number_at_least "${device}" 0 || exit 1
+position_to_file "${device}" 0 || exit 1
 
 # Write EnstoreLarge label, header, payload, and trailer to tape.
 wait_for_device_ready "${device}" || exit 1
@@ -130,17 +143,17 @@ wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/vol1_FL1587.bin of=$device bs=80 || exit 1
 mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
-wait_for_file_number_at_least "${device}" 1 || exit 1
+position_to_file "${device}" 1 || exit 1
 wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_header.bin of=$device bs=262144 || exit 1
 mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
-wait_for_file_number_at_least "${device}" 2 || exit 1
+position_to_file "${device}" 2 || exit 1
 wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_payload.bin of=$device bs=262144 || exit 1
 mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
-wait_for_file_number_at_least "${device}" 3 || exit 1
+position_to_file "${device}" 3 || exit 1
 wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_trailer.bin of=$device bs=262144 || exit 1
 mt -f $device weof || exit 1

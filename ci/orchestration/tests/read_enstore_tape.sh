@@ -80,6 +80,21 @@ wait_for_write_ready() {
   done
 }
 
+position_to_file() {
+  local device_path="$1"
+  local file_number="$2"
+
+  mt -f "$device_path" rewind
+  wait_for_device_ready "$device_path" || return 1
+  wait_for_file_number_at_least "$device_path" 0 || return 1
+
+  if (( file_number > 0 )); then
+    mt -f "$device_path" fsf "$file_number"
+    wait_for_device_ready "$device_path" || return 1
+    wait_for_file_number_at_least "$device_path" "$file_number" || return 1
+  fi
+}
+
 retry_dd_on_busy() {
   local max_attempts=6
   local attempt=1
@@ -120,9 +135,7 @@ mtx -f ${changer} status
 # Get the device status where the tape is loaded and rewind it.
 mt -f ${device} status
 wait_for_device_ready "${device}" || exit 1
-mt -f ${device} rewind
-wait_for_device_ready "${device}" || exit 1
-wait_for_file_number_at_least "${device}" 0 || exit 1
+position_to_file "${device}" 0 || exit 1
 
 # Write Enstore label and payload to tape.
 wait_for_device_ready "${device}" || exit 1
@@ -130,7 +143,7 @@ wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstore/FL1212_f1/vol1_FL1212.bin of=$device bs=80 || exit 1
 mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
-wait_for_file_number_at_least "${device}" 1 || exit 1
+position_to_file "${device}" 1 || exit 1
 wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstore/FL1212_f1/fseq1_payload.bin of=$device bs=1048576 || exit 1
 mt -f $device weof || exit 1
