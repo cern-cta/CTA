@@ -88,7 +88,7 @@ struct SchedulerMaintenanceCleanupRoutineConfig {
 
 struct RoutinesConfig {
   int global_sleep_interval_secs = 1;
-  int liveness_window = 120;
+  int liveness_window_secs = 120;
 
   DiskReportRoutineConfig disk_report_archive;
   DiskReportRoutineConfig disk_report_retrieve;
