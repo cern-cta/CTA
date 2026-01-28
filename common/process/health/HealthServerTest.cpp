@@ -155,7 +155,7 @@ TEST(HealthServer, InvalidHost) {
 
   const std::string host = "garbage";
   const int64_t port = getFreePort();
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
+  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; }, 200);
   hs.start();
   // At this point the server actually should have failed to start, but it should not crash anything
   // It should simply time out on trying the readiness/liveness endpoints
@@ -173,7 +173,7 @@ TEST(HealthServer, InvalidPort) {
 
   const std::string host = "127.0.0.1";
   const int64_t port = -1;
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
+  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; }, 200);
   hs.start();
   // At this point the server actually should have failed to start, but it should not crash anything
   // It should simply time out on trying the readiness/liveness endpoints
@@ -191,10 +191,10 @@ TEST(HealthServer, NoTwoServersOnSamePort) {
 
   const std::string host = "127.0.0.1";
   const int64_t port = getFreePort();
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
+  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; }, 200);
   hs.start();
 
-  cta::common::HealthServer hs2(lc, host, port, []() { return true; }, []() { return true; });
+  cta::common::HealthServer hs2(lc, host, port, []() { return true; }, []() { return true; }, 200);
   hs2.start();
   ASSERT_FALSE(hs2.isRunning());
 }

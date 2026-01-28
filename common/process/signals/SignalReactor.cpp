@@ -21,10 +21,12 @@ namespace cta::process {
 //------------------------------------------------------------------------------
 SignalReactor::SignalReactor(cta::log::LogContext& lc,
                              const sigset_t& sigset,
-                             const std::unordered_map<int, std::function<void()>>& signalFunctions)
+                             const std::unordered_map<int, std::function<void()>>& signalFunctions,
+                             uint32_t waitTimeoutMsecs)
     : m_lc(lc),
       m_sigset(sigset),
-      m_signalFunctions(signalFunctions) {}
+      m_signalFunctions(signalFunctions),
+      m_waitTimeoutMsecs(waitTimeoutMsecs) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -38,17 +40,17 @@ SignalReactor::~SignalReactor() {
 // SignalReactor::start
 //------------------------------------------------------------------------------
 void SignalReactor::start() {
-  m_stopRequested = false;
   cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, nullptr),
                                          "In SignalReactor::start(): pthread_sigmask() failed");
-  m_thread = std::jthread(&SignalReactor::run, this);
+  m_thread = std::jthread(
+    [this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_lc.logger(), m_waitTimeoutMsecs); });
 }
 
 //------------------------------------------------------------------------------
 // SignalReactor::stop
 //------------------------------------------------------------------------------
 void SignalReactor::stop() noexcept {
-  m_stopRequested = true;
+  m_thread.request_stop();
   if (m_thread.joinable()) {
     try {
       m_thread.join();
@@ -63,16 +65,21 @@ void SignalReactor::stop() noexcept {
 //------------------------------------------------------------------------------
 // SignalReactor::run
 //------------------------------------------------------------------------------
-void SignalReactor::run() {
-  m_lc.log(log::INFO, "In SignalReactor::run(): Starting SignalReactor");
+void SignalReactor::run(std::stop_token st,
+                        const std::unordered_map<int, std::function<void()>>& signalFunctions,
+                        const sigset_t& sigset,
+                        cta::log::Logger& log,
+                        const uint32_t waitTimeoutMsecs) {
+  cta::log::LogContext lc(log);
+  lc.log(log::INFO, "In SignalReactor::run(): Starting SignalReactor");
   timespec ts;
-  ts.tv_sec = m_waitTimeoutSecs;
-  ts.tv_nsec = 0;
+  ts.tv_sec = waitTimeoutMsecs / 1000;
+  ts.tv_nsec = (waitTimeoutMsecs % 1000) * 1e6;
 
   try {
-    while (!m_stopRequested) {
+    while (!st.stop_requested()) {
       siginfo_t si {};
-      int signal = sigtimedwait(&m_sigset, &si, &ts);
+      int signal = sigtimedwait(&sigset, &si, &ts);
       // Handle errors
       if (signal == -1) {
         int e = errno;
@@ -81,30 +88,30 @@ void SignalReactor::run() {
           continue;
         }
         // Something else
-        log::ScopedParamContainer params(m_lc);
+        log::ScopedParamContainer params(lc);
         params.add("errno", std::to_string(e));
         params.add("errorMessage", ::strerror(e));
-        m_lc.log(log::WARNING, "In SignalReactor::run(): sigtimedwait failed");
+        lc.log(log::WARNING, "In SignalReactor::run(): sigtimedwait failed");
         continue;
       }
-      m_lc.log(log::INFO, "In SignalReactor::run(): received " + utils::signalToString(signal));
+      lc.log(log::INFO, "In SignalReactor::run(): received " + utils::signalToString(signal));
       // Check whether we have something to do for this signal
-      if (!m_signalFunctions.contains(signal)) {
-        log::ScopedParamContainer params(m_lc);
+      if (!signalFunctions.contains(signal)) {
+        log::ScopedParamContainer params(lc);
         params.add("signal", utils::signalToString(signal));
-        m_lc.log(log::INFO, "In SignalReactor::run(): no action for signal");
+        lc.log(log::INFO, "In SignalReactor::run(): no action for signal");
         continue;
       }
 
-      m_signalFunctions[signal]();
+      signalFunctions.at(signal)();
     }
   } catch (std::exception& ex) {
-    log::ScopedParamContainer exParams(m_lc);
+    log::ScopedParamContainer exParams(lc);
     exParams.add("exceptionMessage", ex.what());
-    m_lc.log(log::ERR, "In SignalReactor::run(): received a std::exception.");
+    lc.log(log::ERR, "In SignalReactor::run(): received a std::exception.");
     throw ex;
   } catch (...) {
-    m_lc.log(log::ERR, "In SignalReactor::run(): received an unknown exception.");
+    lc.log(log::ERR, "In SignalReactor::run(): received an unknown exception.");
     throw;
   }
 }
