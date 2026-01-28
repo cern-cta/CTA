@@ -55,9 +55,8 @@ void initTelemetry(const std::string& otelConfigPath, cta::log::LogContext& lc) 
  *
  * @param config The parsed config file
  * @param log The logging system
- * @return integer representing the exit code. Only used if we are gracefully shutting down.
  */
-static int exceptionThrowingMain(MaintdConfig config, cta::log::Logger& log) {
+static void runMaintd(MaintdConfig config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
 
   MaintenanceDaemon maintenanceDaemon(config, lc);
@@ -90,7 +89,6 @@ static int exceptionThrowingMain(MaintdConfig config, cta::log::Logger& log) {
 
   // Run the maintenance daemon
   maintenanceDaemon.run();
-  return 0;
 }
 
 }  // namespace cta::maintd
@@ -138,38 +136,36 @@ int main(const int argc, char** const argv) {
                                        rfl::NoOptionals     // require optionals present
                                        >;
 
-  auto rflConfig = rfl::toml::load<cta::maintd::MaintdConfig, StrictConfig>(cmdLineParams.configFileLocation);
+  auto rflConfig = rfl::toml::load<maintd::MaintdConfig, StrictConfig>(cmdLineParams.configFileLocation);
   if (!rflConfig) {
-    std::vector<cta::log::Param> params = {log::Param("exceptionMessage", rflConfig.error().what())};
-    log(log::CRIT, "Failed to parse config file", params);
+    log(log::CRIT, "FATAL: Failed to parse config file", {log::Param("error", rflConfig.error().what())});
     sleep(1);
     return EXIT_FAILURE;
   }
-  const cta::maintd::MaintdConfig config = rflConfig.value();
+  const maintd::MaintdConfig config = rflConfig.value();
 
   log.setLogMask(config.logging.level);
   log.setStaticParams(config.logging.attributes);
 
   // Start
-  int programRc = EXIT_FAILURE;
   try {
     log(log::INFO, "Launching cta-maintd", cmdLineParams.toLogParams());
-    programRc = maintd::exceptionThrowingMain(config, log);
+    maintd::runMaintd(config, log);
   } catch (exception::Exception& ex) {
-    // TODO: improve exception handling here
-    // These should all be CRIT and exit with EXIT_FAILURE
-    // Should be a common method for this
-    std::vector<cta::log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
-    log(log::ERR, "Caught an unexpected CTA exception.", params);
+    log(log::CRIT,
+        "FATAL: Caught an unexpected CTA exception",
+        {log::Param("exceptionMessage", ex.getMessage().str())});
     sleep(1);
+    return EXIT_FAILURE;
   } catch (std::exception& se) {
-    std::vector<cta::log::Param> params = {cta::log::Param("what", se.what())};
-    log(log::ERR, "Caught an unexpected standard exception.", params);
+    log(log::CRIT, "FATAL: Caught an unexpected standard exception", {log::Param("error", se.what())});
     sleep(1);
+    return EXIT_FAILURE;
   } catch (...) {
-    log(log::ERR, "Caught an unexpected and unknown exception.");
+    log(log::CRIT, "FATAL: Caught an unexpected and unknown exception", {});
     sleep(1);
+    return EXIT_FAILURE;
   }
   log(log::INFO, "Exiting cta-maintd");
-  return programRc;
+  return EXIT_SUCCESS;
 }

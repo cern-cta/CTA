@@ -126,13 +126,13 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       *m_catalogue,
       *m_schedDb,
       m_config.routines.user_active_queue_cleanup.batch_size,
-      m_config.routines.user_active_queue_cleanup.age_for_collection));
+      m_config.routines.user_active_queue_cleanup.age_for_collection_secs));
     routineRunner->registerRoutine(std::make_unique<RetrieveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.routines.user_active_queue_cleanup.batch_size,
-      m_config.routines.user_active_queue_cleanup.age_for_collection));
+      m_config.routines.user_active_queue_cleanup.age_for_collection_secs));
   }
   // Add Repack Archive and Repack Retrieve Active Queue Cleanup
   if (m_config.routines.repack_active_queue_cleanup.enabled) {
@@ -141,13 +141,13 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       *m_catalogue,
       *m_schedDb,
       m_config.routines.repack_active_queue_cleanup.batch_size,
-      m_config.routines.repack_active_queue_cleanup.age_for_collection));
+      m_config.routines.repack_active_queue_cleanup.age_for_collection_secs));
     routineRunner->registerRoutine(std::make_unique<RepackRetrieveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.routines.repack_active_queue_cleanup.batch_size,
-      m_config.routines.repack_active_queue_cleanup.age_for_collection));
+      m_config.routines.repack_active_queue_cleanup.age_for_collection_secs));
   }
   // Add User Archive and Repack Retrieve Pending Queue Cleanup
   if (m_config.routines.user_pending_queue_cleanup.enabled) {
@@ -156,13 +156,13 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       *m_catalogue,
       *m_schedDb,
       m_config.routines.user_pending_queue_cleanup.batch_size,
-      m_config.routines.user_pending_queue_cleanup.age_for_collection));
+      m_config.routines.user_pending_queue_cleanup.age_for_collection_secs));
     routineRunner->registerRoutine(std::make_unique<RetrieveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.routines.user_pending_queue_cleanup.batch_size,
-      m_config.routines.user_pending_queue_cleanup.age_for_collection));
+      m_config.routines.user_pending_queue_cleanup.age_for_collection_secs));
   }
   // Add Repack Archive and Repack Retrieve Pending Queue Cleanup
   if (m_config.routines.repack_pending_queue_cleanup.enabled) {
@@ -171,13 +171,13 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       *m_catalogue,
       *m_schedDb,
       m_config.routines.repack_pending_queue_cleanup.batch_size,
-      m_config.routines.repack_pending_queue_cleanup.age_for_collection));
+      m_config.routines.repack_pending_queue_cleanup.age_for_collection_secs));
     routineRunner->registerRoutine(std::make_unique<RepackRetrieveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.routines.repack_pending_queue_cleanup.batch_size,
-      m_config.routines.repack_pending_queue_cleanup.age_for_collection));
+      m_config.routines.repack_pending_queue_cleanup.age_for_collection_secs));
   }
   // Add Scheduler Maintenance Cleanup
   if (m_config.routines.scheduler_maintenance_cleanup.enabled) {
