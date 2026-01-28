@@ -81,11 +81,11 @@ void HealthServer::start() {
   });
 
   // Start listening on a separate thread, because the listen() call is blocking
-  m_thread = std::jthread([this](std::stop_token st) { run(st); });
+  m_thread = std::jthread([this]() { run(); });
   // Block until the server actually started listening
   try {
     utils::waitForCondition([&]() { return isRunning(); }, 1000);
-  } catch (std::exception::TimeOut ex) {
+  } catch (cta::exception::TimeOut& ex) {
     m_lc.log(log::ERR, "In HealthServer::start(): failed to start healthServer");
     stop();
   }
