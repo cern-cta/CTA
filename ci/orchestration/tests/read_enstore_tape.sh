@@ -47,7 +47,7 @@ wait_for_file_number() {
 
   while true; do
     status=$(get_mt_status "$device_path" || true)
-    file_num=$(echo "$status" | awk '/File number=/ {gsub(/[,]/,""); for(i=1;i<=NF;i++) if($i ~ /^number=/){split($i,a,"="); print a[2]}}')
+  file_num=$(echo "$status" | awk 'match($0, /File number=([0-9]+)/, m) { print m[1]; exit }')
     if [[ "$file_num" == "$expected" ]]; then
       return 0
     fi
