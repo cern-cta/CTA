@@ -68,7 +68,7 @@ cta-maintd --- CTA Maintenance daemon
 # CONFIGURATION
 
 The **cta-maintd** daemon reads its configuration parameters from the CTA configuration file (by
-default, */etc/cta/cta-maintd.conf*). Each option is listed with its *default* value.
+default, */etc/cta/cta-maintd.toml*). Each option is listed with its *default* value.
 
 ## Maintd Configuration Options
 maintd LogMask *INFO*
@@ -110,10 +110,10 @@ SchedulerBackendName (no default)
 
 # FILES
 
-*/etc/cta/cta-maintd.conf*
+*/etc/cta/cta-maintd.toml*
 
 :   The CTA maintd configuration file, containing the options
-    described above under **CONFIGURATION**. See */etc/cta/cta-maintd.conf.example*.
+    described above under **CONFIGURATION**. See */etc/cta/cta-maintd.example.toml*.
 
 */etc/cta/cta-catalogue.conf*
 
