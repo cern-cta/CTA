@@ -404,7 +404,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
-       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive            }
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive           }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
