@@ -2397,8 +2397,9 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
       throw std::runtime_error("In Scheduler::getNextMount unexpected mount type");
     }
   }
+  auto tteltime = ttel.msecs();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    ttel.msecs(),
+    tteltime,
     {
       {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
       {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kAll     }
@@ -2909,8 +2910,9 @@ std::list<std::unique_ptr<ArchiveJob>> Scheduler::getNextArchiveJobsToReportBatc
     ret.back()->m_dbJob.reset(j.release());
     count++;
   }
+  auto tteltime = t.msecs();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    t.msecs(),
+    tteltime,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kSelectToReportToUser},
@@ -2955,8 +2957,9 @@ std::list<std::unique_ptr<RetrieveJob>> Scheduler::getNextRetrieveJobsToReportBa
     ret.back()->m_dbJob.reset(j.release());
     count++;
   }
+  auto tteltime = t.msecs();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    t.msecs(),
+    tteltime,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kSelectToReportToUser},
@@ -3079,6 +3082,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
   }
   timingList.insertAndReset("reportCompletionTime", t);
   utils::Timer tscheddb;
+  uint64_t scheddbReportedJobCount = reportedDbJobs.size();
   m_db.setArchiveJobBatchReported(reportedDbJobs, timingList, t, lc);
   auto ttel_scheddb = tscheddb.msecs();
   timingList.insertAndReset("reportRecordInSchedDbTime", t);
@@ -3105,8 +3109,10 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
       {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kArchive},
       {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException         }
   });
+  auto tteltime = ttel.msecs();
+  auto repsize = archiveJobsBatch.size();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    ttel.msecs(),
+    tteltime,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
@@ -3115,7 +3121,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-    reportedJobs.size(),
+    repsize,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
@@ -3133,7 +3139,7 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-    reportedJobs.size(),
+    scheddbReportedJobCount,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kDeleteSchedulerDB},
@@ -3203,6 +3209,7 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
   for (auto& j : reportedJobs) {
     reportedDbJobs.push_back(j->m_dbJob.get());
   }
+  uint64_t scheddbReportedJobCount = reportedDbJobs.size();
   utils::Timer tscheddb;
   m_db.setRetrieveJobBatchReportedToUser(reportedDbJobs, timingList, t, lc);
   auto ttel_scheddb = tscheddb.msecs();
@@ -3230,8 +3237,9 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
       {cta::semconv::attr::kCtaTransferDirection, cta::semconv::attr::CtaTransferDirectionValues::kRetrieve},
       {cta::semconv::attr::kErrorType,            cta::semconv::attr::ErrorTypeValues::kException          }
   });
+  auto tteltime = ttel.msecs();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    ttel.msecs(),
+    tteltime,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
@@ -3239,8 +3247,9 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
        cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                    }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
+  auto repsize = retrieveJobsBatch.size();
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-    reportedJobs.size(),
+    repsize,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
@@ -3248,6 +3257,7 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
        cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                    }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
+  repsize =
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     ttel_scheddb,
     {
@@ -3258,7 +3268,7 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-    reportedJobs.size(),
+    scheddbReportedJobCount,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kDeleteSchedulerDB},
