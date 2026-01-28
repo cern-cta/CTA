@@ -73,8 +73,8 @@ void SignalReactor::run(std::stop_token st,
   cta::log::LogContext lc(log);
   lc.log(log::INFO, "In SignalReactor::run(): Starting SignalReactor");
   timespec ts;
-  ts.tv_sec = 0;
-  ts.tv_nsec = waitTimeoutMsecs * 1e6;
+  ts.tv_sec = waitTimeoutMsecs / 1000;
+  ts.tv_nsec = (waitTimeoutMsecs % 1000) * 1e6;
 
   try {
     while (!st.stop_requested()) {
