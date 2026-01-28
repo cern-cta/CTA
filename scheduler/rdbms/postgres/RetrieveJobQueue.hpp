@@ -769,7 +769,7 @@ public:
         stmt.bindString(":SRR_ACTIVITY" + std::to_string(i), row.srrActivity);
       }
     }
-    conn.setDbQuerySummary("insert retrieve job");
+    conn.setDbQuerySummary("insert retrieve");
     stmt.executeNonQuery();
   }
 
