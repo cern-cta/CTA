@@ -24,6 +24,7 @@ struct CatalogueConfig {
 };
 
 struct SchedulerConfig {
+  // TODO: namespace name
   std::string objectstore_backend_path;
   int tape_cache_max_age_secs = 600;
   int retrieve_queue_cache_max_age_secs = 10;
@@ -46,63 +47,68 @@ struct HealthServerConfig {
 
 /// -- end
 
-struct GarbageCollectRoutine {
+struct GarbageCollectRoutineConfig {
   bool enabled = true;
 };
 
-struct DiskReportRoutine {
+struct DiskReportRoutineConfig {
   bool enabled = true;
   int batch_size = 500;
   int soft_timeout_secs = 30;
 };
 
-struct QueueCleanupRoutine {
+struct QueueCleanupRoutineConfig {
   bool enabled = true;
   int batch_size = 500;
 };
 
-struct RepackExpandRoutine {
+struct RepackExpandRoutineConfig {
   bool enabled = true;
-  int max_to_expand = 900;
+  int max_to_toexpand = 900;
 };
 
-struct RepackReportRoutine {
+struct RepackReportRoutineConfig {
   bool enabled = true;
   int soft_timeout_secs = 900;
 };
 
-struct ActivePendingQueueCleanupRoutine {
+#ifdef CTA_PGSCHED
+struct ActivePendingQueueCleanupRoutineConfig {
   bool enabled = true;
   int batch_size = 500;
   int age_for_collection_secs = 900;
 };
 
-struct SchedulerMaintenanceCleanupRoutine {
+struct SchedulerMaintenanceCleanupRoutineConfig {
   bool enabled = true;
   int batch_size = 500;
   int age_for_deletion_secs = 1209600;
 };
+#endif
 
 struct RoutinesConfig {
   int global_sleep_interval_secs = 1;
   int liveness_window = 120;
 
-  DiskReportRoutine disk_report_archive;
-  DiskReportRoutine disk_report_retrieve;
+  DiskReportRoutineConfig disk_report_archive;
+  DiskReportRoutineConfig disk_report_retrieve;
 
-  RepackExpandRoutine repack_expand;
-  RepackReportRoutine repack_report;
+  RepackExpandRoutineConfig repack_expand;
+  RepackReportRoutineConfig repack_report;
 
-  GarbageCollectRoutine garbage_collect;
+#ifndef CTA_PGSCHED
+  GarbageCollectRoutineConfig garbage_collect;
 
-  QueueCleanupRoutine queue_cleanup;
+  QueueCleanupRoutineConfig queue_cleanup;
+#else
 
-  // ActivePendingQueueCleanupRoutine user_active_queue_cleanup;
-  // ActivePendingQueueCleanupRoutine repack_active_queue_cleanup;
-  // ActivePendingQueueCleanupRoutine user_pending_queue_cleanup;
-  // ActivePendingQueueCleanupRoutine repack_pending_queue_cleanup;
+  ActivePendingQueueCleanupRoutineConfig user_active_queue_cleanup;
+  ActivePendingQueueCleanupRoutineConfig repack_active_queue_cleanup;
+  ActivePendingQueueCleanupRoutineConfig user_pending_queue_cleanup;
+  ActivePendingQueueCleanupRoutineConfig repack_pending_queue_cleanup;
 
-  // SchedulerMaintenanceCleanupRoutine scheduler_maintenance_cleanup;
+  SchedulerMaintenanceCleanupRoutineConfig scheduler_maintenance_cleanup;
+#endif
 };
 
 struct MaintdConfig {
