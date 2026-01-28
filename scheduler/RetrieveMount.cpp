@@ -182,8 +182,9 @@ cta::RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReque
     // ret.back()->m_dbJob = std::move(sdrj);
     count++;
   }
+  auto tteltime = t.msecs();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    t.msecs(),
+    tteltime,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
@@ -408,13 +409,15 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
     tl.insertAndReset("waitUpdateCompletionTime", t);
     // Complete the cleaning up of the jobs in the mount
     utils::Timer ttel;
+    uint64_t njobs = validatedSuccessfulDBRetrieveJobs.size();
 #ifdef CTA_PGSCHED
     m_dbMount->setJobBatchTransferred(validatedSuccessfulDBRetrieveJobs, logContext);
 #else
     m_dbMount->flushAsyncSuccessReports(validatedSuccessfulDBRetrieveJobs, logContext);
 #endif
+    auto tteltime = ttel.msecs();
     cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-      ttel.msecs(),
+      tteltime,
       {
         {cta::semconv::attr::kSchedulerOperationName,
          cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
@@ -423,7 +426,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-      validatedSuccessfulRetrieveJobs.size(),
+      njobs,
       {
         {cta::semconv::attr::kSchedulerOperationName,
          cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
@@ -484,8 +487,9 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
     // will be retried.
   }
+  auto tteltime = ttel_total.msecs();
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-    ttel_total.msecs(),
+    tteltime,
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
