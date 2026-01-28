@@ -185,6 +185,7 @@
         "cmake3": ">= 3.19",
         "valgrind": ">= 3.8.1",
         "openssl-devel": ">= 1.0.1",
+        "tomlplusplus-devel": "",
         "cpp-httplib-devel": "",
         "libcurl": "",
         "libcurl-devel": "",

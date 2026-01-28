@@ -20,7 +20,7 @@ namespace cta::maintd {
  */
 class RoutineRunner {
 public:
-  explicit RoutineRunner(uint32_t sleepInterval);
+  explicit RoutineRunner(uint32_t sleepIntervalSecs);
 
   ~RoutineRunner() = default;
 
@@ -48,7 +48,7 @@ private:
   std::vector<std::unique_ptr<IRoutine>> m_routines;
   std::atomic<bool> m_running = false;
 
-  uint32_t m_sleepInterval;
+  uint32_t m_sleepIntervalSecs;
 
   std::atomic<int64_t> m_lastExecutionTime {0};
 };
