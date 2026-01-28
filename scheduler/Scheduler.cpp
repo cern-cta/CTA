@@ -2196,6 +2196,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   double schedulerDbTime = 0;
   double checkLogicalAndPhysicalLibrariesTime = 0;
   double catalogueTime = 0;
+  uint64_t totalJobCount = 0;
 
   if (!checkLogicalAndPhysicalLibraryValidForMount(logicalLibraryName, checkLogicalAndPhysicalLibrariesTime, lc)) {
     return std::unique_ptr<TapeMount>();
@@ -2240,6 +2241,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   // We can now simply iterate on the candidates until we manage to create a
   // mount for one of them
   for (auto m = mountInfo->potentialMounts.begin(); m != mountInfo->potentialMounts.end(); m++) {
+    totalJobCount += m->filesQueued;
     // If the mount is an archive, we still have to find a tape.
     if (common::dataStructures::getMountBasicType(m->type) == common::dataStructures::MountType::ArchiveAllTypes) {
       // We need to find a tape for archiving. It should be both in the right
@@ -2303,15 +2305,6 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
               .add("schedulerDbTime", schedulerDbTime)
               .add("catalogueTime", catalogueTime);
             lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (archive)");
-            cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-              ttel.msecs(),
-              {
-                {cta::semconv::attr::kSchedulerOperationName,
-                 cta::semconv::attr::SchedulerOperationNameValues::kGetNextPotentialMount},
-                {cta::semconv::attr::kSchedulerOperationWorkflow,
-                 cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive          }
-            },
-              opentelemetry::context::RuntimeContext::GetCurrent());
             return std::unique_ptr<TapeMount>(internalRet.release());
           } catch (cta::exception::Exception& ex) {
             log::ScopedParamContainer params(lc);
@@ -2392,15 +2385,6 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
           .add("schedulerDbTime", schedulerDbTime)
           .add("catalogueTime", catalogueTime);
         lc.log(log::INFO, "In Scheduler::getNextMount(): Selected next mount (retrieve)");
-        cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
-          ttel.msecs(),
-          {
-            {cta::semconv::attr::kSchedulerOperationName,
-             cta::semconv::attr::SchedulerOperationNameValues::kGetNextPotentialMount},
-            {cta::semconv::attr::kSchedulerOperationWorkflow,
-             cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve         }
-        },
-          opentelemetry::context::RuntimeContext::GetCurrent());
         return std::unique_ptr<TapeMount>(internalRet.release());
       } catch (exception::Exception& ex) {
         log::ScopedParamContainer params(lc);
@@ -2413,6 +2397,20 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
       throw std::runtime_error("In Scheduler::getNextMount unexpected mount type");
     }
   }
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    ttel.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
+      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kAll     }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    totalJobCount,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
+      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kAll     }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
   catalogueTime = getTapeInfoTime + getTapeForWriteTime + checkLogicalAndPhysicalLibrariesTime;
   decisionTime += timer.secs(utils::Timer::resetCounter);
@@ -3080,8 +3078,9 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
     reportedDbJobs.push_back(j->m_dbJob.get());
   }
   timingList.insertAndReset("reportCompletionTime", t);
-
+  utils::Timer tscheddb;
   m_db.setArchiveJobBatchReported(reportedDbJobs, timingList, t, lc);
+  auto ttel_scheddb = tscheddb.msecs();
   timingList.insertAndReset("reportRecordInSchedDbTime", t);
   // Log the successful reports.
   for (auto& j : reportedJobs) {
@@ -3122,6 +3121,24 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
        cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
        cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                     }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    ttel_scheddb,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kDeleteSchedulerDB},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive      }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    reportedJobs.size(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kDeleteSchedulerDB},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive      }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
@@ -3186,7 +3203,9 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
   for (auto& j : reportedJobs) {
     reportedDbJobs.push_back(j->m_dbJob.get());
   }
+  utils::Timer tscheddb;
   m_db.setRetrieveJobBatchReportedToUser(reportedDbJobs, timingList, t, lc);
+  auto ttel_scheddb = tscheddb.msecs();
   // Log the successful reports.
   for (auto& j : reportedJobs) {
     log::ScopedParamContainer params(lc);
@@ -3227,6 +3246,24 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
        cta::semconv::attr::SchedulerOperationNameValues::kReportToUserAndDeleteSchedulerDB},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
        cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                    }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    ttel_scheddb,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kDeleteSchedulerDB},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve     }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    reportedJobs.size(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kDeleteSchedulerDB},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve     }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }

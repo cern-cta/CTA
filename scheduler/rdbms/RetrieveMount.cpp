@@ -111,7 +111,6 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   try {
     auto nmountrows =
       postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack);
-    txn.setRowCountForTelemetry(nmountrows);
     txn.commit();
     if (nmountrows < 1) {
       lc.log(cta::log::WARNING,
@@ -315,9 +314,7 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uin
     cta::schedulerdb::Transaction txn(m_connPool, lc);
     try {
       m_RelationalDB.insertOrUpdateDiskSleepEntry(txn, diskSystemName, dse);
-      txn.setRowCountForTelemetry(1);
       txn.commit();
-
     } catch (const exception::Exception& ex) {
       cta::log::ScopedParamContainer params(lc);
       params.add("exceptionMessage", ex.getMessageValue());

@@ -57,6 +57,7 @@ namespace SchedulerOperationWorkflowValues {
 static constexpr const char* kArchive = "archive";
 static constexpr const char* kRetrieve = "retrieve";
 static constexpr const char* kRepack = "repack";
+static constexpr const char* kAll = "all";
 }  // namespace SchedulerOperationWorkflowValues
 
 namespace CtaTransferDirectionValues {
@@ -97,15 +98,17 @@ static constexpr const char* kScopedExclusive = "exclusive";
 }  // namespace LockTypeValues
 
 namespace SchedulerOperationNameValues {
-static constexpr const char* kRetrieveSelectCatalogueDB =
-  "retrieve_select_catalogue_db";  // happens during retrieve_queue_insert so not used for the moment
+static constexpr const char* kSelectCatalogueDB =
+  "select_catalogue_db";  // happens during retrieve_queue_insert so not used for the moment
 static constexpr const char* kEnqueue = "queue_insert";
-static constexpr const char* kGetNextPotentialMount = "get_next_potential_mount";
-static constexpr const char* kInsertForProcessing = "move_insert_for_processing";
+static constexpr const char* kGetNextMount = "select_work_summary";
+static constexpr const char* kInsertForProcessing = "insert_for_processing";
+static constexpr const char* kUpdateFinishedTransfer = "update_finished_tranfer";
 static constexpr const char* kUpdateSchedulerDB = "update_tranfer_in_scheduler_db";
 static constexpr const char* kUpdateInsertCatalogueDB = "update_tranfer_in_catalogue_db";
 static constexpr const char* kSelectToReportToUser = "select_to_report_to_user";
 static constexpr const char* kReportToUserAndDeleteSchedulerDB = "report_and_delete";
+static constexpr const char* kDeleteSchedulerDB = "delete";
 static constexpr const char* kCancel = "cancel";
 }  // namespace SchedulerOperationNameValues
 

@@ -196,7 +196,8 @@ Rset Stmt::executeQuery() {
   try {
     if (nullptr != m_stmt) {
       auto result = Rset(m_stmt->executeQuery());
-
+      /* This telemetry measurements are disabled for now for stress tests
+       * since we measure the real DB operation duration via the connection
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
         {
@@ -204,7 +205,7 @@ Rset Stmt::executeQuery() {
           {cta::semconv::attr::kDbNamespace,    m_stmt->getDbNamespace()   },
           {cta::semconv::attr::kDbQuerySummary, m_stmt->getDbQuerySummary()}
       },
-        opentelemetry::context::RuntimeContext::GetCurrent());
+        opentelemetry::context::RuntimeContext::GetCurrent());*/
       return result;
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");
@@ -219,7 +220,7 @@ Rset Stmt::executeQuery() {
         {cta::semconv::attr::kDbQuerySummary, m_stmt->getDbQuerySummary()                    }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
-    throw;
+      throw;
   }
 }
 
@@ -231,6 +232,8 @@ void Stmt::executeNonQuery() {
   try {
     if (nullptr != m_stmt) {
       m_stmt->executeNonQuery();
+      /* This telemetry measurements are disabled for now for stress tests
+       * since we measure the real DB operation duration via the connection
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         timer.msecs(),
         {
@@ -247,7 +250,7 @@ void Stmt::executeNonQuery() {
           {cta::semconv::attr::kDbNamespace,    m_stmt->getDbNamespace()   },
           {cta::semconv::attr::kDbQuerySummary, m_stmt->getDbQuerySummary()}
       },
-        opentelemetry::context::RuntimeContext::GetCurrent());
+        opentelemetry::context::RuntimeContext::GetCurrent());*/
 
     } else {
       throw exception::Exception("Stmt does not contain a cached statement");

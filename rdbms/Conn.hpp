@@ -245,7 +245,7 @@ public:
    */
   void setDbQuerySummary(const std::string& optQuerySummary);
 
-  void setRowCountForTelemetry(uint64_t row_count);
+  void setRowCountForTelemetry(uint64_t rowCount);
 
 private:
   /**
@@ -272,7 +272,7 @@ private:
    * this seems acceptable price to pay at the moment.
    */
   std::string m_querySummary;
-  uint64_t m_rowCount;
+  uint64_t m_rowCount = 0;
   /**
    * The database connection pool to which the m_conn should be returned
    */
