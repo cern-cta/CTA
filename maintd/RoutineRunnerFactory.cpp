@@ -181,16 +181,16 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   }
   // Add Scheduler Maintenance Cleanup
   if (m_config.routines.scheduler_maintenance_cleanup.enabled) {
-    routineRunner->registerRoutine(
-      std::make_unique<DeleteOldFailedQueuesRoutine>(m_lc,
-                                                     *m_schedDb,
-                                                     m_config.routines.scheduler_maintenance_cleanup.batch_size,
-                                                     m_config.routines.scheduler_maintenance_cleanup.age_for_deletion));
+    routineRunner->registerRoutine(std::make_unique<DeleteOldFailedQueuesRoutine>(
+      m_lc,
+      *m_schedDb,
+      m_config.routines.scheduler_maintenance_cleanup.batch_size,
+      m_config.routines.scheduler_maintenance_cleanup.age_for_deletion_secs));
     routineRunner->registerRoutine(std::make_unique<CleanMountLastFetchTimeRoutine>(
       m_lc,
       *m_schedDb,
       m_config.routines.scheduler_maintenance_cleanup.batch_size,
-      m_config.routines.scheduler_maintenance_cleanup.age_for_deletion));
+      m_config.routines.scheduler_maintenance_cleanup.age_for_deletion_secs));
   }
 #endif
 
