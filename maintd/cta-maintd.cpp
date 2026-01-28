@@ -30,10 +30,7 @@
 
 namespace cta::maintd {
 
-void initTelemetry(const common::Config& config, cta::log::LogContext& lc) {
-  if (!config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
-    return;
-  }
+void initTelemetry(const std::string& otelConfigPath, cta::log::LogContext& lc) {
   try {
     std::map<std::string, std::string> ctaResourceAttributes = {
       {cta::semconv::attr::kServiceName,       cta::semconv::attr::ServiceNameValues::kCtaMaintd},
@@ -41,8 +38,7 @@ void initTelemetry(const common::Config& config, cta::log::LogContext& lc) {
       {cta::semconv::attr::kServiceInstanceId, cta::utils::generateUuid()                       },
       {cta::semconv::attr::kHostName,          cta::utils::getShortHostname()                   }
     };
-    auto otelConfigFile = config.getOptionValueStr("cta.telemetry.config").value_or("/etc/cta/cta-otel.yaml");
-    cta::telemetry::initOpenTelemetry(otelConfigFile, ctaResourceAttributes, lc);
+    cta::telemetry::initOpenTelemetry(otelConfigPath, ctaResourceAttributes, lc);
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", ex.getMessage().str());
@@ -69,26 +65,24 @@ static int exceptionThrowingMain(MaintdConfig config, cta::log::Logger& log) {
   // Set up the signal reactor
   process::SignalReactor signalReactor =
     process::SignalReactorBuilder(lc)
-      .addSignalFunction(SIGHUP, [&maintenanceDaemon]() { maintenanceDaemon.reload(); })
       .addSignalFunction(SIGTERM, [&maintenanceDaemon]() { maintenanceDaemon.stop(); })
       .addSignalFunction(SIGUSR1, [&log]() { log.refresh(); })
       .build();
   signalReactor.start();
 
-  if (!config.experimental.telemetry) {
+  if (config.experimental.telemetry_enabled) {
     // Telemetry spawns some threads, so the SignalReactor must have started before this to correctly block signals
-    initTelemetry(config.telemetry, lc);
-    return;
+    initTelemetry(config.telemetry.config, lc);
   }
 
   common::HealthServer healthServer = common::HealthServer(
     lc,
-    config.getOptionValueStr("cta.health_server.host").value_or("127.0.0.1"),
-    config.getOptionValueInt("cta.health_server.port").value_or(8080),
+    config.health_server.host,
+    config.health_server.port,
     [&maintenanceDaemon]() { return maintenanceDaemon.isReady(); },
     [&maintenanceDaemon]() { return maintenanceDaemon.isLive(); });
 
-  if (config.getOptionValueBool("cta.health_server.enabled").value_or(false)) {
+  if (config.health_server.enabled) {
     // We only start it if it's enabled. We explicitly construct the object outside the scope of this if statement
     // Otherwise, healthServer will go out of scope and be destructed immediately
     healthServer.start();
@@ -139,20 +133,12 @@ int main(const int argc, char** const argv) {
   log::Logger& log = *logPtr;
 
   // Read the config file
+  // TODO: strictness settings
   cta::maintd::MaintdConfig config = rfl::toml::read<cta::maintd::MaintdConfig>(cmdLineParams.configFileLocation);
 
   log.setLogMask(config.logging.level);
   log.setStaticParams(config.logging.attributes);
 
-<<<<<<< HEAD
-=======
-  // Change user and group
-  // TODO: will be fully removed in the next MR
-  if (int rc = cta::maintd::setUserAndGroup("cta", "tape", log)) {
-    return rc;
-  }
-
->>>>>>> 8c694f5d39 (Initial PoC for new maintd config)
   // Start
   int programRc = EXIT_FAILURE;
   try {

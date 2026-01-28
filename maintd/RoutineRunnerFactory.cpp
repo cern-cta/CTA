@@ -35,16 +35,11 @@ namespace cta::maintd {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-RoutineRunnerFactory::RoutineRunnerFactory(const cta::common::Config& config, cta::log::LogContext& lc)
+RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config, cta::log::LogContext& lc)
     : m_config(config),
       m_lc(lc) {
-  if (!m_config.getOptionValueStr("cta.catalogue.config_file").has_value()) {
-    throw exception::UserError("Could not find config entry 'cta.catalogue.config_file'");
-  }
-
   m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Catalogue");
-  const rdbms::Login catalogueLogin =
-    rdbms::Login::parseFile(m_config.getOptionValueStr("cta.catalogue.config_file").value());
+  const rdbms::Login catalogueLogin = rdbms::Login::parseFile(m_config.catalogue.config_file);
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 1;
   auto catalogueFactory =

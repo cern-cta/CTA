@@ -5,9 +5,9 @@
 
 #pragma once
 
+#include "MaintdConfig.hpp"
 #include "RoutineRunner.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "common/config/Config.hpp"
 #include "common/log/LogContext.hpp"
 #include "scheduler/Scheduler.hpp"
 
@@ -24,11 +24,11 @@ namespace cta::maintd {
  */
 class RoutineRunnerFactory {
 public:
-  RoutineRunnerFactory(const cta::common::Config& config, cta::log::LogContext& lc);
+  RoutineRunnerFactory(const MaintdConfig& config, cta::log::LogContext& lc);
   std::unique_ptr<RoutineRunner> create();
 
 private:
-  const cta::common::Config& m_config;
+  const MaintdConfig& m_config;
   cta::log::LogContext& m_lc;
 
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;

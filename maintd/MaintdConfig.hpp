@@ -16,7 +16,7 @@ namespace cta::maintd {
 // This should go into common config
 
 struct ExperimentalConfig {
-  bool telemetry = false;
+  bool telemetry_enabled = false;
 };
 
 struct CatalogueConfig {
@@ -24,14 +24,9 @@ struct CatalogueConfig {
 };
 
 struct SchedulerConfig {
-  std::string objectstore_backendpath;
-  std::int64_t tape_cache_max_age_secs = 600;
-  std::int64_t retrieve_queue_cache_max_age_secs = 10;
-};
-
-struct KeyValue {
-  std::string key;
-  std::string value;
+  std::string objectstore_backend_path;
+  int tape_cache_max_age_secs = 600;
+  int retrieve_queue_cache_max_age_secs = 10;
 };
 
 struct LoggingConfig {
@@ -39,34 +34,14 @@ struct LoggingConfig {
   std::map<std::string, std::string> attributes;
 };
 
-struct BasicAuthConfig {
-  std::string username;
-  std::string password_file;
-};
-
-struct TelemetryMetricsOtlpConfig {
-  std::string endpoint;
-  BasicAuthConfig auth;
-};
-
-struct TelemetryMetricsFileConfig {
-  std::string path;
-};
-
-struct TelemetryMetricsConfig {
-  cta::telemetry::MetricsBackend backend;
-  std::int64_t interval_ms = 15000;
-  std::int64_t timeout_ms = 3000;
-  // TODO: ensure we enforce the correct checks here
-  // TODO: for now just enforce both to be here
-  // Hopefully we can get rid of this using the declarative config
-  TelemetryMetricsOtlpConfig otlp;
-  TelemetryMetricsFileConfig file;
-};
-
 struct TelemetryConfig {
-  bool retain_instance_id_on_restart = false;
-  TelemetryMetricsConfig metrics;
+  std::string config;
+};
+
+struct HealthServerConfig {
+  bool enabled;
+  std::string host;
+  int port;
 };
 
 /// -- end
@@ -77,65 +52,67 @@ struct GarbageCollectRoutine {
 
 struct DiskReportRoutine {
   bool enabled = true;
-  std::int64_t batch_size = 500;
-  std::int64_t soft_timeout_secs = 30;
+  int batch_size = 500;
+  int soft_timeout_secs = 30;
 };
 
 struct QueueCleanupRoutine {
   bool enabled = true;
-  std::int64_t batch_size = 500;
+  int batch_size = 500;
 };
 
 struct RepackExpandRoutine {
   bool enabled = true;
-  std::int64_t max_to_expand = 900;
+  int max_to_expand = 900;
 };
 
 struct RepackReportRoutine {
   bool enabled = true;
-  std::int64_t soft_timeout_secs = 900;
+  int soft_timeout_secs = 900;
 };
 
 struct ActivePendingQueueCleanupRoutine {
   bool enabled = true;
-  std::int64_t batch_size = 500;
-  std::int64_t age_for_collection_secs = 900;
+  int batch_size = 500;
+  int age_for_collection_secs = 900;
 };
 
 struct SchedulerMaintenanceCleanupRoutine {
   bool enabled = true;
-  std::int64_t batch_size = 500;
-  std::int64_t age_for_deletion_secs = 1209600;
+  int batch_size = 500;
+  int age_for_deletion_secs = 1209600;
 };
 
 struct RoutinesConfig {
-  std::int64_t global_sleep_interval_secs = 1;
+  int global_sleep_interval_secs = 1;
+  int liveness_window = 120;
 
   DiskReportRoutine disk_report_archive;
   DiskReportRoutine disk_report_retrieve;
+
+  RepackExpandRoutine repack_expand;
+  RepackReportRoutine repack_report;
 
   GarbageCollectRoutine garbage_collect;
 
   QueueCleanupRoutine queue_cleanup;
 
-  RepackExpandRoutine repack_expand;
-  RepackReportRoutine repack_report;
+  // ActivePendingQueueCleanupRoutine user_active_queue_cleanup;
+  // ActivePendingQueueCleanupRoutine repack_active_queue_cleanup;
+  // ActivePendingQueueCleanupRoutine user_pending_queue_cleanup;
+  // ActivePendingQueueCleanupRoutine repack_pending_queue_cleanup;
 
-  ActivePendingQueueCleanupRoutine user_active_queue_cleanup;
-  ActivePendingQueueCleanupRoutine repack_active_queue_cleanup;
-  ActivePendingQueueCleanupRoutine user_pending_queue_cleanup;
-  ActivePendingQueueCleanupRoutine repack_pending_queue_cleanup;
-
-  SchedulerMaintenanceCleanupRoutine scheduler_maintenance_cleanup;
+  // SchedulerMaintenanceCleanupRoutine scheduler_maintenance_cleanup;
 };
 
 struct MaintdConfig {
-  ExperimentalConfig experimental;
   CatalogueConfig catalogue;
   SchedulerConfig scheduler;
   LoggingConfig logging;
-  RoutinesConfig routines;
   TelemetryConfig telemetry;
+  HealthServerConfig health_server;
+  RoutinesConfig routines;
+  ExperimentalConfig experimental;
 };
 
 }  // namespace cta::maintd

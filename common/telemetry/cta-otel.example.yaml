@@ -32,7 +32,8 @@ resource:
       value: cephUser
       type: string
   # Configure resource attributes. Entries have lower priority than entries from .resource.attributes.
-  # The value is a list of comma separated key-value pairs matching the format of OTEL_RESOURCE_ATTRIBUTES. See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#general-sdk-configuration for details.
+  # The value is a list of comma separated key-value pairs matching the format of OTEL_RESOURCE_ATTRIBUTES.
+  # See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md#general-sdk-configuration for details.
   # If omitted or null, no resource attributes are added.
   # Internally, CTA generates the CTA_OTEL_RESOURCE_ATTRIBUTES env variable, which contains attributes such as service.name, service.version, service.instance.id and host.name.
   # In order to see these resource attributes, the attributes_list MUST reference CTA_OTEL_RESOURCE_ATTRIBUTES. Additional attributes can still be freely added.
@@ -66,7 +67,8 @@ meter_provider:
             # If omitted or null, https://localhost:4318/v1/metrics is used.
             endpoint: https://localhost:4318/v1/metrics
             # Configure headers. Entries have lower priority than entries from .headers.
-            # The value is a list of comma separated key-value pairs matching the format of OTEL_EXPORTER_OTLP_HEADERS. See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#configuration-options for details.
+            # The value is a list of comma separated key-value pairs matching the format of OTEL_EXPORTER_OTLP_HEADERS.
+            # See https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/protocol/exporter.md#configuration-options for details.
             # If omitted or null, no headers are added.
             # When using basic authorization, set this value to "Basic <base64(username:password)>" where <base64(username:password)> should be replaced accordingly.
             # It is also possible to pass in an environment variable here if preferred. E.g. "${OTEL_EXPORTER_AUTH_HEADER}"
@@ -84,10 +86,12 @@ meter_provider:
             # If omitted or null, protobuf is used.
             encoding: protobuf
             # Configure temporality preference.
-            # Values include: cumulative, delta, low_memory. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
+            # Values include: cumulative, delta, low_memory.
+            # For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
             # If omitted or null, cumulative is used.
             temporality_preference: cumulative
             # Configure default histogram aggregation.
-            # Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram. For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
+            # Values include: explicit_bucket_histogram, base2_exponential_bucket_histogram.
+            # For behavior of values, see https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/metrics/sdk_exporters/otlp.md.
             # If omitted or null, explicit_bucket_histogram is used.
             default_histogram_aggregation: explicit_bucket_histogram
