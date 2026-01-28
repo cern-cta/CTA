@@ -76,6 +76,9 @@ taped:
       tar -c . | tar -C ${PV_PATH} -xv
       echo "Mounting logs volume ${PV_PATH} in /var/log"
       mount --bind ${PV_PATH} /var/log
+  conf:
+    taped:
+      bufferCount: 10000
 
 maintd:
   preRun:
@@ -95,3 +98,26 @@ maintd:
       tar -c . | tar -C ${PV_PATH} -xv
       echo "Mounting logs volume ${PV_PATH} in /var/log"
       mount --bind ${PV_PATH} /var/log
+  routines:
+    # Note that the snake_case version of all these options (including the names)
+    # should match the corresponding names in the maintd conf file
+    # So diskReportArchive:softTimeout will map to cta.routines.disk_report_archive.soft_timeout
+    # To disable a routine, set replicas to 0
+    diskReportArchive:
+      replicas: 2
+      sleepInterval: 5000
+      batchSize: 4000
+      softTimeout: 30
+    diskReportRetrieve:
+      replicas: 2
+      sleepInterval: 5000
+      batchSize: 4000
+      softTimeout: 30
+    repackExpand:
+      replicas: 1
+      sleepInterval: 5000
+      maxToToExpand: 2
+    repackReport:
+      replicas: 1
+      sleepInterval: 5000
+      softTimeout: 30
