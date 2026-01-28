@@ -109,17 +109,22 @@ TEST(SignalReactor, HandlesUnregisteredSignals) {
 
   std::atomic<int> called {0};
 
-  auto signalReactor = cta::process::SignalReactorBuilder(lc)
-                         .addSignalFunction(SIGUSR1, [&]() { called++; })
-                         .addSignalFunction(SIGHUP, []() {})
-                         .addSignalFunction(SIGTERM, []() {})
-                         .build();
+  // Both signals are blocked; only 1 of them has a handler
+  // We just want to check that the process doesn't crash
+  sigset_t sigset;
+  sigaddset(&sigset, SIGUSR1);
+  sigaddset(&sigset, SIGUSR2);
+  cta::process::SignalReactor signalReactor(lc,
+                                            sigset,
+                                            {
+                                              {SIGUSR1, [&]() { called++; }}
+  });
 
   signalReactor.start();
 
   auto th = SignalReactorTestAccess::nativeHandle(signalReactor);
 
-  // Send an unknown signal
+  // Send an unhandled signal
   ASSERT_EQ(0, ::pthread_kill(th, SIGUSR2));
   // Give it a little bit
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
