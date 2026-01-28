@@ -963,7 +963,7 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
   if (!optionalDriveState.has_value()) {
     throw NoSuchDrive("In Scheduler::getDesiredDriveState(): no such drive");
   }
-  const auto driveState& = optionalDriveState.value();
+  const auto& driveState = optionalDriveState.value();
 
   common::dataStructures::DesiredDriveState desiredDriveState;
   desiredDriveState.up = driveState.desiredUp;
