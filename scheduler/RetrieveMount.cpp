@@ -490,7 +490,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
-       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve           }
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve          }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
@@ -499,7 +499,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
-       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve            }
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve          }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
 }
