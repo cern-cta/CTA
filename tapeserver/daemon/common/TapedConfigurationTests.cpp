@@ -15,7 +15,7 @@
 namespace unitTests {
 
 TEST(cta_Daemon, TapedConfiguration) {
-  segfault();
+  cta::utils::segfault();
   TempFile incompleteConfFile, completeConfFile;
   incompleteConfFile.stringFill("# My incomplete taped configuration file\n");
   completeConfFile.stringFill("# A good enough configuration file for taped\n"
