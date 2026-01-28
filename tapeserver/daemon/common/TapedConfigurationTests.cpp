@@ -6,6 +6,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/StringLogger.hpp"
+#include "common/utils/utils.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 #include "tests/TempFile.hpp"
 
@@ -14,6 +15,7 @@
 namespace unitTests {
 
 TEST(cta_Daemon, TapedConfiguration) {
+  segfault();
   TempFile incompleteConfFile, completeConfFile;
   incompleteConfFile.stringFill("# My incomplete taped configuration file\n");
   completeConfFile.stringFill("# A good enough configuration file for taped\n"

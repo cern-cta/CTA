@@ -76,9 +76,16 @@ unit-test-cta:
     CTAREPODIR: /tmp/repo
   before_script:
     - *setup-cta-install
+    - ulimit -c
+    - cat /proc/sys/kernel/core_pattern
   script:
     - /usr/bin/cta-unitTests
     - /usr/bin/cta-unitTests-multiProcess
+  # artifacts:
+  #   when: on_failure
+  #   paths:
+  #     - checkpkg-output.json
+
 
 unit-test-postgresql:
   stage: test
