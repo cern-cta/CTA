@@ -220,7 +220,7 @@ Rset Stmt::executeQuery() {
         {cta::semconv::attr::kDbQuerySummary, m_stmt->getDbQuerySummary()                    }
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
-      throw;
+    throw;
   }
 }
 
