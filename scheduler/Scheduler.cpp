@@ -3257,7 +3257,6 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
        cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                    }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
-  repsize =
   cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
     ttel_scheddb,
     {
