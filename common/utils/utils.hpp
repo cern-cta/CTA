@@ -9,6 +9,7 @@
 #include "common/utils/StringConversions.hpp"
 
 #include <chrono>
+#include <functional>
 #include <list>
 #include <sstream>
 #include <stdint.h>

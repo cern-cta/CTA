@@ -10,7 +10,6 @@
 #include "common/log/LogContext.hpp"
 
 #include <chrono>
-#include <functional>
 #include <gtest/gtest.h>
 #include <httplib.h>
 
