@@ -12,6 +12,8 @@ LimitCORE=infinity
 OOMScoreAdjust=-1000
 Restart=yes
 TimeoutSec=60
+User=cta
+Group=tape
 
 [Install]
 WantedBy=default.target

@@ -155,6 +155,7 @@ RUN dnf install -y \
 # Remove the local RPMs to reduce size
 RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
 
+USER cta
 ENTRYPOINT ["/bin/bash"]
 
 ###############################################
@@ -171,4 +172,5 @@ RUN dnf install -y \
 # Remove the local RPMs to reduce size
 RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
 
+USER cta
 ENTRYPOINT ["/bin/bash"]

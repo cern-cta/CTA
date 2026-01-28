@@ -27,24 +27,6 @@
 
 namespace cta::maintd {
 
-static int setUserAndGroup(const std::string& userName, const std::string& groupName, cta::log::Logger& logger) {
-  try {
-    logger(log::INFO,
-           "Setting user name and group name of current process",
-           {
-             {"userName",  userName },
-             {"groupName", groupName}
-    });
-    cta::System::setUserAndGroup(userName, groupName);
-  } catch (exception::Exception& ex) {
-    std::vector<log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
-    logger(log::ERR, "Caught an unexpected CTA, exiting cta-maintd", params);
-    return EXIT_FAILURE;
-  }
-
-  return 0;
-}
-
 void initTelemetry(const common::Config& config, cta::log::LogContext& lc) {
   if (!config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
     return;
@@ -170,13 +152,6 @@ int main(const int argc, char** const argv) {
   staticParamMap["instance"] = config.getOptionValueStr("cta.instance_name").value();
   staticParamMap["sched_backend"] = config.getOptionValueStr("cta.scheduler_backend_name").value();
   log.setStaticParams(staticParamMap);
-
-  // Change user and group
-  if (int rc = cta::maintd::setUserAndGroup(config.getOptionValueStr("cta.daemon_user").value_or("cta"),
-                                            config.getOptionValueStr("cta.daemon_group").value_or("tape"),
-                                            log)) {
-    return rc;
-  }
 
   // Start
   int programRc = EXIT_FAILURE;

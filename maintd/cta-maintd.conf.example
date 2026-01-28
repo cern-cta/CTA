@@ -28,12 +28,6 @@ cta.instance_name production
 # "[ceph|postgres|vfs][User|Repack]".
 cta.scheduler_backend_name cephUser
 
-# The expected user of the cta-maintd daemon process. In the process user does not match the process will exit.
-cta.daemon_user cta
-#
-# The expected group of the cta-maintd daemon process. If the process groups does not match the process will exit.
-cta.daemon_group tape
-
 # Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
 # CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
 cta.log.level INFO
