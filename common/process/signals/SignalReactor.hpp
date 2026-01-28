@@ -29,7 +29,8 @@ class SignalReactor {
 public:
   SignalReactor(cta::log::LogContext& lc,
                 const sigset_t& sigset,
-                const std::unordered_map<int, std::function<void()>>& signalFunctions);
+                const std::unordered_map<int, std::function<void()>>& signalFunctions,
+                uint32_t waitTimeoutMsecs);
 
   ~SignalReactor();
 
@@ -45,7 +46,8 @@ public:
   static void run(std::stop_token st,
                   const std::unordered_map<int, std::function<void()>>& signalFunctions,
                   const sigset_t& sigset,
-                  cta::log::Logger& log);
+                  cta::log::Logger& log,
+                  const uint32_t waitTimeoutMsecs);
 
   /**
    * Stop the SignalReactor (both the thread and the waiting for signal)
@@ -60,7 +62,7 @@ private:
   // The thread the signalReactor will run on when start() is called
   std::jthread m_thread;
 
-  static const uint32_t waitTimeoutSecs = 1;
+  const uint32_t m_waitTimeoutMsecs;
 
   friend struct unitTests::SignalReactorTestAccess;
 };

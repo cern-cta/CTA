@@ -20,11 +20,13 @@ HealthServer::HealthServer(cta::log::LogContext& lc,
                            const std::string& host,
                            int port,
                            const std::function<bool()>& readinessFunc,
-                           const std::function<bool()>& livenessFunc)
+                           const std::function<bool()>& livenessFunc,
+                           int listenTimeoutMsec)
     : m_host(host),
       m_port(port),
       m_readinessFunc(readinessFunc),
       m_livenessFunc(livenessFunc),
+      m_listenTimeoutMsec(listenTimeoutMsec),
       m_lc(lc) {
   if (isUdsHost(m_host)) {
     m_lc.log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Ignoring port value.");
@@ -84,7 +86,7 @@ void HealthServer::start() {
   m_thread = std::jthread([this]() { run(*m_server, m_host, m_port, m_lc.logger()); });
   // Block until the server actually started listening
   try {
-    utils::waitForCondition([&]() { return isRunning(); }, 1000);
+    utils::waitForCondition([&]() { return isRunning(); }, m_listenTimeoutMsec);
   } catch (cta::exception::TimeOut& ex) {
     m_lc.log(log::ERR, "In HealthServer::start(): failed to start healthServer");
     stop();

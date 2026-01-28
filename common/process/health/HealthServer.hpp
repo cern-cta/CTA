@@ -26,7 +26,8 @@ public:
                const std::string& host,
                int port,
                const std::function<bool()>& readinessFunc,
-               const std::function<bool()>& livenessFunc);
+               const std::function<bool()>& livenessFunc,
+               int listenTimeoutMsec = 1000);
 
   ~HealthServer();
 
@@ -59,6 +60,8 @@ private:
   int m_port;
   const std::function<bool()> m_readinessFunc;
   const std::function<bool()> m_livenessFunc;
+  // Amount of time to wait for the server to start listening before we consider it a failure
+  const int m_listenTimeoutMsec;
 
   cta::log::LogContext& m_lc;
   // The thread the HealthServer will run on when start() is called

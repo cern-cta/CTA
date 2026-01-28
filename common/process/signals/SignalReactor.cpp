@@ -21,10 +21,12 @@ namespace cta::process {
 //------------------------------------------------------------------------------
 SignalReactor::SignalReactor(cta::log::LogContext& lc,
                              const sigset_t& sigset,
-                             const std::unordered_map<int, std::function<void()>>& signalFunctions)
+                             const std::unordered_map<int, std::function<void()>>& signalFunctions,
+                             uint32_t waitTimeoutMsecs)
     : m_lc(lc),
       m_sigset(sigset),
-      m_signalFunctions(signalFunctions) {}
+      m_signalFunctions(signalFunctions),
+      m_waitTimeoutMsecs(waitTimeoutMsecs) {}
 
 //------------------------------------------------------------------------------
 // Destructor
@@ -40,7 +42,8 @@ SignalReactor::~SignalReactor() {
 void SignalReactor::start() {
   cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, nullptr),
                                          "In SignalReactor::start(): pthread_sigmask() failed");
-  m_thread = std::jthread([this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_lc.logger()); });
+  m_thread = std::jthread(
+    [this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_lc.logger(), m_waitTimeoutMsecs); });
 }
 
 //------------------------------------------------------------------------------
@@ -65,12 +68,13 @@ void SignalReactor::stop() noexcept {
 void SignalReactor::run(std::stop_token st,
                         const std::unordered_map<int, std::function<void()>>& signalFunctions,
                         const sigset_t& sigset,
-                        cta::log::Logger& log) {
+                        cta::log::Logger& log,
+                        const uint32_t waitTimeoutMsecs) {
   cta::log::LogContext lc(log);
   lc.log(log::INFO, "In SignalReactor::run(): Starting SignalReactor");
   timespec ts;
-  ts.tv_sec = waitTimeoutSecs;
-  ts.tv_nsec = 0;
+  ts.tv_sec = 0;
+  ts.tv_nsec = waitTimeoutMsecs * 1e6;
 
   try {
     while (!st.stop_requested()) {

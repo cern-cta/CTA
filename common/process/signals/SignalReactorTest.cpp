@@ -34,6 +34,7 @@ TEST(SignalReactor, HandlesSingleSignalCorrectly) {
                          .addSignalFunction(SIGHUP, [&]() { calledHup++; })
                          .addSignalFunction(SIGTERM, [&]() { calledTerm++; })
                          .addSignalFunction(SIGUSR1, [&]() { calledUsr1++; })
+                         .withTimeoutMsecs(10)  // Check often
                          .build();
 
   signalReactor.start();
@@ -59,6 +60,7 @@ TEST(SignalReactor, IgnoresSignalWithoutFunctionEvenIfInSigset) {
                          .addSignalFunction(SIGUSR1, [&]() { called++; })
                          .addSignalFunction(SIGHUP, []() {})
                          .addSignalFunction(SIGTERM, []() {})
+                         .withTimeoutMsecs(10)  // Check often
                          .build();
 
   signalReactor.start();
@@ -67,7 +69,7 @@ TEST(SignalReactor, IgnoresSignalWithoutFunctionEvenIfInSigset) {
   ASSERT_EQ(0, ::pthread_kill(th, SIGHUP));
 
   // Give it a moment; should still remain 0.
-  EXPECT_THROW(cta::utils::waitForCondition([&]() { return called != 0; }, 300, 10), cta::exception::TimeOut);
+  EXPECT_THROW(cta::utils::waitForCondition([&]() { return called != 0; }, 200, 10), cta::exception::TimeOut);
   EXPECT_EQ(0, called);
 
   signalReactor.stop();
@@ -83,6 +85,7 @@ TEST(SignalReactor, HandlesMultipleSignals) {
                          .addSignalFunction(SIGUSR1, [&]() { called++; })
                          .addSignalFunction(SIGHUP, []() {})
                          .addSignalFunction(SIGTERM, []() {})
+                         .withTimeoutMsecs(10)  // Check often
                          .build();
 
   signalReactor.start();
@@ -96,8 +99,7 @@ TEST(SignalReactor, HandlesMultipleSignals) {
     std::this_thread::sleep_for(std::chrono::milliseconds(50));
   }
   // The signal reactor sleeps in between checking, so we need to give it sufficient time
-  // 3 signals, 1 second sleep between -> wait 4 sec
-  cta::utils::waitForCondition([&]() { return called >= kN; }, 4000, 10);
+  cta::utils::waitForCondition([&]() { return called >= kN; }, 500, 10);
   EXPECT_EQ(kN, called);
 
   signalReactor.stop();
@@ -118,7 +120,8 @@ TEST(SignalReactor, HandlesUnregisteredSignals) {
                                             sigset,
                                             {
                                               {SIGUSR1, [&]() { called++; }}
-  });
+  },
+                                            10);
 
   signalReactor.start();
 
@@ -132,7 +135,7 @@ TEST(SignalReactor, HandlesUnregisteredSignals) {
   // Send a registered signal
   ASSERT_EQ(0, ::pthread_kill(th, SIGUSR1));
 
-  cta::utils::waitForCondition([&]() { return called >= 1; }, 1000, 10);
+  cta::utils::waitForCondition([&]() { return called >= 1; }, 500, 10);
   EXPECT_EQ(1, called);
 
   signalReactor.stop();
