@@ -8,6 +8,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NullPtrException.hpp"
+#include "common/exception/TimeOut.hpp"
 #include "common/utils/Regex.hpp"
 
 #include <algorithm>
@@ -24,6 +25,7 @@
 #include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
+#include <thread>
 #include <uuid/uuid.h>
 #include <zlib.h>
 
@@ -704,7 +706,8 @@ void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMse
 
   while (!condition()) {
     if (clock::now() - start >= timeout) {
-      throw cta::exception::TimeOut("");
+      throw cta::exception::TimeOut("Timeout reached. Timeout (ms) = " + std::to_string(timeoutMsec)
+                                    + ". CheckInterval (ms) = " + std::to_string(checkIntervalMsec));
     }
     std::this_thread::sleep_for(interval);
   }
