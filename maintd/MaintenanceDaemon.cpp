@@ -65,7 +65,7 @@ bool MaintenanceDaemon::isLive() {
   if (!m_routineRunner) {
     return true;
   }
-  return m_routineRunner->didRecentlyFinishRoutine(m_config.routines.liveness_window);
+  return m_routineRunner->didRecentlyFinishRoutine(m_config.routines.liveness_window_secs);
 }
 
 }  // namespace cta::maintd
