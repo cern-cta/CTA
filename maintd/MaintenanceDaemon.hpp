@@ -5,8 +5,8 @@
 
 #pragma once
 
+#include "MaintdConfig.hpp"
 #include "RoutineRunner.hpp"
-#include "common/config/Config.hpp"
 
 #include <atomic>
 #include <memory>
@@ -19,7 +19,7 @@ namespace cta::maintd {
  */
 class MaintenanceDaemon {
 public:
-  MaintenanceDaemon(cta::common::Config& config, cta::log::LogContext& lc);
+  MaintenanceDaemon(const MaintdConfig& config, cta::log::LogContext& lc);
 
   ~MaintenanceDaemon() = default;
 
@@ -27,17 +27,14 @@ public:
 
   void stop();
 
-  void reload();
-
   bool isLive();
 
   bool isReady();
 
 private:
-  cta::common::Config& m_config;
+  const MaintdConfig& m_config;
   cta::log::LogContext& m_lc;
   std::unique_ptr<RoutineRunner> m_routineRunner;
-  int64_t m_livenessWindow;
 
   std::atomic<bool> m_stopRequested;
 };
