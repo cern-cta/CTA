@@ -6,6 +6,8 @@
 #pragma once
 
 #include "common/dataStructures/DiskSpaceReservationRequest.hpp"
+#include "common/dataStructures/DriveStatus.hpp"
+#include "common/dataStructures/MountType.hpp"
 
 #include <map>
 #include <optional>
@@ -64,6 +66,21 @@ public:
    * @return Parameters of the Tape Drive.
    */
   virtual std::optional<common::dataStructures::TapeDrive> getTapeDrive(const std::string& tapeDriveName) const = 0;
+
+  /**
+   * Gets the drive status of the specified Tape Drive.
+   * @param tapeDriveName The name of the Tape Drive to get the status for.
+   * @return The drive status of the Tape Drive.
+   */
+  virtual std::optional<common::dataStructures::DriveStatus>
+  getTapeDriveStatus(const std::string& tapeDriveName) const = 0;
+
+  /**
+   * Gets the mount type of the specified Tape Drive.
+   * @param tapeDriveName The name of the Tape Drive to get the status for.
+   * @return The mount type of the Tape Drive.
+   */
+  virtual std::optional<common::dataStructures::MountType> getMountType(const std::string& tapeDriveName) const = 0;
 
   /**
    * Modifies the desired state parameters off the specified Tape Drive

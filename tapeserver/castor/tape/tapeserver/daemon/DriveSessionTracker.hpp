@@ -26,7 +26,8 @@ public:
   DriveSessionTracker(const DriveSessionTracker&) = delete;
   DriveSessionTracker& operator=(const DriveSessionTracker&) = delete;
 
-  std::optional<cta::common::dataStructures::TapeDrive> queryTapeDrive() const;
+  std::optional<cta::common::dataStructures::MountType> getCurrentMountType() const;
+  std::optional<cta::common::dataStructures::DriveStatus> getCurrentDriveStatus() const;
 
 private:
   std::shared_ptr<cta::catalogue::Catalogue> m_catalogue;
