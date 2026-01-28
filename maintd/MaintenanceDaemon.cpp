@@ -14,11 +14,9 @@ namespace cta::maintd {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-MaintenanceDaemon::MaintenanceDaemon(cta::common::Config& config, cta::log::LogContext& lc)
+MaintenanceDaemon::MaintenanceDaemon(const MaintdConfig& config, cta::log::LogContext& lc)
     : m_config(config),
-      m_lc(lc) {
-  m_livenessWindow = m_config.getOptionValueInt("cta.health_server.liveness_window").value_or(120);
-}
+      m_lc(lc) {}
 
 void MaintenanceDaemon::stop() {
   if (!m_routineRunner) {
@@ -48,27 +46,6 @@ void MaintenanceDaemon::run() {
   m_lc.log(cta::log::INFO, "In MaintenanceDaemon::run: Maintenance daemon stopped");
 }
 
-void MaintenanceDaemon::reload() {
-  if (!m_routineRunner) {
-    m_lc.log(log::WARNING, "In MaintenanceDaemon::reload(): Reload requested but daemon is not currently active");
-    return;
-  }
-
-  m_lc.log(cta::log::INFO,
-           "Reloading config for maintd process. Process user and group, telemetry, and log format will not be "
-           "reloaded.");
-
-  cta::log::Logger& logger = m_lc.logger();
-  // Reload the config
-  m_config.parse(logger);
-
-  // Update log mask
-  logger.setLogMask(m_config.getOptionValueStr("cta.log.level").value_or("INFO"));
-
-  // Stopping the routineRunner will restart the loop in run() and therefore recreate the routines with the new config
-  m_routineRunner->stop();
-}
-
 /**
  * The maintenance daemon is considered ready when:
  * - a routine runner is running
@@ -88,7 +65,7 @@ bool MaintenanceDaemon::isLive() {
   if (!m_routineRunner) {
     return true;
   }
-  return m_routineRunner->didRecentlyFinishRoutine(m_livenessWindow);
+  return m_routineRunner->didRecentlyFinishRoutine(m_config.routines.liveness_window);
 }
 
 }  // namespace cta::maintd

@@ -1,0 +1,87 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+####################################################################################################
+#
+# CTA Maintd Service Configuration
+#
+####################################################################################################
+
+[catalogue]
+  # Path to the CTA Catalogue configuration file
+  config_file = "/etc/cta/cta-catalogue.conf"
+
+[scheduler]
+  # URL of the objectstore (CTA Scheduler Database). Usually this will be the URL of a Ceph RADOS
+  # objectstore. For testing or small installations, a file-based objectstore can be used instead.
+  objectstore_backend_path = "rados://cta@tapecta:cta"
+  # Defaults to 600 seconds if not set.
+  tape_cache_max_age_secs = 600
+  # Defaults to 10 seconds if not set.
+  retrieve_queue_cache_max_age_secs = 10
+
+[logging]
+  # Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
+  # CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
+  level = "INFO"
+
+  # The following key-value pairs are added to all log lines
+  # All keys are optional as this is purely for monitoring purposes
+  [logging.attributes]
+    # Unique string to identify CTA's instance the maintd process is serving (i.e: production, preproduction).
+    # Each of these instances should be associated with a specific CTA catalogue instance.
+    instance_name = "production"
+    # The unique string to identify the backend scheduler resources. As an example, it can be structured as:
+    # "[ceph|postgres|vfs][User|Repack]".
+    scheduler_backend_name = "cephUser"
+
+# Note that telemetry is experimental and disabled by default.
+# To make use of this experimental feature, ensure telemetry is enabled under [experimental]
+[telemetry]
+  # Path to the declarative config file to initialise the OpenTelemetry SDK
+  config = "/etc/cta/cta-otel.yaml"
+
+[health_server]
+  # Whether to enable the health server or not
+  enabled = false
+  # Where to accept connections from. By default accept only from localhost (127.0.0.1)
+  # Set to 0.0.0.0 to accept connections from anywhere. Set to the socket path if using Unix Domain Sockets (*.sock)
+  # When using Unix Domain Sockets, the port value will be unused
+  # host = "/run/cta/cta-maintd/health.sock"
+  host = "127.0.0.1"
+  # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port
+  port = 8080
+
+
+# This is what is used to connect to the disk instance
+[xrootd]
+  # Overrides XrdSecPROTOCOL
+  security_protocol = "sss"
+  # Overrides XrdSecSSSKT
+  sss_keytab_path = "/etc/cta/cta.sss.keytab"
+
+[routines]
+  # All routines run sequentially: A -> B -> C -> sleep -> A -> B -> C -> sleep ...
+  # This value defines the sleep interval between all routines
+  global_sleep_interval_secs = 1
+
+  # If the number of seconds since the last routine finished executing exceeds this value, the process is no longer considered alive.
+  liveness_window = 120
+
+  # Routine-specific settings.
+  repack_expand        = { enabled = true, max_to_expand = 2 }
+  repack_report        = { enabled = true, soft_timeout_secs = 30 }
+  disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
+  disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
+  queue_cleanup        = { enabled = true, batch_size = 500 }
+  garbage_collect      = { enabled = true }
+
+  # Postgres-only queue cleanup
+  # user_active_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  # repack_active_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  # user_pending_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  # repack_pending_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  # scheduler_maintenance_cleanup = { enabled = true, batch_size = 1000, age_for_deletion_secs = 1209600 }
+
+[experimental]
+  telemetry_enabled = false
