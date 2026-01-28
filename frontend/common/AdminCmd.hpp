@@ -7,8 +7,9 @@
 
 #include "AdminCmdOptions.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "cta_frontend.pb.h"
 #include "frontend/common/FrontendService.hpp"
+
+#include "cta_frontend.pb.h"
 
 namespace cta::frontend {
 
