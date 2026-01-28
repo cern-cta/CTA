@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required (VERSION 3.17)
 
+find_package(reflectcpp CONFIG REQUIRED)
+
 add_subdirectory(routines/disk)
 add_subdirectory(routines/repack)
 
@@ -10,6 +12,7 @@ add_library(ctamaintd
   RoutineRunner.cpp
   RoutineRunnerFactory.cpp
 )
+
 
 if(NOT CTA_USE_PGSCHED)
     add_subdirectory(routines/scheduler/objectstore)
@@ -29,7 +32,7 @@ target_link_libraries(ctamaintd
 )
 
 add_executable (cta-maintd cta-maintd.cpp)
-target_link_libraries(cta-maintd ctamaintd)
+target_link_libraries(cta-maintd ctamaintd reflectcpp::reflectcpp)
 
 add_manpage (cta-maintd)
 
