@@ -111,7 +111,6 @@ void ArchiveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn,
 
   try {
     uint64_t nrows = m_jobRow.updateFailedJobStatus(txn, isRepack);
-    txn.setRowCountForTelemetry(nrows);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING,
@@ -141,7 +140,6 @@ void ArchiveRdbJob::requeueJobToMount(cta::schedulerdb::Transaction& txn,
     uint64_t nrows = 0;
     auto status = isRepack ? ArchiveJobStatus::AJS_ToTransferForRepack : ArchiveJobStatus::AJS_ToTransferForUser;
     nrows = m_jobRow.requeueFailedJob(txn, status, keepMountId, isRepack);
-    txn.setRowCountForTelemetry(nrows);
     txn.commit();
     if (nrows != 1) {
       lc.log(log::WARNING, log_msg + std::string(" failed. Job not found in DB."));
@@ -215,7 +213,6 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
     if (reportType == ReportType::NoReportRequired || m_jobRow.totalReportRetries >= m_jobRow.maxReportRetries) {
       // the job will be moved to FAILED_QUEUE table, and deleted from the ACTIVE_QUEUE.
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, ArchiveJobStatus::ReadyForDeletion);
-      txn.setRowCountForTelemetry(nrows);
       deletionCount = nrows;
       if (nrows != 1) {
         lc.log(log::WARNING,
@@ -227,7 +224,6 @@ void ArchiveRdbJob::failReport(const std::string& failureReason, log::LogContext
       // Status is unchanged, but we reset the IS_REPORTING flag to FALSE
       m_jobRow.isReporting = false;
       uint64_t nrows = m_jobRow.updateJobStatusForFailedReport(txn, m_jobRow.status);
-      txn.setRowCountForTelemetry(nrows);
       if (nrows != 1) {
         lc.log(
           log::WARNING,

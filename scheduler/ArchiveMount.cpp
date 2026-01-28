@@ -151,14 +151,12 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
   auto dbJobBatch = m_dbMount->getNextJobBatch(filesRequested, bytesRequested, logContext);
   std::list<std::unique_ptr<ArchiveJob>> ret;
   // We prepare the response
-  uint64_t count = 0;
   for (auto& sdaj : dbJobBatch) {
     ret.emplace_back(std::make_unique<ArchiveJob>(this, m_catalogue, std::move(sdaj)));
-    count++;
   }
   log::ScopedParamContainer(logContext)
     .add("filesRequested", filesRequested)
-    .add("filesFetched", count)
+    .add("filesFetched", ret.size())
     .add("bytesRequested", bytesRequested)
     .add("getNextJobBatchTime", t.secs())
     .log(log::INFO, "In SchedulerDB::ArchiveMount::getNextJobBatch(): Finished getting next job batch.");
@@ -172,7 +170,7 @@ cta::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesReques
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-    count,
+    ret.size(),
     {
       {cta::semconv::attr::kSchedulerOperationName,
        cta::semconv::attr::SchedulerOperationNameValues::kInsertForProcessing},
@@ -211,6 +209,9 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
   std::unique_ptr<cta::ArchiveJob> job;
   std::string failedValidationJobReportURL;
   bool catalogue_updated = false;
+  double catalogueTimeMSecs = 0;
+  utils::Timer ttel_total;
+  uint64_t total_files = 0;
   try {
     uint64_t files = 0;
     uint64_t bytes = 0;
@@ -231,7 +232,9 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
         .add("type", "ReportSuccessful");
       logContext.log(cta::log::INFO, "In cta::ArchiveMount::reportJobsBatchTransferred(): archive job successful");
       try {
+        utils::Timer ttel_catalogue;
         tapeItemsWritten.emplace(job->validateAndGetTapeFileWritten().release());
+        catalogueTimeMSecs += ttel_catalogue.msecs(utils::Timer::resetCounter);
       } catch (const cta::exception::Exception&) {
         //We put the not validated job into this list in order to insert the job
         //into the failedToReportArchiveJobs list in the exception catching block
@@ -244,6 +247,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
       validatedSuccessfulArchiveJobs.emplace_back(std::move(job));
       job.reset();
     }
+    total_files = files;
     while (!skippedFiles.empty()) {
       auto tiwup = std::make_unique<cta::catalogue::TapeItemWritten>();
       *tiwup = skippedFiles.front();
@@ -261,9 +265,8 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
 
     updateCatalogueWithTapeFilesWritten(tapeItemsWritten);
     catalogue_updated = true;
-    auto catalogueTimeMSecs = t.msecs();
-    auto tapeItemsWrittenCount = tapeItemsWritten.size();
-    catalogueTime = t.secs(utils::Timer::resetCounter);
+    catalogueTimeMSecs += t.msecs();
+    catalogueTime = t.secs(utils::Timer::resetCounter) + catalogueTimeMSecs / 1000.;
     cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
       catalogueTimeMSecs,
       {
@@ -274,7 +277,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-      tapeItemsWrittenCount,
+      files,
       {
         {cta::semconv::attr::kSchedulerOperationName,
          cta::semconv::attr::SchedulerOperationNameValues::kUpdateInsertCatalogueDB},
@@ -304,7 +307,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
     cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
-      tapeItemsWrittenCount,
+      validatedSuccessfulDBArchiveJobs.size(),
       {
         {cta::semconv::attr::kSchedulerOperationName,
          cta::semconv::attr::SchedulerOperationNameValues::kUpdateSchedulerDB},
@@ -386,6 +389,24 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
       throw cta::ArchiveMount::FailedReportCatalogueUpdate(msg_error);
     }
   }
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    ttel_total.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive           }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    total_files,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive            }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
 //------------------------------------------------------------------------------

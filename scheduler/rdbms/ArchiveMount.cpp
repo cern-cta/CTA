@@ -108,7 +108,6 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
   try {
     auto nmountrows =
       postgres::ArchiveJobQueueRow::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack);
-    txn.setRowCountForTelemetry(nmountrows);
     txn.commit();
     if (nmountrows < 1) {
       lc.log(cta::log::WARNING, "In postgres::ArchiveJobQueueRow::updateMountQueueLastFetch: did not update any row.");
@@ -180,7 +179,6 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
       params.add("jobsRequeued", nrows);
       lc.log(cta::log::ERR, "In schedulerdb::ArchiveMount::requeueJobBatch(): failed to requeue all jobs !");
     }
-    txn.setRowCountForTelemetry(nrows);
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer(lc)
@@ -314,7 +312,6 @@ void ArchiveMount::setRepackJobBatchTransferred(std::list<std::unique_ptr<Schedu
       .add("updatedRows", nrows)
       .add("jobListSize", jobIDsList.size())
       .log(log::INFO, "In ArchiveMount::updateRepackJobSuccess(): Finished DB report for job list provided.");
-    txn.setRowCountForTelemetry(nrows);
     txn.commit();
     // After processing, return the job object to the job pool for re-use
     recycleTransferredJobs(jobsBatch, lc);
