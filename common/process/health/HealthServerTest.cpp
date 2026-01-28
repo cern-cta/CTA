@@ -8,7 +8,6 @@
 #include "common/exception/TimeOut.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/log/StdoutLogger.hpp"
 
 #include <chrono>
 #include <functional>
@@ -243,7 +242,7 @@ TEST(HealthServer, StopsCorrectly) {
 }
 
 TEST(HealthServer, CanStartUnixDomainSocket) {
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest");
   cta::log::LogContext lc(dl);
 
   const std::string socketPath = "/tmp/health_test.sock";

@@ -62,6 +62,13 @@ void HealthServer::stop() noexcept {
     if (m_server) {
       m_server->stop();
     }
+    try {
+      m_thread.join();
+    } catch (std::system_error& e) {
+      log::ScopedParamContainer params(m_lc);
+      params.add("exceptionMessage", e.what());
+      m_lc.log(log::ERR, "In SignalReactor::stop(): failed to join thread");
+    }
   }
   m_lc.log(log::INFO, "In HealthServer::stop(): health server stopped");
 }
