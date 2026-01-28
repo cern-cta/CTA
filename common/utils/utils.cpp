@@ -8,6 +8,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NullPtrException.hpp"
+#include "common/exception/TimeOut.hpp"
 #include "common/utils/Regex.hpp"
 
 #include <algorithm>
@@ -24,6 +25,7 @@
 #include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
+#include <thread>
 #include <uuid/uuid.h>
 #include <zlib.h>
 
@@ -693,6 +695,22 @@ std::string file2string(const std::string& filename) {
   std::ostringstream as_string;
   as_string << as_stream.rdbuf();
   return as_string.str();
+}
+
+void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMsec, int64_t checkIntervalMsec) {
+  using clock = std::chrono::steady_clock;
+
+  const auto timeout = std::chrono::milliseconds(timeoutMsec);
+  const auto interval = std::chrono::milliseconds(checkIntervalMsec);
+  const auto start = clock::now();
+
+  while (!condition()) {
+    if (clock::now() - start >= timeout) {
+      throw cta::exception::TimeOut("Timeout reached. Timeout (ms) = " + std::to_string(timeoutMsec)
+                                    + ". CheckInterval (ms) = " + std::to_string(checkIntervalMsec));
+    }
+    std::this_thread::sleep_for(interval);
+  }
 }
 
 }  // namespace cta::utils

@@ -8,10 +8,8 @@
 #include "common/exception/TimeOut.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/log/StdoutLogger.hpp"
 
 #include <chrono>
-#include <functional>
 #include <gtest/gtest.h>
 #include <httplib.h>
 
@@ -29,21 +27,6 @@ httplib::Result httpGet(const std::string& host, int64_t port, const std::string
   cli.set_read_timeout(5);
   cli.set_write_timeout(5);
   return cli.Get(endpoint);
-}
-
-void waitForCondition(const std::function<bool()>& condition, int64_t timeoutSec, int64_t checkIntervalMsec = 100) {
-  using clock = std::chrono::steady_clock;
-
-  const auto timeout = std::chrono::seconds(timeoutSec);
-  const auto interval = std::chrono::milliseconds(checkIntervalMsec);
-  const auto start = clock::now();
-
-  while (!condition()) {
-    if (clock::now() - start >= timeout) {
-      throw cta::exception::TimeOut();
-    }
-    std::this_thread::sleep_for(interval);
-  }
 }
 
 // Technically there could be a race condition here between the port being closed here and the server picking up the port
@@ -99,9 +82,6 @@ TEST(HealthServer, ServerNotRunningWhenNotStarted) {
   const std::string host = "127.0.0.1";
   const int64_t port = getFreePort();
   cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
-
-  EXPECT_THROW(waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS),
-               cta::exception::TimeOut);
   ASSERT_FALSE(hs.isRunning());
 
   auto res = httpGet(host, port, "/health/live");
@@ -116,7 +96,6 @@ TEST(HealthServer, ReadyEndpoint) {
   const int64_t port = getFreePort();
   cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
   hs.start();
-  waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
 
   auto res = httpGet(host, port, "/health/ready");
   ASSERT_TRUE(res) << "connection failed";
@@ -132,7 +111,6 @@ TEST(HealthServer, ReadyEndpointNotReady) {
   const int64_t port = getFreePort();
   cta::common::HealthServer hs(lc, host, port, []() { return false; }, []() { return true; });
   hs.start();
-  waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
 
   // Here we don't use isReady because we explicitly want to check the full response
   auto res = httpGet(host, port, "/health/ready");
@@ -149,7 +127,6 @@ TEST(HealthServer, LiveEndpointAvailable) {
   const int64_t port = getFreePort();
   cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
   hs.start();
-  waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
 
   auto res = httpGet(host, port, "/health/live");
   ASSERT_TRUE(res) << "connection failed";
@@ -165,7 +142,6 @@ TEST(HealthServer, LiveEndpointNotLive) {
   const int64_t port = getFreePort();
   cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return false; });
   hs.start();
-  waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
 
   auto res = httpGet(host, port, "/health/live");
   ASSERT_TRUE(res) << "connection failed";
@@ -183,8 +159,6 @@ TEST(HealthServer, InvalidHost) {
   hs.start();
   // At this point the server actually should have failed to start, but it should not crash anything
   // It should simply time out on trying the readiness/liveness endpoints
-  EXPECT_THROW(waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS),
-               cta::exception::TimeOut);
   ASSERT_FALSE(hs.isRunning());
 
   auto resReady = httpGet(host, port, "/health/ready");
@@ -203,8 +177,6 @@ TEST(HealthServer, InvalidPort) {
   hs.start();
   // At this point the server actually should have failed to start, but it should not crash anything
   // It should simply time out on trying the readiness/liveness endpoints
-  EXPECT_THROW(waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS),
-               cta::exception::TimeOut);
   ASSERT_FALSE(hs.isRunning());
 
   auto resReady = httpGet(host, port, "/health/ready");
@@ -221,12 +193,10 @@ TEST(HealthServer, NoTwoServersOnSamePort) {
   const int64_t port = getFreePort();
   cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
   hs.start();
-  waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
 
   cta::common::HealthServer hs2(lc, host, port, []() { return true; }, []() { return true; });
   hs2.start();
-  EXPECT_THROW(waitForCondition([&]() { return hs2.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS),
-               cta::exception::TimeOut);
+  ASSERT_FALSE(hs2.isRunning());
 }
 
 TEST(HealthServer, StopsCorrectly) {
@@ -237,20 +207,18 @@ TEST(HealthServer, StopsCorrectly) {
   const int64_t port = getFreePort();
   cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
   hs.start();
-  waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
   hs.stop();
-  waitForCondition([&]() { return !hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
+  ASSERT_FALSE(hs.isRunning());
 }
 
 TEST(HealthServer, CanStartUnixDomainSocket) {
-  cta::log::StdoutLogger dl("dummy", "unitTest");
+  cta::log::DummyLogger dl("dummy", "unitTest");
   cta::log::LogContext lc(dl);
 
   const std::string socketPath = "/tmp/health_test.sock";
   ::unlink(socketPath.c_str());
   cta::common::HealthServer hs(lc, socketPath, 80, []() { return true; }, []() { return true; });
   hs.start();
-  waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
 
   assertUDSReady(socketPath);
 }
@@ -263,7 +231,6 @@ TEST(HealthServer, CanStartUnixDomainSocketWithNon80Port) {
   ::unlink(socketPath.c_str());
   cta::common::HealthServer hs(lc, socketPath, 8080, []() { return true; }, []() { return true; });
   hs.start();
-  waitForCondition([&]() { return hs.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
 
   assertUDSReady(socketPath);
 }
@@ -276,13 +243,11 @@ TEST(HealthServer, CanStartUnixDomainSocketOnSamePort) {
   ::unlink(socketPath1.c_str());
   cta::common::HealthServer hs1(lc, socketPath1, 80, []() { return true; }, []() { return true; });
   hs1.start();
-  waitForCondition([&]() { return hs1.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
 
   const std::string socketPath2 = "/tmp/health_test2.sock";
   ::unlink(socketPath2.c_str());
   cta::common::HealthServer hs2(lc, socketPath2, 80, []() { return true; }, []() { return true; });
   hs2.start();
-  waitForCondition([&]() { return hs2.isRunning(); }, HTTP_SERVER_STARTUP_TIMEOUT_SECS);
 
   assertUDSReady(socketPath1);
 

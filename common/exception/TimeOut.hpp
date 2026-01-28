@@ -18,7 +18,8 @@ public:
   /**
    * default constructor
    */
-  TimeOut() : cta::exception::Exception() {}
+  TimeOut(const std::string& context = "", const bool embedBacktrace = true)
+      : cta::exception::Exception(context, embedBacktrace) {}
 };
 
 }  // namespace cta::exception

@@ -9,6 +9,7 @@
 #include "common/utils/StringConversions.hpp"
 
 #include <chrono>
+#include <functional>
 #include <list>
 #include <sstream>
 #include <stdint.h>
@@ -409,5 +410,14 @@ std::time_t getCurrentEpochTime();
 std::string getProcessName();
 
 std::string file2string(const std::string& filename);
+
+/**
+ * Periodically executes the condition() function every checkIntervalMsec milliseconds.
+ * The function returns as soon as the condition is true. If the timeout is reached, a TimeOut() exception is thrown.
+ * @param condition Function that will periodically be evaluated until it is true (or until the timeout is reached).
+ * @param timeoutMsec Maximum number of milliseconds to wait until the timeout.
+ * @param checkIntervalMsec Interval of to check the condition() variable.
+ */
+void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMsec, int64_t checkIntervalMsec = 100);
 
 }  // namespace cta::utils
