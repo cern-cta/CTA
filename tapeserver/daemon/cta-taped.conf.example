@@ -237,7 +237,7 @@ taped externalFreeDiskSpaceScript /usr/bin/cta-eosdf.sh
 # telemetry metricsExportInterval 15000
 #
 # Timeout for a single export
-# telemetry metricsExportTimeout 5000
+# telemetry metricsExportTimeout 3000
 #
 # Service location of the OTLP collector in case the OTLP backend is used
 # telemetry metricsOtlpEndpoint endpoint:port
