@@ -10,21 +10,21 @@ routines:
   # To disable a routine, set replicas to 0
   diskReportArchive:
     replicas: 2
-    sleepInterval: 5000
-    batchSize: 5000
+    sleepInterval: 1000
+    batchSize: 500
     softTimeout: 30
   diskReportRetrieve:
     replicas: 2
-    sleepInterval: 5000
-    batchSize: 5000
+    sleepInterval: 1000
+    batchSize: 500
     softTimeout: 30
   repackExpand:
     replicas: 1
-    sleepInterval: 5000
+    sleepInterval: 1000
     maxToToExpand: 2
   repackReport:
     replicas: 1
-    sleepInterval: 5000
+    sleepInterval: 1000
     softTimeout: 30
 
 conf:
