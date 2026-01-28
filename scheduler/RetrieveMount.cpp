@@ -383,7 +383,8 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
   uint64_t files = 0;
   uint64_t bytes = 0;
   utils::Timer t;
-  utils::Timer ttel;
+  utils::Timer ttel_total;
+  auto total_files = 0;
   log::TimingList tl;
   try {
     while (!successfulRetrieveJobs.empty()) {
@@ -402,9 +403,11 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
       validatedSuccessfulRetrieveJobs.emplace_back(std::move(job));
       job.reset();
     }
+    total_files = files;
     waitUpdateCompletionTime = t.secs(utils::Timer::resetCounter);
     tl.insertAndReset("waitUpdateCompletionTime", t);
     // Complete the cleaning up of the jobs in the mount
+    utils::Timer ttel;
 #ifdef CTA_PGSCHED
     m_dbMount->setJobBatchTransferred(validatedSuccessfulDBRetrieveJobs, logContext);
 #else
@@ -481,6 +484,24 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
     // Failing here does not really affect the session so we can carry on. Reported jobs are reported, non-reported ones
     // will be retried.
   }
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    ttel_total.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve           }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    total_files,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kUpdateFinishedTransfer},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve            }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
 }
 
 //------------------------------------------------------------------------------

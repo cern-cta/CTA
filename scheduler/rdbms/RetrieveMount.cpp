@@ -318,9 +318,7 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uin
     cta::schedulerdb::Transaction txn(m_connPool, lc);
     try {
       m_RelationalDB.insertOrUpdateDiskSleepEntry(txn, diskSystemName, dse);
-      txn.setRowCountForTelemetry(1);
       txn.commit();
-
     } catch (const exception::Exception& ex) {
       cta::log::ScopedParamContainer params(lc);
       params.add(semconv::log::exceptionMessage, ex.getMessageValue());
