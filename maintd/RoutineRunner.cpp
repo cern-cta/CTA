@@ -25,7 +25,7 @@ namespace cta::maintd {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RoutineRunner::RoutineRunner(uint32_t sleepInterval) : m_sleepInterval(sleepInterval) {}
+RoutineRunner::RoutineRunner(uint32_t sleepIntervalSecs) : m_sleepIntervalSecs(sleepIntervalSecs) {}
 
 //------------------------------------------------------------------------------
 // RoutineRunner::registerRoutine
@@ -88,7 +88,7 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
         return;
       }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(m_sleepInterval)));
+    std::this_thread::sleep_for(std::chrono::seconds(m_sleepIntervalSecs));
   }
   lc.log(log::DEBUG, "In RoutineRunner::run(): Stop requested.");
 }

@@ -48,27 +48,19 @@ RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config, cta::log:
   m_catalogue = catalogueFactory->create();
 
   m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Scheduler");
-  if (!m_config.getOptionValueStr("cta.objectstore.backendpath").has_value()) {
-    throw exception::UserError("Could not find config entry 'cta.objectstore.backendpath' in");
-  }
-  m_schedDbInit = std::make_unique<SchedulerDBInit_t>("Maintd",
-                                                      m_config.getOptionValueStr("cta.objectstore.backendpath").value(),
-                                                      m_lc.logger());
+
+  // TODO: why are we manually putting "maintd" here?
+  m_schedDbInit =
+    std::make_unique<SchedulerDBInit_t>("Maintd", m_config.scheduler.objectstore_backend_path, m_lc.logger());
   m_schedDb = m_schedDbInit->getSchedDB(*m_catalogue, m_lc.logger());
   // Set Scheduler DB cache timeouts
   SchedulerDatabase::StatisticsCacheConfig statisticsCacheConfig;
-  statisticsCacheConfig.tapeCacheMaxAgeSecs =
-    m_config.getOptionValueInt("cta.schedulerdb.tape_cache_max_age_secs").value_or(600);
-  statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs =
-    m_config.getOptionValueInt("cta.schedulerdb.retrieve_queue_cache_max_age_secs").value_or(10);
+  statisticsCacheConfig.tapeCacheMaxAgeSecs = m_config.scheduler.tape_cache_max_age_secs;
+  statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_config.scheduler.retrieve_queue_cache_max_age_secs;
   m_schedDb->setStatisticsCacheConfig(statisticsCacheConfig);
 
-  if (!m_config.getOptionValueStr("cta.scheduler_backend_name").has_value()) {
-    throw exception::UserError("Could not find config entry 'cta.scheduler_backend_name'");
-  }
-  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue,
-                                                 *m_schedDb,
-                                                 m_config.getOptionValueStr("cta.scheduler_backend_name").value());
+  // TODO: why is the scheduler namespace a config option? That is extremely error prone... It should be automatically detected from the scheduler
+  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_schedDb, "Replace this with scheduler namespace");
   m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Scheduler and Catalogue initialised");
 }
 
@@ -78,36 +70,35 @@ RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config, cta::log:
 std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   m_lc.log(log::INFO, "In RoutineRunnerFactory::create(): Creating RoutineRunner");
 
-  uint32_t sleepInterval = m_config.getOptionValueUInt("cta.routines.sleep_interval").value_or(1000);
-  auto routineRunner = std::make_unique<RoutineRunner>(sleepInterval);
+  auto routineRunner = std::make_unique<RoutineRunner>(m_config.routines.global_sleep_interval_secs);
 
   // Register all of the different routines
 
   // Add Disk Reporter for Archive
-  if (m_config.getOptionValueBool("cta.routines.disk_report_archive.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<DiskReportArchiveRoutine>(
-      m_lc,
-      *m_scheduler,
-      m_config.getOptionValueInt("cta.routines.disk_report_archive.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.disk_report_archive.soft_timeout").value_or(30)));
+  if (m_config.routines.disk_report_archive.enabled) {
+    routineRunner->registerRoutine(
+      std::make_unique<DiskReportArchiveRoutine>(m_lc,
+                                                 *m_scheduler,
+                                                 m_config.routines.disk_report_archive.batch_size,
+                                                 m_config.routines.disk_report_archive.soft_timeout_secs));
   }
 
   // Add Disk Reporter for Retrieve
-  if (m_config.getOptionValueBool("cta.routines.disk_report_retrieve.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<DiskReportRetrieveRoutine>(
-      m_lc,
-      *m_scheduler,
-      m_config.getOptionValueInt("cta.routines.disk_report_retrieve.batch_size").value_or(500),
-      m_config.getOptionValueInt("cta.routines.disk_report_retrieve.soft_timeout").value_or(30)));
+  if (m_config.routines.disk_report_retrieve.enabled) {
+    routineRunner->registerRoutine(
+      std::make_unique<DiskReportRetrieveRoutine>(m_lc,
+                                                  *m_scheduler,
+                                                  m_config.routines.disk_report_retrieve.batch_size,
+                                                  m_config.routines.disk_report_retrieve.soft_timeout_secs));
   }
 
 #ifndef CTA_PGSCHED
   // Add Garbage Collector
-  if (m_config.getOptionValueBool("cta.routines.garbage_collect.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<maintd::GarbageCollectRoutine>(m_lc,
-                                                                                   m_schedDbInit->getBackend(),
-                                                                                   m_schedDbInit->getAgentReference(),
-                                                                                   *m_catalogue));
+  if (m_config.routines.garbage_collect.enabled) {
+    routineRunner->registerRoutine(std::make_unique<GarbageCollectRoutine>(m_lc,
+                                                                           m_schedDbInit->getBackend(),
+                                                                           m_schedDbInit->getAgentReference(),
+                                                                           *m_catalogue));
   }
 #endif
 /*
@@ -121,103 +112,98 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
  */
 #ifndef CTA_PGSCHED
   // Add Queue Cleanup
-  if (m_config.getOptionValueBool("cta.routines.queue_cleanup.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<maintd::QueueCleanupRoutine>(
-      m_lc,
-      *m_schedDb,
-      *m_catalogue,
-      m_config.getOptionValueInt("cta.routines.queue_cleanup.batch_size").value_or(500)));
+  if (m_config.routines.queue_cleanup.enabled) {
+    routineRunner->registerRoutine(std::make_unique<QueueCleanupRoutine>(m_lc,
+                                                                         *m_schedDb,
+                                                                         *m_catalogue,
+                                                                         m_config.routines.queue_cleanup.batch_size));
   }
 #else
   // Add User Archive and Retrieve Active Queue Cleanup
-  if (m_config.getOptionValueBool("cta.routines.user_active_queue_cleanup.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<maintd::ArchiveInactiveMountActiveQueueRoutine>(
+  if (m_config.routines.user_active_queue_cleanup.enabled) {
+    routineRunner->registerRoutine(std::make_unique<ArchiveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.user_active_queue_cleanup.batch_size").value_or(1000),
-      m_config.getOptionValueInt("cta.routines.user_active_queue_cleanup.age_for_collection").value_or(900)));
-    routineRunner->registerRoutine(std::make_unique<maintd::RetrieveInactiveMountActiveQueueRoutine>(
+      m_config.routines.user_active_queue_cleanup.batch_size,
+      m_config.routines.user_active_queue_cleanup.age_for_collection));
+    routineRunner->registerRoutine(std::make_unique<RetrieveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.user_active_queue_cleanup.batch_size").value_or(1000),
-      m_config.getOptionValueInt("cta.routines.user_active_queue_cleanup.age_for_collection").value_or(900)));
+      m_config.routines.user_active_queue_cleanup.batch_size,
+      m_config.routines.user_active_queue_cleanup.age_for_collection));
   }
   // Add Repack Archive and Repack Retrieve Active Queue Cleanup
-  if (m_config.getOptionValueBool("cta.routines.repack_active_queue_cleanup.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<maintd::RepackArchiveInactiveMountActiveQueueRoutine>(
+  if (m_config.routines.repack_active_queue_cleanup.enabled) {
+    routineRunner->registerRoutine(std::make_unique<RepackArchiveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.repack_active_queue_cleanup.batch_size").value_or(1000),
-      m_config.getOptionValueInt("cta.routines.repack_active_queue_cleanup.age_for_collection").value_or(900)));
-    routineRunner->registerRoutine(std::make_unique<maintd::RepackRetrieveInactiveMountActiveQueueRoutine>(
+      m_config.routines.repack_active_queue_cleanup.batch_size,
+      m_config.routines.repack_active_queue_cleanup.age_for_collection));
+    routineRunner->registerRoutine(std::make_unique<RepackRetrieveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.repack_active_queue_cleanup.batch_size").value_or(1000),
-      m_config.getOptionValueInt("cta.routines.repack_active_queue_cleanup.age_for_collection").value_or(900)));
+      m_config.routines.repack_active_queue_cleanup.batch_size,
+      m_config.routines.repack_active_queue_cleanup.age_for_collection));
   }
   // Add User Archive and Repack Retrieve Pending Queue Cleanup
-  if (m_config.getOptionValueBool("cta.routines.user_pending_queue_cleanup.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<maintd::ArchiveInactiveMountPendingQueueRoutine>(
+  if (m_config.routines.user_pending_queue_cleanup.enabled) {
+    routineRunner->registerRoutine(std::make_unique<ArchiveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.user_pending_queue_cleanup.batch_size").value_or(1000),
-      m_config.getOptionValueInt("cta.routines.user_pending_queue_cleanup.age_for_collection").value_or(900)));
-    routineRunner->registerRoutine(std::make_unique<maintd::RetrieveInactiveMountPendingQueueRoutine>(
+      m_config.routines.user_pending_queue_cleanup.batch_size,
+      m_config.routines.user_pending_queue_cleanup.age_for_collection));
+    routineRunner->registerRoutine(std::make_unique<RetrieveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.user_pending_queue_cleanup.batch_size").value_or(1000),
-      m_config.getOptionValueInt("cta.routines.user_pending_queue_cleanup.age_for_collection").value_or(900)));
+      m_config.routines.user_pending_queue_cleanup.batch_size,
+      m_config.routines.user_pending_queue_cleanup.age_for_collection));
   }
   // Add Repack Archive and Repack Retrieve Pending Queue Cleanup
-  if (m_config.getOptionValueBool("cta.routines.repack_pending_queue_cleanup.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<maintd::RepackArchiveInactiveMountPendingQueueRoutine>(
+  if (m_config.routines.repack_pending_queue_cleanup.enabled) {
+    routineRunner->registerRoutine(std::make_unique<RepackArchiveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.repack_pending_queue_cleanup.batch_size").value_or(1000),
-      m_config.getOptionValueInt("cta.routines.repack_pending_queue_cleanup.age_for_collection").value_or(900)));
-    routineRunner->registerRoutine(std::make_unique<maintd::RepackRetrieveInactiveMountPendingQueueRoutine>(
+      m_config.routines.repack_pending_queue_cleanup.batch_size,
+      m_config.routines.repack_pending_queue_cleanup.age_for_collection));
+    routineRunner->registerRoutine(std::make_unique<RepackRetrieveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.repack_pending_queue_cleanup.batch_size").value_or(1000),
-      m_config.getOptionValueInt("cta.routines.repack_pending_queue_cleanup.age_for_collection").value_or(900)));
+      m_config.routines.repack_pending_queue_cleanup.batch_size,
+      m_config.routines.repack_pending_queue_cleanup.age_for_collection));
   }
   // Add Scheduler Maintenance Cleanup
-  if (m_config.getOptionValueBool("cta.routines.scheduler_maintenance_cleanup.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<maintd::DeleteOldFailedQueuesRoutine>(
+  if (m_config.routines.scheduler_maintenance_cleanup.enabled) {
+    routineRunner->registerRoutine(
+      std::make_unique<DeleteOldFailedQueuesRoutine>(m_lc,
+                                                     *m_schedDb,
+                                                     m_config.routines.scheduler_maintenance_cleanup.batch_size,
+                                                     m_config.routines.scheduler_maintenance_cleanup.age_for_deletion));
+    routineRunner->registerRoutine(std::make_unique<CleanMountLastFetchTimeRoutine>(
       m_lc,
       *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.scheduler_maintenance_cleanup.batch_size").value_or(1000),
-      m_config.getOptionValueInt("cta.routines.scheduler_maintenance_cleanup.age_for_deletion").value_or(1209600)));
-    routineRunner->registerRoutine(std::make_unique<maintd::CleanMountLastFetchTimeRoutine>(
-      m_lc,
-      *m_schedDb,
-      m_config.getOptionValueInt("cta.routines.scheduler_maintenance_cleanup.batch_size").value_or(1000),
-      m_config.getOptionValueInt("cta.routines.scheduler_maintenance_cleanup.age_for_deletion").value_or(1209600)));
+      m_config.routines.scheduler_maintenance_cleanup.batch_size,
+      m_config.routines.scheduler_maintenance_cleanup.age_for_deletion));
   }
 #endif
 
   // Add Repack Expansion
-  if (m_config.getOptionValueBool("cta.routines.repack_expand.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<RepackExpandRoutine>(
-      m_lc,
-      *m_scheduler,
-      m_config.getOptionValueInt("cta.routines.repack_expand.max_to_toexpand").value_or(2)));
+  if (m_config.routines.repack_expand.enabled) {
+    routineRunner->registerRoutine(
+      std::make_unique<RepackExpandRoutine>(m_lc, *m_scheduler, m_config.routines.repack_expand.max_to_toexpand));
   }
 
   // Add Repack Reporting
-  if (m_config.getOptionValueBool("cta.routines.repack_report.enabled").value_or(true)) {
-    routineRunner->registerRoutine(std::make_unique<RepackReportRoutine>(
-      m_lc,
-      *m_scheduler,
-      m_config.getOptionValueInt("cta.routines.repack_report.soft_timeout").value_or(30)));
+  if (m_config.routines.repack_report.enabled) {
+    routineRunner->registerRoutine(
+      std::make_unique<RepackReportRoutine>(m_lc, *m_scheduler, m_config.routines.repack_report.soft_timeout_secs));
   }
 
   m_lc.log(log::INFO, "In RoutineRunnerFactory::create(): RoutineRunner created");

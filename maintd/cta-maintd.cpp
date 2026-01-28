@@ -133,8 +133,19 @@ int main(const int argc, char** const argv) {
   log::Logger& log = *logPtr;
 
   // Read the config file
-  // TODO: strictness settings
-  cta::maintd::MaintdConfig config = rfl::toml::read<cta::maintd::MaintdConfig>(cmdLineParams.configFileLocation);
+  // TODO: allow for configuring strictness via the commandline args
+  using StrictConfig = rfl::Processors<rfl::NoExtraFields,  // error on unknown keys
+                                       rfl::NoOptionals     // require optionals present
+                                       >;
+
+  auto rflConfig = rfl::toml::load<cta::maintd::MaintdConfig, StrictConfig>(cmdLineParams.configFileLocation);
+  if (!rflConfig) {
+    std::vector<cta::log::Param> params = {log::Param("exceptionMessage", rflConfig.error().what())};
+    log(log::CRIT, "Failed to parse config file", params);
+    sleep(1);
+    return EXIT_FAILURE;
+  }
+  const cta::maintd::MaintdConfig config = rflConfig.value();
 
   log.setLogMask(config.logging.level);
   log.setStaticParams(config.logging.attributes);
@@ -145,6 +156,9 @@ int main(const int argc, char** const argv) {
     log(log::INFO, "Launching cta-maintd", cmdLineParams.toLogParams());
     programRc = maintd::exceptionThrowingMain(config, log);
   } catch (exception::Exception& ex) {
+    // TODO: improve exception handling here
+    // These should all be CRIT and exit with EXIT_FAILURE
+    // Should be a common method for this
     std::vector<cta::log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
     log(log::ERR, "Caught an unexpected CTA exception.", params);
     sleep(1);
