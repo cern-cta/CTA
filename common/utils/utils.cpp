@@ -695,4 +695,19 @@ std::string file2string(const std::string& filename) {
   return as_string.str();
 }
 
+void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMsec, int64_t checkIntervalMsec) {
+  using clock = std::chrono::steady_clock;
+
+  const auto timeout = std::chrono::milliseconds(timeoutMsec);
+  const auto interval = std::chrono::milliseconds(checkIntervalMsec);
+  const auto start = clock::now();
+
+  while (!condition()) {
+    if (clock::now() - start >= timeout) {
+      throw cta::exception::TimeOut("");
+    }
+    std::this_thread::sleep_for(interval);
+  }
+}
+
 }  // namespace cta::utils

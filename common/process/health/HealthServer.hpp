@@ -38,7 +38,7 @@ public:
   /**
    * Starts a lightweight HTTP server that listens to /health/readiness and /health/liveness endpoints
    */
-  void run(std::stop_token st);
+  void run();
 
   /**
    * Stop the HealthServer
