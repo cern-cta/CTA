@@ -30,6 +30,8 @@ RetrieveJobQueueRow::updateMountQueueLastFetch(Transaction& txn, uint64_t mountI
   stmt.bindUint64(":MOUNT_ID", mountId);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
+  txn.getConn().setDbQuerySummary("update mount_queue_last_fetch");
+  txn.setRowCountForTelemetry(nrows);
   return nrows;
 }
 
@@ -240,7 +242,7 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
   stmt.bindString(":TAPE_POOL", mountInfo.tapePool.empty() ? "NOT_PROVIDED" : mountInfo.tapePool);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
-  txn.getConn().setDbQuerySummary("move retrieve jobs to active queue");
+  txn.getConn().setDbQuerySummary("move retrieve to active queue");
   auto result = stmt.executeQuery();
   auto nrows = stmt.getNbAffectedRows();
   return std::make_pair(std::move(result), nrows);
@@ -276,9 +278,11 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
         )SQL";
     sql += sqlpart + std::string(")");
     auto stmt2 = txn.getConn().createStmt(sql);
-    txn.getConn().setDbQuerySummary("delete retrieve jobs");
+    txn.getConn().setDbQuerySummary("delete retrieve");
     stmt2.executeNonQuery();
-    return stmt2.getNbAffectedRows();
+    auto nrows = stmt2.getNbAffectedRows();
+    txn.setRowCountForTelemetry(nrows);
+    return nrows;
   }
 
   // END OF DISABLE DELETION FOR DEBUGGING
@@ -294,9 +298,11 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   sql += " SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
   auto stmt1 = txn.getConn().createStmt(sql);
   stmt1.bindString(":STATUS", to_string(newStatus));
-  txn.getConn().setDbQuerySummary("update retrieve job status");
+  txn.getConn().setDbQuerySummary("update retrieve");
   stmt1.executeNonQuery();
-  return stmt1.getNbAffectedRows();
+  auto nrows = stmt1.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
 };
 
 uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRepack) {
@@ -325,9 +331,11 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRep
   stmt.bindUint64(":LAST_MOUNT_WITH_FAILURE", lastMountWithFailure);
   stmt.bindString(":FAILURE_LOG", failureLogs.value_or(""));
   stmt.bindUint64(":JOB_ID", jobId);
-  txn.getConn().setDbQuerySummary("update failed retrieve job status");
+  txn.getConn().setDbQuerySummary("update retrieve");
   stmt.executeNonQuery();
-  return stmt.getNbAffectedRows();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
 };
 
 void RetrieveJobQueueRow::updateJobRowFailureLog(const std::string& reason, bool is_report_log) {
@@ -560,9 +568,11 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
   if (userowjid) {
     stmt.bindUint64(":JOB_ID", jobId);
   }
-  txn.getConn().setDbQuerySummary("requeue failed retrieve");
+  txn.getConn().setDbQuerySummary("move retrieve back to pending");
   stmt.executeNonQuery();
-  return stmt.getNbAffectedRows();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
 };
 
 uint64_t RetrieveJobQueueRow::requeueJobBatch(Transaction& txn,
@@ -722,9 +732,11 @@ uint64_t RetrieveJobQueueRow::requeueJobBatch(Transaction& txn,
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindString(":FAILURE_LOG", "UNPROCESSED_TASK_QUEUE_JOB_REQUEUED");
-  txn.getConn().setDbQuerySummary("requeue failed retrieve");
+  txn.getConn().setDbQuerySummary("move retrieve back to pending");
   stmt.executeNonQuery();
-  return stmt.getNbAffectedRows();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
 }
 
 rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, const size_t limit) {
@@ -942,7 +954,7 @@ rdbms::Rset RetrieveJobQueueRow::transformJobBatchToArchive(Transaction& txn, co
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT_BASE", 0);
   stmt.bindUint32(":RETRIES_WITHIN_MOUNT_ALTERNATE", 0);
   stmt.bindUint32(":LIMIT", limit);
-  txn.getConn().setDbQuerySummary("transform retrieve and insert to archive");
+  txn.getConn().setDbQuerySummary("move repack retrieve to archive");
   return stmt.executeQuery();
 }
 
@@ -1080,9 +1092,11 @@ uint64_t RetrieveJobQueueRow::handlePendingRetrieveJobsAfterTapeStateChange(Tran
   stmt.bindString(":VID", vid);
   stmt.bindString(":STATUS", to_string(RetrieveJobStatus::RJS_ToReportToUserForFailure));
   stmt.bindString(":FAILURE_LOG", "TAPE_STATE_CHANGE_JOBS_TO_REPORT_FOR_FAILURE");
-  txn.getConn().setDbQuerySummary("handle pending retrieve jobs after tape state change");
+  txn.getConn().setDbQuerySummary("move pending retrieve to report failure");
   stmt.executeNonQuery();
-  return stmt.getNbAffectedRows();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
 }
 
 uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
@@ -1096,9 +1110,12 @@ uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":JOB_ID", jobId);
-  txn.getConn().setDbQuerySummary("move retrieve to failed queue");
-  stmt.executeQuery();
-  return stmt.getNbAffectedRows();
+  txn.getConn().setDbQuerySummary("move failed retrieve");
+  txn.setRowCountForTelemetry(1);
+  stmt.executeNonQuery();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
 }
 
 uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
@@ -1130,9 +1147,11 @@ uint64_t RetrieveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn,
   SELECT * FROM MOVED_ROWS
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
-  txn.getConn().setDbQuerySummary("move retrieve to failed queue");
+  txn.getConn().setDbQuerySummary("move failed retrieve");
   stmt.executeNonQuery();
-  return stmt.getNbAffectedRows();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
 }
 
 rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Transaction& txn, uint64_t limit) {
@@ -1163,7 +1182,7 @@ rdbms::Rset RetrieveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Tran
   )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":LIMIT", limit);
-  txn.getConn().setDbQuerySummary("move failed repack retrieve job batch to failed queue table");
+  txn.getConn().setDbQuerySummary("move failed repack retrieve");
   auto rset = stmt.executeQuery();
   return rset;
 }
@@ -1185,7 +1204,8 @@ uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, R
   stmt.bindBool(":IS_REPORTING", isReporting);
   stmt.bindString(":REPORT_FAILURE_LOG", reportFailureLogs.value_or(""));
   stmt.bindUint64(":JOB_ID", jobId);
-  txn.getConn().setDbQuerySummary("update retrieve job status for failed report");
+  txn.getConn().setDbQuerySummary("update retrieve");
+  txn.setRowCountForTelemetry(1);
   stmt.executeNonQuery();
   // if this was the final reporting failure,
   // move the row to failed jobs and delete the entry from the queue
@@ -1255,7 +1275,7 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
   stmt.bindUint64(":LIMIT", limit);
   stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
 
-  txn.getConn().setDbQuerySummary("select retrieve jobs for reporting");
+  txn.getConn().setDbQuerySummary("update retrieve");
   return stmt.executeQuery();
 }
 
@@ -1283,8 +1303,10 @@ uint64_t RetrieveJobQueueRow::cancelRetrieveJob(Transaction& txn, uint64_t archi
   )SQL";
   auto stmt = txn.getConn().createStmt(sqlActive);
   stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileID);
-  txn.getConn().setDbQuerySummary("cancel retrieve job");
+  txn.getConn().setDbQuerySummary("delete retrieve");
   stmt.executeNonQuery();
-  return stmt.getNbAffectedRows();
+  auto nrows = stmt.getNbAffectedRows();
+  txn.setRowCountForTelemetry(nrows);
+  return nrows;
 }
 }  // namespace cta::schedulerdb::postgres
