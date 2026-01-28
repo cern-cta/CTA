@@ -27,13 +27,16 @@ Conn::Conn() : m_pool(nullptr) {}
 //------------------------------------------------------------------------------
 Conn::Conn(std::unique_ptr<ConnAndStmts> connAndStmts, ConnPool* pool)
     : m_connAndStmts(std::move(connAndStmts)),
-      m_pool(pool) {}
+      m_pool(pool) {
+  m_executionStartTime = std::chrono::steady_clock::now();
+}
 
 //------------------------------------------------------------------------------
 // move constructor
 //------------------------------------------------------------------------------
 Conn::Conn(Conn&& other) noexcept : m_connAndStmts(std::move(other.m_connAndStmts)), m_pool(other.m_pool) {
   other.m_pool = nullptr;
+  m_executionStartTime = std::chrono::steady_clock::now();
 }
 
 //------------------------------------------------------------------------------
@@ -119,8 +122,8 @@ void Conn::setDbQuerySummary(const std::string& optQuerySummary) {
   m_querySummary = optQuerySummary;
 };
 
-void Conn::setRowCountForTelemetry(uint64_t row_count) {
-  m_rowCount = row_count;
+void Conn::setRowCountForTelemetry(uint64_t rowCount) {
+  m_rowCount = rowCount;
 }
 
 //------------------------------------------------------------------------------
@@ -129,24 +132,26 @@ void Conn::setRowCountForTelemetry(uint64_t row_count) {
 void Conn::commit() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     m_connAndStmts->conn->commit();
-    auto end = std::chrono::steady_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - m_executionStartTime).count();
-    cta::telemetry::metrics::dbClientOperationDuration->Record(
-      duration,
-      {
-        {cta::semconv::attr::kDbSystemName,   m_pool->m_connFactory->getDbSystemName()},
-        {cta::semconv::attr::kDbNamespace,    m_pool->m_connFactory->getDbNamespace() },
-        {cta::semconv::attr::kDbQuerySummary, m_querySummary                          }
-    },
-      opentelemetry::context::RuntimeContext::GetCurrent());
-    cta::telemetry::metrics::dbClientOperationReturnedRows->Record(
-      m_rowCount,
-      {
-        {cta::semconv::attr::kDbSystemName,   m_pool->m_connFactory->getDbSystemName()},
-        {cta::semconv::attr::kDbNamespace,    m_pool->m_connFactory->getDbNamespace() },
-        {cta::semconv::attr::kDbQuerySummary, m_querySummary                          }
-    },
-      opentelemetry::context::RuntimeContext::GetCurrent());
+    if (m_rowCount > 0) {
+      auto end = std::chrono::steady_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - m_executionStartTime).count();
+      cta::telemetry::metrics::dbClientOperationDuration->Record(
+        duration,
+        {
+          {cta::semconv::attr::kDbSystemName,   m_pool->m_connFactory->getDbSystemName()},
+          {cta::semconv::attr::kDbNamespace,    m_pool->m_connFactory->getDbNamespace() },
+          {cta::semconv::attr::kDbQuerySummary, m_querySummary                          }
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
+      cta::telemetry::metrics::dbClientOperationReturnedRows->Record(
+        m_rowCount,
+        {
+          {cta::semconv::attr::kDbSystemName,   m_pool->m_connFactory->getDbSystemName()},
+          {cta::semconv::attr::kDbNamespace,    m_pool->m_connFactory->getDbNamespace() },
+          {cta::semconv::attr::kDbQuerySummary, m_querySummary                          }
+      },
+        opentelemetry::context::RuntimeContext::GetCurrent());
+    }
   } else {
     throw exception::Exception("Conn does not contain a connection");
   }
