@@ -37,7 +37,10 @@ public:
   /**
    * Waits for incoming signals and executes the functions registered with said signal (if any)
    */
-  void run();
+  static void run(std::stop_token st,
+                  const std::unordered_map<int, std::function<void()>>& signalFunctions,
+                  const sigset_t& sigset,
+                  cta::log::Logger& log);
 
   /**
    * Stop the SignalReactor (both the thread and the waiting for signal)
@@ -51,9 +54,10 @@ private:
 
   // The thread the signalReactor will run on when start() is called
   std::jthread m_thread;
-  std::atomic<bool> m_stopRequested;
 
-  uint32_t m_waitTimeoutSecs = 1;
+  static const uint32_t waitTimeoutSecs = 1;
+
+  friend struct unitTests::SignalReactorTestAccess;
 };
 
 }  // namespace cta::process
