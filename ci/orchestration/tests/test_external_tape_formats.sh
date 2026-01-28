@@ -160,14 +160,14 @@ install_integrationtests "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd"
 unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}"
 pause_taped "${NAMESPACE}" "${CTA_TAPED_APP_NAME}"
 kubectl -n ${NAMESPACE} cp read_enstore_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_tape.sh -c cta-rmcd
-kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_tape.sh ${device}
+kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_tape.sh ${device} || exit 1
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" || exit 1
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- cta-enstoreReaderTest ${device_name} ${device} || exit 1
 
 # Prepare EnstoreLarge tape sample
 unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}"
 kubectl -n ${NAMESPACE} cp read_enstore_large_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_large_tape.sh -c cta-rmcd
-kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_large_tape.sh ${device}
+kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_large_tape.sh ${device} || exit 1
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" || exit 1
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- cta-enstoreLargeReaderTest ${device_name} ${device} || exit 1
 

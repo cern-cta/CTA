@@ -32,6 +32,54 @@ wait_for_device_ready() {
   done
 }
 
+get_mt_status() {
+  local device_path="$1"
+  mt -f "$device_path" status 2>/dev/null
+}
+
+wait_for_file_number() {
+  local device_path="$1"
+  local expected="$2"
+  local timeout_seconds="${3:-120}"
+  local waited=0
+  local status=""
+  local file_num=""
+
+  while true; do
+    status=$(get_mt_status "$device_path" || true)
+    file_num=$(echo "$status" | awk '/File number=/ {gsub(/[,]/,""); for(i=1;i<=NF;i++) if($i ~ /^number=/){split($i,a,"="); print a[2]}}')
+    if [[ "$file_num" == "$expected" ]]; then
+      return 0
+    fi
+    if (( waited >= timeout_seconds )); then
+      echo "Timed out waiting for tape file number ${expected}. Last status:" >&2
+      echo "$status" >&2
+      return 1
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+}
+
+wait_for_write_ready() {
+  local device_path="$1"
+  local timeout_seconds="${2:-120}"
+  local waited=0
+
+  while true; do
+    if dd if=/dev/zero of="$device_path" bs=1 count=0 >/dev/null 2>&1; then
+      return 0
+    fi
+    if (( waited >= timeout_seconds )); then
+      echo "Timed out waiting for tape device ${device_path} to become write-ready" >&2
+      get_mt_status "$device_path" >&2 || true
+      return 1
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+}
+
 retry_dd_on_busy() {
   local max_attempts=6
   local attempt=1
@@ -74,18 +122,26 @@ mt -f ${device} status
 wait_for_device_ready "${device}" || exit 1
 mt -f ${device} rewind
 wait_for_device_ready "${device}" || exit 1
+wait_for_file_number "${device}" 0 || exit 1
 
 # Write EnstoreLarge label, header, payload, and trailer to tape.
 wait_for_device_ready "${device}" || exit 1
+wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/vol1_FL1587.bin of=$device bs=80 || exit 1
 mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
+wait_for_file_number "${device}" 1 || exit 1
+wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_header.bin of=$device bs=262144 || exit 1
 mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
+wait_for_file_number "${device}" 2 || exit 1
+wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_payload.bin of=$device bs=262144 || exit 1
 mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
+wait_for_file_number "${device}" 3 || exit 1
+wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstorelarge/FL1587_f1/fseq1_trailer.bin of=$device bs=262144 || exit 1
 mt -f $device weof || exit 1
 
