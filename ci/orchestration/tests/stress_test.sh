@@ -40,11 +40,11 @@ CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD="cta-frontend-0"
 EOS_MGM_POD="eos-mgm-0"
 
-NB_FILES=50000
-NB_DIRS=40
+NB_FILES=10000
+NB_DIRS=10
 FILE_SIZE_KB=1
 NB_PROCS=40
-NB_DRIVES=2
+NB_DRIVES=4
 
 
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
