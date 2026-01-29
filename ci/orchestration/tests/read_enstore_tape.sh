@@ -12,6 +12,7 @@ git clone https://github.com/LTrestka/ens-mhvtl.git /ens-mhvtl
 
 device="$1"
 changer="${2:-/dev/smc}"
+slot="${3:-2}"
 
 wait_for_device_ready() {
   local device_path="$1"
@@ -95,6 +96,15 @@ position_to_file() {
   fi
 }
 
+cycle_tape_in_drive() {
+  local slot_number="$1"
+
+  mtx -f "$changer" unload "$slot_number" 0 || return 1
+  sleep 2
+  mtx -f "$changer" load "$slot_number" 0 || return 1
+  wait_for_device_ready "$device" || return 1
+}
+
 retry_dd_on_busy() {
   local max_attempts=6
   local attempt=1
@@ -143,6 +153,7 @@ wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstore/FL1212_f1/vol1_FL1212.bin of=$device bs=80 || exit 1
 mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
+cycle_tape_in_drive "${slot}" || exit 1
 position_to_file "${device}" 1 || exit 1
 wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstore/FL1212_f1/fseq1_payload.bin of=$device bs=1048576 || exit 1
