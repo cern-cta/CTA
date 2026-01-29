@@ -35,12 +35,7 @@ public:
 
   bool isRunning();
 
-  /**
-   * Whether a routine executed and finished recently
-   * @param seconds Number of seconds that defines recently.
-   * @return True if a routine finished within the last `seconds` seconds
-   */
-  bool didRecentlyFinishRoutine(int64_t seconds);
+  bool isLive(int maxRoutinesDurationSecs);
 
 private:
   void safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc);
@@ -48,9 +43,10 @@ private:
   std::vector<std::unique_ptr<IRoutine>> m_routines;
   std::atomic<bool> m_running = false;
 
-  uint32_t m_sleepInterval;
+  uint32_t m_sleepIntervalSecs;
 
-  std::atomic<int64_t> m_lastExecutionTime {0};
+  std::atomic<int64_t> m_lastExecutionFinishedTime {0};
+  std::atomic<int64_t> m_lastSleepFinishedTime {0};
 };
 
 }  // namespace cta::maintd

@@ -22,10 +22,15 @@
 
 namespace cta::maintd {
 
+// Don't say this out loud
+int nowSecs() {
+  return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-RoutineRunner::RoutineRunner(uint32_t sleepInterval) : m_sleepInterval(sleepInterval) {}
+RoutineRunner::RoutineRunner(uint32_t sleepInterval) : m_sleepIntervalSecs(sleepInterval) {}
 
 //------------------------------------------------------------------------------
 // RoutineRunner::registerRoutine
@@ -55,8 +60,6 @@ void RoutineRunner::safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) 
         {cta::semconv::attr::kCtaRoutineName, routine.getName()}
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
-    m_lastExecutionTime =
-      std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
   } catch (cta::exception::Exception& ex) {
     params.add("exceptionMessage", ex.getMessageValue());
     lc.log(log::ERR, "In RoutineRunner::safeRunRoutine(): received an exception. Backtrace follows.");
@@ -88,7 +91,9 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
         return;
       }
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(std::chrono::milliseconds(m_sleepInterval)));
+    m_lastExecutionFinishedTime = nowSecs();
+    std::this_thread::sleep_for(std::chrono::seconds(m_sleepIntervalSecs));
+    m_lastSleepFinishedTime = nowSecs();
   }
   lc.log(log::DEBUG, "In RoutineRunner::run(): Stop requested.");
 }
@@ -97,10 +102,14 @@ bool RoutineRunner::isRunning() {
   return m_running;
 }
 
-bool RoutineRunner::didRecentlyFinishRoutine(int64_t seconds) {
-  auto now =
-    std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-  return (now - m_lastExecutionTime) < seconds;
+bool RoutineRunner::isLive(int maxRoutinesDurationSecs) {
+  // If we are sleeping, check that we have not been sleeping for too long
+  // 2 times the sleep interval should leave enough room for error here
+  if (m_lastSleepFinishedTime < m_lastExecutionFinishedTime) {
+    return (nowSecs() - m_lastExecutionFinishedTime) < 2 * m_sleepIntervalSecs;
+  }
+  // If we are executing, check that we have not been executing for too long
+  return (nowSecs() - m_lastSleepFinishedTime) < maxRoutinesDurationSecs;
 }
 
 }  // namespace cta::maintd

@@ -59,6 +59,10 @@ cta.maintd.sleep_interval 1000
 # MAINTD ROUTINE CONFIGURATION OPTIONS
 #
 
+# The maximum duration in seconds a full cycle of routine execution is allowed to take.
+# A full cycle of routine execution refers to executing all enabled routines once and excludes the sleep interval.
+cta.routines.max_routines_duration 900
+
 # Enable Disk Reporting to report the state (fail or success) of archive jobs.
 cta.routines.disk_report_archive.enabled true
 cta.routines.disk_report_archive.batch_size 500
@@ -123,8 +127,6 @@ cta.health_server.enabled false
 cta.health_server.host 127.0.0.1
 # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port
 cta.health_server.port 8080
-# If the number of seconds since the last routine finished executing exceeds this value, the process is no longer considered alive.
-cta.health_server.liveness_window 120
 
 
 ####################################

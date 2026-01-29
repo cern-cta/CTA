@@ -17,7 +17,7 @@ namespace cta::maintd {
 MaintenanceDaemon::MaintenanceDaemon(cta::common::Config& config, cta::log::LogContext& lc)
     : m_config(config),
       m_lc(lc) {
-  m_livenessWindow = m_config.getOptionValueInt("cta.health_server.liveness_window").value_or(120);
+  m_maxRoutinesDurationSecs = m_config.getOptionValueInt("cta.routines.max_routines_duration").value_or(900);
 }
 
 void MaintenanceDaemon::stop() {
@@ -88,7 +88,7 @@ bool MaintenanceDaemon::isLive() {
   if (!m_routineRunner) {
     return true;
   }
-  return m_routineRunner->didRecentlyFinishRoutine(m_livenessWindow);
+  return m_routineRunner->isLive(m_maxRoutinesDurationSecs);
 }
 
 }  // namespace cta::maintd
