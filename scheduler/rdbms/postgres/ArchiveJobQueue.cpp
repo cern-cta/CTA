@@ -822,7 +822,7 @@ uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, co
     ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;")SQL";
   auto stmt = txn.getConn().createStmt(sql);
   txn.getConn().setDbQuerySummary("move failed archive");
-  txn.setRowCountForTelemetry(jobIDs.size());
+  //txn.setRowCountForTelemetry(jobIDs.size());
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
