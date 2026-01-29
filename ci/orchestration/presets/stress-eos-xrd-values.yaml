@@ -101,7 +101,7 @@ mgm:
         emptyDir: {}
 
 fst:
-  replicaCount: 14
+  replicaCount: 13
 
   persistence:
     enabled: true
