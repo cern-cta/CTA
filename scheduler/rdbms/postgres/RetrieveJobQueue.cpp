@@ -1111,7 +1111,6 @@ uint64_t RetrieveJobQueueRow::moveJobToFailedQueueTable(Transaction& txn) {
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindUint64(":JOB_ID", jobId);
   txn.getConn().setDbQuerySummary("move failed retrieve");
-  txn.setRowCountForTelemetry(1);
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
