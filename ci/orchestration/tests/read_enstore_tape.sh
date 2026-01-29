@@ -106,7 +106,9 @@ cycle_tape_in_drive() {
 }
 
 retry_dd_on_busy() {
-  local max_attempts=6
+  local max_attempts="${DD_BUSY_MAX_ATTEMPTS:-30}"
+  local sleep_seconds="${DD_BUSY_SLEEP_SECONDS:-3}"
+  local max_sleep_seconds="${DD_BUSY_MAX_SLEEP_SECONDS:-10}"
   local attempt=1
   local err_file
 
@@ -119,14 +121,19 @@ retry_dd_on_busy() {
     fi
 
     if grep -qi "resource busy" "$err_file"; then
-      rm -f "$err_file"
       if (( attempt >= max_attempts )); then
+        cat "$err_file" >&2
+        rm -f "$err_file"
         echo "dd failed with EBUSY after ${attempt} attempts" >&2
         return 1
       fi
       echo "Tape device busy, retrying dd (${attempt}/${max_attempts})..." >&2
-      wait_for_device_ready "${device}" || true
-      sleep 2
+      rm -f "$err_file"
+      wait_for_device_ready "${device}" 20 || true
+      sleep "${sleep_seconds}"
+      if (( sleep_seconds < max_sleep_seconds )); then
+        sleep_seconds=$((sleep_seconds + 1))
+      fi
       attempt=$((attempt + 1))
       continue
     fi
@@ -139,7 +146,7 @@ retry_dd_on_busy() {
 
 # Load tape in a tapedrive
 mtx -f ${changer} status
-mtx -f ${changer} load 2 0
+mtx -f ${changer} load ${slot} 0
 mtx -f ${changer} status
 
 # Get the device status where the tape is loaded and rewind it.
@@ -153,11 +160,14 @@ wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstore/FL1212_f1/vol1_FL1212.bin of=$device bs=80 || exit 1
 mt -f $device weof || exit 1
 wait_for_device_ready "${device}" || exit 1
+wait_for_file_number_at_least "${device}" 1 || exit 1
 cycle_tape_in_drive "${slot}" || exit 1
 position_to_file "${device}" 1 || exit 1
 wait_for_write_ready "${device}" || exit 1
 retry_dd_on_busy if=/ens-mhvtl/enstore/FL1212_f1/fseq1_payload.bin of=$device bs=1048576 || exit 1
 mt -f $device weof || exit 1
+wait_for_device_ready "${device}" || exit 1
+wait_for_file_number_at_least "${device}" 2 || exit 1
 
 wait_for_device_ready "${device}" || exit 1
 mt -f $device rewind
