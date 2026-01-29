@@ -3,7 +3,9 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-
+dnf install -y git git-lfs
+git lfs install --skip-repo
+git clone https://github.com/LTrestka/ens-mhvtl.git /ens-mhvtl
 
 # Use preloaded Enstore sample tape files.
 ens_mhvtl_root="/ens-mhvtl"
