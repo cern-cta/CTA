@@ -372,7 +372,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
         schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn,
                                                                    cta::schedulerdb::ArchiveJobStatus::ReadyForDeletion,
                                                                    jobIDsList_success);
-      deletionCount += nrows;
+      deletionCount = nrows;
       if (nrows != jobIDsList_success.size()) {
         log::ScopedParamContainer(lc)
           .add("successfulJobsDeleted", nrows)
@@ -387,7 +387,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
         schedulerdb::postgres::ArchiveJobQueueRow::updateJobStatus(txn,
                                                                    cta::schedulerdb::ArchiveJobStatus::AJS_Failed,
                                                                    jobIDsList_failure);
-      failedCount += nrows;
+      failedCount = nrows;
       if (nrows != jobIDsList_failure.size()) {
         log::ScopedParamContainer(lc)
           .add("failedJobsDeleted", nrows)

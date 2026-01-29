@@ -29,10 +29,9 @@ ArchiveJobQueueRow::updateMountQueueLastFetch(Transaction& txn, uint64_t mountId
   queueType += isActive ? "_ACTIVE" : "_PENDING";
   stmt.bindString(":QUEUE_TYPE", queueType);
   stmt.bindUint64(":MOUNT_ID", mountId);
-  stmt.executeQuery();
+  stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.getConn().setDbQuerySummary("update mount_queue_last_fetch");
-  txn.setRowCountForTelemetry(nrows);
   return nrows;
 }
 
@@ -844,7 +843,7 @@ uint64_t ArchiveJobQueueRow::moveJobBatchToFailedQueueTable(Transaction& txn, co
     ) INSERT INTO ARCHIVE_FAILED_QUEUE SELECT * FROM MOVED_ROWS;")SQL";
   auto stmt = txn.getConn().createStmt(sql);
   txn.getConn().setDbQuerySummary("move failed archive");
-  txn.setRowCountForTelemetry(jobIDs.size());
+  //txn.setRowCountForTelemetry(jobIDs.size());
   stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   txn.setRowCountForTelemetry(nrows);
