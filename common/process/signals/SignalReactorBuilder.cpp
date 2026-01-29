@@ -16,7 +16,9 @@ namespace cta::process {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SignalReactorBuilder::SignalReactorBuilder(cta::log::LogContext& lc) : m_lc(lc) {}
+SignalReactorBuilder::SignalReactorBuilder(cta::log::LogContext& lc) : m_lc(lc) {
+  sigemptyset(&m_sigset);
+}
 
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::addSignalFunction
