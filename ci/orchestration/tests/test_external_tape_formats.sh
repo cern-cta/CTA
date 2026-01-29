@@ -133,7 +133,9 @@ refresh_taped_context() {
   echo "Obtaining drive device and name"
   device_name=$(kubectl -n ${namespace} exec ${CTA_TAPED_POD} -c cta-taped -- printenv DRIVE_NAME)
   device=$(kubectl -n ${namespace} exec ${CTA_TAPED_POD} -c cta-taped -- printenv DRIVE_DEVICE)
-  DRIVE_INDEX=$(get_drive_index_from_device "${device}")
+  resolved_device=$(kubectl -n ${namespace} exec ${CTA_TAPED_POD} -c cta-taped -- \
+    bash -c "readlink -f \"${device}\" 2>/dev/null || echo \"${device}\"")
+  DRIVE_INDEX=$(get_drive_index_from_device "${resolved_device}")
   echo "Using device: ${device}; name ${device_name}; drive index ${DRIVE_INDEX}"
 }
 

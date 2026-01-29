@@ -10,10 +10,15 @@ git clone https://github.com/LTrestka/ens-mhvtl.git /ens-mhvtl
 # Use preloaded Enstore sample tape files.
 ens_mhvtl_root="/ens-mhvtl"
 device="$1"
+resolved_device=$(readlink -f "${device}" 2>/dev/null || echo "${device}")
+drive_index=0
+if [[ "${resolved_device}" =~ ([0-9]+)$ ]]; then
+  drive_index="${BASH_REMATCH[1]}"
+fi
 
 # Load tape in a tapedrive
 mtx -f /dev/smc status
-mtx -f /dev/smc load 2 0
+mtx -f /dev/smc load 2 ${drive_index}
 mtx -f /dev/smc status
 
 # Get the device status where the tape is loaded and rewind it.
