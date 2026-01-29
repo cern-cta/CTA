@@ -114,6 +114,7 @@ TEST(SignalReactor, HandlesUnregisteredSignals) {
   // Both signals are blocked; only 1 of them has a handler
   // We just want to check that the process doesn't crash
   sigset_t sigset;
+  sigemptyset(&sigset);
   sigaddset(&sigset, SIGUSR1);
   sigaddset(&sigset, SIGUSR2);
   cta::process::SignalReactor signalReactor(lc,

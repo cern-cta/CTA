@@ -56,7 +56,7 @@ public:
 
 private:
   cta::log::LogContext& m_lc;
-  sigset_t m_sigset;
+  const sigset_t m_sigset;
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
 
   // The thread the signalReactor will run on when start() is called
