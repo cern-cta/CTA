@@ -15,6 +15,18 @@ get_pods_by_type() {
   kubectl get pod -l app.kubernetes.io/component=$type -n $namespace --no-headers -o custom-columns=":metadata.name"
 }
 
+get_drive_index_from_device() {
+  local device_path="$1"
+  local base
+  base=$(basename "$device_path")
+  if [[ "$base" =~ ([0-9]+)$ ]]; then
+    echo "${BASH_REMATCH[1]}"
+    return 0
+  fi
+  echo "WARNING: Could not derive drive index from device ${device_path}, defaulting to 0" >&2
+  echo "0"
+}
+
 unload_loaded_tape() {
   local namespace="$1"
   local pod="$2"
@@ -121,7 +133,8 @@ refresh_taped_context() {
   echo "Obtaining drive device and name"
   device_name=$(kubectl -n ${namespace} exec ${CTA_TAPED_POD} -c cta-taped -- printenv DRIVE_NAME)
   device=$(kubectl -n ${namespace} exec ${CTA_TAPED_POD} -c cta-taped -- printenv DRIVE_DEVICE)
-  echo "Using device: ${device}; name ${device_name}"
+  DRIVE_INDEX=$(get_drive_index_from_device "${device}")
+  echo "Using device: ${device}; name ${device_name}; drive index ${DRIVE_INDEX}"
 }
 
 NAMESPACE=""
@@ -157,7 +170,7 @@ refresh_taped_context "$NAMESPACE" "$CTA_TAPED_APP_NAME"
 install_integrationtests "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd"
 
 # Prepare Enstore tape sample
-unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}"
+unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}" "/dev/smc" "${DRIVE_INDEX}"
 pause_taped "${NAMESPACE}" "${CTA_TAPED_APP_NAME}"
 kubectl -n ${NAMESPACE} cp read_enstore_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_tape.sh -c cta-rmcd
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_tape.sh ${device} || exit 1
@@ -165,7 +178,7 @@ wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" || 
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- cta-enstoreReaderTest ${device_name} ${device} || exit 1
 
 # Prepare EnstoreLarge tape sample
-unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}"
+unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}" "/dev/smc" "${DRIVE_INDEX}"
 kubectl -n ${NAMESPACE} cp read_enstore_large_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_large_tape.sh -c cta-rmcd
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_large_tape.sh ${device} || exit 1
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" || exit 1
