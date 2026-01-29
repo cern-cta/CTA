@@ -31,12 +31,12 @@ mt -f ${device} status
 # Write EnstoreLarge label, header, payload, and trailer to tape.
 touch /enstorelarge-tape.img
 dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/vol1_FL1587.bin of=/enstorelarge-tape.img bs=80
-dd if=/enstorelarge-tape.img of=$device bs=80
+dd if=/enstorelarge-tape.img of=$device bs=80 conv=fsync
 mt -f ${device} status
-dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_header.bin of=$device bs=262144
+dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_header.bin of=$device bs=262144 conv=fsync
 mt -f ${device} status
-dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_payload.bin of=$device bs=262144
+dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_payload.bin of=$device bs=262144 conv=fsync
 mt -f ${device} status
-dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_trailer.bin of=$device bs=262144
+dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_trailer.bin of=$device bs=262144 conv=fsync
 
 mt -f $device rewind
