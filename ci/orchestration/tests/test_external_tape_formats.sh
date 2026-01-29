@@ -169,6 +169,15 @@ fi
 refresh_taped_context "$NAMESPACE" "$CTA_TAPED_APP_NAME"
 install_integrationtests "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd"
 
+ens_mhvtl_root="/ens-mhvtl"
+# Sync sample tapes into the rmcd pod (scripts read from /ens-mhvtl).
+if [[ ! -d "${ens_mhvtl_root}" ]]; then
+  echo "ERROR: Missing ${ens_mhvtl_root}  on host; cannot stage Enstore samples" >&2
+  exit 1
+fi
+kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- rm -rf ${ens_mhvtl_root} || exit 1
+kubectl -n ${NAMESPACE} cp ${ens_mhvtl_root}  ${CTA_RMCD_POD}:${ens_mhvtl_root} -c cta-rmcd || exit 1
+
 # Prepare Enstore tape sample
 unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}" "/dev/smc" "${DRIVE_INDEX}"
 pause_taped "${NAMESPACE}" "${CTA_TAPED_APP_NAME}"
