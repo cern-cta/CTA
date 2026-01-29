@@ -46,7 +46,7 @@ data:
     cta.health_server.port 8080
     # This is a temporary hack to make CI happy.
     # Will be fixed by https://gitlab.cern.ch/cta/CTA/-/issues/1517
-    cta.health_server.liveness_window 900
+    cta.health_server.liveness_window 90000
 
     # Telemetry
     cta.experimental.telemetry.enabled true
