@@ -4,9 +4,11 @@
  */
 
 #include "MaintdConfig.hpp"
-#include "MaintenanceDaemon.hpp"
+#include "RoutineRunner.hpp"
+#include "RoutineRunnerFactory.hpp"
 #include "common/CmdLineParams.hpp"
 #include "common/config/Config.hpp"
+#include "common/config/ConfigLoader.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
@@ -22,21 +24,20 @@
 #include <getopt.h>
 #include <iostream>
 #include <memory>
-#include <rfl.hpp>
-#include <rfl/toml.hpp>
 #include <signal.h>
 #include <string>
 #include <thread>
 
 namespace cta::maintd {
 
-void initTelemetry(const std::string& otelConfigPath, cta::log::LogContext& lc) {
+void initTelemetry(const std::string& otelConfigPath, const std::string& schedulerNamespace, cta::log::LogContext& lc) {
   try {
     std::map<std::string, std::string> ctaResourceAttributes = {
-      {cta::semconv::attr::kServiceName,       cta::semconv::attr::ServiceNameValues::kCtaMaintd},
-      {cta::semconv::attr::kServiceVersion,    std::string(CTA_VERSION)                         },
-      {cta::semconv::attr::kServiceInstanceId, cta::utils::generateUuid()                       },
-      {cta::semconv::attr::kHostName,          cta::utils::getShortHostname()                   }
+      {cta::semconv::attr::kServiceName,        cta::semconv::attr::ServiceNameValues::kCtaMaintd},
+      {cta::semconv::attr::kServiceVersion,     std::string(CTA_VERSION)                         },
+      {cta::semconv::attr::kServiceInstanceId,  cta::utils::generateUuid()                       },
+      {cta::semconv::attr::kHostName,           cta::utils::getShortHostname()                   },
+      {cta::semconv::attr::kSchedulerNamespace, schedulerNamespace                               }
     };
     cta::telemetry::initOpenTelemetry(otelConfigPath, ctaResourceAttributes, lc);
   } catch (exception::Exception& ex) {
@@ -56,30 +57,33 @@ void initTelemetry(const std::string& otelConfigPath, cta::log::LogContext& lc) 
  * @param config The parsed config file
  * @param log The logging system
  */
-static void runMaintd(MaintdConfig config, cta::log::Logger& log) {
+static void runRoutineRunner(MaintdConfig config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
 
-  MaintenanceDaemon maintenanceDaemon(config, lc);
+  RoutineRunnerFactory routineRunnerFactory(config, lc);
+  // Create the routine runner
+  auto routineRunner = routineRunnerFactory.create();
 
   // Set up the signal reactor
-  process::SignalReactor signalReactor =
-    process::SignalReactorBuilder(lc)
-      .addSignalFunction(SIGTERM, [&maintenanceDaemon]() { maintenanceDaemon.stop(); })
-      .addSignalFunction(SIGUSR1, [&log]() { log.refresh(); })
-      .build();
+  process::SignalReactor signalReactor = process::SignalReactorBuilder(lc)
+                                           .addSignalFunction(SIGTERM, [&routineRunner]() { routineRunner->stop(); })
+                                           .addSignalFunction(SIGUSR1, [&log]() { log.refresh(); })
+                                           .build();
   signalReactor.start();
 
-  if (config.experimental.telemetry_enabled) {
+  // Set up telemetry
+  if (config.experimental.telemetry_enabled && !config.telemetry.config.empty()) {
     // Telemetry spawns some threads, so the SignalReactor must have started before this to correctly block signals
-    initTelemetry(config.telemetry.config, lc);
+    initTelemetry(config.telemetry.config, config.scheduler.backend_name, lc);
   }
 
+  // Set up the health server
   common::HealthServer healthServer = common::HealthServer(
     lc,
     config.health_server.host,
     config.health_server.port,
-    [&maintenanceDaemon]() { return maintenanceDaemon.isReady(); },
-    [&maintenanceDaemon]() { return maintenanceDaemon.isLive(); });
+    [&routineRunner]() { return routineRunner->isReady(); },
+    [&routineRunner]() { return routineRunner->isLive(); });
 
   if (config.health_server.enabled) {
     // We only start it if it's enabled. We explicitly construct the object outside the scope of this if statement
@@ -87,8 +91,13 @@ static void runMaintd(MaintdConfig config, cta::log::Logger& log) {
     healthServer.start();
   }
 
-  // Run the maintenance daemon
-  maintenanceDaemon.run();
+  // Overwrite XRootD env variables
+  // TODO: do we just always set the protocol to SSS?
+  ::setenv("XrdSecPROTOCOL", config.xrootd.security_protocol.c_str(), 1);
+  ::setenv("XrdSecSSSKT", config.xrootd.sss_keytab_path.c_str(), 1);
+
+  // This run routine blocks until we explicitly tell the routine runner to stop
+  routineRunner->run(lc);
 }
 
 }  // namespace cta::maintd
@@ -131,26 +140,29 @@ int main(const int argc, char** const argv) {
   log::Logger& log = *logPtr;
 
   // Read the config file
-  // TODO: allow for configuring strictness via the commandline args
-  using StrictConfig = rfl::Processors<rfl::NoExtraFields,  // error on unknown keys
-                                       rfl::NoOptionals     // require optionals present
-                                       >;
-
-  auto rflConfig = rfl::toml::load<maintd::MaintdConfig, StrictConfig>(cmdLineParams.configFileLocation);
-  if (!rflConfig) {
-    log(log::CRIT, "FATAL: Failed to parse config file", {log::Param("error", rflConfig.error().what())});
+  maintd::MaintdConfig config;
+  try {
+    // TODO: strict from commandline args
+    config = config::loadFromToml<maintd::MaintdConfig>(cmdLineParams.configFileLocation, true);
+  } catch (exception::UserError& ex) {
+    log(log::CRIT, "FATAL: Failed to parse config file", {log::Param("exceptionMessage", ex.getMessage().str())});
     sleep(1);
     return EXIT_FAILURE;
   }
-  const maintd::MaintdConfig config = rflConfig.value();
 
   log.setLogMask(config.logging.level);
-  log.setStaticParams(config.logging.attributes);
+  std::map<std::string, std::string> logAttributes;
+  // This should eventually be handled by auto-discovery
+  logAttributes["sched_backend"] = config.scheduler.backend_name;
+  for (const auto& [key, value] : config.logging.attributes) {
+    logAttributes[key] = value;
+  }
+  log.setStaticParams(logAttributes);
 
   // Start
   try {
     log(log::INFO, "Launching cta-maintd", cmdLineParams.toLogParams());
-    maintd::runMaintd(config, log);
+    maintd::runRoutineRunner(config, log);
   } catch (exception::Exception& ex) {
     log(log::CRIT,
         "FATAL: Caught an unexpected CTA exception",
