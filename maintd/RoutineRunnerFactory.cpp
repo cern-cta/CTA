@@ -59,8 +59,7 @@ RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config, cta::log:
   statisticsCacheConfig.retrieveQueueCacheMaxAgeSecs = m_config.scheduler.retrieve_queue_cache_max_age_secs;
   m_schedDb->setStatisticsCacheConfig(statisticsCacheConfig);
 
-  // TODO: why is the scheduler namespace a config option? That is extremely error prone... It should be automatically detected from the scheduler
-  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_schedDb, "Replace this with scheduler namespace");
+  m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_schedDb, config.scheduler.backend_name);
   m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Scheduler and Catalogue initialised");
 }
 
@@ -70,7 +69,8 @@ RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config, cta::log:
 std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   m_lc.log(log::INFO, "In RoutineRunnerFactory::create(): Creating RoutineRunner");
 
-  auto routineRunner = std::make_unique<RoutineRunner>(m_config.routines.global_sleep_interval_secs);
+  auto routineRunner = std::make_unique<RoutineRunner>(m_config.routines.global_sleep_interval_secs,
+                                                       m_config.routines.max_cycle_duration_secs);
 
   // Register all of the different routines
 
@@ -92,15 +92,6 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
                                                   m_config.routines.disk_report_retrieve.soft_timeout_secs));
   }
 
-#ifndef CTA_PGSCHED
-  // Add Garbage Collector
-  if (m_config.routines.garbage_collect.enabled) {
-    routineRunner->registerRoutine(std::make_unique<GarbageCollectRoutine>(m_lc,
-                                                                           m_schedDbInit->getBackend(),
-                                                                           m_schedDbInit->getAgentReference(),
-                                                                           *m_catalogue));
-  }
-#endif
 /*
  * If we enable all routines in 1 process they will all be running sequentially
  * and with the same sleep_interval configured for the maintd process itself.
@@ -111,12 +102,31 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
  * (or fully split it into separate services; 1 per routine).
  */
 #ifndef CTA_PGSCHED
+  // Add Garbage Collector
+  if (m_config.routines.garbage_collect.enabled) {
+    routineRunner->registerRoutine(std::make_unique<GarbageCollectRoutine>(m_lc,
+                                                                           m_schedDbInit->getBackend(),
+                                                                           m_schedDbInit->getAgentReference(),
+                                                                           *m_catalogue));
+  }
   // Add Queue Cleanup
   if (m_config.routines.queue_cleanup.enabled) {
     routineRunner->registerRoutine(std::make_unique<QueueCleanupRoutine>(m_lc,
                                                                          *m_schedDb,
                                                                          *m_catalogue,
                                                                          m_config.routines.queue_cleanup.batch_size));
+  }
+
+  // Add Repack Expansion
+  if (m_config.routines.repack_expand.enabled) {
+    routineRunner->registerRoutine(
+      std::make_unique<RepackExpandRoutine>(m_lc, *m_scheduler, m_config.routines.repack_expand.max_to_toexpand));
+  }
+
+  // Add Repack Reporting
+  if (m_config.routines.repack_report.enabled) {
+    routineRunner->registerRoutine(
+      std::make_unique<RepackReportRoutine>(m_lc, *m_scheduler, m_config.routines.repack_report.soft_timeout_secs));
   }
 #else
   // Add User Archive and Retrieve Active Queue Cleanup
@@ -193,18 +203,6 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       m_config.routines.scheduler_maintenance_cleanup.age_for_deletion_secs));
   }
 #endif
-
-  // Add Repack Expansion
-  if (m_config.routines.repack_expand.enabled) {
-    routineRunner->registerRoutine(
-      std::make_unique<RepackExpandRoutine>(m_lc, *m_scheduler, m_config.routines.repack_expand.max_to_toexpand));
-  }
-
-  // Add Repack Reporting
-  if (m_config.routines.repack_report.enabled) {
-    routineRunner->registerRoutine(
-      std::make_unique<RepackReportRoutine>(m_lc, *m_scheduler, m_config.routines.repack_report.soft_timeout_secs));
-  }
 
   m_lc.log(log::INFO, "In RoutineRunnerFactory::create(): RoutineRunner created");
   return routineRunner;

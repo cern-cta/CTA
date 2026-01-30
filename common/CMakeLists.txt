@@ -8,6 +8,7 @@ find_package (libcap REQUIRED)
 find_package (libuuid REQUIRED)
 find_package (json-c REQUIRED)
 find_package (opentelemetry-cpp CONFIG REQUIRED)
+find_package(reflectcpp CONFIG REQUIRED)
 
 add_subdirectory (exception)
 
@@ -156,6 +157,7 @@ target_link_libraries (ctacommon
   cap
   json-c
   cryptopp
+  reflectcpp::reflectcpp
   ${OPENTELEMETRY_CPP_LIBRARIES}
 )
 
@@ -176,6 +178,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/LoggerParamTypeTest.cpp
   remoteFS/RemotePathTest.cpp
   CRCTest.cpp
+  config/ConfigLoaderTest.cpp
   process/health/HealthServerTest.cpp
   process/signals/SignalReactorTest.cpp
   process/threading/CondVarTest.cpp
