@@ -389,6 +389,11 @@ public:
                            const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
                            log::LogContext& logContext) override;
 
+  std::vector<std::string> queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                        log::LogContext& lc) override {
+    throw cta::exception::Exception("Not supported for OStoreDB implementation.");
+  };
+
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> getArchiveJobs() const override;
 
   std::list<cta::common::dataStructures::ArchiveJob>
