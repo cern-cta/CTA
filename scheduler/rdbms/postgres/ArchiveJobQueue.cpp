@@ -947,7 +947,7 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
   }
   stmt.bindUint64(":LIMIT", limit);
   stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
-  txn.getConn().setDbQuerySummary("update archive");
+  txn.getConn().setDbQuerySummary("update archive report");
   return stmt.executeQuery();
 }
 
