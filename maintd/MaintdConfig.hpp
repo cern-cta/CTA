@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include "common/telemetry/config/TelemetryConfig.hpp"
-
 #include <cstdint>
+#include <map>
 #include <optional>
 #include <string>
 
@@ -24,7 +23,7 @@ struct CatalogueConfig {
 };
 
 struct SchedulerConfig {
-  // TODO: namespace name
+  std::string backend_name;
   std::string objectstore_backend_path;
   int tape_cache_max_age_secs = 600;
   int retrieve_queue_cache_max_age_secs = 10;
@@ -36,7 +35,7 @@ struct LoggingConfig {
 };
 
 struct TelemetryConfig {
-  std::string config;
+  std::string config = "";
 };
 
 struct HealthServerConfig {
@@ -45,21 +44,17 @@ struct HealthServerConfig {
   int port;
 };
 
-/// -- end
-
-struct GarbageCollectRoutineConfig {
-  bool enabled = true;
+struct XRootDConfig {
+  std::string security_protocol = "sss";
+  std::string sss_keytab_path;
 };
+
+/// -- end
 
 struct DiskReportRoutineConfig {
   bool enabled = true;
   int batch_size = 500;
   int soft_timeout_secs = 30;
-};
-
-struct QueueCleanupRoutineConfig {
-  bool enabled = true;
-  int batch_size = 500;
 };
 
 struct RepackExpandRoutineConfig {
@@ -72,7 +67,16 @@ struct RepackReportRoutineConfig {
   int soft_timeout_secs = 900;
 };
 
-#ifdef CTA_PGSCHED
+#ifndef CTA_PGSCHED
+struct QueueCleanupRoutineConfig {
+  bool enabled = true;
+  int batch_size = 500;
+};
+
+struct GarbageCollectRoutineConfig {
+  bool enabled = true;
+};
+#else
 struct ActivePendingQueueCleanupRoutineConfig {
   bool enabled = true;
   int batch_size = 500;
@@ -87,8 +91,8 @@ struct SchedulerMaintenanceCleanupRoutineConfig {
 #endif
 
 struct RoutinesConfig {
-  int global_sleep_interval_secs = 1;
-  int liveness_window_secs = 120;
+  int global_sleep_interval_secs = 10;
+  int max_cycle_duration_secs = 900;
 
   DiskReportRoutineConfig disk_report_archive;
   DiskReportRoutineConfig disk_report_retrieve;
@@ -119,6 +123,7 @@ struct MaintdConfig {
   HealthServerConfig health_server;
   RoutinesConfig routines;
   ExperimentalConfig experimental;
+  XRootDConfig xrootd;
 };
 
 }  // namespace cta::maintd

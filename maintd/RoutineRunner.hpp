@@ -20,7 +20,7 @@ namespace cta::maintd {
  */
 class RoutineRunner {
 public:
-  explicit RoutineRunner(uint32_t sleepIntervalSecs);
+  explicit RoutineRunner(int64_t sleepIntervalSecs, int64_t maxCycleDurationSecs);
 
   ~RoutineRunner() = default;
 
@@ -33,24 +33,22 @@ public:
    */
   void run(cta::log::LogContext& lc);
 
-  bool isRunning();
+  bool isLive();
 
-  /**
-   * Whether a routine executed and finished recently
-   * @param seconds Number of seconds that defines recently.
-   * @return True if a routine finished within the last `seconds` seconds
-   */
-  bool didRecentlyFinishRoutine(int64_t seconds);
+  bool isReady();
 
 private:
   void safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc);
 
   std::vector<std::unique_ptr<IRoutine>> m_routines;
+
+  const int64_t m_sleepIntervalSecs;
+  const int64_t m_maxCycleDurationSecs;
+
   std::atomic<bool> m_running = false;
 
-  uint32_t m_sleepIntervalSecs;
-
-  std::atomic<int64_t> m_lastExecutionTime {0};
+  std::atomic<int64_t> m_executionStartTime {0};
+  std::atomic<int64_t> m_sleepStartTime {0};
 };
 
 }  // namespace cta::maintd
