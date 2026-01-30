@@ -217,6 +217,7 @@ unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}" "/dev/smc" "${DRIVE_INDEX}"
 pause_all_taped "${NAMESPACE}"
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" 60 true true || exit 1
 kubectl -n ${NAMESPACE} cp read_enstore_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_tape.sh -c cta-rmcd
+kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- chmod +x /root/read_enstore_tape.sh
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash -c "FUSER_KILL_BUSY=1 /root/read_enstore_tape.sh ${device}" || exit 1
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" || exit 1
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- cta-enstoreReaderTest ${device_name} ${device} || exit 1
@@ -224,6 +225,7 @@ kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- cta-enstoreReaderTes
 # Prepare EnstoreLarge tape sample
 unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}" "/dev/smc" "${DRIVE_INDEX}"
 kubectl -n ${NAMESPACE} cp read_enstore_large_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_large_tape.sh -c cta-rmcd
+kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- chmod +x /root/read_enstore_large_tape.sh
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" 60 true true || exit 1
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash -c "FUSER_KILL_BUSY=1 /root/read_enstore_large_tape.sh ${device}" || exit 1
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" || exit 1
@@ -234,6 +236,7 @@ resume_taped_if_paused
 # Copy and run the above a script to the rmcd pod to load osm tape
 refresh_taped_context "$NAMESPACE" "$CTA_TAPED_APP_NAME"
 kubectl -n ${NAMESPACE} cp read_osm_tape.sh ${CTA_RMCD_POD}:/root/read_osm_tape.sh -c cta-rmcd
+kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- chmod +x /root/read_osm_tape.sh
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_osm_tape.sh ${device}
 
 # Run the test
