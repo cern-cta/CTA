@@ -121,7 +121,8 @@ install_integrationtests() {
   local pod="$2"
   local container="$3"
   echo "Installing cta systest rpms in ${pod} - ${container} container... "
-  kubectl -n ${namespace} exec ${pod} -c ${container} -- bash -c "dnf -y install cta-integrationtests"
+  kubectl -n ${namespace} exec ${pod} -c ${container} -- \
+    bash -c "dnf -y install cta-integrationtests psmisc lsof"
 }
 
 wait_for_device_free() {
@@ -131,11 +132,16 @@ wait_for_device_free() {
   local device_path="$4"
   local max_attempts="${5:-30}"
   local kill_busy="${6:-false}"
+  local allow_no_medium="${7:-false}"
   local attempt=1
 
   while true; do
-    if kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
-      bash -c "dd if=${device_path} of=/dev/null bs=1 count=0 >/dev/null 2>&1"; then
+    local dd_cmd
+    dd_cmd="out=\$(dd if=${device_path} of=/dev/null bs=1 count=0 2>&1); rc=\$?; \
+      if [[ \$rc -eq 0 ]]; then exit 0; fi; \
+      if [[ \"${allow_no_medium}\" == \"true\" ]] && echo \"\$out\" | grep -qi \"No medium\"; then exit 0; fi; \
+      echo \"\$out\" >&2; exit 1"
+    if kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- bash -c "${dd_cmd}"; then
       return 0
     fi
     if (( attempt >= max_attempts )); then
@@ -209,7 +215,7 @@ install_integrationtests "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd"
 # Prepare Enstore tape sample
 unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}" "/dev/smc" "${DRIVE_INDEX}"
 pause_all_taped "${NAMESPACE}"
-wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" 60 true || exit 1
+wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" 60 true true || exit 1
 kubectl -n ${NAMESPACE} cp read_enstore_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_tape.sh -c cta-rmcd
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash -c "FUSER_KILL_BUSY=1 /root/read_enstore_tape.sh ${device}" || exit 1
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" || exit 1
@@ -218,7 +224,7 @@ kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- cta-enstoreReaderTes
 # Prepare EnstoreLarge tape sample
 unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}" "/dev/smc" "${DRIVE_INDEX}"
 kubectl -n ${NAMESPACE} cp read_enstore_large_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_large_tape.sh -c cta-rmcd
-wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" 60 true || exit 1
+wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" 60 true true || exit 1
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash -c "FUSER_KILL_BUSY=1 /root/read_enstore_large_tape.sh ${device}" || exit 1
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" || exit 1
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- cta-enstoreLargeReaderTest ${device_name} ${device} || exit 1
