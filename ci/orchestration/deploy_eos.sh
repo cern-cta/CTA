@@ -93,7 +93,7 @@ deploy() {
 
   log_run helm upgrade --install eos oci://registry.cern.ch/eos/charts/server --version ${eos_server_chart_version} \
                       --namespace ${namespace} \
-                      --wait --timeout 5m \
+                      --wait --timeout 6m \
                       --reuse-values \
                       ${helm_flags}
 
