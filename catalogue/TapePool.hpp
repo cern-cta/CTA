@@ -118,12 +118,6 @@ struct TapePool {
   uint64_t nbPhysicalFiles = 0;
 
   /**
-   * Optional value used by the tape pool supply mechanism.
-   * TODO: deprecate this field, since it's replaced by the TAPE_POOL_SUPPLY catalogue table
-   */
-  std::optional<std::string> supply;
-
-  /**
    * The creation log.
    */
   common::dataStructures::EntryLog creationLog;

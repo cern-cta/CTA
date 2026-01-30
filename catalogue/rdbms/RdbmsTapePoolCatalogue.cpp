@@ -427,17 +427,6 @@ std::vector<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn& conn,
     auto dst_set_node_handle = supply_dst_per_tape_pool.extract(pool.name);
     if (src_set_node_handle) {
       pool.supply_source_set = std::move(src_set_node_handle.mapped());
-      // resulting comma-separated string will be sorted alphabetically since std::set is sorted)
-      std::string result = "";
-      for (const auto& source : pool.supply_source_set) {
-        if (!result.empty()) {
-          result += ",";
-        }
-        result += source;
-      }
-      if (!result.empty()) {
-        pool.supply = result;
-      }
     }
     if (dst_set_node_handle) {
       pool.supply_destination_set = std::move(dst_set_node_handle.mapped());
@@ -540,17 +529,6 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string& t
   {
     auto [supply_src_set, supply_dst_set] = getTapePoolSupplySourcesAndDestinations(conn, pool.name);
     pool.supply_source_set = std::move(supply_src_set);
-    // resulting comma-separated string will be sorted alphabetically since std::set is sorted)
-    std::string result = "";
-    for (const auto& source : pool.supply_source_set) {
-      if (!result.empty()) {
-        result += ",";
-      }
-      result += source;
-    }
-    if (!result.empty()) {
-      pool.supply = result;
-    }
     pool.supply_destination_set = std::move(supply_dst_set);
   }
 
