@@ -1248,7 +1248,7 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
   }
   stmt.bindUint64(":LIMIT", limit);
 
-  txn.getConn().setDbQuerySummary("update retrieve");
+  txn.getConn().setDbQuerySummary("update retrieve report");
   return stmt.executeQuery();
 }
 
