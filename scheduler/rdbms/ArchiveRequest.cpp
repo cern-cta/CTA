@@ -67,6 +67,22 @@ ArchiveRequest::makeJobRow(const postgres::ArchiveQueueJob& archiveJob) const {
   return ajr;
 }
 
+std::vector<std::unique_ptr<postgres::ArchiveJobQueueRow>> ArchiveRequest::returnRowsToInsert() {
+  std::vector<std::unique_ptr<postgres::ArchiveJobQueueRow>> rows;
+  try {
+    rows.reserve(m_jobs.size());
+    for (const auto& aj : m_jobs) {
+      rows.emplace_back(makeJobRow(aj));
+    }
+  } catch (exception::Exception& ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("exceptionMessage", ex.getMessageValue());
+    m_lc.log(log::ERR, "In ArchiveRequest::returnRowsToInsert(): failed to create rows from request.");
+    throw;
+  }
+  return rows;
+}
+
 // Inserts one row into DB
 void ArchiveRequest::insert() {
   try {
