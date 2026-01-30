@@ -126,6 +126,66 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName
 
   return archiveFileId;
 }
+#ifdef CTA_PGSCHED
+void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                     log::LogContext& lc) {
+  // Process sequentially
+  try {
+    std::string_view instanceNamePrevious = "";
+    std::string_view storageClassPrevious = "";
+    cta::common::dataStructures::RequesterIdentity requesterPrevious;
+    std::map<uint32_t, std::string> copyToPoolMapPrevious;
+    common::dataStructures::MountPolicy mountPolicyPrevious;
+    for (size_t i = 0; i < batch.size(); ++i) {
+      auto& item = batch[i];
+      if (instanceNamePrevious == item.instanceName && storageClassPrevious == item.request.storageClass
+          && requesterPrevious == item.request.requester) {
+        item.copyToPoolMap = copyToPoolMapPrevious;
+        item.mountPolicy = mountPolicyPrevious;
+      } else {
+        instanceNamePrevious = item.instanceName;
+        storageClassPrevious = item.request.storageClass;
+        requesterPrevious = item.request.requester;
+        const auto queueCriteria = m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(item.instanceName,
+                                                                                          item.request.storageClass,
+                                                                                          item.request.requester);
+        item.copyToPoolMap = queueCriteria.copyToPoolMap;
+        item.mountPolicy = queueCriteria.mountPolicy;
+        copyToPoolMapPrevious = queueCriteria.copyToPoolMap;
+        mountPolicyPrevious = queueCriteria.mountPolicy;
+      }
+    }
+    std::vector<std::string> archiveReqAddrVector;
+    archiveReqAddrVector.reserve(batch.size());
+    archiveReqAddrVector = m_db.queueArchive(batch, lc);
+    // Sanity check
+    if (archiveReqAddrVector.size() != batch.size()) {
+      std::string err = "queueArchive returned size " + std::to_string(archiveReqAddrVector.size())
+                        + " but batch size is " + std::to_string(batch.size());
+      for (auto& item : batch) {
+        item.promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
+      }
+      return;
+    }
+    for (size_t i = 0; i < batch.size(); ++i) {
+      try {
+        batch[i].promise.set_value(archiveReqAddrVector[i]);
+      } catch (const std::exception& e) {
+        std::string err = std::string("queueArchive failed to set return value") + e.what();
+        batch[i].promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
+      }
+    }
+  } catch (const std::exception& e) {
+    std::string err = std::string("queueArchive threw an exception: ") + e.what();
+    for (auto& item : batch) {
+      item.promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
+    }
+    return;
+  };
+
+  return;
+}
+#endif
 
 //------------------------------------------------------------------------------
 // queueArchiveWithGivenId
@@ -144,6 +204,59 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
       + request.diskFileInfo.path);
   }
 
+#ifdef CTA_PGSCHED
+
+  std::future<std::string> future;
+  //bool isLeader = false;
+
+  {
+    std::unique_lock<std::mutex> lock(m_mutexOpportunisticBatching);
+
+    m_opportunisticInsertBatch.emplace_back(
+      cta::common::dataStructures::ArchiveInsertQueueItem {archiveFileId,
+                                                           instanceName,
+                                                           request,
+                                                           {},
+                                                           {},
+                                                           std::promise<std::string>()});
+    future = m_opportunisticInsertBatch.back().promise.get_future();
+    // Decide the leadership
+    if (!m_enqueueBatchInProgress) {
+      m_enqueueBatchInProgress = true;
+      //isLeader = true;
+    } else {
+      // Followers wait for batch completion
+      m_cvOpportunisticBatching.wait(lock, [&] { return !m_enqueueBatchInProgress; });
+      return future.get();
+    }
+  }  // end of scope with the lock
+
+  // ---- LEADER PATH ----
+
+  // Opportunistic batching window
+  std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+  std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
+
+  {
+    // Steal the batch
+    std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
+    batch.swap(m_opportunisticInsertBatch);
+  }
+
+  processEnqueuedBatch(batch, lc);
+
+  {
+    std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
+    m_enqueueBatchInProgress = false;
+  }
+
+  // Wake followers
+  m_cvOpportunisticBatching.notify_all();
+
+  // Return leader's result
+  return future.get();
+#else
   const auto queueCriteria =
     m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(instanceName, request.storageClass, request.requester);
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
@@ -195,6 +308,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   return archiveReqAddr;
+#endif
 }
 
 //------------------------------------------------------------------------------

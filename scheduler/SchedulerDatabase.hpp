@@ -125,6 +125,8 @@ public:
                                    const cta::common::dataStructures::ArchiveRequest& request,
                                    const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,
                                    log::LogContext& logContext) = 0;
+  // for opportunistic request batch inserts
+  virtual std::vector<std::string> queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch, log::LogContext& lc) = 0;
 
   /**
    * Returns all of the queued archive jobs.  The returned jobs are
