@@ -14,7 +14,7 @@
 #include <sys/prctl.h>
 #include <thread>
 
-namespace cta::process {
+namespace cta::runtime {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -116,4 +116,4 @@ void SignalReactor::run(std::stop_token st,
   }
 }
 
-}  // namespace cta::process
+}  // namespace cta::runtime
