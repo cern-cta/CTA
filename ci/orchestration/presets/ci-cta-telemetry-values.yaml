@@ -13,7 +13,7 @@ frontend:
         metrics:
           backend: "OTLP_HTTP"
           exportInterval: 1000
-          exportTimeout: 1000
+          exportTimeout: 500
           otlp:
             endpoint: "https://monit-otlp.cern.ch:4319"
             auth:
@@ -45,7 +45,7 @@ taped:
       metrics:
         backend: "OTLP_HTTP"
         exportInterval: 1000
-        exportTimeout: 1000
+        exportTimeout: 500
         otlp:
           endpoint: "https://monit-otlp.cern.ch:4319"
           auth:
@@ -79,18 +79,13 @@ maintd:
       readers:
         - periodic:
             interval: 1000
-            timeout: 1000
+            timeout: 500
             exporter:
               otlp_http:
                 endpoint: https://monit-otlp.cern.ch:4319/v1/metrics
                 headers_list: "Authorization=Basic ${OTEL_EXPORTER_CREDENTIALS}"
                 compression: gzip
-                timeout: 5000
+                timeout: 1000
                 encoding: protobuf
                 temporality_preference: cumulative
                 default_histogram_aggregation: explicit_bucket_histogram
-      processors:
-        - batch:
-            max_queue_size: 4096
-            max_export_batch_size: 1024
-            scheduled_delay: 500
