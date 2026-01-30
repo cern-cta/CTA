@@ -12,8 +12,8 @@ frontend:
         retainInstanceIdOnRestart: false
         metrics:
           backend: "OTLP_HTTP"
-          exportInterval: 1000
-          exportTimeout: 500
+          exportInterval: 10000
+          exportTimeout: 5000
           otlp:
             endpoint: "https://monit-otlp.cern.ch:4319"
             auth:
@@ -28,8 +28,8 @@ frontend:
         retainInstanceIdOnRestart: false
         metrics:
           backend: "OTLP_HTTP"
-          exportInterval: 1000
-          exportTimeout: 500
+          exportInterval: 10000
+          exportTimeout: 5000
           otlp:
             endpoint: "https://monit-otlp.cern.ch:4319"
             auth:
@@ -44,8 +44,8 @@ taped:
       retainInstanceIdOnRestart: true
       metrics:
         backend: "OTLP_HTTP"
-        exportInterval: 1000
-        exportTimeout: 500
+        exportInterval: 10000
+        exportTimeout: 5000
         otlp:
           endpoint: "https://monit-otlp.cern.ch:4319"
           auth:
@@ -78,8 +78,8 @@ maintd:
     meter_provider:
       readers:
         - periodic:
-            interval: 1000
-            timeout: 500
+            interval: 10000
+            timeout: 5000
             exporter:
               otlp_http:
                 endpoint: https://monit-otlp.cern.ch:4319/v1/metrics
