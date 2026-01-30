@@ -389,7 +389,7 @@ create_instance() {
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
                                 -f "${taped_config}" \
                                 -f "${rmcd_config}" \
-                                --wait --timeout 5m ${extra_cta_chart_flags}
+                                --wait --timeout 15m ${extra_cta_chart_flags}
 
   # At this point the disk buffer(s) should also be ready
   if [ $eos_enabled == "true" ] ; then
