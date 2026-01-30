@@ -8,8 +8,10 @@
 #include "common/checksum/ChecksumBlob.hpp"
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/EntryLog.hpp"
+#include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RequesterIdentity.hpp"
 
+#include <future>
 #include <list>
 #include <map>
 #include <stdint.h>
@@ -40,6 +42,16 @@ struct ArchiveRequest {
   EntryLog creationLog;
 
 };  // struct ArchiveRequest
+
+struct ArchiveInsertQueueItem {
+  uint64_t archiveFileId;
+  std::string instanceName;
+  cta::common::dataStructures::ArchiveRequest request;
+  std::map<uint32_t, std::string> copyToPoolMap;
+  common::dataStructures::MountPolicy mountPolicy;
+
+  std::promise<std::string> promise;
+};
 
 std::ostream& operator<<(std::ostream& os, const ArchiveRequest& obj);
 
