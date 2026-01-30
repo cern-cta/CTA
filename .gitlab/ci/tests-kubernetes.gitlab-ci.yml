@@ -266,12 +266,12 @@ stress-test:
                           --test-script tests/prepare_tests.sh
                           "${extra_args[@]}"
     # Set up monitoring
-    - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
-    - helm install ci-monitoring ci_monitoring/ci-monitoring
-                  --namespace ${NAMESPACE}
-                  --set logsClaimName=logstorage-pvc
-                  --set image.pullSecrets={reg-eoscta-operations}
-                  --wait --timeout 5m
+    #- git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
+    #- helm install ci-monitoring ci_monitoring/ci-monitoring
+    #              --namespace ${NAMESPACE}
+    #              --set logsClaimName=logstorage-pvc
+    #              --set image.pullSecrets={reg-eoscta-operations}
+    #              --wait --timeout 5m
     # Run the actual stress test
     - cd tests
     - ./stress_test.sh -n ${NAMESPACE} ${EXTRA_STRESS_TEST_OPTIONS}
