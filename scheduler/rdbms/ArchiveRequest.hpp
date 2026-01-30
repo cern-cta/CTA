@@ -24,6 +24,7 @@ public:
 
   std::unique_ptr<postgres::ArchiveJobQueueRow> makeJobRow(const postgres::ArchiveQueueJob& archiveJob) const;
   void insert();
+  std::vector<std::unique_ptr<postgres::ArchiveJobQueueRow>> returnRowsToInsert();
   [[noreturn]] void update() const;
 
   // ============================== Job management =============================

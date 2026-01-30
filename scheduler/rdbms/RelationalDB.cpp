@@ -77,6 +77,73 @@ std::optional<common::dataStructures::VirtualOrganization> RelationalDB::getDefa
   return m_catalogue.VO()->getDefaultVirtualOrganizationForRepack();
 }
 
+std::vector<std::string>
+RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                           log::LogContext& lc) {
+  std::vector<std::unique_ptr<schedulerdb::postgres::ArchiveJobQueueRow>> rowsToInsert;
+  std::vector<std::string> ret_bogus_strings;
+  std::vector<uint32_t> groupIds;
+  rowsToInsert.reserve(batch.size());
+  auto sqlconn = m_connPool.getConn();
+  for (size_t i = 0; i < batch.size(); ++i) {
+    auto& item = batch[i];
+
+    // Construct the archive request object
+    schedulerdb::ArchiveRequest aReq(sqlconn, lc);
+
+    // Summarize all as an archiveFile
+    common::dataStructures::ArchiveFile aFile;
+    aFile.archiveFileID = item.archiveFileId;
+    aFile.checksumBlob = item.request.checksumBlob;
+    aFile.creationTime = std::numeric_limits<decltype(aFile.creationTime)>::min();
+    aFile.reconciliationTime = 0;
+    aFile.diskFileId = item.request.diskFileID;
+    aFile.diskFileInfo = item.request.diskFileInfo;
+    aFile.diskInstance = item.instanceName;
+    aFile.fileSize = item.request.fileSize;
+    aFile.storageClass = item.request.storageClass;
+    aReq.setArchiveFile(aFile);
+
+    utils::Timer timeSetters;
+    aReq.setMountPolicy(item.mountPolicy);
+    aReq.setArchiveReportURL(item.request.archiveReportURL);
+    aReq.setArchiveErrorReportURL(item.request.archiveErrorReportURL);
+    aReq.setRequester(item.request.requester);
+    aReq.setSrcURL(item.request.srcURL);
+    aReq.setEntryLog(item.request.creationLog);
+    auto archiveRequestId = 0;  //bogus, will be assigned by DB insert itself
+                                // cta::schedulerdb::postgres::ArchiveJobQueueRow::getNextArchiveRequestID(sqlconn);
+    int count_jobs = 0;
+    for (auto& [key, value] : item.copyToPoolMap) {
+      count_jobs++;
+      aReq.addJob(key,
+                  value,
+                  schedulerdb::ArchiveRequest::RETRIES_WITHIN_MOUNT,
+                  schedulerdb::ArchiveRequest::TOTAL_RETRIES,
+                  schedulerdb::ArchiveRequest::REPORT_RETRIES,
+                  archiveRequestId);
+    }
+
+    if (count_jobs == 0) {
+      throw schedulerdb::ArchiveRequestHasNoCopies("In RelationalDB::queueArchive: the archive request has no copies");
+    }
+
+    std::vector<std::unique_ptr<schedulerdb::postgres::ArchiveJobQueueRow>> areqrows = aReq.returnRowsToInsert();
+    for (size_t j = 0; j < areqrows.size(); ++j) {
+      rowsToInsert.emplace_back(std::move(areqrows[i]));
+      groupIds.emplace_back(i);
+      ret_bogus_strings.emplace_back("bogus");
+    }
+  }
+  uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::insertRequestBatch(sqlconn, rowsToInsert, groupIds);
+  log::ScopedParamContainer params(lc);
+
+  params.add("nrows", nrows);
+  lc.log(log::INFO, "In RelationalDB::queueArchive(): enqueued archive.");
+
+  return ret_bogus_strings;
+}
+
 std::string RelationalDB::queueArchive(const std::string& instanceName,
                                        const cta::common::dataStructures::ArchiveRequest& request,
                                        const cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId& criteria,

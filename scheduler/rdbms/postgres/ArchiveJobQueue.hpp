@@ -14,6 +14,7 @@
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <stdexcept>
 #include <vector>
 
 namespace cta::schedulerdb::postgres {
@@ -626,6 +627,275 @@ VALUES )SQL";
     params.add("lastMountWithFailure", lastMountWithFailure);
     params.add("maxTotalRetries", maxTotalRetries);
     params.add("maxReportRetries", maxReportRetries);
+  }
+
+  // This is used for opportunistic batching during queueing user requests, repack requests are not handled by this method
+  static uint64_t insertRequestBatch(rdbms::Conn& conn,
+                                 const std::vector<std::unique_ptr<ArchiveJobQueueRow>>& rows,
+                                 const std::vector<uint32_t>& groupIds) {
+    if (rows.empty()) {
+      return 0;
+    }
+    if (rows.size() != groupIds.size()) {
+      throw std::logic_error("insertRequestBatch: groupIds size mismatch");
+    }
+    std::string sql = R"SQL(
+    WITH input_rows (
+      request_group_id,
+      request_job_count,
+      status,
+      tape_pool,
+      mount_policy,
+      priority,
+      min_archive_request_age,
+      archive_file_id,
+      size_in_bytes,
+      copy_nb,
+      start_time,
+      checksumblob,
+      creation_time,
+      disk_instance,
+      disk_file_id,
+      disk_file_owner_uid,
+      disk_file_gid,
+      disk_file_path,
+      archive_report_url,
+      archive_error_report_url,
+      requester_name,
+      requester_group,
+      src_url,
+      storage_class,
+      retries_within_mount,
+      max_retries_within_mount,
+      total_retries,
+      last_mount_with_failure,
+      max_total_retries,
+      total_report_retries,
+      max_report_retries
+    ) AS (
+      VALUES
+    )SQL";
+    for (size_t i = 0; i < rows.size(); ++i) {
+      const std::string idx = std::to_string(i);
+      sql += "("
+             ":REQUEST_GROUP"
+             + idx
+             + "::INTEGER,"
+               ":REQUEST_JOB_COUNT"
+             + idx
+             + "::SMALLINT,"
+               ":STATUS"
+             + idx
+             + "::ARCHIVE_JOB_STATUS,"
+               ":TAPE_POOL"
+             + idx
+             + "::VARCHAR,"
+               ":MOUNT_POLICY"
+             + idx
+             + "::VARCHAR,"
+               ":PRIORITY"
+             + idx
+             + "::SMALLINT,"
+               ":MIN_ARCHIVE_REQUEST_AGE"
+             + idx
+             + "::INTEGER,"
+               ":ARCHIVE_FILE_ID"
+             + idx
+             + "::BIGINT,"
+               ":SIZE_IN_BYTES"
+             + idx
+             + "::BIGINT,"
+               ":COPY_NB"
+             + idx
+             + "::SMALLINT,"
+               ":START_TIME"
+             + idx
+             + "::BIGINT,"
+               ":CHECKSUMBLOB"
+             + idx
+             + "::BYTEA,"
+               ":CREATION_TIME"
+             + idx
+             + "::BIGINT,"
+               ":DISK_INSTANCE"
+             + idx
+             + "::VARCHAR,"
+               ":DISK_FILE_ID"
+             + idx
+             + "::VARCHAR,"
+               ":DISK_FILE_OWNER_UID"
+             + idx
+             + "::INTEGER,"
+               ":DISK_FILE_GID"
+             + idx
+             + "::INTEGER,"
+               ":DISK_FILE_PATH"
+             + idx
+             + "::VARCHAR,"
+               ":ARCHIVE_REPORT_URL"
+             + idx
+             + "::VARCHAR,"
+               ":ARCHIVE_ERROR_REPORT_URL"
+             + idx
+             + "::VARCHAR,"
+               ":REQUESTER_NAME"
+             + idx
+             + "::VARCHAR,"
+               ":REQUESTER_GROUP"
+             + idx
+             + "::VARCHAR,"
+               ":SRC_URL"
+             + idx
+             + "::VARCHAR,"
+               ":STORAGE_CLASS"
+             + idx
+             + "::VARCHAR,"
+               ":RETRIES_WITHIN_MOUNT"
+             + idx
+             + "::SMALLINT,"
+               ":MAX_RETRIES_WITHIN_MOUNT"
+             + idx
+             + "::SMALLINT,"
+               ":TOTAL_RETRIES"
+             + idx
+             + "::SMALLINT,"
+               ":LAST_MOUNT_WITH_FAILURE"
+             + idx
+             + "::BIGINT,"
+               ":MAX_TOTAL_RETRIES"
+             + idx
+             + "::SMALLINT,"
+               ":TOTAL_REPORT_RETRIES"
+             + idx
+             + "::SMALLINT,"
+               ":MAX_REPORT_RETRIES"
+             + idx
+             + "::SMALLINT"
+               ")";
+      if (i + 1 < rows.size()) {
+        sql += ",";
+      }
+    }
+    sql += R"SQL(
+    ),
+      request_ids AS (
+        SELECT
+          request_group_id,
+        nextval('archive_request_id_seq') AS archive_request_id
+      FROM (
+        SELECT DISTINCT request_group_id FROM input_rows ORDER BY request_group_id ASC
+           ) g
+      )
+    )SQL";
+    sql += R"SQL( INSERT INTO ARCHIVE_PENDING_QUEUE (
+      ARCHIVE_REQUEST_ID,
+      REQUEST_JOB_COUNT,
+      STATUS,
+      TAPE_POOL,
+      MOUNT_POLICY,
+      PRIORITY,
+      MIN_ARCHIVE_REQUEST_AGE,
+      ARCHIVE_FILE_ID,
+      SIZE_IN_BYTES,
+      COPY_NB,
+      START_TIME,
+      CHECKSUMBLOB,
+      CREATION_TIME,
+      DISK_INSTANCE,
+      DISK_FILE_ID,
+      DISK_FILE_OWNER_UID,
+      DISK_FILE_GID,
+      DISK_FILE_PATH,
+      ARCHIVE_REPORT_URL,
+      ARCHIVE_ERROR_REPORT_URL,
+      REQUESTER_NAME,
+      REQUESTER_GROUP,
+      SRC_URL,
+      STORAGE_CLASS,
+      RETRIES_WITHIN_MOUNT,
+      MAX_RETRIES_WITHIN_MOUNT,
+      TOTAL_RETRIES,
+      LAST_MOUNT_WITH_FAILURE,
+      MAX_TOTAL_RETRIES,
+      TOTAL_REPORT_RETRIES,
+      MAX_REPORT_RETRIES)
+    SELECT
+    )SQL";
+    sql += R"SQL(
+       req.archive_request_id,
+       v.request_job_count,
+       v.status,
+       v.tape_pool,
+       v.mount_policy,
+       v.priority,
+       v.min_archive_request_age,
+       v.archive_file_id,
+       v.size_in_bytes,
+       v.copy_nb,
+       v.start_time,
+       v.checksumblob,
+       v.creation_time,
+       v.disk_instance,
+       v.disk_file_id,
+       v.disk_file_owner_uid,
+       v.disk_file_gid,
+       v.disk_file_path,
+       v.archive_report_url,
+       v.archive_error_report_url,
+       v.requester_name,
+       v.requester_group,
+       v.src_url,
+       v.storage_class,
+       v.retries_within_mount,
+       v.max_retries_within_mount,
+       v.total_retries,
+       v.last_mount_with_failure,
+       v.max_total_retries,
+       v.total_report_retries,
+       v.max_report_retries
+  FROM input_rows v JOIN request_ids req ON v.request_group_id = req.request_group_id
+    )SQL";
+    auto stmt = conn.createStmt(sql);
+    // Bind values for each row with distinct names
+    for (size_t i = 0; i < rows.size(); ++i) {
+      const auto& row = *rows[i];
+      std::string idx = std::to_string(i);
+      //stmt.bindUint64(":ARCHIVE_REQUEST_ID" + idx, row.reqId);
+      stmt.bindUint32(":REQUEST_GROUP" + idx, groupIds[i]);
+      stmt.bindUint32(":REQUEST_JOB_COUNT" + idx, row.reqJobCount);
+      stmt.bindString(":STATUS" + idx, to_string(row.status));
+      stmt.bindString(":TAPE_POOL" + idx, row.tapePool);
+      stmt.bindString(":MOUNT_POLICY" + idx, row.mountPolicy);
+      stmt.bindUint16(":PRIORITY" + idx, row.priority);
+      stmt.bindUint32(":MIN_ARCHIVE_REQUEST_AGE" + idx, row.minArchiveRequestAge);
+      stmt.bindUint64(":ARCHIVE_FILE_ID" + idx, row.archiveFileID);
+      stmt.bindUint64(":SIZE_IN_BYTES" + idx, row.fileSize);
+      stmt.bindUint16(":COPY_NB" + idx, row.copyNb);
+      stmt.bindUint64(":START_TIME" + idx, row.startTime);
+      stmt.bindBlob(":CHECKSUMBLOB" + idx, row.checksumBlob.serialize());
+      stmt.bindUint64(":CREATION_TIME" + idx, row.creationTime);
+      stmt.bindString(":DISK_INSTANCE" + idx, row.diskInstance);
+      stmt.bindString(":DISK_FILE_ID" + idx, row.diskFileId);
+      stmt.bindUint32(":DISK_FILE_OWNER_UID" + idx, row.diskFileInfoOwnerUid);
+      stmt.bindUint32(":DISK_FILE_GID" + idx, row.diskFileInfoGid);
+      stmt.bindString(":DISK_FILE_PATH" + idx, row.diskFileInfoPath);
+      stmt.bindString(":ARCHIVE_REPORT_URL" + idx, row.archiveReportURL);
+      stmt.bindString(":ARCHIVE_ERROR_REPORT_URL" + idx, row.archiveErrorReportURL);
+      stmt.bindString(":REQUESTER_NAME" + idx, row.requesterName);
+      stmt.bindString(":REQUESTER_GROUP" + idx, row.requesterGroup);
+      stmt.bindString(":SRC_URL" + idx, row.srcUrl);
+      stmt.bindString(":STORAGE_CLASS" + idx, row.storageClass);
+      stmt.bindUint16(":RETRIES_WITHIN_MOUNT" + idx, row.retriesWithinMount);
+      stmt.bindUint16(":MAX_RETRIES_WITHIN_MOUNT" + idx, row.maxRetriesWithinMount);
+      stmt.bindUint16(":TOTAL_RETRIES" + idx, row.totalRetries);
+      stmt.bindUint32(":LAST_MOUNT_WITH_FAILURE" + idx, row.lastMountWithFailure);
+      stmt.bindUint16(":MAX_TOTAL_RETRIES" + idx, row.maxTotalRetries);
+      stmt.bindUint16(":TOTAL_REPORT_RETRIES" + idx, row.totalReportRetries);
+      stmt.bindUint16(":MAX_REPORT_RETRIES" + idx, row.maxReportRetries);
+    }
+    conn.setDbQuerySummary("insert archive");
+    stmt.executeNonQuery();
+    return stmt.getNbAffectedRows();
   }
 
   /**
