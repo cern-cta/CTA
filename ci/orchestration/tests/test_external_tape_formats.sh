@@ -9,6 +9,9 @@ EOF
 exit 1
 }
 
+declare -a TAPED_STATEFULSETS=()
+declare -A TAPED_REPLICA_COUNTS=()
+
 get_pods_by_type() {
   local type="$1"
   local namespace="$2"
@@ -59,33 +62,57 @@ get_taped_pod_by_app_name() {
   kubectl -n "$namespace" get pod -l app.kubernetes.io/name="$app_name" --no-headers -o custom-columns=":metadata.name" | head -1
 }
 
-pause_taped() {
+pause_all_taped() {
   local namespace="$1"
-  local app_name="$2"
-  local pod
-  pod=$(get_taped_pod_by_app_name "$namespace" "$app_name")
-  if [[ -z "$pod" ]]; then
-    echo "WARNING: Could not find taped pod for ${app_name} to pause"
+  local line
+
+  TAPED_STATEFULSETS=()
+  TAPED_REPLICA_COUNTS=()
+
+  while read -r line; do
+    local name
+    local replicas
+    name=$(echo "$line" | awk '{print $1}')
+    replicas=$(echo "$line" | awk '{print $2}')
+    if [[ -n "$name" ]]; then
+      TAPED_STATEFULSETS+=("$name")
+      TAPED_REPLICA_COUNTS["$name"]="${replicas:-1}"
+    fi
+  done < <(kubectl -n "$namespace" get statefulset -l app.kubernetes.io/component=taped --no-headers -o custom-columns=":metadata.name,:spec.replicas")
+
+  if [[ ${#TAPED_STATEFULSETS[@]} -eq 0 ]]; then
+    echo "WARNING: No taped statefulsets found to pause"
     return 0
   fi
-  echo "Pausing taped pod ${pod} (statefulset ${app_name}) to free tape device"
-  kubectl -n "$namespace" scale statefulset "$app_name" --replicas=0
-  kubectl -n "$namespace" wait --for=delete pod "$pod" --timeout=300s || true
+
+  echo "Pausing taped statefulsets: ${TAPED_STATEFULSETS[*]}"
+  for ss in "${TAPED_STATEFULSETS[@]}"; do
+    kubectl -n "$namespace" scale statefulset "$ss" --replicas=0
+  done
+  kubectl -n "$namespace" wait --for=delete pod -l app.kubernetes.io/component=taped --timeout=300s || true
   sleep 2
   TAPED_PAUSED=true
 }
 
-resume_taped() {
+resume_all_taped() {
   local namespace="$1"
-  local app_name="$2"
-  echo "Resuming taped statefulset ${app_name}"
-  kubectl -n "$namespace" scale statefulset "$app_name" --replicas=1
-  kubectl -n "$namespace" wait --for=condition=Ready pod -l app.kubernetes.io/name="$app_name" --timeout=300s
+
+  if [[ ${#TAPED_STATEFULSETS[@]} -eq 0 ]]; then
+    return 0
+  fi
+
+  for ss in "${TAPED_STATEFULSETS[@]}"; do
+    local replicas
+    replicas="${TAPED_REPLICA_COUNTS[$ss]:-1}"
+    echo "Resuming taped statefulset ${ss} to ${replicas} replicas"
+    kubectl -n "$namespace" scale statefulset "$ss" --replicas="${replicas}"
+  done
+  kubectl -n "$namespace" wait --for=condition=Ready pod -l app.kubernetes.io/component=taped --timeout=300s
 }
 
 resume_taped_if_paused() {
   if [[ "${TAPED_PAUSED}" == "true" ]]; then
-    resume_taped "${NAMESPACE}" "${CTA_TAPED_APP_NAME}"
+    resume_all_taped "${NAMESPACE}"
   fi
 }
 
@@ -103,6 +130,7 @@ wait_for_device_free() {
   local container="$3"
   local device_path="$4"
   local max_attempts="${5:-30}"
+  local kill_busy="${6:-false}"
   local attempt=1
 
   while true; do
@@ -115,6 +143,13 @@ wait_for_device_free() {
       return 1
     fi
     echo "Tape device busy, waiting before running reader test (${attempt}/${max_attempts})..."
+    kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- bash -c "\
+      if command -v fuser >/dev/null 2>&1; then fuser -v ${device_path} || true; fi; \
+      if command -v lsof >/dev/null 2>&1; then lsof ${device_path} || true; fi" || true
+    if [[ "${kill_busy}" == "true" ]]; then
+      kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- bash -c "\
+        if command -v fuser >/dev/null 2>&1; then fuser -k ${device_path} || true; fi" || true
+    fi
     sleep 2
     attempt=$((attempt + 1))
   done
@@ -173,16 +208,18 @@ install_integrationtests "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd"
 
 # Prepare Enstore tape sample
 unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}" "/dev/smc" "${DRIVE_INDEX}"
-pause_taped "${NAMESPACE}" "${CTA_TAPED_APP_NAME}"
+pause_all_taped "${NAMESPACE}"
+wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" 60 true || exit 1
 kubectl -n ${NAMESPACE} cp read_enstore_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_tape.sh -c cta-rmcd
-kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_tape.sh ${device} || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash -c "FUSER_KILL_BUSY=1 /root/read_enstore_tape.sh ${device}" || exit 1
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" || exit 1
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- cta-enstoreReaderTest ${device_name} ${device} || exit 1
 
 # Prepare EnstoreLarge tape sample
 unload_loaded_tape "${NAMESPACE}" "${CTA_RMCD_POD}" "/dev/smc" "${DRIVE_INDEX}"
 kubectl -n ${NAMESPACE} cp read_enstore_large_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_large_tape.sh -c cta-rmcd
-kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_large_tape.sh ${device} || exit 1
+wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" 60 true || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash -c "FUSER_KILL_BUSY=1 /root/read_enstore_large_tape.sh ${device}" || exit 1
 wait_for_device_free "${NAMESPACE}" "${CTA_RMCD_POD}" "cta-rmcd" "${device}" || exit 1
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- cta-enstoreLargeReaderTest ${device_name} ${device} || exit 1
 
