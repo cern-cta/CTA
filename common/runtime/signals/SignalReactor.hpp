@@ -17,7 +17,7 @@ namespace unitTests {
 struct SignalReactorTestAccess;
 }  // namespace unitTests
 
-namespace cta::process {
+namespace cta::runtime {
 
 /**
  * Responsible for responding to a certain set of signals.
@@ -67,4 +67,4 @@ private:
   friend struct unitTests::SignalReactorTestAccess;
 };
 
-}  // namespace cta::process
+}  // namespace cta::runtime

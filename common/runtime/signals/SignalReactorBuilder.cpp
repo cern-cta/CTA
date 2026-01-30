@@ -11,7 +11,7 @@
 
 #include <signal.h>
 
-namespace cta::process {
+namespace cta::runtime {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -52,4 +52,4 @@ SignalReactor SignalReactorBuilder::build() {
   return SignalReactor(m_lc, m_sigset, std::move(m_signalFunctions), m_waitTimeoutMsecs);
 }
 
-}  // namespace cta::process
+}  // namespace cta::runtime

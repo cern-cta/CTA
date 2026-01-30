@@ -10,7 +10,7 @@
 #include <rfl.hpp>
 #include <rfl/toml.hpp>
 
-namespace cta::config {
+namespace cta::runtime {
 
 template<typename T>
 T loadFromToml(const std::string& filePath, bool strict = false) {
@@ -28,4 +28,4 @@ T loadFromToml(const std::string& filePath, bool strict = false) {
   return res.value();
 }
 
-}  // namespace cta::config
+}  // namespace cta::runtime

@@ -96,10 +96,11 @@ set (COMMON_LIB_SRC_FILES
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
-  process/signals/SignalReactor.cpp
-  process/signals/SignalReactorBuilder.cpp
-  process/signals/SignalUtils.cpp
-  process/health/HealthServer.cpp
+  runtime/signals/SignalReactor.cpp
+  runtime/signals/SignalReactorBuilder.cpp
+  runtime/signals/SignalUtils.cpp
+  runtime/health/HealthServer.cpp
+  runtime/ApplicationBuilder.cpp
   process/ProcessCap.cpp
   process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp
@@ -181,6 +182,9 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   config/ConfigLoaderTest.cpp
   process/health/HealthServerTest.cpp
   process/signals/SignalReactorTest.cpp
+  runtime/ConfigLoaderTest.cpp
+  runtime/health/HealthServerTest.cpp
+  runtime/Application.cpp
   process/threading/CondVarTest.cpp
   process/threading/DaemonTest.cpp
   process/threading/RWLockTest.cpp

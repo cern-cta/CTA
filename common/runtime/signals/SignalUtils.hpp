@@ -7,8 +7,8 @@
 
 #include <string>
 
-namespace cta::process::utils {
+namespace cta::runtime::utils {
 
 std::string signalToString(int signal);
 
-}  // namespace cta::process::utils
+}  // namespace cta::runtime::utils

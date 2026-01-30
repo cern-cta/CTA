@@ -16,7 +16,7 @@ namespace cta::common {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-HealthServer::HealthServer(cta::log::LogContext& lc,
+HealthServer::HealthServer(cta::log::Logger& log,
                            const std::string& host,
                            int port,
                            const std::function<bool()>& readinessFunc,
@@ -27,7 +27,7 @@ HealthServer::HealthServer(cta::log::LogContext& lc,
       m_readinessFunc(readinessFunc),
       m_livenessFunc(livenessFunc),
       m_listenTimeoutMsec(listenTimeoutMsec),
-      m_lc(lc) {
+      m_lc(log::LogContext(log)) {
   if (isUdsHost(m_host)) {
     m_lc.log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Ignoring port value.");
     m_port = 80;  // technically the port shouldn't be used but the httplib example uses port 80

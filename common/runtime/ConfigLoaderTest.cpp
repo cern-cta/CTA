@@ -26,7 +26,7 @@ public:
 
     int fd = ::mkstemp(s.data());
     if (fd == -1) {
-      throw std::runtime_error("mkstemp failed");
+      throw std::runtime_error("mkstemp failed for " + s);
     }
 
     m_path = s;
@@ -63,7 +63,7 @@ TEST(ConfigLoader, LenientThrowsOnGarbageToml) {
 garbage
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), false)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), false)), cta::exception::UserError);
 }
 
 TEST(ConfigLoader, LenientThrowsOnIncorrectToml) {
@@ -74,7 +74,7 @@ maybe = 42
 default_value = "hi"
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), false)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), false)), cta::exception::UserError);
 }
 
 TEST(ConfigLoader, LenientAllowsAllValues) {
@@ -84,7 +84,7 @@ maybe = 42
 default_value = "hi"
 )toml");
 
-  const auto config = cta::config::loadFromToml<MyConfig>(f.path(), false);
+  const auto config = cta::runtime::loadFromToml<MyConfig>(f.path(), false);
   ASSERT_EQ(config.mandatory, 7);
   ASSERT_TRUE(config.maybe.has_value());
   ASSERT_EQ(config.maybe.value(), 42);
@@ -98,7 +98,7 @@ maybe = 42
 default_value = "hi"
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), false)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), false)), cta::exception::UserError);
 }
 
 TEST(ConfigLoader, LenientAllowsMissingOptionals) {
@@ -108,7 +108,7 @@ mandatory = 7
 default_value = "hi"
 )toml");
 
-  const auto config = cta::config::loadFromToml<MyConfig>(f.path(), false);
+  const auto config = cta::runtime::loadFromToml<MyConfig>(f.path(), false);
   ASSERT_EQ(config.mandatory, 7);
   ASSERT_FALSE(config.maybe.has_value());
   ASSERT_EQ(config.default_value, "hi");
@@ -121,7 +121,7 @@ maybe = 42
 # default_value missing
 )toml");
 
-  const auto config = cta::config::loadFromToml<MyConfig>(f.path(), false);
+  const auto config = cta::runtime::loadFromToml<MyConfig>(f.path(), false);
   ASSERT_EQ(config.mandatory, 7);
   ASSERT_TRUE(config.maybe.has_value());
   ASSERT_EQ(config.maybe.value(), 42);
@@ -136,7 +136,7 @@ default_value = "hi"
 unknown_key = "ignored in lenient"
 )toml");
 
-  const auto config = cta::config::loadFromToml<MyConfig>(f.path(), false);
+  const auto config = cta::runtime::loadFromToml<MyConfig>(f.path(), false);
   ASSERT_EQ(config.mandatory, 7);
   ASSERT_TRUE(config.maybe.has_value());
   ASSERT_EQ(config.maybe.value(), 42);
@@ -150,7 +150,7 @@ maybe = 42
 default_value = "hi"
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), false)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), false)), cta::exception::UserError);
 }
 
 // Strict Mode
@@ -160,7 +160,7 @@ TEST(ConfigLoader, StrictThrowsOnGarbageToml) {
 garbage
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
 TEST(ConfigLoader, StrictThrowsOnIncorrectToml) {
@@ -171,7 +171,7 @@ maybe = 42
 default_value = "hi"
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
 TEST(ConfigLoader, StrictAllowsAllValues) {
@@ -181,7 +181,7 @@ maybe = 42
 default_value = "hi"
 )toml");
 
-  const auto config = cta::config::loadFromToml<MyConfig>(f.path(), true);
+  const auto config = cta::runtime::loadFromToml<MyConfig>(f.path(), true);
   ASSERT_EQ(config.mandatory, 7);
   ASSERT_TRUE(config.maybe.has_value());
   ASSERT_EQ(config.maybe.value(), 42);
@@ -195,7 +195,7 @@ maybe = 42
 default_value = "hi"
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
 TEST(ConfigLoader, StrictThrowsOnMissingOptionals) {
@@ -205,7 +205,7 @@ mandatory = 7
 default_value = "hi"
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
 TEST(ConfigLoader, StrictThrowsOnMissingDefaults) {
@@ -215,7 +215,7 @@ maybe = 42
 # default_value missing
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
 TEST(ConfigLoader, StrictThrowsOnUnknownKeys) {
@@ -226,7 +226,7 @@ default_value = "hi"
 unknown_key = "ignored in lenient"
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
 TEST(ConfigLoader, StrictThrowsOnIncorrectType) {
@@ -236,7 +236,7 @@ maybe = 42
 default_value = "hi"
 )toml");
 
-  EXPECT_THROW((cta::config::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
+  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
 }  // namespace unitTests
