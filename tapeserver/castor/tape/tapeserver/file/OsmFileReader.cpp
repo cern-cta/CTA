@@ -15,6 +15,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace castor::tape::tapeFile {
 
@@ -142,31 +143,30 @@ size_t OsmFileReader::readNextDataBlock(void* data, const size_t size) {
   if (!m_cpioHeader.valid()) {
     size_t uiHeaderSize = 0;
     size_t uiResiduesSize = 0;
-    uint8_t* pucTmpData = new uint8_t[size];
+    std::vector<uint8_t> pucTmpData(size);
 
-    uiBytesRead = m_session.m_drive.readBlock(pucTmpData, size);
+    uiBytesRead = m_session.m_drive.readBlock(pucTmpData.data(), size);
     // Special case - checking whether the data format contains CRC32
     if (cta::verifyCrc32cForMemoryBlockWithCrc32c(SCSI::logicBlockProtectionMethod::CRC32CSeed,
                                                   uiBytesRead,
-                                                  static_cast<const uint8_t*>(pucTmpData))) {
+                                                  pucTmpData.data())) {
       m_bDataWithCRC32 = true;
       uiBytesRead -= SCSI::logicBlockProtectionMethod::CRC32CLength;
     }
 
-    uiHeaderSize = m_cpioHeader.decode(pucTmpData, CPIO::MAXHEADERSIZE);
+    uiHeaderSize = m_cpioHeader.decode(pucTmpData.data(), CPIO::MAXHEADERSIZE);
     uiResiduesSize = uiBytesRead - uiHeaderSize;
 
     // Copy the rest of data to the buffer
     if (uiResiduesSize >= m_cpioHeader.m_ui64FileSize) {
       uiBytesRead = m_cpioHeader.m_ui64FileSize;
       m_ui64CPIODataSize = uiBytesRead;
-      memcpy(data, pucTmpData + uiHeaderSize, uiBytesRead);
+      memcpy(data, pucTmpData.data() + uiHeaderSize, uiBytesRead);
     } else {
-      memcpy(data, pucTmpData + uiHeaderSize, uiResiduesSize);
+      memcpy(data, pucTmpData.data() + uiHeaderSize, uiResiduesSize);
       uiBytesRead = uiResiduesSize;
       m_ui64CPIODataSize = uiBytesRead >= m_cpioHeader.m_ui64FileSize ? m_cpioHeader.m_ui64FileSize : uiBytesRead;
     }
-    delete[] pucTmpData;
   } else {
     uiBytesRead = m_session.m_drive.readBlock(data, size);
     // Special case - the data format contains CRC32

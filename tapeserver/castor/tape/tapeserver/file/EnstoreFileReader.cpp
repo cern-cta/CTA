@@ -15,6 +15,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace castor::tape::tapeFile {
 
@@ -86,10 +87,10 @@ size_t EnstoreFileReader::readNextDataBlock(void* data, const size_t size) {
   if (!m_cpioHeader.valid()) {
     size_t uiHeaderSize = 0;
     size_t uiResiduesSize = 0;
-    uint8_t* pucTmpData = new uint8_t[size];
+    std::vector<uint8_t> pucTmpData(size);
 
-    bytes_read = m_session.m_drive.readBlock(pucTmpData, size);
-    uiHeaderSize = m_cpioHeader.decode(pucTmpData, size);
+    bytes_read = m_session.m_drive.readBlock(pucTmpData.data(), size);
+    uiHeaderSize = m_cpioHeader.decode(pucTmpData.data(), size);
     uiResiduesSize = bytes_read - uiHeaderSize;
 
     // Copy the rest of data to the buffer
@@ -97,13 +98,12 @@ size_t EnstoreFileReader::readNextDataBlock(void* data, const size_t size) {
     if (uiResiduesSize >= m_cpioHeader.m_ui64FileSize) {
       bytes_read = m_cpioHeader.m_ui64FileSize;
       m_ui64CPIODataSize = bytes_read;
-      memcpy(data, pucTmpData + uiHeaderSize, bytes_read);
+      memcpy(data, pucTmpData.data() + uiHeaderSize, bytes_read);
     } else {
-      memcpy(data, pucTmpData + uiHeaderSize, uiResiduesSize);
+      memcpy(data, pucTmpData.data() + uiHeaderSize, uiResiduesSize);
       bytes_read = uiResiduesSize;
       m_ui64CPIODataSize = bytes_read >= m_cpioHeader.m_ui64FileSize ? m_cpioHeader.m_ui64FileSize : bytes_read;
     }
-    delete[] pucTmpData;
 
   } else {
     bytes_read = m_session.m_drive.readBlock(data, size);

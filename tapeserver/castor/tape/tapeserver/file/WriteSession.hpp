@@ -8,6 +8,7 @@
 #include "castor/tape/tapeserver/daemon/VolumeInfo.hpp"
 #include "castor/tape/tapeserver/file/Exceptions.hpp"
 
+#include <cstddef>
 #include <string>
 
 namespace castor::tape {
@@ -171,7 +172,7 @@ private:
   */
   bool m_detectedLbp = false;
 
-  const uint16_t MAX_UNIX_HOSTNAME_LENGTH = 256;  // 255 + 1 terminating character
+  static constexpr std::size_t MAX_UNIX_HOSTNAME_LENGTH = 256;  // 255 + 1 terminating character
 };
 
 }  // namespace tapeFile

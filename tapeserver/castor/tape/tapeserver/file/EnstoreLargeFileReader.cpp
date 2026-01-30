@@ -12,10 +12,12 @@
 #include "common/exception/NotImplementedException.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
+#include <cstring>
 #include <limits>
 #include <memory>
 #include <sstream>
 #include <string>
+#include <vector>
 
 namespace castor::tape::tapeFile {
 
@@ -118,8 +120,8 @@ void EnstoreLargeFileReader::checkTrailers() {
   // let's read and check the trailers
 
   size_t blockSize = 256 * 1024;
-  char* data = new char[blockSize + 1];
-  size_t bytes_read = m_session.m_drive.readBlock(data, blockSize);
+  std::vector<char> data(blockSize);
+  size_t bytes_read = m_session.m_drive.readBlock(data.data(), data.size());
 
   EOF1 eof1;
   EOF2 eof2;
@@ -128,10 +130,9 @@ void EnstoreLargeFileReader::checkTrailers() {
   if (bytes_read < sizeof(eof1) + sizeof(eof2) + sizeof(utl1)) {
     throw cta::exception::Exception("Too few bytes read for headers:" + std::to_string(bytes_read));
   }
-  memcpy(&eof1, data, sizeof(eof1));
-  memcpy(&eof2, data + sizeof(eof1), sizeof(eof2));
-  memcpy(&utl1, data + sizeof(eof1) + sizeof(eof2), sizeof(utl1));
-  delete[] data;
+  std::memcpy(&eof1, data.data(), sizeof(eof1));
+  std::memcpy(&eof2, data.data() + sizeof(eof1), sizeof(eof2));
+  std::memcpy(&utl1, data.data() + sizeof(eof1) + sizeof(eof2), sizeof(utl1));
 
   m_session.m_drive.readFileMark("Reading file mark at the end of file header");
 
@@ -153,8 +154,8 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   m_session.setCurrentFseq(fileToRecall.selectedTapeFile().fSeq);
 
   size_t blockSize = 256 * 1024;
-  char* data = new char[blockSize + 1];
-  size_t bytes_read = m_session.m_drive.readBlock(data, blockSize);
+  std::vector<char> data(blockSize);
+  size_t bytes_read = m_session.m_drive.readBlock(data.data(), data.size());
 
   HDR1 hdr1;
   HDR2 hdr2;
@@ -164,11 +165,10 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   if (bytes_read < sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1)) {
     throw cta::exception::Exception("Too few bytes read for headers:" + std::to_string(bytes_read));
   }
-  memcpy(&hdr1, data, sizeof(hdr1));
-  memcpy(&hdr2, data + sizeof(hdr1), sizeof(hdr1));
-  memcpy(&uhl1, data + sizeof(hdr1) + sizeof(hdr2), sizeof(uhl1));
-  memcpy(&uhl2, data + sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1), sizeof(uhl2));
-  delete[] data;
+  std::memcpy(&hdr1, data.data(), sizeof(hdr1));
+  std::memcpy(&hdr2, data.data() + sizeof(hdr1), sizeof(hdr1));
+  std::memcpy(&uhl1, data.data() + sizeof(hdr1) + sizeof(hdr2), sizeof(uhl1));
+  std::memcpy(&uhl2, data.data() + sizeof(hdr1) + sizeof(hdr2) + sizeof(uhl1), sizeof(uhl2));
 
   m_session.m_drive.readFileMark("Reading file mark at the end of file header");
   // after this we should be where we want, i.e. at the beginning of the file

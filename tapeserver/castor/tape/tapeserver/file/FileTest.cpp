@@ -25,6 +25,7 @@
 
 #include <gtest/gtest.h>
 #include <memory>
+#include <vector>
 
 namespace unitTests {
 
@@ -168,12 +169,13 @@ TEST_P(castorTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
     m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
     const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
-    char* data = new char[blockSize + 1];
+    std::vector<char> data(blockSize + 1);
     // block size needs to be the same provided by the headers
-    ASSERT_THROW(reader->readNextDataBlock(data, 1), castor::tape::tapeFile::WrongBlockSize);
+    ASSERT_THROW(reader->readNextDataBlock(data.data(), 1), castor::tape::tapeFile::WrongBlockSize);
     // it is normal to reach end of file after a loop of reads
-    ASSERT_THROW(while (true) { reader->readNextDataBlock(data, blockSize); }, castor::tape::tapeFile::EndOfFile);
-    delete[] data;
+    ASSERT_THROW(
+      while (true) { reader->readNextDataBlock(data.data(), blockSize); },
+      castor::tape::tapeFile::EndOfFile);
   }
 }
 
@@ -217,12 +219,11 @@ TEST_P(castorTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {
     const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
     ASSERT_EQ(blockSize, m_block_size);
-    char* data = new char[blockSize + 1];
-    size_t bytes_read = reader->readNextDataBlock(data, blockSize);
+    std::vector<char> data(blockSize + 1);
+    size_t bytes_read = reader->readNextDataBlock(data.data(), blockSize);
     data[bytes_read] = '\0';
     ASSERT_EQ(bytes_read, static_cast<size_t>(testString.size()));
-    ASSERT_EQ(testString.compare(data), 0);
-    delete[] data;
+    ASSERT_EQ(testString.compare(data.data()), 0);
   }
 }
 
@@ -243,8 +244,8 @@ INSTANTIATE_TEST_CASE_P(FormatLabelsParam,
 
 TEST(castorTapeDiskFile, canWriteAndReadDisk) {
   const uint32_t block_size = 1024;
-  char* data1 = new char[block_size];
-  char* data2 = new char[block_size];
+  std::vector<char> data1(block_size);
+  std::vector<char> data2(block_size);
   cta::disk::DiskFileFactory fileFactory(0);
   TempFile sourceFile;
   sourceFile.randomFill(1000);
@@ -256,8 +257,8 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
     std::unique_ptr<cta::disk::WriteFile> wf(fileFactory.createWriteFile(lh + destinationFile.path()));
     size_t res = 0;
     do {
-      res = rf->read(data1, block_size);
-      wf->write(data1, res);
+      res = rf->read(data1.data(), block_size);
+      wf->write(data1.data(), res);
     } while (res);
     wf->close();
   }
@@ -266,13 +267,11 @@ TEST(castorTapeDiskFile, canWriteAndReadDisk) {
   size_t res1 = 0;
   size_t res2 = 0;
   do {
-    res1 = src->read(data1, block_size);
-    res2 = dst->read(data2, block_size);
+    res1 = src->read(data1.data(), block_size);
+    res2 = dst->read(data2.data(), block_size);
     ASSERT_EQ(res1, res2);
-    ASSERT_EQ(strncmp(data1, data2, res1), 0);
+    ASSERT_EQ(strncmp(data1.data(), data2.data(), res1), 0);
   } while (res1 || res2);
-  delete[] data1;
-  delete[] data2;
 }
 
 TEST(ctaDirectoryTests, directoryExist) {

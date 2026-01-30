@@ -26,6 +26,7 @@
 #include <cstdio>
 #include <gtest/gtest.h>
 #include <memory>
+#include <vector>
 
 namespace unitTests {
 
@@ -182,12 +183,13 @@ TEST_F(OSMTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
     m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
     const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
-    char* data = new char[blockSize + 1];
+    std::vector<char> data(blockSize + 1);
     // block size needs to be the same provided by the headers
-    ASSERT_THROW(reader->readNextDataBlock(data, 1), castor::tape::tapeFile::WrongBlockSize);
+    ASSERT_THROW(reader->readNextDataBlock(data.data(), 1), castor::tape::tapeFile::WrongBlockSize);
     // it is normal to reach end of file after a loop of reads
-    ASSERT_THROW(while (true) { reader->readNextDataBlock(data, blockSize); }, castor::tape::tapeFile::EndOfFile);
-    delete[] data;
+    ASSERT_THROW(
+      while (true) { reader->readNextDataBlock(data.data(), blockSize); },
+      castor::tape::tapeFile::EndOfFile);
   }
 }
 
@@ -216,12 +218,11 @@ TEST_F(OSMTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {
     const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
     ASSERT_EQ(blockSize, m_block_size);
-    char* data = new char[blockSize + 1];
-    size_t bytes_read = reader->readNextDataBlock(data, blockSize);
+    std::vector<char> data(blockSize + 1);
+    size_t bytes_read = reader->readNextDataBlock(data.data(), blockSize);
     data[bytes_read] = '\0';
     ASSERT_EQ(bytes_read, static_cast<size_t>(testString.size()));
-    ASSERT_EQ(testString.compare(data), 0);
-    delete[] data;
+    ASSERT_EQ(testString.compare(data.data()), 0);
   }
 }
 

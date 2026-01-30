@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ObjectOps.hpp"
+
 #include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {

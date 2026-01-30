@@ -10,6 +10,7 @@
 #include "castor/tape/tapeserver/file/Structures.hpp"
 
 #include <algorithm>
+#include <array>
 #include <string>
 
 namespace castor::tape::tapeFile {
@@ -133,13 +134,14 @@ std::string WriteSession::getLBPMode() {
 }
 
 void WriteSession::setHostName() {
-  char* hostname_cstr = new char[MAX_UNIX_HOSTNAME_LENGTH];
-  cta::exception::Errnum::throwOnMinusOne(gethostname(hostname_cstr, MAX_UNIX_HOSTNAME_LENGTH),
+  std::array<char, MAX_UNIX_HOSTNAME_LENGTH> hostname {};
+  hostname.back() = '\0';
+  cta::exception::Errnum::throwOnMinusOne(gethostname(hostname.data(), hostname.size()),
                                           "Failed gethostname() in WriteFile::setHostName");
-  m_hostName = hostname_cstr;
+  hostname.back() = '\0';
+  m_hostName = hostname.data();
   std::transform(m_hostName.begin(), m_hostName.end(), m_hostName.begin(), ::toupper);
   m_hostName = m_hostName.substr(0, m_hostName.find("."));
-  delete[] hostname_cstr;
 }
 
 void WriteSession::setSiteName() {

@@ -5,12 +5,13 @@
 
 #pragma once
 
-#include "cta_frontend.pb.h"
 #include "frontend/common/AdminCmdOptions.hpp"
 
 #include <map>
 #include <optional>
 #include <string>
+
+#include "cta_frontend.pb.h"
 
 namespace cta::frontend::grpc::request {
 

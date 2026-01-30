@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "objectstore/cta.pb.h"
-
 #include <list>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 

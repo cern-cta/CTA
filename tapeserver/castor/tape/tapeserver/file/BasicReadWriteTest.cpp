@@ -27,6 +27,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <vector>
 
 char gen_random() {
   static const char alphanum[] = "123456789"
@@ -203,10 +204,10 @@ int main(int argc, char* argv[]) {
 
             auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, fileToRecall);
             size_t bs = reader->getBlockSize();
-            char* data = new char[bs + 1];
+            std::vector<char> data(bs + 1);
             for (int j = 0; j < 100; ++j) {
-              reader->readNextDataBlock(data, bs);
-              std::cout << data << std::endl;
+              reader->readNextDataBlock(data.data(), bs);
+              std::cout << data.data() << std::endl;
             }
           } else if (test == RAO_TEST) {
             if (argc != 2) {
