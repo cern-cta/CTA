@@ -60,6 +60,11 @@ public:
     return m_SchedDB->queueArchive(instanceName, request, criteria, logContext);
   }
 
+  std::vector<std::string> queueArchive(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                        log::LogContext& lc) override {
+    return m_SchedDB->queueArchive(batch, lc);
+  };
+
   void deleteRetrieveRequest(const common::dataStructures::SecurityIdentity& cliIdentity,
                              const std::string& remoteFile) override {
     m_SchedDB->deleteRetrieveRequest(cliIdentity, remoteFile);
