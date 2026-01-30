@@ -219,7 +219,7 @@ if [[ "x${COMMENT}" = "x" ]]; then
 fi
 
 if [[ $PREQUEUE == 1 ]]; then
-  DRIVE_UP_SUBDIR_NUMBER=20
+  DRIVE_UP_SUBDIR_NUMBER=$((NB_DIRS / 2))
 # DRIVE_UP="ULT3580-TD811"
 fi
 
@@ -453,7 +453,7 @@ ARCHIVING=${TO_BE_ARCHIVED}
 ARCHIVED=0
 echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
-WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((6600+${NB_FILES}/10))
+WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((${NB_FILES}/10))
 START_TIME=$(date +%s)
 END_TIME=$(date +%s)
 while test 0 != ${ARCHIVING}; do
