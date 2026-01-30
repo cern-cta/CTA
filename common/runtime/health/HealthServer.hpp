@@ -22,7 +22,7 @@ namespace cta::common {
  */
 class HealthServer {
 public:
-  HealthServer(cta::log::LogContext& lc,
+  HealthServer(cta::log::Logger& lc,
                const std::string& host,
                int port,
                const std::function<bool()>& readinessFunc,
@@ -63,7 +63,7 @@ private:
   // Amount of time to wait for the server to start listening before we consider it a failure
   const int m_listenTimeoutMsec;
 
-  cta::log::LogContext& m_lc;
+  cta::log::LogContext m_lc;
   // The thread the HealthServer will run on when start() is called
   std::jthread m_thread;
 };

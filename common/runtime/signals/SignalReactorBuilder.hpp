@@ -11,7 +11,7 @@
 #include <functional>
 #include <unordered_map>
 
-namespace cta::process {
+namespace cta::runtime {
 
 /**
  * This builder allows for the construction of an immutable SignalReactor object
@@ -32,4 +32,4 @@ private:
   uint32_t m_waitTimeoutMsecs = 1000;
 };
 
-}  // namespace cta::process
+}  // namespace cta::runtime
