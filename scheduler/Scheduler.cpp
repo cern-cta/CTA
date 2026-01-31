@@ -207,7 +207,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
 #ifdef CTA_PGSCHED
 
   std::future<std::string> future;
-  //bool isLeader = false;
+  bool isLeader = false;
 
   {
     std::unique_lock<std::mutex> lock(m_mutexOpportunisticBatching);
@@ -223,39 +223,40 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     // Decide the leadership
     if (!m_enqueueBatchInProgress) {
       m_enqueueBatchInProgress = true;
-      //isLeader = true;
+      isLeader = true;
     } else {
       // Followers wait for batch completion
       m_cvOpportunisticBatching.wait(lock, [&] { return !m_enqueueBatchInProgress; });
-      return future.get();
+      m_enqueueBatchInProgress = true;
     }
   }  // end of scope with the lock
 
   // ---- LEADER PATH ----
+  if (isLeader) {
+    // Opportunistic batching window
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
 
-  // Opportunistic batching window
-  std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
 
-  std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
+    {
+      // Steal the batch
+      std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
+      batch.swap(m_opportunisticInsertBatch);
+    }
 
-  {
-    // Steal the batch
-    std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
-    batch.swap(m_opportunisticInsertBatch);
+    processEnqueuedBatch(batch, lc);
+
+    {
+      std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
+      m_enqueueBatchInProgress = false;
+    }
+
+    // Wake followers
+    m_cvOpportunisticBatching.notify_all();
+
+    // Return leader's result
+    return future.get();
   }
-
-  processEnqueuedBatch(batch, lc);
-
-  {
-    std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
-    m_enqueueBatchInProgress = false;
-  }
-
-  // Wake followers
-  m_cvOpportunisticBatching.notify_all();
-
-  // Return leader's result
-  return future.get();
 #else
   const auto queueCriteria =
     m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(instanceName, request.storageClass, request.requester);
