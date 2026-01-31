@@ -6,7 +6,6 @@
 #pragma once
 
 #include "IRoutine.hpp"
-#include "MaintdCliOptions.hpp"
 #include "MaintdConfig.hpp"
 #include "common/log/LogContext.hpp"
 
@@ -33,7 +32,7 @@ public:
   /**
    * Periodically executes all registered routines.
    */
-  int run(const MaintdConfig& config, const MaintdCliOptions& cliOptions, cta::log::Logger& log);
+  int run(const MaintdConfig& config, cta::log::Logger& log);
 
   bool isLive() const;
 

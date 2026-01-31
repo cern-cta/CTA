@@ -12,6 +12,7 @@
 #include <string>
 #include <utility>
 
+// TODO: test what happens with enums
 namespace unitTests {
 
 //------------------------------------------------------------------------------

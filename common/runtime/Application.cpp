@@ -5,4 +5,5 @@
 
 #include "Application.hpp"
 
+// TODO: anything that should go in here?
 namespace cta::runtime {}  // namespace cta::runtime

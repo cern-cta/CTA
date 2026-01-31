@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "CommonCliOptions.hpp"
 #include "CommonConfig.hpp"
 #include "ConfigLoader.hpp"
 #include "common/exception/Errnum.hpp"
@@ -81,7 +82,7 @@ template<class TApp, class TConfig, class TArgs>
 class Application {
 public:
   Application(const std::string& appName, TArgs cliOptions)
-    requires HasLoggingConfig<TConfig> && HasStopFunction<TApp>
+    requires HasLoggingConfig<TConfig> && HasStopFunction<TApp> && HasRequiredCliOptions<TArgs>
       : m_appName(appName),
         m_cliOptions(cliOptions),
         m_appConfig(runtime::loadFromToml<TConfig>(m_cliOptions.configPath, m_cliOptions.configStrict)) {
