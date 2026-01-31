@@ -399,6 +399,17 @@ public:
   void deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
 
   /**
+   * @brief Reactivates rows for reporting
+   *
+   * Updated IS_REPORTING state back to false to make rows eligible
+   * to be picked up by reporting again in case of dead reporting process.
+   * @param deletionAge  Age threshold in seconds.
+   * @param batchSize    Maximum number of rows to delete per batch.
+   * @param lc           Logging context.
+   */
+  void resubmitInactiveReporting(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc);
+
+  /**
    * @brief Removes stale mount last-fetch records.
    *
    * Deletes entries from the MOUNT_QUEUE_LAST_FETCH table that are older
