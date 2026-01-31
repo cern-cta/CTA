@@ -66,7 +66,7 @@ echo '['
 
 index=0
 first=1
-
+firstDriveNameAsLibraryForAll=""
 for drive_device in $drive_devices; do
   (( index >= max_drives )) && break
 
@@ -77,6 +77,9 @@ for drive_device in $drive_devices; do
   serial=$(sg_inq "$sg_device" 2>/dev/null | awk '/Unit serial number/ {print $4; exit}')
 
   drive_name="${vendor}-${serial}"
+  if [[ -z "$firstDriveNameAsLibraryForAll" ]]; then
+    firstDriveNameAsLibraryForAll=$drive_name
+  fi
 
   (( first )) || echo ","
   first=0
@@ -84,7 +87,8 @@ for drive_device in $drive_devices; do
   echo '  {'
   echo "    \"name\": \"${drive_name}\","
   echo "    \"device\": \"${nst_device}\","
-  echo "    \"logicalLibraryName\": \"${drive_name}\","
+#  echo "    \"logicalLibraryName\": \"${drive_name}\","
+  echo "    \"logicalLibraryName\": \"${firstDriveNameAsLibraryForAll}MYLIB\","
   echo "    \"controlPath\": \"smc${index}\""
   echo -n '  }'
 
