@@ -40,6 +40,7 @@ static constexpr const char* kCtaIoDirection = "cta.io.direction";  // similar t
 static constexpr const char* kCtaIoMedium = "cta.io.medium";
 static constexpr const char* kCtaTapedDriveState = "cta.taped.drive.state";
 static constexpr const char* kCtaTapedMountType = "cta.taped.mount.type";
+static constexpr const char* kCtaTapedMountId = "cta.taped.mount.id";
 static constexpr const char* kTapeDriveName = "tape.drive.name";
 static constexpr const char* kTapeLibraryLogicalName = "tape.library.logical.name";
 static constexpr const char* kCtaRoutineName = "cta.routine.name";
@@ -100,14 +101,14 @@ static constexpr const char* kScopedExclusive = "exclusive";
 namespace SchedulerOperationNameValues {
 static constexpr const char* kSelectCatalogueDB =
   "select_catalogue_db";  // happens during retrieve_queue_insert so not used for the moment
-static constexpr const char* kEnqueue = "queue_insert";
-static constexpr const char* kGetNextMount = "select_work_summary";
-static constexpr const char* kInsertForProcessing = "insert_for_processing";
-static constexpr const char* kUpdateFinishedTransfer = "update_finished_tranfer";
-static constexpr const char* kUpdateSchedulerDB = "update_tranfer_in_scheduler_db";
-static constexpr const char* kUpdateInsertCatalogueDB = "update_tranfer_in_catalogue_db";
-static constexpr const char* kSelectToReportToUser = "select_to_report_to_user";
-static constexpr const char* kReportToUserAndDeleteSchedulerDB = "report_and_delete";
+static constexpr const char* kEnqueue = "queue insert";
+static constexpr const char* kGetNextMount = "select work summary";
+static constexpr const char* kInsertForProcessing = "insert for processing";
+static constexpr const char* kUpdateFinishedTransfer = "update finished tranfer";
+static constexpr const char* kUpdateSchedulerDB = "update tranfer in scheduler db";
+static constexpr const char* kUpdateInsertCatalogueDB = "update tranfer in catalogue db";
+static constexpr const char* kSelectToReportToUser = "select to report to user";
+static constexpr const char* kReportToUserAndDeleteSchedulerDB = "report and delete";
 static constexpr const char* kDeleteSchedulerDB = "delete";
 static constexpr const char* kCancel = "cancel";
 }  // namespace SchedulerOperationNameValues

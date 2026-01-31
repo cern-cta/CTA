@@ -104,20 +104,20 @@ maintd:
     # So diskReportArchive:softTimeout will map to cta.routines.disk_report_archive.soft_timeout
     # To disable a routine, set replicas to 0
     diskReportArchive:
-      replicas: 4
+      replicas: 2
       sleepInterval: 5000
       batchSize: 4000
       softTimeout: 30
     diskReportRetrieve:
-      replicas: 4
+      replicas: 2
       sleepInterval: 5000
       batchSize: 4000
       softTimeout: 30
     repackExpand:
       replicas: 1
-      sleepInterval: 5000
+      sleepInterval: 10000
       maxToToExpand: 2
     repackReport:
       replicas: 1
-      sleepInterval: 5000
+      sleepInterval: 10000
       softTimeout: 30

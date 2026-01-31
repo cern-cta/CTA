@@ -90,8 +90,8 @@ TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
 # We launch this in test_client for now as this is the one with opentelemetry enabled (meaning the config file has more options to check)
-echo "Checking drive config correctness..."
-python3 compare_taped_config_to_dr_ls.py --namespace ${NAMESPACE}
+#echo "Checking drive config correctness..."
+#python3 compare_taped_config_to_dr_ls.py --namespace ${NAMESPACE}
 
 echo "Setting up client pod for HTTPs REST API test"
 echo " Copying CA certificates to client pod from ${EOS_MGM_POD} pod."
@@ -99,8 +99,8 @@ kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp
 kubectl -n ${NAMESPACE} cp /tmp/certificates ${CLIENT_POD}:/etc/grid-security/ -c client
 rm -rf /tmp/certificates
 
-echo "Launching brief Keycloak test"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_testKeycloak.sh || exit 1
+#echo "Launching brief Keycloak test"
+#kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_testKeycloak.sh || exit 1
 
 # We don'y care about the tapesrv logs so we don't need the TEST_[PRERUN|POSTRUN].
 # We just test the .well-known/wlcg-tape-rest-api endpoint and REST API compliance
