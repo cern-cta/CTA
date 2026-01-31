@@ -7,9 +7,11 @@
 
 #include "SignalUtils.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
 
 #include <chrono>
+#include <poll.h>
 #include <signal.h>
 #include <sys/prctl.h>
 #include <thread>
@@ -19,11 +21,11 @@ namespace cta::runtime {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SignalReactor::SignalReactor(cta::log::LogContext& lc,
+SignalReactor::SignalReactor(cta::log::Logger& lc,
                              const sigset_t& sigset,
                              const std::unordered_map<int, std::function<void()>>& signalFunctions,
                              uint32_t waitTimeoutMsecs)
-    : m_lc(lc),
+    : m_log(log),
       m_sigset(sigset),
       m_signalFunctions(signalFunctions),
       m_waitTimeoutMsecs(waitTimeoutMsecs) {}
@@ -55,9 +57,11 @@ void SignalReactor::stop() noexcept {
     try {
       m_thread.join();
     } catch (std::system_error& e) {
-      log::ScopedParamContainer params(m_lc);
-      params.add("exceptionMessage", e.what());
-      m_lc.log(log::ERR, "In SignalReactor::stop(): failed to join thread");
+      log(log::ERR,
+          "In SignalReactor::stop(): failed to join thread",
+          {
+            {"exceptionMessage", e.what()}
+      });
     }
   }
 }

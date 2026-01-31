@@ -19,7 +19,7 @@
 namespace unitTests {
 
 struct SignalReactorTestAccess {
-  static std::jthread::native_handle_type nativeHandle(cta::process::SignalReactor& r) {
+  static std::jthread::native_handle_type nativeHandle(cta::runtime::SignalReactor& r) {
     return r.m_thread.native_handle();
   }
 };
@@ -30,7 +30,7 @@ TEST(SignalReactor, HandlesSingleSignalCorrectly) {
 
   std::atomic<int> calledHup {0}, calledTerm {0}, calledUsr1 {0};
 
-  auto signalReactor = cta::process::SignalReactorBuilder(lc)
+  auto signalReactor = cta::runtime::SignalReactorBuilder(lc)
                          .addSignalFunction(SIGHUP, [&]() { calledHup++; })
                          .addSignalFunction(SIGTERM, [&]() { calledTerm++; })
                          .addSignalFunction(SIGUSR1, [&]() { calledUsr1++; })
@@ -56,7 +56,7 @@ TEST(SignalReactor, IgnoresSignalWithoutFunctionEvenIfInSigset) {
 
   std::atomic<int> called {0};
 
-  auto signalReactor = cta::process::SignalReactorBuilder(lc)
+  auto signalReactor = cta::runtime::SignalReactorBuilder(lc)
                          .addSignalFunction(SIGUSR1, [&]() { called++; })
                          .addSignalFunction(SIGHUP, []() {})
                          .addSignalFunction(SIGTERM, []() {})
@@ -81,7 +81,7 @@ TEST(SignalReactor, HandlesMultipleSignals) {
 
   std::atomic<int> called {0};
 
-  auto signalReactor = cta::process::SignalReactorBuilder(lc)
+  auto signalReactor = cta::runtime::SignalReactorBuilder(lc)
                          .addSignalFunction(SIGUSR1, [&]() { called++; })
                          .addSignalFunction(SIGHUP, []() {})
                          .addSignalFunction(SIGTERM, []() {})
@@ -117,7 +117,7 @@ TEST(SignalReactor, HandlesUnregisteredSignals) {
   sigemptyset(&sigset);
   sigaddset(&sigset, SIGUSR1);
   sigaddset(&sigset, SIGUSR2);
-  cta::process::SignalReactor signalReactor(lc,
+  cta::runtime::SignalReactor signalReactor(lc,
                                             sigset,
                                             {
                                               {SIGUSR1, [&]() { called++; }}
