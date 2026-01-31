@@ -87,6 +87,8 @@ spec:
           value: "xterm"
         - name: DRIVE_NAME
           value: {{ .name }}
+        - name: LIBRARY_NAME
+          value: {{ .logicalLibraryName }}
         - name: DRIVE_DEVICE
           value: {{ .device }}
         - name: SCHEDULER_BACKEND
