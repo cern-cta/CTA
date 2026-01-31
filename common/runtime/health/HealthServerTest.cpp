@@ -77,11 +77,10 @@ void assertUDSReady(const std::string& socketPath) {
 
 TEST(HealthServer, ServerNotRunningWhenNotStarted) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string host = "127.0.0.1";
   const int64_t port = getFreePort();
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
+  cta::runtime::HealthServer hs(dl, host, port, []() { return true; }, []() { return true; });
   ASSERT_FALSE(hs.isRunning());
 
   auto res = httpGet(host, port, "/health/live");
@@ -90,11 +89,10 @@ TEST(HealthServer, ServerNotRunningWhenNotStarted) {
 
 TEST(HealthServer, ReadyEndpoint) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string host = "127.0.0.1";
   const int64_t port = getFreePort();
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
+  cta::runtime::HealthServer hs(dl, host, port, []() { return true; }, []() { return true; });
   hs.start();
 
   auto res = httpGet(host, port, "/health/ready");
@@ -105,11 +103,10 @@ TEST(HealthServer, ReadyEndpoint) {
 
 TEST(HealthServer, ReadyEndpointNotReady) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string host = "127.0.0.1";
   const int64_t port = getFreePort();
-  cta::common::HealthServer hs(lc, host, port, []() { return false; }, []() { return true; });
+  cta::runtime::HealthServer hs(dl, host, port, []() { return false; }, []() { return true; });
   hs.start();
 
   // Here we don't use isReady because we explicitly want to check the full response
@@ -121,11 +118,10 @@ TEST(HealthServer, ReadyEndpointNotReady) {
 
 TEST(HealthServer, LiveEndpointAvailable) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string host = "127.0.0.1";
   const int64_t port = getFreePort();
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
+  cta::runtime::HealthServer hs(dl, host, port, []() { return true; }, []() { return true; });
   hs.start();
 
   auto res = httpGet(host, port, "/health/live");
@@ -136,11 +132,10 @@ TEST(HealthServer, LiveEndpointAvailable) {
 
 TEST(HealthServer, LiveEndpointNotLive) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string host = "127.0.0.1";
   const int64_t port = getFreePort();
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return false; });
+  cta::runtime::HealthServer hs(dl, host, port, []() { return true; }, []() { return false; });
   hs.start();
 
   auto res = httpGet(host, port, "/health/live");
@@ -151,11 +146,10 @@ TEST(HealthServer, LiveEndpointNotLive) {
 
 TEST(HealthServer, InvalidHost) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string host = "garbage";
   const int64_t port = getFreePort();
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; }, 200);
+  cta::runtime::HealthServer hs(dl, host, port, []() { return true; }, []() { return true; }, 200);
   hs.start();
   // At this point the server actually should have failed to start, but it should not crash anything
   // It should simply time out on trying the readiness/liveness endpoints
@@ -169,11 +163,10 @@ TEST(HealthServer, InvalidHost) {
 
 TEST(HealthServer, InvalidPort) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string host = "127.0.0.1";
   const int64_t port = -1;
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; }, 200);
+  cta::runtime::HealthServer hs(dl, host, port, []() { return true; }, []() { return true; }, 200);
   hs.start();
   // At this point the server actually should have failed to start, but it should not crash anything
   // It should simply time out on trying the readiness/liveness endpoints
@@ -187,25 +180,23 @@ TEST(HealthServer, InvalidPort) {
 
 TEST(HealthServer, NoTwoServersOnSamePort) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string host = "127.0.0.1";
   const int64_t port = getFreePort();
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; }, 200);
+  cta::runtime::HealthServer hs(dl, host, port, []() { return true; }, []() { return true; }, 200);
   hs.start();
 
-  cta::common::HealthServer hs2(lc, host, port, []() { return true; }, []() { return true; }, 200);
+  cta::runtime::HealthServer hs2(dl, host, port, []() { return true; }, []() { return true; }, 200);
   hs2.start();
   ASSERT_FALSE(hs2.isRunning());
 }
 
 TEST(HealthServer, StopsCorrectly) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string host = "127.0.0.1";
   const int64_t port = getFreePort();
-  cta::common::HealthServer hs(lc, host, port, []() { return true; }, []() { return true; });
+  cta::runtime::HealthServer hs(dl, host, port, []() { return true; }, []() { return true; });
   hs.start();
   hs.stop();
   ASSERT_FALSE(hs.isRunning());
@@ -213,11 +204,10 @@ TEST(HealthServer, StopsCorrectly) {
 
 TEST(HealthServer, CanStartUnixDomainSocket) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string socketPath = "/tmp/health_test.sock";
   ::unlink(socketPath.c_str());
-  cta::common::HealthServer hs(lc, socketPath, 80, []() { return true; }, []() { return true; });
+  cta::runtime::HealthServer hs(dl, socketPath, 80, []() { return true; }, []() { return true; });
   hs.start();
 
   assertUDSReady(socketPath);
@@ -225,11 +215,10 @@ TEST(HealthServer, CanStartUnixDomainSocket) {
 
 TEST(HealthServer, CanStartUnixDomainSocketWithNon80Port) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string socketPath = "/tmp/health_test.sock";
   ::unlink(socketPath.c_str());
-  cta::common::HealthServer hs(lc, socketPath, 8080, []() { return true; }, []() { return true; });
+  cta::runtime::HealthServer hs(dl, socketPath, 8080, []() { return true; }, []() { return true; });
   hs.start();
 
   assertUDSReady(socketPath);
@@ -237,16 +226,15 @@ TEST(HealthServer, CanStartUnixDomainSocketWithNon80Port) {
 
 TEST(HealthServer, CanStartUnixDomainSocketOnSamePort) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   const std::string socketPath1 = "/tmp/health_test1.sock";
   ::unlink(socketPath1.c_str());
-  cta::common::HealthServer hs1(lc, socketPath1, 80, []() { return true; }, []() { return true; });
+  cta::runtime::HealthServer hs1(dl, socketPath1, 80, []() { return true; }, []() { return true; });
   hs1.start();
 
   const std::string socketPath2 = "/tmp/health_test2.sock";
   ::unlink(socketPath2.c_str());
-  cta::common::HealthServer hs2(lc, socketPath2, 80, []() { return true; }, []() { return true; });
+  cta::runtime::HealthServer hs2(dl, socketPath2, 80, []() { return true; }, []() { return true; });
   hs2.start();
 
   assertUDSReady(socketPath1);

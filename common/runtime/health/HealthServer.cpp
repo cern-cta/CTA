@@ -11,7 +11,7 @@
 
 #include <httplib.h>
 
-namespace cta::common {
+namespace cta::runtime {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -156,4 +156,4 @@ void HealthServer::run(httplib::Server& server, std::string host, int port, cta:
   lc.log(log::INFO, "In HealthServer::run(): HealthServer stopped listening");
 }
 
-}  // namespace cta::common
+}  // namespace cta::runtime
