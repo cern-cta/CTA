@@ -5,10 +5,9 @@
 
 #pragma once
 
-#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 
 #include <functional>
-#include <poll.h>
 #include <thread>
 #include <unordered_map>
 
@@ -27,7 +26,7 @@ namespace cta::runtime {
  */
 class SignalReactor {
 public:
-  SignalReactor(cta::log::LogContext& lc,
+  SignalReactor(cta::log::Logger& lc,
                 const sigset_t& sigset,
                 const std::unordered_map<int, std::function<void()>>& signalFunctions,
                 uint32_t waitTimeoutMsecs);
@@ -55,7 +54,7 @@ public:
   void stop() noexcept;
 
 private:
-  cta::log::LogContext& m_lc;
+  cta::log::Logger& m_log;
   const sigset_t m_sigset;
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
 

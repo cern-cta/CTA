@@ -16,7 +16,7 @@ namespace cta::runtime {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SignalReactorBuilder::SignalReactorBuilder(cta::log::LogContext& lc) : m_lc(lc) {
+SignalReactorBuilder::SignalReactorBuilder(cta::log::Logger& log) : m_log(log) {
   sigemptyset(&m_sigset);
 }
 
@@ -25,13 +25,18 @@ SignalReactorBuilder::SignalReactorBuilder(cta::log::LogContext& lc) : m_lc(lc) 
 //------------------------------------------------------------------------------
 SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>& func) {
   if (m_signalFunctions.contains(signal)) {
-    m_lc.log(log::WARNING,
-             "In SignalReactorBuilder::addSignalFunction(): Function already registered for signal "
-               + std::to_string(signal));
+    log(log::WARNING,
+        "In SignalReactorBuilder::addSignalFunction(): Function already registered for signal.",
+        {
+          {"signal", std::to_string(signal)}
+    });
     return *this;
   }
-  m_lc.log(log::INFO,
-           "In SignalReactorBuilder::addSignalFunction(): Adding function for signal " + utils::signalToString(signal));
+  log(log::INFO,
+      "In SignalReactorBuilder::addSignalFunction(): Adding function for signal.",
+      {
+        {"signal", std::to_string(signal)}
+  });
   sigaddset(&m_sigset, signal);
   m_signalFunctions[signal] = func;
   return *this;
@@ -49,7 +54,7 @@ SignalReactorBuilder& SignalReactorBuilder::withTimeoutMsecs(uint32_t msecs) {
 // SignalReactorBuilder::build
 //------------------------------------------------------------------------------
 SignalReactor SignalReactorBuilder::build() {
-  return SignalReactor(m_lc, m_sigset, std::move(m_signalFunctions), m_waitTimeoutMsecs);
+  return SignalReactor(m_log, m_sigset, std::move(m_signalFunctions), m_waitTimeoutMsecs);
 }
 
 }  // namespace cta::runtime
