@@ -794,10 +794,8 @@ public:
     *
     * @return  result set of job IDs
     */
-  static rdbms::Rset flagReportingJobsByStatus(Transaction& txn,
-                                               std::list<RetrieveJobStatus> statusList,
-                                               uint64_t gc_delay,
-                                               uint64_t limit);
+  static rdbms::Rset
+  flagReportingJobsByStatus(Transaction& txn, std::list<RetrieveJobStatus> statusList, uint64_t limit);
   /*
    * Getting pending or failed retrieve jobs for unit tests only
    */
