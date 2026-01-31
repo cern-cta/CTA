@@ -23,6 +23,7 @@
 #else
 #include "routines/scheduler/rdbms/AncientRowRoutines.hpp"
 #include "routines/scheduler/rdbms/InactiveMountQueueRoutines.hpp"
+#include "routines/scheduler/rdbms/ReportingCleanupRoutines.hpp"
 #endif
 
 #include <chrono>
@@ -148,6 +149,11 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       *m_schedDb,
       m_config.getOptionValueInt("cta.routines.user_active_queue_cleanup.batch_size").value_or(1000),
       m_config.getOptionValueInt("cta.routines.user_active_queue_cleanup.age_for_collection").value_or(900)));
+    routineRunner->registerRoutine(std::make_unique<maintd::ResubmitInactiveReportingRoutine>(
+      m_lc,
+      *m_schedDb,
+      m_config.getOptionValueInt("cta.routines.user_pending_queue_cleanup.batch_size").value_or(1000),
+      m_config.getOptionValueInt("cta.routines.user_pending_queue_cleanup.age_for_collection").value_or(1800)));
   }
   // Add Repack Archive and Repack Retrieve Active Queue Cleanup
   if (m_config.getOptionValueBool("cta.routines.repack_active_queue_cleanup.enabled").value_or(true)) {
