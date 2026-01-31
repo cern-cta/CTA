@@ -29,7 +29,7 @@ ArchiveJobQueueRow::updateMountQueueLastFetch(Transaction& txn, uint64_t mountId
   queueType += isActive ? "_ACTIVE" : "_PENDING";
   stmt.bindString(":QUEUE_TYPE", queueType);
   stmt.bindUint64(":MOUNT_ID", mountId);
-  stmt.executeQuery();
+  stmt.executeNonQuery();
   auto nrows = stmt.getNbAffectedRows();
   return nrows;
 }
@@ -871,9 +871,7 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
 
 rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
                                                           std::list<ArchiveJobStatus> statusList,
-                                                          uint64_t gc_delay,
                                                           uint64_t limit) {
-  uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
   std::string sql = R"SQL(
       WITH SET_SELECTION AS (
         SELECT JOB_ID FROM ARCHIVE_ACTIVE_QUEUE
@@ -894,8 +892,7 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
     j++;
   }
   sql += R"SQL(
-        ]::ARCHIVE_JOB_STATUS[]) AND ( IS_REPORTING IS FALSE
-        OR (IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY) )
+        ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
         ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
       UPDATE ARCHIVE_ACTIVE_QUEUE SET
@@ -911,8 +908,6 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
     stmt.bindString(placeholderVec[i], statusVec[i]);
   }
   stmt.bindUint64(":LIMIT", limit);
-  stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
-
   return stmt.executeQuery();
 }
 
