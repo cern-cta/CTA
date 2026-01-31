@@ -20,12 +20,13 @@
 namespace cta::maintd {
 
 /**
- * Responsible for create a RoutineRunner with a specific set of registered routines based on the provided config.
+ * Responsible for registring a set of routines in a RoutineRunner based on the provided config.
+ * TODO: think of a cleaner way to do this
  */
-class RoutineRunnerFactory {
+class RoutineRegistrar {
 public:
-  RoutineRunnerFactory(const MaintdConfig& config, cta::log::LogContext& lc);
-  std::unique_ptr<RoutineRunner> create();
+  RoutineRegistrar(const MaintdConfig& config, cta::log::LogContext& lc);
+  void registerRoutines(RoutineRunner& routineRunner);
 
 private:
   const MaintdConfig& m_config;

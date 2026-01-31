@@ -26,7 +26,7 @@ namespace cta::runtime {
  */
 class SignalReactor {
 public:
-  SignalReactor(cta::log::Logger& lc,
+  SignalReactor(cta::log::Logger& log,
                 const sigset_t& sigset,
                 const std::unordered_map<int, std::function<void()>>& signalFunctions,
                 uint32_t waitTimeoutMsecs);

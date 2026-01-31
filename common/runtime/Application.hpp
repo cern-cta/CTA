@@ -7,99 +7,115 @@
 
 #include "CommonConfig.hpp"
 #include "ConfigLoader.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/log/FileLogger.hpp"
 #include "common/log/Logger.hpp"
+#include "common/log/StdoutLogger.hpp"
+#include "common/semconv/Attributes.hpp"
+#include "common/telemetry/OtelInit.hpp"
+#include "common/utils/utils.hpp"
+#include "health/HealthServer.hpp"
 #include "signals/SignalReactor.hpp"
+#include "signals/SignalReactorBuilder.hpp"
+#include "version.h"
 
 #include <concepts>
+#include <signal.h>
 #include <string>
 #include <utility>
 
 namespace cta::runtime {
 
-template<class App>
-concept HasReadinessFunction = requires(const App& app) {
+template<class TApp>
+concept HasReadinessFunction = requires(const TApp& app) {
   { app.isReady() } -> std::same_as<bool>;
 };
 
-template<class App>
-concept HasLivenessFunction = requires(const App& app) {
+template<class TApp>
+concept HasLivenessFunction = requires(const TApp& app) {
   { app.isLive() } -> std::same_as<bool>;
 };
 
-template<class App>
-concept HasStopFunction = requires(App& app) {
+template<class TApp>
+concept HasStopFunction = requires(TApp& app) {
   { app.stop() } -> std::same_as<void>;
 };
 
-template<class App, class Config, class Args, class Logger>
-concept HasRunFunction = requires(App& app, const Config& cfg, const Args& args, Logger& logger) {
+template<class TApp, class TConfig, class TArgs, class Logger>
+concept HasRunFunction = requires(TApp& app, const TConfig& cfg, const TArgs& args, Logger& logger) {
   { app.run(cfg, args, logger) } -> std::same_as<int>;
 };
 
-template<class Config>
-concept HasHealthServerConfig =
-  requires(Config cfg) { requires std::same_as<std::remove_cvref_t<decltype(cfg.health_server)>, HealthServerConfig>; };
+template<class TConfig>
+concept HasHealthServerConfig = requires(const TConfig& cfg) {
+  requires std::same_as<std::remove_cvref_t<decltype(cfg.health_server)>, HealthServerConfig>;
+};
 
-template<class Config>
-concept HasTelemetryConfig = requires(const Config& cfg) {
+template<class TConfig>
+concept HasTelemetryConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.telemetry)>, TelemetryConfig>;
 
   requires std::same_as<std::remove_cvref_t<decltype(cfg.experimental.telemetry_enabled)>, bool>;
 };
 
-template<class Config>
+template<class TConfig>
 concept HasXRootDConfig =
-  requires(Config cfg) { requires std::same_as<std::remove_cvref_t<decltype(cfg.xrootd)>, XRootDConfig>; };
+  requires(const TConfig& cfg) { requires std::same_as<std::remove_cvref_t<decltype(cfg.xrootd)>, XRootDConfig>; };
 
-template<class Config>
+template<class TConfig>
 concept HasLoggingConfig =
-  requires(Config cfg) { requires std::same_as<std::remove_cvref_t<decltype(cfg.logging)>, LoggingConfig>; };
+  requires(const TConfig& cfg) { requires std::same_as<std::remove_cvref_t<decltype(cfg.logging)>, LoggingConfig>; };
 
-template<class Config>
-concept HasSchedulerConfig =
-  requires(const Config& cfg) { requires std::same_as<std::remove_cvref_t<decltype(cfg.scheduler)>, SchedulerConfig>; };
+template<class TConfig>
+concept HasSchedulerConfig = requires(const TConfig& cfg) {
+  requires std::same_as<std::remove_cvref_t<decltype(cfg.scheduler)>, SchedulerConfig>;
+};
 
-template<class Config>
-concept HasCatalogueConfig =
-  requires(const Config& cfg) { requires std::same_as<std::remove_cvref_t<decltype(cfg.scheduler)>, CatalogueConfig>; };
+template<class TConfig>
+concept HasCatalogueConfig = requires(const TConfig& cfg) {
+  requires std::same_as<std::remove_cvref_t<decltype(cfg.catalogue)>, CatalogueConfig>;
+};
 
-template<class T, class U, class V>
+template<class TApp, class TConfig, class TArgs>
 class Application {
 public:
-  Application(const std::string& appName, U cmdLineArgs)
-    requires HasLoggingConfig<V> && HasStopFunction<T>
+  Application(const std::string& appName, TArgs cliOptions)
+    requires HasLoggingConfig<TConfig> && HasStopFunction<TApp>
       : m_appName(appName),
-        m_cmdlineArgs(cmdLineArgs),
-        m_appConfig(runtime::loadFromToml<V>(m_cmdlineArgs.configPath, m_cmdlineArgs.configStrict)) {
+        m_cliOptions(cliOptions),
+        m_appConfig(runtime::loadFromToml<TConfig>(m_cliOptions.configPath, m_cliOptions.configStrict)) {
     initLogging();
     m_signalReactorBuilder = std::make_unique<SignalReactorBuilder>(*m_logPtr);
     m_signalReactorBuilder->addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
     m_signalReactorBuilder->addSignalFunction(SIGUSR1, [this]() { m_logPtr->refresh(); });
   }
 
-  Application& addSignalFunction(int signal, const std::function<void()>& func);
+  Application& addSignalFunction(int signal, const std::function<void()>& func) {
+    m_signalReactorBuilder->addSignalFunction(signal, func);
+    return *this;
+  }
 
   // TODO: use SFINAE so that if the app doesn't need the commandline arguments it can still run. I.e. don't enforce an interface that is not necessary
   int run()
-    requires HasRunFunction<T, V, U, log::Logger>
+    requires HasRunFunction<TApp, TConfig, TArgs, log::Logger>
   {
-    auto log = *m_logPtr;
+    cta::log::Logger& log = *m_logPtr;
 
-    const auto signalReactor = m_signalReactorBuilder->build();
+    auto signalReactor = m_signalReactorBuilder->build();
     signalReactor.start();
 
-    if constexpr (HasHealthServerConfig<V>) {
-      static_assert(HasReadinessFunction<T> && HasLivenessFunction<T>,
+    if constexpr (HasHealthServerConfig<TConfig>) {
+      static_assert(HasReadinessFunction<TApp> && HasLivenessFunction<TApp>,
                     "Config has health_server, but app type lacks isReady()/isLive() methods");
       initHealthServer();
     }
 
-    if constexpr (HasTelemetryConfig<V>) {
+    if constexpr (HasTelemetryConfig<TConfig>) {
       initTelemetry();
     }
 
-    if constexpr (HasXRootDConfig<V>) {
+    if constexpr (HasXRootDConfig<TConfig>) {
       initXRootD();
     }
 
@@ -107,7 +123,7 @@ public:
     int returnCode = EXIT_FAILURE;
     try {
       log(log::INFO, "Starting " + m_appName);
-      returnCode = m_app.run(m_appConfig, m_cmdlineArgs, *m_logPtr);
+      returnCode = m_app.run(m_appConfig, m_cliOptions, *m_logPtr);
     } catch (exception::Exception& ex) {
       log(log::CRIT,
           "FATAL: Caught an unexpected CTA exception",
@@ -128,41 +144,59 @@ public:
   }
 
 private:
-  void initLogging(
+  void initLogging() {
+    using namespace cta;
     std::string shortHostName;
-    try { shortHostName = utils::getShortHostname(); } catch (const exception::Errnum& ex) {
-      throw cta::exception::Exception("Failed to get short host name: " << ex.getMessage().str());
+    try {
+      shortHostName = utils::getShortHostname();
+    } catch (const exception::Errnum& ex) {
+      throw cta::exception::Exception("Failed to get short host name: " + ex.getMessage().str());
     }
 
     try {
-      if (m_cmdlineArgs.logToFile) {
-        m_logPtr = std::make_unique<log::FileLogger>(shortHostName, m_appName, m_cmdlineArgs.logFilePath, log::INFO);
+      if (m_cliOptions.logToFile) {
+        m_logPtr = std::make_unique<log::FileLogger>(shortHostName, m_appName, m_cliOptions.logFilePath, log::INFO);
       } else {
         // Default to stdout logger
         m_logPtr = std::make_unique<log::StdoutLogger>(shortHostName, m_appName);
       }
       m_logPtr->setLogFormat(m_appConfig.logging.format);
-    } catch (exception::Exception & ex) {
-      throw cta::exception::Exception("Failed to instantiate CTA logging system: " << ex.getMessage().str());
+    } catch (exception::Exception& ex) {
+      throw cta::exception::Exception("Failed to instantiate CTA logging system: " + ex.getMessage().str());
     }
 
     m_logPtr->setLogMask(m_appConfig.logging.level);
     std::map<std::string, std::string> logAttributes;
     // This should eventually be handled by auto-discovery
-    if constexpr (HasSchedulerConfig<V>) {
+    if constexpr (HasSchedulerConfig<TConfig>) {
       logAttributes["sched_backend"] = m_appConfig.scheduler.backend_name;
-    } for (const auto& [key, value] : m_appConfig.logging.attributes) {
+    }
+    for (const auto& [key, value] : m_appConfig.logging.attributes) {
       logAttributes[key] = value;
-    } m_logPtr->setStaticParams(logAttributes););
+    }
+    m_logPtr->setStaticParams(logAttributes);
+  }
 
-  void initSignalReactor();
+  void initHealthServer() {
+    if (m_appConfig.health_server.enabled) {
+      m_healthServer = std::make_unique<HealthServer>(
+        *m_logPtr,
+        m_appConfig.health_server.host,
+        m_appConfig.health_server.port,
+        [this]() { return m_app.isReady(); },
+        [this]() { return m_app.isLive(); });
 
-  void initHealthServer();
+      // We only start it if it's enabled. We explicitly construct the object outside the scope of this if statement
+      // Otherwise, healthServer will go out of scope and be destructed immediately
+      m_healthServer->start();
+    }
+  }
 
-  void initTelemetry(
+  void initTelemetry() {
     if (!m_appConfig.experimental.telemetry_enabled || m_appConfig.telemetry.config.empty()) {
       return;
-    } log::LogContext lc(*m_logPtr);
+    }
+    log::LogContext lc(*m_logPtr);
     try {
       std::map<std::string, std::string> ctaResourceAttributes = {
         {cta::semconv::attr::kServiceName,       cta::semconv::attr::ServiceNameValues::kCtaMaintd},
@@ -171,27 +205,33 @@ private:
         {cta::semconv::attr::kHostName,          cta::utils::getShortHostname()                   }
       };
 
-      if constexpr (HasSchedulerConfig<V>) {
+      if constexpr (HasSchedulerConfig<TConfig>) {
         ctaResourceAttributes[cta::semconv::attr::kSchedulerNamespace] = m_appConfig.scheduler.backend_name;
       }
-      cta::telemetry::initOpenTelemetry(config.telemetry.config, ctaResourceAttributes, lc);
-    } catch (exception::Exception & ex) {
+      cta::telemetry::initOpenTelemetry(m_appConfig.telemetry.config, ctaResourceAttributes, lc);
+    } catch (exception::Exception& ex) {
       cta::log::ScopedParamContainer params(lc);
       params.add("exceptionMessage", ex.getMessage().str());
       lc.log(log::ERR, "Failed to instantiate OpenTelemetry");
       cta::telemetry::cleanupOpenTelemetry(lc);
-    });
+    }
+  }
 
-  void initXRootD();
+  void initXRootD() {
+    // Overwrite XRootD env variables
+    ::setenv("XrdSecPROTOCOL", m_appConfig.xrootd.security_protocol.c_str(), 1);
+    ::setenv("XrdSecSSSKT", m_appConfig.xrootd.sss_keytab_path.c_str(), 1);
+    // TODO: check the keytab here
+  }
 
   const std::string m_appName;
 
   // The actual application class
-  T m_app;
+  TApp m_app;
   // A struct representing the commandline arguments
-  const U m_cmdlineArgs;
+  const TArgs m_cliOptions;
   // A struct containing all configuration
-  const V m_appConfig;
+  const TConfig m_appConfig;
 
   std::unique_ptr<SignalReactorBuilder> m_signalReactorBuilder;
   std::unique_ptr<HealthServer> m_healthServer;

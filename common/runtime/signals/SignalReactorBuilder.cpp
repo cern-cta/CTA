@@ -25,17 +25,17 @@ SignalReactorBuilder::SignalReactorBuilder(cta::log::Logger& log) : m_log(log) {
 //------------------------------------------------------------------------------
 SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>& func) {
   if (m_signalFunctions.contains(signal)) {
-    log(log::WARNING,
-        "In SignalReactorBuilder::addSignalFunction(): Function already registered for signal.",
-        {
-          {"signal", std::to_string(signal)}
+    m_log(log::WARNING,
+          "In SignalReactorBuilder::addSignalFunction(): Function already registered for signal.",
+          {
+            {"signal", std::to_string(signal)}
     });
     return *this;
   }
-  log(log::INFO,
-      "In SignalReactorBuilder::addSignalFunction(): Adding function for signal.",
-      {
-        {"signal", std::to_string(signal)}
+  m_log(log::INFO,
+        "In SignalReactorBuilder::addSignalFunction(): Adding function for signal.",
+        {
+          {"signal", std::to_string(signal)}
   });
   sigaddset(&m_sigset, signal);
   m_signalFunctions[signal] = func;

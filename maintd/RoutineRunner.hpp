@@ -6,6 +6,8 @@
 #pragma once
 
 #include "IRoutine.hpp"
+#include "MaintdCliOptions.hpp"
+#include "MaintdConfig.hpp"
 #include "common/log/LogContext.hpp"
 
 #include <vector>
@@ -20,7 +22,7 @@ namespace cta::maintd {
  */
 class RoutineRunner {
 public:
-  explicit RoutineRunner(int64_t sleepIntervalSecs, int64_t maxCycleDurationSecs);
+  RoutineRunner() = default;
 
   ~RoutineRunner() = default;
 
@@ -31,19 +33,17 @@ public:
   /**
    * Periodically executes all registered routines.
    */
-  void run(cta::log::LogContext& lc);
+  int run(const MaintdConfig& config, const MaintdCliOptions& cliOptions, cta::log::Logger& log);
 
-  bool isLive();
+  bool isLive() const;
 
-  bool isReady();
+  bool isReady() const;
 
 private:
   void safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc);
 
   std::vector<std::unique_ptr<IRoutine>> m_routines;
-
-  const int64_t m_sleepIntervalSecs;
-  const int64_t m_maxCycleDurationSecs;
+  MaintdConfig m_config;
 
   std::atomic<bool> m_running = false;
 
