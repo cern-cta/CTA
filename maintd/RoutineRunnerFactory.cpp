@@ -22,6 +22,7 @@
 #else
 #include "routines/scheduler/rdbms/AncientRowRoutines.hpp"
 #include "routines/scheduler/rdbms/InactiveMountQueueRoutines.hpp"
+#include "routines/scheduler/rdbms/ReportingCleanupRoutines.hpp"
 #endif
 
 #include <chrono>
@@ -142,6 +143,11 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
     routines.push_back(std::make_unique<RetrieveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
+      *m_schedDb,
+      m_config.routines.user_active_queue_cleanup.batch_size,
+      m_config.routines.user_active_queue_cleanup.age_for_collection_secs));
+    routines.push_back(std::make_unique<ResubmitInactiveReportingRoutine>(
+      m_lc,
       *m_schedDb,
       m_config.routines.user_active_queue_cleanup.batch_size,
       m_config.routines.user_active_queue_cleanup.age_for_collection_secs));

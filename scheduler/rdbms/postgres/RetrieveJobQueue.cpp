@@ -1232,9 +1232,7 @@ rdbms::Rset RetrieveJobQueueRow::getRetrieveJobs(Transaction& txn, uint64_t file
 
 rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
                                                            std::list<RetrieveJobStatus> statusList,
-                                                           uint64_t gc_delay,
                                                            uint64_t limit) {
-  uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
   std::string sql = R"SQL(
       WITH SET_SELECTION AS (
         SELECT JOB_ID FROM RETRIEVE_ACTIVE_QUEUE
@@ -1255,8 +1253,7 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
     j++;
   }
   sql += R"SQL(
-        ]::RETRIEVE_JOB_STATUS[]) AND (IS_REPORTING IS FALSE
-        OR (IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY))
+        ]::RETRIEVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
         ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
       UPDATE RETRIEVE_ACTIVE_QUEUE SET
@@ -1272,7 +1269,6 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
     stmt.bindString(placeholderVec[i], statusVec[i]);
   }
   stmt.bindUint64(":LIMIT", limit);
-  stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
 
   txn.getConn().setDbQuerySummary("update retrieve report");
   return stmt.executeQuery();

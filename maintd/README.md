@@ -101,4 +101,7 @@ For all the routines above, the following also applies:
 - `DeleteOldFailedQueuesRoutine`
   - Deletes all jobs which hang in the failed queue tables for too long (2 weeks).
 - `CleanMountLastFetchTimeRoutine`
-  - Deletes all tracking MOUNT_QUEUE_LAST_FETCH entries for which the mount was not active since a very long time (e.g. 4 weeks; longer than the time limit defined for the collection routines).
+  - Deletes all tracking MOUNT_QUEUE_LAST_FETCH entries for which the mount was not active since a very long time (e.g. 4 weeks; longer than the time limit defined for the collection routines). 
+- `ResubmitInactiveReportingRoutine`
+  - Reactivated rows to be picked up for reporting again if in case of dead reporting process.
+  
