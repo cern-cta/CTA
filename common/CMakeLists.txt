@@ -97,7 +97,6 @@ set (COMMON_LIB_SRC_FILES
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
   runtime/signals/SignalReactor.cpp
-  runtime/signals/SignalReactorBuilder.cpp
   runtime/signals/SignalUtils.cpp
   runtime/health/HealthServer.cpp
   runtime/ApplicationBuilder.cpp
@@ -180,8 +179,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   remoteFS/RemotePathTest.cpp
   CRCTest.cpp
   config/ConfigLoaderTest.cpp
-  process/health/HealthServerTest.cpp
-  process/signals/SignalReactorTest.cpp
+  runtime/signals/SignalReactorTest.cpp
   runtime/ConfigLoaderTest.cpp
   runtime/health/HealthServerTest.cpp
   runtime/Application.cpp
