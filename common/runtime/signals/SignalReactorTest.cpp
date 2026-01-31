@@ -30,7 +30,7 @@ TEST(SignalReactor, HandlesSingleSignalCorrectly) {
 
   std::atomic<int> calledHup {0}, calledTerm {0}, calledUsr1 {0};
 
-  auto signalReactor = cta::runtime::SignalReactorBuilder(lc)
+  auto signalReactor = cta::runtime::SignalReactorBuilder(dl)
                          .addSignalFunction(SIGHUP, [&]() { calledHup++; })
                          .addSignalFunction(SIGTERM, [&]() { calledTerm++; })
                          .addSignalFunction(SIGUSR1, [&]() { calledUsr1++; })
@@ -52,11 +52,10 @@ TEST(SignalReactor, HandlesSingleSignalCorrectly) {
 
 TEST(SignalReactor, IgnoresSignalWithoutFunctionEvenIfInSigset) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   std::atomic<int> called {0};
 
-  auto signalReactor = cta::runtime::SignalReactorBuilder(lc)
+  auto signalReactor = cta::runtime::SignalReactorBuilder(dl)
                          .addSignalFunction(SIGUSR1, [&]() { called++; })
                          .addSignalFunction(SIGHUP, []() {})
                          .addSignalFunction(SIGTERM, []() {})
@@ -77,11 +76,10 @@ TEST(SignalReactor, IgnoresSignalWithoutFunctionEvenIfInSigset) {
 
 TEST(SignalReactor, HandlesMultipleSignals) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   std::atomic<int> called {0};
 
-  auto signalReactor = cta::runtime::SignalReactorBuilder(lc)
+  auto signalReactor = cta::runtime::SignalReactorBuilder(dl)
                          .addSignalFunction(SIGUSR1, [&]() { called++; })
                          .addSignalFunction(SIGHUP, []() {})
                          .addSignalFunction(SIGTERM, []() {})
@@ -107,7 +105,6 @@ TEST(SignalReactor, HandlesMultipleSignals) {
 
 TEST(SignalReactor, HandlesUnregisteredSignals) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   std::atomic<int> called {0};
 
@@ -117,7 +114,7 @@ TEST(SignalReactor, HandlesUnregisteredSignals) {
   sigemptyset(&sigset);
   sigaddset(&sigset, SIGUSR1);
   sigaddset(&sigset, SIGUSR2);
-  cta::runtime::SignalReactor signalReactor(lc,
+  cta::runtime::SignalReactor signalReactor(dl,
                                             sigset,
                                             {
                                               {SIGUSR1, [&]() { called++; }}

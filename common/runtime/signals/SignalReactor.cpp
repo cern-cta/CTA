@@ -21,7 +21,7 @@ namespace cta::runtime {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SignalReactor::SignalReactor(cta::log::Logger& lc,
+SignalReactor::SignalReactor(cta::log::Logger& log,
                              const sigset_t& sigset,
                              const std::unordered_map<int, std::function<void()>>& signalFunctions,
                              uint32_t waitTimeoutMsecs)
@@ -44,8 +44,8 @@ SignalReactor::~SignalReactor() {
 void SignalReactor::start() {
   cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, nullptr),
                                          "In SignalReactor::start(): pthread_sigmask() failed");
-  m_thread = std::jthread(
-    [this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_lc.logger(), m_waitTimeoutMsecs); });
+  m_thread =
+    std::jthread([this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_log, m_waitTimeoutMsecs); });
 }
 
 //------------------------------------------------------------------------------
@@ -57,10 +57,10 @@ void SignalReactor::stop() noexcept {
     try {
       m_thread.join();
     } catch (std::system_error& e) {
-      log(log::ERR,
-          "In SignalReactor::stop(): failed to join thread",
-          {
-            {"exceptionMessage", e.what()}
+      m_log(log::ERR,
+            "In SignalReactor::stop(): failed to join thread",
+            {
+              {"exceptionMessage", e.what()}
       });
     }
   }

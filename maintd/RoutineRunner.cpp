@@ -5,8 +5,7 @@
 
 #include "RoutineRunner.hpp"
 
-#include "catalogue/CatalogueFactory.hpp"
-#include "catalogue/CatalogueFactoryFactory.hpp"
+#include "RoutineRegistrar.hpp"
 #include "common/Timer.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
@@ -26,13 +25,6 @@ namespace cta::maintd {
 int64_t nowSecs() {
   return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-RoutineRunner::RoutineRunner(int64_t sleepIntervalSecs, int64_t maxCycleDurationSecs)
-    : m_sleepIntervalSecs(sleepIntervalSecs),
-      m_maxCycleDurationSecs(maxCycleDurationSecs) {}
 
 //------------------------------------------------------------------------------
 // RoutineRunner::registerRoutine
@@ -77,10 +69,16 @@ void RoutineRunner::safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) 
 //------------------------------------------------------------------------------
 // RoutineRunner::run
 //------------------------------------------------------------------------------
-void RoutineRunner::run(cta::log::LogContext& lc) {
+int RoutineRunner::run(const MaintdConfig& config, const MaintdCliOptions& cliOptions, cta::log::Logger& log) {
+  m_config = config;
+  cta::log::LogContext lc(log);
+  RoutineRegistrar routineRegistrar(config, lc);
+  routineRegistrar.registerRoutines(*this);
+
   // At least one routine should be enabled.
   if (m_routines.empty()) {
-    throw cta::exception::UserError("In RoutineRunner::run(): No routines enabled.");
+    lc.log(log::ERR, "In RoutineRunner::run(): No routines enabled.");
+    return 1;
   }
   m_running = true;
   lc.log(log::DEBUG, "In RoutineRunner::run(): New run started.");
@@ -91,13 +89,14 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
       safeRunRoutine(*routine, lc);
       if (!m_running) {
         lc.log(log::INFO, "In RoutineRunner::run(): Stop requested.");
-        return;
+        return 0;
       }
     }
     m_sleepStartTime = nowSecs();
-    std::this_thread::sleep_for(std::chrono::seconds(m_sleepIntervalSecs));
+    std::this_thread::sleep_for(std::chrono::seconds(m_config.routines.global_sleep_interval_secs));
   }
   lc.log(log::DEBUG, "In RoutineRunner::run(): Stop requested.");
+  return 0;
 }
 
 /**
@@ -106,7 +105,7 @@ void RoutineRunner::run(cta::log::LogContext& lc) {
  * - the catalogue is reachable (not implemented yet)
  * - the scheduler is reachable (not implemented yet)
  */
-bool RoutineRunner::isReady() {
+bool RoutineRunner::isReady() const {
   return m_running;
 }
 
@@ -114,16 +113,20 @@ bool RoutineRunner::isReady() {
  * The routine runner is considered alive when:
  * - a routine has executed in the last 2 minutes
  */
-bool RoutineRunner::isLive() {
+bool RoutineRunner::isLive() const {
+  if (!m_running) {
+    // We consider ourselves alive if we haven't started yet, because a restart likely won't fix this.
+    return true;
+  }
   // If the executionStartTime is the most recent, it means we are currently executing.
   if (m_executionStartTime > m_sleepStartTime) {
     // Check that we have not been executing for too long
-    return (nowSecs() - m_executionStartTime) < m_maxCycleDurationSecs;
+    return (nowSecs() - m_executionStartTime) < m_config.routines.max_cycle_duration_secs;
   }
   // The sleepStartTime is the most recent, so we are currently sleeping.
   // Check that we have not been sleeping for too long.
   // We need to give it a few extra seconds as the transition from sleeping to executing is not instant
-  return (nowSecs() - m_sleepStartTime) < m_sleepIntervalSecs + 5;
+  return (nowSecs() - m_sleepStartTime) < m_config.routines.global_sleep_interval_secs + 5;
 }
 
 }  // namespace cta::maintd

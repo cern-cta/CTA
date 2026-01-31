@@ -15,14 +15,14 @@ namespace httplib {
 class Server;
 }
 
-namespace cta::common {
+namespace cta::runtime {
 
 /**
  * Allows a service to expose health endpoints for readiness/liveness probes. It does this in the form of a lightweight HTTP server.
  */
 class HealthServer {
 public:
-  HealthServer(cta::log::Logger& lc,
+  HealthServer(cta::log::Logger& log,
                const std::string& host,
                int port,
                const std::function<bool()>& readinessFunc,
@@ -68,4 +68,4 @@ private:
   std::jthread m_thread;
 };
 
-}  // namespace cta::common
+}  // namespace cta::runtime
