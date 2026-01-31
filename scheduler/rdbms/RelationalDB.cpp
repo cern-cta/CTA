@@ -243,10 +243,7 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
   statusList.emplace_back(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure);
   rdbms::Rset resultSet;
   try {
-    // gc_delay 3h delay for each report, if not reported, requeue for reporting
-    uint64_t gc_delay = 10800;
-    resultSet =
-      schedulerdb::postgres::ArchiveJobQueueRow::flagReportingJobsByStatus(txn, statusList, gc_delay, filesRequested);
+    resultSet = schedulerdb::postgres::ArchiveJobQueueRow::flagReportingJobsByStatus(txn, statusList, filesRequested);
     if (resultSet.isEmpty()) {
       lc.log(cta::log::INFO, "In RelationalDB::getNextArchiveJobsToReportBatch(): nothing to report.");
       return ret;
@@ -956,10 +953,7 @@ RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::Log
   statusList.emplace_back(schedulerdb::RetrieveJobStatus::RJS_ToReportToUserForFailure);
   rdbms::Rset resultSet;
   try {
-    // gc_delay 3h delay for each report, if not reported, requeue for reporting
-    uint64_t gc_delay = 10800;
-    resultSet =
-      schedulerdb::postgres::RetrieveJobQueueRow::flagReportingJobsByStatus(txn, statusList, gc_delay, filesRequested);
+    resultSet = schedulerdb::postgres::RetrieveJobQueueRow::flagReportingJobsByStatus(txn, statusList, filesRequested);
     if (resultSet.isEmpty()) {
       lc.log(cta::log::INFO, "In RelationalDB::getNextRetrieveJobsToReportBatch(): nothing to report.");
       return ret;
@@ -2218,6 +2212,85 @@ void RelationalDB::deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSiz
         .add("exceptionMessage", ex.getMessageValue())
         .log(log::ERR,
              "In RelationalDB::deleteOldFailedQueues(): Failed to delete old rows from failed queue tables: ");
+      txn.abort();
+    }
+  }
+}
+
+void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batchSize, log::LogContext& lc) {
+  std::vector<std::string> activeTables = {"ARCHIVE_ACTIVE_QUEUE", "RETRIEVE_ACTIVE_QUEUE"};
+
+  uint64_t olderThanTimestamp = (uint64_t) cta::utils::getCurrentEpochTime() - deletionAge;
+  for (const auto& tbl : activeTables) {
+    std::vector<std::string> statusVec;
+    std::string tbl_prefix = "";
+    if (tbl == "ARCHIVE_ACTIVE_QUEUE") {
+      tbl_prefix = "ARCHIVE";
+      statusVec.emplace_back(to_string(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForSuccess));
+      statusVec.emplace_back(to_string(schedulerdb::ArchiveJobStatus::AJS_ToReportToUserForFailure));
+    } else {
+      tbl_prefix = "RETRIEVE";
+      statusVec.emplace_back(to_string(schedulerdb::RetrieveJobStatus::RJS_ToReportToUserForSuccess));
+      statusVec.emplace_back(to_string(schedulerdb::RetrieveJobStatus::RJS_ToReportToUserForFailure));
+    }
+    schedulerdb::Transaction txn(m_connPool, lc);
+    txn.takeNamedLock(tbl + "_resubmitInactiveReporting");
+    try {
+      ///
+      std::string sql = R"SQL(
+      WITH SET_SELECTION AS (
+        SELECT JOB_ID FROM )SQL";
+      sql += tbl_prefix + "_ACTIVE_QUEUE";
+      sql += R"SQL(
+        WHERE STATUS = ANY(ARRAY[
+      )SQL";
+      // we can move this to new bindArray method for stmt
+      std::vector<std::string> placeholderVec;
+      for (size_t i = 0; i < statusVec.size(); ++i) {
+        std::string plch = std::string(":STATUS") + std::to_string(i + 1);
+        placeholderVec.emplace_back(plch);
+        sql += plch;
+        if (i + 1 < statusVec.size()) {
+          sql += std::string(",");
+        }
+      }
+      sql += "]::" + tbl_prefix + "_JOB_STATUS[])";
+      sql += R"SQL(
+         AND IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY
+        ORDER BY PRIORITY DESC, JOB_ID
+        LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
+      UPDATE
+      )SQL";
+      sql += tbl_prefix + "_ACTIVE_QUEUE";
+      sql += R"SQL( SET IS_REPORTING = FALSE
+        FROM SET_SELECTION
+        WHERE
+     )SQL";
+      sql += tbl_prefix + "_ACTIVE_QUEUE.JOB_ID = SET_SELECTION.JOB_ID";
+      auto stmt = txn.getConn().createStmt(sql);
+      // we can move the array binding to new bindArray method for STMT
+      size_t sz = statusVec.size();
+      for (size_t i = 0; i < sz; ++i) {
+        stmt.bindString(placeholderVec[i], statusVec[i]);
+      }
+      stmt.bindUint64(":LIMIT", batchSize);
+      stmt.bindUint64(":NOW_MINUS_DELAY", olderThanTimestamp);
+      txn.getConn().setDbQuerySummary("update inactive report");
+      stmt.executeNonQuery();
+      auto nrows = stmt.getNbAffectedRows();
+      txn.setRowCountForTelemetry(nrows);
+      txn.commit();
+      cta::log::ScopedParamContainer(lc)
+        .add("reactivatedReportsInTable", tbl)
+        .add("reactivatedReports", nrows)
+        .add("olderThanTimestamp", olderThanTimestamp)
+        .log(cta::log::INFO,
+             "In RelationalDB::resubmitInactiveReporting(): Reactivated reports for reporting to disk successfully.");
+    } catch (exception::Exception& ex) {
+      log::ScopedParamContainer(lc)
+        .add("exceptionMessage", ex.getMessageValue())
+        .log(log::ERR,
+             "In RelationalDB::resubmitInactiveReporting(): Failed to reactivated reports for reporting to disk.");
       txn.abort();
     }
   }
