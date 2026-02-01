@@ -53,6 +53,34 @@ struct ArchiveInsertQueueItem {
   std::promise<std::string> promise;
 };
 
+struct ArchiveInsertQueueCriteria {
+  std::map<uint32_t, std::string> copyToPoolMap;
+  common::dataStructures::MountPolicy mountPolicy;
+};
+
+struct ArchiveInsertQueueCriteriaKey {
+  std::string_view instanceName;
+  std::string_view storageClass;
+  std::string_view requesterName;
+  std::string_view requesterGroup;
+
+  bool operator==(const ArchiveInsertQueueCriteriaKey& other) const {
+    return instanceName == other.instanceName && storageClass == other.storageClass
+           && requesterName == other.requesterName && requesterGroup == other.requesterGroup;
+  }
+};
+
+// Hash function for unordered_map
+struct ArchiveInsertQueueCriteriaKeyHash {
+  std::size_t operator()(const ArchiveInsertQueueCriteriaKey& k) const {
+    std::size_t h = std::hash<std::string_view>{}(k.instanceName);
+    h ^= std::hash<std::string_view>{}(k.storageClass) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    h ^= std::hash<std::string_view>{}(k.requesterName) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    h ^= std::hash<std::string_view>{}(k.requesterGroup) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    return h;
+  }
+};
+
 std::ostream& operator<<(std::ostream& os, const ArchiveRequest& obj);
 
 }  // namespace cta::common::dataStructures
