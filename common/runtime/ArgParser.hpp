@@ -32,13 +32,12 @@ struct ArgSpec {
   std::function<void(std::optional<std::string_view>)> apply;
 };
 
-// TODO: better exception handling
 // Basic usage
 //  runtime::CommonCliOptions opts;
 //  runtime::ArgParser argParser(appName, opts);
 //  argParser.parser(argc, argv);
 // TODO example with custom args
-// TODO: no support for positional arguments yet, but should not be too complicated to add
+// no support for positional arguments yet, but should not be too complicated to add
 template<class T>
 class ArgParser {
 public:
@@ -103,7 +102,6 @@ public:
     int nextLongOnlyVal = 256;  // avoid collision with ASCII short flags
 
     for (std::size_t i = 0; i < m_supportedArgs.size(); ++i) {
-      // TODO: change exceptions to error codes
       const ArgSpec& s = m_supportedArgs[i];
 
       int val = 0;
@@ -145,7 +143,7 @@ public:
         // Unknown option or missing required argument.
         // optopt is set for short options; for long options, it's less helpful.
 
-        // TODO: better error message
+        // TODO: better error message?
         throw cta::exception::UserError("Invalid option. Use --help to see valid options.");
       }
 
@@ -174,7 +172,7 @@ public:
 
     if (m_options.showHelp) {
       std::cout << usageString() << std::endl;
-      std::exit(EXIT_SUCCESS);  // TODO: can we return here somehow?
+      std::exit(EXIT_SUCCESS);
     }
     return m_options;
   }
