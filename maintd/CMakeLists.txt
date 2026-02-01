@@ -6,8 +6,9 @@ add_subdirectory(routines/disk)
 add_subdirectory(routines/repack)
 
 add_library(ctamaintd
+  MaintdApp.cpp
   RoutineRunner.cpp
-  RoutineRegistrar.cpp
+  RoutineRunnerFactory.cpp
 )
 
 

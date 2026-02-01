@@ -1,13 +1,13 @@
 /*
- * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2025 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
 
-#include "MaintdConfig.hpp"
 #include "RoutineRunner.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "common/config/Config.hpp"
 #include "common/log/LogContext.hpp"
 #include "scheduler/Scheduler.hpp"
 
@@ -20,13 +20,12 @@
 namespace cta::maintd {
 
 /**
- * Responsible for registring a set of routines in a RoutineRunner based on the provided config.
- * TODO: think of a cleaner way to do this
+ * Responsible for create a RoutineRunner with a specific set of registered routines based on the provided config.
  */
-class RoutineRegistrar {
+class RoutineRunnerFactory {
 public:
-  RoutineRegistrar(const MaintdConfig& config, cta::log::LogContext& lc);
-  void registerRoutines(RoutineRunner& routineRunner);
+  RoutineRunnerFactory(const MaintdConfig& config, cta::log::LogContext& lc);
+  std::unique_ptr<RoutineRunner> create();
 
 private:
   const MaintdConfig& m_config;

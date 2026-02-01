@@ -1,11 +1,12 @@
 /*
- * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2026 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
 
 #include "MaintdConfig.hpp"
+#include "RoutineRunner.hpp"
 #include "common/log/LogContext.hpp"
 
 #include <vector>
@@ -27,6 +28,7 @@ public:
   bool isReady() const;
 
 private:
+  std::unique_ptr<RoutineRunner> m_routineRunner;
 };
 
 }  // namespace cta::maintd

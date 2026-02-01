@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2025 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -21,7 +21,7 @@ namespace cta::maintd {
  */
 class RoutineRunner {
 public:
-  RoutineRunner() = default;
+  RoutineRunner(const RoutinesConfig& routinesConfig, std::vector<std::unique_ptr<IRoutine>> routines);
 
   ~RoutineRunner() = default;
 
@@ -32,7 +32,7 @@ public:
   /**
    * Periodically executes all registered routines.
    */
-  int run(const MaintdConfig& config, cta::log::Logger& log);
+  void run(cta::log::LogContext& lc);
 
   bool isLive() const;
 
@@ -41,8 +41,8 @@ public:
 private:
   void safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc);
 
-  std::vector<std::unique_ptr<IRoutine>> m_routines;
-  MaintdConfig m_config;
+  const std::vector<std::unique_ptr<IRoutine>> m_routines;
+  const RoutinesConfig& m_config;
 
   std::atomic<bool> m_running = false;
 

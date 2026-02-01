@@ -11,14 +11,11 @@
 
 int main(const int argc, char** const argv) {
   using namespace cta;
-  try {
+  runtime::Application::safeRun([]() {
     const std::string appName = "cta-maind";
     runtime::ArgParser<CommonCliOptions> argParser(appName);
     auto cliOptions = argParser.parse(argc, argv);
     runtime::Application<maintd::MaintdApp, maintd::MaintdConfig> app(appName, cliOptions);
     return app.run();
-  } catch (...) {
-    // TODO: we probably want to do some printing here
-    return EXIT_FAILURE;
-  }
+  });
 }
