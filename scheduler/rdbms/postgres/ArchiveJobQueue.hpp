@@ -895,7 +895,9 @@ VALUES )SQL";
     }
     conn.setDbQuerySummary("insert archive");
     stmt.executeNonQuery();
-    return stmt.getNbAffectedRows();
+    auto nrows = stmt.getNbAffectedRows();
+    conn.setRowCountForTelemetry(nrows);
+    return nrows
   }
 
   /**
