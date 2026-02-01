@@ -295,7 +295,8 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   // }
   std::string sql = "UPDATE ";
   sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
-  sql += " SET STATUS = :STATUS WHERE JOB_ID IN (" + sqlpart + ")";
+  sql += " SET STATUS = :STATUS, LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER WHERE JOB_ID IN ("
+         + sqlpart + ")";
   auto stmt1 = txn.getConn().createStmt(sql);
   stmt1.bindString(":STATUS", to_string(newStatus));
   txn.getConn().setDbQuerySummary("update retrieve");
@@ -321,7 +322,8 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRep
         TOTAL_RETRIES = :TOTAL_RETRIES,
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
         LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
-        FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG
+        FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG,
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
         WHERE JOB_ID = :JOB_ID
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
@@ -1193,7 +1195,8 @@ uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, R
         STATUS = :STATUS,
         TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
         IS_REPORTING =:IS_REPORTING,
-        REPORT_FAILURE_LOG = :REPORT_FAILURE_LOG
+        REPORT_FAILURE_LOG = :REPORT_FAILURE_LOG,
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
       WHERE JOB_ID = :JOB_ID
     )SQL";
 
@@ -1254,10 +1257,10 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
   }
   sql += R"SQL(
         ]::RETRIEVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
-        ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
       UPDATE RETRIEVE_ACTIVE_QUEUE SET
-        IS_REPORTING = TRUE
+        IS_REPORTING = TRUE,
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
       FROM SET_SELECTION
       WHERE RETRIEVE_ACTIVE_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
       RETURNING RETRIEVE_ACTIVE_QUEUE.*
