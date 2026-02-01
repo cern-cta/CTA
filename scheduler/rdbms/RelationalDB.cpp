@@ -143,6 +143,7 @@ RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInser
   }
   lc.log(log::DEBUG, "In RelationalDB::queueArchive(): 3.");
   uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::insertRequestBatch(sqlconn, rowsToInsert, groupIds);
+  sqlconn.commit();
   log::ScopedParamContainer params(lc);
   params.add("nrows", nrows);
   params.add("inputJobCount", totalJobCount);
