@@ -600,8 +600,8 @@ private:
 
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
 
-  void processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
-                            log::LogContext& lc);
+  uint64_t processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                log::LogContext& lc);
   bool m_enqueueBatchInProgress = false;
   std::mutex m_mutexOpportunisticBatching;
   std::condition_variable m_cvOpportunisticBatching;
