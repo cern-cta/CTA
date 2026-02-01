@@ -134,7 +134,7 @@ void Logger::setLogMask(std::string_view logMask) {
 // setLogFormat
 //------------------------------------------------------------------------------
 void Logger::setLogFormat(std::string_view logFormat) {
-  if (logFormat == "default") {
+  if (logFormat == "default" || logFormat == "kv") {
     m_logFormat = LogFormat::DEFAULT;
   } else if (logFormat == "json") {
     m_logFormat = LogFormat::JSON;

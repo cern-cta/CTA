@@ -36,4 +36,6 @@ TEST(Application, AppCorrectXRootDKeyTab) {}
 
 TEST(Application, AppWrongXRootDKeyTab) {}
 
+TEST(Application, AppCheckConfig) {}
+
 }  // namespace unitTests

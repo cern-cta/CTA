@@ -15,7 +15,7 @@ QueueCleanupRoutine::QueueCleanupRoutine(cta::log::LogContext& lc,
       m_queueCleanup(lc, oStoreDb, catalogue, batchSize) {
   log::ScopedParamContainer params(m_lc);
   params.add("batchSize", batchSize);
-  m_lc.log(cta::log::INFO, "Created QueueCleanupRoutine");
+  m_lc.log(cta::log::INFO, "In QueueCleanupRoutine: Created QueueCleanupRoutine");
 }
 
 void QueueCleanupRoutine::execute() {

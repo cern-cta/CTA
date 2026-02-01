@@ -28,7 +28,6 @@ struct SchedulerConfig {
 };
 
 struct LoggingConfig {
-  // TODO: enum
   std::string level = "INFO";
   std::string format = "json";
   std::map<std::string, std::string> attributes;

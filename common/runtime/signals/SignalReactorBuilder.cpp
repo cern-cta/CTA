@@ -18,6 +18,7 @@ namespace cta::runtime {
 //------------------------------------------------------------------------------
 SignalReactorBuilder::SignalReactorBuilder(cta::log::Logger& log) : m_log(log) {
   sigemptyset(&m_sigset);
+  m_log(log::INFO, "In SignalReactorBuilder: Initialising SignalReactor");
 }
 
 //------------------------------------------------------------------------------
@@ -26,17 +27,12 @@ SignalReactorBuilder::SignalReactorBuilder(cta::log::Logger& log) : m_log(log) {
 SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>& func) {
   if (m_signalFunctions.contains(signal)) {
     m_log(log::WARNING,
-          "In SignalReactorBuilder::addSignalFunction(): Function already registered for signal.",
-          {
-            {"signal", std::to_string(signal)}
-    });
+          "In SignalReactorBuilder::addSignalFunction(): Function already registered for "
+            + utils::signalToString(signal));
     return *this;
   }
   m_log(log::INFO,
-        "In SignalReactorBuilder::addSignalFunction(): Adding function for signal.",
-        {
-          {"signal", std::to_string(signal)}
-  });
+        "In SignalReactorBuilder::addSignalFunction(): Adding function for " + utils::signalToString(signal));
   sigaddset(&m_sigset, signal);
   m_signalFunctions[signal] = func;
   return *this;

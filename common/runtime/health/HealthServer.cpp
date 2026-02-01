@@ -53,6 +53,7 @@ bool HealthServer::isUdsHost(const std::string& host) {
 // HealthServer::start
 //------------------------------------------------------------------------------
 void HealthServer::start() {
+  m_lc.log(log::INFO, "In HealthServer::start(): Initialising HealthServer");
   m_server = std::make_unique<httplib::Server>();
   m_server->Get("/health/ready", [readinessFunc = m_readinessFunc](const httplib::Request&, httplib::Response& res) {
     if (readinessFunc()) {
@@ -97,7 +98,7 @@ void HealthServer::start() {
 // HealthServer::stop
 //------------------------------------------------------------------------------
 void HealthServer::stop() noexcept {
-  m_lc.log(log::INFO, "In HealthServer::stop(): stopping health server");
+  m_lc.log(log::INFO, "In HealthServer::stop(): stopping HealthServer");
   if (m_thread.joinable()) {
     if (m_server) {
       m_server->stop();
@@ -110,7 +111,7 @@ void HealthServer::stop() noexcept {
       m_lc.log(log::ERR, "In HealthServer::stop(): failed to join thread");
     }
   }
-  m_lc.log(log::INFO, "In HealthServer::stop(): health server stopped");
+  m_lc.log(log::INFO, "In HealthServer::stop(): HealthServer stopped");
 }
 
 //------------------------------------------------------------------------------
@@ -130,7 +131,7 @@ void HealthServer::run(httplib::Server& server, std::string host, int port, cta:
   // LogContext is not thread safe, which is why we pass in the logger and not the logcontext
   cta::log::LogContext lc(log);
   try {
-    lc.log(log::INFO, "In HealthServer::run(): starting health server");
+    lc.log(log::INFO, "In HealthServer::run(): starting HealthServer");
     bool listenSuccess;
     if (isUdsHost(host)) {
       // Unix domain socket

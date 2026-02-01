@@ -12,7 +12,7 @@
 int main(const int argc, char** const argv) {
   using namespace cta;
   return runtime::safeRun([argc, argv]() {
-    const std::string appName = "cta-maind";
+    const std::string appName = "cta-maintd";
     runtime::ArgParser<runtime::CommonCliOptions> argParser(appName);
     auto cliOptions = argParser.parse(argc, argv);
     runtime::Application<maintd::MaintdApp, maintd::MaintdConfig, runtime::CommonCliOptions> app(appName, cliOptions);
