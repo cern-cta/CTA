@@ -46,7 +46,7 @@ data:
       sss_keytab_path = "/etc/cta/cta-maintd.sss.keytab"
 
     [routines]
-      cycle_sleep_interval_secs = {{ int64 $routineConf.sleepInterval | toString }}
+      cycle_sleep_interval_secs = {{ int64 $routineConf.sleepIntervalSecs | toString }}
       max_cycle_duration_secs = 900
 
 

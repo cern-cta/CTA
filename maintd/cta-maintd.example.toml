@@ -29,7 +29,7 @@
   # If omitted INFO is used.
   level = "INFO"
 
-  # Log format. Possible values are "kv" (key-value) and "json".
+  # Log format. Possible values are "json" and "kv" (key-value).
   # If omitted json is used.
   format = "json"
 
