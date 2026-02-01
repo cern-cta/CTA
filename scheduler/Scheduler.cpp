@@ -265,7 +265,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 6 : " + std::to_string(archiveFileId));
 
     // Opportunistic batching window
-    //std::this_thread::sleep_for(std::chrono::microseconds(100));
+    std::this_thread::sleep_for(std::chrono::microseconds(200));
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
 
     std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
