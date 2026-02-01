@@ -264,8 +264,8 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   if (isLeader) {
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 6 : " + std::to_string(archiveFileId));
 
-    // Opportunistic batching window
-    std::this_thread::sleep_for(std::chrono::microseconds(200));
+    // Opportunistic batching window - with 0 ms, it still bunches but then it calls at 200Hz - 5ms duration which we can batch to contact db less
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
 
     std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
