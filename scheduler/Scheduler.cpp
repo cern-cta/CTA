@@ -184,7 +184,7 @@ void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::Ar
         batch[i].promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
       }
     }
-    lc.log(log::INFO, "In Scheduler::processEnqueuedBatch() 6");
+    lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 6");
   } catch (const std::exception& e) {
     std::string err = std::string("queueArchive threw an exception: ") + e.what();
     lc.log(log::DEBUG, std::string("In Scheduler::processEnqueuedBatch() 7 ") + err);
@@ -264,7 +264,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 6 : " + std::to_string(archiveFileId));
 
     // Opportunistic batching window
-    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
 
     std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
