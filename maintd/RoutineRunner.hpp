@@ -41,8 +41,8 @@ public:
 private:
   void safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc);
 
-  const std::vector<std::unique_ptr<IRoutine>> m_routines;
   const RoutinesConfig& m_config;
+  const std::vector<std::unique_ptr<IRoutine>> m_routines;
 
   std::atomic<bool> m_running = false;
 

@@ -179,8 +179,9 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/LoggerParamTypeTest.cpp
   remoteFS/RemotePathTest.cpp
   CRCTest.cpp
+  runtime/ApplicationTest.cpp
   runtime/ConfigLoaderTest.cpp
-  runtime/CliArgParserTest.cpp
+  runtime/ArgParserTest.cpp
   runtime/signals/SignalReactorTest.cpp
   runtime/health/HealthServerTest.cpp
   process/threading/CondVarTest.cpp

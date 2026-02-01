@@ -27,7 +27,7 @@ int64_t nowSecs() {
 }
 
 RoutineRunner::RoutineRunner(const RoutinesConfig& routinesConfig, std::vector<std::unique_ptr<IRoutine>> routines)
-    : m_routinesConfig(routinesConfig),
+    : m_config(routinesConfig),
       m_routines(std::move(routines)) {}
 
 //------------------------------------------------------------------------------

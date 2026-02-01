@@ -46,14 +46,14 @@ concept HasStopFunction = requires(TApp& app) {
   { app.stop() } -> std::same_as<void>;
 };
 
-template<class TApp, class TConfig, class TOpts, class Logger>
-concept HasRunFunction = requires(TApp& app, const TConfig& cfg, const TOpts& opts, Logger& logger) {
-  { app.run(cfg, opts, logger) } -> std::same_as<int>;
-};
-
 template<class TApp, class TConfig, class Logger>
 concept HasRunFunction = requires(TApp& app, const TConfig& cfg, Logger& logger) {
   { app.run(cfg, logger) } -> std::same_as<int>;
+};
+
+template<class TApp, class TConfig, class TOpts, class Logger>
+concept HasRunFunctionWithOpts = requires(TApp& app, const TConfig& cfg, const TOpts& opts, Logger& logger) {
+  { app.run(cfg, opts, logger) } -> std::same_as<int>;
 };
 
 template<class TConfig>
@@ -86,6 +86,34 @@ concept HasCatalogueConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.catalogue)>, CatalogueConfig>;
 };
 
+//------------------------------------------------------------------------------
+// Utility Functions
+//------------------------------------------------------------------------------
+
+int safeRun(const std::function<int()>& func) noexcept {
+  int returnCode = EXIT_FAILURE;
+  try {
+    returnCode = func();
+  } catch (exception::UserError& ex) {
+    std::cerr << "FATAL: User Error:\n\t" << ex.getMessage().str() << std::endl;
+    return EXIT_FAILURE;
+  } catch (exception::Exception& ex) {
+    std::cerr << "FATAL: Caught an unexpected CTA exception:\n\t" << ex.getMessage().str() << std::endl;
+    return EXIT_FAILURE;
+  } catch (std::exception& se) {
+    std::cerr << "FATAL: Caught an unexpected exception:\n\t" << se.what() << std::endl;
+    return EXIT_FAILURE;
+  } catch (...) {
+    std::cerr << "FATAL: Caught an unexpected and unknown exception." << std::endl;
+    return EXIT_FAILURE;
+  }
+  return returnCode;
+}
+
+//------------------------------------------------------------------------------
+// Application
+//------------------------------------------------------------------------------
+
 /**
  * @brief
  *
@@ -101,14 +129,13 @@ public:
       : m_appName(appName),
         m_cliOptions(cliOptions),
         m_appConfig() {
-    assert(
-      !m_cliOptions
-         .showHelp);  // If we got here and help was supposed to show, then there is a bug in how the program was set up
+    // If we got here and help was supposed to show, then there is a bug in how the program was set up
+    assert(!m_cliOptions.showHelp);
 
-    if (!m_cliOptions.configPath.has_value()) {
-      m_cliOptions.configPath = "/etc/cta/" + m_appName + ".toml";
+    if (m_cliOptions.configFilePath.empty()) {
+      m_cliOptions.configFilePath = "/etc/cta/" + m_appName + ".toml";
     }
-    m_appConfig = runtime::loadFromToml<TConfig>(m_cliOptions.configPath.value(), m_cliOptions.configStrict);
+    m_appConfig = runtime::loadFromToml<TConfig>(m_cliOptions.configFilePath, m_cliOptions.configStrict);
 
     initLogging();
     m_signalReactorBuilder = std::make_unique<SignalReactorBuilder>(*m_logPtr);
@@ -121,32 +148,8 @@ public:
     return *this;
   }
 
-  // Utility functions. This one should always be used to wrap essentially all of main
-  static int safeRun(const std::function<int()>& func) noexcept {
-    int returnCode = EXIT_FAILURE;
-    try {
-      returnCode = func();
-    } catch (exception::UserError& ex) {
-      std::cerr << "FATAL: User Error:\n\t" << ex.getMessage().str() << std::endl;
-      return EXIT_FAILURE;
-    } catch (exception::Exception& ex) {
-      std::cerr << "FATAL: Caught an unexpected CTA exception:\n\t" << ex.getMessage().str() << std::endl;
-      return EXIT_FAILURE;
-    } catch (std::exception& se) {
-      std::cerr << "FATAL: Caught an unexpected exception:\n\t" << se.what() << std::endl;
-      return EXIT_FAILURE;
-    } catch (...) {
-      std::cerr << "FATAL: Caught an unexpected and unknown exception." << std::endl;
-      return EXIT_FAILURE;
-    }
-    return returnCode;
-  }
-
-  int run() noexcept
-    requires HasRunFunction<TApp, TConfig, TOpts, log::Logger>
-  {
-    cta::log::Logger& log = *m_logPtr;
-    runtime::Application::safeRunWithLog(log, [this]() {
+  int run() noexcept {
+    return safeRunWithLog(*m_logPtr, [this]() {
       auto signalReactor = m_signalReactorBuilder->build();
       signalReactor.start();
 
@@ -165,6 +168,7 @@ public:
       }
 
       // Start
+      cta::log::Logger& log = *m_logPtr;
       log(log::INFO, "Starting " + m_appName);
       return runApp(log);
     });
@@ -173,7 +177,7 @@ public:
 private:
   // SFINAE: allow an app to ignore the cliOptions if it does not use them
   int runApp(cta::log::Logger& log)
-    requires HasRunFunction<TApp, TConfig, TOpts, log::Logger>
+    requires HasRunFunctionWithOpts<TApp, TConfig, TOpts, log::Logger>
   {
     return m_app.run(m_appConfig, m_cliOptions, log);
   }
@@ -195,7 +199,7 @@ private:
     }
 
     try {
-      if (m_cliOptions.logToFile) {
+      if (!m_cliOptions.logFilePath.empty()) {
         m_logPtr = std::make_unique<log::FileLogger>(shortHostName, m_appName, m_cliOptions.logFilePath, log::INFO);
       } else {
         // Default to stdout logger
