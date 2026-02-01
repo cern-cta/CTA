@@ -72,6 +72,7 @@ void RoutineRunner::safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) 
 int RoutineRunner::run(const MaintdConfig& config, const MaintdCliOptions& cliOptions, cta::log::Logger& log) {
   m_config = config;
   cta::log::LogContext lc(log);
+  // TODO: bring back the middle man; should allow for a more functional-style approach with more const stuff
   RoutineRegistrar routineRegistrar(config, lc);
   routineRegistrar.registerRoutines(*this);
 
@@ -93,7 +94,7 @@ int RoutineRunner::run(const MaintdConfig& config, const MaintdCliOptions& cliOp
       }
     }
     m_sleepStartTime = nowSecs();
-    std::this_thread::sleep_for(std::chrono::seconds(m_config.routines.global_sleep_interval_secs));
+    std::this_thread::sleep_for(std::chrono::seconds(m_config.routines.cycle_sleep_interval_secs));
   }
   lc.log(log::DEBUG, "In RoutineRunner::run(): Stop requested.");
   return 0;
@@ -126,7 +127,7 @@ bool RoutineRunner::isLive() const {
   // The sleepStartTime is the most recent, so we are currently sleeping.
   // Check that we have not been sleeping for too long.
   // We need to give it a few extra seconds as the transition from sleeping to executing is not instant
-  return (nowSecs() - m_sleepStartTime) < m_config.routines.global_sleep_interval_secs + 5;
+  return (nowSecs() - m_sleepStartTime) < m_config.routines.cycle_sleep_interval_secs + 5;
 }
 
 }  // namespace cta::maintd
