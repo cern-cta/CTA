@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "common/exceptions/UserError.hpp"
+
 #include <algorithm>
 #include <cstdlib>
 #include <functional>
@@ -32,8 +34,8 @@ template<class T>
 concept HasRequiredCliOptions = requires(T& opts) {
   { opts.showHelp } -> std::convertible_to<bool>;
   { opts.configStrict } -> std::convertible_to<bool>;
-  requires std::convertible_to<decltype(opts.configFilePath), const std::string&>;
-  requires std::convertible_to<decltype(opts.logFilePath), const std::string&>;
+  requires std::same_as<std::remove_cvref_t<decltype(opts.configFilePath)>, std::optional<std::string>>;
+  requires std::same_as<std::remove_cvref_t<decltype(opts.logFilePath)>, std::optional<std::string>>;
 };
 
 // TODO: better exception handling
@@ -42,6 +44,7 @@ concept HasRequiredCliOptions = requires(T& opts) {
 //  runtime::ArgParser argParser(appName, opts);
 //  argParser.parser(argc, argv);
 // TODO example with custom args
+// TODO: no support for positional arguments yet, but should not be too complicated to add
 template<class T>
 class ArgParser {
 public:
@@ -67,7 +70,7 @@ public:
     arg.description = description;
     arg.apply = [this, field](std::optional<std::string_view> arg) {
       if (!arg.has_value() || arg.value().empty()) {
-        throw std::runtime_error("missing required argument");
+        throw exception::UserError("Missing required argument for option: --" + longFlag);
       }
       m_options.*field = std::string(arg.value());
     };
@@ -147,14 +150,12 @@ public:
         // optopt is set for short options; for long options, it's less helpful.
 
         // TODO: better error message
-        std::cerr << "Invalid option. Use --help to see valid options." << std::endl;
-        return std::nullopt;
+        throw exception::UserError("Invalid option. Use --help to see valid options.");
       }
 
       const auto it = valToIndex.find(c);
       if (it == valToIndex.end()) {
-        std::cerr << "Internal error: parsed option not mapped to a spec" << std::endl;
-        return std::nullopt;
+        throw exception::Exception("Internal error: parsed option not mapped to a spec.");
       }
 
       const ArgSpec& spec = m_arguments[it->second];
@@ -165,8 +166,7 @@ public:
       }
 
       if (spec.argKind == ArgKind::Required && !arg) {
-        std::cerr << "Missing argument for --" << spec.longFlag << std::endl;
-        return std::nullopt;
+        throw exception::UserError("Missing argument for --" + spec.longFlag);
       }
 
       // Dispatch

@@ -1,9 +1,9 @@
 /*
- * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2025 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "RoutineRegistrar.hpp"
+#include "RoutineRunnerFactory.hpp"
 
 #include "IRoutine.hpp"
 #include "catalogue/CatalogueFactory.hpp"
@@ -34,8 +34,10 @@ namespace cta::maintd {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-RoutineRegistrar::RoutineRegistrar(const MaintdConfig& config, cta::log::LogContext& lc) : m_config(config), m_lc(lc) {
-  m_lc.log(log::INFO, "In RoutineRegistrar::RoutineRegistrar(): Initialising Catalogue");
+RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config, cta::log::LogContext& lc)
+    : m_config(config),
+      m_lc(lc) {
+  m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Catalogue");
   const rdbms::Login catalogueLogin = rdbms::Login::parseFile(m_config.catalogue.config_file);
   const uint64_t nbConns = 1;
   const uint64_t nbArchiveFileListingConns = 1;
@@ -44,7 +46,7 @@ RoutineRegistrar::RoutineRegistrar(const MaintdConfig& config, cta::log::LogCont
 
   m_catalogue = catalogueFactory->create();
 
-  m_lc.log(log::INFO, "In RoutineRegistrar::RoutineRegistrar(): Initialising Scheduler");
+  m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Scheduler");
 
   // TODO: why are we manually putting "maintd" here?
   m_schedDbInit =
@@ -57,20 +59,22 @@ RoutineRegistrar::RoutineRegistrar(const MaintdConfig& config, cta::log::LogCont
   m_schedDb->setStatisticsCacheConfig(statisticsCacheConfig);
 
   m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_schedDb, config.scheduler.backend_name);
-  m_lc.log(log::INFO, "In RoutineRegistrar::RoutineRegistrar(): Scheduler and Catalogue initialised");
+  m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Scheduler and Catalogue initialised");
 }
 
 //------------------------------------------------------------------------------
-// RoutineRegistrar::registerRoutines
+// RoutineRunnerFactory::registerRoutines
 //------------------------------------------------------------------------------
-void RoutineRegistrar::registerRoutines(RoutineRunner& routineRunner) {
-  m_lc.log(log::INFO, "In RoutineRegistrar::registerRoutines(): Registring routines");
+void RoutineRunnerFactory::create() {
+  m_lc.log(log::INFO, "In RoutineRunnerFactory::registerRoutines(): Creating routines");
 
-  // Register all of the different routines
+  // Create all of the different routines
+
+  std::vector<std::unique_ptr<IRoutine>> routines;
 
   // Add Disk Reporter for Archive
   if (m_config.routines.disk_report_archive.enabled) {
-    routineRunner.registerRoutine(
+    routines.push_back(
       std::make_unique<DiskReportArchiveRoutine>(m_lc,
                                                  *m_scheduler,
                                                  m_config.routines.disk_report_archive.batch_size,
@@ -79,7 +83,7 @@ void RoutineRegistrar::registerRoutines(RoutineRunner& routineRunner) {
 
   // Add Disk Reporter for Retrieve
   if (m_config.routines.disk_report_retrieve.enabled) {
-    routineRunner.registerRoutine(
+    routines.push_back(
       std::make_unique<DiskReportRetrieveRoutine>(m_lc,
                                                   *m_scheduler,
                                                   m_config.routines.disk_report_retrieve.batch_size,
@@ -98,40 +102,40 @@ void RoutineRegistrar::registerRoutines(RoutineRunner& routineRunner) {
 #ifndef CTA_PGSCHED
   // Add Garbage Collector
   if (m_config.routines.garbage_collect.enabled) {
-    routineRunner.registerRoutine(std::make_unique<GarbageCollectRoutine>(m_lc,
-                                                                          m_schedDbInit->getBackend(),
-                                                                          m_schedDbInit->getAgentReference(),
-                                                                          *m_catalogue));
+    routines.push_back(std::make_unique<GarbageCollectRoutine>(m_lc,
+                                                               m_schedDbInit->getBackend(),
+                                                               m_schedDbInit->getAgentReference(),
+                                                               *m_catalogue));
   }
   // Add Queue Cleanup
   if (m_config.routines.queue_cleanup.enabled) {
-    routineRunner.registerRoutine(std::make_unique<QueueCleanupRoutine>(m_lc,
-                                                                        *m_schedDb,
-                                                                        *m_catalogue,
-                                                                        m_config.routines.queue_cleanup.batch_size));
+    routines.push_back(std::make_unique<QueueCleanupRoutine>(m_lc,
+                                                             *m_schedDb,
+                                                             *m_catalogue,
+                                                             m_config.routines.queue_cleanup.batch_size));
   }
 
   // Add Repack Expansion
   if (m_config.routines.repack_expand.enabled) {
-    routineRunner.registerRoutine(
+    routines.push_back(
       std::make_unique<RepackExpandRoutine>(m_lc, *m_scheduler, m_config.routines.repack_expand.max_to_toexpand));
   }
 
   // Add Repack Reporting
   if (m_config.routines.repack_report.enabled) {
-    routineRunner.registerRoutine(
+    routines.push_back(
       std::make_unique<RepackReportRoutine>(m_lc, *m_scheduler, m_config.routines.repack_report.soft_timeout_secs));
   }
 #else
   // Add User Archive and Retrieve Active Queue Cleanup
   if (m_config.routines.user_active_queue_cleanup.enabled) {
-    routineRunner.registerRoutine(std::make_unique<ArchiveInactiveMountActiveQueueRoutine>(
+    routines.push_back(std::make_unique<ArchiveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.routines.user_active_queue_cleanup.batch_size,
       m_config.routines.user_active_queue_cleanup.age_for_collection_secs));
-    routineRunner.registerRoutine(std::make_unique<RetrieveInactiveMountActiveQueueRoutine>(
+    routines.push_back(std::make_unique<RetrieveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
@@ -140,13 +144,13 @@ void RoutineRegistrar::registerRoutines(RoutineRunner& routineRunner) {
   }
   // Add Repack Archive and Repack Retrieve Active Queue Cleanup
   if (m_config.routines.repack_active_queue_cleanup.enabled) {
-    routineRunner.registerRoutine(std::make_unique<RepackArchiveInactiveMountActiveQueueRoutine>(
+    routines.push_back(std::make_unique<RepackArchiveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.routines.repack_active_queue_cleanup.batch_size,
       m_config.routines.repack_active_queue_cleanup.age_for_collection_secs));
-    routineRunner.registerRoutine(std::make_unique<RepackRetrieveInactiveMountActiveQueueRoutine>(
+    routines.push_back(std::make_unique<RepackRetrieveInactiveMountActiveQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
@@ -155,13 +159,13 @@ void RoutineRegistrar::registerRoutines(RoutineRunner& routineRunner) {
   }
   // Add User Archive and Repack Retrieve Pending Queue Cleanup
   if (m_config.routines.user_pending_queue_cleanup.enabled) {
-    routineRunner.registerRoutine(std::make_unique<ArchiveInactiveMountPendingQueueRoutine>(
+    routines.push_back(std::make_unique<ArchiveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.routines.user_pending_queue_cleanup.batch_size,
       m_config.routines.user_pending_queue_cleanup.age_for_collection_secs));
-    routineRunner.registerRoutine(std::make_unique<RetrieveInactiveMountPendingQueueRoutine>(
+    routines.push_back(std::make_unique<RetrieveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
@@ -170,13 +174,13 @@ void RoutineRegistrar::registerRoutines(RoutineRunner& routineRunner) {
   }
   // Add Repack Archive and Repack Retrieve Pending Queue Cleanup
   if (m_config.routines.repack_pending_queue_cleanup.enabled) {
-    routineRunner.registerRoutine(std::make_unique<RepackArchiveInactiveMountPendingQueueRoutine>(
+    routines.push_back(std::make_unique<RepackArchiveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
       m_config.routines.repack_pending_queue_cleanup.batch_size,
       m_config.routines.repack_pending_queue_cleanup.age_for_collection_secs));
-    routineRunner.registerRoutine(std::make_unique<RepackRetrieveInactiveMountPendingQueueRoutine>(
+    routines.push_back(std::make_unique<RepackRetrieveInactiveMountPendingQueueRoutine>(
       m_lc,
       *m_catalogue,
       *m_schedDb,
@@ -185,12 +189,12 @@ void RoutineRegistrar::registerRoutines(RoutineRunner& routineRunner) {
   }
   // Add Scheduler Maintenance Cleanup
   if (m_config.routines.scheduler_maintenance_cleanup.enabled) {
-    routineRunner.registerRoutine(std::make_unique<DeleteOldFailedQueuesRoutine>(
+    routines.push_back(std::make_unique<DeleteOldFailedQueuesRoutine>(
       m_lc,
       *m_schedDb,
       m_config.routines.scheduler_maintenance_cleanup.batch_size,
       m_config.routines.scheduler_maintenance_cleanup.age_for_deletion_secs));
-    routineRunner.registerRoutine(std::make_unique<CleanMountLastFetchTimeRoutine>(
+    routines.push_back(std::make_unique<CleanMountLastFetchTimeRoutine>(
       m_lc,
       *m_schedDb,
       m_config.routines.scheduler_maintenance_cleanup.batch_size,
@@ -198,7 +202,8 @@ void RoutineRegistrar::registerRoutines(RoutineRunner& routineRunner) {
   }
 #endif
 
-  m_lc.log(log::INFO, "In RoutineRegistrar::registerRoutines(): Routines registered");
+  m_lc.log(log::INFO, "In RoutineRunnerFactory::create(): Routines created");
+  return RoutineRunner(m_config.routines, std::move(routines));
 }
 
 }  // namespace cta::maintd

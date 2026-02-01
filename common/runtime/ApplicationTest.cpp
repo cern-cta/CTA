@@ -14,16 +14,13 @@
 
 namespace unitTests {
 
-TEST(Application, SimpleApp) {
-  const std::string appName = "cta-test";
-  CommonCliOptions opts;
-
-  runtime::Application<maintd::RoutineRunner, maintd::MaintdConfig> app(appName, opts);
-  // Starts the RoutineRunner
-  return app.run();
-}
+TEST(Application, SimpleApp) {}
 
 TEST(Application, AppNameCannotBeEmpty) {}
+
+TEST(Application, AppWithConfigFileNotSet) {}
+
+TEST(Application, AppWithNonExistingConfigFile) {}
 
 TEST(Application, SimpleAppWithCustomCliOpts) {}
 

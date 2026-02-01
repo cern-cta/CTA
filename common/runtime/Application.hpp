@@ -28,6 +28,9 @@
 
 namespace cta::runtime {
 
+//------------------------------------------------------------------------------
+// Compile time constraints
+//------------------------------------------------------------------------------
 template<class TApp>
 concept HasReadinessFunction = requires(const TApp& app) {
   { app.isReady() } -> std::same_as<bool>;
@@ -43,9 +46,14 @@ concept HasStopFunction = requires(TApp& app) {
   { app.stop() } -> std::same_as<void>;
 };
 
-template<class TApp, class TConfig, class TArgs, class Logger>
-concept HasRunFunction = requires(TApp& app, const TConfig& cfg, const TArgs& args, Logger& logger) {
-  { app.run(cfg, args, logger) } -> std::same_as<int>;
+template<class TApp, class TConfig, class TOpts, class Logger>
+concept HasRunFunction = requires(TApp& app, const TConfig& cfg, const TOpts& opts, Logger& logger) {
+  { app.run(cfg, opts, logger) } -> std::same_as<int>;
+};
+
+template<class TApp, class TConfig, class Logger>
+concept HasRunFunction = requires(TApp& app, const TConfig& cfg, Logger& logger) {
+  { app.run(cfg, logger) } -> std::same_as<int>;
 };
 
 template<class TConfig>
@@ -78,17 +86,30 @@ concept HasCatalogueConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.catalogue)>, CatalogueConfig>;
 };
 
-template<class TApp, class TConfig, class TArgs>
+/**
+ * @brief
+ *
+ * @tparam TApp The type of application. Several constraints are enforced on this application depending on what is in the config.
+ * @tparam TConfig The type of config to use for the application.
+ * @tparam TOpts The commandline options used to construct the config and the app.
+ */
+template<class TApp, class TConfig, class TOpts>
 class Application {
 public:
-  Application(const std::string& appName, TArgs cliOptions)
-    requires HasLoggingConfig<TConfig> && HasStopFunction<TApp> && HasRequiredCliOptions<TArgs>
+  Application(const std::string& appName, const TOpts& cliOptions)
+    requires HasLoggingConfig<TConfig> && HasStopFunction<TApp> && HasRequiredCliOptions<TOpts>
       : m_appName(appName),
         m_cliOptions(cliOptions),
-        m_appConfig(runtime::loadFromToml<TConfig>(m_cliOptions.configPath, m_cliOptions.configStrict)) {
+        m_appConfig() {
     assert(
       !m_cliOptions
          .showHelp);  // If we got here and help was supposed to show, then there is a bug in how the program was set up
+
+    if (!m_cliOptions.configPath.has_value()) {
+      m_cliOptions.configPath = "/etc/cta/" + m_appName + ".toml";
+    }
+    m_appConfig = runtime::loadFromToml<TConfig>(m_cliOptions.configPath.value(), m_cliOptions.configStrict);
+
     initLogging();
     m_signalReactorBuilder = std::make_unique<SignalReactorBuilder>(*m_logPtr);
     m_signalReactorBuilder->addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
@@ -100,61 +121,77 @@ public:
     return *this;
   }
 
-  // TODO: use SFINAE so that if the app doesn't need the commandline arguments it can still run. I.e. don't enforce an interface that is not necessary
-  int run()
-    requires HasRunFunction<TApp, TConfig, TArgs, log::Logger>
-  {
-    cta::log::Logger& log = *m_logPtr;
-
-    auto signalReactor = m_signalReactorBuilder->build();
-    signalReactor.start();
-
-    if constexpr (HasHealthServerConfig<TConfig>) {
-      static_assert(HasReadinessFunction<TApp> && HasLivenessFunction<TApp>,
-                    "Config has health_server, but app type lacks isReady()/isLive() methods");
-      initHealthServer();
-    }
-
-    if constexpr (HasTelemetryConfig<TConfig>) {
-      initTelemetry();
-    }
-
-    if constexpr (HasXRootDConfig<TConfig>) {
-      initXRootD();
-    }
-
-    // Start
+  // Utility functions. This one should always be used to wrap essentially all of main
+  static int safeRun(const std::function<int()>& func) noexcept {
     int returnCode = EXIT_FAILURE;
     try {
-      log(log::INFO, "Starting " + m_appName);
-      returnCode = m_app.run(m_appConfig, m_cliOptions, *m_logPtr);
+      returnCode = func();
+    } catch (exception::UserError& ex) {
+      std::cerr << "FATAL: User Error:\n\t" << ex.getMessage().str() << std::endl;
+      return EXIT_FAILURE;
     } catch (exception::Exception& ex) {
-      log(log::CRIT,
-          "FATAL: Caught an unexpected CTA exception",
-          {log::Param("exceptionMessage", ex.getMessage().str())});
-      sleep(1);
+      std::cerr << "FATAL: Caught an unexpected CTA exception:\n\t" << ex.getMessage().str() << std::endl;
       return EXIT_FAILURE;
     } catch (std::exception& se) {
-      log(log::CRIT, "FATAL: Caught an unexpected standard exception", {log::Param("error", se.what())});
-      sleep(1);
+      std::cerr << "FATAL: Caught an unexpected exception:\n\t" << se.what() << std::endl;
       return EXIT_FAILURE;
     } catch (...) {
-      log(log::CRIT, "FATAL: Caught an unexpected and unknown exception", {});
-      sleep(1);
+      std::cerr << "FATAL: Caught an unexpected and unknown exception." << std::endl;
       return EXIT_FAILURE;
     }
-    log(log::INFO, "Exiting " + m_appName);
     return returnCode;
   }
 
+  int run() noexcept
+    requires HasRunFunction<TApp, TConfig, TOpts, log::Logger>
+  {
+    cta::log::Logger& log = *m_logPtr;
+    runtime::Application::safeRunWithLog(log, [this]() {
+      auto signalReactor = m_signalReactorBuilder->build();
+      signalReactor.start();
+
+      if constexpr (HasHealthServerConfig<TConfig>) {
+        static_assert(HasReadinessFunction<TApp> && HasLivenessFunction<TApp>,
+                      "Config has health_server, but app type lacks isReady()/isLive() methods");
+        initHealthServer();
+      }
+
+      if constexpr (HasTelemetryConfig<TConfig>) {
+        initTelemetry();
+      }
+
+      if constexpr (HasXRootDConfig<TConfig>) {
+        initXRootD();
+      }
+
+      // Start
+      log(log::INFO, "Starting " + m_appName);
+      return runApp(log);
+    });
+  }
+
 private:
+  // SFINAE: allow an app to ignore the cliOptions if it does not use them
+  int runApp(cta::log::Logger& log)
+    requires HasRunFunction<TApp, TConfig, TOpts, log::Logger>
+  {
+    return m_app.run(m_appConfig, m_cliOptions, log);
+  }
+
+  int runApp(cta::log::Logger& log)
+    requires HasRunFunction<TApp, TConfig, log::Logger>
+  {
+    return m_app.run(m_appConfig, log);
+  }
+
   void initLogging() {
     using namespace cta;
     std::string shortHostName;
     try {
       shortHostName = utils::getShortHostname();
     } catch (const exception::Errnum& ex) {
-      throw cta::exception::Exception("Failed to get short host name: " + ex.getMessage().str());
+      std::cerr << "Failed to get short host name: " << ex.getMessage().str() << std::endl;
+      std::exit(EXIT_FAILURE);
     }
 
     try {
@@ -166,7 +203,8 @@ private:
       }
       m_logPtr->setLogFormat(m_appConfig.logging.format);
     } catch (exception::Exception& ex) {
-      throw cta::exception::Exception("Failed to instantiate CTA logging system: " + ex.getMessage().str());
+      std::cerr << "Failed to instantiate CTA logging system: " << ex.getMessage().str() << std::endl;
+      std::exit(EXIT_FAILURE);
     }
 
     m_logPtr->setLogMask(m_appConfig.logging.level);
@@ -228,14 +266,51 @@ private:
     // TODO: check the keytab here
   }
 
+  // TODO: For internal use
+  static int safeRunWithLog(log::Logger& log, const std::function<int()>& func) noexcept {
+    int returnCode = EXIT_FAILURE;
+    try {
+      returnCode = func();
+    } catch (exception::UserError& ex) {
+      log(log::CRIT,
+          "FATAL: User Error",
+          {
+            {"exceptionMessage", ex.getMessage().str()}
+      });
+      sleep(1);
+      return EXIT_FAILURE;
+    } catch (exception::Exception& ex) {
+      log(log::CRIT,
+          "FATAL: Caught an unexpected CTA exception",
+          {
+            {"exceptionMessage", ex.getMessage().str()}
+      });
+      sleep(1);
+      return EXIT_FAILURE;
+    } catch (std::exception& se) {
+      log(log::CRIT,
+          "FATAL: Caught an unexpected exception",
+          {
+            {"error", se.what()}
+      });
+      sleep(1);
+      return EXIT_FAILURE;
+    } catch (...) {
+      log(log::CRIT, "FATAL: Caught an unexpected and unknown exception", {});
+      sleep(1);
+      return EXIT_FAILURE;
+    }
+    return returnCode;
+  }
+
   const std::string m_appName;
 
   // The actual application class
   TApp m_app;
   // A struct representing the commandline arguments
-  const TArgs m_cliOptions;
+  TOpts m_cliOptions;
   // A struct containing all configuration
-  const TConfig m_appConfig;
+  TConfig m_appConfig;
 
   std::unique_ptr<SignalReactorBuilder> m_signalReactorBuilder;
   std::unique_ptr<HealthServer> m_healthServer;

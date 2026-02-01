@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2025 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -26,12 +26,9 @@ int64_t nowSecs() {
   return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
-//------------------------------------------------------------------------------
-// RoutineRunner::registerRoutine
-//------------------------------------------------------------------------------
-void RoutineRunner::registerRoutine(std::unique_ptr<IRoutine> routine) {
-  m_routines.emplace_back(std::move(routine));
-}
+RoutineRunner::RoutineRunner(const RoutinesConfig& routinesConfig, std::vector<std::unique_ptr<IRoutine>> routines)
+    : m_routinesConfig(routinesConfig),
+      m_routines(std::move(routines)) {}
 
 //------------------------------------------------------------------------------
 // RoutineRunner::stop
@@ -69,17 +66,10 @@ void RoutineRunner::safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) 
 //------------------------------------------------------------------------------
 // RoutineRunner::run
 //------------------------------------------------------------------------------
-int RoutineRunner::run(const MaintdConfig& config, const MaintdCliOptions& cliOptions, cta::log::Logger& log) {
-  m_config = config;
-  cta::log::LogContext lc(log);
-  // TODO: bring back the middle man; should allow for a more functional-style approach with more const stuff
-  RoutineRegistrar routineRegistrar(config, lc);
-  routineRegistrar.registerRoutines(*this);
-
+void RoutineRunner::run(cta::log::LogContext& lc) {
   // At least one routine should be enabled.
   if (m_routines.empty()) {
-    lc.log(log::ERR, "In RoutineRunner::run(): No routines enabled.");
-    return 1;
+    throw exception::UserError("No routines enabled.");
   }
   m_running = true;
   lc.log(log::DEBUG, "In RoutineRunner::run(): New run started.");
@@ -90,14 +80,14 @@ int RoutineRunner::run(const MaintdConfig& config, const MaintdCliOptions& cliOp
       safeRunRoutine(*routine, lc);
       if (!m_running) {
         lc.log(log::INFO, "In RoutineRunner::run(): Stop requested.");
-        return 0;
+        return;
       }
     }
     m_sleepStartTime = nowSecs();
-    std::this_thread::sleep_for(std::chrono::seconds(m_config.routines.cycle_sleep_interval_secs));
+    std::this_thread::sleep_for(std::chrono::seconds(m_config.cycle_sleep_interval_secs));
   }
   lc.log(log::DEBUG, "In RoutineRunner::run(): Stop requested.");
-  return 0;
+  return;
 }
 
 /**
@@ -122,12 +112,12 @@ bool RoutineRunner::isLive() const {
   // If the executionStartTime is the most recent, it means we are currently executing.
   if (m_executionStartTime > m_sleepStartTime) {
     // Check that we have not been executing for too long
-    return (nowSecs() - m_executionStartTime) < m_config.routines.max_cycle_duration_secs;
+    return (nowSecs() - m_executionStartTime) < m_config.max_cycle_duration_secs;
   }
   // The sleepStartTime is the most recent, so we are currently sleeping.
   // Check that we have not been sleeping for too long.
   // We need to give it a few extra seconds as the transition from sleeping to executing is not instant
-  return (nowSecs() - m_sleepStartTime) < m_config.routines.cycle_sleep_interval_secs + 5;
+  return (nowSecs() - m_sleepStartTime) < m_config.cycle_sleep_interval_secs + 5;
 }
 
 }  // namespace cta::maintd
