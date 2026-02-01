@@ -19,7 +19,7 @@
 
 namespace cta::runtime {
 
-struct ArgumentSpec {
+struct ArgSpec {
   std::optional<char> shortFlag;       // e.g. "c" (no dash), nullopt => no shorthand
   std::string longFlag;                // e.g. "help". Used to show --help
   std::optional<std::string> argName;  // e.g. "config-file". Used to show --config <config-file>
@@ -45,30 +45,22 @@ concept HasRequiredCliOptions = requires(T& opts) {
 template<class T>
 class ArgParser {
 public:
-  ArgParser(const std::string& appName, T& options)
+  ArgParser(const std::string& appName)
     requires HasRequiredCliOptions<T>
-      : m_appName(appName),
-        m_options(options) {
-    withBoolArgument(m_options.showHelp,
-                     "help",
-                     'h',
-                     "Print this help and exit",
-                     [this](std::optional<std::string_view>) {
-                       std::cout << usageString() << std::endl;
-                       std::exit(EXIT_SUCCESS);
-                     });
-    withBoolArgument(m_options.configStrict, "config-strict", std::nullopt, "Enable strict config checking");
-    withStringArgument(m_options.configFilePath, "config", 'c', "config-file", "Configuration file");
-    withStringArgument(m_options.logFilePath, "log-file", 'l', "path", "Path to log file");
+      : m_appName(appName) {
+    withBoolArg(&m_options::showHelp, "help", "h", "Show help");
+    withBoolArg(&m_options::configStrict, "config-strict", std::nullopt, "Enable strict config checking");
+    withStringArg(&m_options::configFilePath, "config", 'c', "config-file", "Configuration file");
+    withStringArg(&m_options::logFilePath, "log-file", 'l', "path", "Path to log file");
   }
 
-  void withStringArgument(std::string T::* field,
-                          const std::string& longFlag,
-                          std::optional<char> shortFlag,
-                          const std::string& argName,
-                          const std::string& description) {
+  void withStringArg(std::string T::* field,
+                     const std::string& longFlag,
+                     std::optional<char> shortFlag,
+                     const std::string& argName,
+                     const std::string& description) {
     // assert the long flag and short flags are unique
-    ArgumentSpec arg;
+    ArgSpec arg;
     arg.longFlag = longFlag;
     arg.shortFlag = shortFlag;
     arg.argName = argName;
@@ -82,30 +74,22 @@ public:
     m_arguments.push_back(arg);
   }
 
-  void withBoolArgument(bool TOptions::* field,
-                        const std::string& longFlag,
-                        std::optional<char> shortFlag,
-                        const std::string& description) {
-    // Assert bool is false
-    withBoolArgument(flag, longFlag, shortFlag, description, [this, field](std::optional<std::string_view>) {
-      m_options.*field = true;
-    });
-  }
-
-  void withBoolArgument(const std::string& longFlag,
-                        std::optional<char> shortFlag,
-                        const std::string& description,
-                        std::function<void(std::optional<std::string_view>)> apply) {
-    ArgumentSpec arg;
+  void withBoolArg(bool TOptions::* field,
+                   const std::string& longFlag,
+                   std::optional<char> shortFlag,
+                   const std::string& description) {
+    // assert the long flag and short flags are unique
+    ArgSpec arg;
     arg.longFlag = longFlag;
     arg.shortFlag = shortFlag;
-    arg.argName = {};
+    arg.argName = argName;
     arg.description = description;
-    arg.apply = apply;
-    m_arguments.push_back(arg);
+    // Assert bool is false
+    arg.apply = [this, field](std::optional<std::string_view>) { m_options.*field = true; };
   }
 
-  void parseOptions(const int argc, char** const argv) {
+  // Maybe Throw exceptions here?
+  std::optional<T> parseOptions(const int argc, char** const argv) {
     // Build short option string and long option array
     std::string shortopts;
     shortopts.reserve(m_arguments.size() * 2);
@@ -120,7 +104,8 @@ public:
     int nextLongOnlyVal = 256;  // avoid collision with ASCII short flags
 
     for (std::size_t i = 0; i < m_arguments.size(); ++i) {
-      const ArgumentSpec& s = m_arguments[i];
+      // TODO: change exceptions to error codes
+      const ArgSpec& s = m_arguments[i];
 
       int val = 0;
       if (s.shortFlag) {
@@ -130,7 +115,6 @@ public:
         if (s.argName.has_value()) {
           shortopts.push_back(':');
         }
-        // if you add Optional later: shortopts.append("::");
       } else {
         val = nextLongOnlyVal++;
       }
@@ -161,15 +145,19 @@ public:
       if (c == '?' || c == ':') {
         // Unknown option or missing required argument.
         // optopt is set for short options; for long options, it's less helpful.
-        throw std::runtime_error("Invalid option. Use --help to see valid options.");
+
+        // TODO: better error message
+        std::cerr << "Invalid option. Use --help to see valid options." << std::endl;
+        return std::nullopt;
       }
 
       const auto it = valToIndex.find(c);
       if (it == valToIndex.end()) {
-        throw std::runtime_error("Internal error: parsed option not mapped to a spec");
+        std::cerr << "Internal error: parsed option not mapped to a spec" << std::endl;
+        return std::nullopt;
       }
 
-      const ArgumentSpec& spec = m_arguments[it->second];
+      const ArgSpec& spec = m_arguments[it->second];
 
       std::optional<std::string_view> arg;
       if (optarg) {
@@ -177,7 +165,8 @@ public:
       }
 
       if (spec.argKind == ArgKind::Required && !arg) {
-        throw std::runtime_error("Missing argument for --" + spec.longFlag);
+        std::cerr << "Missing argument for --" << spec.longFlag << std::endl;
+        return std::nullopt;
       }
 
       // Dispatch
@@ -186,6 +175,12 @@ public:
 
     // Optional: treat remaining args as positional
     // for (int i = optind; i < argc; ++i) { ... }
+
+    if (m_options.showHelp) {
+      std::cout << usageString() << std::endl;
+      std::exit(EXIT_SUCCESS);  // TODO: can we return here somehow?
+    }
+    return m_options;
   }
 
 private:
@@ -194,7 +189,7 @@ private:
                         + " [options]\n\n"
                           "Options:\n\n";
 
-    auto formatLeft = [](const ArgumentSpec& s) -> std::string {
+    auto formatLeft = [](const ArgSpec& s) -> std::string {
       std::string left;
 
       if (s.shortFlag) {
@@ -244,8 +239,8 @@ private:
   }
 
   const std::string m_appName;
-  std::vector<ArgumentSpec> m_arguments;
+  std::vector<ArgSpec> m_arguments;
   T& m_options;
-}
+};
 
 }  // namespace cta::runtime

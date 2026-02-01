@@ -66,14 +66,19 @@
   # Overrides XrdSecSSSKT
   sss_keytab_path = "/etc/cta/cta.sss.keytab"
 
-[routines]
-  # All routines run sequentially: A -> B -> C -> sleep -> A -> B -> C -> sleep ...
-  # This value defines the sleep interval between all routines
-  # If omitted, 10 is used.
-  global_sleep_interval_secs = 10
 
-  # The maximum duration in seconds a full cycle of routine execution is allowed to take.
-  # A full cycle of routine execution refers to executing all enabled routines once and excludes the sleep interval.
+# Maintd runs all routines sequentially: A -> B -> C -> sleep -> A -> B -> C -> sleep ...
+# Here [A -> B -> C] is a single cycle of routine execution.
+# A full cycle of routine execution refers to executing all enabled routines once and excludes the sleep interval.
+# Due to this operating model, it is not possible to define different sleep intervals per routine.
+# If this behaviour is desired, it is recommended to run several maintd processes, each with only one routine enabled.
+# At that point, a cycle consists of a single routine and cycle_sleep_interval_secs effectively becomes a per-routine sleep interval.
+[routines]
+  # The sleep duration in between cycles of routine executions.
+  # If omitted, 10 is used.
+  cycle_sleep_interval_secs = 10
+
+  # The maximum duration in seconds a single cycle of routine execution is allowed to take.
   # If omitted, 900 is used (15 minutes).
   max_cycle_duration_secs = 900
 

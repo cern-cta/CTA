@@ -54,7 +54,7 @@ struct SchedulerMaintenanceCleanupRoutineConfig {
 #endif
 
 struct RoutinesConfig {
-  int global_sleep_interval_secs = 10;
+  int cycle_sleep_interval_secs = 10;
   int max_cycle_duration_secs = 900;
 
   DiskReportRoutineConfig disk_report_archive;
