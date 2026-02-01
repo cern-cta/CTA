@@ -76,7 +76,7 @@ spec:
           httpGet:
             path: /health/live
             port: 8080
-          initialDelaySeconds: 30 # It relies on the last routine executed. Give it some time to execute a routine
+          initialDelaySeconds: 5
           periodSeconds: 60
           failureThreshold: 2
         securityContext:
@@ -95,10 +95,6 @@ spec:
           value: "xterm"
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote }}
-        - name: XrdSecPROTOCOL
-          value: sss
-        - name: XrdSecSSSKT
-          value: /etc/cta/cta-maintd.sss.keytab
         {{- with $.Values.extraEnv }}
         {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
@@ -106,7 +102,7 @@ spec:
         - name: scripts-volume
           mountPath: /scripts
         - name: cta-maintd-config
-          mountPath: /etc/cta/cta-maintd.conf
+          mountPath: /etc/cta/cta-maintd.toml
           subPath: cta-maintd.conf
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf

@@ -95,13 +95,13 @@ int safeRun(const std::function<int()>& func) noexcept {
   try {
     returnCode = func();
   } catch (exception::UserError& ex) {
-    std::cerr << "FATAL: User Error:\n\t" << ex.getMessage().str() << std::endl;
+    std::cerr << "FATAL:\n" << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   } catch (exception::Exception& ex) {
-    std::cerr << "FATAL: Caught an unexpected CTA exception:\n\t" << ex.getMessage().str() << std::endl;
+    std::cerr << "FATAL: Caught an unexpected CTA exception:\n" << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   } catch (std::exception& se) {
-    std::cerr << "FATAL: Caught an unexpected exception:\n\t" << se.what() << std::endl;
+    std::cerr << "FATAL: Caught an unexpected exception:\n" << se.what() << std::endl;
     return EXIT_FAILURE;
   } catch (...) {
     std::cerr << "FATAL: Caught an unexpected and unknown exception." << std::endl;
@@ -136,8 +136,15 @@ public:
       m_cliOptions.configFilePath = "/etc/cta/" + m_appName + ".toml";
     }
     m_appConfig = runtime::loadFromToml<TConfig>(m_cliOptions.configFilePath, m_cliOptions.configStrict);
+    if (cliOptions.configCheck) {
+      std::cout << "Config check passed." << std::endl;
+      std::exit(EXIT_SUCCESS);
+    }
 
     initLogging();
+
+    cta::log::Logger& log = *m_logPtr;
+    log(log::INFO, "Initialising application: " + m_appName);
     m_signalReactorBuilder = std::make_unique<SignalReactorBuilder>(*m_logPtr);
     m_signalReactorBuilder->addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
     m_signalReactorBuilder->addSignalFunction(SIGUSR1, [this]() { m_logPtr->refresh(); });

@@ -28,6 +28,7 @@ static std::unique_ptr<opentelemetry::sdk::configuration::ConfiguredSdk> sdk;
 void initOpenTelemetry(const std::string& configFile,
                        const std::map<std::string, std::string>& ctaResourceAttributes,
                        cta::log::LogContext& lc) {
+  lc.log(log::INFO, "In initOpenTelemetry(): Initialising OpenTelemetry");
   // Before we get started, populate the CTA_OTEL_RESOURCE_ATTRIBUTES environment variable
   // This allows operators to reference these in the declarative config
 
@@ -76,7 +77,7 @@ void initOpenTelemetry(const std::string& configFile,
   sdk->Install();
   // Ensure all of our instruments are re-initialised to use the newly configured SDK
   cta::telemetry::metrics::initAllInstruments();
-  lc.log(log::INFO, "In initOpenTelemetry(): OpenTelemetry was instantiated successfully");
+  lc.log(log::INFO, "In initOpenTelemetry(): OpenTelemetry was initialised successfully");
 }
 
 void cleanupOpenTelemetry(cta::log::LogContext& lc) {

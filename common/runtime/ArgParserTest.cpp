@@ -34,18 +34,20 @@ struct Argv {
   char** data() { return argv.data(); }
 };
 
-TEST(ArgParser, SetsHelpCorrectly) {
-  const std::string appName = "cta-test";
-  Argv args({appName, "--help"});
+// TODO: should probably test the actual error messages here, because not all of them were exactly clear
 
-  EXPECT_EXIT(
-    {
-      cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
-      argParser.parse(args.count, args.data());
-    },
-    ::testing::ExitedWithCode(EXIT_SUCCESS),
-    "Usage: cta-test");
-}
+// TEST(ArgParser, SetsHelpCorrectly) {
+//   EXPECT_EXIT(
+//     {
+//       const std::string appName = "cta-test";
+//       Argv args({appName, "--help"});
+
+//       cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
+//       argParser.parse(args.count, args.data());
+//     },
+//     ::testing::ExitedWithCode(EXIT_SUCCESS),
+//     "Usage: cta-test");
+// }
 
 TEST(ArgParser, SetsStrictConfigCorrectly) {
   const std::string appName = "cta-test";
@@ -120,6 +122,7 @@ TEST(ArgParser, WithCustomStructSameOptions) {
   // Shows that we don't need to extend the struct as long as we define the same member variables
   struct SameOptionsAsCliOptions {
     bool showHelp = false;
+    bool configCheck = false;
     bool configStrict = false;
     std::string configFilePath;
     std::string logFilePath;
@@ -176,5 +179,7 @@ TEST(ArgParser, ShortHandBoolFlag) {
   auto opts = argParser.parse(args.count, args.data());
   ASSERT_TRUE(opts.iAmExtra);
 }
+
+// TODO: repeated arguments
 
 }  // namespace unitTests

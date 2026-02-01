@@ -40,10 +40,10 @@ void RoutineRunner::safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) 
   log::ScopedParamContainer params(lc);
   params.add("routine", routine.getName());
   try {
-    lc.log(log::INFO, "Routine started");
+    lc.log(log::INFO, "In RoutineRunner::safeRunRoutine(): Routine started");
     cta::utils::Timer t;
     routine.execute();
-    lc.log(log::INFO, "Routine finished");
+    lc.log(log::INFO, "In RoutineRunner::safeRunRoutine(): Routine finished");
     cta::telemetry::metrics::ctaMaintdRoutineDuration->Record(
       t.msecs(),
       {

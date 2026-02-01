@@ -29,6 +29,10 @@
   # If omitted INFO is used.
   level = "INFO"
 
+  # Log format. Possible values are "kv" (key-value) and "json".
+  # If omitted json is used.
+  format = "json"
+
   # The following key-value pairs are added to all log lines.
   # All keys are optional as this is purely for monitoring purposes.
   [logging.attributes]
@@ -84,7 +88,7 @@
 
 
   # Routine-specific settings.
-  repack_expand        = { enabled = true, max_to_toexpand = 2 }
+  repack_expand        = { enabled = true, max_to_to_expand = 2 }
   repack_report        = { enabled = true, soft_timeout_secs = 30 }
   disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
   disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }

@@ -15,42 +15,52 @@ metadata:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
   cta-maintd.conf: |-
-    # General
-    cta.instance_name {{ $.Release.Namespace }}
-    cta.scheduler_backend_name {{ $schedulerConfig.backend }}
 
-    cta.log.level {{ $.Values.conf.logLevel }}
-    cta.log.format json
+    [catalogue]
+      config_file = "/etc/cta/cta-catalogue.conf"
 
-    cta.catalogue.config_file /etc/cta/cta-catalogue.conf
-    cta.objectstore.backendpath {{ include "global.schedulerUrl" $ }}
+    [scheduler]
+      backend_name = {{ $schedulerConfig.backend | quote }}
+      objectstore_backend_path = {{ include "global.schedulerUrl" $ | quote }}
+      tape_cache_max_age_secs = {{ $.Values.scheduler.tapeCacheMaxAgeSecs }}
+      retrieve_queue_cache_max_age_secs = {{ $.Values.scheduler.retrieveQueueCacheMaxAgeSecs }}
 
-    cta.schedulerdb.tape_cache_max_age_secs {{ $.Values.conf.tapeCacheMaxAgeSecs }}
-    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ $.Values.conf.retrieveQueueCacheMaxAgeSecs }}
+    [logging]
+      level = {{ $.Values.logging.level | quote }}
+      format = "json"
+      [logging.attributes]
+        instance = {{ $.Release.Namespace | quote }}
 
-    cta.routines.sleep_interval {{ int64 $routineConf.sleepInterval | toString }}
+    [telemetry]
+      config = "/etc/cta/cta-otel.yaml"
 
-    {{- /* We should set the options for ALL routines here, but we only enable the "current" routine */ -}}
-    {{- range $name, $conf := $allRoutines }}
-    cta.routines.{{ include "common.toSnakeCase" $name }}.enabled {{ ternary "true" "false" (eq $name $routineName) }}
-    {{- range $k, $v := (omit $conf "replicas" "sleepInterval") }}
-    cta.routines.{{ include "common.toSnakeCase" $name }}.{{ include "common.toSnakeCase" $k }} {{ include "common.stringOrNumber" $v }}
-    {{- end }}
-    {{ end }}
+    [health_server]
+      enabled = true
+      host = "0.0.0.0"
+      port = 8080
 
-    ## Health
+    [xrootd]
+      # Overrides XrdSecPROTOCOL
+      security_protocol = "sss"
+      # Overrides XrdSecSSSKT
+      sss_keytab_path = "/etc/cta/cta-maintd.sss.keytab"
 
-    cta.health_server.enabled true
-    # For k8s health probes to work, this cannot only accept connections from localhost
-    cta.health_server.host 0.0.0.0
-    cta.health_server.port 8080
-    # This is a temporary hack to make CI happy.
-    # Will be fixed by https://gitlab.cern.ch/cta/CTA/-/issues/1517
-    cta.health_server.liveness_window 90000
+    [routines]
+      cycle_sleep_interval_secs = {{ int64 $routineConf.sleepInterval | toString }}
+      max_cycle_duration_secs = 900
 
-    # Telemetry
-    cta.experimental.telemetry.enabled true
-    cta.telemetry.config /etc/cta/cta-otel.yaml
+
+      {{- /* We should set the options for ALL routines here, but we only enable the "current" routine */ -}}
+      {{- range $name, $conf := $allRoutines }}
+      {{ include "common.toSnakeCase" $name }}.enabled = {{ ternary "true" "false" (eq $name $routineName) }}
+      {{- range $k, $v := (omit $conf "replicas" "sleepInterval") }}
+      {{ include "common.toSnakeCase" $name }}.{{ include "common.toSnakeCase" $k }} = {{ include "common.stringOrNumber" $v }}
+      {{- end }}
+      {{ end }}
+
+    [experimental]
+      telemetry_enabled = true
+
 ---
 {{- end }}
 

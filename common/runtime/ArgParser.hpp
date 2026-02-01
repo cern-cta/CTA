@@ -45,9 +45,13 @@ public:
     requires HasRequiredCliOptions<T>
       : m_appName(appName) {
     withBoolArg(&T::showHelp, "help", 'h', "Show help");
-    withBoolArg(&T::configStrict, "config-strict", std::nullopt, "Enable strict config checking");
-    withStringArg(&T::configFilePath, "config", 'c', "config-file", "Configuration file");
     withStringArg(&T::logFilePath, "log-file", 'l', "path", "Path to log file");
+    withStringArg(&T::configFilePath, "config", 'c', "config-file", "Configuration file");
+    withBoolArg(&T::configStrict, "config-strict", std::nullopt, "Enable strict config checking");
+    withBoolArg(&T::configCheck,
+                "config-check",
+                std::nullopt,
+                "Instead of running the application, performs validation of the config file");
   }
 
   void withStringArg(std::string T::* field,
@@ -86,12 +90,10 @@ public:
     m_supportedArgs.push_back(arg);
   }
 
-  // Maybe Throw exceptions here?
   T parse(const int argc, char** const argv) {
     // Build short option string and long option array
     std::string shortopts;
     shortopts.reserve(m_supportedArgs.size() * 2);
-
     std::vector<option> longopts;
     longopts.reserve(m_supportedArgs.size() + 1);
 
@@ -167,7 +169,7 @@ public:
       spec.apply(arg);
     }
 
-    // Optional: treat remaining args as positional
+    // If we ever want to add positional arguments, do that here:
     // for (int i = optind; i < argc; ++i) { ... }
 
     if (m_options.showHelp) {

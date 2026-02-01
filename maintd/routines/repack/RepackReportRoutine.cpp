@@ -17,7 +17,7 @@ RepackReportRoutine::RepackReportRoutine(cta::log::LogContext& lc, cta::Schedule
       m_softTimeout(timeout) {
   log::ScopedParamContainer params(m_lc);
   params.add("softTimeout", timeout);
-  m_lc.log(cta::log::INFO, "Created RepackReportRoutine");
+  m_lc.log(cta::log::INFO, "In RepackReportRoutine: Created RepackReportRoutine");
 }
 
 void RepackReportRoutine::execute() {

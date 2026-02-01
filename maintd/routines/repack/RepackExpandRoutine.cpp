@@ -16,7 +16,7 @@ RepackExpandRoutine::RepackExpandRoutine(cta::log::LogContext& lc, cta::Schedule
       m_repackMaxRequestsToToExpand(maxRequestsToToExpand) {
   log::ScopedParamContainer params(m_lc);
   params.add("maxRequestsToToExpand", maxRequestsToToExpand);
-  m_lc.log(cta::log::INFO, "Created RepackExpandRoutine");
+  m_lc.log(cta::log::INFO, "In RepackExpandRoutine: Created RepackExpandRoutine");
 }
 
 void RepackExpandRoutine::execute() {

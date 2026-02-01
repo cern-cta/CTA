@@ -23,7 +23,7 @@ DiskReportRetrieveRoutine::DiskReportRetrieveRoutine(cta::log::LogContext& lc,
   log::ScopedParamContainer params(m_lc);
   params.add("softTimeout", softTimeout);
   params.add("batchSize", batchSize);
-  m_lc.log(cta::log::INFO, "Created DiskReportRetrieveRoutine");
+  m_lc.log(cta::log::INFO, "In DiskReportRetrieveRoutine: Created DiskReportRetrieveRoutine");
 }
 
 void DiskReportRetrieveRoutine::execute() {
