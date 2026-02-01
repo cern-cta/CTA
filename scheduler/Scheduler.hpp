@@ -606,6 +606,12 @@ private:
   std::mutex m_mutexOpportunisticBatching;
   std::condition_variable m_cvOpportunisticBatching;
   std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> m_opportunisticInsertBatch;
+  std::unordered_map<cta::common::dataStructures::ArchiveInsertQueueCriteriaKey,
+                     cta::common::dataStructures::ArchiveInsertQueueCriteria,
+                     cta::common::dataStructures::ArchiveInsertQueueCriteriaKeyHash>
+    m_archiveInsertQueueCriteriaCache;
+  size_t m_archiveInsertQueueCriteriaCacheMaxSize = 10000;
+
 };  // class Scheduler
 
 }  // namespace cta
