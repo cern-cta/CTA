@@ -240,4 +240,6 @@ default_value = "hi"
   EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
+TEST(ConfigLoader, EnumHandling) {}
+
 }  // namespace unitTests

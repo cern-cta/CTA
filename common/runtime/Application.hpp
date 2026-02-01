@@ -86,6 +86,9 @@ public:
       : m_appName(appName),
         m_cliOptions(cliOptions),
         m_appConfig(runtime::loadFromToml<TConfig>(m_cliOptions.configPath, m_cliOptions.configStrict)) {
+    assert(
+      !m_cliOptions
+         .showHelp);  // If we got here and help was supposed to show, then there is a bug in how the program was set up
     initLogging();
     m_signalReactorBuilder = std::make_unique<SignalReactorBuilder>(*m_logPtr);
     m_signalReactorBuilder->addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
