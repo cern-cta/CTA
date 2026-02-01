@@ -11,7 +11,8 @@ eos vid enable https
 eos space set default on
 eos space config default space.filearchivedgc=on
 eos space config default space.wfe=on
-eos space config default space.wfe.ntx=100
+eos space config default space.wfe.ntx=500
+eos space config default space.wfe.interval=1
 eos space config default taperestapi.status=on
 eos space config default taperestapi.stage=on
 eos space config default space.scanrate=0
