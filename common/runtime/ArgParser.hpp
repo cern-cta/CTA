@@ -5,9 +5,11 @@
 
 #pragma once
 
-#include "common/exceptions/UserError.hpp"
+#include "CommonCliOptions.hpp"
+#include "common/exception/UserError.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <functional>
 #include <getopt.h>
@@ -30,14 +32,6 @@ struct ArgSpec {
   std::function<void(std::optional<std::string_view>)> apply;
 };
 
-template<class T>
-concept HasRequiredCliOptions = requires(T& opts) {
-  { opts.showHelp } -> std::convertible_to<bool>;
-  { opts.configStrict } -> std::convertible_to<bool>;
-  requires std::same_as<std::remove_cvref_t<decltype(opts.configFilePath)>, std::optional<std::string>>;
-  requires std::same_as<std::remove_cvref_t<decltype(opts.logFilePath)>, std::optional<std::string>>;
-};
-
 // TODO: better exception handling
 // Basic usage
 //  runtime::CommonCliOptions opts;
@@ -51,10 +45,10 @@ public:
   ArgParser(const std::string& appName)
     requires HasRequiredCliOptions<T>
       : m_appName(appName) {
-    withBoolArg(&m_options::showHelp, "help", "h", "Show help");
-    withBoolArg(&m_options::configStrict, "config-strict", std::nullopt, "Enable strict config checking");
-    withStringArg(&m_options::configFilePath, "config", 'c', "config-file", "Configuration file");
-    withStringArg(&m_options::logFilePath, "log-file", 'l', "path", "Path to log file");
+    withBoolArg(&T::showHelp, "help", 'h', "Show help");
+    withBoolArg(&T::configStrict, "config-strict", std::nullopt, "Enable strict config checking");
+    withStringArg(&T::configFilePath, "config", 'c', "config-file", "Configuration file");
+    withStringArg(&T::logFilePath, "log-file", 'l', "path", "Path to log file");
   }
 
   void withStringArg(std::string T::* field,
@@ -68,16 +62,17 @@ public:
     arg.shortFlag = shortFlag;
     arg.argName = argName;
     arg.description = description;
-    arg.apply = [this, field](std::optional<std::string_view> arg) {
-      if (!arg.has_value() || arg.value().empty()) {
-        throw exception::UserError("Missing required argument for option: --" + longFlag);
+    arg.apply = [this, field, longFlag](std::optional<std::string_view> argVal) {
+      if (!argVal.has_value() || argVal.value().empty()) {
+        throw cta::exception::UserError("Missing required argument for option: --" + longFlag);
       }
-      m_options.*field = std::string(arg.value());
+      m_options.*field = std::string(argVal.value());
     };
-    m_arguments.push_back(arg);
+    assertCorrectArgSpec(arg);
+    m_supportedArgs.push_back(arg);
   }
 
-  void withBoolArg(bool TOptions::* field,
+  void withBoolArg(bool T::* field,
                    const std::string& longFlag,
                    std::optional<char> shortFlag,
                    const std::string& description) {
@@ -85,30 +80,31 @@ public:
     ArgSpec arg;
     arg.longFlag = longFlag;
     arg.shortFlag = shortFlag;
-    arg.argName = argName;
     arg.description = description;
     // Assert bool is false
     arg.apply = [this, field](std::optional<std::string_view>) { m_options.*field = true; };
+    assertCorrectArgSpec(arg);
+    m_supportedArgs.push_back(arg);
   }
 
   // Maybe Throw exceptions here?
-  std::optional<T> parseOptions(const int argc, char** const argv) {
+  T parse(const int argc, char** const argv) {
     // Build short option string and long option array
     std::string shortopts;
-    shortopts.reserve(m_arguments.size() * 2);
+    shortopts.reserve(m_supportedArgs.size() * 2);
 
     std::vector<option> longopts;
-    longopts.reserve(m_arguments.size() + 1);
+    longopts.reserve(m_supportedArgs.size() + 1);
 
     // Map getopt_long return value -> spec index
     std::unordered_map<int, std::size_t> valToIndex;
-    valToIndex.reserve(m_arguments.size());
+    valToIndex.reserve(m_supportedArgs.size());
 
     int nextLongOnlyVal = 256;  // avoid collision with ASCII short flags
 
-    for (std::size_t i = 0; i < m_arguments.size(); ++i) {
+    for (std::size_t i = 0; i < m_supportedArgs.size(); ++i) {
       // TODO: change exceptions to error codes
-      const ArgSpec& s = m_arguments[i];
+      const ArgSpec& s = m_supportedArgs[i];
 
       int val = 0;
       if (s.shortFlag) {
@@ -150,23 +146,23 @@ public:
         // optopt is set for short options; for long options, it's less helpful.
 
         // TODO: better error message
-        throw exception::UserError("Invalid option. Use --help to see valid options.");
+        throw cta::exception::UserError("Invalid option. Use --help to see valid options.");
       }
 
       const auto it = valToIndex.find(c);
       if (it == valToIndex.end()) {
-        throw exception::Exception("Internal error: parsed option not mapped to a spec.");
+        throw cta::exception::Exception("Internal error: parsed option not mapped to a spec.");
       }
 
-      const ArgSpec& spec = m_arguments[it->second];
+      const ArgSpec& spec = m_supportedArgs[it->second];
 
       std::optional<std::string_view> arg;
       if (optarg) {
         arg = std::string_view {optarg};
       }
 
-      if (spec.argKind == ArgKind::Required && !arg) {
-        throw exception::UserError("Missing argument for --" + spec.longFlag);
+      if (spec.argName.has_value() && !arg) {
+        throw cta::exception::UserError("Missing argument for --" + spec.longFlag);
       }
 
       // Dispatch
@@ -212,9 +208,9 @@ private:
 
     std::size_t leftWidth = 0;
     std::vector<std::pair<std::string, std::string>> rows;
-    rows.reserve(m_arguments.size());
+    rows.reserve(m_supportedArgs.size());
 
-    for (const auto& s : m_arguments) {
+    for (const auto& s : m_supportedArgs) {
       std::string left = formatLeft(s);
       leftWidth = std::max(leftWidth, left.size());
       rows.emplace_back(std::move(left), s.description);
@@ -238,9 +234,28 @@ private:
     return usage;
   }
 
+  // Uses assertions as its aim is to prevent the developer from making a mistake
+  void assertCorrectArgSpec(const ArgSpec& arg) const {
+    assert(!arg.longFlag.empty());
+    assert(!arg.description.empty());
+    if (arg.shortFlag) {
+      assert(*arg.shortFlag != '\0');
+    }
+    if (arg.argName) {
+      assert(!arg.argName->empty());
+    }
+    //uniqueness checks
+    for (const auto& existing : m_supportedArgs) {
+      assert(existing.longFlag != arg.longFlag);
+      if (arg.shortFlag && existing.shortFlag) {
+        assert(*existing.shortFlag != *arg.shortFlag);
+      }
+    }
+  }
+
   const std::string m_appName;
-  std::vector<ArgSpec> m_arguments;
-  T& m_options;
+  std::vector<ArgSpec> m_supportedArgs;
+  T m_options;
 };
 
 }  // namespace cta::runtime

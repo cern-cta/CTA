@@ -65,7 +65,7 @@ RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config, cta::log:
 //------------------------------------------------------------------------------
 // RoutineRunnerFactory::registerRoutines
 //------------------------------------------------------------------------------
-void RoutineRunnerFactory::create() {
+std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   m_lc.log(log::INFO, "In RoutineRunnerFactory::registerRoutines(): Creating routines");
 
   // Create all of the different routines
@@ -203,7 +203,7 @@ void RoutineRunnerFactory::create() {
 #endif
 
   m_lc.log(log::INFO, "In RoutineRunnerFactory::create(): Routines created");
-  return RoutineRunner(m_config.routines, std::move(routines));
+  return std::make_unique<RoutineRunner>(m_config.routines, std::move(routines));
 }
 
 }  // namespace cta::maintd
