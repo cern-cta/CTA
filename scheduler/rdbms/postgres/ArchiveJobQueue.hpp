@@ -897,7 +897,7 @@ VALUES )SQL";
     stmt.executeNonQuery();
     auto nrows = stmt.getNbAffectedRows();
     conn.setRowCountForTelemetry(nrows);
-    return nrows
+    return nrows;
   }
 
   /**
