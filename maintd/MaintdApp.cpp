@@ -25,7 +25,7 @@ int MaintdApp::run(const MaintdConfig& config, cta::log::Logger& log) {
   cta::log::LogContext lc(log);
   maintd::RoutineRunnerFactory rrFactory(config, lc);
   m_routineRunner = rrFactory.create();
-  routineRunner.run(lc);
+  m_routineRunner->run(lc);
   return 0;
 }
 
