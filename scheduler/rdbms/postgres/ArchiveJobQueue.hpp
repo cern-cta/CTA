@@ -631,8 +631,8 @@ VALUES )SQL";
 
   // This is used for opportunistic batching during queueing user requests, repack requests are not handled by this method
   static uint64_t insertRequestBatch(rdbms::Conn& conn,
-                                 const std::vector<std::unique_ptr<ArchiveJobQueueRow>>& rows,
-                                 const std::vector<uint32_t>& groupIds) {
+                                     const std::vector<std::unique_ptr<ArchiveJobQueueRow>>& rows,
+                                     const std::vector<uint32_t>& groupIds) {
     if (rows.empty()) {
       return 0;
     }
