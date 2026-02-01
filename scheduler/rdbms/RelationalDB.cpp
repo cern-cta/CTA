@@ -83,10 +83,17 @@ RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInser
   std::vector<std::unique_ptr<schedulerdb::postgres::ArchiveJobQueueRow>> rowsToInsert;
   std::vector<std::string> ret_bogus_strings;
   std::vector<uint32_t> groupIds;
-  rowsToInsert.reserve(batch.size());
+  ret_bogus_strings.reserve(batch.size());
   auto sqlconn = m_connPool.getConn();
+  lc.log(log::DEBUG, "In RelationalDB::queueArchive(): 1.");
+  uint64_t totalJobCount = 0;
+  for (auto& j : batch) {
+    totalJobCount += j.copyToPoolMap.size();
+  }
+  rowsToInsert.reserve(totalJobCount);
   for (size_t i = 0; i < batch.size(); ++i) {
     auto& item = batch[i];
+    ret_bogus_strings.emplace_back("bogus");
 
     // Construct the archive request object
     schedulerdb::ArchiveRequest aReq(sqlconn, lc);
@@ -130,15 +137,20 @@ RelationalDB::queueArchive(std::vector<cta::common::dataStructures::ArchiveInser
 
     std::vector<std::unique_ptr<schedulerdb::postgres::ArchiveJobQueueRow>> areqrows = aReq.returnRowsToInsert();
     for (size_t j = 0; j < areqrows.size(); ++j) {
-      rowsToInsert.emplace_back(std::move(areqrows[i]));
+      rowsToInsert.emplace_back(std::move(areqrows[j]));
       groupIds.emplace_back(i);
-      ret_bogus_strings.emplace_back("bogus");
     }
   }
+  lc.log(log::DEBUG, "In RelationalDB::queueArchive(): 3.");
   uint64_t nrows = schedulerdb::postgres::ArchiveJobQueueRow::insertRequestBatch(sqlconn, rowsToInsert, groupIds);
   log::ScopedParamContainer params(lc);
-
   params.add("nrows", nrows);
+  params.add("inputJobCount", totalJobCount);
+  if (totalJobCount != nrows) {
+    lc.log(log::ERR, "In RelationalDB::queueArchive(): enqueued unexpected number of jobs !");
+    throw cta::exception::Exception("In RelationalDB::queueArchive(): enqueued unexpected number of jobs");
+  }
+
   lc.log(log::INFO, "In RelationalDB::queueArchive(): enqueued archive.");
 
   return ret_bogus_strings;

@@ -157,28 +157,37 @@ void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::Ar
         mountPolicyPrevious = queueCriteria.mountPolicy;
       }
     }
+    lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 1");
     std::vector<std::string> archiveReqAddrVector;
     archiveReqAddrVector.reserve(batch.size());
     archiveReqAddrVector = m_db.queueArchive(batch, lc);
+    lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 2");
+
     // Sanity check
     if (archiveReqAddrVector.size() != batch.size()) {
       std::string err = "queueArchive returned size " + std::to_string(archiveReqAddrVector.size())
                         + " but batch size is " + std::to_string(batch.size());
+      lc.log(log::DEBUG, std::string("In Scheduler::processEnqueuedBatch() 3 ") + err);
       for (auto& item : batch) {
         item.promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
       }
       return;
     }
+    lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 4");
+
     for (size_t i = 0; i < batch.size(); ++i) {
       try {
         batch[i].promise.set_value(archiveReqAddrVector[i]);
       } catch (const std::exception& e) {
         std::string err = std::string("queueArchive failed to set return value") + e.what();
+        lc.log(log::DEBUG, std::string("In Scheduler::processEnqueuedBatch() 5 ") + err);
         batch[i].promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
       }
     }
+    lc.log(log::INFO, "In Scheduler::processEnqueuedBatch() 6");
   } catch (const std::exception& e) {
     std::string err = std::string("queueArchive threw an exception: ") + e.what();
+    lc.log(log::DEBUG, std::string("In Scheduler::processEnqueuedBatch() 7 ") + err);
     for (auto& item : batch) {
       item.promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
     }
@@ -222,29 +231,28 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
                                                            {},
                                                            std::promise<std::string>()});
     future = m_opportunisticInsertBatch.back().promise.get_future();
-    lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 1 : " + std::to_string(archiveFileId));
-
+    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 1 : " + std::to_string(archiveFileId));
 
     // Leadership election loop
     while (!isLeader) {
       // If my request is already processed, return
-      lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 2 : " + std::to_string(archiveFileId));
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 2 : " + std::to_string(archiveFileId));
 
       if (future.wait_for(0s) == std::future_status::ready) {
         return future.get();
       }
-      lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 3 : " + std::to_string(archiveFileId));
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 3 : " + std::to_string(archiveFileId));
 
       // If no leader, I become leader
       if (!m_enqueueBatchInProgress) {
         m_enqueueBatchInProgress = true;
         isLeader = true;
-        lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 4 : " + std::to_string(archiveFileId));
+        lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 4 : " + std::to_string(archiveFileId));
 
         // fall through to leader path
         break;
       }
-      lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 5 : " + std::to_string(archiveFileId));
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 5 : " + std::to_string(archiveFileId));
 
       // Otherwise, wait
       m_cvOpportunisticBatching.wait(lock);
@@ -253,39 +261,37 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
 
   // ---- LEADER PATH ----
   if (isLeader) {
-    lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 6 : " + std::to_string(archiveFileId));
+    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 6 : " + std::to_string(archiveFileId));
 
     // Opportunistic batching window
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
+    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
 
     std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
 
     {
       // Steal the batch
       std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
-      lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 8 : " + std::to_string(archiveFileId));
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 8 : " + std::to_string(archiveFileId));
 
       batch.swap(m_opportunisticInsertBatch);
     }
-    lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 9 : " + std::to_string(archiveFileId));
+    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 9 : " + std::to_string(archiveFileId));
 
     processEnqueuedBatch(batch, lc);
-     lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 10 : " + std::to_string(archiveFileId));
-
+    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 10 : " + std::to_string(archiveFileId));
 
     {
       std::lock_guard<std::mutex> lock(m_mutexOpportunisticBatching);
-      lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 11 : " + std::to_string(archiveFileId));
+      lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 11 : " + std::to_string(archiveFileId));
 
       m_enqueueBatchInProgress = false;
     }
-    lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 12 : " + std::to_string(archiveFileId));
+    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 12 : " + std::to_string(archiveFileId));
 
     // Wake followers
     m_cvOpportunisticBatching.notify_all();
-    lc.log(log::INFO, "In Scheduler::queueArchiveWithGivenId() 13 : " + std::to_string(archiveFileId));
-
+    lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 13 : " + std::to_string(archiveFileId));
 
     // Return leader's result
     return future.get();
