@@ -64,7 +64,6 @@ concept HasHealthServerConfig = requires(const TConfig& cfg) {
 template<class TConfig>
 concept HasTelemetryConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.telemetry)>, TelemetryConfig>;
-
   requires std::same_as<std::remove_cvref_t<decltype(cfg.experimental.telemetry_enabled)>, bool>;
 };
 
@@ -81,6 +80,7 @@ concept HasSchedulerConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.scheduler)>, SchedulerConfig>;
 };
 
+// Unused for now, maybe something interesting for the future...
 template<class TConfig>
 concept HasCatalogueConfig = requires(const TConfig& cfg) {
   requires std::same_as<std::remove_cvref_t<decltype(cfg.catalogue)>, CatalogueConfig>;
@@ -270,7 +270,8 @@ private:
     // TODO: check the keytab here
   }
 
-  // TODO: For internal use
+  // Similar to safeRun but with logging. Ideally the normal safeRun barely catches anything
+  // apart from UserErrors and other errors before the app even starts
   static int safeRunWithLog(log::Logger& log, const std::function<int()>& func) noexcept {
     int returnCode = EXIT_FAILURE;
     try {

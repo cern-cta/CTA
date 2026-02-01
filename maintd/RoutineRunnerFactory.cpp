@@ -48,7 +48,6 @@ RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config, cta::log:
 
   m_lc.log(log::INFO, "In RoutineRunnerFactory::RoutineRunnerFactory(): Initialising Scheduler");
 
-  // TODO: why are we manually putting "maintd" here?
   m_schedDbInit =
     std::make_unique<SchedulerDBInit_t>("Maintd", m_config.scheduler.objectstore_backend_path, m_lc.logger());
   m_schedDb = m_schedDbInit->getSchedDB(*m_catalogue, m_lc.logger());
