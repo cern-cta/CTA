@@ -2257,7 +2257,6 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
       sql += "]::" + tbl_prefix + "_JOB_STATUS[])";
       sql += R"SQL(
          AND IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY
-        ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
       UPDATE
       )SQL";
