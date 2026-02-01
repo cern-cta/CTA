@@ -128,8 +128,9 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName
   return archiveFileId;
 }
 #ifdef CTA_PGSCHED
-void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
-                                     log::LogContext& lc) {
+uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                         log::LogContext& lc) {
+  uint64_t totalJobs = 0;
   // Process sequentially
   try {
     for (size_t i = 0; i < batch.size(); ++i) {
@@ -154,6 +155,7 @@ void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::Ar
           m_archiveInsertQueueCriteriaCache.clear();
         }
       }
+      totalJobs += item.copyToPoolMap.size();
     }
     lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 1");
     std::vector<std::string> archiveReqAddrVector;
@@ -169,7 +171,7 @@ void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::Ar
       for (auto& item : batch) {
         item.promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
       }
-      return;
+      return totalJobs;
     }
     lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 4");
 
@@ -182,17 +184,17 @@ void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::Ar
         batch[i].promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
       }
     }
-    lc.log(log::INFO, "In Scheduler::processEnqueuedBatch() 6");
+    lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 6");
   } catch (const std::exception& e) {
     std::string err = std::string("queueArchive threw an exception: ") + e.what();
     lc.log(log::DEBUG, std::string("In Scheduler::processEnqueuedBatch() 7 ") + err);
     for (auto& item : batch) {
       item.promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
     }
-    return;
+    return totalJobs;
   };
 
-  return;
+  return totalJobs;
 }
 #endif
 
@@ -261,8 +263,8 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
   if (isLeader) {
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 6 : " + std::to_string(archiveFileId));
 
-    // Opportunistic batching window
-    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    // Opportunistic batching window - with 0 ms, it still bunches but then it calls at 200Hz - 5ms duration which we can batch to contact db less
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 7 : " + std::to_string(archiveFileId));
 
     std::vector<cta::common::dataStructures::ArchiveInsertQueueItem> batch;
@@ -276,7 +278,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     }
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 9 : " + std::to_string(archiveFileId));
 
-    processEnqueuedBatch(batch, lc);
+    auto nrows = processEnqueuedBatch(batch, lc);
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 10 : " + std::to_string(archiveFileId));
 
     {
@@ -290,7 +292,23 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     // Wake followers
     m_cvOpportunisticBatching.notify_all();
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 13 : " + std::to_string(archiveFileId));
-
+    auto schedulerDbTimeMSecs = t.msecs();
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      schedulerDbTimeMSecs,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+      nrows,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
     // Return leader's result
     return future.get();
   }
@@ -2344,6 +2362,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   double schedulerDbTime = 0;
   double checkLogicalAndPhysicalLibrariesTime = 0;
   double catalogueTime = 0;
+  uint64_t totalJobCount = 0;
 
   if (!checkLogicalAndPhysicalLibraryValidForMount(logicalLibraryName, checkLogicalAndPhysicalLibrariesTime, lc)) {
     return std::unique_ptr<TapeMount>();
@@ -2388,6 +2407,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
   // We can now simply iterate on the candidates until we manage to create a
   // mount for one of them
   for (auto m = mountInfo->potentialMounts.begin(); m != mountInfo->potentialMounts.end(); m++) {
+    totalJobCount += m->filesQueued;
     // If the mount is an archive, we still have to find a tape.
     if (common::dataStructures::getMountBasicType(m->type) == common::dataStructures::MountType::ArchiveAllTypes) {
       // We need to find a tape for archiving. It should be both in the right
@@ -2543,6 +2563,21 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
       throw std::runtime_error("In Scheduler::getNextMount unexpected mount type");
     }
   }
+  auto tteltime = ttel.msecs();
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    tteltime,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
+      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kAll     }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+    totalJobCount,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
+      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kAll     }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;
   catalogueTime = getTapeInfoTime + getTapeForWriteTime + checkLogicalAndPhysicalLibrariesTime;
   decisionTime += timer.secs(utils::Timer::resetCounter);
@@ -2556,6 +2591,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
     .add("mountCreationTime", mountCreationTime)
     .add("driveStatusSetTime", driveStatusSetTime)
     .add("schedulerDbTime", schedulerDbTime)
+    .add("totalJobCount", totalJobCount)
     .add("catalogueTime", catalogueTime);
   lc.log(log::DEBUG, "In Scheduler::getNextMount(): No valid mount found.");
   return std::unique_ptr<TapeMount>();
