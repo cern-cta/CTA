@@ -129,8 +129,9 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName
   return archiveFileId;
 }
 #ifdef CTA_PGSCHED
-void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
-                                     log::LogContext& lc) {
+uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
+                                         log::LogContext& lc) {
+  uint64_t totalJobs = 0;
   // Process sequentially
   try {
     std::string_view instanceNamePrevious = "";
@@ -156,6 +157,7 @@ void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::Ar
         copyToPoolMapPrevious = queueCriteria.copyToPoolMap;
         mountPolicyPrevious = queueCriteria.mountPolicy;
       }
+      totalJobs += item.copyToPoolMap.size();
     }
     lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 1");
     std::vector<std::string> archiveReqAddrVector;
@@ -171,7 +173,7 @@ void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::Ar
       for (auto& item : batch) {
         item.promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
       }
-      return;
+      return totalJobs;
     }
     lc.log(log::DEBUG, "In Scheduler::processEnqueuedBatch() 4");
 
@@ -191,10 +193,10 @@ void Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures::Ar
     for (auto& item : batch) {
       item.promise.set_exception(std::make_exception_ptr(std::runtime_error(err)));
     }
-    return;
+    return totalJobs;
   };
 
-  return;
+  return totalJobs;
 }
 #endif
 
@@ -278,7 +280,7 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     }
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 9 : " + std::to_string(archiveFileId));
 
-    processEnqueuedBatch(batch, lc);
+    auto nrows = processEnqueuedBatch(batch, lc);
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 10 : " + std::to_string(archiveFileId));
 
     {
@@ -292,7 +294,23 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
     // Wake followers
     m_cvOpportunisticBatching.notify_all();
     lc.log(log::DEBUG, "In Scheduler::queueArchiveWithGivenId() 13 : " + std::to_string(archiveFileId));
-
+    auto schedulerDbTimeMSecs = t.msecs();
+    cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+      schedulerDbTimeMSecs,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
+    cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
+      nrows,
+      {
+        {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+        {cta::semconv::attr::kSchedulerOperationWorkflow,
+         cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                             }
+    },
+      opentelemetry::context::RuntimeContext::GetCurrent());
     // Return leader's result
     return future.get();
   }
