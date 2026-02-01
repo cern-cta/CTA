@@ -134,28 +134,27 @@ uint64_t Scheduler::processEnqueuedBatch(std::vector<cta::common::dataStructures
   uint64_t totalJobs = 0;
   // Process sequentially
   try {
-    std::string_view instanceNamePrevious = "";
-    std::string_view storageClassPrevious = "";
-    cta::common::dataStructures::RequesterIdentity requesterPrevious;
-    std::map<uint32_t, std::string> copyToPoolMapPrevious;
-    common::dataStructures::MountPolicy mountPolicyPrevious;
     for (size_t i = 0; i < batch.size(); ++i) {
       auto& item = batch[i];
-      if (instanceNamePrevious == item.instanceName && storageClassPrevious == item.request.storageClass
-          && requesterPrevious == item.request.requester) {
-        item.copyToPoolMap = copyToPoolMapPrevious;
-        item.mountPolicy = mountPolicyPrevious;
+      cta::common::dataStructures::ArchiveInsertQueueCriteriaKey k {item.instanceName,
+                                                                    item.request.storageClass,
+                                                                    item.request.requester.name,
+                                                                    item.request.requester.group};
+      auto it = m_archiveInsertQueueCriteriaCache.find(k);
+      if (it != m_archiveInsertQueueCriteriaCache.end()) {
+        item.copyToPoolMap = it->second.copyToPoolMap;
+        item.mountPolicy = it->second.mountPolicy;
       } else {
-        instanceNamePrevious = item.instanceName;
-        storageClassPrevious = item.request.storageClass;
-        requesterPrevious = item.request.requester;
-        const auto queueCriteria = m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(item.instanceName,
-                                                                                          item.request.storageClass,
-                                                                                          item.request.requester);
+        auto queueCriteria = m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(item.instanceName,
+                                                                                    item.request.storageClass,
+                                                                                    item.request.requester);
         item.copyToPoolMap = queueCriteria.copyToPoolMap;
         item.mountPolicy = queueCriteria.mountPolicy;
-        copyToPoolMapPrevious = queueCriteria.copyToPoolMap;
-        mountPolicyPrevious = queueCriteria.mountPolicy;
+        m_archiveInsertQueueCriteriaCache[k].copyToPoolMap = queueCriteria.copyToPoolMap;
+        m_archiveInsertQueueCriteriaCache[k].mountPolicy = queueCriteria.mountPolicy;
+        if (m_archiveInsertQueueCriteriaCache.size() > m_archiveInsertQueueCriteriaCacheMaxSize) {
+          m_archiveInsertQueueCriteriaCache.clear();
+        }
       }
       totalJobs += item.copyToPoolMap.size();
     }
