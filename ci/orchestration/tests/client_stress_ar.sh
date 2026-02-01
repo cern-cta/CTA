@@ -219,7 +219,8 @@ if [[ "x${COMMENT}" = "x" ]]; then
 fi
 
 if [[ $PREQUEUE == 1 ]]; then
-  DRIVE_UP_SUBDIR_NUMBER=$((NB_DIRS / 2))
+  DRIVE_UP_SUBDIR_NUMBER=400
+#  DRIVE_UP_SUBDIR_NUMBER=$(($((NB_DIRS / 4)) * 2))
 # DRIVE_UP="ULT3580-TD811"
 fi
 
