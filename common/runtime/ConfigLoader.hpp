@@ -21,8 +21,6 @@ namespace cta::runtime {
 //         1) Value named 'soft_timeout' not used. Remove the rfl::NoExtraFields processor or add rfl::ExtraFields to avoid this error message.
 //         2) Field named 'soft_timeout_secs' not found.
 
-// TODO: request insight into default behaviour?
-
 template<typename T>
 T loadFromToml(const std::string& filePath, bool strict = false) {
   toml::table tbl;
@@ -34,7 +32,8 @@ T loadFromToml(const std::string& filePath, bool strict = false) {
     throw cta::exception::UserError("Failed to parse toml file '" + filePath + "': " + oss.str());
   }
 
-  auto res = strict ? rfl::toml::read<T, rfl::NoExtraFields, rfl::NoOptionals>(&tbl) : rfl::toml::read<T>(&tbl);
+  auto res = strict ? rfl::toml::read<T, rfl::NoExtraFields, rfl::NoOptionals>(&tbl) :
+                      rfl::toml::read<T, rfl::DefaultIfMissing>(&tbl);
 
   if (!res) {
     throw cta::exception::UserError("Invalid config in '" + filePath + "': " + std::string(res.error().what()));

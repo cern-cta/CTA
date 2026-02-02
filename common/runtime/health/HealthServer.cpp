@@ -7,6 +7,7 @@
 
 #include "common/exception/Errnum.hpp"
 #include "common/exception/TimeOut.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/utils/utils.hpp"
 
 #include <httplib.h>
@@ -28,6 +29,9 @@ HealthServer::HealthServer(cta::log::Logger& log,
       m_livenessFunc(livenessFunc),
       m_listenTimeoutMsec(listenTimeoutMsec),
       m_lc(log::LogContext(log)) {
+  if (m_host.empty()) {
+    throw exception::UserError("HealthServer host cannot be empty");
+  }
   if (isUdsHost(m_host)) {
     m_lc.log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Ignoring port value.");
     m_port = 80;  // technically the port shouldn't be used but the httplib example uses port 80

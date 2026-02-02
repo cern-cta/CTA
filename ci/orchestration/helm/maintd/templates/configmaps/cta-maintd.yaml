@@ -53,7 +53,7 @@ data:
       {{- /* We should set the options for ALL routines here, but we only enable the "current" routine */ -}}
       {{- range $name, $conf := $allRoutines }}
       {{ include "common.toSnakeCase" $name }}.enabled = {{ ternary "true" "false" (eq $name $routineName) }}
-      {{- range $k, $v := (omit $conf "replicas" "sleepInterval") }}
+      {{- range $k, $v := (omit $conf "replicas" "sleepIntervalSecs") }}
       {{ include "common.toSnakeCase" $name }}.{{ include "common.toSnakeCase" $k }} = {{ include "common.stringOrNumber" $v }}
       {{- end }}
       {{ end }}

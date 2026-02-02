@@ -100,8 +100,9 @@ bool RoutineRunner::isReady() const {
 }
 
 /**
- * The routine runner is considered alive when:
- * - a routine has executed in the last 2 minutes
+ * The routine runner is considered alive when either :
+ * - it is currently sleeping and it has not exceeded the sleep interval (by too much).
+ * - it is currently executing a routine cycle and it has not exceeded the maximum cycle duration.
  */
 bool RoutineRunner::isLive() const {
   if (!m_running) {

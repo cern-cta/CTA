@@ -124,15 +124,28 @@ int safeRun(const std::function<int()>& func) noexcept {
 template<class TApp, class TConfig, class TOpts>
 class Application {
 public:
+  /**
+   * @brief Construct a new Application object.
+   *
+   * @param appName Name of the application. For example, cta-maintd, cta-taped, cta-admins
+   * @param cliOptions Struct containing the (populated) commandline options.
+   */
   Application(const std::string& appName, const TOpts& cliOptions)
     requires HasLoggingConfig<TConfig> && HasStopFunction<TApp> && HasRequiredCliOptions<TOpts>
       : m_appName(appName),
         m_cliOptions(cliOptions),
         m_appConfig() {
-    // If we got here and help was supposed to show, then there is a bug in how the program was set up
-    assert(!m_cliOptions.showHelp);
+    // These two checks should never be reached in an actual; they are just to prevent developers from making mistakes.
+    if (m_cliOptions.showHelp) {
+      throw std::logic_error("Help was set to true and should have been shown before. If this part was reached, it "
+                             "means the program did not exit correctly after showing help.");
+    }
+    if (m_appName.empty()) {
+      throw std::logic_error("Application name cannot be empty.");
+    }
 
     if (m_cliOptions.configFilePath.empty()) {
+      // Construct a default path based on the app name
       m_cliOptions.configFilePath = "/etc/cta/" + m_appName + ".toml";
     }
     m_appConfig = runtime::loadFromToml<TConfig>(m_cliOptions.configFilePath, m_cliOptions.configStrict);
@@ -148,13 +161,32 @@ public:
     m_signalReactorBuilder = std::make_unique<SignalReactorBuilder>(*m_logPtr);
     m_signalReactorBuilder->addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
     m_signalReactorBuilder->addSignalFunction(SIGUSR1, [this]() { m_logPtr->refresh(); });
+    // Don't build the signal reactor yet, because we may want to register more signal functions.
   }
 
-  Application& addSignalFunction(int signal, const std::function<void()>& func) {
-    m_signalReactorBuilder->addSignalFunction(signal, func);
+  /**
+   * @brief Add support for additional signals to the application.
+   * As part of the design, the function/method that will be called on the registered signal MUST be part of the underlying application (m_app).
+   * Example:
+   *   app.addSignalFunction(SIGUSR2, &TestCustomSignalApp::myCustomSignalFunc);
+   * Which will require TestCustomSignalApp to have a method:
+   *   void myCustomSignalFunc();
+   *
+   * @param signal The signal to react to.
+   * @param method The member function of m_app to call when this signal is received.
+   * @return Application& This application object. Can be used to easily chain multiple of these calls together.
+   */
+  Application& addSignalFunction(int signal, void (TApp::*method)()) {
+    auto& app = m_app;
+    m_signalReactorBuilder->addSignalFunction(signal, [&app, method] { (app.*method)(); });
     return *this;
   }
 
+  /**
+   * @brief Runs the application. Will do some initialisation and call the run() method of the underlying app.
+   *
+   * @return int Return code.
+   */
   int run() noexcept {
     return safeRunWithLog(*m_logPtr, [this]() {
       auto signalReactor = m_signalReactorBuilder->build();
@@ -222,6 +254,9 @@ private:
     std::map<std::string, std::string> logAttributes;
     // This should eventually be handled by auto-discovery
     if constexpr (HasSchedulerConfig<TConfig>) {
+      if (m_appConfig.scheduler.backend_name.empty()) {
+        throw exception::UserError("Scheduler backend name cannot be empty");
+      }
       logAttributes["sched_backend"] = m_appConfig.scheduler.backend_name;
     }
     for (const auto& [key, value] : m_appConfig.logging.attributes) {
@@ -238,9 +273,6 @@ private:
         m_appConfig.health_server.port,
         [this]() { return m_app.isReady(); },
         [this]() { return m_app.isLive(); });
-
-      // We only start it if it's enabled. We explicitly construct the object outside the scope of this if statement
-      // Otherwise, healthServer will go out of scope and be destructed immediately
       m_healthServer->start();
     }
   }
@@ -271,6 +303,13 @@ private:
   }
 
   void initXRootD() {
+    if (m_appConfig.xrootd.security_protocol.empty()) {
+      throw exception::UserError("XRootD security protocol cannot be empty");
+    }
+
+    if (m_appConfig.xrootd.security_protocol == "sss" && m_appConfig.xrootd.sss_keytab_path.empty()) {
+      throw exception::UserError("XRootD SSS Keytab cannot be empty when security protocol is set to SSS");
+    }
     // Overwrite XRootD env variables
     ::setenv("XrdSecPROTOCOL", m_appConfig.xrootd.security_protocol.c_str(), 1);
     ::setenv("XrdSecSSSKT", m_appConfig.xrootd.sss_keytab_path.c_str(), 1);
@@ -325,6 +364,7 @@ private:
   TConfig m_appConfig;
 
   std::unique_ptr<SignalReactorBuilder> m_signalReactorBuilder;
+  // The health server must exist at this level as it needs to be in-scope as long as the main app runs.
   std::unique_ptr<HealthServer> m_healthServer;
 
   std::unique_ptr<log::Logger> m_logPtr;
