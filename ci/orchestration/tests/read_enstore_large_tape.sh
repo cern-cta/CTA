@@ -27,14 +27,19 @@ mt -f ${device} status
 label_block_size=80
 label_blocks=2
 touch /enstorelarge-tape.img
-dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/vol1_FL1587.bin of=/enstorelarge-tape.img bs=${label_block_size} count=1  # Build the first VOL1 label block.
-truncate -s $((label_block_size * label_blocks)) /enstorelarge-tape.img  # Pad the label file to two blocks (OSM-style multi-block label).
-dd if=/enstorelarge-tape.img of=$device bs=${label_block_size} count=${label_blocks}  # Write both label blocks to the tape drive.
+# Build the first VOL1 label block.
+dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/vol1_FL1587.bin of=/enstorelarge-tape.img bs=${label_block_size} count=1
+truncate -s $((label_block_size * label_blocks)) /enstorelarge-tape.img 
+# Write both label blocks to the tape drive.
+dd if=/enstorelarge-tape.img of=$device bs=${label_block_size} count=${label_blocks} 
 mt -f ${device} status
-dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_header.bin of=$device bs=262144  # Write the EnstoreLarge file header block to tape (256 KiB blocks).
+# Write the EnstoreLarge file header block to tape (256 KiB blocks).
+dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_header.bin of=$device bs=262144
 mt -f ${device} status
-dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_payload.bin of=$device bs=262144  # Write the EnstoreLarge payload to tape (256 KiB blocks).
+# Write the EnstoreLarge payload to tape (256 KiB blocks).
+dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_payload.bin of=$device bs=262144
 mt -f ${device} status
-dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_trailer.bin of=$device bs=262144  # Write the EnstoreLarge trailer block to tape (256 KiB blocks).
+# Write the EnstoreLarge trailer block to tape (256 KiB blocks).
+dd if=${ens_mhvtl_root}/enstorelarge/FL1587_f1/fseq1_trailer.bin of=$device bs=262144
 
 mt -f $device rewind

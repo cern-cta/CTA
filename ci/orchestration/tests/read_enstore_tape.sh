@@ -25,10 +25,13 @@ mt -f ${device} status
 label_block_size=80
 label_blocks=2
 touch /enstore-tape.img
-dd if=${ens_mhvtl_root}/enstore/FL1212_f1/vol1_FL1212.bin of=/enstore-tape.img bs=${label_block_size} count=1  # Build the first VOL1 label block.
-truncate -s $((label_block_size * label_blocks)) /enstore-tape.img  # Pad the label file to two blocks (OSM-style multi-block label).
-dd if=/enstore-tape.img of=$device bs=${label_block_size} count=${label_blocks}  # Write both label blocks to the tape drive.
+# Build the first VOL1 label block.
+dd if=${ens_mhvtl_root}/enstore/FL1212_f1/vol1_FL1212.bin of=/enstore-tape.img bs=${label_block_size} count=1
+truncate -s $((label_block_size * label_blocks)) /enstore-tape.img
+# Write both label blocks to the tape drive.
+dd if=/enstore-tape.img of=$device bs=${label_block_size} count=${label_blocks}
 mt -f ${device} status
-dd if=${ens_mhvtl_root}/enstore/FL1212_f1/fseq1_payload.bin of=$device bs=1048576  # Stream the Enstore payload to tape in 1 MiB blocks.
+# Stream the Enstore payload to tape in 1 MiB blocks.
+dd if=${ens_mhvtl_root}/enstore/FL1212_f1/fseq1_payload.bin of=$device bs=1048576
 
 mt -f $device rewind
