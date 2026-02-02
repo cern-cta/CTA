@@ -44,7 +44,7 @@ NB_FILES=10000
 NB_DIRS=10
 FILE_SIZE_KB=1
 NB_PROCS=40
-NB_DRIVES=4
+NB_DRIVES=1
 
 
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
