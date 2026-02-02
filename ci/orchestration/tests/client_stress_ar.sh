@@ -219,7 +219,7 @@ if [[ "x${COMMENT}" = "x" ]]; then
 fi
 
 if [[ $PREQUEUE == 1 ]]; then
-  DRIVE_UP_SUBDIR_NUMBER=400
+  DRIVE_UP_SUBDIR_NUMBER=200
 #  DRIVE_UP_SUBDIR_NUMBER=$(($((NB_DIRS / 4)) * 2))
 # DRIVE_UP="ULT3580-TD811"
 fi
@@ -317,6 +317,7 @@ done
 if (( 0 != DRIVE_UP_SUBDIR_NUMBER )); then
   admin_cta drive down ".*" --reason "PUTTING DRIVE DOWN TO PRE-QUEUE REQUESTS"
 fi
+PREVIOUS_PATH=""
 for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   if (( SKIP_ARCHIVE == 1 )); then
     break
@@ -365,43 +366,57 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo "In case of OStoreDB prequeueing the drives processing block further queueing, this is why \
         as soon as we spot jobs taking more then 5 minutes we put them to sleep for next \
         15 minutes before queueing next file on that thread"
-  # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
-  printf "%s\n" "${TEST_FILE_NUMS[@]}" | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "START=\$(date +%s); (${DD_COMMAND}; \
-         printf \"%s\" \"UNIQ_${PADDED_SUBDIR}_TEST_FILE_NUM\";) \
-         | if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
-         2>\"${ERROR_LOG}_TEST_FILE_NUM\" > \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then  \
-         if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
-         2>>\"${ERROR_LOG}_TEST_FILE_NUM\" >> \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then \
-         if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
-         2>>\"${ERROR_LOG}_TEST_FILE_NUM\" >> \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then :; fi; fi; fi; \
-         tail -n 50 \"${ERROR_LOG}_TEST_FILE_NUM\" >>\"${ERROR_LOG}\"; \
-         tail -n 50 \"${OUTPUT_LOG}_TEST_FILE_NUM\" >>\"${OUTPUT_LOG}\"; \
-         rm -f \"${ERROR_LOG}_TEST_FILE_NUM\"; \
-         rm -f \"${OUTPUT_LOG}_TEST_FILE_NUM\"; \
-         END=\$(date +%s); DURATION=\$((END - START)); \
-         (( DURATION > 300 )) && sleep 900 || :" || echo "xargs failed !!!"
-  if [[ -s "$ERROR_LOG" ]]; then
-    LINE_COUNT=$(wc -l < "$ERROR_LOG")
-    TMP_FILE=$(mktemp)
-    {
-       echo "Original line count: $LINE_COUNT"
-       tail -n 250 "$ERROR_LOG"
-    } > "$TMP_FILE"
-    mv -f "$TMP_FILE" "$ERROR_LOG"
+  if (( subdir == 0 )); then
+    PREVIOUS_PATH="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+    # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
+    printf "%s\n" "${TEST_FILE_NUMS[@]}" | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "START=\$(date +%s); (${DD_COMMAND}; \
+           printf \"%s\" \"UNIQ_${PADDED_SUBDIR}_TEST_FILE_NUM\";) \
+           | if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+           2>\"${ERROR_LOG}_TEST_FILE_NUM\" > \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then  \
+           if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+           2>>\"${ERROR_LOG}_TEST_FILE_NUM\" >> \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then \
+           if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+           2>>\"${ERROR_LOG}_TEST_FILE_NUM\" >> \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then :; fi; fi; fi; \
+           tail -n 50 \"${ERROR_LOG}_TEST_FILE_NUM\" >>\"${ERROR_LOG}\"; \
+           tail -n 50 \"${OUTPUT_LOG}_TEST_FILE_NUM\" >>\"${OUTPUT_LOG}\"; \
+           rm -f \"${ERROR_LOG}_TEST_FILE_NUM\"; \
+           rm -f \"${OUTPUT_LOG}_TEST_FILE_NUM\"; \
+           END=\$(date +%s); DURATION=\$((END - START)); \
+           (( DURATION > 300 )) && sleep 900 || :" || echo "xargs failed !!!"
+    if [[ -s "$ERROR_LOG" ]]; then
+      LINE_COUNT=$(wc -l < "$ERROR_LOG")
+      TMP_FILE=$(mktemp)
+      {
+         echo "Original line count: $LINE_COUNT"
+         tail -n 250 "$ERROR_LOG"
+      } > "$TMP_FILE"
+      mv -f "$TMP_FILE" "$ERROR_LOG"
+    fi
+    if [[ -s "$OUTPUT_LOG" ]]; then
+      LINE_COUNT=$(wc -l < "$OUTPUT_LOG")
+      TMP_FILE=$(mktemp)
+      {
+         echo "Original line count: $LINE_COUNT"
+         tail -n 250 "$OUTPUT_LOG"
+      } > "$TMP_FILE"
+      mv -f "$TMP_FILE" "$OUTPUT_LOG"
+    fi
+    # move the files to make space in the small memory buffer /dev/shm for logs
+    mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
   fi
-  if [[ -s "$OUTPUT_LOG" ]]; then
-    LINE_COUNT=$(wc -l < "$OUTPUT_LOG")
-    TMP_FILE=$(mktemp)
-    {
-       echo "Original line count: $LINE_COUNT"
-       tail -n 250 "$OUTPUT_LOG"
-    } > "$TMP_FILE"
-    mv -f "$TMP_FILE" "$OUTPUT_LOG"
-  fi
-  # move the files to make space in the small memory buffer /dev/shm for logs
-  mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
+  # for all the next directories we simply copy the first one for faster queeuing !
+  # if different file names are required we can adjust them via eos mv:
+  #  eos root://ctaeos find /eos/ctaeos/cta/target -type f | while read -r f; do
+  #  eos root://ctaeos mv "$f" "${f}_SUFFIX"
+  #done
+  echo "${PREVIOUS_PATH}"
+  echo "root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+  XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp -r "${PREVIOUS_PATH}" "root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+  PREVIOUS_PATH="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
   echo "Done."
 done
+
+
 # aternative while loop for parallele processing
 #i=0
 #running_jobs=0
