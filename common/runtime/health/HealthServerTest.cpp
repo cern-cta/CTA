@@ -6,6 +6,7 @@
 #include "HealthServer.hpp"
 
 #include "common/exception/TimeOut.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
 
@@ -142,6 +143,21 @@ TEST(HealthServer, LiveEndpointNotLive) {
   ASSERT_TRUE(res) << "connection failed";
   EXPECT_EQ(res->status, 503);
   EXPECT_NE(res->body.find("not live"), std::string::npos);
+}
+
+TEST(HealthServer, EmptyHostThrowsUserError) {
+  cta::log::DummyLogger dl("dummy", "unitTest");
+
+  const std::string host = "";
+  const int64_t port = getFreePort();
+  ASSERT_THROW(cta::runtime::HealthServer hs(
+                 dl,
+                 host,
+                 port,
+                 []() { return true; },
+                 []() { return true; },
+                 200),
+               cta::exception::UserError);
 }
 
 TEST(HealthServer, InvalidHost) {

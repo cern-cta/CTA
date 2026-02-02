@@ -21,8 +21,8 @@ struct CatalogueConfig {
 };
 
 struct SchedulerConfig {
-  std::string backend_name;
-  std::string objectstore_backend_path;
+  std::string backend_name = "";
+  std::string objectstore_backend_path = "";
   int tape_cache_max_age_secs = 600;
   int retrieve_queue_cache_max_age_secs = 10;
 };
@@ -38,14 +38,14 @@ struct TelemetryConfig {
 };
 
 struct HealthServerConfig {
-  bool enabled;
-  std::string host;
-  int port;
+  bool enabled = false;
+  std::string host = "";
+  int port = 8080;
 };
 
 struct XRootDConfig {
   std::string security_protocol = "sss";
-  std::string sss_keytab_path;
+  std::string sss_keytab_path = "etc/cta/sss.keytab";
 };
 
 }  // namespace cta::runtime

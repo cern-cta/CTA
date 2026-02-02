@@ -5,6 +5,8 @@
 
 #include "ConfigLoader.hpp"
 
+#include "RuntimeTestHelpers.hpp"
+
 #include <chrono>
 #include <filesystem>
 #include <fstream>
@@ -12,43 +14,11 @@
 #include <string>
 #include <utility>
 
-// TODO: test what happens with enums
 namespace unitTests {
 
 //------------------------------------------------------------------------------
 // Helpers
 //------------------------------------------------------------------------------
-
-class TempFile {
-public:
-  explicit TempFile(const std::string& content, const std::string& suffix = "") {
-    std::string fileName = "test_XXXXXX" + suffix;
-    std::string path = (std::filesystem::temp_directory_path() / fileName).string();
-
-    const int fd = ::mkstemps(path.data(), static_cast<int>(suffix.size()));
-    if (fd == -1) {
-      throw std::runtime_error("mkstemps failed: " + std::string {std::strerror(errno)});
-    }
-
-    if (::write(fd, content.data(), content.size()) != static_cast<ssize_t>(content.size())) {
-      ::close(fd);
-      throw std::runtime_error("failed to write temp file");
-    }
-
-    ::close(fd);
-    m_path = std::move(path);
-  }
-
-  ~TempFile() {
-    std::error_code ec;
-    std::filesystem::remove(m_path, ec);
-  }
-
-  const std::string& path() const { return m_path; }
-
-private:
-  std::string m_path;
-};
 
 struct MyConfig {
   int mandatory;
@@ -98,17 +68,6 @@ default_value = "hi"
   ASSERT_EQ(config.default_value, "hi");
 }
 
-TEST(ConfigLoader, LenientThrowsOnMissingMandatoryValue) {
-  TempFile f(R"toml(
-# mandatory missing
-maybe = 42
-default_value = "hi"
-)toml",
-             ".toml");
-
-  EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), false)), cta::exception::UserError);
-}
-
 TEST(ConfigLoader, LenientAllowsMissingOptionals) {
   TempFile f(R"toml(
 mandatory = 7
@@ -123,20 +82,20 @@ default_value = "hi"
   ASSERT_EQ(config.default_value, "hi");
 }
 
-// TEST(ConfigLoader, LenientAllowsMissingDefaults) {
-//   TempFile f(R"toml(
-// mandatory = 7
-// maybe = 42
-// # default_value missing
-// )toml",
-//              ".toml");
+TEST(ConfigLoader, LenientAllowsMissingDefaults) {
+  TempFile f(R"toml(
+mandatory = 7
+maybe = 42
+# default_value missing
+)toml",
+             ".toml");
 
-//   const auto config = cta::runtime::loadFromToml<MyConfig>(f.path(), false);
-//   ASSERT_EQ(config.mandatory, 7);
-//   ASSERT_TRUE(config.maybe.has_value());
-//   ASSERT_EQ(config.maybe.value(), 42);
-//   ASSERT_EQ(config.default_value, "default_value");
-// }
+  const auto config = cta::runtime::loadFromToml<MyConfig>(f.path(), false);
+  ASSERT_EQ(config.mandatory, 7);
+  ASSERT_TRUE(config.maybe.has_value());
+  ASSERT_EQ(config.maybe.value(), 42);
+  ASSERT_EQ(config.default_value, "default_value");
+}
 
 TEST(ConfigLoader, LenientAllowsUnknownKeys) {
   TempFile f(R"toml(
@@ -259,6 +218,7 @@ default_value = "hi"
   EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
+// TODO: test what happens with enums
 TEST(ConfigLoader, EnumHandling) {}
 
 }  // namespace unitTests
