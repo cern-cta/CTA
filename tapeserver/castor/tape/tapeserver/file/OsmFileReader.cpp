@@ -15,7 +15,6 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <vector>
 
 namespace castor::tape::tapeFile {
 
@@ -143,27 +142,27 @@ size_t OsmFileReader::readNextDataBlock(void* data, const size_t size) {
   if (!m_cpioHeader.valid()) {
     size_t uiHeaderSize = 0;
     size_t uiResiduesSize = 0;
-    std::vector<uint8_t> pucTmpData(size);
+    auto pucTmpData = std::make_unique<uint8_t[]>(size);
 
-    uiBytesRead = m_session.m_drive.readBlock(pucTmpData.data(), size);
+    uiBytesRead = m_session.m_drive.readBlock(pucTmpData.get(), size);
     // Special case - checking whether the data format contains CRC32
     if (cta::verifyCrc32cForMemoryBlockWithCrc32c(SCSI::logicBlockProtectionMethod::CRC32CSeed,
                                                   uiBytesRead,
-                                                  pucTmpData.data())) {
+                                                  pucTmpData.get())) {
       m_bDataWithCRC32 = true;
       uiBytesRead -= SCSI::logicBlockProtectionMethod::CRC32CLength;
     }
 
-    uiHeaderSize = m_cpioHeader.decode(pucTmpData.data(), CPIO::MAXHEADERSIZE);
+    uiHeaderSize = m_cpioHeader.decode(pucTmpData.get(), CPIO::MAXHEADERSIZE);
     uiResiduesSize = uiBytesRead - uiHeaderSize;
 
     // Copy the rest of data to the buffer
     if (uiResiduesSize >= m_cpioHeader.m_ui64FileSize) {
       uiBytesRead = m_cpioHeader.m_ui64FileSize;
       m_ui64CPIODataSize = uiBytesRead;
-      memcpy(data, pucTmpData.data() + uiHeaderSize, uiBytesRead);
+      memcpy(data, pucTmpData.get() + uiHeaderSize, uiBytesRead);
     } else {
-      memcpy(data, pucTmpData.data() + uiHeaderSize, uiResiduesSize);
+      memcpy(data, pucTmpData.get() + uiHeaderSize, uiResiduesSize);
       uiBytesRead = uiResiduesSize;
       m_ui64CPIODataSize = uiBytesRead >= m_cpioHeader.m_ui64FileSize ? m_cpioHeader.m_ui64FileSize : uiBytesRead;
     }

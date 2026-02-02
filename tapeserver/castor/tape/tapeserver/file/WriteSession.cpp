@@ -135,7 +135,6 @@ std::string WriteSession::getLBPMode() {
 
 void WriteSession::setHostName() {
   std::array<char, MAX_UNIX_HOSTNAME_LENGTH> hostname {};
-  hostname.back() = '\0';
   cta::exception::Errnum::throwOnMinusOne(gethostname(hostname.data(), hostname.size()),
                                           "Failed gethostname() in WriteFile::setHostName");
   hostname.back() = '\0';

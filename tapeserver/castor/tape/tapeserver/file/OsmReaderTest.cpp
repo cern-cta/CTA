@@ -20,8 +20,8 @@
 #include "scheduler/RetrieveJob.hpp"
 
 #include <gtest/gtest.h>
+#include <memory>
 #include <string>
-#include <vector>
 
 namespace {
 std::string g_device_name;
@@ -136,10 +136,10 @@ TEST_F(OsmReaderTest, ReadOsmTape) {
     // Create Read File OSM
     auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, fileToRecall);
     size_t bs = reader->getBlockSize();
-    std::vector<char> data(bs + 1);
+    auto data = std::make_unique<char[]>(bs + 1);
     size_t j = 0;
     while (j < 100) {
-      reader->readNextDataBlock(data.data(), bs);
+      reader->readNextDataBlock(data.get(), bs);
       j++;
     }
   } catch (cta::exception::Exception& ex) {
