@@ -589,7 +589,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
     END=\$(date +%s); DURATION=\$((END - START)); \
     (( DURATION > 300 )) && sleep 900 || :" || echo "xargs for prepare failed !!!"
   # letting the traffic settle
-  sleep 2
+  #sleep 2
   # Limit the logging output not to run out of space
   if [[ -s "$ERROR_LOG" ]]; then
     LINE_COUNT=$(wc -l < "$ERROR_LOG")
