@@ -57,7 +57,6 @@ cta::xrd::Data TapePoolLsResponseStream::next() {
   tp_item->set_data_bytes(tp.dataBytes);
   tp_item->set_encrypt(tp.encryption);
   tp_item->set_encryption_key_name(tp.encryptionKeyName.value_or(""));
-  tp_item->set_supply(tp.supply.value_or(""));
   tp_item->mutable_created()->set_username(tp.creationLog.username);
   tp_item->mutable_created()->set_host(tp.creationLog.host);
   tp_item->mutable_created()->set_time(tp.creationLog.time);

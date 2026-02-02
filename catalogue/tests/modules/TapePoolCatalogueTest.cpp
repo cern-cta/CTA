@@ -85,7 +85,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(true, pool.encryption);
     ASSERT_EQ(encryptionKeyName, pool.encryptionKeyName);
-    ASSERT_EQ(std::nullopt, pool.supply);
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -109,7 +109,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool) {
     ASSERT_EQ(nbPartialTapes, pool->nbPartialTapes);
     ASSERT_EQ(true, pool->encryption);
     ASSERT_EQ(encryptionKeyName, pool->encryptionKeyName);
-    ASSERT_EQ(std::nullopt, pool->supply);
+    ASSERT_TRUE(pool->supply_source_set.empty());
     ASSERT_EQ(0, pool->nbTapes);
     ASSERT_EQ(0, pool->capacityBytes);
     ASSERT_EQ(0, pool->dataBytes);
@@ -151,7 +151,7 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_null_supply) {
   ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
   ASSERT_EQ(true, pool.encryption);
   ASSERT_EQ(encryptionKeyName, pool.encryptionKeyName);
-  ASSERT_EQ(std::nullopt, pool.supply);
+  ASSERT_TRUE(pool.supply_source_set.empty());
   ASSERT_EQ(0, pool.nbTapes);
   ASSERT_EQ(0, pool.capacityBytes);
   ASSERT_EQ(0, pool.dataBytes);
@@ -1100,14 +1100,12 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     // Get reference to tape pool 1
     const auto& pool_1 = pools.front().name == tapePoolName_1 ? *pools.begin() : *(++pools.begin());
     ASSERT_EQ(tapePoolName_1, pool_1.name);
-    ASSERT_EQ(std::nullopt, pool_1.supply);
     ASSERT_TRUE(pool_1.supply_source_set.empty());
     ASSERT_TRUE(pool_1.supply_destination_set.empty());
 
     // Get reference to tape pool 2
     const auto& pool_2 = pools.front().name == tapePoolName_2 ? *pools.begin() : *(++pools.begin());
     ASSERT_EQ(tapePoolName_2, pool_2.name);
-    ASSERT_EQ(std::nullopt, pool_2.supply);
     ASSERT_TRUE(pool_2.supply_source_set.empty());
     ASSERT_TRUE(pool_2.supply_destination_set.empty());
   }
@@ -1125,14 +1123,13 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply) {
     // Get reference to tape pool 1
     const auto& pool_1 = pools.front().name == tapePoolName_1 ? *pools.begin() : *(++pools.begin());
     ASSERT_EQ(tapePoolName_1, pool_1.name);
-    ASSERT_EQ(tapePoolName_2, pool_1.supply.value());
+    ASSERT_EQ(1, pool_1.supply_source_set.size());
     ASSERT_EQ(1, pool_1.supply_source_set.count(tapePoolName_2));
     ASSERT_TRUE(pool_1.supply_destination_set.empty());
 
     // Get reference to tape pool 2
     const auto& pool_2 = pools.front().name == tapePoolName_2 ? *pools.begin() : *(++pools.begin());
     ASSERT_EQ(tapePoolName_2, pool_2.name);
-    ASSERT_EQ(std::nullopt, pool_2.supply);
     ASSERT_TRUE(pool_2.supply_source_set.empty());
     ASSERT_EQ(1, pool_2.supply_destination_set.count(tapePoolName_1));
   }
@@ -1166,7 +1163,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(true, pool.encryption);
     ASSERT_EQ(encryptionKeyName, pool.encryptionKeyName);
-    ASSERT_EQ(std::nullopt, pool.supply);
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1195,7 +1192,7 @@ TEST_P(cta_catalogue_TapePoolTest, modifyTapePoolSupply_emptyStringSupply) {
     ASSERT_EQ(nbPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(true, pool.encryption);
     ASSERT_EQ(encryptionKeyName, pool.encryptionKeyName);
-    ASSERT_EQ(std::nullopt, pool.supply);
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1261,7 +1258,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(firstPoolEncryptionKeyName.has_value(), pool.encryption);
     ASSERT_EQ(firstPoolEncryptionKeyName, pool.encryptionKeyName);
-    ASSERT_EQ(std::nullopt, pool.supply);
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1285,7 +1282,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterName) {
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolEncryptionKeyNull.has_value(), pool.encryption);
     ASSERT_EQ(secondPoolEncryptionKeyNull, pool.encryptionKeyName);
-    ASSERT_FALSE(pool.supply.has_value());
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1358,7 +1355,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(firstPoolEncryptionKeyName.has_value(), pool.encryption);
     ASSERT_EQ(firstPoolEncryptionKeyName, pool.encryptionKeyName);
-    ASSERT_EQ(std::nullopt, pool.supply);
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1382,7 +1379,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterVO) {
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolEncryptionKeyNull.has_value(), pool.encryption);
     ASSERT_EQ(secondPoolEncryptionKeyNull, pool.encryptionKeyName);
-    ASSERT_EQ(std::nullopt, pool.supply);
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1457,7 +1454,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(true, pool.encryption);
     ASSERT_EQ(firstPoolEncryptionKeyName, pool.encryptionKeyName);
-    ASSERT_EQ(std::nullopt, pool.supply);
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1481,7 +1478,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncrypted) {
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(false, pool.encryption);
     ASSERT_EQ(secondPoolEncryptionKeyNull, pool.encryptionKeyName);
-    ASSERT_FALSE(pool.supply);
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1541,7 +1538,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncryptionKeyName) {
     ASSERT_EQ(nbFirstPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(firstPoolEncryptionKeyName.has_value(), pool.encryption);
     ASSERT_EQ(firstPoolEncryptionKeyName, pool.encryptionKeyName);
-    ASSERT_EQ(std::nullopt, pool.supply);
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1565,7 +1562,7 @@ TEST_P(cta_catalogue_TapePoolTest, getTapePools_filterEncryptionKeyName) {
     ASSERT_EQ(nbSecondPoolPartialTapes, pool.nbPartialTapes);
     ASSERT_EQ(secondPoolEncryptionKeyNull.has_value(), pool.encryption);
     ASSERT_EQ(secondPoolEncryptionKeyNull, pool.encryptionKeyName);
-    ASSERT_FALSE(pool.supply);
+    ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_EQ(0, pool.nbTapes);
     ASSERT_EQ(0, pool.capacityBytes);
     ASSERT_EQ(0, pool.dataBytes);
@@ -1734,7 +1731,6 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
 
     const auto& pool = poolMaplet->second;
     ASSERT_EQ(firstTapePoolName, pool.name);
-    ASSERT_EQ(std::nullopt, pool.supply);
     ASSERT_TRUE(pool.supply_source_set.empty());
     ASSERT_TRUE(pool.supply_destination_set.count(secondTapePoolName));
   }
@@ -1745,11 +1741,9 @@ TEST_P(cta_catalogue_TapePoolTest, createTapePool_usingTapePoolSupplyTable) {
 
     const auto& pool = poolMaplet->second;
     ASSERT_EQ(secondTapePoolName, pool.name);
-    ASSERT_EQ("tape_pool", pool.supply);
-    ASSERT_FALSE(pool.supply_source_set.empty());
+    ASSERT_EQ(1, pool.supply_source_set.size());
+    ASSERT_EQ(1, pool.supply_source_set.count(firstTapePoolName));
     ASSERT_TRUE(pool.supply_destination_set.empty());
-    ASSERT_TRUE(pool.supply_source_set.count(firstTapePoolName));
-    ASSERT_EQ(firstTapePoolName, pool.supply);
   }
   // create a third tapepool to test multiple entries
   std::string thirdTapePoolName("tape_pool_3");
