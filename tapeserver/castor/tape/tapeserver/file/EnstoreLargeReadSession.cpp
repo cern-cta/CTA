@@ -10,7 +10,6 @@
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "common/exception/Exception.hpp"
 
-#include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
@@ -34,7 +33,7 @@ EnstoreLargeReadSession::EnstoreLargeReadSession(tapeserver::drive::DriveInterfa
   if (size_t bytes_read = m_drive.readBlock(data.data(), data.size()); bytes_read < sizeof(vol1)) {
     throw cta::exception::Exception("Too few bytes read from label");
   }
-  std::memcpy(&vol1, data.data(), sizeof(vol1));
+  memcpy(&vol1, data.data(), sizeof(vol1));
 
   // Tapes should have label character 3, but if they were recycled from CPIO tapes, it could be 0
   try {

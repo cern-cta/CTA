@@ -9,7 +9,6 @@
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
 
-#include <cstring>
 #include <memory>
 #include <string>
 #include <vector>
@@ -33,7 +32,7 @@ EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface& drive,
   if (size_t bytes_read = m_drive.readBlock(data.data(), data.size()); bytes_read < sizeof(vol1)) {
     throw cta::exception::Exception("Too few bytes read from label");
   }
-  std::memcpy(&vol1, data.data(), sizeof(vol1));
+  memcpy(&vol1, data.data(), sizeof(vol1));
 
   // Tapes should have label character 0, but if they were recycled from EnstoreLarge tapes, it could be 3
   try {

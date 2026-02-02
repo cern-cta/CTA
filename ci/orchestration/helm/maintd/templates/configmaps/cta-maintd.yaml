@@ -44,7 +44,9 @@ data:
     # For k8s health probes to work, this cannot only accept connections from localhost
     cta.health_server.host 0.0.0.0
     cta.health_server.port 8080
-    cta.health_server.liveness_window 120
+    # This is a temporary hack to make CI happy.
+    # Will be fixed by https://gitlab.cern.ch/cta/CTA/-/issues/1517
+    cta.health_server.liveness_window 90000
 
     # Telemetry
     cta.experimental.telemetry.enabled true

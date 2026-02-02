@@ -5,10 +5,9 @@
 
 #pragma once
 
+#include "cta_frontend.pb.h"
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/PbException.hpp"
-
-#include "cta_frontend.pb.h"
 
 namespace cta::frontend {
 

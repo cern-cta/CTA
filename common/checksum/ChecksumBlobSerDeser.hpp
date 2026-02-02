@@ -6,7 +6,6 @@
 #pragma once
 
 #include "common/checksum/ChecksumBlob.hpp"
-
 #include "cta_common.pb.h"
 
 namespace cta::checksum {

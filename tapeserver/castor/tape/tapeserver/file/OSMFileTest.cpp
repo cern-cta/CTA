@@ -187,9 +187,7 @@ TEST_F(OSMTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
     // block size needs to be the same provided by the headers
     ASSERT_THROW(reader->readNextDataBlock(data.data(), 1), castor::tape::tapeFile::WrongBlockSize);
     // it is normal to reach end of file after a loop of reads
-    ASSERT_THROW(
-      while (true) { reader->readNextDataBlock(data.data(), blockSize); },
-      castor::tape::tapeFile::EndOfFile);
+    ASSERT_THROW(while (true) { reader->readNextDataBlock(data.data(), blockSize); }, castor::tape::tapeFile::EndOfFile);
   }
 }
 
