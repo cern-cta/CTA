@@ -378,7 +378,7 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
          XrdSecPROTOCOL=unix XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
           > /dev/null 2>&1 || true \
          "
-
+  sleep 1
   # move the files to make space in the small memory buffer /dev/shm for logs
   mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
   #fi
