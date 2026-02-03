@@ -46,15 +46,7 @@ ensure_device_free() {
       return 0
     fi
     echo "Tape device ${dev} busy (attempt ${attempt}/${max_attempts})"
-    if command -v fuser >/dev/null 2>&1; then
-      fuser -v "${dev}" || true
-      if [[ "${FUSER_KILL_BUSY:-1}" == "1" ]]; then
-        fuser -k "${dev}" || true
-      fi
-    fi
-    if command -v lsof >/dev/null 2>&1; then
-      lsof "${dev}" || true
-    fi
+    report_device_users "${dev}"
     sleep 2
     attempt=$((attempt + 1))
   done
@@ -63,10 +55,24 @@ ensure_device_free() {
   return 1
 }
 
+report_device_users() {
+  local dev="$1"
+  if command -v fuser >/dev/null 2>&1; then
+    fuser -v "${dev}" || true
+    if [[ "${FUSER_KILL_BUSY:-1}" == "1" ]]; then
+      fuser -k "${dev}" || true
+    fi
+  fi
+  if command -v lsof >/dev/null 2>&1; then
+    lsof "${dev}" || true
+  fi
+}
+
 write_with_retry() {
   local desc="$1"
   shift
   local max_attempts="${WRITE_RETRY_MAX:-10}"
+  local sleep_seconds="${WRITE_RETRY_SLEEP:-2}"
   local attempt=1
   local errfile
   errfile=$(mktemp)
@@ -81,6 +87,8 @@ write_with_retry() {
     err=$(cat "${errfile}")
     if echo "${err}" | grep -q "Device or resource busy"; then
       echo "${desc} failed: device busy (attempt ${attempt}/${max_attempts})"
+      report_device_users "${device}"
+      sleep "${sleep_seconds}"
       ensure_device_free "${device}" 30 || true
       attempt=$((attempt + 1))
       if (( attempt > max_attempts )); then
