@@ -40,8 +40,14 @@ global:
 frontend:
   grpc:
     enabled: true
+    conf:
+      logger:
+        logLevel: "ERR"
   xrd:
     enabled: false
+    conf:
+      logger:
+        logLevel: "ERR"
   preRun:
     enabled: true
     # Mount /var/log contents in /mnt/logs so that the fluentd can consume it
@@ -83,6 +89,7 @@ taped:
   conf:
     taped:
       bufferCount: 10000
+      logMask: "WARNING"
 
 maintd:
   preRun:

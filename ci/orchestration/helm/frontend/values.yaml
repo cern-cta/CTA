@@ -30,7 +30,7 @@ grpc:
       retrieveQueueCacheMaxAgeSecs: 1
 
     logger:
-      logLevel: "INFO"
+      logLevel: "ERR"
       logFormat: json
 
     tls:
@@ -72,7 +72,7 @@ xrd:
   port: 10955
   conf:
     catalogue:
-      numberOfConnections: 10
+      numberOfConnections: 50
       # Reduced value for test environment
       missingFileCopiesMinAgeSecs: 5
 
@@ -90,7 +90,7 @@ xrd:
       retrieveQueueCacheMaxAgeSecs: 1
 
     logger:
-      logLevel: "INFO"
+      logLevel: "ERR"
       ssiLogLevel: "warning"
     telemetry:
       enabled: false
