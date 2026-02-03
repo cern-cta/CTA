@@ -38,8 +38,8 @@ struct ArgSpec {
 //  runtime::CommonCliOptions opts;
 //  runtime::ArgParser argParser(appName, opts);
 //  argParser.parser(argc, argv);
-// TODO example with custom args
 // no support for positional arguments yet, but should not be too complicated to add
+// TODO: parser builder
 template<class T>
 class ArgParser {
 public:
@@ -67,6 +67,8 @@ public:
                    + m_appName + ".toml)."));
     withStringArg(&T::logFilePath, "log-file", 'l', "PATH", "Write logs to PATH (defaults to stdout/stderr).");
   }
+
+  void withDescription(const std::string& description) { m_appDescription = description; }
 
   void withStringArg(std::string T::* field,
                      const std::string& longFlag,
@@ -224,15 +226,21 @@ public:
       return option;
     };
 
-    std::string usage = "Usage:\n  " + m_appName + " [OPTIONS]\n\nOptions:\n";
+    std::string usage = "Usage: " + m_appName + " [OPTIONS]\n\n";
+
+    if (!m_appDescription.empty()) {
+      usage += m_appDescription + "\n\n";
+    }
+
+    usage += "Options:";
     for (const auto& s : m_supportedArgs | std::views::reverse) {
-      usage += "  " + formatOption(s) + "\n      " + s.description + "\n\n";
+      usage += "\n  " + formatOption(s) + "\n      " + s.description;
     }
     return usage;
   }
 
   std::string versionString() const {
-    return m_appName + " " + std::string(CTA_VERSION) + "\nCopyright (C) 2026 CERN\nLicense GPL-3.0-or-later\n";
+    return m_appName + " " + std::string(CTA_VERSION) + "\nCopyright (C) 2026 CERN\nLicense GPL-3.0-or-later";
   }
 
 private:
@@ -256,6 +264,7 @@ private:
   }
 
   const std::string m_appName;
+  std::string m_appDescription = "";
   std::vector<ArgSpec> m_supportedArgs;
   T m_options;
 };
