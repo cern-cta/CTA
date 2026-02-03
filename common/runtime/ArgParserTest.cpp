@@ -186,29 +186,74 @@ TEST(ArgParser, UsageStringDefault) {
   const std::string appName = "cta-test";
   cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
 
-  std::string expectedUsageString = R"""(Usage:
-  cta-test [OPTIONS]
+  std::string expectedUsageString = R"""(Usage: cta-test [OPTIONS]
 
 Options:
   -l, --log-file PATH
       Write logs to PATH (defaults to stdout/stderr).
-
   -c, --config PATH
       Path to the main configuration file (default: /etc/cta/cta-test.toml).
-
   --config-strict
       Treat unknown keys, missing keys, and type mismatches in the config file as errors.
-
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
-
   -v, --version
       Print version information, then exit.
-
   -h, --help
-      Show this help message, then exit.
+      Show this help message, then exit.)""";
 
-)""";
+  ASSERT_EQ(argParser.usageString(), expectedUsageString);
+}
+
+TEST(ArgParser, UsageStringDefaultWithDescription) {
+  const std::string appName = "cta-test";
+  cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
+  argParser.withDescription("my fancy description");
+
+  std::string expectedUsageString = R"""(Usage: cta-test [OPTIONS]
+
+my fancy description
+
+Options:
+  -l, --log-file PATH
+      Write logs to PATH (defaults to stdout/stderr).
+  -c, --config PATH
+      Path to the main configuration file (default: /etc/cta/cta-test.toml).
+  --config-strict
+      Treat unknown keys, missing keys, and type mismatches in the config file as errors.
+  --config-check
+      Validate the configuration, then exit. Respects --config-strict.
+  -v, --version
+      Print version information, then exit.
+  -h, --help
+      Show this help message, then exit.)""";
+
+  ASSERT_EQ(argParser.usageString(), expectedUsageString);
+}
+
+TEST(ArgParser, UsageStringDefaultWithMultilineDescription) {
+  const std::string appName = "cta-test";
+  cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
+  argParser.withDescription("my fancy description\nA second line!");
+
+  std::string expectedUsageString = R"""(Usage: cta-test [OPTIONS]
+
+my fancy description
+A second line!
+
+Options:
+  -l, --log-file PATH
+      Write logs to PATH (defaults to stdout/stderr).
+  -c, --config PATH
+      Path to the main configuration file (default: /etc/cta/cta-test.toml).
+  --config-strict
+      Treat unknown keys, missing keys, and type mismatches in the config file as errors.
+  --config-check
+      Validate the configuration, then exit. Respects --config-strict.
+  -v, --version
+      Print version information, then exit.
+  -h, --help
+      Show this help message, then exit.)""";
 
   ASSERT_EQ(argParser.usageString(), expectedUsageString);
 }
@@ -222,32 +267,23 @@ TEST(ArgParser, UsageStringExtra) {
   cta::runtime::ArgParser<ExtendsFromCliOptions> argParser(appName);
   argParser.withStringArg(&ExtendsFromCliOptions::iAmExtra, "extra", 'e', "STUFF", "Some extra argument.");
 
-  std::string expectedUsageString = R"""(Usage:
-  cta-test [OPTIONS]
+  std::string expectedUsageString = R"""(Usage: cta-test [OPTIONS]
 
 Options:
   -e, --extra STUFF
       Some extra argument.
-
   -l, --log-file PATH
       Write logs to PATH (defaults to stdout/stderr).
-
   -c, --config PATH
       Path to the main configuration file (default: /etc/cta/cta-test.toml).
-
   --config-strict
       Treat unknown keys, missing keys, and type mismatches in the config file as errors.
-
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
-
   -v, --version
       Print version information, then exit.
-
   -h, --help
-      Show this help message, then exit.
-
-)""";
+      Show this help message, then exit.)""";
 
   ASSERT_EQ(argParser.usageString(), expectedUsageString);
 }
@@ -257,7 +293,7 @@ TEST(ArgParser, VersionString) {
   cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
 
   std::string expectedVersionString =
-    "cta-test " + std::string(CTA_VERSION) + "\nCopyright (C) 2026 CERN\nLicense GPL-3.0-or-later\n";
+    "cta-test " + std::string(CTA_VERSION) + "\nCopyright (C) 2026 CERN\nLicense GPL-3.0-or-later";
 
   ASSERT_EQ(argParser.versionString(), expectedVersionString);
 }
