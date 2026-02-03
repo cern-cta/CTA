@@ -371,11 +371,11 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
   printf "%s\n" "${TEST_FILE_NUMS[@]}" | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "(${DD_COMMAND}; \
          printf \"%s\" \"UNIQ_${PADDED_SUBDIR}_TEST_FILE_NUM\";) \
-         |  XrdSecPROTOCOL=unix XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+         |  XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
          > /dev/null 2>&1 ||  \
-         XrdSecPROTOCOL=unix XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+         XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
           > /dev/null 2>&1  ||  \
-         XrdSecPROTOCOL=unix XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+         XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
           > /dev/null 2>&1 || true \
          "
   sleep 1
