@@ -449,7 +449,7 @@ ARCHIVING=${TO_BE_ARCHIVED}
 ARCHIVED=0
 echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
-WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((${NB_FILES}/10))
+WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((${NB_FILES}/3))
 START_TIME=$(date +%s)
 END_TIME=$(date +%s)
 while test 0 != ${ARCHIVING}; do
