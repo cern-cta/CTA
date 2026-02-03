@@ -553,14 +553,15 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   #OUTPUT_LOG="/dev/null"
   touch ${OUTPUT_LOG}
   touch ${ERROR_LOG}
+  # XrdSecPROTOCOL=krb5,unix
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes...${subdir}, ${EOS_DIR}/${subdir}/, ${ERROR_LOG},  ${OUTPUT_LOG}, ${EOS_MGM_HOST}"
   awk -F '/' -v subdir="${subdir}" '$1 == subdir { print $2 }' "${STATUS_FILE}" | \
     xargs -P ${NB_PROCS} -I{} bash -c \
-    "XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
+    "XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 \
     xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" > /dev/null 2>&1 \
-    || XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
+    || XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 \
     xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" > /dev/null 2>&1 \
-    || XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
+    || XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 \
     xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" > /dev/null 2>&1;"
   fi
   # move the files to make space in the small memory buffer for logs
