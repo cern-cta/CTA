@@ -23,6 +23,9 @@ int main(const int argc, char* const* const argv) {
   cta::log::StdoutLogger log(hostName, "cta-readtp");
   cta::log::DummyLogger dummyLog("dummy", "dummy");
 
+  log.setLogFormat("json");
+  dummyLog.setLogFormat("json");
+
   cta::tapeserver::readtp::ReadtpCmd cmd(std::cin, std::cout, std::cerr, log, dummyLog);
   return cmd.mainImpl(argc, argv);
 }
