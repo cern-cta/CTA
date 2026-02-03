@@ -363,56 +363,36 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   touch "${OUTPUT_LOG}"
   PADDED_SUBDIR="${TEST_SUBDIRS[${subdir}]}"
   echo "Starting parallel processes."
-  echo "In case of OStoreDB prequeueing the drives processing block further queueing, this is why \
-        as soon as we spot jobs taking more then 5 minutes we put them to sleep for next \
-        15 minutes before queueing next file on that thread"
-  if (( subdir == 0 )); then
-    PREVIOUS_PATH="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
-    # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
-    printf "%s\n" "${TEST_FILE_NUMS[@]}" | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "START=\$(date +%s); (${DD_COMMAND}; \
-           printf \"%s\" \"UNIQ_${PADDED_SUBDIR}_TEST_FILE_NUM\";) \
-           | if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
-           2>\"${ERROR_LOG}_TEST_FILE_NUM\" > \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then  \
-           if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
-           2>>\"${ERROR_LOG}_TEST_FILE_NUM\" >> \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then \
-           if ! XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
-           2>>\"${ERROR_LOG}_TEST_FILE_NUM\" >> \"${OUTPUT_LOG}_TEST_FILE_NUM\"; then :; fi; fi; fi; \
-           tail -n 50 \"${ERROR_LOG}_TEST_FILE_NUM\" >>\"${ERROR_LOG}\"; \
-           tail -n 50 \"${OUTPUT_LOG}_TEST_FILE_NUM\" >>\"${OUTPUT_LOG}\"; \
-           rm -f \"${ERROR_LOG}_TEST_FILE_NUM\"; \
-           rm -f \"${OUTPUT_LOG}_TEST_FILE_NUM\"; \
-           END=\$(date +%s); DURATION=\$((END - START)); \
-           (( DURATION > 300 )) && sleep 900 || :" || echo "xargs failed !!!"
-    if [[ -s "$ERROR_LOG" ]]; then
-      LINE_COUNT=$(wc -l < "$ERROR_LOG")
-      TMP_FILE=$(mktemp)
-      {
-         echo "Original line count: $LINE_COUNT"
-         tail -n 250 "$ERROR_LOG"
-      } > "$TMP_FILE"
-      mv -f "$TMP_FILE" "$ERROR_LOG"
-    fi
-    if [[ -s "$OUTPUT_LOG" ]]; then
-      LINE_COUNT=$(wc -l < "$OUTPUT_LOG")
-      TMP_FILE=$(mktemp)
-      {
-         echo "Original line count: $LINE_COUNT"
-         tail -n 250 "$OUTPUT_LOG"
-      } > "$TMP_FILE"
-      mv -f "$TMP_FILE" "$OUTPUT_LOG"
-    fi
-    # move the files to make space in the small memory buffer /dev/shm for logs
-    mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
-  fi
-  # for all the next directories we simply copy the first one for faster queeuing !
+  #echo "In case of OStoreDB prequeueing the drives processing block further queueing, this is why \
+  #      as soon as we spot jobs taking more then 5 minutes we put them to sleep for next \
+  #      15 minutes before queueing next file on that thread"
+  #if (( subdir == 0 )); then
+  #PREVIOUS_PATH="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+  # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
+  printf "%s\n" "${TEST_FILE_NUMS[@]}" | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "(${DD_COMMAND}; \
+         printf \"%s\" \"UNIQ_${PADDED_SUBDIR}_TEST_FILE_NUM\";) \
+         |  XrdSecPROTOCOL=unix XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+         > /dev/null 2>&1 ||  \
+         XrdSecPROTOCOL=unix XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+          > /dev/null 2>&1  ||  \
+         XrdSecPROTOCOL=unix XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+          > /dev/null 2>&1 || true \
+         "
+
+  # move the files to make space in the small memory buffer /dev/shm for logs
+  mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
+  #fi
+  # we tried, for all the next directories we simply copy the first one for faster queeuing
+  # this was going too slow at 10Hz only ;/
+  #
   # if different file names are required we can adjust them via eos mv:
   #  eos root://ctaeos find /eos/ctaeos/cta/target -type f | while read -r f; do
   #  eos root://ctaeos mv "$f" "${f}_SUFFIX"
   #done
-  echo "${PREVIOUS_PATH}"
-  echo "root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
-  XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp -r "${PREVIOUS_PATH}" "root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
-  PREVIOUS_PATH="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+  #echo "${PREVIOUS_PATH}"
+  #echo "root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+  #XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp -r "${PREVIOUS_PATH}" "root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+  #PREVIOUS_PATH="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
   echo "Done."
 done
 
