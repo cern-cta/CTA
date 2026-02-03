@@ -7,6 +7,7 @@
 
 #include "CommonCliOptions.hpp"
 #include "common/exception/UserError.hpp"
+#include "version.h"
 
 #include <algorithm>
 #include <cassert>
@@ -15,6 +16,7 @@
 #include <getopt.h>
 #include <iostream>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -44,14 +46,26 @@ public:
   ArgParser(const std::string& appName)
     requires HasRequiredCliOptions<T>
       : m_appName(appName) {
-    withBoolArg(&T::showHelp, "help", 'h', "Show help");
-    withStringArg(&T::logFilePath, "log-file", 'l', "path", "Path to log file");
-    withStringArg(&T::configFilePath, "config", 'c', "config-file", "Configuration file");
-    withBoolArg(&T::configStrict, "config-strict", std::nullopt, "Enable strict config checking");
+    // Help is displayed in reverse order so that --help always shows last and custom added arguments show first
+    withBoolArg(&T::showHelp, "help", 'h', "Show this help message, then exit.");
+    withBoolArg(&T::showVersion, "version", 'v', "Print version information, then exit.");
     withBoolArg(&T::configCheck,
                 "config-check",
                 std::nullopt,
-                "Instead of running the application, performs validation of the config file");
+                "Validate the configuration, then exit. Respects --config-strict.");
+    withBoolArg(&T::configStrict,
+                "config-strict",
+                std::nullopt,
+                "Treat unknown keys, missing keys, and type mismatches in the config file as errors.");
+
+    withStringArg(&T::configFilePath,
+                  "config",
+                  'c',
+                  "PATH",
+                  ("Path to the main configuration file "
+                   "(default: /etc/cta/"
+                   + m_appName + ".toml)."));
+    withStringArg(&T::logFilePath, "log-file", 'l', "PATH", "Write logs to PATH (defaults to stdout/stderr).");
   }
 
   void withStringArg(std::string T::* field,
@@ -59,7 +73,6 @@ public:
                      std::optional<char> shortFlag,
                      const std::string& argName,
                      const std::string& description) {
-    // assert the long flag and short flags are unique
     ArgSpec arg;
     arg.longFlag = longFlag;
     arg.shortFlag = shortFlag;
@@ -79,12 +92,10 @@ public:
                    const std::string& longFlag,
                    std::optional<char> shortFlag,
                    const std::string& description) {
-    // assert the long flag and short flags are unique
     ArgSpec arg;
     arg.longFlag = longFlag;
     arg.shortFlag = shortFlag;
     arg.description = description;
-    // Assert bool is false
     arg.apply = [this, field](std::optional<std::string_view>) { m_options.*field = true; };
     assertCorrectArgSpec(arg);
     m_supportedArgs.push_back(arg);
@@ -93,7 +104,8 @@ public:
   T parse(const int argc, char** const argv) {
     // Build short option string and long option array
     std::string shortopts;
-    shortopts.reserve(m_supportedArgs.size() * 2);
+    shortopts.reserve(m_supportedArgs.size() * 2 + 1);
+    shortopts.push_back(':');  // return ':' on missing required argument
     std::vector<option> longopts;
     longopts.reserve(m_supportedArgs.size() + 1);
 
@@ -101,13 +113,16 @@ public:
     std::unordered_map<int, std::size_t> valToIndex;
     valToIndex.reserve(m_supportedArgs.size());
 
-    int nextLongOnlyVal = 256;  // avoid collision with ASCII short flags
+    // avoid collision with ASCII short flags
+    int nextLongOnlyVal = 256;
 
     for (std::size_t i = 0; i < m_supportedArgs.size(); ++i) {
       const ArgSpec& s = m_supportedArgs[i];
 
+      // The value that will be returned by getopt_long
       int val = 0;
-      if (s.shortFlag) {
+      if (s.shortFlag.has_value()) {
+        // For short options, just return the corresponding ASCII value
         val = static_cast<unsigned char>(*s.shortFlag);
 
         shortopts.push_back(static_cast<char>(val));
@@ -115,38 +130,54 @@ public:
           shortopts.push_back(':');
         }
       } else {
+        // For long options, return a unique value
         val = nextLongOnlyVal++;
       }
 
       option o {};
       o.name = s.longFlag.c_str();
-      o.has_arg = s.argName.has_value();
+      o.has_arg = s.argName.has_value() ? required_argument : no_argument;
       o.flag = nullptr;
       o.val = val;
 
       longopts.push_back(o);
+      // Map the return value of getopt_long to the index in the argument array
       valToIndex.emplace(val, i);
     }
 
+    // getopt_long expects an all-zero terminator
     longopts.push_back(option {nullptr, 0, nullptr, 0});
 
     // Reset getopt globals
-    opterr = 0;  // suppress getopt's own error output
-    optind = 1;
+    opterr = 0;  // Disable error output from getopt
+    optind = 0;  // Reset getopt_long parser state to index 0
 
     while (true) {
       int optionIndex = 0;
+      const int tokenIndex = optind;
+      optopt = 0;
       const int c = ::getopt_long(argc, argv, shortopts.c_str(), longopts.data(), &optionIndex);
       if (c == -1) {
+        // Done
         break;
       }
 
       if (c == '?' || c == ':') {
-        // Unknown option or missing required argument.
-        // optopt is set for short options; for long options, it's less helpful.
+        std::string offending;
+        if (tokenIndex >= 0 && tokenIndex < argc && argv[tokenIndex]) {
+          offending = argv[tokenIndex];
+        } else if (optopt != 0) {
+          offending = "-" + std::string(1, static_cast<char>(optopt));
+        } else {
+          offending = "<unknown>";
+        }
 
-        // TODO: better error message?
-        throw cta::exception::UserError("Invalid option. Use --help to see valid options.");
+        if (c == '?') {
+          throw cta::exception::UserError("Unknown option: \"" + offending + "\". Use --help to see valid options.");
+        } else {
+          throw cta::exception::UserError("Missing required argument for: \"" + offending
+                                          + "\". Use --help to see valid options.");
+        }
       }
 
       const auto it = valToIndex.find(c);
@@ -154,18 +185,12 @@ public:
         throw cta::exception::Exception("Internal error: parsed option not mapped to a spec.");
       }
 
-      const ArgSpec& spec = m_supportedArgs[it->second];
-
       std::optional<std::string_view> arg;
       if (optarg) {
         arg = std::string_view {optarg};
       }
-
-      if (spec.argName.has_value() && !arg) {
-        throw cta::exception::UserError("Missing argument for --" + spec.longFlag);
-      }
-
       // Dispatch
+      const ArgSpec& spec = m_supportedArgs[it->second];
       spec.apply(arg);
     }
 
@@ -176,64 +201,41 @@ public:
       std::cout << usageString() << std::endl;
       std::exit(EXIT_SUCCESS);
     }
+    if (m_options.showVersion) {
+      std::cout << versionString() << std::endl;
+      std::exit(EXIT_SUCCESS);
+    }
     return m_options;
   }
 
-private:
   std::string usageString() const {
-    std::string usage = "Usage: " + m_appName
-                        + " [options]\n\n"
-                          "Options:\n\n";
+    auto formatOption = [](const ArgSpec& s) -> std::string {
+      std::string option;
 
-    auto formatLeft = [](const ArgSpec& s) -> std::string {
-      std::string left;
-
-      if (s.shortFlag) {
-        left += "-";
-        left += *s.shortFlag;
-        left += ", ";
+      if (s.shortFlag.has_value()) {
+        option += "-" + std::string(1, s.shortFlag.value()) + ", ";
       }
-
-      left += "--";
-      left += s.longFlag;
+      option += "--" + s.longFlag;
 
       if (s.argName && !s.argName->empty()) {
-        left += " <";
-        left += *s.argName;
-        left += ">";
+        option += " " + *s.argName;
       }
 
-      return left;
+      return option;
     };
 
-    std::size_t leftWidth = 0;
-    std::vector<std::pair<std::string, std::string>> rows;
-    rows.reserve(m_supportedArgs.size());
-
-    for (const auto& s : m_supportedArgs) {
-      std::string left = formatLeft(s);
-      leftWidth = std::max(leftWidth, left.size());
-      rows.emplace_back(std::move(left), s.description);
+    std::string usage = "Usage:\n  " + m_appName + " [OPTIONS]\n\nOptions:\n";
+    for (const auto& s : m_supportedArgs | std::views::reverse) {
+      usage += "  " + formatOption(s) + "\n      " + s.description + "\n\n";
     }
-
-    for (const auto& [left, desc] : rows) {
-      usage += "  ";
-      usage += left;
-
-      if (!desc.empty()) {
-        if (left.size() < leftWidth) {
-          usage.append(leftWidth - left.size(), ' ');
-        }
-        usage += "  ";
-        usage += desc;
-      }
-
-      usage += "\n";
-    }
-
     return usage;
   }
 
+  std::string versionString() const {
+    return m_appName + " " + std::string(CTA_VERSION) + "\nCopyright (C) 2026 CERN\nLicense GPL-3.0-or-later\n";
+  }
+
+private:
   // Uses assertions as its aim is to prevent the developer from making a mistake
   void assertCorrectArgSpec(const ArgSpec& arg) const {
     assert(!arg.longFlag.empty());
