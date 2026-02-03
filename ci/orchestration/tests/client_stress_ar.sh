@@ -371,14 +371,14 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
   printf "%s\n" "${TEST_FILE_NUMS[@]}" | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "(${DD_COMMAND}; \
          printf \"%s\" \"UNIQ_${PADDED_SUBDIR}_TEST_FILE_NUM\";) \
-         |  XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+         |  XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
          > /dev/null 2>&1 ||  \
-         XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+         XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
           > /dev/null 2>&1  ||  \
-         XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+         XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
           > /dev/null 2>&1 || true \
          "
-  #sleep 1
+  sleep 1
   # move the files to make space in the small memory buffer /dev/shm for logs
   mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
   #fi
@@ -556,38 +556,12 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes...${subdir}, ${EOS_DIR}/${subdir}/, ${ERROR_LOG},  ${OUTPUT_LOG}, ${EOS_MGM_HOST}"
   awk -F '/' -v subdir="${subdir}" '$1 == subdir { print $2 }' "${STATUS_FILE}" | \
     xargs -P ${NB_PROCS} -I{} bash -c \
-    "START=\$(date +%s); if ! XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
-    xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" 2> ${ERROR_LOG}_{}  > ${OUTPUT_LOG}_{}; then  \
-    if ! XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
-    xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" 2>> ${ERROR_LOG}_{}  >> ${OUTPUT_LOG}_{}; then \
-    if ! XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
-    xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" 2>> ${ERROR_LOG}_{}  >> ${OUTPUT_LOG}_{}; then :; fi; fi; fi; \
-    tail -n 50 ${ERROR_LOG}_{} >>${ERROR_LOG}; \
-    tail -n 50 ${OUTPUT_LOG}_{} >>${OUTPUT_LOG}; \
-    rm -f ${ERROR_LOG}_{}; \
-    rm -f ${OUTPUT_LOG}_{}; \
-    END=\$(date +%s); DURATION=\$((END - START)); \
-    (( DURATION > 300 )) && sleep 900 || :" || echo "xargs for prepare failed !!!"
-  # letting the traffic settle
-  #sleep 2
-  # Limit the logging output not to run out of space
-  if [[ -s "$ERROR_LOG" ]]; then
-    LINE_COUNT=$(wc -l < "$ERROR_LOG")
-    TMP_FILE=$(mktemp)
-    {
-       echo "Original line count: $LINE_COUNT"
-       tail -n 200 "$ERROR_LOG"
-    } > "$TMP_FILE"
-    mv -f "$TMP_FILE" "$ERROR_LOG"
-  fi
-  if [[ -s "$OUTPUT_LOG" ]]; then
-    LINE_COUNT=$(wc -l < "$OUTPUT_LOG")
-    TMP_FILE=$(mktemp)
-    {
-       echo "Original line count: $LINE_COUNT"
-       tail -n 200 "$OUTPUT_LOG"
-    } > "$TMP_FILE"
-    mv -f "$TMP_FILE" "$OUTPUT_LOG"
+    "XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
+    xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" > /dev/null 2>&1 \
+    || XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
+    xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" > /dev/null 2>&1 \
+    || XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5,unix \
+    xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" > /dev/null 2>&1;"
   fi
   # move the files to make space in the small memory buffer for logs
   mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
