@@ -67,8 +67,12 @@ rm -rf /tmp/certificates
 kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/eos.keytab" /tmp/eos.keytab -c eos-mgm
 sed -i 's/u:daemon g:daemon/u:user1 g:eosusers/' /tmp/eos.keytab
 kubectl -n ${NAMESPACE} cp /tmp/eos.keytab "${CLIENT_POD}:etc/eos.keytab" -c client
+MY_CLIENT_SSS_KEY=$(kubectl exec ${EOS_MGM_POD} -n dev -c eos-mgm -- bash -c "cat /etc/eos.keytab")
 kubectl exec cta-client-0 -n dev -c client -- bash -c "chmod 400 /etc/eos.keytab"
 
+kubectl exec ${EOS_MGM_POD} -n dev -c eos-mgm -- bash -c "chmod 770 /etc/eos.keytab"
+kubectl exec ${EOS_MGM_POD} -n dev -c eos-mgm -- bash -c "echo ${MY_CLIENT_SSS_KEY} >> /etc/eos.keytab"
+kubectl exec ${EOS_MGM_POD} -n dev -c eos-mgm -- bash -c "chmod 400 /etc/eos.keytab"
 
 echo "Putting all tape drives down - to queue the files first since the processing is faster than the queueing capabilities of EOS, we hold it half-way and only then put drives up in the client_stress_ar.sh script"
 kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr down '.*' --reason "pre-queue jobs"
