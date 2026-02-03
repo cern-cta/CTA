@@ -64,6 +64,12 @@ kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp
 kubectl -n ${NAMESPACE} cp /tmp/certificates ${CLIENT_POD}:/etc/grid-security/ -c client
 rm -rf /tmp/certificates
 
+kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/eos.keytab" /tmp/eos.keytab -c eos-mgm
+sed -i 's/u:daemon g:daemon/u:user1 g:eosusers/' /tmp/eos.keytab
+kubectl -n ${NAMESPACE} cp /tmp/eos.keytab "${CLIENT_POD}:etc/eos.keytab" -c client
+kubectl exec cta-client-0 -n dev -c client -- bash -c "chmod 400 /etc/eos.keytab"
+
+
 echo "Putting all tape drives down - to queue the files first since the processing is faster than the queueing capabilities of EOS, we hold it half-way and only then put drives up in the client_stress_ar.sh script"
 kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr down '.*' --reason "pre-queue jobs"
 
