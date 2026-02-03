@@ -56,6 +56,10 @@ frontend:
       tar -c . | tar -C ${PV_PATH} -xv
       echo "Mounting logs volume ${PV_PATH} in /var/log"
       mount --bind ${PV_PATH} /var/log
+  xrd:
+    conf:
+      logger:
+        logLevel: "ERR"
 
 taped:
   preRun:
@@ -79,6 +83,7 @@ taped:
   conf:
     taped:
       bufferCount: 10000
+      logMask: "WARNING"
 
 maintd:
   preRun:
