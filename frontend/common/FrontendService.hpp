@@ -7,6 +7,7 @@
 
 #include "scheduler/Scheduler.hpp"
 #ifdef CTA_PGSCHED
+#include "common/dataStructures/StorageClass.hpp"
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
@@ -176,6 +177,10 @@ public:
    */
   bool getenableCtaAdminCommands() const { return m_enableCtaAdminCommands; }
 
+  common::dataStructures::StorageClassCache& getStorageClassCache() { return *m_storageClassCache; }
+
+  const common::dataStructures::StorageClassCache& getStorageClassCache() const { return *m_storageClassCache; }
+
 private:
   /*!
    * Set the verification mount policy
@@ -220,6 +225,8 @@ private:
   std::optional<int>                            m_jwksTotalTimeout;             //!< The total timeout in seconds for JWKS endpoint (default 60)
   bool                                          m_jwtAuth;                      //!< Feature flag to guard JWT auth when TLS is enabled
   bool                                          m_enableCtaAdminCommands;      //!< Feature flag to disable CTA admin commands
+  std::unique_ptr<cta::common::dataStructures::StorageClassCache> m_storageClassCache;
+
   // clang-format on
 };
 

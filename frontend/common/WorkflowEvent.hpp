@@ -5,9 +5,10 @@
 
 #pragma once
 
-#include "cta_frontend.pb.h"
 #include "frontend/common/FrontendService.hpp"
 #include "frontend/common/PbException.hpp"
+
+#include "cta_frontend.pb.h"
 
 namespace cta::frontend {
 
@@ -58,10 +59,10 @@ private:
   cta::Scheduler& m_scheduler;                             //!< Reference to CTA Scheduler
   log::LogContext m_lc;                                    //!< CTA Log Context
   std::string m_verificationMountPolicy;                   //!< Verification mount policy
-
-  bool m_zeroLengthFilesDisallowed;  //!< Do not allow 0-length files to be archived
+  bool m_zeroLengthFilesDisallowed;                        //!< Do not allow 0-length files to be archived
   std::set<std::string>
     m_zeroLengthFilesDisallowedExceptions;  //!< Virtual Organizations (VOs) exempted from the 0-length file rule (if enabled)
+  const common::dataStructures::StorageClassCache& m_storageClassCache;
 };
 
 }  // namespace cta::frontend
