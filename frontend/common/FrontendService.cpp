@@ -456,6 +456,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
   std::optional<bool> enableCtaAdminCommands =
     config.getOptionValueBool("cta.experimental.grpc.cta_admin_commands.enabled");
   m_enableCtaAdminCommands = enableCtaAdminCommands.value_or(false);  // default value is false
+  m_storageClassCache = std::make_unique<cta::common::dataStructures::StorageClassCache>(m_catalogue.get());
   if (!m_tls && m_jwtAuth) {
     throw exception::UserError("grpc.jwt.auth is set to true when grpc.tls is set to false in configuration file "
                                + configFilename + ". Cannot use tokens over unencrypted channel, tls must be enabled.");

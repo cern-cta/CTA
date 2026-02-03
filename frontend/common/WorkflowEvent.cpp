@@ -27,7 +27,8 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
       m_verificationMountPolicy(frontendService.getVerificationMountPolicy()),
       m_zeroLengthFilesDisallowed(frontendService.getDisallowZeroLengthFiles()),
       m_zeroLengthFilesDisallowedExceptions {frontendService.getDisallowZeroLengthFilesExemptions().begin(),
-                                             frontendService.getDisallowZeroLengthFilesExemptions().end()} {
+                                             frontendService.getDisallowZeroLengthFilesExemptions().end()},
+      m_storageClassCache(frontendService.getStorageClassCache()) {
   m_lc.push({"user", m_cliIdentity.username});
 
   // Log event before processing. This corresponds to the entry in WFE.log in EOS.
@@ -224,7 +225,11 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   }
 
   {
-    auto storageClass = m_catalogue.StorageClass()->getStorageClass(storageClassStr);
+    auto storageClassOptional = m_storageClassCache.find(storageClassStr);
+    if (!storageClassOptional.has_value()) {
+      throw exception::PbException("CLOSEW: Failed to find storage class in the Catalogue.");
+    }
+    auto storageClass = storageClassOptional.value();
     // Disallow archival of files above the specified limit
     if (storageClass.vo.maxFileSize && m_event.file().size() > storageClass.vo.maxFileSize) {
       throw exception::UserError("Archive request rejected: file size (" + std::to_string(m_event.file().size())
