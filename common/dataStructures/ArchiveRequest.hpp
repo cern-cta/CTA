@@ -73,10 +73,10 @@ struct ArchiveInsertQueueCriteriaKey {
 // Hash function for unordered_map
 struct ArchiveInsertQueueCriteriaKeyHash {
   std::size_t operator()(const ArchiveInsertQueueCriteriaKey& k) const {
-    std::size_t h = std::hash<std::string_view>{}(k.instanceName);
-    h ^= std::hash<std::string_view>{}(k.storageClass) + 0x9e3779b9 + (h << 6) + (h >> 2);
-    h ^= std::hash<std::string_view>{}(k.requesterName) + 0x9e3779b9 + (h << 6) + (h >> 2);
-    h ^= std::hash<std::string_view>{}(k.requesterGroup) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    std::size_t h = std::hash<std::string_view> {}(k.instanceName);
+    h ^= std::hash<std::string_view> {}(k.storageClass) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    h ^= std::hash<std::string_view> {}(k.requesterName) + 0x9e3779b9 + (h << 6) + (h >> 2);
+    h ^= std::hash<std::string_view> {}(k.requesterGroup) + 0x9e3779b9 + (h << 6) + (h >> 2);
     return h;
   }
 };
