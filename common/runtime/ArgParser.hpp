@@ -103,6 +103,8 @@ public:
     m_supportedArgs.push_back(arg);
   }
 
+  // TODO: handle positional arguments (.withPositionalArguments)
+  // TODO: handle correct error messages
   T parse(const int argc, char** const argv) {
     // Build short option string and long option array
     std::string shortopts;
@@ -156,7 +158,7 @@ public:
 
     while (true) {
       int optionIndex = 0;
-      const int tokenIndex = optind;
+      const int tokenIndex = (optind == 0 ? 1 : optind);
       optopt = 0;
       const int c = ::getopt_long(argc, argv, shortopts.c_str(), longopts.data(), &optionIndex);
       if (c == -1) {
