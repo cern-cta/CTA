@@ -12,6 +12,7 @@ namespace cta::runtime {
 template<class T>
 concept HasRequiredCliOptions = requires(T& opts) {
   { opts.showHelp } -> std::convertible_to<bool>;
+  { opts.showVersion } -> std::convertible_to<bool>;
   { opts.configStrict } -> std::convertible_to<bool>;
   { opts.configCheck } -> std::convertible_to<bool>;
   requires std::same_as<std::remove_cvref_t<decltype(opts.configFilePath)>, std::string>;
@@ -20,11 +21,12 @@ concept HasRequiredCliOptions = requires(T& opts) {
 
 // Every options struct passed to ArgParser MUST support these fields. In practice, if you need additional fields, it will be easiest to inherit from this struct
 struct CommonCliOptions {
-  bool showHelp = false;       // --help, -h
-  std::string logFilePath;     // --log-file <path>
-  std::string configFilePath;  // --config <path>, -c
-  bool configCheck = false;    // --check-config
-  bool configStrict = false;   // --config-strict
+  bool showHelp = false;
+  bool showVersion = false;
+  std::string logFilePath;
+  std::string configFilePath;
+  bool configCheck = false;
+  bool configStrict = false;
 };
 
 }  // namespace cta::runtime

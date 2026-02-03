@@ -7,6 +7,7 @@
 
 #include "CommonCliOptions.hpp"
 #include "common/exception/UserError.hpp"
+#include "version.h"
 
 #include <chrono>
 #include <functional>
@@ -122,6 +123,7 @@ TEST(ArgParser, WithCustomStructSameOptions) {
   // Shows that we don't need to extend the struct as long as we define the same member variables
   struct SameOptionsAsCliOptions {
     bool showHelp = false;
+    bool showVersion = false;
     bool configCheck = false;
     bool configStrict = false;
     std::string configFilePath;
@@ -178,6 +180,86 @@ TEST(ArgParser, ShortHandBoolFlag) {
   argParser.withBoolArg(&ExtendsFromCliOptions::iAmExtra, "bool-extra", 'b', "Some boolean extra argument");
   auto opts = argParser.parse(args.count, args.data());
   ASSERT_TRUE(opts.iAmExtra);
+}
+
+TEST(ArgParser, UsageStringDefault) {
+  const std::string appName = "cta-test";
+  cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
+
+  std::string expectedUsageString = R"""(Usage:
+  cta-test [OPTIONS]
+
+Options:
+  -l, --log-file PATH
+      Write logs to PATH (defaults to stdout/stderr).
+
+  -c, --config PATH
+      Path to the main configuration file (default: /etc/cta/cta-test.toml).
+
+  --config-strict
+      Treat unknown keys, missing keys, and type mismatches in the config file as errors.
+
+  --config-check
+      Validate the configuration, then exit. Respects --config-strict.
+
+  -v, --version
+      Print version information, then exit.
+
+  -h, --help
+      Show this help message, then exit.
+
+)""";
+
+  ASSERT_EQ(argParser.usageString(), expectedUsageString);
+}
+
+TEST(ArgParser, UsageStringExtra) {
+  struct ExtendsFromCliOptions : public cta::runtime::CommonCliOptions {
+    std::string iAmExtra;
+  };
+
+  const std::string appName = "cta-test";
+  cta::runtime::ArgParser<ExtendsFromCliOptions> argParser(appName);
+  argParser.withStringArg(&ExtendsFromCliOptions::iAmExtra, "extra", 'e', "STUFF", "Some extra argument.");
+
+  std::string expectedUsageString = R"""(Usage:
+  cta-test [OPTIONS]
+
+Options:
+  -e, --extra STUFF
+      Some extra argument.
+
+  -l, --log-file PATH
+      Write logs to PATH (defaults to stdout/stderr).
+
+  -c, --config PATH
+      Path to the main configuration file (default: /etc/cta/cta-test.toml).
+
+  --config-strict
+      Treat unknown keys, missing keys, and type mismatches in the config file as errors.
+
+  --config-check
+      Validate the configuration, then exit. Respects --config-strict.
+
+  -v, --version
+      Print version information, then exit.
+
+  -h, --help
+      Show this help message, then exit.
+
+)""";
+
+  ASSERT_EQ(argParser.usageString(), expectedUsageString);
+}
+
+TEST(ArgParser, VersionString) {
+  const std::string appName = "cta-test";
+  cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
+
+  std::string expectedVersionString =
+    "cta-test " + std::string(CTA_VERSION) + "\nCopyright (C) 2026 CERN\nLicense GPL-3.0-or-later\n";
+
+  ASSERT_EQ(argParser.versionString(), expectedVersionString);
 }
 
 // TODO: repeated arguments
