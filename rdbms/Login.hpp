@@ -274,6 +274,14 @@ private:
   void setPostgresqlConnectionString(const std::string& connectionDetails);
 
   /**
+   * Looks for search_path= or searchpath%3D in the connection string
+   * and extracts the first value of the schema name after = or %3D
+   * and sets it as the dbNamespace value of the connection
+   * @param connectionDetails
+   */
+  void setPostgresqlDbNamespace(const std::string& connectionDetails);
+
+  /**
    * Sets the connection string of a sqlite database
    * @param filename
    */
@@ -281,10 +289,12 @@ private:
 
   /**
    * Returns true if the Postgresql connectionDetails contains a password, false otherwise
+   * It also sets the username member value accordingly.
    * @param connectionDetails the connectionDetails retrieved from the configuration file
    * @return  true if the Postgresql connectionDetails contains a password, false otherwise
    */
-  static bool postgresqlHasPassword(const std::string& connectionDetails);
+  bool postgresqlHasPassword(const std::string& connectionDetails);
+
 };  // class Login
 
 }  // namespace cta::rdbms

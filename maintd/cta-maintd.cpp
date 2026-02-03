@@ -9,12 +9,12 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/process/health/HealthServer.hpp"
 #include "common/process/signals/SignalReactor.hpp"
 #include "common/process/signals/SignalReactorBuilder.hpp"
 #include "common/process/threading/System.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/TelemetryInit.hpp"
-#include "common/telemetry/config/TelemetryConfig.hpp"
+#include "common/telemetry/OtelInit.hpp"
 #include "common/utils/utils.hpp"
 #include "version.h"
 
@@ -27,69 +27,24 @@
 
 namespace cta::maintd {
 
-static int setUserAndGroup(const std::string& userName, const std::string& groupName, cta::log::Logger& logger) {
-  try {
-    logger(log::INFO,
-           "Setting user name and group name of current process",
-           {
-             {"userName",  userName },
-             {"groupName", groupName}
-    });
-    cta::System::setUserAndGroup(userName, groupName);
-  } catch (exception::Exception& ex) {
-    std::list<log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
-    logger(log::ERR, "Caught an unexpected CTA, exiting cta-maintd", params);
-    return EXIT_FAILURE;
-  }
-
-  return 0;
-}
-
 void initTelemetry(const common::Config& config, cta::log::LogContext& lc) {
   if (!config.getOptionValueBool("cta.experimental.telemetry.enabled").value_or(false)) {
     return;
   }
   try {
-    auto retainInstanceIdOnRestart =
-      config.getOptionValueBool("cta.telemetry.retain_instance_id_on_restart").value_or(false);
-    auto metricsBackend = config.getOptionValueStr("cta.telemetry.metrics.backend").value_or("NOOP");
-    auto metricsExportInterval = config.getOptionValueUInt("cta.telemetry.metrics.export.interval").value_or(15000);
-    auto metricsExportTimeout = config.getOptionValueUInt("cta.telemetry.metrics.export.timeout").value_or(3000);
-    auto metricsOtlpEndpoint = config.getOptionValueStr("cta.telemetry.metrics.otlp.endpoint").value_or("");
-    auto metricsOtlpBasicAuthPasswordFile =
-      config.getOptionValueStr("cta.telemetry.metrics.otlp.auth.basic.password_file");
-    std::string metricsOtlpBasicAuthPassword = "";
-    if (metricsOtlpBasicAuthPasswordFile.has_value()) {
-      metricsOtlpBasicAuthPassword = cta::telemetry::stringFromFile(metricsOtlpBasicAuthPasswordFile.value());
-    }
-    auto metricsOtlpBasicAuthUsername =
-      config.getOptionValueStr("cta.telemetry.metrics.otlp.auth.basic.username").value_or("");
-    auto metricsFileEndpoint =
-      config.getOptionValueStr("cta.telemetry.metrics.file.endpoint").value_or("/var/log/cta/cta-frontend-metrics.txt");
-
-    auto instanceName = config.getOptionValueStr("cta.instance_name").value();
-    auto schedulerBackendName = config.getOptionValueStr("cta.scheduler_backend_name").value();
-
-    cta::telemetry::TelemetryConfig telemetryConfig =
-      cta::telemetry::TelemetryConfigBuilder()
-        .serviceName(cta::semconv::attr::ServiceNameValues::kCtaMaintd)
-        .serviceNamespace(instanceName)
-        .serviceVersion(CTA_VERSION)
-        .retainInstanceIdOnRestart(retainInstanceIdOnRestart)
-        .resourceAttribute(cta::semconv::attr::kSchedulerNamespace, schedulerBackendName)
-        .metricsBackend(metricsBackend)
-        .metricsExportInterval(std::chrono::milliseconds(metricsExportInterval))
-        .metricsExportTimeout(std::chrono::milliseconds(metricsExportTimeout))
-        .metricsOtlpEndpoint(metricsOtlpEndpoint)
-        .metricsOtlpBasicAuth(metricsOtlpBasicAuthUsername, metricsOtlpBasicAuthPassword)
-        .metricsFileEndpoint(metricsFileEndpoint)
-        .build();
-    cta::telemetry::initTelemetry(telemetryConfig, lc);
+    std::map<std::string, std::string> ctaResourceAttributes = {
+      {cta::semconv::attr::kServiceName,       cta::semconv::attr::ServiceNameValues::kCtaMaintd},
+      {cta::semconv::attr::kServiceVersion,    std::string(CTA_VERSION)                         },
+      {cta::semconv::attr::kServiceInstanceId, cta::utils::generateUuid()                       },
+      {cta::semconv::attr::kHostName,          cta::utils::getShortHostname()                   }
+    };
+    auto otelConfigFile = config.getOptionValueStr("cta.telemetry.config").value_or("/etc/cta/cta-otel.yaml");
+    cta::telemetry::initOpenTelemetry(otelConfigFile, ctaResourceAttributes, lc);
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", ex.getMessage().str());
     lc.log(log::ERR, "Failed to instantiate OpenTelemetry");
-    cta::telemetry::shutdownTelemetry(lc);
+    cta::telemetry::cleanupOpenTelemetry(lc);
   }
 }
 
@@ -119,6 +74,19 @@ static int exceptionThrowingMain(common::Config config, cta::log::Logger& log) {
 
   // Telemetry spawns some threads, so the SignalReactor must have started before this to correctly block signals
   initTelemetry(config, lc);
+
+  common::HealthServer healthServer = common::HealthServer(
+    lc,
+    config.getOptionValueStr("cta.health_server.host").value_or("127.0.0.1"),
+    config.getOptionValueInt("cta.health_server.port").value_or(8080),
+    [&maintenanceDaemon]() { return maintenanceDaemon.isReady(); },
+    [&maintenanceDaemon]() { return maintenanceDaemon.isLive(); });
+
+  if (config.getOptionValueBool("cta.health_server.enabled").value_or(false)) {
+    // We only start it if it's enabled. We explicitly construct the object outside the scope of this if statement
+    // Otherwise, healthServer will go out of scope and be destructed immediately
+    healthServer.start();
+  }
 
   // Run the maintenance daemon
   maintenanceDaemon.run();
@@ -185,24 +153,17 @@ int main(const int argc, char** const argv) {
   staticParamMap["sched_backend"] = config.getOptionValueStr("cta.scheduler_backend_name").value();
   log.setStaticParams(staticParamMap);
 
-  // Change user and group
-  if (int rc = cta::maintd::setUserAndGroup(config.getOptionValueStr("cta.daemon_user").value_or("cta"),
-                                            config.getOptionValueStr("cta.daemon_group").value_or("tape"),
-                                            log)) {
-    return rc;
-  }
-
   // Start
   int programRc = EXIT_FAILURE;
   try {
     log(log::INFO, "Launching cta-maintd", cmdLineParams.toLogParams());
     programRc = maintd::exceptionThrowingMain(config, log);
   } catch (exception::Exception& ex) {
-    std::list<cta::log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
+    std::vector<cta::log::Param> params = {log::Param("exceptionMessage", ex.getMessage().str())};
     log(log::ERR, "Caught an unexpected CTA exception.", params);
     sleep(1);
   } catch (std::exception& se) {
-    std::list<cta::log::Param> params = {cta::log::Param("what", se.what())};
+    std::vector<cta::log::Param> params = {cta::log::Param("what", se.what())};
     log(log::ERR, "Caught an unexpected standard exception.", params);
     sleep(1);
   } catch (...) {

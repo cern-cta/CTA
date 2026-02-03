@@ -55,7 +55,7 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char* const* const ar
       if (cmdLineArgs.schedulerdbVersion) {
         throw exception::NotImplementedException("Create a schedulerdb of given version");
       } else {
-        PostgresSchedulerSchema schema;
+        PostgresSchedulerSchema schema(login.username, login.dbNamespace);
         executeNonQueries(conn, schema.sql);
         conn.commit();
       }

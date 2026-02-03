@@ -612,6 +612,46 @@ RdbmsDriveStateCatalogue::getTapeDrive(const std::string& tapeDriveName) const {
   return std::nullopt;
 }
 
+std::optional<common::dataStructures::DriveStatus>
+RdbmsDriveStateCatalogue::getTapeDriveStatus(const std::string& tapeDriveName) const {
+  const char* const sql = R"SQL(
+    SELECT
+      DRIVE_STATUS
+    FROM
+      DRIVE_STATE
+    WHERE
+      DRIVE_NAME = :DRIVE_NAME
+  )SQL";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":DRIVE_NAME", tapeDriveName);
+
+  if (auto rset = stmt.executeQuery(); rset.next()) {
+    return common::dataStructures::TapeDrive::stringToState(rset.columnString("DRIVE_STATUS"));
+  }
+  return std::nullopt;
+}
+
+std::optional<common::dataStructures::MountType>
+RdbmsDriveStateCatalogue::getMountType(const std::string& tapeDriveName) const {
+  const char* const sql = R"SQL(
+    SELECT
+      MOUNT_TYPE
+    FROM
+      DRIVE_STATE
+    WHERE
+      DRIVE_NAME = :DRIVE_NAME
+  )SQL";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":DRIVE_NAME", tapeDriveName);
+
+  if (auto rset = stmt.executeQuery(); rset.next()) {
+    return common::dataStructures::strToMountType(rset.columnString("MOUNT_TYPE"));
+  }
+  return std::nullopt;
+}
+
 void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeDriveName,
                                                         const common::dataStructures::DesiredDriveState& desiredState) {
   const auto trimmedReason = RdbmsCatalogueUtils::checkCommentOrReasonMaxLength(desiredState.reason, &m_log);

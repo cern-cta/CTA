@@ -6,6 +6,10 @@
 # Catalogue
 catalogue/AllCatalogueSchema.hpp
 
+# Scheduler backend
+scheduler/rdbms/schema/insert_cta_scheduler_version.sql.filled.in
+scheduler/rdbms/schema/postgres_scheduler_schema.cpp.in
+
 # cta-release
 cta-release/RPM-GPG-KEY-*
 cta-release/versionlock.cta

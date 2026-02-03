@@ -39,7 +39,7 @@ int ReadtpCmd::exceptionThrowingMain(const int argc, char* const* const argv) {
     return 0;
   }
 
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", getUsername());
   params.emplace_back("tapeVid", cmdLineArgs.m_vid);
   m_log(cta::log::INFO, "Started", params);
@@ -127,7 +127,7 @@ void ReadtpCmd::readAndSetConfiguration(const std::string& userName, const Readt
                                                     nbArchiveFileListingConns);
   m_catalogue = catalogueFactory->create();
 
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("catalogueDbType", catalogueLogin.dbTypeToString(catalogueLogin.dbType));
   params.emplace_back("connectionString", catalogueLogin.connectionString);
   params.emplace_back("devFilename", m_devFilename);
@@ -217,7 +217,7 @@ bool ReadtpCmd::isDriveSupportLbp(castor::tape::tapeserver::drive::DriveInterfac
 // setLbpMode
 //------------------------------------------------------------------------------
 void ReadtpCmd::setLbpMode(castor::tape::tapeserver::drive::DriveInterface& drive) {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeDrive", m_unitName);
@@ -249,7 +249,7 @@ void ReadtpCmd::mountTape(const std::string& vid) {
   librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
   const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
 
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", vid);
   params.emplace_back("tapeDrive", m_unitName);
@@ -266,7 +266,7 @@ void ReadtpCmd::mountTape(const std::string& vid) {
 // waitUntilTapeLoaded
 //------------------------------------------------------------------------------
 void ReadtpCmd::waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface& drive, const int timeoutSecond) {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeDrive", m_unitName);
@@ -320,7 +320,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
 
   auto tapeList = m_catalogue->Tape()->getTapes(searchCriteria);
   if (tapeList.empty()) {
-    std::list<cta::log::Param> params;
+    std::vector<cta::log::Param> params;
     params.emplace_back("userName", getUsername());
     params.emplace_back("tapeVid", m_vid);
     params.emplace_back("tapeDrive", m_unitName);
@@ -346,7 +346,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
     try {
       configureEncryption(volInfo, drive);
     } catch (cta::exception::Exception& ex) {
-      std::list<cta::log::Param> params;
+      std::vector<cta::log::Param> params;
       params.emplace_back("vid", m_vid);
       m_log(cta::log::ERR, "Configuring encryption failed", params);
       throw cta::exception::EncryptionException(ex.what(), false);
@@ -371,7 +371,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
     } catch (tapeserver::readtp::NoSuchFSeqException&) {
       //Do nothing
     } catch (exception::Exception& ne) {
-      std::list<cta::log::Param> params;
+      std::vector<cta::log::Param> params;
       params.emplace_back("userName", getUsername());
       params.emplace_back("tapeVid", m_vid);
       params.emplace_back("destinationFile", destinationFile);
@@ -385,7 +385,7 @@ void ReadtpCmd::readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& d
       m_nbFailedReads++;
     }
   }
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", getUsername());
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeDrive", m_unitName);
@@ -406,7 +406,7 @@ void ReadtpCmd::readTapeFile(castor::tape::tapeserver::drive::DriveInterface& dr
                              const uint64_t& fSeq,
                              cta::disk::WriteFile& wf,
                              const castor::tape::tapeserver::daemon::VolumeInfo& volInfo) {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("fSeq", fSeq);
@@ -482,7 +482,7 @@ void ReadtpCmd::unloadTape([[maybe_unused]] const std::string& vid,
   librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
   const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
 
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeDrive", m_unitName);
@@ -510,7 +510,7 @@ void ReadtpCmd::dismountTape(const std::string& vid) {
   librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
   const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr.get();
 
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeDrive", m_unitName);
@@ -534,7 +534,7 @@ void ReadtpCmd::dismountTape(const std::string& vid) {
 // rewindDrive
 //------------------------------------------------------------------------------
 void ReadtpCmd::rewindDrive(castor::tape::tapeserver::drive::DriveInterface& drive) {
-  std::list<cta::log::Param> params;
+  std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeDrive", m_unitName);
@@ -556,7 +556,7 @@ void ReadtpCmd::configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo
     // We want those scoped params to last for the whole mount.
     // This will allow each session to be logged with its encryption
     // status:
-    std::list<cta::log::Param> params;
+    std::vector<cta::log::Param> params;
     {
       auto encryptionStatus = m_encryptionControl->enable(drive, volInfo, *m_catalogue, false);
       if (encryptionStatus.on) {
@@ -571,7 +571,7 @@ void ReadtpCmd::configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo
       }
     }
   } catch (cta::exception::Exception& ex) {
-    std::list<cta::log::Param> params;
+    std::vector<cta::log::Param> params;
     params.emplace_back("ErrorMessage", ex.getMessage().str());
     m_log(cta::log::ERR, "Drive encryption could not be enabled for this mount.", params);
     throw ex;

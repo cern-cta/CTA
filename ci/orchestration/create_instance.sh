@@ -36,7 +36,7 @@ usage() {
   echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
-  echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-http-values.yaml"
+  echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-values.yaml"
   echo "      --extra-cta-values:            Extra verbatim values for the CTA chart. These will override any previous values from files."
   exit 1
 }
@@ -106,7 +106,7 @@ create_instance() {
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
   # Note that it is fine for not all of these secrets to exist
-  secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd" # Secrets to be copied to the namespace (space separated)
+  secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
   cta_config="presets/dev-cta-xrd-values.yaml"
@@ -364,10 +364,16 @@ create_instance() {
 
   extra_cta_chart_flags=""
   if [[ "$local_telemetry" == "true" ]]; then
-    extra_cta_chart_flags+="--values presets/dev-cta-telemetry-values.yaml"
+    extra_cta_chart_flags+=" --values presets/dev-cta-telemetry-values.yaml"
   fi
   if [[ "$publish_telemetry" == "true" ]]; then
-    extra_cta_chart_flags+="--values presets/ci-cta-telemetry-http-values.yaml"
+    extra_cta_chart_flags+=" --values presets/ci-cta-telemetry-values.yaml"
+  fi
+  # This is a bit hacky, but will be removed when either the objectstore is gone or when I get around to cleaning up all the values files (hopefully soon TM)
+  if grep -q "postgres" "$scheduler_config"; then
+    extra_cta_chart_flags+=" --values presets/dev-cta-maintd-postgres-values.yaml"
+  else
+    extra_cta_chart_flags+=" --values presets/dev-cta-maintd-objectstore-values.yaml"
   fi
   if [ "$extra_cta_values" ]; then
     extra_cta_chart_flags+=" ${extra_cta_values} "

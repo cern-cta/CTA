@@ -57,7 +57,8 @@ int main(int argc, char** argv) {
       case '?':
       default: {
         print_help(argv[0]);
-        throw std::runtime_error("Unknown command-line option");
+        std::cerr << "Unknown command-line option" << std::endl;
+        ::exit(EXIT_FAILURE);
       }
     }
   }
@@ -66,7 +67,8 @@ int main(int argc, char** argv) {
 
   if (nbArgs != 1 && nbArgs != 2) {
     print_help(argv[0]);
-    throw std::runtime_error("Wrong number of positional arguments: expected 1 or 2: [objectstoreURL] objectname");
+    std::cerr << "Wrong number of positional arguments: expected 1 or 2: [objectstoreURL] objectname" << std::endl;
+    ::exit(EXIT_FAILURE);
   }
 
   try {
@@ -119,10 +121,15 @@ int main(int argc, char** argv) {
     }
   } catch (cta::exception::NoSuchObject&) {
     std::cerr << "Object not found in the object store" << std::endl;
+    ::exit(EXIT_FAILURE);
   } catch (const std::bad_optional_access&) {
     std::cerr << "Config file '/etc/cta/cta-objectstore-tools.conf' does not contain the BackendPath entry."
               << std::endl;
+    ::exit(EXIT_FAILURE);
   } catch (std::exception& e) {
     std::cerr << "Failed to dump object: " << std::endl << e.what() << std::endl;
+    ::exit(EXIT_FAILURE);
   }
+
+  ::exit(EXIT_SUCCESS);
 }

@@ -49,3 +49,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {{- define "common.slugify" -}}
 {{- regexReplaceAll "[^a-z0-9-]+" (lower .) "-" | trimAll "-" | trunc 63 -}}
 {{- end -}}
+
+{{- define "common.toSnakeCase" -}}
+{{- $s := . -}}
+{{- $s = regexReplaceAll "([a-z0-9])([A-Z])" $s "${1}_${2}" -}}
+{{- $s = regexReplaceAll "([A-Z]+)([A-Z][a-z])" $s "${1}_${2}" -}}
+{{- lower $s -}}
+{{- end -}}

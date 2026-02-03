@@ -383,7 +383,10 @@ void DriveHandler::processLogs(serializers::WatchdogMessage& message) {
   // Accumulate the logs added (if any)
   for (auto& log : message.addedlogparams()) {
     m_watchdogLogParams.insert(log.name());
-    m_lc.pushOrReplace({log.name(), log.value()});
+    // Only on this case, erase all stacked params and replace by a new one.
+    // We only want to keep one item in the stack, to avoid accumulating it.
+    m_lc.erase({log.name()});
+    m_lc.push({log.name(), log.value()});
   }
   for (auto& logName : message.deletedlogparams()) {
     m_watchdogLogParams.erase(logName);

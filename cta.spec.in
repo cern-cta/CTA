@@ -85,6 +85,7 @@ BuildRoot: %{_builddir}/%{name}-%{version}-root
 BuildRequires: systemd
 
 # PostgreSQL server binaries needed for unit tests when using pgsched
+# Note that this should eventually move to project.json once the objectstore is removed
 %if "%{schedOpt}" == "-DCTA_USE_PGSCHED:Bool=TRUE"
 BuildRequires: postgresql-server
 %endif
@@ -400,6 +401,7 @@ The shared libraries
 %{_libdir}/libctarao.so*
 %{_libdir}/libctadisk.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-otel.yaml.example
 
 #CTA-lib installs libraries so we need ldconfig.
 %post -n cta-lib -p /sbin/ldconfig
@@ -417,6 +419,10 @@ Requires: moreutils
 Requires: libtirpc-devel
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires: gtest-devel %{gtestDevelVersionConstraint}
+# PostgreSQL server binaries needed for unit tests when using pgsched
+%if "%{schedOpt}" == "-DCTA_USE_PGSCHED:Bool=TRUE"
+Requires: postgresql-server
+%endif
 %description -n cta-integrationtests
 CERN Tape Archive:
 Unit tests and integration tests with virtual tape drives

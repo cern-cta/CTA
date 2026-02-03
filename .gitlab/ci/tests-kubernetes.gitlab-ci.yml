@@ -150,7 +150,7 @@ test-cta-admin:
     EXTRA_RUN_ARGS: "--test-timeout 2400"
     # We want to test cta-admin's behaviour on repack requests; not the actual repack itself
     # See the note here on failing cta-admin tests: https://gitlab.cern.ch/cta/CTA/-/issues/1032#note_10458246
-    EXTRA_SPAWN_ARGS: "--extra-cta-values \"--set=maintd.conf.routines.repack_expand.enabled=false --set=maintd.conf.routines.repack_report.enabled=false\""
+    EXTRA_SPAWN_ARGS: "--extra-cta-values \"--set=maintd.routines.repackExpand.replicas=0 --set=maintd.routines.repackReport.replicas=0\""
 
 
 # Manually triggered

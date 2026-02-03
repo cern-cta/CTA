@@ -147,6 +147,8 @@ private:
   const std::optional<std::uint64_t> m_repackMaxFilesToSelect;  //!< Repack max files to expand
   const uint64_t m_missingFileCopiesMinAgeSecs;                 //!< Missing tape file copies minimum age
   std::optional<std::string> m_schedulerBackendName;            //!< Name of the Scheduler DB to which Frontend connects
+  const bool m_acceptUserRequests;                              //!< Allow the processing of user requests
+  const bool m_acceptRepackRequests;                            //!< Allow the processing of repack requests
 };
 
 }  // namespace cta::frontend

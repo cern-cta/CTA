@@ -4,71 +4,53 @@ SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $allRoutines := .Values.routines -}}
+{{- range $routineName, $routineConf := $allRoutines }}
+{{- $routineNameSlug := include "common.slugify" $routineName }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cta-maintd-conf
+  name: cta-maintd-{{ $routineNameSlug }}-conf
   labels:
-    {{-  include "common.labels.standard" . | nindent 4 }}
+    {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
   cta-maintd.conf: |-
     # General
     cta.instance_name {{ $.Release.Namespace }}
     cta.scheduler_backend_name {{ $schedulerConfig.backend }}
-    cta.daemon_user {{ .Values.conf.general.user }}
-    cta.daemon_group {{ .Values.conf.general.group }}
 
-    cta.log.level {{ .Values.conf.log.level }}
-    cta.log.format {{ .Values.conf.log.format }}
+    cta.log.level {{ $.Values.conf.logLevel }}
+    cta.log.format json
 
-    cta.catalogue.config_file {{ .Values.conf.maintd.catalogueConfigPath }}
+    cta.catalogue.config_file /etc/cta/cta-catalogue.conf
     cta.objectstore.backendpath {{ include "global.schedulerUrl" $ }}
 
-    cta.schedulerdb.tape_cache_max_age_secs {{ .Values.conf.maintd.tapeCacheMaxAgeSecs }}
-    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.conf.maintd.retrieveQueueCacheMaxAgeSecs }}
+    cta.schedulerdb.tape_cache_max_age_secs {{ $.Values.conf.tapeCacheMaxAgeSecs }}
+    cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ $.Values.conf.retrieveQueueCacheMaxAgeSecs }}
 
-    cta.routines.sleep_interval {{ .Values.conf.routines.sleep_interval }}
+    cta.routines.sleep_interval {{ int64 $routineConf.sleepInterval | toString }}
 
-    cta.routines.disk_report_archive.enabled {{ .Values.conf.routines.disk_report_archive.enabled }}
-    cta.routines.disk_report_archive.batch_size {{ .Values.conf.routines.disk_report_archive.batchSize  }}
-    cta.routines.disk_report_archive.soft_timeout {{ .Values.conf.routines.disk_report_archive.softTimeout }}
+    {{- /* We should set the options for ALL routines here, but we only enable the "current" routine */ -}}
+    {{- range $name, $conf := $allRoutines }}
+    cta.routines.{{ include "common.toSnakeCase" $name }}.enabled {{ ternary "true" "false" (eq $name $routineName) }}
+    {{- range $k, $v := (omit $conf "replicas" "sleepInterval") }}
+    cta.routines.{{ include "common.toSnakeCase" $name }}.{{ include "common.toSnakeCase" $k }} {{ include "common.stringOrNumber" $v }}
+    {{- end }}
+    {{ end }}
 
-    cta.routines.disk_report_retrieve.enabled {{ .Values.conf.routines.disk_report_retrieve.enabled }}
-    cta.routines.disk_report_retrieve.batch_size {{ .Values.conf.routines.disk_report_retrieve.batchSize  }}
-    cta.routines.disk_report_retrieve.soft_timeout {{ .Values.conf.routines.disk_report_retrieve.softTimeout }}
+    ## Health
 
-    cta.routines.garbage_collect.enabled {{ .Values.conf.routines.garbage_collect.enabled }}
-
-    cta.routines.queue_cleanup.enabled {{ .Values.conf.routines.queue_cleanup.enabled }}
-    cta.routines.queue_cleanup.batch_size {{ .Values.conf.routines.queue_cleanup.batchSize }}
-
-    cta.routines.repack_expand.enabled {{ .Values.conf.routines.repack_expand.enabled }}
-    cta.routines.repack_expand.max_to_toexpand {{ .Values.conf.routines.repack_expand.maxToToExpand }}
-
-    cta.routines.repack_report.enabled {{ .Values.conf.routines.repack_report.enabled }}
-    cta.routines.repack_report.soft_timeout {{ .Values.conf.routines.repack_report.softTimeout }}
+    cta.health_server.enabled true
+    # For k8s health probes to work, this cannot only accept connections from localhost
+    cta.health_server.host 0.0.0.0
+    cta.health_server.port 8080
+    # This is a temporary hack to make CI happy.
+    # Will be fixed by https://gitlab.cern.ch/cta/CTA/-/issues/1517
+    cta.health_server.liveness_window 90000
 
     # Telemetry
-    cta.experimental.telemetry.enabled {{ .Values.conf.telemetry.enabled }}
-
-    cta.telemetry.retain_instance_id_on_restart {{ .Values.conf.telemetry.retainInstanceIdOnRestart }}
-    cta.telemetry.metrics.backend {{ .Values.conf.telemetry.metrics.backend }}
-    {{- if .Values.conf.telemetry.metrics.exportInterval }}
-    cta.telemetry.metrics.export.interval {{ .Values.conf.telemetry.metrics.exportInterval }}
-    {{- end }}
-    {{- if .Values.conf.telemetry.metrics.exportTimeout }}
-    cta.telemetry.metrics.export.timeout {{ .Values.conf.telemetry.metrics.exportTimeout }}
-    {{- end }}
-    {{- if .Values.conf.telemetry.metrics.otlp.endpoint }}
-    cta.telemetry.metrics.otlp.endpoint {{ .Values.conf.telemetry.metrics.otlp.endpoint }}
-    {{- end }}
-    {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.username }}
-    cta.telemetry.metrics.otlp.auth.basic.username {{ .Values.conf.telemetry.metrics.otlp.auth.basic.username }}
-    {{- end }}
-    {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-    cta.telemetry.metrics.otlp.auth.basic.password_file /etc/cta/otlp-basic-auth-pwd.conf
-    {{- end }}
-    {{- if .Values.conf.telemetry.metrics.file.endpoint }}
-    cta.telemetry.metrics.file.endpoint {{ .Values.conf.telemetry.metrics.file.endpoint }}
-    {{- end }}
+    cta.experimental.telemetry.enabled true
+    cta.telemetry.config /etc/cta/cta-otel.yaml
+---
+{{- end }}
 

@@ -35,7 +35,7 @@ retryOnLostConnection(log::Logger& log, const T& callable, const uint32_t maxTri
         return callable();
       } catch (exception::LostDatabaseConnection& le) {
         // Log lost connection
-        std::list<log::Param> params = {
+        std::vector<log::Param> params = {
           {"maxTriesToConnect", maxTriesToConnect    },
           {"tryNb",             tryNb                },
           {"msg",               le.getMessage().str()}

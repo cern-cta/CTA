@@ -169,8 +169,6 @@ LOGDIR="${LOGDIR}/$(basename ${EOS_DIR})"
 mkdir -p ${LOGDIR} || die "Cannot create directory LOGDIR: ${LOGDIR}"
 mkdir -p ${LOGDIR}/xrd_errors || die "Cannot create directory LOGDIR/xrd_errors: ${LOGDIR}/xrd_errors"
 
-echo "$(date +%s): TRACKERDB_FILE=${DB_NAME}"
-echo "$(date +%s): TRACKERDB_TABLE=${DB_TABLE}"
 ERROR_FILE=$(mktemp)
 echo "$(date +%s): ERROR_FILE=${ERROR_FILE}"
 EOS_BATCHFILE=$(mktemp --suffix=.eosh)

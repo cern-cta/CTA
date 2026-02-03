@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "CtaTelemetryLogHandler.hpp"
+#include "CtaOtelLogHandler.hpp"
 
 #include "common/log/Constants.hpp"
 #include "common/log/LogContext.hpp"
@@ -38,15 +38,15 @@ constexpr bool is_supported_scalar_v =
   std::is_same_v<T, bool> || std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> || std::is_same_v<T, int64_t>
   || std::is_same_v<T, uint64_t> || std::is_same_v<T, double> || std::is_same_v<T, std::string>;
 
-CtaTelemetryLogHandler::CtaTelemetryLogHandler(log::Logger& log) : m_log(log) {}
+CtaOtelLogHandler::CtaOtelLogHandler(log::Logger& log) : m_log(log) {}
 
-CtaTelemetryLogHandler::~CtaTelemetryLogHandler() = default;
+CtaOtelLogHandler::~CtaOtelLogHandler() = default;
 
-void CtaTelemetryLogHandler::Handle(opentelemetry::sdk::common::internal_log::LogLevel level,
-                                    const char* file,
-                                    int line,
-                                    const char* msg,
-                                    const opentelemetry::sdk::common::AttributeMap& attributes) noexcept {
+void CtaOtelLogHandler::Handle(opentelemetry::sdk::common::internal_log::LogLevel level,
+                               const char* file,
+                               int line,
+                               const char* msg,
+                               const opentelemetry::sdk::common::AttributeMap& attributes) noexcept {
   cta::log::LogContext lc(m_log);
   cta::log::ScopedParamContainer params(lc);
   params.add("otlpMessage", msg);

@@ -49,9 +49,10 @@ public:
    * @param value The value of the parameter that will be converted to a string
    * using std::ostringstream.
    */
-  template<typename T>
-  Param(std::string_view name, const T& value) noexcept : m_name(name) {
-    setValue(value);
+  template<typename S, typename T>
+    requires std::constructible_from<std::string, S&&>
+  Param(S&& name, T&& value) noexcept : m_name(std::forward<S>(name)) {
+    setValue(std::forward<T>(value));
   }
 
   /**
@@ -59,35 +60,40 @@ public:
    * @param value
    */
   template<typename T>
-  void setValue(const T& value) noexcept {
-    if constexpr (std::is_same_v<T, ParamValType>) {
-      m_value = value;
-    } else if constexpr (is_optional_type<T>::value) {
+  void setValue(T&& value) noexcept {
+    using U = std::remove_cvref_t<T>;
+    if constexpr (std::is_same_v<U, ParamValType>) {
+      m_value = std::forward<T>(value);
+    } else if constexpr (is_optional_type<U>::value) {
       if (value.has_value()) {
-        setValue(value.value());
+        setValue(std::forward<decltype(*value)>(*value));
       } else {
-        setValue(std::nullopt);
+        m_value.reset();
       }
-    } else if constexpr (std::is_same_v<T, bool>) {
-      m_value = static_cast<bool>(value);
-    } else if constexpr (std::is_integral_v<T>) {
-      if constexpr (std::is_signed_v<T>) {
-        m_value = static_cast<int64_t>(value);
+    } else if constexpr (std::is_same_v<U, std::nullopt_t>) {
+      m_value.reset();
+    } else if constexpr (std::is_same_v<U, std::string>) {
+      m_value.emplace(std::in_place_type<std::string>, std::forward<T>(value));
+    } else if constexpr (std::is_convertible_v<T, std::string_view>) {
+      m_value.emplace(std::in_place_type<std::string>, std::string_view(value));
+    } else if constexpr (std::is_same_v<U, bool>) {
+      m_value.emplace(std::in_place_type<bool>, static_cast<bool>(value));
+    } else if constexpr (std::is_integral_v<U>) {
+      if constexpr (std::is_signed_v<U>) {
+        m_value.emplace(std::in_place_type<int64_t>, static_cast<int64_t>(value));
       } else {
-        m_value = static_cast<uint64_t>(value);
+        m_value.emplace(std::in_place_type<uint64_t>, static_cast<uint64_t>(value));
       }
-    } else if constexpr (std::is_same_v<T, float>) {
-      m_value = static_cast<float>(value);
-    } else if constexpr (std::is_floating_point_v<T>) {
-      m_value = static_cast<double>(value);
-    } else if constexpr (std::is_same_v<T, std::nullopt_t>) {
-      m_value = std::nullopt;
-    } else if constexpr (has_ostream_operator<T>::value) {
+    } else if constexpr (std::is_same_v<U, float>) {
+      m_value.emplace(std::in_place_type<float>, static_cast<float>(value));
+    } else if constexpr (std::is_floating_point_v<U>) {
+      m_value.emplace(std::in_place_type<double>, static_cast<double>(value));
+    } else if constexpr (has_ostream_operator<U>::value) {
       std::ostringstream oss;
       oss << value;
-      m_value = oss.str();
+      m_value.emplace(std::in_place_type<std::string>, std::move(oss).str());
     } else {
-      static_assert(always_false<T>::value, "Type not supported");
+      static_assert(always_false<U>::value, "Type not supported");
     }
   }
 

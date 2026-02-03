@@ -32,8 +32,10 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_repackBufferURL(frontendService.getRepackBufferURL()),
       m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
       m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
-      m_schedulerBackendName(m_scheduler.getSchedulerBackendName()) {
-  m_lc.pushOrReplace({"user", m_cliIdentity.username + "@" + m_cliIdentity.host});
+      m_schedulerBackendName(m_scheduler.getSchedulerBackendName()),
+      m_acceptUserRequests(frontendService.getUserRequestsAllowed()),
+      m_acceptRepackRequests(frontendService.getRepackRequestsAllowed()) {
+  m_lc.push({"user", m_cliIdentity.username});
 
   m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
 }
@@ -345,7 +347,7 @@ void AdminCmd::logAdminCmd(const AdminCmdStatus status, const std::string& reaso
     }  // end switch
   }  // end for
   params.add("adminTime", t.secs());
-  params.add("user", m_cliIdentity.username + "@" + m_cliIdentity.host);
+  params.add("user", m_cliIdentity.username);
   m_lc.log(cta::log::INFO, "Admin command succeeded");
 }
 
@@ -1138,8 +1140,7 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
 
   if (mediaType.has_value()) {
     if (m_catalogue.Tape()->getNbFilesOnTape(vid) != 0) {
-      response.set_type(xrd::Response::RSP_ERR_CTA);
-      return;
+      throw cta::exception::UserError("Unable to modify media type of tape " + vid + " because it contains files");
     }
     m_catalogue.Tape()->modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
   }
@@ -1169,6 +1170,33 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
     m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());
   }
   if (state.has_value()) {
+    if (!m_acceptUserRequests || !m_acceptRepackRequests) {
+      // We need to validate if we can modify the state of this tape
+      auto tapeToVid = m_catalogue.Tape()->getTapesByVid(vid);
+      if (!tapeToVid.contains(vid)) {
+        throw cta::exception::UserError("The VID " + vid + " does not exist");
+      }
+      auto tapeState = tapeToVid[vid].state;
+      using Tape = common::dataStructures::Tape;
+      if (!m_acceptUserRequests && (tapeState == Tape::State::ACTIVE || tapeState == Tape::State::DISABLED)) {
+        std::ostringstream oss;
+        oss << "Unable to modify state of VID " << vid << ": ";
+        oss << "Disabled user requests forbids changing tapes currently in ";
+        oss << Tape::stateToString(Tape::State::ACTIVE) + " or " + Tape::stateToString(Tape::State::DISABLED)
+            << " state";
+        throw cta::exception::UserError(oss.str());
+      }
+      if (!m_acceptRepackRequests
+          && (tapeState == Tape::State::REPACKING || tapeState == Tape::State::REPACKING_DISABLED)) {
+        std::ostringstream oss;
+        oss << "Unable to modify state of VID " << vid << ": ";
+        oss << "Disabled repack requests forbids changing tapes currently in ";
+        oss << Tape::stateToString(Tape::State::REPACKING) + " or "
+                 + Tape::stateToString(Tape::State::REPACKING_DISABLED)
+            << " state";
+        throw cta::exception::UserError(oss.str());
+      }
+    }
     auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value(), true);
     m_scheduler.triggerTapeStateChange(m_cliIdentity, vid, stateEnumValue, stateReason, m_lc);
   }
@@ -1242,13 +1270,8 @@ void AdminCmd::processTapePool_Add(xrd::Response& response) {
   auto& vo = getRequired(OptionString::VO);
   auto& ptn = getRequired(OptionUInt64::PARTIAL_TAPES_NUMBER);
   auto& comment = getRequired(OptionString::COMMENT);
-  auto encrypted = getOptional(OptionBoolean::ENCRYPTED);
   auto encryptionKeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
   auto supply = getOptional(OptionString::SUPPLY);
-
-  if (encrypted) {
-    throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
-  }
 
   std::vector<std::string> supply_list;
   if (supply.has_value()) {
@@ -1270,13 +1293,9 @@ void AdminCmd::processTapePool_Ch(xrd::Response& response) {
   auto vo = getOptional(OptionString::VO);
   auto ptn = getOptional(OptionUInt64::PARTIAL_TAPES_NUMBER);
   auto comment = getOptional(OptionString::COMMENT);
-  auto encrypted = getOptional(OptionBoolean::ENCRYPTED);
   auto encryptionKeyName = getOptional(OptionString::ENCRYPTION_KEY_NAME);
   auto supply = getOptional(OptionString::SUPPLY);
 
-  if (encrypted.has_value()) {
-    throw exception::UserError("The parameter '--encrypted' has been deprecated. Use '--encryptionkeyname'.");
-  }
   if (comment.has_value()) {
     m_catalogue.TapePool()->modifyTapePoolComment(m_cliIdentity, name, comment.value());
   }

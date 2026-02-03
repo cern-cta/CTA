@@ -366,6 +366,27 @@ TEST_F(cta_rdbms_LoginTest, parseStringConnectionString_Postgresql) {
   }
 }
 
+TEST_F(cta_rdbms_LoginTest, setPostgresqlDbNamespace_normal) {
+  using namespace cta::rdbms;
+  std::string connectionString = "postgresql://user:pw@dbhost/mydb?options=-c%20search_path=myschemaname";
+  Login login = Login::parsePostgresql(connectionString);
+  ASSERT_EQ("myschemaname", login.dbNamespace);
+}
+
+TEST_F(cta_rdbms_LoginTest, setPostgresqlDbNamespace_with_extra_commas) {
+  using namespace cta::rdbms;
+  std::string connectionString = "postgresql://user:pw@dbhost/mydb?options=-c%20search_path=myschemaname,,";
+  Login login = Login::parsePostgresql(connectionString);
+  ASSERT_EQ("myschemaname", login.dbNamespace);
+}
+
+TEST_F(cta_rdbms_LoginTest, setPostgresqlDbNamespace_with_equalsignencoded) {
+  using namespace cta::rdbms;
+  std::string connectionString = "postgresql://user:pw@dbhost/mydb?options=-c%20search_path%3Dmyschemaname,,";
+  Login login = Login::parsePostgresql(connectionString);
+  ASSERT_EQ("myschemaname", login.dbNamespace);
+}
+
 TEST_F(cta_rdbms_LoginTest, getPostgresqlHostAndDbName_normal) {
   using namespace cta::rdbms;
   std::string connectionDetails = "postgresql://u@db/mydb";

@@ -16,7 +16,9 @@ namespace cta::process {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SignalReactorBuilder::SignalReactorBuilder(cta::log::LogContext& lc) : m_lc(lc) {}
+SignalReactorBuilder::SignalReactorBuilder(cta::log::LogContext& lc) : m_lc(lc) {
+  sigemptyset(&m_sigset);
+}
 
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::addSignalFunction
@@ -36,10 +38,18 @@ SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, const 
 }
 
 //------------------------------------------------------------------------------
+// SignalReactorBuilder::withTimeoutMsecs
+//------------------------------------------------------------------------------
+SignalReactorBuilder& SignalReactorBuilder::withTimeoutMsecs(uint32_t msecs) {
+  m_waitTimeoutMsecs = msecs;
+  return *this;
+}
+
+//------------------------------------------------------------------------------
 // SignalReactorBuilder::build
 //------------------------------------------------------------------------------
 SignalReactor SignalReactorBuilder::build() {
-  return SignalReactor(m_lc, m_sigset, std::move(m_signalFunctions));
+  return SignalReactor(m_lc, m_sigset, std::move(m_signalFunctions), m_waitTimeoutMsecs);
 }
 
 }  // namespace cta::process

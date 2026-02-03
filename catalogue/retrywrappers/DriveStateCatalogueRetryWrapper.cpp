@@ -55,6 +55,22 @@ std::unordered_map<std::string, std::optional<uint64_t>> DriveStateCatalogueRetr
     m_maxTriesToConnect);
 }
 
+std::optional<common::dataStructures::DriveStatus>
+DriveStateCatalogueRetryWrapper::getTapeDriveStatus(const std::string& tapeDriveName) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &tapeDriveName] { return m_catalogue->DriveState()->getTapeDriveStatus(tapeDriveName); },
+    m_maxTriesToConnect);
+}
+
+std::optional<common::dataStructures::MountType>
+DriveStateCatalogueRetryWrapper::getMountType(const std::string& tapeDriveName) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &tapeDriveName] { return m_catalogue->DriveState()->getMountType(tapeDriveName); },
+    m_maxTriesToConnect);
+}
+
 void DriveStateCatalogueRetryWrapper::setDesiredTapeDriveState(
   const std::string& tapeDriveName,
   const common::dataStructures::DesiredDriveState& desiredState) {

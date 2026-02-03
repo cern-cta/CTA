@@ -70,8 +70,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // 1) Prepare the logging environment
   cta::log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
-  lc.pushOrReplace(cta::log::Param("thread", "MainThread"));
-  lc.pushOrReplace(cta::log::Param("tapeDrive", m_driveConfig.unitName));
+  lc.push(cta::log::Param("thread", "MainThread"));
+  lc.push(cta::log::Param("tapeDrive", m_driveConfig.unitName));
 
   // Make effective the raw I/O process capability.
   try {
@@ -363,7 +363,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
 
       // If the disk thread finished the last, it leaves the drive in DrainingToDisk state
       // Return the drive back to UP state
-      if (m_scheduler.getDriveState(m_driveInfo.driveName, &logContext)->driveStatus
+      if (m_scheduler.getDriveStatus(m_driveInfo.driveName, &logContext)
           == cta::common::dataStructures::DriveStatus::DrainingToDisk) {
         m_scheduler.reportDriveStatus(m_driveInfo,
                                       cta::common::dataStructures::MountType::NoMount,
@@ -407,11 +407,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
         }
         watchDog.addToErrorCount("Info_emptyMount");
         watchDog.reportParams();
-        std::list<cta::log::Param> paramList {errorMessageParam,
-                                              mountIdParam,
-                                              mountTypeParam,
-                                              statusParam,
-                                              mountAttemptedParam};
+        std::vector<cta::log::Param> paramList {errorMessageParam,
+                                                mountIdParam,
+                                                mountTypeParam,
+                                                statusParam,
+                                                mountAttemptedParam};
         m_initialProcess.addLogParams(paramList);
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
         cta::log::LogContext::ScopedParam sp11(logContext,
@@ -547,11 +547,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
         }
         watchDog.addToErrorCount("Info_emptyMount");
         watchDog.reportParams();
-        std::list<cta::log::Param> paramList {errorMessageParam,
-                                              mountIdParam,
-                                              mountTypeParam,
-                                              statusParam,
-                                              mountAttemptedParam};
+        std::vector<cta::log::Param> paramList {errorMessageParam,
+                                                mountIdParam,
+                                                mountTypeParam,
+                                                statusParam,
+                                                mountAttemptedParam};
         m_initialProcess.addLogParams(paramList);
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");

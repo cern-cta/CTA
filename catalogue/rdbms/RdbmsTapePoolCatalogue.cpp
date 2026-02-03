@@ -94,7 +94,6 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
       NB_PARTIAL_TAPES,
       IS_ENCRYPTED,
       ENCRYPTION_KEY_NAME,
-      SUPPLY,
 
       USER_COMMENT,
 
@@ -112,7 +111,6 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
       :NB_PARTIAL_TAPES,
       :IS_ENCRYPTED,
       :ENCRYPTION_KEY_NAME,
-      :SUPPLY,
 
       :USER_COMMENT,
 
@@ -136,7 +134,6 @@ void RdbmsTapePoolCatalogue::createTapePool(const common::dataStructures::Securi
   stmt.bindUint64(":NB_PARTIAL_TAPES", nbPartialTapes);
   stmt.bindBool(":IS_ENCRYPTED", encryptionKeyNameOpt.has_value());
   stmt.bindString(":ENCRYPTION_KEY_NAME", encryptionKeyNameOpt);
-  stmt.bindString(":SUPPLY", optionalSupplyString);
 
   stmt.bindString(":USER_COMMENT", trimmedComment);
 
@@ -278,7 +275,6 @@ std::vector<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn& conn,
       TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,
       TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,
       TAPE_POOL.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,
-      TAPE_POOL.SUPPLY AS SUPPLY,
 
       COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,
       COALESCE(SUM(CASE WHEN TAPE.DATA_IN_BYTES = 0 THEN 1 ELSE 0 END), 0) AS NB_EMPTY_TAPES,
@@ -364,7 +360,6 @@ std::vector<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn& conn,
       TAPE_POOL.NB_PARTIAL_TAPES,
       TAPE_POOL.IS_ENCRYPTED,
       TAPE_POOL.ENCRYPTION_KEY_NAME,
-      TAPE_POOL.SUPPLY,
       TAPE_POOL.USER_COMMENT,
       TAPE_POOL.CREATION_LOG_USER_NAME,
       TAPE_POOL.CREATION_LOG_HOST_NAME,
@@ -405,7 +400,6 @@ std::vector<TapePool> RdbmsTapePoolCatalogue::getTapePools(rdbms::Conn& conn,
     pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
     pool.encryption = rset.columnBool("IS_ENCRYPTED");
     pool.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
-    pool.supply = rset.columnOptionalString("SUPPLY");
     pool.nbTapes = rset.columnUint64("NB_TAPES");
     pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
     pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
@@ -450,7 +444,6 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string& t
       TAPE_POOL.NB_PARTIAL_TAPES AS NB_PARTIAL_TAPES,
       TAPE_POOL.IS_ENCRYPTED AS IS_ENCRYPTED,
       TAPE_POOL.ENCRYPTION_KEY_NAME AS ENCRYPTION_KEY_NAME,
-      TAPE_POOL.SUPPLY AS SUPPLY,
 
       COALESCE(COUNT(TAPE.VID), 0) AS NB_TAPES,
       COALESCE(SUM(CASE WHEN TAPE.DATA_IN_BYTES = 0 THEN 1 ELSE 0 END), 0) AS NB_EMPTY_TAPES,
@@ -484,7 +477,6 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string& t
       TAPE_POOL.NB_PARTIAL_TAPES,
       TAPE_POOL.IS_ENCRYPTED,
       TAPE_POOL.ENCRYPTION_KEY_NAME,
-      TAPE_POOL.SUPPLY,
       TAPE_POOL.USER_COMMENT,
       TAPE_POOL.CREATION_LOG_USER_NAME,
       TAPE_POOL.CREATION_LOG_HOST_NAME,
@@ -517,7 +509,6 @@ std::optional<TapePool> RdbmsTapePoolCatalogue::getTapePool(const std::string& t
     pool.nbPartialTapes = rset.columnUint64("NB_PARTIAL_TAPES");
     pool.encryption = rset.columnBool("IS_ENCRYPTED");
     pool.encryptionKeyName = rset.columnOptionalString("ENCRYPTION_KEY_NAME");
-    pool.supply = rset.columnOptionalString("SUPPLY");
     pool.nbTapes = rset.columnUint64("NB_TAPES");
     pool.nbEmptyTapes = rset.columnUint64("NB_EMPTY_TAPES");
     pool.nbDisabledTapes = rset.columnUint64("NB_DISABLED_TAPES");
@@ -745,7 +736,6 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   const char* const sql = R"SQL(
     UPDATE TAPE_POOL SET
-      SUPPLY = :SUPPLY,
       LAST_UPDATE_USER_NAME = :LAST_UPDATE_USER_NAME,
       LAST_UPDATE_HOST_NAME = :LAST_UPDATE_HOST_NAME,
       LAST_UPDATE_TIME = :LAST_UPDATE_TIME
@@ -753,7 +743,6 @@ void RdbmsTapePoolCatalogue::modifyTapePoolSupply(const common::dataStructures::
       TAPE_POOL_NAME = :TAPE_POOL_NAME
   )SQL";
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":SUPPLY", optionalSupplyString);
   stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
   stmt.bindString(":LAST_UPDATE_HOST_NAME", admin.host);
   stmt.bindUint64(":LAST_UPDATE_TIME", now);

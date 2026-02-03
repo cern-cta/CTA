@@ -16,7 +16,9 @@ namespace cta::maintd {
 //------------------------------------------------------------------------------
 MaintenanceDaemon::MaintenanceDaemon(cta::common::Config& config, cta::log::LogContext& lc)
     : m_config(config),
-      m_lc(lc) {}
+      m_lc(lc) {
+  m_livenessWindow = m_config.getOptionValueInt("cta.health_server.liveness_window").value_or(120);
+}
 
 void MaintenanceDaemon::stop() {
   if (!m_routineRunner) {
@@ -65,6 +67,28 @@ void MaintenanceDaemon::reload() {
 
   // Stopping the routineRunner will restart the loop in run() and therefore recreate the routines with the new config
   m_routineRunner->stop();
+}
+
+/**
+ * The maintenance daemon is considered ready when:
+ * - a routine runner is running
+ * - the catalogue is reachable (not implemented yet)
+ * - the scheduler is reachable (not implemented yet)
+ */
+bool MaintenanceDaemon::isReady() {
+  return m_routineRunner && m_routineRunner->isRunning();
+}
+
+/**
+ * The maintenance daemon is considered alive when:
+ * - a routine has executed in the last 2 minutes
+ */
+bool MaintenanceDaemon::isLive() {
+  // Not having a routine runner does not mean the process is not alive
+  if (!m_routineRunner) {
+    return true;
+  }
+  return m_routineRunner->didRecentlyFinishRoutine(m_livenessWindow);
 }
 
 }  // namespace cta::maintd

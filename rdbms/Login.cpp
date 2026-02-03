@@ -243,6 +243,7 @@ Login Login::parsePostgresql(const std::string& connectionDetails) {
   /* If we want a specific schema to be searched first, the way to do this is through SET search_path T0 ... */
   Login login(DBTYPE_POSTGRESQL, "", "", connectionDetails, "", 0, "public");
   login.setPostgresqlConnectionString(connectionDetails);
+  login.setPostgresqlDbNamespace(connectionDetails);
   return login;
 }
 
@@ -271,11 +272,30 @@ bool Login::postgresqlHasPassword(const std::string& connectionDetails) {
   if (result.size() < 2) {
     throw exception::Exception(std::string("Invalid connection string: Correct format is ") + s_fileFormat);
   }
-  if (std::string usernamePassword = result[1]; usernamePassword.find(":") == std::string::npos) {
+  std::string usernamePassword = result[1];
+  if (usernamePassword.find(":") == std::string::npos) {
     // No password provided, no need to hide it
+    username = usernamePassword;
     return false;
   }
+  username = usernamePassword.substr(0, usernamePassword.find(':'));
   return true;
+}
+
+void Login::setPostgresqlDbNamespace(const std::string& connectionDetails) {
+  cta::utils::Regex regex("search_path=([^, &']+)");
+  std::vector<std::string> result = regex.exec(connectionDetails);
+  if (result.size() < 2) {
+    cta::utils::Regex regex2("search_path%3D([^, &']+)");
+    std::vector<std::string> result2 = regex2.exec(connectionDetails);
+    if (result2.size() < 2) {
+      dbNamespace = "public";
+    } else {
+      dbNamespace = result2[1];
+    }
+  } else {
+    dbNamespace = result[1];
+  }
 }
 
 /**

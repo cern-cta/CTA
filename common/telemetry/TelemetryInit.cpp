@@ -6,7 +6,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/telemetry/CtaTelemetryLogHandler.hpp"
+#include "common/telemetry/CtaOtelLogHandler.hpp"
 #include "common/telemetry/config/TelemetryConfigSingleton.hpp"
 #include "common/telemetry/metrics/InstrumentRegistry.hpp"
 #include "common/utils/StringConversions.hpp"
@@ -130,8 +130,10 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
     .add("exportTimeout", std::chrono::duration_cast<std::chrono::milliseconds>(config.metrics.exportTimeout).count());
 
   std::unique_ptr<metrics_sdk::PushMetricExporter> exporter = createExporter(config, lc);
-  metrics_sdk::PeriodicExportingMetricReaderOptions readerOptions {config.metrics.exportInterval,
-                                                                   config.metrics.exportTimeout};
+
+  metrics_sdk::PeriodicExportingMetricReaderOptions readerOptions;
+  readerOptions.export_interval_millis = std::chrono::milliseconds(config.metrics.exportInterval);
+  readerOptions.export_timeout_millis = std::chrono::milliseconds(config.metrics.exportTimeout);
 
   auto reader = metrics_sdk::PeriodicExportingMetricReaderFactory::Create(std::move(exporter), readerOptions);
 
@@ -164,7 +166,7 @@ void initMetrics(const TelemetryConfig& config, cta::log::LogContext& lc) {
 void initTelemetry(const TelemetryConfig& config, cta::log::LogContext& lc) {
   // Ensure any logged messages go through the CTA logging system
   opentelemetry::sdk::common::internal_log::GlobalLogHandler::SetLogHandler(
-    std::make_unique<CtaTelemetryLogHandler>(lc.logger()));
+    std::make_unique<CtaOtelLogHandler>(lc.logger()));
   // Eventually we can init e.g. traces here as well
   initMetrics(config, lc);
   // Ensure we can reuse the config when re-initialise the metrics after e.g. a fork

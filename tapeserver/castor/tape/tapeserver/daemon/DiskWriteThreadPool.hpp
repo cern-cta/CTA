@@ -94,7 +94,7 @@ private:
           m_diskFileFactory(manager.m_xrootTimeout) {
       // This thread id will remain for the rest of the thread's lifetime
       // (and also context's lifetime), so no need for a scoper
-      m_lc.pushOrReplace(cta::log::Param("threadID", m_threadID));
+      m_lc.push(cta::log::Param("threadID", m_threadID));
       m_lc.log(cta::log::INFO, "DiskWrite Thread created");
     }
 

@@ -12,6 +12,11 @@
 #include <thread>
 #include <unordered_map>
 
+namespace unitTests {
+// See SignalReactorTest.cpp
+struct SignalReactorTestAccess;
+}  // namespace unitTests
+
 namespace cta::process {
 
 /**
@@ -24,7 +29,8 @@ class SignalReactor {
 public:
   SignalReactor(cta::log::LogContext& lc,
                 const sigset_t& sigset,
-                const std::unordered_map<int, std::function<void()>>& signalFunctions);
+                const std::unordered_map<int, std::function<void()>>& signalFunctions,
+                uint32_t waitTimeoutMsecs);
 
   ~SignalReactor();
 
@@ -37,7 +43,11 @@ public:
   /**
    * Waits for incoming signals and executes the functions registered with said signal (if any)
    */
-  void run();
+  static void run(std::stop_token st,
+                  const std::unordered_map<int, std::function<void()>>& signalFunctions,
+                  const sigset_t& sigset,
+                  cta::log::Logger& log,
+                  const uint32_t waitTimeoutMsecs);
 
   /**
    * Stop the SignalReactor (both the thread and the waiting for signal)
@@ -46,14 +56,15 @@ public:
 
 private:
   cta::log::LogContext& m_lc;
-  sigset_t m_sigset;
+  const sigset_t m_sigset;
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
 
   // The thread the signalReactor will run on when start() is called
   std::jthread m_thread;
-  std::atomic<bool> m_stopRequested;
 
-  uint32_t m_waitTimeoutSecs = 1;
+  const uint32_t m_waitTimeoutMsecs;
+
+  friend struct unitTests::SignalReactorTestAccess;
 };
 
 }  // namespace cta::process

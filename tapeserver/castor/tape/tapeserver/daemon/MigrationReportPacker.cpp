@@ -487,7 +487,7 @@ MigrationReportPacker::WorkerThread::WorkerThread(MigrationReportPacker& parent)
 void MigrationReportPacker::WorkerThread::run() {
   // Create our own log context for the new thread.
   cta::log::LogContext lc = m_parent.m_lc;
-  lc.pushOrReplace(cta::log::Param("thread", "ReportPacker"));
+  lc.push(cta::log::Param("thread", "ReportPacker"));
   try {
     while (m_parent.m_continue) {
       std::unique_ptr<Report> rep(m_parent.m_fifo.pop());

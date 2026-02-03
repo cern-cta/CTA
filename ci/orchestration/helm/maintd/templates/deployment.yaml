@@ -3,37 +3,41 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- $name := include "ctamaintd.fullname" . }}
-{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+{{- $schedulerConfig := include "scheduler.config" $ | fromYaml -}}
+{{- $allRoutines := $.Values.routines -}}
+{{- range $routineName, $routineConf := $allRoutines }}
+{{- if not (and (eq $routineName "garbageCollect") (eq $schedulerConfig.backend "postgres")) }}
+{{- $routineNameSlug := include "common.slugify" $routineName }}
+{{- $podName := printf "%s-%s-%s" $.Release.Name "rt" $routineNameSlug | trunc 63 | trimSuffix "-" }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ $name }}
-  namespace: {{ .Release.Namespace | quote }}
+  name: {{ $podName }}
+  namespace: {{ $.Release.Namespace | quote }}
   labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
+    {{- include "common.labels.standard" $ | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicas }}
+  replicas: {{ $routineConf.replicas }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ $name }}
+      app.kubernetes.io/name: {{ $podName }}
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: {{ $name }}
-        {{- include "common.labels.withoutname" . | nindent 8 }}
+        app.kubernetes.io/name: {{ $podName }}
+        {{- include "common.labels.withoutname" $ | nindent 8 }}
     spec:
       restartPolicy: Always
-      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
       imagePullSecrets:
-      {{- include "maintd.imagePullSecrets" . | nindent 6 }}
-      {{- if .Values.pod.extraSpec }}
-      {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
+      {{- include "maintd.imagePullSecrets" $ | nindent 6 }}
+      {{- if $.Values.pod.extraSpec }}
+      {{ $.Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
       initContainers:
       - name: init1-fix-sss-keytab-ownership
-        image: {{ include "common.images.busybox" . }}
-        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
+        image: {{ include "common.images.busybox" $ }}
+        imagePullPolicy: {{ include "common.images.defaultPullPolicy" $ }}
         command: ["sh", "-c"]
         args:
         - |
@@ -44,40 +48,49 @@ spec:
         volumeMounts:
           - name: maintd-sss-keytab
             mountPath: /root/sss_keytab/input/maintd.keytab
-            subPath: {{ .Values.keytab.subPath }}
+            subPath: {{ $.Values.keytab.subPath }}
           - name: maintd-sss-keytab-fixedownership
             mountPath: /root/sss_keytab/output
       containers:
-      - name: {{ $name }}
-        image: {{ include "maintd.image" . }}
-        imagePullPolicy: {{ include "maintd.imagePullPolicy" . }}
+      - name: cta-maintd
+        image: {{ include "maintd.image" $ }}
+        imagePullPolicy: {{ include "maintd.imagePullPolicy" $ }}
         stdin: true
         command: ["/bin/bash", "-c"]
-        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/maintd.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/maintd.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
         startupProbe:
-          exec:
-            command: ["rpm", "-q", "cta-maintd"]
-          initialDelaySeconds: 0
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 10
           periodSeconds: 5
           failureThreshold: 60
         readinessProbe:
-          exec:
-            command: ["pgrep", "-f", "/usr/bin/cta-maintd"]
+          httpGet:
+            path: /health/ready
+            port: 8080
           initialDelaySeconds: 1
           periodSeconds: 5
           failureThreshold: 2
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 30 # It relies on the last routine executed. Give it some time to execute a routine
+          periodSeconds: 60
+          failureThreshold: 2
         securityContext:
-          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
-          privileged: {{ include "common.securityContext.privileged" . }}
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
+          privileged: {{ include "common.securityContext.privileged" $ }}
           capabilities:
             add: ["SYS_PTRACE"]
         env:
         - name: MY_NAME
-          value: {{ $name }}
+          value: {{ $podName }}
         - name: MY_NAMESPACE
-          value: {{ .Release.Namespace | quote }}
+          value: {{ $.Release.Namespace | quote }}
         - name: INSTANCE_NAME
-          value: {{ .Release.Namespace | quote }}
+          value: {{ $.Release.Namespace | quote }}
         - name: TERM
           value: "xterm"
         - name: SCHEDULER_BACKEND
@@ -86,6 +99,9 @@ spec:
           value: sss
         - name: XrdSecSSSKT
           value: /etc/cta/cta-maintd.sss.keytab
+        {{- with $.Values.extraEnv }}
+        {{- include "common.extraEnv" . | nindent 8 }}
+        {{- end }}
         volumeMounts:
         - name: scripts-volume
           mountPath: /scripts
@@ -110,19 +126,17 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
-        {{- if .Values.global.volumeMounts }}
-        {{ .Values.global.volumeMounts | toYaml | nindent 8 }}
+        {{- if $.Values.global.volumeMounts }}
+        {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
         {{- end }}
-        {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-        - name: otlp-basic-auth-pwd
-          mountPath: /etc/cta/otlp-basic-auth-pwd.conf
-          subPath: otlp-basic-auth-pwd.conf
-        {{- end }}
+        - name: opentelemetry-config
+          mountPath: /etc/cta/cta-otel.yaml
+          subPath: cta-otel.yaml
       {{- if eq $schedulerConfig.backend "vfs" }}
         - name: vfs-storage-volume
           mountPath: /objectstore
       {{- end }}
-        {{ include "common.extraVolumeMounts" . | nindent 8 }}
+        {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       volumes:
       - name: scripts-volume
         configMap:
@@ -152,18 +166,19 @@ spec:
       {{- end }}
       - name: cta-maintd-config
         configMap:
-          name: cta-maintd-conf
+          name: cta-maintd-{{ $routineNameSlug }}-conf
+      - name: opentelemetry-config
+        configMap:
+          name: cta-maintd-otel-conf
       - name: maintd-sss-keytab
         secret:
-          secretName: {{ .Values.keytab.secretName }}
+          secretName: {{ $.Values.keytab.secretName }}
       - name: maintd-sss-keytab-fixedownership
         emptyDir: {}
-      {{- if .Values.global.volumes }}
-      {{ .Values.global.volumes | toYaml | nindent 6 }}
+      {{- if $.Values.global.volumes }}
+      {{ $.Values.global.volumes | toYaml | nindent 6 }}
       {{- end }}
-      {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-      - name: otlp-basic-auth-pwd
-        secret:
-          secretName: {{ .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
-      {{- end }}
-      {{ include "common.extraVolumes" . | nindent 6 }}
+      {{ include "common.extraVolumes" $ | nindent 6 }}
+---
+{{- end }}
+{{- end }}

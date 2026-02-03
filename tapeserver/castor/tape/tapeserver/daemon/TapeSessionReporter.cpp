@@ -26,7 +26,7 @@ TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserv
       m_unitName(driveConfig.unitName),
       m_logicalLibrary(driveConfig.logicalLibrary) {
   //change the thread's name in the log
-  m_lc.pushOrReplace(cta::log::Param("thread", "TapeSessionReporter"));
+  m_lc.push(cta::log::Param("thread", "TapeSessionReporter"));
 }
 
 //------------------------------------------------------------------------------
