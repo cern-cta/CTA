@@ -6,7 +6,8 @@
   "license": "GPLv3+",
   "catalogueVersion": 15.0,
   "supportedCatalogueVersions": [
-    15
+    15,
+    16
   ],
   "dev": {
     "cppVersion": "c++20",
