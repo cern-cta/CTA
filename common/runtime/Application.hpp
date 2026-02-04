@@ -197,7 +197,7 @@ public:
     requires HasLoggingConfig<TConfig> && HasStopFunction<TApp> && HasRequiredCliOptions<TOpts>
       : m_appName(appName),
         m_cliOptions(cliOptions),
-        m_appConfig() {
+        m_appConfig(runtime::loadFromToml<TConfig>(m_cliOptions.configFilePath, m_cliOptions.configStrict)) {
     // These two checks should never be reached; if they are, it means the developer made a mistake in how they set up the application.
     if (m_cliOptions.showHelp) {
       throw std::logic_error("Help was set to true and should have been shown before. If this part was reached, it "
@@ -207,11 +207,6 @@ public:
       throw std::logic_error("Application name cannot be empty.");
     }
 
-    if (m_cliOptions.configFilePath.empty()) {
-      // Construct a default path based on the app name
-      m_cliOptions.configFilePath = "/etc/cta/" + m_appName + ".toml";
-    }
-    m_appConfig = runtime::loadFromToml<TConfig>(m_cliOptions.configFilePath, m_cliOptions.configStrict);
     // If the user requested to only check the config, we can exit now.
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
@@ -382,6 +377,11 @@ private:
     // Overwrite XRootD env variables
     ::setenv("XrdSecPROTOCOL", m_appConfig.xrootd.security_protocol.c_str(), 1);
     ::setenv("XrdSecSSSKT", m_appConfig.xrootd.sss_keytab_path.c_str(), 1);
+    if (!m_appConfig.xrootd.sss_keytab_path.empty()
+        && ::access(m_appConfig.xrootd.sss_keytab_path.c_str(), R_OK) != 0) {
+      // Can we replace this check by something the XRootD libs provide?
+      throw cta::exception::Exception("Failed to read or open XRootD SSS keytab file.");
+    }
   }
 
   const std::string m_appName;
@@ -389,9 +389,9 @@ private:
   // The actual application class
   TApp m_app;
   // A struct representing the commandline arguments
-  TOpts m_cliOptions;
+  const TOpts& m_cliOptions;
   // A struct containing all configuration
-  TConfig m_appConfig;
+  const TConfig m_appConfig;
 
   std::unique_ptr<SignalReactorBuilder> m_signalReactorBuilder;
   // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
