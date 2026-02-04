@@ -32,7 +32,7 @@ data:
         instance = {{ $.Release.Namespace | quote }}
 
     [telemetry]
-      config = "/etc/cta/cta-otel.yaml"
+      config_file = "/etc/cta/cta-otel.yaml"
 
     [health_server]
       enabled = true
