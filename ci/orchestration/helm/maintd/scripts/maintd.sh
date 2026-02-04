@@ -7,4 +7,4 @@ dnf install -y cta-maintd
 
 # to get maintd logs to stdout
 tail -F /var/log/cta/cta-maintd.log &
-/usr/bin/cta-maintd --log-file=/var/log/cta/cta-maintd.log --config-strict --config /etc/cta/cta-maintd.toml
+runuser --shell='/bin/bash' --session-command="/usr/bin/cta-maintd --log-file=/var/log/cta/cta-maintd.log --config-strict --config /etc/cta/cta-maintd.toml" cta
