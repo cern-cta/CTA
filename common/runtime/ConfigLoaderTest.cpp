@@ -132,7 +132,7 @@ default_value = "hi"
 
 TEST(ConfigLoader, LenientHandlesEnum) {
   TempFile f(R"toml(
-food = PIZZA
+food = "PIZZA"
 )toml",
              ".toml");
 
@@ -142,7 +142,7 @@ food = PIZZA
 
 TEST(ConfigLoader, LenientThrowsOnInvalidEnum) {
   TempFile f(R"toml(
-food = STOEPTEGEL # A STOEPTEGEL is not food obviously
+food = "STOEPTEGEL" # A STOEPTEGEL is not food obviously
 )toml",
              ".toml");
 
@@ -245,7 +245,7 @@ default_value = "hi"
 
 TEST(ConfigLoader, StrictHandlesEnum) {
   TempFile f(R"toml(
-food = PIZZA
+food = "PIZZA"
 )toml",
              ".toml");
 
@@ -255,7 +255,7 @@ food = PIZZA
 
 TEST(ConfigLoader, StrictThrowsOnInvalidEnum) {
   TempFile f(R"toml(
-food = STOEPTEGEL # A STOEPTEGEL is not food obviously
+food = "STOEPTEGEL" # A STOEPTEGEL is not food obviously
 )toml",
              ".toml");
 
