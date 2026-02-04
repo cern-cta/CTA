@@ -55,7 +55,21 @@ NB_DRIVES=100
 FST=$(kubectl -n ${NAMESPACE} get pods | grep "eos-fst" | awk '{ print $1 }' | head)
 
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
-kubectl -n ${NAMESPACE} cp client_helper.sh ${FST}:/root/client_helper.sh -c eos-fst
+kubectl -n ${NAMESPACE} cp xrdcp_stress_archive.py ${FST}:/root/xrdcp_stress_archive.py -c eos-fst
+mkdir /tmp/ctaadmin2
+mkdir /tmp/eosadmin1
+mkdir /tmp/poweruser1
+mkdir -p /tmp/ctaadmin2 /tmp/eosadmin1 /tmp/poweruser1
+kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/ctaadmin2/krb5cc_0 /tmp/ctaadmin2/krb5cc_0 -c client
+kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/eosadmin1/krb5cc_0 /tmp/eosadmin1/krb5cc_0 -c client
+kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/krb5cc_0 /tmp/krb5cc_0 -c client
+kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/poweruser1/krb5cc_0 /tmp/poweruser1/krb5cc_0 -c client
+kubectl exec ${FST} -c eos-fst -n ${NAMESPACE} -- mkdir -p /tmp/ctaadmin2 /tmp/eosadmin1 /tmp/poweruser1
+kubectl exec ${FST} -c eos-fst -n ${NAMESPACE} -- yum install -y python3
+kubectl -n ${NAMESPACE} cp /tmp/ctaadmin2/krb5cc_0 ${FST}:/tmp/ctaadmin2/krb5cc_0 -c eos-fst
+kubectl -n ${NAMESPACE} cp /tmp/eosadmin1/krb5cc_0 ${FST}:/tmp/eosadmin1/krb5cc_0 -c eos-fst
+kubectl -n ${NAMESPACE} cp /tmp/krb5cc_0 ${FST}:/tmp/krb5cc_0 -c eos-fst
+kubectl -n ${NAMESPACE} cp /tmp/poweruser1/krb5cc_0 ${FST}:/tmp/poweruser1/krb5cc_0 -c eos-fst
 
 # Need CTAADMIN_USER krb5
 admin_kdestroy &>/dev/null

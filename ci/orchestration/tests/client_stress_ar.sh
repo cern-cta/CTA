@@ -164,8 +164,7 @@ delete_files_from_eos_and_tapes(){
   fi
 }
 
-FST=0
-while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q:F" o; do
+while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q" o; do
     case "${o}" in
         e)
             EOS_MGM_HOST=${OPTARG}
@@ -200,9 +199,6 @@ while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q:F" o; do
         G)
             TAPEAWAREGC=1
             ;;
-        F)
-            FST=1
-            ;;
         Q)
             PREQUEUE=1
             ;;
@@ -230,9 +226,6 @@ if [[ $PREQUEUE == 1 ]]; then
 fi
 
 SSSKEY="/etc/eos/keytab"
-if [[ $FST == 1 ]]; then
-  SSSKEY="/etc/fstuser.keytab"
-fi
 if [[ $DONOTARCHIVE == 1 ]]; then
     if [[ "x${TARGETDIR}" = "x" ]]; then
       echo "You must provide a target directory to run a test and skip archival"
@@ -285,12 +278,7 @@ test -z ${COMMENT} || annotate "test ${TESTID} STARTED" "comment: ${COMMENT}<br/
 if [[ $DONOTARCHIVE == 0 ]]; then
 export EOS_MGM_HOST=${EOS_MGM_HOST}
 echo "$(date +%s): Creating test dir in eos: ${EOS_DIR}"
-if [[ $FST == 1 ]]; then
-  XrdSecsssKT=${SSSKEY} xrdcp -p eos_setup.sh  root://${EOS_MGM_HOST}/${EOS_DIR}
-  echo "Created dir ${EOS_DIR}"
-else
-  eos root://${EOS_MGM_HOST} mkdir -p "${EOS_DIR}" || die "Cannot create directory ${EOS_DIR} in eos instance ${EOS_MGM_HOST}."
-fi
+eos root://${EOS_MGM_HOST} mkdir -p "${EOS_DIR}" || die "Cannot create directory ${EOS_DIR} in eos instance ${EOS_MGM_HOST}."
 echo
 echo "Listing the EOS extended attributes of ${EOS_DIR}"
 eos root://${EOS_MGM_HOST} attr ls ${EOS_DIR}
