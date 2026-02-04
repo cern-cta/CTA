@@ -125,7 +125,14 @@ uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName
     .add("catalogueTime", catalogueTime)
     .add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "In Scheduler::checkAndGetNextArchiveFileId(): Checked request and got next archive file ID");
-
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    t.msecs(),
+    {
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kCreate},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kArchive                                            }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   return archiveFileId;
 }
 #ifdef CTA_PGSCHED
@@ -393,6 +400,7 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
 
   auto diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
+  auto catalogueTimeMSecs = t.msecs();
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
   // By default, the scheduler makes its decision based on all available vids. But if a vid is specified in the protobuf,
   // ignore all the others.
@@ -471,6 +479,14 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
     schedulerDbTimeMSecs,
     {
       {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kEnqueue},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                                            }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    catalogueTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kPrepare},
       {cta::semconv::attr::kSchedulerOperationWorkflow,
        cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve                                            }
   },
