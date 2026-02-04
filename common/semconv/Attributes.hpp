@@ -101,14 +101,14 @@ static constexpr const char* kScopedExclusive = "exclusive";
 namespace SchedulerOperationNameValues {
 static constexpr const char* kSelectCatalogueDB =
   "select_catalogue_db";  // happens during retrieve_queue_insert so not used for the moment
-static constexpr const char* kEnqueue = "queue insert";
-static constexpr const char* kGetNextMount = "select work summary";
-static constexpr const char* kInsertForProcessing = "insert for processing";
-static constexpr const char* kUpdateFinishedTransfer = "update finished transfer";
-static constexpr const char* kUpdateSchedulerDB = "update transfer in scheduler db";
-static constexpr const char* kUpdateInsertCatalogueDB = "update transfer in catalogue db";
-static constexpr const char* kSelectToReportToUser = "select to report to user";
-static constexpr const char* kReportToUserAndDeleteSchedulerDB = "report and delete";
+static constexpr const char* kEnqueue = "queue";
+static constexpr const char* kGetNextMount = "work summary";
+static constexpr const char* kInsertForProcessing = "processing";
+static constexpr const char* kUpdateFinishedTransfer = "validate transfer";
+static constexpr const char* kUpdateSchedulerDB = "validate in scheduler db";
+static constexpr const char* kUpdateInsertCatalogueDB = "validate in catalogue db";
+static constexpr const char* kSelectToReportToUser = "fetch reports";
+static constexpr const char* kReportToUserAndDeleteSchedulerDB = "report";
 static constexpr const char* kDeleteSchedulerDB = "delete";
 static constexpr const char* kCancel = "cancel";
 }  // namespace SchedulerOperationNameValues
