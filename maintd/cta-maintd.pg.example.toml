@@ -88,7 +88,7 @@
 
 
   # Routine-specific settings.
-  repack_expand        = { enabled = true, max_to_to_expand = 2 }
+  repack_expand        = { enabled = true, max_to_toexpand = 2 }
   repack_report        = { enabled = true, soft_timeout_secs = 30 }
   disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
   disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }

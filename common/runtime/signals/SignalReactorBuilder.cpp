@@ -16,23 +16,20 @@ namespace cta::runtime {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SignalReactorBuilder::SignalReactorBuilder(cta::log::Logger& log) : m_log(log) {
+SignalReactorBuilder::SignalReactorBuilder() {
   sigemptyset(&m_sigset);
-  m_log(log::INFO, "In SignalReactorBuilder: Initialising SignalReactor");
 }
 
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::addSignalFunction
 //------------------------------------------------------------------------------
-SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>& func) {
-  if (m_signalFunctions.contains(signal)) {
-    m_log(log::WARNING,
-          "In SignalReactorBuilder::addSignalFunction(): Function already registered for "
-            + utils::signalToString(signal));
+SignalReactorBuilder&
+SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>& func, bool overwrite) {
+  if (m_signalFunctions.contains(signal) && !overwrite) {
+    throw std::logic_error("Function already registered for " + utils::signalToString(signal)
+                           + ", while overwrite was disabled");
     return *this;
   }
-  m_log(log::INFO,
-        "In SignalReactorBuilder::addSignalFunction(): Adding function for " + utils::signalToString(signal));
   sigaddset(&m_sigset, signal);
   m_signalFunctions[signal] = func;
   return *this;
@@ -49,8 +46,8 @@ SignalReactorBuilder& SignalReactorBuilder::withTimeoutMsecs(uint32_t msecs) {
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::build
 //------------------------------------------------------------------------------
-SignalReactor SignalReactorBuilder::build() {
-  return SignalReactor(m_log, m_sigset, std::move(m_signalFunctions), m_waitTimeoutMsecs);
+SignalReactor SignalReactorBuilder::build(cta::log::Logger& log) {
+  return SignalReactor(log, m_sigset, std::move(m_signalFunctions), m_waitTimeoutMsecs);
 }
 
 }  // namespace cta::runtime

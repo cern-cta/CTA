@@ -26,10 +26,28 @@ This means that the developer defines three things (in this order):
 Then the way you define an app is as follows:
 
 ```c++
-runtime::Application<CustomApp, CustomConfig, CustomCliOptions> app(appName, cliOptions);
+runtime::Application<CustomApp, CustomConfig, CustomCliOptions> app("my-app", "This is a description of my app");
+app.run(argc, argv);
 ```
 
-The cliOptions are expected to be populated beforehand. The `CustomConfig` is populated inside of `Application.hpp`. Similarly, `CustomApp` is initialised there as well. `Application.hpp` performs various compile time checks on all types passed into it (`CustomApp`, `CustomConfig`, `CustomCliOptions`). In that sense, it acts a bit as a builder pattern at compile time. Based on the config structs/types you pass into, it will enforce various constraints on `CustomApp`. This ensures every config and every app has the same consistent layout, while at the same time allowing maximum flexibility.
+A picture is worth a few words; a very simplified view of `Application.hpp` is this:
+
+```mermaid
+flowchart TB
+
+subgraph application.hpp["Application.hpp"]
+direction TB
+
+
+ArgParser.hpp -- populates --> CustomCliOptions
+CustomCliOptions -- passed into --> ConfigLoader.hpp
+ConfigLoader.hpp -- populates --> CustomConfig
+
+CustomCliOptions -- passed into --> crun["CustomApp::run()"]
+CustomConfig -- passed into --> crun
+end
+
+```
 
 ## Config Loading
 
@@ -81,11 +99,8 @@ public:
 int main(const int argc, char** const argv) {
   using namespace cta;
   return runtime::safeRun([argc, argv]() {
-    const std::string appName = "cta-custom-app";
-    runtime::ArgParser<runtime::CommonCliOptions> argParser(appName);
-    auto cliOptions = argParser.parse(argc, argv);
-    runtime::Application<CustomApp, CustomConfig, runtime::CommonCliOptions> app(appName, cliOptions);
-    return app.run();
+    runtime::Application<CustomApp, CustomConfig, runtime::CommonCliOptions> app("cta-custom-app", "description");
+    return app.run(argc, argv);
   });
 }
 ```
@@ -104,13 +119,9 @@ int run(const CustomConfig& config, const CustomCliOptions& opts, cta::log::Logg
 int main(const int argc, char** const argv) {
   using namespace cta;
   return runtime::safeRun([argc, argv]() {
-    const std::string appName = "cta-custom-app";
-    runtime::ArgParser<CustomCliOptions> argParser(appName);
-    // Note we need to add an explicit parser for this new field
-    argParser.withStringArg(&CustomCliOptions::iAmExtra, "extra", 'e', "STUFF", "my description");
-    auto cliOptions = argParser.parse(argc, argv);
-    runtime::Application<CustomApp, CustomConfig, CustomCliOptions> app(appName, cliOptions);
-    return app.run();
+    runtime::Application<CustomApp, CustomConfig, CustomCliOptions> app("cta-custom-app", "description");
+    app.parser().withStringArg(&CustomCliOptions::iAmExtra, "extra", 'e', "STUFF", "my description");
+    return app.run(argc, argv);
   });
 }
 ```
@@ -136,11 +147,8 @@ public:
 int main(const int argc, char** const argv) {
   using namespace cta;
   return runtime::safeRun([argc, argv]() {
-    const std::string appName = "cta-custom-app";
-    runtime::ArgParser<runtime::CommonCliOptions> argParser(appName);
-    auto cliOptions = argParser.parse(argc, argv);
-    runtime::Application<MinimalApp, MinimalConfig, runtime::CommonCliOptions> app(appName, cliOptions);
-    return app.run();
+    runtime::Application<MinimalApp, MinimalConfig, runtime::CommonCliOptions> app("cta-custom-app", "description");
+    return app.run(argc, argv);
   });
 }
 ```

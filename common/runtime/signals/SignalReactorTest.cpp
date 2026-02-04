@@ -26,16 +26,15 @@ struct SignalReactorTestAccess {
 
 TEST(SignalReactor, HandlesSingleSignalCorrectly) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   std::atomic<int> calledHup {0}, calledTerm {0}, calledUsr1 {0};
 
-  auto signalReactor = cta::runtime::SignalReactorBuilder(dl)
+  auto signalReactor = cta::runtime::SignalReactorBuilder()
                          .addSignalFunction(SIGHUP, [&]() { calledHup++; })
                          .addSignalFunction(SIGTERM, [&]() { calledTerm++; })
                          .addSignalFunction(SIGUSR1, [&]() { calledUsr1++; })
                          .withTimeoutMsecs(10)  // Check often
-                         .build();
+                         .build(dl);
 
   signalReactor.start();
 
@@ -55,12 +54,12 @@ TEST(SignalReactor, IgnoresSignalWithoutFunctionEvenIfInSigset) {
 
   std::atomic<int> called {0};
 
-  auto signalReactor = cta::runtime::SignalReactorBuilder(dl)
+  auto signalReactor = cta::runtime::SignalReactorBuilder()
                          .addSignalFunction(SIGUSR1, [&]() { called++; })
                          .addSignalFunction(SIGHUP, []() {})
                          .addSignalFunction(SIGTERM, []() {})
                          .withTimeoutMsecs(10)  // Check often
-                         .build();
+                         .build(dl);
 
   signalReactor.start();
 
@@ -79,12 +78,12 @@ TEST(SignalReactor, HandlesMultipleSignals) {
 
   std::atomic<int> called {0};
 
-  auto signalReactor = cta::runtime::SignalReactorBuilder(dl)
+  auto signalReactor = cta::runtime::SignalReactorBuilder()
                          .addSignalFunction(SIGUSR1, [&]() { called++; })
                          .addSignalFunction(SIGHUP, []() {})
                          .addSignalFunction(SIGTERM, []() {})
                          .withTimeoutMsecs(10)  // Check often
-                         .build();
+                         .build(dl);
 
   signalReactor.start();
 
