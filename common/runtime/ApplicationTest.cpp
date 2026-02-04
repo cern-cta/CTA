@@ -42,20 +42,21 @@ format = "json"
              ".toml");
 
   int rc = runtime::safeRun([f]() {
-    runtime::CommonCliOptions opts;
-    opts.configFilePath = f.path();
-    runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions> app("test-app", opts);
-    return app.run();
+    const std::string appName = "cta-test";
+    Argv args({appName, "--config", f.path()});
+    runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions> app(appName, "");
+    return app.run(args.count, args.data());
   });
   ASSERT_EQ(rc, EXIT_SUCCESS);
 }
 
 TEST(Application, AppWithNonExistingConfigFile) {
   using namespace cta;
-  runtime::CommonCliOptions opts;
-  opts.configFilePath = "IdontExistwow";
+  const std::string appName = "cta-test";
+  Argv args({appName, "--config", "IdontExistwow"});
   using App = runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions>;
-  ASSERT_THROW({ App app("test-app", opts); }, exception::UserError);
+  App app(appName, "");
+  ASSERT_THROW({ app.run(args.count, args.data()); }, exception::UserError);
 }
 
 TEST(Application, SimpleAppWithCustomCliOpts) {
@@ -85,11 +86,11 @@ format = "json"
              ".toml");
 
   int rc = runtime::safeRun([f]() {
-    ExtendsFromCliOptions opts;
-    opts.configFilePath = f.path();
-    opts.iAmExtra = "test";
-    runtime::Application<TestAppCustomCliOpts, MinimalTestConfig, ExtendsFromCliOptions> app("test-app", opts);
-    return app.run();
+    const std::string appName = "cta-test";
+    Argv args({appName, "--config", f.path(), "--extra", "test"});
+    runtime::Application<TestAppCustomCliOpts, MinimalTestConfig, ExtendsFromCliOptions> app(appName, "");
+    app.parser().withStringArg(&ExtendsFromCliOptions::iAmExtra, "extra", 'e', "STUFF", "Some extra argument");
+    return app.run(args.count, args.data());
   });
   ASSERT_EQ(rc, EXIT_SUCCESS);
 }
@@ -115,10 +116,10 @@ format = "json"
              ".toml");
 
   int rc = runtime::safeRun([f]() {
-    runtime::CommonCliOptions opts;
-    opts.configFilePath = f.path();
-    runtime::Application<TestAppWithoutCliOpts, MinimalTestConfig, runtime::CommonCliOptions> app("test-app", opts);
-    return app.run();
+    const std::string appName = "cta-test";
+    Argv args({appName, "--config", f.path()});
+    runtime::Application<TestAppWithoutCliOpts, MinimalTestConfig, runtime::CommonCliOptions> app(appName, "");
+    return app.run(args.count, args.data());
   });
   ASSERT_EQ(rc, EXIT_SUCCESS);
 }
@@ -152,10 +153,10 @@ format = "json"
              ".toml");
 
   int rc = runtime::safeRun([f]() {
-    runtime::CommonCliOptions opts;
-    opts.configFilePath = f.path();
-    runtime::Application<TestAppWithCustomConfig, CustomTestConfig, runtime::CommonCliOptions> app("test-app", opts);
-    return app.run();
+    const std::string appName = "cta-test";
+    Argv args({appName, "--config", f.path()});
+    runtime::Application<TestAppWithCustomConfig, CustomTestConfig, runtime::CommonCliOptions> app(appName, "");
+    return app.run(args.count, args.data());
   });
   ASSERT_EQ(rc, EXIT_SUCCESS);
 }
@@ -169,16 +170,13 @@ level = 3 # Should be a string
 )toml",
              ".toml");
 
-  runtime::CommonCliOptions opts;
-  opts.configFilePath = f.path();
-  opts.configCheck = true;
   using App = runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions>;
 
-  ASSERT_THROW({ App app("test-app", opts); }, exception::UserError);
-
-  int rc = runtime::safeRun([opts]() {
-    App app("test-app", opts);
-    return app.run();
+  int rc = runtime::safeRun([f]() {
+    const std::string appName = "cta-test";
+    Argv args({appName, "--config", f.path(), "--config-check"});
+    App app(appName, "");
+    return app.run(args.count, args.data());
   });
   ASSERT_EQ(rc, EXIT_FAILURE);
 }
@@ -193,22 +191,16 @@ level = "WARNING"
 )toml",
              ".toml");
 
-  runtime::CommonCliOptions opts;
-  opts.configFilePath = f.path();
-  opts.configCheck = true;
-  opts.configStrict = true;
   using App = runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions>;
 
-  ASSERT_THROW({ App app("test-app", opts); }, exception::UserError);
-
-  int rc = runtime::safeRun([opts]() {
-    App app("test-app", opts);
-    return app.run();
+  int rc = runtime::safeRun([f]() {
+    const std::string appName = "cta-test";
+    Argv args({appName, "--config", f.path(), "--config-check", "--config-strict"});
+    App app(appName, "");
+    return app.run(args.count, args.data());
   });
   ASSERT_EQ(rc, EXIT_FAILURE);
 }
-
-// These tests should ideally be implemented at some point, but they are a bit lower priority
 
 TEST(Application, AppHandlesSigTerm) {
   using namespace cta;
@@ -239,10 +231,10 @@ format = "json"
              ".toml");
 
   std::atomic<int> rc = EXIT_FAILURE;
-  runtime::CommonCliOptions opts;
-  opts.configFilePath = f.path();
-  runtime::Application<TestStoppableApp, MinimalTestConfig, runtime::CommonCliOptions> app("test-app", opts);
-  std::jthread thread([&]() { rc = app.run(); });
+  const std::string appName = "cta-test";
+  Argv args({appName, "--config", f.path()});
+  runtime::Application<TestStoppableApp, MinimalTestConfig, runtime::CommonCliOptions> app(appName, "");
+  std::jthread thread([&]() { rc = app.run(args.count, args.data()); });
   // Give it some time to start
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
   ASSERT_EQ(0, ::kill(::getpid(), SIGTERM));
@@ -250,11 +242,5 @@ format = "json"
   ASSERT_EQ(rc, EXIT_SUCCESS);
   ASSERT_TRUE(thread.joinable());
 }
-
-TEST(Application, AppCorrectXRootDKeyTab) {}
-
-TEST(Application, AppWrongXRootDKeyTab) {}
-
-TEST(Application, AppEmptyXRootDKeyTab) {}
 
 }  // namespace unitTests

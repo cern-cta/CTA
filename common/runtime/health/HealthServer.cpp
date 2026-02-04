@@ -91,7 +91,7 @@ void HealthServer::start() {
   m_thread = std::jthread([this]() { run(*m_server, m_host, m_port, m_lc.logger()); });
   // Block until the server actually started listening
   try {
-    utils::waitForCondition([&]() { return isRunning(); }, m_listenTimeoutMsec);
+    utils::waitForCondition([&]() { return isRunning(); }, m_listenTimeoutMsec, 100);
   } catch (cta::exception::TimeOut& ex) {
     m_lc.log(log::ERR, "In HealthServer::start(): failed to start healthServer");
     stop();

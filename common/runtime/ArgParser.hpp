@@ -85,7 +85,7 @@ public:
                   "config",
                   'c',
                   "PATH",
-                  "Path to the main configuration file (default: " + defaultConfigPath() + ").");
+                  "Path to the main configuration file. Defaults to " + defaultConfigPath() + " if not provided.");
     withStringArg(&T::logFilePath, "log-file", 'l', "PATH", "Write logs to PATH (defaults to stdout/stderr).");
   }
 
@@ -291,15 +291,6 @@ public:
 
     if (options.configFilePath.empty()) {
       options.configFilePath = defaultConfigPath();
-    }
-
-    if (options.showHelp) {
-      std::cout << usageString() << std::endl;
-      std::exit(EXIT_SUCCESS);
-    }
-    if (options.showVersion) {
-      std::cout << versionString() << std::endl;
-      std::exit(EXIT_SUCCESS);
     }
     m_hasParsed = true;
     return options;

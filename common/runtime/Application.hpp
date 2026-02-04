@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "ArgParser.hpp"
 #include "CommonCliOptions.hpp"
 #include "CommonConfig.hpp"
 #include "ConfigLoader.hpp"
@@ -97,19 +98,19 @@ concept HasCatalogueConfig = requires(const TConfig& cfg) {
  * @param func The function to wrap. Expected to return a returncode.
  * @return int EXIT_FAILURE if an exception was thrown, otherwise the return code of the func.
  */
-int safeRun(const std::function<int()>& func) noexcept {
+int safeRun(const std::function<int()>& func) {
   int returnCode = EXIT_FAILURE;
   try {
     returnCode = func();
-  } catch (exception::UserError& ex) {
+  } catch (const exception::UserError& ex) {
     // This will be mostly used to print issues with users e.g. making a mistake in the config file.
     // So we only print FATAL to keep it reasonably user friendly.
     std::cerr << "FATAL:\n" << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
-  } catch (exception::Exception& ex) {
+  } catch (const exception::Exception& ex) {
     std::cerr << "FATAL: Caught an unexpected CTA exception:\n" << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
-  } catch (std::exception& se) {
+  } catch (const std::exception& se) {
     std::cerr << "FATAL: Caught an unexpected exception:\n" << se.what() << std::endl;
     return EXIT_FAILURE;
   } catch (...) {
@@ -127,11 +128,11 @@ int safeRun(const std::function<int()>& func) noexcept {
  * @return int EXIT_FAILURE if an exception was thrown, otherwise the return code of the func.
  * @return int
  */
-int safeRunWithLog(log::Logger& log, const std::function<int()>& func) noexcept {
+int safeRunWithLog(log::Logger& log, const std::function<int()>& func) {
   int returnCode = EXIT_FAILURE;
   try {
     returnCode = func();
-  } catch (exception::UserError& ex) {
+  } catch (const exception::UserError& ex) {
     log(log::CRIT,
         "FATAL: User Error",
         {
@@ -139,7 +140,7 @@ int safeRunWithLog(log::Logger& log, const std::function<int()>& func) noexcept 
     });
     sleep(1);
     return EXIT_FAILURE;
-  } catch (exception::Exception& ex) {
+  } catch (const exception::Exception& ex) {
     log(log::CRIT,
         "FATAL: Caught an unexpected CTA exception",
         {
@@ -147,7 +148,7 @@ int safeRunWithLog(log::Logger& log, const std::function<int()>& func) noexcept 
     });
     sleep(1);
     return EXIT_FAILURE;
-  } catch (std::exception& se) {
+  } catch (const std::exception& se) {
     log(log::CRIT,
         "FATAL: Caught an unexpected exception",
         {
@@ -172,9 +173,9 @@ int safeRunWithLog(log::Logger& log, const std::function<int()>& func) noexcept 
  * The basic idea is that you tell this class a few things and it will construct your application object for you:
  * - The Class of the application. Note that you pass in the class (compile time), not the object.
  * - The Config struct the application is expected to consume. Note that you pass in the struct (compile time), not the object.
- * - The CliOptions object that will be used to determine how to populate application.
- *   For example, where to load the configuration from.
+ * - The CliOptions struct the commandline arguments should populate. Note that you pass in the struct (compile time), not the object.
  * - The name of the application.
+ * - The description of the application (may be empty)
  *
  * Using this information, this class will instantiate the application, performing several compile time checks along the way.
  *
@@ -188,39 +189,26 @@ public:
   /**
    * @brief Construct a new Application object.
    *
-   * @param appName Name of the application. For example, cta-maintd, cta-taped, cta-admins
-   * @param cliOptions Struct containing the (populated) commandline options. Note that, while that commandline options
-   * are populated from the config file, they are NOT verified yet. So string values may be empty, integers may be zero
-   * where they shouldn't be etc. This constraints must still be checked later.
+   * @param appName Name of the application. For example, cta-maintd, cta-taped, cta-admin.
+   * @param description. Description of the application. Used for the help message. May be empty.
    */
-  Application(const std::string& appName, const TOpts& cliOptions)
+  Application(const std::string& appName, const std::string& description)
     requires HasLoggingConfig<TConfig> && HasStopFunction<TApp> && HasRequiredCliOptions<TOpts>
       : m_appName(appName),
-        m_cliOptions(cliOptions),
-        m_appConfig(runtime::loadFromToml<TConfig>(m_cliOptions.configFilePath, m_cliOptions.configStrict)) {
-    // These two checks should never be reached; if they are, it means the developer made a mistake in how they set up the application.
-    if (m_cliOptions.showHelp) {
-      throw std::logic_error("Help was set to true and should have been shown before. If this part was reached, it "
-                             "means the program did not exit correctly after showing help.");
-    }
+        m_argParser(appName) {
     if (m_appName.empty()) {
       throw std::logic_error("Application name cannot be empty.");
     }
-
-    // If the user requested to only check the config, we can exit now.
-    if (cliOptions.configCheck) {
-      std::cout << "Config check passed." << std::endl;
-      std::exit(EXIT_SUCCESS);
-    }
-
-    initLogging();
-
-    cta::log::Logger& log = *m_logPtr;
-    log(log::INFO, "Initialising application: " + m_appName);
-    m_signalReactorBuilder = std::make_unique<SignalReactorBuilder>(*m_logPtr);
+    m_argParser.withDescription(description);
+    // We need to start the reactor builder here as we may want to register custom signals.
+    // It is also for that reason that we don't build the actual SignalReactor just yet.
+    m_signalReactorBuilder = std::make_unique<SignalReactorBuilder>();
     m_signalReactorBuilder->addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
-    m_signalReactorBuilder->addSignalFunction(SIGUSR1, [this]() { m_logPtr->refresh(); });
-    // Don't build the signal reactor yet, because we may want to register more signal functions.
+    m_signalReactorBuilder->addSignalFunction(SIGUSR1, [this]() {
+      if (m_logPtr) {
+        m_logPtr->refresh();
+      }
+    });
   }
 
   /**
@@ -233,116 +221,142 @@ public:
    *
    * @param signal The signal to react to.
    * @param method The member function of m_app to call when this signal is received.
+   * @param overwrite Whether to overwrite the function associated with the given signal if a function was already registered to it.
    * @return Application& This application object. Can be used to easily chain multiple of these calls together.
    */
-  Application& addSignalFunction(int signal, void (TApp::*method)()) {
+  Application& addSignalFunction(int signal, void (TApp::*method)(), bool overwrite = false) {
     auto& app = m_app;
-    m_signalReactorBuilder->addSignalFunction(signal, [&app, method] { (app.*method)(); });
+    m_signalReactorBuilder->addSignalFunction(signal, [&app, method] { (app.*method)(); }, overwrite);
     return *this;
   }
+
+  /**
+   * @brief Returns the parser object. Allows for adding additional commandline arguments.
+   * Example:
+   *   app.parser().withStringArg(&CustomCliOptions::iAmExtra, "extra", 'e', "STUFF", "Some extra argument.");
+   * Which will require CustomCliOptions (TConfig) to have a field:
+   *   std::string iAmExtra;
+   *
+   * @return ArgParser<TOpts>& Reference to the parser object.
+   */
+  ArgParser<TOpts>& parser() { return m_argParser; }
 
   /**
    * @brief Runs the application. Will do some initialisation and call the run() method of the underlying app.
    *
    * @return int Return code.
    */
-  int run() noexcept {
-    return safeRunWithLog(*m_logPtr, [this]() {
-      auto signalReactor = m_signalReactorBuilder->build();
+  int run(const int argc, char** const argv) {
+    // Parse commandline opts
+    auto cliOptions = m_argParser.parse(argc, argv);
+    if (cliOptions.showHelp) {
+      std::cout << m_argParser.usageString() << std::endl;
+      return EXIT_SUCCESS;
+    }
+
+    if (cliOptions.showVersion) {
+      std::cout << m_argParser.versionString() << std::endl;
+      return EXIT_SUCCESS;
+    }
+
+    const auto config = runtime::loadFromToml<TConfig>(cliOptions.configFilePath, cliOptions.configStrict);
+    if (cliOptions.configCheck) {
+      std::cout << "Config check passed." << std::endl;
+      return EXIT_SUCCESS;
+    }
+
+    initLogging(config, cliOptions);
+    return safeRunWithLog(*m_logPtr, [&]() {
+      cta::log::Logger& log = *m_logPtr;
+      log(log::INFO, "Initialising application: " + m_appName);
+
+      auto signalReactor = m_signalReactorBuilder->build(*m_logPtr);
       signalReactor.start();
 
+      // We dynamically add/init the relevant parts depending on what is in the config type.
       if constexpr (HasHealthServerConfig<TConfig>) {
         static_assert(HasReadinessFunction<TApp> && HasLivenessFunction<TApp>,
                       "Config has health_server, but app type lacks isReady()/isLive() methods");
-        initHealthServer();
+        initHealthServer(config);
       }
 
       if constexpr (HasTelemetryConfig<TConfig>) {
-        initTelemetry();
+        initTelemetry(config);
       }
 
       if constexpr (HasXRootDConfig<TConfig>) {
-        initXRootD();
+        initXRootD(config);
       }
 
-      // Start
-      cta::log::Logger& log = *m_logPtr;
       log(log::INFO,
           "Starting " + m_appName,
           {
             {"version", std::string(CTA_VERSION)}
       });
-      return runApp(log);
+      // Not all apps need to consume the CliOptions.
+      // So here we allow either the full run() signature, or one that omits the CliOptions
+      if constexpr (HasRunFunctionWithOpts<TApp, TConfig, TOpts, log::Logger>) {
+        return m_app.run(config, cliOptions, log);
+      } else if constexpr (HasRunFunction<TApp, TConfig, log::Logger>) {
+        return m_app.run(config, log);
+      } else {
+        static_assert([] { return false; }(), "TApp has no suitable run(...) overload");
+      }
     });
   }
 
 private:
-  // SFINAE: allow an app to ignore the cliOptions if it does not use them
-  int runApp(cta::log::Logger& log)
-    requires HasRunFunctionWithOpts<TApp, TConfig, TOpts, log::Logger>
-  {
-    return m_app.run(m_appConfig, m_cliOptions, log);
-  }
-
-  int runApp(cta::log::Logger& log)
-    requires HasRunFunction<TApp, TConfig, log::Logger>
-  {
-    return m_app.run(m_appConfig, log);
-  }
-
-  void initLogging() {
+  void initLogging(const TConfig& config, const TOpts& cliOptions) {
     using namespace cta;
     std::string shortHostName;
     try {
       shortHostName = utils::getShortHostname();
     } catch (const exception::Errnum& ex) {
-      std::cerr << "Failed to get host name: " << ex.getMessage().str() << std::endl;
-      std::exit(EXIT_FAILURE);
+      throw exception::Exception("Failed to get host name: " + ex.getMessage().str());
     }
 
     try {
-      if (!m_cliOptions.logFilePath.empty()) {
-        m_logPtr = std::make_unique<log::FileLogger>(shortHostName, m_appName, m_cliOptions.logFilePath, log::INFO);
+      if (!cliOptions.logFilePath.empty()) {
+        m_logPtr = std::make_unique<log::FileLogger>(shortHostName, m_appName, cliOptions.logFilePath, log::INFO);
       } else {
         // Default to stdout logger
         m_logPtr = std::make_unique<log::StdoutLogger>(shortHostName, m_appName);
       }
-      m_logPtr->setLogFormat(m_appConfig.logging.format);
+      m_logPtr->setLogFormat(config.logging.format);
     } catch (exception::Exception& ex) {
-      std::cerr << "Failed to instantiate CTA logging system: " << ex.getMessage().str() << std::endl;
-      std::exit(EXIT_FAILURE);
+      throw exception::Exception("Failed to instantiate CTA logging system: " + ex.getMessage().str());
     }
 
-    m_logPtr->setLogMask(m_appConfig.logging.level);
+    m_logPtr->setLogMask(config.logging.level);
 
     // Add the attributes present in every single log message
     std::map<std::string, std::string> logAttributes;
     if constexpr (HasSchedulerConfig<TConfig>) {
-      if (m_appConfig.scheduler.backend_name.empty()) {
+      if (config.scheduler.backend_name.empty()) {
         throw exception::UserError("Scheduler backend name cannot be empty");
       }
-      logAttributes["sched_backend"] = m_appConfig.scheduler.backend_name;
+      logAttributes["sched_backend"] = config.scheduler.backend_name;
     }
-    for (const auto& [key, value] : m_appConfig.logging.attributes) {
+    for (const auto& [key, value] : config.logging.attributes) {
       logAttributes[key] = value;
     }
     m_logPtr->setStaticParams(logAttributes);
   }
 
-  void initHealthServer() {
-    if (m_appConfig.health_server.enabled) {
+  void initHealthServer(const TConfig& config) {
+    if (config.health_server.enabled) {
       m_healthServer = std::make_unique<HealthServer>(
         *m_logPtr,
-        m_appConfig.health_server.host,
-        m_appConfig.health_server.port,
+        config.health_server.host,
+        config.health_server.port,
         [this]() { return m_app.isReady(); },
         [this]() { return m_app.isLive(); });
       m_healthServer->start();
     }
   }
 
-  void initTelemetry() {
-    if (!m_appConfig.experimental.telemetry_enabled || m_appConfig.telemetry.config_file.empty()) {
+  void initTelemetry(const TConfig& config) {
+    if (!config.experimental.telemetry_enabled || config.telemetry.config_file.empty()) {
       return;
     }
     log::LogContext lc(*m_logPtr);
@@ -355,9 +369,9 @@ private:
       };
 
       if constexpr (HasSchedulerConfig<TConfig>) {
-        ctaResourceAttributes[cta::semconv::attr::kSchedulerNamespace] = m_appConfig.scheduler.backend_name;
+        ctaResourceAttributes[cta::semconv::attr::kSchedulerNamespace] = config.scheduler.backend_name;
       }
-      cta::telemetry::initOpenTelemetry(m_appConfig.telemetry.config_file, ctaResourceAttributes, lc);
+      cta::telemetry::initOpenTelemetry(config.telemetry.config_file, ctaResourceAttributes, lc);
     } catch (exception::Exception& ex) {
       cta::log::ScopedParamContainer params(lc);
       params.add("exceptionMessage", ex.getMessage().str());
@@ -366,19 +380,18 @@ private:
     }
   }
 
-  void initXRootD() {
-    if (m_appConfig.xrootd.security_protocol.empty()) {
+  void initXRootD(const TConfig& config) {
+    if (config.xrootd.security_protocol.empty()) {
       throw exception::UserError("XRootD security protocol cannot be empty");
     }
 
-    if (m_appConfig.xrootd.security_protocol == "sss" && m_appConfig.xrootd.sss_keytab_path.empty()) {
+    if (config.xrootd.security_protocol == "sss" && config.xrootd.sss_keytab_path.empty()) {
       throw exception::UserError("XRootD SSS Keytab cannot be empty when security protocol is set to SSS");
     }
     // Overwrite XRootD env variables
-    ::setenv("XrdSecPROTOCOL", m_appConfig.xrootd.security_protocol.c_str(), 1);
-    ::setenv("XrdSecSSSKT", m_appConfig.xrootd.sss_keytab_path.c_str(), 1);
-    if (!m_appConfig.xrootd.sss_keytab_path.empty()
-        && ::access(m_appConfig.xrootd.sss_keytab_path.c_str(), R_OK) != 0) {
+    ::setenv("XrdSecPROTOCOL", config.xrootd.security_protocol.c_str(), 1);
+    ::setenv("XrdSecSSSKT", config.xrootd.sss_keytab_path.c_str(), 1);
+    if (!config.xrootd.sss_keytab_path.empty() && ::access(config.xrootd.sss_keytab_path.c_str(), R_OK) != 0) {
       // Can we replace this check by something the XRootD libs provide?
       throw cta::exception::Exception("Failed to read or open XRootD SSS keytab file.");
     }
@@ -386,12 +399,9 @@ private:
 
   const std::string m_appName;
 
+  ArgParser<TOpts> m_argParser;
   // The actual application class
   TApp m_app;
-  // A struct representing the commandline arguments
-  const TOpts& m_cliOptions;
-  // A struct containing all configuration
-  const TConfig m_appConfig;
 
   std::unique_ptr<SignalReactorBuilder> m_signalReactorBuilder;
   // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
