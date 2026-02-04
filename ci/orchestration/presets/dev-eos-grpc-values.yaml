@@ -65,6 +65,9 @@ mgm:
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
+      xrd.sched mint 16 maxt 2048 idle 128
+    sched: "mint 16 maxt 2048 idle 128"
+
 
   # Liveness probes are disabled for all pods as we specifically do not want the pod to restart in case of an error for CI
   # Additionally, these liveness probes cause a lot of extra messages in the logs
@@ -196,6 +199,9 @@ fst:
       fstofs.protowfusegrpctls true
       fstofs.jwttokenpath /etc/grid-security/jwt-token-grpc
       tpc.trace  all
+      xrd.sched mint 16 maxt 512 idle 64
+    sched: "mint 16 maxt 512 idle 64"
+
 
   probes:
     liveness: false
