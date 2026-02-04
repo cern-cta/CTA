@@ -209,7 +209,7 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
 
   // check storage class attribute in the first-class attributes, then fall back to checking the xattrs
   // if it is not set
-  std::string_view storageClassStr = m_event.file().storage_class();
+  std::string storageClassStr = m_event.file().storage_class();
   if (storageClassStr.empty()) {
     // Unpack message
     const auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
