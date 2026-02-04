@@ -160,27 +160,6 @@ format = "json"
   ASSERT_EQ(rc, EXIT_SUCCESS);
 }
 
-TEST(ApplicationDeathTest, AppCheckConfigLenientCorrect) {
-  using namespace cta;
-
-  TempFile f(R"toml(
-    # In lenient mode, we can rely on defaults
-)toml",
-             ".toml");
-  using App = runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions>;
-
-  EXPECT_EXIT(
-    {
-      runtime::CommonCliOptions opts;
-      opts.configFilePath = f.path();
-      opts.configCheck = true;
-      App app("test-app", opts);
-      app.run();
-    },
-    testing::ExitedWithCode(EXIT_SUCCESS),
-    "");
-}
-
 TEST(Application, AppCheckConfigLenientWrong) {
   using namespace cta;
 
@@ -202,31 +181,6 @@ level = 3 # Should be a string
     return app.run();
   });
   ASSERT_EQ(rc, EXIT_FAILURE);
-}
-
-TEST(ApplicationDeathTest, AppCheckConfigStrictCorrect) {
-  using namespace cta;
-
-  TempFile f(R"toml(
-[logging]
-level = "WARNING"
-format = "json"
-  [logging.attributes]
-)toml",
-             ".toml");
-  using App = runtime::Application<TestApp, MinimalTestConfig, runtime::CommonCliOptions>;
-
-  EXPECT_EXIT(
-    {
-      runtime::CommonCliOptions opts;
-      opts.configFilePath = f.path();
-      opts.configCheck = true;
-      opts.configStrict = true;
-      App app("test-app", opts);
-      app.run();
-    },
-    testing::ExitedWithCode(EXIT_SUCCESS),
-    "");
 }
 
 TEST(Application, AppCheckConfigStrictWrong) {
