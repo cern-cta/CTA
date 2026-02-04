@@ -102,6 +102,7 @@ namespace SchedulerOperationNameValues {
 static constexpr const char* kSelectCatalogueDB =
   "select_catalogue_db";  // happens during retrieve_queue_insert so not used for the moment
 static constexpr const char* kEnqueue = "queue";
+static constexpr const char* kPrepare = "prepare";
 static constexpr const char* kGetNextMount = "work summary";
 static constexpr const char* kInsertForProcessing = "processing";
 static constexpr const char* kUpdateFinishedTransfer = "validate transfer";
@@ -111,6 +112,7 @@ static constexpr const char* kSelectToReportToUser = "fetch reports";
 static constexpr const char* kReportToUserAndDeleteSchedulerDB = "report";
 static constexpr const char* kDeleteSchedulerDB = "delete";
 static constexpr const char* kCancel = "cancel";
+static constexpr const char* kCreate = "create";
 }  // namespace SchedulerOperationNameValues
 
 namespace DbSystemNameValues {
