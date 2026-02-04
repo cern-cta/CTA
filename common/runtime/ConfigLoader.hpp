@@ -14,13 +14,15 @@
 
 namespace cta::runtime {
 
-// TODO: request better error messages
-// 1) Failed to parse field 'logging': Field named 'format' not found.
-// 2) Failed to parse field 'routines': Found 4 errors:
-//     1) Failed to parse field 'disk_report_archive': Found 2 errors:
-//         1) Value named 'soft_timeout' not used. Remove the rfl::NoExtraFields processor or add rfl::ExtraFields to avoid this error message.
-//         2) Field named 'soft_timeout_secs' not found.
-
+/**
+ * @brief Loads and verifies the provided .toml and populates the provided struct type.
+ * To correctly load the toml file, the names and structure of the struct must match that of the .toml file.
+ *
+ * @tparam T The struct to populate with the data from the .toml file.
+ * @param filePath Path to the .toml file.
+ * @param strict If set to true, treat unknown keys, missing keys, and type mismatches in the config file as errors.
+ * @return T The populated struct.
+ */
 template<typename T>
 T loadFromToml(const std::string& filePath, bool strict = false) {
   toml::table tbl;

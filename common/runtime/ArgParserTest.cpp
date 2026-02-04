@@ -35,24 +35,19 @@ struct Argv {
   char** data() { return argv.data(); }
 };
 
-// TODO: should probably test the actual error messages here, because not all of them were exactly clear
-
-// TEST(ArgParser, SetsHelpCorrectly) {
-//   EXPECT_EXIT(
-//     {
-//       const std::string appName = "cta-test";
-//       Argv args({appName, "--help"});
-
-//       cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
-//       argParser.parse(args.count, args.data());
-//     },
-//     ::testing::ExitedWithCode(EXIT_SUCCESS),
-//     "Usage: cta-test");
-// }
-
+// TODO: should probably test the actual error messages here, because not all of them were exactly clear (initially)
 TEST(ArgParser, SetsStrictConfigCorrectly) {
   const std::string appName = "cta-test";
   Argv args({appName, "--config-strict"});
+
+  cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
+  auto opts = argParser.parse(args.count, args.data());
+  ASSERT_TRUE(opts.configStrict);
+}
+
+TEST(ArgParser, RepeatedBooleanFlag) {
+  const std::string appName = "cta-test";
+  Argv args({appName, "--config-strict", "--config-strict"});
 
   cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
   auto opts = argParser.parse(args.count, args.data());
@@ -298,6 +293,55 @@ TEST(ArgParser, VersionString) {
   ASSERT_EQ(argParser.versionString(), expectedVersionString);
 }
 
-// TODO: repeated arguments
+TEST(ArgParser, SinglePositionalArgument) {
+  struct PositionalArgsOptions : public cta::runtime::CommonCliOptions {
+    std::vector<std::string> positionalArgs;
+  };
+
+  const std::string appName = "cta-test";
+  Argv args({appName, "arg1"});
+
+  cta::runtime::ArgParser<PositionalArgsOptions> argParser(appName);
+  argParser.withPositionalArgs();
+  auto opts = argParser.parse(args.count, args.data());
+  ASSERT_EQ(opts.positionalArgs.size(), 1);
+  ASSERT_EQ(opts.positionalArgs[0], "arg1");
+}
+
+TEST(ArgParser, MultiplePositionalArguments) {
+  struct PositionalArgsOptions : public cta::runtime::CommonCliOptions {
+    std::vector<std::string> positionalArgs;
+  };
+
+  const std::string appName = "cta-test";
+  Argv args({appName, "arg1", "arg2", "arg3"});
+
+  cta::runtime::ArgParser<PositionalArgsOptions> argParser(appName);
+  argParser.withPositionalArgs();
+  auto opts = argParser.parse(args.count, args.data());
+  ASSERT_EQ(opts.positionalArgs.size(), 3);
+  ASSERT_EQ(opts.positionalArgs[0], "arg1");
+  ASSERT_EQ(opts.positionalArgs[1], "arg2");
+  ASSERT_EQ(opts.positionalArgs[2], "arg3");
+}
+
+TEST(ArgParser, MultiplePositionalArgumentsWithFlags) {
+  struct PositionalArgsOptions : public cta::runtime::CommonCliOptions {
+    std::vector<std::string> positionalArgs;
+  };
+
+  const std::string appName = "cta-test";
+  Argv args({appName, "arg1", "--config", "myconfig", "arg2", "arg3", "--config-strict"});
+
+  cta::runtime::ArgParser<PositionalArgsOptions> argParser(appName);
+  argParser.withPositionalArgs();
+  auto opts = argParser.parse(args.count, args.data());
+  ASSERT_EQ(opts.positionalArgs.size(), 3);
+  ASSERT_EQ(opts.positionalArgs[0], "arg1");
+  ASSERT_EQ(opts.positionalArgs[1], "arg2");
+  ASSERT_EQ(opts.positionalArgs[2], "arg3");
+  ASSERT_TRUE(opts.configStrict);
+  ASSERT_EQ(opts.configFilePath, "myconfig");
+}
 
 }  // namespace unitTests

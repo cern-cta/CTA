@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <concepts>
 #include <cstdlib>
 #include <functional>
 #include <getopt.h>
@@ -25,28 +26,50 @@
 
 namespace cta::runtime {
 
+template<class T>
+concept HasPositionalArgs = requires(const T& options) {
+  requires std::same_as<std::remove_cvref_t<decltype(options.positionalArgs)>, std::vector<std::string>>;
+};
+
+/**
+ * @brief Specifies what a single argument/flag looks like.
+ * Can be used to describe that the parser should parse e.g. --config or --config-strict
+ * and how to handle the argument if found via the apply() function.
+ *
+ * @tparam T The type of the options object
+ */
+template<class T>
 struct ArgSpec {
   std::optional<char> shortFlag;       // e.g. "c" (no dash), nullopt => no shorthand
   std::string longFlag;                // e.g. "help". Used to show --help
-  std::optional<std::string> argName;  // e.g. "config-file". Used to show --config <config-file>
+  std::optional<std::string> argName;  // e.g. "PATH". Used to show --config PATH
   std::string description;             // Description for the flag
 
-  std::function<void(std::optional<std::string_view>)> apply;
+  /**
+   * @brief If the argument is found, this function will be called to apply the argument on the options object.
+   * In other words, this is used to populate options for a single argument.
+   *
+   */
+  std::function<void(T& options, std::optional<std::string_view>)> apply;
 };
 
-// Basic usage
-//  runtime::CommonCliOptions opts;
-//  runtime::ArgParser argParser(appName, opts);
-//  argParser.parser(argc, argv);
-// no support for positional arguments yet, but should not be too complicated to add
-// TODO: parser builder
+/**
+ * @brief
+ *
+ * Example usage:
+ *
+ *
+ *
+ * @tparam T The struct to populate when parsing.
+ */
 template<class T>
 class ArgParser {
 public:
   ArgParser(const std::string& appName)
     requires HasRequiredCliOptions<T>
       : m_appName(appName) {
-    // Help is displayed in reverse order so that --help always shows last and custom added arguments show first
+    // The help message displays flags in reverse order of how they are registered
+    // so that --help always shows last and custom added arguments show first.
     withBoolArg(&T::showHelp, "help", 'h', "Show this help message, then exit.");
     withBoolArg(&T::showVersion, "version", 'v', "Print version information, then exit.");
     withBoolArg(&T::configCheck,
@@ -68,44 +91,102 @@ public:
     withStringArg(&T::logFilePath, "log-file", 'l', "PATH", "Write logs to PATH (defaults to stdout/stderr).");
   }
 
-  void withDescription(const std::string& description) { m_appDescription = description; }
+  /**
+   * @brief Adds a description to the help output.
+   *
+   * @param description The description to add. May contain newlines (text is not automatically wrapped).
+   * @return The ArgParser object. Allows for chaining of with* calls.
+   */
+  ArgParser& withDescription(const std::string& description) {
+    m_appDescription = description;
+    return *this;
+  }
 
-  void withStringArg(std::string T::* field,
-                     const std::string& longFlag,
-                     std::optional<char> shortFlag,
-                     const std::string& argName,
-                     const std::string& description) {
-    ArgSpec arg;
+  /**
+   * @brief Adds a string argument to the parser. A string argument is an input flag that itself takes an argument.
+   * For example --config PATH.
+   *
+   * @param field The field to populate. For example, in --config PATH, this would be populated with the value of PATH.
+   * @param longFlag The name of the flag. For example, in --config, this would be "config".
+   * @param shortFlag The name of the short flag (optional). For example, in -c, --config, this would be "c".
+   * @param argName The name of the flag argument. For example, in --config PATH, this would be "PATH".
+   * @param description The description of the flag.
+   * @return The ArgParser object. Allows for chaining of with* calls.
+   */
+  ArgParser& withStringArg(std::string T::* field,
+                           const std::string& longFlag,
+                           std::optional<char> shortFlag,
+                           const std::string& argName,
+                           const std::string& description) {
+    ArgSpec<T> arg;
     arg.longFlag = longFlag;
     arg.shortFlag = shortFlag;
     arg.argName = argName;
     arg.description = description;
-    arg.apply = [this, field, longFlag](std::optional<std::string_view> argVal) {
+    arg.apply = [this, field, longFlag](T& options, std::optional<std::string_view> argVal) {
       if (!argVal.has_value() || argVal.value().empty()) {
         throw cta::exception::UserError("Missing required argument for option: --" + longFlag);
       }
-      m_options.*field = std::string(argVal.value());
+      options.*field = std::string(argVal.value());
     };
     assertCorrectArgSpec(arg);
     m_supportedArgs.push_back(arg);
+    return *this;
   }
 
-  void withBoolArg(bool T::* field,
-                   const std::string& longFlag,
-                   std::optional<char> shortFlag,
-                   const std::string& description) {
-    ArgSpec arg;
+  /**
+   * @brief Adds a boolean argument to the parser. A boolean argument is an input flag that does not take any argument.
+   * For example, --config-strict.
+   *
+   * @param field The field to populate. For all boolean flags, this value will be set to true if the flag is found.
+   * As such, the initial value of this MUST be false, or you will get unexpected behaviour.
+   * @param longFlag The name of the flag. For example, in --config-strict, this would be "config-strict".
+   * @param shortFlag The name of the short flag (optional). For example, in -s, --config-strict this would be "s".
+   * @param description The description of the flag.
+   * @return The ArgParser object. Allows for chaining of with* calls.
+   */
+  ArgParser& withBoolArg(bool T::* field,
+                         const std::string& longFlag,
+                         std::optional<char> shortFlag,
+                         const std::string& description) {
+    ArgSpec<T> arg;
     arg.longFlag = longFlag;
     arg.shortFlag = shortFlag;
     arg.description = description;
-    arg.apply = [this, field](std::optional<std::string_view>) { m_options.*field = true; };
+    // We set it to true instead of toggling, since toggling gives unexpected behaviour when you provide a boolean flag twice.
+    arg.apply = [this, field](T& options, std::optional<std::string_view>) { options.*field = true; };
     assertCorrectArgSpec(arg);
     m_supportedArgs.push_back(arg);
+    return *this;
   }
 
-  // TODO: handle positional arguments (.withPositionalArguments)
-  // TODO: handle correct error messages
+  /**
+   * @brief Adds support for positional arguments. Note that for now the implementation is really simplistic.
+   * It simply populates an array of positional arguments. This means, it is not possible to add flags
+   * specific to certain positional arguments.
+   * In the future, if more sophisticated behaviour is desired, then this should be handled by subparsers.
+   *
+   * @return The ArgParser object. Allows for chaining of with* calls.
+   */
+  ArgParser& withPositionalArgs()
+    requires HasPositionalArgs<T>
+  {
+    // In theory we could auto-detect whether T has positional argument and enable parsing based on this.
+    // However, we want to make this explicit, so that it is less magic for the developers.
+    // By enabling this flag, developers will get a clear compile error if their options struct doesn't support it.
+    m_parsePositionalArgs = true;
+    return *this;
+  }
+
   T parse(const int argc, char** const argv) {
+    if (m_hasParsed) {
+      // In theory parsing again should be fine, but we want to prevent developers from doing this as it's not good practice.
+      // For example, one may call parse() and then afterwards call one of the with* functions and the calling parse() again.
+      // Not only would that be spaghetti, it would also give unexpected results for the first parse() result, as all options
+      // must be registered before parse() is called.
+      throw std::logic_error(
+        "ArgParser has already parsed. Parsing again may give unexpected results and is not supported.");
+    }
     // Build short option string and long option array
     std::string shortopts;
     shortopts.reserve(m_supportedArgs.size() * 2 + 1);
@@ -121,7 +202,7 @@ public:
     int nextLongOnlyVal = 256;
 
     for (std::size_t i = 0; i < m_supportedArgs.size(); ++i) {
-      const ArgSpec& s = m_supportedArgs[i];
+      const ArgSpec<T>& s = m_supportedArgs[i];
 
       // The value that will be returned by getopt_long
       int val = 0;
@@ -156,6 +237,9 @@ public:
     opterr = 0;  // Disable error output from getopt
     optind = 0;  // Reset getopt_long parser state to index 0
 
+    // The actual options object we will be constructing
+    T options;
+    // Parse the arguments and populate the options object
     while (true) {
       int optionIndex = 0;
       const int tokenIndex = (optind == 0 ? 1 : optind);
@@ -166,6 +250,7 @@ public:
         break;
       }
 
+      // Handle user errors
       if (c == '?' || c == ':') {
         std::string offending;
         if (tokenIndex >= 0 && tokenIndex < argc && argv[tokenIndex]) {
@@ -186,7 +271,7 @@ public:
 
       const auto it = valToIndex.find(c);
       if (it == valToIndex.end()) {
-        throw cta::exception::Exception("Internal error: parsed option not mapped to a spec.");
+        throw std::logic_error("Internal error: parsed option not mapped to a spec.");
       }
 
       std::optional<std::string_view> arg;
@@ -194,26 +279,34 @@ public:
         arg = std::string_view {optarg};
       }
       // Dispatch
-      const ArgSpec& spec = m_supportedArgs[it->second];
-      spec.apply(arg);
+      const ArgSpec<T>& spec = m_supportedArgs[it->second];
+      spec.apply(options, arg);
     }
 
-    // If we ever want to add positional arguments, do that here:
-    // for (int i = optind; i < argc; ++i) { ... }
+    if (m_parsePositionalArgs) {
+      // TODO
+      // options.positionalArgs.push_back("")
+    }
 
-    if (m_options.showHelp) {
+    if (options.showHelp) {
       std::cout << usageString() << std::endl;
       std::exit(EXIT_SUCCESS);
     }
-    if (m_options.showVersion) {
+    if (options.showVersion) {
       std::cout << versionString() << std::endl;
       std::exit(EXIT_SUCCESS);
     }
-    return m_options;
+    m_hasParsed = true;
+    return options;
   }
 
+  /**
+   * @brief Constructs the usage string from the app name, the description (if present) and the registered arguments.
+   *
+   * @return std::string The usage string.
+   */
   std::string usageString() const {
-    auto formatOption = [](const ArgSpec& s) -> std::string {
+    auto formatOption = [](const ArgSpec<T>& s) -> std::string {
       std::string option;
 
       if (s.shortFlag.has_value()) {
@@ -241,19 +334,31 @@ public:
     return usage;
   }
 
+  /**
+   * @brief Prints a version string based on the app name.
+   *
+   * @return std::string The version string.
+   */
   std::string versionString() const {
     return m_appName + " " + std::string(CTA_VERSION) + "\nCopyright (C) 2026 CERN\nLicense GPL-3.0-or-later";
   }
 
 private:
   // Uses assertions as its aim is to prevent the developer from making a mistake
-  void assertCorrectArgSpec(const ArgSpec& arg) const {
-    assert(!arg.longFlag.empty());
+  /**
+   * @brief Runtime sanity check for developers to ensure they registered the correct commandflags.
+   * Will check whether the new argument spec they want to register is valid.
+   * For example, a long flag cannot be empty, description cannot be empty, flags must be unique etc.
+   *
+   * @param arg The argument spec.
+   */
+  void assertCorrectArgSpec(const ArgSpec<T>& arg) const {
+    assert(arg.longFlag.size() > 1);
     assert(!arg.description.empty());
-    if (arg.shortFlag) {
-      assert(*arg.shortFlag != '\0');
+    if (arg.shortFlag.has_value()) {
+      assert(arg.shortFlag.value() != '\0');
     }
-    if (arg.argName) {
+    if (arg.argName.has_value()) {
       assert(!arg.argName->empty());
     }
     //uniqueness checks
@@ -267,8 +372,10 @@ private:
 
   const std::string m_appName;
   std::string m_appDescription = "";
-  std::vector<ArgSpec> m_supportedArgs;
-  T m_options;
+  std::vector<ArgSpec<T>> m_supportedArgs;
+
+  bool m_hasParsed = false;
+  bool m_parsePositionalArgs = false;
 };
 
 }  // namespace cta::runtime

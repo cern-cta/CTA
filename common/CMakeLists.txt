@@ -100,7 +100,6 @@ set (COMMON_LIB_SRC_FILES
   runtime/signals/SignalReactorBuilder.cpp
   runtime/signals/SignalUtils.cpp
   runtime/health/HealthServer.cpp
-  runtime/Application.cpp
   process/ProcessCap.cpp
   process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp

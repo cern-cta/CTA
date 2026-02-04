@@ -12,6 +12,10 @@
 
 namespace unitTests {
 
+/**
+ * @brief Creates a temporary file with the provided content. The suffix can be used to add file extensions (e.g .toml).
+ *
+ */
 class TempFile {
 public:
   explicit TempFile(const std::string& content, const std::string& suffix = "") {
