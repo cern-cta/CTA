@@ -283,9 +283,12 @@ public:
       spec.apply(options, arg);
     }
 
-    if (m_parsePositionalArgs) {
-      // TODO
-      // options.positionalArgs.push_back("")
+    if constexpr (HasPositionalArgs<T>) {
+      if (m_parsePositionalArgs) {
+        for (int i = optind; i < argc; i++) {
+          options.positionalArgs.emplace_back(argv[i]);
+        }
+      }
     }
 
     if (options.showHelp) {
