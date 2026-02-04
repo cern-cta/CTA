@@ -42,6 +42,7 @@ BATCH_SIZE=100    # number of files per batch process
 SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
 die() {
+
   echo "$@" 1>&2
   test -z $TAILPID || kill ${TAILPID} &> /dev/null
   exit 1
@@ -163,7 +164,8 @@ delete_files_from_eos_and_tapes(){
   fi
 }
 
-while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q" o; do
+FST=0
+while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q:F" o; do
     case "${o}" in
         e)
             EOS_MGM_HOST=${OPTARG}
@@ -198,6 +200,9 @@ while getopts "d:e:n:N:s:p:vS:rAPGt:m:Q" o; do
         G)
             TAPEAWAREGC=1
             ;;
+        F)
+            FST=1
+            ;;
         Q)
             PREQUEUE=1
             ;;
@@ -224,6 +229,10 @@ if [[ $PREQUEUE == 1 ]]; then
 # DRIVE_UP="ULT3580-TD811"
 fi
 
+SSSKEY="/etc/eos/keytab"
+if [[ $FST == 1 ]]; then
+  SSSKEY="/etc/fstuser.keytab"
+fi
 if [[ $DONOTARCHIVE == 1 ]]; then
     if [[ "x${TARGETDIR}" = "x" ]]; then
       echo "You must provide a target directory to run a test and skip archival"
@@ -273,12 +282,15 @@ echo "Starting test ${TESTID}: ${COMMENT}"
 
 test -z ${COMMENT} || annotate "test ${TESTID} STARTED" "comment: ${COMMENT}<br/>files: $((${NB_DIRS}*${NB_FILES}))<br/>filesize: ${FILE_KB_SIZE}kB" 'test,start'
 
-
 if [[ $DONOTARCHIVE == 0 ]]; then
-
+export EOS_MGM_HOST=${EOS_MGM_HOST}
 echo "$(date +%s): Creating test dir in eos: ${EOS_DIR}"
-
-eos root://${EOS_MGM_HOST} mkdir -p "${EOS_DIR}" || die "Cannot create directory ${EOS_DIR} in eos instance ${EOS_MGM_HOST}."
+if [[ $FST == 1 ]]; then
+  XrdSecsssKT=${SSSKEY} xrdcp -p eos_setup.sh  root://${EOS_MGM_HOST}/${EOS_DIR}
+  echo "Created dir ${EOS_DIR}"
+else
+  eos root://${EOS_MGM_HOST} mkdir -p "${EOS_DIR}" || die "Cannot create directory ${EOS_DIR} in eos instance ${EOS_MGM_HOST}."
+fi
 echo
 echo "Listing the EOS extended attributes of ${EOS_DIR}"
 eos root://${EOS_MGM_HOST} attr ls ${EOS_DIR}
@@ -306,6 +318,7 @@ for (( j=0; j < NB_FILES; j++ )); do
   fi
   TEST_FILE_NUMS[j]=$(printf "%.7d" $j)
 done
+
 echo "Generating array of padded subdirs"
 TEST_SUBDIRS=()
 for (( j=0; j < NB_DIRS; j++ )); do
@@ -369,18 +382,45 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   #if (( subdir == 0 )); then
   #PREVIOUS_PATH="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
   # xargs must iterate on the individual file number no subshell can be spawned even for a simple addition in xargs
-  printf "%s\n" "${TEST_FILE_NUMS[@]}" | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "(${DD_COMMAND}; \
+  printf "%s\n" "${TEST_FILE_NUMS[@]}" | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "(\
          printf \"%s\" \"UNIQ_${PADDED_SUBDIR}_TEST_FILE_NUM\";) \
-         |  XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
-         > /dev/null 2>&1 ||  \
-         XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
-          > /dev/null 2>&1  ||  \
-         XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
-          > /dev/null 2>&1 || true \
-         "
+         |  XrdSecsssKT=${SSSKEY} XRD_LOGLEVEL=Error xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" > /dev/null 2>&1 ||  \
+            XrdSecsssKT=${SSSKEY} XRD_LOGLEVEL=Error xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" > /dev/null 2>&1  ||  \
+            XrdSecsssKT=${SSSKEY} XRD_LOGLEVEL=Error xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" > /dev/null 2>&1 || true \
+          "
   sleep 1
+
+  #export XrdSecsssKT=/etc/eos.keytab
+  #export XRD_LOGLEVEL=Error
+  #export PADDED_SUBDIR
+  #export TEST_FILE_PATH_BASE
+  #parallel -j 4 'echo JOB {} PID $$ HOST $(hostname)' ::: 1 2 3 4
+  #parallel -j "${NB_PROCS}" --no-notice '
+  #  payload="UNIQ_${PADDED_SUBDIR}_{}"
+  #  dest="${TEST_FILE_PATH_BASE}{}"
+  #  # choose keytab modulo 2
+  #  if (( {} % 2 == 0 )); then
+  #      keytab="/etc/eos.keytab2"
+  #  else
+  #      keytab="/etc/eos.keytab"
+  #  fi
+  #  for i in 1 2 3; do
+  #    printf "%s" "$payload" | XrdSecsssKT="$keytab" xrdcp - "$dest" >/dev/null 2>&1 && break
+  #  done
+  #'  ::: "${TEST_FILE_NUMS[@]}"
+  #printf "%s\n" "${TEST_FILE_NUMS[@]}" | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NUM bash -c "(\
+  #       printf \"%s\" \"UNIQ_${PADDED_SUBDIR}_TEST_FILE_NUM\";) \
+  #       |  XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+  #       > /dev/null 2>&1 ||  \
+  #       XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+  #        > /dev/null 2>&1  ||  \
+  #       XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error xrdcp - \"${TEST_FILE_PATH_BASE}TEST_FILE_NUM\" \
+  #        > /dev/null 2>&1 || true \
+  #       "
+  #sleep 1
+  #else
   # move the files to make space in the small memory buffer /dev/shm for logs
-  mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
+  #mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
   #fi
   # we tried, for all the next directories we simply copy the first one for faster queeuing
   # this was going too slow at 10Hz only ;/
@@ -391,8 +431,12 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   #done
   #echo "${PREVIOUS_PATH}"
   #echo "root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
-  #XRD_LOGLEVEL=Error XRD_STREAMTIMEOUT=10800 xrdcp -r "${PREVIOUS_PATH}" "root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+  #XRD_LOGLEVEL=Error XrdSecsssKT=/etc/eos.keytab xrdcp -r "${PREVIOUS_PATH}" "root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+  #CURRENT_PATH="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+  #xargs --max-procs=${NB_PROCS} bash -c "XRD_LOGLEVEL=Error XrdSecsssKT=/etc/eos.keytab xrdcp -r \"${PREVIOUS_PATH}\" \"${CURRENT_PATH}\"> /dev/null 2>&1 "
+  #sleep 2
   #PREVIOUS_PATH="root://${EOS_MGM_HOST}/${EOS_DIR}/${subdir}/"
+  #fi
   echo "Done."
 done
 
@@ -450,6 +494,7 @@ ARCHIVED=0
 echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$((${NB_FILES}/3))
+echo "Waiting for ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}"
 START_TIME=$(date +%s)
 END_TIME=$(date +%s)
 while test 0 != ${ARCHIVING}; do
@@ -557,15 +602,14 @@ for ((subdir=0; subdir < ${NB_DIRS}; subdir++)); do
   echo -n "Retrieving files to ${EOS_DIR}/${subdir} using ${NB_PROCS} processes...${subdir}, ${EOS_DIR}/${subdir}/, ${ERROR_LOG},  ${OUTPUT_LOG}, ${EOS_MGM_HOST}"
   awk -F '/' -v subdir="${subdir}" '$1 == subdir { print $2 }' "${STATUS_FILE}" | \
     xargs -P ${NB_PROCS} -I{} bash -c \
-    "XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 \
+    "XrdSecsssKT=${SSSKEY} XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 \
     xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" > /dev/null 2>&1 \
-    || XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 \
+    || XrdSecsssKT=${SSSKEY} XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 \
     xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" > /dev/null 2>&1 \
-    || XrdSecsssKT=/etc/eos.keytab XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 \
+    || XrdSecsssKT=${SSSKEY} XRD_LOGLEVEL=Error KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 \
     xrdfs ${EOS_MGM_HOST} prepare -s \"${EOS_DIR}/${subdir}/{}?activity=T0Reprocess\" > /dev/null 2>&1;"
-  fi
   # move the files to make space in the small memory buffer for logs
-  mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
+  #mv ${ERROR_LOG} ${LOGDIR}/xrd_errors/
   #cat ${STATUS_FILE} | grep ^${subdir}/ | cut -d/ -f2 | xargs --max-procs=${NB_PROCS} -iTEST_FILE_NAME bash -c "XRD_LOGLEVEL=Dump KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs ${EOS_MGM_HOST} prepare -s ${EOS_DIR}/${subdir}/TEST_FILE_NAME?activity=T0Reprocess 2>${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME && rm ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME || echo ERROR with xrootd prepare stage for file TEST_FILE_NAME, full logs in ${ERROR_DIR}/RETRIEVE_TEST_FILE_NAME" | tee ${LOGDIR}/prepare_${subdir}.log | grep ^ERROR
   echo Done.
 done
