@@ -52,6 +52,7 @@ void SignalReactor::start() {
 // SignalReactor::stop
 //------------------------------------------------------------------------------
 void SignalReactor::stop() noexcept {
+  m_log(log::INFO, "In SignalReactor::stop(): stopping SignalReactor");
   m_thread.request_stop();
   if (m_thread.joinable()) {
     try {
@@ -118,6 +119,7 @@ void SignalReactor::run(std::stop_token st,
     lc.log(log::ERR, "In SignalReactor::run(): received an unknown exception.");
     throw;
   }
+  lc.log(log::INFO, "In SignalReactor::run(): SignalReactor stopped listening");
 }
 
 }  // namespace cta::runtime

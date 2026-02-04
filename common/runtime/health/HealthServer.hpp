@@ -53,6 +53,7 @@ public:
   static bool isUdsHost(const std::string& host);
 
 private:
+  cta::log::LogContext m_lc;
   // From a functional perspective, this doesn't need to be a pointer
   // However, it allows us to forward declare httplib::Server, preventing the expensive include in this header file
   std::unique_ptr<httplib::Server> m_server;
@@ -63,7 +64,6 @@ private:
   // Amount of time to wait for the server to start listening before we consider it a failure
   const int m_listenTimeoutMsec;
 
-  cta::log::LogContext m_lc;
   // The thread the HealthServer will run on when start() is called
   std::jthread m_thread;
 };

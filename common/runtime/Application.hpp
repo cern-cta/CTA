@@ -211,6 +211,13 @@ public:
     });
   }
 
+  ~Application() {
+    if (m_logPtr) {
+      cta::log::Logger& log = *m_logPtr;
+      log(log::INFO, "Exiting application: " + m_appName);
+    }
+  }
+
   /**
    * @brief Add support for additional signals to the application.
    * As part of the design, the function/method that will be called on the registered signal MUST be part of the underlying application (m_app).
@@ -266,18 +273,21 @@ public:
     }
 
     initLogging(config, cliOptions);
+    auto signalReactor = m_signalReactorBuilder->build(*m_logPtr);
+    signalReactor.start();
+    // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
+    // If not, it would immediately be destroyed after initHealthServer finished.
+    std::unique_ptr<HealthServer> healthServer;
+
     return safeRunWithLog(*m_logPtr, [&]() {
       cta::log::Logger& log = *m_logPtr;
       log(log::INFO, "Initialising application: " + m_appName);
-
-      auto signalReactor = m_signalReactorBuilder->build(*m_logPtr);
-      signalReactor.start();
 
       // We dynamically add/init the relevant parts depending on what is in the config type.
       if constexpr (HasHealthServerConfig<TConfig>) {
         static_assert(HasReadinessFunction<TApp> && HasLivenessFunction<TApp>,
                       "Config has health_server, but app type lacks isReady()/isLive() methods");
-        initHealthServer(config);
+        healthServer = initHealthServer(config);
       }
 
       if constexpr (HasTelemetryConfig<TConfig>) {
@@ -289,7 +299,7 @@ public:
       }
 
       log(log::INFO,
-          "Starting " + m_appName,
+          "Starting application: " + m_appName,
           {
             {"version", std::string(CTA_VERSION)}
       });
@@ -343,16 +353,18 @@ private:
     m_logPtr->setStaticParams(logAttributes);
   }
 
-  void initHealthServer(const TConfig& config) {
+  std::unique_ptr<HealthServer> initHealthServer(const TConfig& config) {
     if (config.health_server.enabled) {
-      m_healthServer = std::make_unique<HealthServer>(
+      auto healthServer = std::make_unique<HealthServer>(
         *m_logPtr,
         config.health_server.host,
         config.health_server.port,
         [this]() { return m_app.isReady(); },
         [this]() { return m_app.isLive(); });
-      m_healthServer->start();
+      healthServer->start();
+      return healthServer;
     }
+    return nullptr;
   }
 
   void initTelemetry(const TConfig& config) {
@@ -393,22 +405,19 @@ private:
     ::setenv("XrdSecSSSKT", config.xrootd.sss_keytab_path.c_str(), 1);
     if (!config.xrootd.sss_keytab_path.empty() && ::access(config.xrootd.sss_keytab_path.c_str(), R_OK) != 0) {
       // Can we replace this check by something the XRootD libs provide?
-      throw cta::exception::Exception("Failed to read or open XRootD SSS keytab file.");
+      throw cta::exception::Exception("Failed to read or open XRootD SSS keytab file: "
+                                      + config.xrootd.sss_keytab_path);
     }
   }
 
   const std::string m_appName;
+  std::unique_ptr<log::Logger> m_logPtr;
 
   ArgParser<TOpts> m_argParser;
   // The actual application class
   TApp m_app;
 
   std::unique_ptr<SignalReactorBuilder> m_signalReactorBuilder;
-  // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
-  // If not, it would immediately be destroyed after initHealthServer finished.
-  std::unique_ptr<HealthServer> m_healthServer;
-
-  std::unique_ptr<log::Logger> m_logPtr;
 };
 
 }  // namespace cta::runtime

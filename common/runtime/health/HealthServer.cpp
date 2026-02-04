@@ -23,12 +23,12 @@ HealthServer::HealthServer(cta::log::Logger& log,
                            const std::function<bool()>& readinessFunc,
                            const std::function<bool()>& livenessFunc,
                            int listenTimeoutMsec)
-    : m_host(host),
+    : m_lc(log::LogContext(log)),
+      m_host(host),
       m_port(port),
       m_readinessFunc(readinessFunc),
       m_livenessFunc(livenessFunc),
-      m_listenTimeoutMsec(listenTimeoutMsec),
-      m_lc(log::LogContext(log)) {
+      m_listenTimeoutMsec(listenTimeoutMsec) {
   if (m_host.empty()) {
     throw exception::UserError("HealthServer host cannot be empty");
   }
@@ -57,7 +57,6 @@ bool HealthServer::isUdsHost(const std::string& host) {
 // HealthServer::start
 //------------------------------------------------------------------------------
 void HealthServer::start() {
-  m_lc.log(log::INFO, "In HealthServer::start(): Initialising HealthServer");
   m_server = std::make_unique<httplib::Server>();
   m_server->Get("/health/ready", [readinessFunc = m_readinessFunc](const httplib::Request&, httplib::Response& res) {
     if (readinessFunc()) {
@@ -115,7 +114,6 @@ void HealthServer::stop() noexcept {
       m_lc.log(log::ERR, "In HealthServer::stop(): failed to join thread");
     }
   }
-  m_lc.log(log::INFO, "In HealthServer::stop(): HealthServer stopped");
 }
 
 //------------------------------------------------------------------------------

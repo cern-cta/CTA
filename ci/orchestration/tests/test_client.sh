@@ -274,6 +274,6 @@ kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- bash /root/maint
 
 echo
 echo "Checking correctness of example config files"
-kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- cta-maintd --config-strict --config /etc/cta/cta-maintd.example.toml || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- cta-maintd --config-strict --config /etc/cta/cta-maintd.example.toml --config-check || exit 1
 
 exit 0
