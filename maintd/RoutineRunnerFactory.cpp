@@ -89,6 +89,18 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
                                                   m_config.routines.disk_report_retrieve.soft_timeout_secs));
   }
 
+  // Add Repack Expansion
+  if (m_config.routines.repack_expand.enabled) {
+    routines.push_back(
+      std::make_unique<RepackExpandRoutine>(m_lc, *m_scheduler, m_config.routines.repack_expand.max_to_toexpand));
+  }
+
+  // Add Repack Reporting
+  if (m_config.routines.repack_report.enabled) {
+    routines.push_back(
+      std::make_unique<RepackReportRoutine>(m_lc, *m_scheduler, m_config.routines.repack_report.soft_timeout_secs));
+  }
+
 /*
  * If we enable all routines in 1 process they will all be running sequentially
  * and with the same sleep_interval configured for the maintd process itself.
@@ -112,18 +124,6 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
                                                              *m_schedDb,
                                                              *m_catalogue,
                                                              m_config.routines.queue_cleanup.batch_size));
-  }
-
-  // Add Repack Expansion
-  if (m_config.routines.repack_expand.enabled) {
-    routines.push_back(
-      std::make_unique<RepackExpandRoutine>(m_lc, *m_scheduler, m_config.routines.repack_expand.max_to_toexpand));
-  }
-
-  // Add Repack Reporting
-  if (m_config.routines.repack_report.enabled) {
-    routines.push_back(
-      std::make_unique<RepackReportRoutine>(m_lc, *m_scheduler, m_config.routines.repack_report.soft_timeout_secs));
   }
 #else
   // Add User Archive and Retrieve Active Queue Cleanup

@@ -7,28 +7,28 @@ maintd:
   routines:
     userActiveQueueCleanup:
       replicas: 1
-      sleepIntervalSecs: 9000
+      sleepIntervalSecs: 900
       batchSize: 1000
       ageForCollectionSecs: 1800
     repackActiveQueueCleanup:
       replicas: 1
-      sleepIntervalSecs: 9000
+      sleepIntervalSecs: 900
       batchSize: 1000
       ageForCollectionSecs: 1800
     userPendingQueueCleanup:
       replicas: 1
-      sleepIntervalSecs: 600
+      sleepIntervalSecs: 60
       batchSize: 1000
       ageForCollectionSecs: 120
     repackPendingQueueCleanup:
       replicas: 1
-      sleepIntervalSecs: 600
+      sleepIntervalSecs: 60
       batchSize: 1000
       ageForCollectionSecs: 120
     schedulerMaintenanceCleanup:
       replicas: 1
-      sleepIntervalSecs: 864000
+      sleepIntervalSecs: 86400
       batchSize: 1000
-      ageForDeletionSecs: 12096
+      ageForDeletionSecs: 1209600
 
   # The remainder of the values are inherited from the default values.yaml
