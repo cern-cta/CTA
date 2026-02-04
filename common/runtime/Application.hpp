@@ -31,6 +31,7 @@ namespace cta::runtime {
 //------------------------------------------------------------------------------
 // Compile time constraints
 //------------------------------------------------------------------------------
+
 template<class TApp>
 concept HasReadinessFunction = requires(const TApp& app) {
   { app.isReady() } -> std::same_as<bool>;
@@ -90,11 +91,19 @@ concept HasCatalogueConfig = requires(const TConfig& cfg) {
 // Utility Functions
 //------------------------------------------------------------------------------
 
+/**
+ * @brief Wraps the provided function into a try catch and logs any thrown exceptions to stderr.
+ *
+ * @param func The function to wrap. Expected to return a returncode.
+ * @return int EXIT_FAILURE if an exception was thrown, otherwise the return code of the func.
+ */
 int safeRun(const std::function<int()>& func) noexcept {
   int returnCode = EXIT_FAILURE;
   try {
     returnCode = func();
   } catch (exception::UserError& ex) {
+    // This will be mostly used to print issues with users e.g. making a mistake in the config file.
+    // So we only print FATAL to keep it reasonably user friendly.
     std::cerr << "FATAL:\n" << ex.getMessage().str() << std::endl;
     return EXIT_FAILURE;
   } catch (exception::Exception& ex) {
@@ -110,12 +119,64 @@ int safeRun(const std::function<int()>& func) noexcept {
   return returnCode;
 }
 
+/**
+ * @brief Wraps the provided function into a try catch and logs any thrown exceptions
+ * as CRIT errors to the logging system.
+ *
+ * @param func The function to wrap. Expected to return a returncode.
+ * @return int EXIT_FAILURE if an exception was thrown, otherwise the return code of the func.
+ * @return int
+ */
+int safeRunWithLog(log::Logger& log, const std::function<int()>& func) noexcept {
+  int returnCode = EXIT_FAILURE;
+  try {
+    returnCode = func();
+  } catch (exception::UserError& ex) {
+    log(log::CRIT,
+        "FATAL: User Error",
+        {
+          {"exceptionMessage", ex.getMessage().str()}
+    });
+    sleep(1);
+    return EXIT_FAILURE;
+  } catch (exception::Exception& ex) {
+    log(log::CRIT,
+        "FATAL: Caught an unexpected CTA exception",
+        {
+          {"exceptionMessage", ex.getMessage().str()}
+    });
+    sleep(1);
+    return EXIT_FAILURE;
+  } catch (std::exception& se) {
+    log(log::CRIT,
+        "FATAL: Caught an unexpected exception",
+        {
+          {"error", se.what()}
+    });
+    sleep(1);
+    return EXIT_FAILURE;
+  } catch (...) {
+    log(log::CRIT, "FATAL: Caught an unexpected and unknown exception", {});
+    sleep(1);
+    return EXIT_FAILURE;
+  }
+  return returnCode;
+}
+
 //------------------------------------------------------------------------------
 // Application
 //------------------------------------------------------------------------------
 
 /**
- * @brief
+ * @brief A wrapper class to instantiate custom applications.
+ * The basic idea is that you tell this class a few things and it will construct your application object for you:
+ * - The Class of the application. Note that you pass in the class (compile time), not the object.
+ * - The Config struct the application is expected to consume. Note that you pass in the struct (compile time), not the object.
+ * - The CliOptions object that will be used to determine how to populate application.
+ *   For example, where to load the configuration from.
+ * - The name of the application.
+ *
+ * Using this information, this class will instantiate the application, performing several compile time checks along the way.
  *
  * @tparam TApp The type of application. Several constraints are enforced on this application depending on what is in the config.
  * @tparam TConfig The type of config to use for the application.
@@ -128,14 +189,16 @@ public:
    * @brief Construct a new Application object.
    *
    * @param appName Name of the application. For example, cta-maintd, cta-taped, cta-admins
-   * @param cliOptions Struct containing the (populated) commandline options.
+   * @param cliOptions Struct containing the (populated) commandline options. Note that, while that commandline options
+   * are populated from the config file, they are NOT verified yet. So string values may be empty, integers may be zero
+   * where they shouldn't be etc. This constraints must still be checked later.
    */
   Application(const std::string& appName, const TOpts& cliOptions)
     requires HasLoggingConfig<TConfig> && HasStopFunction<TApp> && HasRequiredCliOptions<TOpts>
       : m_appName(appName),
         m_cliOptions(cliOptions),
         m_appConfig() {
-    // These two checks should never be reached in an actual; they are just to prevent developers from making mistakes.
+    // These two checks should never be reached; if they are, it means the developer made a mistake in how they set up the application.
     if (m_cliOptions.showHelp) {
       throw std::logic_error("Help was set to true and should have been shown before. If this part was reached, it "
                              "means the program did not exit correctly after showing help.");
@@ -149,6 +212,7 @@ public:
       m_cliOptions.configFilePath = "/etc/cta/" + m_appName + ".toml";
     }
     m_appConfig = runtime::loadFromToml<TConfig>(m_cliOptions.configFilePath, m_cliOptions.configStrict);
+    // If the user requested to only check the config, we can exit now.
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
       std::exit(EXIT_SUCCESS);
@@ -208,7 +272,11 @@ public:
 
       // Start
       cta::log::Logger& log = *m_logPtr;
-      log(log::INFO, "Starting " + m_appName);
+      log(log::INFO,
+          "Starting " + m_appName,
+          {
+            {"version", std::string(CTA_VERSION)}
+      });
       return runApp(log);
     });
   }
@@ -233,7 +301,7 @@ private:
     try {
       shortHostName = utils::getShortHostname();
     } catch (const exception::Errnum& ex) {
-      std::cerr << "Failed to get short host name: " << ex.getMessage().str() << std::endl;
+      std::cerr << "Failed to get host name: " << ex.getMessage().str() << std::endl;
       std::exit(EXIT_FAILURE);
     }
 
@@ -251,8 +319,9 @@ private:
     }
 
     m_logPtr->setLogMask(m_appConfig.logging.level);
+
+    // Add the attributes present in every single log message
     std::map<std::string, std::string> logAttributes;
-    // This should eventually be handled by auto-discovery
     if constexpr (HasSchedulerConfig<TConfig>) {
       if (m_appConfig.scheduler.backend_name.empty()) {
         throw exception::UserError("Scheduler backend name cannot be empty");
@@ -278,7 +347,7 @@ private:
   }
 
   void initTelemetry() {
-    if (!m_appConfig.experimental.telemetry_enabled || m_appConfig.telemetry.config.empty()) {
+    if (!m_appConfig.experimental.telemetry_enabled || m_appConfig.telemetry.config_file.empty()) {
       return;
     }
     log::LogContext lc(*m_logPtr);
@@ -293,7 +362,7 @@ private:
       if constexpr (HasSchedulerConfig<TConfig>) {
         ctaResourceAttributes[cta::semconv::attr::kSchedulerNamespace] = m_appConfig.scheduler.backend_name;
       }
-      cta::telemetry::initOpenTelemetry(m_appConfig.telemetry.config, ctaResourceAttributes, lc);
+      cta::telemetry::initOpenTelemetry(m_appConfig.telemetry.config_file, ctaResourceAttributes, lc);
     } catch (exception::Exception& ex) {
       cta::log::ScopedParamContainer params(lc);
       params.add("exceptionMessage", ex.getMessage().str());
@@ -316,44 +385,6 @@ private:
     // TODO: check the keytab here
   }
 
-  // Similar to safeRun but with logging. Ideally the normal safeRun barely catches anything
-  // apart from UserErrors and other errors before the app even starts
-  static int safeRunWithLog(log::Logger& log, const std::function<int()>& func) noexcept {
-    int returnCode = EXIT_FAILURE;
-    try {
-      returnCode = func();
-    } catch (exception::UserError& ex) {
-      log(log::CRIT,
-          "FATAL: User Error",
-          {
-            {"exceptionMessage", ex.getMessage().str()}
-      });
-      sleep(1);
-      return EXIT_FAILURE;
-    } catch (exception::Exception& ex) {
-      log(log::CRIT,
-          "FATAL: Caught an unexpected CTA exception",
-          {
-            {"exceptionMessage", ex.getMessage().str()}
-      });
-      sleep(1);
-      return EXIT_FAILURE;
-    } catch (std::exception& se) {
-      log(log::CRIT,
-          "FATAL: Caught an unexpected exception",
-          {
-            {"error", se.what()}
-      });
-      sleep(1);
-      return EXIT_FAILURE;
-    } catch (...) {
-      log(log::CRIT, "FATAL: Caught an unexpected and unknown exception", {});
-      sleep(1);
-      return EXIT_FAILURE;
-    }
-    return returnCode;
-  }
-
   const std::string m_appName;
 
   // The actual application class
@@ -364,7 +395,8 @@ private:
   TConfig m_appConfig;
 
   std::unique_ptr<SignalReactorBuilder> m_signalReactorBuilder;
-  // The health server must exist at this level as it needs to be in-scope as long as the main app runs.
+  // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
+  // If not, it would immediately be destroyed after initHealthServer finished.
   std::unique_ptr<HealthServer> m_healthServer;
 
   std::unique_ptr<log::Logger> m_logPtr;

@@ -26,6 +26,12 @@ struct MyConfig {
   std::string default_value = "default_value";
 };
 
+enum class CustomFoodEnum { SPAGHETTI, PIZZA, BROODJE_PINDAKAAS };
+
+struct MyEnumConfig {
+  CustomFoodEnum food;
+};
+
 //------------------------------------------------------------------------------
 // Tests
 //------------------------------------------------------------------------------
@@ -124,6 +130,25 @@ default_value = "hi"
   EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), false)), cta::exception::UserError);
 }
 
+TEST(ConfigLoader, LenientHandlesEnum) {
+  TempFile f(R"toml(
+food = PIZZA
+)toml",
+             ".toml");
+
+  const auto config = cta::runtime::loadFromToml<MyEnumConfig>(f.path(), false);
+  ASSERT_EQ(config.food, CustomFoodEnum::PIZZA);
+}
+
+TEST(ConfigLoader, LenientThrowsOnInvalidEnum) {
+  TempFile f(R"toml(
+food = STOEPTEGEL # A STOEPTEGEL is not food obviously
+)toml",
+             ".toml");
+
+  EXPECT_THROW((cta::runtime::loadFromToml<MyEnumConfig>(f.path(), false)), cta::exception::UserError);
+}
+
 // Strict Mode
 
 TEST(ConfigLoader, StrictThrowsOnGarbageToml) {
@@ -218,7 +243,23 @@ default_value = "hi"
   EXPECT_THROW((cta::runtime::loadFromToml<MyConfig>(f.path(), true)), cta::exception::UserError);
 }
 
-// TODO: test what happens with enums
-TEST(ConfigLoader, EnumHandling) {}
+TEST(ConfigLoader, StrictHandlesEnum) {
+  TempFile f(R"toml(
+food = PIZZA
+)toml",
+             ".toml");
+
+  const auto config = cta::runtime::loadFromToml<MyEnumConfig>(f.path(), true);
+  ASSERT_EQ(config.food, CustomFoodEnum::PIZZA);
+}
+
+TEST(ConfigLoader, StrictThrowsOnInvalidEnum) {
+  TempFile f(R"toml(
+food = STOEPTEGEL # A STOEPTEGEL is not food obviously
+)toml",
+             ".toml");
+
+  EXPECT_THROW((cta::runtime::loadFromToml<MyEnumConfig>(f.path(), true)), cta::exception::UserError);
+}
 
 }  // namespace unitTests
