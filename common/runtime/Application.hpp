@@ -382,7 +382,6 @@ private:
     // Overwrite XRootD env variables
     ::setenv("XrdSecPROTOCOL", m_appConfig.xrootd.security_protocol.c_str(), 1);
     ::setenv("XrdSecSSSKT", m_appConfig.xrootd.sss_keytab_path.c_str(), 1);
-    // TODO: check the keytab here
   }
 
   const std::string m_appName;

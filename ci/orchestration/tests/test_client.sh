@@ -273,7 +273,7 @@ echo "Launching maintd_refresh_log_fd.sh on ${CTA_MAINTD_POD} pod"
 kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- bash /root/maintd_refresh_log_fd.sh || exit 1
 
 echo
-echo "Launching maintd_refresh_config.sh on ${CTA_MAINTD_POD} pod"
-kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- bash /root/maintd_refresh_config.sh || exit 1
+echo "Checking correctness of example config files"
+kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- cta-maintd --config-strict --config /etc/cta/cta-maintd.example.toml || exit 1
 
 exit 0

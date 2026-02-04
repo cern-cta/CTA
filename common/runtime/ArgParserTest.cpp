@@ -35,7 +35,6 @@ struct Argv {
   char** data() { return argv.data(); }
 };
 
-// TODO: should probably test the actual error messages here, because not all of them were exactly clear (initially)
 TEST(ArgParser, SetsStrictConfigCorrectly) {
   const std::string appName = "cta-test";
   Argv args({appName, "--config-strict"});

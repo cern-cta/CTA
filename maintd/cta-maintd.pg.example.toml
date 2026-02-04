@@ -92,15 +92,11 @@
   repack_report        = { enabled = true, soft_timeout_secs = 30 }
   disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
   disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
-  queue_cleanup        = { enabled = true, batch_size = 500 }
-  garbage_collect      = { enabled = true }
-
-  # Postgres-only queue cleanup
-  # user_active_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  # repack_active_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  # user_pending_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  # repack_pending_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  # scheduler_maintenance_cleanup = { enabled = true, batch_size = 1000, age_for_deletion_secs = 1209600 }
+  user_active_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  repack_active_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  user_pending_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  repack_pending_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  scheduler_maintenance_cleanup = { enabled = true, batch_size = 1000, age_for_deletion_secs = 1209600 }
 
 [experimental]
   telemetry_enabled = false
