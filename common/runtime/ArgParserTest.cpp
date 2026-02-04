@@ -59,7 +59,7 @@ TEST(ArgParser, OptionalConfigPath) {
 
   cta::runtime::ArgParser<cta::runtime::CommonCliOptions> argParser(appName);
   auto opts = argParser.parse(args.count, args.data());
-  ASSERT_TRUE(opts.configFilePath.empty());
+  ASSERT_EQ(opts.configFilePath, "/etc/cta/cta-test.toml");
 }
 
 TEST(ArgParser, SetConfigPath) {

@@ -85,9 +85,7 @@ public:
                   "config",
                   'c',
                   "PATH",
-                  ("Path to the main configuration file "
-                   "(default: /etc/cta/"
-                   + m_appName + ".toml)."));
+                  "Path to the main configuration file (default: " + defaultConfigPath() + ").");
     withStringArg(&T::logFilePath, "log-file", 'l', "PATH", "Write logs to PATH (defaults to stdout/stderr).");
   }
 
@@ -291,6 +289,10 @@ public:
       }
     }
 
+    if (options.configFilePath.empty()) {
+      options.configFilePath = defaultConfigPath();
+    }
+
     if (options.showHelp) {
       std::cout << usageString() << std::endl;
       std::exit(EXIT_SUCCESS);
@@ -347,7 +349,6 @@ public:
   }
 
 private:
-  // Uses assertions as its aim is to prevent the developer from making a mistake
   /**
    * @brief Runtime sanity check for developers to ensure they registered the correct commandflags.
    * Will check whether the new argument spec they want to register is valid.
@@ -372,6 +373,8 @@ private:
       }
     }
   }
+
+  std::string defaultConfigPath() const { return "/etc/cta/" + m_appName + ".toml"; }
 
   const std::string m_appName;
   std::string m_appDescription = "";
