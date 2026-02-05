@@ -21,7 +21,12 @@ data:
 
     [scheduler]
       backend_name = {{ $schedulerConfig.backend | quote }}
+
+      {{- if eq $schedulerConfig.backend "postgres" }}
+      config_file = "/etc/cta/cta-catalogue.conf"
+      {{- else }}
       objectstore_backend_path = {{ include "global.schedulerUrl" $ | quote }}
+      {{- end }}
       tape_cache_max_age_secs = {{ $.Values.scheduler.tapeCacheMaxAgeSecs }}
       retrieve_queue_cache_max_age_secs = {{ $.Values.scheduler.retrieveQueueCacheMaxAgeSecs }}
 

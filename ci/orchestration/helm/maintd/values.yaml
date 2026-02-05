@@ -21,7 +21,7 @@ routines:
   repackExpand:
     replicas: 1
     sleepIntervalSecs: 1
-    maxToToexpand: 2
+    maxToExpand: 2
   repackReport:
     replicas: 1
     sleepIntervalSecs: 1

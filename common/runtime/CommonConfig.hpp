@@ -47,7 +47,12 @@ struct CatalogueConfig {
 struct SchedulerConfig {
   // This value should eventually be handled by auto-discovery and not be provided by users
   std::string backend_name = "";
+
+#ifndef CTA_PGSCHED
   std::string objectstore_backend_path = "";
+#else
+  std::string config_file = "/etc/cta/cta-scheduler.conf";
+#endif
   int tape_cache_max_age_secs = 600;
   int retrieve_queue_cache_max_age_secs = 10;
 };

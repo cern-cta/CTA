@@ -22,7 +22,7 @@ struct DiskReportRoutineConfig {
 
 struct RepackExpandRoutineConfig {
   bool enabled = true;
-  int max_to_toexpand = 900;
+  int max_to_expand = 2;
 };
 
 struct RepackReportRoutineConfig {
