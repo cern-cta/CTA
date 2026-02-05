@@ -49,27 +49,50 @@ EOS_MGM_POD="eos-mgm-0"
 NB_FILES=20000
 NB_DIRS=250
 FILE_SIZE_KB=1
-NB_PROCS=40
+NB_PROCS=30
 NB_DRIVES=100
 
 FST=$(kubectl -n ${NAMESPACE} get pods | grep "eos-fst" | awk '{ print $1 }' | head)
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -lc '
+  set -euo pipefail
+
+  echo "=== Installing Python 3 ==="
+  if ! command -v python3 >/dev/null 2>&1; then
+    dnf install -y python3
+  fi
+
+  echo "=== Installing XRootD client libraries ==="
+  dnf install -y xrootd-client python3-xrootd
+
+  echo "=== Verifying installation ==="
+  python3 --version
+  python3 - <<EOF
+from XRootD import client
+print("XRootD Python bindings OK")
+EOF
+
+  echo "=== DONE ==="
+'
 
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
-kubectl -n ${NAMESPACE} cp xrdcp_stress_archive.py ${FST}:/root/xrdcp_stress_archive.py -c eos-fst
-mkdir /tmp/ctaadmin2
-mkdir /tmp/eosadmin1
-mkdir /tmp/poweruser1
-mkdir -p /tmp/ctaadmin2 /tmp/eosadmin1 /tmp/poweruser1
-kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/ctaadmin2/krb5cc_0 /tmp/ctaadmin2/krb5cc_0 -c client
-kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/eosadmin1/krb5cc_0 /tmp/eosadmin1/krb5cc_0 -c client
-kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/krb5cc_0 /tmp/krb5cc_0 -c client
-kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/poweruser1/krb5cc_0 /tmp/poweruser1/krb5cc_0 -c client
-kubectl exec ${FST} -c eos-fst -n ${NAMESPACE} -- mkdir -p /tmp/ctaadmin2 /tmp/eosadmin1 /tmp/poweruser1
-kubectl exec ${FST} -c eos-fst -n ${NAMESPACE} -- yum install -y python3
-kubectl -n ${NAMESPACE} cp /tmp/ctaadmin2/krb5cc_0 ${FST}:/tmp/ctaadmin2/krb5cc_0 -c eos-fst
-kubectl -n ${NAMESPACE} cp /tmp/eosadmin1/krb5cc_0 ${FST}:/tmp/eosadmin1/krb5cc_0 -c eos-fst
-kubectl -n ${NAMESPACE} cp /tmp/krb5cc_0 ${FST}:/tmp/krb5cc_0 -c eos-fst
-kubectl -n ${NAMESPACE} cp /tmp/poweruser1/krb5cc_0 ${FST}:/tmp/poweruser1/krb5cc_0 -c eos-fst
+kubectl -n ${NAMESPACE} cp xrdcp_persistent_client_stress.py ${CLIENT_POD}:/root/xrdcp_persistent_client_stress.py -c client
+cp xrdcp_persistent_client_stress.py xrdcp_persistent_client_stress_fst.py
+sed -i 's/eos.keytab/fstuser.keytab/' xrdcp_persistent_client_stress_fst.py
+kubectl -n ${NAMESPACE} cp xrdcp_persistent_client_stress_fst.py ${FST}:/root/xrdcp_stress_archive.py -c eos-fst
+#mkdir /tmp/ctaadmin2
+#mkdir /tmp/eosadmin1
+#mkdir /tmp/poweruser1
+#mkdir -p /tmp/ctaadmin2 /tmp/eosadmin1 /tmp/poweruser1
+#kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/ctaadmin2/krb5cc_0 /tmp/ctaadmin2/krb5cc_0 -c client
+#kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/eosadmin1/krb5cc_0 /tmp/eosadmin1/krb5cc_0 -c client
+#kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/krb5cc_0 /tmp/krb5cc_0 -c client
+#kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/poweruser1/krb5cc_0 /tmp/poweruser1/krb5cc_0 -c client
+#kubectl exec ${FST} -c eos-fst -n ${NAMESPACE} -- mkdir -p /tmp/ctaadmin2 /tmp/eosadmin1 /tmp/poweruser1
+#kubectl exec ${FST} -c eos-fst -n ${NAMESPACE} -- yum install -y python3
+#kubectl -n ${NAMESPACE} cp /tmp/ctaadmin2/krb5cc_0 ${FST}:/tmp/ctaadmin2/krb5cc_0 -c eos-fst
+#kubectl -n ${NAMESPACE} cp /tmp/eosadmin1/krb5cc_0 ${FST}:/tmp/eosadmin1/krb5cc_0 -c eos-fst
+#kubectl -n ${NAMESPACE} cp /tmp/krb5cc_0 ${FST}:/tmp/krb5cc_0 -c eos-fst
+#kubectl -n ${NAMESPACE} cp /tmp/poweruser1/krb5cc_0 ${FST}:/tmp/poweruser1/krb5cc_0 -c eos-fst
 
 # Need CTAADMIN_USER krb5
 admin_kdestroy &>/dev/null
@@ -142,7 +165,27 @@ EXTRA_TEST_OPTIONS=""
 if [[ $PREQUEUE == 1 ]]; then
   EXTRA_TEST_OPTIONS+=" -Q"
 fi
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr down '.*' --reason "pre-queue jobs"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -lc 'command -v xrdfs && xrdfs -h | head -n 1'
 
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -lc '
+  set -e
+  export XrdSecsssKT=/etc/eos.keytab
+  export XRD_LOGLEVEL=Error
+
+  export NB_FILES=5000000
+  export NB_PROCS=40
+  export NB_DIRS=500
+  export NB_FILES_TO_PUT_DRIVES_UP=4000000
+  export CHECK_EVERY_SEC=900
+  export STALL_SEC=900
+
+  export EOS_MGM_HOST=ctaeos
+  export EOS_DIR=/eos/ctaeos/cta
+  export KRB5CC_CTAADMIN2=/tmp/ctaadmin2/krb5cc_0
+  python3 -u /root/xrdcp_persistent_client_stress.py
+'
+exit 0
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_stress_ar.sh -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/cta ${EXTRA_TEST_OPTIONS} || exit 1
 kubectl -n ${NAMESPACE} exec ${FST} -c eos-fst -- bash /root/client_stress_ar.sh -F -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/cta ${EXTRA_TEST_OPTIONS} || exit 1
 ## Do not remove as listing af is not coming back???
