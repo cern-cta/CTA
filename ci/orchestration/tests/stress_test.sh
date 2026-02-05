@@ -175,7 +175,7 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -lc '
 
   export NB_FILES=5000000
   export NB_PROCS=40
-  export NB_DIRS=500
+  export NB_DIRS=250
   export NB_FILES_TO_PUT_DRIVES_UP=4000000
   export CHECK_EVERY_SEC=900
   export STALL_SEC=900
