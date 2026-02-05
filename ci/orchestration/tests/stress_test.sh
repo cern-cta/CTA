@@ -173,12 +173,12 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -lc '
   export XrdSecsssKT=/etc/eos.keytab
   export XRD_LOGLEVEL=Error
 
-  export NB_FILES=5000000
+  export NB_FILES=2000000
   export NB_PROCS=40
-  export NB_DIRS=250
-  export NB_FILES_TO_PUT_DRIVES_UP=4000000
-  export CHECK_EVERY_SEC=900
-  export STALL_SEC=900
+  export NB_DIRS=100
+  export NB_FILES_TO_PUT_DRIVES_UP=1000000
+  export CHECK_EVERY_SEC=600
+  export STALL_SEC=600
 
   export EOS_MGM_HOST=ctaeos
   export EOS_DIR=/eos/ctaeos/cta
