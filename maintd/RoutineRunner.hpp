@@ -39,7 +39,7 @@ public:
   bool isReady() const;
 
 private:
-  void safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc);
+  void safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) const;
 
   const RoutinesConfig& m_config;
   const std::vector<std::unique_ptr<IRoutine>> m_routines;

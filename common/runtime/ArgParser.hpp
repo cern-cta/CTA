@@ -7,6 +7,7 @@
 
 #include "CommonCliOptions.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/utils/utils.hpp"
 #include "version.h"
 
 #include <algorithm>
@@ -65,7 +66,7 @@ struct ArgSpec {
 template<class T>
 class ArgParser {
 public:
-  ArgParser(const std::string& appName)
+  explicit ArgParser(const std::string& appName)
     requires HasRequiredCliOptions<T>
       : m_appName(appName) {
     // The help message displays flags in reverse order of how they are registered
@@ -95,7 +96,7 @@ public:
    * @param description The description to add. May contain newlines (text is not automatically wrapped).
    * @return The ArgParser object. Allows for chaining of with* calls.
    */
-  ArgParser& withDescription(const std::string& description) {
+  ArgParser& withDescription(std::string_view description) {
     m_appDescription = description;
     return *this;
   }
@@ -121,7 +122,7 @@ public:
     arg.shortFlag = shortFlag;
     arg.argName = argName;
     arg.description = description;
-    arg.apply = [this, field, longFlag](T& options, std::optional<std::string_view> argVal) {
+    arg.apply = [field, longFlag](T& options, std::optional<std::string_view> argVal) {
       if (!argVal.has_value() || argVal.value().empty()) {
         throw cta::exception::UserError("Missing required argument for option: --" + longFlag);
       }
@@ -152,7 +153,7 @@ public:
     arg.shortFlag = shortFlag;
     arg.description = description;
     // We set it to true instead of toggling, since toggling gives unexpected behaviour when you provide a boolean flag twice.
-    arg.apply = [this, field](T& options, std::optional<std::string_view>) { options.*field = true; };
+    arg.apply = [field](T& options, std::optional<std::string_view>) { options.*field = true; };
     assertCorrectArgSpec(arg);
     m_supportedArgs.push_back(arg);
     return *this;
@@ -182,7 +183,7 @@ public:
       // For example, one may call parse() and then afterwards call one of the with* functions and the calling parse() again.
       // Not only would that be spaghetti, it would also give unexpected results for the first parse() result, as all options
       // must be registered before parse() is called.
-      throw std::logic_error(
+      throw exception::Exception(
         "ArgParser has already parsed. Parsing again may give unexpected results and is not supported.");
     }
     // Build short option string and long option array
@@ -209,6 +210,7 @@ public:
         val = static_cast<unsigned char>(*s.shortFlag);
 
         shortopts.push_back(static_cast<char>(val));
+        // Flag expects an argument
         if (s.argName.has_value()) {
           shortopts.push_back(':');
         }
@@ -229,7 +231,7 @@ public:
     }
 
     // getopt_long expects an all-zero terminator
-    longopts.push_back(option {nullptr, 0, nullptr, 0});
+    longopts.emplace_back(nullptr, 0, nullptr, 0);
 
     // Reset getopt globals
     opterr = 0;  // Disable error output from getopt
@@ -269,7 +271,7 @@ public:
 
       const auto it = valToIndex.find(c);
       if (it == valToIndex.end()) {
-        throw std::logic_error("Internal error: parsed option not mapped to a spec.");
+        throw exception::Exception("Internal error: parsed option not mapped to a spec.");
       }
 
       std::optional<std::string_view> arg;
@@ -281,12 +283,16 @@ public:
       spec.apply(options, arg);
     }
 
-    if constexpr (HasPositionalArgs<T>) {
-      if (m_parsePositionalArgs) {
-        for (int i = optind; i < argc; i++) {
-          options.positionalArgs.emplace_back(argv[i]);
-        }
+    std::vector<std::string> positionalArgs;
+    for (int i = optind; i < argc; i++) {
+      positionalArgs.emplace_back(argv[i]);
+    }
+    if (m_parsePositionalArgs) {
+      if constexpr (HasPositionalArgs<T>) {
+        options.positionalArgs = positionalArgs;
       }
+    } else if (!positionalArgs.empty()) {
+      throw exception::UserError("Found unexpected positional arguments: " + utils::joinCommaSeparated(positionalArgs));
     }
 
     if (options.configFilePath.empty()) {
@@ -302,7 +308,7 @@ public:
    * @return std::string The usage string.
    */
   std::string usageString() const {
-    auto formatOption = [](const ArgSpec<T>& s) -> std::string {
+    auto formatOption = [](const ArgSpec<T>& s) {
       std::string option;
 
       if (s.shortFlag.has_value()) {

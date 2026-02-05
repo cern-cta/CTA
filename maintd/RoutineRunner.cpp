@@ -36,7 +36,7 @@ void RoutineRunner::stop() {
   m_running = false;
 }
 
-void RoutineRunner::safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) {
+void RoutineRunner::safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) const {
   log::ScopedParamContainer params(lc);
   params.add("routine", routine.getName());
   try {

@@ -50,7 +50,7 @@ public:
 
   bool isRunning() const;
 
-  static bool isUdsHost(const std::string& host);
+  static bool isUdsHost(std::string_view host);
 
 private:
   cta::log::LogContext m_lc;

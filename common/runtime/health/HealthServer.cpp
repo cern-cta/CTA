@@ -49,7 +49,7 @@ HealthServer::~HealthServer() {
 //------------------------------------------------------------------------------
 // HealthServer::isUdsHost
 //------------------------------------------------------------------------------
-bool HealthServer::isUdsHost(const std::string& host) {
+bool HealthServer::isUdsHost(std::string_view host) {
   return host.ends_with(".sock");
 }
 
@@ -90,8 +90,9 @@ void HealthServer::start() {
   m_thread = std::jthread([this]() { run(*m_server, m_host, m_port, m_lc.logger()); });
   // Block until the server actually started listening
   try {
-    utils::waitForCondition([&]() { return isRunning(); }, m_listenTimeoutMsec, 100);
-  } catch (cta::exception::TimeOut& ex) {
+    // Small check interval to ensure we can start quickly
+    utils::waitForCondition([this]() { return isRunning(); }, m_listenTimeoutMsec, 10);
+  } catch (const cta::exception::TimeOut&) {
     m_lc.log(log::ERR, "In HealthServer::start(): failed to start healthServer");
     stop();
   }
