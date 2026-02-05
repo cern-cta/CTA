@@ -74,6 +74,8 @@ std::string signalToString(int signal) {
 #endif
     case SIGSYS:
       return "SIGSYS";
+    default:
+      break;
   }
 
   // Handle realtime signals

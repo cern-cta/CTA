@@ -98,7 +98,9 @@ concept HasCatalogueConfig = requires(const TConfig& cfg) {
  * @param func The function to wrap. Expected to return a returncode.
  * @return int EXIT_FAILURE if an exception was thrown, otherwise the return code of the func.
  */
-int safeRun(const std::function<int()>& func) {
+template<typename F>
+  requires std::invocable<F> && std::convertible_to<std::invoke_result_t<F>, int>
+int safeRun(F&& func) {
   int returnCode = EXIT_FAILURE;
   try {
     returnCode = func();
@@ -128,7 +130,9 @@ int safeRun(const std::function<int()>& func) {
  * @return int EXIT_FAILURE if an exception was thrown, otherwise the return code of the func.
  * @return int
  */
-int safeRunWithLog(log::Logger& log, const std::function<int()>& func) {
+template<typename F>
+  requires std::invocable<F> && std::convertible_to<std::invoke_result_t<F>, int>
+int safeRunWithLog(log::Logger& log, F&& func) {
   int returnCode = EXIT_FAILURE;
   try {
     returnCode = func();
@@ -197,7 +201,7 @@ public:
       : m_appName(appName),
         m_argParser(appName) {
     if (m_appName.empty()) {
-      throw std::logic_error("Application name cannot be empty.");
+      throw exception::Exception("Application name cannot be empty.");
     }
     m_argParser.withDescription(description);
     // We need to start the reactor builder here as we may want to register custom signals.
@@ -277,9 +281,10 @@ public:
     signalReactor.start();
     // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
     // If not, it would immediately be destroyed after initHealthServer finished.
+    // Note that healthServer lives outside of safeRunWithLog so that it is not destructed before we output a (potential) FATAL message.
     std::unique_ptr<HealthServer> healthServer;
 
-    return safeRunWithLog(*m_logPtr, [&]() {
+    return safeRunWithLog(*m_logPtr, [this, cliOptions, config, &healthServer]() {
       cta::log::Logger& log = *m_logPtr;
       log(log::INFO, "Initialising application: " + m_appName);
 
@@ -392,7 +397,7 @@ private:
     }
   }
 
-  void initXRootD(const TConfig& config) {
+  void initXRootD(const TConfig& config) const {
     if (config.xrootd.security_protocol.empty()) {
       throw exception::UserError("XRootD security protocol cannot be empty");
     }

@@ -9,11 +9,9 @@
 #include "tools/standalone_cli_tools/common/CmdLineArgs.hpp"
 
 #include <string>
-#include <utility>
 
 namespace cta::cliTool {
 
-// TODO: is this how we should be parsing the keytab file? Can we use this in Application.hpp?
 std::unique_ptr<::eos::client::EndpointMap> ConnConfiguration::setNamespaceMap(const std::string& keytab_file) {
   // Open the keytab file for reading
   std::ifstream file(keytab_file);
