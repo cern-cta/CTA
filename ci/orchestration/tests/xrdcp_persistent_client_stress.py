@@ -19,11 +19,11 @@ from XRootD.client.flags import OpenFlags
 # CONFIG
 # ----------------------------
 
-NB_FILES = int(os.environ.get("NB_FILES", "5000000"))
+NB_FILES = int(os.environ.get("NB_FILES", "2000000"))
 NB_PROCS = int(os.environ.get("NB_PROCS", "40"))
-NB_DIRS = int(os.environ.get("NB_DIRS", "250"))
+NB_DIRS = int(os.environ.get("NB_DIRS", "100"))
 
-NB_FILES_TO_PUT_DRIVES_UP = int(os.environ.get("NB_FILES_TO_PUT_DRIVES_UP", "4000000"))
+NB_FILES_TO_PUT_DRIVES_UP = int(os.environ.get("NB_FILES_TO_PUT_DRIVES_UP", "1000000"))
 DRIVE_UP = os.environ.get("DRIVE_UP", ".*")
 
 CHECK_EVERY_SEC = int(os.environ.get("CHECK_EVERY_SEC", "900"))
@@ -359,11 +359,11 @@ def prequeue_retrieve_and_put_drives_up_again():
         if ontape >= NB_FILES_TO_PUT_DRIVES_UP:
             print("[retrieve prequeue check] threshold reached -> putting drives UP.", flush=True)
             #admin_cta_drive_up()
-            drive_up_done = True
+            #drive_up_done = True
 
         # safety: don’t loop forever
-        if time.time() - start > 7200:
-            print("!!! retrieve prequeue monitoring timeout (7200s) reached", flush=True)
+        if time.time() - start > 3600:
+            print("!!! retrieve prequeue monitoring timeout (3600s) reached", flush=True)
             admin_cta_drive_up()
             break
 
