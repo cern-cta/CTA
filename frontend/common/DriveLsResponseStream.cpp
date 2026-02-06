@@ -47,50 +47,37 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
     driveRegex = std::make_unique<utils::Regex>(driveRegexStr.c_str());
   }
 
-  // Apply both filters in a single pass
-  for (auto dr_it = m_tapeDrives.begin(); dr_it != m_tapeDrives.end();) {
-    bool shouldKeep = true;
+  // Apply regex filter if specified
+  if (driveRegex) {
+    std::erase_if(m_tapeDrives, [&driveRegex](const auto& drive) { return !driveRegex->has_match(drive.driveName); });
+  }
 
-    // Apply regex filter if specified
-    if (driveRegex && !driveRegex->has_match(dr_it->driveName)) {
-      shouldKeep = false;
-    }
-
-    // Apply scheduler backend filter if not listing all drives
-    if (shouldKeep && !m_listAllDrives) {
-      const auto& driveConfigs = m_tapeDriveNameConfigMap[dr_it->driveName];
+  // Apply scheduler backend filter if not listing all drives
+  if (!m_listAllDrives) {
+    std::erase_if(m_tapeDrives, [this](const auto& drive) {
+      const auto& driveConfigs = m_tapeDriveNameConfigMap[drive.driveName];
+      std::string driveSchedulerBackendName = "unknown";
 
       // Extract the SchedulerBackendName configuration if it exists
-      std::string driveSchedulerBackendName = "unknown";
-      {
-        auto config_it =
-          std::find_if(driveConfigs.begin(),
-                       driveConfigs.end(),
-                       [&driveSchedulerBackendName](const cta::catalogue::DriveConfigCatalogue::DriveConfig& config) {
-                         if (config.keyName == "SchedulerBackendName") {
-                           driveSchedulerBackendName = config.value;
-                           return true;
-                         }
-                         return false;
-                       });
-        if (config_it == driveConfigs.end()) {
-          m_lc.log(cta::log::ERR,
-                   "DriveLsStream::fillBuffer could not find SchedulerBackendName configuration for drive "
-                     + dr_it->driveName);
-        }
-      }
-      if (m_schedulerBackendName.value_or("") != driveSchedulerBackendName) {
-        shouldKeep = false;
-      }
-    }
+      auto config_it =
+        std::find_if(driveConfigs.begin(),
+                     driveConfigs.end(),
+                     [&driveSchedulerBackendName](const cta::catalogue::DriveConfigCatalogue::DriveConfig& config) {
+                       if (config.keyName == "SchedulerBackendName") {
+                         driveSchedulerBackendName = config.value;
+                         return true;
+                       }
+                       return false;
+                     });
 
-    if (shouldKeep) {
-      ++dr_it;
-    } else {
-      auto erase_it = dr_it;
-      ++dr_it;
-      m_tapeDrives.erase(erase_it);
-    }
+      if (config_it == driveConfigs.end()) {
+        m_lc.log(cta::log::ERR,
+                 "DriveLsStream::fillBuffer could not find SchedulerBackendName configuration for drive "
+                   + drive.driveName);
+      }
+
+      return m_schedulerBackendName.value_or("") != driveSchedulerBackendName;
+    });
   }
 
   // Check if any drives match the regex filter (only if regex was specified)
