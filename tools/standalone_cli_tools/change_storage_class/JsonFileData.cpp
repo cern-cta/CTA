@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "cmdline/standalone_cli_tools/change_storage_class/JsonFileData.hpp"
+#include "tools/standalone_cli_tools/change_storage_class/JsonFileData.hpp"
 
 #include "common/exception/UserError.hpp"
 

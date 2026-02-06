@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
+#include "tools/standalone_cli_tools/common/CmdLineTool.hpp"
 
 #include "common/exception/CommandLineNotParsed.hpp"
 #include "common/exception/UserError.hpp"

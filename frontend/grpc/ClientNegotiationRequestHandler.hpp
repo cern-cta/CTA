@@ -6,7 +6,6 @@
 #pragma once
 
 #include "IHandler.hpp"
-#include "cmdline/CtaAdminTextFormatter.hpp"
 #include "common/log/Logger.hpp"
 
 #include <grpcpp/grpcpp.h>

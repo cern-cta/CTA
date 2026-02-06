@@ -3,20 +3,20 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "cmdline/standalone_cli_tools/eos_namespace_injection/EosNamespaceInjection.hpp"
+#include "tools/standalone_cli_tools/eos_namespace_injection/EosNamespaceInjection.hpp"
 
 #include "CtaFrontendApi.hpp"
 #include "XrdSsiPbIStreamBuffer.hpp"
 #include "XrdSsiPbLog.hpp"
-#include "cmdline/CtaAdminParsedCmd.hpp"
-#include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
-#include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
-#include "cmdline/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
 #include "eos_grpc_client/GrpcEndpoint.hpp"
+#include "tools/CtaAdminParsedCmd.hpp"
+#include "tools/standalone_cli_tools/common/CmdLineArgs.hpp"
+#include "tools/standalone_cli_tools/common/ConnectionConfiguration.hpp"
+#include "tools/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
 
 #include <ctime>
 #include <grpc++/grpc++.h>

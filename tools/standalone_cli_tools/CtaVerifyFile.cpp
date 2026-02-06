@@ -4,11 +4,11 @@
  */
 
 #include "CtaFrontendApi.hpp"
-#include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
-#include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 #include "common/CmdLineArgs.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 #include "common/utils/utils.hpp"
+#include "tools/standalone_cli_tools/common/CatalogueFetch.hpp"
+#include "tools/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 #include "version.h"
 
 #include <iostream>
