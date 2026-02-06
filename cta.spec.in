@@ -464,7 +464,6 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctadiskunittests.so*
 %{_libdir}/libctatapelabelunittests.so*
 %{_libdir}/libctatapeserverraounittests.so*
-%{_libdir}/libctafrontendvalidatetokenunittests.so*
 %{_bindir}/cta-integrationTests
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr

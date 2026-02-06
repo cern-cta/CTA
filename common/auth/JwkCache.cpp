@@ -10,7 +10,7 @@
 #include <curl/curl.h>
 #include <mutex>
 
-namespace cta {
+namespace cta::auth {
 JwkCache::JwkCache(JwksFetcher& fetcher, const std::string& jwkUri, int pubkeyTimeout, const log::LogContext& lc)
     : m_jwksFetcher(fetcher),
       m_jwksUri(jwkUri),
@@ -132,4 +132,4 @@ void JwkCache::updateCache(time_t now) {
     spc.add("cachedTime", std::to_string(now));
   }
 }
-}  // namespace cta
+}  // namespace cta::auth

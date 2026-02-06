@@ -3,18 +3,18 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "ValidateToken.hpp"
+#include "JwtValidation.hpp"
 
 #include "jwt-cpp/jwt.h"
 
-namespace cta {
+namespace cta::auth {
 TokenValidationResult
-validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCache, log::LogContext& logContext) {
+ValidateJwt(const std::string& encodedJwt, std::shared_ptr<JwkCache> pubkeyCache, log::LogContext& logContext) {
   // this is thread-safe because it makes a copy of logContext for each thread
   cta::log::LogContext lc(logContext);
   cta::log::ScopedParamContainer sp(lc);
   try {
-    auto decoded = jwt::decode(encodedJWT);
+    auto decoded = jwt::decode(encodedJwt);
     // Extract the "sub" claim
     std::optional<std::string> subjectClaim = std::nullopt;
     if (decoded.has_payload_claim("sub")) {
@@ -26,7 +26,7 @@ validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCac
     }
     // Validation: check if the token is expired
     if (auto exp = decoded.get_payload_claim("exp").as_date(); exp < std::chrono::system_clock::now()) {
-      lc.log(cta::log::WARNING, "In ValidateToken, Passed-in token has expired!");
+      lc.log(cta::log::WARNING, "In ValidateJwt, Passed-in token has expired!");
       return {false, subjectClaim};  // Token has expired
     }
     auto header = decoded.get_header_json();
@@ -65,4 +65,4 @@ validateToken(const std::string& encodedJWT, std::shared_ptr<JwkCache> pubkeyCac
     return {false, std::nullopt};
   }
 }
-}  // namespace cta
+}  // namespace cta::auth

@@ -4,6 +4,7 @@
  */
 
 #include "JwkCache.hpp"
+
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 
@@ -11,7 +12,7 @@
 
 namespace unitTests {
 
-class MockJwksFetcher : public cta::JwksFetcher {
+class MockJwksFetcher : public cta::auth::JwksFetcher {
 private:
   std::map<std::string, std::string> m_responses;
 
@@ -68,7 +69,7 @@ TEST(JwkCacheTest, UpdateCacheAddsKey) {
   cta::log::LogContext lc(log);
 
   MockJwksFetcher mockFetcher;
-  cta::JwkCache cache(mockFetcher, "http://fake-jwks-uri", 1200, lc);
+  cta::auth::JwkCache cache(mockFetcher, "http://fake-jwks-uri", 1200, lc);
 
   time_t fakeNow = 1000;
   cache.updateCache(fakeNow);
@@ -100,7 +101,7 @@ TEST(JwkCacheTest, UpdateCacheRemovesExpiredKeys) {
     })";
 
   mockFetcher.setResponse("http://fake-jwks-uri", jwksWithKey);
-  cta::JwkCache cache(mockFetcher, "http://fake-jwks-uri", 200, lc);  // very short pubkeyTimeout
+  cta::auth::JwkCache cache(mockFetcher, "http://fake-jwks-uri", 200, lc);  // very short pubkeyTimeout
 
   time_t lastRefreshTime = 1000;
   cache.updateCache(lastRefreshTime);

@@ -18,7 +18,7 @@
 #include <string>
 #include <time.h>
 
-namespace cta {
+namespace cta::auth {
 CTA_GENERATE_EXCEPTION_CLASS(CurlException);
 
 struct JwkCacheEntry {
@@ -58,12 +58,12 @@ public:
 
 private:
   JwksFetcher& m_jwksFetcher;
-  std::string m_jwksUri;
+  const std::string m_jwksUri;
   std::shared_mutex m_mutex;  //!< mutex to handle parallel requests
   std::map<std::string, JwkCacheEntry, std::less<>> m_keymap;
   //!< This gives the option to keep public keys around for longer than the refresh interval.
-  int m_pubkeyTimeout;
+  const int m_pubkeyTimeout;
   //!< The logging context
   cta::log::LogContext m_lc;  //!< always make a copy for thread safety
 };
-}  // namespace cta
+}  // namespace cta::auth
