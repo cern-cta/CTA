@@ -20,7 +20,7 @@ namespace cta::runtime {
 /**
  * Allows a service to expose health endpoints for readiness/liveness probes. It does this in the form of a lightweight HTTP server.
  */
-class HealthServer {
+class HealthServer final {
 public:
   HealthServer(cta::log::Logger& log,
                const std::string& host,

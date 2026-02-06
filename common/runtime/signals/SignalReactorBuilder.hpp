@@ -16,7 +16,7 @@ namespace cta::runtime {
 /**
  * This builder allows for the construction of an immutable SignalReactor object
  */
-class SignalReactorBuilder {
+class SignalReactorBuilder final {
 public:
   explicit SignalReactorBuilder();
 
