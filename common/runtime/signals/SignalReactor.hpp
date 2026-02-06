@@ -24,7 +24,7 @@ namespace cta::runtime {
  * as it needs to correctly block the signals on all threads.
  * It cannot do this if threads are already running.
  */
-class SignalReactor {
+class SignalReactor final {
 public:
   SignalReactor(cta::log::Logger& log,
                 const sigset_t& sigset,

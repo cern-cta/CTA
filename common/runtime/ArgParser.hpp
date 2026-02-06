@@ -64,7 +64,7 @@ struct ArgSpec {
  * @tparam T The struct to populate when parsing.
  */
 template<class T>
-class ArgParser {
+class ArgParser final {
 public:
   explicit ArgParser(const std::string& appName)
     requires HasRequiredCliOptions<T>

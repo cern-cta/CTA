@@ -188,7 +188,7 @@ int safeRunWithLog(log::Logger& log, F&& func) {
  * @tparam TOpts The commandline options used to construct the config and the app.
  */
 template<class TApp, class TConfig, class TOpts>
-class Application {
+class Application final {
 public:
   /**
    * @brief Construct a new Application object.
