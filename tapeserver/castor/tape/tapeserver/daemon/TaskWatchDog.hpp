@@ -8,10 +8,10 @@
 #include "DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
-#include "common/Timer.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/AtomicFlag.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
+#include "common/utils/Timer.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "tapeserver/daemon/TapedProxy.hpp"
 

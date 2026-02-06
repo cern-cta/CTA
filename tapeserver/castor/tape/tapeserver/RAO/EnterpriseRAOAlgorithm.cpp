@@ -6,7 +6,7 @@
 #include "EnterpriseRAOAlgorithm.hpp"
 
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
-#include "common/Timer.hpp"
+#include "common/utils/Timer.hpp"
 
 #include <list>
 

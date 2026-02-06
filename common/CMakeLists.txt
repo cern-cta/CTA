@@ -19,16 +19,17 @@ include_directories (${XROOTD_INCLUDE_DIR})
 #
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
+set_source_files_properties(checksum/CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 
 set (COMMON_LIB_SRC_FILES
-  checksum/ChecksumBlob.cpp
-  CmdLineParams.cpp
   CmdLineTool.cpp
+  CmdLineParams.cpp
+  checksum/ChecksumBlob.cpp
+  checksum/CRC.cpp
   config/Config.cpp
-  ConfigurationFile.cpp
-  CRC.cpp
-  CreationLog.cpp
+  config/ConfigurationFile.cpp
+  config/SourcedParameter.cpp
+  dataStructures/CreationLog.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
   dataStructures/ArchiveFileQueueCriteriaAndFileId.cpp
@@ -128,8 +129,7 @@ set (COMMON_LIB_SRC_FILES
   telemetry/metrics/instruments/SchedulerInstruments.cpp
   telemetry/metrics/instruments/TapedInstruments.cpp
   telemetry/metrics/instruments/MaintdInstruments.cpp
-  SourcedParameter.cpp
-  Timer.cpp
+  utils/Timer.cpp
   utils/Base64.cpp
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp
@@ -163,6 +163,7 @@ target_link_libraries (ctacommon
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   checksum/ChecksumBlobTest.cpp
+  checksum/CRCTest.cpp
   ConfigurationFileTests.cpp
   SourcedParameterTests.cpp
   dataStructures/ArchiveFileTest.cpp
@@ -177,7 +178,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/StringLoggerTest.cpp
   log/LoggerParamTypeTest.cpp
   remoteFS/RemotePathTest.cpp
-  CRCTest.cpp
   runtime/ApplicationTest.cpp
   runtime/ConfigLoaderTest.cpp
   runtime/ArgParserTest.cpp

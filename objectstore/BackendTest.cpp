@@ -8,9 +8,9 @@
 #include "BackendRados.hpp"
 #include "BackendRadosTestSwitch.hpp"
 #include "BackendVFS.hpp"
-#include "common/Timer.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/utils/Timer.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 
 #include <atomic>

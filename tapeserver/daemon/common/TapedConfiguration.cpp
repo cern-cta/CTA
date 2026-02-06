@@ -5,7 +5,7 @@
 
 #include "TapedConfiguration.hpp"
 
-#include "common/ConfigurationFile.hpp"
+#include "common/config/ConfigurationFile.hpp"
 
 #include <algorithm>
 #include <filesystem>

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "common/SourcedParameter.hpp"
+#include "common/config/SourcedParameter.hpp"
 #include "tapeserver/daemon/common/FetchReportOrFlushLimits.hpp"
 
 #include <gtest/gtest.h>

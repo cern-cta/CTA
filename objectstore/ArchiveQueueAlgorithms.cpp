@@ -5,7 +5,7 @@
 
 #include "ArchiveQueueAlgorithms.hpp"
 
-#include "common/Timer.hpp"
+#include "common/utils/Timer.hpp"
 
 namespace cta::objectstore {
 

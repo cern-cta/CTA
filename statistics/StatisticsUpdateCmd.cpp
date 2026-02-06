@@ -8,7 +8,7 @@
 #include "StatisticsService.hpp"
 #include "StatisticsServiceFactory.hpp"
 #include "catalogue/SchemaChecker.hpp"
-#include "common/Timer.hpp"
+#include "common/utils/Timer.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "statistics/StatisticsUpdateCmdLineArgs.hpp"
 

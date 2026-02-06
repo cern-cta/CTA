@@ -10,6 +10,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/MaintdInstruments.hpp"
+#include "common/utils/Timer.hpp"
 #include "rdbms/Login.hpp"
 
 #include <chrono>
