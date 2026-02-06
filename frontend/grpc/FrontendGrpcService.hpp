@@ -40,12 +40,12 @@ class CtaRpcImpl : public CtaRpc::Service {
 private:
   std::shared_ptr<cta::frontend::FrontendService> m_frontendService;
   ::grpc::HealthCheckServiceInterface* m_healthCheckService = nullptr;
-  std::shared_ptr<JwkCache> m_pubkeyCache;
+  std::shared_ptr<cta::auth::JwkCache> m_pubkeyCache;
   server::TokenStorage& m_tokenStorage;  // required for the Admin rpc for Kerberos token validation
 
 public:
   CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService,
-             std::shared_ptr<JwkCache> pubkeyCache,
+             std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
              server::TokenStorage& tokenStorage);
 
   FrontendService& getFrontendService() const { return *m_frontendService; }

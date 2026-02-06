@@ -162,6 +162,8 @@ target_link_libraries (ctacommon
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
+  auth/JwkCacheTest.cpp
+  auth/JwtValidationTest.cpp
   checksum/ChecksumBlobTest.cpp
   checksum/CRCTest.cpp
   config/ConfigurationFileTests.cpp
@@ -196,7 +198,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   utils/UtilsTest.cpp
   json/test/JSONCTestObject.cpp
   json/test/JSONCObjectTest.cpp
-  auth/JwkCacheTests.cpp
 )
 
 add_library (ctacommonunittests SHARED
@@ -204,11 +205,17 @@ add_library (ctacommonunittests SHARED
 set_property(TARGET ctacommonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
+
+set (AUTH_LIB_SRC_FILES
+  auth/JwkCache.cpp
+  auth/JwtValidation.cpp
+)
+
 find_package(OpenSSL REQUIRED)
 include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
-add_library(JwkCache STATIC auth/JwkCache.cpp)
-target_link_libraries(JwkCache PRIVATE curl OpenSSL::Crypto)
-target_link_libraries(ctacommonunittests JwkCache)
+add_library(ctaauth STATIC ${AUTH_LIB_SRC_FILES})
+target_link_libraries(ctaauth PRIVATE curl OpenSSL::Crypto)
+target_link_libraries(ctacommonunittests ctaauth)
 
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 add_executable(mutexLtrace process/threading/MutexLtrace.cpp)

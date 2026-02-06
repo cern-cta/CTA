@@ -62,7 +62,7 @@ void printVersionAndExit() {
   exit(0);
 }
 
-void JwksCacheRefreshLoop(std::weak_ptr<JwkCache> weakCache,
+void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwkCache> weakCache,
                           std::future<void> shouldStopThread,
                           int cacheRefreshInterval,
                           const log::LogContext& lc) {
@@ -114,17 +114,17 @@ int main(const int argc, char* const* const argv) {
   log::LogContext lc = frontendService->getLogContext();
 
   // Build the shared JWK cache here even if JWT is disabled, in this case it will never be populated
-  CurlJwksFetcher jwksFetcher(frontendService->getJwksTotalTimeout().value_or(60));
-  std::shared_ptr<JwkCache> jwkCache = std::make_shared<JwkCache>(jwksFetcher,
-                                                                  frontendService->getJwksUri().value_or(""),
-                                                                  frontendService->getPubkeyTimeout().value_or(0),
-                                                                  frontendService->getLogContext());
+  cta::auth::CurlJwksFetcher jwksFetcher(frontendService->getJwksTotalTimeout().value_or(60));
+  auto jwkCache = std::make_shared<cta::auth::JwkCache>(jwksFetcher,
+                                                        frontendService->getJwksUri().value_or(""),
+                                                        frontendService->getPubkeyTimeout().value_or(0),
+                                                        frontendService->getLogContext());
   // Setup TokenStorage for Kerberos authentication
   cta::frontend::grpc::server::TokenStorage tokenStorage;
 
   // Initialize RPC service with shared frontend service and cache
   frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache, tokenStorage);
-  std::weak_ptr<JwkCache> weakCache = jwkCache;
+  std::weak_ptr<cta::auth::JwkCache> weakCache = jwkCache;
   std::promise<void> shouldStopThreadPromise;
   std::future<void> shouldStopThreadFuture = shouldStopThreadPromise.get_future();
   std::thread cacheRefreshThread;

@@ -7,14 +7,13 @@
 #include "FrontendGrpcService.hpp"
 
 #include "catalogue/Catalogue.hpp"
+#include "common/auth/JwtValidation.hpp"
 #include "common/checksum/ChecksumBlobSerDeser.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "common/log/LogLevel.hpp"
 #include "frontend/common/FrontendService.hpp"
-#include "frontend/common/ValidateToken.hpp"
 #include "frontend/common/WorkflowEvent.hpp"
 #include "frontend/grpc/common/GrpcAuthUtils.hpp"
-#include "jwt-cpp/jwt.h"
 
 #include <optional>
 
@@ -398,7 +397,7 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
  * and makes the rpc calls available through this class
  */
 CtaRpcImpl::CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService,
-                       std::shared_ptr<JwkCache> pubkeyCache,
+                       std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
                        server::TokenStorage& tokenStorage)
     : m_frontendService(frontendService),
       m_pubkeyCache(pubkeyCache),

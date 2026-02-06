@@ -5,8 +5,8 @@
 
 #include "GrpcAuthUtils.hpp"
 
+#include "common/auth/JwtValidation.hpp"
 #include "common/log/LogLevel.hpp"
-#include "frontend/common/ValidateToken.hpp"
 
 namespace cta::frontend::grpc::common {
 
@@ -30,7 +30,7 @@ validateKrb5Token(const std::string& token, server::TokenStorage& tokenStorage, 
 std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
 extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::string_ref>& client_metadata,
                              bool jwtAuthEnabled,
-                             std::shared_ptr<JwkCache> pubkeyCache,
+                             std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
                              server::TokenStorage& tokenStorage,
                              const std::string& instanceName,
                              const std::string& peer,
@@ -58,7 +58,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
         return {::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Missing Authorization token"), std::nullopt};
       }
 
-      auto validationResult = validateToken(token, pubkeyCache, lc);
+      auto validationResult = cta::auth::ValidateJwt(token, pubkeyCache, lc);
 
       if (validationResult.isValid) {
         cta::common::dataStructures::SecurityIdentity clientIdentity(validationResult.subjectClaim.value(), peer);

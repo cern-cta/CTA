@@ -5,7 +5,8 @@
 
 // required tests: expired token, token with bad field
 
-#include "ValidateToken.hpp"
+#include "JwtValidation.hpp"
+
 #include "common/auth/JwkCache.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
@@ -77,12 +78,12 @@ std::string raw_jwks = R"({
     }]
     })";
 
-class MockJwksFetcherValidateToken : public cta::JwksFetcher {
+class MockJwksFetcherValidateJwt : public cta::auth::JwksFetcher {
 private:
   std::string m_jwks;
 
 public:
-  MockJwksFetcherValidateToken() : m_jwks(raw_jwks) {}
+  MockJwksFetcherValidateJwt() : m_jwks(raw_jwks) {}
 
   void setJwks(const std::string& jwks) { m_jwks = jwks; }
 
@@ -105,74 +106,74 @@ std::string createTestJwt(bool expired, const std::string& kid) {
   return token;
 }
 
-class ValidateTokenTestFixture : public ::testing::Test {
+class ValidateJwtTestFixture : public ::testing::Test {
 protected:
   cta::log::StringLogger log;
   cta::log::LogContext lc;
-  MockJwksFetcherValidateToken m_mockFetcher;
+  MockJwksFetcherValidateJwt m_mockFetcher;
 
-  ValidateTokenTestFixture() : log("dummy", "ValidateTokenTests", cta::log::DEBUG), lc(log) {}
+  ValidateJwtTestFixture() : log("dummy", "ValidateJwtTests", cta::log::DEBUG), lc(log) {}
 
-  std::shared_ptr<cta::JwkCache> createCacheWithMockFetcher() {
-    return std::make_shared<cta::JwkCache>(m_mockFetcher, "http://fake-jwks-uri", 1200, lc);
+  std::shared_ptr<cta::auth::JwkCache> createCacheWithMockFetcher() {
+    return std::make_shared<cta::auth::JwkCache>(m_mockFetcher, "http://fake-jwks-uri", 1200, lc);
   }
 
-  std::shared_ptr<cta::JwkCache> createCacheWithEmptyMockFetcher() {
-    auto cache = std::make_shared<cta::JwkCache>(m_mockFetcher, "http://fake-jwks-uri", 1200, lc);
+  std::shared_ptr<cta::auth::JwkCache> createCacheWithEmptyMockFetcher() {
+    auto cache = std::make_shared<cta::auth::JwkCache>(m_mockFetcher, "http://fake-jwks-uri", 1200, lc);
     m_mockFetcher.setJwks("");
     return cache;
   }
 };
 
-TEST_F(ValidateTokenTestFixture, ValidTokenWithCachedKey) {
+TEST_F(ValidateJwtTestFixture, ValidTokenWithCachedKey) {
   auto cache = createCacheWithMockFetcher();
   std::string token = createTestJwt(false /*expired*/, "test-kid");
 
   // First populate cache by calling updateCache
   cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   ASSERT_TRUE(result.isValid);
 }
 
-TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
+TEST_F(ValidateJwtTestFixture, ValidTokenWithoutCachedKeyCacheFetchSucceeds) {
   auto cache = createCacheWithMockFetcher();
   std::string token = createTestJwt(false /*expired*/, "test-kid");
   auto entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   ASSERT_TRUE(result.isValid);  // validate will succeed even if the key is not already present in the cache
   // because it will be fetched
   entry = cache->find("test-kid");
   ASSERT_TRUE(entry.has_value());
 }
 
-TEST_F(ValidateTokenTestFixture, ValidTokenWithoutCachedKeyCacheFetchFails) {
+TEST_F(ValidateJwtTestFixture, ValidTokenWithoutCachedKeyCacheFetchFails) {
   auto cache = createCacheWithEmptyMockFetcher();
 
   std::string token = createTestJwt(false /*expired*/, "test-kid");
   auto entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   EXPECT_FALSE(result.isValid);  // validate will fail if we cannot find the public key
   // because it will be fetched
   entry = cache->find("test-kid");
   ASSERT_FALSE(entry.has_value());
 }
 
-TEST_F(ValidateTokenTestFixture, ExpiredToken) {
+TEST_F(ValidateJwtTestFixture, ExpiredToken) {
   auto cache = createCacheWithMockFetcher();
   std::string token = createTestJwt(true /*expired*/, "test-kid");
 
   // Populate cache by calling updateCache
   cache->updateCache(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   ASSERT_FALSE(result.isValid);
 }
 
 // Tests for invalid/malformed tokens
-TEST_F(ValidateTokenTestFixture, BadTokenMissingKid) {
+TEST_F(ValidateJwtTestFixture, BadTokenMissingKid) {
   auto cache = createCacheWithMockFetcher();
   std::string token =
     jwt::create()
@@ -181,11 +182,11 @@ TEST_F(ValidateTokenTestFixture, BadTokenMissingKid) {
       .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   ASSERT_FALSE(result.isValid);
 }
 
-TEST_F(ValidateTokenTestFixture, BadTokenMissingExp) {
+TEST_F(ValidateJwtTestFixture, BadTokenMissingExp) {
   auto cache = createCacheWithMockFetcher();
   std::string token = jwt::create()
                         .set_issuer("test")
@@ -193,11 +194,11 @@ TEST_F(ValidateTokenTestFixture, BadTokenMissingExp) {
                         .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
                         .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   ASSERT_FALSE(result.isValid);
 }
 
-TEST_F(ValidateTokenTestFixture, BadTokenInvalidSignature) {
+TEST_F(ValidateJwtTestFixture, BadTokenInvalidSignature) {
   std::string wrongPrivateKey = R"(-----BEGIN PRIVATE KEY-----
 MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQCHSBjxCyh1svTq
 Wza9G5j0RMF587aWUWSl9ikTF1PRZV42ruJXkBcP6nIjWse3q5rn2Ce+FIXCkipw
@@ -236,11 +237,11 @@ az8ZaVQPvmSthMu8suOc8w==
       .sign(jwt::algorithm::rs256("", wrongPrivateKey, "", ""));
 
   auto cache = createCacheWithMockFetcher();
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   ASSERT_FALSE(result.isValid);
 }
 
-TEST_F(ValidateTokenTestFixture, BadTokenUnsupportedAlgorithm) {
+TEST_F(ValidateJwtTestFixture, BadTokenUnsupportedAlgorithm) {
   auto cache = createCacheWithMockFetcher();
   std::string token =
     jwt::create()
@@ -250,28 +251,28 @@ TEST_F(ValidateTokenTestFixture, BadTokenUnsupportedAlgorithm) {
       .set_payload_claim("sub", jwt::claim(std::string("subjectClaim")))
       .sign(jwt::algorithm::hs256(rsa_priv_key));  // we accept RS256 only
 
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   ASSERT_FALSE(result.isValid);
 }
 
-TEST_F(ValidateTokenTestFixture, BadTokenMalformedToken) {
+TEST_F(ValidateJwtTestFixture, BadTokenMalformedToken) {
   auto cache = createCacheWithMockFetcher();
   auto token = createTestJwt(false, "test-kid");
   // append some garbage to the token string
   token += "GARBAGE";
 
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   ASSERT_FALSE(result.isValid);
 }
 
-TEST_F(ValidateTokenTestFixture, BadTokenEmtpyToken) {
+TEST_F(ValidateJwtTestFixture, BadTokenEmtpyToken) {
   auto cache = createCacheWithMockFetcher();
   auto token = "";
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   ASSERT_FALSE(result.isValid);
 }
 
-TEST_F(ValidateTokenTestFixture, BadTokenMissingSub) {
+TEST_F(ValidateJwtTestFixture, BadTokenMissingSub) {
   auto cache = createCacheWithMockFetcher();
   // missing "sub" claim, validation will fail
   std::string token =
@@ -281,7 +282,7 @@ TEST_F(ValidateTokenTestFixture, BadTokenMissingSub) {
       .set_header_claim("kid", jwt::claim(std::string("test-kid")))
       .sign(jwt::algorithm::rs256("", rsa_priv_key, "", ""));
 
-  auto result = cta::validateToken(token, cache, lc);
+  auto result = cta::auth::ValidateJwt(token, cache, lc);
   ASSERT_FALSE(result.isValid);
 }
 

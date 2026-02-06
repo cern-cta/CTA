@@ -41,8 +41,7 @@ set (CTA_UNIT_TEST_LIBS
   gtest
   gmock
   pthread
-  ctatapeserverraounittests
-  ctafrontendvalidatetokenunittests)
+  ctatapeserverraounittests)
 
 if(NOT CTA_USE_PGSCHED)
   set (CTA_UNIT_TEST_LIBS ${CTA_UNIT_TEST_LIBS}
