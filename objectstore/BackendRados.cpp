@@ -5,12 +5,12 @@
 
 #include "BackendRados.hpp"
 
-#include "common/Timer.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/MutexLocker.hpp"
+#include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 
 #include <errno.h>

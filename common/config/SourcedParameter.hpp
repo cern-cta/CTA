@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/ConfigurationFile.hpp"
+#include "common/config/ConfigurationFile.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"

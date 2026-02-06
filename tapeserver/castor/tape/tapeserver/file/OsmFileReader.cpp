@@ -8,7 +8,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/file/OsmReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
-#include "common/CRC.hpp"
+#include "common/checksum/CRC.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
 #include <limits>

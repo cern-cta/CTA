@@ -10,12 +10,12 @@
 #include "catalogue/rdbms/RdbmsArchiveFileCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
-#include "common/Timer.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/FileRecycleLog.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/TimingList.hpp"
+#include "common/utils/Timer.hpp"
 #include "rdbms/Conn.hpp"
 
 #include <string>

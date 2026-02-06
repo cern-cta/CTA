@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/SourcedParameter.hpp"
+#include "common/config/SourcedParameter.hpp"
 #include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
 #include <ctime>

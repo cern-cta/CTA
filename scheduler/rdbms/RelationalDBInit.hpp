@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "common/Timer.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/Logger.hpp"
+#include "common/utils/Timer.hpp"
 #include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 

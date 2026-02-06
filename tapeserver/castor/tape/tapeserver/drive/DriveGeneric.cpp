@@ -7,9 +7,9 @@
 
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "castor/tape/tapeserver/drive/FakeDrive.hpp"
-#include "common/CRC.hpp"
-#include "common/Timer.hpp"
+#include "common/checksum/CRC.hpp"
 #include "common/exception/MemException.hpp"
+#include "common/utils/Timer.hpp"
 
 #include <errno.h>
 #include <list>

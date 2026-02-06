@@ -6,7 +6,7 @@
 #include "TimingList.hpp"
 
 #include "LogContext.hpp"
-#include "common/Timer.hpp"
+#include "common/utils/Timer.hpp"
 
 namespace cta::log {
 

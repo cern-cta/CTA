@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "common/CRC.hpp"
+#include "common/checksum/CRC.hpp"
 
 #include <gtest/gtest.h>
 #include <stdint.h>

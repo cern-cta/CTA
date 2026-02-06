@@ -7,11 +7,11 @@
 
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
-#include "common/Timer.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/MaintdInstruments.hpp"
+#include "common/utils/Timer.hpp"
 #include "rdbms/Login.hpp"
 
 #include <chrono>

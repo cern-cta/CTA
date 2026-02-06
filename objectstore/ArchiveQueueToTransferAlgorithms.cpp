@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "common/Timer.hpp"
+#include "common/utils/Timer.hpp"
 #include "objectstore/ArchiveQueueAlgorithms.hpp"
 
 namespace cta::objectstore {

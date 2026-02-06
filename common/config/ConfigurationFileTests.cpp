@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "common/ConfigurationFile.hpp"
+#include "ConfigurationFile.hpp"
 #include "tests/TempFile.hpp"
 
 #include <gtest/gtest.h>
