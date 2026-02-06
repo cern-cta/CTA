@@ -164,8 +164,8 @@ target_link_libraries (ctacommon
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   checksum/ChecksumBlobTest.cpp
   checksum/CRCTest.cpp
-  ConfigurationFileTests.cpp
-  SourcedParameterTests.cpp
+  config/ConfigurationFileTests.cpp
+  config/SourcedParameterTests.cpp
   dataStructures/ArchiveFileTest.cpp
   dataStructures/LogicalLibraryTest.cpp
   dataStructures/StorageClassTest.cpp
@@ -196,7 +196,7 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   utils/UtilsTest.cpp
   json/test/JSONCTestObject.cpp
   json/test/JSONCObjectTest.cpp
-  JwkCacheTests.cpp
+  auth/JwkCacheTests.cpp
 )
 
 add_library (ctacommonunittests SHARED
