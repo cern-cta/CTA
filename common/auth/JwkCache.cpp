@@ -5,7 +5,7 @@
 
 #include "JwkCache.hpp"
 
-#include "common/jwt-cpp/jwt.h"
+#include "jwt-cpp/jwt.h"
 
 #include <curl/curl.h>
 #include <mutex>

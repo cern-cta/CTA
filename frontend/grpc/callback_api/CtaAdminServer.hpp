@@ -7,7 +7,7 @@
 
 #include "ServerDefaultReactor.hpp"
 #include "ServerVersion.hpp"
-#include "common/JwkCache.hpp"
+#include "common/auth/JwkCache.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"

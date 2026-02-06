@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "exception/Exception.hpp"
-#include "log/LogContext.hpp"
+#include "common/exception/Exception.hpp"
+#include "common/log/LogContext.hpp"
 
 #include <functional>
 #include <iostream>

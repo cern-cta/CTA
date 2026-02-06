@@ -6,7 +6,7 @@
 // required tests: expired token, token with bad field
 
 #include "ValidateToken.hpp"
-#include "common/JwkCache.hpp"
+#include "common/auth/JwkCache.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 

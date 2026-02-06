@@ -8,8 +8,8 @@
 #include "Backend.hpp"
 #include "EntryLogSerDeser.hpp"
 #include "ObjectOps.hpp"
-#include "common/MountControl.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
+#include "common/dataStructures/MountControl.hpp"
 #include "common/dataStructures/RepackQueueType.hpp"
 
 #include <list>

@@ -7,7 +7,6 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeForWriting.hpp"
-#include "common/MountControl.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
@@ -19,6 +18,7 @@
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
+#include "common/dataStructures/MountControl.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
