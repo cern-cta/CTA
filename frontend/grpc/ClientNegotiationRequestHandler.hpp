@@ -7,6 +7,7 @@
 
 #include "IHandler.hpp"
 #include "common/log/Logger.hpp"
+#include "tools/CtaAdminTextFormatter.hpp"
 
 #include <grpcpp/grpcpp.h>
 #include <gssapi/gssapi_generic.h>
