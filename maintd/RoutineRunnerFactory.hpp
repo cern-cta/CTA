@@ -22,7 +22,7 @@ namespace cta::maintd {
 /**
  * Responsible for create a RoutineRunner with a specific set of registered routines based on the provided config.
  */
-class RoutineRunnerFactory {
+class RoutineRunnerFactory final {
 public:
   RoutineRunnerFactory(const MaintdConfig& config, cta::log::LogContext& lc);
   std::unique_ptr<RoutineRunner> create();

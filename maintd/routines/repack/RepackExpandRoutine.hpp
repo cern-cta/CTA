@@ -13,7 +13,7 @@ namespace cta::maintd {
 
 class Scheduler;
 
-class RepackExpandRoutine : public IRoutine {
+class RepackExpandRoutine final : public IRoutine {
 public:
   RepackExpandRoutine(cta::log::LogContext& lc, cta::Scheduler& scheduler, int maxRequestsToToExpand);
 

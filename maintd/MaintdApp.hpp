@@ -13,7 +13,7 @@
 
 namespace cta::maintd {
 
-class MaintdApp {
+class MaintdApp final {
 public:
   MaintdApp() = default;
 

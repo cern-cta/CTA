@@ -19,7 +19,7 @@ namespace cta::maintd {
  * 2. sleep
  * 3. Go to 1.
  */
-class RoutineRunner {
+class RoutineRunner final {
 public:
   RoutineRunner(const RoutinesConfig& routinesConfig, std::vector<std::unique_ptr<IRoutine>> routines);
 
