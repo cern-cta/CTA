@@ -41,7 +41,7 @@ frontend:
   grpc:
     enabled: true
   xrd:
-    enabled: true
+    enabled: false
   preRun:
     enabled: true
     # Mount /var/log contents in /mnt/logs so that the fluentd can consume it
