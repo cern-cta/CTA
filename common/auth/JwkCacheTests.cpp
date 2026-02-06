@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "common/JwkCache.hpp"
+#include "JwkCache.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 

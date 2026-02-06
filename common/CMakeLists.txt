@@ -206,7 +206,7 @@ set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 find_package(OpenSSL REQUIRED)
 include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
-add_library(JwkCache STATIC JwkCache.cpp)
+add_library(JwkCache STATIC auth/JwkCache.cpp)
 target_link_libraries(JwkCache PRIVATE curl OpenSSL::Crypto)
 target_link_libraries(ctacommonunittests JwkCache)
 
