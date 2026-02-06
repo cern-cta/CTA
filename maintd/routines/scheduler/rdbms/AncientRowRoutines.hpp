@@ -20,7 +20,7 @@ namespace cta::maintd {
  * Removes jobs that have remained in archive/retrieve/repack failed queues
  * longer than the configured inactivity limit (e.g. two weeks).
  */
-class DeleteOldFailedQueuesRoutine : public IRoutine {
+class DeleteOldFailedQueuesRoutine final : public IRoutine {
 public:
   std::string getName() const final { return m_routineName; };
 

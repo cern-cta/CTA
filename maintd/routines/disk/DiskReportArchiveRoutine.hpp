@@ -12,7 +12,7 @@
 
 namespace cta::maintd {
 
-class DiskReportArchiveRoutine : public IRoutine {
+class DiskReportArchiveRoutine final : public IRoutine {
 public:
   DiskReportArchiveRoutine(cta::log::LogContext& lc, cta::Scheduler& scheduler, int batchSize, int softTimeout);
   void execute() final;

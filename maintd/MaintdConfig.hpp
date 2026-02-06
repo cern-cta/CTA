@@ -78,7 +78,7 @@ struct RoutinesConfig {
 #endif
 };
 
-struct MaintdConfig {
+struct MaintdConfig final {
   cta::runtime::CatalogueConfig catalogue;
   cta::runtime::SchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
