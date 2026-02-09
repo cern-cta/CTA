@@ -177,7 +177,7 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(eos_grpc_client)
 
-  add_subdirectory(cmdline)
+  add_subdirectory(tools)
   add_subdirectory(xroot_plugins)
   add_subdirectory(frontend/grpc)
   add_subdirectory(frontend/common)

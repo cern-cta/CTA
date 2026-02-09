@@ -3,15 +3,15 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "cmdline/standalone_cli_tools/restore_files/RestoreFilesCmd.hpp"
+#include "tools/standalone_cli_tools/restore_files/RestoreFilesCmd.hpp"
 
 #include "CtaFrontendApi.hpp"
-#include "cmdline/CtaAdminCmdParser.hpp"
-#include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
-#include "cmdline/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 #include "common/utils/utils.hpp"
 #include "eos_grpc_client/GrpcEndpoint.hpp"
+#include "tools/CtaAdminCmdParser.hpp"
+#include "tools/standalone_cli_tools/common/CatalogueFetch.hpp"
+#include "tools/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 
 #include <XrdSsiPbIStreamBuffer.hpp>
 #include <XrdSsiPbLog.hpp>

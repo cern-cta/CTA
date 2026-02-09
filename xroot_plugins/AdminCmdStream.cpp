@@ -29,7 +29,6 @@
 #include "XrdCtaTapePoolLs.hpp"
 #include "XrdCtaVersion.hpp"
 #include "XrdCtaVirtualOrganizationLs.hpp"
-#include "cmdline/CtaAdminCmdParser.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "frontend/common/AdminCmd.hpp"

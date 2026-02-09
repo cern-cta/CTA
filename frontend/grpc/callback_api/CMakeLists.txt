@@ -26,9 +26,9 @@ include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_INCLUDE_DIR}/private)
 
 add_executable(cta-admin-grpc-stream
   CtaAdminCmdStreaming.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
+  ${PROJECT_SOURCE_DIR}/tools/CtaAdminTextFormatter.cpp
+  ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp
+  ${PROJECT_SOURCE_DIR}/tools/CtaAdminParsedCmd.cpp
 )
 target_link_libraries(cta-admin-grpc-stream ProtoCtaFrontend)
 

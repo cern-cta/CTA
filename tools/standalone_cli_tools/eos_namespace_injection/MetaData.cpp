@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "cmdline/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
+#include "tools/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
 
 #include "common/exception/UserError.hpp"
 

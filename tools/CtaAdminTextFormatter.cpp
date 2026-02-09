@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "tools/CtaAdminTextFormatter.hpp"
+
 #include "common/utils/utils.hpp"
 
-#include <cmdline/CtaAdminTextFormatter.hpp>
 #include <common/checksum/ChecksumBlobSerDeser.hpp>
 #include <common/dataStructures/ArchiveRouteType.hpp>
 #include <common/dataStructures/ArchiveRouteTypeSerDeser.hpp>

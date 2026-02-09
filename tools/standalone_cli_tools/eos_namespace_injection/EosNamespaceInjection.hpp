@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
-#include "cmdline/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
+#include "tools/standalone_cli_tools/common/CmdLineTool.hpp"
+#include "tools/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
 #include "xrootd-ssi-protobuf-interface/eos_cta/include/CtaFrontendApi.hpp"
 
 #include <filesystem>
