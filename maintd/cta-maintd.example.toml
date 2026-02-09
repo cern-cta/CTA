@@ -50,6 +50,12 @@
   # Path to the declarative config file to initialise the OpenTelemetry SDK.
   # If omitted or an empty string, telemetry will be disabled.
   config_file = "/etc/cta/cta-otel.yaml"
+  # Controls how the application reacts if telemetry initialization fails.
+  # Possible values:
+  #   "warn": log a warning and continue startup without telemetry.
+  #   "fatal": treat the failure as an error and abort startup.
+  # If omitted, "warn" is used
+  on_init_failure = "warn"
 
 
 # Configuration for a health server. The health server, if enabled, will expose the following endpoints:

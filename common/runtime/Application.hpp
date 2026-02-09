@@ -204,15 +204,6 @@ public:
       throw exception::Exception("Application name cannot be empty.");
     }
     m_argParser.withDescription(description);
-    // We need to start the reactor builder here as we may want to register custom signals.
-    // It is also for that reason that we don't build the actual SignalReactor just yet.
-    m_signalReactorBuilder = std::make_unique<SignalReactorBuilder>();
-    m_signalReactorBuilder->addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
-    m_signalReactorBuilder->addSignalFunction(SIGUSR1, [this]() {
-      if (m_logPtr) {
-        m_logPtr->refresh();
-      }
-    });
   }
 
   ~Application() {
@@ -237,7 +228,7 @@ public:
    */
   Application& addSignalFunction(int signal, void (TApp::*method)(), bool overwrite = false) {
     auto& app = m_app;
-    m_signalReactorBuilder->addSignalFunction(signal, [&app, method] { (app.*method)(); }, overwrite);
+    m_signalReactorBuilder.addSignalFunction(signal, [&app, method] { (app.*method)(); }, overwrite);
     return *this;
   }
 
@@ -277,7 +268,15 @@ public:
     }
 
     initLogging(config, cliOptions);
-    auto signalReactor = m_signalReactorBuilder->build(*m_logPtr);
+    // We need to start the reactor builder here as we may want to register custom signals.
+    // It is also for that reason that we don't build the actual SignalReactor just yet.
+    m_signalReactorBuilder.addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
+    m_signalReactorBuilder.addSignalFunction(SIGUSR1, [this]() {
+      if (m_logPtr) {
+        m_logPtr->refresh();
+      }
+    });
+    auto signalReactor = m_signalReactorBuilder.build(*m_logPtr);
     signalReactor.start();
     // The health server must exist at this level as it needs to be in-scope for as long as the main app runs.
     // If not, it would immediately be destroyed after initHealthServer finished.
@@ -390,6 +389,9 @@ private:
       }
       cta::telemetry::initOpenTelemetry(config.telemetry.config_file, ctaResourceAttributes, lc);
     } catch (exception::Exception& ex) {
+      if (config.telemetry.on_init_failure == InitFailurePolicy::fatal) {
+        throw ex;
+      }
       cta::log::ScopedParamContainer params(lc);
       params.add("exceptionMessage", ex.getMessage().str());
       lc.log(log::ERR, "Failed to instantiate OpenTelemetry");
@@ -422,7 +424,7 @@ private:
   // The actual application class
   TApp m_app;
 
-  std::unique_ptr<SignalReactorBuilder> m_signalReactorBuilder;
+  SignalReactorBuilder m_signalReactorBuilder;
 };
 
 }  // namespace cta::runtime

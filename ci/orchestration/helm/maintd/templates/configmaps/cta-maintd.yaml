@@ -38,6 +38,7 @@ data:
 
     [telemetry]
       config_file = "/etc/cta/cta-otel.yaml"
+      on_init_failure = "fatal"
 
     [health_server]
       enabled = true

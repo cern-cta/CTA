@@ -24,6 +24,11 @@
 namespace cta::runtime {
 
 /**
+ * @brief Failure policy for non-critical subsystems in a service.
+ */
+enum class InitFailurePolicy { warn, fatal };
+
+/**
  * @brief Experimental config that may be common to all apps/tools.
  * Must follow the naming convention: `<feature>_enabled`.
  * Experimental config options relevant only to a specific app/tool MUST NOT be added here.
@@ -74,6 +79,7 @@ struct TelemetryConfig {
    * @brief Path to the OpenTelemetry declarative config file.
    */
   std::string config_file = "";
+  InitFailurePolicy on_init_failure = InitFailurePolicy::warn;
 };
 
 /**
