@@ -16,19 +16,16 @@ if [[ "${resolved_device}" =~ ([0-9]+)$ ]]; then
   drive_index="${BASH_REMATCH[1]}"
 fi
 
+echo "$(lsscsi -g)"
 CHANGER_DEVICE=$(lsscsi -g | awk '$2=="mediumx" {print $6; exit}')
 echo "Using changer device: ${CHANGER_DEVICE}"
 echo "Using tape device: ${device} (resolved: ${resolved_device}), drive index: ${drive_index}"
 
 # Load tape in a tapedrive
-mtx -f ${CHANGER_DEVICE} status
 mtx -f ${CHANGER_DEVICE} load 1 ${drive_index}
-mtx -f ${CHANGER_DEVICE} status
 
 # Get the device status where the tape is loaded and rewind it.
-mt -f ${device} status
 mt -f ${device} rewind
-mt -f ${device} status
 
 # Write Enstore label and payload to tape.
 touch /enstore-tape.img
