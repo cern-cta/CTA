@@ -36,7 +36,6 @@ CTA_CLI_POD="cta-cli-0"
 echo
 echo "Copying test scripts to pods..."
 kubectl -n "${NAMESPACE}" cp . ${CLIENT_POD}:/root/ -c client || exit 1
-kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CTA_CLI_POD}:/root/ -c cta-cli || exit 1
 
 echo "Preparing namespace for the tests"
   . prepare_tests.sh -n "${NAMESPACE}"

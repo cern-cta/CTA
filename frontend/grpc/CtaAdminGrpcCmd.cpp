@@ -13,10 +13,9 @@
 #include "common/log/Logger.hpp"
 #include "common/utils/Base64.hpp"
 #include "common/utils/utils.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "tools/CtaAdminTextFormatter.hpp"
 #include "utils.hpp"
 
-#include <cmdline/CtaAdminTextFormatter.hpp>
 #include <cstdlib>  // for getenv
 
 namespace cta::admin {

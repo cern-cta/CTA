@@ -8,11 +8,11 @@
 
 #include <XrdSsiPbIStreamBuffer.hpp>
 #include <XrdSsiPbLog.hpp>
-#include <cmdline/CtaAdminTextFormatter.hpp>
-#include <cmdline/CtaAdminXrdCmd.hpp>
 #include <filesystem>
 #include <iostream>
 #include <sstream>
+#include <tools/CtaAdminTextFormatter.hpp>
+#include <tools/CtaAdminXrdCmd.hpp>
 
 // GLOBAL VARIABLES : used to pass information between main thread and stream handler thread
 

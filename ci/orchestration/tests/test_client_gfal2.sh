@@ -42,8 +42,6 @@ echo
 echo "Copying test scripts to client pod"
 kubectl -n ${NAMESPACE} cp . ${CLIENT_POD}:/root/ -c client
 kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ${EOS_MGM_POD}:/root/ -c eos-mgm
-kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CTA_CLI_POD}:/root/ -c cta-cli || exit 1
-kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CLIENT_POD}:/root/ -c client || exit 1
 
 echo "Preparing namespace for the tests"
   . prepare_tests.sh -n ${NAMESPACE}

@@ -3,18 +3,18 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "cmdline/standalone_cli_tools/change_storage_class/ChangeStorageClass.hpp"
+#include "tools/standalone_cli_tools/change_storage_class/ChangeStorageClass.hpp"
 
 #include "CtaFrontendApi.hpp"
-#include "cmdline/CtaAdminCmdParser.hpp"
-#include "cmdline/standalone_cli_tools/change_storage_class/JsonFileData.hpp"
-#include "cmdline/standalone_cli_tools/common/CatalogueFetch.hpp"
-#include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
+#include "tools/CtaAdminCmdParser.hpp"
+#include "tools/standalone_cli_tools/change_storage_class/JsonFileData.hpp"
+#include "tools/standalone_cli_tools/common/CatalogueFetch.hpp"
+#include "tools/standalone_cli_tools/common/CmdLineArgs.hpp"
 
 #include <XrdSsiPbIStreamBuffer.hpp>
 #include <XrdSsiPbLog.hpp>

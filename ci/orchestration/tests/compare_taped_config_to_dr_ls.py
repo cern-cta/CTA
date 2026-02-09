@@ -27,10 +27,10 @@ def main():
 
     cta_taped_pod = run(
         f'kubectl get pod -l app.kubernetes.io/component=taped -n {ns} --no-headers -o custom-columns=":metadata.name" | head -1'
-    )
+    ).strip()
     cta_cli_pod = run(
         f'kubectl get pod -l app.kubernetes.io/component=cli -n {ns} --no-headers -o custom-columns=":metadata.name" | head -1'
-    )
+    ).strip()
 
     taped_config = run(f"kubectl -n {ns} exec {cta_taped_pod} -c cta-taped -- " "bash -c 'cat /etc/cta/cta-taped.conf'")
 

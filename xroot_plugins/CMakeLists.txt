@@ -22,7 +22,7 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 #
 # XRootD SSI plugin for CTA Frontend
 #
-add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp AdminCmdStream.cpp ../cmdline/CtaAdminCmdParser.cpp)
+add_library(XrdSsiCta MODULE XrdSsiCtaServiceProvider.cpp XrdSsiCtaRequestProc.cpp XrdSsiCtaRequestMessage.cpp AdminCmdStream.cpp ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp)
 
 if(CTA_USE_PGSCHED)
   target_link_libraries(XrdSsiCta ${XROOTD_XRDSSI_LIB} XrdSsiLib ctafrontendcommon ctascheduler ctacommon ctacatalogue)

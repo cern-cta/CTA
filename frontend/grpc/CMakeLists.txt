@@ -15,7 +15,7 @@ include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
 # include stuff from the callback api here because we need to serve the streaming commands by registering their service class impl
 add_executable(cta-frontend-grpc
   Main.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
+  ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp
   FrontendGrpcService.cpp
   ${PROJECT_SOURCE_DIR}/frontend/grpc/common/GrpcAuthUtils.cpp
   callback_api/CtaAdminServerWriteReactor.cpp
@@ -56,9 +56,9 @@ add_executable(cta-admin-grpc
   ${PROJECT_SOURCE_DIR}/frontend/common/RequestTracker.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminParsedCmd.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminTextFormatter.cpp
-  ${PROJECT_SOURCE_DIR}/cmdline/CtaAdminCmdParser.cpp
+  ${PROJECT_SOURCE_DIR}/tools/CtaAdminParsedCmd.cpp
+  ${PROJECT_SOURCE_DIR}/tools/CtaAdminTextFormatter.cpp
+  ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp
   ClientNegotiationRequestHandler.cpp
   utils.cpp
 )

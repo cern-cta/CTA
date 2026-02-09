@@ -6,8 +6,8 @@
 #pragma once
 
 #include "CtaFrontendApi.hpp"
-#include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
-#include "cmdline/standalone_cli_tools/common/CmdLineTool.hpp"
+#include "tools/standalone_cli_tools/common/CmdLineArgs.hpp"
+#include "tools/standalone_cli_tools/common/CmdLineTool.hpp"
 
 #include <memory>
 #include <optional>

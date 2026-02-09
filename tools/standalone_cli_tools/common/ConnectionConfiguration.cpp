@@ -5,8 +5,8 @@
 
 #include "ConnectionConfiguration.hpp"
 
-#include "cmdline/standalone_cli_tools/common/CmdLineArgs.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "tools/standalone_cli_tools/common/CmdLineArgs.hpp"
 
 #include <string>
 #include <utility>

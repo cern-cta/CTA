@@ -6,10 +6,10 @@
 #include "XrdSsiCtaRequestMessage.hpp"
 
 #include "AdminCmdStream.hpp"
-#include "cmdline/CtaAdminCmdParser.hpp"
 #include "frontend/common/AdminCmd.hpp"
 #include "frontend/common/PbException.hpp"
 #include "frontend/common/WorkflowEvent.hpp"
+#include "tools/CtaAdminCmdParser.hpp"
 
 namespace cta::xrd {
 
