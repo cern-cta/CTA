@@ -58,8 +58,6 @@ kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD
 kubectl -n ${NAMESPACE} cp taped_refresh_log_fd.sh "${CTA_TAPED_POD}:/root/" -c cta-taped
 kubectl -n ${NAMESPACE} cp maintd_refresh_log_fd.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
 kubectl -n ${NAMESPACE} cp maintd_refresh_config.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
-kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CTA_CLI_POD}:/root/ -c cta-cli || exit 1
-kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CLIENT_POD}:/root/ -c client || exit 1
 
 if [[ ${PREPARE} -eq 1 ]]; then
   echo "Preparing namespace for the tests"

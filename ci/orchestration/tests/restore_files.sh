@@ -15,6 +15,12 @@ EOF
 exit 1
 }
 
+get_pods_by_type() {
+  local type="$1"
+  local namespace="$2"
+  kubectl get pod -l app.kubernetes.io/component=$type -n $namespace --no-headers -o custom-columns=":metadata.name"
+}
+
 while getopts "n:" o; do
   case "${o}" in
     n)
@@ -38,7 +44,7 @@ fi
 
 CLIENT_POD="cta-client-0"
 CTA_CLI_POD="cta-cli-0"
-CTA_FRONTEND_POD="cta-frontend-0"
+CTA_FRONTEND_POD=$(get_pods_by_type frontend $NAMESPACE | head -1)
 EOS_MGM_POD="eos-mgm-0"
 
 FRONTEND_IP=$(kubectl -n ${NAMESPACE} get pods ${CTA_FRONTEND_POD} -o json | jq .status.podIP | tr -d '"')

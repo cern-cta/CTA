@@ -36,8 +36,6 @@ CTA_CLI_POD="cta-cli-0"
 echo
 echo "Copying gRPC test scripts to client pod..."
 kubectl -n "${NAMESPACE}" cp test_cta_admin_grpc_auth.sh ${CLIENT_POD}:/root/ -c client || exit 1
-kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CLIENT_POD}:/root/ -c client || exit 1
-kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CTA_CLI_POD}:/root/ -c cta-cli || exit 1
 
 echo "Preparing namespace for the gRPC authentication tests"
 . prepare_tests.sh -n "${NAMESPACE}"
