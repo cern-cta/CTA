@@ -11,7 +11,7 @@ frontend:
   grpc:
     enabled: true
   xrd:
-    enabled: true
+    enabled: false
 
   # Enabled to allow debugging after a crash
   postRun:

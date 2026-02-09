@@ -45,6 +45,9 @@ CTA_FRONTEND_POD=$(get_pods_by_type frontend $NAMESPACE | head -1)
 CLIENT_POD=$(get_pods_by_type client $NAMESPACE | head -1)
 CTA_CLI_POD=$(get_pods_by_type cli $NAMESPACE | head -1)
 
+kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CTA_CLI_POD}:/root/ -c cta-cli || exit 1
+kubectl -n "${NAMESPACE}" cp grpc_obtain_jwt.sh ${CLIENT_POD}:/root/ -c client || exit 1
+
 # List tapes
 echo "Reading library configuration from ${CTA_RMCD_POD}"
 LIBRARY_DEVICE=$(kubectl exec -n ${NAMESPACE} ${CTA_RMCD_POD} -c cta-rmcd -- printenv LIBRARY_DEVICE)
