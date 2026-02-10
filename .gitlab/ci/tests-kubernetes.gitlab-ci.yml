@@ -105,6 +105,69 @@
     paths:
       - pod_logs
 
+# Once we have migrated everything to python, the above .kubernetes-test can be removed
+.kubernetes-test-python:
+  needs:
+    - job: modify-project-json
+      optional: true
+    - job: build-ctageneric-from-local-rpms
+      optional: true  # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
+    - job: build-ctageneric-from-remote-rpms
+      optional: true
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
+      when: never
+    - when: on_success
+  variables:
+    BASH_LOGGING_ENABLED: 1
+    # Which tests to run
+    PYTESTS:
+    # Passed to the create_instance.sh script verbatim
+    EXTRA_SPAWN_ARGS: ""
+    # Passed to the pytest tests verbatim
+    EXTRA_PYTEST_ARGS: ""
+  before_script:
+    - bash ./ci/checks/check_runner_healthy.sh
+    - *setup-k8s-test-variables
+  script:
+    # Keep the namespace name under 64 characters;
+    # Otherwise the eos mgm fqdn becomes too long and things start failing
+    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
+    - cd ci/orchestration/
+    - ./delete_old_namespaces.sh
+    - ./create_instance.sh --namespace ${NAMESPACE}
+                           --reset-catalogue
+                           --reset-scheduler
+                           --no-setup
+                           --cta-image-tag ${IMAGE_TAG}
+                           --cta-config ${DEFAULT_CTA_VALUES_FILE}
+                           --eos-config ${DEFAULT_EOS_VALUES_FILE}
+                           --catalogue-config ${CATALOGUE_CONFIG}
+                           --scheduler-config ${SCHEDULER_CONFIG}
+                           ${EXTRA_SPAWN_ARGS}
+    - cd ../system_tests
+    - pytest ${PYTESTS} --namespace ${NAMESPACE}
+                                  --no-cleanup
+                                  --color=yes
+                                  ${EXTRA_PYTEST_ARGS}
+                                  2>&1 # Gitlab screws the ordering of stdout and stderr. See https://gitlab.com/gitlab-org/gitlab/-/issues/440824
+  after_script:
+    # Repeat the namespace declaration here as the after_script does not have access to previously exported variables
+    - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
+    # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
+    - cd ci/orchestration/
+    - ./delete_instance.sh --namespace ${NAMESPACE}
+  tags:  # Used to indicate that these jobs should run on our own runners
+    - kubernetes
+    - mhvtl
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - pod_logs
+
 # Tests
 
 test-client:
@@ -135,9 +198,9 @@ test-repack:
     TEST_SCRIPT: "tests/test_repack.sh"
     EXTRA_RUN_ARGS: "--test-timeout 2400"
 
-test-cta-admin:
+test-cta-tools:
   extends:
-    - .kubernetes-test
+    - .kubernetes-test-python
   stage: system-test
   rules:
     # Skip this test for regressions as it does not test anything new
@@ -146,8 +209,7 @@ test-cta-admin:
       when: never
     - !reference [.kubernetes-test, rules]
   variables:
-    TEST_SCRIPT: "tests/test_cta_admin.sh"
-    EXTRA_RUN_ARGS: "--test-timeout 2400"
+    PYTESTS: "tests/tools_test.py"
     # We want to test cta-admin's behaviour on repack requests; not the actual repack itself
     # See the note here on failing cta-admin tests: https://gitlab.cern.ch/cta/CTA/-/issues/1032#note_10458246
     EXTRA_SPAWN_ARGS: "--extra-cta-values \"--set=maintd.routines.repackExpand.replicas=0 --set=maintd.routines.repackReport.replicas=0\""
@@ -306,20 +368,18 @@ stress-test-python:
       allow_failure: true # Otherwise this blocks the pipeline
   variables:
     NAMESPACE: stress-${CI_JOB_ID}
+    # Passed to the create_instance.sh script verbatim
     EXTRA_SPAWN_ARGS: ""
-    EXTRA_TEST_ARGS: ""
+    # Passed to the pytest tests verbatim
+    EXTRA_PYTEST_ARGS: ""
   before_script:
     - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
     - |
-      EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_FILE} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
       if [[ $PUBLISH_TELEMETRY_METRICS == "TRUE" ]]; then
         EXTRA_SPAWN_ARGS+=" --publish-telemetry"
       fi
-      extra_args=($EXTRA_ARGS)
-      if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
-      EXTRA_STRESS_TEST_OPTIONS=""
       if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
       fi
@@ -350,7 +410,7 @@ stress-test-python:
     - pytest tests/stress_test.py --namespace ${NAMESPACE}
                                   --no-cleanup
                                   --color=yes
-                                  ${EXTRA_TEST_ARGS}
+                                  ${EXTRA_PYTEST_ARGS}
                                   2>&1 # Gitlab screws the ordering of stdout and stderr. See https://gitlab.com/gitlab-org/gitlab/-/issues/440824
   after_script:
     - |

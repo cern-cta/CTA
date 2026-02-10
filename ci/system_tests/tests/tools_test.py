@@ -14,6 +14,7 @@ from ..helpers.hosts.cta_frontend_host import CtaFrontendHost
 @pytest.mark.eos
 def test_hosts_present_tools(env):
     assert len(env.cta_frontend) > 0
+    assert len(env.eos_client) > 0
 
 
 # -------------------------------------------------------------------------------------------------
