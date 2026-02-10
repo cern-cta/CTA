@@ -150,7 +150,7 @@
     "el9": {
       "versionlock": {
         "group-ceph": "2:17.2.8-0.el9",
-        "group-eos": "5.3.23.el9",
+        "group-eos": "5.3.23-1.el9",
         "group-eos-folly": "2019.11.11.00-1.el9",
         "group-eosgrpc": "1.56.1-3.el9",
         "group-eosscitokens": "1.2.0-1.el9",
