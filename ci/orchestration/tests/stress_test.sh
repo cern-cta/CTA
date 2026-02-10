@@ -46,14 +46,53 @@ CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD=$(get_pods_by_type frontend $NAMESPACE | head -1)
 EOS_MGM_POD="eos-mgm-0"
 
-NB_FILES=50000
-NB_DIRS=40
+NB_FILES=20000
+NB_DIRS=250
 FILE_SIZE_KB=1
-NB_PROCS=40
-NB_DRIVES=2
+NB_PROCS=30
+NB_DRIVES=100
 
+FST=$(kubectl -n ${NAMESPACE} get pods | grep "eos-fst" | awk '{ print $1 }' | head)
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -lc '
+  set -euo pipefail
+
+  echo "=== Installing Python 3 ==="
+  if ! command -v python3 >/dev/null 2>&1; then
+    dnf install -y python3
+  fi
+
+  echo "=== Installing XRootD client libraries ==="
+  dnf install -y xrootd-client python3-xrootd
+
+  echo "=== Verifying installation ==="
+  python3 --version
+  python3 - <<EOF
+from XRootD import client
+print("XRootD Python bindings OK")
+EOF
+
+  echo "=== DONE ==="
+'
 
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
+kubectl -n ${NAMESPACE} cp xrdcp_persistent_client_stress.py ${CLIENT_POD}:/root/xrdcp_persistent_client_stress.py -c client
+cp xrdcp_persistent_client_stress.py xrdcp_persistent_client_stress_fst.py
+sed -i 's/eos.keytab/fstuser.keytab/' xrdcp_persistent_client_stress_fst.py
+kubectl -n ${NAMESPACE} cp xrdcp_persistent_client_stress_fst.py ${FST}:/root/xrdcp_stress_archive.py -c eos-fst
+#mkdir /tmp/ctaadmin2
+#mkdir /tmp/eosadmin1
+#mkdir /tmp/poweruser1
+#mkdir -p /tmp/ctaadmin2 /tmp/eosadmin1 /tmp/poweruser1
+#kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/ctaadmin2/krb5cc_0 /tmp/ctaadmin2/krb5cc_0 -c client
+#kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/eosadmin1/krb5cc_0 /tmp/eosadmin1/krb5cc_0 -c client
+#kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/krb5cc_0 /tmp/krb5cc_0 -c client
+#kubectl -n ${NAMESPACE} cp ${CLIENT_POD}:/tmp/poweruser1/krb5cc_0 /tmp/poweruser1/krb5cc_0 -c client
+#kubectl exec ${FST} -c eos-fst -n ${NAMESPACE} -- mkdir -p /tmp/ctaadmin2 /tmp/eosadmin1 /tmp/poweruser1
+#kubectl exec ${FST} -c eos-fst -n ${NAMESPACE} -- yum install -y python3
+#kubectl -n ${NAMESPACE} cp /tmp/ctaadmin2/krb5cc_0 ${FST}:/tmp/ctaadmin2/krb5cc_0 -c eos-fst
+#kubectl -n ${NAMESPACE} cp /tmp/eosadmin1/krb5cc_0 ${FST}:/tmp/eosadmin1/krb5cc_0 -c eos-fst
+#kubectl -n ${NAMESPACE} cp /tmp/krb5cc_0 ${FST}:/tmp/krb5cc_0 -c eos-fst
+#kubectl -n ${NAMESPACE} cp /tmp/poweruser1/krb5cc_0 ${FST}:/tmp/poweruser1/krb5cc_0 -c eos-fst
 
 # Need CTAADMIN_USER krb5
 admin_kdestroy &>/dev/null
@@ -62,7 +101,20 @@ admin_kinit &>/dev/null
 echo " Copying CA certificates to client pod from ${EOS_MGM_POD} pod."
 kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp/certificates/ -c eos-mgm
 kubectl -n ${NAMESPACE} cp /tmp/certificates ${CLIENT_POD}:/etc/grid-security/ -c client
+kubectl -n ${NAMESPACE} cp /tmp/certificates ${FST}:/etc/grid-security/ -c eos-fst
 rm -rf /tmp/certificates
+
+kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/eos.keytab" /tmp/eos.keytab -c eos-mgm
+sed -i 's/u:daemon g:daemon/u:user1 g:eosusers/' /tmp/eos.keytab
+kubectl -n ${NAMESPACE} cp /tmp/eos.keytab "${CLIENT_POD}:etc/eos.keytab" -c client
+kubectl -n ${NAMESPACE} cp /tmp/eos.keytab "${FST}:etc/fstuser.keytab" -c eos-fst
+MY_CLIENT_SSS_KEY=$(kubectl exec ${EOS_MGM_POD} -n dev -c eos-mgm -- bash -c "cat /etc/eos.keytab")
+kubectl exec cta-client-0 -n ${NAMESPACE}  -c client -- bash -c "chmod 400 /etc/eos.keytab"
+kubectl exec ${FST} -n ${NAMESPACE} -c eos-fst -- bash -c "chmod 400 /etc/fstuser.keytab"
+
+kubectl exec ${EOS_MGM_POD} -n ${NAMESPACE} -c eos-mgm -- bash -c "chmod 770 /etc/eos.keytab"
+kubectl exec ${EOS_MGM_POD} -n ${NAMESPACE} -c eos-mgm -- bash -c "echo ${MY_CLIENT_SSS_KEY} >> /etc/eos.keytab"
+kubectl exec ${EOS_MGM_POD} -n ${NAMESPACE} -c eos-mgm -- bash -c "chmod 400 /etc/eos.keytab"
 
 echo "Putting all tape drives down - to queue the files first since the processing is faster than the queueing capabilities of EOS, we hold it half-way and only then put drives up in the client_stress_ar.sh script"
 kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr down '.*' --reason "pre-queue jobs"
@@ -81,6 +133,18 @@ kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin mp ls
 kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin dr ls
 
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 1 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 2 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 3 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 4 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 5 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 6 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 7 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 8 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 9 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 10 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 11 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 12 scaninterval=0
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 13 scaninterval=0
 
 # install eos-debuginfo (600MB -> only for stress tests)
 # NEEDED because eos does not leave the coredump after a crash
@@ -95,13 +159,35 @@ echo " Archiving ${NB_FILES} files of ${FILE_SIZE_KB}kB each"
 echo " Archiving files: xrdcp as user1"
 echo " Retrieving them as poweruser1"
 kubectl -n ${NAMESPACE} cp client_stress_ar.sh ${CLIENT_POD}:/root/client_stress_ar.sh -c client
+kubectl -n ${NAMESPACE} cp client_stress_ar.sh ${FST}:/root/client_stress_ar.sh -c eos-fst
 
 EXTRA_TEST_OPTIONS=""
 if [[ $PREQUEUE == 1 ]]; then
   EXTRA_TEST_OPTIONS+=" -Q"
 fi
+kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin dr down '.*' --reason "pre-queue jobs"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -lc 'command -v xrdfs && xrdfs -h | head -n 1'
 
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_stress_ar.sh -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod ${EXTRA_TEST_OPTIONS} || exit 1
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -lc '
+  set -e
+  export XrdSecsssKT=/etc/eos.keytab
+  export XRD_LOGLEVEL=Error
+
+  export NB_FILES=2000000
+  export NB_PROCS=40
+  export NB_DIRS=100
+  export NB_FILES_TO_PUT_DRIVES_UP=1000000
+  export CHECK_EVERY_SEC=600
+  export STALL_SEC=600
+
+  export EOS_MGM_HOST=ctaeos
+  export EOS_DIR=/eos/ctaeos/cta
+  export KRB5CC_CTAADMIN2=/tmp/ctaadmin2/krb5cc_0
+  python3 -u /root/xrdcp_persistent_client_stress.py
+'
+exit 0
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_stress_ar.sh -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/cta ${EXTRA_TEST_OPTIONS} || exit 1
+kubectl -n ${NAMESPACE} exec ${FST} -c eos-fst -- bash /root/client_stress_ar.sh -F -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/cta ${EXTRA_TEST_OPTIONS} || exit 1
 ## Do not remove as listing af is not coming back???
 #kubectl -n ${NAMESPACE} exec client -- bash /root/client_stress_ar.sh -A -N ${NB_DIRS} -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -e ctaeos -d /eos/ctaeos/preprod -v || exit 1
 
