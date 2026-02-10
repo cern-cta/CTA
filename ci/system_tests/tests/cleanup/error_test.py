@@ -61,5 +61,5 @@ def test_no_uncaught_exceptions(env, error_whitelist):
             total_non_whitelisted_errors += count
             prefix = whitelist_prefix
         print(f'{prefix} Count: {count}, Message: "{msg}"')
-
+    # TODO: this doesn't work correctly
     assert total_non_whitelisted_errors == 0, f"Found {total_non_whitelisted_errors} non-whitelisted logged errors"
