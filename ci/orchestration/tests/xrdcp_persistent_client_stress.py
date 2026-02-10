@@ -13,7 +13,7 @@ os.environ["XrdSecsssKT"] = SSSKEY
 os.environ["XRD_LOGLEVEL"] = os.environ.get("XRD_LOGLEVEL", "Error")
 
 from XRootD import client
-from XRootD.client.flags import OpenFlags
+from XRootD.client.flags import OpenFlags, PrepareFlags
 
 # ----------------------------
 # CONFIG
@@ -240,21 +240,20 @@ def prepare_worker(q: mp.JoinableQueue, wid: int):
 
     err_budget = 10
 
+    fs_url = f"root://{EOS_MGM_HOST}"
+    fs = client.FileSystem(fs_url)
+
     while True:
+
         target = q.get()
         if target is None:
             q.task_done()
             return
 
-        p = subprocess.run(
-            ["xrdfs", EOS_MGM_HOST, "prepare", "-s", target],
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        status, _ = fs.prepare([target], PrepareFlags.STAGE)                                                                                             
 
-        if p.returncode != 0 and err_budget > 0:
-            print(f"[prepare worker {wid}] prepare failed: {target}", flush=True)
+        if not status.ok and err_budget > 0:
+            print(f"[prepare worker {wid}] prepare failed: {target}, error message: {status.message}", flush=True)
             err_budget -= 1
 
         q.task_done()
