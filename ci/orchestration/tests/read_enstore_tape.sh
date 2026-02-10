@@ -30,8 +30,8 @@ mt -f ${device} rewind
 # Write Enstore label and payload to tape.
 touch /enstore-tape.img
 dd if=${ens_mhvtl_root}/enstore/FL1212_f1/vol1_FL1212.bin of=/enstore-tape.img bs=80
-dd if=/enstore-tape.img of=$device bs=80
-mt -f ${device} status
-dd if=${ens_mhvtl_root}/enstore/FL1212_f1/fseq1_payload.bin of=$device bs=1048576
+dd if=/enstore-tape.img of=$device bs=80 count=2
+dd if=${ens_mhvtl_root}/enstore/FL1212_f1/fseq1_payload.bin of=$device bs=1048576 count=3
+
 
 mt -f $device rewind
