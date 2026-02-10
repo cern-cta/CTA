@@ -233,10 +233,11 @@ def worker(work_q: mp.JoinableQueue, wid: int):
 
 
 def prepare_worker(q: mp.JoinableQueue, wid: int):
-    env = os.environ.copy()
-    env["XrdSecsssKT"] = SSSKEY
-    env["XRD_LOGLEVEL"] = "Error"
-    env["KRB5CCNAME"] = KRB5CC_POWER
+    # Worker process: switch from SSS to Kerberos (poweruser1) for prepare permissions
+    for k in ("XrdSecsssKT", "XRDSSSKT"):
+        os.environ.pop(k, None)
+    os.environ["XrdSecPROTOCOL"] = "krb5"
+    os.environ["KRB5CCNAME"] = KRB5CC_POWER
 
     err_budget = 10
 
