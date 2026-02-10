@@ -27,11 +27,9 @@ mtx -f ${CHANGER_DEVICE} load 1 ${drive_index}
 # Get the device status where the tape is loaded and rewind it.
 mt -f ${device} rewind
 
-# Write Enstore label and payload to tape.
-touch /enstore-tape.img
-dd if=${ens_mhvtl_root}/enstore/FL1212_f1/vol1_FL1212.bin of=/enstore-tape.img bs=80
-dd if=/enstore-tape.img of=$device bs=80 count=2
-dd if=${ens_mhvtl_root}/enstore/FL1212_f1/fseq1_payload.bin of=$device bs=1048576 count=3
+# Write Enstore label and payload to tape as stored in the repo.
+dd if=${ens_mhvtl_root}/enstore/FL1212_f2/vol1_FL1212.bin of=$device bs=80
+dd if=${ens_mhvtl_root}/enstore/FL1212_f2/fseq2_payload.bin of=$device bs=1048576
 
 
 mt -f $device rewind
