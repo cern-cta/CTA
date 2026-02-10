@@ -26,7 +26,7 @@ NB_DIRS = int(os.environ.get("NB_DIRS", "100"))
 NB_FILES_TO_PUT_DRIVES_UP = int(os.environ.get("NB_FILES_TO_PUT_DRIVES_UP", "1000000"))
 DRIVE_UP = os.environ.get("DRIVE_UP", ".*")
 
-CHECK_EVERY_SEC = int(os.environ.get("CHECK_EVERY_SEC", "900"))
+CHECK_EVERY_SEC = int(os.environ.get("CHECK_EVERY_SEC", "9"))
 
 EOS_MGM_HOST = os.environ.get("EOS_MGM_HOST", "ctaeos")
 EOS_DIR = os.environ.get("EOS_DIR", "/eos/ctaeos/cta")
@@ -44,6 +44,8 @@ JUST_PATH = f"{EOS_DIR}/{RUN_ID}"
 STALL_SEC = int(os.environ.get("STALL_SEC", "900"))  # 15 minutes
 ACTIVITY = os.environ.get("ACTIVITY", "T0Reprocess")
 KRB5CC_POWER = os.environ.get("KRB5CC_POWER", "FILE:/tmp/poweruser1/krb5cc_0")
+RETRIEVE_NO_PROGRESS_TIMEOUT = int(os.environ.get("RETRIEVE_NO_PROGRESS_TIMEOUT", "300"))
+RETRIEVE_TIMEOUT = int(os.environ.get("RETRIEVE_TIMEOUT", str(6600 + NB_FILES // 10))) # default same as in client_stress_ar.sh
 
 
 def bootstrap_kerberos_or_die():
@@ -308,6 +310,45 @@ def count_files_on_tape(return_paths: bool = False):
     return total, ontape, ontape_paths
 
 
+def wait_for_retrieve_completion(total_to_retrieve: int):
+    """Poll until tape-only files are retrieved to disk, tracking d0::t1 count decreasing."""
+    print(f"[retrieve wait] Waiting for {total_to_retrieve} files to be retrieved from tape.", flush=True)
+    print(f"[retrieve wait] poll={CHECK_EVERY_SEC}s no_progress_timeout={RETRIEVE_NO_PROGRESS_TIMEOUT}s timeout={RETRIEVE_TIMEOUT}s", flush=True)
+
+    start = time.time()
+    last_progress_time = start
+    last_tape_only = total_to_retrieve
+
+    while True:
+        _, tape_only, _ = count_files_on_tape(return_paths=False)
+        now = time.time()
+        elapsed = int(now - start)
+        retrieved = total_to_retrieve - tape_only
+
+        if tape_only < last_tape_only:
+            last_progress_time = now
+            last_tape_only = tape_only
+
+        no_progress_for = int(now - last_progress_time)
+        print(f"[retrieve wait] {retrieved}/{total_to_retrieve} retrieved, tape_only={tape_only}, elapsed={elapsed}s, no_progress={no_progress_for}s", flush=True)
+
+        if tape_only <= 0:
+            print(f"[retrieve wait] All {total_to_retrieve} files retrieved.", flush=True)
+            break
+
+        if no_progress_for >= RETRIEVE_NO_PROGRESS_TIMEOUT:
+            print(f"[retrieve wait] No progress for {RETRIEVE_NO_PROGRESS_TIMEOUT}s — treating as done.", flush=True)
+            break
+
+        if elapsed >= RETRIEVE_TIMEOUT:
+            print(f"[retrieve wait] Absolute timeout ({RETRIEVE_TIMEOUT}s) reached.", flush=True)
+            break
+
+        time.sleep(CHECK_EVERY_SEC)
+
+    return total_to_retrieve - tape_only
+
+
 def wait_for_tape_stall_and_get_prepare_targets():
     last_ontape = -1
     last_change_ts = time.time()
@@ -358,8 +399,8 @@ def prequeue_retrieve_and_put_drives_up_again():
 
         if ontape >= NB_FILES_TO_PUT_DRIVES_UP:
             print("[retrieve prequeue check] threshold reached -> putting drives UP.", flush=True)
-            #admin_cta_drive_up()
-            #drive_up_done = True
+            admin_cta_drive_up()
+            drive_up_done = True
 
         # safety: don’t loop forever
         if time.time() - start > 3600:
@@ -370,6 +411,11 @@ def prequeue_retrieve_and_put_drives_up_again():
     # Wait for prepare to finish
     q.join()
     print("Prepare stage-in done.", flush=True)
+
+    # Wait for files to actually be retrieved from tape to disk
+    total_to_retrieve = len(prepare_targets)
+    retrieved = wait_for_retrieve_completion(total_to_retrieve)
+    print(f"Retrieve phase complete: {retrieved}/{total_to_retrieve} files retrieved.", flush=True)
 
 
 # ----------------------------

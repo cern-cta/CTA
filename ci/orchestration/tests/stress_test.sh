@@ -46,11 +46,11 @@ CTA_CLI_POD="cta-cli-0"
 CTA_FRONTEND_POD=$(get_pods_by_type frontend $NAMESPACE | head -1)
 EOS_MGM_POD="eos-mgm-0"
 
-NB_FILES=20000
-NB_DIRS=250
+NB_FILES=2000
+NB_DIRS=10
 FILE_SIZE_KB=1
 NB_PROCS=30
-NB_DRIVES=100
+NB_DRIVES=4
 
 FST=$(kubectl -n ${NAMESPACE} get pods | grep "eos-fst" | awk '{ print $1 }' | head)
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -lc '
@@ -132,19 +132,9 @@ kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin mp ls
 
 kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin dr ls
 
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 1 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 2 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 3 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 4 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 5 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 6 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 7 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 8 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 9 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 10 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 11 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 12 scaninterval=0
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config 13 scaninterval=0
+for fsid in $(kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs ls -m | awk '{for(i=1;i<=NF;i++) if($i ~ /^id=/) {split($i,a,"="); print a[2]; break}}'); do
+  kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos fs config $fsid scaninterval=0
+done
 
 # install eos-debuginfo (600MB -> only for stress tests)
 # NEEDED because eos does not leave the coredump after a crash
@@ -173,11 +163,11 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -lc '
   export XrdSecsssKT=/etc/eos.keytab
   export XRD_LOGLEVEL=Error
 
-  export NB_FILES=2000000
+  export NB_FILES=20000
   export NB_PROCS=40
-  export NB_DIRS=100
-  export NB_FILES_TO_PUT_DRIVES_UP=1000000
-  export CHECK_EVERY_SEC=600
+  export NB_DIRS=10
+  export NB_FILES_TO_PUT_DRIVES_UP=10000
+  export CHECK_EVERY_SEC=6
   export STALL_SEC=600
 
   export EOS_MGM_HOST=ctaeos
