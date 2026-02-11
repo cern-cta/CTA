@@ -4,6 +4,7 @@
 import pytest
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 from ..helpers.hosts.disk.disk_instance_host import DiskInstanceHost
 from ..helpers.hosts.disk.eos_client_host import EosClientHost
@@ -43,6 +44,19 @@ def test_hosts_present_stress(env):
 
 
 @pytest.mark.eos
+def test_setup_xrootd_client(env):
+    """Install XRootD Python bindings and deploy archive script to the client pod."""
+    eos_client: EosClientHost = env.eos_client[0]
+    eos_client.install_xrootd_python()
+
+    script_dir = Path(__file__).parent / "remote_scripts" / "eos_client"
+    eos_client.copyTo(
+        str(script_dir / "xrootd_archive.py"),
+        "/root/xrootd_archive.py",
+    )
+
+
+@pytest.mark.eos
 def test_update_setup_for_max_powerrrr(env):
     num_drives: int = len(env.cta_taped)
     env.cta_cli[0].exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
@@ -66,50 +80,39 @@ def test_generate_and_copy_files(env, stress_params):
     disk_instance.force_remove_directory(archive_directory)
     eos_client.exec(f"eos root://{disk_instance_name} mkdir {archive_directory}")
 
-    # Create a local directory that we will copy a bunch of times to EOS
+    total_file_count = stress_params.num_files_per_dir * stress_params.num_dirs
+
     print("Using the following parameters:")
     print(f"\tNumber of directories: {stress_params.num_dirs}")
     print(f"\tFiles per directory: {stress_params.num_files_per_dir}")
+    print(f"\tTotal files: {total_file_count}")
     print(f"\tFile size: {stress_params.file_size}")
+    print(f"\tIO threads: {stress_params.io_threads}")
 
-    # For performance reasons, we should probably stick with the old stress script (just make it a lot smaller, focused and well defined)
-    # Essentially something like ./archive_files --num-files A --num-dirs B --num-files-per-dir C --file-size D ...
-    # For now I'll keep this
-    print("Creating a single directory locally")
-    local_buffer_dir = "/dev/shm/_buffer"
-    eos_client.exec(f"rm -rf {local_buffer_dir}")
-    eos_client.exec(f"mkdir {local_buffer_dir}")
-    eos_client.exec(
-        f"seq 1 {stress_params.num_files_per_dir} | "
-        f"xargs -P {stress_params.io_threads} -I{{}} dd if=/dev/urandom of={local_buffer_dir}/file_{{}} bs={stress_params.file_size} count=1 status=none"
+    # Use persistent XRootD Python client for high throughput on many small files
+    # The remote script (xrootd_archive.py) runs inside the client pod and uses
+    # multiprocessing with persistent XRootD File objects
+    timer_start = time.time()
+    result = eos_client.archive_files_xrootd(
+        eos_host=disk_instance_name,
+        dest_dir=archive_directory,
+        num_files=total_file_count,
+        num_dirs=stress_params.num_dirs,
+        num_procs=stress_params.io_threads,
+        file_size=stress_params.file_size,
     )
 
-    # Copy this directory a bunch of times to EOS
-    print("Creating multiple directory copies on EOS")
-    timer_start = time.time()
-    for i in range(0, stress_params.num_dirs):
-        destination_dir = f"{archive_directory}/dir_{i}"
-        eos_client.exec(f"eos root://{disk_instance_name} mkdir {destination_dir}")
-        # now copy that buffer to a bunch of different files
-        # Note that right file names are unique within a given subdirectory, but not across subdirectories. I.e.
-        #   directory1: file1-file100, directory2: file1-file100
-        # We might want change this so that the file names are globally unique:
-        #   directory1: file1-file100, directory2: file101-file200
-        eos_client.exec(
-            f"xrdcp --parallel {stress_params.io_threads} --recursive {local_buffer_dir}/* root://{disk_instance_name}/{destination_dir}/"
-        )
-        num_files_copied = int(
-            eos_client.execWithOutput(f"eos root://{disk_instance_name} ls {destination_dir} | wc -l")
-        )
-        assert (
-            num_files_copied == stress_params.num_files_per_dir
-        ), f"Some files failed to copy over to {destination_dir}"
-        print(f"\tDir {i + 1}/{stress_params.num_dirs}: copy to {destination_dir} completed")
+    timer_end = time.time()
+
+    num_files_copied = int(
+        eos_client.execWithOutput(f"eos root://{disk_instance_name} find -f {archive_directory} | wc -l")
+    )
+    assert (
+        num_files_copied == total_file_count
+    ), f"Some files failed to copy over, we wanted {total_file_count} and got {num_files_copied}"
 
     # Some stats
-    timer_end = time.time()
     duration_seconds = timer_end - timer_start
-    total_file_count = stress_params.num_files_per_dir * stress_params.num_dirs
     total_megabytes = total_file_count * stress_params.file_size / 1e6
     avg_mbps = total_megabytes / duration_seconds
     avg_fps = total_file_count / duration_seconds
@@ -118,8 +121,6 @@ def test_generate_and_copy_files(env, stress_params):
     print(f"\tTotal MB:    {total_megabytes}")
     print(f"\tFiles/s:     {avg_fps:.2f}")
     print(f"\tMB/s:        {avg_mbps:.2f}")
-    # And remove the buffer again
-    eos_client.exec(f"rm -rf {local_buffer_dir}")
 
 
 # After everything has been moved, wait for the archival to complete
