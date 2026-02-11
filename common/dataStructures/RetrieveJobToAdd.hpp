@@ -16,12 +16,12 @@ struct RetrieveJobToAdd {
 
   RetrieveJobToAdd(uint32_t cNb,
                    uint64_t fS,
-                   std::string const& rra,
+                   const std::string& rra,
                    uint64_t filesize,
-                   MountPolicy p,
+                   const MountPolicy& p,
                    time_t st,
-                   std::optional<std::string> a,
-                   std::optional<std::string> dsn)
+                   const std::optional<std::string>& a,
+                   const std::optional<std::string>& dsn)
       : copyNb(cNb),
         fSeq(fS),
         retrieveRequestAddress(rra),

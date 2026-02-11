@@ -73,7 +73,7 @@ public:
                    const std::string& connstr,
                    uint64_t missingFileCopiesMinAgeSecs,
                    bool enableCtaAdminCommands,
-                   cta::log::LogContext logContext,
+                   const cta::log::LogContext& logContext,
                    bool jwtAuthEnabled,
                    std::shared_ptr<JwkCache> pubkeyCache,
                    server::TokenStorage& tokenStorage)

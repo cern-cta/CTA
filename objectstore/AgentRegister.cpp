@@ -55,7 +55,7 @@ bool cta::objectstore::AgentRegister::isEmpty() {
   return true;
 }
 
-void cta::objectstore::AgentRegister::addAgent(std::string name) {
+void cta::objectstore::AgentRegister::addAgent(const std::string& name) {
   checkPayloadWritable();
   m_payload.add_agents(name);
   m_payload.add_untrackedagents(name);
@@ -75,7 +75,7 @@ void cta::objectstore::AgentRegister::trackAgent(const std::string& name) {
   serializers::removeString(m_payload.mutable_untrackedagents(), name);
 }
 
-void cta::objectstore::AgentRegister::untrackAgent(std::string name) {
+void cta::objectstore::AgentRegister::untrackAgent(const std::string& name) {
   checkPayloadWritable();
   // Check that the agent is present (next statement throws an exception
   // if the agent is not known)
