@@ -1,3 +1,10 @@
+## 5.11.16.1-1
+
+### Bug Fixes
+
+- [frontend] Fix crash in 'cta-admin dr ls' command when using multiple scheduler backends (!1263)
+
+
 ## 5.11.16.0-1
 
 ### New Features
