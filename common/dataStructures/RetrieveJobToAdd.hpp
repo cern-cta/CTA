@@ -16,7 +16,7 @@ struct RetrieveJobToAdd {
 
   RetrieveJobToAdd(uint32_t cNb,
                    uint64_t fS,
-                   std::string rra,
+                   std::string const& rra,
                    uint64_t filesize,
                    MountPolicy p,
                    time_t st,
