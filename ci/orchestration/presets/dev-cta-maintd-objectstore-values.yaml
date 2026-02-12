@@ -7,10 +7,10 @@ maintd:
   routines:
     garbageCollect:
       replicas: 1
-      sleepInterval: 1000
+      sleepIntervalSecs: 1
     queueCleanup:
       replicas: 1
-      sleepInterval: 1000
+      sleepIntervalSecs: 1
       batchSize: 500
 
 # The remainder of the values are inherited from the default values.yaml

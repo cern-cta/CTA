@@ -13,7 +13,7 @@ GarbageCollectRoutine::GarbageCollectRoutine(cta::log::LogContext& lc,
                                              catalogue::Catalogue& catalogue)
     : m_lc(lc),
       m_garbageCollector(lc, os, agentReference, catalogue) {
-  m_lc.log(cta::log::INFO, "Created GarbageCollectRoutine");
+  m_lc.log(cta::log::INFO, "In GarbageCollectRoutine: Created GarbageCollectRoutine");
 }
 
 void GarbageCollectRoutine::execute() {

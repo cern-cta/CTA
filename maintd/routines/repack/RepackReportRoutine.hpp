@@ -13,7 +13,7 @@ namespace cta::maintd {
 
 class Scheduler;
 
-class RepackReportRoutine : public IRoutine {
+class RepackReportRoutine final : public IRoutine {
 public:
   RepackReportRoutine(cta::log::LogContext& lc, cta::Scheduler& scheduler, int timeout);
 

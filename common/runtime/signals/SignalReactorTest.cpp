@@ -19,23 +19,22 @@
 namespace unitTests {
 
 struct SignalReactorTestAccess {
-  static std::jthread::native_handle_type nativeHandle(cta::process::SignalReactor& r) {
+  static std::jthread::native_handle_type nativeHandle(cta::runtime::SignalReactor& r) {
     return r.m_thread.native_handle();
   }
 };
 
 TEST(SignalReactor, HandlesSingleSignalCorrectly) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   std::atomic<int> calledHup {0}, calledTerm {0}, calledUsr1 {0};
 
-  auto signalReactor = cta::process::SignalReactorBuilder(lc)
+  auto signalReactor = cta::runtime::SignalReactorBuilder()
                          .addSignalFunction(SIGHUP, [&]() { calledHup++; })
                          .addSignalFunction(SIGTERM, [&]() { calledTerm++; })
                          .addSignalFunction(SIGUSR1, [&]() { calledUsr1++; })
                          .withTimeoutMsecs(10)  // Check often
-                         .build();
+                         .build(dl);
 
   signalReactor.start();
 
@@ -52,16 +51,15 @@ TEST(SignalReactor, HandlesSingleSignalCorrectly) {
 
 TEST(SignalReactor, IgnoresSignalWithoutFunctionEvenIfInSigset) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   std::atomic<int> called {0};
 
-  auto signalReactor = cta::process::SignalReactorBuilder(lc)
+  auto signalReactor = cta::runtime::SignalReactorBuilder()
                          .addSignalFunction(SIGUSR1, [&]() { called++; })
                          .addSignalFunction(SIGHUP, []() {})
                          .addSignalFunction(SIGTERM, []() {})
                          .withTimeoutMsecs(10)  // Check often
-                         .build();
+                         .build(dl);
 
   signalReactor.start();
 
@@ -77,16 +75,15 @@ TEST(SignalReactor, IgnoresSignalWithoutFunctionEvenIfInSigset) {
 
 TEST(SignalReactor, HandlesMultipleSignals) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   std::atomic<int> called {0};
 
-  auto signalReactor = cta::process::SignalReactorBuilder(lc)
+  auto signalReactor = cta::runtime::SignalReactorBuilder()
                          .addSignalFunction(SIGUSR1, [&]() { called++; })
                          .addSignalFunction(SIGHUP, []() {})
                          .addSignalFunction(SIGTERM, []() {})
                          .withTimeoutMsecs(10)  // Check often
-                         .build();
+                         .build(dl);
 
   signalReactor.start();
 
@@ -107,7 +104,6 @@ TEST(SignalReactor, HandlesMultipleSignals) {
 
 TEST(SignalReactor, HandlesUnregisteredSignals) {
   cta::log::DummyLogger dl("dummy", "unitTest");
-  cta::log::LogContext lc(dl);
 
   std::atomic<int> called {0};
 
@@ -117,7 +113,7 @@ TEST(SignalReactor, HandlesUnregisteredSignals) {
   sigemptyset(&sigset);
   sigaddset(&sigset, SIGUSR1);
   sigaddset(&sigset, SIGUSR2);
-  cta::process::SignalReactor signalReactor(lc,
+  cta::runtime::SignalReactor signalReactor(dl,
                                             sigset,
                                             {
                                               {SIGUSR1, [&]() { called++; }}

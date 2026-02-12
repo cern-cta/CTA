@@ -5,10 +5,9 @@
 
 #pragma once
 
-#include "common/log/LogContext.hpp"
+#include "common/log/Logger.hpp"
 
 #include <functional>
-#include <poll.h>
 #include <thread>
 #include <unordered_map>
 
@@ -17,7 +16,7 @@ namespace unitTests {
 struct SignalReactorTestAccess;
 }  // namespace unitTests
 
-namespace cta::process {
+namespace cta::runtime {
 
 /**
  * Responsible for responding to a certain set of signals.
@@ -25,9 +24,9 @@ namespace cta::process {
  * as it needs to correctly block the signals on all threads.
  * It cannot do this if threads are already running.
  */
-class SignalReactor {
+class SignalReactor final {
 public:
-  SignalReactor(cta::log::LogContext& lc,
+  SignalReactor(cta::log::Logger& log,
                 const sigset_t& sigset,
                 const std::unordered_map<int, std::function<void()>>& signalFunctions,
                 uint32_t waitTimeoutMsecs);
@@ -55,7 +54,7 @@ public:
   void stop() noexcept;
 
 private:
-  cta::log::LogContext& m_lc;
+  cta::log::Logger& m_log;
   const sigset_t m_sigset;
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
 
@@ -67,4 +66,4 @@ private:
   friend struct unitTests::SignalReactorTestAccess;
 };
 
-}  // namespace cta::process
+}  // namespace cta::runtime

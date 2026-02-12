@@ -897,4 +897,9 @@ TEST_F(cta_UtilsTest, IsValidHex) {
   EXPECT_FALSE(cta::utils::isValidHex(invalidHex2));
 }
 
+TEST_F(cta_UtilsTest, joinCommaSeparated) {
+  const std::vector<std::string> v {"arg1", "another argument", "3"};
+  ASSERT_EQ(cta::utils::joinCommaSeparated(v), "arg1, another argument, 3");
+}
+
 }  // namespace unitTests

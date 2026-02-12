@@ -1,0 +1,129 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+####################################################################################################
+#
+# CTA Maintd Service Configuration
+#
+####################################################################################################
+
+
+[catalogue]
+  # Path to the CTA Catalogue configuration file.
+  config_file = "/etc/cta/cta-catalogue.conf"
+
+
+[scheduler]
+  # The unique string to identify the backend scheduler resources. As an example, it can be structured as:
+  # "[ceph|postgres|vfs][User|Repack]".
+  backend_name = "cephUser"
+  # URL of the objectstore (CTA Scheduler Database). Usually this will be the URL of a Ceph RADOS.
+  # objectstore. For testing or small installations, a file-based objectstore can be used instead.
+  objectstore_backend_path = "rados://cta@tapecta:cta"
+  # If omitted, 600 is used.
+  tape_cache_max_age_secs = 600
+  # If omitted, 10 is used.
+  retrieve_queue_cache_max_age_secs = 10
+
+
+[logging]
+  # Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
+  # CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
+  # If omitted INFO is used.
+  level = "INFO"
+
+  # Log format. Possible values are "json" and "kv" (key-value).
+  # If omitted json is used.
+  format = "json"
+
+  # The following key-value pairs are added to all log lines.
+  # All keys are optional as this is purely for monitoring purposes.
+  [logging.attributes]
+    # Unique string to identify CTA's instance the maintd process is serving (i.e: production, preproduction).
+    # Each of these instances should be associated with a specific CTA catalogue instance.
+    instance = "production"
+
+
+# Note that telemetry is experimental and disabled by default.
+# To make use of this experimental feature, ensure telemetry is enabled under [experimental].
+[telemetry]
+  # Path to the declarative config file to initialise the OpenTelemetry SDK.
+  # If omitted or an empty string, telemetry will be disabled.
+  config_file = "/etc/cta/cta-otel.yaml"
+  # Controls how the application reacts if telemetry initialization fails.
+  # Possible values:
+  #   "warn": log a warning and continue startup without telemetry.
+  #   "fatal": treat the failure as an error and abort startup.
+  # If omitted, "warn" is used
+  on_init_failure = "warn"
+
+
+# Configuration for a health server. The health server, if enabled, will expose the following endpoints:
+# - host:port/health/ready
+# - host:port/health/live
+# This allows for configuring readiness and liveness probes if so desired.
+[health_server]
+  # Whether to enable the health server or not.
+  # If omitted, false is used.
+  enabled = false
+  # Where to accept connections from. Setting this to 127.0.0.1 will make it only accept connections from localhost.
+  # Set to 0.0.0.0 to accept connections from anywhere.
+  # Set to a socket path if using Unix Domain Sockets. For example, "/run/cta/cta-maintd/health.sock".
+  # If omitted, 127.0.0.1 is used.
+  host = "127.0.0.1"
+  # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port.
+  # When using Unix Domain Sockets, this port value will be unused.
+  # If omitted, 8080 is used.
+  port = 8080
+
+
+# Makes XRootD environment variables explicit.
+# XRootD is what is used to connect to the disk instance.
+[xrootd]
+  # Overrides XrdSecPROTOCOL.
+  # If omitted, sss is used.
+  security_protocol = "sss"
+  # Overrides XrdSecSSSKT.
+  sss_keytab_path = "/etc/cta/cta.sss.keytab"
+
+
+# Maintd runs all routines sequentially: A -> B -> C -> sleep -> A -> B -> C -> sleep ...
+# Here [A -> B -> C] is a single cycle of routine execution.
+# A full cycle of routine execution refers to executing all enabled routines once and excludes the sleep interval.
+# Due to this operating model, it is not possible to define different sleep intervals per routine.
+# If this behaviour is desired, it is recommended to run several maintd processes, each with only one routine enabled.
+# At that point, a cycle consists of a single routine and cycle_sleep_interval_secs effectively becomes a per-routine sleep interval.
+[routines]
+  # The sleep duration in between cycles of routine executions.
+  # If omitted, 10 is used.
+  cycle_sleep_interval_secs = 10
+
+  # The maximum duration in seconds a single cycle of routine execution is allowed to take.
+  # If a cycle takes longer than this value, it will not be interrupted.
+  # Instead, the process will no longer be considered alive by the health server.
+  # If omitted, 900 is used (15 minutes).
+  max_cycle_duration_secs = 900
+
+  # Routine that reports archive transfer success/failures to the disk system.
+  disk_report_archive  = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
+  # Routine that reports retrieve transfer success/failures to the disk system.
+  disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
+  # Routine that expands repack requests.
+  repack_expand        = { enabled = true, max_to_expand = 2 }
+  # Routine that handles the reporting of the requests created by repack requests.
+  repack_report        = { enabled = true, soft_timeout_secs = 30 }
+  # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests to other queues.
+  queue_cleanup        = { enabled = true, batch_size = 500 }
+  # Objectstore routine that garbage collects stale agents and objects.
+  garbage_collect      = { enabled = true }
+
+  # Postgres-only queue cleanup.
+  # user_active_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  # repack_active_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  # user_pending_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  # repack_pending_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
+  # scheduler_maintenance_cleanup = { enabled = true, batch_size = 1000, age_for_deletion_secs = 1209600 }
+
+
+[experimental]
+  telemetry_enabled = false

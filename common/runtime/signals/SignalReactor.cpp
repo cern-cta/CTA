@@ -7,23 +7,25 @@
 
 #include "SignalUtils.hpp"
 #include "common/exception/Errnum.hpp"
+#include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
 
 #include <chrono>
+#include <poll.h>
 #include <signal.h>
 #include <sys/prctl.h>
 #include <thread>
 
-namespace cta::process {
+namespace cta::runtime {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SignalReactor::SignalReactor(cta::log::LogContext& lc,
+SignalReactor::SignalReactor(cta::log::Logger& log,
                              const sigset_t& sigset,
                              const std::unordered_map<int, std::function<void()>>& signalFunctions,
                              uint32_t waitTimeoutMsecs)
-    : m_lc(lc),
+    : m_log(log),
       m_sigset(sigset),
       m_signalFunctions(signalFunctions),
       m_waitTimeoutMsecs(waitTimeoutMsecs) {}
@@ -42,22 +44,25 @@ SignalReactor::~SignalReactor() {
 void SignalReactor::start() {
   cta::exception::Errnum::throwOnNonZero(::pthread_sigmask(SIG_BLOCK, &m_sigset, nullptr),
                                          "In SignalReactor::start(): pthread_sigmask() failed");
-  m_thread = std::jthread(
-    [this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_lc.logger(), m_waitTimeoutMsecs); });
+  m_thread =
+    std::jthread([this](std::stop_token st) { run(st, m_signalFunctions, m_sigset, m_log, m_waitTimeoutMsecs); });
 }
 
 //------------------------------------------------------------------------------
 // SignalReactor::stop
 //------------------------------------------------------------------------------
 void SignalReactor::stop() noexcept {
+  m_log(log::INFO, "In SignalReactor::stop(): stopping SignalReactor");
   m_thread.request_stop();
   if (m_thread.joinable()) {
     try {
       m_thread.join();
     } catch (std::system_error& e) {
-      log::ScopedParamContainer params(m_lc);
-      params.add("exceptionMessage", e.what());
-      m_lc.log(log::ERR, "In SignalReactor::stop(): failed to join thread");
+      m_log(log::ERR,
+            "In SignalReactor::stop(): failed to join thread",
+            {
+              {"exceptionMessage", e.what()}
+      });
     }
   }
 }
@@ -114,6 +119,7 @@ void SignalReactor::run(std::stop_token st,
     lc.log(log::ERR, "In SignalReactor::run(): received an unknown exception.");
     throw;
   }
+  lc.log(log::INFO, "In SignalReactor::run(): SignalReactor stopped listening");
 }
 
-}  // namespace cta::process
+}  // namespace cta::runtime

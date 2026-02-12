@@ -7,7 +7,7 @@
 
 #include <signal.h>
 
-namespace cta::process::utils {
+namespace cta::runtime::utils {
 
 std::string signalToString(int signal) {
   // It doesn't seem like there is a reliable way of automatically converting these values
@@ -74,6 +74,8 @@ std::string signalToString(int signal) {
 #endif
     case SIGSYS:
       return "SIGSYS";
+    default:
+      break;
   }
 
   // Handle realtime signals
@@ -84,4 +86,4 @@ std::string signalToString(int signal) {
   return "UNKNOWN(" + std::to_string(signal) + ")";
 }
 
-}  // namespace cta::process::utils
+}  // namespace cta::runtime::utils

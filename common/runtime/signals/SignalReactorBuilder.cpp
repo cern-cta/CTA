@@ -11,27 +11,25 @@
 
 #include <signal.h>
 
-namespace cta::process {
+namespace cta::runtime {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-SignalReactorBuilder::SignalReactorBuilder(cta::log::LogContext& lc) : m_lc(lc) {
+SignalReactorBuilder::SignalReactorBuilder() {
   sigemptyset(&m_sigset);
 }
 
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::addSignalFunction
 //------------------------------------------------------------------------------
-SignalReactorBuilder& SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>& func) {
-  if (m_signalFunctions.contains(signal)) {
-    m_lc.log(log::WARNING,
-             "In SignalReactorBuilder::addSignalFunction(): Function already registered for signal "
-               + std::to_string(signal));
+SignalReactorBuilder&
+SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>& func, bool overwrite) {
+  if (m_signalFunctions.contains(signal) && !overwrite) {
+    throw exception::Exception("Function already registered for " + utils::signalToString(signal)
+                               + ", while overwrite was disabled");
     return *this;
   }
-  m_lc.log(log::INFO,
-           "In SignalReactorBuilder::addSignalFunction(): Adding function for signal " + utils::signalToString(signal));
   sigaddset(&m_sigset, signal);
   m_signalFunctions[signal] = func;
   return *this;
@@ -48,8 +46,8 @@ SignalReactorBuilder& SignalReactorBuilder::withTimeoutMsecs(uint32_t msecs) {
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::build
 //------------------------------------------------------------------------------
-SignalReactor SignalReactorBuilder::build() {
-  return SignalReactor(m_lc, m_sigset, std::move(m_signalFunctions), m_waitTimeoutMsecs);
+SignalReactor SignalReactorBuilder::build(cta::log::Logger& log) {
+  return SignalReactor(log, m_sigset, std::move(m_signalFunctions), m_waitTimeoutMsecs);
 }
 
-}  // namespace cta::process
+}  // namespace cta::runtime

@@ -1,11 +1,12 @@
 /*
- * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2025 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
 
 #include "IRoutine.hpp"
+#include "MaintdConfig.hpp"
 #include "common/log/LogContext.hpp"
 
 #include <vector>
@@ -18,9 +19,9 @@ namespace cta::maintd {
  * 2. sleep
  * 3. Go to 1.
  */
-class RoutineRunner {
+class RoutineRunner final {
 public:
-  explicit RoutineRunner(uint32_t sleepInterval);
+  RoutineRunner(const RoutinesConfig& routinesConfig, std::vector<std::unique_ptr<IRoutine>> routines);
 
   ~RoutineRunner() = default;
 
@@ -33,24 +34,20 @@ public:
    */
   void run(cta::log::LogContext& lc);
 
-  bool isRunning();
+  bool isLive() const;
 
-  /**
-   * Whether a routine executed and finished recently
-   * @param seconds Number of seconds that defines recently.
-   * @return True if a routine finished within the last `seconds` seconds
-   */
-  bool didRecentlyFinishRoutine(int64_t seconds);
+  bool isReady() const;
 
 private:
-  void safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc);
+  void safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) const;
 
-  std::vector<std::unique_ptr<IRoutine>> m_routines;
+  const RoutinesConfig& m_config;
+  const std::vector<std::unique_ptr<IRoutine>> m_routines;
+
   std::atomic<bool> m_running = false;
 
-  uint32_t m_sleepInterval;
-
-  std::atomic<int64_t> m_lastExecutionTime {0};
+  std::atomic<int64_t> m_executionStartTime {0};
+  std::atomic<int64_t> m_sleepStartTime {0};
 };
 
 }  // namespace cta::maintd

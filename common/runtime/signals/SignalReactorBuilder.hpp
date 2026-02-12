@@ -11,25 +11,24 @@
 #include <functional>
 #include <unordered_map>
 
-namespace cta::process {
+namespace cta::runtime {
 
 /**
  * This builder allows for the construction of an immutable SignalReactor object
  */
-class SignalReactorBuilder {
+class SignalReactorBuilder final {
 public:
-  explicit SignalReactorBuilder(cta::log::LogContext& lc);
+  explicit SignalReactorBuilder();
 
-  SignalReactorBuilder& addSignalFunction(int signal, const std::function<void()>& func);
+  SignalReactorBuilder& addSignalFunction(int signal, const std::function<void()>& func, bool overwrite = false);
   SignalReactorBuilder& withTimeoutMsecs(uint32_t msecs);
 
-  SignalReactor build();
+  SignalReactor build(cta::log::Logger& log);
 
 private:
-  cta::log::LogContext& m_lc;
   std::unordered_map<int, std::function<void()>> m_signalFunctions;
   sigset_t m_sigset;
   uint32_t m_waitTimeoutMsecs = 1000;
 };
 
-}  // namespace cta::process
+}  // namespace cta::runtime

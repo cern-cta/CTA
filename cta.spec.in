@@ -168,7 +168,7 @@ CERN Tape Archive:
 %defattr(-,root,root)
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-maintd
 %attr(0755,root,root) %{_bindir}/cta-maintd
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-maintd.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-maintd.example.toml
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-maintd.1cta.gz
 %attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-maintd.service
 
@@ -401,7 +401,7 @@ The shared libraries
 %{_libdir}/libctarao.so*
 %{_libdir}/libctadisk.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.conf.example
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-otel.yaml.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-otel.example.yaml
 
 #CTA-lib installs libraries so we need ldconfig.
 %post -n cta-lib -p /sbin/ldconfig

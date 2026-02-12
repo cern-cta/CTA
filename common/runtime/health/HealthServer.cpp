@@ -7,29 +7,33 @@
 
 #include "common/exception/Errnum.hpp"
 #include "common/exception/TimeOut.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/utils/utils.hpp"
 
 #include <httplib.h>
 
-namespace cta::common {
+namespace cta::runtime {
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-HealthServer::HealthServer(cta::log::LogContext& lc,
+HealthServer::HealthServer(cta::log::Logger& log,
                            const std::string& host,
                            int port,
                            const std::function<bool()>& readinessFunc,
                            const std::function<bool()>& livenessFunc,
                            int listenTimeoutMsec)
-    : m_host(host),
+    : m_log(log),
+      m_host(host),
       m_port(port),
       m_readinessFunc(readinessFunc),
       m_livenessFunc(livenessFunc),
-      m_listenTimeoutMsec(listenTimeoutMsec),
-      m_lc(lc) {
+      m_listenTimeoutMsec(listenTimeoutMsec) {
+  if (m_host.empty()) {
+    throw exception::UserError("HealthServer host cannot be empty");
+  }
   if (isUdsHost(m_host)) {
-    m_lc.log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Ignoring port value.");
+    m_log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Ignoring port value.");
     m_port = 80;  // technically the port shouldn't be used but the httplib example uses port 80
   }
 }
@@ -45,7 +49,7 @@ HealthServer::~HealthServer() {
 //------------------------------------------------------------------------------
 // HealthServer::isUdsHost
 //------------------------------------------------------------------------------
-bool HealthServer::isUdsHost(const std::string& host) {
+bool HealthServer::isUdsHost(std::string_view host) {
   return host.ends_with(".sock");
 }
 
@@ -83,12 +87,13 @@ void HealthServer::start() {
   });
 
   // Start listening on a separate thread, because the listen() call is blocking
-  m_thread = std::jthread([this]() { run(*m_server, m_host, m_port, m_lc.logger()); });
+  m_thread = std::jthread([this]() { run(*m_server, m_host, m_port, m_log); });
   // Block until the server actually started listening
   try {
-    utils::waitForCondition([&]() { return isRunning(); }, m_listenTimeoutMsec);
-  } catch (cta::exception::TimeOut& ex) {
-    m_lc.log(log::ERR, "In HealthServer::start(): failed to start healthServer");
+    // Small check interval to ensure we can start quickly
+    utils::waitForCondition([this]() { return isRunning(); }, m_listenTimeoutMsec, 10);
+  } catch (const cta::exception::TimeOut&) {
+    m_log(log::ERR, "In HealthServer::start(): failed to start healthServer");
     stop();
   }
 }
@@ -97,7 +102,7 @@ void HealthServer::start() {
 // HealthServer::stop
 //------------------------------------------------------------------------------
 void HealthServer::stop() noexcept {
-  m_lc.log(log::INFO, "In HealthServer::stop(): stopping health server");
+  m_log(log::INFO, "In HealthServer::stop(): stopping HealthServer");
   if (m_thread.joinable()) {
     if (m_server) {
       m_server->stop();
@@ -105,12 +110,13 @@ void HealthServer::stop() noexcept {
     try {
       m_thread.join();
     } catch (std::system_error& e) {
-      log::ScopedParamContainer params(m_lc);
-      params.add("exceptionMessage", e.what());
-      m_lc.log(log::ERR, "In HealthServer::stop(): failed to join thread");
+      m_log(log::ERR,
+            "In HealthServer::stop(): failed to join thread",
+            {
+              {"exceptionMessage", e.what()}
+      });
     }
   }
-  m_lc.log(log::INFO, "In HealthServer::stop(): health server stopped");
 }
 
 //------------------------------------------------------------------------------
@@ -130,7 +136,7 @@ void HealthServer::run(httplib::Server& server, std::string host, int port, cta:
   // LogContext is not thread safe, which is why we pass in the logger and not the logcontext
   cta::log::LogContext lc(log);
   try {
-    lc.log(log::INFO, "In HealthServer::run(): starting health server");
+    lc.log(log::INFO, "In HealthServer::run(): starting HealthServer");
     bool listenSuccess;
     if (isUdsHost(host)) {
       // Unix domain socket
@@ -156,4 +162,4 @@ void HealthServer::run(httplib::Server& server, std::string host, int port, cta:
   lc.log(log::INFO, "In HealthServer::run(): HealthServer stopped listening");
 }
 
-}  // namespace cta::common
+}  // namespace cta::runtime
