@@ -267,7 +267,7 @@ public:
       return EXIT_SUCCESS;
     }
 
-    initLogging(config, cliOptions);
+    m_logPtr = initLogger(config, cliOptions);
     // We need to start the reactor builder here as we may want to register custom signals.
     // It is also for that reason that we don't build the actual SignalReactor just yet.
     m_signalReactorBuilder.addSignalFunction(SIGTERM, [this]() { m_app.stop(); });
@@ -283,7 +283,7 @@ public:
     // Note that healthServer lives outside of safeRunWithLog so that it is not destructed before we output a (potential) FATAL message.
     std::unique_ptr<HealthServer> healthServer;
 
-    return safeRunWithLog(*m_logPtr, [this, cliOptions, config, &healthServer]() {
+    return safeRunWithLog(*m_logPtr, [this, &cliOptions, &config, &healthServer]() {
       cta::log::Logger& log = *m_logPtr;
       log(log::INFO, "Initialising application: " + m_appName);
 
@@ -320,7 +320,7 @@ public:
   }
 
 private:
-  void initLogging(const TConfig& config, const TOpts& cliOptions) {
+  std::unique_ptr<log::Logger> initLogger(const TConfig& config, const TOpts& cliOptions) const {
     using namespace cta;
     std::string shortHostName;
     try {
@@ -328,20 +328,20 @@ private:
     } catch (const exception::Errnum& ex) {
       throw exception::Exception("Failed to get host name: " + ex.getMessage().str());
     }
-
+    std::unique_ptr<log::Logger> logPtr;
     try {
       if (!cliOptions.logFilePath.empty()) {
-        m_logPtr = std::make_unique<log::FileLogger>(shortHostName, m_appName, cliOptions.logFilePath, log::INFO);
+        logPtr = std::make_unique<log::FileLogger>(shortHostName, m_appName, cliOptions.logFilePath, log::INFO);
       } else {
         // Default to stdout logger
-        m_logPtr = std::make_unique<log::StdoutLogger>(shortHostName, m_appName);
+        logPtr = std::make_unique<log::StdoutLogger>(shortHostName, m_appName);
       }
-      m_logPtr->setLogFormat(config.logging.format);
+      logPtr->setLogFormat(config.logging.format);
     } catch (exception::Exception& ex) {
       throw exception::Exception("Failed to instantiate CTA logging system: " + ex.getMessage().str());
     }
 
-    m_logPtr->setLogMask(config.logging.level);
+    logPtr->setLogMask(config.logging.level);
 
     // Add the attributes present in every single log message
     std::map<std::string, std::string> logAttributes;
@@ -354,7 +354,8 @@ private:
     for (const auto& [key, value] : config.logging.attributes) {
       logAttributes[key] = value;
     }
-    m_logPtr->setStaticParams(logAttributes);
+    logPtr->setStaticParams(logAttributes);
+    return logPtr;
   }
 
   std::unique_ptr<HealthServer> initHealthServer(const TConfig& config) {

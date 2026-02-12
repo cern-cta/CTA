@@ -23,7 +23,7 @@ data:
       backend_name = {{ $schedulerConfig.backend | quote }}
 
       {{- if eq $schedulerConfig.backend "postgres" }}
-      config_file = "/etc/cta/cta-catalogue.conf"
+      config_file = "/etc/cta/cta-scheduler.conf"
       {{- else }}
       objectstore_backend_path = {{ include "global.schedulerUrl" $ | quote }}
       {{- end }}

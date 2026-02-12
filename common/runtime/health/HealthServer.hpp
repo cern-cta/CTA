@@ -53,7 +53,7 @@ public:
   static bool isUdsHost(std::string_view host);
 
 private:
-  cta::log::LogContext m_lc;
+  cta::log::Logger& m_log;
   // From a functional perspective, this doesn't need to be a pointer
   // However, it allows us to forward declare httplib::Server, preventing the expensive include in this header file
   std::unique_ptr<httplib::Server> m_server;

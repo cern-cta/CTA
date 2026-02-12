@@ -23,7 +23,7 @@ HealthServer::HealthServer(cta::log::Logger& log,
                            const std::function<bool()>& readinessFunc,
                            const std::function<bool()>& livenessFunc,
                            int listenTimeoutMsec)
-    : m_lc(log::LogContext(log)),
+    : m_log(log),
       m_host(host),
       m_port(port),
       m_readinessFunc(readinessFunc),
@@ -33,7 +33,7 @@ HealthServer::HealthServer(cta::log::Logger& log,
     throw exception::UserError("HealthServer host cannot be empty");
   }
   if (isUdsHost(m_host)) {
-    m_lc.log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Ignoring port value.");
+    m_log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Ignoring port value.");
     m_port = 80;  // technically the port shouldn't be used but the httplib example uses port 80
   }
 }
@@ -93,7 +93,7 @@ void HealthServer::start() {
     // Small check interval to ensure we can start quickly
     utils::waitForCondition([this]() { return isRunning(); }, m_listenTimeoutMsec, 10);
   } catch (const cta::exception::TimeOut&) {
-    m_lc.log(log::ERR, "In HealthServer::start(): failed to start healthServer");
+    m_log(log::ERR, "In HealthServer::start(): failed to start healthServer");
     stop();
   }
 }
@@ -102,7 +102,7 @@ void HealthServer::start() {
 // HealthServer::stop
 //------------------------------------------------------------------------------
 void HealthServer::stop() noexcept {
-  m_lc.log(log::INFO, "In HealthServer::stop(): stopping HealthServer");
+  m_log(log::INFO, "In HealthServer::stop(): stopping HealthServer");
   if (m_thread.joinable()) {
     if (m_server) {
       m_server->stop();
@@ -110,9 +110,11 @@ void HealthServer::stop() noexcept {
     try {
       m_thread.join();
     } catch (std::system_error& e) {
-      log::ScopedParamContainer params(m_lc);
-      params.add("exceptionMessage", e.what());
-      m_lc.log(log::ERR, "In HealthServer::stop(): failed to join thread");
+      m_log(log::ERR,
+            "In HealthServer::stop(): failed to join thread",
+            {
+              {"exceptionMessage", e.what()}
+      });
     }
   }
 }

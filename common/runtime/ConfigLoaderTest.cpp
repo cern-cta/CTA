@@ -36,6 +36,11 @@ struct MyEnumConfig {
 // Tests
 //------------------------------------------------------------------------------
 
+TEST(ConfigLoader, ThrowsOnNonExistingPath) {
+  EXPECT_THROW((cta::runtime::loadFromToml<MyEnumConfig>("/tmp/idefinitelydontexist.toml", false)),
+               cta::exception::UserError);
+}
+
 // Lenient (default) Mode
 
 TEST(ConfigLoader, LenientThrowsOnGarbageToml) {
