@@ -87,7 +87,7 @@ void HealthServer::start() {
   });
 
   // Start listening on a separate thread, because the listen() call is blocking
-  m_thread = std::jthread([this]() { run(*m_server, m_host, m_port, m_lc.logger()); });
+  m_thread = std::jthread([this]() { run(*m_server, m_host, m_port, m_log); });
   // Block until the server actually started listening
   try {
     // Small check interval to ensure we can start quickly
