@@ -5,7 +5,6 @@
 
 #include "RoutineRunner.hpp"
 
-#include "common/Timer.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
