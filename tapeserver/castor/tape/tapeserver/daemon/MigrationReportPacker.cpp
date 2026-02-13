@@ -8,8 +8,8 @@
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "catalogue/TapeFileWritten.hpp"
-#include "common/Timer.hpp"
 #include "common/exception/NoSuchObject.hpp"
+#include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 
 #include <cstdio>

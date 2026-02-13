@@ -6,7 +6,7 @@
 #pragma once
 #include "FetchReportOrFlushLimits.hpp"
 #include "common/Constants.hpp"
-#include "common/SourcedParameter.hpp"
+#include "common/config/SourcedParameter.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 

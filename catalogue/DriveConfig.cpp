@@ -6,7 +6,7 @@
 #include "catalogue/DriveConfig.hpp"
 
 #include "catalogue/Catalogue.hpp"
-#include "common/SourcedParameter.hpp"
+#include "common/config/SourcedParameter.hpp"
 #include "tapeserver/daemon/common/FetchReportOrFlushLimits.hpp"
 
 #include <algorithm>

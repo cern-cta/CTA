@@ -5,8 +5,8 @@
 
 #include "AgentHeartbeatThread.hpp"
 
-#include "common/Timer.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 
 #include <signal.h>

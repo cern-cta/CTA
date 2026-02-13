@@ -8,10 +8,6 @@ find_package(Protobuf3 REQUIRED)
 
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
-
-include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
-
 # include stuff from the callback api here because we need to serve the streaming commands by registering their service class impl
 add_executable(cta-frontend-grpc
   Main.cpp
@@ -28,11 +24,11 @@ add_executable(cta-frontend-grpc
 if(CTA_USE_PGSCHED)
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
-    ctafrontendcommon ctascheduler ctacommon ctacatalogue ctagrpc JwkCache gssapi_krb5)
+    ctafrontendcommon ctascheduler ctacommon ctacatalogue ctagrpc ctaauth gssapi_krb5)
 else()
   target_link_libraries(cta-frontend-grpc
     ${GRPC_GRPC++_REFLECTION_LIBRARY}
-    ctafrontendcommon ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc JwkCache gssapi_krb5)
+    ctafrontendcommon ctascheduler ctacommon ctaobjectstore ctacatalogue ctagrpc ctaauth gssapi_krb5)
 endif()
 
 add_manpage(cta-frontend-grpc)

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/CreationLog.hpp"
+#include "common/dataStructures/CreationLog.hpp"
 #include "common/priorities/DriveQuota.hpp"
 #include "common/priorities/MountCriteria.hpp"
 

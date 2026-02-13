@@ -6,8 +6,8 @@
 #pragma once
 
 #include "Agent.hpp"
-#include "common/Timer.hpp"
 #include "common/exception/NoSuchObject.hpp"
+#include "common/utils/Timer.hpp"
 
 namespace cta::objectstore {
 

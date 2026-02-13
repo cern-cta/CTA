@@ -19,16 +19,17 @@ include_directories (${XROOTD_INCLUDE_DIR})
 #
 include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 
-set_source_files_properties(CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
+set_source_files_properties(checksum/CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 
 set (COMMON_LIB_SRC_FILES
-  checksum/ChecksumBlob.cpp
-  CmdLineParams.cpp
   CmdLineTool.cpp
+  CmdLineParams.cpp
+  checksum/ChecksumBlob.cpp
+  checksum/CRC.cpp
   config/Config.cpp
-  ConfigurationFile.cpp
-  CRC.cpp
-  CreationLog.cpp
+  config/ConfigurationFile.cpp
+  config/SourcedParameter.cpp
+  dataStructures/CreationLog.cpp
   dataStructures/AdminUser.cpp
   dataStructures/ArchiveFile.cpp
   dataStructures/ArchiveFileQueueCriteriaAndFileId.cpp
@@ -128,8 +129,7 @@ set (COMMON_LIB_SRC_FILES
   telemetry/metrics/instruments/SchedulerInstruments.cpp
   telemetry/metrics/instruments/TapedInstruments.cpp
   telemetry/metrics/instruments/MaintdInstruments.cpp
-  SourcedParameter.cpp
-  Timer.cpp
+  utils/Timer.cpp
   utils/Base64.cpp
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp
@@ -162,9 +162,12 @@ target_link_libraries (ctacommon
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
+  auth/JwkCacheTest.cpp
+  auth/JwtValidationTest.cpp
   checksum/ChecksumBlobTest.cpp
-  ConfigurationFileTests.cpp
-  SourcedParameterTests.cpp
+  checksum/CRCTest.cpp
+  config/ConfigurationFileTests.cpp
+  config/SourcedParameterTests.cpp
   dataStructures/ArchiveFileTest.cpp
   dataStructures/LogicalLibraryTest.cpp
   dataStructures/StorageClassTest.cpp
@@ -177,7 +180,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   log/StringLoggerTest.cpp
   log/LoggerParamTypeTest.cpp
   remoteFS/RemotePathTest.cpp
-  CRCTest.cpp
   runtime/ApplicationTest.cpp
   runtime/ConfigLoaderTest.cpp
   runtime/ArgParserTest.cpp
@@ -196,7 +198,6 @@ set (COMMON_UNIT_TESTS_LIB_SRC_FILES
   utils/UtilsTest.cpp
   json/test/JSONCTestObject.cpp
   json/test/JSONCObjectTest.cpp
-  JwkCacheTests.cpp
 )
 
 add_library (ctacommonunittests SHARED
@@ -204,11 +205,17 @@ add_library (ctacommonunittests SHARED
 set_property(TARGET ctacommonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacommonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
+
+set (AUTH_LIB_SRC_FILES
+  auth/JwkCache.cpp
+  auth/JwtValidation.cpp
+)
+
 find_package(OpenSSL REQUIRED)
 include_directories(${CMAKE_SOURCE_DIR}/common/jwt-cpp/include/)
-add_library(JwkCache STATIC JwkCache.cpp)
-target_link_libraries(JwkCache PRIVATE curl OpenSSL::Crypto)
-target_link_libraries(ctacommonunittests JwkCache)
+add_library(ctaauth STATIC ${AUTH_LIB_SRC_FILES})
+target_link_libraries(ctaauth PRIVATE curl OpenSSL::Crypto)
+target_link_libraries(ctacommonunittests ctaauth)
 
 install(TARGETS ctacommonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 add_executable(mutexLtrace process/threading/MutexLtrace.cpp)

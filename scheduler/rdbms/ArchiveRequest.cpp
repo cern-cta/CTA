@@ -5,8 +5,8 @@
 
 #include "scheduler/rdbms/ArchiveRequest.hpp"
 
-#include "common/Timer.hpp"
 #include "common/exception/NotImplementedException.hpp"
+#include "common/utils/Timer.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 
 namespace cta::schedulerdb {
