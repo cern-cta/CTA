@@ -59,8 +59,10 @@ fi
 
 # Get Catalogue Schema version
 project_json_file="../../../project.json"
+catalogue_schema_version_int=$(jq '.catalogueVersion | tonumber | floor' ${project_json_file})
 catalogue_schema_version=$(jq .catalogueVersion ${project_json_file})
-prev_catalogue_schema_version=$(jq .supportedCatalogueVersions[] ${project_json_file} | grep $catalogue_schema_version | head -1)
+prev_catalogue_schema_version=$(jq .supportedCatalogueVersions[] ${project_json_file} | grep $catalogue_schema_version_int | head -1)
+prev_catalogue_schema_version="$prev_catalogue_schema_version.0"
 defaultPlatform=$(jq -r .dev.defaultPlatform ${project_json_file})
 
 echo "Checking if the current schema version is the same as the previous one"
