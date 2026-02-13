@@ -17,7 +17,7 @@ public:
   explicit GrpcClient(std::shared_ptr<grpc::Channel> channel) : stub_(eos::rpc::Eos::NewStub(channel)) {}
 
   // factory function
-  static std::unique_ptr<GrpcClient> Create(std::string const& endpoint, std::string const& token);
+  static std::unique_ptr<GrpcClient> Create(const std::string& endpoint, const std::string& token);
 
   std::string ping(const std::string& payload);
 
