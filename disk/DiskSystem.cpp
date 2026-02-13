@@ -100,7 +100,7 @@ void DiskSystemFreeSpaceList::updateFreeSpaceEntry(const std::string& diskSystem
 void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::string>& diskSystems,
                                                        cta::catalogue::Catalogue& catalogue,
                                                        log::LogContext& lc) {
-  auto getDiskSystemFreeSpaceQueryURL = [](DiskSystem ds) {
+  auto getDiskSystemFreeSpaceQueryURL = [](const DiskSystem& ds) {
     auto dsURL = ds.diskInstanceSpace.freeSpaceQueryURL;
     // Replace URLS starting in eosSpace with eos:{diskInstanceName}
     if (dsURL.rfind("eosSpace", 0) == 0) {
