@@ -28,7 +28,7 @@ void RetrieveActivityCountMap::incCount(const std::string& activity) {
   auto counter =
     std::find_if(m_activityCountMap.begin(),
                  m_activityCountMap.end(),
-                 [&activity](serializers::RetrieveActivityCountPair pair) { return pair.activity() == activity; });
+                 [&activity](const serializers::RetrieveActivityCountPair& pair) { return pair.activity() == activity; });
   if (counter != m_activityCountMap.end()) {
     if (counter->count() < 1) {
       std::stringstream err;
