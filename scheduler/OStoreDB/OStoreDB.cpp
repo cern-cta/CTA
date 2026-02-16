@@ -1331,7 +1331,7 @@ jobFound: {
     };
     // A bit ugly, but we need a non-null pointer for the "deleter" to be called.
     std::unique_ptr<void, decltype(scopedCounterDecrement)> scopedCounterDecrementerInstance((void*) 1,
-                                               scopedCounterDecrement);
+                                                                                             scopedCounterDecrement);
     log::LogContext logContext(m_logger);
     utils::Timer timer;
     // Add the request to the queue (with a shared access).
@@ -1370,7 +1370,7 @@ jobFound: {
       .add("requestUnlockTime", rUnlockTime)
       .add("agentOwnershipResetTime", agOwnershipResetTime)
       .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime + agOwnershipResetTime)
-    .log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
+      .log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);
