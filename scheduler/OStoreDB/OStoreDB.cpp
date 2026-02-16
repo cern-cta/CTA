@@ -1242,32 +1242,32 @@ OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
   // Get the best vid from the cache
   std::set<std::string, std::less<>> candidateVids;
   for (auto& tf : criteria.archiveFile.tapeFiles) {
-  candidateVids.insert(tf.vid);
+    candidateVids.insert(tf.vid);
   }
   SchedulerDatabase::RetrieveRequestInfo ret;
   ret.selectedVid = Helpers::selectBestRetrieveQueue(candidateVids, m_catalogue, m_objectStore, logContext);
   // Check that the requested retrieve job (for the provided vid) exists, and record the copynb.
   uint64_t bestCopyNb;
   for (auto& tf : criteria.archiveFile.tapeFiles) {
-  if (tf.vid == ret.selectedVid) {
-    bestCopyNb = tf.copyNb;
-    // Appending the file size to the dstURL so that
-    // XrootD will fail to retrieve if there is not enough free space
-    // in the eos disk
-    rqst.appendFileSizeToDstURL(tf.fileSize);
-    goto vidFound;
-  }
+    if (tf.vid == ret.selectedVid) {
+      bestCopyNb = tf.copyNb;
+      // Appending the file size to the dstURL so that
+      // XrootD will fail to retrieve if there is not enough free space
+      // in the eos disk
+      rqst.appendFileSizeToDstURL(tf.fileSize);
+      goto vidFound;
+    }
   }
   {
-  std::stringstream err;
-  err << "In OStoreDB::queueRetrieve(): no tape file for requested vid. archiveId="
-    << criteria.archiveFile.archiveFileID << " vid=" << ret.selectedVid;
-  throw RetrieveRequestHasNoCopies(err.str());
+    std::stringstream err;
+    err << "In OStoreDB::queueRetrieve(): no tape file for requested vid. archiveId="
+        << criteria.archiveFile.archiveFileID << " vid=" << ret.selectedVid;
+    throw RetrieveRequestHasNoCopies(err.str());
   }
 vidFound:
   // In order to post the job, construct it first in memory.
   auto rReq =
-  std::make_unique<objectstore::RetrieveRequest>(m_agentReference->nextId("RetrieveRequest"), m_objectStore);
+    std::make_unique<objectstore::RetrieveRequest>(m_agentReference->nextId("RetrieveRequest"), m_objectStore);
   ret.requestId = rReq->getAddressIfSet();
   rReq->initialize();
   rReq->setSchedulerRequest(rqst);
@@ -1276,22 +1276,22 @@ vidFound:
   rReq->setCreationTime(rqst.creationLog.time);
   rReq->setIsVerifyOnly(rqst.isVerifyOnly);
   if (diskSystemName) {
-  rReq->setDiskSystemName(diskSystemName.value());
+    rReq->setDiskSystemName(diskSystemName.value());
   }
   // Find the job corresponding to the vid (and check we indeed have one).
   auto jobs = rReq->getJobs();
   objectstore::RetrieveRequest::JobDump job;
   for (auto& j : jobs) {
-  if (j.copyNb == bestCopyNb) {
-    job = j;
-    goto jobFound;
-  }
+    if (j.copyNb == bestCopyNb) {
+      job = j;
+      goto jobFound;
+    }
   }
   {
-  std::stringstream err;
-  err << "In OStoreDB::queueRetrieve(): no job for requested copyNb. archiveId=" << criteria.archiveFile.archiveFileID
-    << " vid=" << ret.selectedVid << " copyNb=" << bestCopyNb;
-  throw RetrieveRequestHasNoCopies(err.str());
+    std::stringstream err;
+    err << "In OStoreDB::queueRetrieve(): no job for requested copyNb. archiveId=" << criteria.archiveFile.archiveFileID
+        << " vid=" << ret.selectedVid << " copyNb=" << bestCopyNb;
+    throw RetrieveRequestHasNoCopies(err.str());
   }
 jobFound: {
   // We are ready to enqueue the request. Let's make the data safe and do the rest behind the scenes.
@@ -1309,78 +1309,78 @@ jobFound: {
   // Prepare the logs to avoid multithread access on the object.
   log::ScopedParamContainer params(logContext);
   params.add("tapeVid", ret.selectedVid)
-  .add("jobObject", rReq->getAddressIfSet())
-  .add("fileId", rReq->getArchiveFile().archiveFileID)
-  .add("diskInstance", rReq->getArchiveFile().diskInstance)
-  .add("diskFilePath", rReq->getArchiveFile().diskFileInfo.path)
-  .add("diskFileId", rReq->getArchiveFile().diskFileId)
-  .add("vidSelectionTime", vidSelectionTime)
-  .add("agentReferencingTime", agentReferencingTime)
-  .add("insertionTime", insertionTime);
-  delayIfNecessary(logContext);
-  auto rReqPtr = rReq.release();
-  auto* mutexForHelgrindAddr = mutexForHelgrind.release();
-  auto* et = new EnqueueingTask([rReqPtr, job, ret, mutexForHelgrindAddr, this] {
-  std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
-  std::unique_ptr<objectstore::RetrieveRequest> rReq(rReqPtr);
-  cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
-  // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
-  auto scopedCounterDecrement = [this](void*) {
-    m_taskQueueSize--;
-    m_taskPostingSemaphore.release();
-  };
-  // A bit ugly, but we need a non-null pointer for the "deleter" to be called.
-  std::unique_ptr<void, decltype(scopedCounterDecrement)> scopedCounterDecrementerInstance((void*) 1,
-                                               scopedCounterDecrement);
-  log::LogContext logContext(m_logger);
-  utils::Timer timer;
-  // Add the request to the queue (with a shared access).
-  auto nonConstJob = job;
-  objectstore::ScopedExclusiveLock rReqL(*rReq);
-  double rLockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-  rReq->fetch();
-  auto sharedLock =
-    ostoredb::MemRetrieveQueue::sharedAddToQueue(nonConstJob, ret.selectedVid, *rReq, *this, logContext);
-  double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-  // The object ownership was set in SharedAdd.
-  // We need to extract the owner before inserting. After, we would need to hold a lock.
-  auto owner = rReq->getOwner();
-  rReq->commit();
-  double cTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-  // The lock on the queue is released here (has to be after the request commit for consistency.
-  sharedLock.reset();
-  double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-  rReqL.release();
-  double rUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-  // And remove reference from the agent
-  m_agentReference->removeFromOwnership(rReq->getAddressIfSet(), m_objectStore);
-  double agOwnershipResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
-  log::ScopedParamContainer(logContext)
-    .add("tapeVid", ret.selectedVid)
-    .add("queueObject", owner)
     .add("jobObject", rReq->getAddressIfSet())
     .add("fileId", rReq->getArchiveFile().archiveFileID)
     .add("diskInstance", rReq->getArchiveFile().diskInstance)
     .add("diskFilePath", rReq->getArchiveFile().diskFileInfo.path)
     .add("diskFileId", rReq->getArchiveFile().diskFileId)
-    .add("requestLockTime", rLockTime)
-    .add("queueingTime", qTime)
-    .add("commitTime", cTime)
-    .add("queueUnlockTime", qUnlockTime)
-    .add("requestUnlockTime", rUnlockTime)
-    .add("agentOwnershipResetTime", agOwnershipResetTime)
-    .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime + agOwnershipResetTime)
+    .add("vidSelectionTime", vidSelectionTime)
+    .add("agentReferencingTime", agentReferencingTime)
+    .add("insertionTime", insertionTime);
+  delayIfNecessary(logContext);
+  auto rReqPtr = rReq.release();
+  auto* mutexForHelgrindAddr = mutexForHelgrind.release();
+  auto* et = new EnqueueingTask([rReqPtr, job, ret, mutexForHelgrindAddr, this] {
+    std::unique_ptr<cta::threading::Mutex> mutexForHelgrind(mutexForHelgrindAddr);
+    std::unique_ptr<objectstore::RetrieveRequest> rReq(rReqPtr);
+    cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);
+    // This unique_ptr's destructor will ensure the OStoreDB object is not deleted before the thread exits.
+    auto scopedCounterDecrement = [this](void*) {
+      m_taskQueueSize--;
+      m_taskPostingSemaphore.release();
+    };
+    // A bit ugly, but we need a non-null pointer for the "deleter" to be called.
+    std::unique_ptr<void, decltype(scopedCounterDecrement)> scopedCounterDecrementerInstance((void*) 1,
+                                               scopedCounterDecrement);
+    log::LogContext logContext(m_logger);
+    utils::Timer timer;
+    // Add the request to the queue (with a shared access).
+    auto nonConstJob = job;
+    objectstore::ScopedExclusiveLock rReqL(*rReq);
+    double rLockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    rReq->fetch();
+    auto sharedLock =
+      ostoredb::MemRetrieveQueue::sharedAddToQueue(nonConstJob, ret.selectedVid, *rReq, *this, logContext);
+    double qTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    // The object ownership was set in SharedAdd.
+    // We need to extract the owner before inserting. After, we would need to hold a lock.
+    auto owner = rReq->getOwner();
+    rReq->commit();
+    double cTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    // The lock on the queue is released here (has to be after the request commit for consistency.
+    sharedLock.reset();
+    double qUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    rReqL.release();
+    double rUnlockTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    // And remove reference from the agent
+    m_agentReference->removeFromOwnership(rReq->getAddressIfSet(), m_objectStore);
+    double agOwnershipResetTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
+    log::ScopedParamContainer(logContext)
+      .add("tapeVid", ret.selectedVid)
+      .add("queueObject", owner)
+      .add("jobObject", rReq->getAddressIfSet())
+      .add("fileId", rReq->getArchiveFile().archiveFileID)
+      .add("diskInstance", rReq->getArchiveFile().diskInstance)
+      .add("diskFilePath", rReq->getArchiveFile().diskFileInfo.path)
+      .add("diskFileId", rReq->getArchiveFile().diskFileId)
+      .add("requestLockTime", rLockTime)
+      .add("queueingTime", qTime)
+      .add("commitTime", cTime)
+      .add("queueUnlockTime", qUnlockTime)
+      .add("requestUnlockTime", rUnlockTime)
+      .add("agentOwnershipResetTime", agOwnershipResetTime)
+      .add("totalTime", rLockTime + qTime + cTime + qUnlockTime + rUnlockTime + agOwnershipResetTime)
     .log(log::INFO, "In OStoreDB::queueRetrieve(): added job to queue (enqueueing finished).");
   });
   mlForHelgrind.unlock();
   m_enqueueingTasksQueue.push(et);
   double taskPostingTime = timer.secs(cta::utils::Timer::reset_t::resetCounter);
   params.add("taskPostingTime", taskPostingTime)
-  .add("taskQueueSize", taskQueueSize)
-  .add("totalTime", vidSelectionTime + agentReferencingTime + insertionTime + taskPostingTime)
-  .log(log::INFO,
-     "In OStoreDB::queueRetrieve(): recorded request for queueing "
-     "(enqueueing posted to thread pool).");
+    .add("taskQueueSize", taskQueueSize)
+    .add("totalTime", vidSelectionTime + agentReferencingTime + insertionTime + taskPostingTime)
+    .log(log::INFO,
+         "In OStoreDB::queueRetrieve(): recorded request for queueing "
+         "(enqueueing posted to thread pool).");
 }
   return ret;
 }
