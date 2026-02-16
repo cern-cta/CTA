@@ -1121,7 +1121,7 @@ Scheduler::getPendingRetrieveJobs(log::LogContext& lc) const {
 // getPendingRetrieveJobs
 //------------------------------------------------------------------------------
 std::list<common::dataStructures::RetrieveJob> Scheduler::getPendingRetrieveJobs(const std::optional<std::string>& vid,
-                                         log::LogContext& lc) const {
+                                                                                 log::LogContext& lc) const {
   utils::Timer t;
   auto ret = m_db.getPendingRetrieveJobs(vid);
   auto schedulerDbTime = t.secs();
