@@ -1232,9 +1232,9 @@ void OStoreDB::setStatisticsCacheConfig(const StatisticsCacheConfig& conf) {
 //------------------------------------------------------------------------------
 SchedulerDatabase::RetrieveRequestInfo
 OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
-            const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
-            const std::optional<std::string>& diskSystemName,
-            log::LogContext& logContext) {
+                        const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
+                        const std::optional<std::string>& diskSystemName,
+                        log::LogContext& logContext) {
   assertAgentAddressSet();
   auto mutexForHelgrind = std::make_unique<cta::threading::Mutex>();
   cta::threading::MutexLocker mlForHelgrind(*mutexForHelgrind);

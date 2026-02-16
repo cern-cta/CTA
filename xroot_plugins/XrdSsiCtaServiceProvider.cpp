@@ -23,8 +23,8 @@ XrdSsiProvider* XrdSsiProviderServer = new XrdSsiCtaServiceProvider;
 // This method inherits from an external class to this project, so we cannot modify the interface
 bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger* logP,
                                     XrdSsiCluster* clsP,
-                                    const std::string& cfgFn,  // cppcheck-suppress passedByValue
-                                    const std::string& parms,  // cppcheck-suppress passedByValue
+                                    const std::string cfgFn,  // cppcheck-suppress passedByValue
+                                    const std::string parms,  // cppcheck-suppress passedByValue
                                     int argc,
                                     char** argv) {
   try {
