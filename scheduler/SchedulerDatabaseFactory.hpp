@@ -66,7 +66,7 @@ public:
   }
 
   std::list<cta::common::dataStructures::RetrieveJob>
-  getPendingRetrieveJobs(std::optional<std::string> vid) const override {
+  getPendingRetrieveJobs(const std::optional<std::string>& vid) const override {
     return m_SchedDB->getPendingRetrieveJobs(vid);
   }
 
@@ -80,7 +80,7 @@ public:
   }
 
   std::list<cta::common::dataStructures::ArchiveJob>
-  getArchiveJobs(std::optional<std::string> tapePoolName) const override {
+  getArchiveJobs(const std::optional<std::string>& tapePoolName) const override {
     return m_SchedDB->getArchiveJobs(tapePoolName);
   }
 
@@ -239,7 +239,7 @@ public:
   SchedulerDatabase::RetrieveRequestInfo
   queueRetrieve(common::dataStructures::RetrieveRequest& rqst,
                 const common::dataStructures::RetrieveFileQueueCriteria& criteria,
-                const std::optional<std::string> diskSystemName,
+                const std::optional<std::string>& diskSystemName,
                 log::LogContext& logContext) override {
     return m_SchedDB->queueRetrieve(rqst, criteria, diskSystemName, logContext);
   }

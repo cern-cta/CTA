@@ -855,7 +855,7 @@ void RetrieveQueue::setQueueCleanupDoCleanup(bool value) {
   m_payload.mutable_cleanupinfo()->set_docleanup(value);
 }
 
-void RetrieveQueue::setQueueCleanupAssignedAgent(std::string agent) {
+void RetrieveQueue::setQueueCleanupAssignedAgent(const std::string& agent) {
   checkPayloadWritable();
   m_payload.mutable_cleanupinfo()->set_assignedagent(agent);
 }
