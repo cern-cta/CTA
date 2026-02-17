@@ -97,6 +97,7 @@ set (COMMON_LIB_SRC_FILES
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
+  runtime/RuntimeDir.cpp
   runtime/signals/SignalReactor.cpp
   runtime/signals/SignalReactorBuilder.cpp
   runtime/signals/SignalUtils.cpp

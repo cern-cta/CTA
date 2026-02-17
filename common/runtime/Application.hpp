@@ -9,6 +9,7 @@
 #include "CommonCliOptions.hpp"
 #include "CommonConfig.hpp"
 #include "ConfigLoader.hpp"
+#include "RuntimeDir.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/FileLogger.hpp"
@@ -261,7 +262,15 @@ public:
       return EXIT_SUCCESS;
     }
 
-    const auto config = runtime::loadFromToml<TConfig>(cliOptions.configFilePath, cliOptions.configStrict);
+    std::unique_ptr<RuntimeDir> runtimeDir;
+    std::string configFilePath = cliOptions.configFilePath;
+    if (cliOptions.runtimeDir) {
+      runtimeDir = std::make_unique<RuntimeDir>();
+      configFilePath = runtimeDir->copyFile(cliOptions.configFilePath, "config.toml");
+      runtimeDir->createFile(CTA_VERSION, "version");
+    }
+
+    const auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
       return EXIT_SUCCESS;

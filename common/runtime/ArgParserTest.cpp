@@ -98,9 +98,12 @@ TEST(ArgParser, UnrecognisedShortFlagFails) {
 
 TEST(ArgParser, WithCustomStructSameOptions) {
   // Shows that we don't need to extend the struct as long as we define the same member variables
+  // Note that if you added options to CommonCliOptions, these must be added here as well
+  // Or this test won't compile (which is the whole point)
   struct SameOptionsAsCliOptions {
     bool showHelp = false;
     bool showVersion = false;
+    bool runtimeDir = false;
     bool configCheck = false;
     bool configStrict = false;
     std::string configFilePath;
@@ -174,6 +177,8 @@ Options:
       Treat unknown keys, missing keys, and type mismatches in the config file as errors.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
+  --runtime-dir
+      Create a temporary a runtime directory /run/cta/<pid> containing state information of the current process.
   -v, --version
       Print version information, then exit.
   -h, --help
@@ -200,6 +205,8 @@ Options:
       Treat unknown keys, missing keys, and type mismatches in the config file as errors.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
+  --runtime-dir
+      Create a temporary a runtime directory /run/cta/<pid> containing state information of the current process.
   -v, --version
       Print version information, then exit.
   -h, --help
@@ -227,6 +234,8 @@ Options:
       Treat unknown keys, missing keys, and type mismatches in the config file as errors.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
+  --runtime-dir
+      Create a temporary a runtime directory /run/cta/<pid> containing state information of the current process.
   -v, --version
       Print version information, then exit.
   -h, --help
@@ -257,6 +266,8 @@ Options:
       Treat unknown keys, missing keys, and type mismatches in the config file as errors.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
+  --runtime-dir
+      Create a temporary a runtime directory /run/cta/<pid> containing state information of the current process.
   -v, --version
       Print version information, then exit.
   -h, --help

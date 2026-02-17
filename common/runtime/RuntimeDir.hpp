@@ -75,7 +75,7 @@ private:
  *
  * @param path The directory path whose permissions should be restricted.
  */
-  void RuntimeDir::restrictDirPermissions(const std::string& path) const;
+  void restrictDirPermissions(const std::string& path) const;
 
   /**
  * @brief Restricts the permissions of the given file.
@@ -92,10 +92,9 @@ private:
  *
  * @param path The file path whose permissions should be restricted.
  */
-  void RuntimeDir::restrictFilePermissions(const std::string& path) const;
+  void restrictFilePermissions(const std::string& path) const;
 
   const std::string m_dirPath;
-  cta::log::Logger& m_log;
 };
 
 }  // namespace cta::runtime
