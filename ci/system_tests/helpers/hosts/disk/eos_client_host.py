@@ -43,3 +43,20 @@ class EosClientHost(DiskClientHost):
         result = self.exec(f"kill -0 {pid} 2>/dev/null", throw_on_failure=False)
         return result.returncode == 0
 
+    def count_files_in_namespace(self, eos_host: str, dest_dir: str, num_dirs: int, count_procs: int) -> int:
+        """Count files in namespace using parallel queries on the remote host.
+
+        Requires count_files.py to be deployed to /root/count_files.py first.
+        """
+        cmd = (
+            f"python3 /root/count_files.py "
+            f"--eos-host {eos_host} "
+            f"--dest-dir {dest_dir} "
+            f"--num-dirs {num_dirs} "
+            f"--num-procs {count_procs}"
+        )
+        output = self.execWithOutput(cmd)
+        try:
+            return int(output.strip())
+        except ValueError:
+            return 0
