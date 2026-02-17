@@ -142,7 +142,7 @@ public:
    * @return The queued requests.
    */
   virtual std::list<cta::common::dataStructures::ArchiveJob>
-  getArchiveJobs(std::optional<std::string> tapePoolName) const = 0;
+  getArchiveJobs(const std::optional<std::string>& tapePoolName) const = 0;
 
   /**
    * Class holding necessary repack request elements for queueing
@@ -390,7 +390,7 @@ public:
 
   virtual RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                                             const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
-                                            const std::optional<std::string> diskSystemName,
+                                            const std::optional<std::string>& diskSystemName,
                                             log::LogContext& logContext) = 0;
 
   virtual void cancelRetrieve(const std::string& instanceName,
@@ -466,7 +466,7 @@ public:
    * @return The queued requests.
    */
   virtual std::list<cta::common::dataStructures::RetrieveJob>
-  getPendingRetrieveJobs(std::optional<std::string> vid) const = 0;
+  getPendingRetrieveJobs(const std::optional<std::string>& vid) const = 0;
 
   /*============ Retrieve management: tape server side ======================*/
 
