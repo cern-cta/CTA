@@ -145,7 +145,7 @@ if(NOT CTA_USE_PGSCHED)
     cta-objectstore-dereference-removed-queues cta-objectstore-collect-orphaned-object cta-objectstore-create-missing-repack-index
     DESTINATION usr/bin)
 
-  install(FILES cta-objectstore-tools.conf.example
+  install(FILES cta-objectstore-tools.example.conf
     DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
     PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 endif()

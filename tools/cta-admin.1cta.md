@@ -436,7 +436,7 @@ XRD\_CONNECTIONRETRY *1*
 
 */etc/cta/cta-cli.conf*
 
-:   See **CONFIGURATION** above, and */etc/cta/cta-cli.conf.example*.
+:   See **CONFIGURATION** above, and */etc/cta/cta-cli.example.conf*.
 
 # BUGS
 

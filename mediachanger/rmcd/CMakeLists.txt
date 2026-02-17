@@ -32,4 +32,4 @@ install(FILES cta-rmcd.service DESTINATION /etc/systemd/system)
 
 add_manpage(cta-rmcd)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-rmcd.1cta DESTINATION /usr/share/man/man1)
-install(FILES cta-rmcd.conf.example DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
+install(FILES cta-rmcd.example.conf DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta)
