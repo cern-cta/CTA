@@ -73,11 +73,12 @@ public:
     // so that --help always shows last and custom added arguments show first.
     withBoolArg(&T::showHelp, "help", 'h', "Show this help message, then exit.");
     withBoolArg(&T::showVersion, "version", 'v', "Print version information, then exit.");
-    withBoolArg(
+    withStringArg(
       &T::runtimeDir,
       "runtime-dir",
       std::nullopt,
-      "Create a temporary a runtime directory /run/cta/<pid> containing state information of the current process.");
+      "PATH",
+      "Put state metadata such as the consumed config and version information into the provided directory.");
     withBoolArg(&T::configCheck,
                 "config-check",
                 std::nullopt,

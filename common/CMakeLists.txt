@@ -97,7 +97,6 @@ set (COMMON_LIB_SRC_FILES
   priorities/DriveQuota.cpp
   priorities/MountCriteria.cpp
   priorities/UserGroup.cpp
-  runtime/RuntimeDir.cpp
   runtime/signals/SignalReactor.cpp
   runtime/signals/SignalReactorBuilder.cpp
   runtime/signals/SignalUtils.cpp
@@ -132,6 +131,7 @@ set (COMMON_LIB_SRC_FILES
   telemetry/metrics/instruments/MaintdInstruments.cpp
   utils/Timer.cpp
   utils/Base64.cpp
+  utils/FileUtils.cpp
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp
   utils/strerror_r_wrapper.cpp

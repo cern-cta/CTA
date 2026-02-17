@@ -103,7 +103,7 @@ TEST(ArgParser, WithCustomStructSameOptions) {
   struct SameOptionsAsCliOptions {
     bool showHelp = false;
     bool showVersion = false;
-    bool runtimeDir = false;
+    std::string runtimeDir;
     bool configCheck = false;
     bool configStrict = false;
     std::string configFilePath;
@@ -177,8 +177,8 @@ Options:
       Treat unknown keys, missing keys, and type mismatches in the config file as errors.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
-  --runtime-dir
-      Create a temporary a runtime directory /run/cta/<pid> containing state information of the current process.
+  --runtime-dir PATH
+      Put state metadata such as the consumed config and version information into the provided directory.
   -v, --version
       Print version information, then exit.
   -h, --help
@@ -205,8 +205,8 @@ Options:
       Treat unknown keys, missing keys, and type mismatches in the config file as errors.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
-  --runtime-dir
-      Create a temporary a runtime directory /run/cta/<pid> containing state information of the current process.
+  --runtime-dir PATH
+      Put state metadata such as the consumed config and version information into the provided directory.
   -v, --version
       Print version information, then exit.
   -h, --help
@@ -234,8 +234,8 @@ Options:
       Treat unknown keys, missing keys, and type mismatches in the config file as errors.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
-  --runtime-dir
-      Create a temporary a runtime directory /run/cta/<pid> containing state information of the current process.
+  --runtime-dir PATH
+      Put state metadata such as the consumed config and version information into the provided directory.
   -v, --version
       Print version information, then exit.
   -h, --help
@@ -266,8 +266,8 @@ Options:
       Treat unknown keys, missing keys, and type mismatches in the config file as errors.
   --config-check
       Validate the configuration, then exit. Respects --config-strict.
-  --runtime-dir
-      Create a temporary a runtime directory /run/cta/<pid> containing state information of the current process.
+  --runtime-dir PATH
+      Put state metadata such as the consumed config and version information into the provided directory.
   -v, --version
       Print version information, then exit.
   -h, --help

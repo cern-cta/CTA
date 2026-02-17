@@ -9,7 +9,6 @@
 #include "CommonCliOptions.hpp"
 #include "CommonConfig.hpp"
 #include "ConfigLoader.hpp"
-#include "RuntimeDir.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/FileLogger.hpp"
@@ -17,6 +16,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/OtelInit.hpp"
+#include "common/utils/FileUtils.hpp"
 #include "common/utils/utils.hpp"
 #include "health/HealthServer.hpp"
 #include "signals/SignalReactor.hpp"
@@ -262,13 +262,12 @@ public:
       return EXIT_SUCCESS;
     }
 
-    std::unique_ptr<RuntimeDir> runtimeDir;
     std::string configFilePath = cliOptions.configFilePath;
-    if (cliOptions.runtimeDir) {
-      runtimeDir = std::make_unique<RuntimeDir>();
-      configFilePath = runtimeDir->copyFile(cliOptions.configFilePath, "config.toml");
-      runtimeDir->createFile("{\"service\": \"" + m_appName + "\", \"version\": \"" + CTA_VERSION + "\"}",
-                             "version.json");
+    if (!cliOptions.runtimeDir.empty()) {
+      configFilePath = utils::copyFile(cliOptions.configFilePath, cliOptions.runtimeDir + "/config.toml", true);
+      utils::createFileWithContents("{\"service\": \"" + m_appName + "\", \"version\": \"" + CTA_VERSION + "\"}",
+                                    cliOptions.runtimeDir + "/version.json",
+                                    true);
     }
 
     const auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
