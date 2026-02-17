@@ -65,7 +65,7 @@ RMC_PORT
 */etc/cta/cta-rmcd.conf*
 
 :   Configuration file. See **CONFIGURATION** above, and
-    */etc/cta/cta-rmcd.conf.example*.
+    */etc/cta/cta-rmcd.example.conf*.
 
 */var/log/cta/cta-rmcd.log*
 

@@ -118,7 +118,7 @@ SchedulerBackendName (no default)
 */etc/cta/cta-catalogue.conf*
 
 :   Usual location for the CTA Catalogue configuration file. See **CatalogueConfigFile**
-    option under **CONFIGURATION**, and */etc/cta/cta-catalogue.conf.example*.
+    option under **CONFIGURATION**, and */etc/cta/cta-catalogue.example.conf*.
 
 */var/log/cta/cta-maintd.log*
 

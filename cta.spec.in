@@ -138,7 +138,7 @@ The tape server daemon
 %defattr(-,root,root)
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-taped
 %attr(0755,root,root) %{_bindir}/cta-taped
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-taped.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-taped.example.conf
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-taped.1cta.gz
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-taped
 %attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-taped.service
@@ -202,7 +202,7 @@ The xroot plugin
 %defattr(0755,root,root)
 %{_libdir}/libXrdSsiCta.so*
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-frontend
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-xrootd.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-xrootd.example.conf
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-frontend
 %attr(0644,cta,tape) /etc/systemd/system/cta-frontend.service
 
@@ -243,7 +243,7 @@ dCache frontend
 %attr(0755,root,root) %{_bindir}/cta-frontend-grpc
 %attr(0644,root,root) /etc/systemd/system/cta-frontend-grpc.service
 %attr(0644,root,root) /etc/sysconfig/cta-frontend-grpc
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-grpc.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-frontend-grpc.example.conf
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-frontend-grpc.1cta.gz
 
 %post -n cta-frontend-grpc
@@ -271,7 +271,7 @@ The cta-admin command line utility, using gRPC as transport.
 %files -n cta-admin-grpc
 %defattr(-,root,root)
 %attr(0755,root,root) %{_bindir}/cta-admin-grpc
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli-grpc.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli-grpc.example.conf
 
 
 %package -n cta-cli
@@ -294,7 +294,7 @@ The command line utilities
 %attr(0755,root,root) %{_bindir}/cta-change-storage-class
 %attr(0755,root,root) %{_bindir}/cta-eos-namespace-inject
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-change-storage-class.1cta.gz
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-cli.example.conf
 
 %posttrans -n cta-cli
 MISSING_CONF=%{_sysconfdir}/cta/cta-cli.conf
@@ -400,7 +400,7 @@ The shared libraries
 %{_libdir}/libctamediachanger.so*
 %{_libdir}/libctarao.so*
 %{_libdir}/libctadisk.so*
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.example.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-otel.example.yaml
 
 #CTA-lib installs libraries so we need ldconfig.
@@ -498,7 +498,7 @@ Tools allowing initialization and inspection of the object store.
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
 %attr(0755,root,root) %{_bindir}/cta-objectstore-collect-orphaned-object
 %attr(0755,root,root) %{_bindir}/cta-objectstore-create-missing-repack-index
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-objectstore-tools.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-objectstore-tools.example.conf
 %endif
 
 #cta-integrationtests installs libraries so we need ldconfig.
@@ -555,7 +555,7 @@ The Remote Media Changer daemon (rmcd)
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-rmcd
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-rmcd.1cta.gz
 %attr(0755,root,root) %{_bindir}/cta-rmcd
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-rmcd.conf.example
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-rmcd.example.conf
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-rmcd
 %attr(0644,root,root) /etc/systemd/system/cta-rmcd.service
 
