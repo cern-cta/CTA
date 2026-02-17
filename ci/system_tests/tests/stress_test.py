@@ -18,6 +18,10 @@ class StressParams:
     # File size in bytes
     file_size: int
     io_threads: int
+    prequeue: bool
+    num_files_to_put_drives_up: int
+    check_every_sec: int
+    timeout_to_put_drives_up: int
 
 
 @pytest.fixture
@@ -27,6 +31,10 @@ def stress_params(request):
         num_files_per_dir=request.config.test_config["tests"]["stress"]["num_files_per_dir"],
         file_size=request.config.test_config["tests"]["stress"]["file_size"],
         io_threads=request.config.test_config["tests"]["stress"]["io_threads"],
+        prequeue=request.config.test_config["tests"]["stress"]["prequeue"],
+        num_files_to_put_drives_up=request.config.test_config["tests"]["stress"]["num_files_to_put_drives_up"],
+        check_every_sec=request.config.test_config["tests"]["stress"]["check_every_sec"],
+        timeout_to_put_drives_up=request.config.test_config["tests"]["stress"]["timeout_to_put_drives_up"]
     )
 
 
@@ -88,12 +96,21 @@ def test_generate_and_copy_files(env, stress_params):
     print(f"\tTotal files: {total_file_count}")
     print(f"\tFile size: {stress_params.file_size}")
     print(f"\tIO threads: {stress_params.io_threads}")
+    print(f"\tPrequeueing: {stress_params.prequeue}")
+    print(f"\tNumber of files to put drives up: {stress_params.num_files_to_put_drives_up}")
+    print(f"\tTimeout to put drives up: {stress_params.timeout_to_put_drives_up}")
+
+    if stress_params.prequeue:
+        # Put drives down first — we queue archive jobs and only put drives up
+        # after enough files have been written, to avoid the drives outpacing the queueing
+        env.cta_cli[0].set_all_drives_down()
 
     # Use persistent XRootD Python client for high throughput on many small files
     # The remote script (xrootd_archive.py) runs inside the client pod and uses
     # multiprocessing with persistent XRootD File objects
+    # Launch archive in background so we can monitor file count and put drives up at threshold
     timer_start = time.time()
-    eos_client.archive_files_xrootd(
+    pid = eos_client.archive_files_xrootd_async(
         eos_host=disk_instance_name,
         dest_dir=archive_directory,
         num_files=total_file_count,
@@ -101,6 +118,36 @@ def test_generate_and_copy_files(env, stress_params):
         num_procs=stress_params.io_threads,
         file_size=stress_params.file_size,
     )
+    print(f"Archive started in background (PID {pid})")
+
+    if stress_params.prequeue:
+        # Poll namespace file count and put drives up once threshold is reached
+        drives_up = False
+        mgm = env.eos_mgm[0]
+        while eos_client.is_process_running(pid):
+            if not drives_up:
+                num_files_so_far = int(
+                    mgm.execWithOutput(f"eos find -f {archive_directory} | wc -l")
+                )
+                print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created")
+                if num_files_so_far >= stress_params.num_files_to_put_drives_up:
+                    print(f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP")
+                    env.cta_cli[0].set_all_drives_up(wait=False) # do not wait for status to be UP as drives will immediately start TRANSFERING
+                    drives_up = True
+                if time.time() - timer_start > stress_params.timeout_to_put_drives_up:
+                    env.cta_cli[0].set_all_drives_up(wait=False)
+                    drives_up = True
+            time.sleep(stress_params.check_every_sec)
+
+        # If archive finished before threshold was reached, still put drives up
+        if not drives_up:
+            print("\tArchive finished before drive-up threshold — putting drives UP now")
+            env.cta_cli[0].set_all_drives_up(wait=False)
+
+    # Wait for archive to finish (poll since `wait` doesn't work across kubectl exec sessions)
+    # we use this instead of wait because this process is in another kubectl exec session, we cannot wait on it
+    while eos_client.is_process_running(pid):
+        time.sleep(1)
 
     timer_end = time.time()
 
