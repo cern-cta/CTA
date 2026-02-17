@@ -9,11 +9,14 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <unistd.h>
 
 namespace cta::runtime {
 
-RuntimeDir::RuntimeDir() : m_dirPath("/run/cta/" + std::to_string(getpid())) {
+RuntimeDir::RuntimeDir()
+    : m_dirPath("/tmp/run/user/" + std::to_string(getuid()) + "/cta/" + std::to_string(getpid())),
+      m_shouldCleanUp(true) {
   // Delete the directory in case it already exists, NOOP if it doesn't
   deleteRuntimeDir();
 
@@ -25,12 +28,16 @@ RuntimeDir::RuntimeDir() : m_dirPath("/run/cta/" + std::to_string(getpid())) {
   restrictDirPermissions(m_dirPath);
 }
 
+RuntimeDir::RuntimeDir(const std::string& dirPath) : m_dirPath(dirPath), m_shouldCleanUp(false) {}
+
 RuntimeDir::~RuntimeDir() {
-  try {
-    deleteRuntimeDir();
-  } catch (...) {
-    // Directory failed to clean up, but we can't throw and no access to logger
-    // Should only be triggered at shutdown and is not critical.
+  if (m_shouldCleanUp) {
+    try {
+      deleteRuntimeDir();
+    } catch (...) {
+      // Directory failed to clean up, but we can't throw and no access to logger.
+      // Should be no big deal as it is only triggered at shutdown and is not critical.
+    }
   }
 }
 
@@ -88,11 +95,15 @@ std::string RuntimeDir::createFile(const std::string& contents, const std::strin
 }
 
 void RuntimeDir::deleteRuntimeDir() const {
-  // Yes this string construction is duplicated on purpose.
+  // Just a double check
+  if (!m_shouldCleanUp) {
+    return;
+  }
+  // Yes this (partial) string construction is duplicated on purpose.
   // Removing directories recursively is a dangerous business.
   // Better double check we are not deleting something unintentionally.
-  const std::string expected = "/run/cta/" + std::to_string(getpid());
-  if (m_dirPath != expected) {
+  const std::string expected = "/cta/" + std::to_string(getpid());
+  if (!m_dirPath.ends_with(expected)) {
     return;
   }
 
@@ -113,7 +124,7 @@ void RuntimeDir::deleteRuntimeDir() const {
 
   // Prevent weird paths like /run/cta/../../someotherdirectory
   std::filesystem::path canon = std::filesystem::weakly_canonical(m_dirPath);
-  if (canon != std::filesystem::path(expected)) {
+  if (canon != std::filesystem::path(m_dirPath)) {
     throw exception::Exception("Failed to delete '" + m_dirPath + "'. Path is not canonical.");
   }
   // Finally remove it

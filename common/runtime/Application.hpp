@@ -267,7 +267,8 @@ public:
     if (cliOptions.runtimeDir) {
       runtimeDir = std::make_unique<RuntimeDir>();
       configFilePath = runtimeDir->copyFile(cliOptions.configFilePath, "config.toml");
-      runtimeDir->createFile(CTA_VERSION, "version");
+      runtimeDir->createFile("{\"service\": \"" + m_appName + "\", \"version\": \"" + CTA_VERSION + "\"}",
+                             "version.json");
     }
 
     const auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);

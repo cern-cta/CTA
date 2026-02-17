@@ -21,8 +21,15 @@ public:
    * If a runtime directory already existed, it will be cleaned up.
    */
   RuntimeDir();
+
   /**
-   * @brief Cleans up the runtime directory.
+   * @brief Allows for the usage of an existing runtime directory. For this, the provided directory must already exist and have the correct permissions.
+   * The directory will not be cleaned up afterwards.
+   */
+  explicit RuntimeDir(const std::string& dirPath);
+
+  /**
+   * @brief If a predefined runtime directory was provided, this does nothing. If the default runtime directory was created, this cleans up said runtime directory.
    *
    */
   ~RuntimeDir();
@@ -95,6 +102,7 @@ private:
   void restrictFilePermissions(const std::string& path) const;
 
   const std::string m_dirPath;
+  const bool m_shouldCleanUp;
 };
 
 }  // namespace cta::runtime
