@@ -34,7 +34,7 @@ def stress_params(request):
         prequeue=request.config.test_config["tests"]["stress"]["prequeue"],
         num_files_to_put_drives_up=request.config.test_config["tests"]["stress"]["num_files_to_put_drives_up"],
         check_every_sec=request.config.test_config["tests"]["stress"]["check_every_sec"],
-        timeout_to_put_drives_up=request.config.test_config["tests"]["stress"]["timeout_to_put_drives_up"]
+        timeout_to_put_drives_up=request.config.test_config["tests"]["stress"]["timeout_to_put_drives_up"],
     )
 
 
@@ -53,7 +53,7 @@ def test_hosts_present_stress(env):
 
 @pytest.mark.eos
 def test_setup_xrootd_client(env):
-    """Install XRootD Python bindings and deploy archive script to the client pod."""
+    """Install XRootD Python bindings and deploy scripts to the client pod."""
     eos_client: EosClientHost = env.eos_client[0]
     eos_client.install_xrootd_python()
 
@@ -61,6 +61,10 @@ def test_setup_xrootd_client(env):
     eos_client.copyTo(
         str(script_dir / "xrootd_archive.py"),
         "/root/xrootd_archive.py",
+    )
+    eos_client.copyTo(
+        str(script_dir / "count_files.py"),
+        "/root/count_files.py",
     )
 
 
@@ -123,16 +127,23 @@ def test_generate_and_copy_files(env, stress_params):
     if stress_params.prequeue:
         # Poll namespace file count and put drives up once threshold is reached
         drives_up = False
-        mgm = env.eos_mgm[0]
         while eos_client.is_process_running(pid):
             if not drives_up:
-                num_files_so_far = int(
-                    mgm.execWithOutput(f"eos find -f {archive_directory} | wc -l")
+                num_files_so_far = eos_client.count_files_in_namespace(
+                    eos_host=disk_instance_name,
+                    dest_dir=archive_directory,
+                    num_dirs=stress_params.num_dirs,
+                    count_procs=5,
                 )
+                # num_files_so_far = int(
+                #     mgm.execWithOutput(f"eos find -f {archive_directory} | wc -l")
+                # )
                 print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created")
                 if num_files_so_far >= stress_params.num_files_to_put_drives_up:
                     print(f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP")
-                    env.cta_cli[0].set_all_drives_up(wait=False) # do not wait for status to be UP as drives will immediately start TRANSFERING
+                    env.cta_cli[0].set_all_drives_up(
+                        wait=False
+                    )  # do not wait for status to be UP as drives will immediately start TRANSFERING
                     drives_up = True
                 if time.time() - timer_start > stress_params.timeout_to_put_drives_up:
                     env.cta_cli[0].set_all_drives_up(wait=False)
