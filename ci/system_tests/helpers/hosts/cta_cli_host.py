@@ -24,7 +24,7 @@ class CtaCliHost(RemoteHost):
 
         raise RuntimeError(f"Failing to find drive status for drive: {drive_name}")
 
-    def wait_for_drive_status(self, drive_name: str, desired_status: str, timeout: int = 10):
+    def wait_for_drive_status(self, drive_name: str, desired_status: str, timeout: int = 30):
         print(f"Waiting for drives {drive_name} to be {desired_status}")
         for _ in range(timeout):
             drives_info = json.loads(self.execWithOutput(f"cta-admin --json drive ls '{drive_name}'"))

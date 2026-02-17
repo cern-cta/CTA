@@ -12,7 +12,6 @@ Output: prints progress lines, then a JSON summary on the last line.
 """
 
 import argparse
-import json
 import multiprocessing as mp
 import os
 import subprocess
@@ -120,18 +119,6 @@ def main():
     rate = args.num_files / max(elapsed, 0.001)
 
     print(f"Archive done: {args.num_files} files in {elapsed:.1f}s ({rate:.1f} files/s)", flush=True)
-
-    # JSON summary on last line for programmatic parsing
-    print(
-        json.dumps(
-            {
-                "files_created": args.num_files,
-                "elapsed_secs": round(elapsed, 2),
-                "files_per_sec": round(rate, 1),
-            }
-        ),
-        flush=True,
-    )
 
 
 if __name__ == "__main__":
