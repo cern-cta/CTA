@@ -63,7 +63,7 @@ public:
        * @param VSN the tape serial number
        * @param LBPMethod The logical block protection method.
        */
-  void fill(std::string VSN, unsigned char LBPMethod);
+  void fill(const std::string& VSN, unsigned char LBPMethod);
 
   /**
        * @return VSN the tape serial number
@@ -142,7 +142,7 @@ protected:
        * @param VSN          The tape serial number.
        * @param fSeq         The file sequence number on the tape.
        */
-  void fillCommon(std::string fileId, std::string VSN, int fSeq);
+  void fillCommon(const std::string& fileId, const std::string& VSN, int fSeq);
 
   /**
        * Throws an exception if the common field of the structures does
@@ -182,7 +182,7 @@ public:
        * @param VSN          The tape serial number.
        * @param fSeq         The file sequence number on the tape.
        */
-  void fill(std::string fileId, std::string VSN, int fSeq);
+  void fill(const std::string& fileId, const std::string& VSN, int fSeq);
 
   /**
        * Throws an exception if the structure does not match expectations.
@@ -202,7 +202,7 @@ public:
        * @param blockCount   The number of written data blocks. It is
        *                     modulus by 1000000.
        */
-  void fill(std::string fileId, std::string VSN, int fSeq, int blockCount);
+  void fill(const std::string& fileId, const std::string& VSN, int fSeq, int blockCount);
 
   /**
        * Throws an exception if the structure does not match expectations.
@@ -218,7 +218,7 @@ public:
        *
        * @param VSN          The tape serial number.
        */
-  void fill(std::string VSN);
+  void fill(const std::string& VSN);
 
   /**
        * Throws an exception if the structure does not match expectations.
@@ -333,9 +333,9 @@ protected:
        */
   void fillCommon(int fSeq,
                   int blockSize,
-                  std::string siteName,
-                  std::string hostName,
-                  castor::tape::tapeserver::drive::deviceInfo deviceInfo);
+                  const std::string& siteName,
+                  const std::string& hostName,
+                  const castor::tape::tapeserver::drive::deviceInfo& deviceInfo);
   /**
        * Throws an exception if the common part structure does
        * not match expectations.
@@ -368,9 +368,9 @@ public:
        */
   void fill(int fSeq,
             int blockSize,
-            std::string siteName,
-            std::string hostName,
-            castor::tape::tapeserver::drive::deviceInfo deviceInfo);
+            const std::string& siteName,
+            const std::string& hostName,
+            const castor::tape::tapeserver::drive::deviceInfo& deviceInfo);
   /**
        * Throws an exception if the structure does not match expectations.
        */
@@ -391,9 +391,9 @@ public:
        */
   void fill(int fSeq,
             int blockSize,
-            std::string siteName,
-            std::string hostName,
-            castor::tape::tapeserver::drive::deviceInfo deviceInfo);
+            const std::string& siteName,
+            const std::string& hostName,
+            const castor::tape::tapeserver::drive::deviceInfo& deviceInfo);
   /**
        * Throws an exception if the structure does not match expectations.
        */

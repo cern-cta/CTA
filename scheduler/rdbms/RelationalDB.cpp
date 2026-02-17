@@ -151,7 +151,7 @@ std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>
 }
 
 std::list<cta::common::dataStructures::ArchiveJob>
-RelationalDB::getArchiveJobs(std::optional<std::string> tapePoolName) const {
+RelationalDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) const {
   std::list<cta::common::dataStructures::ArchiveJob> ret;
 
   // Get a connection
@@ -434,7 +434,7 @@ void RelationalDB::setStatisticsCacheConfig(const StatisticsCacheConfig& conf) {
 SchedulerDatabase::RetrieveRequestInfo
 RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                             const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
-                            const std::optional<std::string> diskSystemName,
+                            const std::optional<std::string>& diskSystemName,
                             log::LogContext& lc) {
   utils::Timer timeTotal;
   auto rreqMutex = std::make_unique<cta::threading::Mutex>();
@@ -587,7 +587,7 @@ RelationalDB::getPendingRetrieveJobs() const {
 }
 
 std::list<cta::common::dataStructures::RetrieveJob>
-RelationalDB::getPendingRetrieveJobs(std::optional<std::string> vid) const {
+RelationalDB::getPendingRetrieveJobs(const std::optional<std::string>& vid) const {
   std::list<cta::common::dataStructures::RetrieveJob> ret;
   // Get a connection
   auto conn = m_connPool.getConn();

@@ -871,7 +871,7 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveJob>
-OStoreDB::getArchiveJobs(std::optional<std::string> tapePoolName) const {
+OStoreDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) const {
   std::list<cta::common::dataStructures::ArchiveJob> ret;
   if (!tapePoolName) {
     return ret;
@@ -1649,7 +1649,7 @@ void OStoreDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
 // OStoreDB::getPendingRetrieveJobs()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::RetrieveJob>
-OStoreDB::getPendingRetrieveJobs(std::optional<std::string> vid) const {
+OStoreDB::getPendingRetrieveJobs(const std::optional<std::string>& vid) const {
   std::list<common::dataStructures::RetrieveJob> ret;
   if (!vid) {
     return ret;
