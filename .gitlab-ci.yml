@@ -1,198 +1,177 @@
-# SPDX-FileCopyrightText: 2025 CERN
-# SPDX-License-Identifier: GPL-3.0-or-later
-
+# You can override the included template(s) by including variable overrides
+# SAST customization: https://docs.gitlab.com/ee/user/application_security/sast/#customizing-the-sast-settings
+# Secret Detection customization: https://docs.gitlab.com/user/application_security/secret_detection/pipeline/configure
+# Dependency Scanning customization: https://docs.gitlab.com/ee/user/application_security/dependency_scanning/#customizing-the-dependency-scanning-settings
+# Container Scanning customization: https://docs.gitlab.com/ee/user/application_security/container_scanning/#customizing-the-container-scanning-settings
+# Note that environment variables can be set in several places
+# See https://docs.gitlab.com/ee/ci/variables/#cicd-variable-precedence
 stages:
-  - .pre
-  - validate
-  - lint
-  - build
-  - build:image
-  - test
-  - system-test
-  - sbom
-  - release
-  - report
-  - .post
-
+- ".pre"
+- validate
+- lint
+- build
+- build:image
+- test
+- system-test
+- sbom
+- release
+- report
+- ".post"
 variables:
-
-  # Pipeline Type. Supported types:
-  #   - DEFAULT: runs static analysis, compiles the software and tests it.
-  #   - SYSTEM_TEST_ONLY: runs the system tests against the latest (or a provided) ctageneric image.
-  #   - REGR_AGAINST_CTA_MAIN: test custom dependency versions (EOS/XRootD) against CTA main.
-  #   - REGR_AGAINST_CTA_VERSION: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
-  #   - IMAGE_FROM_CTA_VERSION: generate a docker image from a set of CTA RPMS avaiable in repos and run the tests.
   PIPELINE_TYPE:
-    description: "What kind of pipeline to run. Use IMAGE_FROM_CTA_VERSION if you want to build a new Docker image based of existing CTA RPMs"
-    value: "DEFAULT"
+    description: What kind of pipeline to run. Use IMAGE_FROM_CTA_VERSION if you want
+      to build a new Docker image based of existing CTA RPMs
+    value: DEFAULT
     options:
-      - "DEFAULT"
-      - "SYSTEM_TEST_ONLY"
-      - "REGR_AGAINST_CTA_MAIN"
-      - "REGR_AGAINST_CTA_VERSION"
-      - "IMAGE_FROM_CTA_VERSION"
-
-  # Custom variables for image building and run environment packages
+    - DEFAULT
+    - SYSTEM_TEST_ONLY
+    - REGR_AGAINST_CTA_MAIN
+    - REGR_AGAINST_CTA_VERSION
+    - IMAGE_FROM_CTA_VERSION
   CUSTOM_EOS_VERSION:
-    description: "Custom EOS version to use running. If provided in conjunction with CUSTOM_EOS_IMAGE_TAG, then this variable affects only the client versions."
-    value: ""
+    description: Custom EOS version to use running. If provided in conjunction with
+      CUSTOM_EOS_IMAGE_TAG, then this variable affects only the client versions.
+    value: ''
   CUSTOM_EOS_IMAGE_TAG:
-    description: "Custom EOS image tag to use running. If not provided while CUSTOM_EOS_VERSION is provided, this will be deduced automatically"
-    value: ""
+    description: Custom EOS image tag to use running. If not provided while CUSTOM_EOS_VERSION
+      is provided, this will be deduced automatically
+    value: ''
   CUSTOM_XROOTD_VERSION:
-    description: "Custom XRootD version to use for building and running."
-    value: ""
+    description: Custom XRootD version to use for building and running.
+    value: ''
   CUSTOM_CTA_VERSION:
-    description: "Custom CTA version to build a docker image from and test with. Must exist in the CTA testing repo. Should only be used when PIPELINE_TYPE != DEFAULT."
-    value: ""
+    description: Custom CTA version to build a docker image from and test with. Must
+      exist in the CTA testing repo. Should only be used when PIPELINE_TYPE != DEFAULT.
+    value: ''
   CUSTOM_SYSTEM_TEST_IMAGE_TAG:
-    description: "Custom image tag to run the systemtests against. If left empty, the latest image tag from main will be used. Should only be used when PIPELINE_TYPE = SYSTEM_TEST_ONLY."
-    value: ""
-
+    description: Custom image tag to run the systemtests against. If left empty, the
+      latest image tag from main will be used. Should only be used when PIPELINE_TYPE
+      = SYSTEM_TEST_ONLY.
+    value: ''
   PLATFORM:
-    description: "Specifies the platform to build, test and (possibly) release on"
-    value: "el9"
+    description: Specifies the platform to build, test and (possibly) release on
+    value: el9
     options:
-      - "el9"
-
+    - el9
   USE_INTERNAL_REPOS:
-    description: "Whether to use the internal yum repos instead of the public yum repos."
-    value: "TRUE"
+    description: Whether to use the internal yum repos instead of the public yum repos.
+    value: 'TRUE'
     options:
-      - "TRUE"
-      - "FALSE"
-
-  # Building Configuration
+    - 'TRUE'
+    - 'FALSE'
   BUILD_CTA_VERSION: 5
-
   BUILD_GENERATOR:
-    description: "Specifies the build generated for building the CTA RPMs"
-    value: "Unix Makefiles"
+    description: Specifies the build generated for building the CTA RPMs
+    value: Unix Makefiles
     options:
-      - "Unix Makefiles"
-      - "Ninja"
-
+    - Unix Makefiles
+    - Ninja
   CMAKE_BUILD_TYPE:
-    description: "Specifies the build type used to compile the CTA RPMs"
-    value: "Debug"
+    description: Specifies the build type used to compile the CTA RPMs
+    value: Debug
     options:
-      - "Release"
-      - "Debug"
-      - "RelWithDebInfo"
-      - "MinSizeRel"
-
+    - Release
+    - Debug
+    - RelWithDebInfo
+    - MinSizeRel
   ENABLE_ADDRESS_SANITIZER:
-    description: "Whether to compile with Address Sanitizer enabled"
-    value: "FALSE"
+    description: Whether to compile with Address Sanitizer enabled
+    value: 'FALSE'
     options:
-      - "TRUE"
-      - "FALSE"
-
+    - 'TRUE'
+    - 'FALSE'
   ENABLE_DEBUG_INFO:
-    description: "Whether to the extraction and building of debuginfo and debugsource"
-    value: "TRUE"
+    description: Whether to the extraction and building of debuginfo and debugsource
+    value: 'TRUE'
     options:
-      - "TRUE"
-      - "FALSE"
-
-  # CTA Configuration
+    - 'TRUE'
+    - 'FALSE'
   SCHEDULER_TYPE:
-    description: "Specifies what scheduler should be used to build CTA and run the tests"
-    value: "objectstore"
+    description: Specifies what scheduler should be used to build CTA and run the
+      tests
+    value: objectstore
     options:
-      - "pgsched"
-      - "objectstore"
-
+    - pgsched
+    - objectstore
   ORACLE_SUPPORT:
-    description: "Whether to build the CTA RPMs with Oracle support or not"
-    value: "TRUE"
+    description: Whether to build the CTA RPMs with Oracle support or not
+    value: 'TRUE'
     options:
-      - "TRUE"
-      - "FALSE"
-
+    - 'TRUE'
+    - 'FALSE'
   GENERATE_SBOM:
-    description: "Whether to generate a Software Bill of Materials in the pipeline"
-    value: "FALSE"
+    description: Whether to generate a Software Bill of Materials in the pipeline
+    value: 'FALSE'
     options:
-      - "TRUE"
-      - "FALSE"
-
+    - 'TRUE'
+    - 'FALSE'
   SKIP_UNIT_TESTS:
-    description: "Skips the CTA unit tests. Should only be disabled if there is a very good reason to do so."
-    value: "FALSE"
+    description: Skips the CTA unit tests. Should only be disabled if there is a very
+      good reason to do so.
+    value: 'FALSE'
     options:
-      - "TRUE"
-      - "FALSE"
-
+    - 'TRUE'
+    - 'FALSE'
   VALGRIND_UNIT_TESTS:
-    description: "Whether to run the unit tests with valgrind."
-    value: "FALSE"
+    description: Whether to run the unit tests with valgrind.
+    value: 'FALSE'
     options:
-      - "TRUE"
-      - "FALSE"
-
+    - 'TRUE'
+    - 'FALSE'
   DCACHE_REGRESSION_TESTS:
-    description: "Whether to run the dCache regression tests."
-    value: "FALSE"
+    description: Whether to run the dCache regression tests.
+    value: 'FALSE'
     options:
-      - "TRUE"
-      - "FALSE"
-
+    - 'TRUE'
+    - 'FALSE'
   KEEP_STRESS_TEST_NAMESPACE:
-    description: "Keep the stress-test namespace alive after it has been created to allow for manual debugging. In this case, the namespace must be manually deleted at some point."
-    value: "FALSE"
+    description: Keep the stress-test namespace alive after it has been created to
+      allow for manual debugging. In this case, the namespace must be manually deleted
+      at some point.
+    value: 'FALSE'
     options:
-      - "TRUE"
-      - "FALSE"
-
-  # Pass a file here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
+    - 'TRUE'
+    - 'FALSE'
   DEFAULT_CTA_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the CTA Helm chart."
-    value: "presets/dev-cta-xrd-values.yaml"
+    description: Path to a values.yaml file to be passed to the CTA Helm chart.
+    value: presets/dev-cta-xrd-values.yaml
     options:
-      - "presets/dev-cta-xrd-values.yaml"
-      - "presets/dev-cta-grpc-values.yaml"
+    - presets/dev-cta-xrd-values.yaml
+    - presets/dev-cta-grpc-values.yaml
   DEFAULT_EOS_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the EOS Helm chart."
-    value: "presets/dev-eos-xrd-values.yaml"
+    description: Path to a values.yaml file to be passed to the EOS Helm chart.
+    value: presets/dev-eos-xrd-values.yaml
     options:
-      - "presets/dev-eos-xrd-values.yaml"
-      - "presets/dev-eos-grpc-values.yaml"
-
+    - presets/dev-eos-xrd-values.yaml
+    - presets/dev-eos-grpc-values.yaml
   STRESS_CTA_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the CTA Helm chart for the stress test."
-    value: "presets/stress-cta-xrd-values.yaml"
+    description: Path to a values.yaml file to be passed to the CTA Helm chart for
+      the stress test.
+    value: presets/stress-cta-xrd-values.yaml
     options:
-      - "presets/stress-cta-xrd-values.yaml"
-      - "presets/stress-cta-grpc-values.yaml"
+    - presets/stress-cta-xrd-values.yaml
+    - presets/stress-cta-grpc-values.yaml
   STRESS_EOS_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the EOS Helm chart for the stress test."
-    value: "presets/stress-eos-xrd-values.yaml"
+    description: Path to a values.yaml file to be passed to the EOS Helm chart for
+      the stress test.
+    value: presets/stress-eos-xrd-values.yaml
     options:
-      - "presets/stress-eos-xrd-values.yaml"
-      - "presets/stress-eos-grpc-values.yaml"
-
+    - presets/stress-eos-xrd-values.yaml
+    - presets/stress-eos-grpc-values.yaml
   PUBLISH_TELEMETRY_METRICS:
-    description: "Whether to publish telemetry metrics for the stress test"
-    value: "TRUE"
+    description: Whether to publish telemetry metrics for the stress test
+    value: 'TRUE'
     options:
-      - "TRUE"
-      - "FALSE"
-
-  # Meta CI
-  CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
-  CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Pipeline: $PIPELINE_TYPE, Scheduler: $SCHEDULER_TYPE, Oracle support: $ORACLE_SUPPORT"
-
-  # Git CI Configuration
+    - 'TRUE'
+    - 'FALSE'
+  CTA_BUILD_ID: "${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}"
+  CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Pipeline: $PIPELINE_TYPE, Scheduler: $SCHEDULER_TYPE,
+    Oracle support: $ORACLE_SUPPORT"
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
-  GIT_DEPTH: 1  # Enforce a shallow clone of the main repo
-  GIT_SUBMODULE_DEPTH: 1  # Shallow clone of the submodules
-
-  # Job output configuration
+  GIT_DEPTH: 1
+  GIT_SUBMODULE_DEPTH: 1
   FF_TIMESTAMPS: true
-
-  # Images
   IMAGE_DEFAULT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2026-02-17-14059426.el9
   IMAGE_LINT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2026-02-17-14059426.el9
   IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2026-02-17-14059426.el9
@@ -201,30 +180,26 @@ variables:
   IMAGE_DANGER: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2026-02-17-14059426.el9
   IMAGE_DOCKER_IMAGE_BUILDER: registry.cern.ch/gcr.io/kaniko-project/executor:debug
   IMAGE_LICENSE_CHECK: registry.cern.ch/docker.io/fsfe/reuse:6.2
-
 default:
-  image: $IMAGE_DEFAULT
+  image: "$IMAGE_DEFAULT"
   interruptible: true
-
 workflow:
-  name: $CTA_PIPELINE_NAME
+  name: "$CTA_PIPELINE_NAME"
   auto_cancel:
     on_new_commit: interruptible
   rules:
-    # If we are in a merge request and there are no changes, don't run the pipeline
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
-      changes:
-        compare_to: "refs/heads/$CI_DEFAULT_BRANCH"
-        paths:
-          - '**/*'
-      variables:
-        ENABLE_DEBUG_INFO: "FALSE"
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
-      auto_cancel:
-        on_new_commit: none
-    # Push events to main will still trigger the pipeline as per the previous rule
-    # But we want to prevent dual pipelines on MRs
-    - if: $CI_PIPELINE_SOURCE != "push"
-
+  - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    changes:
+      compare_to: refs/heads/$CI_DEFAULT_BRANCH
+      paths:
+      - "**/*"
+    variables:
+      ENABLE_DEBUG_INFO: 'FALSE'
+  - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE
+      == "trigger"
+    auto_cancel:
+      on_new_commit: none
+  - if: $CI_PIPELINE_SOURCE != "push"
 include:
-  - local: .gitlab/ci/*.gitlab-ci.yml
+- local: ".gitlab/ci/*.gitlab-ci.yml"
+- template: Security/Dependency-Scanning.gitlab-ci.yml
