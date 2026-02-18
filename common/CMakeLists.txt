@@ -131,6 +131,7 @@ set (COMMON_LIB_SRC_FILES
   telemetry/metrics/instruments/MaintdInstruments.cpp
   utils/Timer.cpp
   utils/Base64.cpp
+  utils/FileUtils.cpp
   utils/GetOptThreadSafe.cpp
   utils/Regex.cpp
   utils/strerror_r_wrapper.cpp

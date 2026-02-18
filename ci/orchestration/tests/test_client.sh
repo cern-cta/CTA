@@ -57,7 +57,6 @@ kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/" 
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
 kubectl -n ${NAMESPACE} cp taped_refresh_log_fd.sh "${CTA_TAPED_POD}:/root/" -c cta-taped
 kubectl -n ${NAMESPACE} cp maintd_refresh_log_fd.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
-kubectl -n ${NAMESPACE} cp maintd_refresh_config.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
 
 if [[ ${PREPARE} -eq 1 ]]; then
   echo "Preparing namespace for the tests"
@@ -275,5 +274,8 @@ kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- bash /root/maint
 echo
 echo "Checking correctness of example config files"
 kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- cta-maintd --config-strict --config /etc/cta/cta-maintd.example.toml --config-check || exit 1
+echo "Checking correctness of runtime directory"
+kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- comm /etc/cta/cta-maintd.toml /run/cta/config.toml -3 || exit 1
+kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- sh -c 'jq -e -r ".service == \"cta-maintd\"" /run/cta/version.json >/dev/null' || exit 1
 
 exit 0

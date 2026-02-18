@@ -132,6 +132,8 @@ spec:
         - name: vfs-storage-volume
           mountPath: /objectstore
       {{- end }}
+        - name: runtime-dir
+          mountPath: /run/cta
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -166,6 +168,8 @@ spec:
       - name: opentelemetry-config
         configMap:
           name: cta-maintd-otel-conf
+      - name: runtime-dir
+        emptyDir: {}
       - name: maintd-sss-keytab
         secret:
           secretName: {{ $.Values.keytab.secretName }}

@@ -16,6 +16,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/OtelInit.hpp"
+#include "common/utils/FileUtils.hpp"
 #include "common/utils/utils.hpp"
 #include "health/HealthServer.hpp"
 #include "signals/SignalReactor.hpp"
@@ -261,7 +262,15 @@ public:
       return EXIT_SUCCESS;
     }
 
-    const auto config = runtime::loadFromToml<TConfig>(cliOptions.configFilePath, cliOptions.configStrict);
+    std::string configFilePath = cliOptions.configFilePath;
+    if (!cliOptions.runtimeDir.empty()) {
+      configFilePath = utils::copyFile(cliOptions.configFilePath, cliOptions.runtimeDir + "/config.toml", true);
+      utils::createFileWithContents("{\"service\": \"" + m_appName + "\", \"version\": \"" + CTA_VERSION + "\"}",
+                                    cliOptions.runtimeDir + "/version.json",
+                                    true);
+    }
+
+    const auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
       return EXIT_SUCCESS;
