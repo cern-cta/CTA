@@ -1,137 +1,267 @@
 ---
-date: 2025-08-12
+
+date: 2026-02-18
 section: 1cta
 title: CTA-MAINTD
 header: The CERN Tape Archive (CTA)
----
+-----------------------------------
+
 <!---
-@project      The CERN Tape Archive (CTA)
-@copyright    Copyright © 2020-2025 CERN
-@license      This program is free software, distributed under the terms of the GNU General Public
-              Licence version 3 (GPL Version 3), copied verbatim in the file "COPYING". You can
-              redistribute it and/or modify it under the terms of the GPL Version 3, or (at your
-              option) any later version.
-
-              This program is distributed in the hope that it will be useful, but WITHOUT ANY
-              WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-              PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-              In applying this licence, CERN does not waive the privileges and immunities
-              granted to it by virtue of its status as an Intergovernmental Organization or
-              submit itself to any jurisdiction.
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
 --->
 
 # NAME
 
-cta-maintd --- CTA Maintenance daemon
+cta-maintd --- CTA maintenance daemon
 
 # SYNOPSIS
 
-**cta-maintd** \[\--config *config_file*] \[\--stdout]] \[\--log-to-file *log_file*] \[\--log-format *format*]\
-**cta-maintd** \--help
+**cta-maintd** [OPTIONS]
+
+**cta-maintd** --help
+**cta-maintd** --version
 
 # DESCRIPTION
 
-**cta-maintd** is the daemon responsible for performing housekeeping tasks related to the disk buffer and scheduler. It is composed of different routines that periodically execute.
+**cta-maintd** is the daemon responsible for periodically executing a set of routines related to the CTA scheduler, catalogue and disk system.
 
-**Disk Report Routine**
+These routines include:
 
-**Queue Cleanup Routine**
+* Reporting archive and retrieve job status to the disk buffer.
+* Expanding and reporting repack requests.
+* Garbage collection and queue cleanup (depending on the scheduler backend).
 
-**Garbage Collector Routine**
+All enabled routines are executed sequentially in a cycle:
 
-**Repack Request Routine**
+A -> B -> C -> sleep -> A -> B -> C -> sleep ...
+
+A cycle consists of executing each enabled routine once. The sleep interval between cycles is configurable. It is not possible to define different sleep intervals per routine within a single process. If per-routine intervals are required, multiple **cta-maintd** instances should be started, each with a different subset of routines enabled.
 
 # OPTIONS
 
--c, \--config *config_file*
+-l, --log-file *PATH*
 
-:   Read **cta-maintd** configuration from *config_file* instead of the default,
-    */etc/cta/cta-maintd.conf*.
+:   Write logs to *PATH*. If not specified, logs are written to stdout/stderr.
 
--h, \--help
+-c, --config *PATH*
 
-:   Display command options and exit.
+:   Path to the main configuration file.
+Defaults to */etc/cta/cta-maintd.toml* if not provided.
 
--l, \--log-to-file *log_file*
+--config-strict
 
-:   Log to a file instead of stdout.
+:   Treat unknown keys, missing keys, and type mismatches in the configuration file as errors.
 
--o, \--log-format *format*
+--config-check
 
-:   Output format for log messages. \[default\|json\]
+:   Validate the configuration, then exit.
+Respects **--config-strict**.
 
--s, \--stdout
+--runtime-dir *PATH*
 
-:   Log to standard output. Logging to stdout is the default, but this option is kept for compatibility reasons
+:   Store runtime state metadata (such as the consumed configuration and version information) in the specified directory.
+
+-v, --version
+
+:   Print version information and exit.
+
+-h, --help
+
+:   Display command usage information and exit.
+
+# ROUTINES
+
+The available routines depend on the configured scheduler backend.
+
+## Common routines
+
+disk_report_archive
+
+:   Reports archive job success or failure to the disk system.
+
+disk_report_retrieve
+
+:   Reports retrieve job success or failure to the disk system.
+
+repack_expand
+
+:   Expands repack requests into individual archive and retrieve jobs.
+
+repack_report
+
+:   Handles reporting for repack-generated requests.
+
+## Objectstore-specific routines
+
+queue_cleanup
+
+:   Finds queues marked for cleanup, takes ownership, and moves requests to other queues.
+
+garbage_collect
+
+:   Performs garbage collection on stale agents and objects in the objectstore.
+
+## Postgres-specific routines
+
+Additional queue cleanup routines may be enabled when using the Postgres scheduler backend, including:
+
+* user_active_queue_cleanup
+* repack_active_queue_cleanup
+* user_pending_queue_cleanup
+* repack_pending_queue_cleanup
+* scheduler_maintenance_cleanup
 
 # CONFIGURATION
 
-The **cta-maintd** daemon reads its configuration parameters from the CTA configuration file (by
-default, */etc/cta/cta-maintd.toml*). Each option is listed with its *default* value.
+The **cta-maintd** daemon reads its configuration from a TOML file
+(default: */etc/cta/cta-maintd.toml*).
 
-## Maintd Configuration Options
-maintd LogMask *INFO*
+Each section is described below.
 
-:   Logs with a level lower than this value will be masked. Possible
-    values are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (USERERR), INFO,
-    DEBUG. USERERR log level is equivalent to NOTICE, because by
-    convention, CTA uses log level NOTICE for user errors.
+## [catalogue]
 
-maintd LogFormat *json*
+config_file
 
-:   The default format for log lines is jsos. If
-    this option is set to *unstructured*, log lines will be output in key=value format.
+:   Path to the CTA catalogue configuration file
+(commonly */etc/cta/cta-catalogue.conf*).
 
-maintd CatalogueConfigFile */etc/cta/cta-catalogue.conf*
+## [scheduler]
 
-:   Path to the CTA Catalogue configuration file. See **FILES**, below.
+backend_name
 
-ObjectStore BackendPath (no default)
+:   Unique identifier for the backend scheduler resources.
+Example structure: [ceph|postgres|vfs][User|Repack].
 
-:   URL of the objectstore (CTA Scheduler Database). Usually this will
-    be the URL of a Ceph RADOS objectstore. For testing or small
-    installations, a file-based objectstore can be used instead. See
-    **cta-objectstore-initialize**.
+objectstore_backend_path
 
-## General Configuration Options
+:   URL of the objectstore (CTA Scheduler Database).
+Typically a Ceph RADOS URL. A file-based backend may be used for testing.
 
-This options will be included in every log line of maintd to
-enhance log identification when swapping drives between different backends.
+tape_cache_max_age_secs *(default: 600)*
 
-InstanceName (no default)
+:   Maximum age of tape cache entries.
 
-:   Unique string to identify CTA\'s catalogue instance maintd is serving.
+retrieve_queue_cache_max_age_secs *(default: 10)*
 
-SchedulerBackendName (no default)
+:   Maximum age of retrieve queue cache entries.
 
-:   The unique string to identify the backend scheduler resources. It
-    can be structured as: \[ceph\|postgres\|vfs]\[User\|Repack].
+## [logging]
+
+level *(default: INFO)*
+
+:   Log mask. Messages below this level are suppressed.
+Possible values: EMERG, ALERT, CRIT, ERR, WARNING, NOTICE, INFO, DEBUG.
+
+format *(default: json)*
+
+:   Log output format. Possible values: json, kv.
+
+[logging.attributes]
+
+:   Optional key-value pairs added to all log lines, typically used for monitoring and instance identification.
+
+## [telemetry]
+
+config_file
+
+:   Path to the OpenTelemetry SDK declarative configuration file.
+If omitted or empty, telemetry is disabled.
+
+on_init_failure *(default: warn)*
+
+:   Behaviour if telemetry initialisation fails.
+Possible values:
+- warn
+- fatal
+
+Telemetry is experimental and disabled by default unless explicitly enabled under **[experimental]**.
+
+## [health_server]
+
+enabled *(default: false)*
+
+:   Enable or disable the health server.
+
+host *(default: 127.0.0.1)*
+
+:   Interface to bind to (ignored if using a Unix domain socket).
+
+port *(default: 8080)*
+
+:   TCP port to bind to (ignored if using a Unix domain socket).
+
+use_unix_domain_socket *(default: false)*
+
+:   Expose the health server over a Unix domain socket instead of TCP.
+When enabled, **--runtime-dir** must be provided.
+The socket file will be created at *<runtime-dir>/health.sock*.
+
+The health server exposes:
+
+* /health/ready
+* /health/live
+
+## [xrootd]
+
+security_protocol *(default: sss)*
+
+:   Overrides XrdSecPROTOCOL.
+
+sss_keytab_path
+
+:   Overrides XrdSecSSSKT.
+
+## [routines]
+
+cycle_sleep_interval_secs *(default: 10)*
+
+:   Sleep duration between cycles of routine execution.
+
+max_cycle_duration_secs *(default: 900)*
+
+:   Maximum allowed duration of a full cycle.
+If exceeded, the cycle is not interrupted, but the process will no longer be considered alive by the health server.
+
+Each routine can be individually configured and enabled/disabled, for example:
+
+* disk_report_archive = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
+* disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
+* repack_expand = { enabled = true, max_to_expand = 2 }
+* repack_report = { enabled = true, soft_timeout_secs = 30 }
+* queue_cleanup = { enabled = true, batch_size = 500 }
+* garbage_collect = { enabled = true }
+
+## [experimental]
+
+telemetry_enabled *(default: false)*
+
+:   Enables experimental telemetry support.
 
 # FILES
 
 */etc/cta/cta-maintd.toml*
 
-:   The CTA maintd configuration file, containing the options
-    described above under **CONFIGURATION**. See */etc/cta/cta-maintd.example.toml*.
+:   Default configuration file.
 
 */etc/cta/cta-catalogue.conf*
 
-:   Usual location for the CTA Catalogue configuration file. See **CatalogueConfigFile**
-    option under **CONFIGURATION**, and */etc/cta/cta-catalogue.example.conf*.
+:   CTA catalogue configuration file.
 
-*/var/log/cta/cta-maintd.log*
+/etc/cta/cta-otel.yaml
 
-:   Usual location for the maintd log file.
+:   OpenTelemetry declarative configuration file.
+    Used only if telemetry is enabled and a config_file is specified under the [telemetry] section.
 
 # SEE ALSO
 
-CERN Tape Archive documentation [https://cta.docs.cern.ch/](https://eoscta.docs.cern.ch/)
+CERN Tape Archive documentation
+[https://cta.docs.cern.ch/](https://cta.docs.cern.ch/)
 
 # COPYRIGHT
 
-Copyright © 2025 CERN. License GPLv3+: GNU GPL version 3 or later [http://gnu.org/licenses/gpl.html](http://gnu.org/licenses/gpl.html).
-This is free software: you are free to change and redistribute it. There is NO WARRANTY, to the extent permitted by law.
-In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an
-Intergovernmental Organization or submit itself to any jurisdiction.
-
+Copyright © 2026 CERN.
+License GPLv3+: GNU GPL version 3 or later [http://gnu.org/licenses/gpl.html](http://gnu.org/licenses/gpl.html).
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+In applying this licence, CERN does not waive the privileges and immunities granted to it by virtue of its status as an Intergovernmental Organization or submit itself to any jurisdiction.

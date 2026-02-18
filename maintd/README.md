@@ -1,6 +1,6 @@
 # cta-maintd
 
-This directory contains the source code the maintenance daemon. The responsibility of the maintenance daemon is to periodically run a number of routines.
+This directory contains the source code the maintenance daemon. The responsibility of the maintenance daemon is to periodically run a number of routines. Note that (unlike the name suggests), these routines are responsible for more than just maintenance tasks. For example, some routines take care of the disk reporting or repack functionality.
 
 At the moment, this works as follows:
 
