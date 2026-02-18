@@ -87,8 +87,9 @@ struct TelemetryConfig {
  */
 struct HealthServerConfig {
   bool enabled = false;
-  std::string host = "";
-  int port = 8080;
+  bool use_unix_domain_socket = false;
+  std::optional<std::string> host = "";
+  std::optional<int> port = 8080;
 };
 
 /**

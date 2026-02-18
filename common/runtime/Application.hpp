@@ -300,7 +300,7 @@ public:
       if constexpr (HasHealthServerConfig<TConfig>) {
         static_assert(HasReadinessFunction<TApp> && HasLivenessFunction<TApp>,
                       "Config has health_server, but app type lacks isReady()/isLive() methods");
-        healthServer = initHealthServer(config);
+        healthServer = initHealthServer(config, cliOptions);
       }
 
       if constexpr (HasTelemetryConfig<TConfig>) {
@@ -367,12 +367,30 @@ private:
     return logPtr;
   }
 
-  std::unique_ptr<HealthServer> initHealthServer(const TConfig& config) {
+  std::unique_ptr<HealthServer> initHealthServer(const TConfig& config, const TOpts& cliOptions) {
     if (config.health_server.enabled) {
+      std::string host;
+      int port;
+      if (config.health_server.use_unix_domain_socket) {
+        if (cliOptions.runtimeDir.empty()) {
+          throw exception::UserError(
+            "health_server.use_unix_domain_socket was enabled, but the program was not started with --runtime-dir.");
+        }
+        host = cliOptions.runtimeDir + "/health.sock";
+        // This value is also overwritten in the health server itself when UDS is used. This is simply here to be explicit.
+        port = 80;
+      } else {
+        if (!config.health_server.host.has_value() || !config.health_server.port.has_value()) {
+          throw exception::UserError("Both host and port must be provided when setting up a health server over TCP.");
+        }
+        host = config.health_server.host.value();
+        port = config.health_server.port.value();
+      }
+
       auto healthServer = std::make_unique<HealthServer>(
         *m_logPtr,
-        config.health_server.host,
-        config.health_server.port,
+        host,
+        port,
         [this]() { return m_app.isReady(); },
         [this]() { return m_app.isLive(); });
       healthServer->start();

@@ -67,13 +67,16 @@
   enabled = false
   # Where to accept connections from. Setting this to 127.0.0.1 will make it only accept connections from localhost.
   # Set to 0.0.0.0 to accept connections from anywhere.
-  # Set to a socket path if using Unix Domain Sockets. For example, "/run/cta/cta-maintd/health.sock".
   # If omitted, 127.0.0.1 is used.
   host = "127.0.0.1"
   # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port.
-  # When using Unix Domain Sockets, this port value will be unused.
   # If omitted, 8080 is used.
   port = 8080
+  # If enabled, expose the health server over a unix domain socket instead. In this case, the values for host and port are ignored.
+  # Enabling this will put the corresponding socket file in <runtime-dir>/health.sock.
+  # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
+  # If omitted, false is used.
+  use_unix_domain_socket = false
 
 
 # Makes XRootD environment variables explicit.
