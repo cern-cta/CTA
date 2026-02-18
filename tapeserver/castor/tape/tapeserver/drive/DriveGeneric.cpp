@@ -86,7 +86,7 @@ std::string drive::getSerialNumber(const int& fd, System::virtualWrapper& sw) {
   return serialNumber;
 }
 
-drive::DriveGeneric::DriveGeneric(const SCSI::DeviceInfo& di, System::virtualWrapper& sw)
+drive::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw)
     : m_SCSIInfo(di),
       m_sysWrapper(sw) {
   /* Open the device files */
