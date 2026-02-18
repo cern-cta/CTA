@@ -33,8 +33,10 @@ HealthServer::HealthServer(cta::log::Logger& log,
     throw exception::UserError("HealthServer host cannot be empty");
   }
   if (isUdsHost(m_host)) {
-    m_log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected. Ignoring port value.");
-    m_port = 80;  // technically the port shouldn't be used but the httplib example uses port 80
+    m_log(log::INFO, "In HealthServer::HealthServer(): Unix Domain Socket detected.");
+    // technically the port shouldn't be used but the httplib example uses port 80
+    // Anyway, this value doesn't affect how the socket is contacted
+    m_port = 80;
   }
 }
 

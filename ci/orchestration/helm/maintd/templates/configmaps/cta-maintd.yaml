@@ -44,6 +44,7 @@ data:
       enabled = true
       host = "0.0.0.0"
       port = 8080
+      use_unix_domain_socket = false
 
     [xrootd]
       # Overrides XrdSecPROTOCOL
