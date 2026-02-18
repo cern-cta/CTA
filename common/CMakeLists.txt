@@ -153,16 +153,13 @@ install (FILES telemetry/cta-otel.example.yaml
 target_include_directories(ctacommon PRIVATE ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
 
 target_link_libraries (ctacommon
-  PRIVATE
-    reflectcpp::reflectcpp
-
-  PUBLIC
-    ctaprotobuf
-    uuid
-    cap
-    json-c
-    cryptopp
-    ${OPENTELEMETRY_CPP_LIBRARIES}
+  ctaprotobuf
+  uuid
+  cap
+  json-c
+  cryptopp
+  reflectcpp::reflectcpp
+  ${OPENTELEMETRY_CPP_LIBRARIES}
 )
 
 set (COMMON_UNIT_TESTS_LIB_SRC_FILES
