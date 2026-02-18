@@ -5,6 +5,45 @@
 - [frontend] Fix crash in 'cta-admin dr ls' command when using multiple scheduler backends (!1263)
 
 
+## 5.11.17.0-1 (2026-02-18)
+
+### New Features
+
+- [maintd] Add CLI option to use runtime directory for app metadata (cta/CTA!1266)
+
+
+### Changes
+
+- [maintd] Add use_unix_domain_socket configuration entry for health server (cta/CTA!1282)
+
+- [maintd] Update maintd to use TOML configuration (cta/CTA!1246)
+
+- [maintd] Remove daemon_user and daemon_group settings (cta/CTA!1252)
+
+- [maintd] Use declarative config to initialise OpenTelemetry SDK (cta/CTA!1248)
+
+
+### Bug Fixes
+
+- [frontend] Fix crash in 'cta-admin dr ls' command when using multiple...
+
+- [frontend] Add error message when trying to change media type of non-empty tape (cta/CTA!1253)
+
+
+### Removals
+
+- [frontend] Stop using TAPE_POOL.SUPPLY column (cta/CTA!1245)
+
+
+### Performance Improvements
+
+- [taped] Optimise DriveState queries (cta/CTA!1198)
+
+
+### Other
+
+- [Misc] Rename *.conf.example files to *.example.conf (cta/CTA!1279)
+
 ## 5.11.16.0-1
 
 ### New Features
