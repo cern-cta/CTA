@@ -1,15 +1,9 @@
 ---
-
 date: 2026-02-18
 section: 1cta
 title: CTA-MAINTD
 header: The CERN Tape Archive (CTA)
------------------------------------
-
-<!---
-SPDX-FileCopyrightText: 2026 CERN
-SPDX-License-Identifier: GPL-3.0-or-later
---->
+---
 
 # NAME
 
@@ -250,8 +244,7 @@ telemetry_enabled *(default: false)*
 
 /etc/cta/cta-otel.yaml
 
-:   OpenTelemetry declarative configuration file.
-    Used only if telemetry is enabled and a config_file is specified under the [telemetry] section.
+:   OpenTelemetry declarative configuration file. Used only if telemetry is enabled and a config_file is specified under the [telemetry] section.
 
 # SEE ALSO
 

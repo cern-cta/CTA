@@ -26,27 +26,7 @@ end
 classDef hidden display: none;
 ```
 
-The sleep interval can be configured in the config file.
-
-In addition to the main thread, the `maintd` process also spawns a dedicated SignalReactor thread whose job it is to capture incoming signals (e.g. `SIGTERM`, `SIGHUP`) and execute the function associated with said signal. This ensures that the logic for dealing with signals is not spread out through all of the code.
-
-
-```mermaid
-graph LR
-
-wfs["Wait for signal"]
-esf["Execute Function</br>for said signal"]
-
-subgraph SignalReactor Thread
-direction LR
-START:::hidden --> wfs
-wfs -- Signal Received --> esf
-esf -- Done --> wfs
-end
-
-classDef hidden display: none;
-```
-
+The sleep interval can be configured in the config file through `[routines.cycle_sleep_interval_secs]`. If separate sleep intervals per routine are desired, then several instances of maintd should be spawned; each with a subset of the routines enabled and each with their own sleep interval.
 
 ## Routines
 
