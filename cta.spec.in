@@ -166,6 +166,11 @@ Requires: cta-lib-catalogue = %{version}-%{release}
 CERN Tape Archive:
 %files -n cta-maintd
 %defattr(-,root,root)
+%if "%{usingObjectstore}" != "0"
+%{_libdir}/libctaosdbroutines.so*
+%else
+%{_libdir}/libctardbroutines.so*
+%endif
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-maintd
 %attr(0755,root,root) %{_bindir}/cta-maintd
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-maintd.example.toml
