@@ -185,7 +185,7 @@ private:
      * @param nbByte the number of byte it really wrote to tape between
      * this flush and the previous one
      *  */
-    explicit ReportFlush(const drive::compressionStats& compressStats) : m_compressStats(compressStats) {}
+    explicit ReportFlush(drive::compressionStats compressStats) : m_compressStats(compressStats) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };

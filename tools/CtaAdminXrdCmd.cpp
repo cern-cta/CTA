@@ -48,7 +48,7 @@ void RequestCallback<cta::xrd::Alert>::operator()(const cta::xrd::Alert& alert) 
 * Defines how incoming records from the stream should be handled
 */
 template<>
-void IStreamBuffer<cta::xrd::Data>::DataCallback(const cta::xrd::Data& record) const {
+void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
   using namespace cta::xrd;
   using namespace cta::admin;
 
