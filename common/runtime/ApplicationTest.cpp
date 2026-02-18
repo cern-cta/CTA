@@ -205,23 +205,23 @@ level = "WARNING"
 TEST(Application, AppHandlesSigTerm) {
   using namespace cta;
 
+  // Global so that we can wait for this later on
+  static std::atomic<bool> stoppableTestApprunning = false;
+
   class TestStoppableApp {
   public:
     TestStoppableApp() = default;
     ~TestStoppableApp() = default;
 
-    void stop() { m_running = false; }
+    void stop() { stoppableTestApprunning = false; }
 
     int run(const MinimalTestConfig& config, cta::log::Logger& log) {
-      m_running = true;
-      while (m_running) {
+      stoppableTestApprunning = true;
+      while (stoppableTestApprunning) {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
       }
       return EXIT_SUCCESS;
     }
-
-    // Global so that we can wait for this later on
-    static inline std::atomic<bool> m_running = false;
   };
 
   TempFile f(R"toml(
@@ -237,7 +237,7 @@ format = "json"
   runtime::Application<TestStoppableApp, MinimalTestConfig, runtime::CommonCliOptions> app(appName, "");
   std::jthread thread([&]() { rc = app.run(args.count, args.data()); });
   // Give it some time to start
-  cta::utils::waitForCondition([&]() { return TestStoppableApp::m_running; }, 2000, 10);
+  cta::utils::waitForCondition([&]() { return stoppableTestApprunning == true; }, 2000, 10);
   ASSERT_EQ(0, ::kill(::getpid(), SIGTERM));
   cta::utils::waitForCondition([&]() { return rc == EXIT_SUCCESS; }, 2000, 100);
   ASSERT_EQ(rc, EXIT_SUCCESS);
