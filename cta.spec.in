@@ -169,7 +169,7 @@ CERN Tape Archive:
 %if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaosdbroutines.so*
 %else
-%{_libdir}/ctardbroutines.so*
+%{_libdir}/libctardbroutines.so*
 %endif
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-maintd
 %attr(0755,root,root) %{_bindir}/cta-maintd
