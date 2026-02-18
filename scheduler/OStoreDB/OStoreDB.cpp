@@ -2931,7 +2931,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(
   uint64_t maxFSeqLowBound,
   const uint64_t maxAddedFSeq,
   const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles,
-  const disk::DiskSystemList& diskSystemList,
+  const disk::DiskSystemList diskSystemList,
   log::LogContext& lc) {
   // We need to prepare retrieve requests names and reference them, create them, enqueue them.
   uint64_t nbRetrieveSubrequestsCreated = 0;

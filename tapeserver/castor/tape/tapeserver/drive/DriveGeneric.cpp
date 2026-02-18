@@ -18,7 +18,7 @@
 
 namespace castor::tape::tapeserver {
 
-drive::DriveInterface* drive::createDrive(const SCSI::DeviceInfo& di, System::virtualWrapper& sw) {
+drive::DriveInterface* drive::createDrive(SCSI::DeviceInfo di, System::virtualWrapper& sw) {
   // For now we need this code as we can only determine that the drive
   // is an mhVTL drive from the serial number and that information is
   // not available in the sysfs of the device.
