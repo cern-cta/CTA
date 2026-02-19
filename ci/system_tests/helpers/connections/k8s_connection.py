@@ -26,7 +26,11 @@ class K8sConnection(RemoteConnection):
 
     def exec(self, command: str, capture_output=False, throw_on_failure=True) -> subprocess.CompletedProcess[bytes]:
         cmd = f'kubectl exec -n {self.namespace} {self.pod} -c {self.container} -- bash -c "{command}"'
-        result = subprocess.run(cmd, shell=True, capture_output=capture_output)
+        # When not throwing on failure, suppress stderr to avoid kubectl noise
+        if not throw_on_failure and not capture_output:
+            result = subprocess.run(cmd, shell=True, stderr=subprocess.DEVNULL)
+        else:
+            result = subprocess.run(cmd, shell=True, capture_output=capture_output)
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}')
         return result

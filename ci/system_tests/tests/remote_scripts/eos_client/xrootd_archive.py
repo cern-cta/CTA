@@ -27,6 +27,9 @@ def parse_args():
     p.add_argument("--num-procs", type=int, default=8, help="Number of parallel worker processes")
     p.add_argument("--file-size", type=int, default=512, help="File size in bytes")
     p.add_argument("--sss-keytab", default="/etc/eos.keytab", help="SSS keytab path")
+    p.add_argument("--file-offset", type=int, default=0, help="Starting file number (for non-overlapping multi-source runs)")
+    p.add_argument("--skip-mkdir", action="store_true", help="Skip creating subdirectories (caller pre-created them)")
+    p.add_argument("--done-file", help="Path to marker file created on completion")
     return p.parse_args()
 
 
@@ -84,12 +87,14 @@ def main():
     print(
         f"xrootd_archive: {args.num_files} files, {args.num_dirs} dirs, "
         f"{args.num_procs} procs, {args.file_size}B each",
+        f"{args.num_procs} procs, {args.file_size}B each, offset={args.file_offset}",
         flush=True,
     )
     print(f"  dest: {args.dest_dir}", flush=True)
 
-    # Create subdirectories
-    mkdir_dirs(args.eos_host, args.dest_dir, args.num_dirs)
+    # Create subdirectories (skip if caller already created them)
+    if not args.skip_mkdir:
+        mkdir_dirs(args.eos_host, args.dest_dir, args.num_dirs)
 
     # Launch workers
     work_q = mp.JoinableQueue()
@@ -106,7 +111,8 @@ def main():
     t0 = time.time()
 
     # Enqueue all work
-    for i in range(args.num_files):
+    # for i in range(args.num_files):
+    for i in range(args.file_offset, args.file_offset + args.num_files):
         work_q.put(i)
 
     # Send stop sentinels
@@ -119,6 +125,11 @@ def main():
     rate = args.num_files / max(elapsed, 0.001)
 
     print(f"Archive done: {args.num_files} files in {elapsed:.1f}s ({rate:.1f} files/s)", flush=True)
+
+    # Create marker file to signal completion (avoids zombie detection issues)
+    if args.done_file:
+        with open(args.done_file, "w") as f:
+            f.write(f"{args.num_files}\n")
 
 
 if __name__ == "__main__":
