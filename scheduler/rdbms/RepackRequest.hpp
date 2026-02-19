@@ -46,7 +46,7 @@ public:
                                         uint64_t maxFSeqLowBound,
                                         const uint64_t maxAddedFSeq,
                                         const TotalStatsFiles& totalStatsFiles,
-                                        disk::DiskSystemList diskSystemList,
+                                        const disk::DiskSystemList& diskSystemList,
                                         log::LogContext& lc) override;
 
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles getTotalStatsFile();

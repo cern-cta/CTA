@@ -73,7 +73,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
                                             uint64_t maxFSeqLowBound,
                                             const uint64_t maxAddedFSeq,
                                             const TotalStatsFiles& totalStatsFiles,
-                                            disk::DiskSystemList diskSystemList,
+                                            const disk::DiskSystemList& diskSystemList,
                                             log::LogContext& lc) {
   uint64_t nbRetrieveSubrequestsCreated = 0;
 
