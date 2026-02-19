@@ -161,6 +161,9 @@ if [[ "$load_into_k8s" == "true" ]]; then
   fi
 fi
 
+# Clean up build context temp files left by podman/docker
+rm -f /tmp/build.*.tar 2>/dev/null || true
+
 }
 
 buildImage "$@"
