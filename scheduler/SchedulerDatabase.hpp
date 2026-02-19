@@ -656,12 +656,12 @@ public:
      * Add Retrieve subrequests to the repack request and update its statistics
      * @return the number of retrieve subrequests queued
      */
-    virtual uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
-                                                  cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+    virtual uint64_t addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackSubrequests,
+                                                  const cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
                                                   uint64_t maxFSeqLowBound,
                                                   const uint64_t maxAddedFSeq,
                                                   const TotalStatsFiles& totalStatsFiles,
-                                                  disk::DiskSystemList diskSystemList,
+                                                  const disk::DiskSystemList& diskSystemList,
                                                   log::LogContext& lc) = 0;
     virtual void expandDone() = 0;
     virtual void fail() = 0;

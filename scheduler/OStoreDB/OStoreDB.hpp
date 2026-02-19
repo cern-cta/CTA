@@ -540,12 +540,12 @@ public:
         : m_oStoreDB(oStoreDB),
           m_repackRequest(jobAddress, m_oStoreDB.m_objectStore) {}
 
-    uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
-                                          cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+    uint64_t addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackSubrequests,
+                                          const cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
                                           uint64_t maxFSeqLowBound,
-                                          const uint64_t maxAddedFSeq,
+                                          uint64_t maxAddedFSeq,
                                           const TotalStatsFiles& totalStatsFiles,
-                                          disk::DiskSystemList diskSystemList,
+                                          const disk::DiskSystemList& diskSystemList,
                                           log::LogContext& lc) override;
     void expandDone() override;
     void fail() override;
