@@ -95,7 +95,7 @@ void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> fai
 //------------------------------------------------------------------------------
 //reportFlush
 //------------------------------------------------------------------------------
-void MigrationReportPacker::reportFlush(drive::compressionStats compressStats, cta::log::LogContext& lc) {
+void MigrationReportPacker::reportFlush(const drive::compressionStats& compressStats, cta::log::LogContext& lc) {
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportFlush");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFlush(), pushing a report.");

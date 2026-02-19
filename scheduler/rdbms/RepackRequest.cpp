@@ -68,8 +68,8 @@ void RepackRequest::reportRetrieveCreationFailures(const uint64_t failedToRetrie
 }
 
 uint64_t
-RepackRequest::addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
-                                            cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackSubrequests,
+                                            const cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
                                             uint64_t maxFSeqLowBound,
                                             const uint64_t maxAddedFSeq,
                                             const TotalStatsFiles& totalStatsFiles,

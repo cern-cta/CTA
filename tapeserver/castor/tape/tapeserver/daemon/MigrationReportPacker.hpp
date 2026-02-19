@@ -63,7 +63,7 @@ public:
    * @param lc log context provided by the calling thread.
    *
    */
-  virtual void reportFlush(drive::compressionStats compressStats, cta::log::LogContext& lc);
+  virtual void reportFlush(const drive::compressionStats& compressStats, cta::log::LogContext& lc);
 
   /**
    * Create into the MigrationReportPacker a report of reaching the end of the tape.
@@ -185,7 +185,7 @@ private:
      * @param nbByte the number of byte it really wrote to tape between
      * this flush and the previous one
      *  */
-    explicit ReportFlush(drive::compressionStats compressStats) : m_compressStats(compressStats) {}
+    explicit ReportFlush(const drive::compressionStats& compressStats) : m_compressStats(compressStats) {}
 
     void execute(MigrationReportPacker& reportPacker) override;
   };

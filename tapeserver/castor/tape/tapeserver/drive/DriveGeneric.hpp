@@ -21,7 +21,7 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveDoesNotSupportRAOException);
  */
 class DriveGeneric : public DriveInterface {
 public:
-  DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw);
+  DriveGeneric(const SCSI::DeviceInfo& di, System::virtualWrapper& sw);
 
   /* Operations to be used by the higher levels */
 

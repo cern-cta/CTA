@@ -262,7 +262,7 @@ public:
  * @return pointer to the newly allocated drive object
  */
 
-DriveInterface* createDrive(SCSI::DeviceInfo di, System::virtualWrapper& sw);
+DriveInterface* createDrive(const SCSI::DeviceInfo& di, System::virtualWrapper& sw);
 
 std::string getSerialNumber(const int& fd, System::virtualWrapper& sw);
 

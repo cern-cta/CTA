@@ -41,8 +41,8 @@ public:
   uint64_t getLastExpandedFSeq() override;
   void setLastExpandedFSeq(uint64_t fseq) override;
 
-  uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
-                                        cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+  uint64_t addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackSubrequests,
+                                        const cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
                                         uint64_t maxFSeqLowBound,
                                         const uint64_t maxAddedFSeq,
                                         const TotalStatsFiles& totalStatsFiles,
