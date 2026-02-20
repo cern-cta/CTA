@@ -13,6 +13,9 @@ num_dirs = 10
 num_files_per_dir = 1000
 file_size = 512
 io_threads = 8
+
+[tests.stress.prequeue]
+
 # If true, put drives down before archiving and only put them up after num_files_to_put_drives_up files are created.
 # This prevents drives from outpacing the queueing capabilities of EOS.
 prequeue = true
