@@ -11,11 +11,7 @@ Output: prints a single integer (total file count) to stdout.
 
 import argparse
 import multiprocessing as mp
-import re
 import subprocess
-
-_FILES_RE = re.compile(r"\bFiles:\s*(\d+)\b")
-
 
 def parse_args():
     p = argparse.ArgumentParser(description="Count files in EOS directories")
@@ -27,11 +23,11 @@ def parse_args():
 
 
 def count_dir_files(args) -> int:
-    """Count files in a single directory via eos file info command."""
+    """Count files in a single directory via eos find -f command."""
     eos_host, path = args
     try:
         p = subprocess.run(
-            ["eos", f"root://{eos_host}", "file", "info", path],
+            ["eos", f"root://{eos_host}", "find", "-f", path],
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
             text=True,
@@ -42,9 +38,10 @@ def count_dir_files(args) -> int:
 
     if p.returncode != 0 or not p.stdout:
         return 0
+    
+    print(p.stdout)
 
-    m = _FILES_RE.search(p.stdout)
-    return int(m.group(1)) if m else 0
+    return int(len(p.stdout.strip().splitlines()))
 
 
 def main():
