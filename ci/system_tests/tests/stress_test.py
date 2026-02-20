@@ -31,10 +31,12 @@ def stress_params(request):
         num_files_per_dir=request.config.test_config["tests"]["stress"]["num_files_per_dir"],
         file_size=request.config.test_config["tests"]["stress"]["file_size"],
         io_threads=request.config.test_config["tests"]["stress"]["io_threads"],
-        prequeue=request.config.test_config["tests"]["stress"]["prequeue"],
-        num_files_to_put_drives_up=request.config.test_config["tests"]["stress"]["num_files_to_put_drives_up"],
-        check_every_sec=request.config.test_config["tests"]["stress"]["check_every_sec"],
-        timeout_to_put_drives_up=request.config.test_config["tests"]["stress"]["timeout_to_put_drives_up"],
+        prequeue=request.config.test_config["tests"]["stress"]["prequeue"]["prequeue"],
+        num_files_to_put_drives_up=request.config.test_config["tests"]["stress"]["prequeue"][
+            "num_files_to_put_drives_up"
+        ],
+        check_every_sec=request.config.test_config["tests"]["stress"]["prequeue"]["check_every_sec"],
+        timeout_to_put_drives_up=request.config.test_config["tests"]["stress"]["prequeue"]["timeout_to_put_drives_up"],
     )
 
 
