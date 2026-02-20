@@ -128,33 +128,31 @@ def test_generate_and_copy_files(env, stress_params):
 
     if stress_params.prequeue:
         # Poll namespace file count and put drives up once threshold is reached
-        drives_up = False
         while eos_client.is_process_running(pid):
-            if not drives_up:
-                num_files_so_far = eos_client.count_files_in_namespace(
-                    eos_host=disk_instance_name,
-                    dest_dir=archive_directory,
-                    num_dirs=stress_params.num_dirs,
-                    count_procs=5,
-                )
-                # num_files_so_far = int(
-                #     mgm.execWithOutput(f"eos find -f {archive_directory} | wc -l")
-                # )
-                print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created")
-                if num_files_so_far >= stress_params.num_files_to_put_drives_up:
-                    print(f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP")
-                    env.cta_cli[0].set_all_drives_up(
-                        wait=False
-                    )  # do not wait for status to be UP as drives will immediately start TRANSFERING
-                    drives_up = True
-                if time.time() - timer_start > stress_params.timeout_to_put_drives_up:
-                    env.cta_cli[0].set_all_drives_up(wait=False)
-                    drives_up = True
+            num_files_so_far = eos_client.count_files_in_namespace(
+                eos_host=disk_instance_name,
+                dest_dir=archive_directory,
+                num_dirs=stress_params.num_dirs,
+                count_procs=5,
+            )
+            # num_files_so_far = int(
+            #     mgm.execWithOutput(f"eos find -f {archive_directory} | wc -l")
+            # )
+            print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created")
+            if num_files_so_far >= stress_params.num_files_to_put_drives_up:
+                print(f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP")
+                env.cta_cli[0].set_all_drives_up(
+                    wait=False
+                )  # do not wait for status to be UP as drives will immediately start TRANSFERING
+                break
+            if time.time() - timer_start > stress_params.timeout_to_put_drives_up:
+                env.cta_cli[0].set_all_drives_up(wait=False)
+                break
             time.sleep(stress_params.check_every_sec)
 
         # If archive finished before threshold was reached, still put drives up
-        if not drives_up:
-            print("\tArchive finished before drive-up threshold — putting drives UP now")
+        if stress_params.num_files_to_put_drives_up >= total_file_count:
+            print("\tDisregarding drive-up threshold as it is larger than total files — putting drives UP now")
             env.cta_cli[0].set_all_drives_up(wait=False)
 
     # Wait for archive to finish (poll since `wait` doesn't work across kubectl exec sessions)

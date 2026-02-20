@@ -7,8 +7,6 @@ Archive files to EOS using persistent XRootD Python client connections.
 
 Runs inside the client pod. Uses multiprocessing with persistent XRootD
 File objects for high throughput on many small files.
-
-Output: prints progress lines, then a JSON summary on the last line.
 """
 
 import argparse
