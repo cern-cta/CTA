@@ -49,7 +49,7 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
       continue;
     }
     const std::string createTableSQL = "CREATE[a-zA-Z ]+TABLE " + tableName + "[ ]*\\(([a-zA-Z0-9_, '\\)\\(]+)\\)";
-    cta::utils::Regex tableSqlRegex(createTableSQL.c_str());
+    cta::utils::Regex tableSqlRegex(createTableSQL);
     auto tableSql = tableSqlRegex.exec(sqlStmt);
     if (tableSql.size() != 2) {
       // Ensure the dimensions are correct
@@ -70,7 +70,7 @@ std::map<std::string, std::string, std::less<>> CatalogueSchema::getSchemaColumn
         continue;
       }
       const std::string columnSQL = "([a-zA-Z_0-9]+) +(" + columnTypes + ")";
-      cta::utils::Regex columnSqlRegex(columnSQL.c_str());
+      cta::utils::Regex columnSqlRegex(columnSQL);
       auto columnSql = columnSqlRegex.exec(sqlStmtComma);
       if (3 == columnSql.size()) {
         schemaColumnNames.try_emplace(columnSql[1], columnSql[2]);
@@ -164,8 +164,8 @@ std::map<std::string, uint64_t, std::less<>> CatalogueSchema::getSchemaVersion()
                                        "  ([[:digit:]]+),"
                                        "  ([[:digit:]]+)\\);");
   if (auto version = schemaVersionRegex.exec(sql); version.size() == 3) {
-    schemaVersion.try_emplace("SCHEMA_VERSION_MAJOR", cta::utils::toUint64(version[1].c_str()));
-    schemaVersion.try_emplace("SCHEMA_VERSION_MINOR", cta::utils::toUint64(version[2].c_str()));
+    schemaVersion.try_emplace("SCHEMA_VERSION_MAJOR", cta::utils::toUint64(version[1]));
+    schemaVersion.try_emplace("SCHEMA_VERSION_MINOR", cta::utils::toUint64(version[2]));
   } else {
     throw exception::Exception("Could not find SCHEMA_VERSION");
   }
