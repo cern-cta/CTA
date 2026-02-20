@@ -168,7 +168,7 @@ def test_generate_and_copy_files(env, stress_params):
         eos_client.execWithOutput(f"eos root://{disk_instance_name} find -f {archive_directory} | wc -l")
     )
     if num_files_copied != total_file_count:
-        print(f"Some files failed to copy over, we wanted {total_file_count} and got {num_files_copied}")
+        print(f"Some files failed to copy over, expected: {total_file_count} and actual: {num_files_copied}")
     else:
         print(f"All {total_file_count} files copied successfully to {archive_directory}")
 
