@@ -672,7 +672,7 @@ void RdbmsDriveStateCatalogue::setDesiredTapeDriveState(const std::string& tapeD
     )SQL";
 
   auto conn = m_connPool->getConn();
-  auto stmt = conn.createStmt(sql.c_str());
+  auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":DRIVE_NAME", tapeDriveName);
   stmt.bindBool(":DESIRED_UP", desiredState.up);
@@ -788,7 +788,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   )SQL";
 
   auto conn = m_connPool->getConn();
-  auto stmt = conn.createStmt(sql.c_str());
+  auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":DRIVE_NAME", tapeDrive.driveName);
   stmt.bindString(":HOST", tapeDrive.host);
@@ -903,7 +903,7 @@ void RdbmsDriveStateCatalogue::updateTapeDriveStatus(const common::dataStructure
   )SQL";
 
   stmt.reset();
-  stmt = conn.createStmt(sql.c_str());
+  stmt = conn.createStmt(sql);
 
   auto setOptionalTime = [&stmt](const std::string& sqlField, const std::optional<time_t>& optionalField) {
     if (optionalField) {

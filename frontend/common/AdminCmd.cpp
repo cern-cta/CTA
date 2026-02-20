@@ -503,7 +503,7 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
 
   auto regex = getRequired(OptionString::DRIVE);
   regex = '^' + regex + '$';
-  utils::Regex driveNameRegex(regex.c_str());
+  utils::Regex driveNameRegex(regex);
 
   if (!m_schedulerBackendName.has_value()) {
     throw exception::UserError(
@@ -1623,7 +1623,7 @@ std::string AdminCmd::setDriveState(const std::string& regex,
   using namespace cta::admin;
 
   std::stringstream cmdlineOutput;
-  utils::Regex driveNameRegex(regex.c_str());
+  utils::Regex driveNameRegex(regex);
 
   if (!m_schedulerBackendName.has_value()) {
     throw exception::UserError(
