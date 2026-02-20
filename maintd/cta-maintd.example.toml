@@ -122,13 +122,5 @@
   # Objectstore routine that garbage collects stale agents and objects.
   garbage_collect      = { enabled = true }
 
-  # Postgres-only queue cleanup.
-  # user_active_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  # repack_active_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  # user_pending_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  # repack_pending_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
-  # scheduler_maintenance_cleanup = { enabled = true, batch_size = 1000, age_for_deletion_secs = 1209600 }
-
-
 [experimental]
   telemetry_enabled = false
