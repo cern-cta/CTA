@@ -6,7 +6,6 @@
 #include "MaintdApp.hpp"
 #include "MaintdConfig.hpp"
 #include "common/runtime/Application.hpp"
-#include "common/runtime/CommonCliOptions.hpp"
 
 int main(const int argc, char** const argv) {
   using namespace cta;

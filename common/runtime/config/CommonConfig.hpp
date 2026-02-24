@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "ConfigMeta.hpp"
+
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -37,6 +39,10 @@ enum class InitFailurePolicy { warn, fatal };
  */
 struct ExperimentalConfig {
   bool telemetry_enabled = false;
+
+  static consteval auto fields() {
+    return std::make_tuple(field("telemetry_enabled", &ExperimentalConfig::telemetry_enabled));
+  }
 };
 
 /**
@@ -44,6 +50,8 @@ struct ExperimentalConfig {
  */
 struct CatalogueConfig {
   std::string config_file = "/etc/cta/cta-catalogue.conf";
+
+  static consteval auto fields() { return std::make_tuple(field("config_file", &CatalogueConfig::config_file)); }
 };
 
 /**
@@ -60,6 +68,18 @@ struct SchedulerConfig {
 #endif
   int tape_cache_max_age_secs = 600;
   int retrieve_queue_cache_max_age_secs = 10;
+
+  static consteval auto fields() {
+    return std::make_tuple(
+      field("backend_name", &SchedulerConfig::backend_name),
+#ifndef CTA_PGSCHED
+      field("objectstore_backend_path", &SchedulerConfig::objectstore_backend_path),
+#else
+      field("config_file", &SchedulerConfig::config_file),
+#endif
+      field("tape_cache_max_age_secs", &SchedulerConfig::tape_cache_max_age_secs),
+      field("retrieve_queue_cache_max_age_secs", &SchedulerConfig::retrieve_queue_cache_max_age_secs));
+  }
 };
 
 /**
@@ -69,6 +89,12 @@ struct LoggingConfig {
   std::string level = "INFO";
   std::string format = "json";
   std::map<std::string, std::string> attributes;
+
+  static consteval auto fields() {
+    return std::make_tuple(field("level", &LoggingConfig::level),
+                           field("format", &LoggingConfig::format),
+                           field("attributes", &LoggingConfig::attributes));
+  }
 };
 
 /**
@@ -79,7 +105,13 @@ struct TelemetryConfig {
    * @brief Path to the OpenTelemetry declarative config file.
    */
   std::string config_file = "";
-  InitFailurePolicy on_init_failure = InitFailurePolicy::warn;
+  // InitFailurePolicy on_init_failure = InitFailurePolicy::warn;
+  std::string on_init_failure = "warn";
+
+  static consteval auto fields() {
+    return std::make_tuple(field("config_file", &TelemetryConfig::config_file),
+                           field("on_init_failure", &TelemetryConfig::on_init_failure));
+  }
 };
 
 /**
@@ -90,6 +122,13 @@ struct HealthServerConfig {
   bool use_unix_domain_socket = false;
   std::optional<std::string> host = "";
   std::optional<int> port = 8080;
+
+  static consteval auto fields() {
+    return std::make_tuple(field("enabled", &HealthServerConfig::enabled),
+                           field("use_unix_domain_socket", &HealthServerConfig::use_unix_domain_socket),
+                           field("host", &HealthServerConfig::host),
+                           field("port", &HealthServerConfig::port));
+  }
 };
 
 /**
@@ -99,6 +138,11 @@ struct HealthServerConfig {
 struct XRootDConfig {
   std::string security_protocol = "sss";
   std::string sss_keytab_path = "etc/cta/sss.keytab";
+
+  static consteval auto fields() {
+    return std::make_tuple(field("security_protocol", &XRootDConfig::security_protocol),
+                           field("sss_keytab_path", &XRootDConfig::sss_keytab_path));
+  }
 };
 
 }  // namespace cta::runtime

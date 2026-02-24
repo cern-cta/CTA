@@ -6,8 +6,8 @@
 #include "ArgParser.hpp"
 
 #include "CommonCliOptions.hpp"
-#include "RuntimeTestHelpers.hpp"
 #include "common/exception/UserError.hpp"
+#include "common/runtime/RuntimeTestHelpers.hpp"
 #include "version.h"
 
 #include <chrono>

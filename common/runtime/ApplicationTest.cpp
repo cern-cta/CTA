@@ -5,7 +5,6 @@
 
 #include "Application.hpp"
 
-#include "CommonCliOptions.hpp"
 #include "RuntimeTestHelpers.hpp"
 
 #include <chrono>
@@ -17,6 +16,10 @@ namespace unitTests {
 
 struct MinimalTestConfig {
   cta::runtime::LoggingConfig logging;
+
+  static consteval auto fields() {
+    return std::make_tuple(cta::runtime::field("logging", &MinimalTestConfig::logging));
+  }
 };
 
 class TestApp {
@@ -130,6 +133,11 @@ TEST(Application, AppCompilesWithCustomConfig) {
   struct CustomTestConfig {
     cta::runtime::LoggingConfig logging;
     std::string extraConfigField;
+
+    static consteval auto fields() {
+      return std::make_tuple(cta::runtime::field("logging", &CustomTestConfig::logging),
+                             cta::runtime::field("extraConfigField", &CustomTestConfig::extraConfigField));
+    }
   };
 
   class TestAppWithCustomConfig {
