@@ -17,7 +17,7 @@
 namespace cta::catalogue {
 
 RequesterActivityMountRuleCatalogueRetryWrapper::RequesterActivityMountRuleCatalogueRetryWrapper(
-  const std::unique_ptr<Catalogue>& catalogue,
+  Catalogue& catalogue,
   log::Logger& log,
   const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -33,11 +33,11 @@ void RequesterActivityMountRuleCatalogueRetryWrapper::modifyRequesterActivityMou
   return retryOnLostConnection(
     m_log,
     [this, &admin, &instanceName, &requesterName, &activityRegex, &mountPolicy]() {
-      m_catalogue->RequesterActivityMountRule()->modifyRequesterActivityMountRulePolicy(admin,
-                                                                                        instanceName,
-                                                                                        requesterName,
-                                                                                        activityRegex,
-                                                                                        mountPolicy);
+      m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRulePolicy(admin,
+                                                                                       instanceName,
+                                                                                       requesterName,
+                                                                                       activityRegex,
+                                                                                       mountPolicy);
     },
     m_maxTriesToConnect);
 }
@@ -51,11 +51,11 @@ void RequesterActivityMountRuleCatalogueRetryWrapper::modifyRequesterActivityMou
   return retryOnLostConnection(
     m_log,
     [this, &admin, &instanceName, &requesterName, &activityRegex, &comment]() {
-      m_catalogue->RequesterActivityMountRule()->modifyRequesterActivityMountRuleComment(admin,
-                                                                                         instanceName,
-                                                                                         requesterName,
-                                                                                         activityRegex,
-                                                                                         comment);
+      m_catalogue.RequesterActivityMountRule()->modifyRequesterActivityMountRuleComment(admin,
+                                                                                        instanceName,
+                                                                                        requesterName,
+                                                                                        activityRegex,
+                                                                                        comment);
     },
     m_maxTriesToConnect);
 }
@@ -70,7 +70,7 @@ void RequesterActivityMountRuleCatalogueRetryWrapper::createRequesterActivityMou
   return retryOnLostConnection(
     m_log,
     [this, &admin, &mountPolicyName, &diskInstance, &requesterName, &activityRegex, &comment]() {
-      m_catalogue->RequesterActivityMountRule()
+      m_catalogue.RequesterActivityMountRule()
         ->createRequesterActivityMountRule(admin, mountPolicyName, diskInstance, requesterName, activityRegex, comment);
     },
     m_maxTriesToConnect);
@@ -80,7 +80,7 @@ std::vector<common::dataStructures::RequesterActivityMountRule>
 RequesterActivityMountRuleCatalogueRetryWrapper::getRequesterActivityMountRules() const {
   return retryOnLostConnection(
     m_log,
-    [this]() { return m_catalogue->RequesterActivityMountRule()->getRequesterActivityMountRules(); },
+    [this]() { return m_catalogue.RequesterActivityMountRule()->getRequesterActivityMountRules(); },
     m_maxTriesToConnect);
 }
 
@@ -91,9 +91,9 @@ void RequesterActivityMountRuleCatalogueRetryWrapper::deleteRequesterActivityMou
   return retryOnLostConnection(
     m_log,
     [this, &diskInstanceName, &requesterName, &activityRegex]() {
-      m_catalogue->RequesterActivityMountRule()->deleteRequesterActivityMountRule(diskInstanceName,
-                                                                                  requesterName,
-                                                                                  activityRegex);
+      m_catalogue.RequesterActivityMountRule()->deleteRequesterActivityMountRule(diskInstanceName,
+                                                                                 requesterName,
+                                                                                 activityRegex);
     },
     m_maxTriesToConnect);
 }

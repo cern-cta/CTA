@@ -567,7 +567,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -807,7 +807,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -1058,7 +1058,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = 1000 + fseq;
-      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       // Write the data (one block)
       writer.write(data, sizeof(data));
       // Close the file
@@ -1303,7 +1303,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -1533,7 +1533,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -1760,7 +1760,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -1992,7 +1992,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -2216,7 +2216,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -2382,7 +2382,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(writeSession, *aj, archiveFileSize);
+      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);

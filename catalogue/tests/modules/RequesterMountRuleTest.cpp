@@ -216,7 +216,7 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesterMountRulePolicy_nonE
                cta::exception::UserError);
 }
 
-TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesteMountRuleComment) {
+TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesterMountRuleComment) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
   auto mountPolicyToAdd = CatalogueTestUtils::getMountPolicy1();
@@ -248,10 +248,10 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesteMountRuleComment) {
   }
 
   const std::string modifiedComment = "Modified comment";
-  m_catalogue->RequesterMountRule()->modifyRequesteMountRuleComment(m_admin,
-                                                                    m_diskInstance.name,
-                                                                    requesterName,
-                                                                    modifiedComment);
+  m_catalogue->RequesterMountRule()->modifyRequesterMountRuleComment(m_admin,
+                                                                     m_diskInstance.name,
+                                                                     requesterName,
+                                                                     modifiedComment);
 
   {
     const auto rules = m_catalogue->RequesterMountRule()->getRequesterMountRules();
@@ -268,7 +268,7 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesteMountRuleComment) {
   }
 }
 
-TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesteMountRuleComment_nonExistentRequester) {
+TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesterMountRuleComment_nonExistentRequester) {
   ASSERT_TRUE(m_catalogue->RequesterMountRule()->getRequesterMountRules().empty());
 
   m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
@@ -276,10 +276,10 @@ TEST_P(cta_catalogue_RequesterMountRuleTest, modifyRequesteMountRuleComment_nonE
   const std::string requesterName = "requester_name";
   const std::string comment = "Comment";
 
-  ASSERT_THROW(m_catalogue->RequesterMountRule()->modifyRequesteMountRuleComment(m_admin,
-                                                                                 m_diskInstance.name,
-                                                                                 requesterName,
-                                                                                 comment),
+  ASSERT_THROW(m_catalogue->RequesterMountRule()->modifyRequesterMountRuleComment(m_admin,
+                                                                                  m_diskInstance.name,
+                                                                                  requesterName,
+                                                                                  comment),
                cta::exception::UserError);
 }
 

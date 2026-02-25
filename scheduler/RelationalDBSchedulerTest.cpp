@@ -3216,7 +3216,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
   log::TimingList tl;
   utils::Timer t;
-  ASSERT_THROW(scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc), cta::ExpandRepackRequestException);
+  ASSERT_THROW(scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc), cta::ExpandRepackRequestException);
 }
 
 TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecallFlagProvided) {
@@ -3334,7 +3334,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
   log::TimingList tl;
   utils::Timer t;
-  ASSERT_NO_THROW(scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc));
+  ASSERT_NO_THROW(scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc));
 }
 
 TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount) {

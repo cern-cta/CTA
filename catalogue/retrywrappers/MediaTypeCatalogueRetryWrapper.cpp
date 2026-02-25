@@ -17,7 +17,7 @@
 
 namespace cta::catalogue {
 
-MediaTypeCatalogueRetryWrapper::MediaTypeCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+MediaTypeCatalogueRetryWrapper::MediaTypeCatalogueRetryWrapper(Catalogue& catalogue,
                                                                log::Logger& log,
                                                                const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -28,28 +28,25 @@ void MediaTypeCatalogueRetryWrapper::createMediaType(const common::dataStructure
                                                      const MediaType& mediaType) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &mediaType] { return m_catalogue->MediaType()->createMediaType(admin, mediaType); },
+    [this, &admin, &mediaType] { return m_catalogue.MediaType()->createMediaType(admin, mediaType); },
     m_maxTriesToConnect);
 }
 
 void MediaTypeCatalogueRetryWrapper::deleteMediaType(const std::string& name) {
   return retryOnLostConnection(
     m_log,
-    [this, &name] { return m_catalogue->MediaType()->deleteMediaType(name); },
+    [this, &name] { return m_catalogue.MediaType()->deleteMediaType(name); },
     m_maxTriesToConnect);
 }
 
 std::vector<MediaTypeWithLogs> MediaTypeCatalogueRetryWrapper::getMediaTypes() const {
-  return retryOnLostConnection(
-    m_log,
-    [this] { return m_catalogue->MediaType()->getMediaTypes(); },
-    m_maxTriesToConnect);
+  return retryOnLostConnection(m_log, [this] { return m_catalogue.MediaType()->getMediaTypes(); }, m_maxTriesToConnect);
 }
 
 MediaType MediaTypeCatalogueRetryWrapper::getMediaTypeByVid(const std::string& vid) const {
   return retryOnLostConnection(
     m_log,
-    [this, &vid] { return m_catalogue->MediaType()->getMediaTypeByVid(vid); },
+    [this, &vid] { return m_catalogue.MediaType()->getMediaTypeByVid(vid); },
     m_maxTriesToConnect);
 }
 
@@ -59,7 +56,7 @@ void MediaTypeCatalogueRetryWrapper::modifyMediaTypeName(const common::dataStruc
   return retryOnLostConnection(
     m_log,
     [this, &admin, &currentName, &newName] {
-      return m_catalogue->MediaType()->modifyMediaTypeName(admin, currentName, newName);
+      return m_catalogue.MediaType()->modifyMediaTypeName(admin, currentName, newName);
     },
     m_maxTriesToConnect);
 }
@@ -70,7 +67,7 @@ void MediaTypeCatalogueRetryWrapper::modifyMediaTypeCartridge(const common::data
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &cartridge] {
-      return m_catalogue->MediaType()->modifyMediaTypeCartridge(admin, name, cartridge);
+      return m_catalogue.MediaType()->modifyMediaTypeCartridge(admin, name, cartridge);
     },
     m_maxTriesToConnect);
 }
@@ -82,7 +79,7 @@ void MediaTypeCatalogueRetryWrapper::modifyMediaTypeCapacityInBytes(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &capacityInBytes] {
-      return m_catalogue->MediaType()->modifyMediaTypeCapacityInBytes(admin, name, capacityInBytes);
+      return m_catalogue.MediaType()->modifyMediaTypeCapacityInBytes(admin, name, capacityInBytes);
     },
     m_maxTriesToConnect);
 }
@@ -94,7 +91,7 @@ void MediaTypeCatalogueRetryWrapper::modifyMediaTypePrimaryDensityCode(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &primaryDensityCode] {
-      return m_catalogue->MediaType()->modifyMediaTypePrimaryDensityCode(admin, name, primaryDensityCode);
+      return m_catalogue.MediaType()->modifyMediaTypePrimaryDensityCode(admin, name, primaryDensityCode);
     },
     m_maxTriesToConnect);
 }
@@ -106,7 +103,7 @@ void MediaTypeCatalogueRetryWrapper::modifyMediaTypeSecondaryDensityCode(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &secondaryDensityCode] {
-      return m_catalogue->MediaType()->modifyMediaTypeSecondaryDensityCode(admin, name, secondaryDensityCode);
+      return m_catalogue.MediaType()->modifyMediaTypeSecondaryDensityCode(admin, name, secondaryDensityCode);
     },
     m_maxTriesToConnect);
 }
@@ -116,7 +113,7 @@ void MediaTypeCatalogueRetryWrapper::modifyMediaTypeNbWraps(const common::dataSt
                                                             const std::optional<std::uint32_t>& nbWraps) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &name, &nbWraps] { return m_catalogue->MediaType()->modifyMediaTypeNbWraps(admin, name, nbWraps); },
+    [this, &admin, &name, &nbWraps] { return m_catalogue.MediaType()->modifyMediaTypeNbWraps(admin, name, nbWraps); },
     m_maxTriesToConnect);
 }
 
@@ -125,7 +122,7 @@ void MediaTypeCatalogueRetryWrapper::modifyMediaTypeMinLPos(const common::dataSt
                                                             const std::optional<std::uint64_t>& minLPos) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &name, &minLPos] { return m_catalogue->MediaType()->modifyMediaTypeMinLPos(admin, name, minLPos); },
+    [this, &admin, &name, &minLPos] { return m_catalogue.MediaType()->modifyMediaTypeMinLPos(admin, name, minLPos); },
     m_maxTriesToConnect);
 }
 
@@ -134,7 +131,7 @@ void MediaTypeCatalogueRetryWrapper::modifyMediaTypeMaxLPos(const common::dataSt
                                                             const std::optional<std::uint64_t>& maxLPos) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &name, &maxLPos] { return m_catalogue->MediaType()->modifyMediaTypeMaxLPos(admin, name, maxLPos); },
+    [this, &admin, &name, &maxLPos] { return m_catalogue.MediaType()->modifyMediaTypeMaxLPos(admin, name, maxLPos); },
     m_maxTriesToConnect);
 }
 
@@ -143,7 +140,7 @@ void MediaTypeCatalogueRetryWrapper::modifyMediaTypeComment(const common::dataSt
                                                             const std::string& comment) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &name, &comment] { return m_catalogue->MediaType()->modifyMediaTypeComment(admin, name, comment); },
+    [this, &admin, &name, &comment] { return m_catalogue.MediaType()->modifyMediaTypeComment(admin, name, comment); },
     m_maxTriesToConnect);
 }
 

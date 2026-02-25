@@ -14,7 +14,7 @@
 
 namespace cta::catalogue {
 
-DiskSystemCatalogueRetryWrapper::DiskSystemCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+DiskSystemCatalogueRetryWrapper::DiskSystemCatalogueRetryWrapper(Catalogue& catalogue,
                                                                  log::Logger& log,
                                                                  const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -40,14 +40,14 @@ void DiskSystemCatalogueRetryWrapper::createDiskSystem(const common::dataStructu
      &targetedFreeSpace,
      &sleepTime,
      &comment] {
-      return m_catalogue->DiskSystem()->createDiskSystem(admin,
-                                                         name,
-                                                         diskInstanceName,
-                                                         diskInstanceSpaceName,
-                                                         fileRegexp,
-                                                         targetedFreeSpace,
-                                                         sleepTime,
-                                                         comment);
+      return m_catalogue.DiskSystem()->createDiskSystem(admin,
+                                                        name,
+                                                        diskInstanceName,
+                                                        diskInstanceSpaceName,
+                                                        fileRegexp,
+                                                        targetedFreeSpace,
+                                                        sleepTime,
+                                                        comment);
     },
     m_maxTriesToConnect);
 }
@@ -55,14 +55,14 @@ void DiskSystemCatalogueRetryWrapper::createDiskSystem(const common::dataStructu
 void DiskSystemCatalogueRetryWrapper::deleteDiskSystem(const std::string& name) {
   return retryOnLostConnection(
     m_log,
-    [this, &name] { return m_catalogue->DiskSystem()->deleteDiskSystem(name); },
+    [this, &name] { return m_catalogue.DiskSystem()->deleteDiskSystem(name); },
     m_maxTriesToConnect);
 }
 
 disk::DiskSystemList DiskSystemCatalogueRetryWrapper::getAllDiskSystems() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->DiskSystem()->getAllDiskSystems(); },
+    [this] { return m_catalogue.DiskSystem()->getAllDiskSystems(); },
     m_maxTriesToConnect);
 }
 
@@ -72,7 +72,7 @@ void DiskSystemCatalogueRetryWrapper::modifyDiskSystemFileRegexp(const common::d
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &fileRegexp] {
-      return m_catalogue->DiskSystem()->modifyDiskSystemFileRegexp(admin, name, fileRegexp);
+      return m_catalogue.DiskSystem()->modifyDiskSystemFileRegexp(admin, name, fileRegexp);
     },
     m_maxTriesToConnect);
 }
@@ -84,7 +84,7 @@ void DiskSystemCatalogueRetryWrapper::modifyDiskSystemTargetedFreeSpace(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &targetedFreeSpace] {
-      return m_catalogue->DiskSystem()->modifyDiskSystemTargetedFreeSpace(admin, name, targetedFreeSpace);
+      return m_catalogue.DiskSystem()->modifyDiskSystemTargetedFreeSpace(admin, name, targetedFreeSpace);
     },
     m_maxTriesToConnect);
 }
@@ -94,9 +94,7 @@ void DiskSystemCatalogueRetryWrapper::modifyDiskSystemComment(const common::data
                                                               const std::string& comment) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &name, &comment] {
-      return m_catalogue->DiskSystem()->modifyDiskSystemComment(admin, name, comment);
-    },
+    [this, &admin, &name, &comment] { return m_catalogue.DiskSystem()->modifyDiskSystemComment(admin, name, comment); },
     m_maxTriesToConnect);
 }
 
@@ -106,7 +104,7 @@ void DiskSystemCatalogueRetryWrapper::modifyDiskSystemSleepTime(const common::da
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &sleepTime] {
-      return m_catalogue->DiskSystem()->modifyDiskSystemSleepTime(admin, name, sleepTime);
+      return m_catalogue.DiskSystem()->modifyDiskSystemSleepTime(admin, name, sleepTime);
     },
     m_maxTriesToConnect);
 }
@@ -118,7 +116,7 @@ void DiskSystemCatalogueRetryWrapper::modifyDiskSystemDiskInstanceName(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &diskInstanceName] {
-      return m_catalogue->DiskSystem()->modifyDiskSystemDiskInstanceName(admin, name, diskInstanceName);
+      return m_catalogue.DiskSystem()->modifyDiskSystemDiskInstanceName(admin, name, diskInstanceName);
     },
     m_maxTriesToConnect);
 }
@@ -130,7 +128,7 @@ void DiskSystemCatalogueRetryWrapper::modifyDiskSystemDiskInstanceSpaceName(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &diskInstanceSpaceName] {
-      return m_catalogue->DiskSystem()->modifyDiskSystemDiskInstanceSpaceName(admin, name, diskInstanceSpaceName);
+      return m_catalogue.DiskSystem()->modifyDiskSystemDiskInstanceSpaceName(admin, name, diskInstanceSpaceName);
     },
     m_maxTriesToConnect);
 }
@@ -138,7 +136,7 @@ void DiskSystemCatalogueRetryWrapper::modifyDiskSystemDiskInstanceSpaceName(
 bool DiskSystemCatalogueRetryWrapper::diskSystemExists(const std::string& name) const {
   return retryOnLostConnection(
     m_log,
-    [this, &name] { return m_catalogue->DiskSystem()->diskSystemExists(name); },
+    [this, &name] { return m_catalogue.DiskSystem()->diskSystemExists(name); },
     m_maxTriesToConnect);
 }
 

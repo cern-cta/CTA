@@ -19,10 +19,10 @@ public:
                                       const std::string& requesterName,
                                       const std::string& mountPolicy) override;
 
-  void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity& admin,
-                                      const std::string& instanceName,
-                                      const std::string& requesterName,
-                                      const std::string& comment) override;
+  void modifyRequesterMountRuleComment(const common::dataStructures::SecurityIdentity& admin,
+                                       const std::string& instanceName,
+                                       const std::string& requesterName,
+                                       const std::string& comment) override;
 
   void createRequesterMountRule(const common::dataStructures::SecurityIdentity& admin,
                                 const std::string& mountPolicyName,

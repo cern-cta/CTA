@@ -63,7 +63,7 @@ public:
    * @param lc For logging
    * @param timer
    */
-  virtual void execute(const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session,
+  virtual void execute(castor::tape::tapeFile::WriteSession& session,
                        MigrationReportPacker& reportPacker,
                        MigrationWatchDog& watchdog,
                        cta::log::LogContext& lc,
@@ -145,8 +145,8 @@ private:
    * @param lc for logging purpose
    * @return the FileWriter if everything went well
    */
-  std::unique_ptr<castor::tape::tapeFile::FileWriter>
-  openFileWriter(const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session, cta::log::LogContext& lc);
+  std::unique_ptr<castor::tape::tapeFile::FileWriter> openFileWriter(castor::tape::tapeFile::WriteSession& session,
+                                                                     cta::log::LogContext& lc);
 
   /**
    * All we need to know about the file we are migrating

@@ -20,9 +20,7 @@ namespace cta::catalogue {
 
 class DriveConfigCatalogueRetryWrapper : public DriveConfigCatalogue {
 public:
-  DriveConfigCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                   log::Logger& m_log,
-                                   const uint32_t maxTriesToConnect);
+  DriveConfigCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
 
   ~DriveConfigCatalogueRetryWrapper() override = default;
 
@@ -50,7 +48,7 @@ public:
   void deleteTapeDriveConfig(const std::string& tapeDriveName, const std::string& keyName) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };

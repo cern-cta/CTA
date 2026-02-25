@@ -965,7 +965,7 @@ void AdminCmd::processRequesterMountRule_Ch(xrd::Response& response) {
   auto mountpolicy = getOptional(OptionString::MOUNT_POLICY);
 
   if (comment.has_value()) {
-    m_catalogue.RequesterMountRule()->modifyRequesteMountRuleComment(m_cliIdentity, in, name, comment.value());
+    m_catalogue.RequesterMountRule()->modifyRequesterMountRuleComment(m_cliIdentity, in, name, comment.value());
   }
   if (mountpolicy.has_value()) {
     m_catalogue.RequesterMountRule()->modifyRequesterMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());

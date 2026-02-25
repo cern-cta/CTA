@@ -15,7 +15,7 @@
 
 namespace cta::catalogue {
 
-DiskInstanceCatalogueRetryWrapper::DiskInstanceCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+DiskInstanceCatalogueRetryWrapper::DiskInstanceCatalogueRetryWrapper(Catalogue& catalogue,
                                                                      log::Logger& log,
                                                                      const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -27,14 +27,14 @@ void DiskInstanceCatalogueRetryWrapper::createDiskInstance(const common::dataStr
                                                            const std::string& comment) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &name, &comment] { return m_catalogue->DiskInstance()->createDiskInstance(admin, name, comment); },
+    [this, &admin, &name, &comment] { return m_catalogue.DiskInstance()->createDiskInstance(admin, name, comment); },
     m_maxTriesToConnect);
 }
 
 void DiskInstanceCatalogueRetryWrapper::deleteDiskInstance(const std::string& name) {
   return retryOnLostConnection(
     m_log,
-    [this, &name] { return m_catalogue->DiskInstance()->deleteDiskInstance(name); },
+    [this, &name] { return m_catalogue.DiskInstance()->deleteDiskInstance(name); },
     m_maxTriesToConnect);
 }
 
@@ -44,7 +44,7 @@ void DiskInstanceCatalogueRetryWrapper::modifyDiskInstanceComment(const common::
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &comment] {
-      return m_catalogue->DiskInstance()->modifyDiskInstanceComment(admin, name, comment);
+      return m_catalogue.DiskInstance()->modifyDiskInstanceComment(admin, name, comment);
     },
     m_maxTriesToConnect);
 }
@@ -52,7 +52,7 @@ void DiskInstanceCatalogueRetryWrapper::modifyDiskInstanceComment(const common::
 std::vector<common::dataStructures::DiskInstance> DiskInstanceCatalogueRetryWrapper::getAllDiskInstances() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->DiskInstance()->getAllDiskInstances(); },
+    [this] { return m_catalogue.DiskInstance()->getAllDiskInstances(); },
     m_maxTriesToConnect);
 }
 

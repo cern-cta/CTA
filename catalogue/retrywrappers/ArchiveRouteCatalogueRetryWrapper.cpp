@@ -14,7 +14,7 @@
 
 namespace cta::catalogue {
 
-ArchiveRouteCatalogueRetryWrapper::ArchiveRouteCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+ArchiveRouteCatalogueRetryWrapper::ArchiveRouteCatalogueRetryWrapper(Catalogue& catalogue,
                                                                      log::Logger& log,
                                                                      const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -31,7 +31,7 @@ void ArchiveRouteCatalogueRetryWrapper::createArchiveRoute(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &storageClassName, &copyNb, &archiveRouteType, &tapePoolName, &comment] {
-      return m_catalogue->ArchiveRoute()
+      return m_catalogue.ArchiveRoute()
         ->createArchiveRoute(admin, storageClassName, copyNb, archiveRouteType, tapePoolName, comment);
     },
     m_maxTriesToConnect);
@@ -44,7 +44,7 @@ void ArchiveRouteCatalogueRetryWrapper::deleteArchiveRoute(
   return retryOnLostConnection(
     m_log,
     [this, &storageClassName, &copyNb, &archiveRouteType] {
-      return m_catalogue->ArchiveRoute()->deleteArchiveRoute(storageClassName, copyNb, archiveRouteType);
+      return m_catalogue.ArchiveRoute()->deleteArchiveRoute(storageClassName, copyNb, archiveRouteType);
     },
     m_maxTriesToConnect);
 }
@@ -52,7 +52,7 @@ void ArchiveRouteCatalogueRetryWrapper::deleteArchiveRoute(
 std::vector<common::dataStructures::ArchiveRoute> ArchiveRouteCatalogueRetryWrapper::getArchiveRoutes() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->ArchiveRoute()->getArchiveRoutes(); },
+    [this] { return m_catalogue.ArchiveRoute()->getArchiveRoutes(); },
     m_maxTriesToConnect);
 }
 
@@ -62,7 +62,7 @@ ArchiveRouteCatalogueRetryWrapper::getArchiveRoutes(const std::string& storageCl
   return retryOnLostConnection(
     m_log,
     [this, &storageClassName, &tapePoolName] {
-      return m_catalogue->ArchiveRoute()->getArchiveRoutes(storageClassName, tapePoolName);
+      return m_catalogue.ArchiveRoute()->getArchiveRoutes(storageClassName, tapePoolName);
     },
     m_maxTriesToConnect);
 }
@@ -76,11 +76,11 @@ void ArchiveRouteCatalogueRetryWrapper::modifyArchiveRouteTapePoolName(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &storageClassName, &copyNb, &archiveRouteType, &tapePoolName] {
-      return m_catalogue->ArchiveRoute()->modifyArchiveRouteTapePoolName(admin,
-                                                                         storageClassName,
-                                                                         copyNb,
-                                                                         archiveRouteType,
-                                                                         tapePoolName);
+      return m_catalogue.ArchiveRoute()->modifyArchiveRouteTapePoolName(admin,
+                                                                        storageClassName,
+                                                                        copyNb,
+                                                                        archiveRouteType,
+                                                                        tapePoolName);
     },
     m_maxTriesToConnect);
 }
@@ -94,11 +94,11 @@ void ArchiveRouteCatalogueRetryWrapper::modifyArchiveRouteComment(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &storageClassName, &copyNb, &archiveRouteType, &comment] {
-      return m_catalogue->ArchiveRoute()->modifyArchiveRouteComment(admin,
-                                                                    storageClassName,
-                                                                    copyNb,
-                                                                    archiveRouteType,
-                                                                    comment);
+      return m_catalogue.ArchiveRoute()->modifyArchiveRouteComment(admin,
+                                                                   storageClassName,
+                                                                   copyNb,
+                                                                   archiveRouteType,
+                                                                   comment);
     },
     m_maxTriesToConnect);
 }

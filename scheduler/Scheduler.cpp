@@ -553,11 +553,11 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
 //------------------------------------------------------------------------------
 // expandRepackRequest
 //------------------------------------------------------------------------------
-void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repackRequest,
+void Scheduler::expandRepackRequest(const RepackRequest& repackRequest,
                                     log::TimingList& timingList,
                                     utils::Timer& t,
                                     log::LogContext& lc) {
-  auto repackInfo = repackRequest->getRepackInfo();
+  auto repackInfo = repackRequest.getRepackInfo();
 
   using RepackType = cta::common::dataStructures::RepackInfo::Type;
 
@@ -581,7 +581,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
   uint64_t fSeq;
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles totalStatsFile;
   lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): before  fillLastExpandedFSeqAndTotalStatsFile.");
-  repackRequest->m_dbReq->fillLastExpandedFSeqAndTotalStatsFile(fSeq, totalStatsFile);
+  repackRequest.m_dbReq->fillLastExpandedFSeqAndTotalStatsFile(fSeq, totalStatsFile);
   lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after  fillLastExpandedFSeqAndTotalStatsFile.");
   timingList.insertAndReset("fillTotalStatsFileBeforeExpandTime", t);
   cta::catalogue::ArchiveFileItor archiveFilesForCatalogue =
@@ -618,11 +618,11 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
 
   const auto storageClasses = m_catalogue.StorageClass()->getStorageClasses();
   lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): before  setExpandStartedAndChangeStatus().");
-  if (!repackRequest || !repackRequest->m_dbReq) {
+  if (!repackRequest.m_dbReq) {
     lc.log(log::ERR, "In Scheduler::expandRepackRequest():  m_dbReq is null!");
   }
   try {
-    repackRequest->m_dbReq->setExpandStartedAndChangeStatus();
+    repackRequest.m_dbReq->setExpandStartedAndChangeStatus();
   } catch (cta::exception::Exception& e) {
     std::string bt = e.backtrace();
     lc.log(log::ERR, "In Scheduler::expandRepackRequest(): setExpandStartedAndChangeStatus() Exception thrown: " + bt);
@@ -840,13 +840,13 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
     // value in case of crash.
     lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): before addSubrequestsAndUpdateStats().");
 
-    nbRetrieveSubrequestsQueued = repackRequest->m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests,
-                                                                                       archiveRoutesMap,
-                                                                                       fSeq,
-                                                                                       maxAddedFSeq,
-                                                                                       totalStatsFile,
-                                                                                       diskSystemList,
-                                                                                       lc);
+    nbRetrieveSubrequestsQueued = repackRequest.m_dbReq->addSubrequestsAndUpdateStats(retrieveSubrequests,
+                                                                                      archiveRoutesMap,
+                                                                                      fSeq,
+                                                                                      maxAddedFSeq,
+                                                                                      totalStatsFile,
+                                                                                      diskSystemList,
+                                                                                      lc);
     lc.log(log::DEBUG, "In Scheduler::expandRepackRequest(): after addSubrequestsAndUpdateStats().");
     cta::telemetry::metrics::ctaSchedulerRepackExpandCount->Add(nbRetrieveSubrequestsQueued);
   } catch (const cta::ExpandRepackRequestException&) {
@@ -866,7 +866,7 @@ void Scheduler::expandRepackRequest(const std::unique_ptr<RepackRequest>& repack
     //TODO : in case of Repack tape repair, we should not try to delete the buffer
     deleteRepackBuffer(std::move(dir), lc);
   }
-  repackRequest->m_dbReq->expandDone();
+  repackRequest.m_dbReq->expandDone();
   lc.log(log::INFO, "In Scheduler::expandRepackRequest(), repack request expanded.");
 }
 

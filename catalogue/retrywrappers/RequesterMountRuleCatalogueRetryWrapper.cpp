@@ -16,10 +16,9 @@
 
 namespace cta::catalogue {
 
-RequesterMountRuleCatalogueRetryWrapper::RequesterMountRuleCatalogueRetryWrapper(
-  const std::unique_ptr<Catalogue>& catalogue,
-  log::Logger& log,
-  const uint32_t maxTriesToConnect)
+RequesterMountRuleCatalogueRetryWrapper::RequesterMountRuleCatalogueRetryWrapper(Catalogue& catalogue,
+                                                                                 log::Logger& log,
+                                                                                 const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
       m_log(log),
       m_maxTriesToConnect(maxTriesToConnect) {}
@@ -32,15 +31,12 @@ void RequesterMountRuleCatalogueRetryWrapper::modifyRequesterMountRulePolicy(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &instanceName, &requesterName, &mountPolicy]() {
-      m_catalogue->RequesterMountRule()->modifyRequesterMountRulePolicy(admin,
-                                                                        instanceName,
-                                                                        requesterName,
-                                                                        mountPolicy);
+      m_catalogue.RequesterMountRule()->modifyRequesterMountRulePolicy(admin, instanceName, requesterName, mountPolicy);
     },
     m_maxTriesToConnect);
 }
 
-void RequesterMountRuleCatalogueRetryWrapper::modifyRequesteMountRuleComment(
+void RequesterMountRuleCatalogueRetryWrapper::modifyRequesterMountRuleComment(
   const common::dataStructures::SecurityIdentity& admin,
   const std::string& instanceName,
   const std::string& requesterName,
@@ -48,7 +44,7 @@ void RequesterMountRuleCatalogueRetryWrapper::modifyRequesteMountRuleComment(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &instanceName, &requesterName, &comment]() {
-      m_catalogue->RequesterMountRule()->modifyRequesteMountRuleComment(admin, instanceName, requesterName, comment);
+      m_catalogue.RequesterMountRule()->modifyRequesterMountRuleComment(admin, instanceName, requesterName, comment);
     },
     m_maxTriesToConnect);
 }
@@ -62,11 +58,11 @@ void RequesterMountRuleCatalogueRetryWrapper::createRequesterMountRule(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &mountPolicyName, &diskInstance, &requesterName, &comment]() {
-      m_catalogue->RequesterMountRule()->createRequesterMountRule(admin,
-                                                                  mountPolicyName,
-                                                                  diskInstance,
-                                                                  requesterName,
-                                                                  comment);
+      m_catalogue.RequesterMountRule()->createRequesterMountRule(admin,
+                                                                 mountPolicyName,
+                                                                 diskInstance,
+                                                                 requesterName,
+                                                                 comment);
     },
     m_maxTriesToConnect);
 }
@@ -75,7 +71,7 @@ std::vector<common::dataStructures::RequesterMountRule>
 RequesterMountRuleCatalogueRetryWrapper::getRequesterMountRules() const {
   return retryOnLostConnection(
     m_log,
-    [this]() { return m_catalogue->RequesterMountRule()->getRequesterMountRules(); },
+    [this]() { return m_catalogue.RequesterMountRule()->getRequesterMountRules(); },
     m_maxTriesToConnect);
 }
 
@@ -84,7 +80,7 @@ void RequesterMountRuleCatalogueRetryWrapper::deleteRequesterMountRule(const std
   return retryOnLostConnection(
     m_log,
     [this, &diskInstanceName, &requesterName]() {
-      m_catalogue->RequesterMountRule()->deleteRequesterMountRule(diskInstanceName, requesterName);
+      m_catalogue.RequesterMountRule()->deleteRequesterMountRule(diskInstanceName, requesterName);
     },
     m_maxTriesToConnect);
 }

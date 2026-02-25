@@ -38,7 +38,7 @@ void RepackExpandRoutine::execute() {
   //We have a RepackRequest that has the status ToExpand, expand it
   try {
     try {
-      m_scheduler.expandRepackRequest(repackRequest, timingList, t, m_lc);
+      m_scheduler.expandRepackRequest(*repackRequest, timingList, t, m_lc);
       m_lc.log(log::INFO, "In RepackExpandRoutine::execute(): finished expanding a repack request.");
     } catch (const ExpandRepackRequestException& ex) {
       log::ScopedParamContainer spc(m_lc);

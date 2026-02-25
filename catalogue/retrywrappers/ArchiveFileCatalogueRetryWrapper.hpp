@@ -22,9 +22,7 @@ class Catalogue;
 
 class ArchiveFileCatalogueRetryWrapper : public ArchiveFileCatalogue {
 public:
-  ArchiveFileCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                   log::Logger& m_log,
-                                   const uint32_t maxTriesToConnect);
+  ArchiveFileCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~ArchiveFileCatalogueRetryWrapper() override = default;
 
   uint64_t checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
@@ -70,7 +68,7 @@ public:
                                                log::LogContext& lc) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class SchemaCatalogueRetryWrapper

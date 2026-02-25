@@ -2786,7 +2786,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         break;
       }
 
-      scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+      scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
     }
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
@@ -3152,7 +3152,7 @@ TEST_P(SchedulerTest, expandRepackRequestWithMaxFiles) {
       log::TimingList tl;
       utils::Timer t;
       auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
-      scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+      scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
     }
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
@@ -3331,7 +3331,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
     //If we have expanded 2 repack requests, the getNextRepackRequestToExpand will return null as it is not possible
     //to promote more than 2 repack requests at a time. So we break here.
 
-    scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+    scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
 
@@ -3561,7 +3561,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
     //If we have expanded 2 repack requests, the getNextRepackRequestToExpand will return null as it is not possible
     //to promote more than 2 repack requests at a time. So we break here.
 
-    scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+    scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
   const std::string driveName = "tape_drive";
@@ -3826,7 +3826,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
 
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
 
-    scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+    scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
   const std::string driveName = "tape_drive";
@@ -5179,7 +5179,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
 
     ASSERT_EQ(vid, repackRequestToExpand->getRepackInfo().vid);
 
-    scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+    scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
 
     {
       cta::objectstore::RepackRequest rr(repackRequestAddress, backend);
@@ -5478,7 +5478,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldFailIfArchiveRouteMissing) {
     ASSERT_EQ(vid, repackRequestToExpand->getRepackInfo().vid);
 
     //Expansion should fail.
-    ASSERT_THROW(scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc), cta::ExpandRepackRequestException);
+    ASSERT_THROW(scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc), cta::ExpandRepackRequestException);
   }
 }
 
@@ -5657,7 +5657,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies) {
 
     ASSERT_EQ(vid, repackRequestToExpand->getRepackInfo().vid);
 
-    scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+    scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
 
     {
       cta::objectstore::RepackRequest rr(repackRequestAddress, backend);
@@ -5917,7 +5917,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
 
     ASSERT_EQ(vid, repackRequestToExpand->getRepackInfo().vid);
 
-    scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+    scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
 
     scheduler.waitSchedulerDbSubthreadsComplete();
     re.fetchNoLock();
@@ -5972,7 +5972,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
 
     scheduler.waitSchedulerDbSubthreadsComplete();
 
-    scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+    scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
 
     scheduler.waitSchedulerDbSubthreadsComplete();
 
@@ -6507,7 +6507,7 @@ TEST_P(SchedulerTest, repackRetrieveRequestsFailToFetchDiskSystem) {
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
   log::TimingList tl;
   utils::Timer t;
-  scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+  scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   const std::string driveName = "tape_drive";
@@ -6680,7 +6680,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
   log::TimingList tl;
   utils::Timer t;
-  ASSERT_THROW(scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc), cta::ExpandRepackRequestException);
+  ASSERT_THROW(scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc), cta::ExpandRepackRequestException);
 }
 
 TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecallFlagProvided) {
@@ -6802,7 +6802,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
   log::TimingList tl;
   utils::Timer t;
-  ASSERT_NO_THROW(scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc));
+  ASSERT_NO_THROW(scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc));
 }
 
 TEST_P(SchedulerTest, archiveUserQueueMaxDrivesVoInFlightChangeScheduleMount) {
@@ -7116,7 +7116,7 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
     log::TimingList tl;
     utils::Timer t;
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
-    scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc);
+    scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
     scheduler.waitSchedulerDbSubthreadsComplete();
   }
 

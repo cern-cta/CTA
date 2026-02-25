@@ -15,10 +15,9 @@
 
 namespace cta::catalogue {
 
-DiskInstanceSpaceCatalogueRetryWrapper::DiskInstanceSpaceCatalogueRetryWrapper(
-  const std::unique_ptr<Catalogue>& catalogue,
-  log::Logger& log,
-  const uint32_t maxTriesToConnect)
+DiskInstanceSpaceCatalogueRetryWrapper::DiskInstanceSpaceCatalogueRetryWrapper(Catalogue& catalogue,
+                                                                               log::Logger& log,
+                                                                               const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
       m_log(log),
       m_maxTriesToConnect(maxTriesToConnect) {}
@@ -28,7 +27,7 @@ void DiskInstanceSpaceCatalogueRetryWrapper::deleteDiskInstanceSpace(const std::
   return retryOnLostConnection(
     m_log,
     [this, &name, &diskInstance] {
-      return m_catalogue->DiskInstanceSpace()->deleteDiskInstanceSpace(name, diskInstance);
+      return m_catalogue.DiskInstanceSpace()->deleteDiskInstanceSpace(name, diskInstance);
     },
     m_maxTriesToConnect);
 }
@@ -43,7 +42,7 @@ void DiskInstanceSpaceCatalogueRetryWrapper::createDiskInstanceSpace(
   return retryOnLostConnection(
     m_log,
     [this, &admin, name, &diskInstance, &freeSpaceQueryURL, &refreshInterval, &comment] {
-      return m_catalogue->DiskInstanceSpace()
+      return m_catalogue.DiskInstanceSpace()
         ->createDiskInstanceSpace(admin, name, diskInstance, freeSpaceQueryURL, refreshInterval, comment);
     },
     m_maxTriesToConnect);
@@ -53,7 +52,7 @@ std::vector<common::dataStructures::DiskInstanceSpace>
 DiskInstanceSpaceCatalogueRetryWrapper::getAllDiskInstanceSpaces() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->DiskInstanceSpace()->getAllDiskInstanceSpaces(); },
+    [this] { return m_catalogue.DiskInstanceSpace()->getAllDiskInstanceSpaces(); },
     m_maxTriesToConnect);
 }
 
@@ -65,7 +64,7 @@ void DiskInstanceSpaceCatalogueRetryWrapper::modifyDiskInstanceSpaceComment(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &diskInstance, &comment] {
-      return m_catalogue->DiskInstanceSpace()->modifyDiskInstanceSpaceComment(admin, name, diskInstance, comment);
+      return m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceComment(admin, name, diskInstance, comment);
     },
     m_maxTriesToConnect);
 }
@@ -78,10 +77,10 @@ void DiskInstanceSpaceCatalogueRetryWrapper::modifyDiskInstanceSpaceRefreshInter
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &diskInstance, &refreshInterval] {
-      return m_catalogue->DiskInstanceSpace()->modifyDiskInstanceSpaceRefreshInterval(admin,
-                                                                                      name,
-                                                                                      diskInstance,
-                                                                                      refreshInterval);
+      return m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceRefreshInterval(admin,
+                                                                                     name,
+                                                                                     diskInstance,
+                                                                                     refreshInterval);
     },
     m_maxTriesToConnect);
 }
@@ -92,7 +91,7 @@ void DiskInstanceSpaceCatalogueRetryWrapper::modifyDiskInstanceSpaceFreeSpace(co
   return retryOnLostConnection(
     m_log,
     [this, &name, &diskInstance, &freeSpace] {
-      return m_catalogue->DiskInstanceSpace()->modifyDiskInstanceSpaceFreeSpace(name, diskInstance, freeSpace);
+      return m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceFreeSpace(name, diskInstance, freeSpace);
     },
     m_maxTriesToConnect);
 }
@@ -105,10 +104,10 @@ void DiskInstanceSpaceCatalogueRetryWrapper::modifyDiskInstanceSpaceQueryURL(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &diskInstance, &freeSpaceQueryURL] {
-      return m_catalogue->DiskInstanceSpace()->modifyDiskInstanceSpaceQueryURL(admin,
-                                                                               name,
-                                                                               diskInstance,
-                                                                               freeSpaceQueryURL);
+      return m_catalogue.DiskInstanceSpace()->modifyDiskInstanceSpaceQueryURL(admin,
+                                                                              name,
+                                                                              diskInstance,
+                                                                              freeSpaceQueryURL);
     },
     m_maxTriesToConnect);
 }

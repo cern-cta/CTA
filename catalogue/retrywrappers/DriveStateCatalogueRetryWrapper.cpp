@@ -12,7 +12,7 @@
 
 namespace cta::catalogue {
 
-DriveStateCatalogueRetryWrapper::DriveStateCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+DriveStateCatalogueRetryWrapper::DriveStateCatalogueRetryWrapper(Catalogue& catalogue,
                                                                  log::Logger& log,
                                                                  const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -22,21 +22,21 @@ DriveStateCatalogueRetryWrapper::DriveStateCatalogueRetryWrapper(const std::uniq
 void DriveStateCatalogueRetryWrapper::createTapeDrive(const common::dataStructures::TapeDrive& tapeDrive) {
   return retryOnLostConnection(
     m_log,
-    [this, &tapeDrive] { return m_catalogue->DriveState()->createTapeDrive(tapeDrive); },
+    [this, &tapeDrive] { return m_catalogue.DriveState()->createTapeDrive(tapeDrive); },
     m_maxTriesToConnect);
 }
 
 std::vector<std::string> DriveStateCatalogueRetryWrapper::getTapeDriveNames() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->DriveState()->getTapeDriveNames(); },
+    [this] { return m_catalogue.DriveState()->getTapeDriveNames(); },
     m_maxTriesToConnect);
 }
 
 std::vector<common::dataStructures::TapeDrive> DriveStateCatalogueRetryWrapper::getTapeDrives() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->DriveState()->getTapeDrives(); },
+    [this] { return m_catalogue.DriveState()->getTapeDrives(); },
     m_maxTriesToConnect);
 }
 
@@ -44,14 +44,14 @@ std::optional<common::dataStructures::TapeDrive>
 DriveStateCatalogueRetryWrapper::getTapeDrive(const std::string& tapeDriveName) const {
   return retryOnLostConnection(
     m_log,
-    [this, &tapeDriveName] { return m_catalogue->DriveState()->getTapeDrive(tapeDriveName); },
+    [this, &tapeDriveName] { return m_catalogue.DriveState()->getTapeDrive(tapeDriveName); },
     m_maxTriesToConnect);
 }
 
 std::unordered_map<std::string, std::optional<uint64_t>> DriveStateCatalogueRetryWrapper::getTapeDriveMountIDs() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->DriveState()->getTapeDriveMountIDs(); },
+    [this] { return m_catalogue.DriveState()->getTapeDriveMountIDs(); },
     m_maxTriesToConnect);
 }
 
@@ -59,7 +59,7 @@ std::optional<common::dataStructures::DriveStatus>
 DriveStateCatalogueRetryWrapper::getTapeDriveStatus(const std::string& tapeDriveName) const {
   return retryOnLostConnection(
     m_log,
-    [this, &tapeDriveName] { return m_catalogue->DriveState()->getTapeDriveStatus(tapeDriveName); },
+    [this, &tapeDriveName] { return m_catalogue.DriveState()->getTapeDriveStatus(tapeDriveName); },
     m_maxTriesToConnect);
 }
 
@@ -67,7 +67,7 @@ std::optional<common::dataStructures::MountType>
 DriveStateCatalogueRetryWrapper::getMountType(const std::string& tapeDriveName) const {
   return retryOnLostConnection(
     m_log,
-    [this, &tapeDriveName] { return m_catalogue->DriveState()->getMountType(tapeDriveName); },
+    [this, &tapeDriveName] { return m_catalogue.DriveState()->getMountType(tapeDriveName); },
     m_maxTriesToConnect);
 }
 
@@ -77,7 +77,7 @@ void DriveStateCatalogueRetryWrapper::setDesiredTapeDriveState(
   return retryOnLostConnection(
     m_log,
     [this, &tapeDriveName, &desiredState] {
-      return m_catalogue->DriveState()->setDesiredTapeDriveState(tapeDriveName, desiredState);
+      return m_catalogue.DriveState()->setDesiredTapeDriveState(tapeDriveName, desiredState);
     },
     m_maxTriesToConnect);
 }
@@ -87,7 +87,7 @@ void DriveStateCatalogueRetryWrapper::setDesiredTapeDriveStateComment(const std:
   return retryOnLostConnection(
     m_log,
     [this, &tapeDriveName, &comment] {
-      return m_catalogue->DriveState()->setDesiredTapeDriveStateComment(tapeDriveName, comment);
+      return m_catalogue.DriveState()->setDesiredTapeDriveStateComment(tapeDriveName, comment);
     },
     m_maxTriesToConnect);
 }
@@ -100,7 +100,7 @@ void DriveStateCatalogueRetryWrapper::updateTapeDriveStatistics(
   return retryOnLostConnection(
     m_log,
     [this, &tapeDriveName, &host, &logicalLibrary, &statistics] {
-      return m_catalogue->DriveState()->updateTapeDriveStatistics(tapeDriveName, host, logicalLibrary, statistics);
+      return m_catalogue.DriveState()->updateTapeDriveStatistics(tapeDriveName, host, logicalLibrary, statistics);
     },
     m_maxTriesToConnect);
 }
@@ -108,21 +108,21 @@ void DriveStateCatalogueRetryWrapper::updateTapeDriveStatistics(
 void DriveStateCatalogueRetryWrapper::updateTapeDriveStatus(const common::dataStructures::TapeDrive& tapeDrive) {
   return retryOnLostConnection(
     m_log,
-    [this, &tapeDrive] { return m_catalogue->DriveState()->updateTapeDriveStatus(tapeDrive); },
+    [this, &tapeDrive] { return m_catalogue.DriveState()->updateTapeDriveStatus(tapeDrive); },
     m_maxTriesToConnect);
 }
 
 void DriveStateCatalogueRetryWrapper::deleteTapeDrive(const std::string& tapeDriveName) {
   return retryOnLostConnection(
     m_log,
-    [this, &tapeDriveName] { return m_catalogue->DriveState()->deleteTapeDrive(tapeDriveName); },
+    [this, &tapeDriveName] { return m_catalogue.DriveState()->deleteTapeDrive(tapeDriveName); },
     m_maxTriesToConnect);
 }
 
 std::map<std::string, uint64_t, std::less<>> DriveStateCatalogueRetryWrapper::getDiskSpaceReservations() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->DriveState()->getDiskSpaceReservations(); },
+    [this] { return m_catalogue.DriveState()->getDiskSpaceReservations(); },
     m_maxTriesToConnect);
 }
 
@@ -133,7 +133,7 @@ void DriveStateCatalogueRetryWrapper::reserveDiskSpace(const std::string& driveN
   return retryOnLostConnection(
     m_log,
     [this, &driveName, &mountId, &diskSpaceReservation, &lc] {
-      return m_catalogue->DriveState()->reserveDiskSpace(driveName, mountId, diskSpaceReservation, lc);
+      return m_catalogue.DriveState()->reserveDiskSpace(driveName, mountId, diskSpaceReservation, lc);
     },
     m_maxTriesToConnect);
 }
@@ -145,7 +145,7 @@ void DriveStateCatalogueRetryWrapper::releaseDiskSpace(const std::string& driveN
   return retryOnLostConnection(
     m_log,
     [this, &driveName, &mountId, &diskSpaceReservation, &lc] {
-      return m_catalogue->DriveState()->releaseDiskSpace(driveName, mountId, diskSpaceReservation, lc);
+      return m_catalogue.DriveState()->releaseDiskSpace(driveName, mountId, diskSpaceReservation, lc);
     },
     m_maxTriesToConnect);
 }

@@ -15,7 +15,7 @@
 
 namespace cta::catalogue {
 
-TapeFileCatalogueRetryWrapper::TapeFileCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+TapeFileCatalogueRetryWrapper::TapeFileCatalogueRetryWrapper(Catalogue& catalogue,
                                                              log::Logger& log,
                                                              const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -25,7 +25,7 @@ TapeFileCatalogueRetryWrapper::TapeFileCatalogueRetryWrapper(const std::unique_p
 void TapeFileCatalogueRetryWrapper::filesWrittenToTape(const std::set<TapeItemWrittenPointer>& event) {
   return retryOnLostConnection(
     m_log,
-    [this, &event] { return m_catalogue->TapeFile()->filesWrittenToTape(event); },
+    [this, &event] { return m_catalogue.TapeFile()->filesWrittenToTape(event); },
     m_maxTriesToConnect);
 }
 
@@ -33,7 +33,7 @@ void TapeFileCatalogueRetryWrapper::deleteTapeFileCopy(common::dataStructures::A
                                                        const std::string& reason) {
   return retryOnLostConnection(
     m_log,
-    [this, &file, &reason] { return m_catalogue->TapeFile()->deleteTapeFileCopy(file, reason); },
+    [this, &file, &reason] { return m_catalogue.TapeFile()->deleteTapeFileCopy(file, reason); },
     m_maxTriesToConnect);
 }
 
@@ -47,7 +47,7 @@ TapeFileCatalogueRetryWrapper::prepareToRetrieveFile(const std::string& diskInst
   return retryOnLostConnection(
     m_log,
     [this, &diskInstanceName, &archiveFileId, &user, &activity, &lc, &mountPolicyName] {
-      return m_catalogue->TapeFile()
+      return m_catalogue.TapeFile()
         ->prepareToRetrieveFile(diskInstanceName, archiveFileId, user, activity, lc, mountPolicyName);
     },
     m_maxTriesToConnect);

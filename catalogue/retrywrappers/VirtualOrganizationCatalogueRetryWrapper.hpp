@@ -17,9 +17,7 @@ class SchemaVersion;
 
 class VirtualOrganizationCatalogueRetryWrapper : public VirtualOrganizationCatalogue {
 public:
-  VirtualOrganizationCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                           log::Logger& m_log,
-                                           const uint32_t maxTriesToConnect);
+  VirtualOrganizationCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~VirtualOrganizationCatalogueRetryWrapper() override = default;
 
   void createVirtualOrganization(const common::dataStructures::SecurityIdentity& admin,
@@ -65,7 +63,7 @@ public:
                                            const bool isRepackVo) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };
