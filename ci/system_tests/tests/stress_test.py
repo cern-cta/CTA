@@ -89,10 +89,16 @@ def test_generate_and_copy_files(env, stress_params):
     eos_client: EosClientHost = env.eos_client[0]
     disk_instance_name = disk_instance.instance_name
 
+    # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
+    mgm_conn = env.eos_mgm[0].conn
+    mgm_ip = env.execLocal(
+        f"kubectl get pod {mgm_conn.pod} -n {mgm_conn.namespace} -o jsonpath='{{.status.podIP}}'", True
+    ).stdout.decode("utf-8")
+
     # Create an archive directory on eos
     print(f"Cleaning up previous archive directory: {archive_directory}")
     disk_instance.force_remove_directory(archive_directory)
-    eos_client.exec(f"eos root://{disk_instance_name} mkdir {archive_directory}")
+    eos_client.exec(f"eos root://{mgm_ip} mkdir {archive_directory}")
 
     total_file_count = stress_params.num_files_per_dir * stress_params.num_dirs
 
@@ -117,7 +123,7 @@ def test_generate_and_copy_files(env, stress_params):
     # Launch archive in background so we can monitor file count and put drives up at threshold
     timer_start = time.time()
     pid = eos_client.archive_files_xrootd_async(
-        eos_host=disk_instance_name,
+        eos_host=mgm_ip,
         dest_dir=archive_directory,
         num_files=total_file_count,
         num_dirs=stress_params.num_dirs,
@@ -130,7 +136,7 @@ def test_generate_and_copy_files(env, stress_params):
         # Poll namespace file count and put drives up once threshold is reached
         while eos_client.is_process_running(pid):
             num_files_so_far = eos_client.count_files_in_namespace(
-                eos_host=disk_instance_name,
+                eos_host=mgm_ip,
                 dest_dir=archive_directory,
                 num_dirs=stress_params.num_dirs,
                 count_procs=5,
@@ -162,9 +168,7 @@ def test_generate_and_copy_files(env, stress_params):
 
     timer_end = time.time()
 
-    num_files_copied = int(
-        eos_client.execWithOutput(f"eos root://{disk_instance_name} find -f {archive_directory} | wc -l")
-    )
+    num_files_copied = int(eos_client.execWithOutput(f"eos root://{mgm_ip} find -f {archive_directory} | wc -l"))
     if num_files_copied != total_file_count:
         print(f"Some files failed to copy over, expected: {total_file_count} and actual: {num_files_copied}")
     else:
