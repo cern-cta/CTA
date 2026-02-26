@@ -130,7 +130,10 @@ add_library (ctardbmswrapperunittests SHARED
 set_property(TARGET ctardbmswrapperunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmswrapperunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries (ctardbmswrapperunittests
-  ctacatalogue)
+target_link_libraries (ctardbmswrapperunittests ctardbmspostgres)
+
+if (OCCI_SUPPORT)
+  target_link_libraries (ctardbmswrapperunittests ctardbmsocci)
+endif()
 
 install(TARGETS ctardbmswrapperunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

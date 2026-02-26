@@ -61,7 +61,7 @@ std::unique_ptr<CatalogueFactory> CatalogueFactoryFactory::create(log::Logger& l
       throw exception::NoSupportedDB("Oracle Catalogue Schema is not supported. Compile CTA with Oracle support.");
 #endif
     case rdbms::Login::DBTYPE_POSTGRESQL:
-      pm.load("libctacataloguepostrgres.so");
+      pm.load("libctacataloguepostgres.so");
       if (!pm.isRegistered("ctacataloguepostgres")) {
         pm.bootstrap("factory");
       }

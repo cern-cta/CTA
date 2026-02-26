@@ -46,9 +46,7 @@ file (GLOB CATALOGUE_LIB_SRC_FILES
 # It use set because it was giving linking error
 set (CATALOGUE_LIB_SRC_FILES
   ${CATALOGUE_LIB_SRC_FILES}
-  SchemaCreatingSqliteCatalogue.cpp
   SchemaVersion.cpp
-  SqliteCatalogueSchema.cpp
 )
 
 # OCCI
@@ -72,6 +70,23 @@ if (OCCI_SUPPORT)
   install(TARGETS ctacatalogueocci DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 endif()
 
+# SQLITE - Sqlite file based databases are not supported
+file (GLOB CATALOGUE_SQLITE_LIB_SRC_FILES
+  rdbms/sqlite/*.cpp
+  SchemaCreatingSqliteCatalogue.cpp
+)
+
+add_library (ctacataloguesqlite SHARED
+  ${CATALOGUE_SQLITE_LIB_SRC_FILES})
+set_property(TARGET ctacataloguesqlite PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctacataloguesqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_compile_definitions(ctacataloguesqlite PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+
+target_link_libraries (ctacataloguesqlite ctardbmssqlite)
+
+install(TARGETS ctacataloguesqlite DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
 # IN_MEMORY
 file (GLOB CATALOGUE_IN_MEMORY_LIB_SRC_FILES
   InMemoryCatalogue.cpp
@@ -84,26 +99,9 @@ set_property(TARGET ctacatalogueinmemory PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctacatalogueinmemory PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_compile_definitions(ctacatalogueinmemory PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_link_libraries (ctacatalogueinmemory ctacataloguesqlite)
 
 install(TARGETS ctacatalogueinmemory DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-# SQLITE - Sqlite file based databases are not supported
-file (GLOB CATALOGUE_SQLITE_LIB_SRC_FILES
-  rdbms/sqlite/*.cpp
-)
-
-add_library (ctacataloguesqlite SHARED
-  ${CATALOGUE_SQLITE_LIB_SRC_FILES})
-set_property(TARGET ctacataloguesqlite PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctacataloguesqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-target_compile_definitions(ctacataloguesqlite PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
-
-target_link_libraries (ctacataloguesqlite
-  ctardbmssqlite
-)
-
-install(TARGETS ctacataloguesqlite DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 # POSTGRES
 file (GLOB CATALOGUE_POSTGRES_LIB_SRC_FILES
@@ -111,18 +109,18 @@ file (GLOB CATALOGUE_POSTGRES_LIB_SRC_FILES
   rdbms/postgres/*.cpp
 )
 
-add_library (ctacataloguepostrgres SHARED
+add_library (ctacataloguepostgres SHARED
   ${CATALOGUE_POSTGRES_LIB_SRC_FILES})
-set_property(TARGET ctacataloguepostrgres PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctacataloguepostrgres PROPERTY   VERSION "${CTA_LIBVERSION}")
+set_property(TARGET ctacataloguepostgres PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctacataloguepostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_compile_definitions(ctacataloguepostrgres PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+target_compile_definitions(ctacataloguepostgres PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
-target_link_libraries (ctacataloguepostrgres
+target_link_libraries (ctacataloguepostgres
   ctardbmspostgres
 )
 
-install(TARGETS ctacataloguepostrgres DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctacataloguepostgres DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 # COMMON
 add_library (ctacatalogue SHARED
@@ -139,15 +137,7 @@ install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 target_link_libraries (ctacatalogue
   ctacommon
   ctardbms
-  ctacataloguepostrgres
-  ctacatalogueinmemory
-  ctacataloguesqlite
 )
-
-if (OCCI_SUPPORT)
-  target_link_libraries (ctacatalogue ctacatalogueocci
-)
-endif()
 
 add_custom_command(
   OUTPUT AllCatalogueSchema.hpp
@@ -170,7 +160,7 @@ add_custom_command(
 add_custom_command(
   OUTPUT SqliteCatalogueSchema.cpp PostgresCatalogueSchema.cpp
   COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed '/CTA_SQL_SCHEMA/r sqlite_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp > SqliteCatalogueSchema.cpp
-  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed -e '/CTA_SQL_SCHEMA/r postgres_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp > PostgresCatalogueSchema.cpp
+  COMMAND ${CMAKE_COMMAND} -E env "LC_ALL=C" sed '/CTA_SQL_SCHEMA/r postgres_catalogue_schema.cpp' ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp > PostgresCatalogueSchema.cpp
   DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/SqliteCatalogueSchema.before_SQL.cpp sqlite_catalogue_schema.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/PostgresCatalogueSchema.before_SQL.cpp postgres_catalogue_schema.cpp
@@ -231,7 +221,7 @@ set_property(TARGET ctainmemorycatalogueunittests PROPERTY   VERSION "${CTA_LIBV
 set_property(TARGET ctainmemorycatalogueunittests PROPERTY COMPILE_FLAGS "-fno-var-tracking-assignments")
 
 target_link_libraries (ctainmemorycatalogueunittests
-  ctacatalogue ctadisk)
+  ctacatalogue ctadisk ctacatalogueinmemory)
 
 install (TARGETS ctainmemorycatalogueunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 

@@ -8,6 +8,8 @@ set -e
 # install the needed packages
 dnf install -y cta-catalogueutils
 
+sleep infinity
+
 echo "Wiping catalogue"
 echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
 
