@@ -34,12 +34,12 @@ jobs:
           dnf -y --enablerepo=crb install git gcc gcc-c++ cmake3 make rpm-build dnf-utils unzip nodejs ninja-build
 
       - name: Download CTA
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
 
       - name: Install Build Wrapper
-        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v7
+        uses: SonarSource/sonarqube-scan-action/install-build-wrapper@v6
 
       - name: Install CTA dependencies
         run: |
@@ -87,7 +87,7 @@ jobs:
           build-wrapper-linux-x86-64 --out-dir ../${{ env.BUILD_WRAPPER_OUT_DIR }} make
 
       - name: Run sonar-scanner
-        uses: SonarSource/sonarqube-scan-action@v7
+        uses: SonarSource/sonarqube-scan-action@v6
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
