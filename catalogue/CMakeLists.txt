@@ -207,6 +207,7 @@ file (GLOB CATALOGUE_MODULES_TESTS_SRC_FILES
 set(IN_MEMORY_CATALOGUE_UNIT_TESTS_LIB_SRC_FILES
   ${CATALOGUE_MODULES_TESTS_SRC_FILES}
   TapeItemWrittenPointerTest.cpp
+  SqliteCatalogueSchema.cpp
   tests/CatalogueTestUtils.cpp
   tests/InMemoryCatalogueTest.cpp
   tests/InMemoryVersionOfCatalogueTest.cpp
