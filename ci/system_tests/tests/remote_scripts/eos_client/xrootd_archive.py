@@ -40,6 +40,10 @@ def mkdir_dirs(eos_host, dest_dir, num_dirs):
         )
 
 
+HEADER_SIZE = 16  # 4 hex subdir + 8 hex file_num + 4 zeros
+CHUNK_1MB = 1024 * 1024  # 1MB pre-allocated once per worker
+
+
 def worker(work_q: mp.JoinableQueue, wid: int, eos_host: str, dest_dir: str, num_dirs: int, file_size: int):
     # Import here so XrdSecsssKT is already set in the environment
     from XRootD import client
@@ -48,6 +52,9 @@ def worker(work_q: mp.JoinableQueue, wid: int, eos_host: str, dest_dir: str, num
     _ = client.FileSystem(f"root://{eos_host}")
     err_budget = 3
 
+    # Pre-allocate zero chunk once per worker to avoid per-file allocation overhead
+    zeros_chunk = b"\x00" * CHUNK_1MB
+
     while True:
         file_num = work_q.get()
         if file_num is None:
@@ -55,20 +62,44 @@ def worker(work_q: mp.JoinableQueue, wid: int, eos_host: str, dest_dir: str, num
             return
 
         subdir = file_num % num_dirs
-        payload = os.urandom(file_size)
-
         dest_url = f"root://{eos_host}/{dest_dir}/{subdir}/test{file_num:07d}"
 
         f = client.File()
         st, _ = f.open(dest_url, OpenFlags.NEW | OpenFlags.WRITE, 0o644)
-        if st.ok:
-            f.write(payload, 0)
-            f.close()
-        else:
+        if not st.ok:
             if err_budget > 0:
                 print(f"[worker {wid}] open failed: {dest_url} :: {st}", flush=True)
                 err_budget -= 1
+            work_q.task_done()
+            continue
 
+        # Write compressible content: unique header + zero padding
+        # Header format: 4 hex subdir + 8 hex file_num + 4 zeros (16 bytes total)
+        header = f"{subdir:04x}{file_num:08x}0000".encode("ascii")
+        st, _ = f.write(header, 0)
+        if not st.ok:
+            if err_budget > 0:
+                print(f"[worker {wid}] write header failed: {dest_url} :: {st}", flush=True)
+                err_budget -= 1
+            f.close()
+            work_q.task_done()
+            continue
+
+        # Write zero padding in chunks (highly compressible by mhVTL)
+        offset = HEADER_SIZE
+        remaining = file_size - HEADER_SIZE
+        while remaining > 0:
+            n = min(remaining, CHUNK_1MB)
+            st, _ = f.write(zeros_chunk[:n], offset)
+            if not st.ok:
+                if err_budget > 0:
+                    print(f"[worker {wid}] write zeros failed: {dest_url} :: {st}", flush=True)
+                    err_budget -= 1
+                break
+            offset += n
+            remaining -= n
+
+        f.close()
         work_q.task_done()
 
 
