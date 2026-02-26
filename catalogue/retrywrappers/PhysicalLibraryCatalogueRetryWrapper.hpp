@@ -43,7 +43,7 @@ public:
                              const common::dataStructures::UpdatePhysicalLibrary& pl) override;
 
 private:
-  Catalogue& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class PhysicalLibraryCatalogueRetryWrapper

@@ -40,10 +40,10 @@ public:
   bool isAdmin(const common::dataStructures::SecurityIdentity& identity) const override;
 
 private:
-  Catalogue& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
-};  // class SchemaCatalogueRetryWrapper
+};  // class AdminUserCatalogueRetryWrapper
 
 }  // namespace catalogue
 }  // namespace cta

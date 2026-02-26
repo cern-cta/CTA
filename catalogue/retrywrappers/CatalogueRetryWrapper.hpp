@@ -35,28 +35,28 @@ public:
 
   CatalogueRetryWrapper& operator=(const CatalogueRetryWrapper&) = delete;
 
-  const std::unique_ptr<SchemaCatalogue>& Schema() override;
-  const std::unique_ptr<AdminUserCatalogue>& AdminUser() override;
-  const std::unique_ptr<DiskSystemCatalogue>& DiskSystem() override;
-  const std::unique_ptr<DiskInstanceCatalogue>& DiskInstance() override;
-  const std::unique_ptr<DiskInstanceSpaceCatalogue>& DiskInstanceSpace() override;
-  const std::unique_ptr<VirtualOrganizationCatalogue>& VO() override;
-  const std::unique_ptr<ArchiveRouteCatalogue>& ArchiveRoute() override;
-  const std::unique_ptr<MediaTypeCatalogue>& MediaType() override;
-  const std::unique_ptr<StorageClassCatalogue>& StorageClass() override;
-  const std::unique_ptr<TapePoolCatalogue>& TapePool() override;
-  const std::unique_ptr<TapeCatalogue>& Tape() override;
-  const std::unique_ptr<MountPolicyCatalogue>& MountPolicy() override;
-  const std::unique_ptr<RequesterActivityMountRuleCatalogue>& RequesterActivityMountRule() override;
-  const std::unique_ptr<RequesterMountRuleCatalogue>& RequesterMountRule() override;
-  const std::unique_ptr<RequesterGroupMountRuleCatalogue>& RequesterGroupMountRule() override;
-  const std::unique_ptr<LogicalLibraryCatalogue>& LogicalLibrary() override;
-  const std::unique_ptr<PhysicalLibraryCatalogue>& PhysicalLibrary() override;
-  const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() override;
-  const std::unique_ptr<DriveStateCatalogue>& DriveState() override;
-  const std::unique_ptr<TapeFileCatalogue>& TapeFile() override;
-  const std::unique_ptr<FileRecycleLogCatalogue>& FileRecycleLog() override;
-  const std::unique_ptr<ArchiveFileCatalogue>& ArchiveFile() override;
+  const std::unique_ptr<SchemaCatalogue>& Schema() const override;
+  const std::unique_ptr<AdminUserCatalogue>& AdminUser() const override;
+  const std::unique_ptr<DiskSystemCatalogue>& DiskSystem() const override;
+  const std::unique_ptr<DiskInstanceCatalogue>& DiskInstance() const override;
+  const std::unique_ptr<DiskInstanceSpaceCatalogue>& DiskInstanceSpace() const override;
+  const std::unique_ptr<VirtualOrganizationCatalogue>& VO() const override;
+  const std::unique_ptr<ArchiveRouteCatalogue>& ArchiveRoute() const override;
+  const std::unique_ptr<MediaTypeCatalogue>& MediaType() const override;
+  const std::unique_ptr<StorageClassCatalogue>& StorageClass() const override;
+  const std::unique_ptr<TapePoolCatalogue>& TapePool() const override;
+  const std::unique_ptr<TapeCatalogue>& Tape() const override;
+  const std::unique_ptr<MountPolicyCatalogue>& MountPolicy() const override;
+  const std::unique_ptr<RequesterActivityMountRuleCatalogue>& RequesterActivityMountRule() const override;
+  const std::unique_ptr<RequesterMountRuleCatalogue>& RequesterMountRule() const override;
+  const std::unique_ptr<RequesterGroupMountRuleCatalogue>& RequesterGroupMountRule() const override;
+  const std::unique_ptr<LogicalLibraryCatalogue>& LogicalLibrary() const override;
+  const std::unique_ptr<PhysicalLibraryCatalogue>& PhysicalLibrary() const override;
+  const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() const override;
+  const std::unique_ptr<DriveStateCatalogue>& DriveState() const override;
+  const std::unique_ptr<TapeFileCatalogue>& TapeFile() const override;
+  const std::unique_ptr<FileRecycleLogCatalogue>& FileRecycleLog() const override;
+  const std::unique_ptr<ArchiveFileCatalogue>& ArchiveFile() const override;
 
 protected:
   /**
