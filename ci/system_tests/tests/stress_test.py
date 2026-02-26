@@ -163,8 +163,21 @@ def test_generate_and_copy_files(env, stress_params):
 
     # Wait for archive to finish (poll since `wait` doesn't work across kubectl exec sessions)
     # we use this instead of wait because this process is in another kubectl exec session, we cannot wait on it
+    t = 0
     while eos_client.is_process_running(pid):
+        t = t + 1
+        if t % 10 == 0:
+            t = 0
+            num_files_so_far = eos_client.count_files_in_namespace(
+                eos_host=mgm_ip,
+                dest_dir=archive_directory,
+                num_dirs=stress_params.num_dirs,
+                count_procs=5,
+            )
+            # print progress report if not prequeuing
+            print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created")
         time.sleep(1)
+        
 
     timer_end = time.time()
 
