@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import asyncio
+
 from .disk_client_host import DiskClientHost
 
 
@@ -62,3 +64,17 @@ class EosClientHost(DiskClientHost):
             return int(output.strip())
         except ValueError:
             return 0
+
+    async def start_archive_process_async(
+        self,
+        eos_host: str,
+        dest_dir: str,
+        num_files: int,
+        num_dirs: int,
+        num_procs: int,
+        file_size: int = 512,
+        batch_size: int = 1000,
+    ) -> asyncio.subprocess.Process:
+        """Start archive as an async subprocess. Returns process handle for awaiting."""
+        cmd = self._archive_cmd(eos_host, dest_dir, num_files, num_dirs, num_procs, file_size, batch_size)
+        return await self.conn.exec_async(cmd)
