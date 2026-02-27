@@ -18,6 +18,7 @@ class StressParams:
     # File size in bytes
     file_size: int
     io_threads: int
+    batch_size: int
     prequeue: bool
     num_files_to_put_drives_up: int
     check_every_sec: int
@@ -31,6 +32,7 @@ def stress_params(request):
         num_files_per_dir=request.config.test_config["tests"]["stress"]["num_files_per_dir"],
         file_size=request.config.test_config["tests"]["stress"]["file_size"],
         io_threads=request.config.test_config["tests"]["stress"]["io_threads"],
+        batch_size=request.config.test_config["tests"]["stress"]["batch_size"],
         prequeue=request.config.test_config["tests"]["stress"]["prequeue"]["prequeue"],
         num_files_to_put_drives_up=request.config.test_config["tests"]["stress"]["prequeue"][
             "num_files_to_put_drives_up"
@@ -129,6 +131,7 @@ def test_generate_and_copy_files(env, stress_params):
         num_dirs=stress_params.num_dirs,
         num_procs=stress_params.io_threads,
         file_size=stress_params.file_size,
+        batch_size=stress_params.batch_size,
     )
     print(f"Archive started in background (PID {pid})")
 
@@ -177,7 +180,6 @@ def test_generate_and_copy_files(env, stress_params):
             # print progress report if not prequeuing
             print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created")
         time.sleep(1)
-        
 
     timer_end = time.time()
 

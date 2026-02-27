@@ -12,7 +12,7 @@ class EosClientHost(DiskClientHost):
         """Ensure python3 and XRootD Python bindings are installed."""
         self.exec("rpm -q python3-xrootd || dnf install -y python3 xrootd-client python3-xrootd")
 
-    def _archive_cmd(self, eos_host, dest_dir, num_files, num_dirs, num_procs, file_size):
+    def _archive_cmd(self, eos_host, dest_dir, num_files, num_dirs, num_procs, file_size, batch_size):
         return (
             f"python3 -u /root/xrootd_archive.py "
             f"--eos-host {eos_host} "
@@ -20,7 +20,8 @@ class EosClientHost(DiskClientHost):
             f"--num-files {num_files} "
             f"--num-dirs {num_dirs} "
             f"--num-procs {num_procs} "
-            f"--file-size {file_size}"
+            f"--file-size {file_size} "
+            f"--batch-size {batch_size}"
         )
 
     def archive_files_xrootd_async(
@@ -31,10 +32,11 @@ class EosClientHost(DiskClientHost):
         num_dirs: int,
         num_procs: int,
         file_size: int = 512,
+        batch_size: int = 1000,
         log_file: str = "/root/archive.log",
     ) -> str:
         """Start archive in background. Returns PID of the background process."""
-        cmd = self._archive_cmd(eos_host, dest_dir, num_files, num_dirs, num_procs, file_size)
+        cmd = self._archive_cmd(eos_host, dest_dir, num_files, num_dirs, num_procs, file_size, batch_size)
         pid = self.execWithOutput(f"nohup {cmd} > {log_file} 2>&1 & echo \\$!")
         return pid.strip()
 
