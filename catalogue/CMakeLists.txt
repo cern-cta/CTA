@@ -41,12 +41,24 @@ file (GLOB CATALOGUE_LIB_SRC_FILES
   TapeForWriting.cpp
   TapeItemImplementation.cpp
   TapePool.cpp
+  SchemaVersion.cpp
 )
 
-# It use set because it was giving linking error
-set (CATALOGUE_LIB_SRC_FILES
+# COMMON
+add_library (ctacatalogue SHARED
   ${CATALOGUE_LIB_SRC_FILES}
-  SchemaVersion.cpp
+)
+
+set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
+
+target_compile_definitions(ctacatalogue PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
+
+install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+
+target_link_libraries (ctacatalogue
+  ctacommon
+  ctardbms
 )
 
 # OCCI
@@ -64,7 +76,7 @@ if (OCCI_SUPPORT)
   target_compile_definitions(ctacatalogueocci PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
   target_link_libraries (ctacatalogueocci
-    ctardbmsocci
+    ctardbmsocci ctacatalogue
   )
 
   install(TARGETS ctacatalogueocci DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
@@ -83,7 +95,7 @@ set_property(TARGET ctacataloguesqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_compile_definitions(ctacataloguesqlite PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
-target_link_libraries (ctacataloguesqlite ctardbmssqlite)
+target_link_libraries (ctacataloguesqlite ctardbmssqlite ctacatalogue)
 
 install(TARGETS ctacataloguesqlite DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
@@ -117,27 +129,11 @@ set_property(TARGET ctacataloguepostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 target_compile_definitions(ctacataloguepostgres PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
 target_link_libraries (ctacataloguepostgres
-  ctardbmspostgres
+  ctardbmspostgres ctacatalogue
 )
 
 install(TARGETS ctacataloguepostgres DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-# COMMON
-add_library (ctacatalogue SHARED
-  ${CATALOGUE_LIB_SRC_FILES}
-)
-
-set_property(TARGET ctacatalogue PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctacatalogue PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-target_compile_definitions(ctacatalogue PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
-
-install (TARGETS ctacatalogue DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
-
-target_link_libraries (ctacatalogue
-  ctacommon
-  ctardbms
-)
 
 add_custom_command(
   OUTPUT AllCatalogueSchema.hpp
