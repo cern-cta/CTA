@@ -399,8 +399,9 @@ Shared libraries required to access the CTA catalogue
 %package -n cta-lib
 Summary: CERN Tape Archive libraries
 Group: Application/CTA
+%if "%{usingObjectstore}" != "0"
 Requires: librados2 %{radosVersionConstraint}
-%if "%{usingObjectstore}" == "0"
+%else
 Requires: postgresql-libs
 %endif
 Requires: xrootd-client-libs %{xrootdVersionConstraint}

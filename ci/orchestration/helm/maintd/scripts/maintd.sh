@@ -3,6 +3,8 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# By default, only Postgres is installed, if we detect Oracle, we install OCCI instead
+grep -q oracle /etc/cta/cta-catalogue.conf && dnf install -y cta-lib-catalogue-occi
 dnf install -y cta-maintd
 
 # to get maintd logs to stdout
