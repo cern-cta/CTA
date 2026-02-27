@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import asyncio
 import subprocess
 from typing import Optional
 from functools import cached_property
@@ -30,6 +31,20 @@ class K8sConnection(RemoteConnection):
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}')
         return result
+
+    async def exec_async(self, command: str) -> asyncio.subprocess.Process:
+        """Start a command asynchronously and return the process handle.
+
+        The caller is responsible for awaiting process completion via process.communicate().
+        This allows concurrent monitoring while the process runs.
+        We need this for launching the xrootd_archive.py script asynchronously
+        """
+        cmd = f'kubectl exec -n {self.namespace} {self.pod} -c {self.container} -- bash -c "{command}"'
+        return await asyncio.create_subprocess_shell(
+            cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
 
     def copyTo(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
         cmd = f"kubectl cp {src_path} {self.namespace}/{self.pod}:{dst_path} -c {self.container}"

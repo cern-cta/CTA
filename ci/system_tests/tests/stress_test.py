@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import asyncio
 import pytest
 import time
 from dataclasses import dataclass
@@ -83,13 +84,13 @@ def test_update_setup_for_max_powerrrr(env):
 
 
 @pytest.mark.eos
-def test_generate_and_copy_files(env, stress_params):
+@pytest.mark.asyncio
+async def test_generate_and_copy_files(env, stress_params):
     disk_instance: DiskInstanceHost = env.disk_instance[0]
     archive_directory = env.disk_instance[0].base_dir_path + "/cta/stress"
     # For now this is an eos client (hence we mark all methods here as such)
     # We should factor out all the exec() into dedicated methods for disk_client_host.py
     eos_client: EosClientHost = env.eos_client[0]
-    disk_instance_name = disk_instance.instance_name
 
     # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
     mgm_conn = env.eos_mgm[0].conn
@@ -122,9 +123,9 @@ def test_generate_and_copy_files(env, stress_params):
     # Use persistent XRootD Python client for high throughput on many small files
     # The remote script (xrootd_archive.py) runs inside the client pod and uses
     # multiprocessing with persistent XRootD File objects
-    # Launch archive in background so we can monitor file count and put drives up at threshold
+    # Start archive as async subprocess — allows us to await completion instead of polling PID
     timer_start = time.time()
-    pid = eos_client.archive_files_xrootd_async(
+    archive_proc = await eos_client.start_archive_process_async(
         eos_host=mgm_ip,
         dest_dir=archive_directory,
         num_files=total_file_count,
@@ -133,11 +134,12 @@ def test_generate_and_copy_files(env, stress_params):
         file_size=stress_params.file_size,
         batch_size=stress_params.batch_size,
     )
-    print(f"Archive started in background (PID {pid})")
+    print("Archive process started")
 
-    if stress_params.prequeue:
-        # Poll namespace file count and put drives up once threshold is reached
-        while eos_client.is_process_running(pid):
+    async def monitor_and_manage_drives():
+        """Monitor file count and put drives up when threshold reached (for prequeue mode)."""
+        drives_up = False
+        while archive_proc.returncode is None:
             num_files_so_far = eos_client.count_files_in_namespace(
                 eos_host=mgm_ip,
                 dest_dir=archive_directory,
@@ -148,40 +150,43 @@ def test_generate_and_copy_files(env, stress_params):
             #     mgm.execWithOutput(f"eos find -f {archive_directory} | wc -l")
             # )
             print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created")
-            if num_files_so_far >= stress_params.num_files_to_put_drives_up:
-                print(f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP")
-                env.cta_cli[0].set_all_drives_up(
-                    wait=False
-                )  # do not wait for status to be UP as drives will immediately start TRANSFERING
-                break
-            if time.time() - timer_start > stress_params.timeout_to_put_drives_up:
-                env.cta_cli[0].set_all_drives_up(wait=False)
-                break
-            time.sleep(stress_params.check_every_sec)
+
+            if stress_params.prequeue and not drives_up:
+                if num_files_so_far >= stress_params.num_files_to_put_drives_up:
+                    print(f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP")
+                    # do not wait for status to be UP as drives will immediately start TRANSFERING
+                    env.cta_cli[0].set_all_drives_up(wait=False)
+                    drives_up = True
+                elif time.time() - timer_start > stress_params.timeout_to_put_drives_up:
+                    print("\tTimeout reached — putting drives UP")
+                    env.cta_cli[0].set_all_drives_up(wait=False)
+                    drives_up = True
+
+            await asyncio.sleep(stress_params.check_every_sec)
 
         # If archive finished before threshold was reached, still put drives up
-        if stress_params.num_files_to_put_drives_up >= total_file_count:
+        if stress_params.prequeue and not drives_up:
             print("\tDisregarding drive-up threshold as it is larger than total files — putting drives UP now")
             env.cta_cli[0].set_all_drives_up(wait=False)
 
-    # Wait for archive to finish (poll since `wait` doesn't work across kubectl exec sessions)
-    # we use this instead of wait because this process is in another kubectl exec session, we cannot wait on it
-    t = 0
-    while eos_client.is_process_running(pid):
-        t = t + 1
-        if t % 10 == 0:
-            t = 0
-            num_files_so_far = eos_client.count_files_in_namespace(
-                eos_host=mgm_ip,
-                dest_dir=archive_directory,
-                num_dirs=stress_params.num_dirs,
-                count_procs=5,
-            )
-            # print progress report if not prequeuing
-            print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created")
-        time.sleep(1)
+    # Run archive and monitoring concurrently — no PID polling needed
+    monitor_task = asyncio.create_task(monitor_and_manage_drives())
+    stdout, stderr = await archive_proc.communicate()
+    monitor_task.cancel()  # Stop monitoring once archive completes
+    try:
+        await monitor_task
+    except asyncio.CancelledError:
+        pass
 
     timer_end = time.time()
+
+    # Print archive script output
+    if stdout:
+        print(stdout.decode())
+    if archive_proc.returncode != 0:
+        print(f"Archive process failed with exit code {archive_proc.returncode}")
+        if stderr:
+            print(stderr.decode())
 
     num_files_copied = int(eos_client.execWithOutput(f"eos root://{mgm_ip} find -f {archive_directory} | wc -l"))
     if num_files_copied != total_file_count:
