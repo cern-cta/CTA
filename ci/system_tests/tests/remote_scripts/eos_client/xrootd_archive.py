@@ -25,6 +25,7 @@ def parse_args():
     p.add_argument("--num-procs", type=int, default=8, help="Number of parallel worker processes")
     p.add_argument("--file-size", type=int, default=512, help="File size in bytes")
     p.add_argument("--sss-keytab", default="/etc/eos.keytab", help="SSS keytab path")
+    p.add_argument("--batch-size", type=int, default=1000, help="Files per batch (to reduce queue contention)")
     return p.parse_args()
 
 
@@ -56,50 +57,52 @@ def worker(work_q: mp.JoinableQueue, wid: int, eos_host: str, dest_dir: str, num
     zeros_chunk = b"\x00" * CHUNK_1MB
 
     while True:
-        file_num = work_q.get()
-        if file_num is None:
+        batch = work_q.get()
+        if batch is None:
             work_q.task_done()
             return
 
-        subdir = file_num % num_dirs
-        dest_url = f"root://{eos_host}/{dest_dir}/{subdir}/test{file_num:07d}"
+        # Process all files in the batch (start, end) range
+        start, end = batch
+        for file_num in range(start, end):
+            subdir = file_num % num_dirs
+            dest_url = f"root://{eos_host}/{dest_dir}/{subdir}/test{file_num:07d}"
 
-        f = client.File()
-        st, _ = f.open(dest_url, OpenFlags.NEW | OpenFlags.WRITE, 0o644)
-        if not st.ok:
-            if err_budget > 0:
-                print(f"[worker {wid}] open failed: {dest_url} :: {st}", flush=True)
-                err_budget -= 1
-            work_q.task_done()
-            continue
-
-        # Write compressible content: unique header + zero padding
-        # Header format: 4 hex subdir + 8 hex file_num + 4 zeros (16 bytes total)
-        header = f"{subdir:04x}{file_num:08x}0000".encode("ascii")
-        st, _ = f.write(header, 0)
-        if not st.ok:
-            if err_budget > 0:
-                print(f"[worker {wid}] write header failed: {dest_url} :: {st}", flush=True)
-                err_budget -= 1
-            f.close()
-            work_q.task_done()
-            continue
-
-        # Write zero padding in chunks (highly compressible by mhVTL)
-        offset = HEADER_SIZE
-        remaining = file_size - HEADER_SIZE
-        while remaining > 0:
-            n = min(remaining, CHUNK_1MB)
-            st, _ = f.write(zeros_chunk[:n], offset)
+            f = client.File()
+            st, _ = f.open(dest_url, OpenFlags.NEW | OpenFlags.WRITE, 0o644)
             if not st.ok:
                 if err_budget > 0:
-                    print(f"[worker {wid}] write zeros failed: {dest_url} :: {st}", flush=True)
+                    print(f"[worker {wid}] open failed: {dest_url} :: {st}", flush=True)
                     err_budget -= 1
-                break
-            offset += n
-            remaining -= n
+                continue
 
-        f.close()
+            # Write compressible content: unique header + zero padding
+            # Header format: 4 hex subdir + 8 hex file_num + 4 zeros (16 bytes total)
+            header = f"{subdir:04x}{file_num:08x}0000".encode("ascii")
+            st, _ = f.write(header, 0)
+            if not st.ok:
+                if err_budget > 0:
+                    print(f"[worker {wid}] write header failed: {dest_url} :: {st}", flush=True)
+                    err_budget -= 1
+                f.close()
+                continue
+
+            # Write zero padding in chunks (highly compressible by mhVTL)
+            offset = HEADER_SIZE
+            remaining = file_size - HEADER_SIZE
+            while remaining > 0:
+                n = min(remaining, CHUNK_1MB)
+                st, _ = f.write(zeros_chunk[:n], offset)
+                if not st.ok:
+                    if err_budget > 0:
+                        print(f"[worker {wid}] write zeros failed: {dest_url} :: {st}", flush=True)
+                        err_budget -= 1
+                    break
+                offset += n
+                remaining -= n
+
+            f.close()
+
         work_q.task_done()
 
 
@@ -134,9 +137,12 @@ def main():
 
     t0 = time.time()
 
-    # Enqueue all work
-    for i in range(args.num_files):
-        work_q.put(i)
+    # Enqueue work in batches to reduce queue contention
+    # Instead of 50M individual items, enqueue 50K batches of 1000
+    batch_size = args.batch_size
+    for start in range(0, args.num_files, batch_size):
+        end = min(start + batch_size, args.num_files)
+        work_q.put((start, end))
 
     # Send stop sentinels
     for _ in range(args.num_procs):
