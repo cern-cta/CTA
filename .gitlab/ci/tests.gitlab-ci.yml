@@ -199,6 +199,7 @@ test-cta-release:
       - checkpkg-output.json
 
 trigger-grpc-frontend-pipeline:
+  allow_failure: true
   stage: test
   needs: []
   rules:
@@ -207,7 +208,6 @@ trigger-grpc-frontend-pipeline:
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: manual
-  allow_failure: true
   variables:
     DEFAULT_CTA_VALUES_FILE: "presets/dev-cta-grpc-values.yaml"
     DEFAULT_EOS_VALUES_FILE: "presets/dev-eos-grpc-values.yaml"
@@ -216,6 +216,7 @@ trigger-grpc-frontend-pipeline:
     strategy: mirror
 
 trigger-postgres-scheduler-pipeline:
+  allow_failure: true
   stage: test
   needs: []
   rules:
@@ -224,7 +225,6 @@ trigger-postgres-scheduler-pipeline:
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
     - when: manual
-  allow_failure: true
   variables:
     SCHEDULER_TYPE: "pgsched"
   trigger:
