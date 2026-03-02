@@ -207,7 +207,8 @@ trigger-grpc-frontend-pipeline:
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
-    - when: manual
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "push"
+      when: manual
   variables:
     DEFAULT_CTA_VALUES_FILE: "presets/dev-cta-grpc-values.yaml"
     DEFAULT_EOS_VALUES_FILE: "presets/dev-eos-grpc-values.yaml"
@@ -224,7 +225,8 @@ trigger-postgres-scheduler-pipeline:
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
-    - when: manual
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "push"
+      when: manual
   variables:
     SCHEDULER_TYPE: "pgsched"
   trigger:
