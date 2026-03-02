@@ -212,7 +212,7 @@ trigger-grpc-frontend-pipeline:
     DEFAULT_CTA_VALUES_FILE: "presets/dev-cta-grpc-values.yaml"
     DEFAULT_EOS_VALUES_FILE: "presets/dev-eos-grpc-values.yaml"
   trigger:
-    incude: .gitlab-ci.yml
+    include: .gitlab-ci.yml
 
 trigger-postgres-scheduler-pipeline:
   stage: test
@@ -227,4 +227,4 @@ trigger-postgres-scheduler-pipeline:
   variables:
     SCHEDULER_TYPE: "pgsched"
   trigger:
-    incude: .gitlab-ci.yml
+    include: .gitlab-ci.yml
