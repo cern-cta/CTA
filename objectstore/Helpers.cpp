@@ -431,9 +431,9 @@ std::string Helpers::selectBestRetrieveQueue(const std::set<std::string, std::le
     }
     // Add in all the entries we need for this batch of candidates
     auto tapeStatuses = catalogue.Tape()->getTapesByVid(candidateVids);
-    for (auto& ts : tapeStatuses) {
-      g_tapeStatuses[ts.first].tapeStatus = ts.second;
-      g_tapeStatuses[ts.first].updateTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    for (auto& [vid, tapeStatus] : tapeStatuses) {
+      g_tapeStatuses[vid].tapeStatus = tapeStatus;
+      g_tapeStatuses[vid].updateTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     }
   }
   // Find the vids to be fetched (if any)

@@ -724,9 +724,9 @@ auto RetrieveQueue::getMountPolicyNames() -> std::list<std::string> {
 
   std::list<std::string> mountPolicyNames;
 
-  for (const auto& mountPolicyCount : mountPolicyCountMap) {
-    if (mountPolicyCount.second != 0) {
-      mountPolicyNames.push_back(mountPolicyCount.first);
+  for (const auto& [name, count] : mountPolicyCountMap) {
+    if (count != 0) {
+      mountPolicyNames.push_back(name);
     }
   }
   return mountPolicyNames;

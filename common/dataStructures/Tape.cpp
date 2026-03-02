@@ -48,11 +48,11 @@ const std::map<std::string, Tape::State> Tape::STRING_TO_STATE_MAP = {
 
 std::string Tape::getAllPossibleStates(bool hidePendingStates) {
   std::string ret;
-  for (auto& kv : STRING_TO_STATE_MAP) {
-    if (hidePendingStates && PENDING_STATES_SET.count(kv.second)) {
+  for (const auto& [key, value] : STRING_TO_STATE_MAP) {
+    if (hidePendingStates && PENDING_STATES_SET.count(value)) {
       continue;
     }
-    ret += kv.first + " ";
+    ret += key + " ";
   }
   if (ret.size()) {
     ret.pop_back();

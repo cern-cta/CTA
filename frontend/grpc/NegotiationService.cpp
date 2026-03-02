@@ -102,9 +102,8 @@ void NegotiationService::startProcessing() {
   }
 
   // Initialise all registered handlers
-  for (const auto& item : m_umapHandlers) {
-    const std::unique_ptr<NegotiationRequestHandler>& upIHandler = item.second;
-    upIHandler.get()->next(true);
+  for (const auto& [key, upHandler] : m_umapHandlers) {
+    upHandler.get()->next(true);
     //TODO: Log names of initialised handlers;
   }
 

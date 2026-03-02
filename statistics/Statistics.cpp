@@ -77,15 +77,15 @@ std::ostream& operator<<(std::ostream& stream, const Statistics& stats) {
   const auto& allVoStatistics = stats.getAllVOStatistics();
   uint64_t nbElementsVoStatistics = allVoStatistics.size();
   uint64_t i = 0;
-  for (auto& stat : allVoStatistics) {
+  for (auto& [voName, stat] : allVoStatistics) {
     stream << "{"
-           << "\"vo\": \"" << stat.first << "\","
-           << "\"nbMasterFiles\": " << stat.second.nbMasterFiles << ","
-           << "\"masterDataInBytes\": " << stat.second.masterDataInBytes << ","
-           << "\"nbCopyNb1\": " << stat.second.nbCopyNb1 << ","
-           << "\"copyNb1InBytes\": " << stat.second.copyNb1InBytes << ","
-           << "\"nbCopyNbGt1\": " << stat.second.nbCopyNbGt1 << ","
-           << "\"copyNbGt1InBytes\": " << stat.second.copyNbGt1InBytes << "}";
+           << "\"vo\": \"" << voName << "\","
+           << "\"nbMasterFiles\": " << stat.nbMasterFiles << ","
+           << "\"masterDataInBytes\": " << stat.masterDataInBytes << ","
+           << "\"nbCopyNb1\": " << stat.nbCopyNb1 << ","
+           << "\"copyNb1InBytes\": " << stat.copyNb1InBytes << ","
+           << "\"nbCopyNbGt1\": " << stat.nbCopyNbGt1 << ","
+           << "\"copyNbGt1InBytes\": " << stat.copyNbGt1InBytes << "}";
     if (++i < nbElementsVoStatistics) {
       stream << ",";
     }

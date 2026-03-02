@@ -48,8 +48,8 @@ const std::map<std::string, DriveStatus> TapeDrive::STRING_TO_STATE_MAP = {
 
 std::string TapeDrive::getAllPossibleStates() {
   std::string ret;
-  for (auto& kv : STRING_TO_STATE_MAP) {
-    ret += kv.first + " ";
+  for (const auto& [key, value] : STRING_TO_STATE_MAP) {
+    ret += key + " ";
   }
   if (ret.size()) {
     ret.pop_back();

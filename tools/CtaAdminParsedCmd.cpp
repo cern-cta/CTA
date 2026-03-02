@@ -294,8 +294,8 @@ void CtaAdminParsedCmd::throwUsage(const std::string& error_txt) const {
     //clang-format off
    // List help for each command in lexicographic order
    std::set<std::string> helpSet;
-   for(auto &helpPair : cmdHelp) {
-     helpSet.insert(helpPair.second.short_help());
+   for(auto & [key, helpPair] : cmdHelp) {
+     helpSet.insert(helpPair.short_help());
    }
    for(auto &helpItem : helpSet) {
      help << "  " << m_execname << ' ' << helpItem << std::endl;

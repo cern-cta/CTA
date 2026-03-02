@@ -238,8 +238,8 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(
   auto previousDrivesReservations = m_catalogue.DriveState()->getDiskSpaceReservations();
   // Get the free space from disk systems involved.
   std::set<std::string> diskSystemNames;
-  for (const auto& dsrr : diskSpaceReservationRequest) {
-    diskSystemNames.insert(dsrr.first);
+  for (const auto& [diskSystemName, reservation] : diskSpaceReservationRequest) {
+    diskSystemNames.insert(diskSystemName);
   }
 
   try {
@@ -248,10 +248,10 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(
     // Could not get free space for one of the disk systems due to a script error.
     // The queue will not be put to sleep (backpressure will not be applied), and we return
     // true, because we want to allow staging files for retrieve in case of script errors.
-    for (const auto& failedDiskSystem : ex.m_failedDiskSystems) {
+    for (const auto& [failedDiskSystemName, failedDiskSystemError] : ex.m_failedDiskSystems) {
       cta::log::ScopedParamContainer(logContext)
-        .add("diskSystemName", failedDiskSystem.first)
-        .add("failureReason", failedDiskSystem.second.getMessageValue())
+        .add("diskSystemName", failedDiskSystemName)
+        .add("failureReason", failedDiskSystemError.getMessageValue())
         .log(cta::log::WARNING,
              "In cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(): unable to request EOS free space for "
              "disk system using external script, backpressure will not be applied");
@@ -274,12 +274,12 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(
     uint64_t previousDrivesReservationTotal = 0;
     auto diskSystem = diskSystemFreeSpace.getDiskSystemList().at(ds);
     // Compute previous drives reservation for the physical space of the current disk system.
-    for (const auto& previousDriveReservation : previousDrivesReservations) {
+    for (const auto& [previousDriveName, previousDriveReservation] : previousDrivesReservations) {
       //avoid empty string when no disk space reservation exists for drive
-      if (previousDriveReservation.second != 0) {
-        auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveReservation.first);
+      if (previousDriveReservation != 0) {
+        auto previousDiskSystem = diskSystemFreeSpace.getDiskSystemList().at(previousDriveName);
         if (diskSystem.diskInstanceSpace.freeSpaceQueryURL == previousDiskSystem.diskInstanceSpace.freeSpaceQueryURL) {
-          previousDrivesReservationTotal += previousDriveReservation.second;
+          previousDrivesReservationTotal += previousDriveReservation;
         }
       }
     }

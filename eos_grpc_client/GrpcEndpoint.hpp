@@ -31,8 +31,8 @@ private:
 class EndpointMap {
 public:
   explicit EndpointMap(const NamespaceMap_t& nsMap) {
-    for (const auto& ns : nsMap) {
-      m_endpointMap.insert(std::make_pair(ns.first, Endpoint(ns.second)));
+    for (const auto& [key, value] : nsMap) {
+      m_endpointMap.insert(std::make_pair(key, Endpoint(value)));
     }
   }
 

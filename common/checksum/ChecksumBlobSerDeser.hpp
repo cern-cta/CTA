@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common/checksum/ChecksumBlob.hpp"
+
 #include "cta_common.pb.h"
 
 namespace cta::checksum {
@@ -40,32 +41,32 @@ inline void ProtobufToChecksumBlob(const common::ChecksumBlob& p_csb, checksum::
 }
 
 inline void ChecksumBlobToProtobuf(const checksum::ChecksumBlob& csb, common::ChecksumBlob& p_csb) {
-  for (auto& cs : csb.getMap()) {
-    common::ChecksumBlob::Checksum::Type type;
-    switch (cs.first) {
+  for (const auto& [type, value] : csb.getMap()) {
+    common::ChecksumBlob::Checksum::Type p_type;
+    switch (type) {
       case ADLER32:
-        type = common::ChecksumBlob::Checksum::ADLER32;
+        p_type = common::ChecksumBlob::Checksum::ADLER32;
         break;
       case CRC32:
-        type = common::ChecksumBlob::Checksum::CRC32;
+        p_type = common::ChecksumBlob::Checksum::CRC32;
         break;
       case CRC32C:
-        type = common::ChecksumBlob::Checksum::CRC32C;
+        p_type = common::ChecksumBlob::Checksum::CRC32C;
         break;
       case MD5:
-        type = common::ChecksumBlob::Checksum::MD5;
+        p_type = common::ChecksumBlob::Checksum::MD5;
         break;
       case SHA1:
-        type = common::ChecksumBlob::Checksum::SHA1;
+        p_type = common::ChecksumBlob::Checksum::SHA1;
         break;
       case NONE:
       default:
-        type = common::ChecksumBlob::Checksum::NONE;
+        p_type = common::ChecksumBlob::Checksum::NONE;
         break;
     }
     auto cs_ptr = p_csb.add_cs();
-    cs_ptr->set_type(type);
-    cs_ptr->set_value(cs.second);
+    cs_ptr->set_type(p_type);
+    cs_ptr->set_value(value);
   }
 }
 

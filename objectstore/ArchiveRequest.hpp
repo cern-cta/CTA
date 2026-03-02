@@ -185,10 +185,10 @@ public:
       arri.set_repack_request_address(repackRequestAddress);
       arri.set_fseq(fSeq);
       arri.set_file_buffer_url(fileBufferURL);
-      for (const auto& kv : jobsDestination) {
+      for (const auto& [copyNumber, destinationVid] : jobsDestination) {
         auto jobDestination = arri.mutable_jobs_destination()->Add();
-        jobDestination->set_copy_nb(kv.first);
-        jobDestination->set_destination_vid(kv.second);
+        jobDestination->set_copy_nb(copyNumber);
+        jobDestination->set_destination_vid(destinationVid);
       }
     }
 

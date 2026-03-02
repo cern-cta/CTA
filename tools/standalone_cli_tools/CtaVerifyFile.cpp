@@ -69,8 +69,8 @@ void fillNotification(cta::eos::Notification& notification,
   AttrMap xattrs;
   xattrs["sys.archive.file_id"] = archiveFileId;
 
-  for (auto& xattr : xattrs) {
-    google::protobuf::MapPair<std::string, std::string> mp(xattr.first, xattr.second);
+  for (auto& [key, value] : xattrs) {
+    google::protobuf::MapPair<std::string, std::string> mp(key, value);
     notification.mutable_file()->mutable_xattr()->insert(mp);
   }
 }

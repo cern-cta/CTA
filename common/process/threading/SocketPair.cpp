@@ -83,9 +83,9 @@ void SocketPair::poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll) {
   std::unique_ptr<struct ::pollfd[]> fds(new ::pollfd[socketPairs.size()]);
   struct ::pollfd* fdsp = fds.get();
   std::list<std::string> keys;
-  for (const auto& sp : socketPairs) {
-    keys.push_back(sp.first);
-    fdsp->fd = sp.second->getFdForAccess(sourceToPoll);
+  for (const auto& [key, sp] : socketPairs) {
+    keys.push_back(key);
+    fdsp->fd = sp->getFdForAccess(sourceToPoll);
     fdsp->revents = 0;
     fdsp->events = POLLIN;
     fdsp++;

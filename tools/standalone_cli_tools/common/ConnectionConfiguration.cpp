@@ -96,9 +96,9 @@ ConnConfiguration::readAndSetConfiguration(cta::log::StdoutLogger& log,
   XrdSsiPb::Config frontendXrootdConfig(frontend_xrootd_config_file, "cta");
 
   // Get the endpoint for namespace queries
-  auto nsConf = frontendXrootdConfig.getOptionValueStr("ns.config");
-  if (nsConf.first) {
-    auto endpointMap = setNamespaceMap(nsConf.second);
+  auto [found, nsconfigValue] = frontendXrootdConfig.getOptionValueStr("ns.config");
+  if (found) {
+    auto endpointMap = setNamespaceMap(nsconfigValue);
     std::pair<std::unique_ptr<XrdSsiPbServiceType>, std::unique_ptr<::eos::client::EndpointMap>>
       serviceProviderPtrAndEndpointMap = std::make_pair(std::move(serviceProviderPtr), std::move(endpointMap));
     return serviceProviderPtrAndEndpointMap;
