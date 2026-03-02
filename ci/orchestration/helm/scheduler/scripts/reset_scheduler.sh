@@ -5,8 +5,6 @@
 
 set -e
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
-
 die() {
   echo "$@" 1>&2
   exit 1
@@ -52,4 +50,4 @@ else
   die "ERROR: Unsupported scheduler backend: ${SCHEDULER_BACKEND}"
 fi
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Scheduler reset completed"
+echo "Scheduler reset completed"
