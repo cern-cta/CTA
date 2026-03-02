@@ -82,9 +82,9 @@ SLTFRAOAlgorithm::computeAllFilesPosition(const std::vector<std::unique_ptr<cta:
 void SLTFRAOAlgorithm::computeCostBetweenFileAndOthers(RAOFile& file,
                                                        const SLTFRAOAlgorithm::RAOFilesContainer& otherFiles) const {
   FilePositionInfos filePositionInfos = file.getFilePositionInfos();
-  for (auto& otherFile : otherFiles) {
-    double distance = m_costHeuristic->getCost(filePositionInfos, otherFile.second.getFilePositionInfos());
-    file.addDistanceToFile(distance, otherFile.second);
+  for (auto& [otherFileIndex, otherFile] : otherFiles) {
+    double distance = m_costHeuristic->getCost(filePositionInfos, otherFile.getFilePositionInfos());
+    file.addDistanceToFile(distance, otherFile);
   }
 }
 

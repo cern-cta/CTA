@@ -435,8 +435,8 @@ auto RepackRequest::getOrPrepareSubrequestInfo(std::set<uint64_t> fSeqs, AgentRe
   // Record changes, if any.
   if (newElementCreated) {
     m_payload.mutable_subrequests()->Clear();
-    for (auto& p : pointerMap) {
-      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& [fSeq, p] : pointerMap) {
+      p.serialize(*m_payload.mutable_subrequests()->Add());
     }
   }
   return ret;
@@ -573,8 +573,8 @@ void RepackRequest::reportRetriveSuccesses(SubrequestStatistics::List& retrieveS
   if (didUpdate) {
     setStatus();
     m_payload.mutable_subrequests()->Clear();
-    for (auto& p : pointerMap) {
-      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& [fSeq, p] : pointerMap) {
+      p.serialize(*m_payload.mutable_subrequests()->Add());
     }
   }
 }
@@ -606,8 +606,8 @@ void RepackRequest::reportRetriveFailures(SubrequestStatistics::List& retrieveFa
   if (didUpdate) {
     setStatus();
     m_payload.mutable_subrequests()->Clear();
-    for (auto& p : pointerMap) {
-      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& [fSeq, p] : pointerMap) {
+      p.serialize(*m_payload.mutable_subrequests()->Add());
     }
   }
 }
@@ -644,8 +644,8 @@ serializers::RepackRequestStatus RepackRequest::reportArchiveSuccesses(Subreques
   if (didUpdate) {
     setStatus();
     m_payload.mutable_subrequests()->Clear();
-    for (auto& p : pointerMap) {
-      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& [fSeq, p] : pointerMap) {
+      p.serialize(*m_payload.mutable_subrequests()->Add());
     }
   }
   return m_payload.status();
@@ -680,8 +680,8 @@ serializers::RepackRequestStatus RepackRequest::reportArchiveFailures(Subrequest
     // Check whether we reached the end.
     setStatus();
     m_payload.mutable_subrequests()->Clear();
-    for (auto& p : pointerMap) {
-      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& [fSeq, p] : pointerMap) {
+      p.serialize(*m_payload.mutable_subrequests()->Add());
     }
   }
   return m_payload.status();
@@ -711,8 +711,8 @@ void RepackRequest::reportSubRequestsForDeletion(std::list<uint64_t>& fSeqs) {
   }
   if (didUpdate) {
     m_payload.mutable_subrequests()->Clear();
-    for (auto& p : pointerMap) {
-      p.second.serialize(*m_payload.mutable_subrequests()->Add());
+    for (auto& [fSeq, p] : pointerMap) {
+      p.serialize(*m_payload.mutable_subrequests()->Add());
     }
   }
 }

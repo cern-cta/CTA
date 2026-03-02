@@ -84,36 +84,36 @@ void QueueItor<objectstore::RootEntry::ArchiveQueueDump, objectstore::ArchiveQue
   }
 
   // Populate the jobs cache from the archive jobs
-  for (auto& osar : requests) {
+  for (auto& [osar, osarFetcher] : requests) {
     try {
-      osar.second->wait();
+      osarFetcher->wait();
     } catch (cta::exception::NoSuchObject&) {
       // Skip non-existent objects
       continue;
     }
 
     // Find the copy for this TapePool
-    for (auto& j : osar.first.dumpJobs()) {
+    for (auto& j : osar.dumpJobs()) {
       if (j.tapePool == m_jobQueuesQueueIt->tapePool) {
         auto job = cta::common::dataStructures::ArchiveJob();
 
         job.tapePool = j.tapePool;
         job.copyNumber = j.copyNb;
-        job.archiveFileID = osar.first.getArchiveFile().archiveFileID;
-        job.request.checksumBlob = osar.first.getArchiveFile().checksumBlob;
-        job.request.creationLog = osar.first.getEntryLog();
-        job.request.diskFileID = osar.first.getArchiveFile().diskFileId;
-        job.request.diskFileInfo = osar.first.getArchiveFile().diskFileInfo;
-        job.request.fileSize = osar.first.getArchiveFile().fileSize;
-        job.instanceName = osar.first.getArchiveFile().diskInstance;
-        job.request.requester = osar.first.getRequester();
-        job.request.srcURL = osar.first.getSrcURL();
-        job.request.archiveReportURL = osar.first.getArchiveReportURL();
-        job.request.storageClass = osar.first.getArchiveFile().storageClass;
-        job.objectId = osar.first.getAddressIfSet();
-        job.failurelogs = osar.first.getFailures();
-        job.reportfailurelogs = osar.first.getReportFailures();
-        auto retryStatus = osar.first.getRetryStatus(j.copyNb);
+        job.archiveFileID = osar.getArchiveFile().archiveFileID;
+        job.request.checksumBlob = osar.getArchiveFile().checksumBlob;
+        job.request.creationLog = osar.getEntryLog();
+        job.request.diskFileID = osar.getArchiveFile().diskFileId;
+        job.request.diskFileInfo = osar.getArchiveFile().diskFileInfo;
+        job.request.fileSize = osar.getArchiveFile().fileSize;
+        job.instanceName = osar.getArchiveFile().diskInstance;
+        job.request.requester = osar.getRequester();
+        job.request.srcURL = osar.getSrcURL();
+        job.request.archiveReportURL = osar.getArchiveReportURL();
+        job.request.storageClass = osar.getArchiveFile().storageClass;
+        job.objectId = osar.getAddressIfSet();
+        job.failurelogs = osar.getFailures();
+        job.reportfailurelogs = osar.getReportFailures();
+        auto retryStatus = osar.getRetryStatus(j.copyNb);
         job.totalRetries = retryStatus.totalRetries;
         job.totalReportRetries = retryStatus.reportRetries;
         m_jobCache.push_back(job);
@@ -188,30 +188,30 @@ void QueueItor<objectstore::RootEntry::RetrieveQueueDump, objectstore::RetrieveQ
   }
 
   // Populate the jobs cache from the retrieve jobs
-  for (auto& osrr : requests) {
+  for (auto& [osrr, osrrFetcher] : requests) {
     try {
-      osrr.second->wait();
+      osrrFetcher->wait();
     } catch (cta::exception::NoSuchObject&) {
       // Skip non-existent objects
       continue;
     }
 
     // Find the copy for this Volume ID
-    for (auto& tf : osrr.first.getArchiveFile().tapeFiles) {
+    for (auto& tf : osrr.getArchiveFile().tapeFiles) {
       if (tf.vid == m_jobQueuesQueueIt->vid) {
         auto job = cta::common::dataStructures::RetrieveJob();
 
-        cta::common::dataStructures::ArchiveFile archiveFile = osrr.first.getArchiveFile();
-        job.request = osrr.first.getSchedulerRequest();
+        cta::common::dataStructures::ArchiveFile archiveFile = osrr.getArchiveFile();
+        job.request = osrr.getSchedulerRequest();
         job.fileSize = archiveFile.fileSize;
         job.tapeCopies[tf.vid] = std::make_pair(tf.copyNb, tf);
-        job.objectId = osrr.first.getAddressIfSet();
-        job.failurelogs = osrr.first.getFailures();
-        job.reportfailurelogs = osrr.first.getReportFailures();
+        job.objectId = osrr.getAddressIfSet();
+        job.failurelogs = osrr.getFailures();
+        job.reportfailurelogs = osrr.getReportFailures();
         job.diskInstance = archiveFile.diskInstance;
         job.storageClass = archiveFile.storageClass;
         job.diskFileId = archiveFile.diskFileId;
-        auto retryStatus = osrr.first.getRetryStatus(tf.copyNb);
+        auto retryStatus = osrr.getRetryStatus(tf.copyNb);
         job.totalRetries = retryStatus.totalRetries;
         job.totalReportRetries = retryStatus.totalReportRetries;
         m_jobCache.push_back(job);

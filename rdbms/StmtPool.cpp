@@ -47,8 +47,7 @@ uint64_t StmtPool::getNbStmts() const {
   threading::MutexLocker locker(m_stmtsMutex);
 
   uint64_t nbStmts = 0;
-  for (const auto& maplet : m_stmts) {
-    auto& stmtList = maplet.second;
+  for (const auto& [sql, stmtList] : m_stmts) {
     nbStmts += stmtList.size();
   }
   return nbStmts;

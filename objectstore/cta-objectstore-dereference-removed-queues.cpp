@@ -102,13 +102,13 @@ int main(int argc, char** argv) {
     missingArchiveQueues = getAllMissingArchiveQueues(re, *be);
     missingRetrieveQueues = getAllMissingRetrieveQueues(re, *be);
     // Actually do the job
-    for (auto& arQueue : missingArchiveQueues) {
-      re.removeMissingArchiveQueueReference(arQueue.first, arQueue.second);
-      std::cout << "Archive queue for tape pool " << arQueue.first << " dereferenced." << std::endl;
+    for (auto& [tapePool, queueType] : missingArchiveQueues) {
+      re.removeMissingArchiveQueueReference(tapePool, queueType);
+      std::cout << "Archive queue for tape pool " << tapePool << " dereferenced." << std::endl;
     }
-    for (auto& reQueue : missingRetrieveQueues) {
-      re.removeMissingRetrieveQueueReference(reQueue.first, reQueue.second);
-      std::cout << "Retrieve queue for vid " << reQueue.first << " dereferenced." << std::endl;
+    for (auto& [vid, queueType] : missingRetrieveQueues) {
+      re.removeMissingRetrieveQueueReference(vid, queueType);
+      std::cout << "Retrieve queue for vid " << vid << " dereferenced." << std::endl;
     }
     if (missingArchiveQueues.size() || missingRetrieveQueues.size()) {
       re.commit();

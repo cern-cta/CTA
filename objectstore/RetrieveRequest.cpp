@@ -169,17 +169,17 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
             std::list<std::tuple<cta::objectstore::Sorter::RetrieveJob, std::future<void>>> allFutures;
             cta::utils::Timer t;
             cta::log::TimingList tl;
-            for (auto& kv : allRetrieveJobs) {
-              for (auto& job : kv.second) {
+            for (const auto& [key, value] : allRetrieveJobs) {
+              for (auto& job : value) {
                 allFutures.emplace_back(
                   std::make_tuple(std::get<0>(job->jobToQueue), std::get<1>(job->jobToQueue).get_future()));
               }
             }
             sorter.flushAll(lc);
             tl.insertAndReset("sorterFlushingTime", t);
-            for (auto& future : allFutures) {
+            for (auto& [job, future] : allFutures) {
               //Throw an exception in case of failure
-              std::get<1>(future).get();
+              future.get();
             }
             log::ScopedParamContainer params(lc);
             params.add("jobObject", getAddressIfSet())
@@ -765,10 +765,10 @@ void RetrieveRequest::setRepackInfo(const RepackInfo& repackInfo) {
   checkPayloadWritable();
   m_payload.set_isrepack(repackInfo.isRepack);
   if (repackInfo.isRepack) {
-    for (auto& ar : repackInfo.archiveRouteMap) {
+    for (const auto& [copyNb, tapePool] : repackInfo.archiveRouteMap) {
       auto* plar = m_payload.mutable_repack_info()->mutable_archive_routes()->Add();
-      plar->set_copynb(ar.first);
-      plar->set_tapepool(ar.second);
+      plar->set_copynb(copyNb);
+      plar->set_tapepool(tapePool);
     }
     for (auto cntr : repackInfo.copyNbsToRearchive) {
       m_payload.mutable_repack_info()->mutable_copy_nbs_to_rearchive()->Add(cntr);
