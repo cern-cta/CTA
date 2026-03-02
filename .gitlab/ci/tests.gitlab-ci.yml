@@ -197,3 +197,34 @@ test-cta-release:
     when: always
     paths:
       - checkpkg-output.json
+
+trigger-grpc-frontend-pipeline:
+  stage: test
+  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - when: manual
+  allow_failure: true
+  variables:
+    DEFAULT_CTA_VALUES_FILE: "presets/dev-cta-grpc-values.yaml"
+    DEFAULT_EOS_VALUES_FILE: "presets/dev-eos-grpc-values.yaml"
+  trigger:
+    incude: .gitlab-ci.yml
+
+trigger-postgres-scheduler-pipeline:
+  stage: test
+  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - when: manual
+  allow_failure: true
+  variables:
+    SCHEDULER_TYPE: "pgsched"
+  trigger:
+    incude: .gitlab-ci.yml
