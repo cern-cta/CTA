@@ -213,6 +213,7 @@ trigger-grpc-frontend-pipeline:
     DEFAULT_EOS_VALUES_FILE: "presets/dev-eos-grpc-values.yaml"
   trigger:
     include: .gitlab-ci.yml
+    strategy: mirror
 
 trigger-postgres-scheduler-pipeline:
   stage: test
@@ -228,3 +229,4 @@ trigger-postgres-scheduler-pipeline:
     SCHEDULER_TYPE: "pgsched"
   trigger:
     include: .gitlab-ci.yml
+    strategy: mirror
