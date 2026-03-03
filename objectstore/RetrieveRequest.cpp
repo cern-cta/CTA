@@ -1262,7 +1262,7 @@ std::string RetrieveRequest::dump() {
 // RetrieveRequest::asyncDeleteJob()
 //------------------------------------------------------------------------------
 RetrieveRequest::AsyncJobDeleter* RetrieveRequest::asyncDeleteJob() {
-  std::unique_ptr<AsyncJobDeleter> ret(new AsyncJobDeleter);
+  auto ret = std::make_unique<AsyncJobDeleter>();
   ret->m_backendDeleter.reset(m_objectStore.asyncDelete(getAddressIfSet()));
   return ret.release();
 }

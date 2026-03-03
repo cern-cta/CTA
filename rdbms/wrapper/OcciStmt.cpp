@@ -111,7 +111,7 @@ void OcciStmt::bindUint64(const std::string& paramName, const std::optional<uint
 //------------------------------------------------------------------------------
 void OcciStmt::bindBlob(const std::string& paramName, const std::string& paramValue) {
   const unsigned paramIdx = getParamIdx(paramName);
-  std::unique_ptr<unsigned char> buffer = std::unique_ptr<unsigned char>(new unsigned char[paramValue.size()]);
+  auto buffer = std::make_unique<unsigned char[]>(paramValue.size());
   memcpy(buffer.get(), paramValue.c_str(), paramValue.length());
   oracle::occi::Bytes paramBytes(buffer.get(), paramValue.length(), 0);
   m_stmt->setBytes(paramIdx, paramBytes);

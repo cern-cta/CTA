@@ -579,7 +579,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfo
   utils::Timer t;
   //Allocate the getMountInfostructure to return.
   assertAgentAddressSet();
-  std::unique_ptr<OStoreDB::TapeMountDecisionInfoNoLock> privateRet(new OStoreDB::TapeMountDecisionInfoNoLock);
+  auto privateRet = std::make_unique<OStoreDB::TapeMountDecisionInfoNoLock>();
   // Get all the tape pools and tapes with queues (potential mounts)
   objectstore::RootEntry re(m_objectStore);
   re.fetchNoLock();
@@ -3251,8 +3251,7 @@ void OStoreDB::RepackRequest::requeueInToExpandQueue(log::LogContext& lc) {
   m_repackRequest.setStatus();
   m_repackRequest.commit();
   rrl.release();
-  std::unique_ptr<cta::objectstore::RepackRequest> rr(
-    new cta::objectstore::RepackRequest(m_repackRequest.getAddressIfSet(), m_oStoreDB.m_objectStore));
+  auto rr = std::make_unique<cta::objectstore::RepackRequest>(m_repackRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
   using RQTEAlgo = objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand>;
   RQTEAlgo rqteAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQTEAlgo::InsertedElement::list insertedElements;

@@ -51,7 +51,7 @@ void MigrationTaskInjector::injectBulkMigrations(std::list<std::unique_ptr<cta::
     // disk read task gets a bare pointer.
     // TODO: could be changed as a shared_ptr.
     auto archiveJobPtr = job.get();
-    std::unique_ptr<TapeWriteTask> twt(new TapeWriteTask(neededBlock, job.release(), m_memManager, m_errorFlag));
+    auto twt = std::make_unique<TapeWriteTask>(neededBlock, job.release(), m_memManager, m_errorFlag);
     std::unique_ptr<DiskReadTask> drt;
     // We will skip the disk read task creation for zero-length files. Tape write task will handle the request and mark it as an
     // error.

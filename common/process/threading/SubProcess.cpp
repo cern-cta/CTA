@@ -106,7 +106,7 @@ SubProcess::SubProcess(const std::string& executable,
   exception::Errnum::throwOnReturnedErrno(posix_spawnattr_setflags(attr.attrPtr(), POSIX_SPAWN_USEVFORK),
                                           "In Subprocess::Subprocess(): failed to posix_spawnattr_setflags()");
   {
-    std::unique_ptr<char*[]> cargv(new char*[argv.size() + 1]);
+    auto cargv = std::make_unique<char*[]>(argv.size() + 1);
     size_t index = 0;
     std::list<std::unique_ptr<char, void (*)(char*)>> cargvStrings;
     for (auto a = argv.cbegin(); a != argv.cend(); a++) {

@@ -818,7 +818,7 @@ RepackRequest::AsyncOwnerAndStatusUpdater*
 RepackRequest::asyncUpdateOwnerAndStatus(const std::string& owner,
                                          const std::string& previousOwner,
                                          std::optional<serializers::RepackRequestStatus> newStatus) {
-  std::unique_ptr<AsyncOwnerAndStatusUpdater> ret(new AsyncOwnerAndStatusUpdater);
+  auto ret = std::make_unique<AsyncOwnerAndStatusUpdater>();
   auto& retRef = *ret;
   ret->m_updaterCallback = [owner, previousOwner, &retRef, newStatus](const std::string& in) -> std::string {
     // We have a locked and fetched object, so we just need to work on its representation.

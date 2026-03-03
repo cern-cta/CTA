@@ -80,7 +80,7 @@ bool SocketPair::pollFlag() {
 // SocketPair::poll
 //------------------------------------------------------------------------------
 void SocketPair::poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll) {
-  std::unique_ptr<struct ::pollfd[]> fds(new ::pollfd[socketPairs.size()]);
+  auto fds = std::make_unique<::pollfd[]>(socketPairs.size());
   struct ::pollfd* fdsp = fds.get();
   std::list<std::string> keys;
   for (const auto& sp : socketPairs) {
@@ -172,7 +172,7 @@ std::string SocketPair::receive(Side source) {
       throw cta::exception::Errnum("In SocketPair::receive(): failed to recv(): ");
     }
   }
-  std::unique_ptr<char[]> buff(new char[sizePeek]);
+  auto buff = std::make_unique<char[]>(sizePeek);
   struct ::msghdr hdr;
   struct ::iovec iov;
   hdr.msg_name = nullptr;

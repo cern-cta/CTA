@@ -54,28 +54,28 @@ std::string AgentReference::nextId(const std::string& childType) {
 }
 
 void AgentReference::addToOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
-  std::shared_ptr<Action> a(new Action(AgentOperation::Add, objectAddress, std::list<std::string>()));
+  auto a = std::make_shared<Action>(AgentOperation::Add, objectAddress, std::list<std::string>());
   queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::addBatchToOwnership(const std::list<std::string>& objectAdresses, objectstore::Backend& backend) {
-  std::shared_ptr<Action> a(new Action(AgentOperation::AddBatch, "", objectAdresses));
+  auto a = std::make_shared<Action>(AgentOperation::AddBatch, "", objectAdresses);
   queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::removeFromOwnership(const std::string& objectAddress, objectstore::Backend& backend) {
-  std::shared_ptr<Action> a(new Action(AgentOperation::Remove, objectAddress, std::list<std::string>()));
+  auto a = std::make_shared<Action>(AgentOperation::Remove, objectAddress, std::list<std::string>());
   queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::removeBatchFromOwnership(const std::list<std::string>& objectAdresses,
                                               objectstore::Backend& backend) {
-  std::shared_ptr<Action> a(new Action(AgentOperation::RemoveBatch, "", objectAdresses));
+  auto a = std::make_shared<Action>(AgentOperation::RemoveBatch, "", objectAdresses);
   queueAndExecuteAction(a, backend);
 }
 
 void AgentReference::bumpHeatbeat(objectstore::Backend& backend) {
-  std::shared_ptr<Action> a(new Action(AgentOperation::Heartbeat, "", std::list<std::string>()));
+  auto a = std::make_shared<Action>(AgentOperation::Heartbeat, "", std::list<std::string>());
   queueAndExecuteAction(a, backend);
 }
 
@@ -96,7 +96,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
   } else {
     // There is no queue, so we need to create and serve it ourselves.
     // To make sure there is no lifetime issues, we make it a shared_ptr
-    std::shared_ptr<ActionQueue> q(new ActionQueue);
+    auto q = std::make_shared<ActionQueue>();
     // Lock the queue
     threading::MutexLocker ulq(q->mutex);
     // Get it referenced

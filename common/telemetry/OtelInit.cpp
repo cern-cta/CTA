@@ -46,9 +46,7 @@ void initOpenTelemetry(const std::string& configFile,
     std::make_unique<CtaOtelLogHandler>(lc.logger()));
 
   // Populate the registry with the core components supported
-  std::shared_ptr<opentelemetry::sdk::configuration::Registry> registry(
-    new opentelemetry::sdk::configuration::Registry);
-
+  auto registry = std::make_shared<opentelemetry::sdk::configuration::Registry>();
   // If we ever support logRecords/Spans, make sure to register them here
 
   // Console exporters

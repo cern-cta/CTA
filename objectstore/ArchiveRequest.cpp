@@ -564,7 +564,7 @@ ArchiveRequest::asyncUpdateJobOwner(uint32_t copyNumber,
                                     const std::string& owner,
                                     const std::string& previousOwner,
                                     const std::optional<serializers::ArchiveJobStatus>& newStatus) {
-  std::unique_ptr<AsyncJobOwnerUpdater> ret(new AsyncJobOwnerUpdater);
+  auto ret = std::make_unique<AsyncJobOwnerUpdater>();
   // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto& retRef = *ret;
   ret->m_updaterCallback =
@@ -711,7 +711,7 @@ const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getLastestError() {
 //------------------------------------------------------------------------------
 ArchiveRequest::AsyncTransferSuccessfulUpdater*
 ArchiveRequest::asyncUpdateTransferSuccessful(const std::string& destinationVid, const uint32_t copyNumber) {
-  std::unique_ptr<AsyncTransferSuccessfulUpdater> ret(new AsyncTransferSuccessfulUpdater);
+  auto ret = std::make_unique<AsyncTransferSuccessfulUpdater>();
   // The unique pointer will be std::moved so we need to work with its content (bare pointer or here ref to content).
   auto retPtr = ret.get();
   ret->m_updaterCallback = [this, destinationVid, copyNumber, retPtr](const std::string& in) -> std::string {
@@ -786,7 +786,7 @@ void ArchiveRequest::AsyncTransferSuccessfulUpdater::wait() {
 // ArchiveRequest::asyncDeleteRequest()
 //------------------------------------------------------------------------------
 ArchiveRequest::AsyncRequestDeleter* ArchiveRequest::asyncDeleteRequest() {
-  std::unique_ptr<AsyncRequestDeleter> ret(new AsyncRequestDeleter);
+  auto ret = std::make_unique<AsyncRequestDeleter>();
   ret->m_backendDeleter.reset(m_objectStore.asyncDelete(getAddressIfSet()));
   return ret.release();
 }
