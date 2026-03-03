@@ -156,7 +156,10 @@ async def test_generate_and_copy_files(env, stress_params):
 
             if not drives_up:
                 if num_files_so_far >= stress_params.num_files_to_put_drives_up:
-                    print(f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP", flush=True)
+                    print(
+                        f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP",
+                        flush=True,
+                    )
                     # do not wait for status to be UP as drives will immediately start TRANSFERING
                     env.cta_cli[0].set_all_drives_up(wait=False)
                     drives_up = True

@@ -13,6 +13,7 @@ import argparse
 import multiprocessing as mp
 import subprocess
 
+
 def parse_args():
     p = argparse.ArgumentParser(description="Count files in EOS directories")
     p.add_argument("--eos-host", required=True, help="EOS MGM hostname (e.g. ctaeos)")
@@ -38,7 +39,7 @@ def count_dir_files(args) -> int:
 
     if p.returncode != 0 or not p.stdout:
         return 0
-    
+
     # print(p.stdout)
 
     return int(len(p.stdout.strip().splitlines()))
