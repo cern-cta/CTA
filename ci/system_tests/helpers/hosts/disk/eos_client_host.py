@@ -26,27 +26,6 @@ class EosClientHost(DiskClientHost):
             f"--batch-size {batch_size}"
         )
 
-    def archive_files_xrootd_async(
-        self,
-        eos_host: str,
-        dest_dir: str,
-        num_files: int,
-        num_dirs: int,
-        num_procs: int,
-        file_size: int = 512,
-        batch_size: int = 1000,
-        log_file: str = "/root/archive.log",
-    ) -> str:
-        """Start archive in background. Returns PID of the background process."""
-        cmd = self._archive_cmd(eos_host, dest_dir, num_files, num_dirs, num_procs, file_size, batch_size)
-        pid = self.execWithOutput(f"nohup {cmd} > {log_file} 2>&1 & echo \\$!")
-        return pid.strip()
-
-    def is_process_running(self, pid: str) -> bool:
-        """Check if a background process is still running."""
-        result = self.exec(f"kill -0 {pid} 2>/dev/null", throw_on_failure=False)
-        return result.returncode == 0
-
     def count_files_in_namespace(self, eos_host: str, dest_dir: str, num_dirs: int, count_procs: int) -> int:
         """Count files in namespace using parallel queries on the remote host.
 
