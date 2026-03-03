@@ -80,7 +80,7 @@ unit-test-cta:
     - /usr/bin/cta-unitTests
     - /usr/bin/cta-unitTests-multiProcess
 
-unit-test-postgresql:
+unit-test-rdbms-postgresql:
   stage: test
   needs:
     - job: build-cta-rpms
@@ -97,7 +97,6 @@ unit-test-postgresql:
   before_script:
     - *setup-cta-install
   script:
-    - dnf -y install cta-catalogueutils
     - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
     - POSTGRESQL_LOG_DIR=/var/log/postgres
     - echo POSTGRESQL_DATA_DIR=${POSTGRESQL_DATA_DIR}
@@ -112,15 +111,13 @@ unit-test-postgresql:
     - runuser -u postgres -- pg_ctl start -w -t 10 -D ${POSTGRESQL_DATA_DIR} -l ${POSTGRESQL_LOG_DIR}/cta_test_postgres.log
     - runuser -u postgres -- createdb cta
     - runuser -u postgres -- createuser -E cta
-    - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
-    - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
-    - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
-    - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
+    - DB_CONNECTION_CONF=/etc/cta/cta-connection.conf
+    - echo 'postgresql:postgresql://cta@localhost/cta' > ${DB_CONNECTION_CONF}
     - |
       if [[ "$VALGRIND_UNIT_TESTS" = "TRUE" ]]; then
-        valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        valgrind /usr/bin/cta-rdbmsUnitTests ${DB_CONNECTION_CONF}
       else
-        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        /usr/bin/cta-rdbmsUnitTests ${DB_CONNECTION_CONF}
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
 
