@@ -34,7 +34,7 @@ def stress_params(request):
         file_size=request.config.test_config["tests"]["stress"]["file_size"],
         io_threads=request.config.test_config["tests"]["stress"]["io_threads"],
         batch_size=request.config.test_config["tests"]["stress"]["batch_size"],
-        prequeue=request.config.test_config["tests"]["stress"]["prequeue"]["prequeue"],
+        prequeue=request.config.test_config["tests"]["stress"]["prequeue"]["enabled"],
         num_files_to_put_drives_up=request.config.test_config["tests"]["stress"]["prequeue"][
             "num_files_to_put_drives_up"
         ],
