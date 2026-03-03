@@ -136,9 +136,12 @@ async def test_generate_and_copy_files(env, stress_params):
     )
     print("Archive process started")
 
-    async def monitor_and_manage_drives():
+    # Track drives_up outside nested function so we can check it after task cancellation
+    drives_up = not stress_params.prequeue  # If not prequeue, drives are already up
+
+    async def monitor_copy_and_put_drives_up():
         """Monitor file count and put drives up when threshold reached (for prequeue mode)."""
-        drives_up = False
+        nonlocal drives_up
         while archive_proc.returncode is None:
             num_files_so_far = eos_client.count_files_in_namespace(
                 eos_host=mgm_ip,
@@ -149,28 +152,25 @@ async def test_generate_and_copy_files(env, stress_params):
             # num_files_so_far = int(
             #     mgm.execWithOutput(f"eos find -f {archive_directory} | wc -l")
             # )
-            print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created")
+            print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created", flush=True)
 
-            if stress_params.prequeue and not drives_up:
+            if not drives_up:
                 if num_files_so_far >= stress_params.num_files_to_put_drives_up:
-                    print(f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP")
+                    print(f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP", flush=True)
                     # do not wait for status to be UP as drives will immediately start TRANSFERING
                     env.cta_cli[0].set_all_drives_up(wait=False)
                     drives_up = True
                 elif time.time() - timer_start > stress_params.timeout_to_put_drives_up:
-                    print("\tTimeout reached — putting drives UP")
+                    print("\tTimeout reached — putting drives UP", flush=True)
                     env.cta_cli[0].set_all_drives_up(wait=False)
                     drives_up = True
 
-            await asyncio.sleep(stress_params.check_every_sec)
-
-        # If archive finished before threshold was reached, still put drives up
-        if stress_params.prequeue and not drives_up:
-            print("\tDisregarding drive-up threshold as it is larger than total files — putting drives UP now")
-            env.cta_cli[0].set_all_drives_up(wait=False)
+            # During prequeue: sleep check_every_sec, after drives up: sleep 1 second
+            sleep_time = stress_params.check_every_sec if not drives_up else 1
+            await asyncio.sleep(sleep_time)
 
     # Run archive and monitoring concurrently — no PID polling needed
-    monitor_task = asyncio.create_task(monitor_and_manage_drives())
+    monitor_task = asyncio.create_task(monitor_copy_and_put_drives_up())
     stdout, stderr = await archive_proc.communicate()
     monitor_task.cancel()  # Stop monitoring once archive completes
     try:
@@ -178,11 +178,16 @@ async def test_generate_and_copy_files(env, stress_params):
     except asyncio.CancelledError:
         pass
 
+    # If archive finished before threshold was reached, still put drives up
+    if stress_params.prequeue and not drives_up:
+        print("\tDisregarding drive-up threshold as it is larger than total files — putting drives UP now")
+        env.cta_cli[0].set_all_drives_up(wait=False)
+
     timer_end = time.time()
 
     # Print archive script output
     if stdout:
-        print(stdout.decode())
+        print(f"Archive script output: {stdout.decode()}")
     if archive_proc.returncode != 0:
         print(f"Archive process failed with exit code {archive_proc.returncode}")
         if stderr:
