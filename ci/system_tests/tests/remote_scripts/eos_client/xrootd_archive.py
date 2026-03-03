@@ -122,6 +122,8 @@ def main():
 
     # Create subdirectories
     mkdir_dirs(args.eos_host, args.dest_dir, args.num_dirs)
+    if args.file_size < HEADER_SIZE:
+        raise ValueError(f"File size must be >= {HEADER_SIZE} bytes")
 
     # Launch workers
     work_q = mp.JoinableQueue()
