@@ -29,6 +29,8 @@ set(CTARAO_LIBRARY_SRCS
 add_library (ctarao SHARED
   ${CTARAO_LIBRARY_SRCS})
 
+target_link_libraries(ctarao ctacommon)
+
 install(TARGETS ctarao DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_library(ctatapeserverraounittests SHARED

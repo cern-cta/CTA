@@ -19,7 +19,7 @@ add_library(ctadisk SHARED
   XrdClException.cpp
 )
 
-target_link_libraries (ctadisk XrdCl)
+target_link_libraries (ctadisk XrdCl ctacommon)
 
 set_property(TARGET ctadisk PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadisk PROPERTY   VERSION "${CTA_LIBVERSION}")
