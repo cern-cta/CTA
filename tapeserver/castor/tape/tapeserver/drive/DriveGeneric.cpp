@@ -873,7 +873,8 @@ void drive::DriveGeneric::generateRAO(std::list<SCSI::Structures::RAO::blockLims
   SCSI::Structures::senseData_t<127> senseBuff;
 
   int udSize = std::min(static_cast<int>(files.size()), maxSupported);
-  auto ud = std::unique_ptr<SCSI::Structures::RAO::udsDescriptor_t[]>(new SCSI::Structures::RAO::udsDescriptor_t[udSize]());
+  auto ud =
+    std::unique_ptr<SCSI::Structures::RAO::udsDescriptor_t[]>(new SCSI::Structures::RAO::udsDescriptor_t[udSize]());
 
   auto it = files.begin();
   for (int i = 0; i < udSize; ++i) {

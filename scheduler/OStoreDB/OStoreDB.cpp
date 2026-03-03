@@ -3251,7 +3251,8 @@ void OStoreDB::RepackRequest::requeueInToExpandQueue(log::LogContext& lc) {
   m_repackRequest.setStatus();
   m_repackRequest.commit();
   rrl.release();
-  auto rr = std::make_unique<cta::objectstore::RepackRequest>(m_repackRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
+  auto rr =
+    std::make_unique<cta::objectstore::RepackRequest>(m_repackRequest.getAddressIfSet(), m_oStoreDB.m_objectStore);
   using RQTEAlgo = objectstore::ContainerAlgorithms<RepackQueue, RepackQueueToExpand>;
   RQTEAlgo rqteAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
   RQTEAlgo::InsertedElement::list insertedElements;
