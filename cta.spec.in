@@ -406,6 +406,8 @@ The shared libraries
 %{_libdir}/libctascheduler.so*
 %if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaobjectstore.so*
+%else
+%{_libdir}/libctardbmspostgres.so*
 %endif
 %{_libdir}/libctamediachanger.so*
 %{_libdir}/libctarao.so*
