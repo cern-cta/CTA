@@ -349,9 +349,11 @@ protected:
     m_objectOps->m_payloadInterpreted = false;
     // Apply the same to sub objects
     for (auto& oob : m_subObjectsOps) {
+      oob->m_lockForSubObject = nullptr;
       setObjectUnlocked(oob);
       oob->m_payloadInterpreted = false;
     }
+    m_subObjectsOps.clear();
   }
 };
 
