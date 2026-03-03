@@ -49,6 +49,7 @@ add_library(File
 
 target_link_libraries(File
   tirpc
+  ctacommon
 )
 
 add_library(ctatapeserverfileunittests SHARED

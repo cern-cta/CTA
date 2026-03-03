@@ -6,6 +6,8 @@ include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
 add_library(SCSI Device.cpp Structures.cpp Constants.cpp Exception.cpp)
 
+target_link_libraries(SCSI ctacommon)
+
 add_library(ctatapeserverscsiunittests SHARED
   DeviceTest.cpp
   StructuresTest.cpp)
