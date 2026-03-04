@@ -276,6 +276,8 @@ echo "Checking correctness of example config files"
 kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- cta-maintd --config-strict --config /etc/cta/cta-maintd.example.toml --config-check || exit 1
 echo "Checking correctness of runtime directory"
 kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- comm /etc/cta/cta-maintd.toml /run/cta/config.toml -3 || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3 || exit 1
+kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3 || exit 1
 kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- sh -c 'jq -e -r ".service == \"cta-maintd\"" /run/cta/version.json >/dev/null' || exit 1
 
 exit 0
