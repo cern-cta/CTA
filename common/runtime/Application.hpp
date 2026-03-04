@@ -270,10 +270,32 @@ public:
                                     true);
     }
 
-    const auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
+    auto config = runtime::loadFromToml<TConfig>(configFilePath, cliOptions.configStrict);
     if (cliOptions.configCheck) {
       std::cout << "Config check passed." << std::endl;
       return EXIT_SUCCESS;
+    }
+
+    // Copy remaining files into the runtime directory
+    if (!cliOptions.runtimeDir.empty()) {
+      // For all of the options below, we need to ensure we don't have a race condition between copying the file and reading the file.
+      // We first copy the file and then update the path to read to the path of the copy. This ensures the copy always reflects exactly what was loaded.
+      // If we were to read the original file instead of the copy, the original file may have changed in the time it took to copy the file and read it.
+      // We make sure that the file names match the full path in the TOML config file to ensure they are deterministic and can easily be correlated by operators.
+      if constexpr (HasTelemetryConfig<TConfig>) {
+        config.telemetry.config_file =
+          utils::copyFile(config.telemetry.config_file, cliOptions.runtimeDir + "/telemetry.config_file", true);
+      }
+#ifdef CTA_PGSCHED
+      if constexpr (HasSchedulerConfig<TConfig>) {
+        config.scheduler.config_file =
+          utils::copyFile(config.scheduler.config_file, cliOptions.runtimeDir + "/scheduler.config_file", true);
+      }
+#endif
+      if constexpr (HasCatalogueConfig<TConfig>) {
+        config.catalogue.config_file =
+          utils::copyFile(config.catalogue.config_file, cliOptions.runtimeDir + "/catalogue.config_file", true);
+      }
     }
 
     m_logPtr = initLogger(config, cliOptions);
