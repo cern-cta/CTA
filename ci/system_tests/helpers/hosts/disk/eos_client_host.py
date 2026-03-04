@@ -14,18 +14,6 @@ class EosClientHost(DiskClientHost):
         """Ensure python3 and XRootD Python bindings are installed."""
         self.exec("rpm -q python3-xrootd || dnf install -y python3 xrootd-client python3-xrootd")
 
-    def _archive_cmd(self, eos_host, dest_dir, num_files, num_dirs, num_procs, file_size, batch_size):
-        return (
-            f"python3 -u /root/xrootd_archive.py "
-            f"--eos-host {eos_host} "
-            f"--dest-dir {dest_dir} "
-            f"--num-files {num_files} "
-            f"--num-dirs {num_dirs} "
-            f"--num-procs {num_procs} "
-            f"--file-size {file_size} "
-            f"--batch-size {batch_size}"
-        )
-
     def count_files_in_namespace(self, eos_host: str, dest_dir: str, num_dirs: int, count_procs: int) -> int:
         """Count files in namespace using parallel queries on the remote host.
 
@@ -55,5 +43,14 @@ class EosClientHost(DiskClientHost):
         batch_size: int = 1000,
     ) -> asyncio.subprocess.Process:
         """Start archive as an async subprocess. Returns process handle for awaiting."""
-        cmd = self._archive_cmd(eos_host, dest_dir, num_files, num_dirs, num_procs, file_size, batch_size)
+        cmd = (
+            f"python3 -u /root/xrootd_archive.py "
+            f"--eos-host {eos_host} "
+            f"--dest-dir {dest_dir} "
+            f"--num-files {num_files} "
+            f"--num-dirs {num_dirs} "
+            f"--num-procs {num_procs} "
+            f"--file-size {file_size} "
+            f"--batch-size {batch_size}"
+        )
         return await self.conn.exec_async(cmd)
