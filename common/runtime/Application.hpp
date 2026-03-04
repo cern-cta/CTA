@@ -354,11 +354,6 @@ private:
 
     // Add the attributes present in every single log message
     std::map<std::string, std::string> logAttributes;
-    if constexpr (HasSchedulerConfig<TConfig>) {
-      if (config.scheduler.backend_name.empty()) {
-        throw exception::UserError("Scheduler backend name cannot be empty");
-      }
-    }
     for (const auto& [key, value] : config.logging.attributes) {
       logAttributes[key] = value;
     }
