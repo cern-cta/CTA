@@ -22,7 +22,7 @@ class StressParams:
     batch_size: int
     prequeue: bool
     num_files_to_put_drives_up: int
-    check_every_sec: int
+    check_interval_sec: int
     timeout_to_put_drives_up: int
 
 
@@ -38,8 +38,10 @@ def stress_params(request):
         num_files_to_put_drives_up=request.config.test_config["tests"]["stress"]["prequeue"][
             "num_files_to_put_drives_up"
         ],
-        check_every_sec=request.config.test_config["tests"]["stress"]["prequeue"]["check_every_sec"],
-        timeout_to_put_drives_up=request.config.test_config["tests"]["stress"]["prequeue"]["timeout_to_put_drives_up"],
+        check_interval_sec=request.config.test_config["tests"]["stress"]["prequeue"]["check_interval_sec"],
+        timeout_to_put_drives_up=request.config.test_config["tests"]["stress"]["prequeue"][
+            "timeout_to_put_drives_up_sec"
+        ],
     )
 
 
@@ -168,8 +170,8 @@ async def test_generate_and_copy_files(env, stress_params):
                     env.cta_cli[0].set_all_drives_up(wait=False)
                     drives_up = True
 
-            # During prequeue: sleep check_every_sec, after drives up: sleep 1 second
-            sleep_time = stress_params.check_every_sec if not drives_up else 1
+            # During prequeue: sleep check_interval_sec, after drives up: sleep 1 second
+            sleep_time = stress_params.check_interval_sec if not drives_up else 1
             await asyncio.sleep(sleep_time)
 
     # Run archive and monitoring concurrently — no PID polling needed
