@@ -11,6 +11,14 @@ from ..helpers.hosts.disk.disk_instance_host import DiskInstanceHost
 from ..helpers.hosts.disk.eos_client_host import EosClientHost
 
 
+@dataclass
+class PrequeueParams:
+    enabled: bool
+    num_files_to_put_drives_up: int
+    timeout_to_put_drives_up_sec: int
+    check_interval_sec: int
+
+
 # Most likely we will need to specify a directory and file pre/postfix here
 @dataclass
 class StressParams:
@@ -20,28 +28,25 @@ class StressParams:
     file_size: int
     io_threads: int
     batch_size: int
-    prequeue: bool
-    num_files_to_put_drives_up: int
-    check_interval_sec: int
-    timeout_to_put_drives_up: int
+    prequeue: PrequeueParams
 
 
 @pytest.fixture
 def stress_params(request):
+    stress_config = request.config.test_config["tests"]["stress"]
+    prequeue_config = stress_config["prequeue"]
     return StressParams(
-        num_dirs=request.config.test_config["tests"]["stress"]["num_dirs"],
-        num_files_per_dir=request.config.test_config["tests"]["stress"]["num_files_per_dir"],
-        file_size=request.config.test_config["tests"]["stress"]["file_size"],
-        io_threads=request.config.test_config["tests"]["stress"]["io_threads"],
-        batch_size=request.config.test_config["tests"]["stress"]["batch_size"],
-        prequeue=request.config.test_config["tests"]["stress"]["prequeue"]["enabled"],
-        num_files_to_put_drives_up=request.config.test_config["tests"]["stress"]["prequeue"][
-            "num_files_to_put_drives_up"
-        ],
-        check_interval_sec=request.config.test_config["tests"]["stress"]["prequeue"]["check_interval_sec"],
-        timeout_to_put_drives_up=request.config.test_config["tests"]["stress"]["prequeue"][
-            "timeout_to_put_drives_up_sec"
-        ],
+        num_dirs=stress_config["num_dirs"],
+        num_files_per_dir=stress_config["num_files_per_dir"],
+        file_size=stress_config["file_size"],
+        io_threads=stress_config["io_threads"],
+        batch_size=stress_config["batch_size"],
+        prequeue=PrequeueParams(
+            enabled=prequeue_config["enabled"],
+            num_files_to_put_drives_up=prequeue_config["num_files_to_put_drives_up"],
+            timeout_to_put_drives_up_sec=prequeue_config["timeout_to_put_drives_up_sec"],
+            check_interval_sec=prequeue_config["check_interval_sec"],
+        ),
     )
 
 
@@ -113,11 +118,11 @@ async def test_generate_and_copy_files(env, stress_params):
     print(f"\tTotal files: {total_file_count}")
     print(f"\tFile size: {stress_params.file_size}")
     print(f"\tIO threads: {stress_params.io_threads}")
-    print(f"\tPrequeueing: {stress_params.prequeue}")
-    print(f"\tNumber of files to put drives up: {stress_params.num_files_to_put_drives_up}")
-    print(f"\tTimeout to put drives up: {stress_params.timeout_to_put_drives_up}")
+    print(f"\tPrequeueing: {stress_params.prequeue.enabled}")
+    print(f"\tNumber of files to put drives up: {stress_params.prequeue.num_files_to_put_drives_up}")
+    print(f"\tTimeout to put drives up: {stress_params.prequeue.timeout_to_put_drives_up_sec}")
 
-    if stress_params.prequeue:
+    if stress_params.prequeue.enabled:
         # Put drives down first — we queue archive jobs and only put drives up
         # after enough files have been written, to avoid the drives outpacing the queueing
         env.cta_cli[0].set_all_drives_down()
@@ -139,7 +144,7 @@ async def test_generate_and_copy_files(env, stress_params):
     print("Archive process started")
 
     # Track drives_up outside nested function so we can check it after task cancellation
-    drives_up = not stress_params.prequeue  # If not prequeue, drives are already up
+    drives_up = not stress_params.prequeue.enabled  # If not prequeue, drives are already up
 
     async def monitor_copy_and_put_drives_up():
         """Monitor file count and put drives up when threshold reached (for prequeue mode)."""
@@ -157,21 +162,21 @@ async def test_generate_and_copy_files(env, stress_params):
             print(f"\t[copy monitor] {num_files_so_far}/{total_file_count} files created", flush=True)
 
             if not drives_up:
-                if num_files_so_far >= stress_params.num_files_to_put_drives_up:
+                if num_files_so_far >= stress_params.prequeue.num_files_to_put_drives_up:
                     print(
-                        f"\tThreshold ({stress_params.num_files_to_put_drives_up}) reached — putting drives UP",
+                        f"\tThreshold ({stress_params.prequeue.num_files_to_put_drives_up}) reached — putting drives UP",
                         flush=True,
                     )
                     # do not wait for status to be UP as drives will immediately start TRANSFERING
                     env.cta_cli[0].set_all_drives_up(wait=False)
                     drives_up = True
-                elif time.time() - timer_start > stress_params.timeout_to_put_drives_up:
+                elif time.time() - timer_start > stress_params.prequeue.timeout_to_put_drives_up_sec:
                     print("\tTimeout reached — putting drives UP", flush=True)
                     env.cta_cli[0].set_all_drives_up(wait=False)
                     drives_up = True
 
             # During prequeue: sleep check_interval_sec, after drives up: sleep 1 second
-            sleep_time = stress_params.check_interval_sec if not drives_up else 1
+            sleep_time = stress_params.prequeue.check_interval_sec if not drives_up else 1
             await asyncio.sleep(sleep_time)
 
     # Run archive and monitoring concurrently — no PID polling needed
@@ -184,7 +189,7 @@ async def test_generate_and_copy_files(env, stress_params):
         pass
 
     # If archive finished before threshold was reached, still put drives up
-    if stress_params.prequeue and not drives_up:
+    if stress_params.prequeue.enabled and not drives_up:
         print("\tDisregarding drive-up threshold as it is larger than total files — putting drives UP now")
         env.cta_cli[0].set_all_drives_up(wait=False)
 
