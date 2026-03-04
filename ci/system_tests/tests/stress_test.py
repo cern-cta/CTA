@@ -152,7 +152,7 @@ async def test_generate_and_copy_files(env, stress_params):
             # num_files_so_far = int(
             #     mgm.execWithOutput(f"eos find -f {archive_directory} | wc -l")
             # )
-            print(f"\t[archive monitor] {num_files_so_far}/{total_file_count} files created", flush=True)
+            print(f"\t[copy monitor] {num_files_so_far}/{total_file_count} files created", flush=True)
 
             if not drives_up:
                 if num_files_so_far >= stress_params.num_files_to_put_drives_up:
