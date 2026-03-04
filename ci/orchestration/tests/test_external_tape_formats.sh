@@ -49,12 +49,32 @@ echo "Using device: ${device}; name ${device_name}"
 # Prepare Enstore tape sample
 kubectl -n ${NAMESPACE} cp read_enstore_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_tape.sh -c cta-rmcd
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_tape.sh ${device}
+# Wait until drive is ready
+echo "Waiting for tape drive to become ready..."
+kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "
+for i in {1..30}; do
+  mt -f ${device} status >/dev/null 2>&1 && exit 0
+  sleep 1
+done
+echo 'Tape device still busy after 30s'
+exit 1
+"
 # Run the test
 kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- cta-enstoreReaderTest ${device_name} ${device} || exit 1
 
 # Prepare EnstoreLarge tape sample
 kubectl -n ${NAMESPACE} cp read_enstore_large_tape.sh ${CTA_RMCD_POD}:/root/read_enstore_large_tape.sh -c cta-rmcd
 kubectl -n ${NAMESPACE} exec ${CTA_RMCD_POD} -c cta-rmcd -- bash /root/read_enstore_large_tape.sh ${device}
+# Wait until drive is ready
+echo "Waiting for tape drive to become ready..."
+kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "
+for i in {1..30}; do
+  mt -f ${device} status >/dev/null 2>&1 && exit 0
+  sleep 1
+done
+echo 'Tape device still busy after 30s'
+exit 1
+"
 # Run the test
 kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- cta-enstoreLargeReaderTest ${device_name} ${device} || exit 1
 
