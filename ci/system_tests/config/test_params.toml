@@ -11,7 +11,9 @@ krb5_realm = "TEST.CTA"
 # mhvtl is mounted in-memory, so we keep the file size small and easily compressible (unique string + zero padding)
 num_dirs = 10
 num_files_per_dir = 200000
+# file size in bytes
 file_size = 512
+# number of parallel processes to be used for archival
 io_threads = 40
 # Files per batch when enqueueing work (beneficial for large file counts as it should reduce queue contention)
 batch_size = 200
@@ -23,6 +25,6 @@ batch_size = 200
 enabled = true
 num_files_to_put_drives_up = 1000000
 # timeout in seconds
-timeout_to_put_drives_up = 3600
+timeout_to_put_drives_up_sec = 3600
 # how often to count number of files when prequeueing
-check_every_sec = 300
+check_interval_sec = 300
