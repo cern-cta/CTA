@@ -8,7 +8,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/tests/CatalogueTestUtils.hpp"
-#include "common/SourcedParameter.hpp"
+#include "common/config/SourcedParameter.hpp"
 #include "common/dataStructures/DesiredDriveState.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"

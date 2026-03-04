@@ -6,7 +6,6 @@
 #pragma once
 
 #include "catalogue/TapeDrivesCatalogueState.hpp"
-#include "common/Timer.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
 #include "common/dataStructures/ArchiveRequest.hpp"
@@ -28,6 +27,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/TimingList.hpp"
+#include "common/utils/Timer.hpp"
 #include "disk/DiskFile.hpp"
 #include "disk/DiskReporter.hpp"
 #include "disk/DiskReporterFactory.hpp"
@@ -511,10 +511,7 @@ public:
   void promoteRepackRequestsToToExpand(log::LogContext& lc, size_t repackMaxRequestsToExpand);
   // Expansion support
   std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
-  void expandRepackRequest(const std::unique_ptr<RepackRequest>& repqckRequest,
-                           log::TimingList&,
-                           utils::Timer&,
-                           log::LogContext&);
+  void expandRepackRequest(const RepackRequest& repackRequest, log::TimingList&, utils::Timer&, log::LogContext&);
 
   // Scheduler level will not distinguish between report types. It will just do a getnext-report cycle.
   class RepackReportBatch {

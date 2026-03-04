@@ -6,11 +6,11 @@
 #include "scheduler/rdbms/RetrieveMount.hpp"
 
 #include "catalogue/Catalogue.hpp"
-#include "common/Timer.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/process/threading/MutexLocker.hpp"
+#include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 

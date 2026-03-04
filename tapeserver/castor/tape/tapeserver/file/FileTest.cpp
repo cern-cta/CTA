@@ -109,7 +109,7 @@ TEST_P(castorTapeFileTest, throwsWhenUsingSessionTwice) {
   {
     std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
     ASSERT_NO_THROW(
-      writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, m_fileToMigrate, m_block_size));
+      writer = std::make_unique<castor::tape::tapeFile::FileWriter>(*writeSession, m_fileToMigrate, m_block_size));
     writer->write(testString.c_str(), testString.size());
     writer->close();
   }
@@ -129,12 +129,12 @@ TEST_F(castorTapeFileTest, throwsWhenWritingAnEmptyFileOrSessionCorrupted) {
   {
     std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
     ASSERT_NO_THROW(
-      writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, m_fileToMigrate, m_block_size));
+      writer = std::make_unique<castor::tape::tapeFile::FileWriter>(*writeSession, m_fileToMigrate, m_block_size));
     ASSERT_THROW(writer->close(), castor::tape::tapeFile::ZeroFileWritten);
   }
   ASSERT_EQ(writeSession->isCorrupted(), true);
   {
-    ASSERT_THROW(castor::tape::tapeFile::FileWriter writer(writeSession, m_fileToMigrate, m_block_size),
+    ASSERT_THROW(castor::tape::tapeFile::FileWriter writer(*writeSession, m_fileToMigrate, m_block_size),
                  castor::tape::tapeFile::SessionCorrupted);
   }
 }
@@ -144,7 +144,7 @@ TEST_F(castorTapeFileTest, throwsWhenClosingTwice) {
   const auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, 0, true, false);
   std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
   ASSERT_NO_THROW(writer =
-                    std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, m_fileToMigrate, m_block_size));
+                    std::make_unique<castor::tape::tapeFile::FileWriter>(*writeSession, m_fileToMigrate, m_block_size));
   writer->write(testString.c_str(), testString.size());
   writer->close();
   ASSERT_THROW(writer->close(), castor::tape::tapeFile::FileClosedTwice);
@@ -158,7 +158,7 @@ TEST_P(castorTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
       std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, 0, true, false);
     std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
     ASSERT_NO_THROW(
-      writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, m_fileToMigrate, m_block_size));
+      writer = std::make_unique<castor::tape::tapeFile::FileWriter>(*writeSession, m_fileToMigrate, m_block_size));
     writer->write(testString.c_str(), testString.size());
     writer->close();
   }
@@ -199,7 +199,7 @@ TEST_P(castorTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {
     ASSERT_EQ(writeSession->isCorrupted(), false);
     std::unique_ptr<castor::tape::tapeFile::FileWriter> writer;
     ASSERT_NO_THROW(
-      writer = std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, m_fileToMigrate, m_block_size));
+      writer = std::make_unique<castor::tape::tapeFile::FileWriter>(*writeSession, m_fileToMigrate, m_block_size));
     writer->write(testString.c_str(), testString.size());
     writer->close();
   }

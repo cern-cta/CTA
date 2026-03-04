@@ -14,7 +14,7 @@
 
 namespace cta::catalogue {
 
-LogicalLibraryCatalogueRetryWrapper::LogicalLibraryCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+LogicalLibraryCatalogueRetryWrapper::LogicalLibraryCatalogueRetryWrapper(Catalogue& catalogue,
                                                                          log::Logger& log,
                                                                          const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -29,7 +29,7 @@ void LogicalLibraryCatalogueRetryWrapper::createLogicalLibrary(const common::dat
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &isDisabled, &physicalLibraryName, &comment] {
-      return m_catalogue->LogicalLibrary()->createLogicalLibrary(admin, name, isDisabled, physicalLibraryName, comment);
+      return m_catalogue.LogicalLibrary()->createLogicalLibrary(admin, name, isDisabled, physicalLibraryName, comment);
     },
     m_maxTriesToConnect);
 }
@@ -37,14 +37,14 @@ void LogicalLibraryCatalogueRetryWrapper::createLogicalLibrary(const common::dat
 void LogicalLibraryCatalogueRetryWrapper::deleteLogicalLibrary(const std::string& name) {
   return retryOnLostConnection(
     m_log,
-    [this, &name] { return m_catalogue->LogicalLibrary()->deleteLogicalLibrary(name); },
+    [this, &name] { return m_catalogue.LogicalLibrary()->deleteLogicalLibrary(name); },
     m_maxTriesToConnect);
 }
 
 std::vector<common::dataStructures::LogicalLibrary> LogicalLibraryCatalogueRetryWrapper::getLogicalLibraries() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->LogicalLibrary()->getLogicalLibraries(); },
+    [this] { return m_catalogue.LogicalLibrary()->getLogicalLibraries(); },
     m_maxTriesToConnect);
 }
 
@@ -55,7 +55,7 @@ void LogicalLibraryCatalogueRetryWrapper::modifyLogicalLibraryName(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &currentName, &newName] {
-      return m_catalogue->LogicalLibrary()->modifyLogicalLibraryName(admin, currentName, newName);
+      return m_catalogue.LogicalLibrary()->modifyLogicalLibraryName(admin, currentName, newName);
     },
     m_maxTriesToConnect);
 }
@@ -67,7 +67,7 @@ void LogicalLibraryCatalogueRetryWrapper::modifyLogicalLibraryComment(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &comment] {
-      return m_catalogue->LogicalLibrary()->modifyLogicalLibraryComment(admin, name, comment);
+      return m_catalogue.LogicalLibrary()->modifyLogicalLibraryComment(admin, name, comment);
     },
     m_maxTriesToConnect);
 }
@@ -79,7 +79,7 @@ void LogicalLibraryCatalogueRetryWrapper::modifyLogicalLibraryPhysicalLibrary(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &physicalLibraryName] {
-      return m_catalogue->LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(admin, name, physicalLibraryName);
+      return m_catalogue.LogicalLibrary()->modifyLogicalLibraryPhysicalLibrary(admin, name, physicalLibraryName);
     },
     m_maxTriesToConnect);
 }
@@ -91,7 +91,7 @@ void LogicalLibraryCatalogueRetryWrapper::modifyLogicalLibraryDisabledReason(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &disabledReason] {
-      return m_catalogue->LogicalLibrary()->modifyLogicalLibraryDisabledReason(admin, name, disabledReason);
+      return m_catalogue.LogicalLibrary()->modifyLogicalLibraryDisabledReason(admin, name, disabledReason);
     },
     m_maxTriesToConnect);
 }
@@ -103,7 +103,7 @@ void LogicalLibraryCatalogueRetryWrapper::setLogicalLibraryDisabled(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &name, &disabledValue] {
-      return m_catalogue->LogicalLibrary()->setLogicalLibraryDisabled(admin, name, disabledValue);
+      return m_catalogue.LogicalLibrary()->setLogicalLibraryDisabled(admin, name, disabledValue);
     },
     m_maxTriesToConnect);
 }

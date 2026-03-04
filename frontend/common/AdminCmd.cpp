@@ -503,7 +503,7 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
 
   auto regex = getRequired(OptionString::DRIVE);
   regex = '^' + regex + '$';
-  utils::Regex driveNameRegex(regex.c_str());
+  utils::Regex driveNameRegex(regex);
 
   if (!m_schedulerBackendName.has_value()) {
     throw exception::UserError(
@@ -965,7 +965,7 @@ void AdminCmd::processRequesterMountRule_Ch(xrd::Response& response) {
   auto mountpolicy = getOptional(OptionString::MOUNT_POLICY);
 
   if (comment.has_value()) {
-    m_catalogue.RequesterMountRule()->modifyRequesteMountRuleComment(m_cliIdentity, in, name, comment.value());
+    m_catalogue.RequesterMountRule()->modifyRequesterMountRuleComment(m_cliIdentity, in, name, comment.value());
   }
   if (mountpolicy.has_value()) {
     m_catalogue.RequesterMountRule()->modifyRequesterMountRulePolicy(m_cliIdentity, in, name, mountpolicy.value());
@@ -1623,7 +1623,7 @@ std::string AdminCmd::setDriveState(const std::string& regex,
   using namespace cta::admin;
 
   std::stringstream cmdlineOutput;
-  utils::Regex driveNameRegex(regex.c_str());
+  utils::Regex driveNameRegex(regex);
 
   if (!m_schedulerBackendName.has_value()) {
     throw exception::UserError(

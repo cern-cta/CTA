@@ -13,10 +13,9 @@
 
 namespace cta::catalogue {
 
-VirtualOrganizationCatalogueRetryWrapper::VirtualOrganizationCatalogueRetryWrapper(
-  const std::unique_ptr<Catalogue>& catalogue,
-  log::Logger& log,
-  const uint32_t maxTriesToConnect)
+VirtualOrganizationCatalogueRetryWrapper::VirtualOrganizationCatalogueRetryWrapper(Catalogue& catalogue,
+                                                                                   log::Logger& log,
+                                                                                   const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
       m_log(log),
       m_maxTriesToConnect(maxTriesToConnect) {}
@@ -26,14 +25,14 @@ void VirtualOrganizationCatalogueRetryWrapper::createVirtualOrganization(
   const common::dataStructures::VirtualOrganization& vo) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &vo] { return m_catalogue->VO()->createVirtualOrganization(admin, vo); },
+    [this, &admin, &vo] { return m_catalogue.VO()->createVirtualOrganization(admin, vo); },
     m_maxTriesToConnect);
 }
 
 void VirtualOrganizationCatalogueRetryWrapper::deleteVirtualOrganization(const std::string& voName) {
   return retryOnLostConnection(
     m_log,
-    [this, &voName] { return m_catalogue->VO()->deleteVirtualOrganization(voName); },
+    [this, &voName] { return m_catalogue.VO()->deleteVirtualOrganization(voName); },
     m_maxTriesToConnect);
 }
 
@@ -41,7 +40,7 @@ std::vector<common::dataStructures::VirtualOrganization>
 VirtualOrganizationCatalogueRetryWrapper::getVirtualOrganizations() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->VO()->getVirtualOrganizations(); },
+    [this] { return m_catalogue.VO()->getVirtualOrganizations(); },
     m_maxTriesToConnect);
 }
 
@@ -49,7 +48,7 @@ common::dataStructures::VirtualOrganization
 VirtualOrganizationCatalogueRetryWrapper::getVirtualOrganizationOfTapepool(const std::string& tapepoolName) const {
   return retryOnLostConnection(
     m_log,
-    [this, &tapepoolName] { return m_catalogue->VO()->getVirtualOrganizationOfTapepool(tapepoolName); },
+    [this, &tapepoolName] { return m_catalogue.VO()->getVirtualOrganizationOfTapepool(tapepoolName); },
     m_maxTriesToConnect);
 }
 
@@ -58,7 +57,7 @@ VirtualOrganizationCatalogueRetryWrapper::getCachedVirtualOrganizationOfTapepool
   const std::string& tapepoolName) const {
   return retryOnLostConnection(
     m_log,
-    [this, &tapepoolName] { return m_catalogue->VO()->getCachedVirtualOrganizationOfTapepool(tapepoolName); },
+    [this, &tapepoolName] { return m_catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapepoolName); },
     m_maxTriesToConnect);
 }
 
@@ -66,7 +65,7 @@ std::optional<common::dataStructures::VirtualOrganization>
 VirtualOrganizationCatalogueRetryWrapper::getDefaultVirtualOrganizationForRepack() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->VO()->getDefaultVirtualOrganizationForRepack(); },
+    [this] { return m_catalogue.VO()->getDefaultVirtualOrganizationForRepack(); },
     m_maxTriesToConnect);
 }
 
@@ -77,7 +76,7 @@ void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationName(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &currentVoName, &newVoName] {
-      return m_catalogue->VO()->modifyVirtualOrganizationName(admin, currentVoName, newVoName);
+      return m_catalogue.VO()->modifyVirtualOrganizationName(admin, currentVoName, newVoName);
     },
     m_maxTriesToConnect);
 }
@@ -89,7 +88,7 @@ void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationReadMaxD
   return retryOnLostConnection(
     m_log,
     [this, &admin, &voName, &readMaxDrives] {
-      return m_catalogue->VO()->modifyVirtualOrganizationReadMaxDrives(admin, voName, readMaxDrives);
+      return m_catalogue.VO()->modifyVirtualOrganizationReadMaxDrives(admin, voName, readMaxDrives);
     },
     m_maxTriesToConnect);
 }
@@ -101,7 +100,7 @@ void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationWriteMax
   return retryOnLostConnection(
     m_log,
     [this, &admin, &voName, &writeMaxDrives] {
-      return m_catalogue->VO()->modifyVirtualOrganizationWriteMaxDrives(admin, voName, writeMaxDrives);
+      return m_catalogue.VO()->modifyVirtualOrganizationWriteMaxDrives(admin, voName, writeMaxDrives);
     },
     m_maxTriesToConnect);
 }
@@ -113,7 +112,7 @@ void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationMaxFileS
   return retryOnLostConnection(
     m_log,
     [this, &admin, &voName, &maxFileSize] {
-      return m_catalogue->VO()->modifyVirtualOrganizationMaxFileSize(admin, voName, maxFileSize);
+      return m_catalogue.VO()->modifyVirtualOrganizationMaxFileSize(admin, voName, maxFileSize);
     },
     m_maxTriesToConnect);
 }
@@ -125,7 +124,7 @@ void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationComment(
   return retryOnLostConnection(
     m_log,
     [this, &admin, &voName, &comment] {
-      return m_catalogue->VO()->modifyVirtualOrganizationComment(admin, voName, comment);
+      return m_catalogue.VO()->modifyVirtualOrganizationComment(admin, voName, comment);
     },
     m_maxTriesToConnect);
 }
@@ -137,7 +136,7 @@ void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationDiskInst
   return retryOnLostConnection(
     m_log,
     [this, &admin, &voName, &diskInstance] {
-      return m_catalogue->VO()->modifyVirtualOrganizationDiskInstanceName(admin, voName, diskInstance);
+      return m_catalogue.VO()->modifyVirtualOrganizationDiskInstanceName(admin, voName, diskInstance);
     },
     m_maxTriesToConnect);
 }
@@ -149,7 +148,7 @@ void VirtualOrganizationCatalogueRetryWrapper::modifyVirtualOrganizationIsRepack
   return retryOnLostConnection(
     m_log,
     [this, &admin, &voName, &isRepackVo] {
-      return m_catalogue->VO()->modifyVirtualOrganizationIsRepackVo(admin, voName, isRepackVo);
+      return m_catalogue.VO()->modifyVirtualOrganizationIsRepackVo(admin, voName, isRepackVo);
     },
     m_maxTriesToConnect);
 }

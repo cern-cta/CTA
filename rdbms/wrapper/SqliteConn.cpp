@@ -238,7 +238,7 @@ std::map<std::string, std::string, std::less<>> SqliteConn::getColumns(const std
       searchPosComma = findResultComma + 1;
       if (0 < sqlStmtComma.size()) {  // Ignore empty statements
         const std::string columnSQL = "([a-zA-Z_0-9]+) +(" + columnTypes + ")";
-        cta::utils::Regex columnSqlRegex(columnSQL.c_str());
+        cta::utils::Regex columnSqlRegex(columnSQL);
         auto columnSql = columnSqlRegex.exec(sqlStmtComma);
         if (3 == columnSql.size()) {
           columnNamesAndTypes.insert(std::make_pair(columnSql[1], columnSql[2]));
@@ -367,7 +367,7 @@ std::vector<std::string> SqliteConn::getConstraintNames(const std::string& table
       searchPosComma = findResultComma + 1;
       if (0 < sqlStmtComma.size()) {  // Ignore empty statements
         const std::string constraintSQL = "CONSTRAINT ([a-zA-Z_0-9]+)";
-        cta::utils::Regex constraintSQLRegex(constraintSQL.c_str());
+        cta::utils::Regex constraintSQLRegex(constraintSQL);
         auto constraintSql = constraintSQLRegex.exec(sqlStmtComma);
         if (2 == constraintSql.size()) {
           constraintNames.emplace_back(constraintSql[1]);

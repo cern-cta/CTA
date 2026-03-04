@@ -420,4 +420,14 @@ std::string file2string(const std::string& filename);
  */
 void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMsec, int64_t checkIntervalMsec = 100);
 
+/**
+ * @brief Joins a vector of strings into a single comma separated list.
+ * For example, the vector ["string1", "another string", yes] would become:
+ * "string1, another string, yes"
+ *
+ * @param v The vector to join.
+ * @return std::string A comma separated list.
+ */
+std::string joinCommaSeparated(const std::vector<std::string>& v);
+
 }  // namespace cta::utils

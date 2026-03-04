@@ -22,9 +22,7 @@ class Catalogue;
 
 class MountPolicyCatalogueRetryWrapper : public MountPolicyCatalogue {
 public:
-  MountPolicyCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                   log::Logger& m_log,
-                                   const uint32_t maxTriesToConnect);
+  MountPolicyCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~MountPolicyCatalogueRetryWrapper() override = default;
 
   void createMountPolicy(const common::dataStructures::SecurityIdentity& admin,
@@ -59,10 +57,10 @@ public:
                                 const std::string& comment) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
-};  // class SchemaCatalogueRetryWrapper
+};  // class MountPolicyCatalogueRetryWrapper
 
 }  // namespace catalogue
 }  // namespace cta

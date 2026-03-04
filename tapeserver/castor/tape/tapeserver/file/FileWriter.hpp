@@ -25,7 +25,7 @@ public:
     * @param fileInfo: information about the file we want to read
     * @param blockSize: size of blocks we want to use in writing
     */
-  FileWriter(const std::unique_ptr<WriteSession>& ws, const cta::ArchiveJob& fileToMigrate, const size_t blockSize);
+  FileWriter(WriteSession& ws, const cta::ArchiveJob& fileToMigrate, const size_t blockSize);
 
   /**
     * Returns the block id of the current position
@@ -79,7 +79,7 @@ private:
   /**
     * Session to which we are attached to
     */
-  const std::unique_ptr<WriteSession>& m_session;
+  WriteSession& m_session;
 
   /**
     * Information that we have about the current file to be written and that

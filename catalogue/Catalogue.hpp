@@ -44,28 +44,28 @@ public:
   virtual ~Catalogue() = default;
 
   // Table Methods
-  virtual const std::unique_ptr<SchemaCatalogue>& Schema() = 0;
-  virtual const std::unique_ptr<AdminUserCatalogue>& AdminUser() = 0;
-  virtual const std::unique_ptr<DiskSystemCatalogue>& DiskSystem() = 0;
-  virtual const std::unique_ptr<DiskInstanceCatalogue>& DiskInstance() = 0;
-  virtual const std::unique_ptr<DiskInstanceSpaceCatalogue>& DiskInstanceSpace() = 0;
-  virtual const std::unique_ptr<VirtualOrganizationCatalogue>& VO() = 0;
-  virtual const std::unique_ptr<ArchiveRouteCatalogue>& ArchiveRoute() = 0;
-  virtual const std::unique_ptr<MediaTypeCatalogue>& MediaType() = 0;
-  virtual const std::unique_ptr<StorageClassCatalogue>& StorageClass() = 0;
-  virtual const std::unique_ptr<TapePoolCatalogue>& TapePool() = 0;
-  virtual const std::unique_ptr<TapeCatalogue>& Tape() = 0;
-  virtual const std::unique_ptr<MountPolicyCatalogue>& MountPolicy() = 0;
-  virtual const std::unique_ptr<RequesterActivityMountRuleCatalogue>& RequesterActivityMountRule() = 0;
-  virtual const std::unique_ptr<RequesterMountRuleCatalogue>& RequesterMountRule() = 0;
-  virtual const std::unique_ptr<RequesterGroupMountRuleCatalogue>& RequesterGroupMountRule() = 0;
-  virtual const std::unique_ptr<LogicalLibraryCatalogue>& LogicalLibrary() = 0;
-  virtual const std::unique_ptr<PhysicalLibraryCatalogue>& PhysicalLibrary() = 0;
-  virtual const std::unique_ptr<TapeFileCatalogue>& TapeFile() = 0;
-  virtual const std::unique_ptr<FileRecycleLogCatalogue>& FileRecycleLog() = 0;
-  virtual const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() = 0;
-  virtual const std::unique_ptr<DriveStateCatalogue>& DriveState() = 0;
-  virtual const std::unique_ptr<ArchiveFileCatalogue>& ArchiveFile() = 0;
+  virtual const std::unique_ptr<SchemaCatalogue>& Schema() const = 0;
+  virtual const std::unique_ptr<AdminUserCatalogue>& AdminUser() const = 0;
+  virtual const std::unique_ptr<DiskSystemCatalogue>& DiskSystem() const = 0;
+  virtual const std::unique_ptr<DiskInstanceCatalogue>& DiskInstance() const = 0;
+  virtual const std::unique_ptr<DiskInstanceSpaceCatalogue>& DiskInstanceSpace() const = 0;
+  virtual const std::unique_ptr<VirtualOrganizationCatalogue>& VO() const = 0;
+  virtual const std::unique_ptr<ArchiveRouteCatalogue>& ArchiveRoute() const = 0;
+  virtual const std::unique_ptr<MediaTypeCatalogue>& MediaType() const = 0;
+  virtual const std::unique_ptr<StorageClassCatalogue>& StorageClass() const = 0;
+  virtual const std::unique_ptr<TapePoolCatalogue>& TapePool() const = 0;
+  virtual const std::unique_ptr<TapeCatalogue>& Tape() const = 0;
+  virtual const std::unique_ptr<MountPolicyCatalogue>& MountPolicy() const = 0;
+  virtual const std::unique_ptr<RequesterActivityMountRuleCatalogue>& RequesterActivityMountRule() const = 0;
+  virtual const std::unique_ptr<RequesterMountRuleCatalogue>& RequesterMountRule() const = 0;
+  virtual const std::unique_ptr<RequesterGroupMountRuleCatalogue>& RequesterGroupMountRule() const = 0;
+  virtual const std::unique_ptr<LogicalLibraryCatalogue>& LogicalLibrary() const = 0;
+  virtual const std::unique_ptr<PhysicalLibraryCatalogue>& PhysicalLibrary() const = 0;
+  virtual const std::unique_ptr<TapeFileCatalogue>& TapeFile() const = 0;
+  virtual const std::unique_ptr<FileRecycleLogCatalogue>& FileRecycleLog() const = 0;
+  virtual const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() const = 0;
+  virtual const std::unique_ptr<DriveStateCatalogue>& DriveState() const = 0;
+  virtual const std::unique_ptr<ArchiveFileCatalogue>& ArchiveFile() const = 0;
 };  // class Catalogue
 
 }  // namespace cta::catalogue

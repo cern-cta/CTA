@@ -22,9 +22,7 @@ class Catalogue;
 
 class DiskInstanceSpaceCatalogueRetryWrapper : public DiskInstanceSpaceCatalogue {
 public:
-  DiskInstanceSpaceCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                         log::Logger& m_log,
-                                         const uint32_t maxTriesToConnect);
+  DiskInstanceSpaceCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~DiskInstanceSpaceCatalogueRetryWrapper() override = default;
 
   void deleteDiskInstanceSpace(const std::string& name, const std::string& diskInstance) override;
@@ -58,10 +56,10 @@ public:
                                        const std::string& freeSpaceQueryURL) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
-};  // class DiskInstancSpaceCatalogueRetryWrapper
+};  // class DiskInstanceSpaceCatalogueRetryWrapper
 
 }  // namespace catalogue
 }  // namespace cta

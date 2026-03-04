@@ -31,7 +31,9 @@ validate-catalogue-schema-version:
 
 validate-pipeline-variables:
   stage: validate
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: modify-project-json
+      optional: true
   rules:
     - when: on_success
   variables:
@@ -48,7 +50,9 @@ validate-pipeline-variables:
 
 validate-project-json:
   stage: validate
-  needs: []  # Ensure no artifacts are downloaded
+  needs:
+    - job: modify-project-json
+      optional: true
   rules:
     - when: on_success
   script:

@@ -22,7 +22,7 @@ class Catalogue;
 
 class RequesterGroupMountRuleCatalogueRetryWrapper : public RequesterGroupMountRuleCatalogue {
 public:
-  RequesterGroupMountRuleCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+  RequesterGroupMountRuleCatalogueRetryWrapper(Catalogue& catalogue,
                                                log::Logger& m_log,
                                                const uint32_t maxTriesToConnect);
   ~RequesterGroupMountRuleCatalogueRetryWrapper() override = default;
@@ -49,10 +49,10 @@ public:
                                      const std::string& requesterGroupName) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
-};  // class SchemaCatalogueRetryWrapper
+};  // class RequesterGroupMountRuleCatalogueRetryWrapper
 
 }  // namespace catalogue
 }  // namespace cta

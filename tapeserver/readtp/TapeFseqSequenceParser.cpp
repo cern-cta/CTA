@@ -35,7 +35,7 @@ TapeFseqRangeList TapeFileSequenceParser::parse(char* const str) {
 
     switch (nbBoundaries) {
       case 1:  // Range string = "n"
-        if (!utils::isValidUInt(boundaryStrs[0].c_str())) {
+        if (!utils::isValidUInt(boundaryStrs[0])) {
           exception::InvalidArgument ex;
           ex.getMessage() << "Invalid range string: '" << boundaryStrs[0] << "': Expecting an unsigned integer";
           throw ex;
@@ -59,7 +59,7 @@ TapeFseqRangeList TapeFileSequenceParser::parse(char* const str) {
         // At this point the range string must be either "m-n" or "m-"
 
         // Parse the "m" of "m-n" or "m-"
-        if (!utils::isValidUInt(boundaryStrs[0].c_str())) {
+        if (!utils::isValidUInt(boundaryStrs[0])) {
           exception::InvalidArgument ex;
           ex.getMessage() << "Invalid range string: '" << *itor
                           << "': The lower boundary should be an unsigned integer";
@@ -83,7 +83,7 @@ TapeFseqRangeList TapeFileSequenceParser::parse(char* const str) {
             // Else "m-n"
           } else {
             // Parse the "n" of "m-n"
-            if (!utils::isValidUInt(boundaryStrs[1].c_str())) {
+            if (!utils::isValidUInt(boundaryStrs[1])) {
               exception::InvalidArgument ex;
               ex.getMessage() << "Invalid range string: '" << *itor
                               << "': The upper boundary should be an unsigned integer";

@@ -22,9 +22,7 @@ class Catalogue;
 
 class MediaTypeCatalogueRetryWrapper : public MediaTypeCatalogue {
 public:
-  MediaTypeCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                 log::Logger& m_log,
-                                 const uint32_t maxTriesToConnect);
+  MediaTypeCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~MediaTypeCatalogueRetryWrapper() override = default;
 
   void createMediaType(const common::dataStructures::SecurityIdentity& admin, const MediaType& mediaType) override;
@@ -72,7 +70,7 @@ public:
                               const std::string& comment) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class MediaTypeCatalogueRetryWrapper

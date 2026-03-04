@@ -871,7 +871,7 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
 // OStoreDB::getArchiveJobs()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::ArchiveJob>
-OStoreDB::getArchiveJobs(std::optional<std::string> tapePoolName) const {
+OStoreDB::getArchiveJobs(const std::optional<std::string>& tapePoolName) const {
   std::list<cta::common::dataStructures::ArchiveJob> ret;
   if (!tapePoolName) {
     return ret;
@@ -1233,7 +1233,7 @@ void OStoreDB::setStatisticsCacheConfig(const StatisticsCacheConfig& conf) {
 SchedulerDatabase::RetrieveRequestInfo
 OStoreDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                         const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
-                        const std::optional<std::string> diskSystemName,
+                        const std::optional<std::string>& diskSystemName,
                         log::LogContext& logContext) {
   assertAgentAddressSet();
   auto mutexForHelgrind = std::make_unique<cta::threading::Mutex>();
@@ -1649,7 +1649,7 @@ void OStoreDB::deleteFailed(const std::string& objectId, log::LogContext& lc) {
 // OStoreDB::getPendingRetrieveJobs()
 //------------------------------------------------------------------------------
 std::list<cta::common::dataStructures::RetrieveJob>
-OStoreDB::getPendingRetrieveJobs(std::optional<std::string> vid) const {
+OStoreDB::getPendingRetrieveJobs(const std::optional<std::string>& vid) const {
   std::list<common::dataStructures::RetrieveJob> ret;
   if (!vid) {
     return ret;
@@ -2926,12 +2926,12 @@ void OStoreDB::RepackRequest::setLastExpandedFSeq(uint64_t fseq) {
 // OStoreDB::RepackRequest::addSubrequestsAndUpdateStats()
 //------------------------------------------------------------------------------
 uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(
-  std::list<Subrequest>& repackSubrequests,
-  cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+  const std::list<Subrequest>& repackSubrequests,
+  const cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
   uint64_t maxFSeqLowBound,
   const uint64_t maxAddedFSeq,
   const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles,
-  disk::DiskSystemList diskSystemList,
+  const disk::DiskSystemList& diskSystemList,
   log::LogContext& lc) {
   // We need to prepare retrieve requests names and reference them, create them, enqueue them.
   uint64_t nbRetrieveSubrequestsCreated = 0;
@@ -2962,7 +2962,7 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(
 
   // First loop: we will issue the async insertions of the subrequests.
   struct AsyncInsertionInfo {
-    Subrequest& rsr;
+    const Subrequest& rsr;
     std::shared_ptr<RetrieveRequest> request;
     std::shared_ptr<RetrieveRequest::AsyncInserter> inserter;
     std::string bestVid;
@@ -3145,7 +3145,7 @@ nextSubrequest:
 
     // We can now check the subrequests creations succeeded, and prepare their queueing.
     struct AsyncInsertedSubrequestInfo {
-      Subrequest& rsr;
+      const Subrequest& rsr;
       std::string bestVid;
       uint32_t activeCopyNb;
       std::shared_ptr<RetrieveRequest> request;

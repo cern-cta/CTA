@@ -24,9 +24,7 @@ class Catalogue;
 
 class FileRecycleLogCatalogueRetryWrapper : public FileRecycleLogCatalogue {
 public:
-  FileRecycleLogCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                      log::Logger& m_log,
-                                      const uint32_t maxTriesToConnect);
+  FileRecycleLogCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
 
   ~FileRecycleLogCatalogueRetryWrapper() override = default;
 
@@ -38,7 +36,7 @@ public:
   void deleteFilesFromRecycleLog(const std::string& vid, log::LogContext& lc) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };

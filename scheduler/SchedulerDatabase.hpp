@@ -7,7 +7,6 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeForWriting.hpp"
-#include "common/MountControl.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 #include "common/dataStructures/ArchiveJob.hpp"
@@ -19,6 +18,7 @@
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/DriveState.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
+#include "common/dataStructures/MountControl.hpp"
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/dataStructures/RepackInfo.hpp"
@@ -142,7 +142,7 @@ public:
    * @return The queued requests.
    */
   virtual std::list<cta::common::dataStructures::ArchiveJob>
-  getArchiveJobs(std::optional<std::string> tapePoolName) const = 0;
+  getArchiveJobs(const std::optional<std::string>& tapePoolName) const = 0;
 
   /**
    * Class holding necessary repack request elements for queueing
@@ -390,7 +390,7 @@ public:
 
   virtual RetrieveRequestInfo queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                                             const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
-                                            const std::optional<std::string> diskSystemName,
+                                            const std::optional<std::string>& diskSystemName,
                                             log::LogContext& logContext) = 0;
 
   virtual void cancelRetrieve(const std::string& instanceName,
@@ -466,7 +466,7 @@ public:
    * @return The queued requests.
    */
   virtual std::list<cta::common::dataStructures::RetrieveJob>
-  getPendingRetrieveJobs(std::optional<std::string> vid) const = 0;
+  getPendingRetrieveJobs(const std::optional<std::string>& vid) const = 0;
 
   /*============ Retrieve management: tape server side ======================*/
 
@@ -656,13 +656,14 @@ public:
      * Add Retrieve subrequests to the repack request and update its statistics
      * @return the number of retrieve subrequests queued
      */
-    virtual uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
-                                                  cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
-                                                  uint64_t maxFSeqLowBound,
-                                                  const uint64_t maxAddedFSeq,
-                                                  const TotalStatsFiles& totalStatsFiles,
-                                                  disk::DiskSystemList diskSystemList,
-                                                  log::LogContext& lc) = 0;
+    virtual uint64_t
+    addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackSubrequests,
+                                 const cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+                                 uint64_t maxFSeqLowBound,
+                                 const uint64_t maxAddedFSeq,
+                                 const TotalStatsFiles& totalStatsFiles,
+                                 const disk::DiskSystemList& diskSystemList,
+                                 log::LogContext& lc) = 0;
     virtual void expandDone() = 0;
     virtual void fail() = 0;
     virtual void requeueInToExpandQueue(log::LogContext& lc) = 0;

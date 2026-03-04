@@ -17,7 +17,7 @@
 namespace cta::catalogue {
 
 RequesterGroupMountRuleCatalogueRetryWrapper::RequesterGroupMountRuleCatalogueRetryWrapper(
-  const std::unique_ptr<Catalogue>& catalogue,
+  Catalogue& catalogue,
   log::Logger& log,
   const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -32,10 +32,10 @@ void RequesterGroupMountRuleCatalogueRetryWrapper::modifyRequesterGroupMountRule
   return retryOnLostConnection(
     m_log,
     [this, &admin, &instanceName, &requesterGroupName, &mountPolicy] {
-      return m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(admin,
-                                                                                         instanceName,
-                                                                                         requesterGroupName,
-                                                                                         mountPolicy);
+      return m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRulePolicy(admin,
+                                                                                        instanceName,
+                                                                                        requesterGroupName,
+                                                                                        mountPolicy);
     },
     m_maxTriesToConnect);
 }
@@ -48,10 +48,10 @@ void RequesterGroupMountRuleCatalogueRetryWrapper::modifyRequesterGroupMountRule
   return retryOnLostConnection(
     m_log,
     [this, &admin, &instanceName, &requesterGroupName, &comment] {
-      return m_catalogue->RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(admin,
-                                                                                          instanceName,
-                                                                                          requesterGroupName,
-                                                                                          comment);
+      return m_catalogue.RequesterGroupMountRule()->modifyRequesterGroupMountRuleComment(admin,
+                                                                                         instanceName,
+                                                                                         requesterGroupName,
+                                                                                         comment);
     },
     m_maxTriesToConnect);
 }
@@ -65,11 +65,11 @@ void RequesterGroupMountRuleCatalogueRetryWrapper::createRequesterGroupMountRule
   return retryOnLostConnection(
     m_log,
     [this, &admin, &mountPolicyName, &diskInstanceName, &requesterGroupName, &comment] {
-      return m_catalogue->RequesterGroupMountRule()->createRequesterGroupMountRule(admin,
-                                                                                   mountPolicyName,
-                                                                                   diskInstanceName,
-                                                                                   requesterGroupName,
-                                                                                   comment);
+      return m_catalogue.RequesterGroupMountRule()->createRequesterGroupMountRule(admin,
+                                                                                  mountPolicyName,
+                                                                                  diskInstanceName,
+                                                                                  requesterGroupName,
+                                                                                  comment);
     },
     m_maxTriesToConnect);
 }
@@ -78,7 +78,7 @@ std::vector<common::dataStructures::RequesterGroupMountRule>
 RequesterGroupMountRuleCatalogueRetryWrapper::getRequesterGroupMountRules() const {
   return retryOnLostConnection(
     m_log,
-    [this] { return m_catalogue->RequesterGroupMountRule()->getRequesterGroupMountRules(); },
+    [this] { return m_catalogue.RequesterGroupMountRule()->getRequesterGroupMountRules(); },
     m_maxTriesToConnect);
 }
 
@@ -88,8 +88,7 @@ void RequesterGroupMountRuleCatalogueRetryWrapper::deleteRequesterGroupMountRule
   return retryOnLostConnection(
     m_log,
     [this, &diskInstanceName, &requesterGroupName] {
-      return m_catalogue->RequesterGroupMountRule()->deleteRequesterGroupMountRule(diskInstanceName,
-                                                                                   requesterGroupName);
+      return m_catalogue.RequesterGroupMountRule()->deleteRequesterGroupMountRule(diskInstanceName, requesterGroupName);
     },
     m_maxTriesToConnect);
 }

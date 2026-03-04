@@ -57,7 +57,7 @@ uint64_t TapeWriteTask::fileSize() {
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteSession>& session,
+void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession& session,
                             MigrationReportPacker& reportPacker,
                             MigrationWatchDog& watchdog,
                             cta::log::LogContext& lc,
@@ -85,7 +85,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
   // We will not record errors for an empty string. This will allow us to
   // prevent counting where error happened upstream.
   std::string currentErrorToCount = "Error_tapeFSeqOutOfSequenceForWrite";
-  session->validateNextFSeq(m_archiveJob->tapeFile.fSeq);
+  session.validateNextFSeq(m_archiveJob->tapeFile.fSeq);
   try {
     // Try to open the session
     currentErrorToCount = "Error_tapeWriteHeader";
@@ -158,7 +158,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
     m_taskStats.filesCount++;
     // Record the fSeq in the tape session
-    session->reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
+    session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
     m_archiveJob->tapeFile.checksumBlob.insert(cta::checksum::ADLER32, ckSum);
     m_archiveJob->tapeFile.fileSize = m_taskStats.dataVolume;
     m_archiveJob->tapeFile.blockId = output->getBlockId();
@@ -200,7 +200,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     m_taskStats.headerVolume += TapeSessionStats::trailerVolumePerFile;
     m_taskStats.filesCount++;
     // Record the fSeq in the tape session
-    session->reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
+    session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
     reportPacker.reportSkippedJob(std::move(m_archiveJob), s, lc);
     m_taskStats.waitReportingTime += timer.secs(cta::utils::Timer::resetCounter);
     m_taskStats.totalTime = localTime.secs();
@@ -219,7 +219,7 @@ void TapeWriteTask::execute(const std::unique_ptr<castor::tape::tapeFile::WriteS
     circulateMemBlocks();
 
     // Record the fSeq in the tape session
-    session->reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
+    session.reportWrittenFSeq(m_archiveJob->tapeFile.fSeq);
     reportPacker.reportFailedJob(std::move(m_archiveJob), e, lc);
     lc.log(cta::log::INFO, "Left placeholder on tape after skipping unreadable file.");
     return;
@@ -361,8 +361,8 @@ TapeWriteTask::~TapeWriteTask() {
 //------------------------------------------------------------------------------
 // openFileWriter
 //------------------------------------------------------------------------------
-std::unique_ptr<tapeFile::FileWriter>
-TapeWriteTask::openFileWriter(const std::unique_ptr<tape::tapeFile::WriteSession>& session, cta::log::LogContext& lc) {
+std::unique_ptr<tapeFile::FileWriter> TapeWriteTask::openFileWriter(tape::tapeFile::WriteSession& session,
+                                                                    cta::log::LogContext& lc) {
   std::unique_ptr<tape::tapeFile::FileWriter> output;
   try {
     const uint64_t tapeBlockSize = 256 * 1024;

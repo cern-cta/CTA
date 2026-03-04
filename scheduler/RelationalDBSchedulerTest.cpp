@@ -11,7 +11,6 @@
 #include "catalogue/TapeFileWritten.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "catalogue/tests/CatalogueTestUtils.hpp"
-#include "common/Timer.hpp"
 #include "common/dataStructures/DiskInstance.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
@@ -19,6 +18,7 @@
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/utils/Timer.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveMount.hpp"
@@ -3216,7 +3216,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldThrowIfUseBufferNotRecallButNoDir
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
   log::TimingList tl;
   utils::Timer t;
-  ASSERT_THROW(scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc), cta::ExpandRepackRequestException);
+  ASSERT_THROW(scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc), cta::ExpandRepackRequestException);
 }
 
 TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecallFlagProvided) {
@@ -3334,7 +3334,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
   auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
   log::TimingList tl;
   utils::Timer t;
-  ASSERT_NO_THROW(scheduler.expandRepackRequest(repackRequestToExpand, tl, t, lc));
+  ASSERT_NO_THROW(scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc));
 }
 
 TEST_P(SchedulerTest, archiveMaxDrivesVoInFlightChangeScheduleMount) {

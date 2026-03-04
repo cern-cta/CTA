@@ -713,4 +713,15 @@ void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMse
   }
 }
 
+std::string joinCommaSeparated(const std::vector<std::string>& v) {
+  std::string result;
+  for (std::size_t i = 0; i < v.size(); ++i) {
+    if (i != 0) {
+      result += ", ";
+    }
+    result += v[i];
+  }
+  return result;
+}
+
 }  // namespace cta::utils

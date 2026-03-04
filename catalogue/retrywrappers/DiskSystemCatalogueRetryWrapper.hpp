@@ -22,9 +22,7 @@ class Catalogue;
 
 class DiskSystemCatalogueRetryWrapper : public DiskSystemCatalogue {
 public:
-  DiskSystemCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                  log::Logger& m_log,
-                                  const uint32_t maxTriesToConnect);
+  DiskSystemCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~DiskSystemCatalogueRetryWrapper() override = default;
 
   void createDiskSystem(const common::dataStructures::SecurityIdentity& admin,
@@ -67,7 +65,7 @@ public:
   bool diskSystemExists(const std::string& name) const override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class DiskSystemCatalogueRetryWrapper

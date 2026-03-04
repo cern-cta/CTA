@@ -29,9 +29,7 @@ class Catalogue;
 
 class PhysicalLibraryCatalogueRetryWrapper : public PhysicalLibraryCatalogue {
 public:
-  PhysicalLibraryCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                       log::Logger& m_log,
-                                       const uint32_t maxTriesToConnect);
+  PhysicalLibraryCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~PhysicalLibraryCatalogueRetryWrapper() override = default;
 
   void createPhysicalLibrary(const common::dataStructures::SecurityIdentity& admin,
@@ -45,7 +43,7 @@ public:
                              const common::dataStructures::UpdatePhysicalLibrary& pl) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class PhysicalLibraryCatalogueRetryWrapper

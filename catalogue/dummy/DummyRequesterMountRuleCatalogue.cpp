@@ -22,7 +22,7 @@ void DummyRequesterMountRuleCatalogue::modifyRequesterMountRulePolicy(
   throw exception::NotImplementedException();
 }
 
-void DummyRequesterMountRuleCatalogue::modifyRequesteMountRuleComment(
+void DummyRequesterMountRuleCatalogue::modifyRequesterMountRuleComment(
   const common::dataStructures::SecurityIdentity& admin,
   const std::string& instanceName,
   const std::string& requesterName,

@@ -17,9 +17,7 @@ class SchemaVersion;
 
 class TapeCatalogueRetryWrapper : public TapeCatalogue {
 public:
-  TapeCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                            log::Logger& m_log,
-                            const uint32_t maxTriesToConnect);
+  TapeCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~TapeCatalogueRetryWrapper() override = default;
 
   void createTape(const common::dataStructures::SecurityIdentity& admin, const CreateTapeAttributes& tape) override;
@@ -113,9 +111,9 @@ public:
   common::dataStructures::Label::Format getTapeLabelFormat(const std::string& vid) const override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
-};  // class SchemaCatalogueRetryWrapper
+};  // class TapeCatalogueRetryWrapper
 
 }  // namespace cta::catalogue

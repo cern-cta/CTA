@@ -15,7 +15,7 @@
 
 namespace cta::catalogue {
 
-TapeCatalogueRetryWrapper::TapeCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+TapeCatalogueRetryWrapper::TapeCatalogueRetryWrapper(Catalogue& catalogue,
                                                      log::Logger& log,
                                                      const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -26,21 +26,21 @@ void TapeCatalogueRetryWrapper::createTape(const common::dataStructures::Securit
                                            const CreateTapeAttributes& tape) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &tape] { return m_catalogue->Tape()->createTape(admin, tape); },
+    [this, &admin, &tape] { return m_catalogue.Tape()->createTape(admin, tape); },
     m_maxTriesToConnect);
 }
 
 void TapeCatalogueRetryWrapper::deleteTape(const std::string& vid) {
   return retryOnLostConnection(
     m_log,
-    [this, &vid] { return m_catalogue->Tape()->deleteTape(vid); },
+    [this, &vid] { return m_catalogue.Tape()->deleteTape(vid); },
     m_maxTriesToConnect);
 }
 
 TapeItor TapeCatalogueRetryWrapper::getTapesItor(const TapeSearchCriteria& searchCriteria) const {
   return retryOnLostConnection(
     m_log,
-    [this, &searchCriteria] { return m_catalogue->Tape()->getTapesItor(searchCriteria); },
+    [this, &searchCriteria] { return m_catalogue.Tape()->getTapesItor(searchCriteria); },
     m_maxTriesToConnect);
 }
 
@@ -48,14 +48,14 @@ std::vector<common::dataStructures::Tape>
 TapeCatalogueRetryWrapper::getTapes(const TapeSearchCriteria& searchCriteria) const {
   return retryOnLostConnection(
     m_log,
-    [this, &searchCriteria] { return m_catalogue->Tape()->getTapes(searchCriteria); },
+    [this, &searchCriteria] { return m_catalogue.Tape()->getTapes(searchCriteria); },
     m_maxTriesToConnect);
 }
 
 common::dataStructures::VidToTapeMap TapeCatalogueRetryWrapper::getTapesByVid(const std::string& vid) const {
   return retryOnLostConnection(
     m_log,
-    [this, &vid] { return m_catalogue->Tape()->getTapesByVid(vid); },
+    [this, &vid] { return m_catalogue.Tape()->getTapesByVid(vid); },
     m_maxTriesToConnect);
 }
 
@@ -63,7 +63,7 @@ common::dataStructures::VidToTapeMap
 TapeCatalogueRetryWrapper::getTapesByVid(const std::set<std::string, std::less<>>& vids) const {
   return retryOnLostConnection(
     m_log,
-    [this, &vids] { return m_catalogue->Tape()->getTapesByVid(vids); },
+    [this, &vids] { return m_catalogue.Tape()->getTapesByVid(vids); },
     m_maxTriesToConnect);
 }
 
@@ -71,7 +71,7 @@ common::dataStructures::VidToTapeMap
 TapeCatalogueRetryWrapper::getTapesByVid(const std::set<std::string, std::less<>>& vids, bool ignoreMissingVids) const {
   return retryOnLostConnection(
     m_log,
-    [this, &vids, &ignoreMissingVids] { return m_catalogue->Tape()->getTapesByVid(vids, ignoreMissingVids); },
+    [this, &vids, &ignoreMissingVids] { return m_catalogue.Tape()->getTapesByVid(vids, ignoreMissingVids); },
     m_maxTriesToConnect);
 }
 
@@ -79,7 +79,7 @@ std::map<std::string, std::string, std::less<>>
 TapeCatalogueRetryWrapper::getVidToLogicalLibrary(const std::set<std::string, std::less<>>& vids) const {
   return retryOnLostConnection(
     m_log,
-    [this, &vids] { return m_catalogue->Tape()->getVidToLogicalLibrary(vids); },
+    [this, &vids] { return m_catalogue.Tape()->getVidToLogicalLibrary(vids); },
     m_maxTriesToConnect);
 }
 
@@ -88,28 +88,28 @@ void TapeCatalogueRetryWrapper::reclaimTape(const common::dataStructures::Securi
                                             cta::log::LogContext& lc) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &vid, &lc] { return m_catalogue->Tape()->reclaimTape(admin, vid, lc); },
+    [this, &admin, &vid, &lc] { return m_catalogue.Tape()->reclaimTape(admin, vid, lc); },
     m_maxTriesToConnect);
 }
 
 void TapeCatalogueRetryWrapper::checkTapeForLabel(const std::string& vid) {
   return retryOnLostConnection(
     m_log,
-    [this, &vid] { return m_catalogue->Tape()->checkTapeForLabel(vid); },
+    [this, &vid] { return m_catalogue.Tape()->checkTapeForLabel(vid); },
     m_maxTriesToConnect);
 }
 
 void TapeCatalogueRetryWrapper::tapeLabelled(const std::string& vid, const std::string& drive) {
   return retryOnLostConnection(
     m_log,
-    [this, &vid, &drive] { return m_catalogue->Tape()->tapeLabelled(vid, drive); },
+    [this, &vid, &drive] { return m_catalogue.Tape()->tapeLabelled(vid, drive); },
     m_maxTriesToConnect);
 }
 
 uint64_t TapeCatalogueRetryWrapper::getNbFilesOnTape(const std::string& vid) const {
   return retryOnLostConnection(
     m_log,
-    [this, &vid] { return m_catalogue->Tape()->getNbFilesOnTape(vid); },
+    [this, &vid] { return m_catalogue.Tape()->getNbFilesOnTape(vid); },
     m_maxTriesToConnect);
 }
 
@@ -118,7 +118,7 @@ void TapeCatalogueRetryWrapper::modifyTapeMediaType(const common::dataStructures
                                                     const std::string& mediaType) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &vid, &mediaType] { return m_catalogue->Tape()->modifyTapeMediaType(admin, vid, mediaType); },
+    [this, &admin, &vid, &mediaType] { return m_catalogue.Tape()->modifyTapeMediaType(admin, vid, mediaType); },
     m_maxTriesToConnect);
 }
 
@@ -127,7 +127,7 @@ void TapeCatalogueRetryWrapper::modifyTapeVendor(const common::dataStructures::S
                                                  const std::string& vendor) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &vid, &vendor] { return m_catalogue->Tape()->modifyTapeVendor(admin, vid, vendor); },
+    [this, &admin, &vid, &vendor] { return m_catalogue.Tape()->modifyTapeVendor(admin, vid, vendor); },
     m_maxTriesToConnect);
 }
 
@@ -137,7 +137,7 @@ void TapeCatalogueRetryWrapper::modifyTapeLogicalLibraryName(const common::dataS
   return retryOnLostConnection(
     m_log,
     [this, &admin, &vid, &logicalLibraryName] {
-      return m_catalogue->Tape()->modifyTapeLogicalLibraryName(admin, vid, logicalLibraryName);
+      return m_catalogue.Tape()->modifyTapeLogicalLibraryName(admin, vid, logicalLibraryName);
     },
     m_maxTriesToConnect);
 }
@@ -148,7 +148,7 @@ void TapeCatalogueRetryWrapper::modifyTapeTapePoolName(const common::dataStructu
   return retryOnLostConnection(
     m_log,
     [this, &admin, &vid, &tapePoolName] {
-      return m_catalogue->Tape()->modifyTapeTapePoolName(admin, vid, tapePoolName);
+      return m_catalogue.Tape()->modifyTapeTapePoolName(admin, vid, tapePoolName);
     },
     m_maxTriesToConnect);
 }
@@ -159,7 +159,7 @@ void TapeCatalogueRetryWrapper::modifyTapeEncryptionKeyName(const common::dataSt
   return retryOnLostConnection(
     m_log,
     [this, &admin, &vid, &encryptionKeyName] {
-      return m_catalogue->Tape()->modifyTapeEncryptionKeyName(admin, vid, encryptionKeyName);
+      return m_catalogue.Tape()->modifyTapeEncryptionKeyName(admin, vid, encryptionKeyName);
     },
     m_maxTriesToConnect);
 }
@@ -169,9 +169,7 @@ void TapeCatalogueRetryWrapper::modifyPurchaseOrder(const common::dataStructures
                                                     const std::string& purchaseOrder) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &vid, &purchaseOrder] {
-      return m_catalogue->Tape()->modifyPurchaseOrder(admin, vid, purchaseOrder);
-    },
+    [this, &admin, &vid, &purchaseOrder] { return m_catalogue.Tape()->modifyPurchaseOrder(admin, vid, purchaseOrder); },
     m_maxTriesToConnect);
 }
 
@@ -181,7 +179,7 @@ void TapeCatalogueRetryWrapper::modifyTapeVerificationStatus(const common::dataS
   return retryOnLostConnection(
     m_log,
     [this, &admin, &vid, &verificationStatus] {
-      return m_catalogue->Tape()->modifyTapeVerificationStatus(admin, vid, verificationStatus);
+      return m_catalogue.Tape()->modifyTapeVerificationStatus(admin, vid, verificationStatus);
     },
     m_maxTriesToConnect);
 }
@@ -194,7 +192,7 @@ void TapeCatalogueRetryWrapper::modifyTapeState(const common::dataStructures::Se
   return retryOnLostConnection(
     m_log,
     [this, &admin, &vid, &state, &prev_state, &stateReason] {
-      return m_catalogue->Tape()->modifyTapeState(admin, vid, state, prev_state, stateReason);
+      return m_catalogue.Tape()->modifyTapeState(admin, vid, state, prev_state, stateReason);
     },
     m_maxTriesToConnect);
 }
@@ -202,7 +200,7 @@ void TapeCatalogueRetryWrapper::modifyTapeState(const common::dataStructures::Se
 bool TapeCatalogueRetryWrapper::tapeExists(const std::string& vid) const {
   return retryOnLostConnection(
     m_log,
-    [this, &vid] { return m_catalogue->Tape()->tapeExists(vid); },
+    [this, &vid] { return m_catalogue.Tape()->tapeExists(vid); },
     m_maxTriesToConnect);
 }
 
@@ -211,7 +209,7 @@ void TapeCatalogueRetryWrapper::setTapeFull(const common::dataStructures::Securi
                                             const bool fullValue) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &vid, &fullValue] { return m_catalogue->Tape()->setTapeFull(admin, vid, fullValue); },
+    [this, &admin, &vid, &fullValue] { return m_catalogue.Tape()->setTapeFull(admin, vid, fullValue); },
     m_maxTriesToConnect);
 }
 
@@ -220,21 +218,21 @@ void TapeCatalogueRetryWrapper::setTapeDirty(const common::dataStructures::Secur
                                              const bool dirtyValue) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &vid, &dirtyValue] { return m_catalogue->Tape()->setTapeDirty(admin, vid, dirtyValue); },
+    [this, &admin, &vid, &dirtyValue] { return m_catalogue.Tape()->setTapeDirty(admin, vid, dirtyValue); },
     m_maxTriesToConnect);
 }
 
 void TapeCatalogueRetryWrapper::setTapeIsFromCastorInUnitTests(const std::string& vid) {
   return retryOnLostConnection(
     m_log,
-    [this, &vid] { return m_catalogue->Tape()->setTapeIsFromCastorInUnitTests(vid); },
+    [this, &vid] { return m_catalogue.Tape()->setTapeIsFromCastorInUnitTests(vid); },
     m_maxTriesToConnect);
 }
 
 void TapeCatalogueRetryWrapper::setTapeDirty(const std::string& vid) {
   return retryOnLostConnection(
     m_log,
-    [this, &vid] { return m_catalogue->Tape()->setTapeDirty(vid); },
+    [this, &vid] { return m_catalogue.Tape()->setTapeDirty(vid); },
     m_maxTriesToConnect);
 }
 
@@ -243,42 +241,42 @@ void TapeCatalogueRetryWrapper::modifyTapeComment(const common::dataStructures::
                                                   const std::optional<std::string>& comment) {
   return retryOnLostConnection(
     m_log,
-    [this, &admin, &vid, &comment] { return m_catalogue->Tape()->modifyTapeComment(admin, vid, comment); },
+    [this, &admin, &vid, &comment] { return m_catalogue.Tape()->modifyTapeComment(admin, vid, comment); },
     m_maxTriesToConnect);
 }
 
 void TapeCatalogueRetryWrapper::tapeMountedForArchive(const std::string& vid, const std::string& drive) {
   return retryOnLostConnection(
     m_log,
-    [this, &vid, &drive] { return m_catalogue->Tape()->tapeMountedForArchive(vid, drive); },
+    [this, &vid, &drive] { return m_catalogue.Tape()->tapeMountedForArchive(vid, drive); },
     m_maxTriesToConnect);
 }
 
 void TapeCatalogueRetryWrapper::tapeMountedForRetrieve(const std::string& vid, const std::string& drive) {
   return retryOnLostConnection(
     m_log,
-    [this, &vid, &drive] { return m_catalogue->Tape()->tapeMountedForRetrieve(vid, drive); },
+    [this, &vid, &drive] { return m_catalogue.Tape()->tapeMountedForRetrieve(vid, drive); },
     m_maxTriesToConnect);
 }
 
 void TapeCatalogueRetryWrapper::noSpaceLeftOnTape(const std::string& vid) {
   return retryOnLostConnection(
     m_log,
-    [this, &vid] { return m_catalogue->Tape()->noSpaceLeftOnTape(vid); },
+    [this, &vid] { return m_catalogue.Tape()->noSpaceLeftOnTape(vid); },
     m_maxTriesToConnect);
 }
 
 std::vector<TapeForWriting> TapeCatalogueRetryWrapper::getTapesForWriting(const std::string& logicalLibraryName) const {
   return retryOnLostConnection(
     m_log,
-    [this, &logicalLibraryName] { return m_catalogue->Tape()->getTapesForWriting(logicalLibraryName); },
+    [this, &logicalLibraryName] { return m_catalogue.Tape()->getTapesForWriting(logicalLibraryName); },
     m_maxTriesToConnect);
 }
 
 common::dataStructures::Label::Format TapeCatalogueRetryWrapper::getTapeLabelFormat(const std::string& vid) const {
   return retryOnLostConnection(
     m_log,
-    [this, &vid] { return m_catalogue->Tape()->getTapeLabelFormat(vid); },
+    [this, &vid] { return m_catalogue.Tape()->getTapeLabelFormat(vid); },
     m_maxTriesToConnect);
 }
 

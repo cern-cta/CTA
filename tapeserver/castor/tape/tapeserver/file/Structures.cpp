@@ -13,7 +13,7 @@
 
 using namespace castor::tape;
 
-void tapeFile::VOL1::fill(std::string VSN, unsigned char LBPMethod) {
+void tapeFile::VOL1::fill(const std::string& VSN, unsigned char LBPMethod) {
   setString(m_label, "VOL1");
   setString(m_VSN, VSN);
   setString(m_lblStandard, "3");
@@ -51,7 +51,7 @@ void tapeFile::VOL1::verify(const char* const expectedLblStandard) {
   }
 }
 
-void tapeFile::HDR1EOF1::fillCommon(std::string fileId, std::string VSN, int fSeq) {
+void tapeFile::HDR1EOF1::fillCommon(const std::string& fileId, const std::string& VSN, int fSeq) {
   setString(m_fileId, fileId);
   setString(m_VSN, VSN);
   setInt(m_fSeq, fSeq);
@@ -110,7 +110,7 @@ void tapeFile::HDR1EOF1::verifyCommon(const bool skipFSecCheck) const {
   }
 }
 
-void tapeFile::HDR1::fill(std::string fileId, std::string VSN, int fSeq) {
+void tapeFile::HDR1::fill(const std::string& fileId, const std::string& VSN, int fSeq) {
   setString(m_label, "HDR1");
   setString(m_blockCount, "000000");
 
@@ -129,7 +129,7 @@ void tapeFile::HDR1::verify(const bool skipFSecCheck) const {
   verifyCommon(skipFSecCheck);
 }
 
-void tapeFile::HDR1PRELABEL::fill(std::string VSN) {
+void tapeFile::HDR1PRELABEL::fill(const std::string& VSN) {
   setString(m_label, "HDR1");
   setString(m_blockCount, "000000");
 
@@ -151,7 +151,7 @@ void tapeFile::HDR1PRELABEL::verify() const {
   verifyCommon();
 }
 
-void tapeFile::EOF1::fill(std::string fileId, std::string VSN, int fSeq, int blockCount) {
+void tapeFile::EOF1::fill(const std::string& fileId, const std::string& VSN, int fSeq, int blockCount) {
   setString(m_label, "EOF1");
   setInt(m_blockCount, blockCount);
 
@@ -242,9 +242,9 @@ void tapeFile::EOF2::verify(const char* const formatCharacter) const {
 
 void tapeFile::UHL1UTL1::fillCommon(int fSeq,
                                     int blockSize,
-                                    std::string siteName,
-                                    std::string hostName,
-                                    tapeserver::drive::deviceInfo deviceInfo) {
+                                    const std::string& siteName,
+                                    const std::string& hostName,
+                                    const tapeserver::drive::deviceInfo& deviceInfo) {
   setInt(m_actualfSeq, fSeq);
   setInt(m_actualBlockSize, blockSize);
   setInt(m_actualRecordLength, blockSize);
@@ -288,9 +288,9 @@ void tapeFile::UHL1UTL1::verifyCommon() const {
 
 void tapeFile::UHL1::fill(int fSeq,
                           int blockSize,
-                          std::string siteName,
-                          std::string hostName,
-                          tapeserver::drive::deviceInfo deviceInfo) {
+                          const std::string& siteName,
+                          const std::string& hostName,
+                          const tapeserver::drive::deviceInfo& deviceInfo) {
   setString(m_label, "UHL1");
 
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);
@@ -306,9 +306,9 @@ void tapeFile::UHL1::verify() const {
 
 void tapeFile::UTL1::fill(int fSeq,
                           int blockSize,
-                          std::string siteName,
-                          std::string hostName,
-                          tapeserver::drive::deviceInfo deviceInfo) {
+                          const std::string& siteName,
+                          const std::string& hostName,
+                          const tapeserver::drive::deviceInfo& deviceInfo) {
   setString(m_label, "UTL1");
 
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);

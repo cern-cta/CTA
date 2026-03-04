@@ -22,9 +22,7 @@ class Catalogue;
 
 class ArchiveRouteCatalogueRetryWrapper : public ArchiveRouteCatalogue {
 public:
-  ArchiveRouteCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                    log::Logger& m_log,
-                                    const uint32_t maxTriesToConnect);
+  ArchiveRouteCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~ArchiveRouteCatalogueRetryWrapper() override = default;
 
   void createArchiveRoute(const common::dataStructures::SecurityIdentity& admin,
@@ -56,10 +54,10 @@ public:
                                  const std::string& comment) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
-};  // class SchemaCatalogueRetryWrapper
+};  // class ArchiveRouteCatalogueRetryWrapper
 
 }  // namespace catalogue
 }  // namespace cta

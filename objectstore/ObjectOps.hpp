@@ -6,11 +6,11 @@
 #pragma once
 
 #include "Backend.hpp"
-#include "common/Timer.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/ObjectstoreInstruments.hpp"
 #include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
+#include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 
 #include <cryptopp/base64.h>

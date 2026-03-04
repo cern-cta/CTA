@@ -18,7 +18,7 @@
 
 namespace cta::catalogue {
 
-ArchiveFileCatalogueRetryWrapper::ArchiveFileCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+ArchiveFileCatalogueRetryWrapper::ArchiveFileCatalogueRetryWrapper(Catalogue& catalogue,
                                                                    log::Logger& log,
                                                                    const uint32_t maxTriesToConnect)
     : m_catalogue(catalogue),
@@ -32,7 +32,7 @@ ArchiveFileCatalogueRetryWrapper::checkAndGetNextArchiveFileId(const std::string
   return retryOnLostConnection(
     m_log,
     [this, &diskInstanceName, &storageClassName, &user] {
-      return m_catalogue->ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName, storageClassName, user);
+      return m_catalogue.ArchiveFile()->checkAndGetNextArchiveFileId(diskInstanceName, storageClassName, user);
     },
     m_maxTriesToConnect);
 }
@@ -44,7 +44,7 @@ ArchiveFileCatalogueRetryWrapper::getArchiveFileQueueCriteria(const std::string&
   return retryOnLostConnection(
     m_log,
     [this, &diskInstanceName, &storageClassName, &user] {
-      return m_catalogue->ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName, storageClassName, user);
+      return m_catalogue.ArchiveFile()->getArchiveFileQueueCriteria(diskInstanceName, storageClassName, user);
     },
     m_maxTriesToConnect);
 }
@@ -53,7 +53,7 @@ ArchiveFileItor
 ArchiveFileCatalogueRetryWrapper::getArchiveFilesItor(const TapeFileSearchCriteria& searchCriteria) const {
   return retryOnLostConnection(
     m_log,
-    [this, &searchCriteria] { return m_catalogue->ArchiveFile()->getArchiveFilesItor(searchCriteria); },
+    [this, &searchCriteria] { return m_catalogue.ArchiveFile()->getArchiveFilesItor(searchCriteria); },
     m_maxTriesToConnect);
 }
 
@@ -61,7 +61,7 @@ common::dataStructures::ArchiveFile
 ArchiveFileCatalogueRetryWrapper::getArchiveFileCopyForDeletion(const TapeFileSearchCriteria& searchCriteria) const {
   return retryOnLostConnection(
     m_log,
-    [this, &searchCriteria] { return m_catalogue->ArchiveFile()->getArchiveFileCopyForDeletion(searchCriteria); },
+    [this, &searchCriteria] { return m_catalogue.ArchiveFile()->getArchiveFileCopyForDeletion(searchCriteria); },
     m_maxTriesToConnect);
 }
 
@@ -72,7 +72,7 @@ ArchiveFileCatalogueRetryWrapper::getFilesForRepack(const std::string& vid,
   return retryOnLostConnection(
     m_log,
     [this, &vid, &startFSeq, &maxNbFiles] {
-      return m_catalogue->ArchiveFile()->getFilesForRepack(vid, startFSeq, maxNbFiles);
+      return m_catalogue.ArchiveFile()->getFilesForRepack(vid, startFSeq, maxNbFiles);
     },
     m_maxTriesToConnect);
 }
@@ -81,7 +81,7 @@ ArchiveFileItor ArchiveFileCatalogueRetryWrapper::getArchiveFilesForRepackItor(c
                                                                                const uint64_t startFSeq) const {
   return retryOnLostConnection(
     m_log,
-    [this, &vid, &startFSeq] { return m_catalogue->ArchiveFile()->getArchiveFilesForRepackItor(vid, startFSeq); },
+    [this, &vid, &startFSeq] { return m_catalogue.ArchiveFile()->getArchiveFilesForRepackItor(vid, startFSeq); },
     m_maxTriesToConnect);
 }
 
@@ -89,14 +89,14 @@ common::dataStructures::ArchiveFileSummary
 ArchiveFileCatalogueRetryWrapper::getTapeFileSummary(const TapeFileSearchCriteria& searchCriteria) const {
   return retryOnLostConnection(
     m_log,
-    [this, &searchCriteria] { return m_catalogue->ArchiveFile()->getTapeFileSummary(searchCriteria); },
+    [this, &searchCriteria] { return m_catalogue.ArchiveFile()->getTapeFileSummary(searchCriteria); },
     m_maxTriesToConnect);
 }
 
 common::dataStructures::ArchiveFile ArchiveFileCatalogueRetryWrapper::getArchiveFileById(const uint64_t id) const {
   return retryOnLostConnection(
     m_log,
-    [this, &id] { return m_catalogue->ArchiveFile()->getArchiveFileById(id); },
+    [this, &id] { return m_catalogue.ArchiveFile()->getArchiveFileById(id); },
     m_maxTriesToConnect);
 }
 
@@ -105,7 +105,7 @@ void ArchiveFileCatalogueRetryWrapper::modifyArchiveFileStorageClassId(const uin
   return retryOnLostConnection(
     m_log,
     [this, &archiveFileId, &newStorageClassName] {
-      return m_catalogue->ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName);
+      return m_catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName);
     },
     m_maxTriesToConnect);
 }
@@ -116,7 +116,7 @@ void ArchiveFileCatalogueRetryWrapper::modifyArchiveFileFxIdAndDiskInstance(cons
   return retryOnLostConnection(
     m_log,
     [this, &archiveId, &fxId, &diskInstance] {
-      return m_catalogue->ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(archiveId, fxId, diskInstance);
+      return m_catalogue.ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(archiveId, fxId, diskInstance);
     },
     m_maxTriesToConnect);
 }
@@ -127,7 +127,7 @@ void ArchiveFileCatalogueRetryWrapper::DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(c
   return retryOnLostConnection(
     m_log,
     [this, &diskInstanceName, &archiveFileId, &lc] {
-      return m_catalogue->ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstanceName, archiveFileId, lc);
+      return m_catalogue.ArchiveFile()->DO_NOT_USE_deleteArchiveFile_DO_NOT_USE(diskInstanceName, archiveFileId, lc);
     },
     m_maxTriesToConnect);
 }
@@ -138,7 +138,7 @@ void ArchiveFileCatalogueRetryWrapper::updateDiskFileId(uint64_t archiveFileId,
   return retryOnLostConnection(
     m_log,
     [this, &archiveFileId, &diskInstance, &diskFileId] {
-      return m_catalogue->ArchiveFile()->updateDiskFileId(archiveFileId, diskInstance, diskFileId);
+      return m_catalogue.ArchiveFile()->updateDiskFileId(archiveFileId, diskInstance, diskFileId);
     },
     m_maxTriesToConnect);
 }
@@ -148,7 +148,7 @@ void ArchiveFileCatalogueRetryWrapper::moveArchiveFileToRecycleLog(
   log::LogContext& lc) {
   return retryOnLostConnection(
     m_log,
-    [this, &request, &lc] { return m_catalogue->ArchiveFile()->moveArchiveFileToRecycleLog(request, lc); },
+    [this, &request, &lc] { return m_catalogue.ArchiveFile()->moveArchiveFileToRecycleLog(request, lc); },
     m_maxTriesToConnect);
 }
 

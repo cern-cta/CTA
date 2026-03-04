@@ -19,9 +19,7 @@ class Catalogue;
 
 class TapePoolCatalogueRetryWrapper : public TapePoolCatalogue {
 public:
-  TapePoolCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                log::Logger& m_log,
-                                const uint32_t maxTriesToConnect);
+  TapePoolCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~TapePoolCatalogueRetryWrapper() override = default;
 
   void createTapePool(const common::dataStructures::SecurityIdentity& admin,
@@ -67,9 +65,9 @@ public:
   void deleteAllTapePoolSupplyEntries() override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
-};  // class SchemaCatalogueRetryWrapper
+};  // class TapePoolCatalogueRetryWrapper
 
 }  // namespace cta::catalogue

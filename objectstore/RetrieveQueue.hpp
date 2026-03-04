@@ -156,7 +156,7 @@ public:
   void setQueueCleanupDoCleanup(bool value = true);
 
   std::optional<std::string> getQueueCleanupAssignedAgent();
-  void setQueueCleanupAssignedAgent(std::string agent);
+  void setQueueCleanupAssignedAgent(const std::string& agent);
   void clearQueueCleanupAssignedAgent();
 
   uint64_t getQueueCleanupHeartbeat();

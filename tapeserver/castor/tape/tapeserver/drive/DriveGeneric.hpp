@@ -21,7 +21,7 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveDoesNotSupportRAOException);
  */
 class DriveGeneric : public DriveInterface {
 public:
-  DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw);
+  DriveGeneric(const SCSI::DeviceInfo& di, System::virtualWrapper& sw);
 
   /* Operations to be used by the higher levels */
 
@@ -517,7 +517,7 @@ protected:
   compressionStats getCompressionStats();
 
 public:
-  DriveT10000(SCSI::DeviceInfo di, System::virtualWrapper& sw) : DriveGeneric(di, sw) {
+  DriveT10000(const SCSI::DeviceInfo& di, System::virtualWrapper& sw) : DriveGeneric(di, sw) {
     castor::tape::SCSI::Structures::zeroStruct(&m_compressionStatsBase);
   }
 
@@ -539,7 +539,7 @@ public:
  */
 class DriveMHVTL : public DriveT10000 {
 public:
-  DriveMHVTL(SCSI::DeviceInfo di, System::virtualWrapper& sw) : DriveT10000(di, sw) {}
+  DriveMHVTL(const SCSI::DeviceInfo& di, System::virtualWrapper& sw) : DriveT10000(di, sw) {}
 
   void disableLogicalBlockProtection() override;
   void enableCRC32CLogicalBlockProtectionReadOnly() override;
@@ -566,7 +566,7 @@ public:
 
 class DriveLTO : public DriveGeneric {
 public:
-  DriveLTO(SCSI::DeviceInfo di, System::virtualWrapper& sw) : DriveGeneric(di, sw) {}
+  DriveLTO(const SCSI::DeviceInfo& di, System::virtualWrapper& sw) : DriveGeneric(di, sw) {}
 
   compressionStats getCompression() override;
   void clearCompressionStats() override;
@@ -579,7 +579,7 @@ public:
 
 class DriveIBM3592 : public DriveGeneric {
 public:
-  DriveIBM3592(SCSI::DeviceInfo di, System::virtualWrapper& sw) : DriveGeneric(di, sw) {}
+  DriveIBM3592(const SCSI::DeviceInfo& di, System::virtualWrapper& sw) : DriveGeneric(di, sw) {}
 
   compressionStats getCompression() override;
   void clearCompressionStats() override;

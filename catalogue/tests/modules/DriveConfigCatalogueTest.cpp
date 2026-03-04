@@ -7,7 +7,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/tests/CatalogueTestUtils.hpp"
-#include "common/SourcedParameter.hpp"
+#include "common/config/SourcedParameter.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 

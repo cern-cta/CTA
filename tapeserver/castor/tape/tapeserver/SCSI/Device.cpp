@@ -119,8 +119,8 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo& devinfo) {
     tapeDir = "";
   }
 
-  cta::utils::Regex st_re((scsiPrefix + "(st[[:digit:]]+)$").c_str());
-  cta::utils::Regex nst_re((scsiPrefix + "(nst[[:digit:]]+)$").c_str());
+  cta::utils::Regex st_re(scsiPrefix + "(st[[:digit:]]+)$");
+  cta::utils::Regex nst_re(scsiPrefix + "(nst[[:digit:]]+)$");
 
   while (struct dirent* dent = m_sysWrapper.readdir(dirp)) {
     std::vector<std::string> res;

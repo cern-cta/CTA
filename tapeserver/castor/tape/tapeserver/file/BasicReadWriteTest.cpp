@@ -176,7 +176,7 @@ int main(int argc, char* argv[]) {
               fileToMigrate.archiveFile.archiveFileID = j;
               fileToMigrate.tapeFile.fSeq = j;
               auto writer =
-                std::make_unique<castor::tape::tapeFile::FileWriter>(writeSession, fileToMigrate, block_size);
+                std::make_unique<castor::tape::tapeFile::FileWriter>(*writeSession, fileToMigrate, block_size);
 
               std::string testString = "";
               for (uint32_t i = 0; i < block_size - 5; i++) {

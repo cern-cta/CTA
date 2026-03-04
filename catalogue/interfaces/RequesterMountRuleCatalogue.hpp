@@ -26,10 +26,10 @@ public:
                                               const std::string& requesterName,
                                               const std::string& mountPolicy) = 0;
 
-  virtual void modifyRequesteMountRuleComment(const common::dataStructures::SecurityIdentity& admin,
-                                              const std::string& instanceName,
-                                              const std::string& requesterName,
-                                              const std::string& comment) = 0;
+  virtual void modifyRequesterMountRuleComment(const common::dataStructures::SecurityIdentity& admin,
+                                               const std::string& instanceName,
+                                               const std::string& requesterName,
+                                               const std::string& comment) = 0;
 
   /**
    * Creates the rule that the specified mount policy will be used for the

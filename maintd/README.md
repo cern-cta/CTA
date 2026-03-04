@@ -1,6 +1,6 @@
 # cta-maintd
 
-This directory contains the source code the maintenance daemon. The responsibility of the maintenance daemon is to periodically run a number of routines.
+This directory contains the source code the maintenance daemon. The responsibility of the maintenance daemon is to periodically run a number of routines. Note that (unlike the name suggests), these routines are responsible for more than just maintenance tasks. For example, some routines take care of the disk reporting or repack functionality.
 
 At the moment, this works as follows:
 
@@ -26,33 +26,11 @@ end
 classDef hidden display: none;
 ```
 
-The sleep interval can be configured in the config file.
-
-In addition to the main thread, the `maintd` process also spawns a dedicated SignalReactor thread whose job it is to capture incoming signals (e.g. `SIGTERM`, `SIGHUP`) and execute the function associated with said signal. This ensures that the logic for dealing with signals is not spread out through all of the code.
-
-
-```mermaid
-graph LR
-
-wfs["Wait for signal"]
-esf["Execute Function</br>for said signal"]
-
-subgraph SignalReactor Thread
-direction LR
-START:::hidden --> wfs
-wfs -- Signal Received --> esf
-esf -- Done --> wfs
-end
-
-classDef hidden display: none;
-```
-
+The sleep interval can be configured in the config file through `[routines.cycle_sleep_interval_secs]`. If separate sleep intervals per routine are desired, then several instances of maintd should be spawned; each with a subset of the routines enabled and each with their own sleep interval.
 
 ## Routines
 
 The routines are defined in `routines/`. Which routines are run depend on whether the Objectstore or Postgres scheduler is used
-
-### Objectstore
 
 - `DiskReportArchiveRoutine`
   - Reports the state (fail or success) of archive jobs to the disk instance.
@@ -62,6 +40,9 @@ The routines are defined in `routines/`. Which routines are run depend on whethe
   - Expands repack requests into separate archive/retrieve jobs.
 - `RepackReportRoutine`
   - Takes care of the repack reporting.
+
+### Objectstore
+
 - `GarbageCollectRoutine`
   - Performs garbage collection on agents and their objects in the objectstore.
 - `QueueCleanupRoutine`
@@ -69,37 +50,29 @@ The routines are defined in `routines/`. Which routines are run depend on whethe
 
 ### Postgres
 
-- `DiskReportArchiveRoutine`
-  - Reports the state (fail or success) of archive jobs to the disk instance.
-- `DiskReportRetrieveRoutine`
-  - Reports the state (fail or success) of retrieve jobs to the disk instance.
-- `RepackExpandRoutine`
-  - Expands repack requests into separate archive/retrieve jobs.
-- `RepackReportRoutine`
-  - Takes care of the repack reporting.
 - `ArchiveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead archive mounts. The routine requeues dead jobs from active queue table to the pending queue table. 
-  - Only jobs for which reporting did not start yet are selected. Jobs in reporting stage, will be picked up again for reporting automatically. 
+  - Handles jobs owned by dead archive mounts. The routine requeues dead jobs from active queue table to the pending queue table.
+  - Only jobs for which reporting did not start yet are selected. Jobs in reporting stage, will be picked up again for reporting automatically.
 - `RetrieveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead retrieve mounts. The routine requeues dead jobs from active queue table to the pending queue table. 
+  - Handles jobs owned by dead retrieve mounts. The routine requeues dead jobs from active queue table to the pending queue table.
   - Only jobs for which reporting did not start yet are selected. Jobs in reporting stage, will be picked up again for reporting automatically.
 - `RepackArchiveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead repack archive mounts. 
-  - The routine requeues dead jobs from active queue table to the pending queue table. 
+  - Handles jobs owned by dead repack archive mounts.
+  - The routine requeues dead jobs from active queue table to the pending queue table.
 - `RepackRetrieveInactiveMountActiveQueueRoutine`
-  - Handles jobs owned by dead repack repack retrieve mounts. 
+  - Handles jobs owned by dead repack repack retrieve mounts.
   - The routine requeues dead jobs from active queue table to the pending queue table.
 - `ArchiveInactiveMountPendingQueueRoutine`
-  - Handles jobs owned by dead archive mounts. 
+  - Handles jobs owned by dead archive mounts.
   - The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
 - `RetrieveInactiveMountPendingQueueRoutine`
-  - Handles jobs owned by dead retrieve mounts. 
+  - Handles jobs owned by dead retrieve mounts.
   - The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
 - `RepackArchiveInactiveMountPendingQueueRoutine`
-  - Handles jobs owned by dead repack archive mounts. 
+  - Handles jobs owned by dead repack archive mounts.
   - The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
 - `RepackRetrieveInactiveMountPendingQueueRoutine`
-  - Handles jobs owned by dead repack repack retrieve mounts. 
+  - Handles jobs owned by dead repack repack retrieve mounts.
   - The routine requeues dead jobs from pending queue table after they have been requeued previously to the same mount which is now dead.
 
 For all the routines above, the following also applies:
@@ -108,4 +81,4 @@ For all the routines above, the following also applies:
 - `DeleteOldFailedQueuesRoutine`
   - Deletes all jobs which hang in the failed queue tables for too long (2 weeks).
 - `CleanMountLastFetchTimeRoutine`
-  - Deletes all tracking MOUNT_QUEUE_LAST_FETCH entries for which the mount was not active since a very long time (e.g. 4 weeks; longer than the time limit defined for the collection routines). 
+  - Deletes all tracking MOUNT_QUEUE_LAST_FETCH entries for which the mount was not active since a very long time (e.g. 4 weeks; longer than the time limit defined for the collection routines).

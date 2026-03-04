@@ -430,7 +430,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
           m_logContext.log(cta::log::DEBUG, "writing data to tape has finished");
           break;
         }
-        task->execute(writeSession, m_reportPacker, m_watchdog, m_logContext, timer);
+        task->execute(*writeSession, m_reportPacker, m_watchdog, m_logContext, timer);
         // Add the tasks counts to the session's
         m_stats.add(task->getTaskStats());
         // Transmit the statistics to the watchdog thread

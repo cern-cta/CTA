@@ -17,9 +17,7 @@
 
 namespace castor::tape::tapeFile {
 
-FileWriter::FileWriter(const std::unique_ptr<WriteSession>& ws,
-                       const cta::ArchiveJob& fileToMigrate,
-                       const size_t blockSize)
+FileWriter::FileWriter(WriteSession& ws, const cta::ArchiveJob& fileToMigrate, const size_t blockSize)
     : m_currentBlockSize(blockSize),
       m_session(ws),
       m_fileToMigrate(fileToMigrate) {
@@ -31,10 +29,10 @@ FileWriter::FileWriter(const std::unique_ptr<WriteSession>& ws,
         << ") or fSeq (expected >=1, got: " << m_fileToMigrate.tapeFile.fSeq << ")";
     throw cta::exception::InvalidArgument(err.str());
   }
-  if (m_session->isCorrupted()) {
+  if (m_session.isCorrupted()) {
     throw SessionCorrupted();
   }
-  m_session->lock();
+  m_session.lock();
   HDR1 hdr1;
   HDR2 hdr2;
   UHL1 uhl1;
@@ -43,29 +41,29 @@ FileWriter::FileWriter(const std::unique_ptr<WriteSession>& ws,
   std::string fileId;
   s >> fileId;
   std::transform(fileId.begin(), fileId.end(), fileId.begin(), ::toupper);
-  hdr1.fill(fileId, m_session->m_vid, m_fileToMigrate.tapeFile.fSeq);
-  hdr2.fill(m_currentBlockSize, m_session->m_compressionEnabled);
+  hdr1.fill(fileId, m_session.m_vid, m_fileToMigrate.tapeFile.fSeq);
+  hdr2.fill(m_currentBlockSize, m_session.m_compressionEnabled);
   uhl1.fill(m_fileToMigrate.tapeFile.fSeq,
             m_currentBlockSize,
-            m_session->getSiteName(),
-            m_session->getHostName(),
-            m_session->m_drive.getDeviceInfo());
+            m_session.getSiteName(),
+            m_session.getHostName(),
+            m_session.m_drive.getDeviceInfo());
   /* Before writing anything, we record the blockId of the file */
   if (1 == m_fileToMigrate.tapeFile.fSeq) {
     m_blockId = 0;
   } else {
     m_blockId = getPosition();
   }
-  m_session->m_drive.writeBlock(&hdr1, sizeof(hdr1));
-  m_session->m_drive.writeBlock(&hdr2, sizeof(hdr2));
-  m_session->m_drive.writeBlock(&uhl1, sizeof(uhl1));
-  m_session->m_drive.writeImmediateFileMarks(1);
+  m_session.m_drive.writeBlock(&hdr1, sizeof(hdr1));
+  m_session.m_drive.writeBlock(&hdr2, sizeof(hdr2));
+  m_session.m_drive.writeBlock(&uhl1, sizeof(uhl1));
+  m_session.m_drive.writeImmediateFileMarks(1);
   m_open = true;
-  m_LBPMode = m_session->getLBPMode();
+  m_LBPMode = m_session.getLBPMode();
 }
 
 uint32_t FileWriter::getPosition() {
-  return m_session->m_drive.getPositionInfo().currentPosition;
+  return m_session.m_drive.getPositionInfo().currentPosition;
 }
 
 uint32_t FileWriter::getBlockId() {
@@ -77,7 +75,7 @@ size_t FileWriter::getBlockSize() {
 }
 
 void FileWriter::write(const void* data, const size_t size) {
-  m_session->m_drive.writeBlock(data, size);
+  m_session.m_drive.writeBlock(data, size);
   if (size > 0) {
     m_nonzeroFileWritten = true;
     m_numberOfBlocks++;
@@ -86,14 +84,14 @@ void FileWriter::write(const void* data, const size_t size) {
 
 void FileWriter::close() {
   if (!m_open) {
-    m_session->setCorrupted();
+    m_session.setCorrupted();
     throw FileClosedTwice();
   }
   if (!m_nonzeroFileWritten) {
-    m_session->setCorrupted();
+    m_session.setCorrupted();
     throw ZeroFileWritten();
   }
-  m_session->m_drive.writeImmediateFileMarks(1);  // filemark at the end the of data file
+  m_session.m_drive.writeImmediateFileMarks(1);  // filemark at the end the of data file
   EOF1 eof1;
   EOF2 eof2;
   UTL1 utl1;
@@ -102,28 +100,28 @@ void FileWriter::close() {
   std::string fileId;
   s >> fileId;
   std::transform(fileId.begin(), fileId.end(), fileId.begin(), ::toupper);
-  eof1.fill(fileId, m_session->m_vid, m_fileToMigrate.tapeFile.fSeq, m_numberOfBlocks);
-  eof2.fill(m_currentBlockSize, m_session->m_compressionEnabled);
+  eof1.fill(fileId, m_session.m_vid, m_fileToMigrate.tapeFile.fSeq, m_numberOfBlocks);
+  eof2.fill(m_currentBlockSize, m_session.m_compressionEnabled);
   utl1.fill(m_fileToMigrate.tapeFile.fSeq,
             m_currentBlockSize,
-            m_session->getSiteName(),
-            m_session->getHostName(),
-            m_session->m_drive.getDeviceInfo());
-  m_session->m_drive.writeBlock(&eof1, sizeof(eof1));
-  m_session->m_drive.writeBlock(&eof2, sizeof(eof2));
-  m_session->m_drive.writeBlock(&utl1, sizeof(utl1));
-  m_session->m_drive.writeImmediateFileMarks(1);  // filemark at the end the of trailers
+            m_session.getSiteName(),
+            m_session.getHostName(),
+            m_session.m_drive.getDeviceInfo());
+  m_session.m_drive.writeBlock(&eof1, sizeof(eof1));
+  m_session.m_drive.writeBlock(&eof2, sizeof(eof2));
+  m_session.m_drive.writeBlock(&utl1, sizeof(utl1));
+  m_session.m_drive.writeImmediateFileMarks(1);  // filemark at the end the of trailers
   m_open = false;
 }
 
 FileWriter::~FileWriter() noexcept {
   if (m_open) {
-    m_session->setCorrupted();
+    m_session.setCorrupted();
   }
   try {
-    m_session->release();
+    m_session.release();
   } catch (SessionCorrupted&) {
-    m_session->setCorrupted();
+    m_session.setCorrupted();
   }
 }
 

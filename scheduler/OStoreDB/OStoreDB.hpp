@@ -392,7 +392,7 @@ public:
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> getArchiveJobs() const override;
 
   std::list<cta::common::dataStructures::ArchiveJob>
-  getArchiveJobs(std::optional<std::string> tapePoolName) const override;
+  getArchiveJobs(const std::optional<std::string>& tapePoolName) const override;
 
   class ArchiveJobQueueItor : public IArchiveJobQueueItor {
   public:
@@ -446,7 +446,7 @@ public:
   SchedulerDatabase::RetrieveRequestInfo
   queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                 const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
-                const std::optional<std::string> diskSystemName,
+                const std::optional<std::string>& diskSystemName,
                 log::LogContext& logContext) override;
   void cancelRetrieve(const std::string& instanceName,
                       const cta::common::dataStructures::CancelRetrieveRequest& rqst,
@@ -471,7 +471,7 @@ public:
   void deleteFailed(const std::string& objectId, log::LogContext& lc) override;
 
   std::list<cta::common::dataStructures::RetrieveJob>
-  getPendingRetrieveJobs(std::optional<std::string> vid) const override;
+  getPendingRetrieveJobs(const std::optional<std::string>& vid) const override;
 
   std::map<std::string, std::list<common::dataStructures::RetrieveJob>, std::less<>>
   getPendingRetrieveJobs() const override;
@@ -540,12 +540,12 @@ public:
         : m_oStoreDB(oStoreDB),
           m_repackRequest(jobAddress, m_oStoreDB.m_objectStore) {}
 
-    uint64_t addSubrequestsAndUpdateStats(std::list<Subrequest>& repackSubrequests,
-                                          cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
+    uint64_t addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackSubrequests,
+                                          const cta::common::dataStructures::ArchiveRoute::FullMap& archiveRoutesMap,
                                           uint64_t maxFSeqLowBound,
-                                          const uint64_t maxAddedFSeq,
+                                          uint64_t maxAddedFSeq,
                                           const TotalStatsFiles& totalStatsFiles,
-                                          disk::DiskSystemList diskSystemList,
+                                          const disk::DiskSystemList& diskSystemList,
                                           log::LogContext& lc) override;
     void expandDone() override;
     void fail() override;

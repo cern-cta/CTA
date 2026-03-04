@@ -14,11 +14,11 @@
 #include "catalogue/rdbms/RdbmsCatalogueGetFileRecycleLogItor.hpp"
 #include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "catalogue/rdbms/RdbmsTapeFileCatalogue.hpp"
-#include "common/Timer.hpp"
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/DeleteArchiveRequest.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/TimingList.hpp"
+#include "common/utils/Timer.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnPool.hpp"
 

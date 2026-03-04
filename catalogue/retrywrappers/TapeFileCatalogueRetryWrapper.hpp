@@ -16,9 +16,7 @@ class Catalogue;
 
 class TapeFileCatalogueRetryWrapper : public TapeFileCatalogue {
 public:
-  TapeFileCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                log::Logger& m_log,
-                                const uint32_t maxTriesToConnect);
+  TapeFileCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~TapeFileCatalogueRetryWrapper() override = default;
 
   void filesWrittenToTape(const std::set<TapeItemWrittenPointer>& event) override;
@@ -34,9 +32,9 @@ public:
                         const std::optional<std::string>& mountPolicyName = std::nullopt) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
-};  // class SchemaCatalogueRetryWrapper
+};  // class TapeFileCatalogueRetryWrapper
 
 }  // namespace cta::catalogue

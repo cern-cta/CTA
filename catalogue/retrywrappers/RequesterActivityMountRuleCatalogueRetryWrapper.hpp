@@ -22,7 +22,7 @@ class Catalogue;
 
 class RequesterActivityMountRuleCatalogueRetryWrapper : public RequesterActivityMountRuleCatalogue {
 public:
-  RequesterActivityMountRuleCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
+  RequesterActivityMountRuleCatalogueRetryWrapper(Catalogue& catalogue,
                                                   log::Logger& m_log,
                                                   const uint32_t maxTriesToConnect);
   ~RequesterActivityMountRuleCatalogueRetryWrapper() override = default;
@@ -53,10 +53,10 @@ public:
                                         const std::string& activityRegex) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
-};  // class SchemaCatalogueRetryWrapper
+};  // class RequesterActivityMountRuleCatalogueRetryWrapper
 
 }  // namespace catalogue
 }  // namespace cta

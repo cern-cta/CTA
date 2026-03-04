@@ -57,7 +57,7 @@ void RdbmsRequesterMountRuleCatalogue::modifyRequesterMountRulePolicy(
   }
 }
 
-void RdbmsRequesterMountRuleCatalogue::modifyRequesteMountRuleComment(
+void RdbmsRequesterMountRuleCatalogue::modifyRequesterMountRuleComment(
   const common::dataStructures::SecurityIdentity& admin,
   const std::string& instanceName,
   const std::string& requesterName,

@@ -9,7 +9,6 @@
 #include "tools/standalone_cli_tools/common/CmdLineArgs.hpp"
 
 #include <string>
-#include <utility>
 
 namespace cta::cliTool {
 

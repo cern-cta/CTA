@@ -29,9 +29,7 @@ class Catalogue;
 
 class LogicalLibraryCatalogueRetryWrapper : public LogicalLibraryCatalogue {
 public:
-  LogicalLibraryCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                      log::Logger& m_log,
-                                      const uint32_t maxTriesToConnect);
+  LogicalLibraryCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~LogicalLibraryCatalogueRetryWrapper() override = default;
 
   void createLogicalLibrary(const common::dataStructures::SecurityIdentity& admin,
@@ -65,7 +63,7 @@ public:
                                  const bool disabledValue) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class LogicalLibraryCatalogueRetryWrapper

@@ -47,6 +47,7 @@ build-cta-rpms:
         export VCS_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
       fi
     - echo "Building package CTA_VERSION=${CTA_VERSION} - CTA_RELEASE=${VCS_VERSION}"
+    - git -C "$XRD_SSI_PATH" fetch --tags
     - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
     - |
       if [[ -z "$XRD_SSI_VERSION" ]]; then

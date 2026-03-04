@@ -22,9 +22,7 @@ class Catalogue;
 
 class AdminUserCatalogueRetryWrapper : public AdminUserCatalogue {
 public:
-  AdminUserCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                 log::Logger& m_log,
-                                 const uint32_t maxTriesToConnect);
+  AdminUserCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~AdminUserCatalogueRetryWrapper() override = default;
 
   void createAdminUser(const common::dataStructures::SecurityIdentity& admin,
@@ -42,10 +40,10 @@ public:
   bool isAdmin(const common::dataStructures::SecurityIdentity& identity) const override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
-};  // class SchemaCatalogueRetryWrapper
+};  // class AdminUserCatalogueRetryWrapper
 
 }  // namespace catalogue
 }  // namespace cta

@@ -95,7 +95,7 @@ public:
   std::map<std::string, std::list<common::dataStructures::ArchiveJob>, std::less<>> getArchiveJobs() const override;
 
   std::list<cta::common::dataStructures::ArchiveJob>
-  getArchiveJobs(std::optional<std::string> tapePoolName) const override;
+  getArchiveJobs(const std::optional<std::string>& tapePoolName) const override;
 
   std::unique_ptr<IArchiveJobQueueItor>
   getArchiveJobQueueItor(const std::string& tapePoolName,
@@ -163,7 +163,7 @@ public:
   SchedulerDatabase::RetrieveRequestInfo
   queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
                 const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria,
-                const std::optional<std::string> diskSystemName,
+                const std::optional<std::string>& diskSystemName,
                 log::LogContext& logContext) override;
 
   void clearStatisticsCache(const std::string& vid) override;
@@ -194,7 +194,7 @@ public:
   getRetrieveJobs(uint64_t filesRequested, bool fetchFailed, log::LogContext& lc) const;
 
   std::list<cta::common::dataStructures::RetrieveJob>
-  getPendingRetrieveJobs(std::optional<std::string> vid) const override;
+  getPendingRetrieveJobs(const std::optional<std::string>& vid) const override;
 
   std::unique_ptr<IRetrieveJobQueueItor>
   getRetrieveJobQueueItor(const std::string& vid, common::dataStructures::JobQueueType queueType) const override;

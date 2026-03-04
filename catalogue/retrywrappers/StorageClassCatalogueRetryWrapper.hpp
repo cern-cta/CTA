@@ -18,9 +18,7 @@ class Catalogue;
 
 class StorageClassCatalogueRetryWrapper : public StorageClassCatalogue {
 public:
-  StorageClassCatalogueRetryWrapper(const std::unique_ptr<Catalogue>& catalogue,
-                                    log::Logger& m_log,
-                                    const uint32_t maxTriesToConnect);
+  StorageClassCatalogueRetryWrapper(Catalogue& catalogue, log::Logger& m_log, const uint32_t maxTriesToConnect);
   ~StorageClassCatalogueRetryWrapper() override = default;
 
   void createStorageClass(const common::dataStructures::SecurityIdentity& admin,
@@ -49,7 +47,7 @@ public:
                               const std::string& newName) override;
 
 private:
-  const std::unique_ptr<Catalogue>& m_catalogue;
+  const Catalogue& m_catalogue;
   log::Logger& m_log;
   uint32_t m_maxTriesToConnect;
 };  // class StorageClassCatalogueRetryWrapper
