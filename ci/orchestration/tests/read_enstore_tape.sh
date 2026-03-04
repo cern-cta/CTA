@@ -3,38 +3,66 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+set -euo pipefail
+
+# Download EnstoreLarge sample tape
 dnf install -y git git-lfs
 git lfs install --skip-repo
 git clone https://github.com/LTrestka/ens-mhvtl.git /ens-mhvtl
 
-# Use preloaded Enstore sample tape files.
 ens_mhvtl_root="/ens-mhvtl"
+layout_dir="${ens_mhvtl_root}/enstorelarge/FL1587"
 device="$1"
-resolved_device=$(readlink -f "${device}" 2>/dev/null || echo "${device}")
-drive_index=0
-if [[ "${resolved_device}" =~ ([0-9]+)$ ]]; then
-  drive_index="${BASH_REMATCH[1]}"
-fi
+changer="${2:-/dev/smc}"
 
-CHANGER_DEVICE=$(lsscsi -g | awk '$2=="mediumx" {print $6; exit}')
-echo "Checking changer device: ${CHANGER_DEVICE}"
-ls -l ${CHANGER_DEVICE}
+wait_for_device_ready() {
+  local device_path="$1"
+  local timeout_seconds="${2:-60}"
+  local waited=0
 
-CHANGER_DEVICE=/dev/smc
-echo "Using changer device: ${CHANGER_DEVICE}"
-ls -l ${CHANGER_DEVICE}
+  while true; do
+    if mt -f "$device_path" status >/dev/null 2>&1; then
+      return 0
+    fi
+    if (( waited >= timeout_seconds )); then
+      echo "Timed out waiting for tape device ${device_path} to become ready" >&2
+      mt -f "$device_path" status || true
+      return 1
+    fi
+    sleep 1
+    waited=$((waited + 1))
+  done
+}
 
-echo "Using tape device: ${device} (resolved: ${resolved_device}), drive index: ${drive_index}"
+for segment in L1 L2 file1 file2; do
+  [[ -f "${layout_dir}/${segment}" ]] || {
+    echo "Missing layout segment: ${layout_dir}/${segment}" >&2
+    exit 1
+  }
+done
 
 # Load tape in a tapedrive
-mtx -f ${CHANGER_DEVICE} load 1 ${drive_index}
+mtx -f ${changer} status
+mtx -f ${changer} load 3 0
+mtx -f ${changer} status
 
 # Get the device status where the tape is loaded and rewind it.
+mt -f ${device} status
+wait_for_device_ready "${device}" || exit 1
 mt -f ${device} rewind
+wait_for_device_ready "${device}" || exit 1
 
-# Write Enstore label and payload to tape as stored in the repo.
-dd if=${ens_mhvtl_root}/enstore/FL1212_f2/vol1_FL1212.bin of=$device bs=80
-dd if=${ens_mhvtl_root}/enstore/FL1212_f2/fseq2_payload.bin of=$device bs=1048576
+# Write EnstoreLarge logical segments in deterministic order:
+# label file (L1) then data file (L2 + payload segments).
+wait_for_device_ready "${device}" || exit 1
+dd if="${layout_dir}/L1" of="${device}" bs=80
+mt -f $device weof
+wait_for_device_ready "${device}" || exit 1
+dd if="${layout_dir}/L2" of="${device}" bs=80
+dd if="${layout_dir}/file1" of="${device}" bs=262144
+dd if="${layout_dir}/file2" of="${device}" bs=262144
+mt -f $device weof
 
-
+wait_for_device_ready "${device}" || exit 1
 mt -f $device rewind
+wait_for_device_ready "${device}" || exit 1
