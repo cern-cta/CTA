@@ -35,6 +35,7 @@ data:
       format = "json"
       [logging.attributes]
         instance = {{ $.Release.Namespace | quote }}
+        sched_backend = {{ $schedulerConfig.backend | quote }}
 
     [telemetry]
       config_file = "/etc/cta/cta-otel.yaml"

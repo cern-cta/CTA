@@ -358,7 +358,6 @@ private:
       if (config.scheduler.backend_name.empty()) {
         throw exception::UserError("Scheduler backend name cannot be empty");
       }
-      logAttributes["sched_backend"] = config.scheduler.backend_name;
     }
     for (const auto& [key, value] : config.logging.attributes) {
       logAttributes[key] = value;
