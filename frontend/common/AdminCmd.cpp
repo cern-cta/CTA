@@ -516,7 +516,11 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
   for (const auto& tapeDriveName : tapeDriveNames) {
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
     if (!regexResult.empty()) {
-      if (const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(tapeDriveName).value();
+      const auto tapeDriveOpt = m_catalogue.DriveState()->getTapeDrive(tapeDriveName);
+      if (!tapeDriveOpt.has_value()) {
+        continue;
+      }
+      if (const auto& tapeDrive = tapeDriveOpt.value();
           tapeDrive.driveStatus == common::dataStructures::DriveStatus::Down
           || tapeDrive.driveStatus == common::dataStructures::DriveStatus::Shutdown
           || tapeDrive.driveStatus == common::dataStructures::DriveStatus::Unknown || has_flag(OptionBoolean::FORCE)) {
