@@ -528,7 +528,7 @@ std::unique_ptr<SchedulerDatabase::TapeMountDecisionInfo> OStoreDB::getMountInfo
   utils::Timer t;
   //Allocate the getMountInfostructure to return.
   assertAgentAddressSet();
-  auto privateRet = std::make_unique<OStoreDB::TapeMountDecisionInfo>(*this);
+  std::unique_ptr<OStoreDB::TapeMountDecisionInfo> privateRet(new OStoreDB::TapeMountDecisionInfo(*this));
   TapeMountDecisionInfo& tmdi = *privateRet;
   // Get all the tape pools and tapes with queues (potential mounts)
   objectstore::RootEntry re(m_objectStore);
@@ -952,7 +952,7 @@ OStoreDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogConte
     }
   }
   for (auto& j : jobs.elements) {
-    auto aj = std::make_unique<OStoreDB::ArchiveJob>(j.archiveRequest->getAddressIfSet(), *this);
+    std::unique_ptr<OStoreDB::ArchiveJob> aj(new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), *this));
     aj->tapeFile.copyNb = j.copyNb;
     aj->archiveFile = j.archiveFile;
     aj->srcURL = j.srcURL;
@@ -2096,7 +2096,8 @@ auto OStoreDB::getRepackStatistics() -> std::unique_ptr<SchedulerDatabase::Repac
   re.fetchNoLock();
   // We need to take a lock on an object to allow global locking of the repack
   // requests scheduling.
-  auto typedRet = std::make_unique<OStoreDB::RepackRequestPromotionStatistics>(m_objectStore, *m_agentReference);
+  std::unique_ptr<OStoreDB::RepackRequestPromotionStatistics> typedRet(
+    new OStoreDB::RepackRequestPromotionStatistics(m_objectStore, *m_agentReference));
   // Try to get the lock
   try {
     typedRet->m_pendingRepackRequestQueue.setAddress(
@@ -2144,7 +2145,8 @@ OStoreDB::getNextRetrieveJobsToTransferBatch(const std::string& vid,
   auto jobs = rqttAlgo.popNextBatch(vid, criteria, logContext);
 
   for (auto& j : jobs.elements) {
-    auto rj = std::make_unique<OStoreDB::RetrieveJob>(j.retrieveRequest->getAddressIfSet(), *this, nullptr);
+    std::unique_ptr<OStoreDB::RetrieveJob> rj(
+      new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this, nullptr));
     rj->archiveFile = j.archiveFile;
     rj->retrieveRequest = j.rr;
     rj->selectedCopyNb = j.copyNb;
@@ -3394,7 +3396,8 @@ OStoreDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::LogCont
       continue;
     }
     for (auto& j : jobs.elements) {
-      auto rj = std::make_unique<OStoreDB::RetrieveJob>(j.retrieveRequest->getAddressIfSet(), *this, nullptr);
+      std::unique_ptr<OStoreDB::RetrieveJob> rj(
+        new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this, nullptr));
       rj->archiveFile = j.archiveFile;
       rj->retrieveRequest = j.rr;
       rj->selectedCopyNb = j.copyNb;
@@ -3460,7 +3463,8 @@ OStoreDB::getNextRetrieveJobsFailedBatch(uint64_t filesRequested, log::LogContex
       continue;
     }
     for (auto& j : jobs.elements) {
-      auto rj = std::make_unique<OStoreDB::RetrieveJob>(j.retrieveRequest->getAddressIfSet(), *this, nullptr);
+      std::unique_ptr<OStoreDB::RetrieveJob> rj(
+        new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), *this, nullptr));
       rj->archiveFile = j.archiveFile;
       rj->retrieveRequest = j.rr;
       rj->selectedCopyNb = j.copyNb;
@@ -3495,7 +3499,7 @@ OStoreDB::TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase
       throw cta::exception::Exception(
         "In OStoreDB::TapeMountDecisionInfo::createArchiveMount(): unexpected mount type.");
   }
-  auto privateRet = std::make_unique<OStoreDB::ArchiveMount>(m_oStoreDB, queueType);
+  std::unique_ptr<OStoreDB::ArchiveMount> privateRet(new OStoreDB::ArchiveMount(m_oStoreDB, queueType));
   auto& am = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken) {
@@ -3551,7 +3555,7 @@ OStoreDB::TapeMountDecisionInfo::createRetrieveMount(const cta::SchedulerDatabas
   // the drive register does not need garbage collection as it should reflect the
   // latest known state of the drive (and its absence of updating if needed)
   // Prepare the return value
-  auto privateRet = std::make_unique<OStoreDB::RetrieveMount>(m_oStoreDB);
+  std::unique_ptr<OStoreDB::RetrieveMount> privateRet(new OStoreDB::RetrieveMount(m_oStoreDB));
   auto& rm = *privateRet;
   // Check we hold the scheduling lock
   if (!m_lockTaken) {
@@ -3629,7 +3633,8 @@ OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesR
     // We can construct the return value.
     std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
     for (auto& j : jobs.elements) {
-      auto aj = std::make_unique<OStoreDB::ArchiveJob>(j.archiveRequest->getAddressIfSet(), m_oStoreDB);
+      std::unique_ptr<OStoreDB::ArchiveJob> aj(
+        new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), m_oStoreDB));
       aj->tapeFile.copyNb = j.copyNb;
       aj->archiveFile = j.archiveFile;
       aj->archiveReportURL = j.archiveReportURL;
@@ -3653,7 +3658,8 @@ OStoreDB::ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesR
     // We can construct the return value.
     std::list<std::unique_ptr<SchedulerDatabase::ArchiveJob>> ret;
     for (auto& j : jobs.elements) {
-      auto aj = std::make_unique<OStoreDB::ArchiveJob>(j.archiveRequest->getAddressIfSet(), m_oStoreDB);
+      std::unique_ptr<OStoreDB::ArchiveJob> aj(
+        new OStoreDB::ArchiveJob(j.archiveRequest->getAddressIfSet(), m_oStoreDB));
       aj->tapeFile.copyNb = j.copyNb;
       aj->archiveFile = j.archiveFile;
       aj->archiveReportURL = j.archiveReportURL;
@@ -3721,7 +3727,8 @@ OStoreDB::RetrieveMount::getNextJobBatch(uint64_t filesRequested,
   // Construct the return value
   std::list<std::unique_ptr<SchedulerDatabase::RetrieveJob>> ret;
   for (auto& j : jobs.elements) {
-    auto rj = std::make_unique<OStoreDB::RetrieveJob>(j.retrieveRequest->getAddressIfSet(), m_oStoreDB, this);
+    std::unique_ptr<OStoreDB::RetrieveJob> rj(
+      new OStoreDB::RetrieveJob(j.retrieveRequest->getAddressIfSet(), m_oStoreDB, this));
     rj->archiveFile = j.archiveFile;
     rj->diskSystemName = j.diskSystemName;
     rj->retrieveRequest = j.rr;
