@@ -41,6 +41,7 @@ class EosClientHost(DiskClientHost):
         num_procs: int,
         file_size: int = 512,
         batch_size: int = 1000,
+        sss_keytab: str = "/etc/eos.keytab"
     ) -> asyncio.subprocess.Process:
         """Start archive as an async subprocess. Returns process handle for awaiting."""
         cmd = (
@@ -51,6 +52,7 @@ class EosClientHost(DiskClientHost):
             f"--num-dirs {num_dirs} "
             f"--num-procs {num_procs} "
             f"--file-size {file_size} "
-            f"--batch-size {batch_size}"
+            f"--batch-size {batch_size} "
+            f"--sss-keytab {sss_keytab}"
         )
         return await self.conn.exec_async(cmd)

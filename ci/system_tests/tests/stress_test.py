@@ -28,6 +28,7 @@ class StressParams:
     file_size: int
     io_threads: int
     batch_size: int
+    check_copy_interval_sec: int
     prequeue: PrequeueParams
 
 
@@ -41,6 +42,7 @@ def stress_params(request):
         file_size=stress_config["file_size"],
         io_threads=stress_config["io_threads"],
         batch_size=stress_config["batch_size"],
+        check_copy_interval_sec=stress_config["check_copy_interval_sec"],
         prequeue=PrequeueParams(
             enabled=prequeue_config["enabled"],
             num_files_to_put_drives_up=prequeue_config["num_files_to_put_drives_up"],
@@ -140,6 +142,7 @@ async def test_generate_and_copy_files(env, stress_params):
         num_procs=stress_params.io_threads,
         file_size=stress_params.file_size,
         batch_size=stress_params.batch_size,
+        sss_keytab="/etc/eos.keytab"
     )
     print("Archive process started")
 
@@ -176,7 +179,7 @@ async def test_generate_and_copy_files(env, stress_params):
                     drives_up = True
 
             # During prequeue: sleep check_interval_sec, after drives up: sleep 1 second
-            sleep_time = stress_params.prequeue.check_interval_sec if not drives_up else 1
+            sleep_time = stress_params.prequeue.check_interval_sec if not drives_up else stress_params.check_copy_interval_sec
             await asyncio.sleep(sleep_time)
 
     # Run archive and monitoring concurrently — no PID polling needed
