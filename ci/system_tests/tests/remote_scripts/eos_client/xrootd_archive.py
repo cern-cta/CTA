@@ -26,6 +26,12 @@ def parse_args():
     p.add_argument("--file-size", type=int, default=512, help="File size in bytes")
     p.add_argument("--sss-keytab", default="/etc/eos.keytab", help="SSS keytab path")
     p.add_argument("--batch-size", type=int, default=1000, help="Files per batch (to reduce queue contention)")
+    p.add_argument(
+        "--write-files-in-chunks",
+        action="store_true",
+        default=False,
+        help="Write large files in 1MB chunks (useful for large files, several MBs)",
+    )
     return p.parse_args()
 
 
@@ -45,7 +51,15 @@ HEADER_SIZE = 16  # 4 hex subdir + 8 hex file_num + 4 zeros
 CHUNK_1MB = 1024 * 1024  # 1MB pre-allocated once per worker
 
 
-def worker(work_q: mp.JoinableQueue, wid: int, eos_host: str, dest_dir: str, num_dirs: int, file_size: int):
+def worker(
+    work_q: mp.JoinableQueue,
+    wid: int,
+    eos_host: str,
+    dest_dir: str,
+    num_dirs: int,
+    file_size: int,
+    write_in_chunks: bool,
+):
     # Import here so XrdSecsssKT is already set in the environment
     from XRootD import client
     from XRootD.client.flags import OpenFlags
@@ -79,27 +93,39 @@ def worker(work_q: mp.JoinableQueue, wid: int, eos_host: str, dest_dir: str, num
             # Write compressible content: unique header + zero padding
             # Header format: 4 hex subdir + 8 hex file_num + 4 zeros (16 bytes total)
             header = f"{subdir:04x}{file_num:08x}0000".encode("ascii")
-            st, _ = f.write(header, 0)
-            if not st.ok:
-                if err_budget > 0:
-                    print(f"[worker {wid}] write header failed: {dest_url} :: {st}", flush=True)
-                    err_budget -= 1
-                f.close()
-                continue
 
-            # Write zero padding in chunks (highly compressible by mhVTL)
-            offset = HEADER_SIZE
-            remaining = file_size - HEADER_SIZE
-            while remaining > 0:
-                n = min(remaining, CHUNK_1MB)
-                st, _ = f.write(zeros_chunk[:n], offset)
+            if write_in_chunks:
+                # Write header first, then zero padding in 1MB chunks (for large files)
+                st, _ = f.write(header, 0)
                 if not st.ok:
                     if err_budget > 0:
-                        print(f"[worker {wid}] write zeros failed: {dest_url} :: {st}", flush=True)
+                        print(f"[worker {wid}] write header failed: {dest_url} :: {st}", flush=True)
                         err_budget -= 1
-                    break
-                offset += n
-                remaining -= n
+                    f.close()
+                    continue
+
+                offset = HEADER_SIZE
+                remaining = file_size - HEADER_SIZE
+                while remaining > 0:
+                    n = min(remaining, CHUNK_1MB)
+                    st, _ = f.write(zeros_chunk[:n], offset)
+                    if not st.ok:
+                        if err_budget > 0:
+                            print(f"[worker {wid}] write zeros failed: {dest_url} :: {st}", flush=True)
+                            err_budget -= 1
+                        break
+                    offset += n
+                    remaining -= n
+            else:
+                # Write entire payload in one go (optimal for small files)
+                payload = header + b"\x00" * (file_size - HEADER_SIZE)
+                st, _ = f.write(payload, 0)
+                if not st.ok:
+                    if err_budget > 0:
+                        print(f"[worker {wid}] write failed: {dest_url} :: {st}", flush=True)
+                        err_budget -= 1
+                    f.close()
+                    continue
 
             f.close()
 
@@ -131,7 +157,7 @@ def main():
     for wid in range(args.num_procs):
         p = mp.Process(
             target=worker,
-            args=(work_q, wid, args.eos_host, args.dest_dir, args.num_dirs, args.file_size),
+            args=(work_q, wid, args.eos_host, args.dest_dir, args.num_dirs, args.file_size, args.write_files_in_chunks),
             daemon=True,
         )
         p.start()

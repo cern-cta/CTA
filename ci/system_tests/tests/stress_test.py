@@ -29,6 +29,7 @@ class StressParams:
     io_threads: int
     batch_size: int
     check_copy_interval_sec: int
+    write_files_in_chunks: bool
     prequeue: PrequeueParams
 
 
@@ -43,6 +44,7 @@ def stress_params(request):
         io_threads=stress_config["io_threads"],
         batch_size=stress_config["batch_size"],
         check_copy_interval_sec=stress_config["check_copy_interval_sec"],
+        write_files_in_chunks=stress_config["write_files_in_chunks"],
         prequeue=PrequeueParams(
             enabled=prequeue_config["enabled"],
             num_files_to_put_drives_up=prequeue_config["num_files_to_put_drives_up"],
@@ -120,6 +122,7 @@ async def test_generate_and_copy_files(env, stress_params):
     print(f"\tTotal files: {total_file_count}")
     print(f"\tFile size: {stress_params.file_size}")
     print(f"\tIO threads: {stress_params.io_threads}")
+    print(f"\tWrite files in chunks: {stress_params.write_files_in_chunks}")
     print(f"\tPrequeueing: {stress_params.prequeue.enabled}")
     print(f"\tNumber of files to put drives up: {stress_params.prequeue.num_files_to_put_drives_up}")
     print(f"\tTimeout to put drives up: {stress_params.prequeue.timeout_to_put_drives_up_sec}")
@@ -143,6 +146,7 @@ async def test_generate_and_copy_files(env, stress_params):
         file_size=stress_params.file_size,
         batch_size=stress_params.batch_size,
         sss_keytab="/etc/eos.keytab",
+        write_files_in_chunks=stress_params.write_files_in_chunks,
     )
     print("Archive process started")
 

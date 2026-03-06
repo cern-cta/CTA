@@ -42,6 +42,7 @@ class EosClientHost(DiskClientHost):
         file_size: int = 512,
         batch_size: int = 1000,
         sss_keytab: str = "/etc/eos.keytab",
+        write_files_in_chunks: bool = False,
     ) -> asyncio.subprocess.Process:
         """Start archive as an async subprocess. Returns process handle for awaiting."""
         cmd = (
@@ -55,4 +56,6 @@ class EosClientHost(DiskClientHost):
             f"--batch-size {batch_size} "
             f"--sss-keytab {sss_keytab}"
         )
+        if write_files_in_chunks:
+            cmd += " --write-files-in-chunks"
         return await self.conn.exec_async(cmd)
