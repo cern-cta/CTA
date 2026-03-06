@@ -1,3 +1,9 @@
+
+
+
+
+
+
 #!/bin/bash
 
 # SPDX-FileCopyrightText: 2021 CERN
@@ -52,10 +58,10 @@ save_logs() {
       ]
     | @tsv
   ' | while IFS=$'\t' read -r pod instance containers; do
-
     # Pod-level probe: cheap and avoids SIGPIPE/pipefail issues
     if ! kubectl -n "${namespace}" logs "${pod}" --limit-bytes=1 >/dev/null 2>&1; then
-      echo "Pod: ${pod} failed to start. Logging describe output"
+      echo "[pod=${pod}]"
+      echo "    Pod failed to start. Logging describe output"
       kubectl -n "${namespace}" describe pod "${pod}" > "${tmpdir}/${pod}-describe.log"
       continue
     fi
@@ -67,26 +73,32 @@ save_logs() {
       # Name of the (sub)directory to output logs to
       output_dir="${pod}"
       [ "${num_containers}" -gt 1 ] && output_dir="${pod}-${container}"
+      echo "[pod=${pod}] [container=${container}]"
 
-      max_allowed_size=$((2 * 1024 * 1024 * 1024)) # 2 GB
-      var_log_size=$(
-        kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
-          du -sb /var/log 2>/dev/null | awk '{print $1}'
-      )
-
-      if (( var_log_size > max_allowed_size )); then
-        echo "Contents of /var/log are too big: ${var_log_size} bytes" >&2
-        kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- du -h /var/log >&2
-        echo "Failed to collect /var/log from pod ${pod}, container ${container}" >&2
-        continue
-      fi
-
+      echo "    Collecting stdout logs"
       # Collect stdout logs
       kubectl -n "${namespace}" logs "${pod}" -c "${container}" > "${tmpdir}/${output_dir}.log"
 
+      if ! kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- true 2&> /dev/null; then
+        # Cannot exec into the pod for whatever reason (e.g. a completed job), so skip
+        continue
+      fi
+
       # Collect /var/log for any pod part of the eos or cta instances
       if [[ "${instance}" == "cta" || "${instance}" == "eos" ]]; then
-        echo "Collecting /var/log from ${pod} - ${container}"
+        max_allowed_size=$((2 * 1024 * 1024 * 1024)) # 2 GB
+        var_log_size=$(
+          kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
+            du -sb /var/log 2>/dev/null | awk '{print $1}'
+        )
+
+        if (( var_log_size > max_allowed_size )); then
+          echo "    Contents of /var/log are too big: ${var_log_size} bytes" >&2
+          kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- du -h /var/log >&2
+          echo "    Failed to collect /var/log contents" >&2
+          continue
+        fi
+        echo "    Collecting /var/log contents"
         mkdir -p "${tmpdir}/varlogs/${output_dir}"
         # Only tar part of the logs
         subdirs_to_tar=("cta" "eos" "tmp" "xrootd" "*/xrd_errors")
@@ -98,7 +110,7 @@ save_logs() {
         kubectl -n "${namespace}" exec "${pod}" -c "${container}" -- \
           tar --warning=no-file-removed --ignore-failed-read -C /var/log -cf - ${existing_dirs} \
           | tar -C "${tmpdir}/varlogs/${output_dir}" -xf - \
-          || echo "Failed to collect /var/log from pod ${pod}, container ${container}" >&2
+          || echo "    Failed to collect /var/log contents" >&2
         # Remove empty files and directories to prevent polluting the output logs
         find "${tmpdir}/varlogs/${output_dir}" -type d -empty -delete -o -type f -empty -delete
       fi
@@ -204,8 +216,9 @@ delete_instance() {
   fi
 
   # Cleanup of old library values files:
-  echo "Removing auto-generated /tmp/${namespace}-tapeservers-*-values.yaml files"
-  rm -f /tmp/${namespace}-tapeservers-*-values.yaml
+  echo "Removing auto-generated values.yaml files"
+  rm -f /tmp/${namespace}-rmcd-*-values.yaml
+  rm -f /tmp/${namespace}-taped-*-values.yaml
 
   # Delete the actual namespace
   echo "Deleting ${namespace} instance"
