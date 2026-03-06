@@ -203,7 +203,12 @@ async def test_generate_and_copy_files(env, stress_params):
         if stderr:
             print(stderr.decode())
 
-    num_files_copied = int(eos_client.execWithOutput(f"eos root://{mgm_ip} find -f {archive_directory} | wc -l"))
+    num_files_copied = eos_client.count_files_in_namespace(
+        eos_host=mgm_ip,
+        dest_dir=archive_directory,
+        num_dirs=stress_params.num_dirs,
+        count_procs=5,
+    )
     if num_files_copied != total_file_count:
         print(f"Some files failed to copy over, expected: {total_file_count} and actual: {num_files_copied}")
     else:
