@@ -31,6 +31,8 @@ class StressParams:
     check_copy_interval_sec: int
     write_files_in_chunks: bool
     check_archive_interval_sec: int
+    max_no_progress_intervals: int
+    max_acceptable_loss_percent: float
     prequeue: PrequeueParams
 
 
@@ -47,6 +49,8 @@ def stress_params(request):
         check_copy_interval_sec=stress_config["check_copy_interval_sec"],
         write_files_in_chunks=stress_config["write_files_in_chunks"],
         check_archive_interval_sec=stress_config["check_archive_interval_sec"],
+        max_no_progress_intervals=stress_config["max_no_progress_intervals"],
+        max_acceptable_loss_percent=stress_config["max_acceptable_loss_percent"],
         prequeue=PrequeueParams(
             enabled=prequeue_config["enabled"],
             num_files_to_put_drives_up=prequeue_config["num_files_to_put_drives_up"],
@@ -247,6 +251,8 @@ def test_wait_for_archival(env, stress_params):
     num_missing_files, loss_acceptable = disk_instance.wait_for_archival_in_directory(
         archive_dir_path=archive_directory,
         check_archive_interval_sec=stress_params.check_archive_interval_sec,
+        max_no_progress_intervals=stress_params.max_no_progress_intervals,
+        max_acceptable_loss_percent=stress_params.max_acceptable_loss_percent,
     )
     print(f"Missing files: {num_missing_files}")
     print(f"Loss acceptable: {loss_acceptable}")

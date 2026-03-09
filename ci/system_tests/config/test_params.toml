@@ -21,6 +21,10 @@ batch_size = 200
 write_files_in_chunks = false
 check_copy_interval_sec = 20
 check_archive_interval_sec = 10
+# Stop waiting for archival after this many consecutive intervals without progress
+max_no_progress_intervals = 3
+# Maximum acceptable file loss percentage before proceeding to retrieval
+max_acceptable_loss_percent = 5.0
 
 [tests.stress.prequeue]
 
