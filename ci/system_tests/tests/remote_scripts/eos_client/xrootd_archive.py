@@ -135,9 +135,15 @@ def worker(
 def main():
     args = parse_args()
 
+    # NB: For now, we are still using Kerberos authentication for copying/archival of the files.
+    # Testing showed that there is no significant performance difference in using krb5 vs sss.
+    # In order to use SSS instead we also need to specify the env variable XrdSecPROTOCOL.
+    # If in the future we decide to switch to SSS, this is the place to set the env variables,
+    # as is shown below:
     # Set SSS keytab before any XRootD client usage
-    os.environ["XrdSecsssKT"] = args.sss_keytab
-    os.environ.setdefault("XRD_LOGLEVEL", "Error")
+    # os.environ["XrdSecsssKT"] = args.sss_keytab
+    # os.environ["XrdSecPROTOCOL"] = "sss"
+    # os.environ.setdefault("XRD_LOGLEVEL", "Error")
 
     print(
         f"xrootd_archive: {args.num_files} files, {args.num_dirs} dirs, "
