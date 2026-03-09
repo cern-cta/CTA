@@ -11,7 +11,6 @@ File objects for high throughput on many small files.
 
 import argparse
 import multiprocessing as mp
-import os
 import subprocess
 import time
 
