@@ -30,6 +30,7 @@ class StressParams:
     batch_size: int
     check_copy_interval_sec: int
     write_files_in_chunks: bool
+    check_archive_interval_sec: int
     prequeue: PrequeueParams
 
 
@@ -45,6 +46,7 @@ def stress_params(request):
         batch_size=stress_config["batch_size"],
         check_copy_interval_sec=stress_config["check_copy_interval_sec"],
         write_files_in_chunks=stress_config["write_files_in_chunks"],
+        check_archive_interval_sec=stress_config["check_archive_interval_sec"],
         prequeue=PrequeueParams(
             enabled=prequeue_config["enabled"],
             num_files_to_put_drives_up=prequeue_config["num_files_to_put_drives_up"],
@@ -238,17 +240,13 @@ async def test_generate_and_copy_files(env, stress_params):
 # After everything has been moved, wait for the archival to complete
 # We execute this directly on the mgm to bypass some networking between pods (should be negligible though)
 @pytest.mark.eos
-def test_wait_for_archival(env):
+def test_wait_for_archival(env, stress_params):
     archive_directory = env.disk_instance[0].base_dir_path + "/cta/stress"
-    # This timeout is rather arbitrary for now
-    # This is the max amount of time to wait for all files to be archived
-    # This should probably be some function of the total number of files
-    timeout_secs = 300
     disk_instance: DiskInstanceHost = env.disk_instance[0]
 
-    num_missing_files = disk_instance.wait_for_archival_in_directory(
-        archive_dir_path=archive_directory, timeout_secs=timeout_secs
+    num_missing_files, loss_acceptable = disk_instance.wait_for_archival_in_directory(
+        archive_dir_path=archive_directory,
+        check_archive_interval_sec=stress_params.check_archive_interval_sec,
     )
-    # Future tests should work with the number of archived files
-    # So missing files should be ignored when e.g. retrieving
     print(f"Missing files: {num_missing_files}")
+    print(f"Loss acceptable: {loss_acceptable}")
