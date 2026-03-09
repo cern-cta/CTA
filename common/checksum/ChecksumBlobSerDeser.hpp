@@ -42,30 +42,30 @@ inline void ProtobufToChecksumBlob(const common::ChecksumBlob& p_csb, checksum::
 
 inline void ChecksumBlobToProtobuf(const checksum::ChecksumBlob& csb, common::ChecksumBlob& p_csb) {
   for (const auto& [type, value] : csb.getMap()) {
-    common::ChecksumBlob::Checksum::Type p_type;
+    common::ChecksumBlob::Checksum::Type protobufType;
     switch (type) {
       case ADLER32:
-        p_type = common::ChecksumBlob::Checksum::ADLER32;
+        protobufType = common::ChecksumBlob::Checksum::ADLER32;
         break;
       case CRC32:
-        p_type = common::ChecksumBlob::Checksum::CRC32;
+        protobufType = common::ChecksumBlob::Checksum::CRC32;
         break;
       case CRC32C:
-        p_type = common::ChecksumBlob::Checksum::CRC32C;
+        protobufType = common::ChecksumBlob::Checksum::CRC32C;
         break;
       case MD5:
-        p_type = common::ChecksumBlob::Checksum::MD5;
+        protobufType = common::ChecksumBlob::Checksum::MD5;
         break;
       case SHA1:
-        p_type = common::ChecksumBlob::Checksum::SHA1;
+        protobufType = common::ChecksumBlob::Checksum::SHA1;
         break;
       case NONE:
       default:
-        p_type = common::ChecksumBlob::Checksum::NONE;
+        protobufType = common::ChecksumBlob::Checksum::NONE;
         break;
     }
     auto cs_ptr = p_csb.add_cs();
-    cs_ptr->set_type(p_type);
+    cs_ptr->set_type(protobufType);
     cs_ptr->set_value(value);
   }
 }

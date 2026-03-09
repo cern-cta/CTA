@@ -46,8 +46,8 @@ GarbageCollector::GarbageCollector(cta::log::LogContext& lc,
 GarbageCollector::~GarbageCollector() {
   //Normally, the Garbage collector is never destroyed in production
   //this destructor is here to avoid memory leaks on unit tests
-  for (auto& [key, value] : m_watchedAgents) {
-    delete value;
+  for (auto& [key, agentWatchdogPtr] : m_watchedAgents) {
+    delete agentWatchdogPtr;
   }
 }
 
@@ -645,10 +645,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
     // The number of objects to requeue could be very high. In order to limit the time taken by the
     // individual requeue operations, we limit the number of concurrently requeued objects to an
     // arbitrary 500.
-    std::string containerIdentifier;
-    std::string tapepool;
-    common::dataStructures::JobQueueType queueType;
-    std::tie(containerIdentifier, queueType, tapepool) = archiveQueueId;
+    const auto& [containerIdentifier, queueType, tapepool] = archiveQueueId;
     while (requestsList.size()) {
       decltype(requestsList) currentJobBatch;
       while (requestsList.size() && currentJobBatch.size() <= 500) {
@@ -717,10 +714,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
   // 2) Get the retrieve requests done. They are simpler as retrieve requests are fully owned.
   // Then should hence not have changes since we pre-fetched them.
   for (auto& [retrieveQueueId, requestsList] : retrieveQueuesAndRequests) {
-    std::string containerIdentifier;
-    common::dataStructures::JobQueueType queueType;
-    std::string vid;
-    std::tie(containerIdentifier, queueType, vid) = retrieveQueueId;
+    const auto& [containerIdentifier, queueType, vid] = retrieveQueueId;
     while (requestsList.size()) {
       decltype(requestsList) currentJobBatch;
       while (requestsList.size() && currentJobBatch.size() <= 500) {
