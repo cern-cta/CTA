@@ -35,6 +35,7 @@ build-cta-rpms:
     - when: on_success
   image: $IMAGE_BUILD
   variables:
+    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
   before_script:

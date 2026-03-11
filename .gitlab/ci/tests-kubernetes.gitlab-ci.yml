@@ -25,7 +25,7 @@
         IMAGE_TAG=$CUSTOM_SYSTEM_TEST_IMAGE_TAG
       fi
     else
-      IMAGE_TAG=$CTA_BUILD_ID
+      IMAGE_TAG=${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     fi
   # If we are testing from a CTA tag, get the Catalogue version for that tag
   - |
