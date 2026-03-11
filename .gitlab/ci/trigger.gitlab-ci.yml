@@ -36,6 +36,23 @@ trigger-postgres-scheduler-pipeline:
     include: .gitlab-ci.yml
     strategy: mirror
 
+trigger-oracle-disabled-pipeline:
+  allow_failure: true
+  stage: trigger
+  needs: []
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "push"
+      when: manual
+  variables:
+    ORACLE_SUPPORT: "FALSE"
+  trigger:
+    include: .gitlab-ci.yml
+    strategy: mirror
+
 trigger-sonarcloud-pipeline:
   allow_failure: true
   stage: trigger
