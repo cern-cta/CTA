@@ -1537,7 +1537,7 @@ void RdbmsTapeCatalogue::checkTapeSearchCriteria(rdbms::Conn& conn, const TapeSe
   }
 
   if (searchCriteria.vid && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
-    throw exception::UserError("Tape VID " + searchCriteria.vid.value() + " does not exist.", false);
+    throw exception::UserError("Tape VID " + searchCriteria.vid.value() + " does not exist.");
   }
 }
 

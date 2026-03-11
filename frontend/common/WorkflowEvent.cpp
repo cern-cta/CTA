@@ -331,7 +331,7 @@ void WorkflowEvent::processPREPARE(xrd::Response& response) {
   request.isVerifyOnly = m_event.wf().verify_only();
   if (request.isVerifyOnly) {
     if (m_verificationMountPolicy.empty()) {
-      throw exception::UserError("PREPARE: No verification mount policy is configured.");
+      throw exception::UserError("No verification mount policy is configured.");
     }
     request.mountPolicy = m_verificationMountPolicy;
   }

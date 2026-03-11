@@ -594,7 +594,7 @@ void RdbmsArchiveFileCatalogue::checkTapeFileSearchCriteria(rdbms::Conn& conn,
   }
 
   if (searchCriteria.vid.has_value() && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
-    throw exception::UserError("Tape VID " + searchCriteria.vid.value() + " does not exist.", false);
+    throw exception::UserError("Tape VID " + searchCriteria.vid.value() + " does not exist.");
   }
 }
 
