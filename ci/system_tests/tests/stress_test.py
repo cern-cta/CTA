@@ -188,7 +188,6 @@ async def test_generate_and_copy_files(env, stress_params):
                     env.cta_cli[0].set_all_drives_up(wait=False)
                     drives_up = True
 
-            # During prequeue: sleep check_interval_sec, after drives up: sleep 1 second
             sleep_time = (
                 stress_params.prequeue.check_interval_sec if not drives_up else stress_params.check_copy_interval_sec
             )
