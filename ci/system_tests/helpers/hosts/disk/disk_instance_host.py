@@ -63,12 +63,12 @@ class DiskInstanceHost(RemoteHost):
         num_files_total: dict[str, int] = {}
 
         # Construct our queue of all directories we need to check
-        q = deque()
+        dirs_left_queue = deque()
         for directory in directories:
             full_path: str = f"{archive_dir_path}/{directory}"
             num_files_total[full_path] = self.num_files_in_directory(full_path)
             num_files_left[full_path] = self.num_files_on_disk_only(full_path)
-            q.append(full_path)
+            dirs_left_queue.append(full_path)
 
         total_files_to_archive = sum(num_files_total.values())
 
@@ -79,10 +79,10 @@ class DiskInstanceHost(RemoteHost):
         previous_remaining_files = sum(num_files_left.values())
 
         # As long as the queue is not empty and we're making progress, keep checking
-        while q and consecutive_no_progress_intervals < max_no_progress_intervals:
+        while dirs_left_queue and consecutive_no_progress_intervals < max_no_progress_intervals:
             # Process all directories in the current queue
-            next_q = deque()
-            for directory in q:
+            next_queue = deque()
+            for directory in dirs_left_queue:
                 num_files_in_directory = num_files_total[directory]
                 archived_files = self.num_files_on_tape_only(directory)
                 # Don't call num_files_on_disk_only as this is expensive; just do the math here
@@ -90,12 +90,14 @@ class DiskInstanceHost(RemoteHost):
 
                 if archived_files != num_files_in_directory:
                     # Not everything was archived -> put it back in the queue
-                    next_q.append(directory)
+                    next_queue.append(directory)
 
-            q = next_q
+            dirs_left_queue = next_queue
             current_remaining_files = sum(num_files_left.values())
 
-            print(f"{current_remaining_files} files remaining to be archived to tape ({len(q)} directories left)")
+            print(
+                f"{current_remaining_files} files remaining to be archived to tape ({len(dirs_left_queue)} directories left)"
+            )
 
             # Check if progress was made
             if current_remaining_files < previous_remaining_files:
@@ -106,7 +108,7 @@ class DiskInstanceHost(RemoteHost):
                 print(f"No progress in this interval ({consecutive_no_progress_intervals}/{max_no_progress_intervals})")
 
             # Sleep before next check if there are still directories to process
-            if q and consecutive_no_progress_intervals < max_no_progress_intervals:
+            if dirs_left_queue and consecutive_no_progress_intervals < max_no_progress_intervals:
                 time.sleep(check_archive_interval_sec)
 
         # Calculate missing archives
