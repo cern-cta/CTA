@@ -205,6 +205,8 @@ int main(int argc, char* const* const argv) {
     std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
   } catch (XrdSsiPb::XrdSsiException& ex) {
     std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
+  } catch (XrdSsiPb::UserException& ex) {
+    std::cerr << ex.what() << std::endl;
   } catch (std::exception& ex) {
     std::cerr << ex.what() << std::endl;
   } catch (...) {
