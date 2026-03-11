@@ -10,7 +10,6 @@ die() {
   exit 1
 }
 
-dnf search cta-*
 echo "Using scheduler backend: $SCHEDULER_BACKEND"
 
 # Clean up scheduler
@@ -37,9 +36,9 @@ elif [[ "$SCHEDULER_BACKEND" == "postgres" ]]; then
   cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
 elif [[ "$SCHEDULER_BACKEND" == "ceph" ]]; then
   echo "Installing the cta-objectstore-tools"
+  dnf install -y cta-objectstore-tools
   dnf config-manager --enable ceph
-  dnf search cta-*
-  dnf install -y cta-objectstore-tools ceph-common
+  dnf install -y ceph-common
   echo "Wiping objectstore"
   if [[ $(rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE ls | wc -l) -gt 0 ]]; then
     echo "Rados objectstore ${SCHEDULER_URL} is not empty: deleting content"
