@@ -41,6 +41,9 @@
     # Unique string to identify CTA's instance the maintd process is serving (i.e: production, preproduction).
     # Each of these instances should be associated with a specific CTA catalogue instance.
     instance = "production"
+    # The unique string to identify the backend scheduler resources. As an example, it can be structured as:
+    # "[ceph|postgres|vfs][User|Repack]".
+    sched_backend = "cephUser"
 
 
 # Note that telemetry is experimental and disabled by default.
