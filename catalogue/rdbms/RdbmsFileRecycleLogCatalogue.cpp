@@ -76,7 +76,7 @@ void RdbmsFileRecycleLogCatalogue::checkRecycleTapeFileSearchCriteria(
   cta::rdbms::Conn& conn,
   const RecycleTapeFileSearchCriteria& searchCriteria) const {
   if (searchCriteria.vid && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
-    throw exception::UserError(std::string("Tape ") + searchCriteria.vid.value() + " does not exist");
+    throw exception::UserError("Tape VID " + searchCriteria.vid.value() + " does not exist.", false);
   }
 }
 

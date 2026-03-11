@@ -1537,9 +1537,7 @@ void RdbmsTapeCatalogue::checkTapeSearchCriteria(rdbms::Conn& conn, const TapeSe
   }
 
   if (searchCriteria.vid && !RdbmsCatalogueUtils::tapeExists(conn, searchCriteria.vid.value())) {
-    cta::exception::UserError ex;
-    ex.getMessage() << "Cannot list tapes because tape with vid " + searchCriteria.vid.value() + " does not exist";
-    throw ex;
+    throw exception::UserError("Tape VID " + searchCriteria.vid.value() + " does not exist.", false);
   }
 }
 

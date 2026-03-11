@@ -162,7 +162,7 @@ void CatalogueFetch::handleResponse(const cta::xrd::Request& request,
     case Response::RSP_ERR_PROTOBUF:
       throw XrdSsiPb::PbException(response.message_txt());
     case Response::RSP_ERR_USER:
-      throw exception::UserError(response.message_txt());
+      throw exception::UserError(response.message_txt(), false);
     case Response::RSP_ERR_CTA:
       throw std::runtime_error(response.message_txt());
     default:
