@@ -247,11 +247,14 @@ def test_wait_for_archival(env, stress_params):
     archive_directory = env.disk_instance[0].base_dir_path + "/cta/stress"
     disk_instance: DiskInstanceHost = env.disk_instance[0]
 
-    num_missing_files, loss_acceptable = disk_instance.wait_for_archival_in_directory(
+    num_missing_files, loss_percent = disk_instance.wait_for_archival_in_directory(
         archive_dir_path=archive_directory,
         check_archive_interval_sec=stress_params.check_archive_interval_sec,
         max_no_progress_intervals=stress_params.max_no_progress_intervals,
         max_acceptable_loss_percent=stress_params.max_acceptable_loss_percent,
     )
+    loss_acceptable = loss_percent <= stress_params.max_acceptable_loss_percent
     print(f"Missing files: {num_missing_files}")
-    print(f"Loss acceptable: {loss_acceptable}")
+    print(f"Loss: {loss_percent:.2f}% (threshold: {stress_params.max_acceptable_loss_percent}%)")
+
+    assert loss_acceptable, f"Too many files lost during archival: {num_missing_files} files missing"

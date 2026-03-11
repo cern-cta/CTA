@@ -47,7 +47,7 @@ class DiskInstanceHost(RemoteHost):
         check_archive_interval_sec: int,
         max_no_progress_intervals: int = 3,
         max_acceptable_loss_percent: float = 5.0,
-    ) -> tuple[int, bool]:
+    ) -> tuple[int, float]:
         # Few problems to solve here:
         # Not all files might be archived for whatever reason (it's a stress test; errors are bound to happen)
         # Additionally, we have no guarantee on the order in which CTA archives the directories
@@ -123,9 +123,6 @@ class DiskInstanceHost(RemoteHost):
         else:
             loss_percent = 0.0
 
-        acceptable = loss_percent <= max_acceptable_loss_percent
-
         print(f"{total_files_to_archive - missing_archives}/{total_files_to_archive} files archived to tape")
-        print(f"Loss: {loss_percent:.2f}% (threshold: {max_acceptable_loss_percent}%)")
 
-        return missing_archives, acceptable
+        return missing_archives, loss_percent
