@@ -50,6 +50,7 @@ template<class T>
 concept MapStringKey = is_map_string_key<std::remove_cvref_t<T>>::value;
 
 // Check for reflectable
+// TODO: this can be simplified once we have a simple reflection implementation
 template<class X>
 concept TupleLike = requires { typename std::tuple_size<std::remove_cvref_t<X>>::type; };
 
@@ -69,7 +70,6 @@ concept FieldMetaLike = requires(F f) {
   requires member_ptr_points_to_v<std::remove_cvref_t<T>, decltype(f.ptr)>;
 };
 
-// TODO: maybe make this more lightweight to ease compiler errors
 template<class T>
 concept Reflectable = requires {
   { std::remove_cvref_t<T>::fields() };
@@ -90,186 +90,249 @@ concept ScalarLike = TomlValueConvertible<T> && !StdOptional<T> && !Reflectable<
 
 // (forward) declarations
 
-class ParseErrors {
+class ParseResult {
 public:
-  std::string what() {
+  static ParseResult success() { return ParseResult(); }
+
+  static ParseResult error(std::string_view error) { return ParseResult(error); }
+
+  static ParseResult error(std::string_view fieldName, const ParseResult& child) {
+    return ParseResult(fieldName, child);
+  }
+
+  static ParseResult error(std::string_view fieldName, const std::vector<ParseResult>& children) {
+    return ParseResult(fieldName, children);
+  }
+
+  // TODO: fix indentation
+  // TODO: sort alphabetically to group errors consistently independent of parsing logic
+  // TODO: add test to verify error message
+  std::string what(int indent = 0) const {
+    if (ok()) {
+      return "";
+    }
+    const int indentIncrement = 2;
+    std::string indentation;
+    for (int c = 0; c < indent; c++) {
+      indentation += " ";
+    }
+
+    if (m_children.empty()) {
+      return m_error + '\n';
+    }
     std::string message;
-    for (const auto& err : m_errors) {
-      message += err + '\n';
+    if (!m_fieldName.empty()) {
+      message += "Failed to parse field '" + m_fieldName + "': ";
+    }
+    if (m_children.size() == 1) {
+      message += m_children[0].what(indent + indentIncrement);
+    } else {
+      if (!message.empty()) {
+        message += '\n';
+      }
+      for (size_t idx = 1; const auto& child : m_children) {
+        message += indentation + std::to_string(idx) + ") " + child.what(indent + indentIncrement);
+        idx++;
+      }
     }
     return message;
   }
 
-  void add(const std::string& err) { m_errors.push_back(err); }
+  bool ok() const { return m_error.empty() && m_children.empty(); }
 
-  int count() { return m_errors.size(); }
+  void addError(const ParseResult& child) { m_children.push_back(child); }
 
 private:
-  std::vector<std::string> m_errors;
+  ParseResult() {}
+
+  ParseResult(std::string_view error) : m_error(error) {}
+
+  ParseResult(std::string_view fieldName, const ParseResult& child) : m_fieldName(fieldName), m_children {child} {}
+
+  ParseResult(std::string_view fieldName, const std::vector<ParseResult>& children)
+      : m_fieldName(fieldName),
+        m_children {children} {}
+
+  std::string m_fieldName;
+  std::string m_error;
+  std::vector<ParseResult> m_children;
 };
 
 template<class Field>
-bool parseNode(Field& out, toml::node_view<const toml::node> nv, const bool strict, ParseErrors& errs);
-
-template<class T>
-bool parseTable(T& out, const toml::table& tbl, const bool strict, ParseErrors& errs);
+ParseResult parseNode(Field& out, std::string_view fieldName, toml::node_view<const toml::node> nv, const bool strict);
 
 template<class Field>
-bool parseOptional(Field& out, toml::node_view<const toml::node> nv, const bool strict, ParseErrors& errs)
+ParseResult
+parseOptional(Field& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict)
   requires StdOptional<Field>
 {
-  if (!nv) {
+  if (!node) {
     // Entry doesn't exist
     if (strict) {
-      errs.add("Field not found in TOML.");
-      return false;
+      return ParseResult::error("Field named '" + std::string(fieldName) + "' not found.");
     }
     // In non-strict mode, a missing optional is fine
-    return true;
+    return ParseResult::success();
   }
   // Parse the inner result of the optional
   using InnerType = typename std::remove_cvref_t<Field>::value_type;
   InnerType tmp;
-  if (!parseNode(tmp, nv, strict, errs)) {
-    return false;
+  auto res = parseNode(tmp, fieldName, node, strict);
+  if (!res.ok()) {
+    return ParseResult::error(fieldName, res);
   }
   out = std::move(tmp);
-  return true;
+  return ParseResult::success();
 }
 
 template<class Field>
-bool parseVector(Field& out, toml::node_view<const toml::node> nv, const bool strict, ParseErrors& errs)
+ParseResult
+parseVector(Field& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict)
   requires StdVector<Field>
 {
-  const toml::array* arr = nv.as_array();
+  const toml::array* arr = node.as_array();
   if (!arr) {
-    errs.add("Value is not an array.");
-    return false;
+    return ParseResult::error("Value named '" + std::string(fieldName) + "' is not an array.");
   }
   out.clear();
   out.reserve(arr->size());
   using ElemType = typename std::remove_cvref_t<Field>::value_type;
 
-  bool ok = true;
+  std::vector<ParseResult> errs;
   arr->for_each([&](auto&& val) {
     ElemType elem {};
-    if (!parseNode(elem, toml::node_view<const toml::node> {&val}, strict, errs)) {
-      ok = false;
+    auto res = parseNode(elem, fieldName, toml::node_view<const toml::node> {&val}, strict);
+    if (!res.ok()) {
+      errs.push_back(res);
       return;
     }
     out.push_back(std::move(elem));
   });
-  return ok;
+  if (errs.empty()) {
+    return ParseResult::success();
+  }
+  return ParseResult::error(fieldName, errs);
 }
 
 template<class Field>
-bool parseMapStringKey(Field& out, toml::node_view<const toml::node> nv, const bool strict, ParseErrors& errs)
+ParseResult
+parseMapStringKey(Field& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict)
   requires MapStringKey<Field>
 {
-  const toml::table* tbl = nv.as_table();
+  const toml::table* tbl = node.as_table();
   if (!tbl) {
-    errs.add("Value is not a table.");
-    return false;
+    return ParseResult::error("Value named '" + std::string(fieldName) + "' is not a table.");
   }
   out.clear();
   using ElemType = typename std::remove_cvref_t<Field>::mapped_type;
 
-  bool ok = true;
+  std::vector<ParseResult> errs;
   tbl->for_each([&](auto&& key, auto&& val) {
     ElemType elem {};
-    if (!parseNode(elem, toml::node_view<const toml::node> {&val}, strict, errs)) {
-      ok = false;
+    auto res = parseNode(elem, key, toml::node_view<const toml::node> {&val}, strict);
+    if (!res.ok()) {
+      errs.push_back(res);
       return;
     }
     out.emplace(std::string(key.str()), std::move(elem));
   });
-  return ok;
-}
-
-template<class Field>
-bool parseReflectableStruct(Field& out, toml::node_view<const toml::node> nv, const bool strict, ParseErrors& errs)
-  requires Reflectable<Field>
-{
-  const toml::table* tbl = nv.as_table();
-  if (!tbl) {
-    errs.add("Value is not a table.");
-    return false;
+  if (errs.empty()) {
+    return ParseResult::success();
   }
-  return parseTable(out, *tbl, strict, errs);
+  return ParseResult::error(fieldName, errs);
 }
 
 template<class Field>
-bool parseScalar(Field& out, toml::node_view<const toml::node> nv, const bool strict, ParseErrors& errs)
+ParseResult
+parseScalar(Field& out, std::string_view& fieldName, toml::node_view<const toml::node> node, const bool strict)
   requires ScalarLike<Field>
 {
   using F = std::remove_cvref_t<Field>;
-  auto val = nv.value<F>();
+  auto val = node.value<F>();
   if (!val) {
     // Type mismatch or invalid value
-    errs.add("Value contains a type mismatch or invalid value.");
-    return false;
+    return ParseResult::error("Value named '" + std::string(fieldName)
+                              + "' contains a type mismatch or invalid value.");
   }
   out = std::move(*val);
-  return true;
-}
-
-template<class Field>
-bool parseNode(Field& out, toml::node_view<const toml::node> nv, const bool strict, ParseErrors& errs) {
-  if constexpr (StdOptional<Field>) {
-    return parseOptional(out, nv, strict, errs);
-  } else if constexpr (StdVector<Field>) {
-    return parseVector(out, nv, strict, errs);
-  } else if constexpr (MapStringKey<Field>) {
-    return parseMapStringKey(out, nv, strict, errs);
-  } else if constexpr (Reflectable<Field>) {
-    return parseReflectableStruct(out, nv, strict, errs);
-  } else if constexpr (ScalarLike<Field>) {
-    return parseScalar(out, nv, strict, errs);
-  } else {
-    static_assert([] { return false; }(), "Field type not supported by parser");
-  }
-  return false;
+  return ParseResult::success();
 }
 
 template<class T>
-bool parseTable(T& out, const toml::table& tbl, const bool strict, ParseErrors& errs)
+ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tbl, const bool strict)
   requires Reflectable<T>
 {
   std::unordered_set<std::string_view> seenFields;
-  bool ok = true;
+
+  std::vector<ParseResult> errs;
 
   auto assignField = [&](auto field) {
-    const auto nodeView = tbl[field.name];
+    const auto node = tbl[field.name];
 
-    if (!nodeView) {
+    if (!node) {
       if (strict) {
-        errs.add("Field named '" + std::string(field.name) + "' not found in TOML.");
-        ok = false;
+        errs.push_back(ParseResult::error("Field named '" + std::string(field.name) + "' not found."));
       }
       return;
     }
     seenFields.insert(field.name);
-    auto result = parseNode(out.*(field.ptr), nodeView, strict, errs);
-    if (!result) {
-      // parser error
-      ok = false;
+    auto res = parseNode(out.*(field.ptr), field.name, node, strict);
+    if (!res.ok()) {
+      errs.push_back(res);
       return;
     }
   };
 
   // Do a pass over the fields of T and try to assign its members
+  // TODO: replace T::fields with reflection
   std::apply([&](const auto&... fields) { (assignField(fields), ...); }, T::fields());
 
   if (strict) {
     // In strict mode, we need to do a second pass to spot keys in the TOML but not in T
     for (const auto& [key, value] : tbl) {
       if (!seenFields.contains(key)) {
-        errs.add("TOML value named '" + std::string(key) + "' not used.");
-        ok = false;
+        errs.push_back(ParseResult::error("Value named '" + std::string(key) + "' not used."));
       }
     }
   }
-  return ok;
+  if (errs.empty()) {
+    return ParseResult::success();
+  }
+  return ParseResult::error(fieldName, errs);
+}
+
+template<class Field>
+ParseResult parseReflectableStruct(Field& out,
+                                   std::string_view fieldName,
+                                   toml::node_view<const toml::node> node,
+                                   const bool strict)
+  requires Reflectable<Field>
+{
+  const toml::table* tbl = node.as_table();
+  if (!tbl) {
+    return ParseResult::error("Value named '" + std::string(fieldName) + "' is not a table.");
+  }
+  return parseTable(out, fieldName, *tbl, strict);
+}
+
+template<class Field>
+ParseResult
+parseNode(Field& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
+  if constexpr (StdOptional<Field>) {
+    return parseOptional(out, fieldName, node, strict);
+  } else if constexpr (StdVector<Field>) {
+    return parseVector(out, fieldName, node, strict);
+  } else if constexpr (MapStringKey<Field>) {
+    return parseMapStringKey(out, fieldName, node, strict);
+  } else if constexpr (Reflectable<Field>) {
+    return parseReflectableStruct(out, fieldName, node, strict);
+  } else if constexpr (ScalarLike<Field>) {
+    return parseScalar(out, fieldName, node, strict);
+  } else {
+    static_assert([] { return false; }(), "Field type not supported by parser");
+  }
+  // Should be unreachable
+  return ParseResult::error("Field named '" + std::string(fieldName) + "' is an unsupported type.");
 }
 
 /**
@@ -293,10 +356,9 @@ T loadFromToml(const std::string& filePath, bool strict = false) {
   }
 
   T config {};
-  ParseErrors errs {};
-  bool res = parseTable(config, tbl, strict, errs);
-  if (!res) {
-    throw cta::exception::UserError("Invalid config in '" + filePath + "':\n" + errs.what());
+  auto res = parseTable(config, "", tbl, strict);
+  if (!res.ok()) {
+    throw cta::exception::UserError("Invalid config in '" + filePath + "':\n" + res.what());
   }
   return config;
 }
