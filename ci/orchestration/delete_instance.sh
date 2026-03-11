@@ -1,9 +1,3 @@
-
-
-
-
-
-
 #!/bin/bash
 
 # SPDX-FileCopyrightText: 2021 CERN

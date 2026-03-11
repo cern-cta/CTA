@@ -17,6 +17,8 @@ EXPECTED_ORDER = [
     "needs",
     "dependencies",
     "rules",
+    "trigger",
+    "inherit",
     "image",
     "variables",
     "before_script",
