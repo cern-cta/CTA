@@ -1,24 +1,7 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# .trigger-child-pipeline:
-#   allow_failure: true
-#   stage: trigger
-#   needs: []
-#   rules:
-#     - if: $CI_COMMIT_TAG
-#       when: never
-#     - if: $PIPELINE_TYPE != "DEFAULT"
-#       when: never
-#     - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "push"
-#       when: manual
-#   trigger:
-#     include: .gitlab-ci.yml
-#     strategy: mirror
-#   inherit:
-#     variables: false
-
-trigger-grpc-frontend-pipeline:
+.trigger-child-pipeline:
   allow_failure: true
   stage: trigger
   needs: []
@@ -32,47 +15,23 @@ trigger-grpc-frontend-pipeline:
   trigger:
     include: .gitlab-ci.yml
     strategy: mirror
-  inherit:
-    variables: false
+
+trigger-grpc-frontend-pipeline:
+  extends:
+    - .trigger-child-pipeline
   variables:
     DEFAULT_CTA_VALUES_FILE: "presets/dev-cta-grpc-values.yaml"
     DEFAULT_EOS_VALUES_FILE: "presets/dev-eos-grpc-values.yaml"
 
 trigger-postgres-scheduler-pipeline:
-  allow_failure: true
-  stage: trigger
-  needs: []
-  rules:
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "push"
-      when: manual
-  trigger:
-    include: .gitlab-ci.yml
-    strategy: mirror
-  inherit:
-    variables: false
+  extends:
+    - .trigger-child-pipeline
   variables:
     SCHEDULER_TYPE: "pgsched"
 
 trigger-oracle-disabled-pipeline:
-  allow_failure: true
-  stage: trigger
-  needs: []
-  rules:
-    - if: $CI_COMMIT_TAG
-      when: never
-    - if: $PIPELINE_TYPE != "DEFAULT"
-      when: never
-    - if: $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "push"
-      when: manual
-  trigger:
-    include: .gitlab-ci.yml
-    strategy: mirror
-  inherit:
-    variables: false
+  extends:
+    - .trigger-child-pipeline
   variables:
     ORACLE_SUPPORT: "FALSE"
 
