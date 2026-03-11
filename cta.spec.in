@@ -423,6 +423,10 @@ The shared libraries
 Summary: CERN Tape Archive: unit and integration tests with virtual tape drives
 Group: Application/CTA
 Requires: cta-lib-catalogue-inmemory = %{version}-%{release}
+Requires: cta-lib-catalogue-postgres = %{version}-%{release}
+%if "%{occiSupport}" == "1"
+Requires: cta-lib-catalogue-occi = %{version}-%{release}
+%endif
 Requires: valgrind %{valgrindVersionConstraint}
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
@@ -443,7 +447,9 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libintegrationTestHelperTests.so*
 %{_libdir}/libcta-tapedIntegrationTests.so*
 %{_bindir}/cta-rdbmsUnitTests
+%if "%{occiSupport}" == "1"
 %{_bindir}/cta-rdbmsUnitTests-oracle.sh
+%endif
 %{_bindir}/cta-unitTests
 %{_bindir}/cta-unitTests-multiProcess
 %{_bindir}/cta-valgrindUnitTests.sh
