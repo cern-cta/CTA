@@ -5,7 +5,10 @@
 
 #pragma once
 
-#include "ConfigMeta.hpp"
+// TODO: change
+#include "../ConfigMeta.hpp"
+#include "ParseResult.hpp"
+#include "ParserConstraints.hpp"
 #include "common/exception/UserError.hpp"
 
 #include <algorithm>
@@ -17,145 +20,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
-namespace cta::runtime::parser {
+namespace cta::runtime::parsing {
 
-template<class T>
-struct is_std_optional : std::false_type {};
-
-template<class U>
-struct is_std_optional<std::optional<U>> : std::true_type {};
-
-template<class T>
-concept StdOptional = is_std_optional<std::remove_cvref_t<T>>::value;
-
-template<class T>
-struct is_std_vector : std::false_type {};
-
-template<class U, class A>
-struct is_std_vector<std::vector<U, A>> : std::true_type {};
-
-template<class T>
-concept StdVector = is_std_vector<std::remove_cvref_t<T>>::value;
-
-template<class T>
-struct is_map_string_key : std::false_type {};
-
-template<class V, class C, class A>
-struct is_map_string_key<std::map<std::string, V, C, A>> : std::true_type {};
-
-template<class V, class H, class E, class A>
-struct is_map_string_key<std::unordered_map<std::string, V, H, E, A>> : std::true_type {};
-
-template<class T>
-concept MapStringKey = is_map_string_key<std::remove_cvref_t<T>>::value;
-
-// Check for reflectable
-// TODO: this can be simplified once we have a simple reflection implementation
-template<class X>
-concept TupleLike = requires { typename std::tuple_size<std::remove_cvref_t<X>>::type; };
-
-template<class T, class Ptr>
-struct member_ptr_points_to : std::false_type {};
-
-template<class T, class U>
-struct member_ptr_points_to<T, U T::*> : std::true_type {};
-
-template<class T, class Ptr>
-inline constexpr bool member_ptr_points_to_v = member_ptr_points_to<T, Ptr>::value;
-
-template<class T, class F>
-concept FieldMetaLike = requires(F f) {
-  { f.name } -> std::convertible_to<std::string_view>;
-  // ptr exists and is a pointer-to-member of T
-  requires member_ptr_points_to_v<std::remove_cvref_t<T>, decltype(f.ptr)>;
-};
-
-template<class T>
-concept Reflectable = requires {
-  { std::remove_cvref_t<T>::fields() };
-} && TupleLike<decltype(std::remove_cvref_t<T>::fields())> && []<class U>(std::type_identity<U>) consteval {
-  using R = decltype(U::fields());
-  constexpr std::size_t N = std::tuple_size_v<std::remove_cvref_t<R>>;
-  return []<std::size_t... I>(std::index_sequence<I...>) consteval {
-    return (FieldMetaLike<U, std::tuple_element_t<I, std::remove_cvref_t<R>>> && ...);
-  }(std::make_index_sequence<N> {});
-}(std::type_identity<std::remove_cvref_t<T>> {});
-
-template<class T>
-concept TomlValueConvertible =
-  requires(toml::node_view<const toml::node> nv) { nv.template value<std::remove_cvref_t<T>>(); };
-
-template<class T>
-concept ScalarLike = TomlValueConvertible<T> && !StdOptional<T> && !Reflectable<T> && !StdVector<T> && !MapStringKey<T>;
-
-// (forward) declarations
-
-class ParseResult {
-public:
-  static ParseResult success() { return ParseResult(); }
-
-  static ParseResult error(std::string_view error) { return ParseResult(error); }
-
-  static ParseResult error(std::string_view fieldName, const ParseResult& child) {
-    return ParseResult(fieldName, child);
-  }
-
-  static ParseResult error(std::string_view fieldName, const std::vector<ParseResult>& children) {
-    return ParseResult(fieldName, children);
-  }
-
-  // TODO: add test to verify error message
-  std::string what(int indent = 0) const {
-    const int indentIncrement = 4;
-    if (ok()) {
-      return "";
-    }
-
-    if (m_childErrors.empty()) {
-      return m_error + '\n';
-    }
-    std::string message;
-    if (!m_fieldName.empty()) {
-      message += "Failed to parse field '" + m_fieldName + "':\n";
-    }
-    // Ensure messages are consistently sorted and grouped
-    auto sortedChildren = m_childErrors;
-    std::sort(sortedChildren.begin(), sortedChildren.end(), [](const auto& a, const auto& b) {
-      if (!a.m_error.empty() && !b.m_error.empty()) {
-        return a.m_error < b.m_error;
-      }
-      return a.m_fieldName < b.m_fieldName;
-    });
-
-    std::string indentation(indent, ' ');
-    for (size_t idx = 1; const auto& childErr : sortedChildren) {
-      message += indentation + std::to_string(idx) + ") " + childErr.what(indent + indentIncrement);
-      idx++;
-    }
-    return message;
-  }
-
-  bool ok() const { return m_error.empty() && m_childErrors.empty(); }
-
-  void addError(const ParseResult& child) { m_childErrors.push_back(child); }
-
-private:
-  ParseResult() {}
-
-  ParseResult(std::string_view error) : m_error(error) {}
-
-  ParseResult(std::string_view fieldName, const ParseResult& child) : m_fieldName(fieldName), m_childErrors {child} {}
-
-  ParseResult(std::string_view fieldName, const std::vector<ParseResult>& children)
-      : m_fieldName(fieldName),
-        m_childErrors {children} {}
-
-  std::string m_fieldName;
-  std::string m_error;
-  std::vector<ParseResult> m_childErrors;
-};
-
-// forward declarations
+// Forward declarations
 
 template<StdOptional T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
@@ -178,7 +45,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
 template<Reflectable T>
 ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tbl, const bool strict);
 
-// ---
+// Implementations
 
 template<StdOptional T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
@@ -317,4 +184,4 @@ ParseResult parseTable(T& out, const toml::table& tbl, const bool strict) {
   return parseTable(out, "", tbl, strict);
 }
 
-}  // namespace cta::runtime::parser
+}  // namespace cta::runtime::parsing

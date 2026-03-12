@@ -5,8 +5,8 @@
 
 #pragma once
 
-#include "TomlParser.hpp"
 #include "common/exception/UserError.hpp"
+#include "parsing/TomlParser.hpp"
 
 #include <sstream>
 #include <toml++/toml.hpp>
@@ -34,7 +34,7 @@ T loadFromToml(const std::string& filePath, bool strict = false) {
   }
 
   T config {};
-  auto res = parser::parseTable(config, tbl, strict);
+  auto res = parsing::parseTable(config, tbl, strict);
   if (!res.ok()) {
     throw cta::exception::UserError("Invalid config in '" + filePath + "':\n" + res.what());
   }
