@@ -1250,8 +1250,7 @@ void drive::DriveGeneric::readExactBlock(void* data, size_t count, const std::st
       if (res == -1 && ENOMEM == errno) {
         throw cta::exception::Errnum(
           errno,
-          context
-            + ": In DriveGeneric::readExactBlock: Failed ST read. Block size is larger than the available buffer size ("
+          context + ": In DriveGeneric::readExactBlock: Failed ST read. Block size is larger than expected (> "
             + std::to_string(count) + " bytes + CRC32).");
       }
       // Generic handling of other errors
@@ -1283,8 +1282,7 @@ void drive::DriveGeneric::readExactBlock(void* data, size_t count, const std::st
       if (res == -1 && ENOMEM == errno) {
         throw cta::exception::Errnum(
           errno,
-          context
-            + ": In DriveGeneric::readExactBlock: Failed ST read. Block size is larger than the available buffer size ("
+          context + ": In DriveGeneric::readExactBlock: Failed ST read. Block size is larger than expected (> "
             + std::to_string(count) + " bytes).");
       }
       // Generic handling of other errors
