@@ -38,7 +38,11 @@ class DiskInstanceHost(RemoteHost):
 
     def num_files_on_disk_only(self, directory: str) -> int: ...
 
+    def list_entries_in_directory(self, directory: str) -> list[str]: ...
+
     def list_files_in_directory(self, directory: str) -> list[str]: ...
+
+    def list_subdirectories_in_directory(self, directory: str) -> list[str]: ...
 
     # Eventually we should move this method to a more central place
     def wait_for_archival_in_directory(
@@ -54,8 +58,7 @@ class DiskInstanceHost(RemoteHost):
         # So we can't wait for directories to complete one by one and instead, we continuously loop through all of them as they progress.
         # We don't want to check directories that have completed, so we use a queue
 
-        # TODO: split methods for num files and num directories
-        directories = self.list_files_in_directory(archive_dir_path)
+        directories = self.list_subdirectories_in_directory(archive_dir_path)
 
         # For tracking progress; how many files are left for each directory
         num_files_left: dict[str, int] = {}
