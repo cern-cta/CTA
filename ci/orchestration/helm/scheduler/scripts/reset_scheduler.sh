@@ -5,8 +5,6 @@
 
 set -e
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "${BASH_SOURCE[0]}")] Started"
-
 die() {
   echo "$@" 1>&2
   exit 1
@@ -32,7 +30,7 @@ elif [[ "$SCHEDULER_BACKEND" == "postgres" ]]; then
   dnf install -y cta-scheduler-utils
   echo "Postgres scheduler config file content: "
   cat /etc/cta/cta-scheduler.conf
-  echo "Droping the scheduler DB schema"
+  echo "Dropping the scheduler DB schema"
   echo "yes" | cta-scheduler-schema-drop /etc/cta/cta-scheduler.conf || die "ERROR: Could not drop scheduler schema. cta-scheduler-schema-drop /etc/cta/cta-scheduler.conf FAILED"
   echo "Creating the scheduler DB schema"
   cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
@@ -52,4 +50,4 @@ else
   die "ERROR: Unsupported scheduler backend: ${SCHEDULER_BACKEND}"
 fi
 
-echo "$(date '+%Y-%m-%d %H:%M:%S') [$(basename "$0")] Scheduler reset completed"
+echo "Scheduler reset completed"

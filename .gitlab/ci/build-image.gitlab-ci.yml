@@ -17,6 +17,7 @@
     name: $IMAGE_DOCKER_IMAGE_BUILDER
     entrypoint: [""]
   variables:
+    CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for these jobs
     DOCKERFILE:
     IMAGE_NAME:

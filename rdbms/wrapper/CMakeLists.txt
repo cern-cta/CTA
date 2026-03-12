@@ -62,7 +62,7 @@ set_property(TARGET ctardbmssqlite PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_compile_definitions(ctardbmssqlite PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
-target_link_libraries (ctardbmssqlite
+target_link_libraries (ctardbmssqlite ctardbms ctacommon
   ${SQLITE_LIBRARIES})
 
 install(TARGETS ctardbmssqlite DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
@@ -75,7 +75,7 @@ set_property(TARGET ctardbmspostgres PROPERTY   VERSION "${CTA_LIBVERSION}")
 
 target_compile_definitions(ctardbmspostgres PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
-target_link_libraries (ctardbmspostgres
+target_link_libraries (ctardbmspostgres ctardbms ctacommon
   ${POSTGRES_LIBRARIES})
 
 install(TARGETS ctardbmspostgres DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
@@ -89,7 +89,7 @@ if (OCCI_SUPPORT)
 
   target_compile_definitions(ctardbmsocci PRIVATE VERSION_API="${CTA_VERSION}-${CTA_RELEASE}")
 
-  target_link_libraries (ctardbmsocci
+  target_link_libraries (ctardbmsocci ctardbms ctacommon
     ${ORACLE-INSTANTCLIENT_LIBRARIES})
 
   install(TARGETS ctardbmsocci DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
@@ -130,7 +130,10 @@ add_library (ctardbmswrapperunittests SHARED
 set_property(TARGET ctardbmswrapperunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctardbmswrapperunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries (ctardbmswrapperunittests
-  ctacatalogue)
+target_link_libraries (ctardbmswrapperunittests ctardbmspostgres)
+
+if (OCCI_SUPPORT)
+  target_link_libraries (ctardbmswrapperunittests ctardbmsocci)
+endif()
 
 install(TARGETS ctardbmswrapperunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

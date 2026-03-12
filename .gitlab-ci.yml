@@ -180,10 +180,6 @@ variables:
       - "TRUE"
       - "FALSE"
 
-  # Meta CI
-  CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
-  CTA_PIPELINE_NAME: "$CI_COMMIT_TITLE -- Pipeline: $PIPELINE_TYPE, Scheduler: $SCHEDULER_TYPE, Oracle support: $ORACLE_SUPPORT"
-
   # Git CI Configuration
   GIT_STRATEGY: fetch
   GIT_SUBMODULE_STRATEGY: recursive
@@ -208,7 +204,7 @@ default:
   interruptible: true
 
 workflow:
-  name: $CTA_PIPELINE_NAME
+  name: "$CI_COMMIT_TITLE -- Pipeline: $PIPELINE_TYPE, Scheduler: $SCHEDULER_TYPE, Oracle support: $ORACLE_SUPPORT"
   auto_cancel:
     on_new_commit: interruptible
   rules:
