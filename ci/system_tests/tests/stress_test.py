@@ -137,6 +137,8 @@ async def test_generate_and_copy_files(env, stress_params):
         # Put drives down first — we queue archive jobs and only put drives up
         # after enough files have been written, to avoid the drives outpacing the queueing
         env.cta_cli[0].set_all_drives_down()
+    else:
+        env.cta_cli[0].set_all_drives_up()
 
     # Use persistent XRootD Python client for high throughput on many small files
     # The remote script (xrootd_archive.py) runs inside the client pod and uses
