@@ -40,10 +40,9 @@ priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
     cta-versionlock apply
 
 RUN dnf config-manager --enable ceph
-RUN dnf install -y \
-      ceph-common \
-      cta-debuginfo \
-      cta-debugsource
+RUN dnf install -y ceph-common
+      # cta-debuginfo \
+      # cta-debugsource
 
 
 ###############################################

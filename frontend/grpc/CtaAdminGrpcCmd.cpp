@@ -102,11 +102,9 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
     credentials = grpc::InsecureChannelCredentials();
   }
 
-  // gRPC stream server
-  std::string strGrpcHost = "cta-frontend-grpc";
   const std::string GRPC_SERVER = endpoint.value();
-  // Service name
-  const std::string GSS_SPN = "cta/" + strGrpcHost;
+  // Service principal for Kerberos authentication
+  const std::string GSS_SPN = config.getOptionValueStr("grpc.service_principal").value_or("cta/cta-frontend-grpc");
   // Create a channel to the KRB-GSI negotiation service
   std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateChannel(GRPC_SERVER, credentials)};
   cta::log::FileLogger log(GRPC_SERVER, "cta-admin-grpc", "/var/log/cta-admin-grpc.log", cta::log::INFO);

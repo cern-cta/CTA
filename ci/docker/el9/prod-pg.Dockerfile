@@ -39,9 +39,9 @@ priority=2" > /etc/yum.repos.d/cta-local-testing.repo && \
     dnf install -y cta-release && \
     cta-versionlock apply
 
-RUN dnf install -y \
-  cta-debuginfo \
-  cta-debugsource
+# RUN dnf install -y \
+#   cta-debuginfo \
+#   cta-debugsource
 
 
 ###############################################
