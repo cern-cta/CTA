@@ -6,6 +6,7 @@
 #include "CtaFrontendApi.hpp"
 #include "common/CmdLineArgs.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/utils/utils.hpp"
 #include "tools/standalone_cli_tools/common/CatalogueFetch.hpp"
 #include "tools/standalone_cli_tools/common/ConnectionConfiguration.hpp"
@@ -205,8 +206,8 @@ int main(int argc, char* const* const argv) {
     std::cerr << "Error in Google Protocol Buffers: " << ex.what() << std::endl;
   } catch (XrdSsiPb::XrdSsiException& ex) {
     std::cerr << "Error from XRootD SSI Framework: " << ex.what() << std::endl;
-  } catch (XrdSsiPb::UserException& ex) {
-    std::cerr << ex.what() << std::endl;
+  } catch (const cta::exception::UserError& ex) {
+    std::cerr << ex.getMessageValue() << std::endl;
   } catch (std::exception& ex) {
     std::cerr << ex.what() << std::endl;
   } catch (...) {
