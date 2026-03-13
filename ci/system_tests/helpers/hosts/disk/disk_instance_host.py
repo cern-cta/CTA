@@ -50,7 +50,6 @@ class DiskInstanceHost(RemoteHost):
         archive_dir_path: str,
         check_archive_interval_sec: int,
         max_no_progress_intervals: int = 3,
-        max_acceptable_loss_percent: float = 5.0,
     ) -> tuple[int, float]:
         # Few problems to solve here:
         # Not all files might be archived for whatever reason (it's a stress test; errors are bound to happen)

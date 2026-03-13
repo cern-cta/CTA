@@ -251,7 +251,6 @@ def test_wait_for_archival(env, stress_params):
         archive_dir_path=archive_directory,
         check_archive_interval_sec=stress_params.check_archive_interval_sec,
         max_no_progress_intervals=stress_params.max_no_progress_intervals,
-        max_acceptable_loss_percent=stress_params.max_acceptable_loss_percent,
     )
     loss_acceptable = loss_percent <= stress_params.max_acceptable_loss_percent
     print(f"Missing files: {num_missing_files}")
