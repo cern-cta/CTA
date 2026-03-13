@@ -5,8 +5,6 @@
 
 #pragma once
 
-#include "ConfigMeta.hpp"
-
 #include <cstdint>
 #include <map>
 #include <optional>
@@ -37,27 +35,25 @@ enum class InitFailurePolicy { warn, fatal };
  * Instead, extend this struct in the relevant app/tool.
  *
  */
-struct ExperimentalConfig {
+struct ExperimentalConfig final {
   bool telemetry_enabled = false;
 
-  static consteval auto fields() {
-    return std::make_tuple(field("telemetry_enabled", &ExperimentalConfig::telemetry_enabled));
-  }
+  static constexpr std::size_t memberCount() { return 1; }
 };
 
 /**
  * @brief Catalogue config.
  */
-struct CatalogueConfig {
+struct CatalogueConfig final {
   std::string config_file = "/etc/cta/cta-catalogue.conf";
 
-  static consteval auto fields() { return std::make_tuple(field("config_file", &CatalogueConfig::config_file)); }
+  static constexpr std::size_t memberCount() { return 1; }
 };
 
 /**
  * @brief Scheduler config.
  */
-struct SchedulerConfig {
+struct SchedulerConfig final {
   // This value should eventually be handled by auto-discovery and not be provided by users
   std::string backend_name = "";
 
@@ -69,38 +65,24 @@ struct SchedulerConfig {
   int tape_cache_max_age_secs = 600;
   int retrieve_queue_cache_max_age_secs = 10;
 
-  static consteval auto fields() {
-    return std::make_tuple(
-      field("backend_name", &SchedulerConfig::backend_name),
-#ifndef CTA_PGSCHED
-      field("objectstore_backend_path", &SchedulerConfig::objectstore_backend_path),
-#else
-      field("config_file", &SchedulerConfig::config_file),
-#endif
-      field("tape_cache_max_age_secs", &SchedulerConfig::tape_cache_max_age_secs),
-      field("retrieve_queue_cache_max_age_secs", &SchedulerConfig::retrieve_queue_cache_max_age_secs));
-  }
+  static constexpr std::size_t memberCount() { return 4; }
 };
 
 /**
  * @brief Logging config.
  */
-struct LoggingConfig {
+struct LoggingConfig final {
   std::string level = "INFO";
   std::string format = "json";
   std::map<std::string, std::string> attributes;
 
-  static consteval auto fields() {
-    return std::make_tuple(field("level", &LoggingConfig::level),
-                           field("format", &LoggingConfig::format),
-                           field("attributes", &LoggingConfig::attributes));
-  }
+  static constexpr std::size_t memberCount() { return 3; }
 };
 
 /**
  * @brief Telemetry config.
  */
-struct TelemetryConfig {
+struct TelemetryConfig final {
   /**
    * @brief Path to the OpenTelemetry declarative config file.
    */
@@ -108,41 +90,30 @@ struct TelemetryConfig {
   // InitFailurePolicy on_init_failure = InitFailurePolicy::warn;
   std::string on_init_failure = "warn";
 
-  static consteval auto fields() {
-    return std::make_tuple(field("config_file", &TelemetryConfig::config_file),
-                           field("on_init_failure", &TelemetryConfig::on_init_failure));
-  }
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
 /**
  * @brief HealthServer config. For applications only.
  */
-struct HealthServerConfig {
+struct HealthServerConfig final {
   bool enabled = false;
   bool use_unix_domain_socket = false;
   std::optional<std::string> host = "";
   std::optional<int> port = 8080;
 
-  static consteval auto fields() {
-    return std::make_tuple(field("enabled", &HealthServerConfig::enabled),
-                           field("use_unix_domain_socket", &HealthServerConfig::use_unix_domain_socket),
-                           field("host", &HealthServerConfig::host),
-                           field("port", &HealthServerConfig::port));
-  }
+  static constexpr std::size_t memberCount() { return 4; }
 };
 
 /**
  * @brief XRootD config to ensure we don't need to rely on environment variables.
  *
  */
-struct XRootDConfig {
+struct XRootDConfig final {
   std::string security_protocol = "sss";
   std::string sss_keytab_path = "etc/cta/sss.keytab";
 
-  static consteval auto fields() {
-    return std::make_tuple(field("security_protocol", &XRootDConfig::security_protocol),
-                           field("sss_keytab_path", &XRootDConfig::sss_keytab_path));
-  }
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
 }  // namespace cta::runtime

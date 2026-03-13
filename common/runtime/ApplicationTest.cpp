@@ -17,9 +17,7 @@ namespace unitTests {
 struct MinimalTestConfig {
   cta::runtime::LoggingConfig logging;
 
-  static consteval auto fields() {
-    return std::make_tuple(cta::runtime::field("logging", &MinimalTestConfig::logging));
-  }
+  static constexpr std::size_t memberCount() { return 1; }
 };
 
 class TestApp {
@@ -134,10 +132,7 @@ TEST(Application, AppCompilesWithCustomConfig) {
     cta::runtime::LoggingConfig logging;
     std::string extraConfigField;
 
-    static consteval auto fields() {
-      return std::make_tuple(cta::runtime::field("logging", &CustomTestConfig::logging),
-                             cta::runtime::field("extraConfigField", &CustomTestConfig::extraConfigField));
-    }
+    static constexpr std::size_t memberCount() { return 2; }
   };
 
   class TestAppWithCustomConfig {

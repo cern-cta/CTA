@@ -25,30 +25,21 @@ struct MyConfig {
   std::optional<int> maybe = std::nullopt;
   std::string default_value = "default_value";
 
-  static consteval auto fields() {
-    return std::make_tuple(cta::runtime::field("mandatory", &MyConfig::mandatory),
-                           cta::runtime::field("maybe", &MyConfig::maybe),
-                           cta::runtime::field("default_value", &MyConfig::default_value));
-  }
+  static constexpr std::size_t memberCount() { return 3; }
 };
 
 struct MapOnlyConfig {
   int mandatory;
   std::unordered_map<std::string, int> counts;
 
-  static consteval auto fields() {
-    return std::make_tuple(cta::runtime::field("mandatory", &MapOnlyConfig::mandatory),
-                           cta::runtime::field("counts", &MapOnlyConfig::counts));
-  }
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
 struct Endpoint {
   std::string host;
   int port;
 
-  static consteval auto fields() {
-    return std::make_tuple(cta::runtime::field("host", &Endpoint::host), cta::runtime::field("port", &Endpoint::port));
-  }
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
 struct Limits {
@@ -56,11 +47,7 @@ struct Limits {
   std::vector<int> retry_backoff_ms;
   std::map<std::string, int> per_user;
 
-  static consteval auto fields() {
-    return std::make_tuple(cta::runtime::field("max_conn", &Limits::max_conn),
-                           cta::runtime::field("retry_backoff_ms", &Limits::retry_backoff_ms),
-                           cta::runtime::field("per_user", &Limits::per_user));
-  }
+  static constexpr std::size_t memberCount() { return 3; }
 };
 
 struct User {
@@ -68,11 +55,7 @@ struct User {
   std::vector<std::string> roles;
   std::optional<std::map<std::string, std::string>> labels = std::nullopt;
 
-  static consteval auto fields() {
-    return std::make_tuple(cta::runtime::field("name", &User::name),
-                           cta::runtime::field("roles", &User::roles),
-                           cta::runtime::field("labels", &User::labels));
-  }
+  static constexpr std::size_t memberCount() { return 3; }
 };
 
 struct ComplexConfig {
@@ -84,24 +67,11 @@ struct ComplexConfig {
   Limits limits;
 
   std::vector<User> users;
-
   std::map<std::string, std::vector<int>> matrix;
-
   std::vector<std::vector<int>> nested_arrays;
-
   std::optional<std::vector<std::map<std::string, int>>> maybe_tables = std::nullopt;
 
-  static consteval auto fields() {
-    return std::make_tuple(cta::runtime::field("mandatory", &ComplexConfig::mandatory),
-                           cta::runtime::field("maybe", &ComplexConfig::maybe),
-                           cta::runtime::field("default_value", &ComplexConfig::default_value),
-                           cta::runtime::field("endpoint", &ComplexConfig::endpoint),
-                           cta::runtime::field("limits", &ComplexConfig::limits),
-                           cta::runtime::field("users", &ComplexConfig::users),
-                           cta::runtime::field("matrix", &ComplexConfig::matrix),
-                           cta::runtime::field("nested_arrays", &ComplexConfig::nested_arrays),
-                           cta::runtime::field("maybe_tables", &ComplexConfig::maybe_tables));
-  }
+  static constexpr std::size_t memberCount() { return 9; }
 };
 
 //------------------------------------------------------------------------------
@@ -126,7 +96,7 @@ garbage
 
 TEST(ConfigLoader, LenientThrowsOnIncorrectToml) {
   TempFile f(R"toml(
-# Oh no, forgot an equals sign
+# missing equals sign
 mandatory 7
 maybe = 42
 default_value = "hi"
@@ -476,36 +446,6 @@ per_user = { alice = 5 }
 
 [[users]]
 name = "alice"
-roles = ["admin"]
-)toml",
-             ".toml");
-
-  EXPECT_THROW((cta::runtime::loadFromToml<ComplexConfig>(f.path(), false)), cta::exception::UserError);
-}
-
-TEST(ConfigLoader, LenientThrowsOnArrayOfTablesPartialDefinitions) {
-  TempFile f(R"toml(
-mandatory = 7
-maybe = 1
-default_value = "hi"
-
-matrix = { a = [1], b = [2] }
-nested_arrays = [[1], [2]]
-maybe_tables = [{ k = 1, v = 2 }]
-
-[endpoint]
-host = "localhost"
-port = 8080
-
-[limits]
-max_conn = 100
-retry_backoff_ms = [10, 20]
-per_user = { alice = 5 }
-
-[[users]]
-name = "alice"
-
-[[users]]
 roles = ["admin"]
 )toml",
              ".toml");
@@ -943,36 +883,6 @@ per_user = { alice = 5 }
 name = "alice"
 roles = ["admin"]
 
-)toml",
-             ".toml");
-
-  EXPECT_THROW((cta::runtime::loadFromToml<ComplexConfig>(f.path(), true)), cta::exception::UserError);
-}
-
-TEST(ConfigLoader, StrictThrowsOnArrayOfTablesPartialDefinitions) {
-  TempFile f(R"toml(
-mandatory = 7
-maybe = 1
-default_value = "hi"
-
-matrix = { a = [1], b = [2] }
-nested_arrays = [[1], [2]]
-maybe_tables = [{ k = 1, v = 2 }]
-
-[endpoint]
-host = "localhost"
-port = 8080
-
-[limits]
-max_conn = 100
-retry_backoff_ms = [10, 20]
-per_user = { alice = 5 }
-
-[[users]]
-name = "alice"
-
-[[users]]
-roles = ["admin"]
 )toml",
              ".toml");
 

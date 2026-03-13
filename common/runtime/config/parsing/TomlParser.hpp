@@ -5,10 +5,8 @@
 
 #pragma once
 
-// TODO: change
-#include "../ConfigMeta.hpp"
 #include "ParseResult.hpp"
-#include "ParserConstraints.hpp"
+#include "Reflection.hpp"
 #include "common/exception/UserError.hpp"
 
 #include <algorithm>
@@ -21,6 +19,45 @@
 #include <unordered_set>
 
 namespace cta::runtime::parsing {
+
+// Constraints
+
+template<class T>
+struct is_std_optional : std::false_type {};
+
+template<class U>
+struct is_std_optional<std::optional<U>> : std::true_type {};
+
+template<class T>
+concept StdOptional = is_std_optional<std::remove_cvref_t<T>>::value;
+
+template<class T>
+struct is_std_vector : std::false_type {};
+
+template<class U, class A>
+struct is_std_vector<std::vector<U, A>> : std::true_type {};
+
+template<class T>
+concept StdVector = is_std_vector<std::remove_cvref_t<T>>::value;
+
+template<class T>
+struct is_map_string_key : std::false_type {};
+
+template<class V, class C, class A>
+struct is_map_string_key<std::map<std::string, V, C, A>> : std::true_type {};
+
+template<class V, class H, class E, class A>
+struct is_map_string_key<std::unordered_map<std::string, V, H, E, A>> : std::true_type {};
+
+template<class T>
+concept MapStringKey = is_map_string_key<std::remove_cvref_t<T>>::value;
+
+template<class T>
+concept TomlValueConvertible =
+  requires(toml::node_view<const toml::node> nv) { nv.template value<std::remove_cvref_t<T>>(); };
+
+template<class T>
+concept ScalarLike = TomlValueConvertible<T> && !StdOptional<T> && !Aggregate<T> && !StdVector<T> && !MapStringKey<T>;
 
 // Forward declarations
 
@@ -39,10 +76,10 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
 template<ScalarLike T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
 
-template<Reflectable T>
+template<Aggregate T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
 
-template<Reflectable T>
+template<Aggregate T>
 ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tbl, const bool strict);
 
 // Implementations
@@ -129,7 +166,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
   return ParseResult::success();
 }
 
-template<Reflectable T>
+template<Aggregate T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
   const toml::table* tbl = node.as_table();
   if (!tbl) {
@@ -138,23 +175,23 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
   return parseTable(out, fieldName, *tbl, strict);
 }
 
-template<Reflectable T>
+template<Aggregate T>
 ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tbl, const bool strict) {
   std::unordered_set<std::string_view> seenFields;
 
   std::vector<ParseResult> errs;
 
-  auto assignField = [&](auto field) {
-    const auto node = tbl[field.name];
+  auto assignField = [&](std::string_view fieldName, auto& field) {
+    const auto node = tbl[fieldName];
 
     if (!node) {
       if (strict) {
-        errs.push_back(ParseResult::error("Field named '" + std::string(field.name) + "' not found."));
+        errs.push_back(ParseResult::error("Field named '" + std::string(fieldName) + "' not found."));
       }
       return;
     }
-    seenFields.insert(field.name);
-    auto res = parseNode(out.*(field.ptr), field.name, node, strict);
+    seenFields.insert(fieldName);
+    auto res = parseNode(field, fieldName, node, strict);
     if (!res.ok()) {
       errs.push_back(res);
       return;
@@ -162,8 +199,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
   };
 
   // Do a pass over the fields of T and try to assign its members
-  // TODO: replace T::fields with reflection
-  std::apply([&](const auto&... fields) { (assignField(fields), ...); }, T::fields());
+  forEachMember(out, assignField);
 
   if (strict) {
     // In strict mode, we need to do a second pass to spot keys in the TOML but not in T
@@ -179,7 +215,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
   return ParseResult::error(fieldName, errs);
 }
 
-template<Reflectable T>
+template<Aggregate T>
 ParseResult parseTable(T& out, const toml::table& tbl, const bool strict) {
   return parseTable(out, "", tbl, strict);
 }
