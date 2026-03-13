@@ -172,9 +172,14 @@ public:
   bool getJwtAuth() const { return m_jwtAuth; }
 
   /*
-   * Get the feature flag to disable CTA admin commands
+   * Get the feature flag to disable admin commands
    */
-  bool getenableCtaAdminCommands() const { return m_enableCtaAdminCommands; }
+  bool getEnableAdminCommands() const { return m_enableAdminCommands; }
+
+  /*
+   * Get the feature flag to disable workflow events
+   */
+  bool getEnableWorkflowEvents() const { return m_enableWorkflowEvents; }
 
 private:
   /*!
@@ -213,13 +218,14 @@ private:
   std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file
   std::optional<std::string>                    m_tlsChain;                     //!< The TLS CA chain file
   uint64_t                                      m_missingFileCopiesMinAgeSecs;  //!< Missing tape file copies minimum age.
-  std::string                                   m_instanceName;               //!< value of cta.instance_name in the CTA frontend configuration file
+  std::string                                   m_instanceName;                 //!< value of cta.instance_name in the CTA frontend configuration file
   std::optional<std::string>                    m_jwksUri;                      //!< The endpoint to obtain public keys from, for validating tokens
   std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
-  std::optional<int>                            m_pubkeyTimeout;        //!< The number of seconds after which to update the cache entry for a cached key
+  std::optional<int>                            m_pubkeyTimeout;                //!< The number of seconds after which to update the cache entry for a cached key
   std::optional<int>                            m_jwksTotalTimeout;             //!< The total timeout in seconds for JWKS endpoint (default 60)
   bool                                          m_jwtAuth;                      //!< Feature flag to guard JWT auth when TLS is enabled
-  bool                                          m_enableCtaAdminCommands;      //!< Feature flag to disable CTA admin commands
+  bool                                          m_enableAdminCommands;          //!< Feature flag to disable CTA admin commands
+  bool                                          m_enableWorkflowEvents;         //!< Feature flag to disable CTA workflow events
   // clang-format on
 };
 

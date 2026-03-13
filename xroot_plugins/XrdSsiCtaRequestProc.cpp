@@ -10,6 +10,7 @@
 
 #include <XrdSsiPbLog.hpp>
 #include <XrdSsiPbRequestProc.hpp>
+#include <common/exception/DisabledError.hpp>
 
 namespace XrdSsiPb {
 
@@ -68,6 +69,10 @@ void RequestProc<cta::xrd::Request, cta::xrd::Response, cta::xrd::Alert>::Execut
     m_metadata.set_type(cta::xrd::Response::RSP_ERR_USER);
     m_metadata.set_message_txt(ex.getMessageValue());
     lc.log(cta::log::INFO, ErrorFunction + "RSP_ERR_USER: " + ex.getMessageValue());
+  } catch (cta::exception::DisabledError& ex) {
+    m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
+    m_metadata.set_message_txt(ex.getMessageValue());
+    lc.log(cta::log::INFO, ErrorFunction + "RSP_ERR_CTA: " + ex.what());
   } catch (cta::exception::Exception& ex) {
     m_metadata.set_type(cta::xrd::Response::RSP_ERR_CTA);
     m_metadata.set_message_txt(ex.getMessageValue());

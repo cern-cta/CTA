@@ -30,6 +30,7 @@
 #include "XrdCtaVersion.hpp"
 #include "XrdCtaVirtualOrganizationLs.hpp"
 #include "common/dataStructures/LogicalLibrary.hpp"
+#include "common/exception/DisabledError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "frontend/common/AdminCmd.hpp"
 #include "frontend/common/PbException.hpp"
@@ -45,13 +46,23 @@ AdminCmdStream::AdminCmdStream(const frontend::FrontendService& frontendService,
       m_stream(stream),
       m_schedDb(frontendService.getSchedDb()),
       m_catalogueConnString(frontendService.getCatalogueConnString()),
-      m_instanceName(frontendService.getInstanceName()) {}
+      m_instanceName(frontendService.getInstanceName()),
+      m_enableAdminCommands(frontendService.getEnableAdminCommands()) {}
 
 xrd::Response AdminCmdStream::process() {
   cta::frontend::RequestTracker requestTracker("ADMIN_STREAMING", "admin");
   xrd::Response response;
 
   utils::Timer t;
+
+  if (!m_enableAdminCommands) {
+    // Only the 'cta-admin version' command should be allowed to proceed
+    if (m_adminCmd.cmd() != admin::AdminCmd::CMD_VERSION || m_adminCmd.subcmd() != admin::AdminCmd::SUBCMD_NONE) {
+      logAdminCmd(AdminCmdStatus::DISABLED, c_disabledAdminCmdMsg, t);
+      requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
+      throw cta::exception::DisabledError(c_disabledAdminCmdMsg);
+    }
+  }
 
   try {
     // Map the <Cmd, SubCmd> to a method

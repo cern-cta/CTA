@@ -15,6 +15,7 @@
 #include "frontend/common/WorkflowEvent.hpp"
 #include "frontend/grpc/common/GrpcAuthUtils.hpp"
 
+#include <common/exception/DisabledError.hpp>
 #include <optional>
 
 /*
@@ -317,12 +318,6 @@ Status CtaRpcImpl::CancelRetrieve(::grpc::ServerContext* context,
 
 Status
 CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* request, cta::xrd::Response* response) {
-  if (!m_frontendService->getenableCtaAdminCommands()) {
-    response->set_type(cta::xrd::Response::RSP_ERR_USER);
-    response->set_message_txt(CTA_ADMIN_COMMANDS_DISABLED_ERROR);
-    return ::grpc::Status(::grpc::StatusCode::UNIMPLEMENTED, CTA_ADMIN_COMMANDS_DISABLED_ERROR);
-  }
-
   // Check if repack requests are blocked
   if (!m_frontendService->getRepackRequestsAllowed() && request->admincmd().subcmd() != admin::AdminCmd::SUBCMD_LS
       && request->admincmd().cmd() == admin::AdminCmd::CMD_REPACK) {
@@ -374,6 +369,11 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
     response->set_type(cta::xrd::Response::RSP_ERR_USER);
     response->set_message_txt(ex.getMessageValue());
     return ::grpc::Status(::grpc::StatusCode::INVALID_ARGUMENT, ex.getMessageValue());
+  } catch (cta::exception::DisabledError& ex) {
+    lc.log(cta::log::INFO, ex.getMessageValue());
+    response->set_type(cta::xrd::Response::RSP_ERR_CTA);
+    response->set_message_txt(ex.getMessageValue());
+    return ::grpc::Status(::grpc::StatusCode::FAILED_PRECONDITION, ex.getMessageValue());
   } catch (cta::exception::Exception& ex) {
     lc.log(cta::log::ERR, ex.getMessageValue());
     response->set_type(cta::xrd::Response::RSP_ERR_CTA);

@@ -76,7 +76,8 @@ private:
   XrdSsiStream*&         m_stream;                 //!< XRootD SSI stream for responses
   cta::SchedulerDB_t&    m_schedDb;                //!< Reference to CTA SchedulerDB
   const std::string      m_catalogueConnString;    //!< CTA Catalogue DB connection string
-  const std::string      m_instanceName;    //!< name of the CTA instance as specified in the server configuration file
+  const std::string      m_instanceName;           //!< name of the CTA instance as specified in the server configuration file
+  const bool             m_enableAdminCommands;    //!< Allow admin commands (version always enabled)
   // clang-format on
 };
 

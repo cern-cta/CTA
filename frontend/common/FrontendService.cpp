@@ -453,9 +453,12 @@ FrontendService::FrontendService(const std::string& configFilename) {
   std::optional<bool> jwtAuth = config.getOptionValueBool("grpc.jwt.enabled");
   m_jwtAuth = jwtAuth.value_or(false);  // default value is false
 
-  std::optional<bool> enableCtaAdminCommands =
-    config.getOptionValueBool("cta.experimental.grpc.cta_admin_commands.enabled");
-  m_enableCtaAdminCommands = enableCtaAdminCommands.value_or(false);  // default value is false
+  std::optional<bool> enableAdminCommands = config.getOptionValueBool("cta.admin_commands.enabled");
+  m_enableAdminCommands = enableAdminCommands.value_or(true);  // default value is false
+
+  std::optional<bool> enableWorkflowEvents = config.getOptionValueBool("cta.workflow_events.enabled");
+  m_enableWorkflowEvents = enableWorkflowEvents.value_or(true);  // default value is false
+
   if (!m_tls && m_jwtAuth) {
     throw exception::UserError("grpc.jwt.auth is set to true when grpc.tls is set to false in configuration file "
                                + configFilename + ". Cannot use tokens over unencrypted channel, tls must be enabled.");

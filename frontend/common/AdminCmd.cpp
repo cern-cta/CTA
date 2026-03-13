@@ -10,6 +10,7 @@
 #include "catalogue/CreateTapeAttributes.hpp"
 #include "catalogue/MediaType.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
+#include "common/exception/DisabledError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "frontend/common/RequestTracker.hpp"
@@ -34,7 +35,8 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
       m_schedulerBackendName(m_scheduler.getSchedulerBackendName()),
       m_acceptUserRequests(frontendService.getUserRequestsAllowed()),
-      m_acceptRepackRequests(frontendService.getRepackRequestsAllowed()) {
+      m_acceptRepackRequests(frontendService.getRepackRequestsAllowed()),
+      m_enableAdminCommands(frontendService.getEnableAdminCommands()) {
   m_lc.push({"user", m_cliIdentity.username});
 
   m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
@@ -45,6 +47,12 @@ xrd::Response AdminCmd::process() {
   xrd::Response response;
 
   utils::Timer t;
+
+  if (!m_enableAdminCommands) {
+    logAdminCmd(AdminCmdStatus::DISABLED, c_disabledAdminCmdMsg, t);
+    requestTracker.setErrorType(cta::semconv::attr::ErrorTypeValues::kException);
+    throw cta::exception::DisabledError(c_disabledAdminCmdMsg);
+  }
 
   try {
     // Map the <Cmd, SubCmd> to a method
@@ -270,6 +278,10 @@ void AdminCmd::logAdminCmd(const AdminCmdStatus status, const std::string& reaso
     }
     case AdminCmdStatus::EXCEPTION: {
       statusStr = "failure";
+      break;
+    }
+    case AdminCmdStatus::DISABLED: {
+      statusStr = "disabled";
       break;
     }
   }

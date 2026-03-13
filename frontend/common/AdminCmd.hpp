@@ -13,7 +13,7 @@
 
 namespace cta::frontend {
 
-enum class AdminCmdStatus { SUCCESS, USER_ERROR, EXCEPTION };
+enum class AdminCmdStatus { SUCCESS, DISABLED, USER_ERROR, EXCEPTION };
 
 class AdminCmd : public AdminCmdOptions {
 public:
@@ -67,6 +67,8 @@ protected:
    */
   std::string setDriveState(const std::string& regex,
                             const common::dataStructures::DesiredDriveState& desiredDriveState);
+
+  inline static const std::string c_disabledAdminCmdMsg = "Admin command disabled on this frontend.";
 
   const admin::AdminCmd m_adminCmd;   //!< Administrator Command protocol buffer
   catalogue::Catalogue& m_catalogue;  //!< Reference to CTA Catalogue
@@ -149,6 +151,7 @@ private:
   std::optional<std::string> m_schedulerBackendName;            //!< Name of the Scheduler DB to which Frontend connects
   const bool m_acceptUserRequests;                              //!< Allow the processing of user requests
   const bool m_acceptRepackRequests;                            //!< Allow the processing of repack requests
+  const bool m_enableAdminCommands;                             //!< Allow admin commands
 };
 
 }  // namespace cta::frontend

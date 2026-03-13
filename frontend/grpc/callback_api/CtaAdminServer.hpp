@@ -72,7 +72,6 @@ public:
                    const std::string& instanceName,
                    const std::string& connstr,
                    uint64_t missingFileCopiesMinAgeSecs,
-                   bool enableCtaAdminCommands,
                    const cta::log::LogContext& logContext,
                    bool jwtAuthEnabled,
                    std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
@@ -84,7 +83,6 @@ public:
         m_schedDb(schedDB),
         m_catalogueConnString(connstr),
         m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs),
-        m_enableCtaAdminCommands(enableCtaAdminCommands),
         m_jwtAuthEnabled(jwtAuthEnabled),
         m_pubkeyCache(pubkeyCache),
         m_tokenStorage(tokenStorage) {}
@@ -103,7 +101,6 @@ private:
   cta::SchedulerDB_t& m_schedDb;                       //!< Reference to CTA SchedulerDB
   std::string m_catalogueConnString;                   //!< Provided by frontendService
   uint64_t m_missingFileCopiesMinAgeSecs;              //!< Provided by the frontendService
-  bool m_enableCtaAdminCommands;                       //!< Feature flag to disable CTA admin commands
   bool m_jwtAuthEnabled;                               //!< Whether JWT authentication is enabled
   std::shared_ptr<cta::auth::JwkCache> m_pubkeyCache;  //!< Shared JWK cache for token validation
   server::TokenStorage& m_tokenStorage;                //!< Required for Kerberos token validation
@@ -112,10 +109,6 @@ private:
 // request object will be filled in by the Parser of the command on the client-side.
 ::grpc::ServerWriteReactor<cta::xrd::StreamResponse>*
 CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, const cta::xrd::Request* request) {
-  if (!m_enableCtaAdminCommands) {
-    return new DefaultWriteReactor(CTA_ADMIN_COMMANDS_DISABLED_ERROR, ::grpc::StatusCode::UNIMPLEMENTED);
-  }
-
   // Authenticate the request using JWT if enabled
   cta::log::LogContext lc(m_lc);
   // get the client metadata for authentication

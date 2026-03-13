@@ -242,7 +242,6 @@ int main(const int argc, char* const* const argv) {
                                              frontendService->getInstanceName(),
                                              frontendService->getCatalogueConnString(),
                                              frontendService->getMissingFileCopiesMinAgeSecs(),
-                                             frontendService->getenableCtaAdminCommands(),
                                              frontendService->getLogContext(),
                                              frontendService->getJwtAuth(),
                                              jwkCache,
