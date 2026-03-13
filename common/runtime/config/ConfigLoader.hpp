@@ -30,13 +30,13 @@ T loadFromToml(const std::string& filePath, bool strict = false) {
   } catch (const toml::parse_error& e) {
     std::ostringstream oss;
     oss << e;
-    throw cta::exception::UserError("Failed to parse toml file '" + filePath + "': " + oss.str());
+    throw cta::exception::UserError("Failed to parse toml file '" + filePath + "': " + oss.str(), false);
   }
 
   T config {};
   auto res = parsing::parseTable(config, tbl, strict);
   if (!res.ok()) {
-    throw cta::exception::UserError("Invalid config in '" + filePath + "':\n" + res.what());
+    throw cta::exception::UserError("Invalid config in '" + filePath + "':\n" + res.what(), false);
   }
   return config;
 }

@@ -217,6 +217,7 @@ counts = { alice = "one" }
 TEST(ConfigLoader, LenientThrowsOnUnorderedMapWrongShapeArrayInsteadOfTable) {
   TempFile f(R"toml(
 mandatory = 7
+# Supposed to be a map
 counts = [1, 2, 3]
 )toml",
              ".toml");
@@ -483,6 +484,60 @@ roles = ["user"]
              ".toml");
 
   EXPECT_THROW((cta::runtime::loadFromToml<ComplexConfig>(f.path(), false)), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, LenientErrorMessages) {
+  TempFile f(R"toml(
+mandatory = 7
+# maybe should be an int, not a string
+maybe = "123"
+default_value = "hi"
+
+# a is supposed to be a list
+matrix = { a = "hello" }
+nested_arrays = [[1, 2], [3, 4, 5]]
+
+maybe_tables = [{ k = 1, v = 2 }, { k = 3, v = 4 }]
+
+# This key doesn't exist in the config
+idontexist = 3
+
+[endpoint]
+host = "localhost"
+port = 8080
+
+[limits]
+# Should be an int
+max_conn = "100"
+# Should be a list
+retry_backoff_ms = 20
+# Subtype should not be a string
+per_user = { alice = "5", bob = 10, "svc-account" = 1 }
+
+# Missing users table
+)toml",
+             ".toml");
+
+  try {
+    cta::runtime::loadFromToml<ComplexConfig>(f.path(), false);
+    FAIL() << "Expected cta::exception::UserError";
+  } catch (const cta::exception::UserError& e) {
+    std::string expectedErrorMessage = "Invalid config in '" + f.path() + R"""(':
+1) Failed to parse field 'limits':
+    1) Value named 'max_conn' contains a type mismatch or invalid value.
+    2) Value named 'retry_backoff_ms' is not an array.
+    3) Failed to parse field 'per_user':
+        1) Value named 'alice' contains a type mismatch or invalid value.
+2) Failed to parse field 'matrix':
+    1) Value named 'a' is not an array.
+3) Failed to parse field 'maybe':
+    1) Value named 'maybe' contains a type mismatch or invalid value.
+
+)""";
+    EXPECT_EQ(std::string(e.what()), expectedErrorMessage);
+  } catch (...) {
+    FAIL() << "Expected cta::exception::UserError";
+  }
 }
 
 // Strict Mode
@@ -919,6 +974,62 @@ roles = ["user"]
              ".toml");
 
   EXPECT_THROW((cta::runtime::loadFromToml<ComplexConfig>(f.path(), true)), cta::exception::UserError);
+}
+
+TEST(ConfigLoader, StrictErrorMessages) {
+  TempFile f(R"toml(
+mandatory = 7
+# maybe should be an int, not a string
+maybe = "123"
+default_value = "hi"
+
+# a is supposed to be a list
+matrix = { a = "hello" }
+nested_arrays = [[1, 2], [3, 4, 5]]
+
+maybe_tables = [{ k = 1, v = 2 }, { k = 3, v = 4 }]
+
+# This key doesn't exist in the config
+idontexist = 3
+
+[endpoint]
+host = "localhost"
+port = 8080
+
+[limits]
+# Should be an int
+max_conn = "100"
+# Should be a list
+retry_backoff_ms = 20
+# Subtype should not be a string
+per_user = { alice = "5", bob = 10, "svc-account" = 1 }
+
+# Missing users table
+)toml",
+             ".toml");
+
+  try {
+    cta::runtime::loadFromToml<ComplexConfig>(f.path(), true);
+    FAIL() << "Expected cta::exception::UserError";
+  } catch (const cta::exception::UserError& e) {
+    std::string expectedErrorMessage = "Invalid config in '" + f.path() + R"""(':
+1) Field named 'users' not found.
+2) Value named 'idontexist' not used.
+3) Failed to parse field 'limits':
+    1) Value named 'max_conn' contains a type mismatch or invalid value.
+    2) Value named 'retry_backoff_ms' is not an array.
+    3) Failed to parse field 'per_user':
+        1) Value named 'alice' contains a type mismatch or invalid value.
+4) Failed to parse field 'matrix':
+    1) Value named 'a' is not an array.
+5) Failed to parse field 'maybe':
+    1) Value named 'maybe' contains a type mismatch or invalid value.
+
+)""";
+    EXPECT_EQ(std::string(e.what()), expectedErrorMessage);
+  } catch (...) {
+    FAIL() << "Expected cta::exception::UserError";
+  }
 }
 
 }  // namespace unitTests

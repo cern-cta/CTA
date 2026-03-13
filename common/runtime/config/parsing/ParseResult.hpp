@@ -10,6 +10,18 @@
 
 namespace cta::runtime::parsing {
 
+/**
+   * @brief Encapsulates the result of a parsing step.
+   *
+   * In this case there are a few scenarios:
+   * - Parsing was a success. In this case, the class is essentially empty.
+   * - Parsing was a failure and we were at a leave node. In this case, only an error message is passed in.
+   * - Parsing was a failure and we were not at a leave node. In this case, the error is determined by the child parse results.
+   *   Here all child parse results should be errors. They may be errors at leave nodes or other intermediate errors.
+   *
+   * From these cases, the what() function can constructed a comprehensive error message which follows the tree-like structure of the parser.
+   *
+   */
 class ParseResult {
 public:
   static ParseResult success() { return ParseResult(); }
@@ -24,51 +36,15 @@ public:
     return ParseResult(fieldName, children);
   }
 
-  // TODO: add test to verify error message
-  std::string what(int indent = 0) const {
-    const int indentIncrement = 4;
-    if (ok()) {
-      return "";
-    }
+  std::string what(int indent = 0) const;
 
-    if (m_childErrors.empty()) {
-      return m_error + '\n';
-    }
-    std::string message;
-    if (!m_fieldName.empty()) {
-      message += "Failed to parse field '" + m_fieldName + "':\n";
-    }
-    // Ensure messages are consistently sorted and grouped
-    auto sortedChildren = m_childErrors;
-    std::sort(sortedChildren.begin(), sortedChildren.end(), [](const auto& a, const auto& b) {
-      if (!a.m_error.empty() && !b.m_error.empty()) {
-        return a.m_error < b.m_error;
-      }
-      return a.m_fieldName < b.m_fieldName;
-    });
-
-    std::string indentation(indent, ' ');
-    for (size_t idx = 1; const auto& childErr : sortedChildren) {
-      message += indentation + std::to_string(idx) + ") " + childErr.what(indent + indentIncrement);
-      idx++;
-    }
-    return message;
-  }
-
-  bool ok() const { return m_error.empty() && m_childErrors.empty(); }
-
-  void addError(const ParseResult& child) { m_childErrors.push_back(child); }
+  bool ok() const;
 
 private:
-  ParseResult() {}
-
-  ParseResult(std::string_view error) : m_error(error) {}
-
-  ParseResult(std::string_view fieldName, const ParseResult& child) : m_fieldName(fieldName), m_childErrors {child} {}
-
-  ParseResult(std::string_view fieldName, const std::vector<ParseResult>& children)
-      : m_fieldName(fieldName),
-        m_childErrors {children} {}
+  ParseResult();
+  ParseResult(std::string_view error);
+  ParseResult(std::string_view fieldName, const ParseResult& child);
+  ParseResult(std::string_view fieldName, const std::vector<ParseResult>& children);
 
   std::string m_fieldName;
   std::string m_error;

@@ -57,7 +57,8 @@ concept TomlValueConvertible =
   requires(toml::node_view<const toml::node> nv) { nv.template value<std::remove_cvref_t<T>>(); };
 
 template<class T>
-concept ScalarLike = TomlValueConvertible<T> && !StdOptional<T> && !Aggregate<T> && !StdVector<T> && !MapStringKey<T>;
+concept ScalarLike =
+  TomlValueConvertible<T> && !StdOptional<T> && !reflection::Aggregate<T> && !StdVector<T> && !MapStringKey<T>;
 
 // Forward declarations
 
@@ -76,10 +77,10 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
 template<ScalarLike T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
 
-template<Aggregate T>
+template<reflection::Aggregate T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
 
-template<Aggregate T>
+template<reflection::Aggregate T>
 ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tbl, const bool strict);
 
 // Implementations
@@ -166,7 +167,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
   return ParseResult::success();
 }
 
-template<Aggregate T>
+template<reflection::Aggregate T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
   const toml::table* tbl = node.as_table();
   if (!tbl) {
@@ -175,7 +176,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
   return parseTable(out, fieldName, *tbl, strict);
 }
 
-template<Aggregate T>
+template<reflection::Aggregate T>
 ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tbl, const bool strict) {
   std::unordered_set<std::string_view> seenFields;
 
@@ -199,7 +200,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
   };
 
   // Do a pass over the fields of T and try to assign its members
-  forEachMember(out, assignField);
+  reflection::forEachMember(out, assignField);
 
   if (strict) {
     // In strict mode, we need to do a second pass to spot keys in the TOML but not in T
@@ -215,7 +216,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
   return ParseResult::error(fieldName, errs);
 }
 
-template<Aggregate T>
+template<reflection::Aggregate T>
 ParseResult parseTable(T& out, const toml::table& tbl, const bool strict) {
   return parseTable(out, "", tbl, strict);
 }

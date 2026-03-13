@@ -419,6 +419,10 @@ private:
     if (!config.experimental.telemetry_enabled || config.telemetry.config_file.empty()) {
       return;
     }
+    if (config.telemetry.on_init_failure != "fatal" && config.telemetry.on_init_failure != "warn") {
+      throw exception::UserError("Unsupported value for telemetry.on_init_failure: '" + config.telemetry.on_init_failure
+                                 + "'. Must be one of [fatal, warn].");
+    }
     log::LogContext lc(*m_logPtr);
     try {
       std::map<std::string, std::string> ctaResourceAttributes = {
@@ -433,7 +437,6 @@ private:
       }
       cta::telemetry::initOpenTelemetry(config.telemetry.config_file, ctaResourceAttributes, lc);
     } catch (exception::Exception& ex) {
-      // if (config.telemetry.on_init_failure == InitFailurePolicy::fatal) {
       if (config.telemetry.on_init_failure == "fatal") {
         throw ex;
       }

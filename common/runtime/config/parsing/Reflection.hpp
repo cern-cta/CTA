@@ -25,7 +25,7 @@
  * - https://stackoverflow.com/questions/78863041/getting-index-of-current-tuple-item-in-stdapply
  */
 
-namespace cta::runtime::parsing {
+namespace cta::runtime::parsing::reflection {
 
 /**
  * @brief Ensures T is an Aggregate type.
@@ -218,9 +218,9 @@ consteval auto getMemberNames() {
  */
 template<Aggregate T, typename F>
 void forEachMember(T& t, F&& func) {
-  // Turns out counting the number of members is not trivial at all
-  // There are a few tricks one can do with aggregate initialisation (T{args}), but this fails with optional fields
-  // So for now, we'll just have to explicitly specify the member count per struct.
+  // Turns out counting the number of members is not trivial at all. There are just too many edge cases...
+  // There are a few tricks one can do with aggregate initialisation (T{args}), such as described here: https://stackoverflow.com/a/63172566
+  // But this fails with optional fields, so for now, we'll just have to explicitly specify the member count per struct.
   // In theory you could do it with: https://towardsdev.com/counting-the-number-of-fields-in-an-aggregate-in-c-20-c81aecfd725c
   // But good luck with that if anything breaks...
   constexpr std::size_t N = T::memberCount();
@@ -231,4 +231,4 @@ void forEachMember(T& t, F&& func) {
   }(std::make_index_sequence<N> {});
 }
 
-}  // namespace cta::runtime::parsing
+}  // namespace cta::runtime::parsing::reflection
