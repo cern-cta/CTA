@@ -18,7 +18,7 @@
  * However, for other parts of the code, there is most likely a better way of doing it than relying on reflection.
  *
  * Note that this is not a full reflection library. Instead, this is a somewhat simple (believe it or not) and constrained implementation that provides
- * the forEachMember function, which can be used to loop over the members of Aggregate types. Note that these types MUST have a member called memberCount() that gives
+ * the forEachMember function, which can be used to loop over the members of Reflectable types. Note that these types MUST have a member called memberCount() that gives
  * the number of members in the type. This is because figuring this out automatically is so non-trivial that I decided not to take the risk of including it.
  *
  * Most of the implementation relies on template magic, so its usage should be limited to the config parsing.
@@ -33,10 +33,12 @@
 namespace cta::runtime::parsing::reflection {
 
 /**
- * @brief Ensures T is an Aggregate type.
+ * @brief Ensures T is an Aggregate type and has a static member function that returns a size_t.
  */
 template<class T>
-concept Aggregate = std::is_aggregate_v<T>;
+concept Reflectable = std::is_aggregate_v<T> && requires {
+  { T::memberCount() } -> std::convertible_to<std::size_t>;
+};
 
 /**
  * @brief Obtains the name of a type member by inspecting the template arguments using std::source_location and some string manipulation magic.
@@ -64,14 +66,14 @@ consteval std::string_view getMemberName() {
 }
 
 /**
- * @brief Takes the Aggregate type T and unpacks all of its members into a tuple.
+ * @brief Takes the Reflectable type T and unpacks all of its members into a tuple.
  *
- * @tparam T The Aggregate type to unpack.
+ * @tparam T The Reflectable type to unpack.
  * @tparam N The number of members of T. If not provided, this is calculated automatically.
  * @param t Instance of T to unpack.
  * @return constexpr auto A tuple containing references to each member of t.
  */
-template<Aggregate T, std::size_t N>
+template<Reflectable T, std::size_t N>
 constexpr auto asTuple(T& t) {
   // Yes this is hacky, but it is the only way to unpack T in C++20.
   // All the reflection libraries at the time of writing do something similar. If only we could use packs in structured bindings...
@@ -182,7 +184,7 @@ constexpr auto asTuple(T& t) {
 /**
  * @brief Static storage for type T to ensure we can create a compile time instance of T to extract its member names.
  */
-template<Aggregate T>
+template<Reflectable T>
 struct StaticWrapper {
   inline static T fake {};
 };
@@ -190,11 +192,11 @@ struct StaticWrapper {
 /**
  * @brief Returns a list of member names for a given type T.
  *
- * @tparam T The Aggregate type to extract the member names of.
+ * @tparam T The Reflectable type to extract the member names of.
  * @tparam N The number of members of T. If not provided, this is calculated automatically.
  * @return consteval An array of strings containing the member names of T
  */
-template<Aggregate T, std::size_t N>
+template<Reflectable T, std::size_t N>
 consteval auto getMemberNames() {
   // This is a tricky part, because we need the tuple unpacking at compile time (for getMemberName to work)
   // The static wrapper gives us an object we can use at compile time.
@@ -206,7 +208,7 @@ consteval auto getMemberNames() {
 }
 
 /**
- * @brief The main function of this simple reflection implementation. Allows for looping over the members of Aggregate types.
+ * @brief The main function of this simple reflection implementation. Allows for looping over the members of Reflectable types.
  * For example:
  *
  *   Foo foo;
@@ -219,12 +221,12 @@ consteval auto getMemberNames() {
  * - It needs to loop over the members of T. This must happen at runtime.
  * - It needs to somehow combine this information so that when you loop over T at runtime, you have the name of the corresponding member generated at compile time.
  *
- * @tparam T The Aggregate type of t.
+ * @tparam T The Reflectable type of t.
  * @tparam F The type of func.
  * @param t Instance of T that should be looped over.
  * @param func The visitor function that should be invoked for each member. Must be a void function taking (std::string_view, auto&).
  */
-template<Aggregate T, typename F>
+template<Reflectable T, typename F>
 void forEachMember(T& t, F&& func) {
   // Turns out counting the number of members is not trivial at all. There are just too many edge cases...
   // There are a few tricks one can do with aggregate initialisation (T{args}), such as described here: https://stackoverflow.com/a/63172566

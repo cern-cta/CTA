@@ -58,7 +58,7 @@ concept TomlValueConvertible =
 
 template<class T>
 concept ScalarLike =
-  TomlValueConvertible<T> && !StdOptional<T> && !reflection::Aggregate<T> && !StdVector<T> && !MapStringKey<T>;
+  TomlValueConvertible<T> && !StdOptional<T> && !reflection::Reflectable<T> && !StdVector<T> && !MapStringKey<T>;
 
 // Forward declarations (needed because we have some recursive calls)
 
@@ -74,10 +74,10 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
 template<ScalarLike T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
 
-template<reflection::Aggregate T>
+template<reflection::Reflectable T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
 
-template<reflection::Aggregate T>
+template<reflection::Reflectable T>
 ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tbl, const bool strict);
 
 // Implementations
@@ -165,7 +165,7 @@ ParseResult parseNode(T& out,
   return ParseResult::success();
 }
 
-template<reflection::Aggregate T>
+template<reflection::Reflectable T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
   const toml::table* tbl = node.as_table();
   if (!tbl) {
@@ -174,7 +174,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
   return parseTable(out, fieldName, *tbl, strict);
 }
 
-template<reflection::Aggregate T>
+template<reflection::Reflectable T>
 ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tbl, const bool strict) {
   std::unordered_set<std::string_view> seenFields;
 
@@ -214,7 +214,7 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
   return ParseResult::error(fieldName, errs);
 }
 
-template<reflection::Aggregate T>
+template<reflection::Reflectable T>
 ParseResult parseTable(T& out, const toml::table& tbl, const bool strict) {
   return parseTable(out, "", tbl, strict);
 }
