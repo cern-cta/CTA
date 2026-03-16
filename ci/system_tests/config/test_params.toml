@@ -30,7 +30,7 @@ max_acceptable_loss_percent = 5.0
 
 # If true, put drives down before archiving and only put them up after num_files_to_put_drives_up files are created.
 # This prevents drives from outpacing the queueing capabilities of EOS.
-enabled = false
+enabled = true
 num_files_to_put_drives_up = 1000000
 # timeout in seconds
 timeout_to_put_drives_up_sec = 3600
