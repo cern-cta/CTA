@@ -5,9 +5,11 @@
 
 #include "ParseResult.hpp"
 
+#include <algorithm>
+
 namespace cta::runtime::parsing {
 
-ParseResult::ParseResult() {}
+ParseResult::ParseResult() = default;
 
 ParseResult::ParseResult(std::string_view error) : m_error(error) {}
 
@@ -34,7 +36,7 @@ std::string ParseResult::what(int indent) const {
   }
   // Ensure messages are consistently sorted and grouped
   auto sortedChildren = m_childErrors;
-  std::sort(sortedChildren.begin(), sortedChildren.end(), [](const auto& a, const auto& b) {
+  std::ranges::sort(sortedChildren, [](const auto& a, const auto& b) {
     if (!a.m_error.empty() && !b.m_error.empty()) {
       return a.m_error < b.m_error;
     }

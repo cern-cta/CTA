@@ -34,8 +34,7 @@ T loadFromToml(const std::string& filePath, bool strict = false) {
   }
 
   T config {};
-  auto res = parsing::parseTable(config, tbl, strict);
-  if (!res.ok()) {
+  if (auto res = parsing::parseTable(config, tbl, strict); !res.ok()) {
     throw cta::exception::UserError("Invalid config in '" + filePath + "':\n" + res.what(), false);
   }
   return config;

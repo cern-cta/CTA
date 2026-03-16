@@ -60,12 +60,9 @@ template<class T>
 concept ScalarLike =
   TomlValueConvertible<T> && !StdOptional<T> && !reflection::Aggregate<T> && !StdVector<T> && !MapStringKey<T>;
 
-// Forward declarations
+// Forward declarations (needed because we have some recursive calls)
 
 template<StdOptional T>
-ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
-
-template<StdVector T>
 ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict);
 
 template<StdVector T>
@@ -96,8 +93,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
   }
   using InnerType = typename std::remove_cvref_t<T>::value_type;
   InnerType tmp;
-  auto res = parseNode(tmp, fieldName, node, strict);
-  if (!res.ok()) {
+  if (auto res = parseNode(tmp, fieldName, node, strict); !res.ok()) {
     return ParseResult::error(fieldName, res);
   }
   out = std::move(tmp);
@@ -115,7 +111,7 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
   using ElemType = typename std::remove_cvref_t<T>::value_type;
 
   std::vector<ParseResult> errs;
-  arr->for_each([&](auto&& val) {
+  arr->for_each([&out, &fieldName, &errs, strict](auto& val) {
     ElemType elem {};
     auto res = parseNode(elem, fieldName, toml::node_view<const toml::node> {&val}, strict);
     if (!res.ok()) {
@@ -140,10 +136,9 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
   using ElemType = typename std::remove_cvref_t<T>::mapped_type;
 
   std::vector<ParseResult> errs;
-  tbl->for_each([&](auto&& key, auto&& val) {
+  tbl->for_each([&out, &errs, strict](auto& key, auto& val) {
     ElemType elem {};
-    auto res = parseNode(elem, key, toml::node_view<const toml::node> {&val}, strict);
-    if (!res.ok()) {
+    if (auto res = parseNode(elem, key, toml::node_view<const toml::node> {&val}, strict); !res.ok()) {
       errs.push_back(res);
       return;
     }
@@ -156,7 +151,10 @@ ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const 
 }
 
 template<ScalarLike T>
-ParseResult parseNode(T& out, std::string_view fieldName, toml::node_view<const toml::node> node, const bool strict) {
+ParseResult parseNode(T& out,
+                      std::string_view fieldName,
+                      toml::node_view<const toml::node> node,
+                      [[maybe_unused]] const bool strict) {
   using F = std::remove_cvref_t<T>;
   auto val = node.value<F>();
   if (!val) {
@@ -182,17 +180,17 @@ ParseResult parseTable(T& out, std::string_view fieldName, const toml::table& tb
 
   std::vector<ParseResult> errs;
 
-  auto assignField = [&](std::string_view fieldName, auto& field) {
-    const auto node = tbl[fieldName];
+  auto assignField = [&tbl, &errs, &seenFields, strict](std::string_view tableFieldName, auto& field) {
+    const auto node = tbl[tableFieldName];
 
     if (!node) {
       if (strict) {
-        errs.push_back(ParseResult::error("Field named '" + std::string(fieldName) + "' not found."));
+        errs.push_back(ParseResult::error("Field named '" + std::string(tableFieldName) + "' not found."));
       }
       return;
     }
-    seenFields.insert(fieldName);
-    auto res = parseNode(field, fieldName, node, strict);
+    seenFields.insert(tableFieldName);
+    auto res = parseNode(field, tableFieldName, node, strict);
     if (!res.ok()) {
       errs.push_back(res);
       return;

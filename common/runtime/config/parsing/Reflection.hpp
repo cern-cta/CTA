@@ -12,9 +12,14 @@
 #include <tuple>
 
 /*
+ * IMPORTANT NOTE: If you are thinking of using this code for anything other config parsing (as it is used now), I would advise against it.
+ * While this implementation works and is robust enough for the config parsing use case, it was not designed and/or tested to be used outside of this
+ * and will most likely cause unexpected issues and maintenance work. Serialization is one of the most common use cases for reflection as it provides clear benefits there.
+ * However, for other parts of the code, there is most likely a better way of doing it than relying on reflection.
+ *
  * Note that this is not a full reflection library. Instead, this is a somewhat simple (believe it or not) and constrained implementation that provides
  * the forEachMember function, which can be used to loop over the members of Aggregate types. Note that these types MUST have a member called memberCount() that gives
- * the number of members in the type. This is because figuring this out automatically is so non-trivial that we decided not to take the risk of including it.
+ * the number of members in the type. This is because figuring this out automatically is so non-trivial that I decided not to take the risk of including it.
  *
  * Most of the implementation relies on template magic, so its usage should be limited to the config parsing.
  * Ideally, this is replaced by proper C++ reflection as soon as this is available.
