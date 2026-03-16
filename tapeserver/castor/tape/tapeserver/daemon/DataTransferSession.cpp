@@ -618,7 +618,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(cta::log::LogCo
   }
   try {
     std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive;
-    drive.reset(castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
+    drive = castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper);
     if (drive) {
       drive->config = m_driveConfig;
     }
