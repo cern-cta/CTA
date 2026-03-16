@@ -97,6 +97,21 @@ else
   errors=$((errors + 1))
 fi
 
+MIN_PYTEST_ASYNCIO_VERSION="0.23.5" # declared compatibility with pytest 8
+echo "Checking that pytest-asyncio version is at least $MIN_PYTEST_ASYNCIO_VERSION"
+INSTALLED_PYTEST_ASYNCIO_VERSION="$(pip show pytest-asyncio 2>/dev/null | grep '^Version:' | awk '{print $2}')"
+if [ -n "$INSTALLED_PYTEST_ASYNCIO_VERSION" ]; then
+  if [ "$(printf '%s\n' "$MIN_PYTEST_ASYNCIO_VERSION" "$INSTALLED_PYTEST_ASYNCIO_VERSION" | sort -V | head -n1)" = "$MIN_PYTEST_ASYNCIO_VERSION" ]; then
+    echo "SUCCESS: pytest-asyncio version $INSTALLED_PYTEST_ASYNCIO_VERSION is at least $MIN_PYTEST_ASYNCIO_VERSION"
+  else
+    echo "ERROR: pytest-asyncio version $INSTALLED_PYTEST_ASYNCIO_VERSION is less than required $MIN_PYTEST_ASYNCIO_VERSION"
+    errors=$((errors + 1))
+  fi
+else
+  echo "ERROR: pytest-asyncio does not seem to be installed"
+  errors=$((errors + 1))
+fi
+
 echo
 if [[ "${errors}" -gt 0 ]]; then
   echo "FAILURE: not all conditions were satisfied. The runner is not configured correctly"
