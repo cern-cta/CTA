@@ -9,40 +9,64 @@
     "log_level",
     "pid",
     "tid",
-    "message"
+    "message",
+    "schema_version"
   ],
   "properties": {
     "epoch_time": {
       "type": "number",
-      "description": "Unix epoch timestamp with fractional seconds"
+      "description": "Unix epoch timestamp in seconds, including fractional seconds."
     },
     "local_time": {
       "type": "string",
-      "description": "Local timestamp",
+      "description": "Local timestamp of the log entry formatted as YYYY-MM-DDTHH:MM:SS±HHMM.",
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{4}$"
+    },
+    "log_schema_version": {
+      "const": "0.0.1",
+      "description": "Version identifier of the log schema."
     },
     "hostname": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "Hostname of the machine or container where the log entry was generated."
     },
     "program": {
       "type": "string",
-      "enum": ["cta-maintd", "cta-frontend", "cta-taped"]
+      "enum": [
+        "cta-maintd",
+        "cta-frontend",
+        "cta-taped"
+      ],
+      "description": "Name of the CTA service or component emitting the log entry."
     },
     "log_level": {
       "type": "string",
-      "enum": ["DEBUG", "INFO", "NOTICE", "WARN", "ERROR", "CRIT", "ALERT", "EMERG"]
+      "enum": [
+        "DEBUG",
+        "INFO",
+        "NOTICE",
+        "WARN",
+        "ERROR",
+        "CRIT",
+        "ALERT",
+        "EMERG"
+      ],
+      "description": "Severity level of the log entry following syslog-style severity levels."
     },
     "pid": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 0,
+      "description": "Process identifier of the program instance that generated the log entry."
     },
     "tid": {
       "type": "integer",
-      "minimum": 0
+      "minimum": 0,
+      "description": "Thread identifier within the process that generated the log entry."
     },
     "message": {
-      "type": "string"
+      "type": "string",
+      "description": "Human-readable log message describing the event."
     }
   },
   "additionalProperties": true

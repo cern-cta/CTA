@@ -9,6 +9,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
+#include "version.h"
 
 #include <iomanip>
 #include <ranges>
@@ -194,6 +195,7 @@ std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
     case LogFormat::JSON:
       os << R"("epoch_time":)" << ts_s_fraction << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << R"(,)"
          << R"("local_time":")" << std::put_time(&localTime, "%FT%T%z") << R"(",)"
+         << R"("log_schema_version":")" << stringFormattingJSON(LOG_SCHEMA_VERSION) << R"(",)"
          << R"("hostname":")" << stringFormattingJSON(m_hostName) << R"(",)"
          << R"("program":")" << stringFormattingJSON(m_programName) << R"(",)";
   }
