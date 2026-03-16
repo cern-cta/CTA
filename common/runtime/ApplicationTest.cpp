@@ -5,7 +5,6 @@
 
 #include "Application.hpp"
 
-#include "CommonCliOptions.hpp"
 #include "RuntimeTestHelpers.hpp"
 
 #include <chrono>
@@ -17,6 +16,8 @@ namespace unitTests {
 
 struct MinimalTestConfig {
   cta::runtime::LoggingConfig logging;
+
+  static constexpr std::size_t memberCount() { return 1; }
 };
 
 class TestApp {
@@ -130,6 +131,8 @@ TEST(Application, AppCompilesWithCustomConfig) {
   struct CustomTestConfig {
     cta::runtime::LoggingConfig logging;
     std::string extraConfigField;
+
+    static constexpr std::size_t memberCount() { return 2; }
   };
 
   class TestAppWithCustomConfig {

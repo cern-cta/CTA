@@ -51,7 +51,7 @@ end
 
 ## Config Loading
 
-Config loading is done using a combination of [tomlplusplus](https://github.com/marzer/tomlplusplus) to read TOML files and [reflect-cpp](https://github.com/getml/reflect-cpp) to populate the struct.
+Config loading is done using a combination of [tomlplusplus](https://github.com/marzer/tomlplusplus) to read TOML files and a custom parser to populate the struct.
 
 The only thing the developer needs to take care of is that the structure of the config struct matches the structure of TOML files. Both in terms of types and in terms of hierarchy and names. See e.g. `maintd/` for an example of what this looks like.
 
@@ -62,7 +62,7 @@ As a general rule of thumb, you can also check the unit tests for various exampl
 ## Basic Example with Custom Config
 
 ```c++
-struct CustomConfig {
+struct CustomConfig final {
   // Add this if the app/tool uses the catalogue
   cta::runtime::CatalogueConfig catalogue;
   // Add this if the app/tool uses the scheduler
@@ -81,6 +81,10 @@ struct CustomConfig {
   cta::runtime::XRootDConfig xrootd;
   // Put whatever you want here; will be populated from the config file and available in the run() function
   MyCustomConfStruct customConf;
+
+  // All configs must have this function (limitation of custom reflection implementation)
+  // If this number is not consistent with the actual number of members, it won't compile
+  static constexpr std::size_t memberCount() { return 8; }
 };
 
 class CustomApp {
@@ -129,8 +133,10 @@ int main(const int argc, char** const argv) {
 ## Most minimal example you can get away with
 
 ```c++
-struct MinimalConfig {
+struct MinimalConfig final {
   cta::runtime::LoggingConfig logging;
+
+  static constexpr std::size_t memberCount() { return 1; }
 };
 
 class MinimalApp {

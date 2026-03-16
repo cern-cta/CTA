@@ -6,9 +6,8 @@
 #pragma once
 
 #include "common/exception/UserError.hpp"
+#include "parsing/TomlParser.hpp"
 
-#include <rfl.hpp>
-#include <rfl/toml.hpp>
 #include <sstream>
 #include <toml++/toml.hpp>
 
@@ -23,7 +22,7 @@ namespace cta::runtime {
  * @param strict If set to true, treat unknown keys, missing keys, and type mismatches in the config file as errors.
  * @return T The populated struct.
  */
-template<typename T>
+template<class T>
 T loadFromToml(const std::string& filePath, bool strict = false) {
   toml::table tbl;
   try {
@@ -31,16 +30,14 @@ T loadFromToml(const std::string& filePath, bool strict = false) {
   } catch (const toml::parse_error& e) {
     std::ostringstream oss;
     oss << e;
-    throw cta::exception::UserError("Failed to parse toml file '" + filePath + "': " + oss.str());
+    throw cta::exception::UserError("Failed to parse toml file '" + filePath + "': " + oss.str(), false);
   }
 
-  auto res = strict ? rfl::toml::read<T, rfl::NoExtraFields, rfl::NoOptionals>(&tbl) :
-                      rfl::toml::read<T, rfl::DefaultIfMissing>(&tbl);
-
-  if (!res) {
-    throw cta::exception::UserError("Invalid config in '" + filePath + "': " + std::string(res.error().what()));
+  T config {};
+  if (auto res = parsing::parseTable(config, tbl, strict); !res.ok()) {
+    throw cta::exception::UserError("Invalid config in '" + filePath + "':\n" + res.what(), false);
   }
-  return res.value();
+  return config;
 }
 
 }  // namespace cta::runtime

@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "common/runtime/CommonConfig.hpp"
+#include "common/runtime/config/CommonConfig.hpp"
 
 #include <cstdint>
 #include <map>
@@ -14,46 +14,64 @@
 
 namespace cta::maintd {
 
-struct DiskReportRoutineConfig {
+struct DiskReportRoutineConfig final {
   bool enabled = true;
   int batch_size = 500;
   int soft_timeout_secs = 30;
+
+  static constexpr std::size_t memberCount() { return 3; }
 };
 
-struct RepackExpandRoutineConfig {
+struct RepackExpandRoutineConfig final {
   bool enabled = true;
   int max_to_expand = 2;
+
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
-struct RepackReportRoutineConfig {
+struct RepackReportRoutineConfig final {
   bool enabled = true;
   int soft_timeout_secs = 900;
+
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
 #ifndef CTA_PGSCHED
-struct QueueCleanupRoutineConfig {
+
+struct QueueCleanupRoutineConfig final {
   bool enabled = true;
   int batch_size = 500;
+
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
-struct GarbageCollectRoutineConfig {
+struct GarbageCollectRoutineConfig final {
   bool enabled = true;
+
+  static constexpr std::size_t memberCount() { return 1; }
 };
+
 #else
-struct ActivePendingQueueCleanupRoutineConfig {
+
+struct ActivePendingQueueCleanupRoutineConfig final {
   bool enabled = true;
   int batch_size = 500;
   int age_for_collection_secs = 900;
+
+  static constexpr std::size_t memberCount() { return 3; }
 };
 
-struct SchedulerMaintenanceCleanupRoutineConfig {
+struct SchedulerMaintenanceCleanupRoutineConfig final {
   bool enabled = true;
   int batch_size = 500;
   int age_for_deletion_secs = 1209600;
+
+  static constexpr std::size_t memberCount() { return 3; }
 };
+
 #endif
 
-struct RoutinesConfig {
+struct RoutinesConfig final {
   int cycle_sleep_interval_secs = 10;
   int max_cycle_duration_secs = 900;
 
@@ -65,16 +83,17 @@ struct RoutinesConfig {
 
 #ifndef CTA_PGSCHED
   GarbageCollectRoutineConfig garbage_collect;
-
   QueueCleanupRoutineConfig queue_cleanup;
-#else
 
+  static constexpr std::size_t memberCount() { return 8; }
+#else
   ActivePendingQueueCleanupRoutineConfig user_active_queue_cleanup;
   ActivePendingQueueCleanupRoutineConfig repack_active_queue_cleanup;
   ActivePendingQueueCleanupRoutineConfig user_pending_queue_cleanup;
   ActivePendingQueueCleanupRoutineConfig repack_pending_queue_cleanup;
-
   SchedulerMaintenanceCleanupRoutineConfig scheduler_maintenance_cleanup;
+
+  static constexpr std::size_t memberCount() { return 11; }
 #endif
 };
 
@@ -87,6 +106,8 @@ struct MaintdConfig final {
   cta::runtime::ExperimentalConfig experimental;
   cta::runtime::XRootDConfig xrootd;
   RoutinesConfig routines;
+
+  static constexpr std::size_t memberCount() { return 8; }
 };
 
 }  // namespace cta::maintd

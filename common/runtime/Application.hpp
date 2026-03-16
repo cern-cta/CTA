@@ -5,10 +5,8 @@
 
 #pragma once
 
-#include "ArgParser.hpp"
-#include "CommonCliOptions.hpp"
-#include "CommonConfig.hpp"
-#include "ConfigLoader.hpp"
+#include "cli/ArgParser.hpp"
+#include "cli/CommonCliOptions.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/FileLogger.hpp"
@@ -18,6 +16,8 @@
 #include "common/telemetry/OtelInit.hpp"
 #include "common/utils/FileUtils.hpp"
 #include "common/utils/utils.hpp"
+#include "config/CommonConfig.hpp"
+#include "config/ConfigLoader.hpp"
 #include "health/HealthServer.hpp"
 #include "signals/SignalReactor.hpp"
 #include "signals/SignalReactorBuilder.hpp"
@@ -419,6 +419,10 @@ private:
     if (!config.experimental.telemetry_enabled || config.telemetry.config_file.empty()) {
       return;
     }
+    if (config.telemetry.on_init_failure != "fatal" && config.telemetry.on_init_failure != "warn") {
+      throw exception::UserError("Unsupported value for telemetry.on_init_failure: '" + config.telemetry.on_init_failure
+                                 + "'. Must be one of [fatal, warn].");
+    }
     log::LogContext lc(*m_logPtr);
     try {
       std::map<std::string, std::string> ctaResourceAttributes = {
@@ -433,7 +437,7 @@ private:
       }
       cta::telemetry::initOpenTelemetry(config.telemetry.config_file, ctaResourceAttributes, lc);
     } catch (exception::Exception& ex) {
-      if (config.telemetry.on_init_failure == InitFailurePolicy::fatal) {
+      if (config.telemetry.on_init_failure == "fatal") {
         throw ex;
       }
       cta::log::ScopedParamContainer params(lc);

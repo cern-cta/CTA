@@ -24,7 +24,6 @@
 %define radosVersionConstraint @RADOS_VERSION_CONSTRAINT@
 %define gtestDevelVersionConstraint @GTEST_VERSION_CONSTRAINT@
 %define opentelemetryCppVersionConstraint @OPENTELEMETRY_CPP_VERSION_CONSTRAINT@
-%define reflectCppVersionConstraint @REFLECTCPP_VERSION_CONSTRAINT@
 
 # Neutral packaging (for srpm)
 #-----------------------------
@@ -316,7 +315,6 @@ Group: Application/CTA
 Requires: %{requiredProtobuf}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires: opentelemetry-cpp %{opentelemetryCppVersionConstraint}
-Requires: reflectcpp %{reflectCppVersionConstraint}
 %description -n cta-lib-common
 CERN Tape Archive:
 The shared libraries base

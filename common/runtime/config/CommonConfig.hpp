@@ -24,32 +24,31 @@
 namespace cta::runtime {
 
 /**
- * @brief Failure policy for non-critical subsystems in a service.
- */
-enum class InitFailurePolicy { warn, fatal };
-
-/**
  * @brief Experimental config that may be common to all apps/tools.
  * Must follow the naming convention: `<feature>_enabled`.
  * Experimental config options relevant only to a specific app/tool MUST NOT be added here.
  * Instead, extend this struct in the relevant app/tool.
  *
  */
-struct ExperimentalConfig {
+struct ExperimentalConfig final {
   bool telemetry_enabled = false;
+
+  static constexpr std::size_t memberCount() { return 1; }
 };
 
 /**
  * @brief Catalogue config.
  */
-struct CatalogueConfig {
+struct CatalogueConfig final {
   std::string config_file = "/etc/cta/cta-catalogue.conf";
+
+  static constexpr std::size_t memberCount() { return 1; }
 };
 
 /**
  * @brief Scheduler config.
  */
-struct SchedulerConfig {
+struct SchedulerConfig final {
   // This value should eventually be handled by auto-discovery and not be provided by users
   std::string backend_name = "";
 
@@ -60,45 +59,55 @@ struct SchedulerConfig {
 #endif
   int tape_cache_max_age_secs = 600;
   int retrieve_queue_cache_max_age_secs = 10;
+
+  static constexpr std::size_t memberCount() { return 4; }
 };
 
 /**
  * @brief Logging config.
  */
-struct LoggingConfig {
+struct LoggingConfig final {
   std::string level = "INFO";
   std::string format = "json";
   std::map<std::string, std::string> attributes;
+
+  static constexpr std::size_t memberCount() { return 3; }
 };
 
 /**
  * @brief Telemetry config.
  */
-struct TelemetryConfig {
+struct TelemetryConfig final {
   /**
    * @brief Path to the OpenTelemetry declarative config file.
    */
   std::string config_file = "";
-  InitFailurePolicy on_init_failure = InitFailurePolicy::warn;
+  std::string on_init_failure = "warn";
+
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
 /**
  * @brief HealthServer config. For applications only.
  */
-struct HealthServerConfig {
+struct HealthServerConfig final {
   bool enabled = false;
   bool use_unix_domain_socket = false;
   std::optional<std::string> host = "";
   std::optional<int> port = 8080;
+
+  static constexpr std::size_t memberCount() { return 4; }
 };
 
 /**
  * @brief XRootD config to ensure we don't need to rely on environment variables.
  *
  */
-struct XRootDConfig {
+struct XRootDConfig final {
   std::string security_protocol = "sss";
   std::string sss_keytab_path = "etc/cta/sss.keytab";
+
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
 }  // namespace cta::runtime
