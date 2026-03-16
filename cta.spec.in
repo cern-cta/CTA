@@ -139,7 +139,7 @@ The tape server daemon
 %defattr(-,root,root)
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-taped
 %attr(0755,root,root) %{_bindir}/cta-taped
-%attr(0644,root,root) %config %{_sysconfdir}/cta/cta-taped.example.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-taped.example.conf
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-taped.1cta.gz
 %attr(0644,root,root) %config(noreplace) /etc/sysconfig/cta-taped
 %attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-taped.service
@@ -174,7 +174,7 @@ CERN Tape Archive:
 %endif
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-maintd
 %attr(0755,root,root) %{_bindir}/cta-maintd
-%attr(0644,root,root) %config %{_sysconfdir}/cta/cta-maintd.example.toml
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-maintd.example.toml
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-maintd.1cta.gz
 %attr(0644,root,root) %config(noreplace) /etc/systemd/system/cta-maintd.service
 
@@ -412,9 +412,9 @@ The shared libraries
 %{_libdir}/libctamediachanger.so*
 %{_libdir}/libctarao.so*
 %{_libdir}/libctadisk.so*
-%attr(0644,root,root) %config %{_sysconfdir}/cta/cta-catalogue.example.conf
-%attr(0644,root,root) %config %{_sysconfdir}/cta/cta-otel.example.yaml
-%attr(0644,root,root) %config %{_sysconfdir}/cta/cta-logging.schema.json
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.example.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-otel.example.yaml
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-logging.schema.json
 
 #CTA-lib installs libraries so we need ldconfig.
 %post -n cta-lib -p /sbin/ldconfig
@@ -517,7 +517,7 @@ Tools allowing initialization and inspection of the object store.
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
 %attr(0755,root,root) %{_bindir}/cta-objectstore-collect-orphaned-object
 %attr(0755,root,root) %{_bindir}/cta-objectstore-create-missing-repack-index
-%attr(0644,root,root) %config %{_sysconfdir}/cta/cta-objectstore-tools.example.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-objectstore-tools.example.conf
 %endif
 
 #cta-integrationtests installs libraries so we need ldconfig.
