@@ -11,13 +11,13 @@
 
 namespace cta::frontend::grpc::server {
 
-NegotiationService::NegotiationService(cta::log::LogContext& lc,
+NegotiationService::NegotiationService(cta::log::Logger& log,
                                        TokenStorage& tokenStorage,
                                        std::unique_ptr<::grpc::ServerCompletionQueue> cq,
                                        const std::string& keytab,
                                        const std::string& servicePrincipal,
                                        unsigned int numThreads)
-    : m_lc(lc),
+    : m_log(log),
       m_tokenStorage(tokenStorage),
       m_upCompletionQueue(std::move(cq)),
       m_keytab(keytab),
@@ -63,9 +63,10 @@ void NegotiationService::releaseHandler(const cta::frontend::grpc::request::Tag 
   std::lock_guard<std::mutex> lck(m_mtxLockHandler);
 
   {
-    log::ScopedParamContainer params(m_lc);
+    cta::log::LogContext lc(m_log);
+    log::ScopedParamContainer params(lc);
     params.add("handler", tag);
-    m_lc.log(cta::log::DEBUG, "In NegotiationService::releaseHandler(): Release handler.");
+    lc.log(cta::log::DEBUG, "In NegotiationService::releaseHandler(): Release handler.");
   }
   /*
    * Check if the handler is registered;
@@ -80,12 +81,14 @@ void NegotiationService::releaseHandler(const cta::frontend::grpc::request::Tag 
 }
 
 void NegotiationService::startProcessing() {
+  cta::log::LogContext lc(m_log);
+
   // Register handlers first
   {
-    log::ScopedParamContainer params(m_lc);
+    log::ScopedParamContainer params(lc);
     params.add("keytab", m_keytab);
     params.add("servicePrincipal", m_servicePrincipal);
-    m_lc.log(cta::log::INFO, "Initializing Kerberos negotiation handlers");
+    lc.log(cta::log::INFO, "Initializing Kerberos negotiation handlers");
 
     // Create initial handler instances
     // Each handler will spawn a new one when it starts processing
@@ -93,9 +96,9 @@ void NegotiationService::startProcessing() {
       try {
         registerHandler();
       } catch (const cta::exception::Exception& e) {
-        log::ScopedParamContainer errorParams(m_lc);
+        log::ScopedParamContainer errorParams(lc);
         errorParams.add("error", e.getMessageValue());
-        m_lc.log(cta::log::ERR, "Failed to initialize negotiation handler");
+        lc.log(cta::log::ERR, "Failed to initialize negotiation handler");
         throw;
       }
     }
@@ -111,16 +114,19 @@ void NegotiationService::startProcessing() {
   // Start worker threads
   m_threads.reserve(m_numThreads);
   for (unsigned int i = 0; i < m_numThreads; ++i) {
-    m_threads.emplace_back(&NegotiationService::process, this, i);
+    m_threads.emplace_back(&NegotiationService::process, this, i, std::ref(m_log));
   }
 
-  log::ScopedParamContainer params(m_lc);
+  log::ScopedParamContainer params(lc);
   params.add("threads", m_numThreads);
-  m_lc.log(cta::log::INFO, "Negotiation service processing threads started");
+  lc.log(cta::log::INFO, "Negotiation service processing threads started");
 }
 
-void NegotiationService::process(unsigned int threadId) {
-  m_lc.log(cta::log::INFO, "In NegotiationService::process");
+void NegotiationService::process(unsigned int threadId, cta::log::Logger& log) {
+  // Each thread creates its own LogContext - thread-safe
+  cta::log::LogContext lc(log);
+
+  lc.log(cta::log::INFO, "In NegotiationService::process");
   /*
    *  pTag
    *  Uniquely identifies a request.
@@ -135,15 +141,15 @@ void NegotiationService::process(unsigned int threadId) {
      * It tells whether there is any kind of event or m_upCompletionQueue is shutting down.
      */
     if (!m_upCompletionQueue->Next(&pTag, &bOk)) {
-      log::ScopedParamContainer params(m_lc);
+      log::ScopedParamContainer params(lc);
       params.add("thread", threadId);
-      m_lc.log(cta::log::ERR, "In NegotiationService::process(): The completion queue has been shutdown.");
+      lc.log(cta::log::ERR, "In NegotiationService::process(): The completion queue has been shutdown.");
       break;
     }
     if (!pTag) {
-      log::ScopedParamContainer params(m_lc);
+      log::ScopedParamContainer params(lc);
       params.add("thread", threadId);
-      m_lc.log(cta::log::ERR, "In NegotiationService::process(): Invalid tag delivered by notification queue.");
+      lc.log(cta::log::ERR, "In NegotiationService::process(): Invalid tag delivered by notification queue.");
       break;
     }
 
@@ -154,10 +160,10 @@ void NegotiationService::process(unsigned int threadId) {
         releaseHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
       }
     } catch (const cta::exception::Exception& ex) {
-      log::ScopedParamContainer params(m_lc);
+      log::ScopedParamContainer params(lc);
       params.add("thread", threadId);
       params.add("exceptionMessage", ex.getMessageValue());
-      m_lc.log(log::ERR, "NegotiationService::process(): Got an exception.");
+      lc.log(log::ERR, "NegotiationService::process(): Got an exception.");
     }
   }
 }

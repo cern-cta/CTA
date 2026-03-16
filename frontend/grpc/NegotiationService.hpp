@@ -27,7 +27,7 @@ namespace cta::frontend::grpc::server {
  */
 class NegotiationService {
 public:
-  NegotiationService(cta::log::LogContext& lc,
+  NegotiationService(cta::log::Logger& log,
                      TokenStorage& tokenStorage,
                      std::unique_ptr<::grpc::ServerCompletionQueue> cq,
                      const std::string& keytab,
@@ -43,10 +43,11 @@ public:
   NegotiationService& operator=(NegotiationService&&) = delete;
 
   NegotiationRequestHandler& registerHandler() {
-    m_lc.log(cta::log::INFO, "In NegotiationService::registerHandler");
+    cta::log::LogContext lc(m_log);
+    lc.log(cta::log::INFO, "In NegotiationService::registerHandler");
     std::lock_guard<std::mutex> lck(m_mtxLockHandler);
     std::unique_ptr<NegotiationRequestHandler> upHandler =
-      std::make_unique<NegotiationRequestHandler>(m_lc.logger(), *this, m_service, m_keytab, m_servicePrincipal);
+      std::make_unique<NegotiationRequestHandler>(m_log, *this, m_service, m_keytab, m_servicePrincipal);
     // Handler initialisation
     upHandler->init();  // can throw
     // Store address
@@ -73,9 +74,9 @@ public:
   void startProcessing();
 
 private:
-  void process(unsigned int threadId);
+  void process(unsigned int threadId, cta::log::Logger& log);
 
-  cta::log::LogContext m_lc;
+  cta::log::Logger& m_log;  // Logger is thread-safe; each thread creates its own LogContext from it
   TokenStorage& m_tokenStorage;
   std::unique_ptr<::grpc::ServerCompletionQueue> m_upCompletionQueue = nullptr;
   std::string m_keytab;
