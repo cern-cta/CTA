@@ -57,6 +57,9 @@ kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh "${EOS_MGM_POD}:/root/" 
 kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
 kubectl -n ${NAMESPACE} cp taped_refresh_log_fd.sh "${CTA_TAPED_POD}:/root/" -c cta-taped
 kubectl -n ${NAMESPACE} cp maintd_refresh_log_fd.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
+kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_MAINTD_POD}:/root/" -c cta-maintd
+kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_TAPED_POD}:/root/" -c cta-taped
+kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_FRONTEND_POD}:/root/" -c cta-frontend
 
 if [[ ${PREPARE} -eq 1 ]]; then
   echo "Preparing namespace for the tests"
@@ -279,5 +282,16 @@ kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- comm /etc/cta/ct
 kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3 || exit 1
 kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3 || exit 1
 kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- sh -c 'jq -e -r ".service == \"cta-maintd\"" /run/cta/version.json >/dev/null' || exit 1
+
+echo "Checking correctness of log schema"
+
+kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- bash -c "dnf install -y python3-pip && python3 -m pip install jsonschema"
+kubectl -n "${NAMESPACE}" exec "${CTA_FRONTEND_POD}" -c cta-frontend -- bash -c "dnf install -y python3-pip && python3 -m pip install jsonschema"
+kubectl -n "${NAMESPACE}" exec "${CTA_TAPED_POD}" -c cta-taped -- bash -c "dnf install -y python3-pip && python3 -m pip install jsonschema"
+
+kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- python3 /root/verify_log_schema.py --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast || exit 1
+kubectl -n "${NAMESPACE}" exec "${CTA_FRONTEND_POD}" -c cta-frontend -- python3 /root/verify_log_schema.py --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-frontend.log --fail-fast || exit 1
+kubectl -n "${NAMESPACE}" exec "${CTA_TAPED_POD}" -c cta-taped -- python3 /root/verify_log_schema.py --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-taped.log --fail-fast || exit 1
+
 
 exit 0

@@ -72,6 +72,8 @@ def main():
         print(f"Total errors found: {errors}")
         sys.exit(1)
 
+    print(f"SUCCESS: Verification of {args.input} against schema {args.schema} passed")
+
 
 if __name__ == "__main__":
     main()
