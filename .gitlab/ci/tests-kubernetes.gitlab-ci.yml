@@ -212,7 +212,7 @@ test-cta-tools:
     PYTESTS: "tests/tools_test.py"
     # We want to test cta-admin's behaviour on repack requests; not the actual repack itself
     # See the note here on failing cta-admin tests: https://gitlab.cern.ch/cta/CTA/-/issues/1032#note_10458246
-    EXTRA_SPAWN_ARGS: "--extra-cta-values \"--set=maintd.routines.repackExpand.replicas=0 --set=maintd.routines.repackReport.replicas=0\""
+    EXTRA_SPAWN_ARGS: "--extra-cta-values '--set=maintd.routines.repackExpand.replicas=0 --set=maintd.routines.repackReport.replicas=0'"
 
 
 # Manually triggered
