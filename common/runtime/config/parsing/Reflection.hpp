@@ -74,7 +74,7 @@ consteval std::string_view getMemberName() {
 template<Aggregate T, std::size_t N>
 constexpr auto asTuple(T& t) {
   // Yes this is hacky, but it is the only way to unpack T in C++20.
-  // All the reflection libraries at the time of writing do something similar.
+  // All the reflection libraries at the time of writing do something similar. If only we could use packs in structured bindings...
   // clang-format off
   if constexpr (N == 1) {
     auto& [m1] = t;
@@ -196,14 +196,17 @@ struct StaticWrapper {
  */
 template<Aggregate T, std::size_t N>
 consteval auto getMemberNames() {
+  // This is a tricky part, because we need the tuple unpacking at compile time (for getMemberName to work)
+  // The static wrapper gives us an object we can use at compile time.
+  // This works, because we don't care about the actual object, just the name of its fields.
+  constexpr auto members = asTuple<T, N>(StaticWrapper<T>::fake);
   return [&]<std::size_t... Is>(std::index_sequence<Is...>) {
-    constexpr auto members = asTuple<T, N>(StaticWrapper<T>::fake);
     return std::array<std::string_view, sizeof...(Is)> {getMemberName<&std::get<Is>(members)>()...};
   }(std::make_index_sequence<N> {});
 }
 
 /**
- * @brief The main function of this simply reflection implementations. Allows for looping over the members of Aggregate types.
+ * @brief The main function of this simple reflection implementation. Allows for looping over the members of Aggregate types.
  * For example:
  *
  *   Foo foo;
