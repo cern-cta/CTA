@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": [
+    "epoch_time",
+    "local_time",
+    "hostname",
+    "program",
+    "log_level",
+    "pid",
+    "tid",
+    "message"
+  ],
+  "properties": {
+    "epoch_time": {
+      "type": "number",
+      "description": "Unix epoch timestamp with fractional seconds"
+    },
+    "local_time": {
+      "type": "string",
+      "description": "Local timestamp",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{4}$"
+    },
+    "hostname": {
+      "type": "string",
+      "minLength": 1
+    },
+    "program": {
+      "type": "string",
+      "enum": ["cta-maintd", "cta-frontend", "cta-taped"]
+    },
+    "log_level": {
+      "type": "string",
+      "enum": ["DEBUG", "INFO", "NOTICE", "WARNING", "ERROR", "CRIT", "ALERT", "EMERG"]
+    },
+    "pid": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "tid": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "message": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true
+}
