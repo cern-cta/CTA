@@ -35,6 +35,16 @@ class StressParams:
     max_acceptable_loss_percent: float
     prequeue: PrequeueParams
 
+    def __post_init__(self):
+        # 50k directories and 100k files are the limits eos find applies
+        # when truncating the results
+        # we do not use EOS find so we do not hit this restriction, but we constrain
+        # the inputs similarly all the same
+        if self.num_dirs > 50000:
+            raise ValueError(f"num_dirs too high: {self.num_dirs}, max allowed value is 50000")
+        if self.num_files_per_dir > 100000:
+            raise ValueError(f"num_files_per_dir too high: {self.num_files_per_dir}, max allowed value is 100000")
+
 
 @pytest.fixture
 def stress_params(request):

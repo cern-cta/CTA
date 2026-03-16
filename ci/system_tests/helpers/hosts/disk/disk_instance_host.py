@@ -84,15 +84,15 @@ class DiskInstanceHost(RemoteHost):
         while dirs_left_queue and consecutive_no_progress_intervals < max_no_progress_intervals:
             # Process all directories in the current queue
             next_queue = deque()
-            for directory in dirs_left_queue:
-                num_files_in_directory = num_files_total[directory]
-                archived_files = self.num_files_on_tape_only(directory)
+            for full_dir_path in dirs_left_queue:
+                num_files_in_directory = num_files_total[full_dir_path]
+                archived_files = self.num_files_on_tape_only(full_dir_path)
                 # Don't call num_files_on_disk_only as this is expensive; just do the math here
-                num_files_left[directory] = num_files_in_directory - archived_files
+                num_files_left[full_dir_path] = num_files_in_directory - archived_files
 
                 if archived_files != num_files_in_directory:
                     # Not everything was archived -> put it back in the queue
-                    next_queue.append(directory)
+                    next_queue.append(full_dir_path)
 
             dirs_left_queue = next_queue
             current_remaining_files = sum(num_files_left.values())
