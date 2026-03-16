@@ -1,5 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CTA Logging Schema",
+  "description": "Schema for log entries produced by CTA services",
   "type": "object",
   "required": [
     "epoch_time",
@@ -10,7 +12,7 @@
     "pid",
     "tid",
     "message",
-    "schema_version"
+    "log_schema_version"
   ],
   "properties": {
     "epoch_time": {

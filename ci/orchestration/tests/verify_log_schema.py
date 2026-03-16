@@ -27,7 +27,6 @@ def main():
     parser.add_argument("--schema", required=True)
     parser.add_argument("--input", default="-")
     parser.add_argument("--fail-fast", action="store_true")
-    parser.add_argument("--print-valid", action="store_true")
     args = parser.parse_args()
 
     schema = load_schema(args.schema)
@@ -65,8 +64,6 @@ def main():
                     print(f"      {v.message}")
             if args.fail_fast:
                 sys.exit(1)
-        elif args.print_valid:
-            print(f"line {i}: valid")
 
     if errors:
         print(f"Total errors found: {errors}")
