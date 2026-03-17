@@ -44,6 +44,21 @@ NegotiationService::~NegotiationService() {
   }
 }
 
+NegotiationRequestHandler& NegotiationService::registerHandler() {
+    cta::log::LogContext lc(m_log);
+    lc.log(cta::log::INFO, "In NegotiationService::registerHandler");
+    std::lock_guard<std::mutex> lck(m_mtxLockHandler);
+    std::unique_ptr<NegotiationRequestHandler> upHandler =
+      std::make_unique<NegotiationRequestHandler>(m_log, *this, m_service, m_keytab, m_servicePrincipal);
+    // Handler initialisation
+    upHandler->init();  // can throw
+    // Store address
+    uintptr_t tag = reinterpret_cast<std::uintptr_t>(upHandler.get());
+    // Move ownership & store under the Tag
+    m_umapHandlers[upHandler.get()] = std::move(upHandler);
+    return *m_umapHandlers[reinterpret_cast<cta::frontend::grpc::request::Tag>(tag)];
+  }
+
 NegotiationRequestHandler& NegotiationService::getHandler(const cta::frontend::grpc::request::Tag tag) {
   std::lock_guard<std::mutex> lck(m_mtxLockHandler);
   /*
