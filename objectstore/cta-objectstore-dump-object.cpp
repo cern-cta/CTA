@@ -47,7 +47,6 @@ int main(int argc, char** argv) {
       case 'h':
         print_help(argv[0]);
         return 0;
-        break;
       case 'j':
         full_json = true;
         break;

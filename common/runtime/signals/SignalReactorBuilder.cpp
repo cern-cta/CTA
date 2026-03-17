@@ -28,7 +28,6 @@ SignalReactorBuilder::addSignalFunction(int signal, const std::function<void()>&
   if (m_signalFunctions.contains(signal) && !overwrite) {
     throw exception::Exception("Function already registered for " + utils::signalToString(signal)
                                + ", while overwrite was disabled");
-    return *this;
   }
   sigaddset(&m_sigset, signal);
   m_signalFunctions[signal] = func;
