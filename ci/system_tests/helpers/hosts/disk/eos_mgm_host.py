@@ -28,9 +28,19 @@ class EosMgmHost(DiskInstanceHost):
     def force_remove_directory(self, directory: str) -> str:
         self.exec(f"eos rm -rF --no-confirmation {directory} 2>/dev/null || true")
 
-    def list_files_in_directory(self, directory: str) -> list[str]:
-        # Note that for now this also counts subdirectories
+    def list_entries_in_directory(self, directory: str) -> list[str]:
+        # This function counts both files and subdirectories
         return self.execWithOutput(f"eos ls {directory}").splitlines()
+
+    def list_subdirectories_in_directory(self, directory: str) -> list[str]:
+        # grep filters directories (lines starting with 'd'), awk extracts the name (field 9)
+        # Note: $9 must be escaped as \$9 so bash passes it literally to awk
+        return self.execWithOutput(f"eos ls -l {directory} | grep '^d' | awk '{{ print \\$9 }}'").splitlines()
+
+    def list_files_in_directory(self, directory: str) -> list[str]:
+        # grep filters regular files (lines starting with '-'), awk extracts the name (field 9)
+        # Note: $9 must be escaped as \$9 so bash passes it literally to awk
+        return self.execWithOutput(f"eos ls -l {directory} | grep '^-' | awk '{{ print \\$9 }}'").splitlines()
 
     def num_files_in_directory(self, directory: str) -> int:
         # Note that for now this also counts subdirectories

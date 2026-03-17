@@ -9,7 +9,30 @@ krb5_realm = "TEST.CTA"
 
 # For the actual stress test we currently have 40 directories with 50.000 files each
 # mhvtl is mounted in-memory, so we keep the file size small and easily compressible (unique string + zero padding)
-num_dirs = 10
-num_files_per_dir = 1000
+num_dirs = 20
+num_files_per_dir = 100000
+# file size in bytes
 file_size = 512
-io_threads = 8
+# number of parallel processes to be used for archival
+io_threads = 40
+# Files per batch when enqueueing work (beneficial for large file counts as it should reduce queue contention)
+batch_size = 200
+# Write files in 1MB chunks instead of a single write (useful for large files, several MBs)
+write_files_in_chunks = false
+check_copy_interval_sec = 20
+check_archive_interval_sec = 10
+# Stop waiting for archival after this many consecutive intervals without progress
+max_no_progress_intervals = 3
+# Maximum acceptable file loss percentage before proceeding to retrieval
+max_acceptable_loss_percent = 5.0
+
+[tests.stress.prequeue]
+
+# If true, put drives down before archiving and only put them up after num_files_to_put_drives_up files are created.
+# This prevents drives from outpacing the queueing capabilities of EOS.
+enabled = true
+num_files_to_put_drives_up = 1000000
+# timeout in seconds
+timeout_to_put_drives_up_sec = 3600
+# how often to count number of files when prequeueing
+check_interval_sec = 300

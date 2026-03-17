@@ -13,7 +13,7 @@ python3 -m venv venv
 Install the project to get all necessary dependencies:
 
 ```sh
-pip install pytest
+pip install pytest pytest-asyncio
 ```
 
 ## Useful commands:
