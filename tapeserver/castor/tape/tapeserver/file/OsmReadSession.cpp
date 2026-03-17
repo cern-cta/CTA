@@ -23,6 +23,7 @@
 #include "castor/tape/tapeserver/file/OsmFileStructure.hpp"
 #include "castor/tape/tapeserver/file/OsmReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
+#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 
 namespace castor::tape::tapeFile {
 
@@ -45,11 +46,11 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
       osm::LIMITS::MAXMRECSIZE,
       "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
-  } catch (UnexpectedSize &ex) {
+  } catch (tapeserver::drive::UnexpectedSize &ex) {
     // try with CRC32C
     m_drive.rewind();
     m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
-    m_drive.readBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
+    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
       osm::LIMITS::MAXMRECSIZE,
       "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1"); 
   }
