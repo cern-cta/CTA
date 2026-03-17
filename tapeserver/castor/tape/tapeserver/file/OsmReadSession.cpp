@@ -32,12 +32,36 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
 
+//  size_t uiBytesRead = 0;
+
   uint8_t uiLLBPMethod = SCSI::logicBlockProtectionMethod::DoNotUse;
   osm::LABEL osmLabel;
 
-  m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-    osm::LIMITS::MAXMRECSIZE,
-    "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+//  m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
+//    osm::LIMITS::MAXMRECSIZE,
+//    "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+
+  try {
+    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
+      osm::LIMITS::MAXMRECSIZE,
+      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+  } catch (UnexpectedSize &ex) {
+    // try with CRC32C
+    m_drive.rewind();
+    m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
+    m_drive.readBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
+      osm::LIMITS::MAXMRECSIZE,
+      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1"); 
+  }
+
+//    uiBytesRead = m_session.m_drive.readBlock(pucTmpData, size);
+//    // Special case - checking whether the data format contains CRC32 
+//    if (cta::verifyCrc32cForMemoryBlockWithCrc32c(
+//          SCSI::logicBlockProtectionMethod::CRC32CSeed, uiBytesRead, static_cast<const uint8_t*>(pucTmpData))) {
+//      m_bDataWithCRC32 = true;
+//      uiBytesRead -= SCSI::logicBlockProtectionMethod::CRC32CLength;
+//    }
+
   m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
     osm::LIMITS::MAXMRECSIZE,
     "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
@@ -69,21 +93,24 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
       throw cta::exception::Exception("In OsmReadSession::OsmReadSession(): unknown LBP method");
   }
   // from this point the right LBP mode should be set or not set
-  m_drive.rewind();
-  {
-    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-      osm::LIMITS::MAXMRECSIZE,
-      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
-    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
-      osm::LIMITS::MAXMRECSIZE,
-      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
-    try {
-      osmLabel.decode();
-    } catch (const std::exception& e) {
-      throw TapeFormatError(e.what());
-    }
-    HeaderChecker::checkOSM(osmLabel, volInfo.vid);
-  }
+//  m_drive.rewind();
+//  {
+//    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
+//      osm::LIMITS::MAXMRECSIZE,
+//      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+//    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
+//      osm::LIMITS::MAXMRECSIZE,
+//      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
+//    try {
+//      osmLabel.decode();
+//    } catch (const std::exception& e) {
+//      throw TapeFormatError(e.what());
+//    }
+//    HeaderChecker::checkOSM(osmLabel, volInfo.vid);
+//  }
+  
+  HeaderChecker::checkOSM(osmLabel, volInfo.vid);
+ 
 }
 
 } // namespace castor::tape::tapeFile
