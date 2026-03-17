@@ -272,12 +272,12 @@ def test_cta_admin_tape(env):
     assert ls_before == cta_cli.execWithOutput("cta-admin --json ta ls --all")
 
 
+# TODO: make EOS agnostic
 @pytest.mark.eos
-@pytest.mark.skip(reason="needs a few helper functions")
 def test_cta_admin_tape_file(env):
     cta_cli: CtaCliHost = env.cta_cli[0]
     disk_instance_name: str = env.disk_instance[0].instance_name
-    vids: List[str] = cta_admin_ctx["vids"]
+    vids: list[str] = cta_cli.list_all_tape_vids()
     assert vids, "No tape VIDs available to test tape file commands."
 
     # Archive one file
@@ -302,7 +302,7 @@ def test_cta_admin_tape_file(env):
     assert archive_id, "Failed to extract archiveId from tf ls output."
 
     # Removing should fail (single copy)
-    rc = cta_cli.exec(f"cta-admin tf rm -v {vid_in_use} -i ctaeos -I {a_id} -r Test")
+    rc = cta_cli.exec(f"cta-admin tf rm -v {vid_in_use} -i ctaeos -I {archive_id} -r Test")
     assert rc != 0, "tf rm unexpectedly succeeded; expected failure for single-copy file."
 
     # Cleanup
@@ -350,6 +350,7 @@ def test_cta_admin_drive(env):
         wait_for_restart=False
     )  # TODO: set to true before merging; for now a bit slow because we don't have immutable images
 
+    print(ls_before)
     # assert ls_before == cta_cli.execWithOutput("cta-admin --json dr ls") # TODO: extract only the required info, because the drive entry will have some updated timing
 
 
@@ -420,10 +421,9 @@ def test_cta_admin_media_type(env):
     assert ls_before == cta_cli.execWithOutput("cta-admin --json mt ls")
 
 
-@pytest.mark.skip(reason="needs a few helper functions")
-def test_cta_admin_recycle_tape_file_ls(env, cta_admin_ctx):
+def test_cta_admin_recycle_tape_file_ls(env):
     cta_cli: CtaCliHost = env.cta_cli[0]
-    vids: List[str] = cta_admin_ctx["vids"]
+    vids: list[str] = cta_cli.list_all_tape_vids()
     assert vids, "Need at least one VID for rtf ls test."
 
     # Bash uses ${vid} found during tf section. Here we re-use vids[0] as a baseline.
@@ -555,7 +555,7 @@ def test_cta_admin_storage_class(env):
 # -------------------------------------------------------------------------------------------------
 
 
-@pytest.mark.skip(reason="needs a few helper functions")
+# @pytest.mark.skip(reason="needs a few helper functions")
 def test_cta_admin_show_queue(env):
     cta_cli: CtaCliHost = env.cta_cli[0]
     disk_instance_name: str = env.disk_instance[0].instance_name
@@ -567,11 +567,11 @@ def test_cta_admin_show_queue(env):
 
     # Trigger an archive request
     # TODO: create file
-    # TODO: create method to archive a random file and receive the path
-    env.eos_client[0].exec(f"xrdcp /root/testfile root://{disk_instance_name}//eos/ctaeos/cta/testfile")
-    # TODO: wait for it to be queued
+    file_path = "/eos/ctaeos/cta/testfile"
+    env.disk_client[0].generate_and_archive_file(disk_instance_name, destination=file_path, wait=False)
 
     # Verify there is at least one ARCHIVE_FOR_USER entry (no wait loop per request)
+    # TODO: do this extraction in python itself
     cnt = cta_cli.execWithOutput(
         r"cta-admin --json sq | jq -r '.[] | select(.mountType==\"ARCHIVE_FOR_USER\") | .mountType' | wc -l"
     ).strip()
@@ -580,21 +580,23 @@ def test_cta_admin_show_queue(env):
     # Bring drives back up
     env.cta_cli[0].set_all_drives_up(wait=True)
     # Wait for file to be archived
+    env.disk_client[0].wait_for_archival(disk_instance_name, destination=file_path, wait=False)
 
     ls_after = cta_cli.execWithOutput("cta-admin sq")
     assert ls_before == ls_after
 
 
-@pytest.mark.skip(reason="needs a few helper functions")
 def test_cta_admin_repack(env):
     cta_cli: CtaCliHost = env.cta_cli[0]
     disk_instance_name: str = env.disk_instance[0].instance_name
-    vids: List[str] = cta_admin_ctx["vids"]
+    vids: list[str] = cta_cli.list_all_tape_vids()
     assert vids, "Need at least one VID for repack test."
 
     vid = vids[0]
 
     ls_before = cta_cli.execWithOutput("cta-admin re ls")
+
+    # TODO: remove sleeps
 
     cta_cli.exec(f"cta-admin ta ch -v {vid} -f true")
     time.sleep(3)
@@ -608,6 +610,7 @@ def test_cta_admin_repack(env):
     # So we proceed directly.
 
     # Add/remove repack request
+    # TODO: these should fail
     cta_cli.exec(f"cta-admin re add -v {vid} -m -u repack_ctasystest -b root://{disk_instance_name}//eos/ctaeos/cta")
     cta_cli.exec(f"cta-admin re rm -v {vid}")
 

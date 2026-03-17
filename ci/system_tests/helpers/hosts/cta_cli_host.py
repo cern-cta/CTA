@@ -49,3 +49,8 @@ class CtaCliHost(RemoteHost):
 
     def set_all_drives_down(self, wait: bool = True):
         self.set_drive_down(".*", wait=wait)
+
+    def list_all_tape_vids(self) -> list[str]:
+        output = self.execWithOutput("cta-admin --json tape ls --all")
+        tape_list = json.loads(output)
+        return [tape["vid"] for tape in tape_list]
