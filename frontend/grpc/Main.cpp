@@ -222,7 +222,6 @@ int main(const int argc, char* const* const argv) {
   std::unique_ptr<::grpc::ServerCompletionQueue> negCq = builder.AddCompletionQueue();
 
   // Create negotiation service
-  // cannot have lc here, need logger instead
   auto negotiationService = std::make_unique<cta::frontend::grpc::server::NegotiationService>(lc.logger(),
                                                                                               tokenStorage,
                                                                                               std::move(negCq),

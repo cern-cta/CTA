@@ -27,6 +27,8 @@ namespace cta::frontend::grpc::server {
  */
 class NegotiationService {
 public:
+  using HandlerMap = std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<NegotiationRequestHandler>>;
+
   NegotiationService(cta::log::Logger& log,
                      TokenStorage& tokenStorage,
                      std::unique_ptr<::grpc::ServerCompletionQueue> cq,
@@ -56,12 +58,24 @@ public:
    */
   cta::xrd::Negotiation::AsyncService& getService() { return m_service; }
 
-  NegotiationRequestHandler& getHandler(const cta::frontend::grpc::request::Tag tag);
-  void releaseHandler(const cta::frontend::grpc::request::Tag tag);
   void startProcessing();
 
 private:
-  void process(unsigned int threadId, cta::log::Logger& log);
+  // These functions are static to force explicit dependency passing for thread safety.
+  // Each thread creates its own LogContext from the shared Logger.
+  static void process(unsigned int threadId,
+                      ::grpc::ServerCompletionQueue& cq,
+                      cta::log::Logger& log,
+                      std::mutex& mtxLockHandler,
+                      HandlerMap& umapHandlers);
+
+  static NegotiationRequestHandler&
+  getHandler(const cta::frontend::grpc::request::Tag tag, std::mutex& mtxLockHandler, HandlerMap& umapHandlers);
+
+  static void releaseHandler(const cta::frontend::grpc::request::Tag tag,
+                             cta::log::Logger& log,
+                             std::mutex& mtxLockHandler,
+                             HandlerMap& umapHandlers);
 
   cta::log::Logger& m_log;  // Logger is thread-safe; each thread creates its own LogContext from it
   TokenStorage& m_tokenStorage;
@@ -72,7 +86,7 @@ private:
 
   cta::xrd::Negotiation::AsyncService m_service;
   std::vector<std::thread> m_threads;
-  std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<NegotiationRequestHandler>> m_umapHandlers;
+  HandlerMap m_umapHandlers;
   std::mutex m_mtxLockHandler;
 };
 

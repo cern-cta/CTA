@@ -45,27 +45,29 @@ NegotiationService::~NegotiationService() {
 }
 
 NegotiationRequestHandler& NegotiationService::registerHandler() {
-    cta::log::LogContext lc(m_log);
-    lc.log(cta::log::INFO, "In NegotiationService::registerHandler");
-    std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-    std::unique_ptr<NegotiationRequestHandler> upHandler =
-      std::make_unique<NegotiationRequestHandler>(m_log, *this, m_service, m_keytab, m_servicePrincipal);
-    // Handler initialisation
-    upHandler->init();  // can throw
-    // Store address
-    uintptr_t tag = reinterpret_cast<std::uintptr_t>(upHandler.get());
-    // Move ownership & store under the Tag
-    m_umapHandlers[upHandler.get()] = std::move(upHandler);
-    return *m_umapHandlers[reinterpret_cast<cta::frontend::grpc::request::Tag>(tag)];
-  }
-
-NegotiationRequestHandler& NegotiationService::getHandler(const cta::frontend::grpc::request::Tag tag) {
+  cta::log::LogContext lc(m_log);
+  lc.log(cta::log::INFO, "In NegotiationService::registerHandler");
   std::lock_guard<std::mutex> lck(m_mtxLockHandler);
+  std::unique_ptr<NegotiationRequestHandler> upHandler =
+    std::make_unique<NegotiationRequestHandler>(m_log, *this, m_service, m_keytab, m_servicePrincipal);
+  // Handler initialisation
+  upHandler->init();  // can throw
+  // Store address
+  uintptr_t tag = reinterpret_cast<std::uintptr_t>(upHandler.get());
+  // Move ownership & store under the Tag
+  m_umapHandlers[upHandler.get()] = std::move(upHandler);
+  return *m_umapHandlers[reinterpret_cast<cta::frontend::grpc::request::Tag>(tag)];
+}
+
+NegotiationRequestHandler& NegotiationService::getHandler(const cta::frontend::grpc::request::Tag tag,
+                                                          std::mutex& mtxLockHandler,
+                                                          HandlerMap& umapHandlers) {
+  std::lock_guard<std::mutex> lck(mtxLockHandler);
   /*
    * Check if the handler is registered;
    */
-  const auto itorFind = m_umapHandlers.find(tag);
-  if (itorFind == m_umapHandlers.end()) {
+  const auto itorFind = umapHandlers.find(tag);
+  if (itorFind == umapHandlers.end()) {
     std::ostringstream osExMsg;
     osExMsg << "In NegotiationService::getHandler(): Handler " << tag << " is not registered.";
     throw cta::exception::Exception(osExMsg.str());
@@ -74,11 +76,14 @@ NegotiationRequestHandler& NegotiationService::getHandler(const cta::frontend::g
   return *upHandler;
 }
 
-void NegotiationService::releaseHandler(const cta::frontend::grpc::request::Tag tag) {
-  std::lock_guard<std::mutex> lck(m_mtxLockHandler);
+void NegotiationService::releaseHandler(const cta::frontend::grpc::request::Tag tag,
+                                        cta::log::Logger& log,
+                                        std::mutex& mtxLockHandler,
+                                        HandlerMap& umapHandlers) {
+  std::lock_guard<std::mutex> lck(mtxLockHandler);
 
   {
-    cta::log::LogContext lc(m_log);
+    cta::log::LogContext lc(log);
     log::ScopedParamContainer params(lc);
     params.add("handler", tag);
     lc.log(cta::log::DEBUG, "In NegotiationService::releaseHandler(): Release handler.");
@@ -86,13 +91,13 @@ void NegotiationService::releaseHandler(const cta::frontend::grpc::request::Tag 
   /*
    * Check if the handler is registered;
    */
-  const auto itorFind = m_umapHandlers.find(tag);
-  if (itorFind == m_umapHandlers.end()) {
+  const auto itorFind = umapHandlers.find(tag);
+  if (itorFind == umapHandlers.end()) {
     std::ostringstream osExMsg;
     osExMsg << "In NegotiationService::releaseHandler(): Handler " << tag << " is not registered.";
     throw cta::exception::Exception(osExMsg.str());
   }
-  m_umapHandlers.erase(itorFind);
+  umapHandlers.erase(itorFind);
 }
 
 void NegotiationService::startProcessing() {
@@ -126,10 +131,15 @@ void NegotiationService::startProcessing() {
     //TODO: Log names of initialised handlers;
   }
 
-  // Start worker threads
+  // Start worker threads with explicit dependencies
   m_threads.reserve(m_numThreads);
   for (unsigned int i = 0; i < m_numThreads; ++i) {
-    m_threads.emplace_back(&NegotiationService::process, this, i, std::ref(m_log));
+    m_threads.emplace_back(&NegotiationService::process,
+                           i,
+                           std::ref(*m_upCompletionQueue),
+                           std::ref(m_log),
+                           std::ref(m_mtxLockHandler),
+                           std::ref(m_umapHandlers));
   }
 
   log::ScopedParamContainer params(lc);
@@ -137,7 +147,11 @@ void NegotiationService::startProcessing() {
   lc.log(cta::log::INFO, "Negotiation service processing threads started");
 }
 
-void NegotiationService::process(unsigned int threadId, cta::log::Logger& log) {
+void NegotiationService::process(unsigned int threadId,
+                                 ::grpc::ServerCompletionQueue& cq,
+                                 cta::log::Logger& log,
+                                 std::mutex& mtxLockHandler,
+                                 HandlerMap& umapHandlers) {
   // Each thread creates its own LogContext - thread-safe
   cta::log::LogContext lc(log);
 
@@ -153,9 +167,9 @@ void NegotiationService::process(unsigned int threadId, cta::log::Logger& log) {
     /*
      * Block waiting to read the next event from the completion queue.
      * The return value of Next should always be checked.
-     * It tells whether there is any kind of event or m_upCompletionQueue is shutting down.
+     * It tells whether there is any kind of event or completion queue is shutting down.
      */
-    if (!m_upCompletionQueue->Next(&pTag, &bOk)) {
+    if (!cq.Next(&pTag, &bOk)) {
       log::ScopedParamContainer params(lc);
       params.add("thread", threadId);
       lc.log(cta::log::ERR, "In NegotiationService::process(): The completion queue has been shutdown.");
@@ -170,9 +184,10 @@ void NegotiationService::process(unsigned int threadId, cta::log::Logger& log) {
 
     try {
       // Everything is ok the request can be processed
-      NegotiationRequestHandler& handler = getHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
+      NegotiationRequestHandler& handler =
+        getHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag), mtxLockHandler, umapHandlers);
       if (!handler.next(bOk)) {
-        releaseHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag));
+        releaseHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag), log, mtxLockHandler, umapHandlers);
       }
     } catch (const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
