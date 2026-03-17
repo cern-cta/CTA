@@ -23,7 +23,8 @@
 #include "castor/tape/tapeserver/file/OsmFileStructure.hpp"
 #include "castor/tape/tapeserver/file/OsmReadSession.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
-#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+//#include "castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "common/exception/Errnum.hpp"
 
 namespace castor::tape::tapeFile {
 
@@ -45,14 +46,18 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   try {
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
       osm::LIMITS::MAXMRECSIZE,
-      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
-  } catch (tapeserver::drive::UnexpectedSize &ex) {
-    // try with CRC32C
-    m_drive.rewind();
-    m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
-    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-      osm::LIMITS::MAXMRECSIZE,
-      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1"); 
+      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.1");
+  } catch (cta::exception::Errnum &en) {
+    if (en.errorNumber() == ENOMEM) {
+      // try with CRC32C
+      m_drive.rewind();
+      m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
+      m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
+        osm::LIMITS::MAXMRECSIZE,
+        "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.2"); 
+    } else {
+      throw;
+    }
   }
 
 //    uiBytesRead = m_session.m_drive.readBlock(pucTmpData, size);
