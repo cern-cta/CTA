@@ -81,7 +81,7 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
     //osm::LIMITS::MAXMRECSIZE,
     uiRecSize,
-    "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
+    "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2:" + std::string(uiRecSize));
 
   try {
     osmLabel.decode();
@@ -114,11 +114,11 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   {
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
       //osm::LIMITS::MAXMRECSIZE,
-      uiRecSize + 4,
-      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+      uiRecSize,
+      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1: " + std::string(uiRecSize));
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
       //osm::LIMITS::MAXMRECSIZE,
-      uiRecSize + 4,
+      uiRecSize,
       "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
     try {
       osmLabel.decode();
