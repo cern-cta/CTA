@@ -8,8 +8,7 @@ import json
 
 from ..helpers.hosts.cta_cli_host import CtaCliHost
 from ..helpers.hosts.cta_taped_host import CtaTapedHost
-
-# TODO: replace jq usage by proper python
+from ..helpers.utils.timeout import Timeout
 
 #####################################################################################################################
 # Helpers
@@ -89,15 +88,16 @@ class TempMountPolicy:
 
 
 class TempVirtualOrganization:
-    def __init__(self, cta_cli, vo_name, di_name):
+    def __init__(self, cta_cli, vo_name, di_name, extra_flags=""):
         self.cta_cli = cta_cli
         self.vo_name = vo_name
         self.di_name = di_name
+        self.extra_flags = extra_flags
 
     def __enter__(self):
         self.ls_before = self.cta_cli.execWithOutput("cta-admin --json vo ls")
         self.cta_cli.exec(
-            f"cta-admin vo add --vo '{self.vo_name}' --rmd 1 --wmd 1 --di '{self.di_name}' -m 'Add temp virtual organization'"
+            f"cta-admin vo add --vo '{self.vo_name}' --rmd 1 --wmd 1 --di '{self.di_name}' -m 'Add temp virtual organization' {self.extra_flags}"
         )
         return self
 
@@ -283,38 +283,50 @@ def test_cta_admin_tape_file(env):
     vids: list[str] = cta_cli.list_all_tape_vids()
     assert vids, "No tape VIDs available to test tape file commands."
 
+    ls_before = [cta_cli.execWithOutput(f"cta-admin --json tf ls -v {vid}") for vid in vids]
+
     # Archive one file
     test_file_path = "/eos/ctaeos/cta/cta_admin_tf_testfile_" + str(uuid.uuid4())[:8]
     env.disk_client[0].generate_and_archive_file(disk_instance_name, destination_path=test_file_path, wait=True)
 
-    # Find a VID with an entry in tf ls
-    vid_in_use = ""
-    for vid in vids:
-        out = cta_cli.execWithOutput(f"cta-admin --json tf ls -v {vid} | jq -r '.[]' || true").strip()
-        if out:
-            vid_in_use = vid
-            break
-    assert vid_in_use, "Could not find a VID with tape files after archiving."
+    # Figure out the fxid and VID
+    file_info_out = env.disk_instance[0].execWithOutput(f"eos -j file info {test_file_path}")
+    fxid = json.loads(file_info_out)["fxid"]
 
-    # Snapshot for tf is vid-specific
-    ls_before = cta_cli.execWithOutput(f"cta-admin tf ls -v {vid_in_use}")
-
-    # Extract archiveId for the file
-    archive_id = cta_cli.execWithOutput(
-        f"cta-admin --json tf ls -v {vid_in_use} | jq -r '.[] | .af | .archiveId' | head -n1"
-    ).strip()
-    assert archive_id, "Failed to extract archiveId from tf ls output."
+    tf_ls_out = env.cta_cli[0].execWithOutput(f"cta-admin --json tf ls --fxid {fxid} -i ctaeos")
+    tf_ls_json = json.loads(tf_ls_out)[0]
+    vid = tf_ls_json["tf"]["vid"]
+    archive_id = tf_ls_json["af"]["archiveId"]
 
     # Removing should fail (single copy)
     with pytest.raises(RuntimeError):
         print("Expected failure after attempt to remove single copy:")
-        cta_cli.exec(f"cta-admin tf rm -v {vid_in_use} -i ctaeos -I {archive_id} -r Test")
+        cta_cli.exec(f"cta-admin tf rm -v {vid} -i ctaeos -I {archive_id} -r Test")
 
-    # Cleanup
     env.disk_client[0].delete_file(disk_instance_name, path=test_file_path)
-    # TODO: ensure the file is also removed from CTA
 
-    ls_after = cta_cli.execWithOutput(f"cta-admin tf ls -v {vid_in_use}")
+    # Helper function
+    def file_exists_in_cta(vid_to_check, archive_id_to_check):
+        # Ls by --id is annoying because it will exit with a failure if the id does not exist
+        print(f"cta-admin --json tf ls -v {vid_to_check} | grep {archive_id_to_check} | wc -l")
+        return (
+            int(
+                cta_cli.execWithOutput(f"cta-admin --json tf ls -v {vid_to_check} | grep {archive_id_to_check} | wc -l")
+            )
+            == 1
+        )
+
+    # Wait until file is removed
+    wait_timeout_secs = 10
+    with Timeout(wait_timeout_secs) as t:
+        while file_exists_in_cta(vid, archive_id) and not t.expired:
+            time.sleep(1)
+        if t.expired:
+            raise TimeoutError(
+                f"File {archive_id} was deleted but is still in tf ls output after {wait_timeout_secs} seconds"
+            )
+
+    ls_after = [cta_cli.execWithOutput(f"cta-admin --json tf ls -v {vid}") for vid in vids]
     assert ls_before == ls_after
 
 
@@ -353,13 +365,17 @@ def test_cta_admin_drive(env):
 
     # Restart taped for the drive in question to ensure it ends up back in the catalogue again
     cta_taped.restart(wait_for_restart=True)
-
-    time.sleep(
-        1
-    )  # Until taped gets a correct readiness probe, we need this to ensure the drive registers itself in the catalogue. Ideally this is more deterministic...
+    # Until taped gets a correct readiness probe, we need this to ensure the drive registers itself in the catalogue. Ideally this is more deterministic...
+    time.sleep(1)
     env.cta_cli[0].set_all_drives_up(wait=True)
-    print(ls_before)
-    # assert ls_before == cta_cli.execWithOutput("cta-admin --json dr ls") # TODO: extract only the required info, because the drive entry will have some updated timing
+    # Since dr ls has things like "time since" in its output, we need to filter certain keys
+    ls_after = cta_cli.execWithOutput("cta-admin --json dr ls")
+    ignore_keys = ["driveStatusSince", "timeSinceLastUpdate"]
+    ls_before_filtered = [
+        {k: v for k, v in dr_dict.items() if k not in ignore_keys} for dr_dict in json.loads(ls_before)
+    ]
+    ls_after_filtered = [{k: v for k, v in dr_dict.items() if k not in ignore_keys} for dr_dict in json.loads(ls_after)]
+    assert ls_before_filtered == ls_after_filtered
 
 
 def test_cta_admin_physical_library(env):
@@ -429,6 +445,7 @@ def test_cta_admin_media_type(env):
     assert ls_before == cta_cli.execWithOutput("cta-admin --json mt ls")
 
 
+@pytest.mark.eos
 def test_cta_admin_recycle_tape_file_ls(env):
     cta_cli: CtaCliHost = env.cta_cli[0]
     disk_instance_name: str = env.disk_instance[0].instance_name
@@ -579,11 +596,11 @@ def test_cta_admin_storage_class(env):
 # -------------------------------------------------------------------------------------------------
 
 
+@pytest.mark.eos
 def test_cta_admin_show_queue(env):
     cta_cli: CtaCliHost = env.cta_cli[0]
     disk_instance_name: str = env.disk_instance[0].instance_name
 
-    # Snapshot is plain output (bash uses start=$(admin_cta sq))
     ls_before = cta_cli.execWithOutput("cta-admin --json sq")
     # Ensure we didn't have anything in the queue at this point
     ls_before_json = json.loads(ls_before)
@@ -613,6 +630,7 @@ def test_cta_admin_show_queue(env):
     env.disk_client[0].delete_file(disk_instance_name, path=file_path)
 
 
+@pytest.mark.eos
 def test_cta_admin_repack(env):
     cta_cli: CtaCliHost = env.cta_cli[0]
     disk_instance_name: str = env.disk_instance[0].instance_name
@@ -623,25 +641,33 @@ def test_cta_admin_repack(env):
 
     ls_before = cta_cli.execWithOutput("cta-admin re ls")
 
-    # TODO: remove sleeps
+    # Note that the goal is not to do an actual repack workflow (that is what the repack tests are for)
+    # This is why the repack expand and repack reporting routines should be disabled for this to (reliably) pass
+    with TempVirtualOrganization(cta_cli, "vo_repack", disk_instance_name, "--isrepackvo true"), TempMountPolicy(
+        cta_cli, "repack_ctasystest"
+    ):
+        cta_cli.exec(f"cta-admin ta ch -v {vid} -f true")
+        cta_cli.exec(f"cta-admin ta ch -v {vid} -s REPACKING -r 'Test repack'")
 
-    cta_cli.exec(f"cta-admin ta ch -v {vid} -f true")
-    time.sleep(3)
+        # Helper function
+        def is_in_repacking_state(vid_to_check):
+            ta_ls_out = cta_cli.execWithOutput(f"cta-admin --json ta ls -v {vid_to_check}")
+            ta_ls_json = json.loads(ta_ls_out)
+            if len(ta_ls_json) != 1:
+                return False
+            return ta_ls_json[0]["state"] == "REPACKING"
 
-    cta_cli.exec(f"cta-admin ta ch -v {vid} -s REPACKING -r 'Test repack'")
-    time.sleep(2)
-    cta_cli.exec(f"cta-admin ta ch -v {vid} -s REPACKING -r 'Test repack'")
-    time.sleep(2)
+        # Wait until tape is in repacking state
+        wait_timeout_secs = 10
+        with Timeout(wait_timeout_secs) as t:
+            while not is_in_repacking_state(vid) and not t.expired:
+                time.sleep(1)
+            if t.expired:
+                raise TimeoutError(f"Tape {vid} failed to change to REPACKING state in {wait_timeout_secs} seconds")
 
-    # Wait loop in bash verifies state == REPACKING; user asked to skip wait-until conditions.
-    # So we proceed directly.
-
-    # Add/remove repack request
-    with pytest.raises(RuntimeError):
         cta_cli.exec(
             f"cta-admin re add -v {vid} -m -u repack_ctasystest -b root://{disk_instance_name}//eos/ctaeos/cta"
         )
-    with pytest.raises(RuntimeError):
         cta_cli.exec(f"cta-admin re rm -v {vid}")
 
     ls_after = cta_cli.execWithOutput("cta-admin re ls")
