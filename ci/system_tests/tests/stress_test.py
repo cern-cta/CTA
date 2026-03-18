@@ -275,3 +275,12 @@ def test_wait_for_archival(eos_mgm, stress_params):
     print(f"Loss: {loss_percent:.2f}% (threshold: {stress_params.max_acceptable_loss_percent}%)")
 
     assert loss_acceptable, f"Too many files lost during archival: {num_missing_files} files missing"
+
+# In client_stress_ar.sh there is an archiveonly mode, after which we exit, maybe consider setting that here too
+# Now retrieve the files as poweruser1
+@pytest.mark.eos
+def test_wait_for_retrieval(env, stress_params):
+    print("Sleeping 60 seconds to allow MGM-FST communication to settle after disk copy deletion", flush=True)
+    
+
+
