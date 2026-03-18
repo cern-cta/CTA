@@ -141,6 +141,15 @@ class TempTapePool:
         return False
 
 
+def get_single_ls_item(cta_cli, ls_command, filter_func) -> dict:
+    ls_out = cta_cli.execWithOutput("cta-admin --json " + ls_command)
+    ls_json = json.loads(ls_out)
+    # If only cta-admin was a well designed API we wouldn't have to do this...
+    filtered_list = list(filter(filter_func, ls_json))
+    assert len(filtered_list) == 1
+    return filtered_list[0]
+
+
 #####################################################################################################################
 # Tests
 #####################################################################################################################
@@ -177,10 +186,18 @@ def test_cta_admin_admin(env):
 
     ls_before = cta_cli.execWithOutput("cta-admin --json ad ls")
 
-    cta_cli.exec(f"cta-admin ad add -u {ad_name} -m 'Add {ad_name}'")
-    cta_cli.exec(f"cta-admin ad ch -u {ad_name} -m 'Change {ad_name}'")
-    cta_cli.exec(f"cta-admin ad rm -u {ad_name}")
+    # Create
+    cta_cli.exec(f"cta-admin ad add -u {ad_name} -m 'Create {ad_name}'")
+    ad_created = get_single_ls_item(cta_cli, "ad ls", lambda x: x["user"] == ad_name)
+    assert ad_created["comment"] == f"Create {ad_name}"
 
+    # Update
+    cta_cli.exec(f"cta-admin ad ch -u {ad_name} -m 'Update {ad_name}'")
+    ad_updated = get_single_ls_item(cta_cli, "ad ls", lambda x: x["user"] == ad_name)
+    assert ad_updated["comment"] == f"Update {ad_name}"
+
+    # Delete
+    cta_cli.exec(f"cta-admin ad rm -u {ad_name}")
     assert ls_before == cta_cli.execWithOutput("cta-admin --json ad ls")
 
 
@@ -191,10 +208,27 @@ def test_cta_admin_virtual_organization(env):
 
     ls_before = cta_cli.execWithOutput("cta-admin --json vo ls")
 
-    cta_cli.exec(f"cta-admin vo add --vo '{vo_name}' --rmd 1 --wmd 1 --di '{disk_instance_name}' -m 'Add {vo_name}'")
-    cta_cli.exec(f"cta-admin vo ch --vo '{vo_name}' --wmd 2 --mfs 100 --isrepackvo false")
-    cta_cli.exec(f"cta-admin vo rm --vo '{vo_name}'")
+    # Create
+    cta_cli.exec(f"cta-admin vo add --vo '{vo_name}' --rmd 1 --wmd 1 --di '{disk_instance_name}' -m 'Create {vo_name}'")
+    vo_created = get_single_ls_item(cta_cli, "vo ls", lambda x: x["name"] == vo_name)
+    assert vo_created["comment"] == f"Create {vo_name}"
+    assert int(vo_created["readMaxDrives"]) == 1
+    assert int(vo_created["writeMaxDrives"]) == 1
+    assert vo_created["diskinstance"] == disk_instance_name
+    assert vo_created["isRepackVo"] is False
 
+    # Update
+    cta_cli.exec(f"cta-admin vo ch --vo '{vo_name}' --wmd 2 --mfs 100 --isrepackvo false -m 'Update {vo_name}'")
+    vo_updated = get_single_ls_item(cta_cli, "vo ls", lambda x: x["name"] == vo_name)
+    assert vo_updated["comment"] == f"Update {vo_name}"
+    assert int(vo_updated["readMaxDrives"]) == 1
+    assert int(vo_updated["writeMaxDrives"]) == 2
+    assert vo_updated["diskinstance"] == disk_instance_name
+    assert vo_updated["isRepackVo"] is False
+    assert int(vo_updated["maxFileSize"]) == 100
+
+    # Delete
+    cta_cli.exec(f"cta-admin vo rm --vo '{vo_name}'")
     assert ls_before == cta_cli.execWithOutput("cta-admin --json vo ls")
 
 
@@ -209,10 +243,18 @@ def test_cta_admin_disk_instance(env):
 
     ls_before = cta_cli.execWithOutput("cta-admin --json di ls")
 
-    cta_cli.exec(f"cta-admin di add -n {di_name} -m 'Add di {di_name}'")
-    cta_cli.exec(f"cta-admin di ch -n {di_name} -m 'Change di {di_name}'")
-    cta_cli.exec(f"cta-admin di rm -n {di_name}")
+    # Create
+    cta_cli.exec(f"cta-admin di add -n {di_name} -m 'Create {di_name}'")
+    di_created = get_single_ls_item(cta_cli, "di ls", lambda x: x["name"] == di_name)
+    assert di_created["comment"] == f"Create {di_name}"
 
+    # Update
+    cta_cli.exec(f"cta-admin di ch -n {di_name} -m 'Update {di_name}'")
+    di_updated = get_single_ls_item(cta_cli, "di ls", lambda x: x["name"] == di_name)
+    assert di_updated["comment"] == f"Update {di_name}"
+
+    # Remove
+    cta_cli.exec(f"cta-admin di rm -n {di_name}")
     assert ls_before == cta_cli.execWithOutput("cta-admin --json di ls")
 
 
@@ -223,12 +265,16 @@ def test_cta_admin_disk_instance_space(env):
 
     ls_before = cta_cli.execWithOutput("cta-admin --json dis ls")
 
+    # Create
     cta_cli.exec(
         f"cta-admin dis add -n {dis_name} --di {disk_instance_name} -i 10 -u eosSpace:default -m 'Add dis {dis_name}'"
     )
-    cta_cli.exec(f"cta-admin dis ch -n {dis_name} --di {disk_instance_name} -i 100 -m 'Change dis {dis_name}'")
-    cta_cli.exec(f"cta-admin dis rm -n {dis_name} --di {disk_instance_name}")
 
+    # Update
+    cta_cli.exec(f"cta-admin dis ch -n {dis_name} --di {disk_instance_name} -i 100 -m 'Change dis {dis_name}'")
+
+    # Remove
+    cta_cli.exec(f"cta-admin dis rm -n {dis_name} --di {disk_instance_name}")
     assert ls_before == cta_cli.execWithOutput("cta-admin --json dis ls")
 
 
@@ -293,7 +339,7 @@ def test_cta_admin_tape_file(env):
     file_info_out = env.disk_instance[0].execWithOutput(f"eos -j file info {test_file_path}")
     fxid = json.loads(file_info_out)["fxid"]
 
-    tf_ls_out = env.cta_cli[0].execWithOutput(f"cta-admin --json tf ls --fxid {fxid} -i ctaeos")
+    tf_ls_out = cta_cli.execWithOutput(f"cta-admin --json tf ls --fxid {fxid} -i ctaeos")
     tf_ls_json = json.loads(tf_ls_out)[0]
     vid = tf_ls_json["tf"]["vid"]
     archive_id = tf_ls_json["af"]["archiveId"]
@@ -305,21 +351,10 @@ def test_cta_admin_tape_file(env):
 
     env.disk_client[0].delete_file(disk_instance_name, path=test_file_path)
 
-    # Helper function
-    def file_exists_in_cta(vid_to_check, archive_id_to_check):
-        # Ls by --id is annoying because it will exit with a failure if the id does not exist
-        print(f"cta-admin --json tf ls -v {vid_to_check} | grep {archive_id_to_check} | wc -l")
-        return (
-            int(
-                cta_cli.execWithOutput(f"cta-admin --json tf ls -v {vid_to_check} | grep {archive_id_to_check} | wc -l")
-            )
-            == 1
-        )
-
     # Wait until file is removed
     wait_timeout_secs = 10
     with Timeout(wait_timeout_secs) as t:
-        while file_exists_in_cta(vid, archive_id) and not t.expired:
+        while cta_cli.file_exists_in_cta(vid, archive_id) and not t.expired:
             time.sleep(1)
         if t.expired:
             raise TimeoutError(

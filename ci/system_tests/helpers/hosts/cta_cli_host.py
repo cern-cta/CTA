@@ -54,3 +54,8 @@ class CtaCliHost(RemoteHost):
         output = self.execWithOutput("cta-admin --json tape ls --all")
         tape_list = json.loads(output)
         return [tape["vid"] for tape in tape_list]
+
+    def file_exists_in_cta(self, vid, archive_id):
+        # Ls by --id is annoying because it will exit with a failure if the id does not exist
+        print(f"cta-admin --json tf ls -v {vid} | grep {archive_id} | wc -l")
+        return int(self.execWithOutput(f"cta-admin --json tf ls -v {vid} | grep {archive_id} | wc -l")) == 1
