@@ -92,7 +92,7 @@ protected:
   char m_tcOwner[LIMITS::CIDLEN];
   char m_tcVersion[LIMITS::LABELVERSIONLEN];
   char m_tcName[LIMITS::VOLNAMELEN+1];
-  char m_tcRawLabel[2 * LIMITS::MAXMRECSIZE];
+  char m_tcRawLabel[2 * (LIMITS::MAXMRECSIZE + 4)];
   uint64_t m_ulCreateTime;
   uint64_t m_ulExpireTime;
   uint64_t m_ulRecSize;

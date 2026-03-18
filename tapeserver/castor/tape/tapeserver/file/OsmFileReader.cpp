@@ -79,8 +79,20 @@ void OsmFileReader::moveToFirstFile() {
   // which we rewind the tape anyway and then space forward)
   m_session.m_drive.rewind();
   osm::LABEL osmLabel;
-  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), osm::LIMITS::MAXMRECSIZE, "[FileReader::position] - Reading OSM label - part 1");
-  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE), osm::LIMITS::MAXMRECSIZE, "[FileReader::position] - Reading OSM label - part 2");
+  size_t uiRecSize = osm::LIMITS::MAXMRECSIZE;
+
+  try {
+    m_session.m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), uiRecSize, "[FileReader::position] - Reading OSM label - part 1");
+  } catch (cta::exception::Errnum &en) {
+    if (en.errorNumber() == ENOMEM) {
+      m_session.m_drive.rewind();
+      uiRecSize = osm::LIMITS::MAXMRECSIZE + SCSI::logicBlockProtectionMethod::CRC32CLength;
+      m_session.m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), uiRecSize, "[FileReader::position] - Reading OSM label - part 1");
+    } else {
+      throw;
+    }
+  }
+  m_session.m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE), uiRecSize, "[FileReader::position] - Reading OSM label - part 2");
   try {
     osmLabel.decode();
   } catch(const std::exception& osmExc) {
