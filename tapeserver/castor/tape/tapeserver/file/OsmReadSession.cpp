@@ -61,10 +61,17 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
 // ??? so it is neccesary to read a bloc manualy by readBlock(...);
       //m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
       uiRecSize = osm::LIMITS::MAXMRECSIZE + SCSI::logicBlockProtectionMethod::CRC32CLength;
+
+      std::stringstream err;
+
+      err << "part 1.2: " << uiRecSize;
+
       m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
         //osm::LIMITS::MAXMRECSIZE,
         uiRecSize,
-        "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.2"); 
+        //"[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.2"
+        err.str()  
+        ); 
     } else {
       throw;
     }
@@ -81,7 +88,7 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
     //osm::LIMITS::MAXMRECSIZE,
     uiRecSize,
-    "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2:" + std::string(uiRecSize));
+    "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
 
   try {
     osmLabel.decode();
@@ -112,10 +119,17 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   // from this point the right LBP mode should be set or not set
   m_drive.rewind();
   {
+      std::stringstream err;
+
+      err << "part 1: " << uiRecSize;
+
+
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
       //osm::LIMITS::MAXMRECSIZE,
       uiRecSize,
-      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1: " + std::string(uiRecSize));
+      //"[OsmReadSession::OsmReadSession] - Reading OSM label - part 1"
+      err.str()
+      );
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
       //osm::LIMITS::MAXMRECSIZE,
       uiRecSize,
