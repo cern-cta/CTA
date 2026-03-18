@@ -6,6 +6,7 @@ import pytest
 import time
 from dataclasses import dataclass
 from pathlib import Path
+import contextlib
 
 from ..helpers.hosts.disk.disk_instance_host import DiskInstanceHost
 from ..helpers.hosts.disk.eos_client_host import EosClientHost
@@ -171,10 +172,13 @@ async def test_generate_and_copy_files(env, stress_params):
     # Track drives_up outside nested function so we can check it after task cancellation
     drives_up = not stress_params.prequeue.enabled  # If not prequeue, drives are already up
 
+    # Will be used to notify the monitoring task that archive is finished
+    stop_monitoring = asyncio.Event()
+
     async def monitor_copy_and_put_drives_up():
         """Monitor file count and put drives up when threshold reached (for prequeue mode)."""
         nonlocal drives_up
-        while archive_proc.returncode is None:
+        while archive_proc.returncode is None and not stop_monitoring.is_set():
             num_files_so_far = eos_client.count_files_in_namespace(
                 eos_host=mgm_ip,
                 dest_dir=archive_directory,
@@ -203,16 +207,15 @@ async def test_generate_and_copy_files(env, stress_params):
             sleep_time = (
                 stress_params.prequeue.check_interval_sec if not drives_up else stress_params.check_copy_interval_sec
             )
-            await asyncio.sleep(sleep_time)
+            # We suppress timeout because we will just continue with monitoring in that case
+            with contextlib.suppress(asyncio.TimeoutError):
+                await asyncio.wait_for(stop_monitoring.wait(), sleep_time)
 
     # Run archive and monitoring concurrently — no PID polling needed
     monitor_task = asyncio.create_task(monitor_copy_and_put_drives_up())
     stdout, stderr = await archive_proc.communicate()
-    monitor_task.cancel()  # Stop monitoring once archive completes
-    try:
-        await monitor_task
-    except asyncio.CancelledError:
-        pass
+    stop_monitoring.set()
+    await monitor_task
 
     # If archive finished before threshold was reached, still put drives up
     if stress_params.prequeue.enabled and not drives_up:
