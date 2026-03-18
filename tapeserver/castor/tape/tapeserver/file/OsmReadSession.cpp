@@ -34,7 +34,7 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
 
-//  size_t uiBytesRead = 0;
+  size_t uiRecSize = osm::LIMITS::MAXMRECSIZE;
 
   uint8_t uiLLBPMethod = SCSI::logicBlockProtectionMethod::DoNotUse;
   osm::LABEL osmLabel;
@@ -43,17 +43,27 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
 //    osm::LIMITS::MAXMRECSIZE,
 //    "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
 
+// SCSI::logicBlockProtectionMethod::CRC32CLength
+
   try {
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-      osm::LIMITS::MAXMRECSIZE,
+      //osm::LIMITS::MAXMRECSIZE,
+      uiRecSize,
       "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.1");
   } catch (cta::exception::Errnum &en) {
     if (en.errorNumber() == ENOMEM) {
       // try with CRC32C
       m_drive.rewind();
-      m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
+      // this is wrong as enabling will cause seting drive to block size 32776 !!! 
+//[st3] Failed to read 32772 byte block with 32768 byte transfer.
+//[st3] Failed to read 32772 byte block with 32768 byte transfer.
+//[st3] Failed to read 32776 byte block with 32772 byte transfer.
+// ??? so it is neccesary to read a bloc manualy by readBlock(...);
+      //m_drive.enableCRC32CLogicalBlockProtectionReadOnly();
+      uiRecSize = osm::LIMITS::MAXMRECSIZE + SCSI::logicBlockProtectionMethod::CRC32CLength;
       m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-        osm::LIMITS::MAXMRECSIZE,
+        //osm::LIMITS::MAXMRECSIZE,
+        uiRecSize,
         "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.2"); 
     } else {
       throw;
@@ -69,7 +79,8 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
 //    }
 
   m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
-    osm::LIMITS::MAXMRECSIZE,
+    //osm::LIMITS::MAXMRECSIZE,
+    uiRecSize,
     "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
 
   try {
@@ -99,21 +110,23 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface &drive,
       throw cta::exception::Exception("In OsmReadSession::OsmReadSession(): unknown LBP method");
   }
   // from this point the right LBP mode should be set or not set
-//  m_drive.rewind();
-//  {
-//    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-//      osm::LIMITS::MAXMRECSIZE,
-//      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
-//    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
-//      osm::LIMITS::MAXMRECSIZE,
-//      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
-//    try {
-//      osmLabel.decode();
-//    } catch (const std::exception& e) {
-//      throw TapeFormatError(e.what());
-//    }
-//    HeaderChecker::checkOSM(osmLabel, volInfo.vid);
-//  }
+  m_drive.rewind();
+  {
+    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
+      //osm::LIMITS::MAXMRECSIZE,
+      uiRecSize,
+      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
+      //osm::LIMITS::MAXMRECSIZE,
+      uiRecSize,
+      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
+    try {
+      osmLabel.decode();
+    } catch (const std::exception& e) {
+      throw TapeFormatError(e.what());
+    }
+    HeaderChecker::checkOSM(osmLabel, volInfo.vid);
+  }
   
   HeaderChecker::checkOSM(osmLabel, volInfo.vid);
  
