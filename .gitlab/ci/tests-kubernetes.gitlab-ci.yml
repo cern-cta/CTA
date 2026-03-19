@@ -345,6 +345,7 @@ stress-test:
                           --cta-image-tag ${IMAGE_TAG}
                           --catalogue-config ${CATALOGUE_CONFIG}
                           --scheduler-config ${SCHEDULER_CONFIG}
+                          --chart-install-timeout 15
                           --test-script tests/prepare_tests.sh
                           "${extra_args[@]}"
     # Set up monitoring
@@ -422,6 +423,7 @@ stress-test-python:
                            --eos-config ${STRESS_EOS_VALUES_FILE}
                            --catalogue-config ${CATALOGUE_CONFIG}
                            --scheduler-config ${SCHEDULER_CONFIG}
+                           --chart-install-timeout 15
                            ${EXTRA_SPAWN_ARGS}
     # Set up monitoring
     - git clone https://gitlab+deploy-token-3624:${CI_MONITORING_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
