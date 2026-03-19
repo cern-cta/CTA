@@ -58,13 +58,7 @@ public:
       return *upHandler;
     }
 
-    void release(cta::log::Logger& log, Tag tag) {
-      {
-        cta::log::LogContext lc(log);
-        log::ScopedParamContainer params(lc);
-        params.add("handler", tag);
-        lc.log(cta::log::DEBUG, "In ThreadSafeHandlerMap::release(): Release handler.");
-      }
+    void release(Tag tag) {
       std::lock_guard<std::mutex> lck(m_mtxLockHandler);
       /*
        * Check if the handler is registered;
@@ -125,13 +119,6 @@ private:
                       ::grpc::ServerCompletionQueue& cq,
                       cta::log::Logger& log,
                       ThreadSafeHandlerMap& handlers);
-
-  static NegotiationRequestHandler& getHandler(const cta::frontend::grpc::request::Tag tag,
-                                               ThreadSafeHandlerMap& umapHandlers);
-
-  static void releaseHandler(const cta::frontend::grpc::request::Tag tag,
-                             cta::log::Logger& log,
-                             ThreadSafeHandlerMap& umapHandlers);
 
   cta::log::Logger& m_log;  // Logger is thread-safe; each thread creates its own LogContext from it
   TokenStorage& m_tokenStorage;

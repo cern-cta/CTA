@@ -138,7 +138,12 @@ void NegotiationService::process(unsigned int threadId,
       // Everything is ok the request can be processed
       NegotiationRequestHandler& handler = handlers.get(static_cast<cta::frontend::grpc::request::Tag>(pTag));
       if (!handler.next(bOk)) {
-        handlers.release(log, static_cast<cta::frontend::grpc::request::Tag>(pTag));
+        {
+          log::ScopedParamContainer params(lc);
+          params.add("handler", pTag);
+          lc.log(cta::log::DEBUG, "In NegotiationService::process(): Release handler.");
+        }
+        handlers.release(static_cast<cta::frontend::grpc::request::Tag>(pTag));
       }
     } catch (const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
