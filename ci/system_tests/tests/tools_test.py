@@ -150,6 +150,15 @@ def get_single_ls_item(cta_cli, ls_command, filter_func) -> dict:
     return filtered_list[0]
 
 
+# We could let this return a boolean, but we get better error messages with individual asserts
+def assert_dict_equals(actual, expected, ignore_keys):
+    ignored = set(ignore_keys)
+    for k1, v1 in actual.items():
+        assert k1 in ignored or (k1 in expected and expected[k1] == v1)
+    for k2, v2 in expected.items():
+        assert k2 in ignored or k2 in actual
+
+
 #####################################################################################################################
 # Tests
 #####################################################################################################################
@@ -194,6 +203,7 @@ def test_cta_admin_admin(env):
     # Update
     cta_cli.exec(f"cta-admin ad ch -u {ad_name} -m 'Update {ad_name}'")
     ad_updated = get_single_ls_item(cta_cli, "ad ls", lambda x: x["user"] == ad_name)
+    assert_dict_equals(ad_updated, ad_created, ["lastModificationLog", "comment"])
     assert ad_updated["comment"] == f"Update {ad_name}"
 
     # Delete
@@ -220,10 +230,11 @@ def test_cta_admin_virtual_organization(env):
     # Update
     cta_cli.exec(f"cta-admin vo ch --vo '{vo_name}' --wmd 2 --mfs 100 --isrepackvo false -m 'Update {vo_name}'")
     vo_updated = get_single_ls_item(cta_cli, "vo ls", lambda x: x["name"] == vo_name)
+    assert_dict_equals(
+        vo_updated, vo_created, ["lastModificationLog", "writeMaxDrives", "maxFileSize", "isRepackVo", "comment"]
+    )
     assert vo_updated["comment"] == f"Update {vo_name}"
-    assert int(vo_updated["readMaxDrives"]) == 1
     assert int(vo_updated["writeMaxDrives"]) == 2
-    assert vo_updated["diskinstance"] == disk_instance_name
     assert vo_updated["isRepackVo"] is False
     assert int(vo_updated["maxFileSize"]) == 100
 
@@ -251,6 +262,7 @@ def test_cta_admin_disk_instance(env):
     # Update
     cta_cli.exec(f"cta-admin di ch -n {di_name} -m 'Update {di_name}'")
     di_updated = get_single_ls_item(cta_cli, "di ls", lambda x: x["name"] == di_name)
+    assert_dict_equals(di_updated, di_created, ["lastModificationLog", "comment"])
     assert di_updated["comment"] == f"Update {di_name}"
 
     # Remove
@@ -267,11 +279,20 @@ def test_cta_admin_disk_instance_space(env):
 
     # Create
     cta_cli.exec(
-        f"cta-admin dis add -n {dis_name} --di {disk_instance_name} -i 10 -u eosSpace:default -m 'Add dis {dis_name}'"
+        f"cta-admin dis add -n {dis_name} --di {disk_instance_name} -i 10 -u eosSpace:default -m 'Create {dis_name}'"
     )
+    dis_created = get_single_ls_item(cta_cli, "dis ls", lambda x: x["name"] == dis_name)
+    assert dis_created["comment"] == f"Create {dis_name}"
+    assert dis_created["diskInstance"] == disk_instance_name
+    assert dis_created["freeSpaceQueryUrl"] == "eosSpace:default"
+    assert int(dis_created["refreshInterval"]) == 10
 
     # Update
-    cta_cli.exec(f"cta-admin dis ch -n {dis_name} --di {disk_instance_name} -i 100 -m 'Change dis {dis_name}'")
+    cta_cli.exec(f"cta-admin dis ch -n {dis_name} --di {disk_instance_name} -i 100 -m 'Update {dis_name}'")
+    dis_updated = get_single_ls_item(cta_cli, "dis ls", lambda x: x["name"] == dis_name)
+    assert_dict_equals(dis_updated, dis_created, ["lastModificationLog", "refreshInterval", "comment"])
+    assert dis_updated["comment"] == f"Update {dis_name}"
+    assert int(dis_updated["refreshInterval"]) == 100
 
     # Remove
     cta_cli.exec(f"cta-admin dis rm -n {dis_name} --di {disk_instance_name}")
@@ -287,11 +308,27 @@ def test_cta_admin_disk_system(env):
     ls_before = cta_cli.execWithOutput("cta-admin --json ds ls")
 
     with TempDiskInstanceSystem(cta_cli, dis_name, disk_instance_name):
+        # Create
         cta_cli.exec(
             f"cta-admin ds add -n {ds_name} --di {disk_instance_name} --dis {dis_name} "
-            f"-r root://{disk_instance_name}//eos/ctaeos/cta/ -f 10000 -s 10 -m 'Adding ds {ds_name}'"
+            f"-r root://{disk_instance_name}//eos/ctaeos/cta/ -f 10000 -s 10 -m 'Create {ds_name}'"
         )
-        cta_cli.exec(f"cta-admin ds ch -n {ds_name} -s 100")
+        ds_created = get_single_ls_item(cta_cli, "ds ls", lambda x: x["name"] == ds_name)
+        assert ds_created["comment"] == f"Create {ds_name}"
+        assert ds_created["diskInstance"] == disk_instance_name
+        assert ds_created["diskInstanceSpace"] == dis_name
+        assert ds_created["fileRegexp"] == f"root://{disk_instance_name}//eos/ctaeos/cta/"
+        assert int(ds_created["targetedFreeSpace"]) == 10000
+        assert int(ds_created["sleepTime"]) == 10
+
+        # Update
+        cta_cli.exec(f"cta-admin ds ch -n {ds_name} -s 100 -m 'Update {ds_name}'")
+        ds_updated = get_single_ls_item(cta_cli, "ds ls", lambda x: x["name"] == ds_name)
+        assert_dict_equals(ds_updated, ds_created, ["lastModificationLog", "sleepTime", "comment"])
+        assert ds_updated["comment"] == f"Update {ds_name}"
+        assert int(ds_updated["sleepTime"]) == 100
+
+        # Delete
         cta_cli.exec(f"cta-admin ds rm -n {ds_name}")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json ds ls")
@@ -306,18 +343,62 @@ def test_cta_admin_tape(env):
     cta_cli: CtaCliHost = env.cta_cli[0]
     pl_name = "test_cta_admin_tape_pl1"
     ll_name = "test_cta_admin_tape_ll1"
-    ta_name = "ULT9999"
+    ta_vid = "ULT9999"
+    tp_name = "ctasystest"
 
     ls_before = cta_cli.execWithOutput("cta-admin --json ta ls --all")
 
     with TempPhysicalLibrary(cta_cli, pl_name), TempLogicalLibrary(cta_cli, ll_name, pl_name):
+        # Create
         cta_cli.exec(
-            f"cta-admin ta add -v {ta_name} --mt LTO8 --ve vendor -l {ll_name} -t ctasystest -f true --purchaseorder order1"
+            f"cta-admin ta add -v {ta_vid} --mt LTO8 --ve testvendor -l {ll_name} -t {tp_name} -f true --purchaseorder order1 -m 'Create {ta_vid}'"
         )
-        cta_cli.exec(f"cta-admin ta reclaim -v {ta_name}")
-        cta_cli.exec(f"cta-admin ta ch -v {ta_name} -s 'REPACKING' -r 'Test admin-cta ta ch'")
-        cta_cli.exec(f"cta-admin ta ch -v {ta_name} --purchaseorder 'order2' -r 'Test admin-cta ta ch'")
-        cta_cli.exec(f"cta-admin ta rm -v {ta_name}")
+        ta_created = get_single_ls_item(cta_cli, "ta ls --all", lambda x: x["vid"] == ta_vid)
+        assert ta_created["vid"] == ta_vid
+        assert ta_created["mediaType"] == "LTO8"
+        assert ta_created["vendor"] == "testvendor"
+        assert ta_created["logicalLibrary"] == ll_name
+        assert ta_created["tapepool"] == tp_name
+        assert ta_created["purchaseOrder"] == "order1"
+        assert ta_created["full"]
+        assert ta_created["dirty"]
+        assert ta_created["comment"] == f"Create {ta_vid}"
+        assert ta_created["state"] == "ACTIVE"
+        assert ta_created["labelFormat"] == "CTA"
+        assert int(ta_created["occupancy"]) == 0
+        assert int(ta_created["lastFseq"]) == 0
+        assert int(ta_created["readMountCount"]) == 0
+        assert int(ta_created["writeMountCount"]) == 0
+        assert int(ta_created["nbMasterFiles"]) == 0
+        assert int(ta_created["masterDataInBytes"]) == 0
+
+        # Update Reclaim
+        cta_cli.exec(f"cta-admin ta reclaim -v {ta_vid}")
+        ta_updated1 = get_single_ls_item(cta_cli, "ta ls --all", lambda x: x["vid"] == ta_vid)
+        assert_dict_equals(ta_updated1, ta_created, ["dirty", "full", "lastModificationLog", "stateUpdateTime"])
+        assert not ta_updated1["full"]
+        assert not ta_updated1["dirty"]
+
+        # Update State
+        cta_cli.exec(f"cta-admin ta ch -v {ta_vid} -s 'REPACKING' -r 'Update state change'")
+        # TODO: make this deterministic
+        time.sleep(2)
+        ta_updated2 = get_single_ls_item(cta_cli, "ta ls --all", lambda x: x["vid"] == ta_vid)
+        assert_dict_equals(
+            ta_updated2,
+            ta_updated1,
+            ["state", "stateReason", "lastModificationLog", "stateUpdateTime", "stateModifiedBy"],
+        )
+        assert ta_updated2["state"] == "REPACKING"
+        assert ta_updated2["stateReason"] == "Update state change"
+
+        cta_cli.exec(f"cta-admin ta ch -v {ta_vid} --purchaseorder 'order2'")
+        ta_updated3 = get_single_ls_item(cta_cli, "ta ls --all", lambda x: x["vid"] == ta_vid)
+        assert_dict_equals(ta_updated3, ta_updated2, ["purchaseOrder", "lastModificationLog"])
+        assert ta_updated3["purchaseOrder"] == "order2"
+
+        # Delete
+        cta_cli.exec(f"cta-admin ta rm -v {ta_vid}")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json ta ls --all")
 
@@ -374,8 +455,27 @@ def test_cta_admin_tape_pool(env):
     ls_before = cta_cli.execWithOutput("cta-admin --json tp ls")
 
     with TempVirtualOrganization(cta_cli, vo_name, disk_instance_name):
-        cta_cli.exec(f"cta-admin tp add -n '{tp_name}' --vo {vo_name} -p 0 -m 'Test tp cmd'")
+        # Create
+        cta_cli.exec(f"cta-admin tp add -n '{tp_name}' --vo {vo_name} -p 0 -m 'Create {tp_name}'")
+        tp_created = get_single_ls_item(cta_cli, "tp ls", lambda x: x["name"] == tp_name)
+        assert tp_created["name"] == tp_name
+        assert tp_created["vo"] == vo_name
+        assert int(tp_created["numTapes"]) == 0
+        assert int(tp_created["numPartialTapes"]) == 0
+        assert int(tp_created["numPhysicalFiles"]) == 0
+        assert int(tp_created["dataBytes"]) == 0
+        assert int(tp_created["encrypt"]) == 0
+        assert tp_created["encryptionKeyName"] == ""
+        assert tp_created["comment"] == f"Create {tp_name}"
+
+        # Update
         cta_cli.exec(f"cta-admin tp ch -n '{tp_name}' -k encrypt_key_name")
+        tp_updated = get_single_ls_item(cta_cli, "tp ls", lambda x: x["name"] == tp_name)
+        assert_dict_equals(tp_updated, tp_created, ["modified", "encrypt", "encryptionKeyName"])
+        assert tp_updated["encrypt"]
+        assert tp_updated["encryptionKeyName"] == "encrypt_key_name"
+
+        # Delete
         cta_cli.exec(f"cta-admin tp rm -n '{tp_name}'")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json tp ls")
@@ -393,9 +493,29 @@ def test_cta_admin_drive(env):
     cta_cli.set_all_drives_down(wait=True)
 
     with TempPhysicalLibrary(cta_cli, pl_name), TempLogicalLibrary(cta_cli, ll_name, pl_name):
+        # No create, because drives auto-create on start
+
+        # Update
         cta_cli.exec(f"cta-admin dr up {dr_name} -r 'cta-admin systest up'")
+        dr_updated1 = get_single_ls_item(cta_cli, "dr ls", lambda x: x["driveName"] == dr_name)
+        assert dr_updated1["driveName"] == dr_name
+        assert dr_updated1["reason"] == "cta-admin systest up"
+        assert dr_updated1["desiredDriveState"] == "UP"
+
         cta_cli.exec(f"cta-admin dr down {dr_name} -r 'cta-admin systest down'")
-        cta_cli.exec(f"cta-admin dr ch {dr_name} -m 'cta-admin test ch'")
+        dr_updated2 = get_single_ls_item(cta_cli, "dr ls", lambda x: x["driveName"] == dr_name)
+        assert_dict_equals(
+            dr_updated2, dr_updated1, ["driveStatusSince", "timeSinceLastUpdate", "reason", "desiredDriveState"]
+        )
+        assert dr_updated2["reason"] == "cta-admin systest down"
+        assert dr_updated2["desiredDriveState"] == "DOWN"
+
+        cta_cli.exec(f"cta-admin dr ch {dr_name} -m 'Updated {dr_name}'")
+        dr_updated3 = get_single_ls_item(cta_cli, "dr ls", lambda x: x["driveName"] == dr_name)
+        assert_dict_equals(dr_updated3, dr_updated2, ["driveStatusSince", "timeSinceLastUpdate", "comment"])
+        assert dr_updated3["comment"] == f"Updated {dr_name}"
+
+        # Delete
         cta_cli.exec(f"cta-admin dr rm {dr_name}")
 
     # Restart taped for the drive in question to ensure it ends up back in the catalogue again
@@ -419,11 +539,20 @@ def test_cta_admin_physical_library(env):
 
     ls_before = cta_cli.execWithOutput("cta-admin --json pl ls")
 
+    # Create
     cta_cli.exec(
         f"cta-admin pl add --name '{pl_name}' --manufacturer 'manA' --model 'modA' --location 'locA' "
         "--type 'typeA' --guiurl 'urlA' --webcamurl 'urlA' "
         "--nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentA'"
     )
+    pl_created = get_single_ls_item(cta_cli, "pl ls", lambda x: x["name"] == pl_name)
+    assert pl_created["name"] == pl_name
+    assert pl_created["manufacturer"] == "manA"
+    assert pl_created["model"] == "modA"
+    assert pl_created["location"] == "locA"
+    assert pl_created["type"] == "typeA"
+
+    # Update
     cta_cli.exec(
         f"cta-admin pl ch --name '{pl_name}' --location 'locB' "
         "--guiurl 'urlB' --webcamurl 'urlB' "
@@ -439,7 +568,10 @@ def test_cta_admin_physical_library(env):
             "--nbphysicalcartridgeslots 4 --nbavailablecartridgeslots 3 --nbphysicaldriveslots 2 --comment 'commentA'"
         )
 
+    # Update
     cta_cli.exec(f"cta-admin pl ch --name '{pl_name}' --disabled true --dr 'disabled_reason_provided'")
+
+    # Delete
     cta_cli.exec(f"cta-admin pl rm --name '{pl_name}'")
 
     ls_after = cta_cli.execWithOutput("cta-admin --json pl ls")
@@ -450,17 +582,21 @@ def test_cta_admin_logical_library(env):
     cta_cli: CtaCliHost = env.cta_cli[0]
     pl1_name = "test_cta_admin_logical_library_pl1"
     pl2_name = "test_cta_admin_logical_library_pl2"
-    ll1_name = "test_cta_admin_logical_library_ll1"
-    ll2_name = "test_cta_admin_logical_library_ll2"
+    ll_name = "test_cta_admin_logical_library_ll1"
 
     ls_before = cta_cli.execWithOutput("cta-admin --json ll ls")
 
     with TempPhysicalLibrary(cta_cli, pl1_name), TempPhysicalLibrary(cta_cli, pl2_name):
-        cta_cli.exec(f"cta-admin ll add -n '{ll1_name}' -d false --pl {pl1_name} -m 'cta-admin systest add'")
-        cta_cli.exec(f"cta-admin ll add -n '{ll2_name}' -d false --pl {pl1_name} -m 'cta-admin systest add'")
-        cta_cli.exec(f"cta-admin ll ch -n '{ll1_name}' -d true --pl {pl2_name} --dr 'cta-admin systest ch'")
-        cta_cli.exec(f"cta-admin ll rm -n {ll1_name}")
-        cta_cli.exec(f"cta-admin ll rm -n {ll2_name}")
+        # Create
+        cta_cli.exec(f"cta-admin ll add -n '{ll_name}' -d false --pl {pl1_name} -m 'cta-admin systest add'")
+        ll_created = get_single_ls_item(cta_cli, "ll ls", lambda x: x["name"] == ll_name)
+        assert ll_created["name"] == ll_name
+
+        # Update
+        cta_cli.exec(f"cta-admin ll ch -n '{ll_name}' -d true --pl {pl2_name} --dr 'cta-admin systest ch'")
+
+        # Delete
+        cta_cli.exec(f"cta-admin ll rm -n {ll_name}")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json ll ls")
 
@@ -471,10 +607,17 @@ def test_cta_admin_media_type(env):
 
     ls_before = cta_cli.execWithOutput("cta-admin --json mt ls")
 
+    # Create
     cta_cli.exec(
         f"cta-admin mt add -n '{mt_name}' -t 12345C -c 5000000000000 -p 50 -m 'cta-admin systest add cartridge'"
     )
+    mt_created = get_single_ls_item(cta_cli, "mt ls", lambda x: x["name"] == mt_name)
+    assert mt_created["name"] == mt_name
+
+    # Update
     cta_cli.exec(f"cta-admin mt ch -n '{mt_name}' -w 10 -m 'cta-admin ch {mt_name}'")
+
+    # Delete
     cta_cli.exec(f"cta-admin mt rm -n '{mt_name}'")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json mt ls")
@@ -503,13 +646,9 @@ def test_cta_admin_recycle_tape_file_ls(env):
     # Delete the file
     env.disk_client[0].delete_file(disk_instance_name, path=test_file_path)
 
-    # File should end up in rtf
-    rtf_ls_out = cta_cli.execWithOutput(f"cta-admin --json rtf ls -v {vid}")
-    rtf_ls_json = json.loads(rtf_ls_out)
-    assert any(
-        rtf["archiveFileId"] == archive_id and rtf["vid"] == vid and rtf["diskFilePath"] == test_file_path
-        for rtf in rtf_ls_json
-    )
+    rtf_created = get_single_ls_item(cta_cli, f"rtf ls -v {vid}", lambda x: x["archiveFileId"] == archive_id)
+    assert rtf_created["vid"] == vid
+    assert rtf_created["diskFilePath"] == test_file_path
 
 
 # -------------------------------------------------------------------------------------------------
@@ -526,12 +665,19 @@ def test_cta_admin_activity_mount_rule(env):
     ls_before = cta_cli.execWithOutput("cta-admin --json amr ls")
 
     with TempMountPolicy(cta_cli, mp_name):
+        # Create
         cta_cli.exec(
             f"cta-admin amr add -i {disk_instance_name} -n {requester_name} --ar ^T1Reprocess -u {mp_name} -m 'cta-admin systest add amr'"
         )
+        amr_created = get_single_ls_item(cta_cli, "amr ls", lambda x: x["name"] == requester_name)
+        assert amr_created["name"] == requester_name
+
+        # Update
         cta_cli.exec(
             f"cta-admin amr ch -i {disk_instance_name} -n {requester_name} --ar ^T1Reprocess -m 'cta-admin systest ch amr'"
         )
+
+        # Delete
         cta_cli.exec(f"cta-admin amr rm -i {disk_instance_name} -n {requester_name} --ar ^T1Reprocess")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json amr ls")
@@ -547,10 +693,15 @@ def test_cta_admin_group_mount_rule(env):
     ls_before = cta_cli.execWithOutput("cta-admin --json gmr ls")
 
     with TempMountPolicy(cta_cli, mp1_name), TempMountPolicy(cta_cli, mp2_name):
+        # Create
         cta_cli.exec(
             f"cta-admin gmr add -i {disk_instance_name} -n {requester_name} -u {mp1_name} -m 'cta-admin systest add gmr'"
         )
+
+        # Update
         cta_cli.exec(f"cta-admin gmr ch -i {disk_instance_name} -n {requester_name} -u {mp2_name}")
+
+        # Delete
         cta_cli.exec(f"cta-admin gmr rm -i {disk_instance_name} -n {requester_name}")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json gmr ls")
@@ -566,12 +717,18 @@ def test_cta_admin_requester_mount_rule(env):
     ls_before = cta_cli.execWithOutput("cta-admin --json rmr ls")
 
     with TempMountPolicy(cta_cli, mp1_name), TempMountPolicy(cta_cli, mp2_name):
+
+        # Create
         cta_cli.exec(
             f"cta-admin rmr add -i {disk_instance_name} -n {requester_name} -u {mp1_name} -m 'cta-admin systest add rmr'"
         )
+
+        # Update
         cta_cli.exec(
             f"cta-admin rmr ch -i {disk_instance_name} -n {requester_name} -u {mp2_name} -m 'cta-admin systest ch rmr'"
         )
+
+        # Delete
         cta_cli.exec(f"cta-admin rmr rm -i {disk_instance_name} -n {requester_name}")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json rmr ls")
@@ -590,8 +747,14 @@ def test_cta_admin_archive_route(env):
     with TempVirtualOrganization(cta_cli, vo_name, disk_instance_name), TempStorageClass(
         cta_cli, sc_name, vo_name
     ), TempTapePool(cta_cli, tp1_name, vo_name), TempTapePool(cta_cli, tp2_name, vo_name):
+
+        # Create
         cta_cli.exec(f"cta-admin ar add -s {sc_name} -c 2 --art DEFAULT -t {tp1_name} -m 'cta-admin systest add'")
+
+        # Update
         cta_cli.exec(f"cta-admin ar ch -s {sc_name} -c 2 --art DEFAULT -t {tp2_name} -m 'cta-admin systest ch'")
+
+        # Delete
         cta_cli.exec(f"cta-admin ar rm -s {sc_name} -c 2 --art DEFAULT")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json ar ls")
@@ -603,8 +766,13 @@ def test_cta_admin_mount_policy(env):
 
     ls_before = cta_cli.execWithOutput("cta-admin --json mp ls")
 
+    # Create
     cta_cli.exec(f"cta-admin mp add -n {mp_name} --ap 3 --aa 2 --rp 2 --ra 1 -m 'cta-admin systest add'")
+
+    # Update
     cta_cli.exec(f"cta-admin mp ch -n {mp_name} --ap 4 -m 'cta-admin systest ch'")
+
+    # Delete
     cta_cli.exec(f"cta-admin mp rm -n {mp_name}")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json mp ls")
@@ -619,8 +787,14 @@ def test_cta_admin_storage_class(env):
     ls_before = cta_cli.execWithOutput("cta-admin --json sc ls")
 
     with TempVirtualOrganization(cta_cli, vo_name, disk_instance_name):
+
+        # Create
         cta_cli.exec(f"cta-admin sc add -n {sc_name} -c 1 --vo {vo_name} -m 'cta-admin systest add'")
+
+        # Update
         cta_cli.exec(f"cta-admin sc ch -n {sc_name} -c 2 -m 'cta-admin systest ch'")
+
+        # Delete
         cta_cli.exec(f"cta-admin sc rm -n {sc_name}")
 
     assert ls_before == cta_cli.execWithOutput("cta-admin --json sc ls")
@@ -682,6 +856,7 @@ def test_cta_admin_repack(env):
         cta_cli, "repack_ctasystest"
     ):
         cta_cli.exec(f"cta-admin ta ch -v {vid} -f true")
+        # TODO: LS
         cta_cli.exec(f"cta-admin ta ch -v {vid} -s REPACKING -r 'Test repack'")
 
         # Helper function
@@ -700,9 +875,12 @@ def test_cta_admin_repack(env):
             if t.expired:
                 raise TimeoutError(f"Tape {vid} failed to change to REPACKING state in {wait_timeout_secs} seconds")
 
+        # Create
         cta_cli.exec(
             f"cta-admin re add -v {vid} -m -u repack_ctasystest -b root://{disk_instance_name}//eos/ctaeos/cta"
         )
+
+        # Delete
         cta_cli.exec(f"cta-admin re rm -v {vid}")
 
     ls_after = cta_cli.execWithOutput("cta-admin re ls")
