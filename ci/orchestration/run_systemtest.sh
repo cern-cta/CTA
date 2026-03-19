@@ -28,6 +28,7 @@ usage() {
   echo "      --eos-image-repository <repo>:  The EOS Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
   echo "      --eos-image-tag <tag>:          The EOS Docker image tag."
   echo "  -t, --test-timeout <seconds>:       Timeout for the system test in seconds."
+  echo "      --chart-install-timeout <min>:  CTA Helm chart installation timeout in minutes."
   echo "      --spawn-options <options>:      Additional options to pass during pod spawning. These are passed verbatim to the create_instance script."
   echo "      --test-options <options>:       Additional options to pass verbatim to the test script."
   echo "  -K, --keep-namespace:               Keep the namespace after the system test script run if successful."
@@ -88,6 +89,7 @@ run_systemtest() {
   # Argument defaults
   keepnamespace=0 # keep or drop namespace after systemtest_script? By default drop it.
   systemtestscript_timeout=3600 # default systemtest timeout is 1 hour
+  char_install_timeout=5 # default for CTA chart installation timeout of 5 minutes
   cleanup_namespaces=0 # by default do not cleanup leftover namespaces
   spawn_options=" --reset-catalogue --reset-scheduler"
   extra_test_options=""
@@ -133,6 +135,10 @@ run_systemtest() {
         shift ;;
       --spawn-options)
         extra_spawn_options="$2"
+        shift ;;
+      --chart-install-timeout)
+        char_install_timeout="$2"
+        spawn_options+=" --chart-install-timeout ${char_install_timeout}"
         shift ;;
       --test-options)
         extra_test_options="$2"
