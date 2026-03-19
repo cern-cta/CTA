@@ -6,7 +6,6 @@
 #include "NegotiationService.hpp"
 
 #include "ServerNegotiationRequestHandler.hpp"
-#include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 
 namespace cta::frontend::grpc::server {
@@ -47,57 +46,12 @@ NegotiationService::~NegotiationService() {
 NegotiationRequestHandler& NegotiationService::registerHandler() {
   cta::log::LogContext lc(m_log);
   lc.log(cta::log::INFO, "In NegotiationService::registerHandler");
-  std::lock_guard<std::mutex> lck(m_mtxLockHandler);
   std::unique_ptr<NegotiationRequestHandler> upHandler =
     std::make_unique<NegotiationRequestHandler>(m_log, *this, m_service, m_keytab, m_servicePrincipal);
   // Handler initialisation
   upHandler->init();  // can throw
-  // Store address
-  uintptr_t tag = reinterpret_cast<std::uintptr_t>(upHandler.get());
-  // Move ownership & store under the Tag
-  m_umapHandlers[upHandler.get()] = std::move(upHandler);
-  return *m_umapHandlers[reinterpret_cast<cta::frontend::grpc::request::Tag>(tag)];
-}
-
-NegotiationRequestHandler& NegotiationService::getHandler(const cta::frontend::grpc::request::Tag tag,
-                                                          std::mutex& mtxLockHandler,
-                                                          HandlerMap& umapHandlers) {
-  std::lock_guard<std::mutex> lck(mtxLockHandler);
-  /*
-   * Check if the handler is registered;
-   */
-  const auto itorFind = umapHandlers.find(tag);
-  if (itorFind == umapHandlers.end()) {
-    std::ostringstream osExMsg;
-    osExMsg << "In NegotiationService::getHandler(): Handler " << tag << " is not registered.";
-    throw cta::exception::Exception(osExMsg.str());
-  }
-  const std::unique_ptr<NegotiationRequestHandler>& upHandler = itorFind->second;
-  return *upHandler;
-}
-
-void NegotiationService::releaseHandler(const cta::frontend::grpc::request::Tag tag,
-                                        cta::log::Logger& log,
-                                        std::mutex& mtxLockHandler,
-                                        HandlerMap& umapHandlers) {
-  std::lock_guard<std::mutex> lck(mtxLockHandler);
-
-  {
-    cta::log::LogContext lc(log);
-    log::ScopedParamContainer params(lc);
-    params.add("handler", tag);
-    lc.log(cta::log::DEBUG, "In NegotiationService::releaseHandler(): Release handler.");
-  }
-  /*
-   * Check if the handler is registered;
-   */
-  const auto itorFind = umapHandlers.find(tag);
-  if (itorFind == umapHandlers.end()) {
-    std::ostringstream osExMsg;
-    osExMsg << "In NegotiationService::releaseHandler(): Handler " << tag << " is not registered.";
-    throw cta::exception::Exception(osExMsg.str());
-  }
-  umapHandlers.erase(itorFind);
+  // Insert into thread-safe map and return reference
+  return m_handlers.insert(std::move(upHandler));
 }
 
 void NegotiationService::startProcessing() {
@@ -125,7 +79,7 @@ void NegotiationService::startProcessing() {
   }
 
   // Initialise all registered handlers
-  for (const auto& item : m_umapHandlers) {
+  for (const auto& item : m_handlers) {
     const std::unique_ptr<NegotiationRequestHandler>& upIHandler = item.second;
     upIHandler.get()->next(true);
     //TODO: Log names of initialised handlers;
@@ -138,8 +92,7 @@ void NegotiationService::startProcessing() {
                            i,
                            std::ref(*m_upCompletionQueue),
                            std::ref(m_log),
-                           std::ref(m_mtxLockHandler),
-                           std::ref(m_umapHandlers));
+                           std::ref(m_handlers));
   }
 
   log::ScopedParamContainer params(lc);
@@ -150,8 +103,7 @@ void NegotiationService::startProcessing() {
 void NegotiationService::process(unsigned int threadId,
                                  ::grpc::ServerCompletionQueue& cq,
                                  cta::log::Logger& log,
-                                 std::mutex& mtxLockHandler,
-                                 HandlerMap& umapHandlers) {
+                                 ThreadSafeHandlerMap& handlers) {
   // Each thread creates its own LogContext - thread-safe
   cta::log::LogContext lc(log);
 
@@ -184,10 +136,9 @@ void NegotiationService::process(unsigned int threadId,
 
     try {
       // Everything is ok the request can be processed
-      NegotiationRequestHandler& handler =
-        getHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag), mtxLockHandler, umapHandlers);
+      NegotiationRequestHandler& handler = handlers.get(static_cast<cta::frontend::grpc::request::Tag>(pTag));
       if (!handler.next(bOk)) {
-        releaseHandler(static_cast<cta::frontend::grpc::request::Tag>(pTag), log, mtxLockHandler, umapHandlers);
+        handlers.release(log, static_cast<cta::frontend::grpc::request::Tag>(pTag));
       }
     } catch (const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);

@@ -8,6 +8,7 @@
 #include "IHandler.hpp"
 #include "ServerNegotiationRequestHandler.hpp"
 #include "TokenStorage.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 
@@ -27,7 +28,64 @@ namespace cta::frontend::grpc::server {
  */
 class NegotiationService {
 public:
-  using HandlerMap = std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<NegotiationRequestHandler>>;
+  /**
+   * Thread-safe wrapper around the handler map.
+   * Encapsulates synchronization so callers don't need to manage mutexes.
+   */
+  class ThreadSafeHandlerMap {
+  public:
+    using Tag = cta::frontend::grpc::request::Tag;
+
+    NegotiationRequestHandler& insert(std::unique_ptr<NegotiationRequestHandler> handler) {
+      Tag tag = handler.get();
+      std::lock_guard<std::mutex> lck(m_mtxLockHandler);
+      m_umapHandlers[tag] = std::move(handler);
+      return *m_umapHandlers[tag];
+    }
+
+    NegotiationRequestHandler& get(Tag tag) {
+      std::lock_guard<std::mutex> lck(m_mtxLockHandler);
+      /*
+      * Check if the handler is registered;
+      */
+      const auto itorFind = m_umapHandlers.find(tag);
+      if (itorFind == m_umapHandlers.end()) {
+        std::ostringstream osExMsg;
+        osExMsg << "In ThreadSafeHandlerMap::get(): Handler " << tag << " is not registered.";
+        throw cta::exception::Exception(osExMsg.str());
+      }
+      const std::unique_ptr<NegotiationRequestHandler>& upHandler = itorFind->second;
+      return *upHandler;
+    }
+
+    void release(cta::log::Logger& log, Tag tag) {
+      {
+        cta::log::LogContext lc(log);
+        log::ScopedParamContainer params(lc);
+        params.add("handler", tag);
+        lc.log(cta::log::DEBUG, "In ThreadSafeHandlerMap::release(): Release handler.");
+      }
+      std::lock_guard<std::mutex> lck(m_mtxLockHandler);
+      /*
+       * Check if the handler is registered;
+       */
+      const auto itorFind = m_umapHandlers.find(tag);
+      if (itorFind == m_umapHandlers.end()) {
+        std::ostringstream osExMsg;
+        osExMsg << "In ThreadSafeHandlerMap::release(): Handler " << tag << " is not registered.";
+        throw cta::exception::Exception(osExMsg.str());
+      }
+      m_umapHandlers.erase(tag);
+    }
+
+    auto begin() { return m_umapHandlers.begin(); }
+
+    auto end() { return m_umapHandlers.end(); }
+
+  private:
+    std::unordered_map<Tag, std::unique_ptr<NegotiationRequestHandler>> m_umapHandlers;
+    std::mutex m_mtxLockHandler;
+  };
 
   NegotiationService(cta::log::Logger& log,
                      TokenStorage& tokenStorage,
@@ -61,21 +119,19 @@ public:
   void startProcessing();
 
 private:
-  // These functions are static to force explicit dependency passing for thread safety.
+  // Static to force explicit dependency passing for thread safety.
   // Each thread creates its own LogContext from the shared Logger.
   static void process(unsigned int threadId,
                       ::grpc::ServerCompletionQueue& cq,
                       cta::log::Logger& log,
-                      std::mutex& mtxLockHandler,
-                      HandlerMap& umapHandlers);
+                      ThreadSafeHandlerMap& handlers);
 
-  static NegotiationRequestHandler&
-  getHandler(const cta::frontend::grpc::request::Tag tag, std::mutex& mtxLockHandler, HandlerMap& umapHandlers);
+  static NegotiationRequestHandler& getHandler(const cta::frontend::grpc::request::Tag tag,
+                                               ThreadSafeHandlerMap& umapHandlers);
 
   static void releaseHandler(const cta::frontend::grpc::request::Tag tag,
                              cta::log::Logger& log,
-                             std::mutex& mtxLockHandler,
-                             HandlerMap& umapHandlers);
+                             ThreadSafeHandlerMap& umapHandlers);
 
   cta::log::Logger& m_log;  // Logger is thread-safe; each thread creates its own LogContext from it
   TokenStorage& m_tokenStorage;
@@ -86,8 +142,7 @@ private:
 
   cta::xrd::Negotiation::AsyncService m_service;
   std::vector<std::thread> m_threads;
-  HandlerMap m_umapHandlers;
-  std::mutex m_mtxLockHandler;
+  ThreadSafeHandlerMap m_handlers;
 };
 
 }  // namespace cta::frontend::grpc::server
