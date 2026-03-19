@@ -36,41 +36,9 @@ public:
   public:
     using Tag = cta::frontend::grpc::request::Tag;
 
-    NegotiationRequestHandler& insert(std::unique_ptr<NegotiationRequestHandler> handler) {
-      Tag tag = handler.get();
-      std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-      m_umapHandlers[tag] = std::move(handler);
-      return *m_umapHandlers[tag];
-    }
-
-    NegotiationRequestHandler& get(Tag tag) {
-      std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-      /*
-      * Check if the handler is registered;
-      */
-      const auto itorFind = m_umapHandlers.find(tag);
-      if (itorFind == m_umapHandlers.end()) {
-        std::ostringstream osExMsg;
-        osExMsg << "In ThreadSafeHandlerMap::get(): Handler " << tag << " is not registered.";
-        throw cta::exception::Exception(osExMsg.str());
-      }
-      const std::unique_ptr<NegotiationRequestHandler>& upHandler = itorFind->second;
-      return *upHandler;
-    }
-
-    void release(Tag tag) {
-      std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-      /*
-       * Check if the handler is registered;
-       */
-      const auto itorFind = m_umapHandlers.find(tag);
-      if (itorFind == m_umapHandlers.end()) {
-        std::ostringstream osExMsg;
-        osExMsg << "In ThreadSafeHandlerMap::release(): Handler " << tag << " is not registered.";
-        throw cta::exception::Exception(osExMsg.str());
-      }
-      m_umapHandlers.erase(tag);
-    }
+    NegotiationRequestHandler& insert(std::unique_ptr<NegotiationRequestHandler> handler);
+    NegotiationRequestHandler& get(Tag tag);
+    void release(Tag tag);
 
     auto begin() { return m_umapHandlers.begin(); }
 
