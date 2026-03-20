@@ -8,6 +8,7 @@
 #include "IHandler.hpp"
 #include "ServerNegotiationRequestHandler.hpp"
 #include "TokenStorage.hpp"
+#include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 
@@ -27,7 +28,28 @@ namespace cta::frontend::grpc::server {
  */
 class NegotiationService {
 public:
-  NegotiationService(cta::log::LogContext& lc,
+  /**
+   * Thread-safe wrapper around the handler map.
+   * Encapsulates synchronization so callers don't need to manage mutexes.
+   */
+  class ThreadSafeHandlerMap {
+  public:
+    using Tag = cta::frontend::grpc::request::Tag;
+
+    NegotiationRequestHandler& insert(std::unique_ptr<NegotiationRequestHandler> handler);
+    NegotiationRequestHandler& get(Tag tag);
+    void release(Tag tag);
+
+    auto begin() { return m_umapHandlers.begin(); }
+
+    auto end() { return m_umapHandlers.end(); }
+
+  private:
+    std::unordered_map<Tag, std::unique_ptr<NegotiationRequestHandler>> m_umapHandlers;
+    std::mutex m_mtxLockHandler;
+  };
+
+  NegotiationService(cta::log::Logger& log,
                      TokenStorage& tokenStorage,
                      std::unique_ptr<::grpc::ServerCompletionQueue> cq,
                      const std::string& keytab,
@@ -42,19 +64,7 @@ public:
   NegotiationService(NegotiationService&&) = delete;
   NegotiationService& operator=(NegotiationService&&) = delete;
 
-  NegotiationRequestHandler& registerHandler() {
-    m_lc.log(cta::log::INFO, "In NegotiationService::registerHandler");
-    std::lock_guard<std::mutex> lck(m_mtxLockHandler);
-    std::unique_ptr<NegotiationRequestHandler> upHandler =
-      std::make_unique<NegotiationRequestHandler>(m_lc.logger(), *this, m_service, m_keytab, m_servicePrincipal);
-    // Handler initialisation
-    upHandler->init();  // can throw
-    // Store address
-    uintptr_t tag = reinterpret_cast<std::uintptr_t>(upHandler.get());
-    // Move ownership & store under the Tag
-    m_umapHandlers[upHandler.get()] = std::move(upHandler);
-    return *m_umapHandlers[reinterpret_cast<cta::frontend::grpc::request::Tag>(tag)];
-  }
+  NegotiationRequestHandler& registerHandler();
 
   ::grpc::ServerCompletionQueue& completionQueue() { return *m_upCompletionQueue; }
 
@@ -68,14 +78,17 @@ public:
    */
   cta::xrd::Negotiation::AsyncService& getService() { return m_service; }
 
-  NegotiationRequestHandler& getHandler(const cta::frontend::grpc::request::Tag tag);
-  void releaseHandler(const cta::frontend::grpc::request::Tag tag);
   void startProcessing();
 
 private:
-  void process(unsigned int threadId);
+  // Static to force explicit dependency passing for thread safety.
+  // Each thread creates its own LogContext from the shared Logger.
+  static void process(unsigned int threadId,
+                      ::grpc::ServerCompletionQueue& cq,
+                      cta::log::Logger& log,
+                      ThreadSafeHandlerMap& handlers);
 
-  cta::log::LogContext m_lc;
+  cta::log::Logger& m_log;  // Logger is thread-safe; each thread creates its own LogContext from it
   TokenStorage& m_tokenStorage;
   std::unique_ptr<::grpc::ServerCompletionQueue> m_upCompletionQueue = nullptr;
   std::string m_keytab;
@@ -84,8 +97,7 @@ private:
 
   cta::xrd::Negotiation::AsyncService m_service;
   std::vector<std::thread> m_threads;
-  std::unordered_map<cta::frontend::grpc::request::Tag, std::unique_ptr<NegotiationRequestHandler>> m_umapHandlers;
-  std::mutex m_mtxLockHandler;
+  ThreadSafeHandlerMap m_handlers;
 };
 
 }  // namespace cta::frontend::grpc::server
