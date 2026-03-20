@@ -14,7 +14,7 @@ def assert_dict_equals(actual, expected, ignore_keys):
         assert k2 in ignored or k2 in actual
 
 
-def wait_for_condition(cond_func, timeout_secs=10, interval_secs=1):
+def wait_for_condition(cond_func, timeout_secs=10, interval_secs=0.5):
     with Timeout(timeout_secs) as t:
         while not cond_func() and not t.expired:
             time.sleep(interval_secs)

@@ -27,7 +27,7 @@ def test_no_uncaught_exceptions(env, error_whitelist):
     error_messages = []  # for summaries
     for host in hosts:
         # collect logs
-        cmd = f'grep -a -E \'"log_level":"(ERROR|CRITICAL)"\' {host.log_file_location} || true'
+        cmd = f"""grep -aE '\\"log_level\\": *\\"(ERROR|CRITICAL)\\"' {host.log_file_location} || true"""
         output = host.execWithOutput(cmd).splitlines()
         if not output:
             # Nothing found, happy :D
