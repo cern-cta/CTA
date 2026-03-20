@@ -36,14 +36,16 @@ usage() {
   echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
   echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
   echo "      --chart-install-timeout <min>:  CTA Helm chart installation timeout in minutes."
+  echo "      --one-logical-library           Will use only one logical library name for all drives except the default creating one library name for each drive."
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
   echo "      --publish-telemetry:            Publishes telemetry to a pre-configured central observability backend. See presets/ci-cta-telemetry-values.yaml"
-  echo "      --extra-cta-values:            Extra verbatim values for the CTA chart. These will override any previous values from files."
+  echo "      --extra-cta-values:             Extra verbatim values for the CTA chart. These will override any previous values from files."
   exit 1
 }
 
 # This should all go once we have auto-discovery and auto-scaling of hardware resources
 generate_tape_values_files() {
+  local one_logical_library="$1"
   echo "Auto-generating rmcd config..."
   rmcd_config=$(mktemp "/tmp/${namespace}-rmcd-XXXXXX-values.yaml")
   set -o pipefail
@@ -64,7 +66,16 @@ EOF
   echo "Auto-generating taped config..."
   # This file is cleaned up again by delete_instance.sh
   taped_config=$(mktemp "/tmp/${namespace}-taped-XXXXXX-values.yaml")
-  drives_json=$(./../utils/tape/list_drives_in_library.sh --library-device "$library_device" --max-drives $max_drives)
+  if [ "$one_logical_library" = true ]; then
+    drives_json=$(./../utils/tape/list_drives_in_library.sh \
+      --library-device "$library_device" \
+      --max-drives "$max_drives" \
+      -l)
+  else
+    drives_json=$(./../utils/tape/list_drives_in_library.sh \
+      --library-device "$library_device" \
+      --max-drives "$max_drives")
+  fi
   echo "taped:" > $taped_config
   echo "  drives:" >> $taped_config
   echo $drives_json | jq -r '.[] | "    - name: \(.name)\n      device: \(.device)\n      logicalLibraryName: \(.logicalLibraryName)\n      controlPath: \(.controlPath)"' >> $taped_config
@@ -140,6 +151,7 @@ create_instance() {
   # Telemetry
   local_telemetry=false
   publish_telemetry=false
+  one_logical_library=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -200,6 +212,7 @@ create_instance() {
         chart_install_timeout="$2"
         shift ;;
       --publish-telemetry) publish_telemetry=true ;;
+      --one-logical-library) one_logical_library=true ;;
       *)
         die_usage "Unsupported argument: $1"
         ;;
@@ -250,7 +263,7 @@ create_instance() {
 
   # Determine the library config to use
   if [[ -z "${tapeservers_config}" ]]; then
-    generate_tape_values_files
+    generate_tape_values_files "$one_logical_library"
   fi
 
   if [[ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]]; then

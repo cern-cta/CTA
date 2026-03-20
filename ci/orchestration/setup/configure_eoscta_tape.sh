@@ -22,7 +22,7 @@ eos space config default space.scanrate=0
 eos space config default space.scaninterval=0
 eos attr -r set default=replica /eos
 eos attr -r set sys.forced.nstripes=1 /eos
-eos debug err "*"
+eos debug warning "*"
 
 # Users
 groupadd --gid 1100 eosusers

@@ -80,9 +80,8 @@ taped:
       tar -c . | tar -C ${PV_PATH} -xv
       echo "Mounting logs volume ${PV_PATH} in /var/log"
       mount --bind ${PV_PATH} /var/log
-  conf:
-    taped:
-      bufferCount: 10000
+  bufferCount: 10000
+  logMask: "WARNING"
 
 maintd:
   preRun:
@@ -102,6 +101,8 @@ maintd:
       tar -c . | tar -C ${PV_PATH} -xv
       echo "Mounting logs volume ${PV_PATH} in /var/log"
       mount --bind ${PV_PATH} /var/log
+  logging:
+    level: "ERR"
   routines:
     # Note that the snake_case version of all these options (including the names)
     # should match the corresponding names in the maintd conf file
