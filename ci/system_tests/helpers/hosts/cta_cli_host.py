@@ -57,5 +57,12 @@ class CtaCliHost(RemoteHost):
 
     def file_exists_in_cta(self, vid, archive_id):
         # Ls by --id is annoying because it will exit with a failure if the id does not exist
-        print(f"cta-admin --json tf ls -v {vid} | grep {archive_id} | wc -l")
         return int(self.execWithOutput(f"cta-admin --json tf ls -v {vid} | grep {archive_id} | wc -l")) == 1
+
+    def get_single_ls_item(self, ls_command, filter_func) -> dict:
+        ls_out = self.execWithOutput("cta-admin --json " + ls_command)
+        ls_json = json.loads(ls_out)
+        # If only cta-admin was a well designed API we wouldn't have to do this...
+        filtered_list = list(filter(filter_func, ls_json))
+        assert len(filtered_list) == 1
+        return filtered_list[0]

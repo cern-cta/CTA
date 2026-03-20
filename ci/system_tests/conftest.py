@@ -94,6 +94,12 @@ def pytest_addoption(parser):
     parser.addoption(
         "--cleanup-first", action="store_true", help="Run the cleanup before starting the tests to ensure a clean start"
     )
+    # Should probably get a better name
+    parser.addoption(
+        "--no-modify",
+        action="store_true",
+        help="Skip all modifications of the pytest Test collections and run only the tests specified",
+    )
     parser.addoption(
         "--test-config",
         type=str,
@@ -145,6 +151,8 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
 
 # Pytest hook that allows us to dynamically modify the set of tests being run
 def pytest_collection_modifyitems(config, items):
+    if config.getoption("--no-modify"):
+        return
     # TODO: figure out how to do all this cleanly when you do something like --ff
     # Always check for errors after the run
     add_test_into_existing_collection("tests/cleanup/error_test.py", items, prepend=False)
