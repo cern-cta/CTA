@@ -38,6 +38,8 @@ struct PhysicalLibrary {
 
 struct UpdatePhysicalLibrary {
   std::string name;
+  std::optional<std::string> model;
+  std::optional<std::string> type;
   std::optional<std::string> guiUrl;
   std::optional<std::string> webcamUrl;
   std::optional<std::string> location;

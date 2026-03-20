@@ -1621,7 +1621,8 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
   common::dataStructures::UpdatePhysicalLibrary pl;
 
   pl.name = getRequired(OptionString::PHYSICAL_LIBRARY);
-
+  pl.model = getOptional(OptionString::LIBRARY_MODEL);
+  pl.type = getOptional(OptionString::LIBRARY_TYPE);
   pl.guiUrl = getOptional(OptionString::GUI_URL);
   pl.webcamUrl = getOptional(OptionString::WEBCAM_URL);
   pl.location = getOptional(OptionString::LIBRARY_LOCATION);
