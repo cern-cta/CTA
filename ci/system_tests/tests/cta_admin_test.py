@@ -19,7 +19,8 @@ from ..helpers.utils import TempVirtualOrganization
 from ..helpers.utils import assert_dict_equals
 from ..helpers.utils import wait_for_condition
 
-
+# NOTE: these tests are only meant for cta-admin tests. Other tools should get their own test suite
+#
 # The tests below are relative simple as they all (mostly) follow the same pattern:
 #
 # 1. Create the resource
