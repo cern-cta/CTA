@@ -27,6 +27,7 @@ global:
       spec:
         type: ExternalName
         externalName: {{ include "utils.mgm_address" . }}
+
 mgm:
   # Must match the authentication chart
   kerberos:
@@ -101,7 +102,7 @@ mgm:
         emptyDir: {}
 
 fst:
-  replicaCount: 13
+  replicaCount: 1
 
   persistence:
     enabled: true

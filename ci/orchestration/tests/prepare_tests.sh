@@ -65,13 +65,6 @@ for taped in $(get_pods_by_type taped $NAMESPACE); do
 done
 NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
 
-# Get list of library names that exist in drive config
-LIBRARY_NAMES_IN_USE=()
-for taped in $(get_pods_by_type taped $NAMESPACE); do
-  LIBRARY_NAMES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${taped} -c cta-taped -- printenv LIBRARY_NAME))
-done
-NB_LIBRARY_NAMES_IN_USE=${#LIBRARY_NAMES_IN_USE[@]}
-
 echo "Preparing CTA configuration for tests"
 # verify the catalogue DB schema
 if ! kubectl --namespace ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf; then
@@ -128,17 +121,10 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --j
   xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin vo rm {}"
 
 # registers all libraries in use - whihc correspond to drive names in our setup
-#for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
-#  kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin logicallibrary add \
-#    --name ${TAPEDRIVES_IN_USE[${i}]}                                            \
-#    --comment "ctasystest library mapped to drive ${TAPEDRIVES_IN_USE[${i}]}"
-#done
-
-# registers only library which is the one used for the drives
-for ((i=0; i<${#LIBRARY_NAMES_IN_USE[@]}; i++)); do
+for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
   kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin logicallibrary add \
-    --name ${LIBRARY_NAMES_IN_USE[${i}]}                                            \
-    --comment "ctasystest library name added to the catalogue: ${LIBRARY_NAMES_IN_USE[${i}]}"
+    --name ${TAPEDRIVES_IN_USE[${i}]}                                            \
+    --comment "ctasystest library mapped to drive ${TAPEDRIVES_IN_USE[${i}]}"
 done
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin diskinstance add  \
@@ -282,7 +268,7 @@ for ((i=0; i<${#TAPES[@]}; i++)); do
     --mediatype "LTO8"                                                   \
     --purchaseorder "order"                                              \
     --vendor vendor                                                      \
-    --logicallibrary ${LIBRARY_NAMES_IN_USE[${i}%${NB_LIBRARY_NAMES_IN_USE}]}  \
+    --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}   \
     --tapepool ctasystest                                                \
     --comment "ctasystest"                                               \
     --vid ${VID}                                                         \

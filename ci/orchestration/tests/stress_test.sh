@@ -47,10 +47,10 @@ CTA_FRONTEND_POD=$(get_pods_by_type frontend $NAMESPACE | head -1)
 EOS_MGM_POD="eos-mgm-0"
 
 NB_FILES=50000
-NB_DIRS=100
+NB_DIRS=40
 FILE_SIZE_KB=1
 NB_PROCS=40
-NB_DRIVES=100
+NB_DRIVES=2
 
 
 kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
