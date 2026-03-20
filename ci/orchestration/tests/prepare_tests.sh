@@ -268,7 +268,7 @@ for ((i=0; i<${#TAPES[@]}; i++)); do
     --mediatype "LTO8"                                                   \
     --purchaseorder "order"                                              \
     --vendor vendor                                                      \
-    --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}   \
+    --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}  \
     --tapepool ctasystest                                                \
     --comment "ctasystest"                                               \
     --vid ${VID}                                                         \
