@@ -124,6 +124,7 @@ def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
     eos_mgm.exec("eos fs config 1 scaninterval=0")
 
 
+
 @pytest.mark.eos
 @pytest.mark.asyncio
 async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_params):
