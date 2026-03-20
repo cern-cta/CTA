@@ -28,6 +28,7 @@ global:
         type: ExternalName
         externalName: {{ include "utils.mgm_address" . }}
 
+
 mgm:
   # Must match the authentication chart
   kerberos:

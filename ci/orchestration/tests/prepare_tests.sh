@@ -120,7 +120,7 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --j
   jq -r '.[] | " --vo  " + .name'  |                                    \
   xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin vo rm {}"
 
-# registers all libraries in use - whihc correspond to drive names in our setup
+
 for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
   kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin logicallibrary add \
     --name ${TAPEDRIVES_IN_USE[${i}]}                                            \
