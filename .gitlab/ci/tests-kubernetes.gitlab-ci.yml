@@ -154,6 +154,7 @@
     - pytest ${PYTESTS} --namespace ${NAMESPACE}
                                   --no-cleanup
                                   --color=yes
+                                  --showlocals
                                   ${EXTRA_PYTEST_ARGS}
                                   2>&1 # Gitlab screws the ordering of stdout and stderr. See https://gitlab.com/gitlab-org/gitlab/-/issues/440824
   after_script:

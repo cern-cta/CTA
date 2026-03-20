@@ -817,6 +817,9 @@ def test_cta_admin_show_queue(env):
     # Wait for file to be archived
     env.disk_client[0].wait_for_file_archival(disk_instance_name, path=file_path)
 
+    # sq has a bit of a delay
+    wait_for_condition(lambda: cta_cli.execWithOutput("cta-admin --json sq") == "[]")
+
     ls_after = cta_cli.execWithOutput("cta-admin --json sq")
     assert ls_before == ls_after
 
