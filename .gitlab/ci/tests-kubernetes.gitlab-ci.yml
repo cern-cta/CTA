@@ -310,6 +310,7 @@ stress-test-python:
     EXTRA_TEST_ARGS: ""
   before_script:
     - bash ./ci/checks/check_runner_healthy.sh
+    - python3 -m pip install -r ci/system_tests/requirements.txt
     - *setup-k8s-test-variables
   script:
     - |

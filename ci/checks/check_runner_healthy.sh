@@ -82,34 +82,11 @@ else
   errors=$((errors + 1))
 fi
 
-MIN_PYTEST_VERSION="8.0.0"
-echo "Checking that pytest version is at least $MIN_PYTEST_VERSION"
-if command -v pytest >/dev/null 2>&1; then
-  INSTALLED_PYTEST_VERSION="$(pytest --version | awk '{print $2}')"
-  if [ "$(printf '%s\n' "$MIN_PYTEST_VERSION" "$INSTALLED_PYTEST_VERSION" | sort -V | head -n1)" = "$MIN_PYTEST_VERSION" ]; then
-    echo "SUCCESS: pytest version $INSTALLED_PYTEST_VERSION is at least $MIN_PYTEST_VERSION"
-  else
-    echo "ERROR: pytest version $INSTALLED_PYTEST_VERSION is less than required $MIN_PYTEST_VERSION"
-    errors=$((errors + 1))
-  fi
+if python3 -m pip --version >/dev/null 2>&1; then
+  echo "OK: pip is available"
 else
-  echo "ERROR: pytest does not seem to be installed"
-  errors=$((errors + 1))
-fi
-
-MIN_PYTEST_ASYNCIO_VERSION="0.23.5" # declared compatibility with pytest 8
-echo "Checking that pytest-asyncio version is at least $MIN_PYTEST_ASYNCIO_VERSION"
-INSTALLED_PYTEST_ASYNCIO_VERSION="$(pip show pytest-asyncio 2>/dev/null | grep '^Version:' | awk '{print $2}')"
-if [ -n "$INSTALLED_PYTEST_ASYNCIO_VERSION" ]; then
-  if [ "$(printf '%s\n' "$MIN_PYTEST_ASYNCIO_VERSION" "$INSTALLED_PYTEST_ASYNCIO_VERSION" | sort -V | head -n1)" = "$MIN_PYTEST_ASYNCIO_VERSION" ]; then
-    echo "SUCCESS: pytest-asyncio version $INSTALLED_PYTEST_ASYNCIO_VERSION is at least $MIN_PYTEST_ASYNCIO_VERSION"
-  else
-    echo "ERROR: pytest-asyncio version $INSTALLED_PYTEST_ASYNCIO_VERSION is less than required $MIN_PYTEST_ASYNCIO_VERSION"
-    errors=$((errors + 1))
-  fi
-else
-  echo "ERROR: pytest-asyncio does not seem to be installed"
-  errors=$((errors + 1))
+  echo "ERROR: pip is not available or not working"
+  exit 1
 fi
 
 echo
