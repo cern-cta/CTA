@@ -150,6 +150,11 @@ install (FILES telemetry/cta-otel.example.yaml
   DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
   PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
 
+install (FILES cta-logging.schema.json
+  DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/cta
+  PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ)
+
+
 target_include_directories(ctacommon PRIVATE ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
 
 target_link_libraries (ctacommon

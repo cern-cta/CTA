@@ -216,6 +216,7 @@ format-cpp:
         - "**/*.h"
         - "**/*.cpp"
         - "**/*.hpp"
+        - "**/*.json"
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
