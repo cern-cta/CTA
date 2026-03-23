@@ -8,6 +8,7 @@
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <charconv>
 #include <list>
 
 namespace castor::tape::tapeserver::rao {
@@ -44,14 +45,20 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
 
       /* Add the RAO sorted files to the new list*/
       for (auto fit = files.begin(); fit != files.end(); fit++) {
-        uint64_t id = atoi((char*) fit->fseq);
+        uint64_t id = 0;
+        auto* first = reinterpret_cast<const char*>(fit->fseq);
+        auto* last = first + sizeof(fit->fseq);
+        std::from_chars(first, last, id);
         raoOrder.push_back(id);
       }
       files.clear();
     }
   }
   for (auto fit = files.begin(); fit != files.end(); fit++) {
-    uint64_t id = atoi((char*) fit->fseq);
+    uint64_t id = 0;
+    auto* first = reinterpret_cast<const char*>(fit->fseq);
+    auto* last = first + sizeof(fit->fseq);
+    std::from_chars(first, last, id);
     raoOrder.push_back(id);
   }
   files.clear();
