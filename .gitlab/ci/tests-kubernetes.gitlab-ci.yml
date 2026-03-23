@@ -311,9 +311,10 @@ stress-test-python:
   before_script:
     - bash ./ci/checks/check_runner_healthy.sh
     # This is not ideal, but since we are in a shell executor and not in a Docker image, we use a venv to do this without polluting the machine
-    - python3 -m venv venv
-    - . venv/bin/activate
-    - pip install -r ci/system_tests/requirements.txt
+    # Note that we use UV instead of pip as it is much faster
+    - uv venv
+    - source .venv/bin/activate
+    - uv pip install -r ci/system_tests/requirements.txt
     - *setup-k8s-test-variables
   script:
     - |

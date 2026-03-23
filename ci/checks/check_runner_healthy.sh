@@ -82,10 +82,10 @@ else
   errors=$((errors + 1))
 fi
 
-if python3 -m pip --version >/dev/null 2>&1; then
-  echo "OK: pip is available"
+if uv --version >/dev/null 2>&1; then
+  echo "OK: uv is available"
 else
-  echo "ERROR: pip is not available or not working"
+  echo "ERROR: uv is not available or not working"
   exit 1
 fi
 
