@@ -224,7 +224,7 @@ void CtaAdminParsedCmd::addOption(const Option& option, const std::string& value
         new_opt->set_value(val_int);
         break;
       } catch (std::invalid_argument&) {
-        throw std::runtime_error(value + " is not a valid uint64: " + option.help());
+        throw std::runtime_error(value + " is not a valid unsigned integer: " + option.help());
       } catch (std::out_of_range&) {
         throw std::runtime_error(value + " is out of range: " + option.help());
       }
