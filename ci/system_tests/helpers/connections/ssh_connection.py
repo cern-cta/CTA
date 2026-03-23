@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import subprocess
-from typing import Optional
 from functools import cached_property
+from typing import Optional
 
-from .remote_connection import RemoteConnection, ExecResult
+from .remote_connection import ExecResult, RemoteConnection
 
 
 class SSHConnection(RemoteConnection):

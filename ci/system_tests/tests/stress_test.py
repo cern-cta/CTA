@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import asyncio
-import pytest
+import contextlib
 import time
 from dataclasses import dataclass
 from pathlib import Path
-import contextlib
+
+import pytest
 
 from ..helpers.hosts.disk.disk_instance_host import DiskInstanceHost
 from ..helpers.hosts.disk.eos_client_host import EosClientHost

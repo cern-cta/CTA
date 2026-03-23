@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import asyncio
-from ..connections.remote_connection import RemoteConnection
-from subprocess import CompletedProcess
-from functools import cached_property
-from typing import Optional
 import time
 from concurrent.futures import Future
+from functools import cached_property
+from subprocess import CompletedProcess
+from typing import Optional
+
+from ..connections.remote_connection import RemoteConnection
 
 
 class RemoteHost:

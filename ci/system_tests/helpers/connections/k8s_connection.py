@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import subprocess
-from typing import Optional
+import time
 from functools import cached_property
-
-from .remote_connection import RemoteConnection, ExecResult
+from typing import Optional
 
 from kubernetes import client, config
 from kubernetes.stream import stream
-import time
+
+from .remote_connection import ExecResult, RemoteConnection
 
 
 class K8sConnection(RemoteConnection):

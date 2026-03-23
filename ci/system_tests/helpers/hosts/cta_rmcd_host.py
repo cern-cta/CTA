@@ -1,10 +1,11 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from .remote_host import RemoteHost
-from typing import List, Tuple
-from functools import cached_property
 import re
+from functools import cached_property
+from typing import List, Tuple
+
+from .remote_host import RemoteHost
 
 
 class CtaRmcdHost(RemoteHost):

@@ -1,9 +1,8 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Protocol
-from typing import Optional
 from dataclasses import dataclass
+from typing import Optional, Protocol
 
 
 @dataclass

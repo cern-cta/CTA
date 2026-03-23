@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
 from functools import cached_property
+
+from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
 
 
 class EosMgmHost(DiskInstanceHost):

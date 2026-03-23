@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-from .disk_client_host import DiskClientHost
 from concurrent.futures import Future
+
+from .disk_client_host import DiskClientHost
 
 
 class EosClientHost(DiskClientHost):

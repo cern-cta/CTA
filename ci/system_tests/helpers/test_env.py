@@ -1,22 +1,23 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from typing import Any, List
 import subprocess
+from typing import Any, List
+
 from kubernetes import client, config
 
+from .connections.k8s_connection import K8sConnection
+from .connections.remote_connection import RemoteConnection
+from .connections.ssh_connection import SSHConnection
 from .hosts.cta_cli_host import CtaCliHost
 from .hosts.cta_frontend_host import CtaFrontendHost
+from .hosts.cta_maintd_host import CtaMaintdHost
 from .hosts.cta_rmcd_host import CtaRmcdHost
 from .hosts.cta_taped_host import CtaTapedHost
-from .hosts.cta_maintd_host import CtaMaintdHost
+from .hosts.disk.disk_client_host import DiskClientHost
+from .hosts.disk.disk_instance_host import DiskInstanceHost
 from .hosts.disk.eos_client_host import EosClientHost
 from .hosts.disk.eos_mgm_host import EosMgmHost
-from .hosts.disk.disk_instance_host import DiskInstanceHost
-from .hosts.disk.disk_client_host import DiskClientHost
-from .connections.remote_connection import RemoteConnection
-from .connections.k8s_connection import K8sConnection
-from .connections.ssh_connection import SSHConnection
 
 
 class TestEnv:
