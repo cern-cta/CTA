@@ -33,14 +33,20 @@ class EosMgmHost(DiskInstanceHost):
         return self.execWithOutput(f"eos ls {directory}").splitlines()
 
     def list_subdirectories_in_directory(self, directory: str) -> list[str]:
-        # grep filters directories (lines starting with 'd'), awk extracts the name (field 9)
-        # Note: $9 must be escaped as \$9 so bash passes it literally to awk
-        return self.execWithOutput(f"eos ls -l {directory} | grep '^d' | awk '{{ print \\$9 }}'").splitlines()
+        output = self.execWithOutput(f"eos ls -l {directory}")
+        lines = output.splitlines()
+
+        files = [line.split()[-1] for line in lines if line.startswith("d")]
+
+        return files
 
     def list_files_in_directory(self, directory: str) -> list[str]:
-        # grep filters regular files (lines starting with '-'), awk extracts the name (field 9)
-        # Note: $9 must be escaped as \$9 so bash passes it literally to awk
-        return self.execWithOutput(f"eos ls -l {directory} | grep '^-' | awk '{{ print \\$9 }}'").splitlines()
+        output = self.execWithOutput(f"eos ls -l {directory}")
+        lines = output.splitlines()
+
+        files = [line.split()[-1] for line in lines if line.startswith("-")]
+
+        return files
 
     def num_files_in_directory(self, directory: str) -> int:
         # Note that for now this also counts subdirectories

@@ -5,7 +5,7 @@ import subprocess
 from typing import Optional
 from functools import cached_property
 
-from .remote_connection import RemoteConnection
+from .remote_connection import RemoteConnection, ExecResult
 
 
 class SSHConnection(RemoteConnection):
@@ -23,12 +23,15 @@ class SSHConnection(RemoteConnection):
     def short_description(self) -> str:
         return f"SSH connection {self.name}"
 
-    def exec(self, command: str, capture_output=False, throw_on_failure=True) -> subprocess.CompletedProcess[bytes]:
+    def exec(self, command: str, capture_output=False, throw_on_failure=True) -> ExecResult:
         full_command = f'ssh {self.user}@{self.host} "{command}"'
         result = subprocess.run(full_command, shell=True, capture_output=capture_output)
-        if throw_on_failure and result.returncode != 0:
+        success = result.returncode == 0
+        if throw_on_failure and not success:
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
-        return result
+        stdout = result.stdout if capture_output else b""
+        stderr = result.stderr if capture_output else b""
+        return ExecResult(stdout=stdout.decode, stderr=stderr.decode, success=success)
 
     def copyTo(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
         full_command = f"scp {src_path} {self.user}@{self.host}:{dst_path}"
@@ -51,3 +54,6 @@ class SSHConnection(RemoteConnection):
         cmd = f"ssh -o BatchMode=yes " f"-o ConnectTimeout=2 " f"{self.user}@{self.host} true"
         result = subprocess.run(cmd, shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         return result.returncode == 0
+
+    def get_ip(self) -> str:
+        return

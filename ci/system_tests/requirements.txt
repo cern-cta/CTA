@@ -1,0 +1,4 @@
+kubernetes>=35.0.0
+pytest>=8.0.0
+pytest-asyncio>=1.2.0
+oauthlib>=3.2.2

@@ -1,11 +1,13 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import asyncio
 from ..connections.remote_connection import RemoteConnection
 from subprocess import CompletedProcess
 from functools import cached_property
 from typing import Optional
 import time
+from concurrent.futures import Future
 
 
 class RemoteHost:
@@ -24,7 +26,21 @@ class RemoteHost:
         return self.conn.exec(command, capture_output=capture_output, throw_on_failure=throw_on_failure)
 
     def execWithOutput(self, command: str, throw_on_failure=True) -> str:
-        return self.conn.exec(command, capture_output=True, throw_on_failure=throw_on_failure).stdout.decode().strip()
+        return self.conn.exec(command, capture_output=True, throw_on_failure=throw_on_failure).stdout.strip()
+
+    def exec_async(self, command: str, throw_on_failure=True) -> Future:
+        """Start a command asynchronously and return a future that can be awaited.
+
+        This allows concurrent monitoring while the process runs.
+        """
+        loop = asyncio.get_running_loop()
+        return loop.run_in_executor(
+            None,
+            self.exec,
+            command,
+            True,
+            throw_on_failure,
+        )
 
     def copyTo(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
         return self.conn.copyTo(src_path, dst_path, throw_on_failure=throw_on_failure, permissions=permissions)
@@ -33,6 +49,7 @@ class RemoteHost:
         return self.conn.copyFrom(src_path, dst_path, throw_on_failure=throw_on_failure)
 
     def restart(self, wait_for_restart=True, throw_on_failure=True) -> None:
+        print(f"Restarting {self.name}...")
         self.conn.restart(throw_on_failure)
         if wait_for_restart:
             self.wait_for_host_up()
@@ -45,3 +62,6 @@ class RemoteHost:
         while not self.is_host_up():
             time.sleep(1)
         print(f"{self.name} is up")
+
+    def get_ip(self) -> str:
+        return self.conn.get_ip()
