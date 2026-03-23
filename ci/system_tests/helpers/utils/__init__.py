@@ -4,7 +4,7 @@
 from .timeout import Timeout
 from .utils import assert_dict_equals, wait_for_condition
 from .temp_resources import (
-    TempDiskInstanceSystem,
+    TempDiskInstanceSpace,
     TempLogicalLibrary,
     TempPhysicalLibrary,
     TempMountPolicy,
@@ -18,7 +18,7 @@ __all__ = [
     "Timeout",
     "assert_dict_equals",
     "wait_for_condition",
-    "TempDiskInstanceSystem",
+    "TempDiskInstanceSpace",
     "TempLogicalLibrary",
     "TempPhysicalLibrary",
     "TempMountPolicy",

@@ -4,7 +4,7 @@
 # RAII structures that create a temporary entry in the catalogue and clean up after themselves
 
 
-class TempDiskInstanceSystem:
+class TempDiskInstanceSpace:
     def __init__(self, cta_cli, dis_name, di_name):
         self.cta_cli = cta_cli
         self.dis_name = dis_name

@@ -8,7 +8,7 @@ import json
 
 from ..helpers.hosts import CtaCliHost
 from ..helpers.hosts import CtaTapedHost
-from ..helpers.utils import TempDiskInstanceSystem
+from ..helpers.utils import TempDiskInstanceSpace
 from ..helpers.utils import TempLogicalLibrary
 from ..helpers.utils import TempPhysicalLibrary
 from ..helpers.utils import TempMountPolicy
@@ -196,7 +196,7 @@ def test_cta_admin_disk_system(env):
 
     ls_before = cta_cli.execWithOutput("cta-admin --json ds ls")
 
-    with TempDiskInstanceSystem(cta_cli, dis_name, disk_instance_name):
+    with TempDiskInstanceSpace(cta_cli, dis_name, disk_instance_name):
         # Create
         cta_cli.exec(
             f"cta-admin ds add -n {ds_name} --di {disk_instance_name} --dis {dis_name} "
