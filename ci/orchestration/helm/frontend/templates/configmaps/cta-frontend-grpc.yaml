@@ -18,6 +18,10 @@ data:
     #
 
     cta.instance_name {{ .Release.Namespace }}
+    
+    cta.admin_commands.mode {{ .Values.grpc.conf.adminCommands.mode }}
+    cta.workflow_events.enabled {{ .Values.grpc.conf.workflowEvents.enabled }}
+    
     cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
 
     # CTA ObjectStore options
@@ -26,8 +30,6 @@ data:
     # CTA Scheduler DB options
     cta.schedulerdb.numberofthreads {{ .Values.grpc.conf.schedulerdb.numberOfThreads }}
     cta.schedulerdb.threadstacksize_mb {{ .Values.grpc.conf.schedulerdb.threadStackSizeMb }}
-    cta.schedulerdb.disable_repack_requests {{ .Values.grpc.conf.schedulerdb.disableRepackRequests }}
-    cta.schedulerdb.disable_user_requests {{ .Values.grpc.conf.schedulerdb.disableUserRequests }}
 
     # CTA Scheduler DB options - Cache timeout options (decreased for tests)
     cta.schedulerdb.tape_cache_max_age_secs {{ .Values.grpc.conf.schedulerdb.tapeCacheMaxAgeSecs }}

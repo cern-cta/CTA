@@ -33,8 +33,7 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
       m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
       m_schedulerBackendName(m_scheduler.getSchedulerBackendName()),
-      m_acceptUserRequests(frontendService.getUserRequestsAllowed()),
-      m_acceptRepackRequests(frontendService.getRepackRequestsAllowed()) {
+      m_adminCommandMode(frontendService.getAdminCommandMode()) {
   m_lc.push({"user", m_cliIdentity.username});
 
   m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
@@ -43,10 +42,35 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
 xrd::Response AdminCmd::process() {
   cta::frontend::RequestTracker requestTracker("ADMIN", "admin");
   xrd::Response response;
-
   utils::Timer t;
 
   try {
+    // Check if the command is disabled
+    switch (m_adminCommandMode) {
+      case (common::AdminCmdMode::ALL):
+        // All commands are accepted
+        break;
+      case (common::AdminCmdMode::REPACK):
+        // Only repack commands are accepted
+        if (m_adminCmd.cmd() != admin::AdminCmd::CMD_REPACK) {
+          throw cta::exception::UserError(c_disabledAdminCmdMsg);
+        }
+        break;
+      case (common::AdminCmdMode::NO_REPACK):
+        // No repack commands are accepted
+        if (m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK) {
+          throw cta::exception::UserError(c_disabledAdminCmdMsg);
+        }
+        break;
+      case (common::AdminCmdMode::VERSION):
+      case (common::AdminCmdMode::NONE):
+        // No commands are accepted (version is stream command only)
+        throw cta::exception::UserError(c_disabledAdminCmdMsg);
+        break;
+      default:
+        throw cta::exception::UserError("Misconfiguration in admin command mode. " + c_disabledAdminCmdMsg);
+    }
+
     // Map the <Cmd, SubCmd> to a method
     switch (cmd_pair(m_adminCmd.cmd(), m_adminCmd.subcmd())) {
       case cmd_pair(admin::AdminCmd::CMD_ADMIN, admin::AdminCmd::SUBCMD_ADD):
@@ -1174,7 +1198,7 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
     m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());
   }
   if (state.has_value()) {
-    if (!m_acceptUserRequests || !m_acceptRepackRequests) {
+    if (m_adminCommandMode != common::AdminCmdMode::ALL) {
       // We need to validate if we can modify the state of this tape
       auto tapeToVid = m_catalogue.Tape()->getTapesByVid(vid);
       if (!tapeToVid.contains(vid)) {
@@ -1182,7 +1206,8 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
       }
       auto tapeState = tapeToVid[vid].state;
       using Tape = common::dataStructures::Tape;
-      if (!m_acceptUserRequests && (tapeState == Tape::State::ACTIVE || tapeState == Tape::State::DISABLED)) {
+      if (m_adminCommandMode == common::AdminCmdMode::REPACK
+          && (tapeState == Tape::State::ACTIVE || tapeState == Tape::State::DISABLED)) {
         std::ostringstream oss;
         oss << "Unable to modify state of VID " << vid << ": ";
         oss << "Disabled user requests forbids changing tapes currently in ";
@@ -1190,7 +1215,7 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
             << " state";
         throw cta::exception::UserError(oss.str());
       }
-      if (!m_acceptRepackRequests
+      if (m_adminCommandMode == common::AdminCmdMode::NO_REPACK
           && (tapeState == Tape::State::REPACKING || tapeState == Tape::State::REPACKING_DISABLED)) {
         std::ostringstream oss;
         oss << "Unable to modify state of VID " << vid << ": ";

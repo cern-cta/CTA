@@ -10,6 +10,13 @@ grpc:
   port: 10956
   conf:
     numberOfThreads: 512
+
+    adminCommands:
+      mode: all
+
+    workflowEvents:
+      enabled: true
+
     catalogue:
       numberOfConnections: 10
       # Reduced value for test environment
@@ -71,6 +78,12 @@ xrd:
   enabled: true
   port: 10955
   conf:
+    adminCommands:
+      mode: all
+
+    workflowEvents:
+      enabled: true
+
     catalogue:
       numberOfConnections: 10
       # Reduced value for test environment
@@ -84,8 +97,6 @@ xrd:
     schedulerdb:
       numberOfThreads: 500
       threadStackSizeMb: 1
-      disableRepackRequests: false
-      disableUserRequests: false
       tapeCacheMaxAgeSecs: 1
       retrieveQueueCacheMaxAgeSecs: 1
 

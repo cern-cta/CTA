@@ -40,6 +40,13 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
     .add("eosInstance", eosInstanceName)
     .add("diskFilePath", diskFilePath)
     .add("diskFileId", diskFileId);
+
+  // Check that we are allowed to run workflow events on this frontend
+  if (!frontendService.getWorkflowEventsEnabled()) {
+    m_lc.log(log::ERR, "In WorkflowEvent::WorkflowEvent(): received workflow event on disabled frontend.");
+    throw exception::UserError("Workflow events are disabled on this frontend");
+  }
+
   m_lc.log(log::INFO, "In WorkflowEvent::WorkflowEvent(): received event.");
 
   // Validate that instance name in key used to authenticate == instance name in protocol buffer

@@ -13,6 +13,7 @@ set(FRONTEND_COMMON_SRC_FILES
   AdminCmd.cpp
   RequestTracker.cpp
   AdminCmdOptions.cpp
+  AdminCmdMode.cpp
   ActivityMountRuleLsResponseStream.cpp
   AdminLsResponseStream.cpp
   ArchiveRouteLsResponseStream.cpp

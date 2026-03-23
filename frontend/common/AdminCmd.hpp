@@ -68,6 +68,8 @@ protected:
   std::string setDriveState(const std::string& regex,
                             const common::dataStructures::DesiredDriveState& desiredDriveState);
 
+  inline static const std::string c_disabledAdminCmdMsg = "Admin command disabled on this frontend.";
+
   const admin::AdminCmd m_adminCmd;   //!< Administrator Command protocol buffer
   catalogue::Catalogue& m_catalogue;  //!< Reference to CTA Catalogue
   cta::Scheduler& m_scheduler;        //!< Reference to CTA Scheduler
@@ -146,9 +148,8 @@ private:
   const std::optional<std::string> m_repackBufferURL;           //!< Repack buffer URL
   const std::optional<std::uint64_t> m_repackMaxFilesToSelect;  //!< Repack max files to expand
   const uint64_t m_missingFileCopiesMinAgeSecs;                 //!< Missing tape file copies minimum age
-  std::optional<std::string> m_schedulerBackendName;            //!< Name of the Scheduler DB to which Frontend connects
-  const bool m_acceptUserRequests;                              //!< Allow the processing of user requests
-  const bool m_acceptRepackRequests;                            //!< Allow the processing of repack requests
+  const std::optional<std::string> m_schedulerBackendName;      //!< Name of the Scheduler DB to which Frontend connects
+  const common::AdminCmdMode m_adminCommandMode;  //!< Option to select which admin command mode will be used
 };
 
 }  // namespace cta::frontend

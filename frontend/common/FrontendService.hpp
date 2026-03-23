@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "AdminCmdMode.hpp"
 #include "scheduler/Scheduler.hpp"
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
@@ -60,14 +61,19 @@ public:
   uint64_t getMissingFileCopiesMinAgeSecs() const { return m_missingFileCopiesMinAgeSecs; }
 
   /*!
-   * Get a reference to the Scheduler
+   * Get the mode of operation of the CTA admin interface
    */
-  bool getUserRequestsAllowed() const { return m_acceptUserRequests; }
+  cta::common::AdminCmdMode getAdminCommandMode() const { return m_adminCommandMode; }
+
+  /*!
+   * Get the enabled status of the workflow event handler
+   */
+  bool getWorkflowEventsEnabled() const { return m_workflowEventsEnabled; }
 
   /*!
    * Get a reference to the Scheduler
    */
-  bool getRepackRequestsAllowed() const { return m_acceptRepackRequests; }
+  //bool getRepackRequestsAllowed() const { return m_acceptRepackCommands; }
 
   /*!
    * Get the maximum file size for an archive request
@@ -172,9 +178,14 @@ public:
   bool getJwtAuth() const { return m_jwtAuth; }
 
   /*
-   * Get the feature flag to disable CTA admin commands
+   * Get the feature flag to disable admin commands
    */
-  bool getenableCtaAdminCommands() const { return m_enableCtaAdminCommands; }
+  //bool getEnableAdminCommands() const { return m_enableAdminCommands; }
+
+  /*
+   * Get the feature flag to disable workflow events
+   */
+  //bool getEnableWorkflowEvents() const { return m_enableWorkflowEvents; }
 
 private:
   /*!
@@ -192,8 +203,8 @@ private:
   std::unique_ptr<cta::SchedulerDB_t>           m_scheddb;                      //!< Scheduler DB for persistent objects (queues and requests)
   std::unique_ptr<cta::Scheduler>               m_scheduler;                    //!< The scheduler
 
-  bool                                          m_acceptRepackRequests;         //!< Flag to allow the processing of repack requests
-  bool                                          m_acceptUserRequests;           //!< Flag to allow the processing of user requests
+  common::AdminCmdMode                          m_adminCommandMode;             //!< Option to select which admin command mode will be used
+  bool                                          m_workflowEventsEnabled;        //!< Flag to allow the processing of workflow events
   std::optional<uint64_t>                       m_tapeCacheMaxAgeSecs;          //!< Option to override the tape cache timeout value in the scheduler DB
   std::optional<uint64_t>                       m_retrieveQueueCacheMaxAgeSecs; //!< Option to override the retrieve queue timeout value in the scheduler DB
   std::string                                   m_catalogue_conn_string;        //!< The catalogue connection string (without the password)
@@ -213,13 +224,12 @@ private:
   std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file
   std::optional<std::string>                    m_tlsChain;                     //!< The TLS CA chain file
   uint64_t                                      m_missingFileCopiesMinAgeSecs;  //!< Missing tape file copies minimum age.
-  std::string                                   m_instanceName;               //!< value of cta.instance_name in the CTA frontend configuration file
+  std::string                                   m_instanceName;                 //!< value of cta.instance_name in the CTA frontend configuration file
   std::optional<std::string>                    m_jwksUri;                      //!< The endpoint to obtain public keys from, for validating tokens
   std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
-  std::optional<int>                            m_pubkeyTimeout;        //!< The number of seconds after which to update the cache entry for a cached key
+  std::optional<int>                            m_pubkeyTimeout;                //!< The number of seconds after which to update the cache entry for a cached key
   std::optional<int>                            m_jwksTotalTimeout;             //!< The total timeout in seconds for JWKS endpoint (default 60)
   bool                                          m_jwtAuth;                      //!< Feature flag to guard JWT auth when TLS is enabled
-  bool                                          m_enableCtaAdminCommands;      //!< Feature flag to disable CTA admin commands
   // clang-format on
 };
 

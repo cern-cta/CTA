@@ -349,43 +349,29 @@ FrontendService::FrontendService(const std::string& configFilename) {
     }
   }
 
-  // Configure allowed requests
+  // Configure admin commands allowed
   {
-    // default value for both repack and user requests is "on"
-    std::optional<bool> disableRepackRequests = config.getOptionValueBool("cta.schedulerdb.disable_repack_requests");
-    m_acceptRepackRequests = disableRepackRequests.has_value() ? (!disableRepackRequests.value()) : true;
-    if (!disableRepackRequests.has_value()) {
-      log(log::WARNING,
-          "cta.schedulerdb.disable_repack_requests is not set in configuration file, using default value false");
-    }
+    std::optional<std::string> adminCmdMode = config.getOptionValueStr("cta.admin_commands.mode");
+    m_adminCommandMode = common::toAdminCmdMode(adminCmdMode.value_or("all"));
 
     std::vector<log::Param> params;
-    params.emplace_back("source", disableRepackRequests.has_value() ? configFilename : "Compile time default");
-    params.emplace_back("category", "cta.schedulerdb");
-    params.emplace_back("key", "disable_repack_requests");
-    params.emplace_back("value",
-                        disableRepackRequests.has_value() ?
-                          config.getOptionValueStr("cta.schedulerdb.disable_repack_requests").value() :
-                          "false");
+    params.emplace_back("source", adminCmdMode.has_value() ? configFilename : "Compile time default");
+    params.emplace_back("category", "cta.admin_commands");
+    params.emplace_back("key", "mode");
+    params.emplace_back("value", adminCmdMode.value_or("all"));
     log(log::INFO, "Configuration entry", params);
   }
 
+  // Configure workflow events enabled
   {
-    auto disableUserRequests = config.getOptionValueBool("cta.schedulerdb.disable_user_requests");
-    m_acceptUserRequests = disableUserRequests.has_value() ? (!disableUserRequests.value()) : true;
-    if (!disableUserRequests.has_value()) {
-      log(log::WARNING,
-          "cta.schedulerdb.disable_user_requests is not set in configuration file, using default value false");
-    }
+    std::optional<bool> workflowEventsEnabled = config.getOptionValueBool("cta.workflow_events.enabled");
+    m_workflowEventsEnabled = workflowEventsEnabled.value_or(true);
 
     std::vector<log::Param> params;
-    params.emplace_back("source", disableUserRequests.has_value() ? configFilename : "Compile time default");
-    params.emplace_back("category", "cta.schedulerdb");
-    params.emplace_back("key", "disable_user_requests");
-    params.emplace_back("value",
-                        disableUserRequests.has_value() ?
-                          config.getOptionValueStr("cta.schedulerdb.disable_user_requests").value() :
-                          "false");
+    params.emplace_back("source", workflowEventsEnabled.has_value() ? configFilename : "Compile time default");
+    params.emplace_back("category", "cta.workflow_events");
+    params.emplace_back("key", "enabled");
+    params.emplace_back("value", m_workflowEventsEnabled ? "true" : "false");
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -453,9 +439,6 @@ FrontendService::FrontendService(const std::string& configFilename) {
   std::optional<bool> jwtAuth = config.getOptionValueBool("grpc.jwt.enabled");
   m_jwtAuth = jwtAuth.value_or(false);  // default value is false
 
-  std::optional<bool> enableCtaAdminCommands =
-    config.getOptionValueBool("cta.experimental.grpc.cta_admin_commands.enabled");
-  m_enableCtaAdminCommands = enableCtaAdminCommands.value_or(false);  // default value is false
   if (!m_tls && m_jwtAuth) {
     throw exception::UserError("grpc.jwt.auth is set to true when grpc.tls is set to false in configuration file "
                                + configFilename + ". Cannot use tokens over unencrypted channel, tls must be enabled.");
