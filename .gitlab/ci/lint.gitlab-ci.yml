@@ -280,5 +280,5 @@ type-check-python:
     # It is a bit unfortunate we have to do this explicitly, but they are mostly independent scripts that need this,
     # so not one top-level "install all dependencies" is available
     # - dnf install -y python3 xrootd-client python3-xrootd
-    # - python3 -m pip install pytest jwcrypto jwt
+    - python3 -m pip install pytest jwcrypto jwt
     - pyright .
