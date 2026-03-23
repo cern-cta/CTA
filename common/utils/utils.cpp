@@ -23,6 +23,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/prctl.h>
+#include <sys/random.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <thread>
@@ -722,6 +723,18 @@ std::string joinCommaSeparated(const std::vector<std::string>& v) {
     result += v[i];
   }
   return result;
+}
+
+std::string generate256BitHex() {
+  std::array<uint8_t, 32> bytes = {0};
+  getrandom(bytes.data(), bytes.size(), 0);
+
+  std::ostringstream oss;
+  oss << std::hex << std::setfill('0');
+  for (auto b : bytes) {
+    oss << std::setw(2) << static_cast<int>(b);
+  }
+  return oss.str();
 }
 
 }  // namespace cta::utils

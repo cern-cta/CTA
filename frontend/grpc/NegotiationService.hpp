@@ -80,6 +80,8 @@ public:
 
   void startProcessing();
 
+  static std::string generate256BitHex();
+
 private:
   // Static to force explicit dependency passing for thread safety.
   // Each thread creates its own LogContext from the shared Logger.
@@ -98,6 +100,7 @@ private:
   cta::xrd::Negotiation::AsyncService m_service;
   std::vector<std::thread> m_threads;
   ThreadSafeHandlerMap m_handlers;
+  // for generating nonce to return to client as token
 };
 
 }  // namespace cta::frontend::grpc::server

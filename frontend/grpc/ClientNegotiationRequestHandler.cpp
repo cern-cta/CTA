@@ -11,16 +11,11 @@
 cta::frontend::grpc::client::NegotiationRequestHandler::NegotiationRequestHandler(
   cta::log::Logger& log,
   cta::xrd::Negotiation::Stub& stub,
-  ::grpc::CompletionQueue& completionQueue,
-  const std::string& strSpn)
+  ::grpc::CompletionQueue& completionQueue)
     : m_log(log),
       m_stub(stub),
       m_completionQueue(completionQueue),
-      m_strSpn(strSpn),
-      m_tag(this) {
-  // Get KRB5 principal name for the given service
-  m_gssNameSpn = gssSpn(m_strSpn);
-}
+      m_tag(this) {}
 
 void cta::frontend::grpc::client::NegotiationRequestHandler::logGSSErrors(const std::string& strContext,
                                                                           OM_uint32 gssCode,
@@ -120,13 +115,21 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
 
   switch (m_streamState) {
     case StreamState::NEW:
+      // receive SPN from server
       // CMD: prepare Negotiate stream
+      m_streamState = StreamState::READ_SPN;  // once StartCall completes
       m_uprwNegotiation = m_stub.PrepareAsyncNegotiate(&m_ctx, &m_completionQueue);
-      m_streamState = StreamState::WRITE;
       // Initiates the gRPC call
       m_uprwNegotiation->StartCall(m_tag);
       break;
+    case StreamState::READ_SPN:
+      m_streamState = StreamState::WRITE;
+      m_response.Clear();
+      // ask to read the server-advertised SPN
+      m_uprwNegotiation->Read(&m_response, m_tag);
+      break;
     case StreamState::READ:
+      // we get here from continue_needed
       m_streamState = StreamState::WRITE;
       m_response.Clear();
       m_uprwNegotiation->Read(&m_response, m_tag);  // is not blocking
@@ -134,6 +137,11 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
     case StreamState::WRITE:
       if (!m_response.is_complete()) {
         // If not first call
+        // If we got here from READ_SPN
+        if (!m_response.service_principal_name().empty()) {
+          m_strSpn = m_response.service_principal_name();
+          m_gssNameSpn = gssSpn(m_strSpn);
+        }
         if (m_response.challenge().empty() && m_gssRecvToken.value != GSS_C_NO_BUFFER) {
           log::ScopedParamContainer params(lc);
           params.add("tag", m_tag);
@@ -204,8 +212,41 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
           }
         }
       } else {
-        m_streamState = StreamState::FINISH;
         m_strToken = m_response.token();
+        if (m_gssRetFlags & GSS_C_MUTUAL_FLAG) {
+          pChallengeData = reinterpret_cast<const uint8_t*>(m_response.challenge().c_str());
+          m_gssRecvToken.length = m_response.challenge().size();
+          m_gssRecvToken.value = const_cast<void*>(reinterpret_cast<const void*>(pChallengeData));
+          // For mutual authentication, client performs a second call to gss_init_sec_context
+          // Based on my understanding of the client (https://docs.oracle.com/cd/E19683-01/816-1331/sampleprogs-fig-14/index.html)
+          // and server (https://docs.oracle.com/cd/E19683-01/816-1331/sampleprogs-38/index.html) examples,
+          // and Figure 2-2 GSS-API Used by Client and Server of The Open Group's publication "Technical Standard Generic Security Service API Base",
+          // this does not need to be done in a loop, one call is enough
+          m_gssMajStat = gss_init_sec_context(  //
+            &m_gssMinStat,                      // minor_status
+            m_gssCred,                          // claimant_cred_handle
+            &m_gssCtx,                          // context_handle
+            m_gssNameSpn,                       // target_name
+            GSS_C_NO_OID,                       // mech_type of the desired mechanism
+            m_gssRetFlags,                      // req_flags
+            0,                                  // time_req for the context to remain valid. 0 for default lifetime.
+            GSS_C_NO_CHANNEL_BINDINGS,          // channel bindings
+            // GSS_C_NO_BUFFER, // input token
+            &m_gssRecvToken,  // input token
+            nullptr,          // actual_mech_type
+            &m_gssSendToken,  // output token
+            nullptr,          // ret_flags
+            nullptr           // time_req
+          );
+          if (m_gssMajStat != GSS_S_COMPLETE) {
+            lc.log(cta::log::ERR,
+                   "In grpc::client::NegotiationRequestHandler::next(): Mutual authentication failed, client did not "
+                   "authenticate the server, expected state to be GSS_S_COMPLETE!");
+            // wipe the token contents so authentication of the following actual Admin call fails
+            m_strToken = "";
+          }
+        }
+        m_streamState = StreamState::FINISH;
         m_uprwNegotiation->WritesDone(m_tag);
       }
       break;

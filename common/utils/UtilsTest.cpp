@@ -8,6 +8,7 @@
 #include "common/exception/Exception.hpp"
 
 #include <gtest/gtest.h>
+#include <set>
 
 namespace unitTests {
 
@@ -900,6 +901,18 @@ TEST_F(cta_UtilsTest, IsValidHex) {
 TEST_F(cta_UtilsTest, joinCommaSeparated) {
   const std::vector<std::string> v {"arg1", "another argument", "3"};
   ASSERT_EQ(cta::utils::joinCommaSeparated(v), "arg1, another argument, 3");
+}
+
+TEST_F(cta_UtilsTest, generate256BitHexProducesUniqueValues) {
+  // generate n nonces, ensure they are all different - we don't generate the same value again and again
+  constexpr size_t nIterations = 100;
+  std::set<std::string> nonces;
+  for (size_t i = 0; i < nIterations; ++i) {
+    auto nonce = cta::utils::generate256BitHex();
+    nonces.insert(nonce);
+    ASSERT_EQ(nonce.length(), 64);
+  }
+  ASSERT_EQ(nIterations, nonces.size());
 }
 
 }  // namespace unitTests

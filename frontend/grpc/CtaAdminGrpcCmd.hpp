@@ -25,7 +25,6 @@ public:
 private:
   void setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
                                        grpc::ClientContext& context,
-                                       const std::string& GSS_SPN,
                                        cta::log::FileLogger& log) const;
   // Attaches the Kerberos token to the call metadata (per-call credentials)
 

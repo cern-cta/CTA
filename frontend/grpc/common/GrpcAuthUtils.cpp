@@ -13,14 +13,22 @@ namespace cta::frontend::grpc::common {
 std::pair<::grpc::Status, std::string>
 validateKrb5Token(const std::string& token, server::TokenStorage& tokenStorage, cta::log::LogContext& lc) {
   // Validate the Kerberos token from storage
-  if (tokenStorage.validate(token)) {
+  if (auto validationResult = tokenStorage.validate(token);
+      validationResult != server::Krb5TokenValidationResult::NOT_FOUND) {
     // extract the name, construct the clientIdentity and remove the token
     std::string username = tokenStorage.getClientPrincipal(token);
     tokenStorage.remove(token);
     if (username.empty()) {
       return {::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Failed to retrieve client principal"), ""};
     }
-    return {::grpc::Status::OK, username};
+    if (validationResult == server::Krb5TokenValidationResult::VALID) {
+      return {::grpc::Status::OK, username};
+    } else {
+      return {
+        ::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED,
+                       std::string("KRB5 authorization process error, expired token for client principal ") + username),
+        ""};
+    }
   }
   // else UNAUTHENTICATED
   return {::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "KRB5 authorization process error. Invalid principal."),
