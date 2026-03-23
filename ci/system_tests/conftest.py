@@ -12,7 +12,7 @@ from .helpers.test_env import TestEnv
 try:
     import tomllib  # Python 3.11+
 except ModuleNotFoundError:
-    import tomli as tomllib  # Python <3.11
+    import tomli as tomllib  # type: ignore  # Python <3.11
 
 #####################################################################################################################
 # General/common fixtures

@@ -55,7 +55,7 @@ class RemoteHost:
         if wait_for_restart:
             self.wait_for_host_up()
 
-    def is_host_up(self) -> None:
+    def is_host_up(self) -> bool:
         return self.conn.is_up()
 
     def wait_for_host_up(self) -> None:

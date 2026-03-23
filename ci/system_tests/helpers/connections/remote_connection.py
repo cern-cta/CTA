@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from functools import cached_property
 from dataclasses import dataclass
 from typing import Optional, Protocol
 
@@ -14,10 +15,10 @@ class ExecResult:
 
 class RemoteConnection(Protocol):
 
-    @property
+    @cached_property
     def name(self) -> str: ...
 
-    @property
+    @cached_property
     def description(self) -> str: ...
 
     def exec(self, command: str, capture_output=False, throw_on_failure=True) -> ExecResult: ...

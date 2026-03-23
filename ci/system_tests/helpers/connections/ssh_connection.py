@@ -21,7 +21,7 @@ class SSHConnection(RemoteConnection):
         return f"{self.host}"
 
     @cached_property
-    def short_description(self) -> str:
+    def description(self) -> str:
         return f"SSH connection {self.name}"
 
     def exec(self, command: str, capture_output=False, throw_on_failure=True) -> ExecResult:

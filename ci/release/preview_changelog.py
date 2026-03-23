@@ -29,7 +29,7 @@ changelog_cats: list[str] = ["addition", "fix", "change", "deprecation", "remova
 def changelog_preview(
     api: GitLabAPI, from_commit_sha: str, to_commit_sha: Optional[str], release_version: str, markdown: bool = False
 ) -> str:
-    if to_commit_sha is not None:
+    if to_commit_sha is None:
         to_commit_sha = "HEAD"
     params: dict = {
         "from": from_commit_sha,
@@ -37,6 +37,10 @@ def changelog_preview(
         "version": release_version,
     }
     changelog_update = api.get("repository/changelog", params)
+
+    if changelog_update is None:
+        print("ERROR: failed to GET repository/changelog")
+        sys.exit(1)
 
     res = header("CHANGELOG UPDATE PREVIEW", markdown)
     res += changelog_update["notes"]
@@ -57,7 +61,7 @@ def get_commits_in_range(api: GitLabAPI, since_sha: str, until_sha: Optional[str
     res = api.get("repository/commits", params=params)
     if res is not None and len(res) >= per_page:
         print("WARNING: you have retrieved the maximum commits per page. Not all commits might be checked.")
-    return res
+    return res if res is not None else []
 
 
 def get_commit(api: GitLabAPI, commit_sha: str) -> Optional[Commit]:

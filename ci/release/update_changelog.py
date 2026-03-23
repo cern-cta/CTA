@@ -20,7 +20,7 @@ def create_new_branch(api: GitLabAPI, branch: str, source_branch: str) -> bool:
         "branch": branch,
         "ref": source_branch,
     }
-    result: Optional[str] = api.post("repository/branches", params=params)
+    result = api.post("repository/branches", params=params)
     if result is not None:
         print("Branch created successfully")
         print(f"\t To view the created branch, visit: {result['web_url']}")
@@ -42,7 +42,7 @@ def update_changelog(api: GitLabAPI, release_version: str, from_commit: str, to_
         "from": from_commit,
         "to": to_commit,
     }
-    result: Optional[str] = api.post("repository/changelog", params=params)
+    result = api.post("repository/changelog", params=params)
     if result is not None:
         print("Changelog update pushed successfully")
         return True
@@ -52,7 +52,7 @@ def update_changelog(api: GitLabAPI, release_version: str, from_commit: str, to_
 
 
 # https://docs.gitlab.com/ee/api/repository_files.html#get-file-from-repository
-def get_file(api: GitLabAPI, path: str, ref: str) -> bool:
+def get_file(api: GitLabAPI, path: str, ref: str) -> Any:
     params: dict = {
         "ref": ref,
     }
@@ -85,11 +85,14 @@ def create_merge_request(
         "remove_source_branch": True,
         "squash": True,
     }
-    result: Optional[str] = api.post("merge_requests", json=data)
+    result = api.post("merge_requests", json=data)
     if result is not None:
         print("Merge request created successfully")
         print(f"Merge request is ready for review. Please visit: {result['web_url']}")
-        return result["iid"]
+        iid = result.get("iid")
+        if iid is not None and isinstance(iid, int):
+            return iid
+        return None
     else:
         print("Failed to create merge request")
         return None
@@ -106,33 +109,41 @@ def add_mr_review_comment(
     print(f"Getting version for Merge Request with id: {mr_id}")
     tries: int = 0
     max_tries: int = 20
-    versions: Optional[list[dict[str, Any]]] = []
+    versions_result = []
     # There seems to be a bit of a delay between the creation of the MR and this api request succeeding
-    while versions == []:
-        versions: Optional[dict] = api.get(f"merge_requests/{mr_id}/versions")
-        if versions is None:
+    while versions_result == []:
+        versions_result = api.get(f"merge_requests/{mr_id}/versions")
+        if versions_result is None or versions_result == []:
+            if tries >= max_tries:
+                print(f"Failed to retrieve versions after {tries} tries.")
+                return False
+            print("Failed to retrieve versions")
+            tries += 1
+            time.sleep(1)
+            continue
+        if not isinstance(versions_result, list) or len(versions_result) == 0:
             print("Failed to retrieve versions")
             return False
-        if max_tries > 20:
-            print("Failed to retrieve versions after {tries} tries.")
-            return False
-        tries += 1
-        time.sleep(1)
+        break
     print(f"Adding review comment for {file_path} at line {line_number}:")
     # Limitation of the current Python version; backslash not allowed in f-string
     indented_comment = textwrap.indent(comment, "\t")
     print(f"{indented_comment}")
+    if not isinstance(versions_result, list) or len(versions_result) == 0:
+        print("Failed to retrieve versions")
+        return False
+    first_version = versions_result[0]
     data: dict = {
         "position[position_type]": "text",
-        "position[base_sha]": versions[0]["base_commit_sha"],
-        "position[head_sha]": versions[0]["head_commit_sha"],
-        "position[start_sha]": versions[0]["start_commit_sha"],
+        "position[base_sha]": first_version["base_commit_sha"],
+        "position[head_sha]": first_version["head_commit_sha"],
+        "position[start_sha]": first_version["start_commit_sha"],
         "position[new_path]": file_path,
         "position[old_path]": file_path,
         "position[new_line]": line_number,
         "body": comment,
     }
-    result: Optional[str] = api.post(f"merge_requests/{mr_id}/discussions", json=data)
+    result = api.post(f"merge_requests/{mr_id}/discussions", json=data)
     if result is not None:
         print("Comment added successfully")
         return True

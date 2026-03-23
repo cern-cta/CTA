@@ -11,7 +11,7 @@ class EosMgmHost(DiskInstanceHost):
         super().__init__(conn)
 
     @cached_property
-    def implementation(self) -> str:
+    def implementation(self) -> DiskInstanceImplementation:
         return DiskInstanceImplementation.EOS
 
     @cached_property
@@ -24,9 +24,9 @@ class EosMgmHost(DiskInstanceHost):
 
     @cached_property
     def workflow_dir(self) -> str:
-        return f"{self.base_dir}/proc/cta/workflow"
+        return f"{self.base_dir_path}/proc/cta/workflow"
 
-    def force_remove_directory(self, directory: str) -> str:
+    def force_remove_directory(self, directory: str) -> None:
         self.exec(f"eos rm -rF --no-confirmation {directory} 2>/dev/null || true")
 
     def list_entries_in_directory(self, directory: str) -> list[str]:

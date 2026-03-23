@@ -220,6 +220,7 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
   # as it is trying to pack the build directory as well
   set(CPACK_SOURCE_IGNORE_FILES
     "/.git/"
+    "/ci/"
     "/build_srpm/"
     "/build_rpm/"
     "/image_rpms/"
