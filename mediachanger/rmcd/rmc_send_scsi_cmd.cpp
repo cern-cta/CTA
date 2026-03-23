@@ -207,6 +207,7 @@ int rmc_send_scsi_cmd(const int tapefd,
   }
   if (do_not_open) {
     fd = tapefd;
+    sgpath[SGPATH_BUFSZ - 1] = '\0';
     snprintf(sgpath, sizeof(sgpath), "%s", path);
     if (sgpath[SGPATH_BUFSZ - 1] != '\0') {
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "path exceeds maximum length");
