@@ -60,8 +60,8 @@ def worker(
     write_in_chunks: bool,
 ):
     # Import here so XrdSecsssKT is already set in the environment
-    from XRootD import client
-    from XRootD.client.flags import OpenFlags
+    from XRootD import client  # type: ignore
+    from XRootD.client.flags import OpenFlags  # type: ignore
 
     _ = client.FileSystem(f"root://{eos_host}")
     err_budget = 3

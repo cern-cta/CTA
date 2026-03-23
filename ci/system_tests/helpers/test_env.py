@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import subprocess
-from typing import Any, List
+from typing import Any, List, Sequence
 
 from kubernetes import client, config
 
@@ -23,24 +23,24 @@ from .hosts.disk.eos_mgm_host import EosMgmHost
 class TestEnv:
     def __init__(
         self,
-        cta_cli_conns: list[RemoteConnection] = [],
-        cta_frontend_conns: list[RemoteConnection] = [],
-        cta_rmcd_conns: list[RemoteConnection] = [],
-        cta_taped_conns: list[RemoteConnection] = [],
-        cta_maintd_conns: list[RemoteConnection] = [],
-        eos_client_conns: list[RemoteConnection] = [],
-        eos_mgm_conns: list[RemoteConnection] = [],
+        cta_cli_conns: Sequence[RemoteConnection] = [],
+        cta_frontend_conns: Sequence[RemoteConnection] = [],
+        cta_rmcd_conns: Sequence[RemoteConnection] = [],
+        cta_taped_conns: Sequence[RemoteConnection] = [],
+        cta_maintd_conns: Sequence[RemoteConnection] = [],
+        eos_client_conns: Sequence[RemoteConnection] = [],
+        eos_mgm_conns: Sequence[RemoteConnection] = [],
     ):
-        self.cta_cli: list[CtaCliHost] = [CtaCliHost(conn) for conn in cta_cli_conns]
-        self.cta_frontend: list[CtaFrontendHost] = [CtaFrontendHost(conn) for conn in cta_frontend_conns]
-        self.cta_rmcd: list[CtaRmcdHost] = [CtaRmcdHost(conn) for conn in cta_rmcd_conns]
-        self.cta_maintd: list[CtaMaintdHost] = [CtaMaintdHost(conn) for conn in cta_maintd_conns]
-        self.cta_taped: list[CtaTapedHost] = [CtaTapedHost(conn) for conn in cta_taped_conns]
-        self.eos_mgm: list[EosMgmHost] = [EosMgmHost(conn) for conn in eos_mgm_conns]
-        self.eos_client: list[EosClientHost] = [EosClientHost(conn) for conn in eos_client_conns]
+        self.cta_cli: Sequence[CtaCliHost] = [CtaCliHost(conn) for conn in cta_cli_conns]
+        self.cta_frontend: Sequence[CtaFrontendHost] = [CtaFrontendHost(conn) for conn in cta_frontend_conns]
+        self.cta_rmcd: Sequence[CtaRmcdHost] = [CtaRmcdHost(conn) for conn in cta_rmcd_conns]
+        self.cta_maintd: Sequence[CtaMaintdHost] = [CtaMaintdHost(conn) for conn in cta_maintd_conns]
+        self.cta_taped: Sequence[CtaTapedHost] = [CtaTapedHost(conn) for conn in cta_taped_conns]
+        self.eos_mgm: Sequence[EosMgmHost] = [EosMgmHost(conn) for conn in eos_mgm_conns]
+        self.eos_client: Sequence[EosClientHost] = [EosClientHost(conn) for conn in eos_client_conns]
         # These should all fall under DiskInstanceHost and DiskClientHost
-        self.disk_instance: list[DiskInstanceHost] = self.eos_mgm  # + self.dcache
-        self.disk_client: list[DiskClientHost] = self.eos_client  # + self.dcache_client
+        self.disk_instance: Sequence[DiskInstanceHost] = self.eos_mgm  # + self.dcache
+        self.disk_client: Sequence[DiskClientHost] = self.eos_client  # + self.dcache_client
 
     # Mostly a convenience function that is arguably not very clean, but that is for later
     @staticmethod
