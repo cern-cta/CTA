@@ -48,7 +48,9 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
         uint64_t id = 0;
         auto* first = reinterpret_cast<const char*>(fit->fseq);
         auto* last = first + sizeof(fit->fseq);
-        std::from_chars(first, last, id);
+        if (std::from_chars(first, last, id).ec != std::errc()) {
+          throw cta::exception::Exception("In EnterpriseRAOAlgorithm::performRAO: unable to parse fSeq value");
+        }
         raoOrder.push_back(id);
       }
       files.clear();
@@ -58,7 +60,9 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
     uint64_t id = 0;
     auto* first = reinterpret_cast<const char*>(fit->fseq);
     auto* last = first + sizeof(fit->fseq);
-    std::from_chars(first, last, id);
+    if (std::from_chars(first, last, id).ec != std::errc()) {
+      throw cta::exception::Exception("In EnterpriseRAOAlgorithm::performRAO: unable to parse fSeq value");
+    }
     raoOrder.push_back(id);
   }
   files.clear();
