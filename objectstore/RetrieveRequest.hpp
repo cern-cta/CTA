@@ -222,10 +222,10 @@ public:
       if (!isRepack) {
         throw exception::Exception("In RetrieveRequest::RepackInfoSerDeser::serialize(): isRepack is false.");
       }
-      for (auto& route : archiveRouteMap) {
+      for (const auto& [copyNb, tapePool] : archiveRouteMap) {
         auto* ar = rrri.mutable_archive_routes()->Add();
-        ar->set_copynb(route.first);
-        ar->set_tapepool(route.second);
+        ar->set_copynb(copyNb);
+        ar->set_tapepool(tapePool);
       }
       for (auto cntr : copyNbsToRearchive) {
         rrri.mutable_copy_nbs_to_rearchive()->Add(cntr);

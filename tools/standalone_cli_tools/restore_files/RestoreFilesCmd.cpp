@@ -167,16 +167,15 @@ int RestoreFilesCmd::exceptionThrowingMain(const int argc, char* const* const ar
       // archive file exists in CTA, so only need to restore the file copy
       restoreDeletedFileCopyCta(file);
       // sanity check
-      auto diskInstanceAndFxid = getInstanceAndFidFromCTA(file);
-      auto eosArchiveFileIdAndChecksum =
-        getArchiveFileIdAndChecksumFromEOS(diskInstanceAndFxid.first, diskInstanceAndFxid.second);
+      auto [diskInstance, fileFid] = getInstanceAndFidFromCTA(file);
+      auto eosArchiveFileIdAndChecksum = getArchiveFileIdAndChecksumFromEOS(diskInstance, fileFid);
       auto& eosArchiveFileId = eosArchiveFileIdAndChecksum.first;
       auto& eosChecksum = eosArchiveFileIdAndChecksum.second;
       auto& ctaChecksum = file.checksum().begin()->value();
       std::vector<cta::log::Param> params;
       params.emplace_back("archiveFileId", file.archive_file_id());
-      params.emplace_back("diskInstance", diskInstanceAndFxid.first);
-      params.emplace_back("diskFileId", diskInstanceAndFxid.second);
+      params.emplace_back("diskInstance", diskInstance);
+      params.emplace_back("diskFileId", fileFid);
       params.emplace_back("checksum", ctaChecksum);
       if (eosArchiveFileId == file.archive_file_id() && eosChecksum == ctaChecksum) {
         m_log(cta::log::INFO, "File metadata in EOS and CTA matches", params);

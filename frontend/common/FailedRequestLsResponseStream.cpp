@@ -112,8 +112,8 @@ cta::xrd::Data FailedRequestLsResponseStream::getNextRetrieveJobsData() {
   fr_item->set_totalreportretries(item.totalReportRetries);
 
   // Find the correct tape copy
-  for (auto& tapecopy : item.tapeCopies) {
-    auto& tf = tapecopy.second.second;
+  for (const auto& [tapecopyKey, tapecopyValue] : item.tapeCopies) {
+    auto& tf = tapecopyValue.second;
     if (tf.vid == vid) {
       fr_item->mutable_tf()->set_f_seq(tf.fSeq);
       fr_item->mutable_tf()->set_block_id(tf.blockId);

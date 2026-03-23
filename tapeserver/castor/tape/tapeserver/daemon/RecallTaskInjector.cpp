@@ -149,10 +149,10 @@ bool RecallTaskInjector::reserveSpaceForNextJobBatch(std::list<std::unique_ptr<c
     }
   }
 
-  for (const auto& reservation : diskSpaceReservation) {
+  for (const auto& [diskSystemName, bytes] : diskSpaceReservation) {
     cta::log::ScopedParamContainer spc(m_lc);
-    spc.add("diskSystemName", reservation.first);
-    spc.add("bytes", reservation.second);
+    spc.add("diskSystemName", diskSystemName);
+    spc.add("bytes", bytes);
     m_lc.log(cta::log::DEBUG, "Disk space reservation for next job batch");
   }
 

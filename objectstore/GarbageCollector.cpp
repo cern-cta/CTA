@@ -46,8 +46,8 @@ GarbageCollector::GarbageCollector(cta::log::LogContext& lc,
 GarbageCollector::~GarbageCollector() {
   //Normally, the Garbage collector is never destroyed in production
   //this destructor is here to avoid memory leaks on unit tests
-  for (auto& kv : m_watchedAgents) {
-    delete kv.second;
+  for (auto& [key, agentWatchdogPtr] : m_watchedAgents) {
+    delete agentWatchdogPtr;
   }
 }
 
@@ -81,8 +81,8 @@ void GarbageCollector::acquireTargets() {
   std::list<std::string> candidatesList = m_agentRegister.getUntrackedAgents();
   // Build a set of our own tracked agents.
   std::set<std::string> alreadyTrackedAgents;
-  for (auto& ata : m_watchedAgents) {
-    alreadyTrackedAgents.insert(ata.first);
+  for (auto& [key, value] : m_watchedAgents) {
+    alreadyTrackedAgents.insert(key);
   }
   for (auto& c : candidatesList) {
     // We don't monitor ourselves
@@ -641,17 +641,13 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
   // and validate ownership.
   //
   // 1) Get the archive requests done.
-  for (auto& archiveQueueIdAndReqs : archiveQueuesAndRequests) {
+  for (auto& [archiveQueueId, requestsList] : archiveQueuesAndRequests) {
     // The number of objects to requeue could be very high. In order to limit the time taken by the
     // individual requeue operations, we limit the number of concurrently requeued objects to an
     // arbitrary 500.
-    std::string containerIdentifier;
-    std::string tapepool;
-    common::dataStructures::JobQueueType queueType;
-    std::tie(containerIdentifier, queueType, tapepool) = archiveQueueIdAndReqs.first;
-    auto& requestsList = archiveQueueIdAndReqs.second;
+    const auto& [containerIdentifier, queueType, tapepool] = archiveQueueId;
     while (requestsList.size()) {
-      decltype(archiveQueueIdAndReqs.second) currentJobBatch;
+      decltype(requestsList) currentJobBatch;
       while (requestsList.size() && currentJobBatch.size() <= 500) {
         currentJobBatch.emplace_back(std::move(requestsList.front()));
         requestsList.pop_front();
@@ -704,7 +700,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateArchiveJobs(Agent& a
       cta::telemetry::metrics::ctaObjectstoreGcObjectCount->Add(currentJobBatch.size());
       currentJobBatch.clear();
       // Sleep a bit if we have oher rounds to go not to hog the queue
-      if (archiveQueueIdAndReqs.second.size()) {
+      if (requestsList.size()) {
         sleep(5);
       }
     }
@@ -717,14 +713,10 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
                                                                          cta::log::LogContext& lc) {
   // 2) Get the retrieve requests done. They are simpler as retrieve requests are fully owned.
   // Then should hence not have changes since we pre-fetched them.
-  for (auto& retriveQueueIdAndReqs : retrieveQueuesAndRequests) {
-    std::string containerIdentifier;
-    common::dataStructures::JobQueueType queueType;
-    std::string vid;
-    std::tie(containerIdentifier, queueType, vid) = retriveQueueIdAndReqs.first;
-    auto& requestsList = retriveQueueIdAndReqs.second;
+  for (auto& [retrieveQueueId, requestsList] : retrieveQueuesAndRequests) {
+    const auto& [containerIdentifier, queueType, vid] = retrieveQueueId;
     while (requestsList.size()) {
-      decltype(retriveQueueIdAndReqs.second) currentJobBatch;
+      decltype(requestsList) currentJobBatch;
       while (requestsList.size() && currentJobBatch.size() <= 500) {
         currentJobBatch.emplace_back(std::move(requestsList.front()));
         requestsList.pop_front();
@@ -908,7 +900,7 @@ agentCleanupForRetrieve:
       cta::telemetry::metrics::ctaObjectstoreGcObjectCount->Add(currentJobBatch.size());
       currentJobBatch.clear();
       // Sleep a bit if we have oher rounds to go not to hog the queue
-      if (retriveQueueIdAndReqs.second.size()) {
+      if (requestsList.size()) {
         sleep(5);
       }
     }

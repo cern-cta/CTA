@@ -166,19 +166,19 @@ std::string ChecksumBlob::ByteArrayToHex(const std::string& bytearray) {
 void ChecksumBlob::addFirstChecksumToLog(cta::log::ScopedParamContainer& spc) const {
   const auto& csItor = m_cs.begin();
   if (csItor != m_cs.end()) {
-    auto& cs = *csItor;
+    const auto& [type, value] = *csItor;
     std::string checksumTypeParam = "checksumType";
     std::string checksumValueParam = "checksumValue";
-    spc.add(checksumTypeParam, ChecksumTypeName.at(cs.first)).add(checksumValueParam, ByteArrayToHex(cs.second));
+    spc.add(checksumTypeParam, ChecksumTypeName.at(type)).add(checksumValueParam, ByteArrayToHex(value));
   }
 }
 
 std::ostream& operator<<(std::ostream& os, const ChecksumBlob& csb) {
   os << "[ ";
   auto num_els = csb.m_cs.size();
-  for (auto& cs : csb.m_cs) {
+  for (const auto& [type, value] : csb.m_cs) {
     bool is_last_el = --num_els > 0;
-    os << "{ \"" << ChecksumTypeName.at(cs.first) << "\",0x" << ChecksumBlob::ByteArrayToHex(cs.second)
+    os << "{ \"" << ChecksumTypeName.at(type) << "\",0x" << ChecksumBlob::ByteArrayToHex(value)
        << (is_last_el ? " }," : " }");
   }
   os << " ]";

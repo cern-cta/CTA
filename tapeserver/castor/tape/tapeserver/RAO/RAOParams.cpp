@@ -27,8 +27,8 @@ RAOParams::RAOAlgorithmType RAOParams::getAlgorithmType() const {
 
 std::string RAOParams::getCTARAOAlgorithmNameAvailable() const {
   std::string ret;
-  for (auto& kv : c_raoAlgoStringTypeMap) {
-    ret += kv.first + " ";
+  for (auto& [key, value] : c_raoAlgoStringTypeMap) {
+    ret += key + " ";
   }
   if (ret.size()) {
     //remove last space

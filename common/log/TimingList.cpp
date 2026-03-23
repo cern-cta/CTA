@@ -20,9 +20,9 @@ void TimingList::addToLog(ScopedParamContainer& spc) {
 }
 
 double& TimingList::at(const std::string& name) {
-  for (auto& e : *this) {
-    if (std::get<0>(e) == name) {
-      return std::get<1>(e);
+  for (auto& [key, value] : *this) {
+    if (key == name) {
+      return value;
     }
   }
   throw std::out_of_range("In TimingList::at(): no such element.");

@@ -730,16 +730,16 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
   aReq->setSrcURL(request.srcURL);
   aReq->setEntryLog(request.creationLog);
   std::list<cta::objectstore::ArchiveRequest::JobDump> jl;
-  for (auto& copy : criteria.copyToPoolMap) {
-    aReq->addJob(copy.first,
-                 copy.second,
+  for (auto& [copyNb, tapePool] : criteria.copyToPoolMap) {
+    aReq->addJob(copyNb,
+                 tapePool,
                  m_agentReference->getAgentAddress(),
                  cta::objectstore::ArchiveRequest::RETRIES_WITHIN_MOUNT,
                  cta::objectstore::ArchiveRequest::TOTAL_RETRIES,
                  cta::objectstore::ArchiveRequest::REPORT_RETRIES);
     jl.emplace_back();
-    jl.back().copyNb = copy.first;
-    jl.back().tapePool = copy.second;
+    jl.back().copyNb = copyNb;
+    jl.back().tapePool = tapePool;
   }
   if (jl.empty()) {
     throw ArchiveRequestHasNoCopies("In OStoreDB::queueArchive(): the archive to file request has no copy");
@@ -1093,13 +1093,13 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
     m_agentReference->removeBatchFromOwnership(jobsToUnown, m_objectStore);
     timingList.insertAndReset("unownDeletedJobsTime", t);
   }
-  for (auto& queue : failedQueues) {
+  for (auto& [queueName, queueJobs] : failedQueues) {
     // Put the jobs in the failed queue
     using CaAQF = objectstore::ContainerAlgorithms<ArchiveQueue, ArchiveQueueFailed>;
     CaAQF caAQF(m_objectStore, *m_agentReference);
     // TODOTODO: also switch status in one step.
     CaAQF::InsertedElement::list insertedElements;
-    for (auto& j : queue.second) {
+    for (auto& j : queueJobs) {
       insertedElements.emplace_back(CaAQF::InsertedElement {&j.job->m_archiveRequest,
                                                             j.job->tapeFile.copyNb,
                                                             j.job->archiveFile,
@@ -1107,7 +1107,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
                                                             serializers::ArchiveJobStatus::AJS_Failed});
     }
     try {
-      caAQF.referenceAndSwitchOwnership(queue.first, m_agentReference->getAgentAddress(), insertedElements, lc);
+      caAQF.referenceAndSwitchOwnership(queueName, m_agentReference->getAgentAddress(), insertedElements, lc);
     } catch (typename CaAQF::OwnershipSwitchFailure& failure) {
       for (auto& failedAR : failure.failedElements) {
         try {
@@ -3000,17 +3000,16 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(
         // Set the repack info.
         RetrieveRequest::RepackInfo rRRepackInfo;
         try {
-          for (auto& ar : archiveRoutesMap.at(rsr.archiveFile.storageClass)) {
-            rRRepackInfo.archiveRouteMap[ar.second.copyNb] = ar.second.tapePoolName;
+          for (auto& [copyNb, ar] : archiveRoutesMap.at(rsr.archiveFile.storageClass)) {
+            rRRepackInfo.archiveRouteMap[copyNb] = ar.tapePoolName;
           }
           //Check that we do not have the same destination tapepool for two different copyNb
-          for (auto& currentCopyNbTapePool : rRRepackInfo.archiveRouteMap) {
-            int nbTapepool =
-              std::count_if(rRRepackInfo.archiveRouteMap.begin(),
-                            rRRepackInfo.archiveRouteMap.end(),
-                            [&currentCopyNbTapePool](const std::pair<uint64_t, std::string>& copyNbTapepool) {
-                              return copyNbTapepool.second == currentCopyNbTapePool.second;
-                            });
+          for (auto& [copyNb, tapePool] : rRRepackInfo.archiveRouteMap) {
+            int nbTapepool = std::count_if(rRRepackInfo.archiveRouteMap.begin(),
+                                           rRRepackInfo.archiveRouteMap.end(),
+                                           [&tapePool](const std::pair<uint64_t, std::string>& copyNbTapepool) {
+                                             return copyNbTapepool.second == tapePool;
+                                           });
             if (nbTapepool != 1) {
               throw cta::ExpandRepackRequestException("In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(), "
                                                       "found the same destination tapepool for different copyNb.");
@@ -3022,10 +3021,8 @@ uint64_t OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(
           failedCreationStats.bytes += rsr.archiveFile.fileSize;
           std::stringstream storageClassList;
           bool first = true;
-          for (auto& sc : archiveRoutesMap) {
-            std::string storageClass;
-            storageClass = sc.first;
-            storageClassList << (first ? "" : " ") << " sc=" << storageClass << " rc=" << sc.second.size();
+          for (auto& [storageClass, archiveRoutes] : archiveRoutesMap) {
+            storageClassList << (first ? "" : " ") << " sc=" << storageClass << " rc=" << archiveRoutes.size();
           }
           log::ScopedParamContainer(lc)
             .add("fileID", rsr.archiveFile.archiveFileID)
@@ -4017,12 +4014,12 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
                                                               diskSpaceReservationRequest,
                                                               lc);
   // 2) Queue the retrieve requests for repack.
-  for (auto& repackRequestQueue : jobsToRequeueForRepackMap) {
+  for (auto& [queueName, queueJobs] : jobsToRequeueForRepackMap) {
     using RQTRTRFSAlgo = objectstore::ContainerAlgorithms<RetrieveQueue, RetrieveQueueToReportToRepackForSuccess>;
     RQTRTRFSAlgo::InsertedElement::list insertedRequests;
     // Keep a map of objectstore request -> sDBJob to handle errors.
     std::map<objectstore::RetrieveRequest*, OStoreDB::RetrieveJob*> requestToJobMap;
-    for (auto& req : repackRequestQueue.second) {
+    for (auto& req : queueJobs) {
       insertedRequests.push_back(RQTRTRFSAlgo::InsertedElement {&req->m_retrieveRequest,
                                                                 req->selectedCopyNb,
                                                                 req->archiveFile.tapeFiles.at(req->selectedCopyNb).fSeq,
@@ -4034,9 +4031,9 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     }
     RQTRTRFSAlgo rQTRTRFSAlgo(m_oStoreDB.m_objectStore, *m_oStoreDB.m_agentReference);
     try {
-      rQTRTRFSAlgo.referenceAndSwitchOwnership(repackRequestQueue.first, insertedRequests, lc);
+      rQTRTRFSAlgo.referenceAndSwitchOwnership(queueName, insertedRequests, lc);
       // In case all goes well, we can remove ownership of all requests.
-      for (auto& req : repackRequestQueue.second) {
+      for (auto& req : queueJobs) {
         rjToUnown.push_back(req->m_retrieveRequest.getAddressIfSet());
       }
     } catch (RQTRTRFSAlgo::OwnershipSwitchFailure& failure) {
@@ -4067,7 +4064,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
         // Add the failed request to the set.
         failedElements.insert(fe.element->retrieveRequest->getAddressIfSet());
       }
-      for (auto& req : repackRequestQueue.second) {
+      for (auto& req : queueJobs) {
         if (!failedElements.count(req->m_retrieveRequest.getAddressIfSet())) {
           rjToUnown.push_back(req->m_retrieveRequest.getAddressIfSet());
         }
@@ -4281,20 +4278,20 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(
         .log(log::INFO,
              "In OStoreDB::ArchiveMount::setJobBatchTransferred(): will queue request for reporting to user.");
     }
-    for (auto& list : insertedElementsLists) {
+    for (auto& [vid, list] : insertedElementsLists) {
       try {
         utils::Timer tLocal;
-        aqtrCa.referenceAndSwitchOwnership(list.first, m_oStoreDB.m_agentReference->getAgentAddress(), list.second, lc);
+        aqtrCa.referenceAndSwitchOwnership(vid, m_oStoreDB.m_agentReference->getAgentAddress(), list, lc);
         log::ScopedParamContainer(lc)
-          .add("tapeVid", list.first)
-          .add("jobs", list.second.size())
+          .add("tapeVid", vid)
+          .add("jobs", list.size())
           .add("enqueueTime", t.secs())
           .log(log::INFO,
                "In OStoreDB::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for "
                "reporting to user.");
       } catch (cta::exception::Exception& ex) {
         log::ScopedParamContainer(lc)
-          .add("tapeVid", list.first)
+          .add("tapeVid", vid)
           .add("exceptionMSG", ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests "
@@ -4324,26 +4321,23 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(
              "In OStoreDB::ArchiveMount::setJobBatchTransferred(): will queue request for reporting "
              "to repack.");
     }
-    for (auto& list : insertedElementsLists) {
+    for (auto& [vid, list] : insertedElementsLists) {
       int currentTotalRetries = 0;
       int maxRetries = 10;
 retry:
       try {
         utils::Timer tLocal;
-        aqtrtrCa.referenceAndSwitchOwnership(list.first,
-                                             m_oStoreDB.m_agentReference->getAgentAddress(),
-                                             list.second,
-                                             lc);
+        aqtrtrCa.referenceAndSwitchOwnership(vid, m_oStoreDB.m_agentReference->getAgentAddress(), list, lc);
         log::ScopedParamContainer(lc)
-          .add("repackRequestAddress", list.first)
-          .add("jobs", list.second.size())
+          .add("repackRequestAddress", vid)
+          .add("jobs", list.size())
           .add("enqueueTime", t.secs())
           .log(log::INFO,
                "In OStoreDB::ArchiveMount::setJobBatchTransferred(): queued a batch of requests for "
                "reporting to repack.");
       } catch (cta::exception::NoSuchObject& ex) {
         log::ScopedParamContainer(lc)
-          .add("tapeVid", list.first)
+          .add("tapeVid", vid)
           .add("exceptionMSG", ex.getMessageValue())
           .log(log::WARNING,
                "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for "
@@ -4352,7 +4346,7 @@ retry:
         //We are in the case where the ownership of the elements could not have been change (most probably because of a Rados lockbackoff error)
         //We will then retry 10 times to requeue the failed jobs
         log::ScopedParamContainer(lc)
-          .add("tapeVid", list.first)
+          .add("tapeVid", vid)
           .add("numberOfRetries", currentTotalRetries)
           .add("numberOfFailedToQueueElements", ex.failedElements.size())
           .add("exceptionMSG", ex.getMessageValue())
@@ -4362,7 +4356,7 @@ retry:
         using OpFailure =
           objectstore::ContainerTraits<ArchiveQueue,
                                        ArchiveQueueToReportToRepackForSuccess>::OpFailure<AqtrtrCa::InsertedElement>;
-        list.second.remove_if([&ex](const AqtrtrCa::InsertedElement& elt) {
+        list.remove_if([&ex](const AqtrtrCa::InsertedElement& elt) {
           //Remove the elements that are NOT in the failed elements list so that we only retry the failed elements
           return std::find_if(ex.failedElements.begin(),
                               ex.failedElements.end(),
@@ -4383,7 +4377,7 @@ retry:
         }
       } catch (cta::exception::Exception& ex) {
         log::ScopedParamContainer(lc)
-          .add("tapeVid", list.first)
+          .add("tapeVid", vid)
           .add("exceptionMSG", ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for "
@@ -4803,10 +4797,10 @@ objectstore::RepackRequest::SubrequestStatistics::List OStoreDB::RepackArchiveRe
     ssl.back().fSeq = sri.repackInfo.fSeq;
     ssl.back().copyNb = sri.archivedCopyNb;
     ssl.back().destinationVid = sri.repackInfo.jobsDestination[sri.archivedCopyNb];
-    for (auto& j : sri.archiveJobsStatusMap) {
-      if (j.first != sri.archivedCopyNb) {
-        if ((j.second != objectstore::serializers::ArchiveJobStatus::AJS_Complete)
-            && (j.second != objectstore::serializers::ArchiveJobStatus::AJS_Failed)) {
+    for (auto& [copyNb, status] : sri.archiveJobsStatusMap) {
+      if (copyNb != sri.archivedCopyNb) {
+        if ((status != objectstore::serializers::ArchiveJobStatus::AJS_Complete)
+            && (status != objectstore::serializers::ArchiveJobStatus::AJS_Failed)) {
           break;
         } else {
           ssl.back().subrequestDeleted = true;
@@ -4855,20 +4849,20 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
     bufferURL = sri.repackInfo.fileBufferURL;
     bool moreJobsToDo = false;
     //Check if the ArchiveRequest contains other jobs that are not finished
-    for (auto& j : sri.archiveJobsStatusMap) {
+    for (auto& [copyNb, status] : sri.archiveJobsStatusMap) {
       //Getting the siblings jobs (ie copy nb != current one)
-      if (j.first != sri.archivedCopyNb) {
+      if (copyNb != sri.archivedCopyNb) {
         //Sibling job not finished mean its status is nor AJS_Complete nor AJS_Failed
-        if ((j.second != serializers::ArchiveJobStatus::AJS_Complete)
-            && (j.second != serializers::ArchiveJobStatus::AJS_Failed)) {
+        if ((status != serializers::ArchiveJobStatus::AJS_Complete)
+            && (status != serializers::ArchiveJobStatus::AJS_Failed)) {
           //The sibling job is not finished, but maybe it is planned to change its status, checking the jobOwnerUpdaterList that is the list containing the jobs
           //we want to change its status to AJS_Complete
           bool copyNbStatusUpdating =
             (std::find_if(jobOwnerUpdatersList.begin(),
                           jobOwnerUpdatersList.end(),
-                          [&j, &sri](JobOwnerUpdaters& jou) {
+                          [&copyNb, &sri](JobOwnerUpdaters& jou) {
                             return ((jou.subrequestInfo.archiveFile.archiveFileID == sri.archiveFile.archiveFileID)
-                                    && (jou.subrequestInfo.archivedCopyNb == j.first));
+                                    && (jou.subrequestInfo.archivedCopyNb == copyNb));
                           })
              != jobOwnerUpdatersList.end());
           if (!copyNbStatusUpdating) {

@@ -56,8 +56,8 @@ void Sorter::executeArchiveAlgorithm(const std::string& tapePool,
       }
     }
   }
-  for (auto& succeededJob : succeededJobs) {
-    std::get<1>(succeededJob.second->jobToQueue).set_value();
+  for (const auto& [copyNb, jobInfo] : succeededJobs) {
+    std::get<1>(jobInfo->jobToQueue).set_value();
   }
 }
 
@@ -132,10 +132,10 @@ void Sorter::insertArchiveJob(const SorterArchiveJob& job) {
 
 bool Sorter::flushOneArchive(log::LogContext& lc) {
   threading::MutexLocker locker(m_mutex);
-  for (auto& kv : m_archiveQueuesAndRequests) {
-    if (!kv.second.empty()) {
-      queueArchiveRequests(std::get<0>(kv.first), std::get<1>(kv.first), kv.second, lc);
-      m_archiveQueuesAndRequests.erase(kv.first);
+  for (auto& [key, value] : m_archiveQueuesAndRequests) {
+    if (!value.empty()) {
+      queueArchiveRequests(std::get<0>(key), std::get<1>(key), value, lc);
+      m_archiveQueuesAndRequests.erase(key);
       return true;
     }
   }
@@ -199,8 +199,8 @@ void Sorter::executeRetrieveAlgorithm(const std::string& vid,
       }
     }
   }
-  for (auto& succeededJob : succeededJobs) {
-    std::get<1>(succeededJob.second->jobToQueue).set_value();
+  for (const auto& [copyNb, jobInfo] : succeededJobs) {
+    std::get<1>(jobInfo->jobToQueue).set_value();
   }
 }
 
@@ -385,10 +385,10 @@ std::string Sorter::getContainerID(RetrieveRequestInfosAccessorInterface& reques
 
 bool Sorter::flushOneRetrieve(log::LogContext& lc) {
   threading::MutexLocker locker(m_mutex);
-  for (auto& kv : m_retrieveQueuesAndRequests) {
-    if (!kv.second.empty()) {
-      queueRetrieveRequests(std::get<0>(kv.first), std::get<1>(kv.first), kv.second, lc);
-      m_retrieveQueuesAndRequests.erase(kv.first);
+  for (auto& [key, value] : m_retrieveQueuesAndRequests) {
+    if (!value.empty()) {
+      queueRetrieveRequests(std::get<0>(key), std::get<1>(key), value, lc);
+      m_retrieveQueuesAndRequests.erase(key);
       return true;
     }
   }
@@ -470,8 +470,8 @@ SorterRetrieveRequestAccessor::SorterRetrieveRequestAccessor(Sorter::SorterRetri
 
 std::list<RetrieveRequest::JobDump> SorterRetrieveRequestAccessor::getJobs() {
   std::list<RetrieveRequest::JobDump> ret;
-  for (auto& kv : m_retrieveRequest.retrieveJobs) {
-    ret.push_back(kv.second.jobDump);
+  for (auto& [key, value] : m_retrieveRequest.retrieveJobs) {
+    ret.push_back(value.jobDump);
   }
   return ret;
 }
