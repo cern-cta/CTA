@@ -255,7 +255,7 @@ MemQueue<Request, Queue>::sharedAddToQueue(typename Request::JobDump& job,
   // It does: we just ride the train: queue ourselves
   // Lock the queue.
   threading::MutexLocker ulq(q->m_mutex);
-  std::shared_ptr<MemQueueRequest<Request, Queue>> maqr(new MemQueueRequest<Request, Queue>(job, request));
+  auto maqr = std::make_shared<MemQueueRequest<Request, Queue>>(job, request);
   // Extract the future before the other thread gets a chance to touch the promise.
   auto resultFuture = maqr->m_promise->get_future();
   q->add(maqr);
@@ -330,7 +330,7 @@ MemQueue<Request, Queue>::sharedAddToNewQueue(typename Request::JobDump& job,
   double waitTime = timer.secs(utils::Timer::resetCounter);
   // We can now proceed with the queuing of the jobs in the object store.
   try {
-    std::shared_ptr<SharedQueueLock<Queue, Request>> ret(new SharedQueueLock<Queue, Request>(logContext));
+    auto ret = std::make_shared<SharedQueueLock<Queue, Request>>(logContext);
     ret->m_promiseForSuccessor = promiseForSuccessor;
     ret->m_queueIndex = queueIndex;
     ret->m_queue.reset(new Queue(oStoreDB.m_objectStore));

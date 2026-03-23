@@ -105,7 +105,7 @@ std::string OcciRset::columnBlob(const std::string& colName) const {
   try {
     const int colIdx = m_colNameToIdx.getIdx(colName);
     auto raw = m_rset->getBytes(colIdx);
-    std::unique_ptr<unsigned char[]> bytearray(new unsigned char[raw.length()]());
+    auto bytearray = std::make_unique<unsigned char[]>(raw.length());
     raw.getBytes(bytearray.get(), raw.length());
     return std::string(reinterpret_cast<char*>(bytearray.get()), raw.length());
   } catch (exception::Exception& ne) {

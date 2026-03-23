@@ -15,7 +15,7 @@ namespace cta::utils {
 GetOpThreadSafe::Reply GetOpThreadSafe::getOpt(const Request& request) {
   threading::MutexLocker locker(gMutex);
   // Prepare the classic styled argv
-  std::unique_ptr<char*[]> argv(new char*[request.argv.size()]);
+  auto argv = std::make_unique<char*[]>(request.argv.size());
   char** p = argv.get();
   for (auto& a : request.argv) {
     // This is ugly, but getopt's interface takes NON-const char** for argv

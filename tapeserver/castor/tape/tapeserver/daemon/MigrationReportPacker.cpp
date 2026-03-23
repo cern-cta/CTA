@@ -53,7 +53,7 @@ MigrationReportPacker::~MigrationReportPacker() {
 //------------------------------------------------------------------------------
 void MigrationReportPacker::reportCompletedJob(std::unique_ptr<cta::ArchiveJob> successfulArchiveJob,
                                                cta::log::LogContext& lc) {
-  std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulArchiveJob)));
+  auto rep = std::make_unique<ReportSuccessful>(std::move(successfulArchiveJob));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportSuccessful");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportCompletedJob(), pushing a report.");
@@ -68,9 +68,9 @@ void MigrationReportPacker::reportSkippedJob(std::unique_ptr<cta::ArchiveJob> sk
                                              const std::string& failure,
                                              cta::log::LogContext& lc) {
   std::string failureLog = cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + failure;
-  std::unique_ptr<Report> rep(new ReportSkipped(std::move(skippedArchiveJob), failureLog));
+  auto rep = std::make_unique<ReportSkipped>(std::move(skippedArchiveJob), failureLog);
   cta::log::ScopedParamContainer params(lc);
-  params.add("type", "ReporSkipped");
+  params.add("type", "ReportSkipped");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportSkippedJob(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
   m_fifo.push(std::move(rep));
@@ -84,7 +84,7 @@ void MigrationReportPacker::reportFailedJob(std::unique_ptr<cta::ArchiveJob> fai
                                             cta::log::LogContext& lc) {
   std::string failureLog =
     cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + ex.getMessageValue();
-  std::unique_ptr<Report> rep(new ReportError(std::move(failedArchiveJob), failureLog));
+  auto rep = std::make_unique<ReportError>(std::move(failedArchiveJob), failureLog);
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportError");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFailedJob(), pushing a report.");
@@ -100,7 +100,7 @@ void MigrationReportPacker::reportFlush(const drive::compressionStats& compressS
   params.add("type", "ReportFlush");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportFlush(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  std::unique_ptr<Report> rep(new ReportFlush(compressStats));
+  auto rep = std::make_unique<ReportFlush>(compressStats);
   m_fifo.push(std::move(rep));
 }
 
@@ -112,7 +112,7 @@ void MigrationReportPacker::reportTapeFull(cta::log::LogContext& lc) {
   params.add("type", "ReportTapeFull");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportTapeFull(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  std::unique_ptr<Report> rep(new ReportTapeFull());
+  auto rep = std::make_unique<ReportTapeFull>();
   m_fifo.push(std::move(rep));
 }
 
@@ -126,7 +126,7 @@ void MigrationReportPacker::reportLastBatchError(const cta::exception::Exception
   params.add("type", "ReportLastBatchError");
   lc.log(cta::log::INFO, "In MigrationReportPacker::reportLastBatchError(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  std::unique_ptr<Report> rep(new ReportLastBatchError(failureLog));
+  auto rep = std::make_unique<ReportLastBatchError>(failureLog);
   m_fifo.push(std::move(rep));
 }
 
@@ -138,7 +138,7 @@ void MigrationReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
   params.add("type", "ReportEndofSession");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSession(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  std::unique_ptr<Report> rep(new ReportEndofSession());
+  auto rep = std::make_unique<ReportEndofSession>();
   m_fifo.push(std::move(rep));
 }
 
@@ -152,7 +152,7 @@ void MigrationReportPacker::reportEndOfSessionWithErrors(const std::string& msg,
   params.add("type", "ReportEndofSessionWithErrors");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportEndOfSessionWithErrors(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  std::unique_ptr<Report> rep(new ReportEndofSessionWithErrors(msg, isTapeFull));
+  auto rep = std::make_unique<ReportEndofSessionWithErrors>(msg, isTapeFull);
   m_fifo.push(std::move(rep));
 }
 
@@ -164,7 +164,7 @@ void MigrationReportPacker::reportTestGoingToEnd(cta::log::LogContext& lc) {
   params.add("type", "ReportTestGoingToEnd");
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportTestGoingToEnd(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  std::unique_ptr<Report> rep(new ReportTestGoingToEnd());
+  auto rep = std::make_unique<ReportTestGoingToEnd>();
   m_fifo.push(std::move(rep));
 }
 
@@ -223,7 +223,7 @@ void MigrationReportPacker::reportDriveStatus(cta::common::dataStructures::Drive
   params.add("type", "ReportDriveStatus").add("Status", cta::common::dataStructures::toString(status));
   lc.log(cta::log::DEBUG, "In MigrationReportPacker::reportDriveStatus(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  std::unique_ptr<Report> rep(new ReportDriveStatus(status, reason));
+  auto rep = std::make_unique<ReportDriveStatus>(status, reason);
   m_fifo.push(std::move(rep));
 }
 

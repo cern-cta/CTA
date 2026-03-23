@@ -21,7 +21,7 @@ auto cta::objectstore::BackendFactory::createBackend(const std::string& URL, log
   // Is it a file:// URL?
   regexResult = fileRe.exec(URL);
   if (regexResult.size()) {
-    return std::unique_ptr<Backend>(new BackendVFS(regexResult[1]));
+    return std::make_unique<BackendVFS>(regexResult[1]);
   }
   // Is it a rados:// URL?
   regexResult = radosRe.exec(URL);
@@ -30,11 +30,11 @@ auto cta::objectstore::BackendFactory::createBackend(const std::string& URL, log
       throw cta::exception::Exception("In BackendFactory::createBackend(): unexpected number of matches in regex");
     }
     if (regexResult.size() == 5) {
-      return std::unique_ptr<Backend>(new BackendRados(logger, regexResult[1], regexResult[2], regexResult[4]));
+      return std::make_unique<BackendRados>(logger, regexResult[1], regexResult[2], regexResult[4]);
     } else {
-      return std::unique_ptr<Backend>(new BackendRados(logger, regexResult[1], regexResult[2]));
+      return std::make_unique<BackendRados>(logger, regexResult[1], regexResult[2]);
     }
   }
   // Fall back to a file URL if all failed
-  return std::unique_ptr<Backend>(new BackendVFS(URL));
+  return std::make_unique<BackendVFS>(URL);
 }

@@ -13,8 +13,7 @@
 namespace eos::client {
 
 std::unique_ptr<GrpcClient> GrpcClient::Create(const std::string& endpoint, const std::string& token) {
-  std::unique_ptr<eos::client::GrpcClient> p(
-    new eos::client::GrpcClient(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials())));
+  auto p = std::make_unique<eos::client::GrpcClient>(grpc::CreateChannel(endpoint, grpc::InsecureChannelCredentials()));
   p->set_ssl(false);
   p->set_token(token);
   return p;

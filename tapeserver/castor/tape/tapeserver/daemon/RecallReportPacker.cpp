@@ -39,7 +39,7 @@ RecallReportPacker::~RecallReportPacker() {
 //------------------------------------------------------------------------------
 void RecallReportPacker::reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob,
                                             cta::log::LogContext& lc) {
-  std::unique_ptr<Report> rep(new ReportSuccessful(std::move(successfulRetrieveJob)));
+  auto rep = std::make_unique<ReportSuccessful>(std::move(successfulRetrieveJob));
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportSuccessful");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportCompletedJob(), pushing a report.");
@@ -55,7 +55,7 @@ void RecallReportPacker::reportFailedJob(std::unique_ptr<cta::RetrieveJob> faile
                                          cta::log::LogContext& lc) {
   std::string failureLog =
     cta::utils::getCurrentLocalTime() + " " + cta::utils::getShortHostname() + " " + ex.getMessageValue();
-  std::unique_ptr<Report> rep(new ReportError(std::move(failedRetrieveJob), failureLog));
+  auto rep = std::make_unique<ReportError>(std::move(failedRetrieveJob), failureLog);
   cta::log::ScopedParamContainer params(lc);
   params.add("type", "ReportError");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportFailedJob(), pushing a report.");
@@ -71,7 +71,7 @@ void RecallReportPacker::reportEndOfSession(cta::log::LogContext& lc) {
   params.add("type", "ReportEndofSession");
   lc.log(cta::log::DEBUG, "In RecallReportPacker::reportEndOfSession(), pushing a report.");
   cta::threading::MutexLocker ml(m_producterProtection);
-  std::unique_ptr<Report> rep(new ReportEndofSession());
+  auto rep = std::make_unique<ReportEndofSession>();
   m_fifo.push(rep.release());
 }
 
