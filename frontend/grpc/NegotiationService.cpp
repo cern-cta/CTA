@@ -116,7 +116,7 @@ void NegotiationService::startProcessing() {
   }
 
   // Initialise all registered handlers
-  for (const auto& [key, upHandler] : m_umapHandlers) {
+  for (const auto& [key, upHandler] : m_handlers) {
     upHandler.get()->next(true);
     //TODO: Log names of initialised handlers;
   }
