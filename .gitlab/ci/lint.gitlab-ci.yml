@@ -252,3 +252,27 @@ format-python:
     - mkdir -p artifacts
     - echo "Running black on all Python files"
     - black . --line-length=120 --diff | sed "s|$CI_PROJECT_DIR|$CI_PROJECT_NAME|" > $FORMAT_DIFF
+
+type-check-python:
+  stage: lint
+  needs: []  # Ensure no artifacts are downloaded
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: never
+    - if: $PIPELINE_TYPE != "DEFAULT"
+      when: never
+    - changes:
+        - "**/*.py"
+      when: always
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: always
+    - when: manual
+      allow_failure: true
+  image:
+    name: $IMAGE_LINT
+    entrypoint: ["/usr/bin/env"]
+  variables:
+    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
+  script:
+    - python3 -m pip install pyright[nodejs] # TODO: move to lint image
+    - pyright .
