@@ -273,6 +273,8 @@ type-check-python:
     entrypoint: ["/usr/bin/env"]
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
+    FORCE_COLOR: 3 # Force color output of pyright
   script:
     - python3 -m pip install pyright[nodejs] # TODO: move to lint image
+    - python3 -m pip install pytest jwcrypto # Necessary dependencies, these are not in the lint image on purpose as they are project specific
     - pyright .
