@@ -329,7 +329,9 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
     using acCount = decltype(jobsSummary.activityCounts.front());
     auto jsA = std::find_if(jobsSummary.activityCounts.begin(),
                             jobsSummary.activityCounts.end(),
-                            [](const acCount& ac) { return ac.activity == "A"; });
+                            [](const acCount& ac) {  // cppcheck-suppress internalAstError
+                              return ac.activity == "A";
+                            });
     ASSERT_NE(jobsSummary.activityCounts.end(), jsA);
     ASSERT_EQ(17, jsA->count);
     auto jsB = std::find_if(jobsSummary.activityCounts.begin(),

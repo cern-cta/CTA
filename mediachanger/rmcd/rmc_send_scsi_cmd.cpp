@@ -197,7 +197,7 @@ int rmc_send_scsi_cmd(const int tapefd,
     if (sg_bufsiz > 0) {
       free(sg_buffer);
     }
-    if ((sg_buffer = (char*) malloc(sizeof(struct sg_header) + cdblen + buflen)) == nullptr) {
+    if ((sg_buffer = static_cast<char*>(malloc(sizeof(struct sg_header) + cdblen + buflen))) == nullptr) {
       serrno = errno;
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "cannot get memory");
       *msgaddr = rmc_err_msgbuf;
@@ -285,7 +285,7 @@ int rmc_send_scsi_cmd(const int tapefd,
   ioctl(fd, SG_SET_TIMEOUT, &timeout_in_jiffies);
 
   memset(sg_buffer, 0, sizeof(struct sg_header));
-  sg_hd = (struct sg_header*) sg_buffer;
+  sg_hd = reinterpret_cast<struct sg_header*>(sg_buffer);
   sg_hd->reply_len = sizeof(struct sg_header) + ((flags & SCSI_IN) ? buflen : 0);
   sg_hd->twelve_byte = cdblen == 12;
   memcpy(sg_buffer + sizeof(struct sg_header), cdb, cdblen);
@@ -295,7 +295,7 @@ int rmc_send_scsi_cmd(const int tapefd,
     n += buflen;
   }
   if (write(fd, sg_buffer, n) < 0) {
-    *msgaddr = (char*) strerror(errno);
+    *msgaddr = strerror(errno);
     serrno = errno;
     snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : write error : %s\n", sgpath, *msgaddr);
     rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
@@ -306,7 +306,7 @@ int rmc_send_scsi_cmd(const int tapefd,
     return RMC_SEND_SCSI_ERR_IOCTL;
   }
   if ((n = read(fd, sg_buffer, sizeof(struct sg_header) + ((flags & SCSI_IN) ? buflen : 0))) < 0) {
-    *msgaddr = (char*) strerror(errno);
+    *msgaddr = strerror(errno);
     serrno = errno;
     snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : read error : %s\n", sgpath, *msgaddr);
     rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';
@@ -343,7 +343,7 @@ int rmc_send_scsi_cmd(const int tapefd,
     *msgaddr = rmc_err_msgbuf;
     return RMC_SEND_SCSI_ERR_SCSI;
   } else if (sg_hd->result) {
-    *msgaddr = (char*) strerror(sg_hd->result);
+    *msgaddr = strerror(sg_hd->result);
     serrno = sg_hd->result;
     snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "%s : read error : %s\n", sgpath, *msgaddr);
     rmc_err_msgbuf[sizeof(rmc_err_msgbuf) - 1] = '\0';

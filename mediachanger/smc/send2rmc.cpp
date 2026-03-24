@@ -64,7 +64,7 @@ int send2rmc(const char* const host,
     serrno = ERMCUNREC;
     return -1;
   }
-  sin.sin_addr.s_addr = ((struct in_addr*) (hp->h_addr))->s_addr;
+  sin.sin_addr.s_addr = reinterpret_cast<struct in_addr*>(hp->h_addr)->s_addr;
 
   if ((s = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     rmc_errmsg(func, RMC02, "socket", neterror());
@@ -72,7 +72,7 @@ int send2rmc(const char* const host,
     return -1;
   }
 
-  if (connect(s, (struct sockaddr*) &sin, sizeof(sin)) < 0) {
+  if (connect(s, reinterpret_cast<struct sockaddr*>(&sin), sizeof(sin)) < 0) {
     if (errno == ECONNREFUSED) {
       rmc_errmsg(func, RMC00, rmchost);
       (void) close(s);

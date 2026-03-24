@@ -29,17 +29,17 @@ DIR* System::fakeWrapper::opendir(const char* name) {
   ourDIR* dir = new ourDIR;
   dir->nextIdx = 0;
   dir->path = name;
-  return (DIR*) dir;
+  return reinterpret_cast<DIR*>(dir);
 }
 
 int System::fakeWrapper::closedir(DIR* dirp) {
-  delete ((ourDIR*) dirp);
+  delete reinterpret_cast<ourDIR*>(dirp);
   return 0;
 }
 
 struct dirent* System::fakeWrapper::readdir(DIR* dirp) {
   /* Dirty pointer gymnastics. Good enough for a test harness */
-  ourDIR& dir = *((ourDIR*) dirp);
+  ourDIR& dir = *reinterpret_cast<ourDIR*>(dirp);
   /* Check we did not reach end of directory. This will create a new
    * entry in the map if it does not exist, but we should be protected by
    * opendir.

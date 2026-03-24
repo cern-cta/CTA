@@ -16,7 +16,10 @@ TapeFileLsResponseStream::TapeFileLsResponseStream(cta::catalogue::Catalogue& ca
                                                    cta::Scheduler& scheduler,
                                                    const std::string& instanceName,
                                                    const admin::AdminCmd& adminCmd)
-    : CtaAdminResponseStream(catalogue, scheduler, instanceName) {
+    : CtaAdminResponseStream(catalogue, scheduler, instanceName),
+      m_currentArchiveFile(std::nullopt),
+      m_currentTapeFileIter(),
+      m_currentTapeFileEnd() {
   using namespace cta::admin;
 
   cta::frontend::AdminCmdOptions request(adminCmd);

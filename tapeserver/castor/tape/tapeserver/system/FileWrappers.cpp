@@ -929,7 +929,7 @@ int System::stDeviceFile::logSenseTapeAlerts(sg_io_hdr_t* sgio_h) {
     struct u16wrap {
       unsigned char u16[2];
     };
-    struct u16wrap* s((struct u16wrap*) &(data[0]));
+    struct u16wrap* s = reinterpret_cast<struct u16wrap*>(&data[0]);
     SCSI::Structures::setU16(s->u16, parameterCodes[i]);
     data[2] = 0U;
     data[3] = 1U;
@@ -1027,12 +1027,13 @@ int System::stDeviceFile::ioctlModSelect6(sg_io_hdr_t* sgio_h) {
     errno = EINVAL;
     return -1;
   }
-  unsigned char* data = (unsigned char*) sgio_h->dxferp;
+  unsigned char* data = reinterpret_cast<unsigned char*>(sgio_h->dxferp);
 
-  SCSI::Structures::modeParameterHeader6_t& header = *(SCSI::Structures::modeParameterHeader6_t*) sgio_h->dxferp;
+  SCSI::Structures::modeParameterHeader6_t& header =
+    *reinterpret_cast<SCSI::Structures::modeParameterHeader6_t*>(sgio_h->dxferp);
 
   SCSI::Structures::modeParameterBlockDecriptor_t& blockDescriptor =
-    *(SCSI::Structures::modeParameterBlockDecriptor_t*) (data + sizeof(header));
+    *reinterpret_cast<SCSI::Structures::modeParameterBlockDecriptor_t*>(data + sizeof(header));
   {
     unsigned char* modeSelectBlock = data + sizeof(header) + sizeof(blockDescriptor);
     switch (modeSelectBlock[0] & 0x3F) {  // only 6bits are the page code

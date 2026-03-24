@@ -115,7 +115,7 @@ private:
   /**
    * Returns the RAO data that is used by this RAOManager
    */
-  RAOParams getRAOParams() const { return m_raoParams; }
+  const RAOParams& getRAOParams() const { return m_raoParams; }
 
   /**
    * Log a warning message after failing an RAO instanciation or execution

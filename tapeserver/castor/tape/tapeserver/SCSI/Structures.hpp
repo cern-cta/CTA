@@ -76,7 +76,7 @@ public:
 
   template<typename T>
   void setCDB(T* cdb) {
-    cmdp = (unsigned char*) cdb;
+    cmdp = reinterpret_cast<unsigned char*>(cdb);
     cmd_len = sizeof(T);
   }
 
@@ -85,8 +85,8 @@ public:
     if (sizeof(T) > UCHAR_MAX) {
       throw cta::exception::Exception("sense structure too big in LinuxSGIO_t::setSense");
     }
-    mx_sb_len = (unsigned char) sizeof(T);
-    sbp = (unsigned char*) senseBuff;
+    mx_sb_len = static_cast<unsigned char>(sizeof(T));
+    sbp = reinterpret_cast<unsigned char*>(senseBuff);
   }
 
   template<typename T>
@@ -103,7 +103,7 @@ public:
     dxfer_len = dataBuffSize;
   }
 
-  sg_io_hdr_t* operator&() { return (sg_io_hdr_t*) this; }
+  sg_io_hdr_t* operator&() { return reinterpret_cast<sg_io_hdr_t*>(this); }
 };
 
 /**
@@ -113,6 +113,7 @@ public:
      */
 inline uint64_t toU64(const unsigned char (&t)[8]) {
   /* Like network, SCSI is BigEndian */
+  // cppcheck-suppress dangerousTypeCast
   return (uint64_t) ntohl((*(uint64_t*) t << 32) >> 32) << 32 | ntohl(*(uint64_t*) t >> 32);
 }
 
@@ -128,6 +129,7 @@ inline uint64_t toU64(const unsigned char (&t)[8]) {
      */
 inline uint64_t toU64(const unsigned char (&t)[6]) {
   /* Like network, SCSI is BigEndian */
+  // cppcheck-suppress dangerousTypeCast
   return (uint64_t) ntohl((*(uint64_t*) t << 32) >> 16) << 32 | ntohl(*(uint64_t*) t >> 16);
 }
 
@@ -138,6 +140,7 @@ inline uint64_t toU64(const unsigned char (&t)[6]) {
      */
 inline uint32_t toU32(const unsigned char (&t)[4]) {
   /* Like network, SCSI is BigEndian */
+  // cppcheck-suppress dangerousTypeCast
   return ntohl(*((uint32_t*) t));
 }
 
@@ -170,7 +173,7 @@ inline uint32_t toU32(const unsigned char (&t)[3]) {
      */
 inline int32_t toS32(const unsigned char (&t)[4]) {
   /* Like network, SCSI is BigEndian */
-  return (int32_t) (ntohl(*((uint32_t*) t)));
+  return static_cast<int32_t>(ntohl(*reinterpret_cast<const uint32_t*>(t)));
 }
 
 /**
@@ -180,7 +183,7 @@ inline int32_t toS32(const unsigned char (&t)[4]) {
      */
 inline uint16_t toU16(const unsigned char (&t)[2]) {
   /* Like network, SCSI is BigEndian */
-  return ntohs(*((uint16_t*) t));
+  return ntohs(*reinterpret_cast<const uint16_t*>(t));
 }
 
 /**
@@ -190,7 +193,7 @@ inline uint16_t toU16(const unsigned char (&t)[2]) {
      * @param val the value.
      */
 inline void setU32(unsigned char (&t)[4], uint32_t val) {
-  *((uint32_t*) t) = htonl(val);
+  *reinterpret_cast<uint32_t*>(t) = htonl(val);
 }
 
 /**
@@ -200,7 +203,7 @@ inline void setU32(unsigned char (&t)[4], uint32_t val) {
      * @param val the value.
      */
 inline void setU16(unsigned char (&t)[2], uint16_t val) {
-  *((uint16_t*) t) = htons(val);
+  *reinterpret_cast<uint16_t*>(t) = htons(val);
 }
 
 /**
@@ -210,7 +213,7 @@ inline void setU16(unsigned char (&t)[2], uint16_t val) {
      * @param val the value.
      */
 inline void setU64(unsigned char (&t)[8], uint64_t val) {
-  *((uint64_t*) t) = htobe64(val);
+  *reinterpret_cast<uint64_t*>(t) = htobe64(val);
 }
 
 /**

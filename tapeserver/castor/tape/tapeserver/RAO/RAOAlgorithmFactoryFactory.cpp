@@ -21,8 +21,8 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
       ret.reset(new EnterpriseRAOAlgorithmFactory(m_raoManager.getDrive(), maxFilesSupported.value()));
     }
   } else {
-    RAOParams raoParams = m_raoManager.getRAOParams();
-    //We will instanciate a CTA RAO algorithm
+    const RAOParams& raoParams = m_raoManager.getRAOParams();
+    //We will instantiate a CTA RAO algorithm
     RAOParams::RAOAlgorithmType raoAlgoType;
     try {
       raoAlgoType = raoParams.getAlgorithmType();
