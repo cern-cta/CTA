@@ -278,5 +278,5 @@ type-check-python:
     # Necessary dependencies, these are not in the lint image on purpose as they are project specific
     # It is a bit unfortunate we have to do this explicitly, but they are mostly independent scripts that need this,
     # so not one top-level "install all dependencies" is available
-    - uv pip install --system pytest jwcrypto jwt tomli
+    - uv pip install --system pytest jwcrypto jwt
     - pyright .
