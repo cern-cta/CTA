@@ -266,7 +266,7 @@ stress-test:
                           --test-script tests/prepare_tests.sh
                           "${extra_args[@]}"
     # Set up monitoring
-    - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
+    - git clone https://gitlab+deploy-token-3624:${CI_MONITORING_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
     - helm install ci-monitoring ci_monitoring/ci-monitoring
                   --namespace ${NAMESPACE}
                   --set logsClaimName=logstorage-pvc
@@ -338,7 +338,7 @@ stress-test-python:
                            --scheduler-config ${SCHEDULER_CONFIG}
                            ${EXTRA_SPAWN_ARGS}
     # Set up monitoring
-    - git clone https://gitlab+deploy-token-3624:${CI_CTA_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
+    - git clone https://gitlab+deploy-token-3624:${CI_MONITORING_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
     - helm install ci-monitoring ci_monitoring/ci-monitoring
                   --namespace ${NAMESPACE}
                   --set logsClaimName=logstorage-pvc
