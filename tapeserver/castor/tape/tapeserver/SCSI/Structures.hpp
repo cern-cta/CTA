@@ -113,11 +113,8 @@ public:
      */
 inline uint64_t toU64(const unsigned char (&t)[8]) {
   /* Like network, SCSI is BigEndian */
-  const uint32_t high = (static_cast<uint32_t>(t[0]) << 24) | (static_cast<uint32_t>(t[1]) << 16)
-                        | (static_cast<uint32_t>(t[2]) << 8) | static_cast<uint32_t>(t[3]);
-  const uint32_t low = (static_cast<uint32_t>(t[4]) << 24) | (static_cast<uint32_t>(t[5]) << 16)
-                       | (static_cast<uint32_t>(t[6]) << 8) | static_cast<uint32_t>(t[7]);
-  return (static_cast<uint64_t>(high) << 32) | low;
+  // cppcheck-suppress dangerousTypeCast
+  return (uint64_t) ntohl((*(uint64_t*) t << 32) >> 32) << 32 | ntohl(*(uint64_t*) t >> 32);
 }
 
 /**
@@ -132,10 +129,8 @@ inline uint64_t toU64(const unsigned char (&t)[8]) {
      */
 inline uint64_t toU64(const unsigned char (&t)[6]) {
   /* Like network, SCSI is BigEndian */
-  const uint64_t value = (static_cast<uint64_t>(t[0]) << 40) | (static_cast<uint64_t>(t[1]) << 32)
-                         | (static_cast<uint64_t>(t[2]) << 24) | (static_cast<uint64_t>(t[3]) << 16)
-                         | (static_cast<uint64_t>(t[4]) << 8) | static_cast<uint64_t>(t[5]);
-  return value;
+  // cppcheck-suppress dangerousTypeCast
+  return (uint64_t) ntohl((*(uint64_t*) t << 32) >> 16) << 32 | ntohl(*(uint64_t*) t >> 16);
 }
 
 /**
@@ -145,8 +140,8 @@ inline uint64_t toU64(const unsigned char (&t)[6]) {
      */
 inline uint32_t toU32(const unsigned char (&t)[4]) {
   /* Like network, SCSI is BigEndian */
-  return (static_cast<uint32_t>(t[0]) << 24) | (static_cast<uint32_t>(t[1]) << 16) | (static_cast<uint32_t>(t[2]) << 8)
-         | static_cast<uint32_t>(t[3]);
+  // cppcheck-suppress dangerousTypeCast
+  return ntohl(*((uint32_t*) t));
 }
 
 /**

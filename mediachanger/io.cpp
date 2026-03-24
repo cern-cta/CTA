@@ -1084,7 +1084,7 @@ void unmarshalInt16(const char*& src, size_t& srcLen, int16_t& dst) {
     throw ex;
   }
 
-  uint16_t netByteOrder = 0;
+  int16_t netByteOrder = 0;
   memcpy(&netByteOrder, src, sizeof(netByteOrder));
   dst = static_cast<int16_t>(ntohs(netByteOrder));
   src += sizeof(dst);
@@ -1162,7 +1162,7 @@ void unmarshalInt32(const char*& src, size_t& srcLen, int32_t& dst) {
     throw ex;
   }
 
-  uint32_t netByteOrder = 0;
+  int32_t netByteOrder = 0;
   memcpy(&netByteOrder, src, sizeof(netByteOrder));
   dst = static_cast<int32_t>(ntohl(netByteOrder));
   src += sizeof(dst);
