@@ -376,7 +376,7 @@ int _net_connectable(int fd, int timeout) {
    * the exception set to indicate that there was an error.
    */
   errval_len = static_cast<socklen_t>(sizeof(errval));
-  if (getsockopt(fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void*>(&errval), &errval_len) == -1) {
+  if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &errval, &errval_len) == -1) {
     serrno = 0;
     return -1;
   }

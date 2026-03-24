@@ -155,7 +155,7 @@ int rmc_main(const char* const robot) {
     rmc_logit(func, RMC02, "socket", neterror());
     exit(CONFERR);
   }
-  memset(static_cast<void*>(&sin), 0, sizeof(struct sockaddr_in));
+  memset(&sin, 0, sizeof(struct sockaddr_in));
   sin.sin_family = AF_INET;
   {
     const char* p;
