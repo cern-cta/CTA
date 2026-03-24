@@ -141,7 +141,7 @@ uint32_t crc32c_hw(const uint32_t crcInit, const uint32_t cnt, const void* const
   uint32_t iremainder = cnt % 8;
   uint32_t crc = crcInit;
   while (iquotient--) {
-    crc = crc32c_intel_le_hw_64b(crc, static_cast<const uint64_t*>(blk_adr), 1);
+    crc = crc32c_intel_le_hw_64b(crc, reinterpret_cast<const uint64_t*>(blk_adr), 1);
     blk_adr += 8;
   }
   if (iremainder) {
