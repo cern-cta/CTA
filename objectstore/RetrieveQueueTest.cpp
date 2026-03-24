@@ -327,10 +327,11 @@ TEST_F(ObjectStore, RetrieveQueueActivityCounts) {
     // File fSeqs are in [0, 99], 34 multiples of 3 (0 included) odds are activity A, evens are B, 17 each.
     ASSERT_EQ(2, jobsSummary.activityCounts.size());
     using acCount = decltype(jobsSummary.activityCounts.front());
-    auto jsA =
-      std::find_if(jobsSummary.activityCounts.begin(), jobsSummary.activityCounts.end(), [](const acCount& ac) {
-        return ac.activity == "A";
-      });  // cppcheck-suppress internalAstError
+    auto jsA = std::find_if(jobsSummary.activityCounts.begin(),
+                            jobsSummary.activityCounts.end(),
+                            [](const acCount& ac) {  // cppcheck-suppress internalAstError
+                              return ac.activity == "A";
+                            });
     ASSERT_NE(jobsSummary.activityCounts.end(), jsA);
     ASSERT_EQ(17, jsA->count);
     auto jsB = std::find_if(jobsSummary.activityCounts.begin(),
