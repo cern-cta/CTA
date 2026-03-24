@@ -113,7 +113,11 @@ int createListenerSock(const struct in_addr& addr,
   // Set the SO_REUSEADDR socket option before calling bind
   {
     int reuseaddrOptval = 1;
-    if (0 > setsockopt(sock.get(), SOL_SOCKET, SO_REUSEADDR, (char*) &reuseaddrOptval, sizeof(reuseaddrOptval))) {
+    if (0 > setsockopt(sock.get(),
+                       SOL_SOCKET,
+                       SO_REUSEADDR,
+                       static_cast<const void*>(&reuseaddrOptval),
+                       sizeof(reuseaddrOptval))) {
       cta::exception::Exception ex;
       ex.getMessage() << ": Failed to set socket option"
                          ": file-descriptor="
@@ -137,7 +141,7 @@ int createListenerSock(const struct in_addr& addr,
     address.sin_addr = addr;
     address.sin_port = htons(port);
 
-    const int bindRc = bind(sock.get(), (struct sockaddr*) &address, sizeof(address));
+    const int bindRc = bind(sock.get(), reinterpret_cast<struct sockaddr*>(&address), sizeof(address));
     const int bindErrno = errno;
 
     // If the bind was successful
@@ -222,7 +226,8 @@ int acceptConnection(const int listenSocketFd) {
   struct sockaddr_in peerAddress;
   unsigned int peerAddressLen = sizeof(peerAddress);
 
-  const int connectedSocketFd = accept(listenSocketFd, (struct sockaddr*) &peerAddress, &peerAddressLen);
+  const int connectedSocketFd =
+    accept(listenSocketFd, reinterpret_cast<struct sockaddr*>(&peerAddress), &peerAddressLen);
   const int savedErrno = errno;
 
   if (connectedSocketFd < 0) {
@@ -321,7 +326,8 @@ int acceptConnection(const int listenSocketFd, const time_t timeout) {
   struct sockaddr_in peerAddress;
   unsigned int peerAddressLen = sizeof(peerAddress);
 
-  const int connectedSocketFd = accept(listenSocketFd, (struct sockaddr*) &peerAddress, &peerAddressLen);
+  const int connectedSocketFd =
+    accept(listenSocketFd, reinterpret_cast<struct sockaddr*>(&peerAddress), &peerAddressLen);
   const int acceptErrno = errno;
 
   if (connectedSocketFd < 0) {
@@ -361,7 +367,8 @@ mediachanger::IpAndPort getSockIpPort(const int socketFd) {
   struct sockaddr_in address;
   memset(&address, '\0', sizeof(address));
 
-  if (socklen_t addressLen = sizeof(address); getsockname(socketFd, (struct sockaddr*) &address, &addressLen) < 0) {
+  if (socklen_t addressLen = sizeof(address);
+      getsockname(socketFd, reinterpret_cast<struct sockaddr*>(&address), &addressLen) < 0) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to get socket name: socketFd=" << socketFd << ": " << cta::utils::errnoToString(errno);
     throw ex;
@@ -386,7 +393,8 @@ mediachanger::IpAndPort getPeerIpPort(const int socketFd) {
   struct sockaddr_in address;
   memset(&address, '\0', sizeof(address));
 
-  if (socklen_t addressLen = sizeof(address); getpeername(socketFd, (struct sockaddr*) &address, &addressLen) < 0) {
+  if (socklen_t addressLen = sizeof(address);
+      getpeername(socketFd, reinterpret_cast<struct sockaddr*>(&address), &addressLen) < 0) {
     cta::exception::Exception ex;
     ex.getMessage() << ": Failed to get peer name: socketFd=" << socketFd << ": " << cta::utils::errnoToString(errno);
     throw ex;
@@ -412,7 +420,7 @@ std::string getSockHostName(const int socketFd) {
   struct sockaddr_in address;
   socklen_t addressLen = sizeof(address);
 
-  if (getsockname(socketFd, (struct sockaddr*) &address, &addressLen) < 0) {
+  if (getsockname(socketFd, reinterpret_cast<struct sockaddr*>(&address), &addressLen) < 0) {
     cta::exception::Exception ex;
     ex.getMessage() << "Failed to get socket hostname"
                        ": socketFd="
@@ -423,7 +431,7 @@ std::string getSockHostName(const int socketFd) {
   char hostName[HOSTNAMEBUFLEN];
   char serviceName[SERVICENAMEBUFLEN];
 
-  if (const int error = getnameinfo((const struct sockaddr*) &address,
+  if (const int error = getnameinfo(reinterpret_cast<const struct sockaddr*>(&address),
                                     addressLen,
                                     hostName,
                                     sizeof(hostName),
@@ -461,7 +469,7 @@ void getSockIpHostnamePort(const int socketFd,
   struct sockaddr_in address;
   socklen_t addressLen = sizeof(address);
 
-  if (getsockname(socketFd, (struct sockaddr*) &address, &addressLen) < 0) {
+  if (getsockname(socketFd, reinterpret_cast<struct sockaddr*>(&address), &addressLen) < 0) {
     cta::exception::Exception ex;
     ex.getMessage() << ": Failed to get socket name"
                        ": socketFd="
@@ -475,7 +483,7 @@ void getSockIpHostnamePort(const int socketFd,
   {
     char serviceName[SERVICENAMEBUFLEN];
 
-    if (const int rc = getnameinfo((const struct sockaddr*) &address,
+    if (const int rc = getnameinfo(reinterpret_cast<const struct sockaddr*>(&address),
                                    addressLen,
                                    hostName,
                                    hostNameLen,
@@ -508,7 +516,7 @@ std::string getPeerHostName(const int socketFd) {
   struct sockaddr_in address;
   socklen_t addressLen = sizeof(address);
 
-  if (getpeername(socketFd, (struct sockaddr*) &address, &addressLen) < 0) {
+  if (getpeername(socketFd, reinterpret_cast<struct sockaddr*>(&address), &addressLen) < 0) {
     cta::exception::Exception ex;
     ex.getMessage() << ": Failed to get peer name"
                        ": socketFd="
@@ -519,7 +527,7 @@ std::string getPeerHostName(const int socketFd) {
   {
     char hostName[HOSTNAMEBUFLEN];
     char serviceName[SERVICENAMEBUFLEN];
-    const int rc = getnameinfo((const struct sockaddr*) &address,
+    const int rc = getnameinfo(reinterpret_cast<const struct sockaddr*>(&address),
                                addressLen,
                                hostName,
                                sizeof(hostName),
@@ -1076,9 +1084,9 @@ void unmarshalInt16(const char*& src, size_t& srcLen, int16_t& dst) {
     throw ex;
   }
 
-  int16_t netByteOrder = 0;
-  memcpy(&netByteOrder, src, sizeof(dst));
-  dst = ntohs(netByteOrder);
+  uint16_t netByteOrder = 0;
+  memcpy(&netByteOrder, src, sizeof(netByteOrder));
+  dst = static_cast<int16_t>(ntohs(netByteOrder));
   src += sizeof(dst);
   srcLen -= sizeof(dst);
 }
@@ -1103,7 +1111,7 @@ void unmarshalUint16(const char*& src, size_t& srcLen, uint16_t& dst) {
   }
 
   uint16_t netByteOrder = 0;
-  memcpy(&netByteOrder, src, sizeof(dst));
+  memcpy(&netByteOrder, src, sizeof(netByteOrder));
   dst = ntohs(netByteOrder);
   src += sizeof(dst);
   srcLen -= sizeof(dst);
@@ -1129,7 +1137,7 @@ void unmarshalUint32(const char*& src, size_t& srcLen, uint32_t& dst) {
   }
 
   uint32_t netByteOrder = 0;
-  memcpy(&netByteOrder, src, sizeof(dst));
+  memcpy(&netByteOrder, src, sizeof(netByteOrder));
   dst = ntohl(netByteOrder);
   src += sizeof(dst);
   srcLen -= sizeof(dst);
@@ -1154,9 +1162,9 @@ void unmarshalInt32(const char*& src, size_t& srcLen, int32_t& dst) {
     throw ex;
   }
 
-  int32_t netByteOrder = 0;
-  memcpy(&netByteOrder, src, sizeof(dst));
-  dst = ntohl(netByteOrder);
+  uint32_t netByteOrder = 0;
+  memcpy(&netByteOrder, src, sizeof(netByteOrder));
+  dst = static_cast<int32_t>(ntohl(netByteOrder));
   src += sizeof(dst);
   srcLen -= sizeof(dst);
 }

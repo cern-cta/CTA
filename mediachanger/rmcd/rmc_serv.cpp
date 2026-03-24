@@ -55,7 +55,7 @@ void handle_connection(int s, struct pollfd* pfd) {
     return;  // No incoming connection
   }
 
-  int rpfd = accept(s, (struct sockaddr*) &from, &fromlen);
+  int rpfd = accept(s, reinterpret_cast<struct sockaddr*>(&from), &fromlen);
   if (rpfd < 0) {
     if (errno == EAGAIN || errno == EWOULDBLOCK) {
       return;  // Non-blocking; no connections
@@ -155,7 +155,7 @@ int rmc_main(const char* const robot) {
     rmc_logit(func, RMC02, "socket", neterror());
     exit(CONFERR);
   }
-  memset((char*) &sin, 0, sizeof(struct sockaddr_in));
+  memset(static_cast<void*>(&sin), 0, sizeof(struct sockaddr_in));
   sin.sin_family = AF_INET;
   {
     const char* p;
@@ -186,10 +186,10 @@ int rmc_main(const char* const robot) {
     rmc_logit(func, "Received unsupported listen scope: \"%s\". Defaulting to loopback.\n", listen_scope_str.c_str());
     sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
   }
-  if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char*) &on, sizeof(on)) < 0) {
+  if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, static_cast<const void*>(&on), sizeof(on)) < 0) {
     rmc_logit(func, RMC02, "setsockopt", neterror());
   }
-  if (bind(s, (struct sockaddr*) &sin, sizeof(sin)) < 0) {
+  if (bind(s, reinterpret_cast<const struct sockaddr*>(&sin), sizeof(sin)) < 0) {
     rmc_logit(func, RMC02, "bind", neterror());
     exit(CONFERR);
   }
@@ -326,7 +326,7 @@ static int rmc_getreq(const int s, int* const req_type, char* const req_data, ch
     }
     l = msglen - sizeof(req_hdr);
     n = netread_timeout(s, req_data, l, RMC_TIMEOUT);
-    if (getpeername(s, (struct sockaddr*) &from, &fromlen) < 0) {
+    if (getpeername(s, reinterpret_cast<struct sockaddr*>(&from), &fromlen) < 0) {
       rmc_logit(func, RMC02, "getpeername", neterror());
       return ERMCUNREC;
     }

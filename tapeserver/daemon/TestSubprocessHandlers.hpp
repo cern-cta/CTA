@@ -48,7 +48,7 @@ public:
     EchoRequestRepy echo;
     echo.counter = 666;
     std::string echoString;
-    echoString.append((char*) &echo, sizeof(echo));
+    echoString.append(reinterpret_cast<char*>(&echo), sizeof(echo));
     try {
       m_socketPair.send(echoString);
     } catch (...) {}
@@ -81,13 +81,13 @@ public:
       throw cta::exception::Exception("In EchoProcess::runChild(): failed to receive parent's data after 1 second");
     }
     std::string echoString = m_socketPair.receive();
-    echoString.copy((char*) &echo, sizeof(echo));
+    echoString.copy(reinterpret_cast<char*>(&echo), sizeof(echo));
     if (echo.magic != 0xdeadbeef) {
       return EXIT_FAILURE;
     }
     echo.counter++;
     echoString.clear();
-    echoString.append((char*) &echo, sizeof(echo));
+    echoString.append(reinterpret_cast<char*>(&echo), sizeof(echo));
     m_socketPair.send(echoString);
     return EXIT_SUCCESS;
   }
@@ -122,7 +122,7 @@ public:
     try {
       auto echoString = m_socketPair.receive();
       EchoRequestRepy echo;
-      auto size = echoString.copy((char*) &echo, sizeof(echo));
+      auto size = echoString.copy(reinterpret_cast<char*>(&echo), sizeof(echo));
       if (size != sizeof(echo)) {
         std::stringstream err;
         err << "In EchoSubprocess::processEvent(): unexpected size for echo: "

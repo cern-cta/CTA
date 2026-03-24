@@ -1,4 +1,3 @@
-
 /*
  * SPDX-FileCopyrightText: 2021 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -431,7 +430,7 @@ MemQueue<Request, Queue>::sharedAddToNewQueue(typename Request::JobDump& job,
     // And we inform the caller in our thread too
     if (exceptionsNotPassed) {
       try {
-        std::rethrow_exception(std::current_exception());
+        std::rethrow_exception(std::current_exception());  // cppcheck-suppress missingReturn
       } catch (std::exception& ex) {
         std::stringstream err;
         err << "In MemQueue::sharedAddToNewQueue(), in main thread, failed to notify " << exceptionsNotPassed

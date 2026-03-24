@@ -170,9 +170,9 @@ int main(const int argc, char* const* const argv) {
     grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
     if (!frontendService->getTlsKey().has_value()) {
-      throw exception::UserError("TLS specified but TLS key is not defined");
+      throw exception::UserError("TLS specified but TLS key is not defined");  // cppcheck-suppress throwInEntryPoint
     } else if (!frontendService->getTlsCert().has_value()) {
-      throw exception::UserError("TLS specified but TLS cert is not defined.");
+      throw exception::UserError("TLS specified but TLS cert is not defined.");  // cppcheck-suppress throwInEntryPoint
     } else {
       auto key_file = frontendService->getTlsKey().value();
       lc.log(log::INFO, "TLS service key file: " + key_file);

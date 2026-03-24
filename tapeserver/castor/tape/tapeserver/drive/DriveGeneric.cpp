@@ -1341,7 +1341,7 @@ void drive::DriveGeneric::SCSI_inquiry() {
             << "sgh.dxfer_len=" << sgh.dxfer_len << " sgh.sb_len_wr=" << ((int) sgh.sb_len_wr)
             << " sgh.status=" << ((int) sgh.status) << " sgh.info=" << ((int) sgh.info) << std::endl;
   std::cout << SCSI::Structures::hexDump(dataBuff)
-            << SCSI::Structures::toString(*((SCSI::Structures::inquiryData_t*) dataBuff));
+            << SCSI::Structures::toString(*reinterpret_cast<SCSI::Structures::inquiryData_t*>(dataBuff));
 }
 
 drive::compressionStats drive::DriveT10000::getCompression() {
@@ -1380,14 +1380,16 @@ drive::compressionStats drive::DriveT10000::getCompressionStats() {
                                           "Failed SG_IO ioctl in DriveT10000::getCompression");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveT10000::getCompression:");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
   while (logParameter < endPage) { /* values in bytes  */
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::sequentialAccessDevicePage::receivedFromInitiator:
         driveCompressionStats.fromHost = logPageParam.getU64Value();
@@ -1463,7 +1465,8 @@ drive::compressionStats drive::DriveLTO::getCompression() {
                                           "Failed SG_IO ioctl in DriveLTO::getCompression");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getCompression:");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
@@ -1471,7 +1474,8 @@ drive::compressionStats drive::DriveLTO::getCompression() {
   const uint64_t mb = 1000000;  // Mega bytes as power of 10
 
   while (logParameter < endPage) { /* values in MB and Bytes */
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
 
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
         // fromHost
@@ -1568,14 +1572,16 @@ drive::compressionStats drive::DriveIBM3592::getCompression() {
                                           "Failed SG_IO ioctl in DriveIBM3592::getCompression");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getCompression:");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
   while (logParameter < endPage) { /* values in KiBs and we use shift <<10 to get bytes */
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::blockBytesTransferred::hostWriteKiBProcessed:
         driveCompressionStats.fromHost = logPageParam.getU64Value() << 10;
@@ -1648,13 +1654,15 @@ std::map<std::string, uint64_t> drive::DriveIBM3592::getTapeWriteErrors() {
                                           "Failed SG_IO ioctl in DriveIBM3592::getTapeWriteErrors");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getTapeWriteErrors");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
   while (logParameter < endPage) { /* values in KiBs and we use shift <<10 to get bytes */
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::writeErrorsDevicePage::totalCorrectedErrors:
         driveWriteErrorStats["mountTotalCorrectedWriteErrors"] = logPageParam.getU64Value();
@@ -1694,13 +1702,15 @@ std::map<std::string, uint64_t> drive::DriveT10000::getTapeWriteErrors() {
                                           "Failed SG_IO ioctl in DriveT10000::getTapeWriteErrors");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveT10000::getTapeWriteErrors");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
   while (logParameter < endPage) {
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::writeErrorsDevicePage::totalCorrectedErrors:
         driveWriteErrorStats["mountTotalCorrectedWriteErrors"] = logPageParam.getU64Value();
@@ -1740,14 +1750,16 @@ std::map<std::string, uint64_t> drive::DriveIBM3592::getTapeReadErrors() {
                                           "Failed SG_IO ioctl in DriveIBM3592::getTapeReadErrors");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getTapeReadErrors");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
   while (logParameter < endPage) { /* values in KiBs and we use shift <<10 to get bytes */
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::readErrorsDevicePage::totalCorrectedErrors:
         driveReadErrorStats["mountTotalCorrectedReadErrors"] = logPageParam.getU64Value();
@@ -1787,13 +1799,15 @@ std::map<std::string, uint64_t> drive::DriveT10000::getTapeReadErrors() {
                                           "Failed SG_IO ioctl in DriveT10000::getTapeReadErrors");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveT10000::getTapeReadErrors");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
   while (logParameter < endPage) { /* values in KiBs and we use shift <<10 to get bytes */
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::readErrorsDevicePage::totalCorrectedErrors:
         driveReadErrorStats["mountTotalCorrectedReadErrors"] = logPageParam.getU64Value();
@@ -1833,14 +1847,16 @@ std::map<std::string, uint32_t> drive::DriveGeneric::getTapeNonMediumErrors() {
                                           "Failed SG_IO ioctl in DriveGeneric::getTapeNonMediumErrors");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveGeneric::getTapeNonMediumErrors");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
   while (logParameter < endPage) {
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::nonMediumErrorsDevicePage::totalCount:
         driveNonMediumErrorsStats["mountTotalNonMediumErrorCounts"] = logPageParam.getU64Value();
@@ -1875,14 +1891,16 @@ std::map<std::string, uint32_t> drive::DriveIBM3592::getVolumeStats() {
                                           "Failed SG_IO ioctl in DriveIBM3592::getVolumeStats");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getVolumeStats");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
   while (logParameter < endPage) {
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::volumeStatisticsPage::validityFlag:
         volumeStats["validity"] = logPageParam.getU64Value();
@@ -1951,14 +1969,16 @@ std::map<std::string, uint32_t> drive::DriveT10000::getVolumeStats() {
                                           "Failed SG_IO ioctl in DriveT10000::getVolumeStats");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveT10000::getVolumeStats");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
   while (logParameter < endPage) {
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::volumeStatisticsPage::validityFlag:
         volumeStats["validity"] = logPageParam.getU64Value();
@@ -2010,14 +2030,16 @@ std::map<std::string, uint32_t> drive::DriveLTO::getVolumeStats() {
                                           "Failed SG_IO ioctl in DriveLTO::getVolumeStats");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getVolumeStats");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
   while (logParameter < endPage) {
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::volumeStatisticsPage::validityFlag:
         volumeStats["validity"] = logPageParam.getU64Value();
@@ -2086,7 +2108,8 @@ std::map<std::string, float> drive::DriveIBM3592::getQualityStats() {
         "Failed SG_IO ioctl in DriveIBM3592::getQualityStats_qualitySummaryBlock");
       SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getQualityStats");
 
-      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+        *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
       const unsigned char* endPage =
         dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
@@ -2094,7 +2117,8 @@ std::map<std::string, float> drive::DriveIBM3592::getQualityStats() {
       unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
       while (logParameter < endPage) {
-        SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+        SCSI::Structures::logSenseParameter_t& logPageParam =
+          *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
         if (const int val = logPageParam.getU64Value(); val != 0) {
           switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
             case SCSI::performanceCharacteristicsQualitySummaryPage::driveEfficiency:
@@ -2138,7 +2162,8 @@ std::map<std::string, float> drive::DriveIBM3592::getQualityStats() {
         "Failed SG_IO ioctl in DriveIBM3592::getQualityStats_qualitySummaryBlock");
       SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getQualityStats");
 
-      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+        *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
       const unsigned char* endPage =
         dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
@@ -2146,7 +2171,8 @@ std::map<std::string, float> drive::DriveIBM3592::getQualityStats() {
       unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
       while (logParameter < endPage) {
-        SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+        SCSI::Structures::logSenseParameter_t& logPageParam =
+          *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
         if (const int val = logPageParam.getU64Value(); val != 0) {
           switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
             case SCSI::performanceCharacteristicsQualitySummaryPage::driveEfficiency:
@@ -2192,7 +2218,8 @@ std::map<std::string, float> drive::DriveIBM3592::getQualityStats() {
                                               "Failed SG_IO ioctl in DriveIBM3592::getQualityStats_hostCommandsBlock");
       SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getQualityStats");
 
-      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+        *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
       const unsigned char* endPage =
         dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
@@ -2200,7 +2227,8 @@ std::map<std::string, float> drive::DriveIBM3592::getQualityStats() {
       unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
       while (logParameter < endPage) {
-        SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+        SCSI::Structures::logSenseParameter_t& logPageParam =
+          *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
         switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
           case SCSI::performanceCharacteristicsHostCommandsPage::readPerformanceEfficiency:
             qualityStats["lifetimeReadEfficiencyPrct"] = (float) logPageParam.getU64Value() / 65536;
@@ -2232,7 +2260,8 @@ std::map<std::string, float> drive::DriveIBM3592::getQualityStats() {
                                               "Failed SG_IO ioctl in DriveIBM3592::getQualityStats_hostCommandsBlock");
       SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getQualityStats");
 
-      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+        *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
       const unsigned char* endPage =
         dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
@@ -2240,7 +2269,8 @@ std::map<std::string, float> drive::DriveIBM3592::getQualityStats() {
       unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
       while (logParameter < endPage) {
-        SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+        SCSI::Structures::logSenseParameter_t& logPageParam =
+          *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
         switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
           case SCSI::performanceCharacteristicsHostCommandsPage::readPerformanceEfficiency:
             qualityStats["mountReadEfficiencyPrct"] = (float) logPageParam.getU64Value() / 65536;
@@ -2284,7 +2314,8 @@ std::map<std::string, float> drive::DriveLTO::getQualityStats() {
                                               "Failed SG_IO ioctl in DriveLTO::getQualityStats_qualitySummaryBlock");
       SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getQualityStats");
 
-      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+        *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
       const unsigned char* endPage =
         dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
@@ -2292,7 +2323,8 @@ std::map<std::string, float> drive::DriveLTO::getQualityStats() {
       unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
       while (logParameter < endPage) {
-        SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+        SCSI::Structures::logSenseParameter_t& logPageParam =
+          *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
         if (const int val = logPageParam.getU64Value(); val != 0) {
           switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
             case SCSI::performanceCharacteristicsQualitySummaryPage::driveEfficiency:
@@ -2335,7 +2367,8 @@ std::map<std::string, float> drive::DriveLTO::getQualityStats() {
                                               "Failed SG_IO ioctl in DriveLTO::getQualityStats_qualitySummaryBlock");
       SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getQualityStats");
 
-      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+        *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
       const unsigned char* endPage =
         dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
@@ -2343,7 +2376,8 @@ std::map<std::string, float> drive::DriveLTO::getQualityStats() {
       unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
       while (logParameter < endPage) {
-        SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+        SCSI::Structures::logSenseParameter_t& logPageParam =
+          *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
         if (const int val = logPageParam.getU64Value(); val != 0) {
           switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
             case SCSI::performanceCharacteristicsQualitySummaryPage::driveEfficiency:
@@ -2389,7 +2423,8 @@ std::map<std::string, float> drive::DriveLTO::getQualityStats() {
                                               "Failed SG_IO ioctl in DriveLTO::getQualityStats_hostCommandsBlock");
       SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getQualityStats");
 
-      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+        *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
       const unsigned char* endPage =
         dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
@@ -2397,7 +2432,8 @@ std::map<std::string, float> drive::DriveLTO::getQualityStats() {
       unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
       while (logParameter < endPage) {
-        SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+        SCSI::Structures::logSenseParameter_t& logPageParam =
+          *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
         switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
           case SCSI::performanceCharacteristicsHostCommandsPage::readPerformanceEfficiency:
             qualityStats["lifetimeReadEfficiencyPrct"] = (float) logPageParam.getU64Value() / 65536;
@@ -2429,7 +2465,8 @@ std::map<std::string, float> drive::DriveLTO::getQualityStats() {
                                               "Failed SG_IO ioctl in DriveLTO::getQualityStats_hostCommandsBlock");
       SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getQualityStats");
 
-      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+      SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+        *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
       const unsigned char* endPage =
         dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
@@ -2437,7 +2474,8 @@ std::map<std::string, float> drive::DriveLTO::getQualityStats() {
       unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
       while (logParameter < endPage) {
-        SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+        SCSI::Structures::logSenseParameter_t& logPageParam =
+          *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
         switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
           case SCSI::performanceCharacteristicsHostCommandsPage::readPerformanceEfficiency:
             qualityStats["mountReadEfficiencyPrct"] = (float) logPageParam.getU64Value() / 65536;
@@ -2476,14 +2514,16 @@ std::map<std::string, float> drive::DriveT10000::getQualityStats() {
                                           "Failed SG_IO ioctl in DriveT10000::getQualityStats");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveT10000::getQualityStats");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
   while (logParameter < endPage) {
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::vendorUniqueDriveStatistics::readQualityIndex:
         qualityStats["mountReadEfficiencyPrct"] = logPageParam.getU64Value() / 160.0;
@@ -2528,14 +2568,16 @@ std::map<std::string, uint32_t> drive::DriveIBM3592::getDriveStats() {
                                             "Failed SG_IO ioctl in DriveIBM3592::getDriveStats_writeErrors");
     SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getDriveStats");
 
-    SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+    SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+      *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
     const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
     unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
     while (logParameter < endPage) {
-      SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+      SCSI::Structures::logSenseParameter_t& logPageParam =
+        *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
       switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
         case SCSI::driveWriteErrorsPage::dataTemps:
           driveStats["mountTemps"] = logPageParam.getU64Value();
@@ -2575,14 +2617,16 @@ std::map<std::string, uint32_t> drive::DriveIBM3592::getDriveStats() {
                                             "Failed SG_IO ioctl in DriveIBM3592::getDriveStats_readFWErrors");
     SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getDriveStats");
 
-    SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+    SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+      *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
     const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
     unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
     while (logParameter < endPage) {
-      SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+      SCSI::Structures::logSenseParameter_t& logPageParam =
+        *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
       switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
         case SCSI::driveReadErrorsPage::dataTemps:
           driveStats["mountTemps"] += logPageParam.getU64Value();
@@ -2622,14 +2666,16 @@ std::map<std::string, uint32_t> drive::DriveIBM3592::getDriveStats() {
                                             "Failed SG_IO ioctl in DriveIBM3592::getDriveStats_readBWErrors");
     SCSI::ExceptionLauncher(sgh, "SCSI error in DriveIBM3592::getDriveStats");
 
-    SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+    SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+      *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
     const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
     unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
     while (logParameter < endPage) {
-      SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+      SCSI::Structures::logSenseParameter_t& logPageParam =
+        *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
       switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
         case SCSI::driveReadErrorsPage::dataTemps:
           driveStats["mountTemps"] += logPageParam.getU64Value();
@@ -2678,14 +2724,16 @@ std::map<std::string, uint32_t> drive::DriveLTO::getDriveStats() {
                                             "Failed SG_IO ioctl in DriveLTO::getDriveStats_writeErrors");
     SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getDriveStats");
 
-    SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+    SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+      *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
     const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
     unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
     while (logParameter < endPage) {
-      SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+      SCSI::Structures::logSenseParameter_t& logPageParam =
+        *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
       switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
         case SCSI::driveWriteErrorsPage::dataTemps:
           driveStats["mountTemps"] = logPageParam.getU64Value();
@@ -2725,14 +2773,16 @@ std::map<std::string, uint32_t> drive::DriveLTO::getDriveStats() {
                                             "Failed SG_IO ioctl in DriveLTO::getDriveStats_readFWErrors");
     SCSI::ExceptionLauncher(sgh, "SCSI error in DriveLTO::getDriveStats");
 
-    SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+    SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+      *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
     const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
     unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
     while (logParameter < endPage) {
-      SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+      SCSI::Structures::logSenseParameter_t& logPageParam =
+        *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
       switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
         case SCSI::driveReadErrorsPage::dataTemps:
           driveStats["mountTemps"] += logPageParam.getU64Value();
@@ -2778,14 +2828,16 @@ std::map<std::string, uint32_t> drive::DriveT10000::getDriveStats() {
                                           "Failed SG_IO ioctl in DriveT10000::getDriveStats");
   SCSI::ExceptionLauncher(sgh, "SCSI error in DriveT10000::getDriveStats");
 
-  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader = *(SCSI::Structures::logSenseLogPageHeader_t*) dataBuff;
+  SCSI::Structures::logSenseLogPageHeader_t& logPageHeader =
+    *reinterpret_cast<SCSI::Structures::logSenseLogPageHeader_t*>(dataBuff);
 
   const unsigned char* endPage = dataBuff + SCSI::Structures::toU16(logPageHeader.pageLength) + sizeof(logPageHeader);
 
   unsigned char* logParameter = dataBuff + sizeof(logPageHeader);
 
   while (logParameter < endPage) {
-    SCSI::Structures::logSenseParameter_t& logPageParam = *(SCSI::Structures::logSenseParameter_t*) logParameter;
+    SCSI::Structures::logSenseParameter_t& logPageParam =
+      *reinterpret_cast<SCSI::Structures::logSenseParameter_t*>(logParameter);
     switch (SCSI::Structures::toU16(logPageParam.header.parameterCode)) {
       case SCSI::vendorUniqueDriveStatistics::readRecoveryRetries:
         driveStats["mountTotalReadRetries"] = logPageParam.getU64Value();

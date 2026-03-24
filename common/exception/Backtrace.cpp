@@ -20,6 +20,8 @@ class bfdContext {
 public:
   bfdContext();
   ~bfdContext();
+  bfdContext(const bfdContext&) = delete;
+  bfdContext& operator=(const bfdContext&) = delete;
   std::string collectExtraInfos(const std::string& address);
 
 private:

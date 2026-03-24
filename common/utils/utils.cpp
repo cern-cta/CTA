@@ -418,7 +418,7 @@ std::string getXattr(const std::string& path, const std::string& name) {
   auto value = std::make_unique<char[]>(sizeOfValue + 1);
   bzero(value.get(), sizeOfValue + 1);
 
-  if (0 > getxattr(path.c_str(), name.c_str(), (void*) value.get(), sizeOfValue)) {
+  if (0 > getxattr(path.c_str(), name.c_str(), static_cast<void*>(value.get()), sizeOfValue)) {
     const int savedErrno = errno;
     std::stringstream msg;
     msg << "Call to getxattr() failed: path=" << path << " name=" << name << ": " << errnoToString(savedErrno);
@@ -433,7 +433,7 @@ std::string getXattr(const std::string& path, const std::string& name) {
 //------------------------------------------------------------------------------
 uint32_t getAdler32(const uint8_t* buf, const uint32_t len) {
   const uint32_t checksum = adler32(0L, Z_NULL, 0);
-  return adler32(checksum, (const Bytef*) buf, len);
+  return adler32(checksum, reinterpret_cast<const Bytef*>(buf), len);
 }
 
 //------------------------------------------------------------------------------

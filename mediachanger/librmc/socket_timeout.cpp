@@ -375,8 +375,8 @@ int _net_connectable(int fd, int timeout) {
    * error for the connect() completion. Some systems (Windows) sets
    * the exception set to indicate that there was an error.
    */
-  errval_len = (socklen_t) sizeof(errval);
-  if (getsockopt(fd, SOL_SOCKET, SO_ERROR, (char*) &errval, &errval_len) == -1) {
+  errval_len = static_cast<socklen_t>(sizeof(errval));
+  if (getsockopt(fd, SOL_SOCKET, SO_ERROR, reinterpret_cast<void*>(&errval), &errval_len) == -1) {
     serrno = 0;
     return -1;
   }
