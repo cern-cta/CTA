@@ -55,7 +55,7 @@ generate-sbom-trivy:
     - if: $GENERATE_SBOM == "TRUE"
       when: on_success
     - when: never
-  image: registry.cern.ch/docker.io/aquasec/trivy:canary
+  image: registry.cern.ch/docker.io/aquasec/trivy@sha256:bcc376de8d77cfe086a917230e818dc9f8528e3c852f7b1aff648949b6258d1c # 0.69.3
   variables:
     SBOM_OUT_PATH: sboms/sbom-trivy.json
     ROOTFS: '/tmp/installroot'
@@ -115,7 +115,7 @@ score-sbom:
     - if: $GENERATE_SBOM == "TRUE"
       when: on_success
     - when: never
-  image: registry.cern.ch/ghcr.io/interlynk-io/sbomqs
+  image: registry.cern.ch/ghcr.io/interlynk-io/sbomqs@sha256:b424b19d0ad2c900229302f4b2db8d80093f7ba82a1114b4f16bf073ace6f6e6 # v2.0.5
   variables:
     # Can be used for e.g. --detailed
     EXTRA_FLAGS: ""
