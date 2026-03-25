@@ -18,10 +18,10 @@ data:
     #
 
     cta.instance_name {{ .Release.Namespace }}
-    
+
     cta.admin_commands.mode {{ .Values.grpc.conf.adminCommands.mode }}
     cta.workflow_events.enabled {{ .Values.grpc.conf.workflowEvents.enabled }}
-    
+
     cta.schedulerdb.scheduler_backend_name {{ $schedulerConfig.backend }}
 
     # CTA ObjectStore options
@@ -53,7 +53,7 @@ data:
     cta.archivefile.zero_length_files_forbidden_vo_exception_list {{ .Values.grpc.conf.frontend.zeroLengthFilesForbiddenVoExceptionList }}
 
     # CTA Frontend log URL
-    cta.log.url file:/var/log/cta/cta-frontend-grpc.log
+    cta.log.url file:/var/log/cta/cta-frontend.log
 
     # CTA Logger log level
     # Valid log levels are EMERG, ALERT, CRIT, ERR, WARNING, NOTICE (==USERERR), INFO, DEBUG

@@ -119,7 +119,7 @@ RUN dnf install -y \
 RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
 
 USER cta
-CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend-grpc.log"]
+CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
 
 
 ###############################################
