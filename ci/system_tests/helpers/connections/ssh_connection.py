@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import socket
 import subprocess
 from functools import cached_property
 from typing import Optional
@@ -56,4 +57,4 @@ class SSHConnection(RemoteConnection):
         return result.returncode == 0
 
     def get_ip(self) -> str:
-        return
+        return socket.gethostbyname(self.host)
