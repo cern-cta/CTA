@@ -1,7 +1,8 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import asyncio
+
+from concurrent.futures import Future
 
 from .disk_client_host import DiskClientHost
 
@@ -32,7 +33,7 @@ class EosClientHost(DiskClientHost):
         except ValueError:
             return 0
 
-    async def start_archive_process_async(
+    def archive_async(
         self,
         eos_host: str,
         dest_dir: str,
@@ -43,8 +44,8 @@ class EosClientHost(DiskClientHost):
         batch_size: int = 1000,
         sss_keytab: str = "/etc/eos.keytab",
         write_files_in_chunks: bool = False,
-    ) -> asyncio.subprocess.Process:
-        """Start archive as an async subprocess. Returns process handle for awaiting."""
+    ) -> Future:
+        """Start archival asynchronously. Returns a future that can be awaited."""
         cmd = (
             f"python3 -u /root/xrootd_archive.py "
             f"--eos-host {eos_host} "
@@ -58,4 +59,4 @@ class EosClientHost(DiskClientHost):
         )
         if write_files_in_chunks:
             cmd += " --write-files-in-chunks"
-        return await self.conn.exec_async(cmd)
+        return self.exec_async(cmd)

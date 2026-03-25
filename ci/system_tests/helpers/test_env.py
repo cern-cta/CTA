@@ -1,22 +1,23 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import json
-from typing import Any, List
 import subprocess
+from typing import Any, List
 
+from kubernetes import client, config
+
+from .connections.k8s_connection import K8sConnection
+from .connections.remote_connection import RemoteConnection
+from .connections.ssh_connection import SSHConnection
 from .hosts.cta_cli_host import CtaCliHost
 from .hosts.cta_frontend_host import CtaFrontendHost
+from .hosts.cta_maintd_host import CtaMaintdHost
 from .hosts.cta_rmcd_host import CtaRmcdHost
 from .hosts.cta_taped_host import CtaTapedHost
-from .hosts.cta_maintd_host import CtaMaintdHost
+from .hosts.disk.disk_client_host import DiskClientHost
+from .hosts.disk.disk_instance_host import DiskInstanceHost
 from .hosts.disk.eos_client_host import EosClientHost
 from .hosts.disk.eos_mgm_host import EosMgmHost
-from .hosts.disk.disk_instance_host import DiskInstanceHost
-from .hosts.disk.disk_client_host import DiskClientHost
-from .connections.remote_connection import RemoteConnection
-from .connections.k8s_connection import K8sConnection
-from .connections.ssh_connection import SSHConnection
 
 
 class TestEnv:
@@ -64,17 +65,25 @@ class TestEnv:
         Returns a list of K8sConnection objects.
         label_value and container_value can be exact matches or partial matches.
         """
-        list_pods_command = f"kubectl get pods -n {namespace} -o json"
-        pods_json_raw = TestEnv.execLocal(list_pods_command, True)
+        core = client.CoreV1Api()
 
-        pods = json.loads(pods_json_raw.stdout.decode("utf-8"))
+        if allow_partial_label_value_match:
+            pods = core.list_namespaced_pod(namespace=namespace)
+        else:
+            label_selector = f"{label_key}={label_value}"
+            pods = core.list_namespaced_pod(
+                namespace=namespace,
+                label_selector=label_selector,
+            )
+
         connections: List[K8sConnection] = []
 
-        for pod in pods.get("items", []):
-            labels = pod.get("metadata", {}).get("labels", {})
+        for pod in pods.items:
+            labels = pod.metadata.labels or {}
             v = labels.get(label_key)
             if not v:
                 continue
+
             if allow_partial_label_value_match:
                 if label_value not in v:
                     continue
@@ -82,21 +91,21 @@ class TestEnv:
                 if v != label_value:
                     continue
 
-            containers = pod.get("spec", {}).get("containers", [])
-            for c in containers:
-                cname = c.get("name", "")
+            for c in pod.spec.containers or []:
+                cname = c.name or ""
                 if container_value in cname or not container_value:
-                    pod_name = pod["metadata"]["name"]
-                    connections.append(K8sConnection(namespace, pod_name, cname))
+                    connections.append(K8sConnection(namespace, pod.metadata.name, cname))
 
         return connections
 
     @staticmethod
     def fromNamespace(namespace: str):
+        config.load_kube_config()
+        core = client.CoreV1Api()
         try:
-            TestEnv.execLocal(f"kubectl get ns {namespace} > /dev/null")
-        except RuntimeError:
-            raise RuntimeError(f"Namespace {namespace} does not exist")
+            core.read_namespace(name=namespace)
+        except client.exceptions.ApiException as e:
+            raise RuntimeError(f"Failed to query namespace {namespace}: {e}")
         return TestEnv(
             # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these concepts
             # Something to be changed once we move them over....

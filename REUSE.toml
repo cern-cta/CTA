@@ -24,6 +24,12 @@ path = "ci/orchestration/tests/error_whitelists/*.txt"
 SPDX-FileCopyrightText = "2025 CERN"
 SPDX-License-Identifier = "GPL-3.0-or-later"
 
+# Python requirements files
+[[annotations]]
+path = "**/requirements.txt"
+SPDX-FileCopyrightText = "2025 CERN"
+SPDX-License-Identifier = "GPL-3.0-or-later"
+
 # Misc files that are tedious to attach copyright to
 [[annotations]]
 path = [

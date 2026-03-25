@@ -1,9 +1,9 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from ...helpers.hosts.cta_rmcd_host import CtaRmcdHost
 from concurrent.futures import ThreadPoolExecutor
 
+from ...helpers.hosts.cta_rmcd_host import CtaRmcdHost
 
 #####################################################################################################################
 # Prerequisites

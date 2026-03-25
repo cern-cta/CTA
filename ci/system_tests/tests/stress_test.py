@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import asyncio
-import pytest
+import contextlib
 import time
 from dataclasses import dataclass
 from pathlib import Path
-import contextlib
+
+import pytest
 
 from ..helpers.hosts.disk.disk_instance_host import DiskInstanceHost
 from ..helpers.hosts.disk.eos_client_host import EosClientHost
@@ -121,10 +122,7 @@ async def test_generate_and_copy_files(env, stress_params):
     eos_client: EosClientHost = env.eos_client[0]
 
     # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
-    mgm_conn = env.eos_mgm[0].conn
-    mgm_ip = env.execLocal(
-        f"kubectl get pod {mgm_conn.pod} -n {mgm_conn.namespace} -o jsonpath='{{.status.podIP}}'", True
-    ).stdout.decode("utf-8")
+    mgm_ip = env.eos_mgm[0].get_ip()
 
     # Create an archive directory on eos
     print(f"Cleaning up previous archive directory: {archive_directory}")
@@ -156,7 +154,7 @@ async def test_generate_and_copy_files(env, stress_params):
     # multiprocessing with persistent XRootD File objects
     # Start archive as async subprocess — allows us to await completion instead of polling PID
     timer_start = time.time()
-    archive_proc = await eos_client.start_archive_process_async(
+    archive_future = eos_client.archive_async(
         eos_host=mgm_ip,
         dest_dir=archive_directory,
         num_files=total_file_count,
@@ -178,7 +176,7 @@ async def test_generate_and_copy_files(env, stress_params):
     async def monitor_copy_and_put_drives_up():
         """Monitor file count and put drives up when threshold reached (for prequeue mode)."""
         nonlocal drives_up
-        while archive_proc.returncode is None and not stop_monitoring.is_set():
+        while not stop_monitoring.is_set():
             num_files_so_far = eos_client.count_files_in_namespace(
                 eos_host=mgm_ip,
                 dest_dir=archive_directory,
@@ -213,7 +211,7 @@ async def test_generate_and_copy_files(env, stress_params):
 
     # Run archive and monitoring concurrently — no PID polling needed
     monitor_task = asyncio.create_task(monitor_copy_and_put_drives_up())
-    stdout, stderr = await archive_proc.communicate()
+    execResult = await archive_future
     stop_monitoring.set()
     await monitor_task
 
@@ -225,12 +223,11 @@ async def test_generate_and_copy_files(env, stress_params):
     timer_end = time.time()
 
     # Print archive script output
-    if stdout:
-        print(f"Archive script output: {stdout.decode()}")
-    if archive_proc.returncode != 0:
-        print(f"Archive process failed with exit code {archive_proc.returncode}")
-        if stderr:
-            print(stderr.decode())
+    if execResult.stdout:
+        print(f"Archive script output:\n{execResult.stdout}")
+    if not execResult.success:
+        print("Archive process failed")
+        print(execResult.stderr)
 
     num_files_copied = eos_client.count_files_in_namespace(
         eos_host=mgm_ip,
