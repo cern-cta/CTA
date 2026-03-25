@@ -4,6 +4,7 @@
 import argparse
 import json
 import sys
+
 from jsonschema import Draft202012Validator
 
 

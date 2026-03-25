@@ -5,6 +5,7 @@ import subprocess
 from typing import Any, List, Sequence
 
 from kubernetes import client, config
+from kubernetes.client import ApiException
 
 from .connections.k8s_connection import K8sConnection
 from .connections.remote_connection import RemoteConnection
@@ -104,7 +105,7 @@ class TestEnv:
         core = client.CoreV1Api()
         try:
             core.read_namespace(name=namespace)
-        except client.exceptions.ApiException as e:
+        except ApiException as e:
             raise RuntimeError(f"Failed to query namespace {namespace}: {e}")
         return TestEnv(
             # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these concepts

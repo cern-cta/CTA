@@ -3,12 +3,12 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from pathlib import Path
+import json
+import os
+import re
 import subprocess
 import sys
-import os
-import json
-import re
+from pathlib import Path
 
 # Dictionary containing the supported config of the different variables.
 SUPPORTED = {

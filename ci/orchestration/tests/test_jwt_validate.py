@@ -1,10 +1,11 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from jwcrypto import jwk
+import argparse
+
 import jwt
 import requests
-import argparse
+from jwcrypto import jwk
 
 # on client pod
 # dnf install python3-pip

@@ -5,6 +5,7 @@
 
 import sys
 from pathlib import Path
+
 import yaml
 
 EXPECTED_ORDER = [

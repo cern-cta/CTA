@@ -4,9 +4,10 @@
 import subprocess
 import time
 from functools import cached_property
-from typing import Optional
+from typing import Optional, cast
 
 from kubernetes import client, config
+from kubernetes.client import ApiException, V1Pod
 from kubernetes.stream import stream
 
 from .remote_connection import ExecResult, RemoteConnection
@@ -104,17 +105,23 @@ class K8sConnection(RemoteConnection):
             # Wait until the pod is no longer ready to ensure a restart has been triggered
             while self.is_up():
                 time.sleep(1)
-        except client.exceptions.ApiException as e:
+        except ApiException as e:
             if throw_on_failure:
                 raise RuntimeError(f"Pod deletion failed: {e}")
 
     def is_up(self) -> bool:
         try:
-            pod = self.core.read_namespaced_pod(
-                name=self.pod,
-                namespace=self.namespace,
+            pod = cast(
+                V1Pod,
+                self.core.read_namespaced_pod(
+                    name=self.pod,
+                    namespace=self.namespace,
+                ),
             )
-        except client.exceptions.ApiException:
+        except ApiException:
+            return False
+
+        if pod is None or pod.status is None:
             return False
 
         conditions = pod.status.conditions or []
@@ -126,12 +133,18 @@ class K8sConnection(RemoteConnection):
 
     def get_ip(self) -> str:
         try:
-            pod = self.core.read_namespaced_pod(
-                name=self.pod,
-                namespace=self.namespace,
+            pod = cast(
+                V1Pod,
+                self.core.read_namespaced_pod(
+                    name=self.pod,
+                    namespace=self.namespace,
+                ),
             )
-        except client.exceptions.ApiException as e:
+        except ApiException as e:
             raise RuntimeError(f"Failed to get pod IP: {e}")
+
+        if pod is None or pod.status is None:
+            raise RuntimeError("Pod IP not available")
 
         ip = pod.status.pod_ip
         if not ip:

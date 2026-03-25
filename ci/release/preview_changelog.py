@@ -3,11 +3,12 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import argparse
 import sys
 from datetime import datetime
-import argparse
-from gitlabapi import GitLabAPI, Commit
 from typing import Optional
+
+from gitlabapi import Commit, GitLabAPI
 
 
 class ColorCodes:

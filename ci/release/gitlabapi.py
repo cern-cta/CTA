@@ -1,9 +1,9 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import requests
 from typing import Any, Optional
 
+import requests
 
 Commit = dict[str, Any]
 

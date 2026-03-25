@@ -3,10 +3,11 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from pathlib import Path
 import json
-import sys
 import re
+import sys
+from pathlib import Path
+
 import jsonschema
 
 

@@ -6,9 +6,9 @@
 # @description  Take a file "filename.1cta.md.in" as input and create "filename.1cta.md" from
 #               embedded comments in source code included with the "@include" directive
 
-import sys
 import os
 import re
+import sys
 from datetime import datetime
 
 

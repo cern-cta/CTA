@@ -3,12 +3,13 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import sys
-from typing import Any, Optional
 import argparse
-from gitlabapi import GitLabAPI
+import sys
 import textwrap
 import time
+from typing import Any, Optional
+
+from gitlabapi import GitLabAPI
 
 # ------------------------------------------------------------------------------
 

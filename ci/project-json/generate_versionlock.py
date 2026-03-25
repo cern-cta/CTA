@@ -3,10 +3,10 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from pathlib import Path
-import json
 import argparse
+import json
 import sys
+from pathlib import Path
 
 project_json_path = Path(__file__).resolve().parents[2] / "project.json"
 with open(project_json_path, "r") as f:
