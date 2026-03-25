@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from functools import cached_property
 import time
 from collections import deque
 from enum import Enum
+from functools import cached_property
 
 from ..remote_host import RemoteHost
 

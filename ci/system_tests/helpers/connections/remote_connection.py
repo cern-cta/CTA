@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from functools import cached_property
 from dataclasses import dataclass
+from functools import cached_property
 from typing import Optional, Protocol
 
 
