@@ -133,6 +133,11 @@
   before_script:
     - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
+    # This is not ideal, but since we are in a shell executor and not in a Docker image, we use a venv to do this without polluting the machine
+    # Note that we use UV instead of pip as it is much faster
+    - uv venv
+    - source .venv/bin/activate
+    - uv pip install -r ci/system_tests/requirements.txt
   script:
     # Keep the namespace name under 64 characters;
     # Otherwise the eos mgm fqdn becomes too long and things start failing
