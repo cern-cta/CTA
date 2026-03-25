@@ -33,7 +33,7 @@ class EosClientHost(DiskClientHost):
         except ValueError:
             return 0
 
-    def start_archive_process_async(
+    def archive_async(
         self,
         eos_host: str,
         dest_dir: str,
@@ -45,7 +45,7 @@ class EosClientHost(DiskClientHost):
         sss_keytab: str = "/etc/eos.keytab",
         write_files_in_chunks: bool = False,
     ) -> Future:
-        """Start archive as an async subprocess. Returns process handle for awaiting."""
+        """Start archival asynchronously. Returns a future that can be awaited."""
         cmd = (
             f"python3 -u /root/xrootd_archive.py "
             f"--eos-host {eos_host} "

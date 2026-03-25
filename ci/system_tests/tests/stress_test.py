@@ -154,7 +154,7 @@ async def test_generate_and_copy_files(env, stress_params):
     # multiprocessing with persistent XRootD File objects
     # Start archive as async subprocess — allows us to await completion instead of polling PID
     timer_start = time.time()
-    archive_future = eos_client.start_archive_process_async(
+    archive_future = eos_client.archive_async(
         eos_host=mgm_ip,
         dest_dir=archive_directory,
         num_files=total_file_count,
