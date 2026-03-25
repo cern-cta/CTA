@@ -111,7 +111,6 @@ build-cta-rpms-pgsched:
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
 
-# Once the main build type switched to RelWithDebInfo, this should be updated to debug
 build-cta-rpms-relwithdebinfo:
   extends:
     - build-cta-rpms
