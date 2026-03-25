@@ -12,7 +12,7 @@ class DiskClientHost(RemoteHost):
 
     def is_file_on_tape(self, disk_instance_name: str, path: str) -> bool: ...
 
-    def wait_for_file_archival(self, disk_instance_name: str, path: str, wait_timeout_secs: int = 20) -> bool:
+    def wait_for_file_archival(self, disk_instance_name: str, path: str, wait_timeout_secs: int = 20) -> None:
         print("Waiting for archival...")
         with Timeout(wait_timeout_secs) as t:
             while not self.is_file_on_tape(disk_instance_name, path) and not t.expired:
