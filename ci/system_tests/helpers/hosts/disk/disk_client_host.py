@@ -1,11 +1,11 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from ..remote_host import RemoteHost
-
-import uuid
 import time
+import uuid
+
 from ...utils.timeout import Timeout
+from ..remote_host import RemoteHost
 
 
 class DiskClientHost(RemoteHost):

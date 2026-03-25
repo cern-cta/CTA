@@ -1,22 +1,24 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import pytest
-import uuid
 import json
+import uuid
 
-from ..helpers.hosts import CtaCliHost
-from ..helpers.hosts import CtaTapedHost
-from ..helpers.utils import TempDiskInstanceSpace
-from ..helpers.utils import TempLogicalLibrary
-from ..helpers.utils import TempPhysicalLibrary
-from ..helpers.utils import TempMountPolicy
-from ..helpers.utils import TempStorageClass
-from ..helpers.utils import TempTapePool
-from ..helpers.utils import TempTape
-from ..helpers.utils import TempVirtualOrganization
-from ..helpers.utils import assert_dict_equals
-from ..helpers.utils import wait_for_condition
+import pytest
+
+from ..helpers.hosts import CtaCliHost, CtaTapedHost
+from ..helpers.utils import (
+    TempDiskInstanceSpace,
+    TempLogicalLibrary,
+    TempMountPolicy,
+    TempPhysicalLibrary,
+    TempStorageClass,
+    TempTape,
+    TempTapePool,
+    TempVirtualOrganization,
+    assert_dict_equals,
+    wait_for_condition,
+)
 
 # NOTE: these tests are only meant for cta-admin tests. Other tools should get their own test suite
 #

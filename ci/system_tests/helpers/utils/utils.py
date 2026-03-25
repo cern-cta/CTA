@@ -1,8 +1,9 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from .timeout import Timeout
 import time
+
+from .timeout import Timeout
 
 
 # We could let this return a boolean, but we get better error messages with individual asserts
