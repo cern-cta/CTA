@@ -181,6 +181,7 @@ mgm:
 
 fst:
   replicaCount: 1
+  podManagementPolicy: Parallel
 
   persistence:
     enabled: true

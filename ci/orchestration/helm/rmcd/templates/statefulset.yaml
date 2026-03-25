@@ -21,6 +21,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ $rmcdName }}
+  podManagementPolicy: Parallel
   template:
     metadata:
       labels:

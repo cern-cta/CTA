@@ -20,6 +20,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ $tapedName }}
+  podManagementPolicy: Parallel
   template:
     metadata:
       labels:
