@@ -3,12 +3,10 @@
 
 import asyncio
 import time
-from concurrent.futures import Future
 from functools import cached_property
-from subprocess import CompletedProcess
 from typing import Optional
 
-from ..connections.remote_connection import RemoteConnection
+from ..connections.remote_connection import ExecResult, RemoteConnection
 
 
 class RemoteHost:
@@ -23,13 +21,13 @@ class RemoteHost:
     def description(self) -> str:
         return self.conn.description
 
-    def exec(self, command: str, capture_output=False, throw_on_failure=True) -> CompletedProcess[bytes]:
+    def exec(self, command: str, capture_output=False, throw_on_failure=True) -> ExecResult:
         return self.conn.exec(command, capture_output=capture_output, throw_on_failure=throw_on_failure)
 
     def execWithOutput(self, command: str, throw_on_failure=True) -> str:
         return self.conn.exec(command, capture_output=True, throw_on_failure=throw_on_failure).stdout.strip()
 
-    def exec_async(self, command: str, throw_on_failure=True) -> Future:
+    def exec_async(self, command: str, throw_on_failure=True) -> asyncio.Future[ExecResult]:
         """Start a command asynchronously and return a future that can be awaited.
 
         This allows concurrent monitoring while the process runs.
@@ -55,7 +53,7 @@ class RemoteHost:
         if wait_for_restart:
             self.wait_for_host_up()
 
-    def is_host_up(self) -> None:
+    def is_host_up(self) -> bool:
         return self.conn.is_up()
 
     def wait_for_host_up(self) -> None:

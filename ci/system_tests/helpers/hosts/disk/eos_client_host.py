@@ -2,8 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-from concurrent.futures import Future
+import asyncio
 
+from ...connections.remote_connection import ExecResult
 from .disk_client_host import DiskClientHost
 
 
@@ -44,7 +45,7 @@ class EosClientHost(DiskClientHost):
         batch_size: int = 1000,
         sss_keytab: str = "/etc/eos.keytab",
         write_files_in_chunks: bool = False,
-    ) -> Future:
+    ) -> asyncio.Future[ExecResult]:
         """Start archival asynchronously. Returns a future that can be awaited."""
         cmd = (
             f"python3 -u /root/xrootd_archive.py "

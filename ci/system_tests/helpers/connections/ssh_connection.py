@@ -21,7 +21,7 @@ class SSHConnection(RemoteConnection):
         return f"{self.host}"
 
     @cached_property
-    def short_description(self) -> str:
+    def description(self) -> str:
         return f"SSH connection {self.name}"
 
     def exec(self, command: str, capture_output=False, throw_on_failure=True) -> ExecResult:
@@ -32,7 +32,7 @@ class SSHConnection(RemoteConnection):
             raise RuntimeError(f'"{full_command}" failed with exit code {result.returncode}: {result.stderr}')
         stdout = result.stdout if capture_output else b""
         stderr = result.stderr if capture_output else b""
-        return ExecResult(stdout=stdout.decode, stderr=stderr.decode, success=success)
+        return ExecResult(stdout=stdout.decode(), stderr=stderr.decode(), success=success)
 
     def copyTo(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
         full_command = f"scp {src_path} {self.user}@{self.host}:{dst_path}"

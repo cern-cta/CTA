@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -9,10 +10,10 @@ import pytest
 from .helpers.hosts.disk.disk_instance_host import DiskInstanceImplementation
 from .helpers.test_env import TestEnv
 
-try:
-    import tomllib  # Python 3.11+
-except ModuleNotFoundError:
-    import tomli as tomllib  # Python <3.11
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
+    import tomli as tomllib
 
 #####################################################################################################################
 # General/common fixtures

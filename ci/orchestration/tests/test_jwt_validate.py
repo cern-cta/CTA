@@ -1,10 +1,11 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from jwcrypto import jwk
+import argparse
+
 import jwt
 import requests
-import argparse
+from jwcrypto import jwk
 
 # on client pod
 # dnf install python3-pip
@@ -16,7 +17,7 @@ args = parser.parse_args()
 
 token = args.token
 
-header = jwt.get_unverified_header(token)
+header = jwt.get_unverified_header(token)  # type: ignore
 
 # Get the 'kid'
 kid = header.get("kid")
@@ -37,4 +38,4 @@ pubkey = key.export_to_pem(private_key=False).decode()
 print(pubkey)
 
 ## Validate the token using the public key..?
-jwt.decode(token, pubkey, algorithms=["RS256"])
+jwt.decode(token, pubkey, algorithms=["RS256"])  # type: ignore

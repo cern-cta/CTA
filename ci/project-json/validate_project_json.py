@@ -3,10 +3,11 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-from pathlib import Path
 import json
-import sys
 import re
+import sys
+from pathlib import Path
+
 import jsonschema
 
 
@@ -21,7 +22,8 @@ def validate_schema(project_json, schema_json):
         print("Schema validation of project.json failed:")
         print(f"  * Path: {path}")
         print(f"  * Error: {e.message}")
-        print(f"  * Expected: {e.schema.get('type')}")
+        expected_type = e.schema.get("type") if isinstance(e.schema, dict) else "unknown"
+        print(f"  * Expected: {expected_type}")
         print(f"  * Schema rule: {e.schema}")
         sys.exit(1)
 

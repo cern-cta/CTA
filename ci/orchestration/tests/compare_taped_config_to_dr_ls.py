@@ -4,8 +4,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import argparse
-import subprocess
 import json
+import subprocess
 import sys
 
 KEY_SKIP_LIST = ["MountCriteria"]

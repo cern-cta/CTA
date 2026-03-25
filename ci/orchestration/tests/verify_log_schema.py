@@ -4,6 +4,7 @@
 import argparse
 import json
 import sys
+
 from jsonschema import Draft202012Validator
 
 
@@ -33,7 +34,7 @@ def main():
     validator = Draft202012Validator(schema)
 
     errors = 0
-
+    i = 0
     for i, line in enumerate(iter_lines(args.input), start=1):
         line = line.strip()
         if not line:
@@ -67,6 +68,10 @@ def main():
 
     if errors:
         print(f"Total errors found: {errors}")
+        sys.exit(1)
+
+    if i == 0:
+        print(f"ERROR: No JSON objects found in {args.input}")
         sys.exit(1)
 
     print(f"SUCCESS: Verification of {args.input} against schema {args.schema} passed. {i} lines checked.")
