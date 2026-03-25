@@ -100,7 +100,8 @@ build-cta-rpms:
     paths:
       - ${BUILD_PATH}
 
-# This is not (and ideally should not) be used further down the pipeline; this is just a compilation check
+# These are not (and ideally should not) be used further down the pipeline; just a compilation checks
+
 build-cta-rpms-pgsched:
   extends:
     - build-cta-rpms
@@ -109,6 +110,13 @@ build-cta-rpms-pgsched:
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
+
+build-cta-rpms-relwithdebinfo:
+  extends:
+    - build-cta-rpms
+  allow_failure: true # TODO: remove once https://gitlab.cern.ch/cta/CTA/-/merge_requests/1207 is merged
+  variables:
+    CMAKE_BUILD_TYPE: "RelWithDebInfo"
 
 # Documentation export
 export-docs:
