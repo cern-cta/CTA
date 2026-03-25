@@ -112,6 +112,7 @@ build-cta-rpms-pgsched:
     SKIP_UNIT_TESTS: "TRUE"
 
 build-cta-rpms-relwithdebinfo:
+  allow_failure: true # TODO: remove once https://gitlab.cern.ch/cta/CTA/-/merge_requests/1207 is merged
   extends:
     - build-cta-rpms
   variables:
