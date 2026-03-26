@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
 import time
 from typing import Callable, Any
 
@@ -28,10 +29,11 @@ def canonicalize(obj: Any) -> Any:
     if isinstance(obj, dict):
         return {k: canonicalize(v) for k, v in obj.items()}
     elif isinstance(obj, list):
-        # try sorting; fallback to frozenset if elements are hashable
-        try:
-            return tuple(sorted(canonicalize(v) for v in obj))
-        except TypeError:
-            return frozenset(canonicalize(v) for v in obj)
+        canon_items = [canonicalize(v) for v in obj]
+        return tuple(sorted(canon_items, key=_sort_key))
     else:
         return obj
+
+
+def _sort_key(x: Any):
+    return json.dumps(x, sort_keys=True, separators=(",", ":"))
