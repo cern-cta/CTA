@@ -207,9 +207,8 @@ int rmc_send_scsi_cmd(const int tapefd,
   }
   if (do_not_open) {
     fd = tapefd;
-    sgpath[SGPATH_BUFSZ - 1] = '\0';
-    strncpy(sgpath, path, SGPATH_BUFSZ);
-    if (sgpath[SGPATH_BUFSZ - 1] != '\0') {
+    const int k = snprintf(sgpath, sizeof(sgpath), "%s", path);
+    if (k < 0 || static_cast<size_t>(k) >= sizeof(sgpath)) {
       snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "path exceeds maximum length");
       *msgaddr = rmc_err_msgbuf;
       serrno = ENOBUFS;
@@ -250,10 +249,8 @@ int rmc_send_scsi_cmd(const int tapefd,
     /* If the major device ID of the specified device is the same as the major device ID of any sg* device,
            we can use the path directly */
     if (sg_major > 0 && major(sbuf.st_rdev) == sg_major) {
-      sgpath[SGPATH_BUFSZ - 1] = '\0';
-      memset(sgpath, 0, sizeof(sgpath));
-      strncpy(sgpath, path, SGPATH_BUFSZ);
-      if (sgpath[SGPATH_BUFSZ - 1] != '\0') {
+      const int k = snprintf(sgpath, sizeof(sgpath), "%s", path);
+      if (k < 0 || static_cast<size_t>(k) >= sizeof(sgpath)) {
         snprintf(rmc_err_msgbuf, RMC_ERR_MSG_BUFSZ, "path exceeds maximum length");
         *msgaddr = rmc_err_msgbuf;
         serrno = ENOBUFS;

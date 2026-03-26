@@ -7,7 +7,7 @@ add_library(ctatapedaemoncommon SHARED
   TapedConfiguration.cpp
 )
 
-target_link_libraries(ctatapedaemoncommon
+target_link_libraries(ctatapedaemoncommon ctacommon
   stdc++fs
 )
 

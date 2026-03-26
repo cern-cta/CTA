@@ -8,6 +8,7 @@
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <charconv>
 #include <list>
 
 namespace castor::tape::tapeserver::rao {
@@ -21,12 +22,12 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
   for (uint32_t i = 0; i < njobs; i++) {
     cta::RetrieveJob* job = jobs.at(i).get();
     castor::tape::SCSI::Structures::RAO::blockLims lims;
-    lims.fseq[sizeof(lims.fseq) - 1] = '\0';
-    strncpy(reinterpret_cast<char*>(lims.fseq), std::to_string(i).c_str(), sizeof(lims.fseq));
-    if (lims.fseq[sizeof(lims.fseq) - 1] != '\0') {
+    int n = std::snprintf(reinterpret_cast<char*>(lims.fseq), sizeof(lims.fseq), "%u", i);
+    if (n < 0 || static_cast<size_t>(n) >= sizeof(lims.fseq)) {
       throw cta::exception::Exception("In EnterpriseRAOAlgorithm::performRAO: fSeq " + std::to_string(i)
                                       + " too long for buffer length " + std::to_string(sizeof(lims.fseq)));
     }
+
     lims.begin = job->selectedTapeFile().blockId;
     lims.end = job->selectedTapeFile().blockId + 8 +
                /* ceiling the number of blocks */
@@ -44,14 +45,24 @@ std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::
 
       /* Add the RAO sorted files to the new list*/
       for (auto fit = files.begin(); fit != files.end(); fit++) {
-        uint64_t id = atoi((char*) fit->fseq);
+        uint64_t id = 0;
+        auto* first = reinterpret_cast<const char*>(fit->fseq);
+        auto* last = first + sizeof(fit->fseq);
+        if (std::from_chars(first, last, id).ec != std::errc()) {
+          throw cta::exception::Exception("In EnterpriseRAOAlgorithm::performRAO: unable to parse fSeq value");
+        }
         raoOrder.push_back(id);
       }
       files.clear();
     }
   }
   for (auto fit = files.begin(); fit != files.end(); fit++) {
-    uint64_t id = atoi((char*) fit->fseq);
+    uint64_t id = 0;
+    auto* first = reinterpret_cast<const char*>(fit->fseq);
+    auto* last = first + sizeof(fit->fseq);
+    if (std::from_chars(first, last, id).ec != std::errc()) {
+      throw cta::exception::Exception("In EnterpriseRAOAlgorithm::performRAO: unable to parse fSeq value");
+    }
     raoOrder.push_back(id);
   }
   files.clear();

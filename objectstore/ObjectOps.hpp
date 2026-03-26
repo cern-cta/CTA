@@ -349,9 +349,11 @@ protected:
     m_objectOps->m_payloadInterpreted = false;
     // Apply the same to sub objects
     for (auto& oob : m_subObjectsOps) {
+      oob->m_lockForSubObject = nullptr;
       setObjectUnlocked(oob);
       oob->m_payloadInterpreted = false;
     }
+    m_subObjectsOps.clear();
   }
 };
 
@@ -400,6 +402,9 @@ public:
   void setObjectUnlocked(ObjectOpsBase* objectOps) override {
     objectOps->m_locksCount--;
     objectOps->m_locksForWriteCount--;
+    if (objectOps->m_exclusiveLock == this) {
+      objectOps->m_exclusiveLock = nullptr;
+    }
   }
 
   void lock(ObjectOpsBase& oo, uint64_t timeout_us = 0) {

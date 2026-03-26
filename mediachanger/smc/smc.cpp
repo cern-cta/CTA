@@ -498,15 +498,17 @@ int main(const int argc, char** argv) {
         }
         break;
       case 'V': /* vid */
-        vid[sizeof(vid) - 1] = '\0';
-        strncpy(vid, optarg, sizeof(vid));
-        if (vid[sizeof(vid) - 1] != '\0') {
+      {
+        const size_t maxLen = sizeof(vid) - 1;  // don't count null terminator
+        if (strnlen(optarg, maxLen + 1) > maxLen) {
           fprintf(stderr, SR004, optarg);
           errflg++;
-          vid[sizeof(vid) - 1] = '\0';
         }
+        strncpy(vid, optarg, maxLen);
+        vid[maxLen] = '\0';
         smc_str_upper(vid);
         break;
+      }
       case 'j':
         isJsonEnabled = 1;
         break;
