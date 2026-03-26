@@ -1633,6 +1633,17 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
   pl.isDisabled = getOptional(OptionBoolean::DISABLED);
   pl.disabledReason = getOptional(OptionString::DISABLED_REASON);
 
+  if (pl.isDisabled.has_value()) {
+    if (pl.isDisabled.value() && !pl.disabledReason.has_value()) {
+      throw exception::UserError(std::string("Cannot disable physical library ") + pl.name
+                                 + " because the reason has not been provided");
+    }
+    if (!pl.isDisabled.value() && !pl.disabledReason.has_value()) {
+      // when re-enabling the physical library (disabled=false), clear the previously stored disabled reason
+      pl.disabledReason = std::string("");
+    }
+  }
+
   m_catalogue.PhysicalLibrary()->modifyPhysicalLibrary(m_cliIdentity, pl);
 
   response.set_type(xrd::Response::RSP_SUCCESS);
