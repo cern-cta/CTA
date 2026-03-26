@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import time
+from typing import Callable
 
 from .timeout import Timeout
 
 
 # We could let this return a boolean, but we get better error messages with individual asserts
-def assert_dict_equals(actual, expected, ignore_keys):
+def assert_dict_equals(actual: dict, expected: dict, ignore_keys: list[str]):
     ignored = set(ignore_keys)
     for k1, v1 in actual.items():
         assert k1 in ignored or (k1 in expected and expected[k1] == v1)
@@ -15,7 +16,7 @@ def assert_dict_equals(actual, expected, ignore_keys):
         assert k2 in ignored or k2 in actual
 
 
-def wait_for_condition(cond_func, timeout_secs=10, interval_secs=0.5):
+def wait_for_condition(cond_func: Callable[[], bool], timeout_secs: float = 10, interval_secs: float = 0.5) -> None:
     with Timeout(timeout_secs) as t:
         while not cond_func() and not t.expired:
             time.sleep(interval_secs)

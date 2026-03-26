@@ -76,7 +76,7 @@ class EosClientHost(DiskClientHost):
         if wait:
             self.wait_for_file_archival(disk_instance_name, destination_path, wait_timeout_secs=wait_timeout_secs)
 
-    def is_file_on_tape(self, disk_instance_name: str, path: str):
+    def is_file_on_tape(self, disk_instance_name: str, path: str) -> bool:
         return int(self.execWithOutput(f'eos root://{disk_instance_name} ls {path} -y | grep "d0::t1" | wc -l')) == 1
 
     def delete_file(self, disk_instance_name: str, path: str) -> None:
