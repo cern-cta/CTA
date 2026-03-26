@@ -48,7 +48,10 @@ grpc:
 
     jwtAuth:
       enabled: true
-      jwksUri: http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
+      jwksUri: file:///etc/grid-security/jwks.json # http://auth-keycloak:8080/realms/master/protocol/openid-connect/certs
+      # Keycloak endpoint to fetch JWKS from (used by init container)
+      keycloakUrl: http://auth-keycloak:8080
+      keycloakRealm: master
 
     experimental:
       ctaAdminCommands:

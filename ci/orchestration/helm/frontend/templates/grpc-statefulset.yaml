@@ -61,6 +61,45 @@ spec:
           - name: grpc-health-probe-bin
             mountPath: /grpc-health-probe
             subPath: grpc-health-probe
+      {{- if .Values.grpc.conf.jwtAuth.enabled }}
+      - name: init3-fetch-jwks
+        image: {{ include "common.images.busybox" . }}
+        command: ["sh", "-c"]
+        args:
+          - |
+            KEYCLOAK_URL="{{ .Values.grpc.conf.jwtAuth.keycloakUrl }}"
+            REALM="{{ .Values.grpc.conf.jwtAuth.keycloakRealm }}"
+            JWKS_FILE="/etc/grid-security/jwks.json"
+            MAX_RETRIES=60
+            RETRY_INTERVAL=5
+
+            echo "Waiting for Keycloak to be ready..."
+            for i in $(seq 1 $MAX_RETRIES); do
+              if wget -q --spider "${KEYCLOAK_URL}/realms/${REALM}/.well-known/openid-configuration" 2>/dev/null; then
+                echo "Keycloak is ready"
+                break
+              fi
+              if [ $i -eq $MAX_RETRIES ]; then
+                echo "ERROR: Keycloak not ready after $MAX_RETRIES attempts"
+                exit 1
+              fi
+              echo "Keycloak not ready, retrying in ${RETRY_INTERVAL}s... ($i/$MAX_RETRIES)"
+              sleep $RETRY_INTERVAL
+            done
+
+            echo "Fetching JWKS from Keycloak..."
+            mkdir -p "$(dirname $JWKS_FILE)"
+            if ! wget -qO "$JWKS_FILE" "${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-connect/certs"; then
+              echo "ERROR: Failed to fetch JWKS"
+              exit 1
+            fi
+
+            echo "JWKS successfully saved to $JWKS_FILE"
+            cat "$JWKS_FILE"
+        volumeMounts:
+          - name: jwks-volume
+            mountPath: /etc/grid-security
+      {{- end }}
       containers:
       - name: cta-frontend
         image: {{ include "ctafrontend.image" . }}
@@ -161,6 +200,10 @@ spec:
           mountPath: /etc/cta/otlp-basic-auth-pwd.conf
           subPath: otlp-basic-auth-pwd.conf
         {{- end }}
+        {{- if .Values.grpc.conf.jwtAuth.enabled }}
+        - name: jwks-volume
+          mountPath: /etc/grid-security
+        {{- end }}
         {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
@@ -204,6 +247,10 @@ spec:
         emptyDir: {}
       - name: eos-sss-keytab-fixedownership
         emptyDir: {}
+      {{- if .Values.grpc.conf.jwtAuth.enabled }}
+      - name: jwks-volume
+        emptyDir: {}
+      {{- end }}
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
