@@ -24,7 +24,7 @@ class CtaCliHost(RemoteHost):
 
         raise RuntimeError(f"Failing to find drive status for drive: {drive_name}")
 
-    def wait_for_drive_status(self, drive_name: str, desired_status: str, timeout: int = 10):
+    def wait_for_drive_status(self, drive_name: str, desired_status: str, timeout: int = 10) -> None:
         print(f"Waiting for drives {drive_name} to be {desired_status}")
         for _ in range(timeout):
             drives_info = json.loads(self.execWithOutput(f"cta-admin --json drive ls '{drive_name}'"))
@@ -34,18 +34,35 @@ class CtaCliHost(RemoteHost):
             time.sleep(1)
         raise RuntimeError(f"Timeout reached while trying to put drives to: {desired_status}")
 
-    def set_drive_up(self, drive_name: str, wait: bool = True):
+    def set_drive_up(self, drive_name: str, wait: bool = True) -> None:
         self.exec(f"cta-admin dr up '{drive_name}' --reason 'Setting drive up'")
         if wait:
             self.wait_for_drive_status(drive_name, "UP")
 
-    def set_drive_down(self, drive_name: str, wait: bool = True):
+    def set_drive_down(self, drive_name: str, wait: bool = True) -> None:
         self.exec(f"cta-admin dr down '{drive_name}' --reason 'Setting drive down'")
         if wait:
             self.wait_for_drive_status(drive_name, "DOWN")
 
-    def set_all_drives_up(self, wait: bool = True):
+    def set_all_drives_up(self, wait: bool = True) -> None:
         self.set_drive_up(".*", wait=wait)
 
-    def set_all_drives_down(self, wait: bool = True):
+    def set_all_drives_down(self, wait: bool = True) -> None:
         self.set_drive_down(".*", wait=wait)
+
+    def list_all_tape_vids(self) -> list[str]:
+        output = self.execWithOutput("cta-admin --json tape ls --all")
+        tape_list = json.loads(output)
+        return [tape["vid"] for tape in tape_list]
+
+    def file_exists_in_cta(self, vid, archive_id) -> bool:
+        # Ls by --id is annoying because it will exit with a failure if the id does not exist
+        return int(self.execWithOutput(f"cta-admin --json tf ls -v {vid} | grep {archive_id} | wc -l")) == 1
+
+    def get_single_ls_item(self, ls_command, filter_func) -> dict:
+        ls_out = self.execWithOutput("cta-admin --json " + ls_command)
+        ls_json = json.loads(ls_out)
+        # If only cta-admin was a well designed API we wouldn't have to do this...
+        filtered_list = list(filter(filter_func, ls_json))
+        assert len(filtered_list) == 1
+        return filtered_list[0]

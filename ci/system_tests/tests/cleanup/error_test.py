@@ -27,7 +27,7 @@ def test_no_uncaught_exceptions(env, error_whitelist):
     error_messages = []  # for summaries
     for host in hosts:
         # collect logs
-        cmd = f"cat {host.log_file_location} | grep -a -E '(ERROR|CRITICAL)' || true"
+        cmd = f"""grep -aE '\\"log_level\\": *\\"(ERROR|CRITICAL)\\"' {host.log_file_location} || true"""
         output = host.execWithOutput(cmd).splitlines()
         if not output:
             # Nothing found, happy :D
@@ -57,9 +57,10 @@ def test_no_uncaught_exceptions(env, error_whitelist):
     for msg, count in sorted(error_counts.items(), key=lambda x: -x[1]):
         whitelist_prefix = "(whitelisted)"
         prefix = " " * len(whitelist_prefix)
+        # Check if we can pattern match the message based on a pattern in the whitelist
         if any(re.search(pattern, msg) for pattern in error_whitelist):
-            total_non_whitelisted_errors += count
             prefix = whitelist_prefix
+        else:
+            total_non_whitelisted_errors += count
         print(f'{prefix} Count: {count}, Message: "{msg}"')
-
     assert total_non_whitelisted_errors == 0, f"Found {total_non_whitelisted_errors} non-whitelisted logged errors"

@@ -7,6 +7,7 @@ from functools import cached_property
 from typing import Optional
 
 from ..connections.remote_connection import ExecResult, RemoteConnection
+from ..utils.timeout import Timeout
 
 
 class RemoteHost:
@@ -56,10 +57,13 @@ class RemoteHost:
     def is_host_up(self) -> bool:
         return self.conn.is_up()
 
-    def wait_for_host_up(self) -> None:
+    def wait_for_host_up(self, wait_timeout_secs: int = 120) -> None:
         print(f"Waiting for {self.name} to be up...")
-        while not self.is_host_up():
-            time.sleep(1)
+        with Timeout(wait_timeout_secs) as t:
+            while not self.is_host_up() and not t.expired:
+                time.sleep(1)
+            if t.expired:
+                raise TimeoutError(f"Host failed to come up within timeout of {wait_timeout_secs} seconds")
         print(f"{self.name} is up")
 
     def get_ip(self) -> str:

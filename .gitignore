@@ -71,6 +71,9 @@ Pipfile.lock
 # Pytest
 .pytest_cache
 
+# Profiling
+*.prof
+
 # --- Miscellaneous ignores ---
 
 # Logs and temporary files

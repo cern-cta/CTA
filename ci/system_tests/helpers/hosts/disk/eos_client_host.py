@@ -61,3 +61,23 @@ class EosClientHost(DiskClientHost):
         if write_files_in_chunks:
             cmd += " --write-files-in-chunks"
         return self.exec_async(cmd)
+
+    def archive_file(
+        self,
+        disk_instance_name: str,
+        destination_path: str,
+        source_path: str,
+        wait: bool = True,
+        wait_timeout_secs: int = 20,
+    ) -> None:
+        # TODO: specify protocol?
+        print(f"Copying {source_path} to archive directory {destination_path} on disk instance {disk_instance_name}")
+        self.exec(f"xrdcp {source_path} root://{disk_instance_name}/{destination_path}")
+        if wait:
+            self.wait_for_file_archival(disk_instance_name, destination_path, wait_timeout_secs=wait_timeout_secs)
+
+    def is_file_on_tape(self, disk_instance_name: str, path: str) -> bool:
+        return int(self.execWithOutput(f'eos root://{disk_instance_name} ls {path} -y | grep "d0::t1" | wc -l')) == 1
+
+    def delete_file(self, disk_instance_name: str, path: str) -> None:
+        self.exec(f"eos root://{disk_instance_name} rm --no-confirmation {path}")
