@@ -12,12 +12,13 @@ from .temp_resources import (
     TempVirtualOrganization,
 )
 from .timeout import Timeout
-from .utils import assert_dict_equals, wait_for_condition
+from .utils import assert_dict_equals, wait_for_condition, canonicalize
 
 __all__ = [
     "Timeout",
     "assert_dict_equals",
     "wait_for_condition",
+    "canonicalize",
     "TempDiskInstanceSpace",
     "TempLogicalLibrary",
     "TempPhysicalLibrary",

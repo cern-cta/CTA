@@ -18,6 +18,7 @@ from ..helpers.utils import (
     TempVirtualOrganization,
     assert_dict_equals,
     wait_for_condition,
+    canonicalize,
 )
 
 # NOTE: these tests are only meant for cta-admin tests. Other tools should get their own test suite
@@ -432,7 +433,9 @@ def test_cta_admin_drive(env):
         {k: v for k, v in dr_dict.items() if k not in ignore_keys} for dr_dict in json.loads(ls_before)
     ]
     ls_after_filtered = [{k: v for k, v in dr_dict.items() if k not in ignore_keys} for dr_dict in json.loads(ls_after)]
-    assert ls_before_filtered == ls_after_filtered
+    # dr ls returns some nested lists where the order of items may change
+    # Logically they are sets, but stored as lists, so we need to ensure order is ignored when testing for equality
+    assert canonicalize(ls_before_filtered) == canonicalize(ls_after_filtered)
 
 
 def test_cta_admin_physical_library(env):

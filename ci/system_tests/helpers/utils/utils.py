@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import time
-from typing import Callable
+from typing import Callable, Any
 
 from .timeout import Timeout
 
@@ -22,3 +22,16 @@ def wait_for_condition(cond_func: Callable[[], bool], timeout_secs: float = 10, 
             time.sleep(interval_secs)
         if t.expired:
             raise TimeoutError(f"Condition failed to change to True within in {timeout_secs} seconds")
+
+
+def canonicalize(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {k: canonicalize(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        # try sorting; fallback to frozenset if elements are hashable
+        try:
+            return tuple(sorted(canonicalize(v) for v in obj))
+        except TypeError:
+            return frozenset(canonicalize(v) for v in obj)
+    else:
+        return obj
