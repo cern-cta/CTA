@@ -280,6 +280,12 @@ std::string
 RdbmsPhysicalLibraryCatalogue::buildUpdateStmtStr(const common::dataStructures::UpdatePhysicalLibrary& pl) const {
   std::string setClause;
 
+  if (pl.model.has_value()) {
+    setClause += R"SQL(PHYSICAL_LIBRARY_MODEL = :PHYSICAL_LIBRARY_MODEL,)SQL";
+  }
+  if (pl.type.has_value()) {
+    setClause += R"SQL(PHYSICAL_LIBRARY_TYPE = :PHYSICAL_LIBRARY_TYPE,)SQL";
+  }
   if (pl.guiUrl.has_value()) {
     setClause += R"SQL(GUI_URL = :GUI_URL,)SQL";
   }
@@ -337,6 +343,12 @@ void RdbmsPhysicalLibraryCatalogue::bindUpdateParams(cta::rdbms::Stmt& stmt,
                                                      const common::dataStructures::UpdatePhysicalLibrary& pl,
                                                      const common::dataStructures::SecurityIdentity& admin,
                                                      const time_t now) const {
+  if (pl.model.has_value()) {
+    stmt.bindString(":PHYSICAL_LIBRARY_MODEL", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.model.value()));
+  }
+  if (pl.type.has_value()) {
+    stmt.bindString(":PHYSICAL_LIBRARY_TYPE", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.type.value()));
+  }
   if (pl.guiUrl.has_value()) {
     stmt.bindString(":GUI_URL", RdbmsCatalogueUtils::nulloptIfEmptyStr(pl.guiUrl.value()));
   }

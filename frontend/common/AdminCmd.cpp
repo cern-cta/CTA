@@ -1621,7 +1621,8 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
   common::dataStructures::UpdatePhysicalLibrary pl;
 
   pl.name = getRequired(OptionString::PHYSICAL_LIBRARY);
-
+  pl.model = getOptional(OptionString::LIBRARY_MODEL);
+  pl.type = getOptional(OptionString::LIBRARY_TYPE);
   pl.guiUrl = getOptional(OptionString::GUI_URL);
   pl.webcamUrl = getOptional(OptionString::WEBCAM_URL);
   pl.location = getOptional(OptionString::LIBRARY_LOCATION);
@@ -1631,6 +1632,17 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
   pl.comment = getOptional(OptionString::COMMENT);
   pl.isDisabled = getOptional(OptionBoolean::DISABLED);
   pl.disabledReason = getOptional(OptionString::DISABLED_REASON);
+
+  if (pl.isDisabled.has_value()) {
+    if (pl.isDisabled.value() && !pl.disabledReason.has_value()) {
+      throw exception::UserError(std::string("Cannot disable physical library ") + pl.name
+                                 + " because the reason has not been provided");
+    }
+    if (!pl.isDisabled.value() && !pl.disabledReason.has_value()) {
+      // when re-enabling the physical library (disabled=false), clear the previously stored disabled reason
+      pl.disabledReason = std::string("");
+    }
+  }
 
   m_catalogue.PhysicalLibrary()->modifyPhysicalLibrary(m_cliIdentity, pl);
 

@@ -859,6 +859,8 @@ physicallibrary (pl)
     opt_comment.optional()}                                                                                                  },
   {{AdminCmd::CMD_PHYSICALLIBRARY, AdminCmd::SUBCMD_CH},
    {opt_physical_library_alias,
+    opt_model.optional(),
+    opt_type.optional(),
     opt_gui_url.optional(),
     opt_webcam_url.optional(),
     opt_location.optional(),
