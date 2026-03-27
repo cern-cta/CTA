@@ -468,7 +468,7 @@ def test_cta_admin_physical_library(env):
 
         # Update
         cta_cli.exec(
-            f"cta-admin pl ch --name '{pl_name}' --location 'locB' --guiurl 'guicamUrlB' --webcamurl 'webcamUrlB' "
+            f"cta-admin pl ch --name '{pl_name}' --model 'modelB' --type 'typeB' --location 'locB' --guiurl 'guicamUrlB' --webcamurl 'webcamUrlB' "
             f"--nbphysicalcartridgeslots 8 --nbavailablecartridgeslots 6 --nbphysicaldriveslots 4 --comment 'Update {pl_name}'"
         )
         pl_updated1 = cta_cli.get_single_ls_item("pl ls", lambda x: x["name"] == pl_name)
@@ -486,6 +486,8 @@ def test_cta_admin_physical_library(env):
                 "lastModificationLog",
             ],
         )
+        assert pl_updated1["model"] == "modelB"
+        assert pl_updated1["type"] == "typeB"
         assert pl_updated1["location"] == "locB"
         assert pl_updated1["guiUrl"] == "guicamUrlB"
         assert pl_updated1["webcamUrl"] == "webcamUrlB"
