@@ -51,6 +51,7 @@ mgm:
 
   xrd:
     # Additional tape-specific config
+    sched: mint 16 maxt 2048 idle 128
     extraConfig: |
       xrootd.chksum  adler32
       mgmofs.archivedir /var/eos/archive
@@ -62,7 +63,6 @@ mgm:
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
-      xrd.sched mint 16 maxt 2048 idle 128
 
   # Liveness probes are disabled for all pods as we specifically do not want the pod to restart in case of an error for CI
   # Additionally, these liveness probes cause a lot of extra messages in the logs
@@ -115,6 +115,7 @@ fst:
       terminationGracePeriodSeconds: 1
 
   xrd:
+    sched: mint 16 maxt 512 idle 64
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
       fstofs.protowfendpoint cta-frontend:10955
@@ -122,7 +123,6 @@ fst:
       fstofs.protowfusegrpc false
       fstofs.filemd_handler  attr
       tpc.trace  all
-      xrd.sched mint 16 maxt 512 idle 64
 
   probes:
     liveness: false

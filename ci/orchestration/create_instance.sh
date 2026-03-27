@@ -45,7 +45,6 @@ usage() {
 
 # This should all go once we have auto-discovery and auto-scaling of hardware resources
 generate_tape_values_files() {
-  local one_logical_library="$1"
   echo "Auto-generating rmcd config..."
   rmcd_config=$(mktemp "/tmp/${namespace}-rmcd-XXXXXX-values.yaml")
   set -o pipefail
@@ -66,16 +65,17 @@ EOF
   echo "Auto-generating taped config..."
   # This file is cleaned up again by delete_instance.sh
   taped_config=$(mktemp "/tmp/${namespace}-taped-XXXXXX-values.yaml")
+
+  DRIVES_JSON_ARGS=(
+    --library-device "$library_device"
+    --max-drives "$max_drives"
+  )
   if [ "$one_logical_library" = true ]; then
-    drives_json=$(./../utils/tape/list_drives_in_library.sh \
-      --library-device "$library_device" \
-      --max-drives "$max_drives" \
-      -l)
-  else
-    drives_json=$(./../utils/tape/list_drives_in_library.sh \
-      --library-device "$library_device" \
-      --max-drives "$max_drives")
+    ARGS+=(-l)
   fi
+
+  drives_json=$(./../utils/tape/list_drives_in_library.sh "${ARGS[@]}")
+
   echo "taped:" > $taped_config
   echo "  drives:" >> $taped_config
   echo $drives_json | jq -r '.[] | "    - name: \(.name)\n      device: \(.device)\n      logicalLibraryName: \(.logicalLibraryName)\n      controlPath: \(.controlPath)"' >> $taped_config

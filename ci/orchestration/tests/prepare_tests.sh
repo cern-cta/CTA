@@ -15,15 +15,10 @@ get_pods_by_type() {
   kubectl get pod -l app.kubernetes.io/component=$type -n $namespace --no-headers -o custom-columns=":metadata.name"
 }
 
-ENABLE_ONE_LOGICAL_LIBRARY=false
-
-while getopts "n:l" o; do
+while getopts "n:" o; do
     case "${o}" in
         n)
             NAMESPACE=${OPTARG}
-            ;;
-        l)
-            ENABLE_ONE_LOGICAL_LIBRARY=true
             ;;
         *)
             usage
@@ -73,7 +68,7 @@ NB_TAPEDRIVES_IN_USE=${#TAPEDRIVES_IN_USE[@]}
 # Get list of library names that exist in drive config
 LIBRARY_NAMES_IN_USE=()
 for taped in $(get_pods_by_type taped $NAMESPACE); do
-  LIBRARY_NAMES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${taped} -c cta-taped -- printenv LIBRARY_NAME))
+  LIBRARY_NAMES_IN_USE+=($(kubectl --namespace ${NAMESPACE} exec ${taped} -c cta-taped -- printenv LOGICAL_LIBRARY_NAME))
 done
 NB_LIBRARY_NAMES_IN_USE=${#LIBRARY_NAMES_IN_USE[@]}
 
@@ -132,21 +127,12 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --j
   jq -r '.[] | " --vo  " + .name'  |                                    \
   xargs -I{} bash -c "kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin vo rm {}"
 
-if [ "$ENABLE_ONE_LOGICAL_LIBRARY" = false ]; then
-  # registers all libraries in use - which correspond to drive names in our setup
-  for ((i=0; i<${#TAPEDRIVES_IN_USE[@]}; i++)); do
-    kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin logicallibrary add \
-      --name ${TAPEDRIVES_IN_USE[${i}]}                                            \
-      --comment "ctasystest library mapped to drive ${TAPEDRIVES_IN_USE[${i}]}"
-  done
-elif
-  # registers only library which is the one used for the drives
-  for ((i=0; i<${#LIBRARY_NAMES_IN_USE[@]}; i++)); do
-    kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin logicallibrary add \
-      --name ${LIBRARY_NAMES_IN_USE[${i}]}                                            \
-      --comment "ctasystest library name added to the catalogue: ${LIBRARY_NAMES_IN_USE[${i}]}"
-  done
-fi
+# registers only library which is the one used for the drives
+for ((i=0; i<${#LIBRARY_NAMES_IN_USE[@]}; i++)); do
+  kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin logicallibrary add \
+    --name ${LIBRARY_NAMES_IN_USE[${i}]}                                            \
+    --comment "ctasystest library name added to the catalogue: ${LIBRARY_NAMES_IN_USE[${i}]}"
+done
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin diskinstance add  \
   --name ${EOS_INSTANCE_NAME}                                                    \
@@ -282,37 +268,20 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin arc
   --tapepool ctasystest_C                                                  \
   --comment "ctasystest"
 
-if [ "$ENABLE_ONE_LOGICAL_LIBRARY" = false ]; then
-  # add all tapes to default tape pool - using logical lib per drive
-  for ((i=0; i<${#TAPES[@]}; i++)); do
-    VID=${TAPES[${i}]}
-    kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape add     \
-      --mediatype "LTO8"                                                   \
-      --purchaseorder "order"                                              \
-      --vendor vendor                                                      \
-      --logicallibrary ${TAPEDRIVES_IN_USE[${i}%${NB_TAPEDRIVES_IN_USE}]}  \
-      --tapepool ctasystest                                                \
-      --comment "ctasystest"                                               \
-      --vid ${VID}                                                         \
-      --full false                                                         \
-      --comment "ctasystest"
-  done
-elif
-  # add all tapes to default tape pool - using a logical lib per multiple drives
-  for ((i=0; i<${#TAPES[@]}; i++)); do
-    VID=${TAPES[${i}]}
-    kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape add     \
-      --mediatype "LTO8"                                                   \
-      --purchaseorder "order"                                              \
-      --vendor vendor                                                      \
-      --logicallibrary ${LIBRARY_NAMES_IN_USE[${i}%${NB_LIBRARY_NAMES_IN_USE}]}  \
-      --tapepool ctasystest                                                \
-      --comment "ctasystest"                                               \
-      --vid ${VID}                                                         \
-      --full false                                                         \
-      --comment "ctasystest"
-  done
-fi
+# add all tapes to default tape pool
+for ((i=0; i<${#TAPES[@]}; i++)); do
+  VID=${TAPES[${i}]}
+  kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape add     \
+    --mediatype "LTO8"                                                   \
+    --purchaseorder "order"                                              \
+    --vendor vendor                                                      \
+    --logicallibrary ${LIBRARY_NAMES_IN_USE[${i}%${NB_LIBRARY_NAMES_IN_USE}]}  \
+    --tapepool ctasystest                                                \
+    --comment "ctasystest"                                               \
+    --vid ${VID}                                                         \
+    --full false                                                         \
+    --comment "ctasystest"
+done
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin mountpolicy add    \
   --name ctasystest                                                 \
