@@ -476,6 +476,8 @@ def test_cta_admin_physical_library(env):
             pl_updated1,
             pl_created,
             [
+                "model",
+                "type",
                 "location",
                 "guiUrl",
                 "webcamUrl",
