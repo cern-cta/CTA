@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 resetImage:
-  repository: gitlab-registry.cern.ch/cta/ctageneric
+  registry: gitlab-registry.cern.ch
+  repository: cta/cta-tools-xrd
   tag: "latest"
   pullPolicy: IfNotPresent
   pullSecrets:

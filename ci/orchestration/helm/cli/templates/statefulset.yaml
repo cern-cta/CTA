@@ -50,23 +50,7 @@ spec:
         image: {{ include "ctacli.image" . }}
         imagePullPolicy: {{ include "ctacli.imagePullPolicy" . }}
         stdin: true
-        {{- if .Values.useGrpc }}
-        command: ["/bin/bash", "/scripts/ctacli-grpc.sh"]
-        readinessProbe:
-          exec:
-            command: ["sh", "-c", "rpm -q cta-admin-grpc"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          failureThreshold: 60
-        {{- else }}
-        command: ["/bin/bash", "/scripts/ctacli.sh"]
-        readinessProbe:
-          exec:
-            command: ["sh", "-c", "rpm -q cta-cli"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          failureThreshold: 60
-        {{- end }}
+        command: ["/bin/bash", "/scripts/ctacli.sh"] # TODO: remove this script
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}

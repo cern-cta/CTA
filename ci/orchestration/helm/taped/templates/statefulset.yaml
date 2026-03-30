@@ -61,18 +61,6 @@ spec:
               - SYS_RAWIO
         command: ["/bin/bash", "-c"]
         args: ["{{- if $.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/taped.sh; {{- if $.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
-        startupProbe:
-          exec:
-            command: ["rpm", "-q", "cta-taped"]
-          initialDelaySeconds: 0
-          periodSeconds: 2
-          failureThreshold: 60
-        readinessProbe:
-          exec:
-            command: ["pgrep", "-f", "/usr/bin/cta-taped"]
-          initialDelaySeconds: 2
-          periodSeconds: 5
-          failureThreshold: 10
         stdin: true
         env:
         - name: MY_NAME

@@ -21,14 +21,17 @@ SPDX-License-Identifier: GPL-3.0-or-later
 */}}
 {{- define "common.images.image" -}}
   {{- $imageRoot := .imageRoot -}}
-  {{- $global := .global -}}
-  {{- if and $global.repository $global.tag -}}
-    {{- printf "%s:%s" $global.repository ( $global.tag | toString ) | quote -}}
-  {{- else if and $imageRoot.repository $imageRoot.tag -}}
-    {{- printf "%s:%s" $imageRoot.repository ( $imageRoot.tag | toString ) | quote -}}
-  {{- else }}
-    {{- fail "You must provide repository, and tag for the image in either .Values.global.image or .Values.image." -}}
-  {{- end }}
+  {{- $global := .global | default dict -}}
+
+  {{- $repository := default $imageRoot.repository $global.repository -}}
+  {{- $tag := default $imageRoot.tag $global.tag -}}
+  {{- $registry := default $imageRoot.registry $global.registry -}}
+
+  {{- if not (and $registry $repository $tag) -}}
+    {{- fail (printf "image definition incomplete: registry='%v', repository='%v', tag='%v'" $registry $repository $tag) -}}
+  {{- end -}}
+
+  {{- printf "%s/%s:%s" $registry $repository ($tag | toString) | quote -}}
 {{- end }}
 
 {{/*

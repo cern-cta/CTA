@@ -12,7 +12,7 @@
     "cppVersion": "c++20",
     "defaultPlatform": "el9",
     "defaultBuildType": "Debug",
-    "ctaImageRepository": "gitlab-registry.cern.ch/cta/ctageneric",
+    "ctaImageRegistry": "gitlab-registry.cern.ch",
     "eosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
     "eosImageTag": "5.3.23.el9",
     "eosServerChartVersion": "0.9.8",

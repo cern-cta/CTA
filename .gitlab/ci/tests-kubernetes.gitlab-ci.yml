@@ -48,9 +48,16 @@
   needs:
     - job: modify-project-json
       optional: true
-    - job: build-ctageneric-from-local-rpms
-      optional: true  # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
-    - job: build-ctageneric-from-remote-rpms
+     # Image builds are optional otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
+    - job: build-image-taped
+      optional: true
+    - job: build-image-rmcd
+      optional: true
+    - job: build-image-maintd
+      optional: true
+    - job: build-image-frontend
+      optional: true
+    - job: build-image-tools
       optional: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -221,9 +228,16 @@ stress-test:
   needs:
     - job: modify-project-json
       optional: true
-    - job: build-ctageneric-from-local-rpms
-      optional: true  # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
-    - job: build-ctageneric-from-remote-rpms
+     # Image builds are optional otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
+    - job: build-image-taped
+      optional: true
+    - job: build-image-rmcd
+      optional: true
+    - job: build-image-maintd
+      optional: true
+    - job: build-image-frontend
+      optional: true
+    - job: build-image-tools
       optional: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -297,9 +311,16 @@ stress-test-python:
   needs:
     - job: modify-project-json
       optional: true
-    - job: build-ctageneric-from-local-rpms
-      optional: true # Otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
-    - job: build-ctageneric-from-remote-rpms
+     # Image builds are optional otherwise the SYSTEM_TEST_ONLY PIPELINE_TYPE won't work
+    - job: build-image-taped
+      optional: true
+    - job: build-image-rmcd
+      optional: true
+    - job: build-image-maintd
+      optional: true
+    - job: build-image-frontend
+      optional: true
+    - job: build-image-tools
       optional: true
   rules:
     - when: manual

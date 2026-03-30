@@ -4,7 +4,7 @@
 # These settings are available to all the subcharts
 global:
   image:
-    repository: gitlab-registry.cern.ch/cta/ctageneric
+    registry: gitlab-registry.cern.ch
     tag: ""
     pullPolicy: IfNotPresent
     pullSecrets:

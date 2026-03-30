@@ -1,6 +1,11 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+image:
+  registry: gitlab-registry.cern.ch
+  repository: cta/cta-maintd
+  tag: latest
+
 # Note that by default this chart does not enable any routines for the objectstore/scheduler cleanup
 # To do this, enable these explicitly by passing in another values file (see e.g. presets/dev-cta-maintd-*-values.yaml)
 routines:

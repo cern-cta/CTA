@@ -5,10 +5,6 @@
 
 set -e
 
-# By default, only Postgres is installed, if we detect Oracle, we install OCCI instead
-grep oracle /etc/cta/cta-catalogue.conf && dnf install -y cta-lib-catalogue-occi
-dnf install -y cta-catalogueutils
-
 echo "Wiping catalogue"
 echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
 

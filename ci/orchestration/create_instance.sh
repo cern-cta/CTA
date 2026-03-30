@@ -21,7 +21,7 @@ usage() {
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
-  echo "  -r, --cta-image-repository <repo>:  Docker image name for the CTA chart. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
+  echo "  -r, --cta-image-registry <repo>:    Registry to find the CTA images in. Defaults to \"gitlab-registry.cern.ch\"."
   echo "  -i, --cta-image-tag <tag>:          Docker image tag for the CTA chart."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
   echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
@@ -117,7 +117,7 @@ create_instance() {
   reset_catalogue=false
   reset_scheduler=false
   setup_enabled=true
-  cta_image_repository=$(jq -r .dev.ctaImageRepository ${project_json_path}) # Used for the ctageneric pod image(s)
+  cta_image_registry=$(jq -r .dev.ctaImageRegistry ${project_json_path})
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
   max_drives=2
   # EOS related
@@ -148,8 +148,8 @@ create_instance() {
       -n|--namespace)
         namespace="$2"
         shift ;;
-      -r|--cta-image-repository)
-        cta_image_repository="$2"
+      -r|--cta-image-registry)
+        cta_image_registry="$2"
         shift ;;
       -i|--cta-image-tag)
         cta_image_tag="$2"
@@ -322,7 +322,7 @@ create_instance() {
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
   log_run helm ${helm_command} cta-catalogue helm/catalogue \
                                 --namespace "${namespace}" \
-                                --set resetImage.repository="${cta_image_repository}" \
+                                --set resetImage.registry="${cta_image_registry}" \
                                 --set resetImage.tag="${cta_image_tag}" \
                                 --set schemaVersion="${catalogue_schema_version}" \
                                 --set resetCatalogue="${reset_catalogue}" \
@@ -332,7 +332,7 @@ create_instance() {
 
   log_run helm ${helm_command} cta-scheduler helm/scheduler \
                                 --namespace "${namespace}" \
-                                --set resetImage.repository="${cta_image_repository}" \
+                                --set resetImage.registry="${cta_image_registry}" \
                                 --set resetImage.tag="${cta_image_tag}" \
                                 --set resetScheduler="${reset_scheduler}" \
                                 --set-file configuration="${scheduler_config}" \
@@ -384,7 +384,7 @@ create_instance() {
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \
                                 -f "${cta_config}" \
-                                --set global.image.repository="${cta_image_repository}" \
+                                --set global.image.registry="${cta_image_registry}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
                                 -f "${taped_config}" \

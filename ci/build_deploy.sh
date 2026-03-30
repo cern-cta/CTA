@@ -494,7 +494,7 @@ build_deploy() {
       cd ci/orchestration
        # shellcheck disable=SC2086
       ./create_instance.sh --namespace "${deploy_namespace}" \
-        --cta-image-repository localhost/ctageneric \
+        --cta-image-registry localhost \
         --cta-image-tag "${image_tag}" \
         --catalogue-config "${catalogue_config}" \
         --scheduler-config "${scheduler_config}" \
