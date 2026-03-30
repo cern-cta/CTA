@@ -113,7 +113,7 @@ class TestEnv:
             eos_client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
             cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"),
             cta_frontend_conns=TestEnv.get_k8s_connections_by_label(
-                namespace, "app.kubernetes.io/name", "cta-frontend"
+                namespace, "app.kubernetes.io/name", "cta-frontend", allow_partial_label_value_match=True
             ),
             cta_rmcd_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-rmcd", "cta-rmcd", allow_partial_label_value_match=True
