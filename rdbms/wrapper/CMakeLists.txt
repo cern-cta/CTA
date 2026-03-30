@@ -47,7 +47,8 @@ if (OCCI_SUPPORT)
     OcciEnv.cpp
     OcciEnvSingleton.cpp
     OcciRset.cpp
-    OcciStmt.cpp)
+    OcciStmt.cpp
+    OcciUtils.cpp)
 endif()
 
 # SQLITE
@@ -122,6 +123,7 @@ if (OCCI_SUPPORT)
   set(RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES
     ${RDBMS_WRAPPER_UNIT_TESTS_LIB_SRC_FILES}
     OcciColumnTest.cpp
+    OcciUtilsTest.cpp
   )
 endif()
 

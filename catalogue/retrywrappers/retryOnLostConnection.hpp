@@ -29,28 +29,24 @@ namespace cta::catalogue {
 template<typename T>
 typename std::result_of<T()>::type
 retryOnLostConnection(log::Logger& log, const T& callable, const uint32_t maxTriesToConnect) {
-  try {
-    for (uint32_t tryNb = 1; tryNb <= maxTriesToConnect; tryNb++) {
-      try {
-        return callable();
-      } catch (exception::LostDatabaseConnection& le) {
-        // Log lost connection
-        std::vector<log::Param> params = {
-          {"maxTriesToConnect", maxTriesToConnect    },
-          {"tryNb",             tryNb                },
-          {"msg",               le.getMessage().str()}
-        };
-        int logLevel = (tryNb == maxTriesToConnect) ? cta::log::CRIT : cta::log::WARNING;
-        log(logLevel, "Lost database connection", params);
+  for (uint32_t tryNb = 1; tryNb <= maxTriesToConnect; tryNb++) {
+    try {
+      return callable();
+    } catch (exception::LostDatabaseConnection& le) {
+      // Log lost connection
+      std::vector<log::Param> params = {
+        {"maxTriesToConnect", maxTriesToConnect    },
+        {"tryNb",             tryNb                },
+        {"msg",               le.getMessage().str()}
+      };
+      log(tryNb == maxTriesToConnect ? cta::log::CRIT : cta::log::WARNING, "Lost database connection", params);
+      if (tryNb == maxTriesToConnect) {
+        le.getMessage() << " Lost the database connection after trying " << maxTriesToConnect << " times.";
+        throw;
       }
     }
-
-    exception::Exception ex;
-    ex.getMessage() << "Lost the database connection after trying " << maxTriesToConnect << " times";
-    throw ex;
-  } catch (...) {
-    throw;
   }
+  throw exception::Exception("Failed to retry database connection");
 }
 
 }  // namespace cta::catalogue

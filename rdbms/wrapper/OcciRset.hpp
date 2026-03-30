@@ -13,6 +13,7 @@
 
 #include <memory>
 #include <occi.h>
+#include <set>
 
 namespace cta::rdbms::wrapper {
 

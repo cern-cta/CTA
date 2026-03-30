@@ -20,6 +20,7 @@
 #include "castor/tape/tapeserver/drive/DriveInterface.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/LogContext.hpp"
@@ -165,6 +166,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
                                              lc,
                                              m_dataTransferConfig.wdGetNextMountMaxSecs * 1000000);
       }
+    } catch (cta::exception::LostDatabaseConnection&) {
+      lc.log(cta::log::ERR, "Lost database error while scheduling new mount. Retrying.");
     } catch (cta::exception::TimeoutException&) {
       // Print warning and try again, after refreshing the tape drive states
       cta::log::ScopedParamContainer params(lc);
