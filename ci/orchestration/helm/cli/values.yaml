@@ -1,6 +1,11 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+image:
+  registry: gitlab-registry.cern.ch
+  repository: cta/cta-tools-xrd
+  tag: latest
+
 replicaCount: 1
 useGrpc: false
 

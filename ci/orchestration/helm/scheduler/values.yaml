@@ -4,8 +4,9 @@
 resetScheduler: false
 
 resetImage:
-  repository: gitlab-registry.cern.ch/cta/ctageneric
-  tag: ""
+  registry: gitlab-registry.cern.ch
+  repository: cta/cta-tools-xrd
+  tag: latest
   pullPolicy: IfNotPresent
   pullSecrets:
     - reg-ctageneric

@@ -17,7 +17,6 @@ dnf install -y cta-scheduler-utils
 
 # Clean up scheduler
 if [[ "$SCHEDULER_BACKEND" == "vfs" ]] || [[ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]]; then
-
   echo "Wiping objectstore"
   if [[ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]]; then
     rm -fr $SCHEDULER_URL
@@ -33,8 +32,6 @@ elif [[ "$SCHEDULER_BACKEND" == "postgres" ]]; then
   echo "Creating the scheduler DB schema"
   cta-scheduler-schema-create /etc/cta/cta-scheduler.conf || die "ERROR: Could not create scheduler schema. cta-scheduler-schema-create /etc/cta/cta-scheduler.conf FAILED"
 elif [[ "$SCHEDULER_BACKEND" == "ceph" ]]; then
-  dnf config-manager --enable ceph
-  dnf install -y ceph-common
   echo "Wiping objectstore"
   if [[ $(rados -p $SCHEDULER_CEPH_POOL --id $SCHEDULER_CEPH_ID --namespace $SCHEDULER_CEPH_NAMESPACE ls | wc -l) -gt 0 ]]; then
     echo "Rados objectstore ${SCHEDULER_URL} is not empty: deleting content"

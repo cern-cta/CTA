@@ -36,7 +36,7 @@ buildImage() {
   local container_runtime="podman"
   local rpm_default_src="image_rpms"
   local defaultPlatform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
-  local dockerfile="ci/docker/${defaultPlatform}/prod.Dockerfile"
+  local dockerfile="ci/docker/${defaultPlatform}/prod-minimal.Dockerfile"
   local load_into_k8s=false
   # Note that the capitalization here is intentional as this is passed directly as a build arg
   local use_internal_repos="FALSE"
@@ -133,6 +133,14 @@ buildImage() {
   # This is important to ensure that the RPMs are accessible from the Docker build context
   # (as the provided location might be outside of the project root)
   cp -r ${rpm_src}/*${rpm_version}*.rpm "${rpm_default_src}"
+  # TODO: ensure createrepo is installed
+  createrepo "${rpm_default_src}"
+
+  # start HTTP server in background
+  pushd "${rpm_default_src}"
+  python3 -m http.server 8000 >/dev/null 2>&1 &
+  SERVER_PID=$!
+  popd
 
   # TODO: handle grpc
   targets=(
@@ -143,8 +151,9 @@ buildImage() {
     "cta-tools-xrd"
   )
 
+  # Build
   for target in "${targets[@]}"; do
-    image_ref="${target}:${image_tag}"
+    image_ref="cta/${target}:${image_tag}"
 
     echo "Building ${tag} from $dockerfile --target $target"
 
@@ -153,31 +162,41 @@ buildImage() {
       ${container_runtime} build . -f ${dockerfile} \
         -t ${image_ref} \
         --network host \
-        --build-arg USE_INTERNAL_REPOS=${use_internal_repos} \
+        --build-arg CTA_REPO_URL="http://host.containers.internal:8000/" \
         --target $target
     )
-
-    # TODO: extract to outer loop?
-    if [[ "$load_into_k8s" == "true" ]]; then
-      image_ref="localhost/${image_name}:${image_tag}"
-      # Note that the below checks are rather crude (for speed)
-
-      # Load into minikube (use stdin to avoid a temp file)
-      if command -v minikube >/dev/null 2>&1; then
-        echo "Minikube detected -> loading image into minikube"
-        ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
-      fi
-
-      # Load into k3s (stream into containerd, no temp file)
-      if command -v k3s >/dev/null 2>&1; then
-        echo "k3s detected -> loading image into k3s/containerd"
-        ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
-      fi
-    fi
   done
+
+  if [[ "$load_into_k8s" == "true" ]]; then
+    # Note that the below checks are rather crude (for speed)
+
+    # Load into minikube (use stdin to avoid a temp file)
+    if command -v minikube >/dev/null 2>&1; then
+      echo "Minikube detected -> loading images into minikube"
+      for target in "${targets[@]}"; do
+        image_ref="cta/${target}:${image_tag}"
+        echo "Loading $image_ref..."
+        ${container_runtime} save "${image_ref}" | minikube image load --overwrite - &
+      done
+      wait
+    fi
+
+    # Load into k3s (stream into containerd)
+    if command -v k3s >/dev/null 2>&1; then
+      echo "k3s detected -> loading images into k3s/containerd"
+      for target in "${targets[@]}"; do
+        image_ref="cta/${target}:${image_tag}"
+        echo "Loading $image_ref..."
+        ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import - &
+      done
+      wait
+    fi
+    echo "Done"
+  fi
 
   # Clean up again
   rm -rf "${rpm_default_src}"
+  kill ${SERVER_PID} 2>/dev/null || true # TODO: figure out why failing
 
   # Clean up build context temp files left by podman/docker
   rm -f /tmp/build.*.tar 2>/dev/null || true
