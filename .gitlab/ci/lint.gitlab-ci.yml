@@ -14,6 +14,7 @@ lint-cpp:
         - "**/*.h"
         - "**/*.cpp"
         - "**/*.hpp"
+        - ".gitlab-ci.yml" # For changes in the image
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -25,11 +26,12 @@ lint-cpp:
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
+    # Should also have the following flag, but not supported in the cppcheck version available in EPEL
+    # --check-level=exhaustive
     - cppcheck --xml
                --force
                --enable=warning,performance
                --inline-suppr
-               --check-level=exhaustive
                --suppressions-list=.cppcheck-suppressions.txt
                . 2> cppcheck_out.xml
     - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
@@ -55,6 +57,7 @@ lint-bash:
       when: never
     - changes:
         - "**/*.sh"
+        - ".gitlab-ci.yml" # For changes in the image
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -84,6 +87,7 @@ lint-python:
       when: never
     - changes:
         - "**/*.py"
+        - ".gitlab-ci.yml" # For changes in the image
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -217,6 +221,7 @@ format-cpp:
         - "**/*.cpp"
         - "**/*.hpp"
         - "**/*.json"
+        - ".gitlab-ci.yml" # For changes in the image
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -241,6 +246,7 @@ format-python:
       when: never
     - changes:
         - "**/*.py"
+        - ".gitlab-ci.yml" # For changes in the image
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
@@ -263,6 +269,7 @@ type-check-python:
       when: never
     - changes:
         - "**/*.py"
+        - ".gitlab-ci.yml" # For changes in the image
       when: always
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       when: always
