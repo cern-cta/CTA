@@ -18,3 +18,7 @@ class CtaFrontendHost(RemoteHost):
         return self.execWithOutput(
             r"cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf | grep -o -E '[0-9]+\.[0-9]'"
         )
+
+    @cached_property
+    def is_grpc(self) -> bool:
+        return "grpc" in self.conn.name
