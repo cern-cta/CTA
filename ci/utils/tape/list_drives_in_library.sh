@@ -19,7 +19,7 @@ usage() {
 }
 
 max_drives=1000
-ENABLE_ONE_LOGICAL_LIBRARY=false
+enable_one_logical_library_only=false
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -32,7 +32,7 @@ while [[ "$#" -gt 0 ]]; do
       max_drives="$2"
       shift ;;
     -l|--enable-one-logical-library)
-      ENABLE_ONE_LOGICAL_LIBRARY=true
+      enable_one_logical_library_only=true
       ;;
     *)
       echo "Unsupported argument: $1"
@@ -82,7 +82,7 @@ for drive_device in $drive_devices; do
   serial=$(sg_inq "$sg_device" 2>/dev/null | awk '/Unit serial number/ {print $4; exit}')
 
   drive_name="${vendor}-${serial}"
-  if [ "$ENABLE_ONE_LOGICAL_LIBRARY" = true ]; then
+  if [ "$enable_one_logical_library_only" = true ]; then
     if [[ -z "$logical_lib_name" ]]; then
       logical_lib_name="${drive_name}"+"_LOGICAL_LIBRARY_NAME"
     fi
