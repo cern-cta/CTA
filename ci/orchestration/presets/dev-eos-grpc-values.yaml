@@ -52,7 +52,7 @@ mgm:
   xrd:
     # Additional tape-specific config
     # The option mgmofs.protowfusegrpc should be configurable
-    sched: mint 16 maxt 2048 idle 128
+    sched: "mint 16 maxt 2048 idle 128"
     extraConfig: |
       xrootd.chksum  adler32
       mgmofs.archivedir /var/eos/archive
@@ -192,7 +192,7 @@ fst:
       podManagementPolicy: Parallel
 
   xrd:
-    sched: mint 16 maxt 512 idle 64
+    sched: "mint 16 maxt 512 idle 64"
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
       fstofs.protowfendpoint cta-frontend-grpc:10956
