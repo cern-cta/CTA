@@ -17,7 +17,7 @@ public:
   /**
    * A method to check if an exception was due to the connection to the DB backend being long
    */
-  static bool isLostConnection(std::exception& se);
+  static bool isLostConnection(const std::exception& se);
 };
 
 }  // namespace cta::rdbms::wrapper

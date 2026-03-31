@@ -1,5 +1,5 @@
 /*
-* SPDX-FileCopyrightText: 2021 CERN
+* SPDX-FileCopyrightText: 2026 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -11,19 +11,20 @@
 
 namespace cta::rdbms::wrapper {
 
-bool OcciUtils::isLostConnection(std::exception& se) {
+bool OcciUtils::isLostConnection(const std::exception& se) {
+  constexpr int errorLength = 5;
   const std::set<int> lostConnectionErrors {
     25401,
   };
 
-  const auto prefix = "ORA-";
+  constexpr char prefix[] = "ORA-";
   auto pos = std::strstr(se.what(), prefix);
   if (!pos) {
     return false;
   }
 
-  pos += 4;
-  if (int errorCode = 0; std::from_chars(pos, pos + 5, errorCode).ec == std::errc {}) {
+  pos += sizeof(prefix);
+  if (int errorCode = 0; std::from_chars(pos, pos + errorLength, errorCode).ec == std::errc {}) {
     return lostConnectionErrors.contains(errorCode);
   }
   return false;
