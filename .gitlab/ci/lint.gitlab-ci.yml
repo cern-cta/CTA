@@ -26,12 +26,11 @@ lint-cpp:
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
-    # Should also have the following flag, but not supported in the cppcheck version available in EPEL
-    # --check-level=exhaustive
     - cppcheck --xml
                --force
                --enable=warning,performance
                --inline-suppr
+               --check-level=exhaustive
                --suppressions-list=.cppcheck-suppressions.txt
                . 2> cppcheck_out.xml
     - cppcheck-codequality --input-file=cppcheck_out.xml --output-file=cppcheck.json
