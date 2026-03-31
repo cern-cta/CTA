@@ -89,7 +89,7 @@ spec:
         - name: DRIVE_NAME
           value: {{ .name }}
         - name: LOGICAL_LIBRARY_NAME
-          value: {{ $.Values.logicalLibraryName }}
+          value: {{ .logicalLibraryName }}
         - name: DRIVE_DEVICE
           value: {{ .device }}
         - name: SCHEDULER_BACKEND
