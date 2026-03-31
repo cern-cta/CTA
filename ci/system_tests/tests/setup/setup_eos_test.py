@@ -33,7 +33,8 @@ def test_general_settings(env):
     env.eos_mgm[0].exec("eos space set default on")
     env.eos_mgm[0].exec("eos space config default space.filearchivedgc=on")
     env.eos_mgm[0].exec("eos space config default space.wfe=on")
-    env.eos_mgm[0].exec("eos space config default space.wfe.ntx=100")
+    env.eos_mgm[0].exec("eos space config default space.wfe.ntx=1500")
+    env.eos_mgm[0].exec("eos space config default space.wfe.interval=1")
     env.eos_mgm[0].exec("eos space config default taperestapi.status=on")
     env.eos_mgm[0].exec("eos space config default taperestapi.stage=on")
     env.eos_mgm[0].exec("eos space config default space.scanrate=0")
@@ -43,6 +44,7 @@ def test_general_settings(env):
     env.eos_mgm[0].exec("eos space config default space.scaninterval=0")
     env.eos_mgm[0].exec("eos attr -r set default=replica /eos")
     env.eos_mgm[0].exec("eos attr -r set sys.forced.nstripes=1 /eos")
+    env.eos_mgm[0].exec("eos debug warning '*'")
 
 
 @pytest.mark.eos
