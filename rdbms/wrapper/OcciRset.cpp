@@ -9,8 +9,8 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/utils/utils.hpp"
+#include "rdbms/DBException.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
-#include "rdbms/wrapper/OcciUtils.hpp"
 
 namespace cta::rdbms::wrapper {
 
@@ -70,10 +70,10 @@ bool OcciRset::next() {
   try {
     const occi::ResultSet::Status status = m_rset->next();
     return occi::ResultSet::DATA_AVAILABLE == status;
-  } catch (std::exception& se) {
-    if (OcciUtils::isLostConnection(se)) {
-      throw exception::LostDatabaseConnection("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
-    }
+  } catch (const occi::SQLException& se) {
+    m_stmt.checkAndThrowIfNeeded(se);
+    throw DBException("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
+  } catch (const std::exception& se) {
     throw exception::Exception("Failed SQL statement " + m_stmt.getSql() + ": " + se.what());
   }
 }

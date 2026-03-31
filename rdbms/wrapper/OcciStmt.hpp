@@ -171,6 +171,14 @@ public:
   void setColumn(OcciColumn& col, oracle::occi::Type type = oracle::occi::OCCI_SQLT_STR);
 
   /**
+   * Check the exception and close the connection if necessary
+   *
+   * @param ex The Oracle exception.
+   * @return True if the connection should be closed.
+   */
+  void checkAndThrowIfNeeded(const oracle::occi::SQLException& ex);
+
+  /**
    * Determines whether or not the connection should be closed based on the
    * specified Oracle exception.
    *
