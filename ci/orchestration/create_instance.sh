@@ -71,10 +71,10 @@ EOF
     --max-drives "$max_drives"
   )
   if [ "$one_logical_library" = true ]; then
-    ARGS+=(-l)
+    DRIVES_JSON_ARGS+=(-l)
   fi
 
-  drives_json=$(./../utils/tape/list_drives_in_library.sh "${ARGS[@]}")
+  drives_json=$(./../utils/tape/list_drives_in_library.sh "${DRIVES_JSON_ARGS[@]}")
 
   echo "taped:" > $taped_config
   echo "  drives:" >> $taped_config
