@@ -86,8 +86,8 @@ for drive_device in $drive_devices; do
     if [[ -z "$logical_lib_name" ]]; then
       logical_lib_name="${drive_name}"+"_LOGICAL_LIBRARY_NAME"
     fi
-  elif
-    logical_lib_name=$drive_name
+  else
+    logical_lib_name="$drive_name"
   fi
   (( first )) || echo ","
   first=0
