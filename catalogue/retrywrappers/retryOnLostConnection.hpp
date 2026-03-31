@@ -39,10 +39,12 @@ retryOnLostConnection(log::Logger& log, const T& callable, const uint32_t maxTri
         {"tryNb",             tryNb                },
         {"msg",               le.getMessage().str()}
       };
-      log(tryNb == maxTriesToConnect ? cta::log::CRIT : cta::log::WARNING, "Lost database connection", params);
       if (tryNb == maxTriesToConnect) {
-        le.getMessage() << " Lost the database connection after trying " << maxTriesToConnect << " times.";
+        log(cta::log::ERR, "Unable to connect to database after multiple retries", params);
+        le.getMessage() << " Unable to connect to database after " << maxTriesToConnect << " retries.";
         throw;
+      } else {
+        log(cta::log::WARNING, "Lost database connection", params);
       }
     }
   }
