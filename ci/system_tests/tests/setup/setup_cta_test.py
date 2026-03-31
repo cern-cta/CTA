@@ -1,6 +1,8 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import pytest
+
 from concurrent.futures import ThreadPoolExecutor
 
 from ...helpers.hosts.cta_rmcd_host import CtaRmcdHost
@@ -24,17 +26,23 @@ def test_hosts_present_cta_setup(krb5_realm, env):
 
 def test_copy_scripts_to_ctacli(env):
     for cta_cli in env.cta_cli:
-        cta_cli.copyTo("tests/remote_scripts/cta_cli/", "/test/", permissions="+x")
+        cta_cli.copyTo("tests/remote_scripts/cta_cli/", "/test", permissions="+x")
 
 
 #####################################################################################################################
-# Kerberos
+# Authentication
 #####################################################################################################################
 
 
 def test_kinit_clients(env, krb5_realm):
     for cta_cli in env.cta_cli:
         cta_cli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
+
+
+@pytest.mark.grpc_frontend
+def test_obtain_grpc_jwt(env):
+    for cta_cli in env.cta_cli:
+        cta_cli.exec("/test/grpc_obtain_jwt.sh")
 
 
 #####################################################################################################################

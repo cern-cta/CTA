@@ -160,6 +160,7 @@ def pytest_collection_modifyitems(config, items):
     # Now figure out which disk instance are present in the test setup, so that we can skip
     # any marked tests for disk instances not in our environment
     present_disk_instances: list[DiskInstanceImplementation] = [di.implementation for di in config.env.disk_instance]
+    grpc_frontend_present: bool = any(frontend.is_grpc for frontend in config.env.cta_frontend)
 
     if not config.getoption("--no-setup"):
         add_test_into_existing_collection("tests/setup/setup_cta_test.py", items, prepend=True)
@@ -180,6 +181,8 @@ def pytest_collection_modifyitems(config, items):
 
     all_disk_instances: list[DiskInstanceImplementation] = [e for e in DiskInstanceImplementation]
     skip_marks: list[str] = [e.label for e in (set(all_disk_instances) - set(present_disk_instances))]
+    if not grpc_frontend_present:
+        skip_marks.append("grpc_frontend")
     # Skip all tests specific to disk instances not present
     for item in items:
         if any(mark in item.keywords for mark in skip_marks):
