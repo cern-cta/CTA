@@ -9,14 +9,8 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/utils/utils.hpp"
-#include "rdbms/NullDbValue.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
 #include "rdbms/wrapper/OcciUtils.hpp"
-
-#include <charconv>
-#include <cstring>
-#include <set>
-#include <stdexcept>
 
 namespace cta::rdbms::wrapper {
 
