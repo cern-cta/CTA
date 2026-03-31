@@ -45,30 +45,10 @@ xrd::Response AdminCmd::process() {
   utils::Timer t;
 
   try {
-    // Check if the command is disabled
-    switch (m_adminCommandMode) {
-      case (common::AdminCmdMode::ALL):
-        // All commands are accepted
-        break;
-      case (common::AdminCmdMode::REPACK):
-        // Only repack commands are accepted
-        if (m_adminCmd.cmd() != admin::AdminCmd::CMD_REPACK) {
-          throw cta::exception::UserError(c_disabledAdminCmdMsg);
-        }
-        break;
-      case (common::AdminCmdMode::NO_REPACK):
-        // No repack commands are accepted
-        if (m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK) {
-          throw cta::exception::UserError(c_disabledAdminCmdMsg);
-        }
-        break;
-      case (common::AdminCmdMode::VERSION):
-      case (common::AdminCmdMode::NONE):
-        // No commands are accepted (version is stream command only)
-        throw cta::exception::UserError(c_disabledAdminCmdMsg);
-        break;
-      default:
-        throw cta::exception::UserError("Misconfiguration in admin command mode. " + c_disabledAdminCmdMsg);
+    // Check if admin commands is explicitly disabled
+    if (m_adminCommandMode == common::AdminCmdMode::NONE || m_adminCommandMode == common::AdminCmdMode::VERSION
+        || (m_adminCommandMode == common::AdminCmdMode::NO_REPACK && m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK)) {
+      throw cta::exception::UserError(c_disabledAdminCmdMsg);
     }
 
     // Map the <Cmd, SubCmd> to a method
@@ -1198,36 +1178,18 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
     m_catalogue.Tape()->setTapeFull(m_cliIdentity, vid, full.value());
   }
   if (state.has_value()) {
-    if (m_adminCommandMode != common::AdminCmdMode::ALL) {
-      // We need to validate if we can modify the state of this tape
-      auto tapeToVid = m_catalogue.Tape()->getTapesByVid(vid);
-      if (!tapeToVid.contains(vid)) {
-        throw cta::exception::UserError("The VID " + vid + " does not exist");
-      }
-      auto tapeState = tapeToVid[vid].state;
-      using Tape = common::dataStructures::Tape;
-      if (m_adminCommandMode == common::AdminCmdMode::REPACK
-          && (tapeState == Tape::State::ACTIVE || tapeState == Tape::State::DISABLED)) {
-        std::ostringstream oss;
-        oss << "Unable to modify state of VID " << vid << ": ";
-        oss << "Disabled user requests forbids changing tapes currently in ";
-        oss << Tape::stateToString(Tape::State::ACTIVE) + " or " + Tape::stateToString(Tape::State::DISABLED)
-            << " state";
-        throw cta::exception::UserError(oss.str());
-      }
-      if (m_adminCommandMode == common::AdminCmdMode::NO_REPACK
-          && (tapeState == Tape::State::REPACKING || tapeState == Tape::State::REPACKING_DISABLED)) {
-        std::ostringstream oss;
-        oss << "Unable to modify state of VID " << vid << ": ";
-        oss << "Disabled repack requests forbids changing tapes currently in ";
-        oss << Tape::stateToString(Tape::State::REPACKING) + " or "
-                 + Tape::stateToString(Tape::State::REPACKING_DISABLED)
-            << " state";
-        throw cta::exception::UserError(oss.str());
-      }
-    }
     auto stateEnumValue = common::dataStructures::Tape::stringToState(state.value(), true);
-    m_scheduler.triggerTapeStateChange(m_cliIdentity, vid, stateEnumValue, stateReason, m_lc);
+    auto operatingMode = Scheduler::OperatingMode::ALL;
+
+    // Modes NONE/VERSION were already handled before the current function call
+    if (m_adminCommandMode == common::AdminCmdMode::REPACK) {
+      operatingMode = Scheduler::OperatingMode::REPACK;
+    }
+    if (m_adminCommandMode == common::AdminCmdMode::NO_REPACK) {
+      operatingMode = Scheduler::OperatingMode::USER;
+    }
+
+    m_scheduler.triggerTapeStateChange(m_cliIdentity, vid, stateEnumValue, stateReason, m_lc, operatingMode);
   }
   if (dirty.has_value()) {
     m_catalogue.Tape()->setTapeDirty(m_cliIdentity, vid, dirty.value());

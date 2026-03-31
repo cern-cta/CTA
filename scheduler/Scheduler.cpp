@@ -2752,8 +2752,42 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                                        const std::string& vid,
                                        const common::dataStructures::Tape::State& new_state,
                                        const std::optional<std::string>& stateReason,
-                                       log::LogContext& logContext) {
+                                       log::LogContext& logContext,
+                                       OperatingMode operatingMode) {
   using Tape = common::dataStructures::Tape;
+
+  static const std::pair c_forbiddenTransitionsRepackMode {
+    // From
+    std::set {
+              Tape::State::ACTIVE,
+              Tape::State::DISABLED,
+              Tape::State::REPACKING_PENDING,
+              Tape::State::BROKEN_PENDING,
+              Tape::State::EXPORTED_PENDING,
+              },
+    // To
+    std::set {
+              Tape::State::REPACKING,
+              Tape::State::BROKEN,
+              Tape::State::EXPORTED,
+              }
+  };
+  static const std::pair c_forbiddenTransitionsUserMode {
+    // From
+    std::set {
+              Tape::State::REPACKING,
+              Tape::State::REPACKING_DISABLED,
+              },
+    // To
+    std::set {
+              Tape::State::ACTIVE,
+              Tape::State::DISABLED,
+              Tape::State::REPACKING,
+              Tape::State::BROKEN,
+              Tape::State::EXPORTED,
+              }
+  };
+
   // Tape must exist on catalogue
   if (!m_catalogue.Tape()->tapeExists(vid)) {
     throw cta::exception::UserError("The VID " + vid + " does not exist");
@@ -2767,14 +2801,26 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
       || new_state == Tape::REPACKING_PENDING) {
     throw cta::exception::UserError("Internal states cannot be set directly by the user");
   }
-  // If previous and desired states are the same, do nothing but changing the reason if provided
-  if (prev_state == new_state && stateReason && stateReason.value() != prev_reason) {
-    m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
-    return;
-  }
+  // If previous and desired states are the same, change only if a new reason is provided
   if (prev_state == new_state) {
+    if (stateReason && stateReason.value() != prev_reason) {
+      m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
+    }
     return;
   }
+
+  // If in repack or user mode, check that state transition is allowed
+  if ((operatingMode == OperatingMode::REPACK && c_forbiddenTransitionsRepackMode.first.contains(prev_state)
+       && c_forbiddenTransitionsRepackMode.second.contains(new_state))
+      || (operatingMode == OperatingMode::USER && c_forbiddenTransitionsUserMode.first.contains(prev_state)
+          && c_forbiddenTransitionsUserMode.second.contains(new_state))) {
+    std::ostringstream oss;
+    oss << "Not allowed to modify tape " << vid << " state  from ";
+    oss << Tape::stateToString(prev_state) << " to " << Tape::stateToString(new_state);
+    oss << " on this frontend";
+    throw cta::exception::UserError(oss.str());
+  }
+
   // If previous state is PENDING (not of the same type), user should wait for it to complete
   if ((prev_state == Tape::BROKEN_PENDING && new_state != Tape::BROKEN)
       || (prev_state == Tape::EXPORTED_PENDING && new_state != Tape::EXPORTED)
@@ -2806,22 +2852,31 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
       // Simply set the new tape state
       m_catalogue.Tape()->modifyTapeState(admin, vid, new_state, prev_state, stateReason);
       break;
-    case Tape::BROKEN:
+    case Tape::BROKEN: {
+      const bool pendingRequired = !(prev_state == Tape::REPACKING || prev_state == Tape::REPACKING_DISABLED);
       try {
-        m_catalogue.Tape()->modifyTapeState(admin, vid, Tape::BROKEN_PENDING, prev_state, stateReason);
+        m_catalogue.Tape()->modifyTapeState(admin,
+                                            vid,
+                                            pendingRequired ? Tape::BROKEN_PENDING : Tape::BROKEN,
+                                            prev_state,
+                                            stateReason);
       } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive& ex) {
         throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
           std::regex_replace(ex.getMessageValue(),
                              std::regex(Tape::stateToString(Tape::BROKEN_PENDING)),
                              Tape::stateToString(Tape::BROKEN)));
       }
+
+      if (pendingRequired) {
 #ifndef CTA_PGSCHED
-      m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
+        m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
-      m_db.cleanRetrieveQueueForVid(vid, logContext);
-      updateTapeStateFromPending(vid, logContext);
+        m_db.cleanRetrieveQueueForVid(vid, logContext);
+        updateTapeStateFromPending(vid, logContext);
 #endif
+      }
       break;
+    }
     case Tape::REPACKING:
       if (prev_state == Tape::REPACKING_DISABLED) {
         // If tape is on REPACKING_DISABLED state, move it directly to REPACKING
@@ -2844,23 +2899,33 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
         updateTapeStateFromPending(vid, logContext);
 #endif
       }
+
       break;
-    case Tape::EXPORTED:
+    case Tape::EXPORTED: {
+      const bool pendingRequired = !(prev_state == Tape::REPACKING || prev_state == Tape::REPACKING_DISABLED);
       try {
-        m_catalogue.Tape()->modifyTapeState(admin, vid, Tape::EXPORTED_PENDING, prev_state, stateReason);
+        m_catalogue.Tape()->modifyTapeState(admin,
+                                            vid,
+                                            pendingRequired ? Tape::EXPORTED_PENDING : Tape::EXPORTED,
+                                            prev_state,
+                                            stateReason);
       } catch (catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive& ex) {
         throw catalogue::UserSpecifiedAnEmptyStringReasonWhenTapeStateNotActive(
           std::regex_replace(ex.getMessageValue(),
                              std::regex(Tape::stateToString(Tape::EXPORTED_PENDING)),
                              Tape::stateToString(Tape::EXPORTED)));
       }
+
+      if (pendingRequired) {
 #ifndef CTA_PGSCHED
-      m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
+        m_db.setRetrieveQueueCleanupFlag(vid, true, logContext);
 #else
-      m_db.cleanRetrieveQueueForVid(vid, logContext);
-      updateTapeStateFromPending(vid, logContext);
+        m_db.cleanRetrieveQueueForVid(vid, logContext);
+        updateTapeStateFromPending(vid, logContext);
 #endif
+      }
       break;
+    }
     default:
       throw cta::exception::UserError("Unknown procedure to change tape state to " + Tape::stateToString(new_state));
   }

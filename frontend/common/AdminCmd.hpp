@@ -143,6 +143,12 @@ private:
   void processRecycleTapeFile_Restore(xrd::Response& response);
   void processModifyArchiveFile(xrd::Response& response);
 
+  void triggerTapeStateChange(const common::dataStructures::SecurityIdentity& admin,
+                              const std::string& vid,
+                              const common::dataStructures::Tape::State& new_state,
+                              const std::optional<std::string>& stateReason,
+                              log::LogContext& logContext);
+
   common::dataStructures::SecurityIdentity m_cliIdentity;       //!< Client identity: username, host, authentication
   const uint64_t m_archiveFileMaxSize;                          //!< Maximum allowed file size for archive requests
   const std::optional<std::string> m_repackBufferURL;           //!< Repack buffer URL

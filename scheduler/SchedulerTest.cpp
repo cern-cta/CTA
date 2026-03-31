@@ -8270,8 +8270,8 @@ INSTANTIATE_TEST_CASE_P(
     SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING, Tape::REPACKING, Tape::REPACKING, false, false}),
     SchedulerTestParam(OStoreDBFactoryVFS,
                        {Tape::REPACKING, Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING, Tape::BROKEN, Tape::BROKEN, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING, Tape::EXPORTED, Tape::EXPORTED, false, false}),
 
     SchedulerTestParam(OStoreDBFactoryVFS,
                        {Tape::REPACKING_DISABLED, Tape::ACTIVE, Tape::REPACKING_DISABLED, true, false}),
@@ -8280,9 +8280,8 @@ INSTANTIATE_TEST_CASE_P(
     SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::REPACKING, Tape::REPACKING, false, false}),
     SchedulerTestParam(OStoreDBFactoryVFS,
                        {Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS,
-                       {Tape::REPACKING_DISABLED, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::BROKEN, Tape::BROKEN, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::EXPORTED, Tape::EXPORTED, false, false}),
 
     SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN, Tape::ACTIVE, Tape::ACTIVE, false, false}),
     SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN, Tape::DISABLED, Tape::DISABLED, false, false}),

@@ -55,34 +55,11 @@ xrd::Response AdminCmdStream::process() {
   utils::Timer t;
 
   try {
-    // Check if the command is disabled
-    switch (m_adminCommandMode) {
-      case (common::AdminCmdMode::ALL):
-        // All commands are accepted
-        break;
-      case (common::AdminCmdMode::REPACK):
-        // Only repack (and version) commands are accepted
-        if (m_adminCmd.cmd() != admin::AdminCmd::CMD_REPACK && m_adminCmd.cmd() != admin::AdminCmd::CMD_VERSION) {
-          throw cta::exception::UserError(c_disabledAdminCmdMsg);
-        }
-        break;
-      case (common::AdminCmdMode::NO_REPACK):
-        // No repack commands are accepted
-        if (m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK) {
-          throw cta::exception::UserError(c_disabledAdminCmdMsg);
-        }
-        break;
-      case (common::AdminCmdMode::VERSION):
-        // Only version commands are accepted
-        if (m_adminCmd.cmd() != admin::AdminCmd::CMD_VERSION) {
-          throw cta::exception::UserError(c_disabledAdminCmdMsg);
-        }
-        break;
-      case (common::AdminCmdMode::NONE):
-        // No commands are accepted (version is stream command only)
-        throw cta::exception::UserError(c_disabledAdminCmdMsg);
-      default:
-        throw cta::exception::UserError("Misconfiguration in admin command mode. " + c_disabledAdminCmdMsg);
+    // Check if admin commands is explicitly disabled
+    if (m_adminCommandMode == common::AdminCmdMode::NONE
+        || (m_adminCommandMode == common::AdminCmdMode::VERSION && m_adminCmd.cmd() != admin::AdminCmd::CMD_VERSION)
+        || (m_adminCommandMode == common::AdminCmdMode::NO_REPACK && m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK)) {
+      throw cta::exception::UserError(c_disabledAdminCmdMsg);
     }
 
     // Map the <Cmd, SubCmd> to a method
