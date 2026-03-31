@@ -22,6 +22,8 @@ lint-cpp:
   image:
     name: $IMAGE_LINT
     entrypoint: ["/usr/bin/env"]
+  inherit:
+    variables: false
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:

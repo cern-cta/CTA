@@ -11,6 +11,9 @@ cancel-on-failure:
       when: on_failure
     - when: never
   image: $IMAGE_LINT # comes with curl installed
+  inherit:
+    variables:
+      - CI_API_TOKEN
   variables:
     GIT_STRATEGY: "none" # Don't need anything from the repo for this job
   script:
