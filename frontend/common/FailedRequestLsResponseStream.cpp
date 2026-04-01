@@ -176,7 +176,12 @@ void FailedRequestLsResponseStream::collectSummaryData(bool hasArchive, bool has
 }
 
 bool FailedRequestLsResponseStream::isDone() {
-  return m_isSummary ? m_summaryData.empty() : m_archiveJobQueueItorPtr->end() && m_retrieveJobQueueItorPtr->end();
+  if (m_isSummary) {
+    return m_summaryData.empty();
+  }
+  const auto archiveDone = !m_archiveJobQueueItorPtr || m_archiveJobQueueItorPtr->end();
+  const auto retrieveDone = !m_retrieveJobQueueItorPtr || m_retrieveJobQueueItorPtr->end();
+  return archiveDone && retrieveDone;
 }
 
 cta::xrd::Data FailedRequestLsResponseStream::next() {
