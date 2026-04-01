@@ -16,7 +16,6 @@
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/PhysicalLibrary.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "common/exception/NonRetryableError.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"

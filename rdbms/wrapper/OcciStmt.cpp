@@ -290,6 +290,23 @@ void OcciStmt::setColumn(OcciColumn& col, oracle::occi::Type type) {
 }
 
 //------------------------------------------------------------------------------
+// checkAndCloseIfNeeded
+//------------------------------------------------------------------------------
+void OcciStmt::checkAndThrowIfNeeded(const oracle::occi::SQLException& ex) {
+  if (connShouldBeClosed(ex)) {
+    try {
+      close();
+    } catch (...) {}
+    try {
+      m_conn.close();
+    } catch (...) {}
+    std::ostringstream msg;
+    msg << "Failed for SQL statement " << getSqlForException() << ": " << ex.what();
+    throw exception::LostDatabaseConnection(msg.str());
+  }
+}
+
+//------------------------------------------------------------------------------
 // connShouldBeClosed
 //------------------------------------------------------------------------------
 bool OcciStmt::connShouldBeClosed(const oracle::occi::SQLException& ex) {

@@ -15,7 +15,6 @@
 #include "RootEntry.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "common/exception/NonRetryableError.hpp"
 #include "common/log/TimingList.hpp"
 
 #include <algorithm>
