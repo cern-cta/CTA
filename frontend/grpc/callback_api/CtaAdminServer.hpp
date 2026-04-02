@@ -53,9 +53,6 @@ constexpr unsigned int cmd_pair(cta::admin::AdminCmd::Cmd cmd, cta::admin::Admin
   return (cmd << 16) + subcmd;
 }
 
-constexpr const char* CTA_ADMIN_COMMANDS_DISABLED_ERROR =
-  "CTA admin commands are disabled by configuration flag cta.experimental.grpc.cta_admin_commands.enabled";
-
 namespace cta::frontend::grpc {
 
 /* CallbackService class is the one that must implement the rpc methods,

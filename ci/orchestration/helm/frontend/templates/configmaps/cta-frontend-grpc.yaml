@@ -82,9 +82,6 @@ data:
     grpc.jwks.uri {{ .Values.grpc.conf.jwtAuth.jwksUri }}
     grpc.jwt.enabled {{ .Values.grpc.conf.jwtAuth.enabled }}
 
-    # for the admin commands
-    cta.experimental.grpc.cta_admin_commands.enabled {{ .Values.grpc.conf.experimental.ctaAdminCommands.enabled }}
-
     # Telemetry
     cta.experimental.telemetry.enabled {{ .Values.grpc.conf.telemetry.enabled }}
 

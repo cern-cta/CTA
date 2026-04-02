@@ -55,9 +55,8 @@ xrd::Response AdminCmdStream::process() {
   utils::Timer t;
 
   try {
-    // Check if admin commands is explicitly disabled
-    if (m_adminCommandMode == common::AdminCmdMode::NONE
-        || (m_adminCommandMode == common::AdminCmdMode::VERSION && m_adminCmd.cmd() != admin::AdminCmd::CMD_VERSION)
+    // Check if admin command is explicitly disabled
+    if ((m_adminCommandMode == common::AdminCmdMode::VERSION && m_adminCmd.cmd() != admin::AdminCmd::CMD_VERSION)
         || (m_adminCommandMode == common::AdminCmdMode::NO_REPACK && m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK)) {
       throw cta::exception::UserError(c_disabledAdminCmdMsg);
     }

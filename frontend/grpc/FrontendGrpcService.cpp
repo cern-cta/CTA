@@ -21,9 +21,6 @@
  * Validate the storage class and issue the archive ID which should be used for the Archive request
  */
 
-constexpr const char* CTA_ADMIN_COMMANDS_DISABLED_ERROR =
-  "CTA admin commands are disabled by configuration flag cta.experimental.grpc.cta_admin_commands.enabled";
-
 constexpr const char* CLIENT_IDENTITY_NOT_SET_ERROR = "clientIdentity not set in gRPC authentication";
 
 namespace cta::frontend::grpc {
