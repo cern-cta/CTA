@@ -61,7 +61,7 @@ protected:
      */
     m_strTestName = {pTestInfo->name()};
 
-    m_block_size = 262144;
+    m_block_size = 262148;
     m_label = "K00001";
     m_fileToRecall.selectedCopyNb = 1;
     cta::common::dataStructures::TapeFile tf;
@@ -101,7 +101,7 @@ protected:
       uint32_t uiNameSize = 11;
       uint64_t ui64FileSize = strTestString.size();
       const std::string strFid = "01234567890";
-      const size_t PAYLOAD_BLOCK_SIZE = 262144;
+      const size_t PAYLOAD_BLOCK_SIZE = 262148;
 
       // Preparing CPIO-ASCII-header
       file << strMagic << std::setfill('0') << std::oct << std::setw(6) << uiDev << std::setw(6) << uiIno

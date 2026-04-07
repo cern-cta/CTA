@@ -75,7 +75,11 @@ protected:
   char m_tcOwner[LIMITS::CIDLEN];
   char m_tcVersion[LIMITS::LABELVERSIONLEN];
   char m_tcName[LIMITS::VOLNAMELEN + 1];
-  char m_tcRawLabel[2 * LIMITS::MAXMRECSIZE];
+  /*
+   * Extra 4 bytes to deal with
+   * mutated / misformed OSM tape format
+   */
+  char m_tcRawLabel[2 * LIMITS::MAXMRECSIZE + 4];
   uint64_t m_ulCreateTime = 0;
   uint64_t m_ulExpireTime = 0;
   uint64_t m_ulRecSize = 0;

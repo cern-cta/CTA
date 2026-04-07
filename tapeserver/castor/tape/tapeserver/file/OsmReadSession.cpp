@@ -9,6 +9,7 @@
 #include "castor/tape/tapeserver/file/HeaderChecker.hpp"
 #include "castor/tape/tapeserver/file/OsmFileStructure.hpp"
 #include "castor/tape/tapeserver/file/Structures.hpp"
+#include "common/exception/Errnum.hpp"
 
 #include <memory>
 #include <string>
@@ -22,14 +23,36 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
 
+  size_t uiRecSize = osm::LIMITS::MAXMRECSIZE;
   uint8_t uiLLBPMethod = SCSI::logicBlockProtectionMethod::DoNotUse;
   osm::LABEL osmLabel;
 
-  m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-                         osm::LIMITS::MAXMRECSIZE,
-                         "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
+  try {
+    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
+      uiRecSize,
+      "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.1");
+  } catch (cta::exception::Errnum &en) {
+    if (en.errorNumber() == ENOMEM) {
+      /*
+       * Some mutated OSM labels may have extra CRC32C bytes e.g.:
+       * 00 3c 00 38 00 43 00 39 93 3c 5d 26 c7 4b 67 48 
+       * -----------------------|-----------|
+       *   DATA BLOCK              CRC32C
+       * -----------------------------------|-----------|
+       *   DATA BLOCK                          CRC32C
+       */
+      m_drive.rewind();
+      uiRecSize = osm::LIMITS::MAXMRECSIZE + SCSI::logicBlockProtectionMethod::CRC32CLength;
+      m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
+                             uiRecSize,
+                             "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.2"); 
+    } else {
+      throw;
+    }
+  }
+
   m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
-                         osm::LIMITS::MAXMRECSIZE,
+                         uiRecSize,
                          "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
 
   try {
@@ -62,10 +85,10 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
   m_drive.rewind();
   {
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-                           osm::LIMITS::MAXMRECSIZE,
+                           uiRecSize,
                            "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1");
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
-                           osm::LIMITS::MAXMRECSIZE,
+                           uiRecSize,
                            "[OsmReadSession::OsmReadSession] - Reading OSM label - part 2");
     try {
       osmLabel.decode();
