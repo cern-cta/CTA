@@ -31,7 +31,7 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
     m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
       uiRecSize,
       "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.1");
-  } catch (cta::exception::Errnum &en) {
+  } catch (cta::exception::Errnum& en) {
     if (en.errorNumber() == ENOMEM) {
       /*
        * Some mutated OSM labels may have extra CRC32C bytes e.g.:
@@ -45,7 +45,7 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
       uiRecSize = osm::LIMITS::MAXMRECSIZE + SCSI::logicBlockProtectionMethod::CRC32CLength;
       m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
                              uiRecSize,
-                             "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.2"); 
+                             "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.2");
     } else {
       throw;
     }
