@@ -185,6 +185,7 @@ fst:
   pod:
     extraSpec:
       terminationGracePeriodSeconds: 1
+      podManagementPolicy: Parallel
 
   xrd:
     extraConfig: |
