@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# SPDX-FileCopyrightText: 2024 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+set -e
+
+echo "Wiping catalogue"
+echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
+
+echo "Catalogue wiped"
+
+echo "Creating catalogue schema..."
+# Eventually this if statement can be removed, since the schema-create supports -v latest
+# However, to allow us to test older versions, we need keep it around for now
+if [[ "$SCHEMA_VERSION" == "latest" ]]; then
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
+else
+    cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf
+fi

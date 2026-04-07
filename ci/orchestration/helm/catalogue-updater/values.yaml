@@ -17,3 +17,7 @@ extraFlags: ""
 
 # Set to true if you want to mount the configmap "yum.repos.d-config"
 customRepoFiles: true
+
+catalogue:
+  secretName: cta-catalogue-conf
+  secretKey: cta-catalogue.conf

@@ -78,7 +78,8 @@ local_telemetry=false
 publish_telemetry=false
 eos_image_repository=""
 eos_image_tag=""
-catalogue_config="presets/dev-catalogue-postgres-values.yaml"
+ci_setup_config=""
+catalogue_config=""
 scheduler_config=""
 cta_config=""
 eos_config=""
@@ -336,8 +337,9 @@ Usage:
 Options:
       --namespace <ns>              Kubernetes namespace.
                                     Defaults to dev.
-      --catalogue-config <path>     Catalogue values file.
-      --scheduler-config <path>     Scheduler values file.
+      --ci-setup-config <path>      CI setup values file (defaults depend on scheduler type).
+      --catalogue-config <path>     Existing catalogue profile to overlay on CI setup values.
+      --scheduler-config <path>    Existing scheduler profile to overlay on CI setup values.
       --cta-config <paths>          Additional CTA Helm values.
                                     Comma-separated list.
       --eos-config <path>           EOS Helm values.
@@ -602,6 +604,11 @@ parse_options() {
       --dcache-image-repository)
         require_command "$1" "$command" deploy up debug all
         dcache_image_repository="$2"
+        shift
+        ;;
+      --ci-setup-config)
+        require_command "$1" "$command" deploy up debug all
+        ci_setup_config="$2"
         shift
         ;;
       --catalogue-config)
@@ -1282,20 +1289,19 @@ deploy_cta() {
   [[ $publish_telemetry == true ]] && extra_spawn_options+=(--publish-telemetry)
 
   # Assign default config based on scheduler type if not already set
-  if [[ -z $scheduler_config ]]; then
+  if [[ -z $ci_setup_config ]]; then
     [[ $scheduler_type == "pgsched" ]] && \
-      scheduler_config="presets/dev-scheduler-postgres-values.yaml" || \
-      scheduler_config="presets/dev-scheduler-vfs-values.yaml"
+      ci_setup_config="presets/dev-ci-setup-postgres-scheduler-values.yaml" || \
+      ci_setup_config="presets/dev-ci-setup-vfs-scheduler-values.yaml"
   fi
+  [[ -n $catalogue_config ]] && extra_spawn_options+=(--catalogue-config "$catalogue_config")
+  [[ -n $scheduler_config ]] && extra_spawn_options+=(--scheduler-config "$scheduler_config")
   ./create_instance.sh --namespace "${namespace}" \
     --cta-image-registry "${cta_image_registry}" \
     --cta-image-tag "${cta_image_tag}" \
-    --catalogue-config "${catalogue_config}" \
-    --scheduler-config "${scheduler_config}" \
+    --ci-setup-config "${ci_setup_config}" \
     --eos-enabled ${eos_enabled} \
     --dcache-enabled ${dcache_enabled} \
-    --reset-catalogue \
-    --reset-scheduler \
     "${extra_spawn_options[@]}"
 
   if [[ $local_telemetry == true ]]; then

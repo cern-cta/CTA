@@ -23,13 +23,6 @@ SPDX-License-Identifier: GPL-3.0-or-later
   {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
 {{- end }}
 
-{{- define "scheduler.config" -}}
-  {{- $schedulerConfig := .Values.global.configuration.scheduler }}
-  {{- if ne (typeOf $schedulerConfig) "string" -}}
-    {{- $schedulerConfig = $schedulerConfig | toYaml }}
-  {{- end }}
-  {{- $schedulerConfig -}}
-{{- end }}
 
 {{- define "ctafrontend.jwtRevokeList" -}}
   /etc/cta/jwt-revoke-list.toml

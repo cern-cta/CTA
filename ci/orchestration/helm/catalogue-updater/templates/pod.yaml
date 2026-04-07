@@ -64,7 +64,7 @@ spec:
     {{- end }}
     - name: catalogue-config
       mountPath: /shared/etc_cta/cta-catalogue.conf
-      subPath: cta-catalogue.conf
+      subPath: {{ .Values.catalogue.secretKey }}
   volumes:
   {{- if .Values.customRepoFiles }}
   - name: yum-repos
@@ -72,6 +72,6 @@ spec:
       name: yum.repos.d-config
   {{- end }}
   - name: catalogue-config
-    configMap:
-      name: cta-catalogue-conf
+    secret:
+      secretName: {{ .Values.catalogue.secretName }}
 

@@ -25,7 +25,7 @@ usage() {
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
-  echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file."
+  echo "      --cta-config <file>:            CTA chart values to overlay on the existing deployment."
   echo "  -r, --cta-image-repository <repo>:  The CTA Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
   echo "  -i, --cta-image-tag <tag>:          The CTA Docker image tag."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version."
@@ -47,9 +47,7 @@ update_local_cta_chart_dependencies() {
   echo "Updating chart dependencies"
   charts=(
     "common"
-    "auth"
-    "catalogue"
-    "scheduler"
+    "ci-setup"
     "cli"
     "frontend-wfe"
     "frontend-admin"
@@ -69,9 +67,9 @@ upgrade_instance() {
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -h | --help) usage ;;
-      -o|--scheduler-config)
-        scheduler_config="$2"
-        [[ -f "${scheduler_config}" ]] || die "Scheduler config file ${scheduler_config} does not exist"
+      --cta-config)
+        cta_config="$2"
+        [[ -f "${cta_config}" ]] || die "CTA config file ${cta_config} does not exist"
         shift ;;
       -n|--namespace)
         namespace="$2"
@@ -117,8 +115,8 @@ upgrade_instance() {
   if [[ -n "$catalogue_schema_version" ]]; then
     helm_flags+=" --set global.catalogueSchemaVersion=${catalogue_schema_version}"
   fi
-  if [[ -n "$scheduler_config" ]]; then
-    helm_flags+=" --set-file global.configuration.scheduler=${scheduler_config}"
+  if [[ -n "$cta_config" ]]; then
+    helm_flags+=" --values ${cta_config}"
   fi
 
   update_local_cta_chart_dependencies

@@ -37,17 +37,14 @@ spec:
 .setup-k8s-test-variables: &setup-k8s-test-variables
   - | # Construct the deployment profiles used by Kubernetes tests
     CTA_VALUES_CHAIN="presets/dev-cta-common.yaml,presets/frontend-wfe/auth-$[[ inputs.workflow-api-authentication ]].yaml,presets/frontend-admin/auth-$[[ inputs.admin-api-authentication ]].yaml"
-  - | # Which scheduler config to use
+  - | # CI setup defaults to Postgres; overlay externally managed Ceph and Oracle profiles.
+    CI_SETUP_CONFIG=presets/dev-ci-setup-postgres-scheduler-values.yaml
+    EXTRA_SETUP_ARGS=""
     if [[ "$SCHEDULER_TYPE" == "objectstore" ]]; then
-      SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml
-    else
-      SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
+      EXTRA_SETUP_ARGS+=" --scheduler-config /opt/kubernetes/CTA/scheduler/ci-ceph-values.yaml"
     fi
-  - | # Which catalogue config to use
     if $ENABLE_ORACLE_SUPPORT; then
-      CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
-    else
-      CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
+      EXTRA_SETUP_ARGS+=" --catalogue-config /opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml"
     fi
   - | # Opportunistic batching overlay (pgsched only)
     if [[ "$SCHEDULER_TYPE" == "pgsched" ]] && $[[ inputs.enable-opportunistic-batching ]]; then
@@ -60,7 +57,7 @@ spec:
       IMAGE_TAG="${CTA_IMAGE_TAG:?Missing CTA_IMAGE_TAG}"
     fi
   # Export all variables here so that it is clear which ones are available
-  - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
+  - export CI_SETUP_CONFIG EXTRA_SETUP_ARGS IMAGE_TAG CTA_VALUES_CHAIN EXTRA_SPAWN_ARGS
 
 .sanitizer-manual-rules:
   rules:
@@ -122,13 +119,11 @@ spec:
     - |
       ./create_instance.sh \
         --namespace ${NAMESPACE} \
-        --reset-catalogue \
-        --reset-scheduler \
         --cta-image-tag ${IMAGE_TAG} \
         --cta-config ${CTA_VALUES_CHAIN} \
         --eos-config presets/eos/auth-$[[ inputs.workflow-api-authentication ]].yaml \
-        --catalogue-config ${CATALOGUE_CONFIG} \
-        --scheduler-config ${SCHEDULER_CONFIG} \
+        --ci-setup-config ${CI_SETUP_CONFIG} \
+        ${EXTRA_SETUP_ARGS} \
         --extra-cta-values "${EXTRA_CTA_HELM_FLAGS}" \
         ${EXTRA_SPAWN_ARGS}
     - create_end=$(date +%s)
@@ -372,14 +367,12 @@ stress-test:
     - |
       ./create_instance.sh \
         --namespace ${NAMESPACE} \
-        --reset-catalogue \
-        --reset-scheduler \
         --publish-telemetry \
         --cta-image-tag ${IMAGE_TAG} \
         --cta-config ${STRESS_CTA_VALUES_CHAIN} \
         --eos-config presets/stress-eos-values.yaml \
-        --catalogue-config ${CATALOGUE_CONFIG} \
-        --scheduler-config ${SCHEDULER_CONFIG} \
+        --ci-setup-config ${CI_SETUP_CONFIG} \
+        ${EXTRA_SETUP_ARGS} \
         --chart-install-timeout 15 \
         ${EXTRA_SPAWN_ARGS}
     # Run the actual stress test

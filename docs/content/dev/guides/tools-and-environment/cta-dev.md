@@ -153,10 +153,14 @@ Relative values-file paths are resolved from `ci/orchestration/`, where the depl
 
 ```bash
 cta-dev deploy \
-  --catalogue-config /path/to/catalogue-values.yaml \
-  --scheduler-config /path/to/scheduler-values.yaml \
+  --ci-setup-config /path/to/ci-setup-values.yaml \
   --cta-config /path/to/base-values.yaml,/path/to/feature-values.yaml
 ```
+
+The `ci-setup` chart provisions authentication, database connection Secrets, and catalogue and scheduler initialization.
+The default preset uses a PostgreSQL catalogue with either VFS or PostgreSQL scheduling, selected by `--scheduler-type`.
+Use `--ci-setup-config` to override these values, including external connection Secrets through `extraObjects`.
+Existing runner profiles remain supported through `--catalogue-config` and `--scheduler-config`; these overlay the setup values.
 
 ### EOS
 

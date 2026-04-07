@@ -28,7 +28,6 @@ spec:
         {{- include "common.labels.withoutname" $ | nindent 8 }}
     spec:
       restartPolicy: Always
-      terminationGracePeriodSeconds: {{ $.Values.terminationGracePeriodSeconds }}
       imagePullSecrets:
       {{- include "maintd.imagePullSecrets" $ | nindent 6 }}
       {{- if $.Values.pod.extraSpec }}
@@ -91,13 +90,13 @@ spec:
           subPath: cta-maintd.toml
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
-          subPath: cta-catalogue.conf
+          subPath: {{ $.Values.global.catalogue.secretKey }}
         - name: maintd-sss-keytab
           mountPath: /etc/cta/cta-maintd.sss.keytab.grp # note the .grp to make it group readable
           subPath: {{ $.Values.keytab.subPath }}
         - name: scheduler-config
           mountPath: /etc/cta/cta-scheduler.conf
-          subPath: cta-scheduler.conf
+          subPath: {{ $.Values.global.scheduler.secretKey }}
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume
           mountPath: /etc/ceph/ceph.conf
@@ -122,11 +121,11 @@ spec:
           name: scripts-maintd
           defaultMode: 0777
       - name: catalogue-config
-        configMap:
-          name: cta-catalogue-conf
+        secret:
+          secretName: {{ $.Values.global.catalogue.secretName }}
       - name: scheduler-config
-        configMap:
-          name: cta-scheduler-conf
+        secret:
+          secretName: {{ $.Values.global.scheduler.secretName }}
       {{- if eq $schedulerConfig.backend "ceph" }}
       - name: cta-ceph-volume
         configMap:

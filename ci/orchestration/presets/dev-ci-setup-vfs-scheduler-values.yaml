@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Spawn only a postgres catalogue
+postgres:
+  databases:
+    - name: cta-catalogue-db
+      # Secret to generate the connection string into
+      secretName: cta-catalogue-conf
+      secretKey: cta-catalogue.conf
+
+objectstore:
+  enabled: true
+  backend: vfs

@@ -1,9 +1,0 @@
-# SPDX-FileCopyrightText: 2025 CERN
-# SPDX-License-Identifier: GPL-3.0-or-later
-
-backend: "vfs"
-vfsConfig:
-  storageClass: local-path
-  accessModes:
-    - ReadWriteOnce
-  size: 10Gi

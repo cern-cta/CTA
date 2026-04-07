@@ -1,0 +1,87 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- if and .Values.schedulerReset.enabled .Values.objectstore.enabled -}}
+{{- $name := printf "%s-%s" $.Release.Name "reset-objectstore-job" }}
+{{- $image := include "common.images.image" (dict "imageRoot" .Values.schedulerReset.image) -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        # Ensures delete_instance.sh will collect its logs
+        app.kubernetes.io/instance: cta
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      imagePullSecrets:
+      {{- range .Values.schedulerReset.image.pullSecrets }}
+        - name: {{ . | quote }}
+      {{- end }}
+      containers:
+        - name: {{ $name }}
+          image: {{ $image }}
+          imagePullPolicy: {{ .Values.schedulerReset.image.pullPolicy }}
+          command: ["bash", "/scripts/reset_objectstore.sh"]
+          args: []
+          securityContext:
+            allowPrivilegeEscalation: false
+          stdin: true
+          env:
+            - name: OBJECTSTORE_BACKEND
+              value: {{ .Values.objectstore.backend | quote }}
+            - name: SCHEDULER_URL
+              value: {{ include "ci-setup.objectstoreUrl" . | quote }}
+            {{- if eq .Values.objectstore.backend "ceph" }}
+            - name: SCHEDULER_CEPH_NAMESPACE
+              value: {{ .Values.objectstore.ceph.namespace | quote }}
+            - name: SCHEDULER_CEPH_ID
+              value: {{ .Values.objectstore.ceph.id | quote }}
+            - name: SCHEDULER_CEPH_POOL
+              value: {{ .Values.objectstore.ceph.pool | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: scripts-cm
+              mountPath: /scripts
+            - name: scheduler-config
+              mountPath: /etc/cta/cta-scheduler.conf
+              subPath: {{ .Values.schedulerReset.connection.secretKey }}
+            {{- if eq .Values.objectstore.backend "ceph" }}
+            - name: ceph-config
+              mountPath: /etc/ceph/ceph.conf
+              subPath: ceph.conf
+            - name: ceph-config
+              mountPath: /etc/ceph/ceph.client.{{ .Values.objectstore.ceph.id }}.keyring
+              subPath: ceph.client.{{ .Values.objectstore.ceph.id }}.keyring
+            {{- end }}
+            {{- if eq .Values.objectstore.backend "vfs" }}
+            - name: vfs-storage-volume
+              mountPath: /objectstore
+            {{- end }}
+      volumes:
+        - name: scripts-cm
+          configMap:
+            name: {{ .Release.Name }}-scripts
+            defaultMode: 0777
+        - name: scheduler-config
+          secret:
+            secretName: {{ .Values.schedulerReset.connection.secretName }}
+        {{- if eq .Values.objectstore.backend "ceph" }}
+        - name: ceph-config
+          configMap:
+            name: ceph-conf
+        {{- end }}
+        {{- if eq .Values.objectstore.backend "vfs" }}
+        - name: vfs-storage-volume
+          persistentVolumeClaim:
+            claimName: scheduler-vfs-pvc
+        {{- end }}
+{{- end }}

@@ -14,13 +14,12 @@ usage() {
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
-  echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
-  echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
+  echo "      --ci-setup-config <file>:       CI setup values file. Defaults to the VFS scheduler preset."
+  echo "  -o, --scheduler-config <file>:      Existing scheduler profile to overlay on the CI setup values."
+  echo "  -d, --catalogue-config <file>:      Existing catalogue profile to overlay on the CI setup values."
   echo "  -r, --cta-image-registry <repo>:    Registry to find the CTA images in. Defaults to \"gitlab-registry.cern.ch\"."
   echo "  -i, --cta-image-tag <tag>:          Docker image tag for the CTA chart."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
-  echo "  -O, --reset-scheduler:              Reset scheduler content during initialization phase. Defaults to false."
-  echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
   echo "      --max-drives <n>:               If no tapeservers-config is provided, this will specifiy how many drives to use in the deployment."
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
@@ -102,9 +101,7 @@ update_local_cta_chart_dependencies() {
   log_task "Updating Helm chart dependencies..."
   charts=(
     "common"
-    "auth"
-    "catalogue"
-    "scheduler"
+    "ci-setup"
     "cli"
     "frontend-wfe"
     "frontend-admin"
@@ -126,15 +123,12 @@ create_instance() {
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
   # Note that it is fine for not all of these secrets to exist
   secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials" # Secrets to be copied to the namespace (space separated)
-  catalogue_config=presets/dev-catalogue-postgres-values.yaml
-  scheduler_config=presets/dev-scheduler-vfs-values.yaml
+  ci_setup_config=presets/dev-ci-setup-vfs-scheduler-values.yaml
+  catalogue_config=""
+  scheduler_config=""
   cta_config="-f presets/dev-cta-common.yaml -f presets/frontend-wfe/auth-jwt.yaml -f presets/frontend-admin/auth-jwt.yaml"
   prometheus_config="presets/dev-prometheus-values.yaml"
   opentelemetry_collector_config="presets/dev-otel-collector-values.yaml"
-  # By default keep the catalogue and keep the scheduler
-  # default should not make user loose data if he forgot the option
-  reset_catalogue=false
-  reset_scheduler=false
   cta_image_registry=$(jq -r .dev.ctaImageRegistry ${project_json_path})
   max_drives=2
   # EOS related
@@ -157,6 +151,10 @@ create_instance() {
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -h | --help) usage ;;
+      --ci-setup-config)
+        ci_setup_config="$2"
+        [[ -f "${ci_setup_config}" ]] || die "CI setup config file ${ci_setup_config} does not exist"
+        shift ;;
       -o|--scheduler-config)
         scheduler_config="$2"
         [[ -f "${scheduler_config}" ]] || die "Scheduler config file ${scheduler_config} does not exist"
@@ -180,8 +178,6 @@ create_instance() {
       --max-drives)
         max_drives="$2"
         shift ;;
-      -O|--reset-scheduler) reset_scheduler=true ;;
-      -D|--reset-catalogue) reset_catalogue=true ;;
       --local-telemetry) local_telemetry=true ;;
       --eos-config)
         eos_config="$2"
@@ -243,18 +239,6 @@ create_instance() {
     die "--local-telemetry and --publish-telemetry cannot be active at the same time"
   fi
 
-  if [[ "$reset_catalogue" == "true" ]]; then
-    log_warn "Catalogue content will be reset."
-  else
-    echo "Catalogue content will be kept."
-  fi
-
-  if [[ "$reset_scheduler" == "true" ]]; then
-    log_warn "Scheduler content will be reset."
-  else
-    echo "Scheduler content will be kept."
-  fi
-
   SECONDS=0
 
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
@@ -269,35 +253,19 @@ create_instance() {
     generate_tape_values_files
   fi
 
-  if [[ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]]; then
-    if kubectl get sc local-path >/dev/null 2>&1; then
-      echo "Local path provisioning is enabled; using the VFS scheduler."
-    else
-      echo "==============================================================================="
-      log_warn "Local path provisioning is not enabled. Support for this configuration will be removed soon."
-      echo "==============================================================================="
-      echo
-      echo "Please follow these instructions to enable local path provisioning."
-      echo " 1. ssh into your machine as root"
-      echo " 2. navigate to the minikube_cta_ci repo you used to instantiate your dev machine"
-      echo " 3. Run: git pull"
-      echo " 4. Run: ./01_bootstrap_minikube.sh"
-      echo " 5. Reboot the machine"
-      echo "The storage-provisioner-rancher addon should now be enabled."
-      echo "This addon provides dynamic local path provisioning"
-      echo
-      echo "Alternatively if you prefer to do it manually:"
-      echo " 1. Run: minikube addons enable storage-provisioner-rancher"
-      echo " 2. Add this same line to /usr/local/bin/start_minikube.sh to ensure it persists over restarts"
-      echo
-      log_warn "Falling back to presets/dev-scheduler-vfs-deprecated-values.yaml."
-      echo "==============================================================================="
-      echo
-      echo
-      scheduler_config=presets/dev-scheduler-vfs-deprecated-values.yaml
-    fi
-  fi
-
+  # Resolve setup and daemon values together before changing the cluster.
+  local setup_python scheduler_backend
+  local setup_profile_args=()
+  setup_values_dir=$(mktemp -d)
+  trap 'rm -rf -- "$setup_values_dir"' EXIT
+  setup_python="${UV_PROJECT_ENVIRONMENT:-../../.venv}/bin/python"
+  [[ -x "$setup_python" ]] || setup_python=python3
+  [[ -n "$catalogue_config" ]] && setup_profile_args+=(--catalogue-config "$catalogue_config")
+  [[ -n "$scheduler_config" ]] && setup_profile_args+=(--scheduler-config "$scheduler_config")
+  scheduler_backend=$("$setup_python" ./prepare_setup_values.py \
+    --ci-setup-config "$ci_setup_config" \
+    --output-dir "$setup_values_dir" \
+    "${setup_profile_args[@]}")
 
   # Create the namespace
   log_task "Creating namespace ${namespace}..."
@@ -331,34 +299,17 @@ create_instance() {
           --wait --timeout 2m
   fi
 
-  # Note that some of these charts are installed in parallel
-  log_run helm upgrade --install auth helm/auth \
+  # Disk buffers need both the generated credentials and a responsive KDC.
+  log_task "Installing CI setup chart..."
+  log_run helm upgrade --install ci-setup helm/ci-setup \
                                 --namespace "${namespace}" \
-                                --wait --wait-for-jobs --timeout 2m &
-  auth_pid=$!
-
-  log_run helm upgrade --install cta-catalogue helm/catalogue \
-                                --namespace "${namespace}" \
-                                --set resetImage.registry="${cta_image_registry}" \
-                                --set resetImage.tag="${cta_image_tag}" \
-                                --set schemaVersion="${catalogue_schema_version}" \
-                                --set resetCatalogue="${reset_catalogue}" \
-                                --set-file configuration="${catalogue_config}" \
-                                --wait --wait-for-jobs --timeout 4m &
-  catalogue_pid=$!
-
-  log_run helm upgrade --install cta-scheduler helm/scheduler \
-                                --namespace "${namespace}" \
-                                --set resetImage.registry="${cta_image_registry}" \
-                                --set resetImage.tag="${cta_image_tag}" \
-                                --set resetScheduler="${reset_scheduler}" \
-                                --set-file configuration="${scheduler_config}" \
-                                --wait --wait-for-jobs --timeout 4m &
-  scheduler_pid=$!
-
-  # The disk-buffer init containers need both the auth secrets and a responsive KDC.
-  # Waiting only for the secrets can make their first kadmin call race KDC startup.
-  wait $auth_pid || exit 1
+                                -f "${setup_values_dir}/setup-values.json" \
+                                --set catalogueReset.image.registry="${cta_image_registry}" \
+                                --set catalogueReset.image.tag="${cta_image_tag}" \
+                                --set catalogueReset.schemaVersion="${catalogue_schema_version}" \
+                                --set schedulerReset.image.registry="${cta_image_registry}" \
+                                --set schedulerReset.image.tag="${cta_image_tag}" \
+                                --wait --wait-for-jobs --timeout 4m
 
   if [[ $eos_enabled == "true" ]]; then
     ./deploy_eos.sh --namespace "${namespace}" \
@@ -376,10 +327,6 @@ create_instance() {
   fi
 
 
-  # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
-  wait $catalogue_pid || exit 1
-  wait $scheduler_pid || exit 1
-
   extra_cta_chart_flags=""
   if [[ "$dcache_enabled" == "true" ]]; then
     # The dCache CTA nearline-storage driver only supports mTLS.
@@ -391,8 +338,7 @@ create_instance() {
   if [[ "$publish_telemetry" == "true" ]]; then
     extra_cta_chart_flags+=" --values presets/ci-cta-telemetry-values.yaml"
   fi
-  # This is a bit hacky, but will be removed when either the objectstore is gone or when I get around to cleaning up all the values files (hopefully soon TM)
-  if grep -q "postgres" "$scheduler_config"; then
+  if [[ "$scheduler_backend" == "postgres" ]]; then
     extra_cta_chart_flags+=" --values presets/dev-cta-maintd-postgres-values.yaml"
   else
     extra_cta_chart_flags+=" --values presets/dev-cta-maintd-objectstore-values.yaml"
@@ -404,10 +350,10 @@ create_instance() {
 
   log_run helm upgrade --install cta helm/cta \
                                 --namespace "${namespace}" \
+                                -f "${setup_values_dir}/cta-values.json" \
                                 ${cta_config} \
                                 --set global.image.registry="${cta_image_registry}" \
                                 --set global.image.tag="${cta_image_tag}" \
-                                --set-file global.configuration.scheduler="${scheduler_config}" \
                                 -f "${taped_config}" \
                                 -f "${rmcd_config}" \
                                 --wait --timeout "${chart_install_timeout}"m ${extra_cta_chart_flags}

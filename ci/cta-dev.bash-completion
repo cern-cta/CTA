@@ -55,6 +55,7 @@ _ctadev() {
         --eos-image-repository
         --eos-image-tag
         --dcache-image-repository
+        --ci-setup-config
         --catalogue-config
         --scheduler-config
         --cta-config
@@ -103,7 +104,7 @@ _ctadev() {
         --cta-version|--cta-image-tag|--eos-image-tag|--eos-image-repository|--dcache-image-repository|--spawn-options)
             return
             ;;
-        --catalogue-config|--scheduler-config|--cta-config|--eos-config)
+        --ci-setup-config|--catalogue-config|--scheduler-config|--cta-config|--eos-config)
             COMPREPLY=( $(compgen -f -- "$cur") )
             return
             ;;

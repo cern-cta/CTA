@@ -1,0 +1,18 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- if and .Values.objectstore.enabled (eq .Values.objectstore.backend "vfs") }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: scheduler-vfs-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ .Values.objectstore.vfs.size }}
+  storageClassName: {{ .Values.objectstore.vfs.storageClassName | quote }}
+{{- end }}
