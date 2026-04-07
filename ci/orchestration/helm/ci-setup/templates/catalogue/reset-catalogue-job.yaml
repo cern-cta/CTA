@@ -1,0 +1,74 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- if .Values.catalogueReset.enabled -}}
+{{- $name := printf "%s-%s" $.Release.Name "reset-catalogue-job" }}
+{{- $image := printf "%s:%s" .Values.catalogueReset.image.repository ( .Values.catalogueReset.image.tag | toString ) | quote -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        # Ensures delete_instance.sh will collect its logs
+        app.kubernetes.io/instance: cta
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+      {{- range .Values.catalogueReset.image.pullSecrets }}
+        - name: {{ . | quote }}
+      {{- end }}
+      initContainers:
+      - name: wait-for-postgres
+        image: {{ .Values.postgres.image }}
+        env:
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.schedulerReset.connection.secretName }}
+                key: {{ .Values.schedulerReset.connection.secretKey }}
+        command:
+          - sh
+          - -c
+          - |
+            if echo "$DATABASE_URL" | grep -q "postgresql"; then
+              # Strip the initial postgresql: part as this is CTA-specific
+              DATABASE_URL="${DATABASE_URL#postgresql:}"
+              until pg_isready -d "$DATABASE_URL"; do
+                sleep 1
+              done
+            fi
+      containers:
+        - name: catalogue-reset
+          image: {{ $image }}
+          imagePullPolicy: {{ .Values.catalogueReset.image.pullPolicy }}
+          command: ["bash", "/scripts/reset_catalogue.sh"]
+          args: []
+          securityContext:
+            allowPrivilegeEscalation: false
+          stdin: true
+          env:
+          - name: SCHEMA_VERSION
+            value: {{ .Values.catalogueReset.schemaVersion | quote }}
+          volumeMounts:
+          - name: scripts-cm
+            mountPath: /scripts
+          - name: catalogue-config
+            mountPath: /etc/cta/cta-catalogue.conf
+            subPath: {{ .Values.catalogueReset.connection.secretKey }}
+      volumes:
+      - name: scripts-cm
+        configMap:
+          name: {{ .Release.Name }}-scripts
+          defaultMode: 0777
+      - name: catalogue-config
+        secret:
+          secretName: {{ .Values.catalogueReset.connection.secretName }}
+{{- end }}

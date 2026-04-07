@@ -64,7 +64,7 @@ spec:
         volumeMounts:
         - name: diskbuffer-sss-keytab
           mountPath: /root/sss_keytab/input/diskbuffer.sss.keytab
-          subPath: {{ .Values.xrd.keytab.subPath }}
+          subPath: {{ .Values.xrd.keytab.secretKey }}
         - name: diskbuffer-sss-keytab-fixedownership
           mountPath: /root/sss_keytab/output
       containers:

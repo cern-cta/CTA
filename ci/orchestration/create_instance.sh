@@ -19,13 +19,10 @@ usage() {
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
-  echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
-  echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
+  echo "      --ci-setup-config <file>:       Path to the scheduler configuration values file."
   echo "  -r, --cta-image-repository <repo>:  Docker image name for the CTA chart. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
   echo "  -i, --cta-image-tag <tag>:          Docker image tag for the CTA chart."
-  echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
-  echo "  -O, --reset-scheduler:              Reset scheduler datastore content during initialization phase. Defaults to false."
-  echo "  -D, --reset-catalogue:              Reset catalogue content during initialization phase. Defaults to false."
+  echo "      --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
   echo "      --max-drives <n>:               If no tapeservers-config is provided, this will specifiy how many drives to use in the deployment."
   echo "      --dry-run:                      Render the Helm-generated yaml files without touching any existing deployments."
   echo "      --no-setup:                     Skip the setup scripts for EOS and tape resets."
@@ -67,13 +64,6 @@ EOF
   echo "---"
 }
 
-check_helm_installed() {
-  # First thing we do is check whether helm is installed
-  if ! command -v helm >/dev/null 2>&1; then
-    die "Helm does not seem to be installed. To install Helm, see: https://helm.sh/docs/intro/install/"
-  fi
-}
-
 update_local_cta_chart_dependencies() {
   # This is a hack to ensure we don't waste 30 seconds updating local dependencies
   # Once helm dependency update gets some performance improvements this can be removed
@@ -84,9 +74,7 @@ update_local_cta_chart_dependencies() {
   echo "Updating chart dependencies"
   charts=(
     "common"
-    "auth"
-    "catalogue"
-    "scheduler"
+    "ci-setup"
     "client"
     "cli"
     "frontend"
@@ -105,17 +93,10 @@ create_instance() {
   project_json_path="../../project.json"
   # Argument defaults
   # Not that some arguments below intentionally use false and not 0/1 as they are directly passed as a helm option
-  # Note that it is fine for not all of these secrets to exist
-  secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials" # Secrets to be copied to the namespace (space separated)
-  catalogue_config=presets/dev-catalogue-postgres-values.yaml
-  scheduler_config=presets/dev-scheduler-vfs-values.yaml
+  ci_setup_config=presets/dev-ci-setup-vfs-scheduler-values.yaml
   cta_config="presets/dev-cta-xrd-values.yaml"
   prometheus_config="presets/dev-prometheus-values.yaml"
   opentelemetry_collector_config="presets/dev-otel-collector-values.yaml"
-  # By default keep Database and keep Scheduler datastore data
-  # default should not make user loose data if he forgot the option
-  reset_catalogue=false
-  reset_scheduler=false
   setup_enabled=true
   cta_image_repository=$(jq -r .dev.ctaImageRepository ${project_json_path}) # Used for the ctageneric pod image(s)
   dry_run=0 # Will not do anything with the namespace and just render the generated yaml files
@@ -137,13 +118,9 @@ create_instance() {
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
       -h | --help) usage ;;
-      -o|--scheduler-config)
-        scheduler_config="$2"
-        test -f "${scheduler_config}" || die "Scheduler config file ${scheduler_config} does not exist"
-        shift ;;
-      -d|--catalogue-config)
-        catalogue_config="$2"
-        test -f "${catalogue_config}" || die "catalogue config file ${catalogue_config} does not exist"
+      --ci-setup-config)
+        ci_setup_config="$2"
+        test -f "${ci_setup_config}" || die "ci-setup config file ${ci_setup_config} does not exist"
         shift ;;
       -n|--namespace)
         namespace="$2"
@@ -154,14 +131,12 @@ create_instance() {
       -i|--cta-image-tag)
         cta_image_tag="$2"
         shift ;;
-      -c|--catalogue-version)
+      --catalogue-version)
         catalogue_schema_version="$2"
         shift ;;
       --max-drives)
         max_drives="$2"
         shift ;;
-      -O|--reset-scheduler) reset_scheduler=true ;;
-      -D|--reset-catalogue) reset_catalogue=true ;;
       --no-setup) setup_enabled=false ;;
       --local-telemetry) local_telemetry=true ;;
       --dry-run) dry_run=1 ;;
@@ -218,21 +193,9 @@ create_instance() {
     helm_command="install"
   fi
 
-  if [ "$reset_catalogue" == "true" ] ; then
-    echo "Catalogue content will be reset"
-  else
-    echo "Catalogue content will be kept"
-  fi
-
-  if [[ "$reset_scheduler" == "true" ]]; then
-    echo "scheduler data store content will be reset"
-  else
-    echo "scheduler data store content will be kept"
-  fi
-
   # This is where the actual scripting starts. All of the above is just initializing some variables, error checking and producing debug output
 
-  # As we have no nice way of locking resources, just fail if another CTA release already exists
+  # As we have no nice way of locking resources (yet), just fail if another CTA release already exists
   if [[ $(helm list --all-namespaces | grep cta | wc -l) -ge 1 ]]; then
     die "Another CTA release was found. Currently, installing multiple CTA releases on the same machine is not supported."
   fi
@@ -242,44 +205,12 @@ create_instance() {
     generate_tape_values_files
   fi
 
-  if [[ "$scheduler_config" == "presets/dev-scheduler-vfs-values.yaml" ]]; then
-    if kubectl get sc local-path >/dev/null 2>&1; then
-      echo "Local path provisioning is enabled. Using VFS scheduler is okay."
-    else
-      echo "==============================================================================="
-      echo "!!!!!!!!DEPRECATION WARNING!!!!!!!!"
-      echo "==============================================================================="
-      echo
-      echo "It seems that your machine does not have local path provisioning enabled"
-      echo "Support for running without local path provisioning will be removed soon."
-      echo
-      echo "Please follow these instructions to enable local path provisioning."
-      echo " 1. ssh into your machine as root"
-      echo " 2. navigate to the minikube_cta_ci repo you used to instantiate your dev machine"
-      echo " 3. Run: git pull"
-      echo " 4. Run: ./01_bootstrap_minikube.sh"
-      echo " 5. Reboot the machine"
-      echo "The storage-provisioner-rancher addon should now be enabled."
-      echo "This addon provides dynamic local path provisioning"
-      echo
-      echo "Alternatively if you prefer to do it manually:"
-      echo " 1. Run: minikube addons enable storage-provisioner-rancher"
-      echo " 2. Add this same line to /usr/local/bin/start_minikube.sh to ensure it persists over restarts"
-      echo
-      echo "Changing scheduler config to \"presets/dev-scheduler-vfs-deprecated-values.yaml\"...."
-      echo "==============================================================================="
-      echo
-      echo
-      scheduler_config=presets/dev-scheduler-vfs-deprecated-values.yaml
-    fi
-  fi
-
-
   # Create the namespace if necessary
   if [ $dry_run == 0 ] ; then
     echo "Creating ${namespace} namespace"
     kubectl create namespace "${namespace}"
     echo "Copying secrets into ${namespace} namespace"
+    secrets=$(kubectl get secrets -o json | jq -r '.items[].metadata.name')
     for secret_name in ${secrets}; do
       # If the secret exists...
       if kubectl get secret "${secret_name}" &> /dev/null; then
@@ -313,33 +244,17 @@ create_instance() {
 
   # Note that some of these charts are installed in parallel
   # See README.md for details on the order
-  echo "Installing Authentication, Catalogue and Scheduler charts..."
-  log_run helm ${helm_command} auth helm/auth \
-                                --namespace "${namespace}" \
-                                --wait --wait-for-jobs --timeout 2m &
-  auth_pid=$!
-
+  echo "Installing CI Setup chart..."
   echo "Deploying with catalogue schema version: ${catalogue_schema_version}"
-  log_run helm ${helm_command} cta-catalogue helm/catalogue \
+  log_run helm ${helm_command} ci-setup helm/ci-setup \
                                 --namespace "${namespace}" \
-                                --set resetImage.repository="${cta_image_repository}" \
-                                --set resetImage.tag="${cta_image_tag}" \
-                                --set schemaVersion="${catalogue_schema_version}" \
-                                --set resetCatalogue="${reset_catalogue}" \
-                                --set-file configuration="${catalogue_config}" \
-                                --wait --wait-for-jobs --timeout 4m &
-  catalogue_pid=$!
-
-  log_run helm ${helm_command} cta-scheduler helm/scheduler \
-                                --namespace "${namespace}" \
-                                --set resetImage.repository="${cta_image_repository}" \
-                                --set resetImage.tag="${cta_image_tag}" \
-                                --set resetScheduler="${reset_scheduler}" \
-                                --set-file configuration="${scheduler_config}" \
-                                --wait --wait-for-jobs --timeout 4m &
-  scheduler_pid=$!
-
-  wait $auth_pid || exit 1
+                                --set catalogueReset.image.repository="${cta_image_repository}" \
+                                --set catalogueReset.image.tag="${cta_image_tag}" \
+                                --set catalogueReset.schemaVersion="${catalogue_schema_version}" \
+                                --set schedulerReset.image.repository="${cta_image_repository}" \
+                                --set schedulerReset.image.tag="${cta_image_tag}" \
+                                -f ${ci_setup_config} \
+                                --wait --wait-for-jobs --timeout 4m
 
   if [ $eos_enabled == "true" ] ; then
     ./deploy_eos.sh --namespace "${namespace}" \
@@ -356,11 +271,6 @@ create_instance() {
                        --dcache-image-tag "${dcache_image_tag}" &
     dcache_pid=$!
   fi
-
-
-  # Wait for the scheduler and catalogue charts to be installed (and exit if 1 failed)
-  wait $catalogue_pid || exit 1
-  wait $scheduler_pid || exit 1
 
   extra_cta_chart_flags=""
   if [[ "$local_telemetry" == "true" ]]; then
@@ -386,7 +296,6 @@ create_instance() {
                                 -f "${cta_config}" \
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
-                                --set-file global.configuration.scheduler="${scheduler_config}" \
                                 -f "${taped_config}" \
                                 -f "${rmcd_config}" \
                                 --wait --timeout 5m ${extra_cta_chart_flags}
@@ -402,13 +311,13 @@ create_instance() {
     exit 0
   fi
 
+  # Can be removed once all system tests use the Python test framework
   if [[ "$setup_enabled" == "true" ]]; then
     ./setup/reset_tapes.sh -n "${namespace}"
     ./setup/kinit_clients.sh -n "${namespace}"
   fi
 }
 
-check_helm_installed
 create_instance "$@"
 echo "Instance ${namespace} successfully created:"
 kubectl --namespace "${namespace}" get pods

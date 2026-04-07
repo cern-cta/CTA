@@ -40,14 +40,13 @@ usage() {
   echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
   echo "      --spawn-options <options>:        Additional options to pass for the deployment. These are passed verbatim to the create/upgrade instance scripts."
   echo "      --image-build-options <options>:  Additional options to pass for the image building. These are passed verbatim to the build_image.sh script."
-  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
-  echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
+  echo "      --ci-setup-config <path>:         Path to the yaml file containing the values of the ci-setup chart. Defaults to: presets/dev-ci-setup-vfs-scheduler-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
-  echo "      --upgrade-cta:                    Upgrades the existing CTA instance with a new image instead of spawning an instance from scratch."
-  echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
   echo "      --eos-image-tag <tag>:            Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
   echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-xrd-values.yaml"
+  echo "      --upgrade-cta:                    Upgrades the existing CTA instance with a new image instead of spawning an instance from scratch."
+  echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
   echo "      --use-public-repos:               Use the public yum repos instead of the internal yum repos. Use when you do not have access to the CERN network."
   echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
   echo "      --disable-eos:                    Skips spawning EOS in the system tests."
@@ -99,7 +98,6 @@ build_deploy() {
   local image_cleanup=true
   local extra_spawn_options=""
   local extra_image_build_options=""
-  local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
   local eos_image_tag=""
   local container_runtime="podman"
   local platform
@@ -196,20 +194,12 @@ build_deploy() {
         error_usage "--scheduler-type requires an argument"
       fi
       ;;
-    --catalogue-config)
+    --ci-setup-config)
       if [[ $# -gt 1 ]]; then
-        catalogue_config="$2"
+        ci_setup_config="$2"
         shift
       else
-        error_usage "--catalogue-config requires an argument"
-      fi
-      ;;
-    --scheduler-config)
-      if [[ $# -gt 1 ]]; then
-        scheduler_config="$2"
-        shift
-      else
-        error_usage "--scheduler-config requires an argument"
+        error_usage "--ci-setup-config requires an argument"
       fi
       ;;
     --tapeservers-config)
@@ -482,11 +472,11 @@ build_deploy() {
         extra_spawn_options+=" --no-setup"
       fi
 
-      if [[ -z "${scheduler_config}" ]]; then
+      if [[ -z "${ci_setup_config}" ]]; then
         if [[ "${scheduler_type}" == "pgsched" ]]; then
-          scheduler_config="presets/dev-scheduler-postgres-values.yaml"
+          ci_setup_config="presets/dev-ci-setup-postgres-scheduler-values.yaml"
         else
-          scheduler_config="presets/dev-scheduler-vfs-values.yaml"
+          ci_setup_config="presets/dev-ci-setup-vfs-scheduler-values.yaml"
         fi
       fi
 
@@ -496,10 +486,7 @@ build_deploy() {
       ./create_instance.sh --namespace "${deploy_namespace}" \
         --cta-image-repository localhost/ctageneric \
         --cta-image-tag "${image_tag}" \
-        --catalogue-config "${catalogue_config}" \
-        --scheduler-config "${scheduler_config}" \
-        --reset-catalogue \
-        --reset-scheduler \
+        --ci-setup-config "${ci_setup_config}" \
         --eos-enabled ${eos_enabled} \
         --dcache-enabled ${dcache_enabled} \
         ${extra_spawn_options}

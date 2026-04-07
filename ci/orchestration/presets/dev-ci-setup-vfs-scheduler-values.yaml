@@ -1,0 +1,39 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Spawn only a postgres catalogue
+postgres:
+  databases:
+  - name: cta-catalogue
+    # Secret to generate the connection string into
+    secretName: cta-catalogue-conf
+    secretKey: cta-catalogue.conf
+
+objectstore:
+  enabled: true
+  backend: vfs
+
+#
+# Define extra arbitrary Kubernetes objects (secrets, configmaps, static PVs, etc.) as items in a list.
+#   Example:
+#   extraObjects:
+#     - |
+#       apiVersion: v1
+#       kind: ConfigMap
+#       metadata:
+#         name: {{ .Release.Name }}-extra
+#       data:
+#         speed: fast
+extraObjects:
+  - |
+    apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      name: scheduler-vfs-pvc
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      storageClassName: local-path

@@ -19,8 +19,7 @@ usage() {
   echo "      --spawn-options <options>:        Additional options to pass for the deployment. These are passed verbatim to the create/upgrade instance scripts."
   echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-xrd-values.yaml"
-  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
-  echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
+  echo "      --ci-setup-config <path>:         Path to the yaml file containing the values of the ci-setup chart. Defaults to: presets/dev-ci-setup-vfs-scheduler-values.yaml"
   echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
   echo "      --local-telemetry:               Enables telemetry for the spawned instance."
   echo
@@ -34,8 +33,7 @@ deploy() {
   local cta_image_tag=""
   local cta_config="presets/dev-cta-xrd-values.yaml"
   local eos_config="presets/dev-eos-xrd-values.yaml"
-  local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
-  local scheduler_config="presets/dev-scheduler-vfs-values.yaml"
+  local ci_setup_config="presets/dev-ci-setup-vfs-scheduler-values.yaml"
   local extra_spawn_options=""
   local local_telemetry=false
 
@@ -63,20 +61,12 @@ deploy() {
           error_usage "--eos-image-tag requires an argument"
         fi
         ;;
-      --catalogue-config)
+      --ci-setup-config)
         if [[ $# -gt 1 ]]; then
-          catalogue_config="$2"
+          ci_setup_config="$2"
           shift
         else
-          error_usage "--catalogue-config requires an argument"
-        fi
-        ;;
-      --scheduler-config)
-        if [[ $# -gt 1 ]]; then
-          scheduler_config="$2"
-          shift
-        else
-          error_usage "--scheduler-config requires an argument"
+          error_usage "--ci-setup-config requires an argument"
         fi
         ;;
       --tapeservers-config)
@@ -157,10 +147,7 @@ deploy() {
    # shellcheck disable=SC2086
   ./create_instance.sh --namespace ${deploy_namespace} \
                       --cta-image-tag "${cta_image_tag}" \
-                      --catalogue-config "${catalogue_config}" \
-                      --scheduler-config "${scheduler_config}" \
-                      --reset-catalogue \
-                      --reset-scheduler \
+                      --ci-setup-config "${ci_setup_config}" \
                       ${extra_spawn_options}
 
 }

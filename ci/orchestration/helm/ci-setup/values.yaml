@@ -1,0 +1,83 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+keycloak:
+  image: registry.cern.ch/quay.io/keycloak/keycloak:26.1
+  adminUsername: admin
+  adminPassword: admin
+  realm: master
+  accessTokenLifespan: 36000
+  ssoSessionMaxLifespan: 36000
+
+kerberos:
+  image: registry.cern.ch/docker.io/almalinux/9-minimal:9.7
+  defaultRealm: TEST.CTA
+  adminPrinc:
+    name: root
+    password: "defaultcipassword"
+
+# Default behaviour: spawn a Postgres catalogue and Postgres Scheduler
+postgres:
+  image: registry.cern.ch/docker.io/postgres:14.15
+  databases:
+  - name: cta-catalogue-db
+    # Secret to generate the connection string into
+    secretName: cta-catalogue-conf
+    secretKey: cta-catalogue.conf
+  - name: cta-scheduler-db
+    # Secret to generate the connection string into
+    secretName: cta-scheduler-conf
+    secretKey: cta-scheduler.conf
+
+catalogueReset:
+  enabled: true
+  schemaVersion: "15.0"
+  connection:
+    secretName: cta-catalogue-conf
+    secretKey: cta-catalogue.conf
+  image:
+    repository: gitlab-registry.cern.ch/cta/ctageneric
+    tag: "latest"
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - reg-ctageneric
+
+
+schedulerReset:
+  enabled: true
+  connection:
+    secretName: cta-scheduler-conf
+    secretKey: cta-scheduler.conf
+  image:
+    repository: gitlab-registry.cern.ch/cta/ctageneric
+    tag: ""
+    pullPolicy: IfNotPresent
+    pullSecrets:
+      - reg-ctageneric
+
+# Can be removed once the objectstore is removed
+objectstore:
+  enabled: false
+  backend: "" # Options: vfs, ceph
+  # Only used if the backend is ceph
+  ceph:
+    mon: ""
+    monport: ""
+    pool: ""
+    namespace: ""
+    id: ""
+    key: ""
+
+
+#
+# Define extra arbitrary Kubernetes objects (secrets, configmaps, static PVs, etc.) as items in a list.
+#   Example:
+#   extraObjects:
+#     - |
+#       apiVersion: v1
+#       kind: ConfigMap
+#       metadata:
+#         name: {{ .Release.Name }}-extra
+#       data:
+#         speed: fast
+extraObjects: []

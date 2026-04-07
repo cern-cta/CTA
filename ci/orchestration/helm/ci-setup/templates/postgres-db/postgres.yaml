@@ -1,0 +1,62 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+{{- range .Values.postgres.databases }}
+{{- $name := printf "%s-%s" $.Release.Name .name }}
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace | quote }}
+  labels:
+    app: {{ $name }}
+spec:
+  restartPolicy: Never
+  containers:
+    - name: postgres
+      image: {{ $.Values.postgres.image }}
+      env:
+        - name: POSTGRES_HOST_AUTH_METHOD
+          value: trust
+        - name: POSTGRES_DB
+          value: {{ .name }}
+        - name: PGDATA
+          value: /var/lib/postgresql/data/pgdata
+      readinessProbe:
+        exec:
+          command:
+            - sh
+            - -c
+            - pg_isready -U postgres -d {{ .name }} -h 127.0.0.1 -p 5432
+        periodSeconds: 2
+        timeoutSeconds: 3
+        failureThreshold: 20
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace | quote }}
+spec:
+  selector:
+    app: {{ $name }}
+  ports:
+    - port: 5432
+      targetPort: 5432
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ .secretName }}
+  namespace: {{ $.Release.Namespace | quote }}
+type: Opaque
+stringData:
+  # CTA expects <db-type>:<connection-string>, hence the double postgresql:
+  {{ .secretKey }}: postgresql:postgresql://postgres@{{ $name }}:5432/{{ .name }}
+
+{{- end }}

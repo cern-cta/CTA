@@ -1,0 +1,69 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- if and .Values.schedulerReset.enabled (not .Values.objectstore.enabled) -}}
+{{- $name := printf "%s-%s" $.Release.Name "reset-scheduler-job" }}
+{{- $image := printf "%s:%s" .Values.schedulerReset.image.repository ( .Values.schedulerReset.image.tag | toString ) | quote -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        # Ensures delete_instance.sh will collect its logs
+        app.kubernetes.io/instance: cta
+    spec:
+      restartPolicy: Never
+      imagePullSecrets:
+      {{- range .Values.schedulerReset.image.pullSecrets }}
+        - name: {{ . | quote }}
+      {{- end }}
+      initContainers:
+      - name: wait-for-postgres
+        image: {{ .Values.postgres.image }}
+        env:
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.schedulerReset.connection.secretName }}
+                key: {{ .Values.schedulerReset.connection.secretKey }}
+        command:
+          - sh
+          - -c
+          - |
+            # Strip the initial postgresql: part as this is CTA-specific
+            DATABASE_URL="${DATABASE_URL#postgresql:}"
+            until pg_isready -d "$DATABASE_URL"; do
+              sleep 1
+            done
+      containers:
+        - name: catalogue-reset
+          image: {{ $image }}
+          imagePullPolicy: {{ .Values.schedulerReset.image.pullPolicy }}
+          command: ["bash", "/scripts/reset_scheduler.sh"]
+          args: []
+          securityContext:
+            allowPrivilegeEscalation: false
+          stdin: true
+          volumeMounts:
+          - name: scripts-cm
+            mountPath: /scripts
+          - name: scheduler-config
+            mountPath: /etc/cta/cta-scheduler.conf
+            subPath: {{ .Values.schedulerReset.connection.secretKey }}
+      volumes:
+      - name: scripts-cm
+        configMap:
+          name: {{ .Release.Name }}-scripts
+          defaultMode: 0777
+      - name: scheduler-config
+        secret:
+          secretName: {{ .Values.schedulerReset.connection.secretName }}
+{{- end }}

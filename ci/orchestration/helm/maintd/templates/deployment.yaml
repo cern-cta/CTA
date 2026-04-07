@@ -48,7 +48,7 @@ spec:
         volumeMounts:
           - name: maintd-sss-keytab
             mountPath: /root/sss_keytab/input/maintd.keytab
-            subPath: {{ $.Values.keytab.subPath }}
+            subPath: {{ $.Values.keytab.secretKey }}
           - name: maintd-sss-keytab-fixedownership
             mountPath: /root/sss_keytab/output
       containers:

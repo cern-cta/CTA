@@ -3,7 +3,6 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{ range .Values.drives }}
 {{- $driveNameSlug := include "common.slugify" .name }}
 # Generate unique config map for each tape drive
@@ -33,7 +32,7 @@ data:
     ObjectStore BackendPath {{ include "global.schedulerUrl" $ }}
     # General
     general InstanceName {{ $.Release.Namespace }}
-    general SchedulerBackendName {{ $schedulerConfig.backend }}
+    general SchedulerBackendName CIBackend
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
 
     # Rmcd

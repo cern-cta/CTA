@@ -1,0 +1,41 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+
+{{- if .Values.objectstore.enabled }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cta-objectstore-conf
+data:
+  cta-objectstore-tools.conf: |-
+    {{ if eq .Values.objectstore.backend "ceph" }}
+    BackendPath rados://{{ .Values.objectstore.ceph.id }}@{{ .Values.objectstore.ceph.pool }}:{{ .Values.objectstore.ceph.namespace }}
+    {{- else if eq .Values.objectstore.backend "vfs" -}}
+    BackendPath /objectstore
+    {{- end }}
+
+{{- if eq .Values.objectstore.backend "ceph" }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ceph-conf
+data:
+  ceph.conf: |
+    [global]
+      mon host = {{ .Values.objectstore.ceph.mon }}:{{ .Values.objectstore.ceph.monport }}
+
+  ceph.client.{{ .Values.objectstore.ceph.id }}.keyring: |
+    [client.{{ .Values.objectstore.ceph.id }}]
+      key = {{ .Values.objectstore.ceph.key }}
+      caps mon = "allow r"
+      caps osd = "allow rwx pool={{ .Values.objectstore.ceph.pool }} namespace={{ .Values.objectstore.ceph.namespace }}"
+{{- end }}
+
+{{- end }}

@@ -145,8 +145,6 @@
     - cd ci/orchestration/
     - ./delete_old_namespaces.sh
     - ./create_instance.sh --namespace ${NAMESPACE}
-                           --reset-catalogue
-                           --reset-scheduler
                            --no-setup
                            --cta-image-tag ${IMAGE_TAG}
                            --cta-config ${DEFAULT_CTA_VALUES_FILE}
@@ -402,8 +400,6 @@ stress-test-python:
     # We don't clean up old namespace so this will fail (deliberately) when another namespace still exist
     # This is because we check for the libraries in use before we start
     - ./create_instance.sh --namespace ${NAMESPACE}
-                           --reset-catalogue
-                           --reset-scheduler
                            --no-setup
                            --cta-image-tag ${IMAGE_TAG}
                            --cta-config ${STRESS_CTA_VALUES_FILE}

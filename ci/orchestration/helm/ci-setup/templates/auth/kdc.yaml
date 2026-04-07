@@ -1,0 +1,105 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+
+{{- $name := printf "%s-%s" .Release.Name "kdc" | trunc 63 | trimSuffix "-" }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-kadm5-acl
+  namespace: {{ .Release.Namespace }}
+data:
+  kadm5.acl: |
+    */admin@{{ .Values.kerberos.defaultRealm }} *
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+spec:
+  automountServiceAccountToken: false
+  restartPolicy: Never
+  terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
+  containers:
+  - name: auth-kdc
+    image: {{ .Values.kerberos.image }}
+    imagePullPolicy: IfNotPresent
+    stdin: true
+    command: ["bash", "/scripts/kdc.sh"]
+    args: []
+    startupProbe:
+      tcpSocket:
+        port: 749
+      initialDelaySeconds: 0
+      periodSeconds: 1
+      timeoutSeconds: 2
+      failureThreshold: 60
+    readinessProbe:
+      tcpSocket:
+        port: 749
+      initialDelaySeconds: 0
+      periodSeconds: 5
+      failureThreshold: 4
+    securityContext:
+      allowPrivilegeEscalation: false
+    env:
+    - name: TERM
+      value: "xterm"
+    - name: KRB5_REALM
+      value: {{ .Values.kerberos.defaultRealm }}
+    - name: KRB5_KDC_PROFILE
+      value: /etc/krb5.conf
+    - name: KRB5_ADMIN_PRINC_NAME
+      value: {{ .Values.kerberos.adminPrinc.name }}
+    - name: KRB5_ADMIN_PRINC_PWD
+      value: {{ .Values.kerberos.adminPrinc.password }}
+    volumeMounts:
+    - name: scripts-volume
+      mountPath: /scripts
+    - name: krb5-conf
+      mountPath: /etc/krb5.conf
+      subPath: krb5.conf
+    - name: kadm5-acl
+      mountPath: /var/kerberos/krb5kdc/kadm5.acl
+      subPath: kadm5.acl
+  volumes:
+  - name: scripts-volume
+    configMap:
+      name: {{ .Release.Name }}-scripts
+      defaultMode: 0777
+  - name: krb5-conf
+    configMap:
+      name: {{ .Release.Name }}-krb5-conf
+  - name: kadm5-acl
+    configMap:
+      name: {{ .Release.Name }}-kadm5-acl
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ $name }}
+  clusterIP: None
+  ports:
+  - name: kdc-tcp
+    port: 88
+    protocol: TCP
+  - name: kdc-udp
+    port: 88
+    protocol: UDP
+  - name: kadmind-tcp
+    port: 749
+    protocol: TCP
+  - name: kadmind-udp
+    port: 749
+    protocol: UDP

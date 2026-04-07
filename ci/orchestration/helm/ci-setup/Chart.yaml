@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+apiVersion: v2
+name: ci-setup
+description: Generates necessary secrets and services for CTA and EOS to function in CI
+type: application
+version: 0.2.1
+appVersion: "5.11.10.1"

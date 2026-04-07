@@ -1,0 +1,12 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Spawn a Postgres catalogue and Postgres Scheduler
+postgres:
+  databases:
+  - name: cta-catalogue-db
+    secretName: cta-catalogue-conf
+    secretKey: cta-catalogue.conf
+  - name: cta-scheduler-db
+    secretName: cta-scheduler-conf
+    secretKey: cta-scheduler.conf

@@ -3,7 +3,6 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{ range .Values.drives -}}
 {{- $driveNameSlug := include "common.slugify" .name }}
 {{- $tapedName := printf "%s-%s-%s" $.Release.Name "taped" $driveNameSlug | trunc 63 | trimSuffix "-" }}
@@ -47,7 +46,7 @@ spec:
         volumeMounts:
           - name: taped-sss-keytab
             mountPath: /root/sss_keytab/input/taped.keytab
-            subPath: {{ $.Values.keytab.subPath }}
+            subPath: {{ $.Values.keytab.secretKey }}
           - name: taped-sss-keytab-fixedownership
             mountPath: /root/sss_keytab/output
       containers:
@@ -90,8 +89,6 @@ spec:
           value: {{ .name }}
         - name: DRIVE_DEVICE
           value: {{ .device }}
-        - name: SCHEDULER_BACKEND
-          value: {{ $schedulerConfig.backend | quote }}
         - name: XrdSecPROTOCOL
           value: sss
         - name: XrdSecSSSKT

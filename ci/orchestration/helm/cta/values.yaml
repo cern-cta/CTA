@@ -10,6 +10,27 @@ global:
     pullSecrets:
       - reg-ctageneric
 
+  catalogue:
+    secretName: cta-catalogue-conf
+    secretKey: cta-catalogue.conf
+
+  scheduler:
+    secretName: cta-scheduler-conf
+    secretKey: cta-scheduler.conf
+
+  # Can be removed once the objectstore is removed
+  objectstore:
+    enabled: false
+    backend: "" # Options: vfs, ceph
+    # Only used if the backend is ceph
+    ceph:
+      mon: ""
+      monport: ""
+      pool: ""
+      namespace: ""
+      id: ""
+      key: ""
+
   #
   # Define extra arbitrary Kubernetes objects (secrets, configmaps, static PVs, etc.) as items in a list.
   #   Example:
@@ -32,17 +53,11 @@ global:
       name: root
       password: "defaultcipassword"
 
-  # This shared mount is to be removed once vfsDeprecated is removed
   extraVolumes:
     volumes:
-      - name: shared
-        hostPath:
-          path: /opt/cta
       - name: coredumps
         emptyDir: {}
     volumeMounts:
-      - name: shared
-        mountPath: /shared
       - name: coredumps
         mountPath: /var/log/tmp
 
