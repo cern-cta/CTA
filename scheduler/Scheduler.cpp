@@ -2815,7 +2815,7 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
       || (operatingMode == OperatingMode::USER && c_forbiddenTransitionsUserMode.first.contains(prev_state)
           && c_forbiddenTransitionsUserMode.second.contains(new_state))) {
     std::ostringstream oss;
-    oss << "Not allowed to modify tape " << vid << " state  from ";
+    oss << "Not allowed to modify tape " << vid << " state from ";
     oss << Tape::stateToString(prev_state) << " to " << Tape::stateToString(new_state);
     oss << " on this frontend";
     throw cta::exception::UserError(oss.str());
