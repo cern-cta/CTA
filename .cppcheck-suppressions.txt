@@ -1,8 +1,8 @@
 syntaxError:*Test.cpp
 syntaxError:*Tests.cpp
 localMutex:common/process/threading/MutexLtrace.cpp
-unknownMacro:tapeserver/castor/tape/tapeserver/file/FileTest.cpp
-unknownMacro:tapeserver/castor/tape/tapeserver/file/OSMFileTest.cpp
+unknownMacro:taped/file/FileTest.cpp
+unknownMacro:taped/file/OSMFileTest.cpp
 nullPointer:common/utils/utils.cpp
 uninitStructMember:objectstore/RetrieveRequest.cpp
 preprocessorErrorDirective:common/jwt-cpp/tests/*

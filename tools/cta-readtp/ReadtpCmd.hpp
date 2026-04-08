@@ -5,6 +5,9 @@
 
 #pragma once
 
+#include "ReadtpCmdLineArgs.hpp"
+#include "TapeFseqRange.hpp"
+#include "TapeFseqRangeListSequence.hpp"
 #include "common/CmdLineTool.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/log/DummyLogger.hpp"
@@ -12,14 +15,11 @@
 #include "common/log/StdoutLogger.hpp"
 #include "disk/DiskFile.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
-#include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
-#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
-#include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
-#include "tapeserver/readtp/TapeFseqRange.hpp"
-#include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
+#include "taped/daemon/common/TapedConfiguration.hpp"
+#include "taped/drive/DriveGeneric.hpp"
+#include "taped/drive/DriveInterface.hpp"
+#include "taped/session/EncryptionControl.hpp"
+#include "taped/session/VolumeInfo.hpp"
 
 #include <memory>
 

@@ -2,8 +2,12 @@
  * SPDX-FileCopyrightText: 2021 CERN
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
-#include "tapeserver/daemon/TapeDaemon.hpp"
+#include "TapeDaemon.hpp"
 
+#include "DriveConfigEntry.hpp"
+#include "DriveHandler.hpp"
+#include "ProcessManager.hpp"
+#include "SignalHandler.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "common/CmdLineParams.hpp"
 #include "common/exception/Errnum.hpp"
@@ -11,10 +15,6 @@
 #include "common/process/ProcessCap.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/utils/utils.hpp"
-#include "tapeserver/daemon/DriveConfigEntry.hpp"
-#include "tapeserver/daemon/DriveHandler.hpp"
-#include "tapeserver/daemon/ProcessManager.hpp"
-#include "tapeserver/daemon/SignalHandler.hpp"
 
 #include <google/protobuf/service.h>
 #include <limits.h>

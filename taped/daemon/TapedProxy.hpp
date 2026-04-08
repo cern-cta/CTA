@@ -7,8 +7,8 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/log/Param.hpp"
-#include "tapeserver/session/SessionState.hpp"
-#include "tapeserver/session/SessionType.hpp"
+#include "taped/session/SessionState.hpp"
+#include "taped/session/SessionType.hpp"
 
 #include <functional>
 #include <list>

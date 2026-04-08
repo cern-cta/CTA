@@ -7,7 +7,7 @@
 
 #include "common/exception/NotImplementedException.hpp"
 
-#include "tapeserver/daemon/WatchdogMessage.pb.h"
+#include "WatchdogMessage.pb.h"
 
 namespace cta::tape::daemon {
 

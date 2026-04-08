@@ -6,7 +6,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/log/StringLogger.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "taped/daemon/common/TapedConfiguration.hpp"
 #include "tests/TempFile.hpp"
 
 #include <gtest/gtest.h>

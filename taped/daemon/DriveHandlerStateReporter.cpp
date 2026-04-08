@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tapeserver/daemon/DriveHandlerStateReporter.hpp"
+#include "DriveHandlerStateReporter.hpp"
 
 namespace cta::tape::daemon {
 

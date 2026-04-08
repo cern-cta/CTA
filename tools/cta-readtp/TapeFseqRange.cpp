@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tapeserver/readtp/TapeFseqRange.hpp"
+#include "TapeFseqRange.hpp"
 
 #include "common/exception/InvalidArgument.hpp"
 

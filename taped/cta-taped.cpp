@@ -12,8 +12,8 @@
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
-#include "tapeserver/daemon/TapeDaemon.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "daemon/TapeDaemon.hpp"
+#include "daemon/common/TapedConfiguration.hpp"
 #include "version.h"
 
 #include <google/protobuf/stubs/common.h>

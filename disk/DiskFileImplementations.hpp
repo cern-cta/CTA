@@ -8,8 +8,8 @@
 #include "XrdClException.hpp"
 #include "common/exception/Exception.hpp"
 #include "disk/DiskFile.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/VolumeInfo.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
+#include "taped/file/Structures.hpp"
+#include "taped/session/VolumeInfo.hpp"
 
 #include <xrootd/XrdCl/XrdClFile.hh>
 

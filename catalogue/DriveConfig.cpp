@@ -7,7 +7,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/config/SourcedParameter.hpp"
-#include "tapeserver/daemon/common/FetchReportOrFlushLimits.hpp"
+#include "taped/daemon/common/FetchReportOrFlushLimits.hpp"
 
 #include <algorithm>
 #include <string>

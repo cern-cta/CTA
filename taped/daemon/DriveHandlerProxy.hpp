@@ -5,9 +5,9 @@
 
 #pragma once
 
+#include "TapedProxy.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/SocketPair.hpp"
-#include "tapeserver/daemon/TapedProxy.hpp"
 
 #include <future>
 

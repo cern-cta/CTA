@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "tapeserver/daemon/DriveHandler.hpp"
-#include "tapeserver/session/SessionState.hpp"
-#include "tapeserver/session/SessionType.hpp"
+#include "DriveHandler.hpp"
+#include "taped/session/SessionState.hpp"
+#include "taped/session/SessionType.hpp"
 
 namespace cta::tape::daemon {
 

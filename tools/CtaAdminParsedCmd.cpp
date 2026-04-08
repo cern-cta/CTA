@@ -6,7 +6,7 @@
 #include "CtaAdminParsedCmd.hpp"
 
 #include "CtaAdminTextFormatter.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <filesystem>
 #include <fstream>

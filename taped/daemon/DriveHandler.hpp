@@ -13,16 +13,16 @@
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
 #endif
+#include "ProcessManager.hpp"
+#include "SubprocessHandler.hpp"
+#include "TapedProxy.hpp"
+#include "common/TapedConfiguration.hpp"
 #include "scheduler/Scheduler.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
-#include "tapeserver/daemon/ProcessManager.hpp"
-#include "tapeserver/daemon/SubprocessHandler.hpp"
-#include "tapeserver/daemon/TapedProxy.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
-#include "tapeserver/session/SessionState.hpp"
-#include "tapeserver/session/SessionType.hpp"
+#include "taped/session/Session.hpp"
+#include "taped/session/SessionState.hpp"
+#include "taped/session/SessionType.hpp"
 
-#include "tapeserver/daemon/WatchdogMessage.pb.h"
+#include "WatchdogMessage.pb.h"
 
 namespace cta {
 

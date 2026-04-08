@@ -3,9 +3,11 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tapeserver/readtp/ReadtpCmd.hpp"
+#include "ReadtpCmd.hpp"
 
-#include "castor/tape/tapeserver/file/FileReaderFactory.hpp"
+#include "ReadtpCmdLineArgs.hpp"
+#include "TapeFseqRange.hpp"
+#include "TapeFseqRangeListSequence.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
@@ -18,14 +20,12 @@
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/Payload.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/ReadSession.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/ReadSessionFactory.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
-#include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
-#include "tapeserver/readtp/TapeFseqRange.hpp"
-#include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
+#include "taped/file/FileReaderFactory.hpp"
+#include "taped/file/ReadSession.hpp"
+#include "taped/file/ReadSessionFactory.hpp"
+#include "taped/file/Structures.hpp"
+#include "taped/session/EncryptionControl.hpp"
+#include "taped/session/Payload.hpp"
 
 namespace cta::tapeserver::readtp {
 

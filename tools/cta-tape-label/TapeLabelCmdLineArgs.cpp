@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tapeserver/tapelabel/TapeLabelCmdLineArgs.hpp"
+#include "TapeLabelCmdLineArgs.hpp"
 
 #include "common/Constants.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"

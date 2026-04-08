@@ -1,0 +1,130 @@
+/*
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#pragma once
+
+#include "RAOAlgorithmFactory.hpp"
+#include "RAOParams.hpp"
+#include "common/log/LogContext.hpp"
+#include "scheduler/RetrieveJob.hpp"
+#include "taped/drive/DriveInterface.hpp"
+#include "taped/scsi/Structures.hpp"
+
+#include <memory>
+#include <optional>
+#include <vector>
+
+namespace castor::tape::tapeserver::rao {
+
+/**
+ * This class will be used to manage everything that is linked to RAO.
+ * It centralizes all the RAO-related task that are executed during the
+ * RecallTaskInjector lifecycle.
+ */
+class RAOAlgorithmFactoryFactory;
+
+class RAOManager {
+public:
+  friend RAOAlgorithmFactoryFactory;
+
+  RAOManager() = default;
+
+  /**
+   * Constructor of a RAO manager
+   * @param config the configuration of the RAO to manage
+   * @param drive the DriveInterface of the drive that is mounting.
+   * @param catalogue the pointer to the CTA catalogue
+   */
+  RAOManager(const RAOParams& config, drive::DriveInterface* drive, cta::catalogue::Catalogue* catalogue)
+      : m_raoParams(config),
+        m_drive(drive),
+        m_catalogue(catalogue) {}
+
+  /**
+   * Destructor
+   */
+  virtual ~RAOManager() = default;
+  /**
+   * Returns true if RAO will be used, false otherwise
+   */
+  bool useRAO() const;
+
+  /**
+   * Returns true if the manager has informations about the drive's User Data Segments limits to
+   * perform RAO for enteprise drive
+   */
+  bool hasUDS() const { return m_hasUDS; }
+
+  /**
+   * Returns the number of files that will be supported by the RAO algorithm
+   */
+  std::optional<uint64_t> getMaxFilesSupported() const { return m_maxFilesSupported; }
+
+  /**
+   * Disable the RAO algorithm
+   */
+  void disableRAO();
+  /**
+   * Set the enterprise RAO User Data Segments limits
+   * that will be used by this manager to perform the Enterprise RAO query on the drive
+   * @param raoLimits the enterprise RAO user data segments limits
+   */
+  void setEnterpriseRAOUdsLimits(const SCSI::Structures::RAO::udsLimits& raoLimits);
+  /**
+   * Query the RAO of the files passed in parameter
+   * @param jobs the vector of jobs to query the RAO
+   * @param lc the log context
+   * @return the vector with re-arranged indexes of the jobs passed in parameter
+   * It does not returns the fseqs, but a vector of indexes that will be used by the recall task injector to pick
+   * the correct job after RAO has been done
+   */
+  std::vector<uint64_t> queryRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs, cta::log::LogContext& lc);
+
+private:
+  //! RAO Configuration Data
+  RAOParams m_raoParams;
+  //! Enterprise Drive-specific RAO parameters
+  SCSI::Structures::RAO::udsLimits m_enterpriseRaoLimits;
+  //! Is true if the drive have been able to get the RAO UDS limits numbers
+  bool m_hasUDS = false;
+  //! The maximum number of files that will be considered for RAO
+  std::optional<uint64_t> m_maxFilesSupported;
+  //! Pointer to the drive interface of the drive currently used by the tapeserver
+  castor::tape::tapeserver::drive::DriveInterface* m_drive = nullptr;
+  bool m_isDriveEnterpriseEnabled = false;
+  cta::catalogue::Catalogue* m_catalogue = nullptr;
+
+  /**
+   * Returns true if the manager can instanciate an Enterprise RAO Algorithm
+   * false otherwise
+   */
+  bool isDriveEnterpriseEnabled() const { return m_isDriveEnterpriseEnabled; }
+
+  /**
+   * Returns the pointer to the interface of the drive currently mounting the tape
+   */
+  castor::tape::tapeserver::drive::DriveInterface* getDrive() const { return m_drive; }
+
+  /**
+   * Returns the pointer to the catalogue of this manager
+   */
+  cta::catalogue::Catalogue* getCatalogue() const { return m_catalogue; }
+
+  /**
+   * Returns the RAO data that is used by this RAOManager
+   */
+  const RAOParams& getRAOParams() const { return m_raoParams; }
+
+  /**
+   * Log a warning message after failing an RAO instanciation or execution
+   * @param exceptionMsg the exception message to log
+   * @param lc the log context to log the warning message
+   */
+  void logWarningAfterRAOOperationFailed(const std::string& warningMsg,
+                                         const std::string& exceptionMsg,
+                                         cta::log::LogContext& lc) const;
+};
+
+}  // namespace castor::tape::tapeserver::rao

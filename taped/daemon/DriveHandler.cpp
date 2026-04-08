@@ -3,8 +3,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tapeserver/daemon/DriveHandler.hpp"
+#include "DriveHandler.hpp"
 
+#include "DriveConfigEntry.hpp"
+#include "DriveHandlerProxy.hpp"
+#include "DriveHandlerStateReporter.hpp"
+#include "TapedProxy.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
@@ -13,14 +17,10 @@
 #include "common/process/ProcessCap.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "rdbms/Login.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/CleanerSession.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/DataTransferSession.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/DriveSessionTracker.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
-#include "tapeserver/daemon/DriveConfigEntry.hpp"
-#include "tapeserver/daemon/DriveHandlerProxy.hpp"
-#include "tapeserver/daemon/DriveHandlerStateReporter.hpp"
-#include "tapeserver/daemon/TapedProxy.hpp"
+#include "taped/session/CleanerSession.hpp"
+#include "taped/session/DataTransferSession.hpp"
+#include "taped/session/DriveSessionTracker.hpp"
+#include "taped/session/Session.hpp"
 
 #include <chrono>
 #include <set>
@@ -29,7 +29,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "tapeserver/daemon/WatchdogMessage.pb.h"
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else

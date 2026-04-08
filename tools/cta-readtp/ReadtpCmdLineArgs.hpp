@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
+#include "TapeFseqRangeListSequence.hpp"
 
 #include <optional>
 #include <string>

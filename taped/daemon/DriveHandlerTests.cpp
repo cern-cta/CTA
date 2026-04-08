@@ -3,7 +3,13 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
+#include "DriveConfigEntry.hpp"
+#include "DriveHandler.hpp"
+#include "DriveHandlerProxy.hpp"
+#include "ProcessManager.hpp"
+#include "TapedProxy.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
+#include "common/TapedConfiguration.hpp"
 #include "common/dataStructures/DriveInfo.hpp"
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/MountType.hpp"
@@ -12,13 +18,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 #include "scheduler/IScheduler.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/Session.hpp"
-#include "tapeserver/daemon/DriveConfigEntry.hpp"
-#include "tapeserver/daemon/DriveHandler.hpp"
-#include "tapeserver/daemon/DriveHandlerProxy.hpp"
-#include "tapeserver/daemon/ProcessManager.hpp"
-#include "tapeserver/daemon/TapedProxy.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "taped/session/Session.hpp"
 
 #include <chrono>
 #include <gmock/gmock.h>

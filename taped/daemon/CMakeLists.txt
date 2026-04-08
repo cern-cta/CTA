@@ -6,8 +6,6 @@ add_subdirectory(common)
 
 find_package(Protobuf3 REQUIRED)
 
-include_directories(${PROJECT_BINARY_DIR}/tapeserver)
-
 # See https://gitlab.cern.ch/cta/CTA/-/issues/791#note_8251696
 PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
 

@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tapeserver/tapelabel/TapeLabelCmd.hpp"
+#include "TapeLabelCmd.hpp"
 
+#include "TapeLabelCmdLineArgs.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
@@ -12,11 +13,10 @@
 #include "common/process/ProcessCap.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/Exceptions.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/HeaderChecker.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/LabelSession.hpp"
-#include "tapeserver/castor/tape/tapeserver/file/Structures.hpp"
-#include "tapeserver/tapelabel/TapeLabelCmdLineArgs.hpp"
+#include "taped/file/Exceptions.hpp"
+#include "taped/file/HeaderChecker.hpp"
+#include "taped/file/LabelSession.hpp"
+#include "taped/file/Structures.hpp"
 
 namespace cta::tapeserver::tapelabel {
 

@@ -9,7 +9,7 @@
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/dataStructures/MountType.hpp"
 #include "common/log/LogContext.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "taped/session/TapeSessionStats.hpp"
 
 #include <optional>
 #include <string>

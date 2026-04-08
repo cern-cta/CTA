@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tapeserver/readtp/ReadtpCmdLineArgs.hpp"
+#include "ReadtpCmdLineArgs.hpp"
 
+#include "TapeFseqSequenceParser.hpp"
 #include "common/Constants.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
 #include "common/utils/utils.hpp"
-#include "tapeserver/readtp/TapeFseqSequenceParser.hpp"
 
 #include <getopt.h>
 #include <ostream>

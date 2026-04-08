@@ -6,8 +6,8 @@
 #pragma once
 
 #include "common/CmdLineParams.hpp"
+#include "common/TapedConfiguration.hpp"
 #include "common/process/threading/Daemon.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
 
 namespace cta::tape::daemon {
 

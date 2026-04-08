@@ -9,9 +9,9 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "mediachanger/MediaChangerFacade.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/EncryptionControl.hpp"
-#include "tapeserver/castor/tape/tapeserver/drive/DriveGeneric.hpp"
-#include "tapeserver/castor/tape/tapeserver/drive/DriveInterface.hpp"
+#include "taped/drive/DriveGeneric.hpp"
+#include "taped/drive/DriveInterface.hpp"
+#include "taped/session/EncryptionControl.hpp"
 
 #include <memory>
 

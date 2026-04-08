@@ -5,8 +5,8 @@
 
 #pragma once
 
+#include "TapeFseqRangeListSequence.hpp"
 #include "common/exception/Exception.hpp"
-#include "tapeserver/readtp/TapeFseqRangeListSequence.hpp"
 
 #include <list>
 

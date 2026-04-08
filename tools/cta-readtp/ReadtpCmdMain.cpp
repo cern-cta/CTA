@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
-#include "tapeserver/readtp/ReadtpCmd.hpp"
+#include "ReadtpCmd.hpp"
+#include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <iostream>
 

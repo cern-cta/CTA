@@ -7,7 +7,6 @@ find_package(xrootd REQUIRED)
 find_package(Protobuf3 REQUIRED)
 
 include_directories(${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/tapeserver)
 
 #
 # XRootD SSI Protocol Buffer bindings

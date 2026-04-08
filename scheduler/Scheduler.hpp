@@ -35,7 +35,7 @@
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <list>
 #include <map>

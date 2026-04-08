@@ -2,16 +2,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required (VERSION 3.17)
 
-# Old CASTOR's tapeserverd daemon code
-add_subdirectory (castor)
-
-# CTA's cta-taped code
 add_subdirectory (daemon)
+add_subdirectory (drive)
+add_subdirectory (rao)
+add_subdirectory (scsi)
 add_subdirectory (session)
-# The tape session's threads are in a separate directory (session, but compiled
-# from the previous one to create a single library).
-add_subdirectory (tapelabel)
-add_subdirectory (readtp)
+add_subdirectory (system)
 
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped ctatapedaemon ctacommon)
