@@ -39,7 +39,7 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
 
   if (uiRecSize < RECSIZE_WITH_CRC32C && uiRecSize < osm::LIMITS::MAXMRECSIZE) {
     std::ostringstream ex_str;
-    ex_str << "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1 - invalid block size: " << size;
+    ex_str << "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1 - invalid block size: " << uiRecSize;
     throw TapeFormatError(ex_str.str());
   }
 
