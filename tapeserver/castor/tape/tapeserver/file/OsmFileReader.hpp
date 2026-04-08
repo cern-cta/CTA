@@ -27,7 +27,21 @@ public:
   const CPIO& getCPIOHeader() const { return m_cpioHeader; }
 
 private:
-  const size_t PAYLOAD_BOLCK_SIZE = 262144;
+  /*
+   * The maximum payload size should be 262144,
+   * but due to the mutated OSM tape format
+   * it may happen that CRC32C is included twice e.g.:
+   * Last 16 bytes of data block:
+   *
+   *  00 3c 00 38 00 43 00 39 93 3c 5d 26 c7 4b 67 48 
+   *  -----------------------|-----------|
+   *     DATA BLOCK              CRC32C
+   *  -----------------------------------|-----------|
+   *     DATA BLOCK          +   CRC32C      CRC32C
+   *
+   * In such case, the payload size should be 262148.
+   */
+  const size_t PAYLOAD_BOLCK_SIZE = 262148;
   /*
    * Set to true if 64k_FORMAT detected
    */
