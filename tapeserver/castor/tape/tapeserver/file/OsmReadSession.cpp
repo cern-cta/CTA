@@ -35,7 +35,7 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
    * -----------------------|-----------|-----------|
    *   DATA BLOCK              CRC32C       CRC32C
    */
-  uiRecSize = m_session.m_drive.readBlock(osmLabel.rawLabel(), RECSIZE_WITH_CRC32C);
+  uiRecSize = m_drive.readBlock(osmLabel.rawLabel(), RECSIZE_WITH_CRC32C);
 
   if (uiRecSize < RECSIZE_WITH_CRC32C && uiRecSize < osm::LIMITS::MAXMRECSIZE) {
     std::ostringstream ex_str;
