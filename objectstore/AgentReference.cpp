@@ -161,11 +161,11 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
         ownershipSet = ag.getOwnershipSet();
       }
       // First we apply our own modification
-      appyAction(*action, ag, ownershipSet, lc);
+      applyAction(*action, ag, ownershipSet, lc);
       // Then those of other threads
       for (auto a : q->queue) {
         threading::MutexLocker ml(a->mutex);
-        appyAction(*a, ag, ownershipSet, lc);
+        applyAction(*a, ag, ownershipSet, lc);
       }
       // Record the new ownership if needed, and commit
       if (ownershipModification) {
@@ -193,7 +193,7 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
   }
 }
 
-void AgentReference::appyAction(Action& action,
+void AgentReference::applyAction(Action& action,
                                 objectstore::Agent& agent,
                                 std::set<std::string>& ownershipSet,
                                 log::LogContext& lc) {
@@ -202,7 +202,7 @@ void AgentReference::appyAction(Action& action,
       ownershipSet.insert(action.objectAddress);
       log::ScopedParamContainer params(lc);
       params.add("ownedObject", action.objectAddress);
-      lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership.");
+      lc.log(log::DEBUG, "In AgentReference::applyAction(): added object to ownership.");
       break;
     }
     case AgentOperation::AddBatch: {
@@ -210,7 +210,7 @@ void AgentReference::appyAction(Action& action,
         ownershipSet.insert(oa);
         log::ScopedParamContainer params(lc);
         params.add("ownedObject", oa);
-        lc.log(log::DEBUG, "In AgentReference::appyAction(): added object to ownership (by batch).");
+        lc.log(log::DEBUG, "In AgentReference::applyAction(): added object to ownership (by batch).");
       }
 
       break;
@@ -219,7 +219,7 @@ void AgentReference::appyAction(Action& action,
       ownershipSet.erase(action.objectAddress);
       log::ScopedParamContainer params(lc);
       params.add("ownedObject", action.objectAddress);
-      lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership.");
+      lc.log(log::DEBUG, "In AgentReference::applyAction(): removed object from ownership.");
       break;
     }
     case AgentOperation::RemoveBatch: {
@@ -227,7 +227,7 @@ void AgentReference::appyAction(Action& action,
         ownershipSet.erase(oa);
         log::ScopedParamContainer params(lc);
         params.add("ownedObject", oa);
-        lc.log(log::DEBUG, "In AgentReference::appyAction(): removed object from ownership (by batch).");
+        lc.log(log::DEBUG, "In AgentReference::applyAction(): removed object from ownership (by batch).");
       }
       break;
     }
@@ -235,7 +235,7 @@ void AgentReference::appyAction(Action& action,
       agent.bumpHeartbeat();
       break;
     default:
-      throw cta::exception::Exception("In AgentReference::appyAction(): unknown operation.");
+      throw cta::exception::Exception("In AgentReference::applyAction(): unknown operation.");
   }
 }
 
