@@ -26,7 +26,7 @@
 #
 die() {
   echo "$@" 1>&2
-  test -z "$TAILPID" || kill "$TAILPID" >/dev/null 2>&1
+  [[ -z "$TAILPID" ]] || kill "$TAILPID" >/dev/null 2>&1
   exit 1
 }
 
@@ -52,7 +52,7 @@ for schemaVersionDir in $schemaVersionsDirectories; do
     "
   for databaseType in "${databaseTypes[@]}"; do
     schemaSqlFilePath="$schemaVersionDir/$databaseType$schemaPostfix"
-    [ -r "$schemaSqlFilePath" ] || die "Unable to open file $schemaSqlFilePath"
+    [[ -r "$schemaSqlFilePath" ]] || die "Unable to open file $schemaSqlFilePath"
     schemaSql=$(cat "$schemaSqlFilePath" | sed 's/^/\ \ \"/' | sed 's/$/\"/')
     mapSchemaCode+="  {\"$databaseType\",$schemaSql
       },

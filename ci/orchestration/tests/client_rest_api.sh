@@ -27,10 +27,10 @@ TOKEN_EOSPOWER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eo
 # disable for now on Alma9 so that this is not on the critical path
 CHECK_CERTIFICATES=1
 grep -qi almalinux /etc/redhat-release 2>/dev/null && CHECK_CERTIFICATES=0 # Disable for now in Alma9
-test ${CHECK_CERTIFICATES} -eq 0 && echo -e "\n\nWARNING: Certificate checks are disabled in this test.\n\n"
+[[ ${CHECK_CERTIFICATES} -eq 0 ]] && echo -e "\n\nWARNING: Certificate checks are disabled in this test.\n\n"
 
 CURL_OPTS=""
-test 0 -eq ${CHECK_CERTIFICATES} && CURL_OPTS+="--insecure"
+[[ 0 -eq ${CHECK_CERTIFICATES} ]] && CURL_OPTS+="--insecure"
 
 echo "Printing eosuser token dump"
 eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSUSER1}" | jq .
@@ -46,17 +46,17 @@ echo "$(date +%s): Testing compliance of .well-known/wlcg-tape-rest-api endpoint
 WELL_KNOWN=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api")
 echo "Full well known: ${WELL_KNOWN}"
 
-test $(echo ${WELL_KNOWN} | jq -r .sitename | wc -l) -eq 1 && echo "Site name:  $(echo ${WELL_KNOWN} | jq -r .sitename)"  || { echo "ERROR: Sitename not in the response from .well-known"; exit 1; }
+[[ $(echo ${WELL_KNOWN} | jq -r .sitename | wc -l) -eq 1 ]] && echo "Site name:  $(echo ${WELL_KNOWN} | jq -r .sitename)"  || { echo "ERROR: Sitename not in the response from .well-known"; exit 1; }
 echo "Description: $(echo ${WELL_KNOWN} | jq -r .description)"
-test   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri | wc -l) -eq 1 && echo "URI:       $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri)" || { echo "ERROR: URI not found in the response from .well-known."; exit 1; }
-test $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version | wc -l) -eq 1 && echo "Version:   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version)" || { echo "ERROR: Metadata not found in the response from .well-known"; exit 1;}
+[[ $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri | wc -l) -eq 1 ]] && echo "URI:       $(echo ${WELL_KNOWN} | jq -r .endpoints[0].uri)" || { echo "ERROR: URI not found in the response from .well-known."; exit 1; }
+[[ $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version | wc -l) -eq 1 ]] && echo "Version:   $(echo ${WELL_KNOWN} | jq -r .endpoints[0].version)" || { echo "ERROR: Metadata not found in the response from .well-known"; exit 1;}
 echo "Metadata: $(echo ${WELL_KNOWN} | jq -r .endpoints[0].metadata)"
 
 # Archive the file.
 
 eos root://"${EOS_MGM_HOST}" rm /eos/ctaeos/preprod/test_http-rest-api 2>/dev/null # Delete the file if present so that we can run the test multiple times
 INIT_COUNT=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod/ | grep test_http-rest-api | wc -l)
-test "${INIT_COUNT}" -eq 0 || { echo "Test file test_http-rest-api already in EOS before archiving."; exit 1; }
+[[ "${INIT_COUNT}" -eq 0 ]] || { echo "Test file test_http-rest-api already in EOS before archiving."; exit 1; }
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
@@ -65,11 +65,11 @@ curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${TOK
 FINAL_COUNT=0
 TIMEOUT=90
 SECONDS_PASSED=0
-while test "${FINAL_COUNT}" -eq 0; do
+while [[ "${FINAL_COUNT}" -eq 0 ]]; do
 
   echo "$(date +%s): Waiting for file to be archived."
 
-  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
+  if [[ "${SECONDS_PASSED}" -eq "${TIMEOUT}" ]]; then
     echo "$(date +%s): Timed out waiting for file to be archived."
     exit 1
   fi
@@ -95,10 +95,10 @@ REQ_ID=$(curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accep
 
 SECONDS_PASSED=0
 FINAL_COUNT=0
-while test "${FINAL_COUNT}" -eq 0; do
+while [[ "${FINAL_COUNT}" -eq 0 ]]; do
   echo "$(date +%s): Waiting for file to be staged."
 
-  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
+  if [[ "${SECONDS_PASSED}" -eq "${TIMEOUT}" ]]; then
     echo "$(date +%s): Timed out waiting for file to be staged."
     exit 1
   fi
@@ -119,7 +119,7 @@ eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod
 curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" "${HTTPS_URI}/release/${REQ_ID}" -d '{"paths":["/eos/ctaeos/preprod/test_http-rest-api"]}'
 
 EVICT_COUNT=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod | grep 'test_http-rest-api' | grep 'd0::t1' | wc -l)
-test "${EVICT_COUNT}" -eq 1 || { echo "$(date +%s): File did not get evicted.";  exit 1; }
+[[ "${EVICT_COUNT}" -eq 1 ]] || { echo "$(date +%s): File did not get evicted.";  exit 1; }
 echo "$(date +%s): File successfully evicted."
 eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod
 
@@ -182,7 +182,7 @@ split1=( $tmp  )
 EVICT_FINAL=${split1[0]}
 echo "Evict final counter: ${EVICT_FINAL}"
 
-test "${EVICT_INIT}" == "${EVICT_FINAL}" &&
+[[ "${EVICT_INIT}" == "${EVICT_FINAL}" ]] &&
 echo "$(date +%s): Request aborted successfully." || { echo "$(date +%s): File got staged despite abortion call."; exit 1; }
 eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod
 

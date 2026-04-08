@@ -76,7 +76,7 @@ upgrade_instance() {
       -h | --help) usage ;;
       -o|--scheduler-config)
         scheduler_config="$2"
-        test -f "${scheduler_config}" || die "Scheduler config file ${scheduler_config} does not exist"
+        [[ -f "${scheduler_config}" ]] || die "Scheduler config file ${scheduler_config} does not exist"
         shift ;;
       -n|--namespace)
         namespace="$2"

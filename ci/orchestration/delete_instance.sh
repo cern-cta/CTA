@@ -66,7 +66,7 @@ save_logs() {
     for container in ${containers}; do
       # Name of the (sub)directory to output logs to
       output_dir="${pod}"
-      [ "${num_containers}" -gt 1 ] && output_dir="${pod}-${container}"
+      [[ "${num_containers}" -gt 1 ]] && output_dir="${pod}-${container}"
       echo "[pod=${pod}] [container=${container}]"
 
       echo "    Collecting stdout logs"
@@ -180,8 +180,8 @@ delete_instance() {
       --keep-pvs) wipe_pvs=false ;;
       -l|--log-dir)
         log_dir="$2"
-        test -d "${log_dir}" || local_die "ERROR: Log directory ${log_dir} does not exist"
-        test -w "${log_dir}" || local_die "ERROR: Canot write to log directory ${log_dir}"
+        [[ -d "${log_dir}" ]] || local_die "ERROR: Log directory ${log_dir} does not exist"
+        [[ -w "${log_dir}" ]] || local_die "ERROR: Canot write to log directory ${log_dir}"
         shift ;;
       *)
         die_usage "Unsupported argument: $1"

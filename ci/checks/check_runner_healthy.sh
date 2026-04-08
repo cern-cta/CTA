@@ -28,7 +28,7 @@ echo "Checking that kubectl client and server versions are at least $MIN_KUBECTL
 client_version=$(kubectl version --client -o json | jq -r '.clientVersion.gitVersion' | sed 's/^v//')
 server_version=$(kubectl version -o json | jq -r '.serverVersion.gitVersion' | sed 's/^v//')
 version_ge() {
-  [ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" = "$2" ]
+  [[ "$(printf '%s\n' "$1" "$2" | sort -V | head -n1)" = "$2" ]]
 }
 if version_ge "$client_version" "$MIN_KUBECTL_VERSION" && version_ge "$server_version" "$MIN_KUBECTL_VERSION"; then
   echo "SUCCESS: kubectl client and server versions are >= v$MIN_KUBECTL_VERSION"

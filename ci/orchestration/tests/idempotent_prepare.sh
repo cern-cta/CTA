@@ -350,7 +350,7 @@ fi
 
 NB_FILES_IN_QUERY_RSP=$(echo ${QUERY_RSP} | jq ".responses | length")
 NB_EXPECTED_FILES=$((${NB_FILES_TAPE}+${NB_FILES_NO_P}+${NB_FILES_MISS}))
-if test ${NB_EXPECTED_FILES} != ${NB_FILES_IN_QUERY_RSP}; then
+if [[ ${NB_EXPECTED_FILES} -ne ${NB_FILES_IN_QUERY_RSP} ]]; then
   echo "ERROR: Query prepare does not refer all ${NV_EXPECTED_FILES} files"
   echo $QUERY_RSP
   exit 1

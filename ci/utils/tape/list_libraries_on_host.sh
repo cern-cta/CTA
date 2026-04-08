@@ -12,13 +12,13 @@ lsscsi -g | grep mediumx | awk '{print $3, $4, $7}' | sort | while read -r vendo
   serial=$(sg_inq -p 0x80 "$device" 2>/dev/null | awk '/Unit serial number:/ {print $NF}')
 
   # Skip devices without serials
-  [ -z "$serial" ] && continue
+  [[ -z "$serial" ]] && continue
 
   library_id=$(printf "%s-%s-%s" "$vendor" "$model" "$serial" \
     | tr '[:upper:]' '[:lower:]' \
     | tr -c 'a-z0-9-' '-')
 
-  if [ "$first" = true ]; then
+  if [[ "$first" == "true" ]]; then
     echo "["
     first=false
   else

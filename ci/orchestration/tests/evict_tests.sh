@@ -77,7 +77,7 @@ fi
 
 # 4. Check that disk replica still exists
 echo "Checking that ${TEMP_FILE} replica still exists on disk..."
-if test 0 == "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE}  | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE}  | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)" -eq 0 ]]; then
   error "'eos evict' removed disk replica, when it should have failed"
 else
   echo "'eos evict' did not remove disk replica, as expected"
@@ -92,7 +92,7 @@ wait_for_archive ${EOS_MGM_HOST} ${TEMP_FILE}
 
 # 6.1 Check that disk replica was deleted and that new tape replica exists
 echo "Checking that ${TEMP_FILE} replica no longer exists on disk..."
-if test 0 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)" -ne 0 ]]; then
   error "Disk replica not removed, when it should have been done after archival"
 else
   echo "Disk replica was removed, as expected"
@@ -100,7 +100,7 @@ fi
 
 # 6.2 Check that disk replica was deleted and that new tape replica exists
 echo "Checking that ${TEMP_FILE} replica exists on tape..."
-if test 0 == "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("tape")) | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("tape")) | .schedgroup' | wc -l)" -eq 0 ]]; then
   error "Tape replica does not exist, when it should have been created after archival"
 else
   echo "Tape replica created, as expected"
@@ -117,11 +117,11 @@ done
 # 8. Wait for the copy to appear on disk
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=90
-while test 0 == "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE}  | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)"; do
+while [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE}  | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)" -eq 0 ]]; do
   echo "Waiting for files to be retrieved from tape: seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
+  if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} ]]; then
     error "Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for files to be retrieved from tape"
   fi
 done
@@ -131,7 +131,7 @@ echo "File retrieve successfully"
 echo "Checking that evict decreases eviction counter (without --ignore-evict-counter/--fsid)..."
 for ((retrieve_req=${NB_RETRIEVES}; retrieve_req > 0; retrieve_req--)); do
   echo "Checking evict counter, expecting ${retrieve_req}..."
-  if test ${retrieve_req} != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} attr get sys.retrieve.evict_counter ${TEMP_FILE} | jq -r '.attr.get[].sys.retrieve.evict_counter')"; then
+  if [[ "${retrieve_req}" != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} attr get sys.retrieve.evict_counter ${TEMP_FILE} | jq -r '.attr.get[].sys.retrieve.evict_counter')" ]]; then
     error "Evict counter sys.retrieve.evict_counter value is not ${retrieve_req}"
   fi
   KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos root://${EOS_MGM_HOST} evict ${TEMP_FILE}
@@ -139,7 +139,7 @@ done
 
 # 10. Check that file was evicted after clearing the eviction counter
 echo "Checking that ${TEMP_FILE} was evicted after clearing the eviction counter..."
-if test 0 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("default")) | .schedgroup' | wc -l)" -ne 0 ]]; then
   error "Disk replica not evicted, when it should have been done after the eviction counter reached zero"
 else
   echo "Disk replica was evicted, as expected"
@@ -162,7 +162,7 @@ KRB5CCNAME=/tmp/${EOSADMIN_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root://
 
 # 13. Check that there are 4 replicas advertised on the namespace now
 echo "Checking that ${TEMP_FILE} has 4 replicas advertised on the namespace..."
-if test 4 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)" -ne 4 ]]; then
   error "The number of replicas is not the expected one"
 else
   echo "Disk replica count is as expected"
@@ -176,7 +176,7 @@ if [[ $? -eq 0 ]]; then
 else
   echo "'eos evict --ignore-evict-counter --fsid ${FSID_TAPE}' command failed as expected"
 fi
-if test 4 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)" -ne 4 ]]; then
   error "The number of replicas is not the expected one"
 else
   echo "Disk replica count is as expected"
@@ -190,7 +190,7 @@ if [[ $? -eq 0 ]]; then
 else
   echo "'eos evict --ignore-evict-counter --fsid ${FSID_NOT_SET_VALUE}' command failed as expected"
 fi
-if test 4 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)" -ne 4 ]]; then
   error "The number of replicas is not the expected one"
 else
   echo "Disk replica count is as expected"
@@ -231,7 +231,7 @@ if [[ $? -ne 0 ]]; then
 else
   echo "'eos evict --ignore-evict-counter --fsid ${FSID_DUMMY_1_VALUE}' command succeeded as expected"
 fi
-if test 3 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)" -ne 3 ]]; then
   error "The number of replicas is not the expected one"
 else
   echo "Disk replica count is as expected"
@@ -245,7 +245,7 @@ if [[ $? -ne 0 ]]; then
 else
   echo "'eos evict --ignore-removal-on-fst --ignore-evict-counter --fsid ${FSID_DUMMY_2_VALUE}' command succeeded as expected"
 fi
-if test 2 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)" -ne 2 ]]; then
   error "The number of replicas is not the expected one"
 else
   echo "Disk replica count is as expected"
@@ -259,12 +259,12 @@ if [[ $? -ne 0 ]]; then
 else
   echo "'eos evict' command succeeded as expected"
 fi
-if test 1 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | .schedgroup' | wc -l)" -ne 1 ]]; then
   error "The number of replicas is not the expected one"
 else
   echo "Disk replica count is as expected"
 fi
-if test 1 != "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("tape")) | .schedgroup' | wc -l)"; then
+if [[ "$(KRB5CCNAME=/tmp/${EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos --json root://${EOS_MGM_HOST} info ${TEMP_FILE} | jq -r '.locations[] | select(.schedgroup | startswith("tape")) | .schedgroup' | wc -l)" -ne 1 ]]; then
   error "The tape replica was removed, when it should have not"
 else
   echo "Tape replica was preserved"

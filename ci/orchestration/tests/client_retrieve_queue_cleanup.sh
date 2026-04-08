@@ -66,15 +66,15 @@ mapfile -t TAPE_LIST_1 < <( for t in "${TAPEPOOL_LIST_1[@]}" ; do admin_cta --js
 mapfile -t TAPE_LIST_2 < <( for t in "${TAPEPOOL_LIST_2[@]}" ; do admin_cta --json tape ls --all | jq -r --arg TAPEPOOL "$t" '.[] | select( .tapepool == $TAPEPOOL) | .vid' ; done )
 mapfile -t TAPE_LIST_3 < <( for t in "${TAPEPOOL_LIST_3[@]}" ; do admin_cta --json tape ls --all | jq -r --arg TAPEPOOL "$t" '.[] | select( .tapepool == $TAPEPOOL) | .vid' ; done )
 
-if [ "${#TAPEPOOL_LIST_1[@]}" -ne "1" ] || [ "${#TAPE_LIST_1[@]}" -ne "1" ]; then
+if [[ "${#TAPEPOOL_LIST_1[@]}" -ne "1" ]] || [[ "${#TAPE_LIST_1[@]}" -ne "1" ]]; then
   echo "ERROR: Tape pool 1 misconfigured"
   exit 1
 fi
-if [ "${#TAPEPOOL_LIST_2[@]}" -ne "2" ] || [ "${#TAPE_LIST_2[@]}" -ne "2" ]; then
+if [[ "${#TAPEPOOL_LIST_2[@]}" -ne "2" ]] || [[ "${#TAPE_LIST_2[@]}" -ne "2" ]]; then
   echo "ERROR: Tape pool 2 misconfigured"
   exit 1
 fi
-if [ "${#TAPEPOOL_LIST_3[@]}" -ne "3" ] || [ "${#TAPE_LIST_3[@]}" -ne "3" ]; then
+if [[ "${#TAPEPOOL_LIST_3[@]}" -ne "3" ]] || [[ "${#TAPE_LIST_3[@]}" -ne "3" ]]; then
   echo "ERROR: Tape pool 3 misconfigured"
   exit 1
 fi
@@ -218,7 +218,7 @@ test_tape_state_queueing_priority() {
   wait ${pid[1]}; ret[1]=$?
   wait ${pid[2]}; ret[2]=$?
 
-  if [ ${ret[0]} -ne 0 ] || [ ${ret[1]} -ne 0 ] || [ ${ret[2]} -ne 0 ]
+  if [[ ${ret[0]} -ne 0 ]] || [[ ${ret[1]} -ne 0 ]] || [[ ${ret[2]} -ne 0 ]]
   then
     echo "Failed to change tape state"
     exit 1
@@ -448,7 +448,7 @@ test_tape_state_change_queue_moved() {
   wait ${pid[0]}; ret[0]=$?
   wait ${pid[1]}; ret[1]=$?
 
-  if [ ${ret[0]} -ne 0 ] || [ ${ret[1]} -ne 0 ]
+  if [[ ${ret[0]} -ne 0 ]] || [[ ${ret[1]} -ne 0 ]]
   then
     echo "Failed to change tape state"
     exit 1

@@ -18,7 +18,7 @@ if [[ -z "${tpd_parent_pid}" ]]; then
     echo "ERROR: No '$DRIVE_NAME-parent' process found."
     exit 1
 fi
-if [ -z "${tpd_drv_pid}" ]; then
+if [[ -z "${tpd_drv_pid}" ]]; then
     echo "ERROR: No '$DRIVE_NAME-drive' process found."
     exit 1
 fi

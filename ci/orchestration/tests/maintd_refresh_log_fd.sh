@@ -8,7 +8,7 @@ process_name="maintd"
 log_dir="/var/log/cta/"
 STRACE_SLEEP_SECS=2
 
-if [ "$(find ${log_dir} -type f | wc -l)" -ne 1 ]; then
+if [[ "$(find ${log_dir} -type f | wc -l)" -ne 1 ]]; then
   echo "ERROR: More than one log file found at ${log_dir}."
   exit 1
 fi
@@ -22,7 +22,7 @@ dnf -y install strace lsof
 # Get PID of maintd process
 pid=$(pgrep "$process_name" -u cta)
 
-if [ -z "${pid}" ]; then
+if [[ -z "${pid}" ]]; then
     echo "ERROR: No $process_name process found."
     exit 1
 fi
@@ -31,7 +31,7 @@ echo "Found '$process_name' process PID: ${pid}"
 
 # Get number of file descriptor used to open the log file
 log_file_fd=$(lsof -p "${pid}" | grep "${log_file}" | awk '{print $4}' | awk -F'[^0-9]' '{print $1}')
-if [ -z "${log_file_fd}" ]; then
+if [[ -z "${log_file_fd}" ]]; then
   echo "ERROR: No file descriptor found for log file ${log_file}."
   exit 1
 else
@@ -66,19 +66,19 @@ sleep 1
 
 # Confirm that the file descriptor was reopened in all processes
 echo "Checking '$process_name' file descriptor reopening..."
-if [ "$(grep -c "close(${log_file_fd})" "${strace_tmp_file}")" -eq 0 ]; then
+if [[ "$(grep -c "close(${log_file_fd})" "${strace_tmp_file}")" -eq 0 ]]; then
   echo "ERROR: File descriptor #${log_file_fd} not closed in '$process_name'."
   exit 1
-elif [ "$(grep -c "close(${log_file_fd})" "${strace_tmp_file}")" -gt 1 ]; then
+elif [[ "$(grep -c "close(${log_file_fd})" "${strace_tmp_file}")" -gt 1 ]]; then
   echo "ERROR: File descriptor #${log_file_fd} closed more than once in '$process_name'."
   exit 1
 else
   echo "OK: File descriptor #${log_file_fd} closed once in '$process_name'."
 fi
-if [ "$(grep "open" "${strace_tmp_file}" | grep -c "${log_file}")" -eq 0 ]; then
+if [[ "$(grep "open" "${strace_tmp_file}" | grep -c "${log_file}")" -eq 0 ]]; then
   echo "ERROR: File descriptor for ${log_file} not reopened in '$process_name'."
   exit 1
-elif [ "$(grep "open" "${strace_tmp_file}" | grep -c "${log_file}")" -gt 1 ]; then
+elif [[ "$(grep "open" "${strace_tmp_file}" | grep -c "${log_file}")" -gt 1 ]]; then
   echo "ERROR: File descriptor for ${log_file} reopened more than once in '$process_name'."
   exit 1
 else

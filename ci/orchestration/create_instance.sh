@@ -159,11 +159,11 @@ create_instance() {
       -h | --help) usage ;;
       -o|--scheduler-config)
         scheduler_config="$2"
-        test -f "${scheduler_config}" || die "Scheduler config file ${scheduler_config} does not exist"
+        [[ -f "${scheduler_config}" ]] || die "Scheduler config file ${scheduler_config} does not exist"
         shift ;;
       -d|--catalogue-config)
         catalogue_config="$2"
-        test -f "${catalogue_config}" || die "catalogue config file ${catalogue_config} does not exist"
+        [[ -f "${catalogue_config}" ]] || die "catalogue config file ${catalogue_config} does not exist"
         shift ;;
       -n|--namespace)
         namespace="$2"
@@ -187,7 +187,7 @@ create_instance() {
       --dry-run) dry_run=1 ;;
       --eos-config)
         eos_config="$2"
-        test -f "${eos_config}" || die "EOS config file ${eos_config} does not exist"
+        [[ -f "${eos_config}" ]] || die "EOS config file ${eos_config} does not exist"
         shift ;;
       --eos-image-repository)
         eos_image_repository="$2"
@@ -203,7 +203,7 @@ create_instance() {
         shift ;;
       --cta-config)
         cta_config="$2"
-        test -f "${cta_config}" || die "CTA config file ${cta_config} does not exist"
+        [[ -f "${cta_config}" ]] || die "CTA config file ${cta_config} does not exist"
         shift ;;
       --extra-cta-values)
         extra_cta_values="$2"
@@ -242,7 +242,7 @@ create_instance() {
     helm_command="install"
   fi
 
-  if [ "$reset_catalogue" == "true" ] ; then
+  if [[ "$reset_catalogue" == "true" ]] ; then
     echo "Catalogue content will be reset"
   else
     echo "Catalogue content will be kept"
@@ -300,7 +300,7 @@ create_instance() {
 
 
   # Create the namespace if necessary
-  if [ $dry_run == 0 ] ; then
+  if [[ $dry_run -eq 0 ]] ; then
     echo "Creating ${namespace} namespace"
     kubectl create namespace "${namespace}"
     echo "Copying secrets into ${namespace} namespace"
@@ -314,7 +314,7 @@ create_instance() {
 
   update_local_cta_chart_dependencies
 
-  if [ "$local_telemetry" == "true" ] ; then
+  if [[ "$local_telemetry" == "true" ]] ; then
     echo "Cleaning up clusterroles..."
     kubectl delete clusterrole otel-opentelemetry-collector --ignore-not-found
     kubectl delete clusterrolebinding otel-opentelemetry-collector --ignore-not-found
@@ -365,7 +365,7 @@ create_instance() {
 
   wait $auth_pid || exit 1
 
-  if [ $eos_enabled == "true" ] ; then
+  if [[ "$eos_enabled" == "true" ]] ; then
     ./deploy_eos.sh --namespace "${namespace}" \
                     --eos-config "${eos_config}" \
                     --eos-image-repository "${eos_image_repository}" \
@@ -374,7 +374,7 @@ create_instance() {
     eos_pid=$!
   fi
 
-  if [ $dcache_enabled == "true" ] ; then
+  if [[ "$dcache_enabled" == "true" ]] ; then
     ./deploy_dcache.sh --namespace "${namespace}" \
                        --dcache-config "${dcache_config}" \
                        --dcache-image-tag "${dcache_image_tag}" &
@@ -399,7 +399,7 @@ create_instance() {
   else
     extra_cta_chart_flags+=" --values presets/dev-cta-maintd-objectstore-values.yaml"
   fi
-  if [ "$extra_cta_values" ]; then
+  if [[ -n "$extra_cta_values" ]]; then
     extra_cta_chart_flags+=" ${extra_cta_values} "
   fi
 
@@ -416,10 +416,10 @@ create_instance() {
                                 --wait --timeout "${chart_install_timeout}"m ${extra_cta_chart_flags}
 
   # At this point the disk buffer(s) should also be ready
-  if [ $eos_enabled == "true" ] ; then
+  if [[ "$eos_enabled" == "true" ]] ; then
     wait $eos_pid || exit 1
   fi
-  if [ $dcache_enabled == "true" ] ; then
+  if [[ "$dcache_enabled" == "true" ]] ; then
     wait $dcache_pid || exit 1
   fi
   if [[ $dry_run == 1 ]]; then
