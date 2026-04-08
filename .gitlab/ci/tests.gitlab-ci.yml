@@ -117,7 +117,7 @@ unit-test-postgresql:
     - echo 'postgresql:postgresql://cta@localhost/cta' > ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
-      if [[ "$VALGRIND_UNIT_TESTS" = "TRUE" ]]; then
+      if [[ "$VALGRIND_UNIT_TESTS" == "TRUE" ]]; then
         valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       else
         /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
@@ -154,7 +154,7 @@ unit-test-oracle:
     - echo yes | cta-catalogue-schema-drop ${CTA_CATALOGUE_CONF}
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
-      if [[ "$VALGRIND_UNIT_TESTS" = "TRUE" ]]; then
+      if [[ "$VALGRIND_UNIT_TESTS" == "TRUE" ]]; then
         valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       else
         /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}

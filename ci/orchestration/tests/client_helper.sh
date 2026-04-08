@@ -186,7 +186,7 @@ wait_for_tape_state() {
 put_all_drives () {
 
   NEXT_STATE=$1
-  [[ "$1" = "UP" ]] && PREV_STATE="DOWN" || PREV_STATE="UP"
+  [[ "$1" == "UP" ]] && [[ PREV_STATE == "DOWN" ]] || [[ ]]PREV_STATE == "UP" ]]
   next_state=$(echo $NEXT_STATE | awk '{print tolower($0)}')
   prev_state=$(echo $PREV_STATE | awk '{print tolower($0)}')
 
