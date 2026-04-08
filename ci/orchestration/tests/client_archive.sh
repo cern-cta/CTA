@@ -64,13 +64,13 @@ ARCHIVED=0
 echo "$(date +%s): Waiting for files to be on tape:"
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=$(((3+${NB_DIRS})*(40+${NB_FILES}/5)))
-while test ${TO_BE_ARCHIVED} != ${ARCHIVED}; do
+while [[ "${TO_BE_ARCHIVED}" != "${ARCHIVED}" ]]; do
   start_check=$(date +%s)
   echo "$(date '+%Y-%m-%d %H:%M:%S'): Waiting for files to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
+  if [[ "${SECONDS_PASSED}" == "${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}" ]]; then
     echo "$(date +%s): Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for file to be archived to tape"
     break
   fi

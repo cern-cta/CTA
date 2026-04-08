@@ -103,12 +103,12 @@ kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --json tf ls
 CATALOGUE_STORAGE_CLASS_2=$(jq . ${CATALOGUE_METADATA_PATH_AFTER_CHANGE_2} | jq '.[0]' | jq -r '.af | .["storageClass"]')
 rm -r ${CATALOGUE_METADATA_PATH_AFTER_CHANGE_2}
 
-if test ${CATALOGUE_STORAGE_CLASS_1} != ${NEW_STORAGE_CLASS_NAME}; then
+if [[ "${CATALOGUE_STORAGE_CLASS_1}" != "${NEW_STORAGE_CLASS_NAME}" ]]; then
   echo "ERROR: File ${FILE_1} did not change the storage class in the Catalogue"
   exit 1
 fi
 
-if test ${CATALOGUE_STORAGE_CLASS_2} != ${NEW_STORAGE_CLASS_NAME}; then
+if [[ "${CATALOGUE_STORAGE_CLASS_2}" != "${NEW_STORAGE_CLASS_NAME}" ]]; then
   echo "ERROR: File ${FILE_2} did not change the storage class in the Catalogue"
   exit 1
 fi

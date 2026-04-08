@@ -43,12 +43,12 @@ xrdcp /etc/group root://${EOS_MGM_HOST}//eos/ctaeos/cta/${TEST_FILE_NAME}
 
 SECONDS_PASSED=0
 WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90
-while test 0 == $(eos root://${EOS_MGM_HOST} info /eos/ctaeos/cta/${TEST_FILE_NAME} | awk '{print $4;}' | grep tape | wc -l); do
+while [[ $(eos root://${EOS_MGM_HOST} info /eos/ctaeos/cta/${TEST_FILE_NAME} | awk '{print $4;}' | grep tape | wc -l) -eq 0 ]]; do
   echo "Waiting for file to be archived to tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
+  if [[ "${SECONDS_PASSED}" == "${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}" ]]; then
     echo "Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for file to be archived to tape"
     exit 1
   fi

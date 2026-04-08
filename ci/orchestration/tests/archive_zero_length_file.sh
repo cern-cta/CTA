@@ -28,11 +28,11 @@ err_msg_file=$(mktemp)
 touch /etc/${TEST_FILE_NAME}
 echo "xrdcp /etc/${TEST_FILE_NAME} root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/${TEST_FILE_NAME}"
 xrdcp /etc/${TEST_FILE_NAME} root://${EOS_MGM_HOST}/${CTA_TEST_DIR}/${TEST_FILE_NAME} 2>&1 | sed 's/[^[:print:]\t]//g' | tee "${err_msg_file}"
-if [ "${PIPESTATUS[0]}" -eq 0 ]
+if [[ "${PIPESTATUS[0]}" -eq 0 ]]
 then
   echo "xrdcp command succeeded where it should have failed"
   exit 1
-elif test 0 == "$(grep -c -i "0-length" < "${err_msg_file}")"
+elif [[ $(grep -ci "0-length" "$err_msg_file") -eq 0 ]]; then
 then
   echo "xrdcp command failed, but with unexpected error: $(cat "${err_msg_file}")"
   exit 1

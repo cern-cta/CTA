@@ -8,7 +8,7 @@ EOS_BASEDIR=/eos/ctaeos/cta
 
 die() {
   echo "$@" 1>&2
-  test -z $TAILPID || kill ${TAILPID} &> /dev/null
+  [[ -z $TAILPID ]] || kill ${TAILPID} &> /dev/null
   exit 1
 }
 
@@ -65,7 +65,7 @@ do
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
   echo "Waiting for file to be retrieved to ${directory}. Files retrieved = ${nbFilesRetrieved}/${nbFilesToRetrieve}. Seconds passed = $SECONDS_PASSED."
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
+  if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} ]]; then
     die "$(date +%s): Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for files to be retrieved from tape"
   fi
 done
@@ -79,7 +79,7 @@ done
 #  sleep 1
 #  let SECONDS_PASSED=SECONDS_PASSED+1
 #  echo "Waiting for file to be retrieved. Seconds passed = $SECONDS_PASSED"
-#  if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
+#  if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} ]]; then
 #    die "$(date +%s): Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for file to be retrieved from tape"
 #  fi
 #done

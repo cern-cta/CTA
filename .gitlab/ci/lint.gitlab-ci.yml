@@ -69,7 +69,7 @@ lint-bash:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
     - all_shell_scripts=( **/*.sh )
-    - if [ ${#all_shell_scripts[@]} -eq 0 ]; then echo "No shell scripts"; exit 0; fi
+    - if [[ ${#all_shell_scripts[@]} -eq 0 ]]; then echo "No shell scripts"; exit 0; fi
     - shellcheck "${all_shell_scripts[@]}" --format json --severity warning | tee shellcheck.json | jq -C
   artifacts:
     expire_in: 7 days

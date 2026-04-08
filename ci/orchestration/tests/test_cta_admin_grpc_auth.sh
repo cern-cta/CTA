@@ -31,7 +31,7 @@ test_version_command() {
         result="failure"
     fi
 
-    if [ $result == $expected_result ]; then
+    if [[ "$result" == "$expected_result" ]]; then
         echo "Test $test_name succeeded!"
         return 0
     else

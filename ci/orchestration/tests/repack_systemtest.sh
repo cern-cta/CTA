@@ -14,7 +14,7 @@ REPORT_DIRECTORY=/var/log
 
 die() {
   echo "$@" 1>&2
-  test -z $TAILPID || kill ${TAILPID} &> /dev/null
+  [[ -z $TAILPID ]] || kill ${TAILPID} &> /dev/null
   exit 1
 }
 
@@ -47,7 +47,7 @@ testRepackBufferURL(){
   echo "Test repack buffer URL OK"
 }
 
-if [ $# -lt 3 ]
+if [[ $# -lt 3 ]]
 then
   usage
 fi;
@@ -194,12 +194,12 @@ admin_cta repack add --mountpolicy ${MOUNT_POLICY_NAME} --vid ${VID_TO_REPACK} $
 if [[ ! -z $BACKPRESSURE_TEST ]]; then
   echo "Backpressure test: waiting to see a report of sleeping retrieve queue."
   SECONDS_PASSED=0
-  while test 0 = $(admin_cta --json sq | jq -r ".[] | select(.vid == \"${VID_TO_REPACK}\" and .sleepingForSpace == true) | .vid" | wc -l); do
+  while [[ $(admin_cta --json sq | jq -r ".[] | select(.vid == \"${VID_TO_REPACK}\" and .sleepingForSpace == true) | .vid" | wc -l) -eq 0 ]]; do
     echo "Waiting for retrieve queue for tape ${VID_TO_REPACK} to be sleeping: Seconds passed = $SECONDS_PASSED"
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
 
-    if test ${SECONDS_PASSED} == ${WAIT_FOR_REPACK_TIMEOUT}; then
+    if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_REPACK_TIMEOUT} ]]; then
       echo "Timed out after ${WAIT_FOR_REPACK_TIMEOUT} seconds waiting retrieve queue for tape ${VID_TO_REPACK} to be sleeping."
       exit 1
     fi
@@ -212,12 +212,12 @@ fi
 
 echo "Now waiting for repack to proceed."
 SECONDS_PASSED=0
-while test 0 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Complete" or .status == "Failed")' | wc -l); do
+while [[ $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0] | select(.status == "Complete" or .status == "Failed")' | wc -l) -eq 0 ]]; do
   echo "Waiting for repack request on tape ${VID_TO_REPACK} to be complete: Seconds passed = $SECONDS_PASSED"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_REPACK_TIMEOUT}; then
+  if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_REPACK_TIMEOUT} ]]; then
     echo "Timed out after ${WAIT_FOR_REPACK_TIMEOUT} seconds waiting for tape ${VID_TO_REPACK} to be repacked"
     echo "Result of show queues"
     admin_cta sq
@@ -234,7 +234,7 @@ while test 0 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '.[0]
     exit 1
   fi
 done
-if test 1 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.status == "Failed")] | length'); then
+if [[ $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.status == "Failed")] | length') -eq 1 ]]; then
     echo "Repack failed for tape ${VID_TO_REPACK}."
     admin_cta repack ls --vid ${VID_TO_REPACK}
     destinationInfos=$(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r ". [0] | .destinationInfos")
@@ -250,14 +250,14 @@ fi
 if [[ ! -z $MAX_FILES_TO_SELECT ]]; then
   TOTAL_FILES_IN_TAPE=$(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length')
   if [[ "$TOTAL_FILES_IN_TAPE" -gt "$MAX_FILES_TO_SELECT" ]]; then
-    if test 1 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == false)] | length') && test 0 != $(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length'); then
+    if [[ $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == false)] | length') -eq 1 ]] && [[ $(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length') -ne 0 ]]; then
       echo "Partial repack selected a subset of files, as expected"
     else
       echo "Partial repack failed to select a subset files"
       exit 1
     fi
   else
-    if test 1 = $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == true)] | length') && test 0 = $(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length'); then
+    if [[ $(admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0] | select (.allFilesSelectedAtStart == true)] | length') -eq 1 ]] && [[ $(admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length') -eq 0 ]]; then
       echo "Partial repack selected the full subset of files, as expected"
     else
       echo "Partial repack failed to select the full subset files"

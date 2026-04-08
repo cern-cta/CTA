@@ -91,7 +91,7 @@ spec:
 
               # Create or update ctaadmin1 user (for admin command tokens with sub='ctaadmin1')
               CTAADMIN_USER_ID=$(/opt/keycloak/bin/kcadm.sh get users -r master -q username="ctaadmin1" --fields id 2>/dev/null | grep '"id"' | head -1 | sed 's/.*"id" : "\([^"]*\)".*/\1/')
-              if [ -z "$CTAADMIN_USER_ID" ]; then
+              if [[ -z "$CTAADMIN_USER_ID" ]]; then
                 echo "Creating ctaadmin1 user..."
                 /opt/keycloak/bin/kcadm.sh create users -r master \
                   -s username="ctaadmin1" \

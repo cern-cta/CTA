@@ -98,7 +98,7 @@ roundTripRepack() {
   echo "***********************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ]
+  if [[ "$VID_TO_REPACK" != "null" ]]
   then
   echo
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
@@ -118,7 +118,7 @@ roundTripRepack() {
   kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape reclaim --vid ${VID_TO_REPACK}
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ]
+  if [[ "$VID_TO_REPACK" != "null" ]]
   then
   echo
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
@@ -150,7 +150,7 @@ repackNonRepackingTape() {
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
 
-  if [ "$VID_TO_REPACK" != "null" ]
+  if [[ "$VID_TO_REPACK" != "null" ]]
   then
     echo "Marking the tape ${VID_TO_REPACK} as DISABLED"
     modifyTapeState ${VID_TO_REPACK} DISABLED "Repack disabled tape test"
@@ -201,7 +201,7 @@ repackJustMove() {
   echo "*********************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ]
+  if [[ "$VID_TO_REPACK" != "null" ]]
   then
     echo
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
@@ -233,7 +233,7 @@ repackJustMoveWithMaxFiles() {
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
 
-  if [ "$VID_TO_REPACK" = "null" ]
+  if [[ "$VID_TO_REPACK" = "null" ]]
   then
     echo "No vid found to repack"
     exit 1
@@ -291,7 +291,7 @@ repackJustAddCopies() {
   echo "**************************************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ]
+  if [[ "$VID_TO_REPACK" != "null" ]]
   then
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
     modifyTapeStateAndWait ${VID_TO_REPACK} REPACKING
@@ -307,7 +307,7 @@ repackJustAddCopies() {
   nbRetrievedFiles=$(echo ${repackJustAddCopiesResult} | jq -r ".retrievedFiles")
   nbArchivedFiles=$(echo ${repackJustAddCopiesResult} | jq -r ".archivedFiles")
 
-  if [ $nbArchivedFiles == 0 ] && [ $nbRetrievedFiles == 0 ]
+  if [[ $nbArchivedFiles -eq 0 ]] && [[ $nbRetrievedFiles -eq 0 ]]
   then
     echo "Nb retrieved files = 0 and nb archived files = 0. Test OK"
   else
@@ -336,7 +336,7 @@ repackCancellation() {
   kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin drive down '.*' --reason "Putting drive down for repack test"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" != "null" ]
+  if [[ "$VID_TO_REPACK" != "null" ]]
   then
   echo
     echo "Marking the tape ${VID_TO_REPACK} as REPACKING"
@@ -476,7 +476,7 @@ repackMoveAndAddCopies() {
     echo "kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape ch --vid ${allVIDTable[$i]} --tapepool ${allTapepoolTable[$tapepoolIndice]}"
     kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin tape ch --vid ${allVIDTable[$i]} --tapepool ${allTapepoolTable[$tapepoolIndice]}
     countChanging=$((countChanging + 1))
-    if [ $countChanging != 0 ] && [ $((countChanging % nbTapePerTapepool)) == 0 ]
+    if [[ $countChanging -ne 0 ]] && [[ $((countChanging % nbTapePerTapepool)) -eq 0 ]]
     then
       tapepoolIndice=$((tapepoolIndice + 1))
     fi
@@ -568,7 +568,7 @@ repackTapeRepair() {
   echo "*******************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" == "null" ]
+  if [[ "$VID_TO_REPACK" == "null" ]]
   then
     echo "No vid found to repack"
     exit 1
@@ -672,7 +672,7 @@ repackTapeRepairNoRecall() {
   echo "*******************************************************"
 
   VID_TO_REPACK=$(getFirstVidContainingFiles)
-  if [ "$VID_TO_REPACK" == "null" ]
+  if [[ "$VID_TO_REPACK" == "null" ]]
   then
     echo "No vid found to repack"
     exit 1

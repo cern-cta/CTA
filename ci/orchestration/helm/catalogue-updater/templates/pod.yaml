@@ -42,7 +42,7 @@ spec:
         command:
           - /bin/sh
           - "-c"
-          - "test -f /launch_liquibase.sh"
+          - "[[ -f /launch_liquibase.sh ]]"
       initialDelaySeconds: 5
       periodSeconds: 5
       timeoutSeconds: 2

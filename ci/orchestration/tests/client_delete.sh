@@ -12,10 +12,10 @@ eval $delete
 EOSRMPID=$!
 # wait a bit in case eos prematurely fails...
 sleep 1
-if test ! -d /proc/${EOSRMPID}; then
+if [[ ! -d "/proc/${EOSRMPID}" ]]; then
   # eos rm process died, get its status
   wait ${EOSRMPID}
-  test $? -ne 0 && die "Could not launch eos rm"
+  [[ $? -ne 0 ]] && die "Could not launch eos rm"
 fi
 
 # Now we can start to do something...
@@ -25,12 +25,12 @@ SECONDS_PASSED=0
 WAIT_FOR_DELETED_FILE_TIMEOUT=$((5+${NB_FILES}/9))
 FILESONTAPE=${INITIALFILESONTAPE}
 
-while test 0 != ${FILESONTAPE}; do
+while [[ "${FILESONTAPE}" -ne 0 ]]; do
   echo "$(date +%s): Waiting for files to be deleted from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_DELETED_FILE_TIMEOUT}; then
+  if [[ "${SECONDS_PASSED}" == "${WAIT_FOR_DELETED_FILE_TIMEOUT}" ]]; then
     echo "Timed out after ${WAIT_FOR_DELETED_FILE_TIMEOUT} seconds waiting for file to be deleted from tape"
     break
   fi

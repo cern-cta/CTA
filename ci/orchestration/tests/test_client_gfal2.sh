@@ -45,7 +45,7 @@ kubectl -n ${NAMESPACE} cp grep_xrdlog_mgm_for_error.sh ${EOS_MGM_POD}:/root/ -c
 
 echo "Preparing namespace for the tests"
   . prepare_tests.sh -n ${NAMESPACE}
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
   echo "ERROR: failed to prepare namespace for the tests"
   exit 1
 fi

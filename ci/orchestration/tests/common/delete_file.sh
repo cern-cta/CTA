@@ -34,12 +34,12 @@ eos root://${EOS_MGM_HOST} rm /eos/ctaeos/cta/${TEST_FILE_NAME}
 
 SECONDS_PASSED=0
 WAIT_FOR_RETRIEVED_FILE_TIMEOUT=10
-while test true = $(xrdfs root://${EOS_MGM_HOST} query prepare 0 /eos/ctaeos/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists'); do
+while [[ "true" == "$(xrdfs root://${EOS_MGM_HOST} query prepare 0 /eos/ctaeos/${TEST_FILE_NAME} | jq . | jq '.responses[0] | .path_exists')" ]] ; do
   echo "Waiting for file to be deleted from tape: Seconds passed = ${SECONDS_PASSED}"
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
+  if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} ]]; then
     echo "Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for file to be deleted"
     exit 1
   fi

@@ -22,11 +22,11 @@ while getopts "n:" o; do
 done
 shift $((OPTIND-1))
 
-if [ -z "${NAMESPACE}" ]; then
+if [[ -z "${NAMESPACE}" ]]; then
     usage
 fi
 
-if [ -n "${error}" ]; then
+if [[ -n "${error}" ]]; then
     echo -e "ERROR:\n${error}"
     exit 1
 fi
@@ -39,7 +39,7 @@ kubectl -n "${NAMESPACE}" cp test_cta_admin_grpc_auth.sh ${CLIENT_POD}:/root/ -c
 
 echo "Preparing namespace for the gRPC authentication tests"
 . prepare_tests.sh -n "${NAMESPACE}"
-if [ $? -ne 0 ]; then
+if [[ $? -ne 0 ]]; then
   echo "ERROR: failed to prepare namespace for the tests"
   exit 1
 fi

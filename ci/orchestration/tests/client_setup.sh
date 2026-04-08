@@ -34,7 +34,7 @@ SSH_OPTIONS='-o BatchMode=yes -o ConnectTimeout=10'
 
 die() {
   echo "$@" 1>&2
-  test -z $TAILPID || kill ${TAILPID} &> /dev/null
+  [[ -z $TAILPID ]] || kill ${TAILPID} &> /dev/null
   exit 1
 }
 
@@ -183,7 +183,7 @@ echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
 . /root/client_helper.sh
 
 # If using GRPC with JWT authentication, obtain JWT token
-if [ -f "/etc/cta/cta-cli.conf" ] && grep -q "grpc" /etc/cta/cta-cli.conf; then
+if [[ -f "/etc/cta/cta-cli.conf" ]] && grep -q "grpc" /etc/cta/cta-cli.conf; then
   echo "$(date +%s): Detected GRPC, obtaining JWT..."
   /root/grpc_obtain_jwt.sh || die "Failed to obtain JWT token for GRPC authentication"
 fi
@@ -213,7 +213,7 @@ echo "Starting test ${TESTID}: ${COMMENT}"
 #echo "$(date +%s): Dumping objectstore list"
 #ssh root@ctappsfrontend cta-objectstore-list
 
-test -z ${COMMENT} || annotate "test ${TESTID} STARTED" "comment: ${COMMENT}<br/>files: $((${NB_DIRS}*${NB_FILES}))<br/>filesize: ${FILE_KB_SIZE}kB" 'test,start'
+[[ -z ${COMMENT} ]] || annotate "test ${TESTID} STARTED" "comment: ${COMMENT}<br/>files: $((${NB_DIRS}*${NB_FILES}))<br/>filesize: ${FILE_KB_SIZE}kB" 'test,start'
 
 
 set +a

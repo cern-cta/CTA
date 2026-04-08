@@ -16,7 +16,7 @@ if [[ "$CATALOGUE_BACKEND" == "oracle" ]]; then
   # dnf install -y oracle-instantclient-sqlplus
   # echo "Purging Oracle recycle bin"
   # ORACLE_SQLPLUS="/usr/bin/sqlplus64"
-  # test -f ${ORACLE_SQLPLUS} || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
+  # [[ -f "${ORACLE_SQLPLUS}" ]] || echo "ERROR: ORACLE SQLPLUS client is not present, cannot purge recycle bin: ${ORACLE_SQLPLUS}"
   # LD_LIBRARY_PATH=$(readlink ${ORACLE_SQLPLUS} | sed -e 's;/bin/[^/]\+;/lib;') ${ORACLE_SQLPLUS} $(cat /etc/cta/cta-catalogue.conf | sed -e 's/oracle://') @/opt/ci/purge_recyclebin.ext
   true
 fi

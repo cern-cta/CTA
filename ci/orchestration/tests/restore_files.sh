@@ -132,7 +132,7 @@ while kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- test $(false = xrd
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
+  if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} ]]; then
     echo "Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for file to be restored at EOS side"
     exit 1
   fi

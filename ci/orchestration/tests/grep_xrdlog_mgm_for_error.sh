@@ -5,7 +5,7 @@
 
 EOS_MGM_LOG=/var/log/eos/mgm/xrdlog.mgm
 
-if test -f ${EOS_MGM_LOG}; then
+if [[ -f "${EOS_MGM_LOG}" ]]; then
   echo "${EOS_MGM_LOG} exists"
 else
   echo "${EOS_MGM_LOG} does not exist or is not a regular file"

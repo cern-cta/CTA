@@ -8,7 +8,7 @@ set -e
 
 # Usage ./populate_catalogue.sh <disk instance name>
 
-if [ "$#" -ne 1 ]; then
+if [[ "$#" -ne 1 ]]; then
     echo "Please provide a diskinstance name"
     exit 1
 fi

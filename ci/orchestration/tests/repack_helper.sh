@@ -78,7 +78,7 @@ executeRepack() {
     echo "Launching the repack request on tape $1"
     kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re add -v $1 -m -b root://${EOS_MGM_HOST}//eos/ctaeos/repack
     SECONDS_PASSED=0
-    while test 0 = $(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re ls -v $1 | grep -E "Complete|Failed" | wc -l); do
+    while [[ $(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re ls -v $1 | grep -E "Complete|Failed" | wc -l) -eq 0 ]]; do
       echo "Waiting for repack request on tape $1 to be complete: Seconds passed = $SECONDS_PASSED"
       sleep 1
       let SECONDS_PASSED=SECONDS_PASSED+1
@@ -88,7 +88,7 @@ executeRepack() {
         exit 1
       fi
     done
-    if test 1 = $(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re ls -v $1 | grep -E "Failed" | wc -l); then
+    if [[ $(kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin re ls -v $1 | grep -E "Failed" | wc -l) -eq 1 ]]; then
         echo "Repack failed for tape $1"
         exit 1
     fi

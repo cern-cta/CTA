@@ -108,7 +108,7 @@ wait_for_archive () {
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
 
-    if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
+    if [[ "${SECONDS_PASSED}" == "${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}" ]]; then
       echo "$(date +%s) ERROR: Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for files to be archived to tape"
       exit 1
     fi
@@ -128,7 +128,7 @@ wait_for_retrieve () {
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
 
-    if test ${SECONDS_PASSED} == ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT}; then
+    if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} ]]; then
       echo "$(date +%s) ERROR: Timed out after ${WAIT_FOR_RETRIEVED_FILE_TIMEOUT} seconds waiting for files to be retrieved from tape"
       exit 1
     fi
@@ -166,7 +166,7 @@ wait_for_tape_state() {
   while :; do
     CURRENT="$(admin_cta --json tape ls --vid "$1" | jq -r '.[] | .state')"
 
-    if [ "$CURRENT" = "$2" ]; then
+    if [[ "$CURRENT" == "$2" ]]; then
       echo "$(date +%s) Tape $1 reached state $2"
       return 0
     fi
@@ -174,7 +174,7 @@ wait_for_tape_state() {
     SECONDS_PASSED=$((SECONDS_PASSED + 1))
     echo "$(date +%s) Waiting... ($SECONDS_PASSED seconds)  current=$CURRENT target=$2"
 
-    if [ "$SECONDS_PASSED" -ge "$WAIT_FOR_EVICTED_FILE_TIMEOUT" ]; then
+    if [[ "$SECONDS_PASSED" -ge "$WAIT_FOR_EVICTED_FILE_TIMEOUT" ]]; then
       echo "$(date +%s) ERROR: Timed out after $WAIT_FOR_EVICTED_FILE_TIMEOUT seconds waiting for tape $1 → $2"
       return 1
     fi
@@ -186,7 +186,7 @@ wait_for_tape_state() {
 put_all_drives () {
 
   NEXT_STATE=$1
-  [ "$1" = "UP" ] && PREV_STATE="DOWN" || PREV_STATE="UP"
+  [[ "$1" = "UP" ]] && PREV_STATE="DOWN" || PREV_STATE="UP"
   next_state=$(echo $NEXT_STATE | awk '{print tolower($0)}')
   prev_state=$(echo $PREV_STATE | awk '{print tolower($0)}')
 

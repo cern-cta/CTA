@@ -348,7 +348,7 @@ stress-test:
     - ./stress_test.sh -n ${NAMESPACE} ${EXTRA_STRESS_TEST_OPTIONS}
   after_script:
     - |
-      if [ "${KEEP_STRESS_TEST_NAMESPACE}" == "TRUE" ]; then
+      if [[ "${KEEP_STRESS_TEST_NAMESPACE}" == "TRUE" ]]; then
         echo "Skipping deletion of stress test namespace ${NAMESPACE}"
         exit 0
       fi

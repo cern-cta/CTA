@@ -39,7 +39,7 @@ response=$(curl -s -X POST "${KEYCLOAK_URL}/realms/${REALM}/protocol/openid-conn
 # Extract access token using jq
 access_token=$(echo "${response}" | jq -r .access_token)
 
-if [ -z "$access_token" ] || [ "$access_token" = "null" ]; then
+if [[ -z "$access_token" ]] || [[ "$access_token" = "null" ]]; then
   echo "Keycloak response:"
   echo "${response}"
   die "Failed to extract access token from Keycloak response"
