@@ -27,7 +27,6 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
   size_t uiRecSize = 0;
   uint8_t uiLLBPMethod = SCSI::logicBlockProtectionMethod::DoNotUse;
   osm::LABEL osmLabel;
- 
   /*
    * Some mutated OSM labels may have extra CRC32C bytes e.g.:
    * 00 3c 00 38 00 43 00 39 93 3c 5d 26 c7 4b 67 48 
