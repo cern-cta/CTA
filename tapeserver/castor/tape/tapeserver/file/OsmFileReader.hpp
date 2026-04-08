@@ -37,7 +37,7 @@ private:
    *  -----------------------|-----------|
    *     DATA BLOCK              CRC32C
    *  -----------------------------------|-----------|
-   *     DATA BLOCK                          CRC32C
+   *     DATA BLOCK          +   CRC32C      CRC32C
    *
    * In such case, the payload size should be 262148.
    */

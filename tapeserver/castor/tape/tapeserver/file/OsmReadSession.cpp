@@ -23,32 +23,25 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
 
-  size_t uiRecSize = osm::LIMITS::MAXMRECSIZE;
+  const size_t RECSIZE_WITH_CRC32C = osm::LIMITS::MAXMRECSIZE + SCSI::logicBlockProtectionMethod::CRC32CLength;
+  size_t uiRecSize = 0;
   uint8_t uiLLBPMethod = SCSI::logicBlockProtectionMethod::DoNotUse;
   osm::LABEL osmLabel;
+ 
+  /*
+   * Some mutated OSM labels may have extra CRC32C bytes e.g.:
+   * 00 3c 00 38 00 43 00 39 93 3c 5d 26 c7 4b 67 48 
+   * -----------------------|-----------|
+   *   DATA BLOCK              CRC32C
+   * -----------------------|-----------|-----------|
+   *   DATA BLOCK              CRC32C       CRC32C
+   */
+  uiRecSize = m_session.m_drive.readBlock(osmLabel.rawLabel(), RECSIZE_WITH_CRC32C);
 
-  try {
-    m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-                           uiRecSize,
-                           "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.1");
-  } catch (cta::exception::Errnum& en) {
-    if (en.errorNumber() == ENOMEM) {
-      /*
-       * Some mutated OSM labels may have extra CRC32C bytes e.g.:
-       * 00 3c 00 38 00 43 00 39 93 3c 5d 26 c7 4b 67 48 
-       * -----------------------|-----------|
-       *   DATA BLOCK              CRC32C
-       * -----------------------------------|-----------|
-       *   DATA BLOCK                          CRC32C
-       */
-      m_drive.rewind();
-      uiRecSize = osm::LIMITS::MAXMRECSIZE + SCSI::logicBlockProtectionMethod::CRC32CLength;
-      m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
-                             uiRecSize,
-                             "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1.2");
-    } else {
-      throw;
-    }
+  if (uiRecSize < RECSIZE_WITH_CRC32C && uiRecSize < osm::LIMITS::MAXMRECSIZE) {
+    std::ostringstream ex_str;
+    ex_str << "[OsmReadSession::OsmReadSession] - Reading OSM label - part 1 - invalid block size: " << size;
+    throw TapeFormatError(ex_str.str());
   }
 
   m_drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + osm::LIMITS::MAXMRECSIZE),
