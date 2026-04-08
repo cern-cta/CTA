@@ -3,33 +3,33 @@
 cmake_minimum_required (VERSION 3.17)
 
 
-set(TAPEDRIVE_LIBRARY_SRCS
+set(CTATAPEDDRIVE_LIBRARY_SRCS
   DriveGeneric.cpp
   FakeDrive.cpp)
 
-add_library(TapeDrive ${TAPEDRIVE_LIBRARY_SRCS})
-target_link_libraries(TapeDrive SCSI ctatapedaemon)
+add_library(ctatapeddrive ${CTATAPEDDRIVE_LIBRARY_SRCS})
+target_link_libraries(ctatapeddrive ctatapedscsi ctatapedaemon)
 
-add_executable(TapeDriveReadWriteTest
+add_executable(cta-TapeDriveReadWriteTest
   TapeDriveReadWriteTest.cpp)
-target_link_libraries(TapeDriveReadWriteTest
-  TapeDrive
+target_link_libraries(cta-TapeDriveReadWriteTest
+  ctatapeddrive
   ctamediachanger
-  SCSI
-  System
+  ctatapedscsi
+  ctatapedsystem
   ctacommon
-  ctaTapeServerDaemon
+  ctatapedsession
   gtest
   pthread)
 
-add_library(ctatapeserverdriveunittests SHARED
+add_library(ctatapeddriveunittests SHARED
   DriveTest.cpp)
-set_property(TARGET ctatapeserverdriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctatapeserverdriveunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+set_property(TARGET ctatapeddriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapeddriveunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-target_link_libraries(ctatapeserverdriveunittests
-  ctaTapeServerDaemon
-  System
-  TapeDrive)
+target_link_libraries(ctatapeddriveunittests
+  ctatapedsession
+  ctatapedsystem
+  ctatapeddrive)
 
-install(TARGETS ctatapeserverdriveunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatapeddriveunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

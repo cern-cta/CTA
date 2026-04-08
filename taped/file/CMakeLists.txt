@@ -8,7 +8,7 @@ include_directories(/usr/include/shift) # TODO: why?
 include_directories (${XROOTD_INCLUDE_DIR})
 include_directories(/usr/include/tirpc) # rpc headers are now provided by libtirpc-devel
 
-set(TAPESERVER_FILE_LIBRARY_SRCS
+set(CTATAPEDFILE_LIBRARY_SRCS
   CtaFileReader.cpp
   CtaReadSession.cpp
   FileReader.cpp
@@ -30,23 +30,23 @@ set(TAPESERVER_FILE_LIBRARY_SRCS
   WriteSession.cpp
 )
 
-add_executable(BasicReadWriteTest
+add_executable(cta-BasicReadWriteTest
   BasicReadWriteTest.cpp)
 
 target_link_libraries(BasicReadWriteTest
-  TapeDrive
+  ctatapeddrive
   ctamediachanger
-  SCSI
-  System
+  ctatapedscsi
+  ctatapedsystem
   ctacommon
-  ctaTapeServerDaemon
+  ctatapedsession
   gtest
   pthread)
 
-add_library(File
-  ${TAPESERVER_FILE_LIBRARY_SRCS})
+add_library(ctatapedfile
+  ${CTATAPEDFILE_LIBRARY_SRCS})
 
-target_link_libraries(File
+target_link_libraries(ctatapedfile
   tirpc
   ctacommon
 )
@@ -71,8 +71,8 @@ add_executable(cta-osmReaderTest
 
 target_link_libraries(cta-osmReaderTest
   ctacommon
-  ctaTapeServerDaemon
-  File
+  ctatapedsession
+  ctatapedfile
   gtest
 )
 

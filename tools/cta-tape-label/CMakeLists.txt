@@ -9,10 +9,10 @@ add_executable(cta-tape-label
 
 target_link_libraries (cta-tape-label
   ctacommon
-  TapeDrive
+  ctatapeddrive
   ctamediachanger
   ctacatalogue
-  SCSI
+  ctatapedscsi
 )
 
 add_library(ctatapelabelunittests SHARED

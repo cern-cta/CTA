@@ -8,7 +8,7 @@ include_directories(${PROJECT_BINARY_DIR})
 
 find_package(ZLIB REQUIRED)
 
-set(CTATAPESERVERDAEMON_LIBRARY_SRCS
+set(CTATAPEDSESSION_LIBRARY_SRCS
   CleanerSession.cpp
   DiskReadThreadPool.cpp
   DiskReadTask.cpp
@@ -31,12 +31,12 @@ set(CTATAPESERVERDAEMON_LIBRARY_SRCS
   TransferTaskTracker.cpp
   DriveSessionTracker.cpp)
 
-add_library(ctaTapeServerDaemon
-  ${CTATAPESERVERDAEMON_LIBRARY_SRCS})
+add_library(ctatapedsession
+  ${CTATAPEDSESSION_LIBRARY_SRCS})
 
-target_link_libraries(ctaTapeServerDaemon ctacommon ctascheduler ctacatalogue ctamediachanger TapeDrive ctarao ZLIB::ZLIB)
+target_link_libraries(ctatapedsession ctacommon ctascheduler ctacatalogue ctamediachanger ctatapeddrive ctatapedrao ZLIB::ZLIB)
 
-add_library(ctatapeserverdaemonunittests SHARED
+add_library(ctatapedsessionunittests SHARED
   DataTransferSessionTest.cpp
   DiskReadTaskTest.cpp
   DiskWriteTaskTest.cpp
@@ -46,9 +46,9 @@ add_library(ctatapeserverdaemonunittests SHARED
   RecallTaskInjectorTest.cpp
   TaskWatchDogTest.cpp
 )
-set_property(TARGET ctatapeserverdaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctatapeserverdaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+set_property(TARGET ctatapedsessionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapedsessionunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 if (NOT CTA_USE_PGSCHED)
-  target_link_libraries(ctatapeserverdaemonunittests ctaobjectstore)
+  target_link_libraries(ctatapedsessionunittests ctaobjectstore)
 endif()
-install(TARGETS ctatapeserverdaemonunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatapedsessionunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

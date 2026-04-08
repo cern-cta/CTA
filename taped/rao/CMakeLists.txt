@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required (VERSION 3.17)
 
-set(CTARAO_LIBRARY_SRCS
+set(CTATAPEDRAO_LIBRARY_SRCS
   RAOParams.cpp
   RAOManager.cpp
   EnterpriseRAOAlgorithm.cpp
@@ -23,17 +23,17 @@ set(CTARAO_LIBRARY_SRCS
   FilePositionEstimatorFactory.cpp
 )
 
-add_library (ctarao SHARED
-  ${CTARAO_LIBRARY_SRCS})
+add_library (ctatapedrao SHARED
+  ${CTATAPEDRAO_LIBRARY_SRCS})
 
-target_link_libraries(ctarao ctacommon)
+target_link_libraries(ctatapedrao ctacommon)
 
-install(TARGETS ctarao DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatapedrao DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
-add_library(ctatapeserverraounittests SHARED
+add_library(ctatapedraounittests SHARED
   RAOTest.cpp)
 
-set_property(TARGET ctatapeserverraounittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctatapeserverraounittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+set_property(TARGET ctatapedraounittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapedraounittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctatapeserverraounittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatapedraounittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

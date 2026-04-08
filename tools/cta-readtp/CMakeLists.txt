@@ -13,10 +13,10 @@ add_executable(cta-readtp
 
 target_link_libraries(cta-readtp
   ctacommon
-  TapeDrive
+  ctatapeddrive
   ctamediachanger
   ctacatalogue
-  SCSI
+  ctatapedscsi
 )
 
 add_manpage(cta-readtp)

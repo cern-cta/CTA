@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required (VERSION 3.17)
 
-add_library(SCSI Device.cpp Structures.cpp Constants.cpp Exception.cpp)
+add_library(tapedscsi Device.cpp Structures.cpp Constants.cpp Exception.cpp)
 
-target_link_libraries(SCSI ctacommon)
+target_link_libraries(tapedscsi ctacommon)
 
 add_library(ctatapeserverscsiunittests SHARED
   DeviceTest.cpp

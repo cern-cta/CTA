@@ -6,6 +6,9 @@ add_subdirectory(common)
 
 find_package(Protobuf3 REQUIRED)
 
+# So that we can see WatchdogMessage.pb.h
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+
 # See https://gitlab.cern.ch/cta/CTA/-/issues/791#note_8251696
 PROTOBUF3_GENERATE_CPP(WDMsgSources WDMsgHeaders WatchdogMessage.proto)
 
@@ -24,12 +27,11 @@ add_library(ctatapedaemon
 )
 
 target_link_libraries(ctatapedaemon
-  ctatapesession
-  ctaTapeServerDaemon
+  ctatapedsession
   ctatapedaemoncommon
-  SCSI
-  TapeDrive
-  File)
+  ctatapedscsi
+  ctatapeddrive
+  ctatapedfile)
 
 add_library(ctadaemonunittests SHARED
   DriveHandlerTests.cpp
