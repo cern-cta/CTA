@@ -81,7 +81,7 @@ void OsmFileReader::moveToFirstFile() {
    */
   uiRecSize = m_session.m_drive.readBlock(osmLabel.rawLabel(), RECSIZE_WITH_CRC32C);
 
-  if (uiRecSize < RECSIZE_WITH_CRC32C && uiRecSize < osm::LIMITS::MAXMRECSIZE) {
+  if (uiRecSize != RECSIZE_WITH_CRC32C && uiRecSize != osm::LIMITS::MAXMRECSIZE) {
     std::ostringstream ex_str;
     ex_str << "[FileReader::position] - Reading OSM label - part 1 - invalid block size: " << uiRecSize;
     throw TapeFormatError(ex_str.str());
