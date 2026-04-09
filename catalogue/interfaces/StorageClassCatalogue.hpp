@@ -48,6 +48,8 @@ public:
 
   virtual std::vector<common::dataStructures::StorageClass> getStorageClasses() const = 0;
 
+  virtual std::vector<common::dataStructures::StorageClass> getStorageClassesByVid(const std::string& vid) const = 0;
+
   virtual common::dataStructures::StorageClass getStorageClass(const std::string& name) const = 0;
 
   virtual void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity& admin,
