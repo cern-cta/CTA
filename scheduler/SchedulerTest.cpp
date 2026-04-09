@@ -40,10 +40,12 @@
 #include "tests/TempFile.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 
+#include <Scheduler.hpp>
 #include <bits/unique_ptr.h>
 #include <exception>
 #include <gtest/gtest.h>
 #include <memory>
+#include <rdbms/schema/CreateSchemaCmd.hpp>
 #include <utility>
 
 #ifdef STDOUT_LOGGING
@@ -63,6 +65,7 @@ namespace {
  * This structure is used to describe a tape state change during the 'triggerTapeStateChangeValidScenarios' test
  */
 struct TriggerTapeStateChangeBehaviour {
+  cta::Scheduler::OperatingMode operatingMode;
   cta::common::dataStructures::Tape::State fromState;
   cta::common::dataStructures::Tape::State toState;
   cta::common::dataStructures::Tape::State observedState;
@@ -85,12 +88,26 @@ struct SchedulerTestParam {
         m_triggerTapeStateChangeBehaviour(triggerTapeStateChangeBehaviour) {}
 };  // struct SchedulerTestParam
 
+std::string operatingModeToStr(cta::Scheduler::OperatingMode operatingMode) {
+  switch (operatingMode) {
+    case cta::Scheduler::OperatingMode::ALL:
+      return "ALL";
+    case cta::Scheduler::OperatingMode::USER:
+      return "USER";
+    case cta::Scheduler::OperatingMode::REPACK:
+      return "REPACK";
+    default:
+      throw std::logic_error("Invalid OperatingMode");
+  }
+}
+
 std::ostream& operator<<(std::ostream& os, const SchedulerTestParam& c) {
   if (!c.m_triggerTapeStateChangeBehaviour.has_value()) {
     return os << "Test";
   } else {
     auto& params = c.m_triggerTapeStateChangeBehaviour.value();
     return os << "{ "
+              << "\"operating_mode\": " << "\"" << operatingModeToStr(params.operatingMode) << "\"" << ", "
               << "\"from\": " << "\"" << cta::common::dataStructures::Tape::stateToString(params.fromState) << "\""
               << ", "
               << "\"to\": " << "\"" << cta::common::dataStructures::Tape::stateToString(params.toState) << "\"" << ", "
@@ -8195,14 +8212,16 @@ TEST_P(SchedulerTestTriggerTapeStateChangeBehaviour, triggerTapeStateChangeValid
                                                   tape.vid,
                                                   triggerTapeStateChangeBehaviour.toState,
                                                   "Test",
-                                                  lc),
+                                                  lc,
+                                                  triggerTapeStateChangeBehaviour.operatingMode),
                  exception::UserError);
   } else {
     ASSERT_NO_THROW(scheduler.triggerTapeStateChange(s_adminOnAdminHost,
                                                      tape.vid,
                                                      triggerTapeStateChangeBehaviour.toState,
                                                      "Test",
-                                                     lc));
+                                                     lc,
+                                                     triggerTapeStateChangeBehaviour.operatingMode));
   }
 
   // Observe results
@@ -8242,73 +8261,138 @@ INSTANTIATE_TEST_CASE_P(OStoreDBPlusMockSchedulerTestVFS,
                         ::testing::Values(SchedulerTestParam(OStoreDBFactoryVFS)));
 
 using Tape = cta::common::dataStructures::Tape;
+using Mode = cta::Scheduler::OperatingMode;
 
 INSTANTIATE_TEST_CASE_P(
   OStoreDBPlusMockSchedulerTestVFS,
   SchedulerTestTriggerTapeStateChangeBehaviour,
   ::testing::Values(
-    /* { fromState, toState, observedState, changeRaisedException, cleanupFlagActivated } */
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE, Tape::ACTIVE, Tape::ACTIVE, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE, Tape::DISABLED, Tape::DISABLED, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE, Tape::REPACKING_PENDING, Tape::ACTIVE, true, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE, Tape::REPACKING_DISABLED, Tape::ACTIVE, true, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE, Tape::BROKEN_PENDING, Tape::ACTIVE, true, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::ACTIVE, Tape::EXPORTED_PENDING, Tape::ACTIVE, true, false}),
-
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED, Tape::ACTIVE, Tape::ACTIVE, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED, Tape::DISABLED, Tape::DISABLED, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED, Tape::REPACKING_DISABLED, Tape::DISABLED, true, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::DISABLED, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
-
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING, Tape::ACTIVE, Tape::ACTIVE, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING, Tape::DISABLED, Tape::DISABLED, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING, Tape::REPACKING, Tape::REPACKING, false, false}),
+    /* { operatingMode, fromState, toState, observedState, changeRaisedException, cleanupFlagActivated } */
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::ACTIVE, Tape::ACTIVE, Tape::ACTIVE, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::ACTIVE, Tape::DISABLED, Tape::DISABLED, false, false}),
     SchedulerTestParam(OStoreDBFactoryVFS,
-                       {Tape::REPACKING, Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
+                       {Mode::ALL, Tape::ACTIVE, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::ACTIVE, Tape::REPACKING_PENDING, Tape::ACTIVE, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::ACTIVE, Tape::REPACKING_DISABLED, Tape::ACTIVE, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::ACTIVE, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::ACTIVE, Tape::BROKEN_PENDING, Tape::ACTIVE, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::ACTIVE, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::ACTIVE, Tape::EXPORTED_PENDING, Tape::ACTIVE, true, false}),
+
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::USER, Tape::ACTIVE, Tape::ACTIVE, Tape::ACTIVE, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::USER, Tape::ACTIVE, Tape::DISABLED, Tape::DISABLED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::USER, Tape::ACTIVE, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::USER, Tape::ACTIVE, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::USER, Tape::ACTIVE, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
+
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::REPACK, Tape::ACTIVE, Tape::ACTIVE, Tape::ACTIVE, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::REPACK, Tape::ACTIVE, Tape::DISABLED, Tape::DISABLED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::REPACK, Tape::ACTIVE, Tape::REPACKING, Tape::ACTIVE, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::REPACK, Tape::ACTIVE, Tape::BROKEN, Tape::ACTIVE, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::REPACK, Tape::ACTIVE, Tape::EXPORTED, Tape::ACTIVE, true, false}),
+
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::DISABLED, Tape::ACTIVE, Tape::ACTIVE, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::DISABLED, Tape::DISABLED, Tape::DISABLED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::DISABLED, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::DISABLED, Tape::REPACKING_DISABLED, Tape::DISABLED, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::DISABLED, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::DISABLED, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
+
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::REPACKING, Tape::ACTIVE, Tape::ACTIVE, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::REPACKING, Tape::DISABLED, Tape::DISABLED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::REPACKING, Tape::REPACKING, Tape::REPACKING, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::REPACKING, Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::REPACKING, Tape::BROKEN, Tape::BROKEN, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::REPACKING, Tape::EXPORTED, Tape::EXPORTED, false, false}),
+
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::USER, Tape::REPACKING, Tape::ACTIVE, Tape::REPACKING, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::USER, Tape::REPACKING, Tape::DISABLED, Tape::REPACKING, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::USER, Tape::REPACKING, Tape::REPACKING, Tape::REPACKING, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::USER, Tape::REPACKING, Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::USER, Tape::REPACKING, Tape::BROKEN, Tape::REPACKING, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::USER, Tape::REPACKING, Tape::EXPORTED, Tape::REPACKING, true, false}),
+
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::REPACK, Tape::REPACKING, Tape::ACTIVE, Tape::ACTIVE, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::REPACK, Tape::REPACKING, Tape::DISABLED, Tape::DISABLED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::REPACK, Tape::REPACKING, Tape::REPACKING, Tape::REPACKING, false, false}),
+    SchedulerTestParam(
+      OStoreDBFactoryVFS,
+      {Mode::REPACK, Tape::REPACKING, Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::REPACK, Tape::REPACKING, Tape::BROKEN, Tape::BROKEN, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::REPACK, Tape::REPACKING, Tape::EXPORTED, Tape::EXPORTED, false, false}),
 
     SchedulerTestParam(OStoreDBFactoryVFS,
-                       {Tape::REPACKING_DISABLED, Tape::ACTIVE, Tape::REPACKING_DISABLED, true, false}),
+                       {Mode::ALL, Tape::REPACKING_DISABLED, Tape::ACTIVE, Tape::REPACKING_DISABLED, true, false}),
     SchedulerTestParam(OStoreDBFactoryVFS,
-                       {Tape::REPACKING_DISABLED, Tape::DISABLED, Tape::REPACKING_DISABLED, true, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::REPACKING, Tape::REPACKING, false, false}),
+                       {Mode::ALL, Tape::REPACKING_DISABLED, Tape::DISABLED, Tape::REPACKING_DISABLED, true, false}),
     SchedulerTestParam(OStoreDBFactoryVFS,
-                       {Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::REPACKING_DISABLED, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
+                       {Mode::ALL, Tape::REPACKING_DISABLED, Tape::REPACKING, Tape::REPACKING, false, false}),
+    SchedulerTestParam(
+      OStoreDBFactoryVFS,
+      {Mode::ALL, Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, Tape::REPACKING_DISABLED, false, false}),
     SchedulerTestParam(OStoreDBFactoryVFS,
-                       {Tape::REPACKING_DISABLED, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
+                       {Mode::ALL, Tape::REPACKING_DISABLED, Tape::BROKEN, Tape::BROKEN, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::REPACKING_DISABLED, Tape::EXPORTED, Tape::EXPORTED, false, false}),
 
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN, Tape::ACTIVE, Tape::ACTIVE, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN, Tape::DISABLED, Tape::DISABLED, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN, Tape::REPACKING_DISABLED, Tape::BROKEN, true, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN, Tape::BROKEN, Tape::BROKEN, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::BROKEN, Tape::ACTIVE, Tape::ACTIVE, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::BROKEN, Tape::DISABLED, Tape::DISABLED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::BROKEN, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::BROKEN, Tape::REPACKING_DISABLED, Tape::BROKEN, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::BROKEN, Tape::BROKEN, Tape::BROKEN, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::BROKEN, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
 
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED, Tape::ACTIVE, Tape::ACTIVE, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED, Tape::DISABLED, Tape::DISABLED, false, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED, Tape::REPACKING_DISABLED, Tape::EXPORTED, true, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED, Tape::EXPORTED, Tape::EXPORTED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::EXPORTED, Tape::ACTIVE, Tape::ACTIVE, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::EXPORTED, Tape::DISABLED, Tape::DISABLED, false, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::EXPORTED, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::EXPORTED, Tape::REPACKING_DISABLED, Tape::EXPORTED, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::EXPORTED, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS, {Mode::ALL, Tape::EXPORTED, Tape::EXPORTED, Tape::EXPORTED, false, false}),
 
     SchedulerTestParam(OStoreDBFactoryVFS,
-                       {Tape::REPACKING_PENDING, Tape::ACTIVE, Tape::REPACKING_PENDING, true, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN_PENDING, Tape::ACTIVE, Tape::BROKEN_PENDING, true, false}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::EXPORTED_PENDING, Tape::ACTIVE, Tape::EXPORTED_PENDING, true, false}),
+                       {Mode::ALL, Tape::REPACKING_PENDING, Tape::ACTIVE, Tape::REPACKING_PENDING, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::BROKEN_PENDING, Tape::ACTIVE, Tape::BROKEN_PENDING, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::EXPORTED_PENDING, Tape::ACTIVE, Tape::EXPORTED_PENDING, true, false}),
 
     // The 'cleanup' flag should be reactivated when the same PENDING state is re-triggered
     SchedulerTestParam(OStoreDBFactoryVFS,
-                       {Tape::REPACKING_PENDING, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
-    SchedulerTestParam(OStoreDBFactoryVFS, {Tape::BROKEN_PENDING, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
+                       {Mode::ALL, Tape::REPACKING_PENDING, Tape::REPACKING, Tape::REPACKING_PENDING, false, true}),
     SchedulerTestParam(OStoreDBFactoryVFS,
-                       {Tape::EXPORTED_PENDING, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true})));
+                       {Mode::ALL, Tape::BROKEN_PENDING, Tape::BROKEN, Tape::BROKEN_PENDING, false, true}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::ALL, Tape::EXPORTED_PENDING, Tape::EXPORTED, Tape::EXPORTED_PENDING, false, true}),
+
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::REPACK, Tape::REPACKING_PENDING, Tape::REPACKING, Tape::REPACKING_PENDING, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::REPACK, Tape::BROKEN_PENDING, Tape::BROKEN, Tape::BROKEN_PENDING, true, false}),
+    SchedulerTestParam(OStoreDBFactoryVFS,
+                       {Mode::REPACK, Tape::EXPORTED_PENDING, Tape::EXPORTED, Tape::EXPORTED_PENDING, true, false})));
 
 #endif
 

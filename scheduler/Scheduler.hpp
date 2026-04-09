@@ -92,7 +92,7 @@ public:
    */
   void ping(log::LogContext& lc) override;
 
-  /*
+  /**
    * Get scheduler backend instance name
    * passed to m_schedulerBackendName via init method from
    * "cta.scheduler_backend_name" frontend
@@ -195,6 +195,7 @@ public:
   getPendingRetrieveJobs(log::LogContext& lc) const;
   std::list<cta::common::dataStructures::RetrieveJob> getPendingRetrieveJobs(std::optional<std::string> vid,
                                                                              log::LogContext& lc) const;
+  enum class OperatingMode { ALL, USER, REPACK };
 
   /*============== Drive state management ====================================*/
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchDrive);
@@ -480,12 +481,15 @@ public:
   * @param vid the VID of the tape to change the state
   * @param state the desired final state
   * @param stateReason the reason why the state changes, if the state is ACTIVE and the stateReason is std::nullopt, the state will be reset to null
+  * @param logContext logging context for recording informational and error messages.
+  * @param operatingMode current operating mode
   */
   void triggerTapeStateChange(const common::dataStructures::SecurityIdentity& admin,
                               const std::string& vid,
                               const common::dataStructures::Tape::State& state,
                               const std::optional<std::string>& stateReason,
-                              log::LogContext& logContext);
+                              log::LogContext& logContext,
+                              OperatingMode operatingMode = OperatingMode::ALL);
 
   /*======================== Archive reporting support =======================*/
   /**
@@ -596,6 +600,45 @@ private:
   const uint64_t m_minBytesToWarrantAMount;
 
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
+
+  /**
+   * Forbidden tape state transitions when connected to a repack-only Scheduler DB
+   */
+  static const inline std::pair c_forbiddenTransitionsRepackMode {
+    // From
+    std::set {
+              common::dataStructures::Tape::State::ACTIVE,
+              common::dataStructures::Tape::State::DISABLED,
+              common::dataStructures::Tape::State::REPACKING_PENDING,
+              common::dataStructures::Tape::State::BROKEN_PENDING,
+              common::dataStructures::Tape::State::EXPORTED_PENDING,
+              },
+    // To
+    std::set {
+              common::dataStructures::Tape::State::REPACKING,
+              common::dataStructures::Tape::State::BROKEN,
+              common::dataStructures::Tape::State::EXPORTED,
+              }
+  };
+
+  /**
+   * Forbidden tape state transitions when connected to a user-only Scheduler DB
+   */
+  static const inline std::pair c_forbiddenTransitionsUserMode {
+    // From
+    std::set {
+              common::dataStructures::Tape::State::REPACKING,
+              common::dataStructures::Tape::State::REPACKING_DISABLED,
+              },
+    // To
+    std::set {
+              common::dataStructures::Tape::State::ACTIVE,
+              common::dataStructures::Tape::State::DISABLED,
+              common::dataStructures::Tape::State::REPACKING,
+              common::dataStructures::Tape::State::BROKEN,
+              common::dataStructures::Tape::State::EXPORTED,
+              }
+  };
 
 };  // class Scheduler
 

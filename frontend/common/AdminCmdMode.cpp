@@ -22,9 +22,6 @@ AdminCmdMode toAdminCmdMode(const std::string& cmdModeStr) {
   if (cmdModeStr == "version") {
     return AdminCmdMode::VERSION;
   }
-  if (cmdModeStr == "none") {
-    return AdminCmdMode::NONE;
-  }
   throw exception::Exception(std::string(cmdModeStr) + " is not a valid admin command mode");
 }
 
