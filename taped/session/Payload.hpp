@@ -27,7 +27,7 @@ class Payload {
 
 public:
   explicit Payload(uint32_t capacity)
-      : m_data(new (std::nothrow) unsigned char[capacity]),
+      : m_data(new(std::nothrow) unsigned char[capacity]),
         m_totalCapacity(capacity),
         m_size(0) {
     if (nullptr == m_data) {
