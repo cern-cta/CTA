@@ -43,7 +43,7 @@ size_t FileReader::getBlockSize() {
   return m_currentBlockSize;
 }
 
-std::string FileReader::getLBPMode() {
+const std::string& FileReader::getLBPMode() const {
   return m_LBPMode;
 }
 

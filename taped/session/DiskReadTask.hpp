@@ -36,7 +36,7 @@ public:
    *
    * Should be called after execute (otherwise, it is pointless)
    */
-  const DiskStats getTaskStats() const;
+  const DiskStats& getTaskStats() const;
 
 private:
   /**

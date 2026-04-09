@@ -105,7 +105,7 @@ public:
    * Return the task stats. Should only be called after execute
    * @return
    */
-  const TapeSessionStats getTaskStats() const;
+  const TapeSessionStats& getTaskStats() const;
 
   /**
     * Return ArchiveJob reference

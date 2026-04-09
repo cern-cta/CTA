@@ -65,9 +65,9 @@ public:
   */
   const bool m_useLbp;
 
-  inline std::string getSiteName() noexcept { return m_siteName; }
+  inline const std::string& getSiteName() const noexcept { return m_siteName; }
 
-  inline std::string getHostName() noexcept { return m_hostName; }
+  inline const std::string& getHostName() const noexcept { return m_hostName; }
 
   inline void setCorrupted() noexcept { m_corrupted = true; }
 

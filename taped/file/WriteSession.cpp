@@ -138,7 +138,7 @@ void WriteSession::setHostName() {
                                           "Failed gethostname() in WriteFile::setHostName");
   m_hostName = hostname_cstr;
   std::transform(m_hostName.begin(), m_hostName.end(), m_hostName.begin(), ::toupper);
-  m_hostName = m_hostName.substr(0, m_hostName.find("."));
+  m_hostName.resize(m_hostName.find("."));
   delete[] hostname_cstr;
 }
 
@@ -152,7 +152,7 @@ void WriteSession::setSiteName() {
     while (std::getline(resolv, buf)) {
       if (buf.substr(0, 7) == toFind) {
         m_siteName = buf.substr(7);
-        m_siteName = m_siteName.substr(0, m_siteName.find("."));
+        m_siteName.resize(m_siteName.find("."));
         std::transform(m_siteName.begin(), m_siteName.end(), m_siteName.begin(), ::toupper);
         break;
       }

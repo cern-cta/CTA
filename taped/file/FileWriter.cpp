@@ -125,7 +125,7 @@ FileWriter::~FileWriter() noexcept {
   }
 }
 
-std::string FileWriter::getLBPMode() {
+const std::string& FileWriter::getLBPMode() const {
   return m_LBPMode;
 }
 

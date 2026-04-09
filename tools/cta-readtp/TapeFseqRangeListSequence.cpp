@@ -93,7 +93,7 @@ uint32_t TapeFseqRangeListSequence::next() {
   // If the end of the current range sequence has been reached
   if (!m_nbSequence.hasMore()) {
     // Move on to the next if there is one
-    m_rangeItor++;
+    ++m_rangeItor;
     if (m_rangeItor != m_list->end()) {
       m_nbSequence = static_cast<cta::tapeserver::readtp::TapeFseqRangeSequence>(*m_rangeItor);
     }

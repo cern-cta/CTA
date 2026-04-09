@@ -229,7 +229,7 @@ void DiskReadTask::logWithStat(int level, std::string_view msg, cta::log::LogCon
   lc.log(level, msg);
 }
 
-const DiskStats DiskReadTask::getTaskStats() const {
+const DiskStats& DiskReadTask::getTaskStats() const {
   return m_stats;
 }
 

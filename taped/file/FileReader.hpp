@@ -59,7 +59,7 @@ public:
     * Returns the LBP access mode.
     * @return The LBP mode.
     */
-  std::string getLBPMode();
+  const std::string& getLBPMode() const;
 
 protected:
   /**

@@ -65,7 +65,7 @@ public:
    * (otherwise, it is pointless)
    * @return
    */
-  const DiskStats getTaskStats() const;
+  const DiskStats& getTaskStats() const;
 
 private:
   /**

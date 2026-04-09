@@ -66,7 +66,7 @@ public:
   EndOfSessionAction execute() override;
 
   /** Temporary method used for debugging while building the session class */
-  std::string getVid() const { return m_volInfo.vid; }
+  const std::string& getVid() const { return m_volInfo.vid; }
 
   /**
    * Destructor.

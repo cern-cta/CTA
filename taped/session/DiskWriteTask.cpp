@@ -247,7 +247,7 @@ void DiskWriteTask::checkErrors(MemBlock* mb, uint64_t blockId, cta::log::LogCon
 //------------------------------------------------------------------------------
 // getTiming
 //------------------------------------------------------------------------------
-const DiskStats DiskWriteTask::getTaskStats() const {
+const DiskStats& DiskWriteTask::getTaskStats() const {
   return m_stats;
 }
 

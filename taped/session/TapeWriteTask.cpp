@@ -412,7 +412,7 @@ void TapeWriteTask::logWithStats(int level, const std::string& msg, cta::log::Lo
 //------------------------------------------------------------------------------
 //   getTaskStats
 //------------------------------------------------------------------------------
-const TapeSessionStats TapeWriteTask::getTaskStats() const {
+const TapeSessionStats& TapeWriteTask::getTaskStats() const {
   return m_taskStats;
 }
 
