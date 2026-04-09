@@ -237,7 +237,7 @@ private:
   cta::RetrieveMount& m_retrieveMount;
 
   /// Drive interface needed for performing Recommended Access Order query
-  castor::tape::tapeserver::drive::DriveInterface* m_drive;
+  castor::tape::tapeserver::drive::DriveInterface* m_drive {};
 
   std::vector<std::unique_ptr<cta::RetrieveJob>> m_jobs;
 
@@ -269,7 +269,7 @@ private:
   /** Number of jobs to be fetched before the tape is mounted.
    *  The desired number is m_raoLimits.maxSupported
    */
-  unsigned int m_fetched;
+  unsigned int m_fetched = 0;
 
   /**
    * The promise for reordering the read tasks according to RAO by the

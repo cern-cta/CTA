@@ -196,7 +196,7 @@ private:
   /**
    *  Pointer to the task injector allowing termination signaling
    */
-  MigrationTaskInjector* m_taskInjector;
+  MigrationTaskInjector* m_taskInjector {};
 
 };  // class TapeWriteSingleThread
 

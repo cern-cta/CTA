@@ -464,8 +464,8 @@ public:
 class RecallWatchDog : public TaskWatchDog {
 private:
   /** The file we are working on */
-  uint64_t m_fileId;
-  uint64_t m_fSeq;
+  uint64_t m_fileId = 0;
+  uint64_t m_fSeq = 0;
 
   void logStuckFile() override {
     cta::log::ScopedParamContainer params(m_lc);
@@ -516,8 +516,8 @@ public:
 class MigrationWatchDog : public TaskWatchDog {
 private:
   /** The file we are working on */
-  uint64_t m_fileId;
-  uint64_t m_fSeq;
+  uint64_t m_fileId = 0;
+  uint64_t m_fSeq = 0;
 
   void logStuckFile() override {
     cta::log::ScopedParamContainer params(m_lc);

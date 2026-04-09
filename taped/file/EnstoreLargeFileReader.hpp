@@ -38,7 +38,7 @@ public:
   size_t readNextDataBlock(void* data, const size_t size) override;
 
 protected:
-  uint64_t bytes_to_read;
+  uint64_t bytes_to_read = 0;
 
 private:
   void setPositioningMethod(const cta::PositioningMethod& newMethod);

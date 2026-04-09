@@ -103,12 +103,13 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string& msg, ct
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent) {
+  const auto archiveFileID = m_successfulRetrieveJob->archiveFile.archiveFileID;
   try {
     m_successfulRetrieveJob->asyncSetSuccessful();
     parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
   } catch (const cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(parent.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_successfulRetrieveJob->archiveFile.archiveFileID);
+    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", archiveFileID);
     parent.m_lc.log(cta::log::WARNING,
                     "In RecallReportPacker::ReportSuccessful::execute(): call to "
                     "m_successfulRetrieveJob->asyncSetSuccessful() failed, job does not exist in the objectstore.");

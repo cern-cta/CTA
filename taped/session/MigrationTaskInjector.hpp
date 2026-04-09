@@ -202,7 +202,7 @@ private:
    * after we make sure synchronousInjection returned true. To do so, we
    *  need to store it
    */
-  uint64_t m_firstFseqToWrite;
+  uint64_t m_firstFseqToWrite = 0;
 };
 
 }  // namespace castor::tape::tapeserver::daemon

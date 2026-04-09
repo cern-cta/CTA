@@ -297,7 +297,7 @@ private:
   /**
    * The boolean variable to store if drive support LBP.
    */
-  bool m_driveSupportLbp;
+  bool m_driveSupportLbp = false;
 
   /**
    * Number of files read successsfully
@@ -317,7 +317,7 @@ private:
   /**
    * Encryption on/off
    */
-  bool m_isTapeEncrypted;
+  bool m_isTapeEncrypted = false;
 
 };  // class ReadtpCmd
 

@@ -116,7 +116,7 @@ private:
   const std::string m_server;
   const std::string m_unitName;
   const std::string m_logicalLibrary;
-  castor::tape::tapeserver::daemon::VolumeInfo m_volume;
+  castor::tape::tapeserver::daemon::VolumeInfo m_volume {};
   const pid_t m_sessionPid = getpid();
 };
 

@@ -78,7 +78,7 @@ private:
    * Object representing the API of the CASTOR logging system.
    */
   cta::log::Logger& m_log;
-  VolumeInfo m_volInfo;
+  VolumeInfo m_volInfo {};
   System::virtualWrapper& m_sysWrapper;
   /**
    * The configuration of the tape drive to be used by this session.

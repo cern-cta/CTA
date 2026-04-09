@@ -9,19 +9,19 @@ package cta.tape.daemon.serializers;
 // its status, plus any log variables needed for end of session summaries.
 
 message LogParam {
-  required string name = 20001;
+  required string name  = 20001;
   required string value = 20002;
 }
 
 message WatchdogMessage {
-  required bool reportingstate = 20010;
-  optional uint32 sessionstate = 20011;
-  optional uint32 sessiontype = 20012;
-  optional string vid = 20013;
-  required bool reportingbytes = 20014;
+  required bool reportingstate        = 20010;
+  optional uint32 sessionstate        = 20011;
+  optional uint32 sessiontype         = 20012;
+  optional string vid                 = 20013;
+  required bool reportingbytes        = 20014;
   optional uint64 totaldiskbytesmoved = 20015;
   optional uint64 totaltapebytesmoved = 20016;
-  repeated LogParam addedlogparams = 20017;
-  repeated string deletedlogparams = 20018;
-  optional bool resetLogParams = 20019;
+  repeated LogParam addedlogparams    = 20017;
+  repeated string deletedlogparams    = 20018;
+  optional bool resetLogParams        = 20019;
 }
