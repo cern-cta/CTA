@@ -26,13 +26,9 @@ StorageClassLsResponseStream::StorageClassLsResponseStream(cta::catalogue::Catal
   if (storageClassName.has_value()) {
     m_storageClasses.push_back(m_catalogue.StorageClass()->getStorageClass(storageClassName.value()));
   } else if (vid.has_value()) {
-    for (const auto& storageClass : m_catalogue.StorageClass()->getStorageClassesByVid(vid.value())) {
-      m_storageClasses.push_back(storageClass);
-    }
+    m_storageClasses = m_catalogue.StorageClass()->getStorageClassesByVid(vid.value());
   } else {
-    for (const auto& storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
-      m_storageClasses.push_back(storageClass);
-    }
+    m_storageClasses = m_catalogue.StorageClass()->getStorageClasses();
   }
 }
 
