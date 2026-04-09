@@ -2756,38 +2756,6 @@ void Scheduler::triggerTapeStateChange(const common::dataStructures::SecurityIde
                                        OperatingMode operatingMode) {
   using Tape = common::dataStructures::Tape;
 
-  static const std::pair c_forbiddenTransitionsRepackMode {
-    // From
-    std::set {
-              Tape::State::ACTIVE,
-              Tape::State::DISABLED,
-              Tape::State::REPACKING_PENDING,
-              Tape::State::BROKEN_PENDING,
-              Tape::State::EXPORTED_PENDING,
-              },
-    // To
-    std::set {
-              Tape::State::REPACKING,
-              Tape::State::BROKEN,
-              Tape::State::EXPORTED,
-              }
-  };
-  static const std::pair c_forbiddenTransitionsUserMode {
-    // From
-    std::set {
-              Tape::State::REPACKING,
-              Tape::State::REPACKING_DISABLED,
-              },
-    // To
-    std::set {
-              Tape::State::ACTIVE,
-              Tape::State::DISABLED,
-              Tape::State::REPACKING,
-              Tape::State::BROKEN,
-              Tape::State::EXPORTED,
-              }
-  };
-
   // Tape must exist on catalogue
   if (!m_catalogue.Tape()->tapeExists(vid)) {
     throw cta::exception::UserError("The VID " + vid + " does not exist");
