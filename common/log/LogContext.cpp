@@ -43,8 +43,8 @@ void LogContext::clear() {
   m_paramsMap.clear();
 }
 
-void LogContext::log(int priority, std::string_view msg) noexcept {
-  m_log.logInternal(priority, msg, m_paramsMap);
+void LogContext::log(int priority, std::string_view msg, const std::source_location location) noexcept {
+  m_log.logInternal(priority, msg, m_paramsMap, location);
 }
 
 void LogContext::logBacktrace(const int priority, std::string_view backtrace) noexcept {

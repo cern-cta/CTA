@@ -25,8 +25,13 @@
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{4}$"
     },
     "log_schema_version": {
-      "const": "0.0.1",
+      "const": "0.1.0",
       "description": "Version identifier of the log schema."
+    },
+    "cta_version": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Version of the CTA software emitting the log entry (release or development build identifier)."
     },
     "hostname": {
       "type": "string",
@@ -41,6 +46,11 @@
         "cta-taped"
       ],
       "description": "Name of the CTA service or component emitting the log entry."
+    },
+    "source_location": {
+      "type": "string",
+      "pattern": "^[^:]+:\\d+$",
+      "description": "Source code location where the log entry was generated, formatted as <filename>:<line>."
     },
     "log_level": {
       "type": "string",

@@ -9,6 +9,7 @@
 
 #include <ostream>
 #include <set>
+#include <source_location>
 #include <vector>
 
 namespace cta::log {
@@ -81,7 +82,9 @@ public:
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    */
-  virtual void log(int priority, std::string_view msg) noexcept;
+  virtual void log(int priority,
+                   std::string_view msg,
+                   const std::source_location location = std::source_location::current()) noexcept;
 
   /**
    * Logs a multiline backtrace as multiple entries in the logs, without

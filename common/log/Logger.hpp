@@ -11,6 +11,7 @@
 #include <atomic>
 #include <chrono>
 #include <map>
+#include <source_location>
 #include <vector>
 
 namespace cta::log {
@@ -247,8 +248,10 @@ protected:
    * @param msg      the message
    * @param params   parameters of the message, will select last value for each entry
    */
-  void
-  logInternal(int priority, std::string_view msg, const std::map<std::string, std::vector<Param>>& paramsMap) noexcept;
+  void logInternal(int priority,
+                   std::string_view msg,
+                   const std::map<std::string, std::vector<Param>>& paramsMap,
+                   const std::source_location location = std::source_location::current()) noexcept;
 
   /**
    * Generates and returns the mapping between syslog priorities and their textual representations
@@ -289,7 +292,7 @@ private:
    * @param timeStamp   Timestamp of the message
    * @return            Message header
    */
-  std::string createMsgHeader(const TimestampT& timeStamp) const;
+  std::string createMsgHeader(const TimestampT& timeStamp, const std::source_location location) const;
 
   /**
    * Creates and returns the body of a log message

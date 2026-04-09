@@ -55,7 +55,8 @@ void Logger::operator()(int priority, std::string_view msg, std::vector<Param>&&
 //-----------------------------------------------------------------------------
 void Logger::logInternal(int priority,
                          std::string_view msg,
-                         const std::map<std::string, std::vector<Param>>& paramsMap) noexcept {
+                         const std::map<std::string, std::vector<Param>>& paramsMap,
+                         const std::source_location location) noexcept {
   // Ignore messages whose priority is not of interest
   if (priority > m_logMask) {
     return;
@@ -73,7 +74,7 @@ void Logger::logInternal(int priority,
     return;
   }
 
-  const std::string header = createMsgHeader(timeStamp);
+  const std::string header = createMsgHeader(timeStamp, location);
   const std::string body = createMsgBody(priorityTextPair->second, msg, paramsMap, pid);
 
   writeMsgToUnderlyingLoggingSystem(header, body);
@@ -171,7 +172,7 @@ void Logger::setStaticParams(const std::map<std::string, std::string>& staticPar
 //-----------------------------------------------------------------------------
 // createMsgHeader
 //-----------------------------------------------------------------------------
-std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
+std::string Logger::createMsgHeader(const TimestampT& timeStamp, const std::source_location location) const {
   using namespace std::chrono;
   std::ostringstream os;
 
@@ -187,6 +188,16 @@ std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
   struct tm localTime;
   localtime_r(&ts_t, &localTime);
 
+  constexpr auto getFileName = [](std::string_view path) {
+    size_t pos = path.find_last_of("/\\");
+    return (pos == std::string_view::npos) ? path : path.substr(pos + 1);
+  };
+
+  std::string sourceLoc;
+  sourceLoc += getFileName(location.file_name());
+  sourceLoc += ':';
+  sourceLoc += std::to_string(location.line());
+
   switch (m_logFormat) {
     case LogFormat::DEFAULT:
       os << std::put_time(&localTime, "%b %e %T") << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << ' '
@@ -195,9 +206,11 @@ std::string Logger::createMsgHeader(const TimestampT& timeStamp) const {
     case LogFormat::JSON:
       os << R"("epoch_time":)" << ts_s_fraction << '.' << std::setfill('0') << std::setw(9) << ts_ns_fraction << R"(,)"
          << R"("local_time":")" << std::put_time(&localTime, "%FT%T%z") << R"(",)"
+         << R"("cta_version":")" << stringFormattingJSON(CTA_VERSION) << R"(",)"
          << R"("log_schema_version":")" << stringFormattingJSON(LOG_SCHEMA_VERSION) << R"(",)"
          << R"("hostname":")" << stringFormattingJSON(m_hostName) << R"(",)"
-         << R"("program":")" << stringFormattingJSON(m_programName) << R"(",)";
+         << R"("program":")" << stringFormattingJSON(m_programName) << R"(",)"
+         << R"("source_location":")" << stringFormattingJSON(sourceLoc) << R"(",)";
   }
   return os.str();
 }
