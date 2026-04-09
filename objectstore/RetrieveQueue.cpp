@@ -207,7 +207,7 @@ void RetrieveQueue::getPayloadFromHeader() {
   m_maxShardSize = m_payload.maxshardsize();
 }
 
-bool RetrieveQueue::isEmpty() {
+bool RetrieveQueue::isEmpty() const {
   checkPayloadReadable();
   return !m_payload.retrievejobstotalsize() && !m_payload.retrievequeueshards_size();
 }
@@ -223,7 +223,7 @@ void RetrieveQueue::removeIfEmpty(log::LogContext& lc) {
   lc.log(log::INFO, "In RetrieveQueue::removeIfEmpty(): removed the queue.");
 }
 
-std::string RetrieveQueue::getVid() {
+std::string RetrieveQueue::getVid() const {
   checkPayloadReadable();
   return m_payload.vid();
 }
@@ -243,7 +243,7 @@ void RetrieveQueue::setSleepForFreeSpaceStartTimeAndName(time_t time,
   m_payload.set_sleep_time(sleepTime);
 }
 
-std::string RetrieveQueue::dump() {
+std::string RetrieveQueue::dump() const {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -253,7 +253,7 @@ std::string RetrieveQueue::dump() {
   return headerDump;
 }
 
-void RetrieveQueue::updateShardLimits(uint64_t fSeq, ShardForAddition& sfa) {
+void RetrieveQueue::updateShardLimits(uint64_t fSeq, ShardForAddition& sfa) const {
   if (fSeq < sfa.minFseq) {
     sfa.minFseq = fSeq;
   }
@@ -265,7 +265,7 @@ void RetrieveQueue::updateShardLimits(uint64_t fSeq, ShardForAddition& sfa) {
 /** Add a jobs to a shard, spliting it if necessary*/
 void RetrieveQueue::addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJobToAdd& jobToAdd,
                                                std::list<ShardForAddition>::iterator& shardForAddition,
-                                               std::list<ShardForAddition>& shardList) {
+                                               std::list<ShardForAddition>& shardList) const {
   // Is the shard still small enough? We will not double split shards (we suppose insertion size << shard size cap).
   // We will also no split a new shard.
   if (shardForAddition->jobsCount < m_maxShardSize || shardForAddition->fromSplit || shardForAddition->newShard) {
@@ -708,7 +708,7 @@ auto RetrieveQueue::getCandidateList(uint64_t maxBytes,
   return ret;
 }
 
-auto RetrieveQueue::getCandidateSummary() -> CandidateJobList {
+auto RetrieveQueue::getCandidateSummary() const -> CandidateJobList {
   checkPayloadReadable();
   CandidateJobList ret;
   for (auto& rqsp : m_payload.retrievequeueshards()) {
@@ -899,7 +899,7 @@ void RetrieveQueue::setShardSize(uint64_t shardSize) {
   m_payload.set_maxshardsize(shardSize);
 }
 
-std::list<std::string> RetrieveQueue::getShardAddresses() {
+std::list<std::string> RetrieveQueue::getShardAddresses() const {
   checkPayloadReadable();
   std::list<std::string> ret;
   for (auto& rqs : m_payload.retrievequeueshards()) {

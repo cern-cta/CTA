@@ -536,7 +536,7 @@ struct ContainerTraits<ArchiveQueue, ArchiveQueueToTransferForUser>::PoppedEleme
 
   explicit PoppedElementsSummary(uint64_t f = 0, uint64_t b = 0) : files(f), bytes(b) {}
 
-  bool operator<(const PopCriteria& pc) {
+  bool operator<(const PopCriteria& pc) const {
     // This returns false if bytes or files are equal but the other value is less. Is that the intended behaviour?
     return bytes < pc.bytes && files < pc.files;
   }

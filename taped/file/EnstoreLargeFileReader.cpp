@@ -93,7 +93,7 @@ size_t EnstoreLargeFileReader::readNextDataBlock(void* data, const size_t size) 
   return bytes_read;
 }
 
-void EnstoreLargeFileReader::moveToFirstHeaderBlock() {
+void EnstoreLargeFileReader::moveToFirstHeaderBlock() const {
   throw cta::exception::NotImplementedException();
 }
 

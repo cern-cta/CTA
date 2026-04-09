@@ -532,7 +532,7 @@ auto RetrieveRequest::addReportAbort(uint32_t copyNumber,
 //------------------------------------------------------------------------------
 // RetrieveRequest::getLastActiveVid()
 //------------------------------------------------------------------------------
-std::string RetrieveRequest::getLastActiveVid() {
+std::string RetrieveRequest::getLastActiveVid() const {
   checkPayloadReadable();
   auto activeCopyNb = m_payload.activecopynb();
   for (auto& tf : m_payload.archivefile().tapefiles()) {
@@ -565,7 +565,7 @@ void RetrieveRequest::setSchedulerRequest(const cta::common::dataStructures::Ret
 //------------------------------------------------------------------------------
 // RetrieveRequest::getSchedulerRequest()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerRequest() {
+cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerRequest() const {
   checkPayloadReadable();
   common::dataStructures::RetrieveRequest ret;
   ret.requester.name = m_payload.schedulerrequest().requester().name();
@@ -587,7 +587,7 @@ cta::common::dataStructures::RetrieveRequest RetrieveRequest::getSchedulerReques
 //------------------------------------------------------------------------------
 // RetrieveRequest::getArchiveFile()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile RetrieveRequest::getArchiveFile() {
+cta::common::dataStructures::ArchiveFile RetrieveRequest::getArchiveFile() const {
   objectstore::ArchiveFileSerDeser af;
   af.deserialize(m_payload.archivefile());
   return af;
@@ -672,7 +672,7 @@ std::optional<std::string> RetrieveRequest::getDiskSystemName() {
 //------------------------------------------------------------------------------
 // RetrieveRequest::dumpJobs()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
+auto RetrieveRequest::dumpJobs() const -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   for (auto& j : m_payload.jobs()) {
@@ -687,7 +687,7 @@ auto RetrieveRequest::dumpJobs() -> std::list<JobDump> {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getJob()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::getJob(uint32_t copyNb) -> JobDump {
+auto RetrieveRequest::getJob(uint32_t copyNb) const -> JobDump {
   checkPayloadReadable();
   // find the job
   for (auto& j : m_payload.jobs()) {
@@ -704,7 +704,7 @@ auto RetrieveRequest::getJob(uint32_t copyNb) -> JobDump {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getJobs()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::getJobs() -> std::list<JobDump> {
+auto RetrieveRequest::getJobs() const -> std::list<JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   for (auto& j : m_payload.jobs()) {
@@ -784,7 +784,7 @@ void RetrieveRequest::setRepackInfo(const RepackInfo& repackInfo) {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getRepackInfo()
 //------------------------------------------------------------------------------
-RetrieveRequest::RepackInfo RetrieveRequest::getRepackInfo() {
+RetrieveRequest::RepackInfo RetrieveRequest::getRepackInfo() const {
   checkPayloadReadable();
   RepackInfoSerDeser ret;
   if (m_payload.isrepack()) {
@@ -796,7 +796,7 @@ RetrieveRequest::RepackInfo RetrieveRequest::getRepackInfo() {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getRetryStatus()
 //------------------------------------------------------------------------------
-RetrieveRequest::RetryStatus RetrieveRequest::getRetryStatus(const uint32_t copyNumber) {
+RetrieveRequest::RetryStatus RetrieveRequest::getRetryStatus(const uint32_t copyNumber) const {
   checkPayloadReadable();
   for (auto& j : m_payload.jobs()) {
     if (copyNumber == j.copynb()) {
@@ -816,7 +816,7 @@ RetrieveRequest::RetryStatus RetrieveRequest::getRetryStatus(const uint32_t copy
 //------------------------------------------------------------------------------
 // RetrieveRequest::getQueueType()
 //------------------------------------------------------------------------------
-common::dataStructures::JobQueueType RetrieveRequest::getQueueType() {
+common::dataStructures::JobQueueType RetrieveRequest::getQueueType() const {
   checkPayloadReadable();
   bool hasToReport = false;
   for (auto& j : m_payload.jobs()) {
@@ -847,7 +847,7 @@ common::dataStructures::JobQueueType RetrieveRequest::getQueueType() {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getQueueType()
 //------------------------------------------------------------------------------
-common::dataStructures::JobQueueType RetrieveRequest::getQueueType(uint32_t copyNb) {
+common::dataStructures::JobQueueType RetrieveRequest::getQueueType(uint32_t copyNb) const {
   checkPayloadReadable();
   for (auto& j : m_payload.jobs()) {
     if (j.copynb() == copyNb) {
@@ -875,7 +875,7 @@ common::dataStructures::JobQueueType RetrieveRequest::getQueueType(uint32_t copy
 //------------------------------------------------------------------------------
 // RetrieveRequest::statusToString()
 //------------------------------------------------------------------------------
-std::string RetrieveRequest::statusToString(const serializers::RetrieveJobStatus& status) {
+std::string RetrieveRequest::statusToString(const serializers::RetrieveJobStatus& status) const {
   switch (status) {
     case serializers::RetrieveJobStatus::RJS_ToTransfer:
       return "ToTransfer";
@@ -889,7 +889,7 @@ std::string RetrieveRequest::statusToString(const serializers::RetrieveJobStatus
 //------------------------------------------------------------------------------
 // RetrieveRequest::eventToString()
 //------------------------------------------------------------------------------
-std::string RetrieveRequest::eventToString(JobEvent jobEvent) {
+std::string RetrieveRequest::eventToString(JobEvent jobEvent) const {
   switch (jobEvent) {
     case JobEvent::ReportFailed:
       return "ReportFailed";
@@ -902,7 +902,7 @@ std::string RetrieveRequest::eventToString(JobEvent jobEvent) {
 //------------------------------------------------------------------------------
 // RetrieveRequest::determineNextStep()
 //------------------------------------------------------------------------------
-auto RetrieveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobEvent, log::LogContext& lc)
+auto RetrieveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobEvent, log::LogContext& lc) const
   -> EnqueueingNextStep {
   checkPayloadWritable();
   auto& jl = m_payload.jobs();
@@ -971,7 +971,7 @@ auto RetrieveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent job
 //------------------------------------------------------------------------------
 // RetrieveRequest::getJobStatus()
 //------------------------------------------------------------------------------
-serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint32_t copyNumber) {
+serializers::RetrieveJobStatus RetrieveRequest::getJobStatus(uint32_t copyNumber) const {
   checkPayloadReadable();
   for (auto& j : m_payload.jobs()) {
     if (j.copynb() == copyNumber) {
@@ -1011,7 +1011,7 @@ std::string RetrieveRequest::asyncUpdateJobOwnerCallback(const std::string& strI
                                                          AsyncJobOwnerUpdater& ret,
                                                          uint32_t ui32CopyNb,
                                                          const std::string& strOwner,
-                                                         const std::string& strPreviousOwner) {
+                                                         const std::string& strPreviousOwner) const {
   // We have a locked and fetched object, so we just need to work on its representation.
   serializers::ObjectHeader oh;
   if (!oh.ParseFromString(strIn)) {
@@ -1130,14 +1130,14 @@ void RetrieveRequest::AsyncJobOwnerUpdater::wait() {
 //------------------------------------------------------------------------------
 // RetrieveRequest::AsyncJobOwnerUpdater::getArchiveFile()
 //------------------------------------------------------------------------------
-const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
+const common::dataStructures::ArchiveFile& RetrieveRequest::AsyncJobOwnerUpdater::getArchiveFile() const {
   return m_archiveFile;
 }
 
 //------------------------------------------------------------------------------
 // RetrieveRequest::AsyncJobOwnerUpdater::getRepackInfo()
 //------------------------------------------------------------------------------
-const RetrieveRequest::RepackInfo& RetrieveRequest::AsyncJobOwnerUpdater::getRepackInfo() {
+const RetrieveRequest::RepackInfo& RetrieveRequest::AsyncJobOwnerUpdater::getRepackInfo() const {
   return m_repackInfo;
 }
 
@@ -1158,11 +1158,11 @@ const std::optional<std::string>& RetrieveRequest::AsyncJobOwnerUpdater::getDisk
 //------------------------------------------------------------------------------
 // RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveRequest()
 //------------------------------------------------------------------------------
-const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveRequest() {
+const common::dataStructures::RetrieveRequest& RetrieveRequest::AsyncJobOwnerUpdater::getRetrieveRequest() const {
   return m_retrieveRequest;
 }
 
-cta::common::dataStructures::LifecycleTimings RetrieveRequest::getLifecycleTimings() {
+cta::common::dataStructures::LifecycleTimings RetrieveRequest::getLifecycleTimings() const {
   checkPayloadReadable();
   LifecycleTimingsSerDeser serDeser;
   serDeser.deserialize(m_payload.lifecycle_timings());
@@ -1174,7 +1174,7 @@ void RetrieveRequest::setCreationTime(const uint64_t creationTime) {
   m_payload.mutable_lifecycle_timings()->set_creation_time(creationTime);
 }
 
-uint64_t RetrieveRequest::getCreationTime() {
+uint64_t RetrieveRequest::getCreationTime() const {
   checkPayloadReadable();
   return m_payload.lifecycle_timings().creation_time();
 }
@@ -1200,7 +1200,7 @@ void RetrieveRequest::setActiveCopyNumber(uint32_t activeCopyNb) {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getActiveCopyNumber()
 //------------------------------------------------------------------------------
-uint32_t RetrieveRequest::getActiveCopyNumber() {
+uint32_t RetrieveRequest::getActiveCopyNumber() const {
   return m_payload.activecopynb();
 }
 
@@ -1215,7 +1215,7 @@ void RetrieveRequest::setFailed() {
 //------------------------------------------------------------------------------
 // RetrieveRequest::isFailed()
 //------------------------------------------------------------------------------
-bool RetrieveRequest::isFailed() {
+bool RetrieveRequest::isFailed() const {
   checkPayloadReadable();
   return m_payload.isfailed();
 }
@@ -1223,7 +1223,7 @@ bool RetrieveRequest::isFailed() {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getRetrieveFileQueueCriteria()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::RetrieveFileQueueCriteria RetrieveRequest::getRetrieveFileQueueCriteria() {
+cta::common::dataStructures::RetrieveFileQueueCriteria RetrieveRequest::getRetrieveFileQueueCriteria() const {
   checkPayloadReadable();
   cta::common::dataStructures::RetrieveFileQueueCriteria ret;
   ArchiveFileSerDeser afsd;
@@ -1238,7 +1238,7 @@ cta::common::dataStructures::RetrieveFileQueueCriteria RetrieveRequest::getRetri
 //------------------------------------------------------------------------------
 // RetrieveRequest::getEntryLog()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog RetrieveRequest::getEntryLog() {
+cta::common::dataStructures::EntryLog RetrieveRequest::getEntryLog() const {
   checkPayloadReadable();
   EntryLogSerDeser el;
   el.deserialize(m_payload.schedulerrequest().entrylog());
@@ -1248,7 +1248,7 @@ cta::common::dataStructures::EntryLog RetrieveRequest::getEntryLog() {
 //------------------------------------------------------------------------------
 // RetrieveRequest::dump()
 //------------------------------------------------------------------------------
-std::string RetrieveRequest::dump() {
+std::string RetrieveRequest::dump() const {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -1279,7 +1279,7 @@ void RetrieveRequest::AsyncJobDeleter::wait() {
 //------------------------------------------------------------------------------
 std::string RetrieveRequest::asyncJobSucceedReporterCallback(const std::string& strIn,
                                                              AsyncJobSucceedReporter& ret,
-                                                             uint32_t ui32CopyNb) {
+                                                             uint32_t ui32CopyNb) const {
   // We have a locked and fetched object, so we just need to work on its representation.
   cta::objectstore::serializers::ObjectHeader oh;
   if (!oh.ParseFromString(strIn)) {
@@ -1344,7 +1344,7 @@ void RetrieveRequest::AsyncJobSucceedReporter::wait() {
 //------------------------------------------------------------------------------
 std::string RetrieveRequest::asyncReportSucceedForRepackCallback(const std::string& strIn,
                                                                  AsyncJobSucceedForRepackReporter& ret,
-                                                                 uint32_t ui32CopyNb) {
+                                                                 uint32_t ui32CopyNb) const {
   // We have a locked and fetched object, so we just need to work on its representation.
   cta::objectstore::serializers::ObjectHeader oh;
   if (!oh.ParseFromString(strIn)) {
@@ -1409,7 +1409,7 @@ void RetrieveRequest::AsyncJobSucceedForRepackReporter::wait() {
 //------------------------------------------------------------------------------
 std::string RetrieveRequest::asyncTransformToArchiveRequestCallback(const std::string& strIn,
                                                                     AsyncRetrieveToArchiveTransformer& ret,
-                                                                    const std::string& strProcessAgentAddress) {
+                                                                    const std::string& strProcessAgentAddress) const {
   // We have a locked and fetched object, so we just need to work on its representation.
   cta::objectstore::serializers::ObjectHeader oh;
   if (!oh.ParseFromString(strIn)) {
@@ -1542,7 +1542,7 @@ void RetrieveRequest::AsyncRetrieveToArchiveTransformer::wait() {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getFailures()
 //------------------------------------------------------------------------------
-std::list<std::string> RetrieveRequest::getFailures() {
+std::list<std::string> RetrieveRequest::getFailures() const {
   checkPayloadReadable();
   std::list<std::string> ret;
   for (auto& j : m_payload.jobs()) {
@@ -1556,7 +1556,7 @@ std::list<std::string> RetrieveRequest::getFailures() {
 //------------------------------------------------------------------------------
 // RetrieveRequest::getReportFailures()
 //------------------------------------------------------------------------------
-std::list<std::string> RetrieveRequest::getReportFailures() {
+std::list<std::string> RetrieveRequest::getReportFailures() const {
   checkPayloadReadable();
   std::list<std::string> ret;
   for (auto& j : m_payload.jobs()) {

@@ -212,7 +212,7 @@ private:
    * @param value The boolean value.
    * @return The string representation.
    */
-  const char* boolToStr(const bool value);
+  const char* boolToStr(const bool value) const;
 
   /**
    * The object representing the API of the CTA logging system.

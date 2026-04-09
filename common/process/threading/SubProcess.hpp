@@ -21,10 +21,10 @@ public:
   void wait(void);
   std::string stdout();
   std::string stderr();
-  void kill(int signal);
-  int exitValue();
-  bool wasKilled();
-  int killSignal();
+  void kill(int signal) const;
+  int exitValue() const;
+  bool wasKilled() const;
+  int killSignal() const;
 
 private:
   int m_stdoutFd;

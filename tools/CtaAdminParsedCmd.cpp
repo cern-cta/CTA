@@ -231,7 +231,7 @@ void CtaAdminParsedCmd::addOption(const Option& option, const std::string& value
   }
 }
 
-void CtaAdminParsedCmd::readListFromFile(cta::admin::OptionStrList& str_list, const std::string& filename) {
+void CtaAdminParsedCmd::readListFromFile(cta::admin::OptionStrList& str_list, const std::string& filename) const {
   std::ifstream file(filename);
   if (file.fail()) {
     throw std::runtime_error("Unable to open file " + filename);

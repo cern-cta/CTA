@@ -121,7 +121,7 @@ WriteSession::WriteSession(tapeserver::drive::DriveInterface& drive,
   setHostName();
 }
 
-std::string WriteSession::getLBPMode() {
+std::string WriteSession::getLBPMode() const {
   if (m_useLbp && m_detectedLbp) {
     return "LBP_On";
   } else if (!m_useLbp && m_detectedLbp) {

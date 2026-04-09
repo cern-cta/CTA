@@ -42,7 +42,8 @@ private:
                                                        log::TimingList* timingList,
                                                        log::LogContext& lc) const override;
 
-  std::vector<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn);
+  std::vector<cta::catalogue::InsertFileRecycleLog>
+  insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn) const;
 
   /**
    * Selects the specified tape for update and returns its last FSeq.

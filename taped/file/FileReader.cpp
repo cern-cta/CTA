@@ -34,7 +34,7 @@ FileReader::~FileReader() noexcept {
   m_session.release();
 }
 
-size_t FileReader::getBlockSize() {
+size_t FileReader::getBlockSize() const {
   if (m_currentBlockSize < 1) {
     std::ostringstream ex_str;
     ex_str << "[FileReader::getBlockSize] - Invalid block size: " << m_currentBlockSize;

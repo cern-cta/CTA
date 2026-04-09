@@ -80,7 +80,7 @@ private:
    * @param blockId The block id the mem blopck should be at
    * @param lc FOr logging
    */
-  void checkErrors(MemBlock* mb, uint64_t blockId, cta::log::LogContext& lc);
+  void checkErrors(MemBlock* mb, uint64_t blockId, cta::log::LogContext& lc) const;
 
   /**
    * In case of error, it will spin on the blocks until we reach the end

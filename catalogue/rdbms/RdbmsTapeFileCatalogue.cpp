@@ -130,7 +130,7 @@ void RdbmsTapeFileCatalogue::checkTapeFileWrittenFieldsAreSet(const TapeFileWrit
 //------------------------------------------------------------------------------
 void RdbmsTapeFileCatalogue::insertTapeFile(rdbms::Conn& conn,
                                             const common::dataStructures::TapeFile& tapeFile,
-                                            const uint64_t archiveFileId) {
+                                            const uint64_t archiveFileId) const {
   const auto fileRecycleLogCatalogue =
     static_cast<RdbmsFileRecycleLogCatalogue*>(m_rdbmsCatalogue->FileRecycleLog().get());
   auto insertedFilesRecycleLog =

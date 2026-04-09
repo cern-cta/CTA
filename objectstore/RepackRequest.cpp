@@ -127,7 +127,7 @@ void RepackRequest::setStatus(common::dataStructures::RepackInfo::Status repackS
 //------------------------------------------------------------------------------
 // RepackRequest::getInfo()
 //------------------------------------------------------------------------------
-common::dataStructures::RepackInfo RepackRequest::getInfo() {
+common::dataStructures::RepackInfo RepackRequest::getInfo() const {
   checkPayloadReadable();
   using RepackInfo = common::dataStructures::RepackInfo;
   RepackInfo ret;
@@ -210,7 +210,7 @@ void RepackRequest::setMountPolicy(const common::dataStructures::MountPolicy& mp
   m_payload.set_mountpolicyname(mp.name);
 }
 
-common::dataStructures::MountPolicy RepackRequest::getMountPolicy() {
+common::dataStructures::MountPolicy RepackRequest::getMountPolicy() const {
   checkPayloadReadable();
   MountPolicySerDeser mpSerDeser;
   mpSerDeser.deserialize(m_payload.mount_policy());
@@ -274,7 +274,7 @@ void RepackRequest::updateRepackDestinationInfos(const cta::common::dataStructur
   info->set_bytes(info->bytes() + archiveFile.fileSize);
 }
 
-std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> RepackRequest::getRepackDestinationInfos() {
+std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> RepackRequest::getRepackDestinationInfos() const {
   checkPayloadReadable();
 
   std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> ret;
@@ -294,7 +294,7 @@ void RepackRequest::setCreationLog(const common::dataStructures::EntryLog& creat
   creationLogToSet.serialize(*m_payload.mutable_creation_log());
 }
 
-common::dataStructures::EntryLog RepackRequest::getCreationLog() {
+common::dataStructures::EntryLog RepackRequest::getCreationLog() const {
   checkPayloadReadable();
   cta::objectstore::EntryLogSerDeser ret;
   ret.deserialize(m_payload.creation_log());
@@ -306,7 +306,7 @@ void RepackRequest::setNoRecall(const bool noRecall) {
   m_payload.set_no_recall(noRecall);
 }
 
-bool RepackRequest::getNoRecall() {
+bool RepackRequest::getNoRecall() const {
   checkPayloadReadable();
   return m_payload.no_recall();
 }
@@ -349,7 +349,7 @@ void RepackRequest::setStatus() {
 //------------------------------------------------------------------------------
 // RepackRequest::getExpandFinished()
 //------------------------------------------------------------------------------
-bool RepackRequest::isExpandFinished() {
+bool RepackRequest::isExpandFinished() const {
   checkPayloadReadable();
   return m_payload.is_expand_finished();
 }
@@ -373,7 +373,7 @@ void RepackRequest::setMaxFilesToSelect(const uint64_t masFilesToExpand) {
 //------------------------------------------------------------------------------
 // RepackRequest::RepackSubRequestPointer::serialize()
 //------------------------------------------------------------------------------
-void RepackRequest::RepackSubRequestPointer::serialize(serializers::RepackSubRequestPointer& rsrp) {
+void RepackRequest::RepackSubRequestPointer::serialize(serializers::RepackSubRequestPointer& rsrp) const {
   rsrp.set_address(address);
   rsrp.set_fseq(fSeq);
   rsrp.set_retrieve_accounted(retrieveAccounted);
@@ -461,7 +461,7 @@ void RepackRequest::setLastExpandedFSeq(uint64_t lastExpandedFSeq) {
 //------------------------------------------------------------------------------
 // RepackRequest::getLastExpandedFSeq()
 //------------------------------------------------------------------------------
-uint64_t RepackRequest::getLastExpandedFSeq() {
+uint64_t RepackRequest::getLastExpandedFSeq() const {
   checkPayloadReadable();
   return m_payload.lastexpandedfseq();
 }
@@ -530,7 +530,7 @@ void RepackRequest::setUserProvidedFiles(const uint64_t userProvidedFiles) {
 //------------------------------------------------------------------------------
 // RepackRequest::getTotalStatsFile()
 //------------------------------------------------------------------------------
-cta::SchedulerDatabase::RepackRequest::TotalStatsFiles RepackRequest::getTotalStatsFile() {
+cta::SchedulerDatabase::RepackRequest::TotalStatsFiles RepackRequest::getTotalStatsFile() const {
   checkPayloadReadable();
   cta::SchedulerDatabase::RepackRequest::TotalStatsFiles ret;
   ret.totalFilesOnTapeAtStart = m_payload.totalfilesontapeatstart();
@@ -720,7 +720,7 @@ void RepackRequest::reportSubRequestsForDeletion(std::list<uint64_t>& fSeqs) {
 //------------------------------------------------------------------------------
 // RepackRequest::reportSubRequestsForDeletion()
 //------------------------------------------------------------------------------
-auto RepackRequest::getStats() -> std::map<StatsType, StatsValues> {
+auto RepackRequest::getStats() const -> std::map<StatsType, StatsValues> {
   checkPayloadReadable();
   std::map<StatsType, StatsValues> ret;
   ret[StatsType::ArchiveTotal].files = m_payload.totalfilestoarchive();
@@ -891,14 +891,14 @@ void RepackRequest::AsyncOwnerAndStatusUpdater::wait() {
 //------------------------------------------------------------------------------
 // RepackRequest::AsyncOwnerUpdater::wait()
 //------------------------------------------------------------------------------
-common::dataStructures::RepackInfo RepackRequest::AsyncOwnerAndStatusUpdater::getInfo() {
+common::dataStructures::RepackInfo RepackRequest::AsyncOwnerAndStatusUpdater::getInfo() const {
   return m_repackInfo;
 }
 
 //------------------------------------------------------------------------------
 // RepackRequest::dump()
 //------------------------------------------------------------------------------
-std::string RepackRequest::dump() {
+std::string RepackRequest::dump() const {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;

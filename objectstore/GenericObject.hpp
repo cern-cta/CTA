@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ObjectOps.hpp"
+
 #include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
@@ -80,7 +81,7 @@ public:
    * The source (this) will be emptied.
    * @param destination pointed to the new object's destination
    */
-  void transplantHeader(ObjectOpsBase& destination);
+  void transplantHeader(ObjectOpsBase& destination) const;
 
   /**
    * This method exposes the reference to the object store.

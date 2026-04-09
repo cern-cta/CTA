@@ -590,7 +590,7 @@ public:
        *         If we have a parameter length more than 8 bytes the returning
        *         value is not determined.
        */
-  inline uint64_t getU64Value() {
+  inline uint64_t getU64Value() const {
     union {
       unsigned char tmp[8];
       uint64_t val64;
@@ -618,7 +618,7 @@ public:
        *
        * @return    The value of the log sense parameter as int64_t
        */
-  inline int64_t getS64Value() {
+  inline int64_t getS64Value() const {
     std::byte tmp[8];
 
     for (int i = 0; i < 8; ++i) {
@@ -975,7 +975,7 @@ public:
        * length in bytes (as found in the struct) in a parameter count.
        * @return number of parameters.
        */
-  unsigned int parameterNumber() {
+  unsigned int parameterNumber() const {
     unsigned int numFromLength = SCSI::Structures::toU16(pageLength) / sizeof(tapeAlertLogParameter_t);
     return numFromLength;
   }
@@ -1062,13 +1062,13 @@ public:
     // and current/deffered
   };
 
-  bool isFixedFormat() { return responseCode == 0x70 || responseCode == 0x71; }
+  bool isFixedFormat() const { return responseCode == 0x70 || responseCode == 0x71; }
 
-  bool isDescriptorFormat() { return responseCode == 0x72 || responseCode == 0x73; }
+  bool isDescriptorFormat() const { return responseCode == 0x72 || responseCode == 0x73; }
 
-  bool isCurrent() { return responseCode == 0x70 || responseCode == 0x72; }
+  bool isCurrent() const { return responseCode == 0x70 || responseCode == 0x72; }
 
-  bool isDeferred() { return responseCode == 0x71 || responseCode == 0x73; }
+  bool isDeferred() const { return responseCode == 0x71 || responseCode == 0x73; }
 
   uint8_t getASC() {
     if (isFixedFormat()) {
@@ -1235,7 +1235,7 @@ public:
       logicalObjectIdentifier[6];     // The logical object identifier of the object at the end of the above wrap
   } wrapDescriptor[maxLTOTapeWraps];  // Array of wrap descriptiors
 
-  uint16_t getNbWrapsReturned() {
+  uint16_t getNbWrapsReturned() const {
     return ((SCSI::Structures::toU16(responseDataLength) - sizeof(reserved)) / sizeof(WrapDescriptor));
   }
 };

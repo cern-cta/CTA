@@ -112,7 +112,7 @@ private:
   executeWrite(cta::log::LogContext& logContext, cta::ArchiveMount* archiveMount, TapeSessionReporter& reporter);
 
   /** sub-part of execute for a label session */
-  EndOfSessionAction executeLabel(cta::log::LogContext& logContext, cta::LabelMount* labelMount);
+  EndOfSessionAction executeLabel(cta::log::LogContext& logContext, cta::LabelMount* labelMount) const;
 
   /** Reference to the MediaChangerFacade, allowing the mounting of the tape
    * by the library. It will be used exclusively by the tape thread. */

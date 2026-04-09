@@ -23,7 +23,7 @@ public:
   cta::xrd::Data next() override;
 
 private:
-  std::vector<cta::catalogue::TapePool> buildTapePoolList(const admin::AdminCmd& admincmd);
+  std::vector<cta::catalogue::TapePool> buildTapePoolList(const admin::AdminCmd& admincmd) const;
 
   std::vector<cta::catalogue::TapePool> m_tapePools;
   std::size_t m_tapePoolsIdx = 0;

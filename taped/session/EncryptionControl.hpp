@@ -52,7 +52,7 @@ public:
    * @param m_drive The drive object on which the encryption is to be disabled.
    * @return true if encryption parameters cleared, false otherwise.
    */
-  bool disable(castor::tape::tapeserver::drive::DriveInterface& m_drive);
+  bool disable(castor::tape::tapeserver::drive::DriveInterface& m_drive) const;
 
   /**
    * Get script path
@@ -88,7 +88,7 @@ private:
    * @param delimiter The delimiter between the different arguments
    * @return A string representation of the arguments passed.
    */
-  std::string argsToString(std::list<std::string> args, const std::string& delimiter);
+  std::string argsToString(std::list<std::string> args, const std::string& delimiter) const;
 };
 
 }  // namespace castor::tape::tapeserver::daemon

@@ -98,8 +98,9 @@ protected:
    * @param archiveFileId The identifier of the archive file of which the tape
    * file is a copy.
    */
-  void
-  insertTapeFile(rdbms::Conn& conn, const common::dataStructures::TapeFile& tapeFile, const uint64_t archiveFileId);
+  void insertTapeFile(rdbms::Conn& conn,
+                      const common::dataStructures::TapeFile& tapeFile,
+                      const uint64_t archiveFileId) const;
 
   friend class OracleArchiveFileCatalogue;
   friend class PostgresArchiveFileCatalogue;

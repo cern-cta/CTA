@@ -35,7 +35,7 @@ void Thread::start() {
 //------------------------------------------------------------------------------
 //wait
 //------------------------------------------------------------------------------
-void Thread::wait() {
+void Thread::wait() const {
   void* res;
   cta::exception::Errnum::throwOnReturnedErrno(pthread_join(m_thread, &res),
                                                "Error from pthread_join in cta::threading::Thread::wait()");
@@ -52,7 +52,7 @@ void Thread::wait() {
 //------------------------------------------------------------------------------
 //cancel
 //------------------------------------------------------------------------------
-void Thread::kill() {
+void Thread::kill() const {
   if (!m_started) {
     throw cta::exception::Exception("Trying to kill a non-started thread!");
   }

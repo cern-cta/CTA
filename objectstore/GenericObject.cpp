@@ -61,7 +61,7 @@ void GenericObject::initialize() {
   throw ForbiddenOperation("In GenericObject::initialize: this operation is not possible");
 }
 
-void GenericObject::transplantHeader(ObjectOpsBase& destination) {
+void GenericObject::transplantHeader(ObjectOpsBase& destination) const {
   destination.m_header = m_header;
   destination.m_existingObject = m_existingObject;
   destination.m_headerInterpreted = m_headerInterpreted;

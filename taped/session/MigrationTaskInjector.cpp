@@ -74,7 +74,7 @@ void MigrationTaskInjector::injectBulkMigrations(std::list<std::unique_ptr<cta::
 //------------------------------------------------------------------------------
 //injectBulkMigrations
 //------------------------------------------------------------------------------
-void MigrationTaskInjector::waitThreads() {
+void MigrationTaskInjector::waitThreads() const {
   m_thread.wait();
 }
 

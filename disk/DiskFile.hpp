@@ -200,7 +200,7 @@ public:
      */
   virtual void rmdir() = 0;
 
-  std::string getURL() { return m_URL; }
+  std::string getURL() const { return m_URL; }
 
   virtual ~Directory() = default;
 

@@ -492,7 +492,7 @@ void TapeLabelCmd::waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInt
 //------------------------------------------------------------------------------
 // boolToStr
 //------------------------------------------------------------------------------
-const char* TapeLabelCmd::boolToStr(const bool value) {
+const char* TapeLabelCmd::boolToStr(const bool value) const {
   return value ? "true" : "false";
 }
 

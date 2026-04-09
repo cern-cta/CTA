@@ -72,7 +72,7 @@ void SocketPair::close(Side sideToClose) {
 //------------------------------------------------------------------------------
 // SocketPair::close
 //------------------------------------------------------------------------------
-bool SocketPair::pollFlag() {
+bool SocketPair::pollFlag() const {
   return m_pollFlag;
 }
 
@@ -108,7 +108,7 @@ void SocketPair::poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll) {
 //------------------------------------------------------------------------------
 // SocketPair::getFdForAccess
 //------------------------------------------------------------------------------
-int SocketPair::getFdForAccess(Side sourceOrDestination) {
+int SocketPair::getFdForAccess(Side sourceOrDestination) const {
   // First, make sure the source to access makes sense.
   // There is a double inversion here. If our current side is parent, we should
   // read from the child and vice versa. And then then talking to parent, we use
@@ -159,7 +159,7 @@ int SocketPair::getFdForAccess(Side sourceOrDestination) {
 //------------------------------------------------------------------------------
 // SocketPair::receive
 //------------------------------------------------------------------------------
-std::string SocketPair::receive(Side source) {
+std::string SocketPair::receive(Side source) const {
   int fd = getFdForAccess(source);
   // First, get the message size (using peek option)
   ssize_t sizePeek = recv(fd, nullptr, 0, MSG_DONTWAIT | MSG_PEEK | MSG_TRUNC);
@@ -206,7 +206,7 @@ std::string SocketPair::receive(Side source) {
 //------------------------------------------------------------------------------
 // SocketPair::send
 //------------------------------------------------------------------------------
-void SocketPair::send(const std::string& msg, Side destination) {
+void SocketPair::send(const std::string& msg, Side destination) const {
   int fd = getFdForAccess(destination);
   cta::exception::Errnum::throwOnMinusOne(::send(fd, msg.data(), msg.size(), 0),
                                           "In SocketPair::send(): failed to send(): ");

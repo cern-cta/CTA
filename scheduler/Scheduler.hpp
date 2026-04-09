@@ -126,7 +126,7 @@ public:
   uint64_t checkAndGetNextArchiveFileId(const std::string& diskInstanceName,
                                         const std::string& storageClassName,
                                         const common::dataStructures::RequesterIdentity& user,
-                                        log::LogContext& lc);
+                                        log::LogContext& lc) const;
 
   /**
    * Queue the specified archive request.
@@ -228,7 +228,7 @@ public:
    *
    * @param driveName The drive name
    */
-  void removeDrive(const std::string& driveName, log::LogContext& lc);
+  void removeDrive(const std::string& driveName, log::LogContext& lc) const;
 
   /**
    * Reports the state of the drive to the object store. This function fills
@@ -312,7 +312,7 @@ private:
                                    double& getTapeInfoTime,
                                    double& candidateSortingTime,
                                    double& getTapeForWriteTime,
-                                   log::LogContext& lc);
+                                   log::LogContext& lc) const;
 
   /**
    * Checks wether the tape can be repacked of not.
@@ -321,7 +321,7 @@ private:
    * @param repackRequest the associated repackRequest to check the tape can be repacked
    * @throws a UserError exception if the tape cannot be repacked
    */
-  void checkTapeCanBeRepacked(const std::string& vid, const SchedulerDatabase::QueueRepackRequest& repackRequest);
+  void checkTapeCanBeRepacked(const std::string& vid, const SchedulerDatabase::QueueRepackRequest& repackRequest) const;
 
   /* common part for getNextMountDryRun() and getNextMount() to check for disabled logical/physical library */
   bool checkLogicalAndPhysicalLibraryValidForMount(const std::string& libraryName,
@@ -334,13 +334,13 @@ private:
   std::optional<common::dataStructures::PhysicalLibrary> getPhysicalLibrary(const std::string& libraryName,
                                                                             double& getPhysicalLibraryTime);
 
-  void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext& lc);
+  void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext& lc) const;
 
   /**
    * Checks that the environment variables needed by the tapeserver to work
    * are set correctly.
    */
-  void checkNeededEnvironmentVariables();
+  void checkNeededEnvironmentVariables() const;
 
 public:
   /**
@@ -401,14 +401,14 @@ public:
    * After TapeMountDecisionInfo is received from the Scheduler Database
    * with Potential Mounts we enrich this with information about Existing and Next Mounts
    */
-  void getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi, log::LogContext& logContext);
+  void getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi, log::LogContext& logContext) const;
   /**
    * After TapeMountDecisionInfo is received from the Scheduler Database
    * we iterate the Potential Mounts and compare the Mount Polisies with those in the catalogue to
    * select only eligible Mount Policy Names
    */
   void fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
-                                              log::LogContext& logContext);
+                                              log::LogContext& logContext) const;
 
   /**
    * An internal helper function to build a list of mount policies with the map of the
@@ -421,7 +421,7 @@ public:
 
   std::vector<common::dataStructures::MountPolicy>
   getMountPoliciesInQueue(const std::vector<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
-                          const std::map<std::string, uint64_t>& queueMountPolicyMap);
+                          const std::map<std::string, uint64_t>& queueMountPolicyMap) const;
 
   /**
    * Run the mount decision logic lock free, so we have no contention in the
@@ -515,7 +515,7 @@ public:
   void promoteRepackRequestsToToExpand(log::LogContext& lc, size_t repackMaxRequestsToExpand);
   // Expansion support
   std::unique_ptr<RepackRequest> getNextRepackRequestToExpand();
-  void expandRepackRequest(const RepackRequest& repackRequest, log::TimingList&, utils::Timer&, log::LogContext&);
+  void expandRepackRequest(const RepackRequest& repackRequest, log::TimingList&, utils::Timer&, log::LogContext&) const;
 
   // Scheduler level will not distinguish between report types. It will just do a getnext-report cycle.
   class RepackReportBatch {
@@ -576,7 +576,7 @@ public:
   SchedulerDatabase::JobsFailedSummary getRetrieveJobsFailedSummary(log::LogContext& lc);
 
   /*======================== Administrator management ========================*/
-  void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity& cliIdentity, log::LogContext& lc);
+  void authorizeAdmin(const cta::common::dataStructures::SecurityIdentity& cliIdentity, log::LogContext& lc) const;
 
   void setRepackRequestExpansionTimeLimit(const double& time);
 

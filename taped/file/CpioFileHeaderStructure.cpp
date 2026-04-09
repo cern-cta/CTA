@@ -76,7 +76,7 @@ size_t castor::tape::tapeFile::CPIO::decode(const uint8_t* puiData, const size_t
 /**
  *
  */
-bool castor::tape::tapeFile::CPIO::valid() {
+bool castor::tape::tapeFile::CPIO::valid() const {
   if (m_strMagic != ASCIIMAGIC) {
     return false;
   }

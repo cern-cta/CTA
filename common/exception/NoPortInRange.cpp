@@ -18,13 +18,13 @@ cta::exception::NoPortInRange::NoPortInRange(const unsigned short lowPort, const
 //------------------------------------------------------------------------------
 // getLowPort()
 //------------------------------------------------------------------------------
-unsigned short cta::exception::NoPortInRange::getLowPort() {
+unsigned short cta::exception::NoPortInRange::getLowPort() const {
   return m_lowPort;
 }
 
 //------------------------------------------------------------------------------
 // getHighPort()
 //------------------------------------------------------------------------------
-unsigned short cta::exception::NoPortInRange::getHighPort() {
+unsigned short cta::exception::NoPortInRange::getHighPort() const {
   return m_highPort;
 }

@@ -33,12 +33,12 @@ public:
   /**
    * Returns the inclusive low port of the port number range.
    */
-  unsigned short getLowPort();
+  unsigned short getLowPort() const;
 
   /**
    * Returns the inclusive high port of the port number range.
    */
-  unsigned short getHighPort();
+  unsigned short getHighPort() const;
 
 private:
   /**

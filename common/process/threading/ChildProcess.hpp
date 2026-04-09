@@ -69,7 +69,7 @@ public:
   /** collect exit code */
   int exitCode();
   /** kill */
-  void kill();
+  void kill() const;
 
 private:
   pid_t m_pid;

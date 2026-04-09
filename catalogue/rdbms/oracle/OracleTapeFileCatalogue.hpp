@@ -41,7 +41,7 @@ private:
                                                        log::TimingList* timingList,
                                                        log::LogContext& lc) const override;
 
-  uint64_t selectTapeForUpdateAndGetLastFSeq(rdbms::Conn& conn, const std::string& vid);
+  uint64_t selectTapeForUpdateAndGetLastFSeq(rdbms::Conn& conn, const std::string& vid) const;
 
   /**
    * Batch inserts rows into the ARCHIVE_FILE table that correspond to the
@@ -59,7 +59,7 @@ private:
    * @param conn The database connection.
    * @param events The tape file written events.
    */
-  void idempotentBatchInsertArchiveFiles(rdbms::Conn& conn, const std::set<TapeFileWritten>& events);
+  void idempotentBatchInsertArchiveFiles(rdbms::Conn& conn, const std::set<TapeFileWritten>& events) const;
 
   /**
    * In the case we insert a TAPE_FILE that already has a copy on the catalogue (same copyNb),
@@ -71,7 +71,8 @@ private:
    * @param conn The database connection.
    * @returns the list of inserted fileRecycleLog
    */
-  std::vector<cta::catalogue::InsertFileRecycleLog> insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn);
+  std::vector<cta::catalogue::InsertFileRecycleLog>
+  insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn) const;
 
 };  // class OracleTapeFileCatalogue
 

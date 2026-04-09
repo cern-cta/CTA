@@ -381,10 +381,11 @@ void RdbmsArchiveRouteCatalogue::modifyArchiveRouteComment(
   }
 }
 
-bool RdbmsArchiveRouteCatalogue::archiveRouteExists(rdbms::Conn& conn,
-                                                    const std::string& storageClassName,
-                                                    const uint32_t copyNb,
-                                                    const common::dataStructures::ArchiveRouteType& archiveRouteType) {
+bool RdbmsArchiveRouteCatalogue::archiveRouteExists(
+  rdbms::Conn& conn,
+  const std::string& storageClassName,
+  const uint32_t copyNb,
+  const common::dataStructures::ArchiveRouteType& archiveRouteType) const {
   const char* const sql = R"SQL(
     SELECT
       ARCHIVE_ROUTE.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,

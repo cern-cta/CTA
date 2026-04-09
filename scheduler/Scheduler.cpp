@@ -86,7 +86,7 @@ void Scheduler::waitSchedulerDbSubthreadsComplete() {
 //------------------------------------------------------------------------------
 // authorizeAdmin
 //------------------------------------------------------------------------------
-void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity& cliIdentity, log::LogContext& lc) {
+void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity& cliIdentity, log::LogContext& lc) const {
   cta::utils::Timer t;
   if (!(m_catalogue.AdminUser()->isAdmin(cliIdentity))) {
     std::stringstream msg;
@@ -106,7 +106,7 @@ void Scheduler::authorizeAdmin(const common::dataStructures::SecurityIdentity& c
 uint64_t Scheduler::checkAndGetNextArchiveFileId(const std::string& instanceName,
                                                  const std::string& storageClassName,
                                                  const common::dataStructures::RequesterIdentity& user,
-                                                 log::LogContext& lc) {
+                                                 log::LogContext& lc) const {
   cta::utils::Timer t;
   const uint64_t archiveFileId =
     m_catalogue.ArchiveFile()->checkAndGetNextArchiveFileId(instanceName, storageClassName, user);
@@ -352,8 +352,9 @@ void Scheduler::deleteFailed(const std::string& objectId, log::LogContext& lc) {
   m_db.deleteFailed(objectId, lc);
 }
 
-void Scheduler::checkTapeCanBeRepacked(const std::string& vid,
-                                       [[maybe_unused]] const SchedulerDatabase::QueueRepackRequest& repackRequest) {
+void Scheduler::checkTapeCanBeRepacked(
+  const std::string& vid,
+  [[maybe_unused]] const SchedulerDatabase::QueueRepackRequest& repackRequest) const {
   try {
     auto vidToTapesMap =
       m_catalogue.Tape()->getTapesByVid(vid);  //throws an exception if the vid is not found on the database
@@ -555,7 +556,7 @@ std::unique_ptr<RepackRequest> Scheduler::getNextRepackRequestToExpand() {
 void Scheduler::expandRepackRequest(const RepackRequest& repackRequest,
                                     log::TimingList& timingList,
                                     utils::Timer& t,
-                                    log::LogContext& lc) {
+                                    log::LogContext& lc) const {
   auto repackInfo = repackRequest.getRepackInfo();
 
   using RepackType = cta::common::dataStructures::RepackInfo::Type;
@@ -1010,7 +1011,7 @@ bool Scheduler::checkDriveCanBeCreated(const cta::common::dataStructures::DriveI
 //------------------------------------------------------------------------------
 // removeDrive
 //------------------------------------------------------------------------------
-void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) {
+void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) const {
   utils::Timer t;
   m_tapeDrivesState->removeDrive(driveName, lc);
   auto schedulerDbTime = t.secs();
@@ -1159,7 +1160,7 @@ void Scheduler::sortAndGetTapesForMountInfo(
   double& getTapeInfoTime,
   double& candidateSortingTime,
   double& getTapeForWriteTime,
-  log::LogContext& lc) {
+  log::LogContext& lc) const {
   // Check if there are any potential mounts for retrieve
   bool anyRetr;
   {
@@ -1662,7 +1663,7 @@ bool Scheduler::checkLogicalAndPhysicalLibraryValidForMount(const std::string& l
   return true;
 }
 
-void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext& lc) {
+void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext& lc) const {
   try {
     if (repackBuffer != nullptr && repackBuffer->exist()) {
       repackBuffer->rmdir();
@@ -1678,7 +1679,7 @@ void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackB
 //------------------------------------------------------------------------------
 // checkNeededEnvironmentVariables
 //------------------------------------------------------------------------------
-void Scheduler::checkNeededEnvironmentVariables() {
+void Scheduler::checkNeededEnvironmentVariables() const {
   std::set<std::string> environmentVariablesNotSet;
   for (auto& environmentVariable : c_mandatoryEnvironmentVariables) {
     std::string envVar = cta::utils::getEnv(environmentVariable);
@@ -1840,7 +1841,7 @@ std::string Scheduler::getLowestRequestAgeRetrieveMountPolicyName(
 //------------------------------------------------------------------------------
 std::vector<common::dataStructures::MountPolicy>
 Scheduler::getMountPoliciesInQueue(const std::vector<common::dataStructures::MountPolicy>& mountPoliciesInCatalogue,
-                                   const std::map<std::string, uint64_t>& queueMountPolicyMap) {
+                                   const std::map<std::string, uint64_t>& queueMountPolicyMap) const {
   std::vector<cta::common::dataStructures::MountPolicy> mountPolicyRet;
   std::copy_if(mountPoliciesInCatalogue.begin(),
                mountPoliciesInCatalogue.end(),
@@ -1855,7 +1856,7 @@ Scheduler::getMountPoliciesInQueue(const std::vector<common::dataStructures::Mou
 // fillMountPolicyNamesForPotentialMounts
 //------------------------------------------------------------------------------
 void Scheduler::fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
-                                                       log::LogContext& logContext) {
+                                                       log::LogContext& logContext) const {
   auto mountPolicies = m_catalogue.MountPolicy()->getCachedMountPolicies();
 
   // Walk the all PotentialMounts and check Mount Policies agains the catalogue
@@ -1895,7 +1896,8 @@ void Scheduler::fillMountPolicyNamesForPotentialMounts(SchedulerDatabase::TapeMo
   }
 }
 
-void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi, log::LogContext& logContext) {
+void Scheduler::getExistingAndNextMounts(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
+                                         log::LogContext& logContext) const {
   // Collect information about the existing and next mounts
   // If a next mount exists the drive "counts double", but the corresponding drive
   // is either about to mount, or about to replace its current mount.

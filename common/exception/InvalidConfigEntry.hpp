@@ -33,17 +33,17 @@ public:
   /**
    * Returns the category of the configuration entry.
    */
-  const std::string& getEntryCategory();
+  const std::string& getEntryCategory() const;
 
   /**
    * Returns the name of the configuration entry.
    */
-  const std::string& getEntryName();
+  const std::string& getEntryName() const;
 
   /**
    * Returns the (invalid) value of the configuration entry.
    */
-  const std::string& getEntryValue();
+  const std::string& getEntryValue() const;
 
 private:
   /**

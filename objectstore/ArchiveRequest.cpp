@@ -660,49 +660,49 @@ void ArchiveRequest::AsyncJobOwnerUpdater::wait() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile()
 //------------------------------------------------------------------------------
-const common::dataStructures::ArchiveFile& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
+const common::dataStructures::ArchiveFile& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile() const {
   return m_archiveFile;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL()
 //------------------------------------------------------------------------------
-const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL() {
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL() const {
   return m_archiveReportURL;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getArchiveErrorReportURL()
 //------------------------------------------------------------------------------
-const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveErrorReportURL() {
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveErrorReportURL() const {
   return m_archiveErrorReportURL;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL()
 //------------------------------------------------------------------------------
-const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() {
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() const {
   return m_srcURL;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getArchiveJobsStatusMap()
 //------------------------------------------------------------------------------
-std::map<uint32_t, serializers::ArchiveJobStatus> ArchiveRequest::AsyncJobOwnerUpdater::getJobsStatusMap() {
+std::map<uint32_t, serializers::ArchiveJobStatus> ArchiveRequest::AsyncJobOwnerUpdater::getJobsStatusMap() const {
   return m_jobsStatusMap;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getRepackInfo()
 //------------------------------------------------------------------------------
-ArchiveRequest::RepackInfo ArchiveRequest::AsyncJobOwnerUpdater::getRepackInfo() {
+ArchiveRequest::RepackInfo ArchiveRequest::AsyncJobOwnerUpdater::getRepackInfo() const {
   return m_repackInfo;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getLastestError()
 //------------------------------------------------------------------------------
-const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getLastestError() {
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getLastestError() const {
   return m_latestError;
 }
 
@@ -868,7 +868,7 @@ std::string ArchiveRequest::statusToString(const serializers::ArchiveJobStatus& 
 //------------------------------------------------------------------------------
 // ArchiveRequest::eventToString()
 //------------------------------------------------------------------------------
-std::string ArchiveRequest::eventToString(JobEvent jobEvent) {
+std::string ArchiveRequest::eventToString(JobEvent jobEvent) const {
   switch (jobEvent) {
     case JobEvent::ReportFailed:
       return "ReportFailed";

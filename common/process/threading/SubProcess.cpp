@@ -135,25 +135,25 @@ SubProcess::SubProcess(const std::string& executable,
   m_stderrFd = stderrPipe[readSide];
 }
 
-void SubProcess::kill(int signal) {
+void SubProcess::kill(int signal) const {
   ::kill(m_child, signal);
 }
 
-int SubProcess::exitValue() {
+int SubProcess::exitValue() const {
   if (!m_childComplete) {
     throw exception::Exception("In Subprocess::exitValue: child process not waited for");
   }
   return WEXITSTATUS(m_childStatus);
 }
 
-bool SubProcess::wasKilled() {
+bool SubProcess::wasKilled() const {
   if (!m_childComplete) {
     throw exception::Exception("In Subprocess::wasKilled: child process not waited for");
   }
   return WIFSIGNALED(m_childStatus);
 }
 
-int SubProcess::killSignal() {
+int SubProcess::killSignal() const {
   if (!m_childComplete) {
     throw exception::Exception("In Subprocess::killSignal: child process not waited for");
   }

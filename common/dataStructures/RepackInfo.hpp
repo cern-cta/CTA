@@ -65,7 +65,7 @@ struct RepackInfo {
   RepackDestinationInfo::List destinationInfos;
   std::string mountPolicy;
 
-  RepackQueueType getQueueType();
+  RepackQueueType getQueueType() const;
 };  // struct RepackInfo
 
 std::string toString(RepackInfo::Type type);

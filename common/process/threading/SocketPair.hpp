@@ -32,12 +32,12 @@ public:
   void close(Side sideToClose);
   /// Send a buffer (optional side parameter allows use without closing,
   /// useful for testing).
-  void send(const std::string& msg, Side destination = Side::current);
+  void send(const std::string& msg, Side destination = Side::current) const;
   CTA_GENERATE_EXCEPTION_CLASS(NothingToReceive);
   CTA_GENERATE_EXCEPTION_CLASS(PeerDisconnected);
   /// Receive a buffer immediately (optional side parameter allows use without
   /// closing, useful for testing).
-  std::string receive(Side source = Side::current);
+  std::string receive(Side source = Side::current) const;
   /// Used to store socketpairs to be passed to ppoll.
   using pollMap = std::map<std::string, SocketPair*>;
   CTA_GENERATE_EXCEPTION_CLASS(Timeout);
@@ -46,10 +46,10 @@ public:
   /// parameter allows use without closing, useful for testing).
   static void poll(pollMap& socketPairs, time_t timeout, Side sourceToPoll = Side::current);
   /// Flag holding the result of a poll for a given socketpair.
-  bool pollFlag();
+  bool pollFlag() const;
   /// An helper function getting the right file descriptor for
   /// a given source or destination. With checks.
-  int getFdForAccess(Side sourceOrDestination);
+  int getFdForAccess(Side sourceOrDestination) const;
 
 private:
   int m_parentFd = -1;  ///< The file descriptor for the

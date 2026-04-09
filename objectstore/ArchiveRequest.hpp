@@ -62,7 +62,7 @@ public:
   std::string getTapePoolForJob(uint32_t copyNumber);
   static std::string statusToString(const serializers::ArchiveJobStatus& status);
   enum class JobEvent { TransferFailed, ReportFailed };
-  std::string eventToString(JobEvent jobEvent);
+  std::string eventToString(JobEvent jobEvent) const;
 
   struct EnqueueingNextStep {
     enum class NextStep {
@@ -141,13 +141,13 @@ public:
 
   public:
     void wait();
-    const common::dataStructures::ArchiveFile& getArchiveFile();
-    const std::string& getSrcURL();
-    const std::string& getArchiveReportURL();
-    const std::string& getArchiveErrorReportURL();
-    const std::string& getLastestError();
-    RepackInfo getRepackInfo();                                            // cppcheck-suppress returnByReference
-    std::map<uint32_t, serializers::ArchiveJobStatus> getJobsStatusMap();  // cppcheck-suppress returnByReference
+    const common::dataStructures::ArchiveFile& getArchiveFile() const;
+    const std::string& getSrcURL() const;
+    const std::string& getArchiveReportURL() const;
+    const std::string& getArchiveErrorReportURL() const;
+    const std::string& getLastestError() const;
+    RepackInfo getRepackInfo() const;                                            // cppcheck-suppress returnByReference
+    std::map<uint32_t, serializers::ArchiveJobStatus> getJobsStatusMap() const;  // cppcheck-suppress returnByReference
 
     // TODO: use the more general structure from utils.
     struct TimingsReport {
@@ -178,7 +178,7 @@ public:
                                             const std::optional<serializers::ArchiveJobStatus>& newStatus);
 
   struct RepackInfoSerDeser : public RepackInfo {
-    void serialize(cta::objectstore::serializers::ArchiveRequestRepackInfo& arri) {
+    void serialize(cta::objectstore::serializers::ArchiveRequestRepackInfo& arri) const {
       if (!isRepack) {
         throw exception::Exception("In ArchiveRequest::RepackInfoSerDeser::serialize(): isRepack is false.");
       }

@@ -576,8 +576,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
 //DataTransferSession::executeLabel
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-castor::tape::tapeserver::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::LogContext& logContext,
-                                                                    [[maybe_unused]] cta::LabelMount* labelMount) {
+castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(
+  [[maybe_unused]] cta::log::LogContext& logContext,
+  [[maybe_unused]] cta::LabelMount* labelMount) const {
   throw cta::exception::NotImplementedException();
   // TODO
 }

@@ -94,7 +94,7 @@ void RetrieveActivityCountMap::decCount(const std::string& activity) {
 //------------------------------------------------------------------------------
 // RetrieveActivityCountMap::getActivities()
 //------------------------------------------------------------------------------
-std::list<RetrieveActivityDescription> RetrieveActivityCountMap::getActivities() {
+std::list<RetrieveActivityDescription> RetrieveActivityCountMap::getActivities() const {
   std::list<RetrieveActivityDescription> ret;
   for (auto& ad : m_activityCountMap) {
     ret.push_back({ad.activity(), ad.count()});

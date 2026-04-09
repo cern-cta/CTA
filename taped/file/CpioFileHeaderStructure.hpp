@@ -49,7 +49,7 @@ public:
    * Validate the CPIO header.
    * @return true if the header is valid
    */
-  bool valid();
+  bool valid() const;
 
 private:
   CPIO(CPIO const&) = default;

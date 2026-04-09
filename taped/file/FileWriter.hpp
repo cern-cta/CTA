@@ -38,13 +38,13 @@ public:
     * This is changed from 1 to 0 for the first file on the tape (fseq=1)
     * @return blockId of the first tape block of the file's header.
     */
-  uint32_t getBlockId();
+  uint32_t getBlockId() const;
 
   /**
     * Get the block size (that was set at construction time)
     * @return the block size in bytes.
     */
-  size_t getBlockSize();
+  size_t getBlockSize() const;
 
   /**
     * Writes a block of data on tape

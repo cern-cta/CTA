@@ -41,7 +41,7 @@ std::string toString(RepackInfo::Status status) {
   }
 }
 
-RepackQueueType RepackInfo::getQueueType() {
+RepackQueueType RepackInfo::getQueueType() const {
   switch (status) {
     case RepackInfo::Status::Pending:
       return RepackQueueType::Pending;

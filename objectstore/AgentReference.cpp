@@ -194,9 +194,9 @@ void AgentReference::queueAndExecuteAction(std::shared_ptr<Action> action, objec
 }
 
 void AgentReference::applyAction(Action& action,
-                                objectstore::Agent& agent,
-                                std::set<std::string>& ownershipSet,
-                                log::LogContext& lc) {
+                                 objectstore::Agent& agent,
+                                 std::set<std::string>& ownershipSet,
+                                 log::LogContext& lc) const {
   switch (action.op) {
     case AgentOperation::Add: {
       ownershipSet.insert(action.objectAddress);

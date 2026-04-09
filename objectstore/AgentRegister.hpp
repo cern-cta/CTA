@@ -31,8 +31,8 @@ public:
   void removeAgent(const std::string& name);
   void trackAgent(const std::string& name);
   void untrackAgent(const std::string& name);
-  std::list<std::string> getAgents();
-  std::list<std::string> getUntrackedAgents();
+  std::list<std::string> getAgents() const;
+  std::list<std::string> getUntrackedAgents() const;
   std::string dump();
 };
 

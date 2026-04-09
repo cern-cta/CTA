@@ -71,9 +71,9 @@ public:
 
   inline void setCorrupted() noexcept { m_corrupted = true; }
 
-  inline bool isCorrupted() noexcept { return m_corrupted; }
+  inline bool isCorrupted() const noexcept { return m_corrupted; }
 
-  inline bool isTapeWithLbp() noexcept { return m_detectedLbp; }
+  inline bool isTapeWithLbp() const noexcept { return m_detectedLbp; }
 
   inline void lock() {
     if (m_locked) {
@@ -126,7 +126,7 @@ public:
   /**
     * Gets the LBP mode for logs
     */
-  std::string getLBPMode();
+  std::string getLBPMode() const;
 
 private:
   /**

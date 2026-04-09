@@ -900,7 +900,7 @@ int System::stDeviceFile::logSenseBlockBytesTransferred(sg_io_hdr_t* sgio_h) {
   return 0;
 }
 
-int System::stDeviceFile::logSenseTapeAlerts(sg_io_hdr_t* sgio_h) {
+int System::stDeviceFile::logSenseTapeAlerts(sg_io_hdr_t* sgio_h) const {
   size_t remaining = sgio_h->dxfer_len;
   /* Truncation of any field should yield an error */
   if (remaining < (4 + 320)) {
@@ -966,7 +966,7 @@ int System::stDeviceFile::ioctlModSense6(sg_io_hdr_t* sgio_h) {
   return -1;
 }
 
-int System::stDeviceFile::modeSenseDeviceConfiguration(sg_io_hdr_t* sgio_h) {
+int System::stDeviceFile::modeSenseDeviceConfiguration(sg_io_hdr_t* sgio_h) const {
   if (SCSI::Structures::modeSense6CDB_t& cdb = *(SCSI::Structures::modeSense6CDB_t*) sgio_h->cmdp;
       SCSI::modeSensePages::deviceConfiguration != cdb.pageCode) {
     errno = EINVAL;
@@ -988,7 +988,7 @@ int System::stDeviceFile::modeSenseDeviceConfiguration(sg_io_hdr_t* sgio_h) {
   return 0;
 }
 
-int System::stDeviceFile::modeSenseControlDataProtection(sg_io_hdr_t* sgio_h) {
+int System::stDeviceFile::modeSenseControlDataProtection(sg_io_hdr_t* sgio_h) const {
   SCSI::Structures::modeSense6CDB_t& cdb = *(SCSI::Structures::modeSense6CDB_t*) sgio_h->cmdp;
   if (SCSI::modeSensePages::controlDataProtection != cdb.pageCode) {
     errno = EINVAL;
@@ -1047,7 +1047,7 @@ int System::stDeviceFile::ioctlModSelect6(sg_io_hdr_t* sgio_h) {
   return -1;
 }
 
-int System::stDeviceFile::modeSelectDeviceConfiguration(sg_io_hdr_t* sgio_h) {
+int System::stDeviceFile::modeSelectDeviceConfiguration(sg_io_hdr_t* sgio_h) const {
   SCSI::Structures::modeSelect6CDB_t& cdb = *(SCSI::Structures::modeSelect6CDB_t*) sgio_h->cmdp;
 
   SCSI::Structures::modeSenseDeviceConfiguration_t& devConfig =

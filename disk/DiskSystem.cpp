@@ -186,7 +186,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
 //------------------------------------------------------------------------------
 // DiskSystemFreeSpaceList::fetchFileSystemFreeSpace()
 //------------------------------------------------------------------------------
-uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& instanceAddress) {
+uint64_t DiskSystemFreeSpaceList::fetchConstantFreeSpace(const std::string& instanceAddress) const {
   return utils::toUint64(instanceAddress);
 }
 
@@ -197,7 +197,7 @@ uint64_t DiskSystemFreeSpaceList::fetchFreeDiskSpaceWithScript(const std::string
                                                                const std::string& diskInstanceName,
                                                                const std::string& spaceName,
                                                                const std::string& jsonInput,
-                                                               log::LogContext& lc) {
+                                                               log::LogContext& lc) const {
   std::unique_ptr<cta::threading::SubProcess> sp;
   try {
     sp = std::make_unique<cta::threading::SubProcess>(scriptPath,

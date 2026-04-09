@@ -5,9 +5,9 @@
 
 #pragma once
 
-#include "objectstore/cta.pb.h"
-
 #include <list>
+
+#include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
 
@@ -28,7 +28,7 @@ public:
   void incCount(const std::string& activity);
   void decCount(const std::string& activity);
   void clear();
-  std::list<RetrieveActivityDescription> getActivities();
+  std::list<RetrieveActivityDescription> getActivities() const;
 
 private:
   google::protobuf::RepeatedPtrField<serializers::RetrieveActivityCountPair>& m_activityCountMap;

@@ -355,7 +355,7 @@ void AdminCmd::logAdminCmd(const AdminCmdStatus status, const std::string& reaso
   m_lc.log(cta::log::INFO, "Admin command succeeded");
 }
 
-void AdminCmd::processAdmin_Add(xrd::Response& response) {
+void AdminCmd::processAdmin_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& username = getRequired(OptionString::USERNAME);
@@ -366,7 +366,7 @@ void AdminCmd::processAdmin_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processAdmin_Ch(xrd::Response& response) {
+void AdminCmd::processAdmin_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& username = getRequired(OptionString::USERNAME);
@@ -377,7 +377,7 @@ void AdminCmd::processAdmin_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processAdmin_Rm(xrd::Response& response) {
+void AdminCmd::processAdmin_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& username = getRequired(OptionString::USERNAME);
@@ -387,7 +387,7 @@ void AdminCmd::processAdmin_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processArchiveRoute_Add(xrd::Response& response) {
+void AdminCmd::processArchiveRoute_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& scn = getRequired(OptionString::STORAGE_CLASS);
@@ -405,7 +405,7 @@ void AdminCmd::processArchiveRoute_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
+void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& scn = getRequired(OptionString::STORAGE_CLASS);
@@ -432,7 +432,7 @@ void AdminCmd::processArchiveRoute_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processArchiveRoute_Rm(xrd::Response& response) {
+void AdminCmd::processArchiveRoute_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& scn = getRequired(OptionString::STORAGE_CLASS);
@@ -558,7 +558,7 @@ void AdminCmd::processFailedRequest_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processGroupMountRule_Add(xrd::Response& response) {
+void AdminCmd::processGroupMountRule_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& mountpolicy = getRequired(OptionString::MOUNT_POLICY);
@@ -571,7 +571,7 @@ void AdminCmd::processGroupMountRule_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processGroupMountRule_Ch(xrd::Response& response) {
+void AdminCmd::processGroupMountRule_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& in = getRequired(OptionString::INSTANCE);
@@ -593,7 +593,7 @@ void AdminCmd::processGroupMountRule_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processGroupMountRule_Rm(xrd::Response& response) {
+void AdminCmd::processGroupMountRule_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& in = getRequired(OptionString::INSTANCE);
@@ -604,7 +604,7 @@ void AdminCmd::processGroupMountRule_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processLogicalLibrary_Add(xrd::Response& response) {
+void AdminCmd::processLogicalLibrary_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& name = getRequired(OptionString::LOGICAL_LIBRARY);
@@ -621,7 +621,7 @@ void AdminCmd::processLogicalLibrary_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
+void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& name = getRequired(OptionString::LOGICAL_LIBRARY);
@@ -654,7 +654,7 @@ void AdminCmd::processLogicalLibrary_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processLogicalLibrary_Rm(xrd::Response& response) {
+void AdminCmd::processLogicalLibrary_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& name = getRequired(OptionString::LOGICAL_LIBRARY);
@@ -664,7 +664,7 @@ void AdminCmd::processLogicalLibrary_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processMediaType_Add(xrd::Response& response) {
+void AdminCmd::processMediaType_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   // Bounds check unsigned integer options less than 64-bits in width
@@ -711,7 +711,7 @@ void AdminCmd::processMediaType_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processMediaType_Ch(xrd::Response& response) {
+void AdminCmd::processMediaType_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& mediaTypeName = getRequired(OptionString::MEDIA_TYPE);
@@ -772,7 +772,7 @@ void AdminCmd::processMediaType_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processMediaType_Rm(xrd::Response& response) {
+void AdminCmd::processMediaType_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& mtn = getRequired(OptionString::MEDIA_TYPE);
@@ -782,7 +782,7 @@ void AdminCmd::processMediaType_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processMountPolicy_Add(xrd::Response& response) {
+void AdminCmd::processMountPolicy_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& group = getRequired(OptionString::MOUNT_POLICY);
@@ -805,7 +805,7 @@ void AdminCmd::processMountPolicy_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processMountPolicy_Ch(xrd::Response& response) {
+void AdminCmd::processMountPolicy_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& group = getRequired(OptionString::MOUNT_POLICY);
@@ -838,7 +838,7 @@ void AdminCmd::processMountPolicy_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processMountPolicy_Rm(xrd::Response& response) {
+void AdminCmd::processMountPolicy_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& group = getRequired(OptionString::MOUNT_POLICY);
@@ -944,14 +944,14 @@ void AdminCmd::processRepack_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processRepack_Err(xrd::Response& response) {
+void AdminCmd::processRepack_Err(xrd::Response& response) const {
   using namespace cta::admin;
 
   response.set_message_txt("Not implemented");
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processRequesterMountRule_Add(xrd::Response& response) {
+void AdminCmd::processRequesterMountRule_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& mountpolicy = getRequired(OptionString::MOUNT_POLICY);
@@ -964,7 +964,7 @@ void AdminCmd::processRequesterMountRule_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processRequesterMountRule_Ch(xrd::Response& response) {
+void AdminCmd::processRequesterMountRule_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& in = getRequired(OptionString::INSTANCE);
@@ -982,7 +982,7 @@ void AdminCmd::processRequesterMountRule_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processRequesterMountRule_Rm(xrd::Response& response) {
+void AdminCmd::processRequesterMountRule_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& in = getRequired(OptionString::INSTANCE);
@@ -993,7 +993,7 @@ void AdminCmd::processRequesterMountRule_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processActivityMountRule_Add(xrd::Response& response) {
+void AdminCmd::processActivityMountRule_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& mountpolicy = getRequired(OptionString::MOUNT_POLICY);
@@ -1008,7 +1008,7 @@ void AdminCmd::processActivityMountRule_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processActivityMountRule_Ch(xrd::Response& response) {
+void AdminCmd::processActivityMountRule_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& in = getRequired(OptionString::INSTANCE);
@@ -1035,7 +1035,7 @@ void AdminCmd::processActivityMountRule_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processActivityMountRule_Rm(xrd::Response& response) {
+void AdminCmd::processActivityMountRule_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& in = getRequired(OptionString::INSTANCE);
@@ -1047,7 +1047,7 @@ void AdminCmd::processActivityMountRule_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processStorageClass_Add(xrd::Response& response) {
+void AdminCmd::processStorageClass_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   common::dataStructures::StorageClass storageClass;
@@ -1062,7 +1062,7 @@ void AdminCmd::processStorageClass_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processStorageClass_Ch(xrd::Response& response) {
+void AdminCmd::processStorageClass_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& scn = getRequired(OptionString::STORAGE_CLASS);
@@ -1083,7 +1083,7 @@ void AdminCmd::processStorageClass_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processStorageClass_Rm(xrd::Response& response) {
+void AdminCmd::processStorageClass_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& scn = getRequired(OptionString::STORAGE_CLASS);
@@ -1093,7 +1093,7 @@ void AdminCmd::processStorageClass_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processTape_Add(xrd::Response& response) {
+void AdminCmd::processTape_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& vid = getRequired(OptionString::VID);
@@ -1224,7 +1224,7 @@ void AdminCmd::processTape_Reclaim(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
+void AdminCmd::processTapeFile_Rm(xrd::Response& response) const {
   using namespace cta::admin;
   auto& vid = getRequired(OptionString::VID);
   auto& reason = getRequired(OptionString::REASON);
@@ -1254,7 +1254,7 @@ void AdminCmd::processTapeFile_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processTapePool_Add(xrd::Response& response) {
+void AdminCmd::processTapePool_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& name = getRequired(OptionString::TAPE_POOL);
@@ -1277,7 +1277,7 @@ void AdminCmd::processTapePool_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processTapePool_Ch(xrd::Response& response) {
+void AdminCmd::processTapePool_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& name = getRequired(OptionString::TAPE_POOL);
@@ -1308,7 +1308,7 @@ void AdminCmd::processTapePool_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processTapePool_Rm(xrd::Response& response) {
+void AdminCmd::processTapePool_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   auto& name = getRequired(OptionString::TAPE_POOL);
@@ -1318,7 +1318,7 @@ void AdminCmd::processTapePool_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processDiskSystem_Add(xrd::Response& response) {
+void AdminCmd::processDiskSystem_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::DISK_SYSTEM);
@@ -1341,7 +1341,7 @@ void AdminCmd::processDiskSystem_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processDiskSystem_Ch(xrd::Response& response) {
+void AdminCmd::processDiskSystem_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::DISK_SYSTEM);
@@ -1374,7 +1374,7 @@ void AdminCmd::processDiskSystem_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processDiskSystem_Rm(xrd::Response& response) {
+void AdminCmd::processDiskSystem_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::DISK_SYSTEM);
@@ -1384,7 +1384,7 @@ void AdminCmd::processDiskSystem_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processDiskInstance_Add(xrd::Response& response) {
+void AdminCmd::processDiskInstance_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::DISK_INSTANCE);
@@ -1395,7 +1395,7 @@ void AdminCmd::processDiskInstance_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processDiskInstance_Ch(xrd::Response& response) {
+void AdminCmd::processDiskInstance_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::DISK_INSTANCE);
@@ -1407,7 +1407,7 @@ void AdminCmd::processDiskInstance_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processDiskInstance_Rm(xrd::Response& response) {
+void AdminCmd::processDiskInstance_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::DISK_INSTANCE);
@@ -1417,7 +1417,7 @@ void AdminCmd::processDiskInstance_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processDiskInstanceSpace_Add(xrd::Response& response) {
+void AdminCmd::processDiskInstanceSpace_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::DISK_INSTANCE_SPACE);
@@ -1432,7 +1432,7 @@ void AdminCmd::processDiskInstanceSpace_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processDiskInstanceSpace_Ch(xrd::Response& response) {
+void AdminCmd::processDiskInstanceSpace_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::DISK_INSTANCE_SPACE);
@@ -1460,7 +1460,7 @@ void AdminCmd::processDiskInstanceSpace_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processDiskInstanceSpace_Rm(xrd::Response& response) {
+void AdminCmd::processDiskInstanceSpace_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::DISK_INSTANCE_SPACE);
@@ -1471,7 +1471,7 @@ void AdminCmd::processDiskInstanceSpace_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) {
+void AdminCmd::processVirtualOrganization_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::VO);
@@ -1555,7 +1555,7 @@ void AdminCmd::processVirtualOrganization_Rm(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
+void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) const {
   using namespace cta::admin;
 
   common::dataStructures::PhysicalLibrary pl;
@@ -1577,7 +1577,7 @@ void AdminCmd::processPhysicalLibrary_Add(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
+void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   common::dataStructures::UpdatePhysicalLibrary pl;
@@ -1611,7 +1611,7 @@ void AdminCmd::processPhysicalLibrary_Ch(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processPhysicalLibrary_Rm(xrd::Response& response) {
+void AdminCmd::processPhysicalLibrary_Rm(xrd::Response& response) const {
   using namespace cta::admin;
 
   const auto& name = getRequired(OptionString::PHYSICAL_LIBRARY);
@@ -1660,7 +1660,7 @@ std::string AdminCmd::setDriveState(const std::string& regex,
   return cmdlineOutput.str();
 }
 
-void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
+void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) const {
   using namespace cta::admin;
 
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -1689,7 +1689,7 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processModifyArchiveFile(xrd::Response& response) {
+void AdminCmd::processModifyArchiveFile(xrd::Response& response) const {
   using namespace cta::admin;
 
   try {

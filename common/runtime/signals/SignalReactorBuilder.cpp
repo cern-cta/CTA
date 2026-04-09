@@ -45,7 +45,7 @@ SignalReactorBuilder& SignalReactorBuilder::withTimeoutMsecs(uint32_t msecs) {
 //------------------------------------------------------------------------------
 // SignalReactorBuilder::build
 //------------------------------------------------------------------------------
-SignalReactor SignalReactorBuilder::build(cta::log::Logger& log) {
+SignalReactor SignalReactorBuilder::build(cta::log::Logger& log) const {
   return SignalReactor(log, m_sigset, std::move(m_signalFunctions), m_waitTimeoutMsecs);
 }
 

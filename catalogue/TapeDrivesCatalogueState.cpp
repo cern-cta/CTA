@@ -29,7 +29,7 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
                                                      const common::dataStructures::DriveStatus& status,
                                                      const tape::daemon::DriveConfigEntry& driveConfigEntry,
                                                      const common::dataStructures::SecurityIdentity& identity,
-                                                     log::LogContext& lc) {
+                                                     log::LogContext& lc) const {
   auto tapeDriveStatus = setTapeDriveStatus(driveInfo, desiredState, type, status, driveConfigEntry, identity);
   auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
   if (auto it = std::find(driveNames.begin(), driveNames.end(), tapeDriveStatus.driveName); it != driveNames.end()) {
@@ -42,7 +42,7 @@ void TapeDrivesCatalogueState::createTapeDriveStatus(const common::dataStructure
   lc.log(log::DEBUG, "In TapeDrivesCatalogueState::createTapeDriveStatus(): success.");
 }
 
-void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo) {
+void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo) const {
   const auto driveNames = m_catalogue.DriveState()->getTapeDriveNames();
   try {
     const auto tapeDrive = m_catalogue.DriveState()->getTapeDrive(driveInfo.driveName);
@@ -61,7 +61,7 @@ void TapeDrivesCatalogueState::checkDriveCanBeCreated(const cta::common::dataStr
   }
 }
 
-void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogContext& lc) {
+void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogContext& lc) const {
   try {
     m_catalogue.DriveState()->deleteTapeDrive(drive);
     log::ScopedParamContainer params(lc);
@@ -74,7 +74,7 @@ void TapeDrivesCatalogueState::removeDrive(const std::string& drive, log::LogCon
 
 void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
                                                     const common::dataStructures::DesiredDriveState& desiredState,
-                                                    [[maybe_unused]] log::LogContext& lc) {
+                                                    [[maybe_unused]] log::LogContext& lc) const {
   if (!desiredState.comment) {
     m_catalogue.DriveState()->setDesiredTapeDriveState(drive, desiredState);
   } else {
@@ -84,7 +84,7 @@ void TapeDrivesCatalogueState::setDesiredDriveState(const std::string& drive,
 
 void TapeDrivesCatalogueState::updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
                                                      const ReportDriveStatsInputs& inputs,
-                                                     [[maybe_unused]] log::LogContext& lc) {
+                                                     [[maybe_unused]] log::LogContext& lc) const {
   common::dataStructures::TapeDriveStatistics statistics;
   statistics.lastModificationLog = common::dataStructures::EntryLog("NO_USER", driveInfo.host, inputs.reportTime);
   statistics.bytesTransferedInSession = inputs.bytesTransferred;
@@ -106,7 +106,7 @@ void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::D
                                                  uint64_t filesTransferred,
                                                  std::string_view vid,
                                                  std::string_view tapepool,
-                                                 std::string_view vo) {
+                                                 std::string_view vo) const {
   using common::dataStructures::DriveStatus;
   // Wrap all the parameters together for easier manipulation by sub-functions
   ReportDriveStatusInputs inputs;
@@ -124,7 +124,7 @@ void TapeDrivesCatalogueState::reportDriveStatus(const common::dataStructures::D
 
 void TapeDrivesCatalogueState::updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                                                  const ReportDriveStatusInputs& inputs,
-                                                 log::LogContext& lc) {
+                                                 log::LogContext& lc) const {
   common::dataStructures::TapeDrive driveState;
   // Set the parameters that we always set
   driveState.driveName = driveInfo.driveName;

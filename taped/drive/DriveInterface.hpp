@@ -96,7 +96,7 @@ public:
    */
   enum Direction_t { FORWARD, BACKWARD };
 
-  Direction_t direction() { return wrap & 1 ? BACKWARD : FORWARD; }
+  Direction_t direction() const { return wrap & 1 ? BACKWARD : FORWARD; }
 };
 
 /**

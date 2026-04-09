@@ -46,7 +46,7 @@ public:
   /**
    * Wait for the inner thread to finish
    */
-  void waitThreads();
+  void waitThreads() const;
 
   /**
    * Start the inner thread
@@ -95,7 +95,7 @@ public:
    * to decide whether they should carry on or just free memory.
    * @return value of the error flag
    */
-  bool hasErrorFlag() {
+  bool hasErrorFlag() const {
     // AtomicFlag implicit conversion to bool allows copy-constructing the return value
     return m_errorFlag;
   }
@@ -108,7 +108,7 @@ private:
   void injectBulkMigrations(std::list<std::unique_ptr<cta::ArchiveJob>>& jobs);
 
   /*Compute how many blocks are needed for a file of fileSize bytes*/
-  uint64_t howManyBlocksNeeded(uint64_t fileSize, size_t blockCapacity) {
+  uint64_t howManyBlocksNeeded(uint64_t fileSize, size_t blockCapacity) const {
     const auto extraBlock = ((fileSize % blockCapacity) == 0) ? 0 : 1;
     return fileSize / blockCapacity + extraBlock;
   }

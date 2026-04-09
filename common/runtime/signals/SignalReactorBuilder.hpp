@@ -23,7 +23,7 @@ public:
   SignalReactorBuilder& addSignalFunction(int signal, const std::function<void()>& func, bool overwrite = false);
   SignalReactorBuilder& withTimeoutMsecs(uint32_t msecs);
 
-  SignalReactor build(cta::log::Logger& log);
+  SignalReactor build(cta::log::Logger& log) const;
 
 private:
   std::unordered_map<int, std::function<void()>> m_signalFunctions;

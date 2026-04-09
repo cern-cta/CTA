@@ -232,7 +232,7 @@ protected:
      * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
-  int logSenseTapeAlerts(sg_io_hdr_t* sgio_h);
+  int logSenseTapeAlerts(sg_io_hdr_t* sgio_h) const;
 
   /**
      * This function only checks the corectness of the parameters in sg_io_hdr_t
@@ -243,7 +243,7 @@ protected:
      * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
-  int modeSenseDeviceConfiguration(sg_io_hdr_t* sgio_h);
+  int modeSenseDeviceConfiguration(sg_io_hdr_t* sgio_h) const;
 
   /**
      * This function checks the corectness of the parameters in sg_io_hdr_t and
@@ -259,7 +259,7 @@ protected:
      * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
-  int modeSenseControlDataProtection(sg_io_hdr_t* sgio_h);
+  int modeSenseControlDataProtection(sg_io_hdr_t* sgio_h) const;
   /**
      * This function only checks the corectness of the parameters in sg_io_hdr_t
      *
@@ -268,7 +268,7 @@ protected:
      * @return        Returns 0 in success and
      *                -1 with appropriate  errno if an error occurred.
      */
-  int modeSelectDeviceConfiguration(sg_io_hdr_t* sgio_h);
+  int modeSelectDeviceConfiguration(sg_io_hdr_t* sgio_h) const;
   /**
      * This function only checks the corectness of the parameters in sg_io_hdr_t
      *

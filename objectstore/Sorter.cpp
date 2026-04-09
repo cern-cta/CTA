@@ -234,7 +234,7 @@ Sorter::RetrieveJob Sorter::createRetrieveJob(std::shared_ptr<RetrieveRequest> r
                                               const cta::common::dataStructures::ArchiveFile& archiveFile,
                                               const uint32_t copyNb,
                                               const uint64_t fSeq,
-                                              AgentReferenceInterface* previousOwner) {
+                                              AgentReferenceInterface* previousOwner) const {
   Sorter::RetrieveJob jobToAdd;
   jobToAdd.jobDump.copyNb = copyNb;
   jobToAdd.fSeq = fSeq;
@@ -361,7 +361,7 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
 }
 
 std::set<std::string, std::less<>>
-Sorter::getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface& requestAccessor) {
+Sorter::getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface& requestAccessor) const {
   using serializers::RetrieveJobStatus;
   std::set<std::string, std::less<>> candidateVids;
   for (auto& j : requestAccessor.getJobs()) {
@@ -374,7 +374,7 @@ Sorter::getCandidateVidsToTransfer(RetrieveRequestInfosAccessorInterface& reques
 
 std::string Sorter::getContainerID(RetrieveRequestInfosAccessorInterface& requestAccessor,
                                    const std::string& vid,
-                                   const uint32_t copyNb) {
+                                   const uint32_t copyNb) const {
   if (serializers::RetrieveJobStatus rjs = requestAccessor.getJobStatus(copyNb);
       rjs == serializers::RetrieveJobStatus::RJS_ToReportToRepackForSuccess
       || rjs == serializers::RetrieveJobStatus::RJS_ToReportToRepackForFailure) {

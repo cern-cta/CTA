@@ -40,7 +40,7 @@ struct ConnAndStmts {
    * @param rhs The object on the right hand side of the operator.
    * @return True if equal.
    */
-  bool operator==(const ConnAndStmts& rhs) { return conn.get() == rhs.conn.get(); }
+  bool operator==(const ConnAndStmts& rhs) const { return conn.get() == rhs.conn.get(); }
 
   /**
    * Inequality operator

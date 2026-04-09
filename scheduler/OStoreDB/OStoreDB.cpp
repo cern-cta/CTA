@@ -97,7 +97,7 @@ void OStoreDB::setAgentReference(objectstore::AgentReference* agentReference) {
 //------------------------------------------------------------------------------
 // OStoreDB::assertAgentAddressSet()
 //------------------------------------------------------------------------------
-void OStoreDB::assertAgentAddressSet() {
+void OStoreDB::assertAgentAddressSet() const {
   if (!m_agentReference) {
     throw AgentNotSet("In OStoreDB::assertAgentAddressSet(): Agent address not set");
   }
@@ -4704,14 +4704,14 @@ void OStoreDB::ArchiveJob::waitAsyncSucceed() {
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::isLastAfterAsyncSuccess()
 //------------------------------------------------------------------------------
-bool OStoreDB::ArchiveJob::isLastAfterAsyncSuccess() {
+bool OStoreDB::ArchiveJob::isLastAfterAsyncSuccess() const {
   return m_succesfulTransferUpdater->m_doReportTransferSuccess;
 }
 
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveJob::isLastAfterAsyncSuccess()
 //------------------------------------------------------------------------------
-objectstore::ArchiveRequest::RepackInfo OStoreDB::ArchiveJob::getRepackInfoAfterAsyncSuccess() {
+objectstore::ArchiveRequest::RepackInfo OStoreDB::ArchiveJob::getRepackInfoAfterAsyncSuccess() const {
   return m_succesfulTransferUpdater->m_repackInfo;
 }
 
