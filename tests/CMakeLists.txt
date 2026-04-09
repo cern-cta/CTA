@@ -34,8 +34,8 @@ set (CTA_UNIT_TEST_LIBS
   ctaschedulerunittests
   ctatapedsessionunittests
   ctatapeddriveunittests
-  ctatapeserverfileunittests
-  ctatapeserverscsiunittests
+  ctatapedfileunittests
+  ctascsiunittests
   ctadiskunittests
   ctatapelabelunittests
   gtest

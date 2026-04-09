@@ -8,14 +8,14 @@ set(CTATAPEDDRIVE_LIBRARY_SRCS
   FakeDrive.cpp)
 
 add_library(ctatapeddrive ${CTATAPEDDRIVE_LIBRARY_SRCS})
-target_link_libraries(ctatapeddrive ctatapedscsi ctatapedaemon)
+target_link_libraries(ctatapeddrive ctascsi ctatapedaemon)
 
 add_executable(cta-TapeDriveReadWriteTest
   TapeDriveReadWriteTest.cpp)
 target_link_libraries(cta-TapeDriveReadWriteTest
   ctatapeddrive
   ctamediachanger
-  ctatapedscsi
+  ctascsi
   ctatapedsystem
   ctacommon
   ctatapedsession

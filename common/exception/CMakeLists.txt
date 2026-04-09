@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required (VERSION 3.17)
 
-# include_directories(${PROJECT_SOURCE_DIR}/tapeserver)
-
 add_library (ctaexceptionunittests SHARED
   ExceptionTest.cpp)
 set_property(TARGET ctaexceptionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")

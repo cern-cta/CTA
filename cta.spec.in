@@ -136,6 +136,7 @@ CERN Tape Archive:
 The tape server daemon
 %files -n cta-taped
 %defattr(-,root,root)
+%{_libdir}/libctatapedrao.so*
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-taped
 %attr(0755,root,root) %{_bindir}/cta-taped
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-taped.example.conf
@@ -407,8 +408,6 @@ The shared libraries
 %else
 %{_libdir}/libctardbmspostgres.so*
 %endif
-%{_libdir}/libctamediachanger.so*
-%{_libdir}/libctatapedrao.so*
 %{_libdir}/libctadisk.so*
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-catalogue.example.conf
 %attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-otel.example.yaml
@@ -474,8 +473,8 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctaschedulerunittests.so*
 %{_libdir}/libctatapedsessionunittests.so*
 %{_libdir}/libctatapeddriveunittests.so*
-%{_libdir}/libctatapeserverfileunittests.so*
-%{_libdir}/libctatapeserverscsiunittests.so*
+%{_libdir}/libctatapedfileunittests.so*
+%{_libdir}/libctascsiunittests.so*
 %{_libdir}/libctadaemonunittests.so*
 %{_libdir}/libctamediachangerunittests.so*
 %{_libdir}/libctadiskunittests.so*
@@ -569,6 +568,7 @@ CERN Tape Archive:
 The Remote Media Changer daemon (rmcd)
 %files -n cta-rmcd
 %defattr(-,root,root)
+%{_libdir}/libctamediachanger.so*
 %attr(0644,root,root) %config(noreplace) /etc/logrotate.d/cta-rmcd
 %attr(0644,root,root) %doc /usr/share/man/man1/cta-rmcd.1cta.gz
 %attr(0755,root,root) %{_bindir}/cta-rmcd

@@ -2,14 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required (VERSION 3.17)
 
-add_library(tapedscsi Device.cpp Structures.cpp Constants.cpp Exception.cpp)
+add_library(ctascsi Device.cpp Structures.cpp Constants.cpp Exception.cpp)
 
-target_link_libraries(tapedscsi ctacommon)
+target_link_libraries(ctascsi ctacommon)
 
-add_library(ctatapeserverscsiunittests SHARED
+add_library(ctascsiunittests SHARED
   DeviceTest.cpp
   StructuresTest.cpp)
-set_property(TARGET ctatapeserverscsiunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctatapeserverscsiunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+set_property(TARGET ctascsiunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctascsiunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctatapeserverscsiunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctascsiunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

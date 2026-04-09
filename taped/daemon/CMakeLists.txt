@@ -29,7 +29,7 @@ add_library(ctatapedaemon
 target_link_libraries(ctatapedaemon
   ctatapedsession
   ctatapedaemoncommon
-  ctatapedscsi
+  ctascsi
   ctatapeddrive
   ctatapedfile)
 

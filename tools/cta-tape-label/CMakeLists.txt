@@ -12,7 +12,7 @@ target_link_libraries (cta-tape-label
   ctatapeddrive
   ctamediachanger
   ctacatalogue
-  ctatapedscsi
+  ctascsi
 )
 
 add_library(ctatapelabelunittests SHARED

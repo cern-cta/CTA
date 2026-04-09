@@ -16,7 +16,7 @@ target_link_libraries(cta-readtp
   ctatapeddrive
   ctamediachanger
   ctacatalogue
-  ctatapedscsi
+  ctascsi
 )
 
 add_manpage(cta-readtp)

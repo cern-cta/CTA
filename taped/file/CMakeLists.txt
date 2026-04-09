@@ -33,10 +33,10 @@ set(CTATAPEDFILE_LIBRARY_SRCS
 add_executable(cta-BasicReadWriteTest
   BasicReadWriteTest.cpp)
 
-target_link_libraries(BasicReadWriteTest
+target_link_libraries(cta-BasicReadWriteTest
   ctatapeddrive
   ctamediachanger
-  ctatapedscsi
+  ctascsi
   ctatapedsystem
   ctacommon
   ctatapedsession
@@ -51,20 +51,20 @@ target_link_libraries(ctatapedfile
   ctacommon
 )
 
-add_library(ctatapeserverfileunittests SHARED
+add_library(ctatapedfileunittests SHARED
   StructuresTest.cpp
   FileTest.cpp
   OSMFileTest.cpp
 )
 
-target_link_libraries(ctatapeserverfileunittests
+target_link_libraries(ctatapedfileunittests
   ctadisk
 )
 
-set_property(TARGET ctatapeserverfileunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET ctatapeserverfileunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
+set_property(TARGET ctatapedfileunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
+set_property(TARGET ctatapedfileunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
-install(TARGETS ctatapeserverfileunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ctatapedfileunittests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})
 
 add_executable(cta-osmReaderTest
   OsmReaderTest.cpp)

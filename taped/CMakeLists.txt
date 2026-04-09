@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required (VERSION 3.17)
 
-add_subdirectory (daemon)
-add_subdirectory (drive)
-add_subdirectory (rao)
 add_subdirectory (scsi)
-add_subdirectory (session)
+add_subdirectory (drive)
 add_subdirectory (system)
+add_subdirectory (file)
+add_subdirectory (session)
+add_subdirectory (rao)
+add_subdirectory (daemon)
 
 add_executable (cta-taped cta-taped.cpp)
 target_link_libraries(cta-taped ctatapedaemon ctacommon)
