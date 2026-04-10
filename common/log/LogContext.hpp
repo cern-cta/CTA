@@ -19,7 +19,7 @@ namespace cta::log {
  * container is ordered , by order of inclusion. There can be only one
  * parameter value per parameter name.
  */
-class LogContext {
+class LogContext final {
   friend std::ostream& operator<<(std::ostream& os, const LogContext& lc);
 
 public:
@@ -83,9 +83,9 @@ public:
    * @param location source location of where the log statement was executed
    * @param msg the message.
    */
-  virtual void log(int priority,
-                   std::string_view msg,
-                   const std::source_location location = std::source_location::current()) noexcept;
+  void log(int priority,
+           std::string_view msg,
+           const std::source_location location = std::source_location::current()) noexcept;
 
   /**
    * Logs a multiline backtrace as multiple entries in the logs, without
@@ -93,7 +93,7 @@ public:
    * @param priority the logging priority
    * @param backtrace the multi-line (\n separated) stack trace
    */
-  virtual void logBacktrace(int priority, std::string_view backtrace) noexcept;
+  void logBacktrace(int priority, std::string_view backtrace) noexcept;
 
   /**
    * Small introspection function to help in tests
