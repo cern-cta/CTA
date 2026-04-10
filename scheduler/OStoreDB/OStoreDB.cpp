@@ -18,6 +18,7 @@
 #include "common/exception/TimeoutException.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFile.hpp"
 #include "objectstore/AgentWrapper.hpp"

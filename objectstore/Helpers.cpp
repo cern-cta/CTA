@@ -16,6 +16,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
+#include "common/semconv/Logging.hpp"
 
 #include <algorithm>
 #include <random>

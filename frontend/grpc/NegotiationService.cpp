@@ -7,6 +7,7 @@
 
 #include "ServerNegotiationRequestHandler.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/semconv/Logging.hpp"
 
 namespace cta::frontend::grpc::server {
 

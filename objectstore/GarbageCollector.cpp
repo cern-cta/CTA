@@ -18,6 +18,7 @@
 #include "common/dataStructures/RetrieveJobToAdd.cpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/semconv/Logging.hpp"
 
 #include <algorithm>
 #include <unistd.h>

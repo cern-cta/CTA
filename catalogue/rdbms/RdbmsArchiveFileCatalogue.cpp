@@ -28,6 +28,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/exception/UserErrorWithCacheInfo.hpp"
 #include "common/log/TimingList.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnPool.hpp"

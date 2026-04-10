@@ -5,6 +5,8 @@
 
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include "common/semconv/Logging.hpp"
+
 #include <random>
 
 namespace cta::schedulerdb {

@@ -9,6 +9,7 @@
 #include "RepackQueue.hpp"
 #include "RepackRequest.hpp"
 #include "common/exception/NoSuchObject.hpp"
+#include "common/semconv/Logging.hpp"
 
 #include <optional>
 

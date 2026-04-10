@@ -5,6 +5,7 @@
 
 #include "JwkCache.hpp"
 
+#include "common/semconv/Logging.hpp"
 #include "jwt-cpp/jwt.h"
 
 #include <curl/curl.h>

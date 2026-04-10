@@ -6,6 +6,7 @@
 #include "ClientTapeLsRequestHandler.hpp"
 
 #include "common/log/LogContext.hpp"
+#include "common/semconv/Logging.hpp"
 
 cta::frontend::grpc::client::TapeLsRequestHandler::TapeLsRequestHandler(cta::log::Logger& log,
                                                                         cta::xrd::CtaRpcStream::Stub& stub,

@@ -8,6 +8,7 @@
 #include "Algorithms.hpp"
 #include "ArchiveQueue.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
+#include "common/semconv/Logging.hpp"
 
 #include <optional>
 

@@ -7,6 +7,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
+#include "common/semconv/Logging.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 // includes for debug timings only below
 #include "common/log/TimingList.hpp"

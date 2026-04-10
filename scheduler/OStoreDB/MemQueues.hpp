@@ -8,6 +8,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/Mutex.hpp"
 #include "common/process/threading/MutexLocker.hpp"
+#include "common/semconv/Logging.hpp"
 #include "objectstore/ArchiveQueue.hpp"
 #include "objectstore/ArchiveRequest.hpp"
 #include "objectstore/Helpers.hpp"

@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "common/semconv/Logging.hpp"
 #include "scheduler/ArchiveMount.hpp"
 #include "scheduler/testingMocks/MockArchiveJob.hpp"
 

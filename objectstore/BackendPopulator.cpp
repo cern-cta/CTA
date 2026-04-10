@@ -5,6 +5,7 @@
 
 #include "objectstore/BackendPopulator.hpp"
 
+#include "common/semconv/Logging.hpp"
 #include "common/utils/utils.hpp"
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/RootEntry.hpp"

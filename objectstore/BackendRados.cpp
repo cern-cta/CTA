@@ -10,6 +10,7 @@
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/MutexLocker.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 

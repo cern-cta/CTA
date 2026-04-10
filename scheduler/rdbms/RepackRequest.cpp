@@ -7,6 +7,7 @@
 
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/semconv/Logging.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/rdbms/Helpers.hpp"

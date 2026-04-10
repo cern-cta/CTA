@@ -7,6 +7,7 @@
 
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/semconv/Logging.hpp"
 #include "scheduler/rdbms/ArchiveMount.hpp"
 #include "scheduler/rdbms/RetrieveMount.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"

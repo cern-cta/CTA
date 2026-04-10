@@ -18,6 +18,7 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/telemetry/metrics/instruments/SchedulerInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"

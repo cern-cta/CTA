@@ -10,6 +10,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/json/object/JSONObjectException.hpp"
 #include "common/process/threading/SubProcess.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/JSONDiskSystem.hpp"
 #include "disk/JSONFreeSpace.hpp"

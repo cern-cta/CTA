@@ -11,6 +11,7 @@
 #include "MountPolicySerDeser.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
+#include "common/semconv/Logging.hpp"
 
 #include <algorithm>
 #include <cmath>

@@ -7,6 +7,7 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/semconv/Logging.hpp"
 
 cta::frontend::grpc::client::NegotiationRequestHandler::NegotiationRequestHandler(
   cta::log::Logger& log,
