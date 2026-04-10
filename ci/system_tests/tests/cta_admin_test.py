@@ -59,7 +59,7 @@ def is_in_repacking_state(cta_cli, vid_to_check):
 #####################################################################################################################
 
 
-def test_hosts_present_tools(env):
+def test_hosts_present_cta_admin(env):
     assert len(env.cta_taped) > 0
     assert len(env.cta_frontend) > 0
     assert len(env.cta_cli) > 0

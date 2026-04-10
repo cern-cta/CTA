@@ -189,11 +189,10 @@ test-client:
 
 test-client-gfal2:
   extends:
-    - .kubernetes-test
+    - .kubernetes-test-python
   stage: system-test
   variables:
-    TEST_SCRIPT: "tests/test_client_gfal2.sh"
-    EXTRA_RUN_ARGS: "--test-timeout 2400"
+    PYTESTS: "tests/cta_admin_test.py"
     # While the telemetry is not actually consumed, we need to ensure enabling it doesn't break anything
     EXTRA_SPAWN_ARGS: "--local-telemetry"
 
