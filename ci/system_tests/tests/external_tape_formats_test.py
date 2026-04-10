@@ -11,10 +11,6 @@ def test_hosts_present_external_tape_formats(env):
     assert len(env.cta_rmcd) > 0
 
 
-def test_install_cta_integrationtests(env):
-    env.cta_taped[0].exec("dnf -y install cta-integrationtests")
-
-
 def test_read_osm_tape(env):
     drive_name = env.cta_taped[0].drive_name
     drive_device = env.cta_taped[0].drive_device
@@ -50,4 +46,5 @@ def test_osm_reader(env):
     drive_name = env.cta_taped[0].drive_name
     drive_device = env.cta_taped[0].drive_device
     print(f"Using drive: {drive_name}, device: {drive_device}")
+    env.cta_taped[0].exec("dnf -y install cta-integrationtests")
     env.cta_taped[0].exec(f"cta-osmReaderTest {drive_name} {drive_device}")
