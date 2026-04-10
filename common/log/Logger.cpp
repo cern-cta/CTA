@@ -188,12 +188,20 @@ std::string Logger::createMsgHeader(const TimestampT& timeStamp, const std::sour
   struct tm localTime;
   localtime_r(&ts_t, &localTime);
 
+  // In theory this could be done at compile time if this is found to be too slow
+  // In that case, the source_location would have to be passed as a template parameter,
+  // because function parameters by themselves cannot be constexpr (yet?)
+  // However, keep in mind that this would most likely produce a significant increase in binary size
   constexpr auto getFileName = [](std::string_view path) {
     size_t pos = path.find_last_of("/\\");
     return (pos == std::string_view::npos) ? path : path.substr(pos + 1);
   };
 
   std::string sourceLoc;
+  // Source location gives the full absolute path, which produces lot of noise
+  // We strip it back to only the file name here which should be enough to identify where it came from
+  // We don't include the function name because location.function_name()
+  // gives the full function signature including all modifiers which is much too noisy
   sourceLoc += getFileName(location.file_name());
   sourceLoc += ':';
   sourceLoc += std::to_string(location.line());
