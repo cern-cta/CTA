@@ -60,7 +60,7 @@ ValidateJwt(const std::string& encodedJwt, std::shared_ptr<JwkCache> pubkeyCache
     verifier.verify(decoded);
     return {true, subjectClaim};
   } catch (const std::exception& e) {
-    sp.add("exceptionMessage", e.what());
+    sp.add(semconv::log::exceptionMessage, e.what());
     lc.log(cta::log::ERR, "There was a failure in token verification");
     return {false, std::nullopt};
   }

@@ -98,7 +98,7 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
             {
               log::ScopedParamContainer params(lc);
               params.add("tag", m_tag);
-              params.add("errorMessage", strErrorMsg);
+              params.add(semconv::log::exceptionMessage, strErrorMsg);
               lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): Response error.");
             }
             strErrorMsg.clear();
@@ -155,7 +155,7 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
         default: {
           log::ScopedParamContainer params(lc);
           params.add("tag", m_tag);
-          params.add("errorMessage", m_grpcStatus.error_message());
+          params.add(semconv::log::exceptionMessage, m_grpcStatus.error_message());
           lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): gRPC Error");
         } break;
       }

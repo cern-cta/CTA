@@ -115,7 +115,7 @@ void HealthServer::stop() noexcept {
       m_log(log::ERR,
             "In HealthServer::stop(): failed to join thread",
             {
-              {"exceptionMessage", e.what()}
+              {semconv::log::exceptionMessage, e.what()}
       });
     }
   }
@@ -156,7 +156,7 @@ void HealthServer::run(httplib::Server& server, std::string host, int port, cta:
     }
   } catch (std::exception& ex) {
     log::ScopedParamContainer exParams(lc);
-    exParams.add("exceptionMessage", ex.what());
+    exParams.add(semconv::log::exceptionMessage, ex.what());
     lc.log(log::ERR, "In HealthServer::run(): received an exception");
   } catch (...) {
     lc.log(log::ERR, "In HealthServer::run(): received an unknown exception");

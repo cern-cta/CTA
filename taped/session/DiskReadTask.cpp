@@ -173,7 +173,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
 
     cta::log::ScopedParamContainer spc(lc);
     spc.add("blockID", blockId)
-      .add("exceptionMessage", e.getMessageValue())
+      .add(semconv::log::exceptionMessage, e.getMessageValue())
       .add("fileSize", m_archiveJob->archiveFile.fileSize);
     m_archiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(spc);
     lc.log(cta::log::ERR, "Exception while reading a file");

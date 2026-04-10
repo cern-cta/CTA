@@ -572,7 +572,7 @@ void ReadtpCmd::configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo
     }
   } catch (cta::exception::Exception& ex) {
     std::vector<cta::log::Param> params;
-    params.emplace_back("ErrorMessage", ex.getMessage().str());
+    params.emplace_back(semconv::log::exceptionMessage, ex.getMessage().str());
     m_log(cta::log::ERR, "Drive encryption could not be enabled for this mount.", params);
     throw ex;
   }

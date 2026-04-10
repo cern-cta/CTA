@@ -42,7 +42,7 @@ void QueueCleanup::cleanupQueues() {
       vidToTapesMap = m_catalogue.Tape()->getTapesByVid(queueVidSet, true);
     } catch (const exception::UserError& ex) {
       log::ScopedParamContainer params(m_lc);
-      params.add("exceptionMessage", ex.getMessageValue());
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
       m_lc.log(log::ERR,
                "In QueueCleanup::cleanupQueues(): failed to read set of tapes from the database. Aborting cleanup.");
       return;  // Unable to proceed from here...
@@ -83,26 +83,26 @@ void QueueCleanup::cleanupQueues() {
       toReportQueueAddress = m_db.blockRetrieveQueueForCleanup(queueVid);
     } catch (OStoreDB::RetrieveQueueNotFound& ex) {
       log::ScopedParamContainer paramsExcMsg(m_lc);
-      paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
+      paramsExcMsg.add(semconv::log::exceptionMessage, ex.getMessageValue());
       m_lc.log(log::DEBUG,
                "In QueueCleanup::cleanupQueues(): Unable to find the retrieve queue for cleanup. Queue "
                "may have already been deleted. Skipping it.");
       continue;
     } catch (OStoreDB::RetrieveQueueNotReservedForCleanup& ex) {
       log::ScopedParamContainer paramsExcMsg(m_lc);
-      paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
+      paramsExcMsg.add(semconv::log::exceptionMessage, ex.getMessageValue());
       m_lc.log(log::DEBUG,
                "In QueueCleanup::cleanupQueues(): Unable to reserve the retrieve queue due to it not "
                "being available for cleanup. Skipping it.");
       continue;
     } catch (OStoreDB::RetrieveQueueAlreadyReserved& ex) {
       log::ScopedParamContainer paramsExcMsg(m_lc);
-      paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
+      paramsExcMsg.add(semconv::log::exceptionMessage, ex.getMessageValue());
       m_lc.log(log::DEBUG, "In QueueCleanup::cleanupQueues(): Queue already reserved. Skipping it.");
       continue;
     } catch (cta::exception::Exception& ex) {
       log::ScopedParamContainer paramsExcMsg(m_lc);
-      paramsExcMsg.add("exceptionMessage", ex.getMessageValue());
+      paramsExcMsg.add(semconv::log::exceptionMessage, ex.getMessageValue());
       m_lc.log(log::WARNING,
                "In QueueCleanup::cleanupQueues(): Unable to reserve the retrieve queue for cleanup for "
                "unknown reasons. Skipping it.");
@@ -155,7 +155,7 @@ void QueueCleanup::cleanupQueues() {
         tapeDataRefreshed = vidToTapesMapRefreshed.at(queueVid);
       } catch (const catalogue::TapeNotFound& ex) {
         log::ScopedParamContainer params(m_lc);
-        params.add("tapeVid", queueVid).add("exceptionMessage", ex.getMessageValue());
+        params.add("tapeVid", queueVid).add(semconv::log::exceptionMessage, ex.getMessageValue());
         m_lc.log(log::WARNING,
                  "In QueueCleanup::cleanupQueues(): Failed to find a tape in the database. Unable to "
                  "update tape state.");

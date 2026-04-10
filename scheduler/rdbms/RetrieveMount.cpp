@@ -88,7 +88,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
       return ret;
     }
   } catch (exception::Exception& ex) {
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(
       cta::log::ERR,
       "In postgres::RetrieveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs. Aborting the transaction.");
@@ -121,7 +121,7 @@ uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR,
            "In schedulerdb::RetrieveMount::requeueJobBatch(): failed to update job status for failed task queue.");
     txn.abort();
@@ -228,7 +228,7 @@ void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string
     }
   } catch (const exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR,
            "In RetrieveMount::updateRetrieveJobStatusWrapper(): Exception while updating job status. Aborting "
            "transaction.");
@@ -296,7 +296,7 @@ void RetrieveMount::putQueueToSleep(const std::string& diskSystemName, const uin
 
     } catch (const exception::Exception& ex) {
       cta::log::ScopedParamContainer params(lc);
-      params.add("exceptionMessage", ex.getMessageValue());
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(cta::log::ERR,
              "In RetrieveMount::putQueueToSleep(): Exception while updating job status. Aborting "
              "transaction. ");
@@ -321,7 +321,7 @@ void RetrieveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDa
     }
   } catch (const exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR,
            "In RetrieveMount::recycleTransferredJobs(): Failed to recycle all job objects for the job pool.");
   }

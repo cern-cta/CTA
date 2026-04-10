@@ -24,7 +24,7 @@ DriveHandlerProxy::~DriveHandlerProxy() {
       m_refreshLoggerAsyncFut.wait();
     } catch (std::exception& ex) {
       log::ScopedParamContainer exParams(m_lc);
-      exParams.add("exceptionMessage", ex.what());
+      exParams.add(semconv::log::exceptionMessage, ex.what());
       m_lc.log(log::ERR, "In DriveHandlerProxy::~DriveHandlerProxy(): received a std::exception.");
     } catch (...) {
       m_lc.log(log::ERR, "In DriveHandlerProxy::~DriveHandlerProxy(): received an unknown exception.");
@@ -139,12 +139,12 @@ void DriveHandlerProxy::setRefreshLoggerHandler(std::function<void()> handler) {
         }
       } catch (cta::exception::Exception& ex) {
         log::ScopedParamContainer exParams(lc);
-        exParams.add("exceptionMessage", ex.getMessageValue());
+        exParams.add(semconv::log::exceptionMessage, ex.getMessageValue());
         lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received an exception. Backtrace follows.");
         lc.logBacktrace(log::INFO, ex.backtrace());
       } catch (std::exception& ex) {
         log::ScopedParamContainer exParams(lc);
-        exParams.add("exceptionMessage", ex.what());
+        exParams.add(semconv::log::exceptionMessage, ex.what());
         lc.log(log::ERR, "In DriveHandlerProxy::setRefreshLoggerHandler(): received a std::exception.");
       }
     });

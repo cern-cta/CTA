@@ -162,7 +162,7 @@ void RetrieveRdbJob::handleExceedTotalRetries(cta::schedulerdb::Transaction& txn
     reportType = ReportType::FailureReport;
   } catch (const exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::WARNING, "Failed to update job status for reporting failure. Aborting transaction.");
     txn.abort();
   }
@@ -283,7 +283,7 @@ void RetrieveRdbJob::failReport(const std::string& failureReason, log::LogContex
         .log(log::INFO, "In schedulerdb::RetrieveJobQueueRow::updateJobStatusForFailedReport(): deleted jobs");
     }
   } catch (exception::Exception& ex) {
-    log::ScopedParamContainer(lc).add("exceptionMessage", ex.getMessageValue());
+    log::ScopedParamContainer(lc).add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::WARNING,
            "In schedulerdb::RetrieveRdbJob::failReport(): failed to update job status for failed "
            "report case. Aborting the transaction.");

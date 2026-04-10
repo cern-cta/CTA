@@ -95,7 +95,7 @@ protected:
         opentelemetry::context::RuntimeContext::GetCurrent());
       m_logContext.log(cta::log::INFO, "Tape mounted for read-only access");
     } catch (cta::exception::Exception& ex) {
-      scoped.add("exceptionMessage", ex.getMessageValue());
+      scoped.add(semconv::log::exceptionMessage, ex.getMessageValue());
       m_logContext.log(cta::log::ERR, "Failed to mount the tape for read-only access");
       throw;
     }
@@ -120,7 +120,7 @@ protected:
         opentelemetry::context::RuntimeContext::GetCurrent());
       m_logContext.log(cta::log::INFO, "Tape mounted for read/write access");
     } catch (cta::exception::Exception& ex) {
-      scoped.add("exceptionMessage", ex.getMessageValue());
+      scoped.add(semconv::log::exceptionMessage, ex.getMessageValue());
       m_logContext.log(cta::log::ERR, "Failed to mount the tape for read/write access");
       throw;
     }
@@ -140,7 +140,7 @@ protected:
       m_drive.waitUntilReady(m_tapeLoadTimeout);
     } catch (const cta::exception::Exception& e) {
       cta::log::ScopedParamContainer spc(m_logContext);
-      spc.add("exceptionMessage", e.getMessageValue())
+      spc.add(semconv::log::exceptionMessage, e.getMessageValue())
         .add("configuredTapeLoadTimeout", m_tapeLoadTimeout)
         .add("tapeLoadTime", tapeLoadTime.secs());
       m_logContext.log(cta::log::ERR, "Got timeout or error while waiting for drive to be ready.");

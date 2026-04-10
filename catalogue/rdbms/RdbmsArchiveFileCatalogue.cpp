@@ -748,7 +748,7 @@ void RdbmsArchiveFileCatalogue::moveArchiveFileToRecycleLog(const common::dataSt
       .add("creationTime", std::to_string(archiveFile.creationTime))
       .add("reconciliationTime", std::to_string(archiveFile.reconciliationTime))
       .add("diskFilePath", request.diskFilePath)
-      .add("errorMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .add("storageClass", archiveFile.storageClass);
     archiveFile.checksumBlob.addFirstChecksumToLog(spc);
     for (const auto& tapeFile : archiveFile.tapeFiles) {

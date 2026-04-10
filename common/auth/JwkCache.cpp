@@ -119,7 +119,7 @@ void JwkCache::updateCache(time_t now) {
         return;
       }
     } catch (std::runtime_error& ex) {
-      spc.add("exceptionMessage", ex.what());
+      spc.add(semconv::log::exceptionMessage, ex.what());
       lc.log(log::ERR, "Runtime error thrown when parsing JWKS");
       return;
     }

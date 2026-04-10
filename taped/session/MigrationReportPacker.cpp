@@ -194,13 +194,15 @@ void MigrationReportPacker::ReportSkipped::execute(MigrationReportPacker& report
     m_skippedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
   } catch (cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue())
+      .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::WARNING,
                           "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed(), "
                           "job does not exist in the objectstore.");
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue())
+      .add("fileId", m_skippedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(
       cta::log::ERR,
       "In MigrationReportPacker::ReportSkipped::execute(): call to m_failedArchiveJob->failed() threw an exception.");
@@ -263,7 +265,7 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
       jobIDsList.emplace_back(job->getJobID());
     } catch (cta::exception::Exception& ex) {
       cta::log::ScopedParamContainer params(reportPacker.m_lc);
-      params.add("ExceptionMSG", ex.getMessageValue())
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue())
         .add("archiveFileId", job->archiveFile.archiveFileID)
         .add("jobIDsListSize", jobIDsList.size());
       reportPacker.m_lc.log(cta::log::ERR,
@@ -289,7 +291,7 @@ void MigrationReportPacker::ReportLastBatchError::execute(MigrationReportPacker&
     }
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue()).add("reportPackerJobsToRequeue", njobstorequeue);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue()).add("reportPackerJobsToRequeue", njobstorequeue);
     reportPacker.m_lc.log(
       cta::log::ERR,
       "In MigrationReportPacker::ReportLastBatchError::execute(): call to requeueJobBatch threw an exception.");
@@ -332,7 +334,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
             .add("latestError", archiveJob->latestError)
-            .add("exceptionMSG", ex.getMessageValue());
+            .add(semconv::log::exceptionMessage, ex.getMessageValue());
           reportPacker.m_lc.log(cta::log::WARNING,
                                 "In MigrationReportPacker::ReportFlush::execute(): failed to failTransfer for the "
                                 "archive job because it does not exist in the objectstore.");
@@ -341,7 +343,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
             .add("latestError", archiveJob->latestError)
-            .add("exceptionMSG", ex.getMessageValue());
+            .add(semconv::log::exceptionMessage, ex.getMessageValue());
           reportPacker.m_lc.log(cta::log::WARNING,
                                 "In MigrationReportPacker::ReportFlush::execute(): failed to failTransfer for the "
                                 "archive job because of CTA exception.");
@@ -358,7 +360,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
             .add("latestError", archiveJob->latestError)
-            .add("exceptionMSG", ex.getMessageValue());
+            .add(semconv::log::exceptionMessage, ex.getMessageValue());
           reportPacker.m_lc.log(cta::log::WARNING,
                                 "In MigrationReportPacker::ReportFlush::execute(): failed to failReport for the "
                                 "archive job because it does not exist in the objectstore.");
@@ -367,7 +369,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& reportPa
           cta::log::ScopedParamContainer params(reportPacker.m_lc);
           params.add("fileId", archiveJob->archiveFile.archiveFileID)
             .add("latestError", archiveJob->latestError)
-            .add("exceptionMSG", ex.getMessageValue());
+            .add(semconv::log::exceptionMessage, ex.getMessageValue());
           reportPacker.m_lc.log(cta::log::WARNING,
                                 "In MigrationReportPacker::ReportFlush::execute(): failed to failReport for the "
                                 "archive job because of CTA exception.");
@@ -410,7 +412,7 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& r
   } else {
     // We have some errors
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
-    sp.add("errorMessage", "Previous file errors");
+    sp.add(semconv::log::exceptionMessage, "Previous file errors");
     reportPacker.m_lc.log(cta::log::ERR, "Reported end of session with error to client due to previous file errors");
     if (reportPacker.m_watchdog) {
       reportPacker.m_watchdog->addParameter(cta::log::Param("status", "failure"));
@@ -433,7 +435,7 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
   reportPacker.m_archiveMount->complete();
   if (reportPacker.m_errorHappened) {
     cta::log::ScopedParamContainer sp(reportPacker.m_lc);
-    sp.add("errorMessage", m_message).add("isTapeFull", m_isTapeFull);
+    sp.add(semconv::log::exceptionMessage, m_message).add("isTapeFull", m_isTapeFull);
     reportPacker.m_lc.log(cta::log::INFO, "Reported end of session with error to client after sending file errors");
   } else {
     reportPacker.m_lc.log(cta::log::INFO, "Reported end of session with error to client");
@@ -462,13 +464,15 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& reportPa
     m_failedArchiveJob->transferFailed(m_failureLog, reportPacker.m_lc);
   } catch (cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue())
+      .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::WARNING,
                           "In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed(), job "
                           "does not exist in the objectstore.");
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue())
+      .add("fileId", m_failedArchiveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(
       cta::log::ERR,
       "In MigrationReportPacker::ReportError::execute(): call to m_failedArchiveJob->failed() threw an exception.");
@@ -509,7 +513,7 @@ void MigrationReportPacker::WorkerThread::run() {
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMSG", e.getMessageValue());
+    params.add(semconv::log::exceptionMessage, e.getMessageValue());
     lc.log(
       cta::log::ERR,
       "In MigrationReportPacker::WorkerThread::run(): Received a CTA exception while reporting archive mount results.");
@@ -521,7 +525,7 @@ void MigrationReportPacker::WorkerThread::run() {
     //we get there because to tried to close the connection and it failed
     //either from the catch a few lines above or directly from rep->execute
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMSG", e.what());
+    params.add(semconv::log::exceptionMessage, e.what());
     int demangleStatus;
     char* demangleExceptionType = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
     if (!demangleStatus) {

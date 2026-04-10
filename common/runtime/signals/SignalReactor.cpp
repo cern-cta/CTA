@@ -61,7 +61,7 @@ void SignalReactor::stop() noexcept {
       m_log(log::ERR,
             "In SignalReactor::stop(): failed to join thread",
             {
-              {"exceptionMessage", e.what()}
+              {semconv::log::exceptionMessage, e.what()}
       });
     }
   }
@@ -95,7 +95,7 @@ void SignalReactor::run(std::stop_token st,
         // Something else
         log::ScopedParamContainer params(lc);
         params.add("errno", std::to_string(e));
-        params.add("errorMessage", ::strerror(e));
+        params.add(semconv::log::exceptionMessage, ::strerror(e));
         lc.log(log::WARNING, "In SignalReactor::run(): sigtimedwait failed");
         continue;
       }
@@ -112,7 +112,7 @@ void SignalReactor::run(std::stop_token st,
     }
   } catch (std::exception& ex) {
     log::ScopedParamContainer exParams(lc);
-    exParams.add("exceptionMessage", ex.what());
+    exParams.add(semconv::log::exceptionMessage, ex.what());
     lc.log(log::ERR, "In SignalReactor::run(): received a std::exception.");
     throw ex;
   } catch (...) {

@@ -67,7 +67,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
     }
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
-    scoped.add("exceptionError", ex.getMessageValue());
+    scoped.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_this.m_logContext.log(cta::log::ERR, "Failed to turn off encryption before unmounting");
   }
   m_this.m_stats.encryptionControlTime += m_timer.secs(cta::utils::Timer::resetCounter);
@@ -152,7 +152,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
                                             m_this.m_logContext);
     m_this.m_reporter.reportState(cta::tape::session::SessionState::Fatal, cta::tape::session::SessionType::Archive);
     cta::log::ScopedParamContainer scoped(m_this.m_logContext);
-    scoped.add("exceptionMessage", ex.getMessageValue());
+    scoped.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_this.m_logContext.log(logLevel, errorMsg);
 
     // As we do not throw exceptions from here, the watchdog signalling has
@@ -210,7 +210,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
     // TODO: log and unroll the session
     // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("exceptionMessage", e.getMessageValue());
+    scoped.add(semconv::log::exceptionMessage, e.getMessageValue());
     m_logContext.log(cta::log::ERR, "Failed to start tape write session");
     throw;
   }
@@ -367,7 +367,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
         m_stats.encryptionControlTime += timer.secs(cta::utils::Timer::resetCounter);
       } catch (cta::exception::Exception& ex) {
         cta::log::ScopedParamContainer exceptionParams(m_logContext);
-        exceptionParams.add("ErrorMessage", ex.getMessage().str());
+        exceptionParams.add(semconv::log::exceptionMessage, ex.getMessage().str());
         m_logContext.log(cta::log::ERR, "Drive encryption could not be enabled for this mount.");
         throw;
       }
@@ -515,7 +515,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
       }
     } catch (cta::exception::Exception& ex) {
       cta::log::ScopedParamContainer exceptionParams(m_logContext);
-      exceptionParams.add("ErrorMessage", ex.getMessage().str());
+      exceptionParams.add(semconv::log::exceptionMessage, ex.getMessage().str());
       m_logContext.log(
         cta::log::ERR,
         "TapeWriteSingleThread::run(): job ID could not be retrieved for the last task of the crashed session.");
@@ -550,7 +550,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
     }
     // prepare logging params
     cta::log::ScopedParamContainer params(m_logContext);
-    params.add("status", "error").add("ErrorMessage", errorMessage);
+    params.add("status", "error").add(semconv::log::exceptionMessage, errorMessage);
     m_stats.totalTime = totalTimer.secs();
     logWithStats(logLevel, "Tape thread complete for writing", params);
     m_reportPacker.reportEndOfSessionWithErrors(errorMessage, isTapeFull, m_logContext);
@@ -630,7 +630,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logSCSIMetrics() {
                  scsi_write_metrics_hash.size() + scsi_nonmedium_metrics_hash.size());
   } catch (const cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("exceptionMessage", ex.getMessageValue());
+    scoped.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_logContext.log(cta::log::ERR, "Exception in logging mount general statistics");
   }
 
@@ -646,7 +646,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logSCSIMetrics() {
     logSCSIStats("Logging drive statistics", scsi_quality_metrics_hash.size() + scsi_drive_metrics_hash.size());
   } catch (const cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("exceptionMessage", ex.getMessageValue());
+    scoped.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_logContext.log(cta::log::ERR, "Exception in logging drive statistics");
   }
 
@@ -659,7 +659,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logSCSIMetrics() {
     logSCSIStats("Logging volume statistics", scsi_metrics_hash.size());
   } catch (const cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);
-    scoped.add("exceptionMessage", ex.getMessageValue());
+    scoped.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_logContext.log(cta::log::ERR, "Exception in logging volume statistics");
   }
 }

@@ -261,7 +261,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
                    "In ArchiveMount::reportJobsBatchTransferred(): recorded a batch of archive jobs in metadata");
   } catch (const cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(logContext);
-    params.add("exceptionMessageValue", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     if (job) {
       params.add("fileId", job->archiveFile.archiveFileID)
         .add("diskInstance", job->archiveFile.diskInstance)
@@ -274,7 +274,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     logContext.log(cta::log::WARNING, msg_error);
   } catch (const cta::exception::Exception& e) {
     cta::log::ScopedParamContainer params(logContext);
-    params.add("exceptionMessageValue", e.getMessageValue());
+    params.add(semconv::log::exceptionMessage, e.getMessageValue());
     if (job) {
       params.add("fileId", job->archiveFile.archiveFileID)
         .add("diskInstance", job->archiveFile.diskInstance)
@@ -304,7 +304,7 @@ void cta::ArchiveMount::reportJobsBatchTransferred(
     }
   } catch (const std::exception& e) {
     cta::log::ScopedParamContainer params(logContext);
-    params.add("exceptionWhat", e.what());
+    params.add(semconv::log::exceptionMessage, e.what());
     if (job) {
       params.add("fileId", job->archiveFile.archiveFileID)
         .add("diskInstance", job->archiveFile.diskInstance)

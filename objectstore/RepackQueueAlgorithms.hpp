@@ -291,7 +291,7 @@ retry:
              "entry");
     } catch (RootEntry::RepackQueueNotEmpty& ex) {
       log::ScopedParamContainer params(lc);
-      params.add("queueObject", cont.getAddressIfSet()).add("exceptionMessage", ex.getMessageValue());
+      params.add("queueObject", cont.getAddressIfSet()).add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::INFO,
              "In ContainerTraits<RepackQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue "
              "from root entry");

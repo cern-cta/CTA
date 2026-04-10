@@ -154,7 +154,7 @@ void DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(const std::set<std::strin
             false;  // if we update the catalogue at this point, we will update it with an old value, since we were not able to get a new one
           // but will still reset the last refresh time, so it will be essentially a "false" update; better to not update and let the lastRefreshTime reflect
           // the actual last time an up-to-date value was put in the catalogue
-          spc.add("exceptionMsg", ex.getMessageValue());
+          spc.add(semconv::log::exceptionMessage, ex.getMessageValue());
           spc.add("externalScript", m_systemList.getExternalFreeDiskSpaceScript());
           const std::string errorMsg =
             "In DiskSystemFreeSpaceList::fetchDiskSystemFreeSpace(), unable to get the free disk space with the script."

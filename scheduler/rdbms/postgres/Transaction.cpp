@@ -29,7 +29,7 @@ Transaction::~Transaction() {
       m_conn->rollback();
       m_conn->reset();
     } catch (const cta::exception::Exception& e) {
-      log::ScopedParamContainer(m_lc).add("exceptionMessage", e.getMessageValue());
+      log::ScopedParamContainer(m_lc).add(semconv::log::exceptionMessage, e.getMessageValue());
       m_lc.log(cta::log::ERR, "In Transaction::~Transaction(): Failed to rollback.");
     }
   }
@@ -45,7 +45,7 @@ void Transaction::lockGlobal() {
     stmt.executeQuery();
   } catch (const cta::exception::Exception& e) {
     log::ScopedParamContainer errorParams(m_lc);
-    errorParams.add("exceptionMessage", e.getMessageValue());
+    errorParams.add(semconv::log::exceptionMessage, e.getMessageValue());
     m_lc.log(cta::log::ERR, "In Transaction::lockGlobal(): Failed to take a global advisory lock.");
   }
 }
@@ -64,7 +64,7 @@ void Transaction::takeNamedLock(std::string_view tapePoolString) {
     stmt.executeQuery();
   } catch (const cta::exception::Exception& e) {
     log::ScopedParamContainer errorParams(m_lc);
-    errorParams.add("exceptionMessage", e.getMessageValue());
+    errorParams.add(semconv::log::exceptionMessage, e.getMessageValue());
     errorParams.add("pgLockString", tapePoolString);
     m_lc.log(cta::log::ERR, "In Transaction::takeNamedLock(): Failed to take an advisory lock.");
   }
@@ -87,7 +87,7 @@ void Transaction::startWithRetry(cta::rdbms::ConnPool& connPool) {
       log::ScopedParamContainer params(m_lc);
       params.add("attempt", attempt);
       params.add("maxAttempts", MAX_TXN_START_RETRIES);
-      params.add("exceptionMessage", e.getMessageValue());
+      params.add(semconv::log::exceptionMessage, e.getMessageValue());
 
       m_lc.log(cta::log::ERR, "Transaction::startWithRetry(): Failed to start DB transaction, retrying.");
 
@@ -117,7 +117,7 @@ void Transaction::abort() {
     m_begin = false;
   } catch (const cta::exception::Exception& e) {
     log::ScopedParamContainer errorParams(m_lc);
-    errorParams.add("exceptionMessage", e.getMessageValue());
+    errorParams.add(semconv::log::exceptionMessage, e.getMessageValue());
     m_lc.log(cta::log::ERR, "Transaction::abort(): Failed to abort rollback.");
   }
 }

@@ -278,7 +278,7 @@ bool cta::frontend::grpc::client::NegotiationRequestHandler::next(const bool bOk
         default: {
           log::ScopedParamContainer params(lc);
           params.add("tag", m_tag);
-          params.add("errorMessage", m_grpcStatus.error_message());
+          params.add(semconv::log::exceptionMessage, m_grpcStatus.error_message());
           lc.log(cta::log::INFO, "In grpc::client::NegotiationRequestHandler::next(): gRPC Error.");
 
         } break;

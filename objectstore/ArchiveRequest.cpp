@@ -519,10 +519,10 @@ void ArchiveRequest::garbageCollect(const std::string& presumedOwner,
         try {
           std::rethrow_exception(std::current_exception());
         } catch (cta::exception::Exception& ex) {
-          params.add("exceptionMessage", ex.getMessageValue());
+          params.add(semconv::log::exceptionMessage, ex.getMessageValue());
           backtrace = ex.backtrace();
         } catch (std::exception& ex) {
-          params.add("exceptionWhat", ex.what());
+          params.add(semconv::log::exceptionMessage, ex.what());
         } catch (...) {
           params.add("exceptionType", "unknown");
         }

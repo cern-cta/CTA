@@ -76,7 +76,7 @@ OStoreDB::~OStoreDB() {
     } catch (const exception::Exception& ex) {
       log::LogContext lc(m_logger);
       log::ScopedParamContainer(lc)
-        .add("exceptionMessage", ex.what())
+        .add(semconv::log::exceptionMessage, ex.what())
         .log(log::ERR, "In OStoreDB::~OStoreDB(): caught unexpected exception.");
     }
   }
@@ -248,7 +248,7 @@ OStoreDB::getRetrieveQueuesCleanupInfo(log::LogContext& logContext) {
       log::ScopedParamContainer(logContext)
         .add("queueObject", rqp.address)
         .add("tapeVid", rqp.vid)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::DEBUG,
              "In OStoreDB::getRetrieveQueuesCleanupInfo(): failed to fetch a retrieve queue. "
              "Skipping it.");
@@ -295,7 +295,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
       log::ScopedParamContainer(logContext)
         .add("queueObject", aqp.address)
         .add("tapePool", aqp.tapePool)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::DEBUG,
              "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue for user. "
              "Skipping it.");
@@ -353,7 +353,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
       log::ScopedParamContainer(logContext)
         .add("queueObject", aqp.address)
         .add("tapePool", aqp.tapePool)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::DEBUG,
              "In OStoreDB::fetchMountInfo(): failed to lock/fetch an archive queue for repack. "
              "Skipping it.");
@@ -411,7 +411,7 @@ void OStoreDB::fetchMountInfo(SchedulerDatabase::TapeMountDecisionInfo& tmdi,
       log::ScopedParamContainer(lc)
         .add("queueObject", rqp.address)
         .add("tapeVid", rqp.vid)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::DEBUG,
              "In OStoreDB::fetchMountInfo(): failed to lock/fetch a retrieve queue."
              "Skipping it.");
@@ -643,7 +643,7 @@ void OStoreDB::trimEmptyQueues(log::LogContext& lc) {
       }
     } catch (cta::exception::Exception& ex) {
       log::ScopedParamContainer(lc)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::ERR, "In OStoreDB::trimEmptyQueues(): got an exception. Stack trace follows.");
       lc.logBacktrace(log::INFO, ex.backtrace());
     }
@@ -826,7 +826,7 @@ std::string OStoreDB::queueArchive(const std::string& instanceName,
       log::ScopedParamContainer(logContext)
         .add("tapePool", currentTapepool)
         .add("archiveRequestObject", aReq->getAddressIfSet())
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .add("jobObject", aReq->getAddressIfSet())
         .log(log::ERR, "In OStoreDB::queueArchive(): failed to enqueue job");
       return;
@@ -985,7 +985,7 @@ SchedulerDatabase::JobsFailedSummary OStoreDB::getArchiveJobsFailedSummary(log::
     } catch (cta::exception::Exception& ex) {
       log::ScopedParamContainer(logContext)
         .add("queueObject", aj.address)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::DEBUG, "In OStoreDB::getArchiveJobsFailedSummary(): failed to lock/fetch an archive queue.");
       continue;
     }
@@ -1081,7 +1081,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
         log::ScopedParamContainer(lc)
           .add("fileId", j->archiveFile.archiveFileID)
           .add("objectAddress", j->m_archiveRequest.getAddressIfSet())
-          .add("exceptionMSG", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::setArchiveJobBatchReported(): failed to delete ArchiveRequest "
                "after completion and reporting.");
@@ -1122,7 +1122,7 @@ void OStoreDB::setArchiveJobBatchReported(std::list<cta::SchedulerDatabase::Arch
       }
     } catch (exception::Exception& ex) {
       log::ScopedParamContainer(lc)
-        .add("exceptionMSG", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::ERR, "In OStoreDB::setArchiveJobBatchReported(), failed to queue in the ArchiveQueueFailed.");
     }
     log::TimingList tl;
@@ -1190,7 +1190,7 @@ void OStoreDB::setRetrieveJobBatchReportedToUser(std::list<cta::SchedulerDatabas
         log::ScopedParamContainer(lc)
           .add("fileId", j->archiveFile.archiveFileID)
           .add("objectAddress", j->m_retrieveRequest.getAddressIfSet())
-          .add("exceptionMSG", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR, "In OStoreDB::setRetrieveJobBatchReportedToUser(): failed to delete RetrieveRequest.");
         jobsToUnown.push_back(j->m_retrieveRequest.getAddressIfSet());
       }
@@ -1408,7 +1408,7 @@ void OStoreDB::cancelRetrieve(const std::string& instanceName,
     log::ScopedParamContainer(lc)
       .add("archiveFileId", rqst.archiveFileID)
       .add("retrieveRequestId", rqst.retrieveRequestId)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR, "In OStoreDB::cancelRetrieve(): failed to lock of fetch the retreive request.");
     throw;
   }
@@ -1490,7 +1490,7 @@ void OStoreDB::cancelArchive(const common::dataStructures::DeleteArchiveRequest&
     log::ScopedParamContainer(lc)
       .add("archiveFileId", request.archiveFileID)
       .add("archiveRequestId", request.address.value())
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR, "In OStoreDB::cancelArchive(): failed to lock of fetch the archive request.");
     throw;
   }
@@ -2207,7 +2207,7 @@ void OStoreDB::setRetrieveQueueCleanupFlag(const std::string& vid, bool val, log
       .add("queueObject", qAddress)
       .add("tapeVid", vid)
       .add("cleanupFlagValue", val)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::DEBUG,
            "In OStoreDB::setRetrieveQueueCleanupFlag(): failed to set cleanup flag value "
            "on retrieve queue.");
@@ -2571,7 +2571,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", rr.archiveFile.archiveFileID)
           .add("subrequestAddress", rr.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::WARNING,
                "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): failed to "
                "asyncTransformToArchiveRequest(), object does not exist in the objectstore.");
@@ -2592,7 +2592,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", rr.archiveFile.archiveFileID)
           .add("subrequestAddress", rr.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): failed to "
                "asyncTransformToArchiveRequest().");
@@ -2636,7 +2636,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", atar.subrequestInfo.archiveFile.archiveFileID)
           .add("subrequestAddress", atar.subrequestInfo.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::WARNING,
                "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): async transformation failed "
                "on wait(). Object does not exist in the objectstore");
@@ -2657,7 +2657,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", atar.subrequestInfo.archiveFile.archiveFileID)
           .add("subrequestAddress", atar.subrequestInfo.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): async transformation failed "
                "on wait().");
@@ -2699,7 +2699,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
           log::ScopedParamContainer(lc)
             .add("fileId", fs->archiveFile.archiveFileID)
             .add("subrequestAddress", fs->subrequest->getAddressIfSet())
-            .add("exceptionMsg", ex.getMessageValue())
+            .add(semconv::log::exceptionMessage, ex.getMessageValue())
             .log(log::WARNING,
                  "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): failed to asyncDelete() "
                  "retrieve request. Object does not exist in the objectstore.");
@@ -2708,7 +2708,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
           log::ScopedParamContainer(lc)
             .add("fileId", fs->archiveFile.archiveFileID)
             .add("subrequestAddress", fs->subrequest->getAddressIfSet())
-            .add("exceptionMsg", ex.getMessageValue())
+            .add(semconv::log::exceptionMessage, ex.getMessageValue())
             .log(log::ERR,
                  "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): failed to asyncDelete() "
                  "retrieve request.");
@@ -2730,7 +2730,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
           log::ScopedParamContainer(lc)
             .add("fileId", adar.subrequestInfo.archiveFile.archiveFileID)
             .add("subrequestAddress", adar.subrequestInfo.subrequest->getAddressIfSet())
-            .add("exceptionMsg", ex.getMessageValue())
+            .add(semconv::log::exceptionMessage, ex.getMessageValue())
             .log(log::WARNING,
                  "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): async deletion of retrieve request "
                  "failed on wait(). Object does not exist in the objectstore.");
@@ -2739,7 +2739,7 @@ void OStoreDB::RepackRetrieveSuccessesReportBatch::report(log::LogContext& lc) {
           log::ScopedParamContainer(lc)
             .add("fileId", adar.subrequestInfo.archiveFile.archiveFileID)
             .add("subrequestAddress", adar.subrequestInfo.subrequest->getAddressIfSet())
-            .add("exceptionMsg", ex.getMessageValue())
+            .add(semconv::log::exceptionMessage, ex.getMessageValue())
             .log(log::ERR,
                  "In OStoreDB::RepackRetrieveSuccessesReportBatch::report(): async deletion of retrieve request "
                  "failed on wait().");
@@ -2838,7 +2838,7 @@ void OStoreDB::RepackRetrieveFailureReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", fs.archiveFile.archiveFileID)
           .add("subrequestAddress", fs.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::WARNING,
                "In OStoreDB::RepackRetrieveFailureReportBatch::report(): failed to asyncDelete() retrieve request. "
                "Object does not exist in the objectstore.");
@@ -2847,7 +2847,7 @@ void OStoreDB::RepackRetrieveFailureReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", fs.archiveFile.archiveFileID)
           .add("subrequestAddress", fs.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::RepackRetrieveFailureReportBatch::report(): failed to asyncDelete() retrieve request.");
       }
@@ -2876,7 +2876,7 @@ void OStoreDB::RepackRetrieveFailureReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", adar.subrequestInfo.archiveFile.archiveFileID)
           .add("subrequestAddress", adar.subrequestInfo.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::WARNING,
                "In OStoreDB::RepackRetrieveFailureReportBatch::report(): async deletion of retrieve request "
                "failed on wait(). Object does not exist in the objectstore.");
@@ -2885,7 +2885,7 @@ void OStoreDB::RepackRetrieveFailureReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", adar.subrequestInfo.archiveFile.archiveFileID)
           .add("subrequestAddress", adar.subrequestInfo.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::RepackRetrieveFailureReportBatch::report(): async deletion of retrieve request "
                "failed on wait().");
@@ -3130,7 +3130,7 @@ copyNbFound:;
             .add("fileId", rsr.archiveFile.archiveFileID)
             .add("repackVid", repackInfo.vid)
             .add("bestVid", bestVid)
-            .add("ExceptionMessage", ex.getMessageValue())
+            .add(semconv::log::exceptionMessage, ex.getMessageValue())
             .log(log::ERR,
                  "In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(): could not asyncInsert the subrequest.");
         }
@@ -3177,7 +3177,7 @@ nextSubrequest:
           .add("repackVid", repackInfo.vid)
           .add("bestVid", aii.bestVid)
           .add("bestCopyNb", aii.activeCopyNb)
-          .add("ExceptionMessage", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::RepackRequest::addSubrequestsAndUpdateStats(): could not asyncInsert the subrequest.");
       }
@@ -3424,7 +3424,7 @@ SchedulerDatabase::JobsFailedSummary OStoreDB::getRetrieveJobsFailedSummary(log:
     } catch (cta::exception::Exception& ex) {
       log::ScopedParamContainer(logContext)
         .add("queueObject", rj.address)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::DEBUG, "In OStoreDB::getRetrieveJobsFailedSummary(): failed to lock/fetch a retrieve queue.");
       continue;
     }
@@ -3892,7 +3892,7 @@ void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(
     log::ScopedParamContainer(m_lc)
       .add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
       .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::WARNING,
            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed, "
            "job does not exist in the objectstore.");
@@ -3900,7 +3900,7 @@ void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(
     log::ScopedParamContainer(m_lc)
       .add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
       .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR,
            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed. "
            "Will leave job to garbage collection.");
@@ -3936,7 +3936,7 @@ void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(
     log::ScopedParamContainer(m_lc)
       .add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
       .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::WARNING,
            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async deletion failed, "
            "the object does not exist anymore. ");
@@ -3944,7 +3944,7 @@ void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(
     log::ScopedParamContainer(m_lc)
       .add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
       .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR,
            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async deletion failed. "
            "Will leave job to garbage collection.");
@@ -3972,7 +3972,7 @@ void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(
     log::ScopedParamContainer(m_lc)
       .add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
       .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::WARNING,
            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed, "
            "job does not exist in the objectstore.");
@@ -3980,7 +3980,7 @@ void OStoreDB::RetrieveMount::AsyncJobCaller::operator()(
     log::ScopedParamContainer(m_lc)
       .add("fileId", m_pOsdbJob->archiveFile.archiveFileID)
       .add("requestObject", m_pOsdbJob->m_retrieveRequest.getAddressIfSet())
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR,
            "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): async status update failed. "
            "Will leave job to garbage collection.");
@@ -4056,9 +4056,9 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
           logMessage = "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for "
                        "repack, job does not exist in the objectstore.";
         } catch (cta::exception::Exception& ex) {
-          params.add("exceptionMessage", ex.getMessageValue());
+          params.add(semconv::log::exceptionMessage, ex.getMessageValue());
         } catch (std::exception& ex) {
-          params.add("exceptionWhat", ex.what()).add("exceptionTypeName", typeid(ex).name());
+          params.add(semconv::log::exceptionMessage, ex.what()).add("exceptionTypeName", typeid(ex).name());
         }
         lc.log(priority, logMessage);
         // Add the failed request to the set.
@@ -4072,7 +4072,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     } catch (exception::Exception& ex) {
       // Something else happened. We just log the error and let the garbage collector go through all the requests.
       log::ScopedParamContainer(lc)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::ERR, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue a batch of requests.");
     }
   }
@@ -4120,9 +4120,9 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
           logMessage = "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue request to report for "
                        "user, job does not exist in the objectstore.";
         } catch (cta::exception::Exception& ex) {
-          params.add("exceptionMessage", ex.getMessageValue());
+          params.add(semconv::log::exceptionMessage, ex.getMessageValue());
         } catch (std::exception& ex) {
-          params.add("exceptionWhat", ex.what()).add("exceptionTypeName", typeid(ex).name());
+          params.add(semconv::log::exceptionMessage, ex.what()).add("exceptionTypeName", typeid(ex).name());
         }
         lc.log(priority, logMessage);
         // Add the failed request to the set.
@@ -4136,7 +4136,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
     } catch (exception::Exception& ex) {
       // Something else happened. We just log the error and let the garbage collector go through all the requests.
       log::ScopedParamContainer(lc)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::ERR, "In OStoreDB::RetrieveMount::flushAsyncSuccessReports(): failed to queue a batch of requests.");
     }
   }
@@ -4223,7 +4223,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(
         .add("tapeVid", (*jobsBatchItor)->tapeFile.vid)
         .add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
         .add("requestObject", castFromSchedDBJob(jobsBatchItor->get())->m_archiveRequest.getAddressIfSet())
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::WARNING,
              "In OStoreDB::RetrieveMount::setJobBatchTransferred(): async succeed transfer failed, "
              "job does not exist in the objectstore.");
@@ -4256,7 +4256,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(
       jobsBatch.erase(jobsBatchItor++);
       log::ScopedParamContainer(lc)
         .add("fileId", (*jobsBatchItor)->archiveFile.archiveFileID)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::WARNING,
              "In OStoreDB::RetrieveMount::setJobBatchTransferred(): wait async succeed transfer failed, "
              "job does not exist in the objectstore.");
@@ -4292,7 +4292,7 @@ void OStoreDB::ArchiveMount::setJobBatchTransferred(
       } catch (cta::exception::Exception& ex) {
         log::ScopedParamContainer(lc)
           .add("tapeVid", vid)
-          .add("exceptionMSG", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests "
                "for reporting to user.");
@@ -4338,7 +4338,7 @@ retry:
       } catch (cta::exception::NoSuchObject& ex) {
         log::ScopedParamContainer(lc)
           .add("tapeVid", vid)
-          .add("exceptionMSG", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::WARNING,
                "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for "
                "reporting to repack, jobs do not exist in the objectstore.");
@@ -4349,7 +4349,7 @@ retry:
           .add("tapeVid", vid)
           .add("numberOfRetries", currentTotalRetries)
           .add("numberOfFailedToQueueElements", ex.failedElements.size())
-          .add("exceptionMSG", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::WARNING,
                "In OStoreDB::ArchiveMount::setJobBatchTransferred(): unable to queue some elements "
                "because of an ownership switch failure, retrying another time");
@@ -4378,7 +4378,7 @@ retry:
       } catch (cta::exception::Exception& ex) {
         log::ScopedParamContainer(lc)
           .add("tapeVid", vid)
-          .add("exceptionMSG", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::ArchiveMount::setJobBatchTransferred(): failed to queue a batch of requests for "
                "reporting to repack.");
@@ -4890,7 +4890,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", sri.archiveFile.archiveFileID)
           .add("subrequestAddress", sri.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::WARNING,
                "In OStoreDB::RepackArchiveReportBatch::report(): failed to asyncUpdateJobOwner(), "
                "object does not exist in the objectstore.");
@@ -4899,7 +4899,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", sri.archiveFile.archiveFileID)
           .add("subrequestAddress", sri.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): failed to asyncUpdateJobOwner()");
       }
     } else {
@@ -4911,7 +4911,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", sri.archiveFile.archiveFileID)
           .add("subrequestAddress", sri.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::WARNING,
                "In OStoreDB::RepackArchiveReportBatch::report(): failed to asyncDelete(), "
                "object does not exist in the objectstore.");
@@ -4920,7 +4920,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", sri.archiveFile.archiveFileID)
           .add("subrequestAddress", sri.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): failed to asyncDelete()");
       }
     }
@@ -4952,7 +4952,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
         log::ScopedParamContainer(lc)
           .add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
           .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async deletion of disk file failed.");
       }
     } catch (const cta::exception::NoSuchObject& ex) {
@@ -4960,7 +4960,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
       log::ScopedParamContainer(lc)
         .add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
         .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
-        .add("exceptionMsg", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::WARNING,
              "In OStoreDB::RepackArchiveReportBatch::report(): async deletion failed. "
              "Object does not exist in the objectstore.");
@@ -4969,7 +4969,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
       log::ScopedParamContainer(lc)
         .add("fileId", d.subrequestInfo.archiveFile.archiveFileID)
         .add("subrequestAddress", d.subrequestInfo.subrequest->getAddressIfSet())
-        .add("exceptionMsg", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async deletion failed.");
     }
   }
@@ -4987,7 +4987,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
         .add("fileId", dfr.subrequestInfo.archiveFile.archiveFileID)
         .add("subrequestAddress", dfr.subrequestInfo.subrequest->getAddressIfSet())
         .add("fileBufferURL", dfr.subrequestInfo.repackInfo.fileBufferURL)
-        .add("exceptionMsg", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async file not deleted.");
     }
   }
@@ -5015,7 +5015,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
       } catch (const cta::exception::Exception& ex) {
         log::ScopedParamContainer(lc)
           .add("repackRequestAddress", m_repackRequest.getAddressIfSet())
-          .add("exceptionMsg", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR,
                "In OStoreDB::RepackArchiveReportBatch::report(): failed to remove the " + directoryPath + " directory");
       }
@@ -5035,7 +5035,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
         .add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
         .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
         .add("copyNb", jou.subrequestInfo.archivedCopyNb)
-        .add("exceptionMsg", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::WARNING,
              "In OStoreDB::RepackArchiveReportBatch::report(): async job update failed. "
              "Object does not exist in the objectstore.");
@@ -5045,7 +5045,7 @@ void OStoreDB::RepackArchiveReportBatch::report(log::LogContext& lc) {
         .add("fileId", jou.subrequestInfo.archiveFile.archiveFileID)
         .add("subrequestAddress", jou.subrequestInfo.subrequest->getAddressIfSet())
         .add("copyNb", jou.subrequestInfo.archivedCopyNb)
-        .add("exceptionMsg", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::ERR, "In OStoreDB::RepackArchiveReportBatch::report(): async job update failed.");
     }
   }
