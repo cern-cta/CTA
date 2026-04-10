@@ -107,9 +107,16 @@ public:
    * @param priority the priority of the message as defined by the syslog API
    * @param msg      the message
    * @param params   optional parameters of the message
+   * @param location source location of where the log statement was executed
    */
-  void operator()(int priority, std::string_view msg, const std::vector<Param>& params) noexcept;
-  void operator()(int priority, std::string_view msg, std::vector<Param>&& params = std::vector<Param>()) noexcept;
+  void operator()(int priority,
+                  std::string_view msg,
+                  const std::vector<Param>& params,
+                  const std::source_location location = std::source_location::current()) noexcept;
+  void operator()(int priority,
+                  std::string_view msg,
+                  std::vector<Param>&& params = std::vector<Param>(),
+                  const std::source_location location = std::source_location::current()) noexcept;
 
   /**
    * Sets the log mask

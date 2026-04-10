@@ -34,20 +34,26 @@ Logger::~Logger() = default;
 //-----------------------------------------------------------------------------
 // operator()
 //-----------------------------------------------------------------------------
-void Logger::operator()(int priority, std::string_view msg, const std::vector<Param>& params) noexcept {
+void Logger::operator()(int priority,
+                        std::string_view msg,
+                        const std::vector<Param>& params,
+                        const std::source_location location) noexcept {
   std::map<std::string, std::vector<Param>> paramsMap;
   for (auto& param : params) {
     paramsMap[param.getName()].push_back(param);
   }
-  logInternal(priority, msg, paramsMap);
+  logInternal(priority, msg, paramsMap, location);
 }
 
-void Logger::operator()(int priority, std::string_view msg, std::vector<Param>&& params) noexcept {
+void Logger::operator()(int priority,
+                        std::string_view msg,
+                        std::vector<Param>&& params,
+                        const std::source_location location) noexcept {
   std::map<std::string, std::vector<Param>> paramsMap;
   for (auto& param : params) {
     paramsMap[param.getName()].push_back(std::move(param));
   }
-  logInternal(priority, msg, paramsMap);
+  logInternal(priority, msg, paramsMap, location);
 }
 
 //-----------------------------------------------------------------------------
