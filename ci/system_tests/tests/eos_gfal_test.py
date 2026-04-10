@@ -88,6 +88,7 @@ def test_kinit_client(env):
     env.eos_client[0].exec(". /root/client_helper.sh && admin_kinit")
 
 
+@pytest.mark.eos
 def test_setup_archive_directory(env):
     archive_directory = env.eos_mgm[0].base_dir_path + "/cta/gfal"
     print(f"Cleaning up previous archive directory: {archive_directory}")
@@ -95,6 +96,7 @@ def test_setup_archive_directory(env):
     env.eos_client[0].exec(f"eos root://{env.eos_mgm[0].instance_name} mkdir {archive_directory}")
 
 
+@pytest.mark.eos
 def test_setup_client_gfal_xrootd(env, gfal_params):
     archive_directory = env.eos_mgm[0].base_dir_path + "/cta/gfal"
     env.eos_client[0].exec("dnf install -y python3-gfal2-util gfal2-plugin-xrootd")
@@ -103,6 +105,7 @@ def test_setup_client_gfal_xrootd(env, gfal_params):
     )
 
 
+@pytest.mark.eos
 def test_archive_gfal_xrootd(env):
     env.eos_client[0].exec(". /root/client_env && /root/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
@@ -110,18 +113,22 @@ def test_archive_gfal_xrootd(env):
     time.sleep(10)
 
 
+@pytest.mark.eos
 def test_retrieve_gfal_xrootd(env):
     env.eos_client[0].exec(". /root/client_env && /root/test_retrieve.sh")
 
 
+@pytest.mark.eos
 def test_evict_gfal_xrootd(env):
     env.eos_client[0].exec(". /root/client_env && /root/test_evict.sh")
 
 
+@pytest.mark.eos
 def test_delete_gfal_xrootd(env):
     env.eos_client[0].exec(". /root/client_env && /root/test_delete.sh")
 
 
+@pytest.mark.eos
 def test_setup_client_gfal_https(env, gfal_params):
     archive_directory = env.eos_mgm[0].base_dir_path + "/cta/gfal"
     env.eos_client[0].exec("dnf install -y gfal2-plugin-http")
@@ -132,6 +139,7 @@ def test_setup_client_gfal_https(env, gfal_params):
     env.eos_client[0].exec("sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf")
 
 
+@pytest.mark.eos
 def test_archive_gfal_https(env):
     env.eos_client[0].exec(". /root/client_env && /root/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
@@ -139,25 +147,33 @@ def test_archive_gfal_https(env):
     time.sleep(10)
 
 
+@pytest.mark.eos
 def test_retrieve_gfal_https(env):
     env.eos_client[0].exec(". /root/client_env && /root/test_retrieve.sh")
 
 
+@pytest.mark.eos
 def test_evict_gfal_https(env):
     env.eos_client[0].exec(". /root/client_env && /root/test_evict.sh")
 
 
+@pytest.mark.eos
 def test_delete_gfal_https(env):
     env.eos_client[0].exec(". /root/client_env && /root/test_delete.sh")
 
 
+@pytest.mark.eos
 def test_gfal_activity(env):
     disk_instance_name = env.eos_mgm[0].instance_name
     archive_directory = env.eos_mgm[0].base_dir_path + "/cta/gfal"
-    valid_instance_file = archive_directory + "/test_gfal_activity_valid_instance_" + str(uuid.uuid4())[:8]
-    invalid_instance_file = archive_directory + "/test_gfal_activity_invalid_instance_" + str(uuid.uuid4())[:8]
-    env.eos_client[0].generate_and_archive_file(disk_instance_name, valid_instance_file, wait=False)
-    env.eos_client[0].generate_and_archive_file(disk_instance_name, invalid_instance_file, wait=False)
+    valid_instance_file = archive_directory + "/test_gfal_activity_valid_instance"
+    invalid_instance_file = archive_directory + "/test_gfal_activity_invalid_instance"
+    valid_instance_file = env.eos_client[0].generate_and_archive_file(
+        disk_instance_name, valid_instance_file, wait=False, append_uid=True
+    )
+    invalid_instance_file = env.eos_client[0].generate_and_archive_file(
+        disk_instance_name, invalid_instance_file, wait=False, append_uid=True
+    )
     env.eos_client[0].wait_for_file_archival(disk_instance_name, valid_instance_file)
     env.eos_client[0].wait_for_file_archival(disk_instance_name, invalid_instance_file)
 
@@ -204,9 +220,11 @@ def test_gfal_activity(env):
 
     report_file = _get_report_file_path(env.eos_mgm[0])
     print(f"Report file: {report_file}")
+
+    # Arguably not the most efficient. If this becomes a problem, just replace by grep
     content = _read_report_file(env.eos_mgm[0], report_file)
 
-    # # Check that activity is set for staging of file with valid instance name
+    # Check that activity is set for staging of file with valid instance name
     valid_line = _find_line(content, "event=stage", valid_instance_file)
 
     assert valid_line, f"Missing log line for {valid_instance_file}"
@@ -223,13 +241,14 @@ def test_gfal_activity(env):
     assert "&activity=&" in invalid_line, f"Activity unexpectedly set for invalid instance: {invalid_line}"
 
 
+@pytest.mark.eos
 def test_xrootd_activity(env):
     disk_instance_name = env.eos_mgm[0].instance_name
     archive_directory = env.eos_mgm[0].base_dir_path + "/cta/gfal"
     test_file = archive_directory + "/test_xrootd_activity_" + str(uuid.uuid4())[:8]
     env.eos_client[0].generate_and_archive_file(disk_instance_name, test_file, wait=True)
 
-    # TODO: eventually move these definitions elsewhere
+    # TODO: eventually move definitions like this to a central place
     EOSPOWER_USER = "poweruser1"
 
     # Retrieve with activity
@@ -254,6 +273,7 @@ def test_xrootd_activity(env):
     assert "&activity=XRootD_Act&" in xrd_line, f"Activity not set correctly for XRootD: {xrd_line}"
 
 
+@pytest.mark.eos
 def test_cleanup_archive_directory(env):
     archive_directory = env.eos_mgm[0].base_dir_path + "/cta/gfal"
     print(f"Cleaning up previous archive directory: {archive_directory}")

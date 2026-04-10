@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
-import uuid
 
 import pytest
 
@@ -321,8 +320,10 @@ def test_cta_admin_tape_file(env):
     ls_before = [cta_cli.execWithOutput(f"cta-admin --json tf ls -v {vid}") for vid in vids]
 
     # Archive one file
-    test_file_path = "/eos/ctaeos/cta/cta_admin_tf_testfile_" + str(uuid.uuid4())[:8]
-    env.disk_client[0].generate_and_archive_file(disk_instance_name, destination_path=test_file_path, wait=True)
+    test_file_path = "/eos/ctaeos/cta/cta_admin_tf_testfile"
+    test_file_path = env.disk_client[0].generate_and_archive_file(
+        disk_instance_name, destination_path=test_file_path, wait=True, append_uid=True
+    )
 
     # Figure out the fxid and VID
     file_info_out = env.disk_instance[0].execWithOutput(f"eos -j file info {test_file_path}")
@@ -595,8 +596,10 @@ def test_cta_admin_recycle_tape_file_ls(env):
     assert vids, "Need at least one VID for rtf ls test."
 
     # Archive one file
-    test_file_path = "/eos/ctaeos/cta/cta_admin_rtf_testfile_" + str(uuid.uuid4())[:8]
-    env.disk_client[0].generate_and_archive_file(disk_instance_name, destination_path=test_file_path, wait=True)
+    test_file_path = "/eos/ctaeos/cta/cta_admin_rtf_testfile"
+    test_file_path = env.disk_client[0].generate_and_archive_file(
+        disk_instance_name, destination_path=test_file_path, wait=True, append_uid=True
+    )
 
     # Figure out the fxid and VID
     file_info_out = env.disk_instance[0].execWithOutput(f"eos -j file info {test_file_path}")
@@ -846,8 +849,10 @@ def test_cta_admin_show_queue(env):
     env.cta_cli[0].set_all_drives_down(wait=True)
 
     # Trigger an archive request
-    file_path = "/eos/ctaeos/cta/cta_admin_sq_testfile_" + str(uuid.uuid4())[:8]
-    env.disk_client[0].generate_and_archive_file(disk_instance_name, destination_path=file_path, wait=False)
+    file_path = "/eos/ctaeos/cta/cta_admin_sq_testfile"
+    file_path = env.disk_client[0].generate_and_archive_file(
+        disk_instance_name, destination_path=file_path, wait=False, append_uid=True
+    )
 
     # Verify there is at least one ARCHIVE_FOR_USER entry
     sq_out = cta_cli.execWithOutput("cta-admin --json sq")
