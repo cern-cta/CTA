@@ -262,13 +262,12 @@ test-liquibase-update:
 
 test-external-tape-formats:
   extends:
-    - .kubernetes-test
+    - .kubernetes-test-python
   stage: system-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    TEST_SCRIPT: "tests/test_external_tape_formats.sh"
-    EXTRA_RUN_ARGS: "--test-timeout 2400"
+    TEST_SCRIPT: "tests/external_tape_formats_test.py"
 
 test-regression-dCache:
   extends:
