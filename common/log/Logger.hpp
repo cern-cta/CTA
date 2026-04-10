@@ -11,6 +11,7 @@
 #include <atomic>
 #include <chrono>
 #include <map>
+#include <source_location>
 #include <vector>
 
 namespace cta::log {
@@ -106,9 +107,16 @@ public:
    * @param priority the priority of the message as defined by the syslog API
    * @param msg      the message
    * @param params   optional parameters of the message
+   * @param location source location of where the log statement was executed
    */
-  void operator()(int priority, std::string_view msg, const std::vector<Param>& params) noexcept;
-  void operator()(int priority, std::string_view msg, std::vector<Param>&& params = std::vector<Param>()) noexcept;
+  void operator()(int priority,
+                  std::string_view msg,
+                  const std::vector<Param>& params,
+                  const std::source_location location = std::source_location::current()) noexcept;
+  void operator()(int priority,
+                  std::string_view msg,
+                  std::vector<Param>&& params = std::vector<Param>(),
+                  const std::source_location location = std::source_location::current()) noexcept;
 
   /**
    * Sets the log mask
@@ -246,9 +254,12 @@ protected:
    * @param priority the priority of the message as defined by the syslog API
    * @param msg      the message
    * @param params   parameters of the message, will select last value for each entry
+   * @param location source location of where the log statement was executed
    */
-  void
-  logInternal(int priority, std::string_view msg, const std::map<std::string, std::vector<Param>>& paramsMap) noexcept;
+  void logInternal(int priority,
+                   std::string_view msg,
+                   const std::map<std::string, std::vector<Param>>& paramsMap,
+                   const std::source_location location) noexcept;
 
   /**
    * Generates and returns the mapping between syslog priorities and their textual representations
@@ -287,9 +298,10 @@ private:
    * Concrete subclasses of the Logger class can decide whether or not to use message headers created by this method.
    *
    * @param timeStamp   Timestamp of the message
+   * @param location    Source location of where the log statement was executed
    * @return            Message header
    */
-  std::string createMsgHeader(const TimestampT& timeStamp) const;
+  std::string createMsgHeader(const TimestampT& timeStamp, const std::source_location location) const;
 
   /**
    * Creates and returns the body of a log message

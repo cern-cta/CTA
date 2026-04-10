@@ -9,6 +9,7 @@
 
 #include <ostream>
 #include <set>
+#include <source_location>
 #include <vector>
 
 namespace cta::log {
@@ -18,7 +19,7 @@ namespace cta::log {
  * container is ordered , by order of inclusion. There can be only one
  * parameter value per parameter name.
  */
-class LogContext {
+class LogContext final {
   friend std::ostream& operator<<(std::ostream& os, const LogContext& lc);
 
 public:
@@ -79,9 +80,12 @@ public:
    * All the parameters present in the context will be added to the log message.
    *
    * @param priority the priority of the message as defined by the syslog API.
+   * @param location source location of where the log statement was executed
    * @param msg the message.
    */
-  virtual void log(int priority, std::string_view msg) noexcept;
+  void log(int priority,
+           std::string_view msg,
+           const std::source_location location = std::source_location::current()) noexcept;
 
   /**
    * Logs a multiline backtrace as multiple entries in the logs, without
@@ -89,7 +93,7 @@ public:
    * @param priority the logging priority
    * @param backtrace the multi-line (\n separated) stack trace
    */
-  virtual void logBacktrace(int priority, std::string_view backtrace) noexcept;
+  void logBacktrace(int priority, std::string_view backtrace) noexcept;
 
   /**
    * Small introspection function to help in tests
