@@ -252,7 +252,7 @@ protected:
   void logInternal(int priority,
                    std::string_view msg,
                    const std::map<std::string, std::vector<Param>>& paramsMap,
-                   const std::source_location location = std::source_location::current()) noexcept;
+                   const std::source_location location) noexcept;
 
   /**
    * Generates and returns the mapping between syslog priorities and their textual representations
