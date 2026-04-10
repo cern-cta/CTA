@@ -177,7 +177,7 @@ private:
 
     void start() { cta::threading::Thread::start(); }
 
-    void wait() { cta::threading::Thread::wait(); }
+    void wait() const { cta::threading::Thread::wait(); }
 
   private:
     BackendRados& m_parentBackend;

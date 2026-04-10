@@ -31,7 +31,7 @@ public:
   void commit() override;
 
   /** Get the object's type (type is forced implicitly in other classes) */
-  serializers::ObjectType type();
+  serializers::ObjectType type() const;
 
   /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
    * Object is only used to manipulate existing objects */

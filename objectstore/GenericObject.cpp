@@ -24,7 +24,7 @@
 
 namespace cta::objectstore {
 
-serializers::ObjectType GenericObject::type() {
+serializers::ObjectType GenericObject::type() const {
   checkHeaderReadable();
   return m_header.type();
 }

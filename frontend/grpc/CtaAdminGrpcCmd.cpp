@@ -66,7 +66,7 @@ void CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Chan
 }
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string& config_file) {
+void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string& config_file) const {
   cta::common::Config config(config_file);
   const auto& request = parsedCmd.getRequest();
   // Validate the Protocol Buffer

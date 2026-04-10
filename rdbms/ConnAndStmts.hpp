@@ -48,7 +48,7 @@ struct ConnAndStmts {
    * @param rhs The object on the right hand side of the operator.
    * @return True if not equal.
    */
-  bool operator!=(const ConnAndStmts& rhs) { return !operator==(rhs); }
+  bool operator!=(const ConnAndStmts& rhs) const { return !operator==(rhs); }
 
   /**
    * The database connection.

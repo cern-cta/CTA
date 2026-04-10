@@ -168,7 +168,7 @@ protected:
    * @param The RMC return code.
    */
   template<typename T>
-  int rmcSendRecv(const T& rqstBody, std::ostringstream& rmcErrorStream) {
+  int rmcSendRecv(const T& rqstBody, std::ostringstream& rmcErrorStream) const {
     // Connect to rmcd and send request
     cta::SmartFd fd(connectToRmc());
     {
