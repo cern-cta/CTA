@@ -247,6 +247,7 @@ protected:
    * @param priority the priority of the message as defined by the syslog API
    * @param msg      the message
    * @param params   parameters of the message, will select last value for each entry
+   * @param location source location of where the log statement was executed
    */
   void logInternal(int priority,
                    std::string_view msg,
@@ -290,6 +291,7 @@ private:
    * Concrete subclasses of the Logger class can decide whether or not to use message headers created by this method.
    *
    * @param timeStamp   Timestamp of the message
+   * @param location    Source location of where the log statement was executed
    * @return            Message header
    */
   std::string createMsgHeader(const TimestampT& timeStamp, const std::source_location location) const;

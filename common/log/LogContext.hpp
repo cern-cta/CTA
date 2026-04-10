@@ -80,6 +80,7 @@ public:
    * All the parameters present in the context will be added to the log message.
    *
    * @param priority the priority of the message as defined by the syslog API.
+   * @param location source location of where the log statement was executed
    * @param msg the message.
    */
   virtual void log(int priority,
