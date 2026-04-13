@@ -3,6 +3,8 @@
 
 from pathlib import Path
 import pytest
+from ..helpers.connections.k8s_connection import K8sConnection
+from ..helpers.hosts.remote_host import RemoteHost
 
 
 #####################################################################################################################
@@ -13,14 +15,17 @@ import pytest
 @pytest.fixture(scope="session")
 def catalogue_from_version(project_json):
     supported_major_versions = project_json["supportedCatalogueVersions"]
-    current_major_version = project_json["catalogueVersion"]
-    return project_json["catalogueVersion"]
+    supported_major_versions.sort()
+    # Sorted from low to high, the "from" version is the lowest major version + ".0"
+    return str(supported_major_versions[0]) + ".0"
 
 
 @pytest.fixture(scope="session")
 def catalogue_to_version(project_json):
-    # prev_catalogue_schema_version=$(jq .supportedCatalogueVersions[] ${project_json_file} | grep -v $catalogue_schema_version | head -1)
-    return project_json["catalogueVersion"]
+    supported_major_versions = project_json["supportedCatalogueVersions"]
+    supported_major_versions.sort()
+    # Sorted from low to high, the "to" version is the highest major version + ".0"
+    return str(supported_major_versions[-1]) + ".0"
 
 
 #####################################################################################################################
@@ -30,7 +35,6 @@ def catalogue_to_version(project_json):
 
 def test_hosts_present_liquibase(env):
     assert len(env.cta_frontend) > 0
-    assert len(env.cta_cli) > 0
 
 
 def test_catalogue_version_is_from_version(env, catalogue_from_version):
@@ -40,22 +44,32 @@ def test_catalogue_version_is_from_version(env, catalogue_from_version):
     ), 'Catalogue version should be equal to the "from" version before any updates'
 
 
-def test_create_catalogue_updater(env, project_json, catalogue_from_version, catalogue_to_version):
+def test_init_catalogue_updater(env, request, project_json, catalogue_from_version, catalogue_to_version):
+    # Just to note, this entire method is hacky and should be rewritten at some point. Suggestions welcome...
+    # A few of the problems with it:
+    # - It makes plain kubectl calls and therefore assumes things are running on a Kubernetes cluster
+    # - It makes a call to helm, therefore requiring helm and assuming Kubernetes
+    # - It uses a hacky way to extract the namespace. If the --namespace flag ever changes for some reason, this will break
+    # - It has to create a configmap based on a file somewhere else in the repo
+    namespace = request.config.getoption("--namespace", default=None)
     # This is pretty disgusting but for now this will do
-    # If the configmap generation would be done through Helm the file in question needs to be within the chart
+    # If the configmap generation would need to be done through Helm the file in question needs to be within the chart
     defaultPlatform = project_json["dev"]["defaultPlatform"]
     yum_repos_file = (
         Path(__file__).resolve().parent / ".." / ".." / "docker" / defaultPlatform / "etc" / "yum.repos.d-internal"
     ).resolve()
-    env.execLocal(f"kubectl -n {NAMESPACE} create configmap yum.repos.d-config --from-file={yum_repos_file}")
+    env.execLocal(f"kubectl -n {namespace} create configmap yum.repos.d-config --from-file={yum_repos_file}")
 
+    print(f"Catalogue source version: {catalogue_from_version}")
+    print(f"Catalogue destination version: {catalogue_to_version}")
+    print("Install catalogue-updater chart...")
     env.execLocal(
-        f"helm install catalogue-updater ../helm/catalogue-updater --namespace {NAMESPACE} \
+        f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
                                                          --set catalogueSourceVersion={catalogue_from_version} \
                                                          --set catalogueDestinationVersion={catalogue_to_version} \
                                                          --wait --timeout 2m"
     )
-    env.catalogue_updater = ...
+    env.catalogue_updater = RemoteHost(K8sConnection(namespace, "liquibase-update", "liquibase-update"))
 
 
 def test_tag_liquibase(env):

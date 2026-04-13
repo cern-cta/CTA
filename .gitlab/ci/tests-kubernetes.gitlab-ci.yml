@@ -242,13 +242,12 @@ test-cta-tools:
 
 test-liquibase-update:
   extends:
-    - .kubernetes-test
+    - .kubernetes-test-python
   stage: system-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    TEST_SCRIPT: "tests/test_liquibase_update.sh"
-    EXTRA_ARGS: "--test-timeout 2400"
+    PYTESTS: "tests/catalogue_schema_update_test.py"
   before_script:
     - !reference [.kubernetes-test, before_script]
     - |

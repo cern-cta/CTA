@@ -62,8 +62,8 @@ def krb5_realm(request):
 
 @pytest.fixture(scope="session")
 def project_json():
-    project_json_path = (Path(__file__).resolve().parent / ".." / ".." / ".." / "project.json").resolve()
-    return json.load(project_json_path)
+    project_json_path = (Path(__file__).resolve().parent / ".." / ".." / "project.json").resolve()
+    return json.loads(project_json_path.read_text(encoding="utf-8"))
 
 
 #####################################################################################################################
