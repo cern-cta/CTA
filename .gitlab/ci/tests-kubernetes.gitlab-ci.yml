@@ -192,7 +192,7 @@ test-client-gfal2:
     - .kubernetes-test-python
   stage: system-test
   variables:
-    PYTESTS: "tests/eos_gfal_test.py"
+    PYTESTS: "tests/client_gfal_test.py"
     # While the telemetry is not actually consumed, we need to ensure enabling it doesn't break anything
     EXTRA_SPAWN_ARGS: "--local-telemetry"
 
