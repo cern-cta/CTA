@@ -182,18 +182,27 @@ def pytest_collection_modifyitems(config, items):
 
 
 def skip_tests_if_necessary(config, items, present_disk_instances):
+    """Modifies the items collection to skip tests with certain marks when relevant.
+    For example, all tests marked as EOS will be skipped if EOS is not found in the deployment.
+    """
     SKIP_REASONS = {
-        "eos": "Requires EOS, which was not found",
-        "dcache": "Requires dCache, which was not found",
-        "grpc_frontend": "Requires a gRPC CTA Frontend, which was not found",
+        "eos": "Requires EOS",
+        "dcache": "Requires dCache",
+        "grpc_frontend": "Requires a gRPC CTA Frontend",
     }
 
-    grpc_frontend_present: bool = any(frontend.is_grpc for frontend in config.env.cta_frontend)
+    skip_marks: list[str] = []
+
+    # Skip all disk-instances which we didn't find the deployment
     all_disk_instances: list[DiskInstanceImplementation] = [e for e in DiskInstanceImplementation]
-    skip_marks: list[str] = [e.label for e in (set(all_disk_instances) - set(present_disk_instances))]
+    skip_marks.extend([e.label for e in (set(all_disk_instances) - set(present_disk_instances))])
+
+    # Skip gRPC tests if there is no gRPC frontend
+    grpc_frontend_present: bool = any(frontend.is_grpc for frontend in config.env.cta_frontend)
     if not grpc_frontend_present:
         skip_marks.append("grpc_frontend")
-    # Skip all tests specific to disk instances not present
+
+    # Modify the items collection by adding the "skip" mark to the relevant tests
     for item in items:
         matched_marks = [mark for mark in skip_marks if mark in item.keywords]
         if matched_marks:

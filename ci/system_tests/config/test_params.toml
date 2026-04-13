@@ -8,7 +8,7 @@
   [tests.gfal]
 
     file_count    = 2000
-    file_size     = 10
+    file_size_kb  = 10
     process_count = 20
 
   [tests.stress]

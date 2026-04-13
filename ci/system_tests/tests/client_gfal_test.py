@@ -19,8 +19,7 @@ from pathlib import Path
 @dataclass
 class GfalParams:
     file_count: int
-    # File size in bytes
-    file_size: int
+    file_size_kb: int
     process_count: int
 
 
@@ -29,7 +28,7 @@ def gfal_params(request):
     gfal_config = request.config.test_config["tests"]["gfal"]
     return GfalParams(
         file_count=gfal_config["file_count"],
-        file_size=gfal_config["file_size"],
+        file_size_kb=gfal_config["file_size_kb"],
         process_count=gfal_config["process_count"],
     )
 
@@ -101,7 +100,7 @@ def test_setup_client_gfal_xrootd(env, gfal_params):
     archive_directory = env.eos_mgm[0].base_dir_path + "/cta/gfal"
     env.eos_client[0].exec("dnf install -y python3-gfal2-util gfal2-plugin-xrootd")
     env.eos_client[0].exec(
-        f"/root/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size} -p {gfal_params.process_count} -d {archive_directory} -r -c gfal2 -Z root"
+        f"/root/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {archive_directory} -r -c gfal2 -Z root"
     )
 
 
@@ -133,7 +132,7 @@ def test_setup_client_gfal_https(env, gfal_params):
     archive_directory = env.eos_mgm[0].base_dir_path + "/cta/gfal"
     env.eos_client[0].exec("dnf install -y gfal2-plugin-http")
     env.eos_client[0].exec(
-        f"/root/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size} -p {gfal_params.process_count} -d {archive_directory} -r -c gfal2 -Z https"
+        f"/root/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {archive_directory} -r -c gfal2 -Z https"
     )
     # Enable insecure certs for gfal2
     env.eos_client[0].exec("sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf")
