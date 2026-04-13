@@ -3,6 +3,7 @@
 
 import shutil
 import sys
+import json
 from pathlib import Path
 
 import pytest
@@ -47,7 +48,7 @@ def env(request):
 
 
 @pytest.fixture(scope="session")
-def error_whitelist(request):
+def error_whitelist():
     """Mutable whitelist that individual test cases can add errors to"""
     whitelist = set()  # mutable whitelist shared between all tests
     return whitelist
@@ -57,6 +58,12 @@ def error_whitelist(request):
 def krb5_realm(request):
     """Kerberos realm used in the tests"""
     return request.config.test_config["tests"]["krb5_realm"]
+
+
+@pytest.fixture(scope="session")
+def project_json():
+    project_json_path = (Path(__file__).resolve().parent / ".." / ".." / ".." / "project.json").resolve()
+    return json.load(project_json_path)
 
 
 #####################################################################################################################
