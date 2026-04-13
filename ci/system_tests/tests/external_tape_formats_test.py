@@ -2,6 +2,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import uuid
+import pytest
+
+#####################################################################################################################
+# Helpers
+#####################################################################################################################
+
+
+@pytest.fixture(scope="session")
+def drive_name(env):
+    return env.cta_taped[0].drive_name
+
+
+@pytest.fixture(scope="session")
+def drive_device(env):
+    return env.cta_taped[0].drive_device
+
 
 #####################################################################################################################
 # Tests
@@ -13,22 +29,24 @@ def test_hosts_present_external_tape_formats(env):
     assert len(env.cta_rmcd) > 0
 
 
-def test_read_osm_tape(env):
-    drive_name = env.cta_taped[0].drive_name
-    drive_device = env.cta_taped[0].drive_device
-    print(f"Using drive: {drive_name}, device: {drive_device}")
-
-    osm_dir = "/osm_mhvtl_" + str(uuid.uuid4())[:8]
-
-    # Download OSM sample tape
+def test_install_required(env):
     env.cta_rmcd[0].exec("dnf install -y git git-lfs")
-    env.cta_rmcd[0].exec("git lfs install --skip-repo")
-    env.cta_rmcd[0].exec(f"git clone https://gitlab.desy.de/mwai.karimi/osm-mhvtl.git {osm_dir}")
+    env.cta_taped[0].exec("dnf -y install cta-integrationtests")
 
+
+def test_load_tape(env):
     # Load tape in a tapedrive
     env.cta_rmcd[0].exec("mtx -f /dev/smc status")
     env.cta_rmcd[0].exec("mtx -f /dev/smc load 1 0")
     env.cta_rmcd[0].exec("mtx -f /dev/smc status")
+
+
+def test_read_osm_tape(env, drive_device):
+    osm_dir = "/osm_mhvtl_" + str(uuid.uuid4())[:8]
+
+    # Download OSM sample tape
+    env.cta_rmcd[0].exec("git lfs install --skip-repo")
+    env.cta_rmcd[0].exec(f"git clone https://gitlab.desy.de/mwai.karimi/osm-mhvtl.git {osm_dir}")
 
     # Get the device status where the tape is loaded and rewind it.
     env.cta_rmcd[0].exec(f"mt -f {drive_device} status")
@@ -43,12 +61,19 @@ def test_read_osm_tape(env):
     env.cta_rmcd[0].exec(f"dd if=/{osm_dir}/L08033/file1 of={drive_device} bs=262144 count=202")
     env.cta_rmcd[0].exec(f"dd if=/{osm_dir}/L08033/file2 of={drive_device} bs=262144 count=202")
 
+    # Clean up the clone
+    env.cta_rmcd[0].exec(f"rm -rf {osm_dir}")
+
     env.cta_rmcd[0].exec(f"mt -f {drive_device} rewind")
 
 
-def test_osm_reader(env):
-    drive_name = env.cta_taped[0].drive_name
-    drive_device = env.cta_taped[0].drive_device
+def test_osm_reader(env, drive_name, drive_device):
     print(f"Using drive: {drive_name}, device: {drive_device}")
-    env.cta_taped[0].exec("dnf -y install cta-integrationtests")
     env.cta_taped[0].exec(f"cta-osmReaderTest {drive_name} {drive_device}")
+
+
+def test_unload_tape(env):
+    # Unload the tape again
+    env.cta_rmcd[0].exec("mtx -f /dev/smc status")
+    env.cta_rmcd[0].exec("mtx -f /dev/smc unload 1 0")
+    env.cta_rmcd[0].exec("mtx -f /dev/smc status")
