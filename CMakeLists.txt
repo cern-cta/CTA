@@ -174,14 +174,10 @@ ELSE(DEFINED PackageOnly)
   # Pandocology (to create man pages from Markdown)
   include(cmake/Pandocology.cmake)
   add_subdirectory(eos_cta)
-
   add_subdirectory(eos_grpc_client)
-
-  add_subdirectory(tools)
   add_subdirectory(xroot_plugins)
   add_subdirectory(frontend/grpc)
   add_subdirectory(frontend/common)
-
   add_subdirectory(catalogue)
   add_subdirectory(common)
   add_subdirectory(disk)
@@ -193,12 +189,10 @@ ELSE(DEFINED PackageOnly)
 
   add_subdirectory(rdbms)
   add_subdirectory(scheduler)
-  add_subdirectory(tapeserver)
-
+  add_subdirectory(taped)
   add_subdirectory(maintd)
-
   add_subdirectory(statistics)
-
+  add_subdirectory(tools)
   add_subdirectory(cta-release)
 
   #Generate version information
@@ -233,9 +227,6 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
       ${PROJECT_NAME} ${PROJECT_NAME}.spec.in)
   endif (RPMTools_FOUND)
 endif (${COMPILE_PACKAGING} STREQUAL "1")
-
-#add_custom_target(test test/castorUnitTests
-#                    COMMENT "Not running the unit tests" VERBATIM)
 
 configure_file(tests/valgrind.suppr tests/valgrind.suppr COPYONLY)
 configure_file(tests/helgrind.suppr tests/helgrind.suppr COPYONLY)

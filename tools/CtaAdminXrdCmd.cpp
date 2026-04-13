@@ -4,7 +4,7 @@
 */
 
 #include "CtaFrontendApi.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <XrdSsiPbIStreamBuffer.hpp>
 #include <XrdSsiPbLog.hpp>

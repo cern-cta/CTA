@@ -1,0 +1,34 @@
+/*
+ * SPDX-FileCopyrightText: 2022 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#include "ReadSession.hpp"
+
+#include "Exceptions.hpp"
+#include "HeaderChecker.hpp"
+#include "Structures.hpp"
+
+#include <string>
+
+namespace castor::tape::tapeFile {
+
+ReadSession::ReadSession(tapeserver::drive::DriveInterface& drive,
+                         const tapeserver::daemon::VolumeInfo& volInfo,
+                         const bool useLbp)
+    : m_drive(drive),
+      m_vid(volInfo.vid),
+      m_useLbp(useLbp),
+      m_volInfo(volInfo) {
+  if (!m_vid.compare("")) {
+    throw cta::exception::InvalidArgument();
+  }
+
+  if (m_drive.isTapeBlank()) {
+    cta::exception::Exception ex;
+    ex.getMessage() << "[ReadSession::ReadSession()] - Tape is blank, cannot proceed with constructing the ReadSession";
+    throw ex;
+  }
+}
+
+}  // namespace castor::tape::tapeFile

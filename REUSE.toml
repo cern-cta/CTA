@@ -41,7 +41,7 @@ path = [
     "catalogue/rdbms_classes.pdf",
     "catalogue/rdbms_classes.pptx",
     "rdbms/cta_rdbms_class_diagram.svg",
-    "tapeserver/castor/tape/tapeserver/AUTHORS",
+    "taped/AUTHORS",
     "tests/parallelTestsMakefile.in",
     "tests/parallelTestsMakefile.local.in"
 ]

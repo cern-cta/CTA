@@ -1,0 +1,106 @@
+/*
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#pragma once
+
+#include "common/log/LogContext.hpp"
+
+#include <memory>
+
+namespace castor::tape::tapeserver::daemon {
+
+namespace detail {
+//nameholder
+struct Recall {};
+
+struct Migration {};
+
+// Enum describing the type of client. Some clients need batched reports,
+// some prefer reports file by file
+enum ReportBatching { ReportInBulk, ReportByFile };
+}  // namespace detail
+
+// Forward declaration to avoid circular inclusions.
+class TaskWatchDog;
+
+/**
+ * Utility class that should be inherited privately/protectedly
+ * the type PlaceHolder is either detail::Recall or detail::Migration
+ */
+template<class PlaceHolder>
+class ReportPackerInterface {
+public:
+  // Pass a reference to the watchdog for initial process reporting.
+  void setWatchdog(TaskWatchDog& wd) { m_watchdog = &wd; }
+
+protected:
+  virtual ~ReportPackerInterface() = default;
+
+  explicit ReportPackerInterface(const cta::log::LogContext& lc) : m_lc(lc) {}
+
+  /**
+   * Log a set of files independently of the success/failure
+   * @param c The set of files to log
+   * @param msg The message to be append at the end.
+   */
+  template<class C>
+  void logReport(const C& c, const std::string& msg) {
+    using cta::log::LogContext;
+    using cta::log::Param;
+    for (typename C::const_iterator it = c.begin(); it != c.end(); ++it) {
+      cta::log::ScopedParamContainer sp(m_lc);
+      sp.add("fileId", (*it)->fileid())
+        .add("NSFSEQ", (*it)->fseq())
+        .add("NSHOST", (*it)->nshost())
+        .add("NSFILETRANSACTIONID", (*it)->fileTransactionId());
+      m_lc.log(cta::log::INFO, msg);
+    }
+  }
+
+  /**
+   * Log a set of files independently of the success/failure
+   * @param c The set of files to log
+   * @param msg The message to be append at the end.
+   */
+  template<class C>
+  void logReportWithError(const C& c, const std::string& msg) {
+    using cta::log::LogContext;
+    using cta::log::Param;
+    for (typename C::const_iterator it = c.begin(); it != c.end(); ++it) {
+      cta::log::ScopedParamContainer sp(m_lc);
+      sp.add("fileId", (*it)->fileid())
+        .add("NSFSEQ", (*it)->fseq())
+        .add("NSHOST", (*it)->nshost())
+        .add("NSFILETRANSACTIONID", (*it)->fileTransactionId())
+        .add("ErrorMessage", (*it)->errorMessage());
+      m_lc.log(cta::log::INFO, msg);
+    }
+  }
+
+  /**
+   * The  log context, copied due to threads
+   */
+  cta::log::LogContext m_lc;
+
+  /**
+   * Define how we should report to the client (by file/in bulk).
+   */
+  enum detail::ReportBatching m_reportBatching = detail::ReportInBulk;
+
+public:
+  /**
+   * Turn off the packing of the reports by the report packer.
+   * This is used for recalls driven by read_tp.
+   */
+  virtual void disableBulk() { m_reportBatching = detail::ReportByFile; }
+
+  /**
+   * Pointer to the watchdog, so we can communicate communication errors
+   * and end of session results to the initial process
+   */
+  TaskWatchDog* m_watchdog = nullptr;
+};
+
+}  // namespace castor::tape::tapeserver::daemon

@@ -4,7 +4,7 @@
  */
 
 #include "common/config/SourcedParameter.hpp"
-#include "tapeserver/daemon/common/FetchReportOrFlushLimits.hpp"
+#include "taped/daemon/common/FetchReportOrFlushLimits.hpp"
 
 #include <gtest/gtest.h>
 

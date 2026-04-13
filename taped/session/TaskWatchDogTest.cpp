@@ -1,0 +1,130 @@
+/*
+ * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+
+#include "TaskWatchDog.hpp"
+
+#include "ReportPackerInterface.hpp"
+#include "TapeserverProxyMock.hpp"
+#include "common/log/StringLogger.hpp"
+#include "scheduler/TapeMountDummy.hpp"
+
+#include <gmock/gmock.h>
+#include <gtest/gtest.h>
+
+namespace unitTests {
+using namespace castor::tape;
+using ::testing::_;
+
+TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
+  const double reportPeriodSecs = 10;  // We wont report in practice
+  const double stuckPeriod = 0.01;
+  const double pollPeriod = 0.01;
+
+  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_WatchdogTestStuck", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
+  cta::TapeMountDummy dummyTapeMount;
+
+  tapeserver::daemon::RecallWatchDog
+    watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
+
+  watchdog.startThread();
+  usleep(100000);
+  watchdog.stopAndWaitThread();
+  //we dont tell the watchdog we are working on file,
+  //it should not report as being stuck
+  ASSERT_EQ(std::string::npos, log.getLog().find("No tape block movement for too long"));
+}
+
+TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
+  const double reportPeriodSecs = 10;  // We wont report in practice
+  const double stuckPeriod = 0.01;
+  const double pollPeriod = 0.01;
+
+  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_WatchdogTestStuck", cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
+  cta::TapeMountDummy dummyTapeMount;
+
+  // We will poll for a
+  tapeserver::daemon::MigrationWatchDog
+    watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
+
+  watchdog.startThread();
+  watchdog.notifyBeginNewJob(64, 64);
+  usleep(100000);
+  watchdog.stopAndWaitThread();
+  // This time the internal watchdog should have triggered
+  ASSERT_NE(std::string::npos, log.getLog().find("No tape block movement for too long"));
+}
+
+TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndDeleted) {
+  const double reportPeriodSecs = 10;  // We wont report in practice
+  const double stuckPeriod = 0.01;
+  const double pollPeriod = 0.01;
+
+  cta::log::StringLogger log("dummy",
+                             "castor_tape_tapeserver_daemon_DoNotReportParamsAddedAndDeleted",
+                             cta::log::DEBUG);
+  cta::log::LogContext lc(log);
+
+  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
+  cta::TapeMountDummy dummyTapeMount;
+
+  tapeserver::daemon::RecallWatchDog
+    watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
+
+  std::vector<cta::log::Param> paramsToAdd {
+    {"param1", 10},
+    {"param1", 11}, // Will override the first param1 entry
+    {"param2", 20},
+    {"param3", 30},
+    {"param3", 31}, // Will override the first param3 entry
+    {"param4", 40}
+  };
+
+  std::list<std::string> paramsToDelete {{"param0"}, {"param1"}, {"param2"}};
+
+  for (const auto& param : paramsToAdd) {
+    watchdog.addParameter(param);
+  }
+  for (const auto& param : paramsToDelete) {
+    watchdog.deleteParameter(param);
+  }
+
+  // Capture the parameters sent by TapedProxyMock with addLogParams() and deleteLogParams()
+  std::vector<cta::log::Param> capturedParamsToAdd;
+  std::vector<std::string> capturedParamsToDelete;
+
+  EXPECT_CALL(dummyInitialProcess, addLogParams(_)).WillOnce(testing::SaveArg<0>(&capturedParamsToAdd));
+  EXPECT_CALL(dummyInitialProcess, deleteLogParams(_)).WillOnce(testing::SaveArg<0>(&capturedParamsToDelete));
+
+  watchdog.startThread();
+  usleep(100000);
+  watchdog.stopAndWaitThread();
+
+  // Should only be adding "param3" (twice with value 30 and 31) and "param4" (once with value 40)
+  {
+    ASSERT_EQ(capturedParamsToAdd.size(), 2);
+    std::map<std::string, cta::log::Param> paramsToAddMap;
+    paramsToAddMap.emplace(capturedParamsToAdd[0].getName(), capturedParamsToAdd[0]);
+    paramsToAddMap.emplace(capturedParamsToAdd[1].getName(), capturedParamsToAdd[1]);
+    ASSERT_TRUE(paramsToAddMap.contains("param3"));
+    ASSERT_EQ(std::get<int64_t>(paramsToAddMap.at("param3").getValueVariant().value()), 31);
+    ASSERT_TRUE(paramsToAddMap.contains("param4"));
+    ASSERT_EQ(std::get<int64_t>(paramsToAddMap.at("param4").getValueVariant().value()), 40);
+  }
+
+  // Should only be adding "param0" (only one that was not added before)
+  {
+    ASSERT_EQ(capturedParamsToDelete.size(), 1);
+    const auto& paramA = capturedParamsToDelete[0];
+    ASSERT_EQ(paramA, "param0");
+  }
+}
+
+}  // namespace unitTests

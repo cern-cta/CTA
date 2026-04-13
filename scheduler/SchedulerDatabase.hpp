@@ -33,7 +33,7 @@
 #include "disk/DiskSystem.hpp"
 #include "rdbms/Rset.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "tapeserver/daemon/common/TapedConfiguration.hpp"
+#include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <limits>
 #include <list>

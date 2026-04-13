@@ -31,7 +31,7 @@
 #include "objectstore/Sorter.hpp"
 #include "scheduler/LogicalLibrary.hpp"
 #include "scheduler/RetrieveJob.hpp"
-#include "tapeserver/castor/tape/tapeserver/daemon/TapeSessionStats.hpp"
+#include "taped/session/TapeSessionStats.hpp"
 
 #include <algorithm>
 #include <bits/unique_ptr.h>

@@ -32,16 +32,16 @@ set (CTA_UNIT_TEST_LIBS
   ctardbmsunittests
   ctardbmswrapperunittests
   ctaschedulerunittests
-  ctatapeserverdaemonunittests
-  ctatapeserverdriveunittests
-  ctatapeserverfileunittests
-  ctatapeserverscsiunittests
+  ctatapedsessionunittests
+  ctatapeddriveunittests
+  ctatapedfileunittests
+  ctascsiunittests
   ctadiskunittests
   ctatapelabelunittests
   gtest
   gmock
   pthread
-  ctatapeserverraounittests)
+  ctatapedraounittests)
 
 if(NOT CTA_USE_PGSCHED)
   set (CTA_UNIT_TEST_LIBS ${CTA_UNIT_TEST_LIBS}
