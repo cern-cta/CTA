@@ -32,7 +32,7 @@ if [[ "${PIPESTATUS[0]}" -eq 0 ]]
 then
   echo "xrdcp command succeeded where it should have failed"
   exit 1
-elif [[ $(grep -ci "0-length" "$err_msg_file") -eq 0 ]]; then
+elif [[ $(grep -ci "0-length" "$err_msg_file") -eq 0 ]]
 then
   echo "xrdcp command failed, but with unexpected error: $(cat "${err_msg_file}")"
   exit 1

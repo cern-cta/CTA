@@ -25,7 +25,7 @@
   script:
     # image comes with sh instead of bash, so no bash syntax allowed
     - |
-      if [[ $CI_PIPELINE_SOURCE == "merge_request_event" ]]; then
+      if [ $CI_PIPELINE_SOURCE = "merge_request_event" ]; then
         EXTRA_BUILD_ARGS="$EXTRA_BUILD_ARGS --no-push-cache"
       fi
     - echo "Authenticating against repo"
