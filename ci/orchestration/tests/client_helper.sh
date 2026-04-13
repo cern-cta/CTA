@@ -186,7 +186,7 @@ wait_for_tape_state() {
 put_all_drives () {
 
   NEXT_STATE=$1
-  [[ "$1" == "UP" ]]; then
+  if [[ "$1" == "UP" ]]; then
     PREV_STATE="DOWN"
   else
     PREV_STATE="UP"
