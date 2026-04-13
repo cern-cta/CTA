@@ -108,7 +108,7 @@ wait_for_archive () {
     sleep 1
     let SECONDS_PASSED=SECONDS_PASSED+1
 
-    if [[ "${SECONDS_PASSED}" == "${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}" ]]; then
+    if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} ]]; then
       echo "$(date +%s) ERROR: Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for files to be archived to tape"
       exit 1
     fi
@@ -186,7 +186,11 @@ wait_for_tape_state() {
 put_all_drives () {
 
   NEXT_STATE=$1
-  [[ "$1" == "UP" ]] && [[ PREV_STATE == "DOWN" ]] || [[ ]]PREV_STATE == "UP" ]]
+  [[ "$1" == "UP" ]]; then
+    PREV_STATE="DOWN"
+  else
+    PREV_STATE="UP"
+  fi
   next_state=$(echo $NEXT_STATE | awk '{print tolower($0)}')
   prev_state=$(echo $PREV_STATE | awk '{print tolower($0)}')
 

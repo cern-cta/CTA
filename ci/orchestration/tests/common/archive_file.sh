@@ -48,7 +48,7 @@ while [[ $(eos root://${EOS_MGM_HOST} info /eos/ctaeos/cta/${TEST_FILE_NAME} | a
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if [[ "${SECONDS_PASSED}" == "${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}" ]]; then
+  if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} ]]; then
     echo "Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for file to be archived to tape"
     exit 1
   fi

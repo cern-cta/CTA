@@ -83,7 +83,7 @@ while [[ ${NB_FILES} -ne $(cat ${TEST_FILES_LIST} | xargs -iFILE_PATH eos root:/
   sleep 1
   let SECONDS_PASSED=SECONDS_PASSED+1
 
-  if [[ "${SECONDS_PASSED}" == "${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}" ]]; then
+  if [[ ${SECONDS_PASSED} -eq ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} ]]; then
     echo "ERROR: Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for files to be archived to tape"
     exit 1
   fi
