@@ -3,6 +3,7 @@
 
 import shutil
 import sys
+import json
 from pathlib import Path
 
 import pytest
@@ -57,6 +58,12 @@ def error_whitelist() -> set[str]:
 def krb5_realm(request) -> str:
     """Kerberos realm used in the tests"""
     return request.config.test_config["tests"]["krb5_realm"]
+
+
+@pytest.fixture(scope="session")
+def project_json():
+    project_json_path = (Path(__file__).resolve().parent / ".." / ".." / ".." / "project.json").resolve()
+    return json.load(project_json_path)
 
 
 #####################################################################################################################
