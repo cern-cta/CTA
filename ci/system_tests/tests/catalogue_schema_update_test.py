@@ -81,6 +81,14 @@ def test_init_catalogue_updater(
     # - It makes a call to helm, therefore requiring helm and assuming Kubernetes (again)
     # - It has to create a configmap based on a file somewhere else in the repo
 
+    # Cleanup first in case they already exist
+    try:
+        print("Cleaning up possible existing catalogue-updater resources")
+        env.execLocal(f"helm uninstall catalogue-updater --namespace {namespace}")
+        env.execLocal(f"kubectl -n {namespace} delete configmap yum.repos.d-config")
+    except Exception:
+        print("Nothing to clean up")
+
     # If the configmap generation would need to be done through Helm the file in question needs to be within the chart
     defaultPlatform = project_json["dev"]["defaultPlatform"]
     yum_repos_file = (
@@ -96,20 +104,12 @@ def test_init_catalogue_updater(
     if catalogue_schema_update_params.schema_checkout_ref:
         extraFlags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_update_params.schema_checkout_ref}'"
 
-    try:
-        env.execLocal(
-            f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
-                                                            --set catalogueSourceVersion={catalogue_from_version} \
-                                                            --set catalogueDestinationVersion={catalogue_to_version} \
-                                                            {extraFlags} --wait --timeout 2m"
-        )
-    except Exception:
-        # Clean up the install again, otherwise re-running the test will fail
-        env.execLocal(f"helm uninstall catalogue-updater --namespace {namespace}")
-        # Similarly, clean up the configmap
-        env.execLocal(f"kubectl -n {namespace} delete configmap yum.repos.d-config")
-        # And resurface the original error again
-        raise
+    env.execLocal(
+        f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
+                                                        --set catalogueSourceVersion={catalogue_from_version} \
+                                                        --set catalogueDestinationVersion={catalogue_to_version} \
+                                                        {extraFlags} --wait --timeout 2m"
+    )
 
 
 def test_tag_liquibase(catalogue_updater):
