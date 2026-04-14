@@ -126,7 +126,7 @@ def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
 
 @pytest.mark.eos
 @pytest.mark.asyncio
-async def test_generate_and_copy_files(eos_client, eos_mgm, stress_params):
+async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_params):
     archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
     # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
     mgm_ip = eos_mgm.get_ip()
