@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import shlex
 import socket
 import subprocess
 from functools import cached_property
@@ -25,7 +26,8 @@ class SSHConnection(RemoteConnection):
         return f"SSH connection {self.name}"
 
     def exec(self, command: str, capture_output=False, throw_on_failure=True) -> ExecResult:
-        full_command = f'ssh {self.user}@{self.host} "{command}"'
+        remote = f"{self.user}@{self.host}"
+        full_command = f"ssh {shlex.quote(remote)} {shlex.quote(command)}"
         result = subprocess.run(full_command, shell=True, capture_output=capture_output)
         success = result.returncode == 0
         if throw_on_failure and not success:
