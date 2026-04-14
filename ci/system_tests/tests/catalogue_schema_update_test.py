@@ -45,6 +45,11 @@ def namespace(request):
     return request.config.getoption("--namespace", default=None)
 
 
+@pytest.fixture(scope="class")
+def catalogue_updater(namespace):
+    return RemoteHost(K8sConnection(namespace, "liquibase-update", "liquibase-update"))
+
+
 #####################################################################################################################
 # Tests
 #####################################################################################################################
@@ -91,30 +96,36 @@ def test_init_catalogue_updater(
     if catalogue_schema_update_params.schema_checkout_ref:
         extraFlags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_update_params.schema_checkout_ref}'"
 
-    env.execLocal(
-        f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
-                                                         --set catalogueSourceVersion={catalogue_from_version} \
-                                                         --set catalogueDestinationVersion={catalogue_to_version} \
-                                                        {extraFlags} --wait --timeout 2m"
-    )
-    # Ensure we can exec into the container from here on out
-    env.catalogue_updater = RemoteHost(K8sConnection(namespace, "liquibase-update", "liquibase-update"))
+    try:
+        env.execLocal(
+            f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
+                                                            --set catalogueSourceVersion={catalogue_from_version} \
+                                                            --set catalogueDestinationVersion={catalogue_to_version} \
+                                                            {extraFlags} --wait --timeout 2m"
+        )
+    except Exception:
+        # Clean up the install again, otherwise re-running the test will fail
+        env.execLocal(f"helm uninstall catalogue-updater --namespace {namespace}")
+        # Similarly, clean up the configmap
+        env.execLocal(f"kubectl -n {namespace} delete configmap yum.repos.d-config")
+        # And resurface the original error again
+        raise
 
 
-def test_tag_liquibase(env):
-    env.catalogue_updater.exec('/launch_liquibase.sh "tag --tag=test_update"')
+def test_tag_liquibase(catalogue_updater):
+    catalogue_updater.exec('/launch_liquibase.sh "tag --tag=test_update"')
 
 
-def test_liquibase_update(env, catalogue_to_version):
-    env.catalogue_updater.exec("/launch_liquibase.sh update")
+def test_liquibase_update(env, catalogue_updater, catalogue_to_version):
+    catalogue_updater.exec("/launch_liquibase.sh update")
     # Now the current version should be equal to the "to" version
     assert (
         env.cta_frontend[0].get_schema_version() == catalogue_to_version
     ), 'Catalogue version should be equal to the "to" version after rollback'
 
 
-def test_liquibase_rollback(env, catalogue_from_version):
-    env.catalogue_updater.exec('/launch_liquibase.sh "rollback --tag=test_update"')
+def test_liquibase_rollback(env, catalogue_updater, catalogue_from_version):
+    catalogue_updater.exec('/launch_liquibase.sh "rollback --tag=test_update"')
     # Check the current version is equal to the "from" version again
     assert (
         env.cta_frontend[0].get_schema_version() == catalogue_from_version
@@ -122,6 +133,5 @@ def test_liquibase_rollback(env, catalogue_from_version):
 
 
 def test_cleanup_catalogue_updater(env, namespace):
-    env.catalogue_updater = None
     env.execLocal(f"helm uninstall catalogue-updater --namespace {namespace}")
     env.execLocal(f"kubectl -n {namespace} delete configmap yum.repos.d-config")
