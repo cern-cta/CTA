@@ -3,7 +3,7 @@
 
 image:
   repository: gitlab-registry.cern.ch/cta/eoscta-operations/registry/container_registry/cta-catalogue-updater
-  tag: "alma9-base.1"
+  tag: "alma9-base.2"
   pullPolicy: IfNotPresent
   pullSecrets:
     - reg-eoscta-operations
