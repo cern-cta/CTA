@@ -121,6 +121,7 @@
       when: never
     - when: on_success
   variables:
+    TEST_REPORT_FILE: "${CI_PROJECT_DIR}/report.xml"
     METRICS_FILE: "${CI_PROJECT_DIR}/metrics.txt"
     # Which tests to run
     PYTESTS:
@@ -164,6 +165,7 @@
                                   --no-cleanup
                                   --color=yes
                                   --showlocals
+                                  --junitxml=${TEST_REPORT_FILE}
                                   ${EXTRA_PYTEST_ARGS}
                                   2>&1 # Gitlab screws the ordering of stdout and stderr. See https://gitlab.com/gitlab-org/gitlab/-/issues/440824
     - test_end=$(date +%s)
@@ -187,6 +189,7 @@
       - pod_logs
     reports:
       metrics: $METRICS_FILE
+      junit: $TEST_REPORT_FILE
 
 # Tests
 
