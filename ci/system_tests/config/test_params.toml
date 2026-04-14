@@ -5,6 +5,12 @@
 
 krb5_realm = "TEST.CTA"
 
+[tests.catalogue_schema_update]
+
+# Leave empty to have it checkout the destination version (tag needs to exist)
+# Set it to a commit if the tag has not yet been created yet
+schema_checkout_ref = ""
+
 [tests.stress]
 
 # For the actual stress test we currently have 40 directories with 50.000 files each

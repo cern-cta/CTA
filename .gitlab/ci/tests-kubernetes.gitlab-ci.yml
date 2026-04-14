@@ -240,7 +240,7 @@ test-cta-tools:
     - when: manual
       allow_failure: true
 
-test-liquibase-update:
+test-catalogue-schema-update:
   extends:
     - .kubernetes-test-python
   stage: system-test
@@ -252,12 +252,14 @@ test-liquibase-update:
     - !reference [.kubernetes-test, before_script]
     - |
       if [[ "$(jq '.supportedCatalogueVersions | length' project.json)" -eq 1 ]]; then
-        echo "We are currently in a non-catalogue release. No update to test."
+        echo "We are not currently in a catalogue release. No update to test."
         exit 0
       fi
-    - PREV_CATALOGUE_VERSION=$(jq .supportedCatalogueVersions[] project.json | grep -v $(jq .catalogueVersion project.json) | head -1)
-    # Note that we need to do this here as the image-tag is not available yet in the variables part
-    - export EXTRA_SPAWN_ARGS="--catalogue-version ${PREV_CATALOGUE_VERSION}"
+    # The version we are upgrading from is the lowest supported version
+    - FROM_CATALOGUE_VERSION=$(jq '.supportedCatalogueVersions | sort[]' project.json | head -1)
+    # supportedCatalogueVersions are major versions. To spawn we need an exact version
+    # As minor versions are by definition backward compatible, we must always be able to upgrade from a .0 version
+    - export EXTRA_SPAWN_ARGS="--catalogue-version ${FROM_CATALOGUE_VERSION}.0"
 
 test-external-tape-formats:
   extends:
