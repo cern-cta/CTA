@@ -9,7 +9,7 @@ krb5_realm = "TEST.CTA"
 
 # Leave empty to have it checkout the destination version (tag needs to exist)
 # Set it to a commit if the tag has not yet been created yet
-schema_checkout_ref = ""
+schema_checkout_ref = "8fc2452b4fd00492c553ac18ae56440a0c57e25c"
 
 [tests.stress]
 
