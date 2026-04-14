@@ -30,8 +30,8 @@ class DiskClientHost(RemoteHost):
         append_uid: bool = False,
     ) -> str:
         if append_uid:
-            destination_path = destination_path + "_" + str(uuid.uuid4())[:8]
-        tmp_file_path = "/tmp/generated_archive_file_" + str(uuid.uuid4())[:8]
+            destination_path = f"{destination_path}_{str(uuid.uuid4())[:8]}"
+        tmp_file_path = f"/tmp/generated_archive_file_{str(uuid.uuid4())[:8]}"
         self.exec(f"dd if=/dev/urandom of={tmp_file_path}  bs=1M  count=1")
         self.archive_file(
             disk_instance_name, destination_path, tmp_file_path, wait=wait, wait_timeout_secs=wait_timeout_secs

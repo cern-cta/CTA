@@ -193,7 +193,7 @@ def skip_tests_if_necessary(config, items, present_disk_instances):
 
     skip_marks: list[str] = []
 
-    # Skip all disk-instances which we didn't find the deployment
+    # Skip all disk-instances which we didn't find in the deployment
     all_disk_instances: list[DiskInstanceImplementation] = [e for e in DiskInstanceImplementation]
     skip_marks.extend([e.label for e in (set(all_disk_instances) - set(present_disk_instances))])
 

@@ -45,11 +45,10 @@ def _read_report_file(eos_mgm, path):
 
 
 def _find_line(content, *filters):
-    lines = content.splitlines()
-    for line in lines:
-        if all(f in line for f in filters):
-            return line
-    return ""
+    return next(
+        (line for line in content.splitlines() if all(f in line for f in filters)),
+        ""
+    )
 
 
 #####################################################################################################################
