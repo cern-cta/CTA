@@ -185,15 +185,34 @@ test-cta-release:
     - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
     - dnf install --nogpgcheck -y cta-release
     - cta-versionlock apply
-    - dnf install --nogpgcheck -y cta-frontend
-    - dnf install --nogpgcheck -y cta-taped
-    - dnf install --nogpgcheck -y cta-rmcd
-    - dnf install --nogpgcheck -y cta-smc
-    - dnf install --nogpgcheck -y eos-server
-    - dnf install --nogpgcheck -y eos-client
+    - dnf install --nogpgcheck -y cta-cli
+                                  cta-admin-grpc
+                                  cta-catalogueutils
+                                  cta-frontend
+                                  cta-frontend-grpc
+                                  cta-maintd
+                                  cta-taped
+                                  cta-tape-label
+                                  cta-readtp
+                                  cta-rmcd
+                                  cta-smc
+                                  cta-lib-catalogue-oracle
+                                  eos-server
+                                  eos-client
     # Check that everything was installed properly
     - cta-versionlock --json check-installed > checkpkg-output.json
+    # Get some metrics on installed sizes
+    - rpm -qa --queryformat '%{NAME} %{SIZE}\n' \
+      | awk '$1 ~ /^cta-/ && $1 !~ /-debuginfo|-debugsource/ {
+          name=$1
+          gsub(/-/, "_", name)
+          printf "rpm_%s_installed_bytes %s\n", name, $2
+        }' \
+      | sort \
+      > metrics.txt
   artifacts:
     when: always
     paths:
       - checkpkg-output.json
+    reports:
+      metrics: metrics.txt
