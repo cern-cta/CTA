@@ -249,7 +249,7 @@ test-catalogue-schema-update:
   variables:
     PYTESTS: "tests/catalogue_schema_update_test.py"
   before_script:
-    - !reference [.kubernetes-test, before_script]
+    - !reference [.kubernetes-test-python, before_script]
     - |
       if [[ "$(jq '.supportedCatalogueVersions | length' project.json)" -eq 1 ]]; then
         echo "We are not currently in a catalogue release. No update to test."
