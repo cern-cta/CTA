@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import pytest
+from pathlib import Path
 
 #####################################################################################################################
 # Prerequisites
@@ -67,8 +68,7 @@ def test_add_users(env):
 
 @pytest.mark.eos
 def test_create_wf_directory(env):
-    base_dir: str = env.eos_mgm[0].base_dir_path
-    workflow_dir: str = f"{base_dir}/proc/cta/workflow"
+    workflow_dir: Path = env.eos_mgm[0].base_dir_path / "proc" / "cta" / "workflow"
     env.eos_mgm[0].exec(f"eos mkdir -p {workflow_dir}")
     env.eos_mgm[0].exec(f'eos attr set sys.workflow.sync::create.default="proto" {workflow_dir}')
     env.eos_mgm[0].exec(f'eos attr set sys.workflow.sync::closew.default="proto" {workflow_dir}')
@@ -87,13 +87,12 @@ def test_create_archive_directory(env) -> None:
     # For now storage class is hardcoded
     # Requires some improvements to the catalogue population
     cta_storage_class: str = "ctaStorageClass"
-    base_dir: str = env.eos_mgm[0].base_dir_path
-    archive_dir: str = f"{base_dir}/cta"
+    archive_dir: Path = env.eos_mgm[0].base_dir_path / "cta"
     # TODO: can we somehow pass values from one test to the next?
     # Ideally I don't want to redefine this workflow_dir all over the place
     # Because if you change this workflow_dir here (or in another place)
     # it will break tests if you don't change everything
-    workflow_dir: str = f"{base_dir}/proc/cta/workflow"
+    workflow_dir: Path = env.eos_mgm[0].base_dir_path / "proc" / "cta" / "workflow"
     env.eos_mgm[0].exec(f"eos mkdir -p {archive_dir}")
     # Must be writable by eosusers and powerusers
     # but as there is no sticky bit in eos, we need to remove deletion for non owner to eosusers members

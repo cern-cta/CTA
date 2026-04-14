@@ -5,6 +5,7 @@ import time
 from collections import deque
 from enum import Enum
 from functools import cached_property
+from pathlib import Path
 
 from ..remote_host import RemoteHost
 
@@ -30,7 +31,7 @@ class DiskInstanceHost(RemoteHost):
     def instance_name(self) -> str: ...
 
     @cached_property
-    def base_dir_path(self) -> str: ...
+    def base_dir_path(self) -> Path: ...
 
     def force_remove_directory(self, directory: str) -> None: ...
 

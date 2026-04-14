@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from functools import cached_property
+from pathlib import Path
 
 from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
 
@@ -19,12 +20,12 @@ class EosMgmHost(DiskInstanceHost):
         return self.execWithOutput("eos --json version | jq -r '.version[0].EOS_INSTANCE'")
 
     @cached_property
-    def base_dir_path(self) -> str:
-        return f"/eos/{self.instance_name}"
+    def base_dir_path(self) -> Path:
+        return Path("/eos") / self.instance_name
 
     @cached_property
-    def workflow_dir(self) -> str:
-        return f"{self.base_dir_path}/proc/cta/workflow"
+    def workflow_dir(self) -> Path:
+        return Path(self.base_dir_path) / "proc" / "cta" / "workflow"
 
     def force_remove_directory(self, directory: str) -> None:
         self.exec(f"eos rm -rF --no-confirmation {directory} 2>/dev/null || true")

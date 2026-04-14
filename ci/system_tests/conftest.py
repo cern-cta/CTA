@@ -40,20 +40,20 @@ def make_tests_look_pretty(request):
     terminal_writer.write(f"\n\n{separator}", cyan=True)
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def env(request):
     """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
     return request.config.env
 
 
 @pytest.fixture(scope="session")
-def error_whitelist(request):
+def error_whitelist():
     """Mutable whitelist that individual test cases can add errors to"""
     whitelist = set()  # mutable whitelist shared between all tests
     return whitelist
 
 
-@pytest.fixture()
+@pytest.fixture(scope="session")
 def krb5_realm(request):
     """Kerberos realm used in the tests"""
     return request.config.test_config["tests"]["krb5_realm"]
@@ -191,16 +191,15 @@ def skip_tests_if_necessary(config, items, present_disk_instances):
         "grpc_frontend": "Requires a gRPC CTA Frontend",
     }
 
-    skip_marks: list[str] = []
+    skip_marks: set[str] = set()
 
     # Skip all disk-instances which we didn't find in the deployment
-    all_disk_instances: list[DiskInstanceImplementation] = [e for e in DiskInstanceImplementation]
-    skip_marks.extend([e.label for e in (set(all_disk_instances) - set(present_disk_instances))])
+    skip_marks.update([e.label for e in (set(DiskInstanceImplementation) - set(present_disk_instances))])
 
     # Skip gRPC tests if there is no gRPC frontend
     grpc_frontend_present: bool = any(frontend.is_grpc for frontend in config.env.cta_frontend)
     if not grpc_frontend_present:
-        skip_marks.append("grpc_frontend")
+        skip_marks.add("grpc_frontend")
 
     # Modify the items collection by adding the "skip" mark to the relevant tests
     for item in items:
