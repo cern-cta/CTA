@@ -12,5 +12,8 @@ catalogueSourceVersion: ""
 
 catalogueDestinationVersion: ""
 
+# Extra flags to pass to the container
+extraFlags: ""
+
 # Set to true if you want to mount the configmap "yum.repos.d-config"
 customRepoFiles: true
