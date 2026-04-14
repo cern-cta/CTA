@@ -196,7 +196,7 @@ test-cta-release:
                                   cta-readtp
                                   cta-rmcd
                                   cta-smc
-                                  cta-lib-catalogue-oracle
+                                  cta-lib-catalogue-occi
                                   eos-server
                                   eos-client
     # Check that everything was installed properly
