@@ -12,7 +12,7 @@ class CtaCliHost(RemoteHost):
         super().__init__(conn)
 
     def get_drive_status(self, drive_name: str) -> str:
-        output = self.execWithOutput(f"cta-admin --json drive ls {drive_name}")
+        output = self.exec_with_output(f"cta-admin --json drive ls {drive_name}")
         drive_list = json.loads(output)
 
         if len(drive_list) == 0:
@@ -27,7 +27,7 @@ class CtaCliHost(RemoteHost):
     def wait_for_drive_status(self, drive_name: str, desired_status: str, timeout: int = 10) -> None:
         print(f"Waiting for drives {drive_name} to be {desired_status}")
         for _ in range(timeout):
-            drives_info = json.loads(self.execWithOutput(f"cta-admin --json drive ls '{drive_name}'"))
+            drives_info = json.loads(self.exec_with_output(f"cta-admin --json drive ls '{drive_name}'"))
             if not any(drive["driveStatus"] != desired_status for drive in drives_info):
                 print(f"Drives {drive_name} are set {desired_status}")
                 return
@@ -51,16 +51,16 @@ class CtaCliHost(RemoteHost):
         self.set_drive_down(".*", wait=wait)
 
     def list_all_tape_vids(self) -> list[str]:
-        output = self.execWithOutput("cta-admin --json tape ls --all")
+        output = self.exec_with_output("cta-admin --json tape ls --all")
         tape_list = json.loads(output)
         return [tape["vid"] for tape in tape_list]
 
     def file_exists_in_cta(self, vid, archive_id) -> bool:
         # Ls by --id is annoying because it will exit with a failure if the id does not exist
-        return int(self.execWithOutput(f"cta-admin --json tf ls -v {vid} | grep {archive_id} | wc -l")) == 1
+        return int(self.exec_with_output(f"cta-admin --json tf ls -v {vid} | grep {archive_id} | wc -l")) == 1
 
     def get_single_ls_item(self, ls_command, filter_func) -> dict:
-        ls_out = self.execWithOutput("cta-admin --json " + ls_command)
+        ls_out = self.exec_with_output("cta-admin --json " + ls_command)
         ls_json = json.loads(ls_out)
         # If only cta-admin was a well designed API we wouldn't have to do this...
         filtered_list = list(filter(filter_func, ls_json))

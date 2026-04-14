@@ -45,7 +45,7 @@ class TestEnv:
 
     # Mostly a convenience function that is arguably not very clean, but that is for later
     @staticmethod
-    def execLocal(command: str, capture_output=False, throw_on_failure=True):
+    def exec_local(command: str, capture_output=False, throw_on_failure=True):
         full_command = f'bash -c "{command}"'
         result = subprocess.run(full_command, shell=True, capture_output=capture_output)
         if throw_on_failure and result.returncode != 0:
@@ -100,7 +100,7 @@ class TestEnv:
         return connections
 
     @staticmethod
-    def fromNamespace(namespace: str):
+    def from_namespace(namespace: str):
         config.load_kube_config()
         core = client.CoreV1Api()
         try:
@@ -126,7 +126,7 @@ class TestEnv:
         )
 
     @staticmethod
-    def fromConfig(path: str):
+    def from_config(path: str):
         """
         Expects a path to a yaml file containing for each host how to connect. For example:
 
@@ -143,7 +143,7 @@ class TestEnv:
         try:
             import yaml
         except ImportError:
-            raise RuntimeError("Install pyyaml to use TestEnv.fromConfig()")
+            raise RuntimeError("Install pyyaml to use TestEnv.from_config()")
         with open(path, "r") as f:
             config = yaml.safe_load(f)
 

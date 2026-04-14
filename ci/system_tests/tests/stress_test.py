@@ -103,11 +103,11 @@ def test_setup_xrootd_client(eos_client):
     eos_client.install_xrootd_python()
 
     script_dir = Path(__file__).parent / "remote_scripts" / "eos_client"
-    eos_client.copyTo(
+    eos_client.copy_to(
         str(script_dir / "xrootd_archive.py"),
         "/root/xrootd_archive.py",
     )
-    eos_client.copyTo(
+    eos_client.copy_to(
         str(script_dir / "count_files.py"),
         "/root/count_files.py",
     )
@@ -190,7 +190,7 @@ async def test_generate_and_copy_files(eos_client, eos_mgm, stress_params):
                 count_procs=5,
             )
             # num_files_so_far = int(
-            #     mgm.execWithOutput(f"eos find -f {archive_directory} | wc -l")
+            #     mgm.exec_with_output(f"eos find -f {archive_directory} | wc -l")
             # )
             print(f"\t[copy monitor] {num_files_so_far}/{total_file_count} files created", flush=True)
 

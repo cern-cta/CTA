@@ -17,7 +17,7 @@ class EosMgmHost(DiskInstanceHost):
 
     @cached_property
     def instance_name(self) -> str:
-        return self.execWithOutput("eos --json version | jq -r '.version[0].EOS_INSTANCE'")
+        return self.exec_with_output("eos --json version | jq -r '.version[0].EOS_INSTANCE'")
 
     @cached_property
     def base_dir_path(self) -> Path:
@@ -32,10 +32,10 @@ class EosMgmHost(DiskInstanceHost):
 
     def list_entries_in_directory(self, directory: str) -> list[str]:
         # This function counts both files and subdirectories
-        return self.execWithOutput(f"eos ls {directory}").splitlines()
+        return self.exec_with_output(f"eos ls {directory}").splitlines()
 
     def list_subdirectories_in_directory(self, directory: str) -> list[str]:
-        output = self.execWithOutput(f"eos ls -l {directory}")
+        output = self.exec_with_output(f"eos ls -l {directory}")
         lines = output.splitlines()
 
         files = [line.split()[-1] for line in lines if line.startswith("d")]
@@ -43,7 +43,7 @@ class EosMgmHost(DiskInstanceHost):
         return files
 
     def list_files_in_directory(self, directory: str) -> list[str]:
-        output = self.execWithOutput(f"eos ls -l {directory}")
+        output = self.exec_with_output(f"eos ls -l {directory}")
         lines = output.splitlines()
 
         files = [line.split()[-1] for line in lines if line.startswith("-")]
@@ -52,10 +52,10 @@ class EosMgmHost(DiskInstanceHost):
 
     def num_files_in_directory(self, directory: str) -> int:
         # Note that for now this also counts subdirectories
-        return int(self.execWithOutput(f"eos ls {directory} | wc -l"))
+        return int(self.exec_with_output(f"eos ls {directory} | wc -l"))
 
     def num_files_on_tape_only(self, directory: str) -> int:
-        return int(self.execWithOutput(f'eos ls {directory} -y | grep "d0::t1" | wc -l'))
+        return int(self.exec_with_output(f'eos ls {directory} -y | grep "d0::t1" | wc -l'))
 
     def num_files_on_disk_only(self, directory: str) -> int:
-        return int(self.execWithOutput(f'eos ls {directory} -y | grep "d1::t0" | wc -l'))
+        return int(self.exec_with_output(f'eos ls {directory} -y | grep "d1::t0" | wc -l'))

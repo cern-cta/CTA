@@ -60,8 +60,8 @@ def test_add_users(env):
     env.eos_mgm[0].exec("useradd --uid 13002 --gid 1300 ctaadmin2", throw_on_failure=False)
     env.eos_mgm[0].exec("useradd --uid 14001 --gid 1400 eosadmin1", throw_on_failure=False)
     env.eos_mgm[0].exec("useradd --uid 14002 --gid 1400 eosadmin2", throw_on_failure=False)
-    eosadmin1_id = env.eos_mgm[0].execWithOutput("id -u eosadmin1")
-    eosadmin2_id = env.eos_mgm[0].execWithOutput("id -u eosadmin2")
+    eosadmin1_id = env.eos_mgm[0].exec_with_output("id -u eosadmin1")
+    eosadmin2_id = env.eos_mgm[0].exec_with_output("id -u eosadmin2")
     env.eos_mgm[0].exec(f"eos vid set membership {eosadmin1_id} +sudo")
     env.eos_mgm[0].exec(f"eos vid set membership {eosadmin2_id} +sudo")
 

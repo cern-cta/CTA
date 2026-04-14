@@ -82,7 +82,7 @@ class K8sConnection(RemoteConnection):
 
         return ExecResult(stdout=stdout, stderr=stderr, success=success)
 
-    def copyTo(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
+    def copy_to(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
         # TODO: replace these kubectl calls so that we rely only on the SDK
         cmd = f"kubectl cp {src_path} {self.namespace}/{self.pod}:{dst_path} -c {self.container}"
         result = subprocess.run(cmd, shell=True)
@@ -91,7 +91,7 @@ class K8sConnection(RemoteConnection):
         if permissions:
             self.exec(f"chmod -R {permissions} {dst_path}")
 
-    def copyFrom(self, src_path: str, dst_path: str, throw_on_failure=True) -> None:
+    def copy_from(self, src_path: str, dst_path: str, throw_on_failure=True) -> None:
         cmd = f"kubectl cp {self.namespace}/{self.pod}:{src_path} {dst_path} -c {self.container}"
         result = subprocess.run(cmd, shell=True)
         if throw_on_failure and result.returncode != 0:

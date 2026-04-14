@@ -78,9 +78,9 @@ def create_test_env_from_commandline_options(config):
 
     if connection_config is None:
         # No connection configuration provided, so assume everything is running in a cluster
-        return TestEnv.fromNamespace(namespace)
+        return TestEnv.from_namespace(namespace)
     else:
-        return TestEnv.fromConfig(connection_config)
+        return TestEnv.from_config(connection_config)
 
 
 def pytest_addoption(parser):

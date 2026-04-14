@@ -25,7 +25,7 @@ class RemoteHost:
     def exec(self, command: str, capture_output=False, throw_on_failure=True) -> ExecResult:
         return self.conn.exec(command, capture_output=capture_output, throw_on_failure=throw_on_failure)
 
-    def execWithOutput(self, command: str, throw_on_failure=True) -> str:
+    def exec_with_output(self, command: str, throw_on_failure=True) -> str:
         return self.conn.exec(command, capture_output=True, throw_on_failure=throw_on_failure).stdout.strip()
 
     def exec_async(self, command: str, throw_on_failure=True) -> asyncio.Future[ExecResult]:
@@ -42,11 +42,11 @@ class RemoteHost:
             throw_on_failure,
         )
 
-    def copyTo(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
-        return self.conn.copyTo(src_path, dst_path, throw_on_failure=throw_on_failure, permissions=permissions)
+    def copy_to(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
+        return self.conn.copy_to(src_path, dst_path, throw_on_failure=throw_on_failure, permissions=permissions)
 
-    def copyFrom(self, src_path: str, dst_path: str, throw_on_failure=True) -> None:
-        return self.conn.copyFrom(src_path, dst_path, throw_on_failure=throw_on_failure)
+    def copy_from(self, src_path: str, dst_path: str, throw_on_failure=True) -> None:
+        return self.conn.copy_from(src_path, dst_path, throw_on_failure=throw_on_failure)
 
     def restart(self, wait_for_restart=True, throw_on_failure=True) -> None:
         print(f"Restarting {self.name}...")

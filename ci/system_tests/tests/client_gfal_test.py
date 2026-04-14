@@ -69,13 +69,13 @@ def test_hosts_present_client_gfal(env):
 def test_copy_scripts(eos_client):
     remote_scripts_dir = Path(__file__).parent / "remote_scripts"
     eos_client_script_dir = remote_scripts_dir / "eos_client"
-    eos_client.copyTo(str(eos_client_script_dir / "client_setup.sh"), "/root/", permissions="+x")
-    eos_client.copyTo(str(eos_client_script_dir / "client_helper.sh"), "/root/", permissions="+x")
-    eos_client.copyTo(str(eos_client_script_dir / "cli_calls.sh"), "/root/", permissions="+x")
-    eos_client.copyTo(str(eos_client_script_dir / "test_archive.sh"), "/root/", permissions="+x")
-    eos_client.copyTo(str(eos_client_script_dir / "test_retrieve.sh"), "/root/", permissions="+x")
-    eos_client.copyTo(str(eos_client_script_dir / "test_evict.sh"), "/root/", permissions="+x")
-    eos_client.copyTo(str(eos_client_script_dir / "test_delete.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "client_setup.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "client_helper.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "cli_calls.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_archive.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_retrieve.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_evict.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_delete.sh"), "/root/", permissions="+x")
 
 
 # For now only the "glue" has been migrated to Python. All the scripts invoked in the tests below still need to be migrated at a later point in time
@@ -178,7 +178,7 @@ def test_gfal_activity(eos_client, eos_mgm):
     eos_client.wait_for_file_archival(disk_instance_name, invalid_instance_file)
 
     # Query .well-known tape rest api endpoint to get the sitename
-    site_name = eos_client.execWithOutput(
+    site_name = eos_client.exec_with_output(
         f"curl --insecure https://{disk_instance_name}:8443/.well-known/wlcg-tape-rest-api 2>/dev/null | jq -r .sitename"
     )
     print(f"Site name: {site_name}")
@@ -187,7 +187,7 @@ def test_gfal_activity(eos_client, eos_mgm):
     TOKEN_TIMEOUT = 604800
     now = int(time.time())
     later = now + TOKEN_TIMEOUT
-    token_eospower1 = eos_client.execWithOutput(
+    token_eospower1 = eos_client.exec_with_output(
         f". /root/client_env && eosadmin_eos root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires \"{later}\" --owner poweruser1 --group powerusers --permission prwx"
     )
 
@@ -222,7 +222,7 @@ def test_gfal_activity(eos_client, eos_mgm):
     print(f"Report file: {report_file}")
 
     # Arguably not the most efficient. If this becomes a problem, just replace by grep
-    content = eos_mgm.execWithOutput(f"cat {report_file}")
+    content = eos_mgm.exec_with_output(f"cat {report_file}")
 
     # Check that activity is set for staging of file with valid instance name
     valid_line = _find_line(content, "event=stage", valid_instance_file)
@@ -264,7 +264,7 @@ def test_xrootd_activity(eos_client, eos_mgm):
     # Check activity is set for XRootD staging request through xrdfs
     report_file = _get_report_file_path()
     print(f"Report file: {report_file}")
-    content = eos_mgm.execWithOutput(f"cat {report_file}")
+    content = eos_mgm.exec_with_output(f"cat {report_file}")
 
     xrd_line = _find_line(content, "event=stage", "XRootD_Act")
 
