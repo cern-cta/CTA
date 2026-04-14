@@ -40,21 +40,21 @@ def make_tests_look_pretty(request):
     terminal_writer.write(f"\n\n{separator}", cyan=True)
 
 
-@pytest.fixture(scope="session", autouse=True)
-def env(request):
+@pytest.fixture(scope="session")
+def env(request) -> TestEnv:
     """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
     return request.config.env
 
 
 @pytest.fixture(scope="session")
-def error_whitelist(request):
+def error_whitelist() -> set[str]:
     """Mutable whitelist that individual test cases can add errors to"""
     whitelist = set()  # mutable whitelist shared between all tests
     return whitelist
 
 
-@pytest.fixture()
-def krb5_realm(request):
+@pytest.fixture(scope="session")
+def krb5_realm(request) -> str:
     """Kerberos realm used in the tests"""
     return request.config.test_config["tests"]["krb5_realm"]
 
@@ -78,9 +78,9 @@ def create_test_env_from_commandline_options(config):
 
     if connection_config is None:
         # No connection configuration provided, so assume everything is running in a cluster
-        return TestEnv.fromNamespace(namespace)
+        return TestEnv.from_namespace(namespace)
     else:
-        return TestEnv.fromConfig(connection_config)
+        return TestEnv.from_config(connection_config)
 
 
 def pytest_addoption(parser):
@@ -160,7 +160,6 @@ def pytest_collection_modifyitems(config, items):
     # Now figure out which disk instance are present in the test setup, so that we can skip
     # any marked tests for disk instances not in our environment
     present_disk_instances: list[DiskInstanceImplementation] = [di.implementation for di in config.env.disk_instance]
-    grpc_frontend_present: bool = any(frontend.is_grpc for frontend in config.env.cta_frontend)
 
     if not config.getoption("--no-setup"):
         add_test_into_existing_collection("tests/setup/setup_cta_test.py", items, prepend=True)
@@ -179,13 +178,32 @@ def pytest_collection_modifyitems(config, items):
         if DiskInstanceImplementation.DCACHE in present_disk_instances:
             add_test_into_existing_collection("tests/cleanup/cleanup_dcache_test.py", items, prepend=prepend)
 
-    all_disk_instances: list[DiskInstanceImplementation] = [e for e in DiskInstanceImplementation]
-    skip_marks: list[str] = [e.label for e in (set(all_disk_instances) - set(present_disk_instances))]
+    skip_tests_if_necessary(config, items, present_disk_instances=present_disk_instances)
+
+
+def skip_tests_if_necessary(config, items, present_disk_instances):
+    """Modifies the items collection to skip tests with certain marks when relevant.
+    For example, all tests marked as EOS will be skipped if EOS is not found in the deployment.
+    """
+    SKIP_REASONS = {
+        "eos": "Requires EOS",
+        "dcache": "Requires dCache",
+        "grpc_frontend": "Requires a gRPC CTA Frontend",
+    }
+
+    skip_marks: set[str] = set()
+
+    # Skip all disk-instances which we didn't find in the deployment
+    skip_marks.update([e.label for e in (set(DiskInstanceImplementation) - set(present_disk_instances))])
+
+    # Skip gRPC tests if there is no gRPC frontend
+    grpc_frontend_present: bool = any(frontend.is_grpc for frontend in config.env.cta_frontend)
     if not grpc_frontend_present:
-        skip_marks.append("grpc_frontend")
-    # Skip all tests specific to disk instances not present
+        skip_marks.add("grpc_frontend")
+
+    # Modify the items collection by adding the "skip" mark to the relevant tests
     for item in items:
-        if any(mark in item.keywords for mark in skip_marks):
-            item.add_marker(
-                pytest.mark.skip(reason="Skipping test because the disk instance required for this test is not present")
-            )
+        matched_marks = [mark for mark in skip_marks if mark in item.keywords]
+        if matched_marks:
+            reasons = [SKIP_REASONS[m] for m in matched_marks]
+            item.add_marker(pytest.mark.skip(reason="; ".join(reasons)))

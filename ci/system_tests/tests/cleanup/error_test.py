@@ -10,7 +10,7 @@ def test_no_coredumps(env):
     hosts = env.disk_client + env.cta_cli + env.cta_frontend + env.cta_taped + env.cta_rmcd
     total_core_dumps_found = 0
     for host in hosts:
-        core_dump_files = host.execWithOutput("find /var/log/tmp/ -type f -name '*.core' 2>/dev/null").splitlines()
+        core_dump_files = host.exec_with_output("find /var/log/tmp/ -type f -name '*.core' 2>/dev/null").splitlines()
         num_core_dumps = len(core_dump_files)
         if num_core_dumps > 0:
             total_core_dumps_found += num_core_dumps
@@ -28,7 +28,7 @@ def test_no_uncaught_exceptions(env, error_whitelist):
     for host in hosts:
         # collect logs
         cmd = f"""grep -aE '\\"log_level\\": *\\"(ERROR|CRITICAL)\\"' {host.log_file_location} || true"""
-        output = host.execWithOutput(cmd).splitlines()
+        output = host.exec_with_output(cmd).splitlines()
         if not output:
             # Nothing found, happy :D
             continue

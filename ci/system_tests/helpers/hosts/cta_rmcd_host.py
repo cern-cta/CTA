@@ -18,14 +18,14 @@ class CtaRmcdHost(RemoteHost):
 
     @cached_property
     def library_device(self) -> str:
-        device: str = self.execWithOutput("printenv LIBRARY_DEVICE")
+        device: str = self.exec_with_output("printenv LIBRARY_DEVICE")
         if not device.startswith("/dev/"):
             device = "/dev/" + device
         return device
 
     def list_tapes_in_library(self) -> set[str]:
         volume_tags: set[str] = set()
-        output: list[str] = self.execWithOutput(f"mtx -f {self.library_device} status").splitlines()
+        output: list[str] = self.exec_with_output(f"mtx -f {self.library_device} status").splitlines()
         # Extract tape VIDs
         for line in output:
             if "Storage Element" in line and "Full" in line:
@@ -36,7 +36,7 @@ class CtaRmcdHost(RemoteHost):
 
     def list_loaded_drives(self) -> List[Tuple[int, int]]:
         """Retrieves a list of loaded drives and their corresponding slots for the library device associated with this ctarmcd host."""
-        status_output = self.execWithOutput(f"mtx -f {self.library_device} status").splitlines()
+        status_output = self.exec_with_output(f"mtx -f {self.library_device} status").splitlines()
         loaded_drives = []
 
         for line in status_output:

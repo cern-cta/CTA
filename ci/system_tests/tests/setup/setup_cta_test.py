@@ -26,7 +26,7 @@ def test_hosts_present_cta_setup(krb5_realm, env):
 
 def test_copy_scripts_to_ctacli(env):
     for cta_cli in env.cta_cli:
-        cta_cli.copyTo("tests/remote_scripts/cta_cli/", "/test", permissions="+x")
+        cta_cli.copy_to("tests/remote_scripts/cta_cli/", "/test", permissions="+x")
 
 
 #####################################################################################################################

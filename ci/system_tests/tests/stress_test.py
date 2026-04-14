@@ -7,10 +7,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..helpers.hosts import CtaCliHost, EosClientHost, EosMgmHost
 import pytest
-
-from ..helpers.hosts.disk.disk_instance_host import DiskInstanceHost
-from ..helpers.hosts.disk.eos_client_host import EosClientHost
 
 
 @dataclass
@@ -48,7 +46,7 @@ class StressParams:
             raise ValueError(f"num_files_per_dir too high: {self.num_files_per_dir}, max allowed value is 100000")
 
 
-@pytest.fixture
+@pytest.fixture(scope="class")
 def stress_params(request):
     stress_config = request.config.test_config["tests"]["stress"]
     prequeue_config = stress_config["prequeue"]
@@ -72,6 +70,21 @@ def stress_params(request):
     )
 
 
+@pytest.fixture
+def cta_cli(env) -> CtaCliHost:
+    return env.cta_cli[0]
+
+
+@pytest.fixture
+def eos_client(env) -> EosClientHost:
+    return env.eos_client[0]
+
+
+@pytest.fixture
+def eos_mgm(env) -> EosMgmHost:
+    return env.eos_mgm[0]
+
+
 #####################################################################################################################
 # Tests
 #####################################################################################################################
@@ -86,47 +99,41 @@ def test_hosts_present_stress(env):
 
 
 @pytest.mark.eos
-def test_setup_xrootd_client(env):
+def test_setup_xrootd_client(eos_client):
     """Install XRootD Python bindings and deploy scripts to the client pod."""
-    eos_client: EosClientHost = env.eos_client[0]
     eos_client.install_xrootd_python()
 
     script_dir = Path(__file__).parent / "remote_scripts" / "eos_client"
-    eos_client.copyTo(
+    eos_client.copy_to(
         str(script_dir / "xrootd_archive.py"),
         "/root/xrootd_archive.py",
     )
-    eos_client.copyTo(
+    eos_client.copy_to(
         str(script_dir / "count_files.py"),
         "/root/count_files.py",
     )
 
 
 @pytest.mark.eos
-def test_update_setup_for_max_powerrrr(env):
+def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
     num_drives: int = len(env.cta_taped)
-    env.cta_cli[0].exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
-    env.cta_cli[0].exec(
+    cta_cli.exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
+    cta_cli.exec(
         'cta-admin mp ch --name ctasystest --minarchiverequestage 100 --minretrieverequestage 100 --comment "Longer min ages"'
     )
-    env.eos_mgm[0].exec("eos fs config 1 scaninterval=0")
+    eos_mgm.exec("eos fs config 1 scaninterval=0")
 
 
 @pytest.mark.eos
 @pytest.mark.asyncio
-async def test_generate_and_copy_files(env, stress_params):
-    disk_instance: DiskInstanceHost = env.disk_instance[0]
-    archive_directory = env.disk_instance[0].base_dir_path + "/cta/stress"
-    # For now this is an eos client (hence we mark all methods here as such)
-    # We should factor out all the exec() into dedicated methods for disk_client_host.py
-    eos_client: EosClientHost = env.eos_client[0]
-
+async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_params):
+    archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
     # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
-    mgm_ip = env.eos_mgm[0].get_ip()
+    mgm_ip = eos_mgm.get_ip()
 
     # Create an archive directory on eos
     print(f"Cleaning up previous archive directory: {archive_directory}")
-    disk_instance.force_remove_directory(archive_directory)
+    eos_mgm.force_remove_directory(archive_directory)
     eos_client.exec(f"eos root://{mgm_ip} mkdir {archive_directory}")
 
     total_file_count = stress_params.num_files_per_dir * stress_params.num_dirs
@@ -145,9 +152,9 @@ async def test_generate_and_copy_files(env, stress_params):
     if stress_params.prequeue.enabled:
         # Put drives down first — we queue archive jobs and only put drives up
         # after enough files have been written, to avoid the drives outpacing the queueing
-        env.cta_cli[0].set_all_drives_down()
+        cta_cli.set_all_drives_down()
     else:
-        env.cta_cli[0].set_all_drives_up()
+        cta_cli.set_all_drives_up()
 
     # Use persistent XRootD Python client for high throughput on many small files
     # The remote script (xrootd_archive.py) runs inside the client pod and uses
@@ -184,7 +191,7 @@ async def test_generate_and_copy_files(env, stress_params):
                 count_procs=5,
             )
             # num_files_so_far = int(
-            #     mgm.execWithOutput(f"eos find -f {archive_directory} | wc -l")
+            #     mgm.exec_with_output(f"eos find -f {archive_directory} | wc -l")
             # )
             print(f"\t[copy monitor] {num_files_so_far}/{total_file_count} files created", flush=True)
 
@@ -195,11 +202,11 @@ async def test_generate_and_copy_files(env, stress_params):
                         flush=True,
                     )
                     # do not wait for status to be UP as drives will immediately start TRANSFERING
-                    env.cta_cli[0].set_all_drives_up(wait=False)
+                    cta_cli.set_all_drives_up(wait=False)
                     drives_up = True
                 elif time.time() - timer_start > stress_params.prequeue.timeout_to_put_drives_up_sec:
                     print("\tTimeout reached — putting drives UP", flush=True)
-                    env.cta_cli[0].set_all_drives_up(wait=False)
+                    cta_cli.set_all_drives_up(wait=False)
                     drives_up = True
 
             sleep_time = (
@@ -218,7 +225,7 @@ async def test_generate_and_copy_files(env, stress_params):
     # If archive finished before threshold was reached, still put drives up
     if stress_params.prequeue.enabled and not drives_up:
         print("\tDisregarding drive-up threshold as it is larger than total files — putting drives UP now")
-        env.cta_cli[0].set_all_drives_up(wait=False)
+        cta_cli.set_all_drives_up(wait=False)
 
     timer_end = time.time()
 
@@ -255,11 +262,10 @@ async def test_generate_and_copy_files(env, stress_params):
 # After everything has been moved, wait for the archival to complete
 # We execute this directly on the mgm to bypass some networking between pods (should be negligible though)
 @pytest.mark.eos
-def test_wait_for_archival(env, stress_params):
-    archive_directory = env.disk_instance[0].base_dir_path + "/cta/stress"
-    disk_instance: DiskInstanceHost = env.disk_instance[0]
+def test_wait_for_archival(eos_mgm, stress_params):
+    archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
 
-    num_missing_files, loss_percent = disk_instance.wait_for_archival_in_directory(
+    num_missing_files, loss_percent = eos_mgm.wait_for_archival_in_directory(
         archive_dir_path=archive_directory,
         check_archive_interval_sec=stress_params.check_archive_interval_sec,
         max_no_progress_intervals=stress_params.max_no_progress_intervals,

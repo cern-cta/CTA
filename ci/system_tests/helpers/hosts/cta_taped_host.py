@@ -16,18 +16,18 @@ class CtaTapedHost(RemoteHost):
 
     @cached_property
     def drive_name(self) -> str:
-        return self.execWithOutput("printenv DRIVE_NAME")
+        return self.exec_with_output("printenv DRIVE_NAME")
 
     @cached_property
     def drive_device(self) -> str:
-        device: str = self.execWithOutput("printenv DRIVE_DEVICE")
+        device: str = self.exec_with_output("printenv DRIVE_DEVICE")
         if not device.startswith("/dev/"):
             device = "/dev/" + device
         return device
 
     @cached_property
     def library_device(self) -> str:
-        device: str = self.execWithOutput("printenv LIBRARY_DEVICE")
+        device: str = self.exec_with_output("printenv LIBRARY_DEVICE")
         if not device.startswith("/dev/"):
             device = "/dev/" + device
         return device
