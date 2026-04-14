@@ -4,28 +4,30 @@
 import uuid
 import pytest
 
+from ..helpers.hosts import CtaRmcdHost, CtaTapedHost
+
 #####################################################################################################################
 # Helpers
 #####################################################################################################################
 
 
 @pytest.fixture(scope="session")
-def cta_rmcd(env):
+def cta_rmcd(env) -> CtaRmcdHost:
     return env.cta_rmcd[0]
 
 
 @pytest.fixture(scope="session")
-def cta_taped(env):
+def cta_taped(env) -> CtaTapedHost:
     return env.cta_taped[0]
 
 
 @pytest.fixture(scope="session")
-def drive_name(cta_taped):
+def drive_name(cta_taped) -> str:
     return cta_taped.drive_name
 
 
 @pytest.fixture(scope="session")
-def drive_device(cta_taped):
+def drive_device(cta_taped) -> str:
     return cta_taped.drive_device
 
 

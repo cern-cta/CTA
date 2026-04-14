@@ -19,6 +19,8 @@ from ..helpers.utils import (
     canonicalize,
 )
 
+from ..helpers.hosts import CtaCliHost, CtaTapedHost, DiskClientHost, DiskInstanceHost
+
 # NOTE: these tests are only meant for cta-admin tests. Other tools should get their own test suite
 #
 # The tests below are relative simple as they all (mostly) follow the same pattern:
@@ -53,27 +55,27 @@ def is_in_repacking_state(cta_cli, vid_to_check):
 
 
 @pytest.fixture
-def cta_cli(env):
+def cta_cli(env) -> CtaCliHost:
     return env.cta_cli[0]
 
 
 @pytest.fixture
-def cta_taped(env):
+def cta_taped(env) -> CtaTapedHost:
     return env.cta_taped[0]
 
 
 @pytest.fixture
-def disk_client(env):
+def disk_client(env) -> DiskClientHost:
     return env.disk_client[0]
 
 
 @pytest.fixture
-def disk_instance(env):
+def disk_instance(env) -> DiskInstanceHost:
     return env.disk_instance[0]
 
 
 @pytest.fixture
-def disk_instance_name(disk_instance):
+def disk_instance_name(disk_instance) -> str:
     return disk_instance.instance_name
 
 

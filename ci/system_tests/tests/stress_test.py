@@ -7,6 +7,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..helpers.hosts import CtaCliHost, EosClientHost, EosMgmHost
 import pytest
 
 
@@ -70,17 +71,17 @@ def stress_params(request):
 
 
 @pytest.fixture
-def cta_cli(env):
+def cta_cli(env) -> CtaCliHost:
     return env.cta_cli[0]
 
 
 @pytest.fixture
-def eos_client(env):
+def eos_client(env) -> EosClientHost:
     return env.eos_client[0]
 
 
 @pytest.fixture
-def eos_mgm(env):
+def eos_mgm(env) -> EosMgmHost:
     return env.eos_mgm[0]
 
 

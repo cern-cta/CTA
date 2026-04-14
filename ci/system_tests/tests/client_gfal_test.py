@@ -10,6 +10,8 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
+from ..helpers.hosts import EosClientHost, EosMgmHost
+
 #####################################################################################################################
 # Helpers
 #####################################################################################################################
@@ -23,7 +25,7 @@ class GfalParams:
 
 
 @pytest.fixture(scope="class")
-def gfal_params(request):
+def gfal_params(request) -> GfalParams:
     gfal_config = request.config.test_config["tests"]["gfal"]
     return GfalParams(
         file_count=gfal_config["file_count"],
@@ -33,12 +35,12 @@ def gfal_params(request):
 
 
 @pytest.fixture
-def eos_client(env):
+def eos_client(env) -> EosClientHost:
     return env.eos_client[0]
 
 
 @pytest.fixture
-def eos_mgm(env):
+def eos_mgm(env) -> EosMgmHost:
     return env.eos_mgm[0]
 
 

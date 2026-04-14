@@ -41,20 +41,20 @@ def make_tests_look_pretty(request):
 
 
 @pytest.fixture(scope="session")
-def env(request):
+def env(request) -> TestEnv:
     """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
     return request.config.env
 
 
 @pytest.fixture(scope="session")
-def error_whitelist():
+def error_whitelist() -> set[str]:
     """Mutable whitelist that individual test cases can add errors to"""
     whitelist = set()  # mutable whitelist shared between all tests
     return whitelist
 
 
 @pytest.fixture(scope="session")
-def krb5_realm(request):
+def krb5_realm(request) -> str:
     """Kerberos realm used in the tests"""
     return request.config.test_config["tests"]["krb5_realm"]
 
