@@ -38,7 +38,7 @@ build-cta-rpms:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
-    RPM_SIZE_METRICS_KEY: "rpm_debug_packages_total_bytes"
+    RPM_SIZE_METRICS_KEY: "rpm_packages_total_bytes_debug"
   before_script:
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
@@ -114,14 +114,14 @@ build-cta-rpms-pgsched:
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
-    RPM_SIZE_METRICS_KEY: "rpm_debug_pgsched_packages_total_bytes"
+    RPM_SIZE_METRICS_KEY: "rpm_packages_total_bytes_debug_pgsched"
 
 build-cta-rpms-relwithdebinfo:
   extends:
     - build-cta-rpms
   variables:
     CMAKE_BUILD_TYPE: "RelWithDebInfo"
-    RPM_SIZE_METRICS_KEY: "rpm_relwithdebinfo_packages_total_bytes"
+    RPM_SIZE_METRICS_KEY: "rpm_packages_total_bytes_relwithdebinfo"
 
 # Documentation export
 export-docs:
