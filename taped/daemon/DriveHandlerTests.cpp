@@ -477,7 +477,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_NE(std::string::npos,
             logToCheck.find("MSG=\"In DriveHandler::runChild(): "
                             "failed to set drive down"));
-  ASSERT_NE(std::string::npos, logToCheck.find("Message=\"Failed to create tape drive status\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Failed to create tape drive status\""));
 
   // It cannot set desired drive state into the catalogue, so it should mark the drive as down, and the session
   // cannot continue.
@@ -493,7 +493,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_NE(std::string::npos,
             logToCheck.find("MSG=\"In DriveHandler::runChild(): "
                             "failed to set drive down"));
-  ASSERT_NE(std::string::npos, logToCheck.find("Message=\"Failed to set desired drive state\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Failed to set desired drive state\""));
 
   // It cannot report the drive configuration to the catalogue, so it should mark the drive as down, and the session
   // cannot continue.
@@ -509,7 +509,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_NE(std::string::npos,
             logToCheck.find("MSG=\"In DriveHandler::runChild(): "
                             "failed to set drive down"));
-  ASSERT_NE(std::string::npos, logToCheck.find("Message=\"Failed to report drive config\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Failed to report drive config\""));
 
   // After all the problems with scheduler, we should be able to run a good session
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_UP);
