@@ -99,7 +99,7 @@ bool cta::frontend::grpc::client::TapeLsRequestHandler::next(const bool bOk) {
             {
               log::ScopedParamContainer params(lc);
               params.add("tag", m_tag);
-              params.add(semconv::log::exceptionMessage, strErrorMsg);
+              params.add(semconv::log::errorMessage, strErrorMsg);
               lc.log(cta::log::ERR, "In grpc::client::TapeLsRequestHandler::next(): Response error.");
             }
             strErrorMsg.clear();

@@ -96,7 +96,7 @@ void SignalReactor::run(std::stop_token st,
         // Something else
         log::ScopedParamContainer params(lc);
         params.add("errno", std::to_string(e));
-        params.add(semconv::log::exceptionMessage, ::strerror(e));
+        params.add(semconv::log::errorMessage, ::strerror(e));
         lc.log(log::WARNING, "In SignalReactor::run(): sigtimedwait failed");
         continue;
       }

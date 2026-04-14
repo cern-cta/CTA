@@ -328,7 +328,7 @@ void TapeWriteTask::checkErrors(MemBlock* mb, uint64_t memBlockId, cta::log::Log
       //so we use a different exception to distinguish this case
       errorMsg = mb->errorMsg();
       m_errorFlag.set();
-      LogContext::ScopedParam sp1(lc, Param(cta::semconv::log::exceptionMessage, errorMsg));
+      LogContext::ScopedParam sp1(lc, Param(cta::semconv::log::errorMessage, errorMsg));
       lc.log(cta::log::ERR, "Error while reading a file");
       throw RecoverableMigrationErrorException(errorMsg);
     } else if (mb->isCanceled()) {

@@ -392,7 +392,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       std::string mountId = retrieveMount->getMountTransactionId();
       std::string mountType = cta::common::dataStructures::toCamelCaseString(retrieveMount->getMountType());
 
-      cta::log::Param errorMessageParam(cta::semconv::log::exceptionMessage, "Aborted: empty recall mount");
+      cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty recall mount");
       cta::log::Param mountIdParam("mountId", mountId);
       cta::log::Param mountTypeParam("mountType", mountType);
       cta::log::Param statusParam("status", status);
@@ -420,7 +420,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
         cta::log::LogContext::ScopedParam sp11(
           logContext,
-          cta::log::Param(cta::semconv::log::exceptionMessage, "Aborted: empty recall mount"));
+          cta::log::Param(cta::semconv::log::errorMessage, "Aborted: empty recall mount"));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
         cta::log::LogContext::ScopedParam sp12(logContext, cta::log::Param("notificationError", ex.getMessageValue()));
@@ -536,7 +536,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
 
       std::string mountId = archiveMount->getMountTransactionId();
       std::string mountType = cta::common::dataStructures::toCamelCaseString(archiveMount->getMountType());
-      cta::log::Param errorMessageParam(cta::semconv::log::exceptionMessage, "Aborted: empty migration mount");
+      cta::log::Param errorMessageParam(cta::semconv::log::errorMessage, "Aborted: empty migration mount");
       cta::log::Param mountIdParam("mountId", mountId);
       cta::log::Param mountTypeParam("mountType", mountType);
       cta::log::Param statusParam("status", status);
@@ -646,7 +646,7 @@ void castor::tape::tapeserver::daemon::DataTransferSession::putDriveDown(const s
                                                                          cta::TapeMount* mount,
                                                                          cta::log::LogContext& logContext) {
   cta::log::ScopedParamContainer params(logContext);
-  params.add("devFilename", m_driveConfig.devFilename).add(cta::semconv::log::exceptionMessage, headerErrMsg);
+  params.add("devFilename", m_driveConfig.devFilename).add(cta::semconv::log::errorMessage, headerErrMsg);
 
   if (mount) {
     mount->complete();
