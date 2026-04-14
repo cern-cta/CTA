@@ -417,7 +417,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   logToCheck = m_logger.getLog();
   ASSERT_NE(std::string::npos, logToCheck.find("LVL=\"CRIT\""));
   ASSERT_NE(std::string::npos, logToCheck.find("MSG=\"In DriveHandler::runChild(): failed to instantiate scheduler."));
-  ASSERT_NE(std::string::npos, logToCheck.find("errorMessage=\"createScheduler failed to create scheduler\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"createScheduler failed to create scheduler\""));
 
   // It cannot ping the database or the objectstore, so it should mark the drive as down
   // There are two reasons to fail the ping, one produced by WrongSchemaVersionException and a general exception
@@ -434,7 +434,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_NE(std::string::npos,
             logToCheck.find("MSG=\"In DriveHandler::runChild(): "
                             "failed to ping central storage before session."));
-  ASSERT_NE(std::string::npos, logToCheck.find("errorMessage=\"Failed to ping scheduler\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Failed to ping scheduler\""));
   // Second exception (WrongSchemaVersionException)
   m_logger.clearLog();
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
@@ -444,7 +444,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   ASSERT_NE(std::string::npos,
             logToCheck.find("MSG=\"In DriveHandler::runChild(): "
                             "catalogue MAJOR version mismatch"));
-  ASSERT_NE(std::string::npos, logToCheck.find("errorMessage=\"Catalogue MAJOR version mismatch\""));
+  ASSERT_NE(std::string::npos, logToCheck.find("exception_message=\"Catalogue MAJOR version mismatch\""));
 
   // It cannot create the drive status, so it should mark the drive as down
   EXPECT_CALL(*m_scheduler, checkDriveCanBeCreated(_, _)).WillOnce(Return(false)).WillRepeatedly(Return(true));
