@@ -38,6 +38,7 @@ build-cta-rpms:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
+    RPM_SIZE_METRICS_KEY: "rpm_packages_total_bytes"
   before_script:
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
@@ -95,10 +96,13 @@ build-cta-rpms:
                               --platform ${PLATFORM}
                               --skip-unit-tests
                               ${BUILD_OPTIONS}
+    - echo "${RPM_SIZE_METRICS_KEY} $(du -sb ${BUILD_PATH} | cut -f1)" > metrics.txt
   artifacts:
     expire_in: 30 days
     paths:
       - ${BUILD_PATH}
+    reports:
+      metrics: metrics.txt
 
 # These are not (and ideally should not) be used further down the pipeline; just a compilation checks
 
@@ -110,12 +114,14 @@ build-cta-rpms-pgsched:
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
+    RPM_SIZE_METRICS_KEY: "rpm_packages_total_bytes_pgsched"
 
 build-cta-rpms-relwithdebinfo:
   extends:
     - build-cta-rpms
   variables:
     CMAKE_BUILD_TYPE: "RelWithDebInfo"
+    RPM_SIZE_METRICS_KEY: "rpm_packages_total_bytes_relwithdebinfo"
 
 # Documentation export
 export-docs:
