@@ -6,6 +6,7 @@
 #include "DriveHandlerProxy.hpp"
 
 #include "common/exception/NotImplementedException.hpp"
+#include "common/semconv/Logging.hpp"
 
 #include "WatchdogMessage.pb.h"
 

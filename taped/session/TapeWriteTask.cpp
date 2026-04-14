@@ -17,6 +17,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
 #include <memory>
@@ -213,7 +214,7 @@ void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession& session,
     }
     // Log and circulate blocks
     LogContext::ScopedParam sp(lc, Param("exceptionCode", cta::log::ERR));
-    LogContext::ScopedParam sp1(lc, Param(semconv::log::exceptionMessage, e.getMessageValue()));
+    LogContext::ScopedParam sp1(lc, Param(cta::semconv::log::exceptionMessage, e.getMessageValue()));
     lc.log(cta::log::ERR, "An error occurred for this file, but migration will proceed as error is recoverable");
     circulateMemBlocks();
 
@@ -271,7 +272,7 @@ void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession& session,
     if (!doReportJobError) {
       errorLevel = cta::log::INFO;
     }
-    LogContext::ScopedParam sp1(lc, Param(semconv::log::exceptionMessage, e.getMessageValue()));
+    LogContext::ScopedParam sp1(lc, Param(cta::semconv::log::exceptionMessage, e.getMessageValue()));
     lc.log(errorLevel, "An error occurred for this file. End of migrations.");
     circulateMemBlocks();
     // this last job will be either reported as failure or success
@@ -327,7 +328,7 @@ void TapeWriteTask::checkErrors(MemBlock* mb, uint64_t memBlockId, cta::log::Log
       //so we use a different exception to distinguish this case
       errorMsg = mb->errorMsg();
       m_errorFlag.set();
-      LogContext::ScopedParam sp1(lc, Param(semconv::log::exceptionMessage, errorMsg));
+      LogContext::ScopedParam sp1(lc, Param(cta::semconv::log::exceptionMessage, errorMsg));
       lc.log(cta::log::ERR, "Error while reading a file");
       throw RecoverableMigrationErrorException(errorMsg);
     } else if (mb->isCanceled()) {
@@ -368,7 +369,8 @@ std::unique_ptr<tapeFile::FileWriter> TapeWriteTask::openFileWriter(tape::tapeFi
     output = std::make_unique<tape::tapeFile::FileWriter>(session, *m_archiveJob, tapeBlockSize);
     lc.log(cta::log::DEBUG, "Successfully opened the tape file for writing");
   } catch (const cta::exception::Exception& ex) {
-    cta::log::LogContext::ScopedParam sp(lc, cta::log::Param(semconv::log::exceptionMessage, ex.getMessageValue()));
+    cta::log::LogContext::ScopedParam sp(lc,
+                                         cta::log::Param(cta::semconv::log::exceptionMessage, ex.getMessageValue()));
     lc.log(cta::log::ERR, "Failed to open tape file for writing");
     throw;
   }

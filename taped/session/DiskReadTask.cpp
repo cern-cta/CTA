@@ -8,6 +8,7 @@
 #include "TransferTaskTracker.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
 
@@ -173,7 +174,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
 
     cta::log::ScopedParamContainer spc(lc);
     spc.add("blockID", blockId)
-      .add(semconv::log::exceptionMessage, e.getMessageValue())
+      .add(cta::semconv::log::exceptionMessage, e.getMessageValue())
       .add("fileSize", m_archiveJob->archiveFile.fileSize);
     m_archiveJob->archiveFile.checksumBlob.addFirstChecksumToLog(spc);
     lc.log(cta::log::ERR, "Exception while reading a file");

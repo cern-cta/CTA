@@ -16,6 +16,7 @@
 #include "common/Constants.hpp"
 #include "common/exception/EncryptionException.hpp"
 #include "common/log/DummyLogger.hpp"
+#include "common/semconv/Logging.hpp"
 #include "disk/DiskFile.hpp"
 #include "mediachanger/LibrarySlotParser.hpp"
 #include "rdbms/Login.hpp"

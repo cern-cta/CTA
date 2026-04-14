@@ -11,6 +11,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/AtomicFlag.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "taped/daemon/TapedProxy.hpp"
@@ -282,7 +283,7 @@ protected:
           m_mount.setTapeSessionStats(m_stats);
         } catch (cta::exception::Exception& ex) {
           cta::log::ScopedParamContainer params(m_lc);
-          params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+          params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
           m_lc.log(cta::log::WARNING,
                    "In TaskWatchDog::run(): failed to set tape session stats in sched. DB. Skipping.");
         }
@@ -300,7 +301,7 @@ protected:
         m_mount.setTapeSessionStats(m_stats);
       } catch (cta::exception::Exception& ex) {
         cta::log::ScopedParamContainer params(m_lc);
-        params.add(semconv::log::exceptionMessage, ex.getMessageValue());
+        params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
         m_lc.log(cta::log::WARNING, "In TaskWatchDog::run(): failed to set tape session stats in sched. DB. Skipping.");
       }
       // Flush the one-off parameter one last time.

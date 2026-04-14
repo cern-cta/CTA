@@ -6,6 +6,7 @@
 #pragma once
 
 #include "common/log/LogContext.hpp"
+#include "common/semconv/Logging.hpp"
 
 #include <memory>
 
@@ -74,7 +75,7 @@ protected:
         .add("NSFSEQ", (*it)->fseq())
         .add("NSHOST", (*it)->nshost())
         .add("NSFILETRANSACTIONID", (*it)->fileTransactionId())
-        .add(semconv::log::exceptionMessage, (*it)->errorMessage());
+        .add(cta::semconv::log::exceptionMessage, (*it)->errorMessage());
       m_lc.log(cta::log::INFO, msg);
     }
   }

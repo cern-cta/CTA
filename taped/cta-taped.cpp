@@ -10,6 +10,7 @@
 #include "common/process/ProcessCap.hpp"
 #include "common/process/threading/System.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
 #include "daemon/TapeDaemon.hpp"

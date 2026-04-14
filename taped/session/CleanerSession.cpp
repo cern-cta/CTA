@@ -7,6 +7,7 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/process/ProcessCap.hpp"
+#include "common/semconv/Logging.hpp"
 #include "taped/file/HeaderChecker.hpp"
 
 #include <exception>
@@ -57,7 +58,7 @@ castor::tape::tapeserver::daemon::CleanerSession::execute() noexcept {
   // Reaching this point means the cleaner failed and an exception was thrown
   std::vector<cta::log::Param> params = {cta::log::Param("tapeVid", m_vid),
                                          cta::log::Param("tapeDrive", m_driveConfig.unitName),
-                                         cta::log::Param(semconv::log::exceptionMessage, errorMessage)};
+                                         cta::log::Param(cta::semconv::log::exceptionMessage, errorMessage)};
   m_log(cta::log::ERR, "Cleaner failed, the drive is going down.", params);
 
   // Putting the drive down
@@ -66,7 +67,7 @@ castor::tape::tapeserver::daemon::CleanerSession::execute() noexcept {
   } catch (const cta::exception::Exception& ex) {
     std::vector<cta::log::Param> params = {cta::log::Param("tapeVid", m_vid),
                                            cta::log::Param("tapeDrive", m_driveConfig.unitName),
-                                           cta::log::Param(semconv::log::exceptionMessage, ex.getMessageValue())};
+                                           cta::log::Param(cta::semconv::log::exceptionMessage, ex.getMessageValue())};
     m_log(cta::log::ERR, "Cleaner failed. Failed to put the drive down", params);
   }
 
@@ -140,7 +141,7 @@ castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute() {
                                              cta::log::Param("tapeDrive", tapeDrive),
                                              cta::log::Param("logicalLibrary", m_driveConfig.logicalLibrary),
                                              cta::log::Param("host", hostname),
-                                             cta::log::Param(semconv::log::exceptionMessage, currentExceptionMsg)};
+                                             cta::log::Param(cta::semconv::log::exceptionMessage, currentExceptionMsg)};
       m_log(cta::log::ERR,
             "In CleanerSession::exceptionThrowingExecute(), failed to clean the Drive with a tape mounted. Disabling "
             "the tape.",
@@ -166,7 +167,7 @@ castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute() {
                 params);
         }
       } catch (cta::exception::Exception& ex) {
-        cta::log::Param param(semconv::log::exceptionMessage, ex.getMessageValue());
+        cta::log::Param param(cta::semconv::log::exceptionMessage, ex.getMessageValue());
         params.push_back(param);
         m_log(cta::log::ERR, "In CleanerSession::exceptionThrowingExecute(), failed to disable the tape.", params);
       }
@@ -237,7 +238,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
   // Reaching this point means it failed and an exception was thrown (because of the "return" above)
   std::vector<cta::log::Param> params = {cta::log::Param("tapeVid", m_vid),
                                          cta::log::Param("tapeDrive", m_driveConfig.unitName),
-                                         cta::log::Param(semconv::log::exceptionMessage, errorMessage)};
+                                         cta::log::Param(cta::semconv::log::exceptionMessage, errorMessage)};
   m_log(cta::log::ERR, "Cleaner failed getting tape alerts from the drive", params);
 }
 
@@ -275,7 +276,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::waitUntilMediaIsReady(dri
     drive.waitUntilReady(m_tapeLoadTimeout);
     m_log(cta::log::INFO, "Cleaner detected drive is ready", params);
   } catch (cta::exception::Exception& ex) {
-    params.emplace_back(semconv::log::exceptionMessage, ex.getMessage().str());
+    params.emplace_back(cta::semconv::log::exceptionMessage, ex.getMessage().str());
     m_log(cta::log::INFO,
           "Cleaner caught non-fatal exception whilst waiting for"
           " drive to become ready",

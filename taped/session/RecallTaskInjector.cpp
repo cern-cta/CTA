@@ -8,6 +8,7 @@
 #include "TapeReadSingleThread.hpp"
 #include "TapeReadTask.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/semconv/Logging.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/drive/DriveGeneric.hpp"
 #include "taped/drive/DriveInterface.hpp"
@@ -315,7 +316,7 @@ bool RecallTaskInjector::synchronousFetch(bool& noFilesToRecall) {
     scoped.add("transactionId", m_retrieveMount.getMountTransactionId())
       .add("requestedBytes", reqSize)
       .add("requestedFiles", reqFiles)
-      .add(semconv::log::exceptionMessage, ex.getMessageValue());
+      .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(cta::log::ERR, "Failed to getFilesToRecall");
     return false;
   }
@@ -410,7 +411,7 @@ void RecallTaskInjector::WorkerThread::run() {
       m_parent.m_lc.log(cta::log::INFO, "Query getLimitUDS for RAO Enterprise completed");
     } catch (castor::tape::SCSI::Exception& e) {
       cta::log::ScopedParamContainer spc(m_parent.m_lc);
-      spc.add(semconv::log::exceptionMessage, e.getMessageValue());
+      spc.add(cta::semconv::log::exceptionMessage, e.getMessageValue());
       m_parent.m_lc.log(cta::log::INFO,
                         "Error while fetching the limitUDS for RAO enterprise drive. Will run a CTA RAO.");
     } catch (const castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException&) {
@@ -435,7 +436,7 @@ void RecallTaskInjector::WorkerThread::run() {
     } catch (const cta::exception::Exception& ex) {
       //we end up there because we could not talk to the client
       cta::log::ScopedParamContainer container(m_parent.m_lc);
-      container.add(semconv::log::exceptionMessage, ex.getMessageValue());
+      container.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
       m_parent.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
       m_parent.m_lc.log(cta::log::ERR,
                         "In RecallJobInjector::WorkerThread::run(): "

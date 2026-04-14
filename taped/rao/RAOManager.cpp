@@ -11,6 +11,7 @@
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 #include "RAOAlgorithmFactoryFactory.hpp"
 #include "catalogue/Catalogue.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 
 namespace castor::tape::tapeserver::rao {
@@ -76,7 +77,7 @@ void RAOManager::logWarningAfterRAOOperationFailed(const std::string& warningMsg
                                                    const std::string& exceptionMsg,
                                                    cta::log::LogContext& lc) const {
   cta::log::ScopedParamContainer spc(lc);
-  spc.add(semconv::log::exceptionMessage, exceptionMsg)
+  spc.add(cta::semconv::log::exceptionMessage, exceptionMsg)
     .add("raoAlgorithmName", m_raoParams.getRAOAlgorithmName())
     .add("raoAlgorithmOptions", m_raoParams.getRAOAlgorithmOptions().getOptionsString())
     .add("useRAO", m_raoParams.useRAO())

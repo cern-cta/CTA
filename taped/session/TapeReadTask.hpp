@@ -14,6 +14,7 @@
 #include "TransferTaskTracker.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "taped/file/FileReaderFactory.hpp"
@@ -216,7 +217,7 @@ public:
       // This is an error case. Log and signal to the disk write task
       {
         cta::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
-        cta::log::LogContext::ScopedParam sp1(lc, Param(semconv::log::exceptionMessage, ex.getMessageValue()));
+        cta::log::LogContext::ScopedParam sp1(lc, Param(cta::semconv::log::exceptionMessage, ex.getMessageValue()));
         lc.log(cta::log::ERR, "Error reading a file in TapeReadFileTask");
       }
       {
@@ -279,7 +280,7 @@ private:
       lc.log(cta::log::DEBUG, "Successfully opened the tape file");
     } catch (cta::exception::Exception& ex) {
       // Log the error
-      ScopedParam sp0(lc, Param(semconv::log::exceptionMessage, ex.getMessageValue()));
+      ScopedParam sp0(lc, Param(cta::semconv::log::exceptionMessage, ex.getMessageValue()));
       lc.log(cta::log::ERR, "Failed to open tape file for reading");
       throw;
     }

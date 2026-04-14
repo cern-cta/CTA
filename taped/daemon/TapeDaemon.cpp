@@ -13,6 +13,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/process/ProcessCap.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/utils/utils.hpp"
 

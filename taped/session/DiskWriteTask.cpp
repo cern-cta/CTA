@@ -10,6 +10,7 @@
 #include "TransferTaskTracker.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
+#include "common/semconv/Logging.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
 
@@ -175,7 +176,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
 
     m_stats.waitReportingTime += localTime.secs(cta::utils::Timer::resetCounter);
     cta::log::ScopedParamContainer params(lc);
-    params.add(semconv::log::exceptionMessage, e.getMessageValue());
+    params.add(cta::semconv::log::exceptionMessage, e.getMessageValue());
     logWithStat(cta::log::ERR, isVerifyOnly ? "File verification failed" : "File writing to disk failed", lc);
     lc.logBacktrace(cta::log::INFO, e.backtrace());
     reporter.reportFailedJob(std::move(m_retrieveJob), e, lc);
