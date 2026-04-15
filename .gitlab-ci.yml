@@ -189,7 +189,7 @@ variables:
 
   # Job output configuration
   FF_TIMESTAMPS: true
-  GTEST_REPORT_FILE: "xml:test_report.xml"
+  GTEST_REPORT_FILE: "test_report.xml"
   GTEST_FLAGS: "" # No additional flags by default
   TERM: "xterm-color"
 
@@ -220,14 +220,14 @@ workflow:
           - '**/*'
       variables:
         ENABLE_DEBUG_INFO: "FALSE"
-        GTEST_FLAGS: "--gtest_output $GTEST_REPORT_FILE"
+        GTEST_FLAGS: "--gtest_output \"xml:$GTEST_REPORT_FILE\""
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
       auto_cancel:
         on_new_commit: none
       variables:
         # We want to prevent gitlab from picking a wrong baseline (e.g. valgrind tests take much longer and would give misleading comparisons)
         # So we only enable reports in MR pipelines and on push pipelines to main
-        GTEST_FLAGS: "--gtest_output $GTEST_REPORT_FILE"
+        GTEST_FLAGS: "--gtest_output \"xml:$GTEST_REPORT_FILE\""
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_new_commit: none
