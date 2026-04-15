@@ -55,6 +55,7 @@ integration-test-cta:
   before_script:
     - *setup-cta-install
   script:
+    - export GTEST_OUTPUT="$GTEST_OUTPUT"
     - /usr/bin/cta-integrationTests
   artifacts:
     reports:
