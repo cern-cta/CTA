@@ -80,10 +80,8 @@ unit-test-cta:
   before_script:
     - *setup-cta-install
   script:
-    - echo "$GTEST_OUTPUT"
     - /usr/bin/cta-unitTests --gtest_output "$GTEST_OUTPUT"
     - /usr/bin/cta-unitTests-multiProcess
-    - cat "$GTEST_OUTPUT"
   artifacts:
     reports:
       junit: $GTEST_OUTPUT
