@@ -189,9 +189,10 @@ variables:
 
   # Job output configuration
   FF_TIMESTAMPS: true
-  GTEST_REPORT_FILE: "test_report.xml"
-  GTEST_FLAGS: "" # No additional flags by default
   TERM: "xterm-color"
+  GTEST_COLOR: "yes"
+  GTEST_REPORT_FILE: "/tmp/test_report.xml"
+  GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"
 
   # Images
   IMAGE_DEFAULT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2026-04-14-14519429.el9
@@ -220,17 +221,16 @@ workflow:
           - '**/*'
       variables:
         ENABLE_DEBUG_INFO: "FALSE"
-        GTEST_FLAGS: "--gtest_output \"xml:$GTEST_REPORT_FILE\""
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+      auto_cancel:
+        on_new_commit: none
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_new_commit: none
       variables:
         # We want to prevent gitlab from picking a wrong baseline (e.g. valgrind tests take much longer and would give misleading comparisons)
-        # So we only enable reports in MR pipelines and on push pipelines to main
-        GTEST_FLAGS: "--gtest_output \"xml:$GTEST_REPORT_FILE\""
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
-      auto_cancel:
-        on_new_commit: none
+        # So we disable reports in anything not a MR pipeline or push pipeline to main
+        GTEST_OUTPUT: ""
     # Push events to main will still trigger the pipeline as per the previous rule
     # But we want to prevent dual pipelines on MRs
     - if: $CI_PIPELINE_SOURCE != "push"
