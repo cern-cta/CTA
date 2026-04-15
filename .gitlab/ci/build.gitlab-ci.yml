@@ -96,7 +96,7 @@ build-cta-rpms:
                               --platform ${PLATFORM}
                               --skip-unit-tests
                               ${BUILD_OPTIONS}
-    - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_kb $(du -s --block-size=1k ${BUILD_PATH} | cut -f1)" > metrics.txt
+    - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_kb $(find ${BUILD_PATH} -type f -name '*.rpm' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n", s/1000}' | cut -f1)" > metrics.txt
   artifacts:
     expire_in: 30 days
     paths:
