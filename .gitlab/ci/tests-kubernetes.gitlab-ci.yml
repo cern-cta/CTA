@@ -158,7 +158,7 @@
                            --extra-cta-values "${EXTRA_CTA_HELM_FLAGS}"
                            ${EXTRA_SPAWN_ARGS}
     - create_end=$(date +%s)
-    - echo "k8s_create_instance_${CI_JOB_NAME_SLUG//-/_}_duration_sec $((create_end - create_start))" >> $METRICS_FILE
+    - echo "k8s_${CI_JOB_NAME_SLUG//-/_}_create_instance_duration_sec $((create_end - create_start))" >> $METRICS_FILE
     - cd ../system_tests
     - test_start=$(date +%s)
     - pytest ${PYTESTS} --namespace ${NAMESPACE}
@@ -178,7 +178,7 @@
     - delete_start=$(date +%s)
     - ./delete_instance.sh --namespace ${NAMESPACE}
     - delete_end=$(date +%s)
-    - echo "k8s_delete_instance_${CI_JOB_NAME_SLUG//-/_}_duration_sec $((delete_end - delete_start))" >> $METRICS_FILE
+    - echo "k8s_${CI_JOB_NAME_SLUG//-/_}_delete_instance_duration_sec $((delete_end - delete_start))" >> $METRICS_FILE
   tags:  # Used to indicate that these jobs should run on our own runners
     - kubernetes
     - mhvtl
