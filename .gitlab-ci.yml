@@ -191,7 +191,7 @@ variables:
   FF_TIMESTAMPS: true
   TERM: "xterm-color"
   GTEST_COLOR: "yes"
-  GTEST_REPORT_FILE: "/tmp/test_report.xml"
+  GTEST_REPORT_FILE: "$CI_PROJECT_DIR/test_report.xml"
   GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"
 
   # Images

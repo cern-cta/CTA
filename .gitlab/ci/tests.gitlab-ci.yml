@@ -55,8 +55,6 @@ integration-test-cta:
   before_script:
     - *setup-cta-install
   script:
-    - export GTEST_OUTPUT="$GTEST_OUTPUT"
-    - printenv GTEST_OUTPUT
     - /usr/bin/cta-integrationTests
   artifacts:
     reports:
@@ -82,8 +80,8 @@ unit-test-cta:
   before_script:
     - *setup-cta-install
   script:
+    - /usr/bin/cta-unitTests-multiProcess
     - /usr/bin/cta-unitTests
-    - /usr/bin/cta-unitTests-multiProcess # Ignore for now; we should merge it with the regular unitTests
   artifacts:
     reports:
       junit: $GTEST_REPORT_FILE
