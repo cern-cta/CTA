@@ -55,10 +55,10 @@ integration-test-cta:
   before_script:
     - *setup-cta-install
   script:
-    - /usr/bin/cta-integrationTests
+    - /usr/bin/cta-integrationTests ${GTEST_FLAGS}
   artifacts:
     reports:
-      junit: $GTEST_OUTPUT
+      junit: $GTEST_REPORT_FILE
 
 unit-test-cta:
   interruptible: false
@@ -80,11 +80,11 @@ unit-test-cta:
   before_script:
     - *setup-cta-install
   script:
-    - /usr/bin/cta-unitTests --gtest_output "$GTEST_OUTPUT"
-    - /usr/bin/cta-unitTests-multiProcess
+    - /usr/bin/cta-unitTests ${GTEST_FLAGS}
+    - /usr/bin/cta-unitTests-multiProcess # Ignore for now; we should merge it with the regular unitTests
   artifacts:
     reports:
-      junit: $GTEST_OUTPUT
+      junit: $GTEST_REPORT_FILE
 
 unit-test-postgresql:
   stage: test
@@ -124,14 +124,14 @@ unit-test-postgresql:
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
       if [[ "$VALGRIND_UNIT_TESTS" = "TRUE" ]]; then
-        valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF} ${GTEST_FLAGS}
       else
-        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF} ${GTEST_FLAGS}
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
   artifacts:
     reports:
-      junit: $GTEST_OUTPUT
+      junit: $GTEST_REPORT_FILE
 
 unit-test-oracle:
   stage: test
@@ -164,16 +164,16 @@ unit-test-oracle:
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
       if [[ "$VALGRIND_UNIT_TESTS" = "TRUE" ]]; then
-        valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF} ${GTEST_FLAGS}
       else
-        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
+        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF} ${GTEST_FLAGS}
       fi
   # Adding this resource group ensures only a single instance of this job can run at any given time
   # This is necessary as the job uses a single account on a centralized database.
   resource_group: oracle-centralized-db-cta-dev04
   artifacts:
     reports:
-      junit: $GTEST_OUTPUT
+      junit: $GTEST_REPORT_FILE
 
 test-cta-release:
   stage: test
