@@ -189,7 +189,7 @@ variables:
 
   # Job output configuration
   FF_TIMESTAMPS: true
-  GTEST_METRICS_FILE: "xml:metrics.xml"
+  GTEST_METRICS_FILE: "xml:/tmp/metrics.xml"
 
   # Images
   IMAGE_DEFAULT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2026-04-14-14519429.el9
