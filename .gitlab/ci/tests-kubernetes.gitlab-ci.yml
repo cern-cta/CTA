@@ -350,13 +350,6 @@ stress-test:
                           --chart-install-timeout 15
                           --test-script tests/prepare_tests.sh
                           "${extra_args[@]}"
-    # Set up monitoring
-    - git clone https://gitlab+deploy-token-3624:${CI_MONITORING_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
-    - helm install ci-monitoring ci_monitoring/ci-monitoring
-                  --namespace ${NAMESPACE}
-                  --set logsClaimName=logstorage-pvc
-                  --set image.pullSecrets={reg-eoscta-operations}
-                  --wait --timeout 5m
     # Run the actual stress test
     - cd tests
     - ./stress_test.sh -n ${NAMESPACE} ${EXTRA_STRESS_TEST_OPTIONS}
@@ -368,7 +361,7 @@ stress-test:
       fi
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
-    # - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
+    - ./delete_instance.sh --namespace ${NAMESPACE}
   tags:
     - stress
   # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time
@@ -429,14 +422,6 @@ stress-test-python:
                            --scheduler-config ${SCHEDULER_CONFIG}
                            --chart-install-timeout 15
                            ${EXTRA_SPAWN_ARGS}
-    # Set up monitoring
-    - git clone https://gitlab+deploy-token-3624:${CI_MONITORING_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
-    - helm install ci-monitoring ci_monitoring/ci-monitoring
-                  --namespace ${NAMESPACE}
-                  --set logsClaimName=logstorage-pvc
-                  --set image.pullSecrets={reg-eoscta-operations}
-                  --wait
-                  --timeout 5m
     # Run the actual stress test
     - cd ../system_tests
     - pytest tests/stress_test.py --namespace ${NAMESPACE}
@@ -452,7 +437,7 @@ stress-test-python:
       fi
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
-    # - ./delete_instance.sh --namespace ${NAMESPACE} --discard-logs
+    - ./delete_instance.sh --namespace ${NAMESPACE}
   tags:
     - stress
   # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time
