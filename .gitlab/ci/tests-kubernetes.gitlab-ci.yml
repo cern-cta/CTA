@@ -366,6 +366,11 @@ stress-test:
     - stress
   # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time
   resource_group: stress-test
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - pod_logs
 
 stress-test-python:
   allow_failure: true
@@ -442,3 +447,8 @@ stress-test-python:
     - stress
   # As we only have 1 stress test machine, this resource group ensures only a single instance of this job can run at any given time
   resource_group: stress-test
+  artifacts:
+    when: always
+    expire_in: 30 days
+    paths:
+      - pod_logs
