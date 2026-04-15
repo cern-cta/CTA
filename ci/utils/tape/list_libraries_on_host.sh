@@ -6,13 +6,10 @@
 
 set -euo pipefail
 
-echo "["
-
 first=true
 
 lsscsi -g | grep mediumx | awk '{print $3, $4, $7}' | sort | while read -r vendor model device; do
   serial=$(sg_inq -p 0x80 "$device" 2>/dev/null | awk '/Unit serial number:/ {print $NF}')
-
 
   # Skip devices without serials
   [ -z "$serial" ] && continue
@@ -22,6 +19,7 @@ lsscsi -g | grep mediumx | awk '{print $3, $4, $7}' | sort | while read -r vendo
     | tr -c 'a-z0-9-' '-')
 
   if [ "$first" = true ]; then
+    echo "["
     first=false
   else
     echo ","

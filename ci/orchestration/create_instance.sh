@@ -45,7 +45,12 @@ usage() {
 generate_tape_values_files() {
   echo "Auto-generating rmcd config..."
   rmcd_config=$(mktemp "/tmp/${namespace}-rmcd-XXXXXX-values.yaml")
-  library_device=$(./../utils/tape/list_libraries_on_host.sh | jq -r .[0].device)
+  set -o pipefail
+  library_device=$(
+    ./../utils/tape/list_libraries_on_host.sh | jq -r .[0].device || \
+    die "Couldn't find any tape libraries on this host. Make sure mhvtl is installed and running, using \`systemctl status mhvtl.target\` as root."
+  )
+  set +o pipefail
   cat <<EOF > $rmcd_config
 rmcd:
   libraryDevice: $library_device
