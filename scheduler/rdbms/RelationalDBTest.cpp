@@ -362,7 +362,7 @@ TEST_P(RelationalDBTest, getArchiveJobs_groupsJobsByTapePool) {
   // This should return jobs grouped by tape pool
   const auto jobs = db.getArchiveJobs();
   ASSERT_EQ(2u, jobs.size());
-  ` ASSERT_EQ(2u, jobs.at("tapePoolA").size());
+  ASSERT_EQ(2u, jobs.at("tapePoolA").size());
   ASSERT_EQ(1u, jobs.at("tapePoolB").size());
 }
 
