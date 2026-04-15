@@ -124,9 +124,9 @@ unit-test-postgresql:
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
       if [[ "$VALGRIND_UNIT_TESTS" = "TRUE" ]]; then
-        valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF} ${GTEST_FLAGS}
+        valgrind /usr/bin/cta-rdbmsUnitTests ${GTEST_FLAGS} ${CTA_CATALOGUE_CONF}
       else
-        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF} ${GTEST_FLAGS}
+        /usr/bin/cta-rdbmsUnitTests ${GTEST_FLAGS} ${CTA_CATALOGUE_CONF}
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
   artifacts:
@@ -164,9 +164,9 @@ unit-test-oracle:
     - /usr/bin/cta-catalogue-schema-create ${CTA_CATALOGUE_CONF}
     - |
       if [[ "$VALGRIND_UNIT_TESTS" = "TRUE" ]]; then
-        valgrind /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF} ${GTEST_FLAGS}
+        valgrind /usr/bin/cta-rdbmsUnitTests ${GTEST_FLAGS} ${CTA_CATALOGUE_CONF}
       else
-        /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF} ${GTEST_FLAGS}
+        /usr/bin/cta-rdbmsUnitTests ${GTEST_FLAGS} ${CTA_CATALOGUE_CONF}
       fi
   # Adding this resource group ensures only a single instance of this job can run at any given time
   # This is necessary as the job uses a single account on a centralized database.
