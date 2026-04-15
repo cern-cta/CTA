@@ -81,7 +81,7 @@ unit-test-cta:
     - *setup-cta-install
   script:
     - echo "$GTEST_OUTPUT"
-    - /usr/bin/cta-unitTests
+    - /usr/bin/cta-unitTests --gtest_output "$GTEST_OUTPUT"
     - /usr/bin/cta-unitTests-multiProcess
     - cat "$GTEST_OUTPUT"
   artifacts:
