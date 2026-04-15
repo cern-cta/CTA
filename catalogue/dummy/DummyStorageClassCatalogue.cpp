@@ -24,6 +24,11 @@ std::vector<common::dataStructures::StorageClass> DummyStorageClassCatalogue::ge
   throw exception::NotImplementedException();
 }
 
+std::vector<common::dataStructures::StorageClass>
+DummyStorageClassCatalogue::getStorageClassesByVid(const std::string& vid) const {
+  throw exception::NotImplementedException();
+}
+
 common::dataStructures::StorageClass DummyStorageClassCatalogue::getStorageClass(const std::string& name) const {
   throw exception::NotImplementedException();
 }

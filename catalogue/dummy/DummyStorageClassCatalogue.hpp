@@ -24,6 +24,8 @@ public:
 
   std::vector<common::dataStructures::StorageClass> getStorageClasses() const override;
 
+  std::vector<common::dataStructures::StorageClass> getStorageClassesByVid(const std::string& vid) const override;
+
   common::dataStructures::StorageClass getStorageClass(const std::string& name) const override;
 
   void modifyStorageClassNbCopies(const common::dataStructures::SecurityIdentity& admin,

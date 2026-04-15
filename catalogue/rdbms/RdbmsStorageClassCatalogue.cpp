@@ -190,6 +190,62 @@ std::vector<common::dataStructures::StorageClass> RdbmsStorageClassCatalogue::ge
   return storageClasses;
 }
 
+std::vector<common::dataStructures::StorageClass>
+RdbmsStorageClassCatalogue::getStorageClassesByVid(const std::string& vid) const {
+  std::vector<common::dataStructures::StorageClass> storageClasses;
+  const char* const sql = R"SQL(
+    SELECT DISTINCT
+      STORAGE_CLASS.STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME,
+      STORAGE_CLASS.NB_COPIES AS NB_COPIES,
+      VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_NAME AS VIRTUAL_ORGANIZATION_NAME,
+
+      STORAGE_CLASS.USER_COMMENT AS USER_COMMENT,
+
+      STORAGE_CLASS.CREATION_LOG_USER_NAME AS CREATION_LOG_USER_NAME,
+      STORAGE_CLASS.CREATION_LOG_HOST_NAME AS CREATION_LOG_HOST_NAME,
+      STORAGE_CLASS.CREATION_LOG_TIME AS CREATION_LOG_TIME,
+
+      STORAGE_CLASS.LAST_UPDATE_USER_NAME AS LAST_UPDATE_USER_NAME,
+      STORAGE_CLASS.LAST_UPDATE_HOST_NAME AS LAST_UPDATE_HOST_NAME,
+      STORAGE_CLASS.LAST_UPDATE_TIME AS LAST_UPDATE_TIME
+    FROM
+      STORAGE_CLASS
+    INNER JOIN
+      VIRTUAL_ORGANIZATION ON STORAGE_CLASS.VIRTUAL_ORGANIZATION_ID = VIRTUAL_ORGANIZATION.VIRTUAL_ORGANIZATION_ID
+    INNER JOIN
+      ARCHIVE_FILE ON ARCHIVE_FILE.STORAGE_CLASS_ID = STORAGE_CLASS.STORAGE_CLASS_ID
+    INNER JOIN
+      TAPE_FILE ON ARCHIVE_FILE.ARCHIVE_FILE_ID = TAPE_FILE.ARCHIVE_FILE_ID
+    WHERE
+      TAPE_FILE.VID = :VID
+    ORDER BY
+      STORAGE_CLASS_NAME
+  )SQL";
+  auto conn = m_connPool->getConn();
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":VID", vid);
+  auto rset = stmt.executeQuery();
+
+  while (rset.next()) {
+    common::dataStructures::StorageClass storageClass;
+
+    storageClass.name = rset.columnString("STORAGE_CLASS_NAME");
+    storageClass.nbCopies = rset.columnUint64("NB_COPIES");
+    storageClass.vo.name = rset.columnString("VIRTUAL_ORGANIZATION_NAME");
+    storageClass.comment = rset.columnString("USER_COMMENT");
+    storageClass.creationLog.username = rset.columnString("CREATION_LOG_USER_NAME");
+    storageClass.creationLog.host = rset.columnString("CREATION_LOG_HOST_NAME");
+    storageClass.creationLog.time = rset.columnUint64("CREATION_LOG_TIME");
+    storageClass.lastModificationLog.username = rset.columnString("LAST_UPDATE_USER_NAME");
+    storageClass.lastModificationLog.host = rset.columnString("LAST_UPDATE_HOST_NAME");
+    storageClass.lastModificationLog.time = rset.columnUint64("LAST_UPDATE_TIME");
+
+    storageClasses.push_back(storageClass);
+  }
+
+  return storageClasses;
+}
+
 common::dataStructures::StorageClass RdbmsStorageClassCatalogue::getStorageClass(const std::string& name) const {
   const char* const sql = R"SQL(
     SELECT

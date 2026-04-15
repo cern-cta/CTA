@@ -43,6 +43,14 @@ std::vector<common::dataStructures::StorageClass> StorageClassCatalogueRetryWrap
     m_maxTriesToConnect);
 }
 
+std::vector<common::dataStructures::StorageClass>
+StorageClassCatalogueRetryWrapper::getStorageClassesByVid(const std::string& vid) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &vid] { return m_catalogue.StorageClass()->getStorageClassesByVid(vid); },
+    m_maxTriesToConnect);
+}
+
 common::dataStructures::StorageClass StorageClassCatalogueRetryWrapper::getStorageClass(const std::string& name) const {
   return retryOnLostConnection(
     m_log,

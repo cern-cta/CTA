@@ -17,13 +17,18 @@ StorageClassLsResponseStream::StorageClassLsResponseStream(cta::catalogue::Catal
   cta::frontend::AdminCmdOptions request(adminCmd);
 
   std::optional<std::string> storageClassName = request.getOptional(cta::admin::OptionString::STORAGE_CLASS);
+  std::optional<std::string> vid = request.getOptional(cta::admin::OptionString::VID);
+
+  if (storageClassName.has_value() && vid.has_value()) {
+    throw cta::exception::UserError("Cannot specify both storage class name and VID");
+  }
 
   if (storageClassName.has_value()) {
     m_storageClasses.push_back(m_catalogue.StorageClass()->getStorageClass(storageClassName.value()));
+  } else if (vid.has_value()) {
+    m_storageClasses = m_catalogue.StorageClass()->getStorageClassesByVid(vid.value());
   } else {
-    for (const auto& storageClass : m_catalogue.StorageClass()->getStorageClasses()) {
-      m_storageClasses.push_back(storageClass);
-    }
+    m_storageClasses = m_catalogue.StorageClass()->getStorageClasses();
   }
 }
 
