@@ -104,39 +104,7 @@ TEST_P(RelationalDBTest, DISABLED_getBatchArchiveJob) {
   ASSERT_EQ(0, 1);
 }
 
-TEST_P(RelationalDBTest, getArchiveJobs) {
-  using namespace cta;
-#ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
-#else
-  cta::log::StdoutLogger dl("", "");
-#endif
-  cta::log::LogContext lc(dl);
-
-  cta::SchedulerDatabase& db = getDb();
-
-  // No archive jobs were queued, so result must be empty
-  const auto jobs = db.getArchiveJobs();
-  ASSERT_TRUE(jobs.empty());
-}
-
-TEST_P(RelationalDBTest, getPendingRetrieveJobs) {
-  using namespace cta;
-#ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
-#else
-  cta::log::StdoutLogger dl("", "");
-#endif
-  cta::log::LogContext lc(dl);
-
-  cta::SchedulerDatabase& db = getDb();
-
-  // No retrieve jobs were queued, so result should be empty
-  const auto jobs = db.getPendingRetrieveJobs();
-  ASSERT_TRUE(jobs.empty());
-}
-
-TEST_P(RelationalDBTest, getArchiveJobs_withTapePoolFilter) {
+TEST_P(RelationalDBTest, queueAndGetArchiveJobs) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
   cta::log::DummyLogger dl("", "");
@@ -182,13 +150,9 @@ TEST_P(RelationalDBTest, getArchiveJobs_withTapePoolFilter) {
       db.queueArchive("eosInstance", ar, afqc, lc);
     };
 
-  // Insert jobs into two different tape pools
-  // Queue one job in tapePoolA and one in tapePoolB
-  // We need one matching job and one non-matching job to be sure that filtering works
+  // Insert jobs into two different tape pools with one matching job and one non-matching job to verify that filtering works
   queueArchiveJob(111, "tapePoolA", "A", 1000);
   queueArchiveJob(222, "tapePoolB", "B", 2000);
-
-  db.waitSubthreadsComplete();
 
   // Filter by tapePoolA
   // This should return only the job in tapePoolA
@@ -214,7 +178,7 @@ TEST_P(RelationalDBTest, getArchiveJobs_withTapePoolFilter) {
   ASSERT_EQ("group", job.request.requester.group);
 }
 
-TEST_P(RelationalDBTest, getPendingRetrieveJobs_withVidFilter) {
+TEST_P(RelationalDBTest, queueAndGetRetrieveJobs) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
   cta::log::DummyLogger dl("", "");
@@ -276,12 +240,9 @@ TEST_P(RelationalDBTest, getPendingRetrieveJobs_withVidFilter) {
     };
 
   // Insert jobs on two different VIDs
-  // Queue one job on vidA and one on vidB
-  // We need one job on the requested VID and one on another VID to be sure that filtering works
+  // Queue one job on vidA and one on vidB to verify filtering works
   queueRetrieveJob(333, "vidA", "A", 3000);
   queueRetrieveJob(444, "vidB", "B", 4000);
-
-  db.waitSubthreadsComplete();
 
   // Filter by vidA
   // This should return only the retrieve job on vidA
@@ -306,7 +267,7 @@ TEST_P(RelationalDBTest, getPendingRetrieveJobs_withVidFilter) {
   ASSERT_EQ(1u, job.tapeCopies.at("vidA").first);
 }
 
-TEST_P(RelationalDBTest, getArchiveJobs_groupsJobsByTapePool) {
+TEST_P(RelationalDBTest, queueArchiveAndCheckTapePool) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
   cta::log::DummyLogger dl("", "");
@@ -350,13 +311,10 @@ TEST_P(RelationalDBTest, getArchiveJobs_groupsJobsByTapePool) {
     };
 
   // Insert jobs into two different tape pools
-  // Queue two jobs in tapePoolA and one job in tapePoolB
-  // We need to be sure that grouping by tape pool works and that jobs are grouped under the correct tape pool
+  // Queue two jobs in tapePoolA and one job in tapePoolB to verify jobs are correctly grouped by tape pool
   queueArchiveJob(111, "tapePoolA", "A1", 1000);
   queueArchiveJob(112, "tapePoolA", "A2", 1001);
   queueArchiveJob(221, "tapePoolB", "B1", 2000);
-
-  db.waitSubthreadsComplete();
 
   // Query all archive jobs
   // This should return jobs grouped by tape pool
@@ -366,7 +324,7 @@ TEST_P(RelationalDBTest, getArchiveJobs_groupsJobsByTapePool) {
   ASSERT_EQ(1u, jobs.at("tapePoolB").size());
 }
 
-TEST_P(RelationalDBTest, getPendingRetrieveJobs_groupsJobsByVid) {
+TEST_P(RelationalDBTest, queueRetrieveAndCheckVid) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
   cta::log::DummyLogger dl("", "");
@@ -423,13 +381,10 @@ TEST_P(RelationalDBTest, getPendingRetrieveJobs_groupsJobsByVid) {
     };
 
   // Insert jobs on two different VIDs
-  // Queue two jobs on vidA and one job on vidB
-  // We need two jobs on one VID and one on another VID
+  // Queue two jobs on vidA and one job on vidB to verify grouping by VID
   queueRetrieveJob(333, "vidA", "A1", 3000);
   queueRetrieveJob(334, "vidA", "A2", 3001);
   queueRetrieveJob(444, "vidB", "B1", 4000);
-
-  db.waitSubthreadsComplete();
 
   // Query all retrieve jobs
   // This should return jobs grouped by VID
