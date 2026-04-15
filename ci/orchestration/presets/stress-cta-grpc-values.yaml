@@ -25,7 +25,7 @@ frontend:
       catalogue:
         numberOfConnections: 50
       logger:
-        logLevel: "ERR"
+        logLevel: "WARNING"
   xrd:
     enabled: false
 taped:
@@ -33,4 +33,4 @@ taped:
 
 maintd:
   logging:
-    level: "ERR"
+    level: "WARNING"

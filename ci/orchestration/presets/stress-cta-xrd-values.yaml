@@ -22,10 +22,10 @@ frontend:
       catalogue:
         numberOfConnections: 50
       logger:
-        logLevel: "ERR"
+        logLevel: "WARNING"
 taped:
   logMask: "WARNING"
 
 maintd:
   logging:
-    level: "ERR"
+    level: "WARNING"

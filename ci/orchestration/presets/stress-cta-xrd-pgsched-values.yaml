@@ -22,14 +22,14 @@ frontend:
       catalogue:
         numberOfConnections: 50
       logger:
-        logLevel: "ERR"
+        logLevel: "WARNING"
 taped:
   bufferCount: 10000
   logMask: "WARNING"
 
 maintd:
   logging:
-    level: "ERR"
+    level: "WARNING"
   routines:
     # Note that the snake_case version of all these options (including the names)
     # should match the corresponding names in the maintd conf file
