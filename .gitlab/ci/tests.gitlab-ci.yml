@@ -58,7 +58,7 @@ integration-test-cta:
     - /usr/bin/cta-integrationTests
   artifacts:
     reports:
-      junit: $GTEST_METRICS_FILE
+      junit: $GTEST_OUTPUT
 
 unit-test-cta:
   interruptible: false
@@ -80,11 +80,13 @@ unit-test-cta:
   before_script:
     - *setup-cta-install
   script:
+    - echo "$GTEST_OUTPUT"
     - /usr/bin/cta-unitTests
     - /usr/bin/cta-unitTests-multiProcess
+    - cat "$GTEST_OUTPUT"
   artifacts:
     reports:
-      junit: $GTEST_METRICS_FILE
+      junit: $GTEST_OUTPUT
 
 unit-test-postgresql:
   stage: test
@@ -131,7 +133,7 @@ unit-test-postgresql:
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
   artifacts:
     reports:
-      junit: $GTEST_METRICS_FILE
+      junit: $GTEST_OUTPUT
 
 unit-test-oracle:
   stage: test
@@ -173,7 +175,7 @@ unit-test-oracle:
   resource_group: oracle-centralized-db-cta-dev04
   artifacts:
     reports:
-      junit: $GTEST_METRICS_FILE
+      junit: $GTEST_OUTPUT
 
 test-cta-release:
   stage: test
