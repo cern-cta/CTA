@@ -24,7 +24,9 @@ frontend:
   xrd:
     enabled: false
 taped:
-  logMask: "WARNING"
+  conf:
+    taped:
+      logMask: "WARNING"
 
 maintd:
   logging:

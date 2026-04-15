@@ -24,8 +24,12 @@ frontend:
       logger:
         logLevel: "WARNING"
 taped:
-  bufferCount: 10000
-  logMask: "WARNING"
+  conf:
+    taped:
+      # number of parallel files to be buffered (bufferCount) conincides with
+      # the increased batchSizes for pgsched deployment
+      bufferCount: 10000
+      logMask: "WARNING"
 
 maintd:
   logging:

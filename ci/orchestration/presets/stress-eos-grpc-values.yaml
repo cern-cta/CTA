@@ -194,7 +194,7 @@ fst:
     annotations: {}
     accessModes:
       - ReadWriteOnce
-    size: 800Gi
+    size: 40Gi
 
   pod:
     extraSpec:
@@ -330,7 +330,7 @@ qdb:
     annotations: {}
     accessModes:
       - ReadWriteOnce
-    size: 800Gi
+    size: 40Gi
 
   pod:
     extraSpec:

@@ -24,7 +24,9 @@ frontend:
       logger:
         logLevel: "WARNING"
 taped:
-  logMask: "WARNING"
+  conf:
+    taped:
+      logMask: "WARNING"
 
 maintd:
   logging:
