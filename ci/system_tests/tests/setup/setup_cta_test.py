@@ -75,21 +75,20 @@ def test_populate_catalogue(env):
 
 def test_populate_catalogue_tapes(env):
     logical_library_names_in_use: list[str] = [taped.logical_library_name for taped in env.cta_taped]
-    print("Using drives:")
+    print("Using logical libraries:")
     for logical_library_name in logical_library_names_in_use:
         print(f"  - {logical_library_name}")
 
     library_devices_in_use: list[str] = [rmcd.library_device for rmcd in env.cta_rmcd]
-    print("Using libraries:")
+    print("Using library devices:")
     for lib in library_devices_in_use:
         print(f"  - {lib}")
 
     for logical_library_name in logical_library_names_in_use:
-        # Each drive will have its own logical library. This has to do with how the scheduler works
         add_ll_cmd: str = (
             f'cta-admin logicallibrary add \
                                 --name {logical_library_name} \
-                                --comment "ctasystest library mapped to drive {logical_library_name}"'
+                                --comment "ctasystest logical library {logical_library_name} was registered in the catalogue"'
         )
         env.cta_cli[0].exec(add_ll_cmd)
 

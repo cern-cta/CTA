@@ -106,7 +106,7 @@ mgm:
         emptyDir: {}
 
 fst:
-  replicaCount: 13
+  replicaCount: 1
   podManagementPolicy: Parallel
 
   persistence:
