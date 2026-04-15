@@ -3,11 +3,6 @@
 
 global:
 
-  # With the /var/log custom mounts, we need to be both priviledged and allowPrivilegeEscalation
-  securityContext:
-    allowPrivilegeEscalation: True
-    privileged: True
-
   # It should be noted that many logs also go to stdout which is still written to /var/log on the node itself
   # So this means not all log-related writes go to an SSD
   extraVolumes:
