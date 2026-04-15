@@ -56,6 +56,9 @@ integration-test-cta:
     - *setup-cta-install
   script:
     - /usr/bin/cta-integrationTests
+  artifacts:
+    reports:
+      junit: $GTEST_METRICS_FILE
 
 unit-test-cta:
   interruptible: false
@@ -79,6 +82,9 @@ unit-test-cta:
   script:
     - /usr/bin/cta-unitTests
     - /usr/bin/cta-unitTests-multiProcess
+  artifacts:
+    reports:
+      junit: $GTEST_METRICS_FILE
 
 unit-test-postgresql:
   stage: test
@@ -123,6 +129,9 @@ unit-test-postgresql:
         /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
+  artifacts:
+    reports:
+      junit: $GTEST_METRICS_FILE
 
 unit-test-oracle:
   stage: test
@@ -162,6 +171,9 @@ unit-test-oracle:
   # Adding this resource group ensures only a single instance of this job can run at any given time
   # This is necessary as the job uses a single account on a centralized database.
   resource_group: oracle-centralized-db-cta-dev04
+  artifacts:
+    reports:
+      junit: $GTEST_METRICS_FILE
 
 test-cta-release:
   stage: test

@@ -189,6 +189,7 @@ variables:
 
   # Job output configuration
   FF_TIMESTAMPS: true
+  GTEST_METRICS_FILE: "xml:metrics.xml"
 
   # Images
   IMAGE_DEFAULT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2026-04-14-14519429.el9
@@ -217,6 +218,12 @@ workflow:
           - '**/*'
       variables:
         ENABLE_DEBUG_INFO: "FALSE"
+        GTEST_OUTPUT: "$GTEST_METRICS_FILE"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+      auto_cancel:
+        on_new_commit: none
+      variables:
+        GTEST_OUTPUT: "$GTEST_METRICS_FILE" # Only get metrics on push pipelines to main to ensure we don't mix e.g. valgrind runs into this
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_new_commit: none
