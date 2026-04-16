@@ -81,3 +81,24 @@ class EosClientHost(DiskClientHost):
 
     def delete_file(self, disk_instance_name: str, path: str) -> None:
         self.exec(f"eos root://{disk_instance_name} rm --no-confirmation {path}")
+
+    def retrieve_async(
+        self,
+        eos_host: str,
+        dest_dir: str,
+        num_dirs: int,
+        num_procs: int,
+        krb5_cache: str = "/tmp/poweruser1/krb5cc_0",
+        activity: str = "T0Reprocess",
+    ) -> asyncio.Future[ExecResult]:
+        """Start retrieve (prepare/stage-in) asynchronously. Returns a future that can be awaited."""
+        cmd = (
+            f"python3 -u /root/xrootd_retrieve.py "
+            f"--eos-host {eos_host} "
+            f"--dest-dir {dest_dir} "
+            f"--num-dirs {num_dirs} "
+            f"--num-procs {num_procs} "
+            f"--krb5-cache {krb5_cache} "
+            f"--activity {activity}"
+        )
+        return self.exec_async(cmd)
