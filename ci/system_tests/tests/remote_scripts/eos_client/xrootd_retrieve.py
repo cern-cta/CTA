@@ -59,8 +59,8 @@ def prepare_worker(work_q, wid, eos_host, krb5_cache):
     os.environ["XrdSecPROTOCOL"] = "krb5"
     os.environ["KRB5CCNAME"] = krb5_cache
 
-    from XRootD import client
-    from XRootD.client.flags import PrepareFlags
+    from XRootD import client  # type: ignore
+    from XRootD.client.flags import PrepareFlags  # type: ignore
 
     fs = client.FileSystem(f"root://{eos_host}")
     err_budget = 10
