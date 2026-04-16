@@ -394,6 +394,51 @@ TEST_P(RelationalDBTest, queueRetrieveAndCheckVid) {
   ASSERT_EQ(1u, jobs.at("vidB").size());
 }
 
+TEST_P(RelationalDBTest, queueRepack) {
+  using namespace cta;
+
+#ifndef STDOUT_LOGGING
+  cta::log::DummyLogger dl("", "");
+#else
+  cta::log::StdoutLogger dl("", "");
+#endif
+  cta::log::LogContext lc(dl);
+
+  cta::SchedulerDatabase& db = getDb();
+
+  cta::common::dataStructures::MountPolicy mountPolicy;
+  mountPolicy.name = "mountPolicy";
+  mountPolicy.archivePriority = 1;
+  mountPolicy.archiveMinRequestAge = 0;
+  mountPolicy.retrievePriority = 1;
+  mountPolicy.retrieveMinRequestAge = 0;
+  mountPolicy.creationLog = {"u", "h", 1000};
+  mountPolicy.lastModificationLog = {"u", "h", 1000};
+  mountPolicy.comment = "comment";
+
+  cta::SchedulerDatabase::QueueRepackRequest repackRequest("V12345",
+                                                           "/repack/buffer",
+                                                           cta::common::dataStructures::RepackInfo::Type::MoveOnly,
+                                                           mountPolicy,
+                                                           false,
+                                                           10);
+
+  repackRequest.m_creationLog = {"user", "host", 1000};
+
+  db.queueRepack(repackRequest, lc);
+
+  ASSERT_TRUE(db.repackExists());
+
+  const auto repackInfo = db.getRepackInfo("V12345");
+
+  ASSERT_EQ("V12345", repackInfo.vid);
+  ASSERT_EQ("/repack/buffer", repackInfo.repackBufferBaseURL);
+  ASSERT_EQ(cta::common::dataStructures::RepackInfo::Type::MoveOnly, repackInfo.type);
+  ASSERT_EQ(1000u, repackInfo.creationLog.time);
+  ASSERT_EQ(10u, repackInfo.maxFilesToSelect);
+  ASSERT_FALSE(repackInfo.noRecall);
+}
+
 static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
 INSTANTIATE_TEST_CASE_P(RelationalDBTest,
                         RelationalDBTest,
