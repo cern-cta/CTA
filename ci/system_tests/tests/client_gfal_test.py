@@ -78,6 +78,7 @@ def test_copy_scripts(eos_client):
     eos_client.copy_to(str(eos_client_script_dir / "test_retrieve.sh"), "/root/", permissions="+x")
     eos_client.copy_to(str(eos_client_script_dir / "test_evict.sh"), "/root/", permissions="+x")
     eos_client.copy_to(str(eos_client_script_dir / "test_delete.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "grpc_obtain_jwt.sh"), "/root/", permissions="+x")
 
 
 # For now only the "glue" has been migrated to Python. All the scripts invoked in the tests below still need to be migrated at a later point in time
