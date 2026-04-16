@@ -278,9 +278,23 @@ def test_wait_for_archival(eos_mgm, stress_params):
 
 # In client_stress_ar.sh there is an archiveonly mode, after which we exit, maybe consider setting that here too
 # Now retrieve the files as poweruser1
+
+# functions in client_stress_ar.sh
+# delete_files_from_eos_and_tapes
+# Look at the work done in branches: 
+
+@pytest.mark.eos
+def test_prepare_files(env, stress_params):
+    print("Sleeping 60 seconds to allow MGM-FST communication to settle after disk copy deletion", flush=True)
+    time.sleep(60)
+    # count how many files we have archived, then issue the prepare requests for all of them
+
+
+# once prepare requests have been issued for all, wait for files to be back on disk
 @pytest.mark.eos
 def test_wait_for_retrieval(env, stress_params):
-    print("Sleeping 60 seconds to allow MGM-FST communication to settle after disk copy deletion", flush=True)
+    pass
+
     
 
 
