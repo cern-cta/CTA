@@ -56,6 +56,9 @@ integration-test-cta:
     - *setup-cta-install
   script:
     - /usr/bin/cta-integrationTests
+  artifacts:
+    reports:
+      junit: $GTEST_REPORT_FILE
 
 unit-test-cta:
   interruptible: false
@@ -77,8 +80,11 @@ unit-test-cta:
   before_script:
     - *setup-cta-install
   script:
-    - /usr/bin/cta-unitTests
     - /usr/bin/cta-unitTests-multiProcess
+    - /usr/bin/cta-unitTests
+  artifacts:
+    reports:
+      junit: $GTEST_REPORT_FILE
 
 unit-test-postgresql:
   stage: test
@@ -123,6 +129,9 @@ unit-test-postgresql:
         /usr/bin/cta-rdbmsUnitTests ${CTA_CATALOGUE_CONF}
       fi
     - runuser -u postgres -- pg_ctl stop -D ${POSTGRESQL_DATA_DIR}
+  artifacts:
+    reports:
+      junit: $GTEST_REPORT_FILE
 
 unit-test-oracle:
   stage: test
@@ -162,6 +171,9 @@ unit-test-oracle:
   # Adding this resource group ensures only a single instance of this job can run at any given time
   # This is necessary as the job uses a single account on a centralized database.
   resource_group: oracle-centralized-db-cta-dev04
+  artifacts:
+    reports:
+      junit: $GTEST_REPORT_FILE
 
 test-cta-release:
   stage: test
@@ -185,15 +197,30 @@ test-cta-release:
     - echo -e "[cta-local-testing]\nname=CTA artifacts\nbaseurl=file://${CTAREPODIR}\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta-local-testing.repo
     - dnf install --nogpgcheck -y cta-release
     - cta-versionlock apply
-    - dnf install --nogpgcheck -y cta-frontend
-    - dnf install --nogpgcheck -y cta-taped
-    - dnf install --nogpgcheck -y cta-rmcd
-    - dnf install --nogpgcheck -y cta-smc
-    - dnf install --nogpgcheck -y eos-server
-    - dnf install --nogpgcheck -y eos-client
+    - dnf install --nogpgcheck -y cta-cli
+                                  cta-admin-grpc
+                                  cta-catalogueutils
+                                  cta-frontend
+                                  cta-frontend-grpc
+                                  cta-maintd
+                                  cta-taped
+                                  cta-tape-label
+                                  cta-readtp
+                                  cta-rmcd
+                                  cta-smc
+                                  cta-lib-catalogue-occi
+                                  eos-server
+                                  eos-client
     # Check that everything was installed properly
     - cta-versionlock --json check-installed > checkpkg-output.json
+    # Get some metrics on installed sizes
+    - rpm -qa --queryformat '%{NAME} %{SIZE}\n'
+      | awk '$1 ~ /^cta-/ && $1 !~ /-debuginfo|-debugsource/ { name=$1; gsub(/-/, "_", name); printf "rpm_%s_installed_kb %s\n", name, $2/1000 }'
+      | sort
+      > metrics.txt
   artifacts:
     when: always
     paths:
       - checkpkg-output.json
+    reports:
+      metrics: metrics.txt

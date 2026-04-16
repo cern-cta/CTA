@@ -121,7 +121,8 @@
       when: never
     - when: on_success
   variables:
-    BASH_LOGGING_ENABLED: 1
+    TEST_REPORT_FILE: "${CI_PROJECT_DIR}/report.xml"
+    METRICS_FILE: "${CI_PROJECT_DIR}/metrics.txt"
     # Which tests to run
     PYTESTS:
     # Passed to helm install of the CTA chart
@@ -144,6 +145,7 @@
     - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
     - cd ci/orchestration/
     - ./delete_old_namespaces.sh
+    - create_start=$(date +%s)
     - ./create_instance.sh --namespace ${NAMESPACE}
                            --reset-catalogue
                            --reset-scheduler
@@ -155,11 +157,14 @@
                            --scheduler-config ${SCHEDULER_CONFIG}
                            --extra-cta-values "${EXTRA_CTA_HELM_FLAGS}"
                            ${EXTRA_SPAWN_ARGS}
+    - create_end=$(date +%s)
+    - echo "k8s_${CI_JOB_NAME_SLUG//-/_}_create_instance_duration_sec $((create_end - create_start))" >> $METRICS_FILE
     - cd ../system_tests
     - pytest ${PYTESTS} --namespace ${NAMESPACE}
                                   --no-cleanup
                                   --color=yes
                                   --showlocals
+                                  --junitxml=${TEST_REPORT_FILE}
                                   ${EXTRA_PYTEST_ARGS}
                                   2>&1 # Gitlab screws the ordering of stdout and stderr. See https://gitlab.com/gitlab-org/gitlab/-/issues/440824
   after_script:
@@ -167,7 +172,10 @@
     - NAMESPACE="${CI_JOB_NAME_SLUG:0:18}-${CI_JOB_ID}"
     # This also gets called if the job is cancelled to ensure we properly clean up after ourselves
     - cd ci/orchestration/
+    - delete_start=$(date +%s)
     - ./delete_instance.sh --namespace ${NAMESPACE}
+    - delete_end=$(date +%s)
+    - echo "k8s_${CI_JOB_NAME_SLUG//-/_}_delete_instance_duration_sec $((delete_end - delete_start))" >> $METRICS_FILE
   tags:  # Used to indicate that these jobs should run on our own runners
     - kubernetes
     - mhvtl
@@ -176,6 +184,9 @@
     expire_in: 30 days
     paths:
       - pod_logs
+    reports:
+      metrics: $METRICS_FILE
+      junit: $TEST_REPORT_FILE
 
 # Tests
 

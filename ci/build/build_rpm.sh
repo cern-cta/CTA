@@ -250,6 +250,7 @@ build_rpm() {
 
   # Cmake
   export CTA_VERSION=${cta_version}
+  export GTEST_COLOR="yes"
 
   if [[ "${skip_cmake}" = false ]]; then
     # Needs to be exported as cmake gets it from the environment
