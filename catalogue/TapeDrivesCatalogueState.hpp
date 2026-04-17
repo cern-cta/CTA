@@ -64,16 +64,16 @@ public:
                              const common::dataStructures::DriveStatus& status,
                              const tape::daemon::DriveConfigEntry& driveConfigEntry,
                              const common::dataStructures::SecurityIdentity& identity,
-                             log::LogContext& lc);
+                             log::LogContext& lc) const;
   CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistsException);
-  void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo);
-  void removeDrive(const std::string& drive, log::LogContext& lc);
+  void checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo) const;
+  void removeDrive(const std::string& drive, log::LogContext& lc) const;
   void setDesiredDriveState(const std::string& drive,
                             const common::dataStructures::DesiredDriveState& desiredState,
-                            log::LogContext& lc);
+                            log::LogContext& lc) const;
   void updateDriveStatistics(const common::dataStructures::DriveInfo& driveInfo,
                              const ReportDriveStatsInputs& inputs,
-                             log::LogContext& lc);
+                             log::LogContext& lc) const;
   void reportDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                          cta::common::dataStructures::MountType mountType,
                          common::dataStructures::DriveStatus status,
@@ -84,10 +84,10 @@ public:
                          uint64_t filesTransferred = 0,
                          std::string_view vid = "",
                          std::string_view tapepool = "",
-                         std::string_view vo = "");
+                         std::string_view vo = "") const;
   void updateDriveStatus(const common::dataStructures::DriveInfo& driveInfo,
                          const ReportDriveStatusInputs& inputs,
-                         log::LogContext& lc);
+                         log::LogContext& lc) const;
 
 private:
   cta::catalogue::Catalogue& m_catalogue;

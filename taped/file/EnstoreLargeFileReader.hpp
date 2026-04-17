@@ -46,7 +46,7 @@ private:
   void positionByBlockID(const cta::RetrieveJob& fileToRecall) override;
   void setBlockSize(const UHL1& uhl1);
   void setTargetFileSize(const UHL2& uhl2);
-  void moveToFirstHeaderBlock();  // Not implemented
+  void moveToFirstHeaderBlock() const;  // Not implemented
   void moveReaderByFSeqDelta(const int64_t fSeq_delta);
   void checkHeaders(const cta::RetrieveJob& fileToRecall);
   void checkTrailers();

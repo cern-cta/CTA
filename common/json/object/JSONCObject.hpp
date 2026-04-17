@@ -66,7 +66,7 @@ protected:
    * @param key the key to return the JSON-C type of the object
    * @return the JSON-C representation of the object associated to the key passed in parameter
    */
-  json_type getJSONObjectType(const std::string& key);
+  json_type getJSONObjectType(const std::string& key) const;
 
   /**
    * This method allows to get the value from the JSON-C representation of the object

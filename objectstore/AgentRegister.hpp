@@ -26,14 +26,14 @@ public:
                       AgentReference& agentReference,
                       log::LogContext& lc,
                       cta::catalogue::Catalogue& catalogue) override;
-  bool isEmpty();
+  bool isEmpty() const;
   void addAgent(const std::string& name);
   void removeAgent(const std::string& name);
   void trackAgent(const std::string& name);
   void untrackAgent(const std::string& name);
-  std::list<std::string> getAgents();
-  std::list<std::string> getUntrackedAgents();
-  std::string dump();
+  std::list<std::string> getAgents() const;
+  std::list<std::string> getUntrackedAgents() const;
+  std::string dump() const;
 };
 
 }  // namespace cta::objectstore

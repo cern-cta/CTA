@@ -46,22 +46,22 @@ public:
               const std::string& strOwner,
               const std::string& strVersion);  // can throw
 
-  std::string owner() { return std::string(m_tcOwner); }
+  std::string owner() const { return std::string(m_tcOwner); }
 
-  std::string version() { return std::string(m_tcVersion); }
+  std::string version() const { return std::string(m_tcVersion); }
 
   std::string name() const {
     // Returns truncated name of the label
     return std::string(m_tcName, cta::CA_MAXVIDLEN);
   }
 
-  uint64_t createTime() { return m_ulCreateTime; }
+  uint64_t createTime() const { return m_ulCreateTime; }
 
-  uint64_t expireTime() { return m_ulExpireTime; }
+  uint64_t expireTime() const { return m_ulExpireTime; }
 
-  uint64_t recSize() { return m_ulRecSize; }
+  uint64_t recSize() const { return m_ulRecSize; }
 
-  uint64_t volId() { return m_ulVolId; }
+  uint64_t volId() const { return m_ulVolId; }
 
   /**
    * @return the logical block protection method

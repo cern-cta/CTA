@@ -37,8 +37,8 @@ public:
 
   virtual ~Thread() = default;
   void start();
-  void wait();
-  void kill();
+  void wait() const;
+  void kill() const;
 
 protected:
   virtual void run() = 0;

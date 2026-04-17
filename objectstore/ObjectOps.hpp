@@ -96,35 +96,35 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(StillLocked);
 
 protected:
-  void checkHeaderWritable() {
+  void checkHeaderWritable() const {
     if (!m_headerInterpreted) {
       throw NotFetched("In ObjectOps::checkHeaderWritable: header not yet fetched or initialized");
     }
     checkWritable();
   }
 
-  void checkHeaderReadable() {
+  void checkHeaderReadable() const {
     if (!m_headerInterpreted) {
       throw NotFetched("In ObjectOps::checkHeaderReadable: header not yet fetched or initialized");
     }
     checkReadable();
   }
 
-  void checkPayloadWritable() {
+  void checkPayloadWritable() const {
     if (!m_payloadInterpreted) {
       throw NotFetched("In ObjectOps::checkPayloadWritable: header not yet fetched or initialized");
     }
     checkWritable();
   }
 
-  void checkPayloadReadable() {
+  void checkPayloadReadable() const {
     if (!m_payloadInterpreted) {
       throw NotFetched("In ObjectOps::checkPayloadReadable: header not yet fetched or initialized");
     }
     checkReadable();
   }
 
-  void checkWritable() {
+  void checkWritable() const {
     if (m_existingObject && !m_locksForWriteCount) {
       throw NotLocked("In ObjectOps::checkWritable: object not locked for write");
     }
@@ -133,7 +133,7 @@ protected:
     }
   }
 
-  void checkReadable() {
+  void checkReadable() const {
     // We could still read from a fresh, not yet inserted object.
     if (m_existingObject && (!m_locksCount && !m_noLock)) {
       throw NotLocked("In ObjectOps::checkReadable: object not locked");
@@ -199,7 +199,7 @@ public:
     m_header.set_backupowner(owner);
   }
 
-  std::string getBackupOwner() {
+  std::string getBackupOwner() const {
     checkHeaderReadable();
     return m_header.backupowner();
   }
@@ -230,7 +230,7 @@ public:
     releaseIfNeeded();
   }
 
-  bool isLocked() { return m_locked; }
+  bool isLocked() const { return m_locked; }
 
   /**
    * Virtual function (implemented differently in shared and exclusive locks),
@@ -314,19 +314,19 @@ protected:
   std::list<ObjectOpsBase*> m_subObjectsOps;
   bool m_locked = false;
 
-  void checkNotLocked() {
+  void checkNotLocked() const {
     if (m_locked) {
       throw AlreadyLocked("In ScopedLock::checkNotLocked: trying to lock an already locked lock");
     }
   }
 
-  void checkLocked() {
+  void checkLocked() const {
     if (!m_locked) {
       throw NotLocked("In ScopedLock::checkLocked: trying to unlock an unlocked lock");
     }
   }
 
-  void checkObjectAndAddressSet(ObjectOpsBase* oob = nullptr) {
+  void checkObjectAndAddressSet(ObjectOpsBase* oob = nullptr) const {
     // By default we deal with the main object.
     if (!oob) {
       oob = m_objectOps;

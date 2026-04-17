@@ -66,7 +66,7 @@ public:
   common::dataStructures::RetrieveJobToAdd getJobToAdd();
   // Job management ============================================================
   void addJob(uint32_t copyNumber, uint16_t maxRetriesWithinMount, uint16_t maxTotalRetries, uint16_t maxReportRetries);
-  std::string getLastActiveVid();
+  std::string getLastActiveVid() const;
   void setFailureReason(const std::string& reason);
   static void updateLifecycleTiming(serializers::RetrieveRequest& payload,
                                     const cta::objectstore::serializers::RetrieveJob& retrieveJob);
@@ -168,8 +168,8 @@ public:
    */
   AsyncRetrieveToArchiveTransformer* asyncTransformToArchiveRequest(AgentReference& processAgent);
 
-  JobDump getJob(uint32_t copyNb);
-  std::list<JobDump> getJobs();
+  JobDump getJob(uint32_t copyNb) const;
+  std::list<JobDump> getJobs() const;
   /**
    * Fail the job and determine if it should be re-queued
    *
@@ -187,9 +187,9 @@ public:
     uint64_t maxReportRetries = 0;
   };
 
-  RetryStatus getRetryStatus(uint32_t copyNumber);
+  RetryStatus getRetryStatus(uint32_t copyNumber) const;
   enum class JobEvent { TransferFailed, ReportFailed };
-  std::string eventToString(JobEvent jobEvent);
+  std::string eventToString(JobEvent jobEvent) const;
 
   struct EnqueueingNextStep {
     enum class NextStep {
@@ -215,10 +215,10 @@ public:
   };
 
   void setRepackInfo(const RepackInfo& repackInfo);
-  RepackInfo getRepackInfo();
+  RepackInfo getRepackInfo() const;
 
   struct RepackInfoSerDeser : public RepackInfo {
-    void serialize(cta::objectstore::serializers::RetrieveRequestRepackInfo& rrri) {
+    void serialize(cta::objectstore::serializers::RetrieveRequestRepackInfo& rrri) const {
       if (!isRepack) {
         throw exception::Exception("In RetrieveRequest::RepackInfoSerDeser::serialize(): isRepack is false.");
       }
@@ -270,13 +270,13 @@ public:
   EnqueueingNextStep
   addReportAbort(uint32_t copyNumber, uint64_t mountId, const std::string& abortReason, log::LogContext& lc);
   //! Returns queue type depending on the compound statuses of all retrieve requests
-  common::dataStructures::JobQueueType getQueueType();
+  common::dataStructures::JobQueueType getQueueType() const;
   CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
-  common::dataStructures::JobQueueType getQueueType(uint32_t copyNumber);
-  std::list<std::string> getFailures();
-  std::list<std::string> getReportFailures();
-  std::string statusToString(const serializers::RetrieveJobStatus& status);
-  serializers::RetrieveJobStatus getJobStatus(uint32_t copyNumber);
+  common::dataStructures::JobQueueType getQueueType(uint32_t copyNumber) const;
+  std::list<std::string> getFailures() const;
+  std::list<std::string> getReportFailures() const;
+  std::string statusToString(const serializers::RetrieveJobStatus& status) const;
+  serializers::RetrieveJobStatus getJobStatus(uint32_t copyNumber) const;
   void setJobStatus(uint32_t copyNumber, const serializers::RetrieveJobStatus& status);
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
 
@@ -287,11 +287,11 @@ public:
   public:
     void wait();
 
-    serializers::RetrieveJobStatus getJobStatus() { return m_jobStatus; }
+    serializers::RetrieveJobStatus getJobStatus() const { return m_jobStatus; }
 
-    const common::dataStructures::RetrieveRequest& getRetrieveRequest();
-    const common::dataStructures::ArchiveFile& getArchiveFile();
-    const RepackInfo& getRepackInfo();
+    const common::dataStructures::RetrieveRequest& getRetrieveRequest() const;
+    const common::dataStructures::ArchiveFile& getArchiveFile() const;
+    const RepackInfo& getRepackInfo() const;
     const std::optional<std::string>& getActivity();
     const std::optional<std::string>& getDiskSystemName();
 
@@ -311,7 +311,7 @@ public:
   asyncUpdateJobOwner(uint32_t ui32CopyNb, const std::string& strOwner, const std::string& strPreviousOwner);
   // ===========================================================================
   void setSchedulerRequest(const cta::common::dataStructures::RetrieveRequest& retrieveRequest);
-  cta::common::dataStructures::RetrieveRequest getSchedulerRequest();
+  cta::common::dataStructures::RetrieveRequest getSchedulerRequest() const;
 
   void setRetrieveFileQueueCriteria(const cta::common::dataStructures::RetrieveFileQueueCriteria& criteria);
   void setActivityIfNeeded(const cta::common::dataStructures::RetrieveRequest& retrieveRequest,
@@ -319,18 +319,18 @@ public:
   std::optional<std::string> getActivity();
   void setDiskSystemName(const std::string& diskSystemName);
   std::optional<std::string> getDiskSystemName();
-  cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria();
-  cta::common::dataStructures::ArchiveFile getArchiveFile();
-  cta::common::dataStructures::EntryLog getEntryLog();
-  cta::common::dataStructures::LifecycleTimings getLifecycleTimings();
+  cta::common::dataStructures::RetrieveFileQueueCriteria getRetrieveFileQueueCriteria() const;
+  cta::common::dataStructures::ArchiveFile getArchiveFile() const;
+  cta::common::dataStructures::EntryLog getEntryLog() const;
+  cta::common::dataStructures::LifecycleTimings getLifecycleTimings() const;
   void setCreationTime(const uint64_t creationTime);
-  uint64_t getCreationTime();
+  uint64_t getCreationTime() const;
 
   void setFirstSelectedTime(const uint64_t firstSelectedTime);
   void setCompletedTime(const uint64_t completedTime);
   void setReportedTime(const uint64_t reportedTime);
   void setActiveCopyNumber(uint32_t activeCopyNb);
-  uint32_t getActiveCopyNumber();
+  uint32_t getActiveCopyNumber() const;
 
   void setIsVerifyOnly(bool isVerifyOnly) { m_payload.set_isverifyonly(isVerifyOnly); }
 
@@ -338,25 +338,25 @@ public:
    * Sets the job as failed. Failed jobs are moved to the failed requests and cannot be deleted from the scheduler.
    */
   void setFailed();
-  bool isFailed();
+  bool isFailed() const;
   // ===========================================================================
-  std::list<JobDump> dumpJobs();
-  std::string dump();
+  std::list<JobDump> dumpJobs() const;
+  std::string dump() const;
 
 private:
   std::string asyncUpdateJobOwnerCallback(const std::string& strIn,
                                           AsyncJobOwnerUpdater& ret,
                                           uint32_t ui32CopyNb,
                                           const std::string& strOwner,
-                                          const std::string& strPreviousOwner);
+                                          const std::string& strPreviousOwner) const;
   std::string
-  asyncJobSucceedReporterCallback(const std::string& strIn, AsyncJobSucceedReporter& ret, uint32_t ui32CopyNb);
+  asyncJobSucceedReporterCallback(const std::string& strIn, AsyncJobSucceedReporter& ret, uint32_t ui32CopyNb) const;
   std::string asyncReportSucceedForRepackCallback(const std::string& strIn,
                                                   AsyncJobSucceedForRepackReporter& ret,
-                                                  uint32_t ui32CopyNb);
+                                                  uint32_t ui32CopyNb) const;
   std::string asyncTransformToArchiveRequestCallback(const std::string& strIn,
                                                      AsyncRetrieveToArchiveTransformer& ret,
-                                                     const std::string& strProcessAgentAddress);
+                                                     const std::string& strProcessAgentAddress) const;
   /*!
    * Determine and set the new status of the job.
    *
@@ -370,7 +370,7 @@ private:
    * @returns    The next step to be taken by the caller (OStoreDB), which is in charge of the queueing
    *             and status setting
    */
-  EnqueueingNextStep determineNextStep(uint32_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext& lc);
+  EnqueueingNextStep determineNextStep(uint32_t copyNumberToUpdate, JobEvent jobEvent, log::LogContext& lc) const;
 };
 
 }  // namespace objectstore

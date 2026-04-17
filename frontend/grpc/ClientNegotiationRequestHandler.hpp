@@ -30,7 +30,7 @@ public:
   void init() override { /* Nothing todo */ };
   bool next(const bool bOk) override;  // can thorw
 
-  inline const std::string& token() { return m_strToken; }
+  inline const std::string& token() const { return m_strToken; }
 
 private:
   enum class StreamState : unsigned int { NEW = 1, WRITE, READ, FINISH };

@@ -599,7 +599,7 @@ void ReadtpCmd::printUsage(std::ostream& os) {
 //------------------------------------------------------------------------------
 // boolToStr
 //------------------------------------------------------------------------------
-const char* ReadtpCmd::boolToStr(const bool value) {
+const char* ReadtpCmd::boolToStr(const bool value) const {
   return value ? "true" : "false";
 }
 

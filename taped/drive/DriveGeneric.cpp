@@ -2959,7 +2959,7 @@ void drive::DriveGeneric::waitUntilReady(const uint32_t timeoutSecond) {
   }
 }
 
-void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond) {
+void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond) const {
   std::string lastTestUnitReadyExceptionMsg("");
   cta::utils::Timer t;
   // Query the tape drive at least once hence a do while loop/

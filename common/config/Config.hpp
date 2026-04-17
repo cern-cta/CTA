@@ -71,7 +71,7 @@ private:
   /*!
    * Tokenize a stringstream
    */
-  optionlist_t tokenize(std::istringstream& input);
+  optionlist_t tokenize(std::istringstream& input) const;
 
   /*!
    * Interprets an unsigned integer value in the string

@@ -125,7 +125,7 @@ void Config::parse(log::Logger& log) {
   }
 }
 
-optionlist_t Config::tokenize(std::istringstream& input) {
+optionlist_t Config::tokenize(std::istringstream& input) const {
   optionlist_t values;
 
   while (!input.eof()) {

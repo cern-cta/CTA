@@ -20,14 +20,14 @@ protected:
    *
    * @param opt The option.
    */
-  void handleMissingParameter(const int opt);
+  void handleMissingParameter(const int opt) const;
 
   /**
    * Handles the specified unknown option.
    *
    * @param opt The option.
    */
-  void handleUnknownOption(const int opt);
+  void handleUnknownOption(const int opt) const;
 
 };  // class CmdLine
 

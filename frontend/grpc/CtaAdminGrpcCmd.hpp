@@ -20,16 +20,16 @@ namespace cta::admin {
 class CtaAdminGrpcCmd {
 public:
   //! Send the protocol buffer across the gRPC transport
-  void send(const CtaAdminParsedCmd& parsedCmd, const std::string& config_file);
+  void send(const CtaAdminParsedCmd& parsedCmd, const std::string& config_file) const;
 
 private:
   void setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
                                        grpc::ClientContext& context,
                                        const std::string& GSS_SPN,
-                                       cta::log::FileLogger& log);
+                                       cta::log::FileLogger& log) const;
   // Attaches the Kerberos token to the call metadata (per-call credentials)
 
-  void setupJwtAuthenticatedAdminCall(grpc::ClientContext& context, const std::string& token_path);
+  void setupJwtAuthenticatedAdminCall(grpc::ClientContext& context, const std::string& token_path) const;
   // Attaches the JWT token to the call metadata (per-call credentials)
 };
 

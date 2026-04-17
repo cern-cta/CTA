@@ -44,7 +44,7 @@ void cta::objectstore::AgentRegister::garbageCollect(const std::string& presumed
   lc.log(log::INFO, "In AgentRegister::garbageCollect(): Garbage collected and removed agent register object.");
 }
 
-bool cta::objectstore::AgentRegister::isEmpty() {
+bool cta::objectstore::AgentRegister::isEmpty() const {
   checkPayloadReadable();
   if (m_payload.untrackedagents_size()) {
     return false;
@@ -89,7 +89,7 @@ void cta::objectstore::AgentRegister::untrackAgent(const std::string& name) {
   }
 }
 
-std::list<std::string> cta::objectstore::AgentRegister::getAgents() {
+std::list<std::string> cta::objectstore::AgentRegister::getAgents() const {
   std::list<std::string> ret;
   for (int i = 0; i < m_payload.agents_size(); i++) {
     ret.push_back(m_payload.agents(i));
@@ -97,7 +97,7 @@ std::list<std::string> cta::objectstore::AgentRegister::getAgents() {
   return ret;
 }
 
-std::list<std::string> cta::objectstore::AgentRegister::getUntrackedAgents() {
+std::list<std::string> cta::objectstore::AgentRegister::getUntrackedAgents() const {
   std::list<std::string> ret;
   for (int i = 0; i < m_payload.untrackedagents_size(); i++) {
     ret.push_back(m_payload.untrackedagents(i));
@@ -105,7 +105,7 @@ std::list<std::string> cta::objectstore::AgentRegister::getUntrackedAgents() {
   return ret;
 }
 
-std::string cta::objectstore::AgentRegister::dump() {
+std::string cta::objectstore::AgentRegister::dump() const {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;

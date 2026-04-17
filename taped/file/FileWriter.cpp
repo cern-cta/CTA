@@ -66,11 +66,11 @@ uint32_t FileWriter::getPosition() {
   return m_session.m_drive.getPositionInfo().currentPosition;
 }
 
-uint32_t FileWriter::getBlockId() {
+uint32_t FileWriter::getBlockId() const {
   return m_blockId;
 }
 
-size_t FileWriter::getBlockSize() {
+size_t FileWriter::getBlockSize() const {
   return m_currentBlockSize;
 }
 

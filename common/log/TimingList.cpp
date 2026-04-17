@@ -10,7 +10,7 @@
 
 namespace cta::log {
 
-void TimingList::addToLog(ScopedParamContainer& spc) {
+void TimingList::addToLog(ScopedParamContainer& spc) const {
   for (auto& t : *this) {
     std::string name;
     double value;

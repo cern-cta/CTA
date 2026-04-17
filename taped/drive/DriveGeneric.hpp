@@ -476,7 +476,7 @@ protected:
   /**
    * Time based loop around "test unit ready" command
    */
-  void waitTestUnitReady(const uint32_t timeoutSecond);
+  void waitTestUnitReady(const uint32_t timeoutSecond) const;
 
   /**
    * Set the tape Logical Block Protection.

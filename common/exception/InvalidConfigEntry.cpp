@@ -19,20 +19,20 @@ cta::exception::InvalidConfigEntry::InvalidConfigEntry(const char* const entryCa
 // -----------------------------------------------------------------------------
 // getEntryCategory()
 // -----------------------------------------------------------------------------
-const std::string& cta::exception::InvalidConfigEntry::getEntryCategory() {
+const std::string& cta::exception::InvalidConfigEntry::getEntryCategory() const {
   return m_entryCategory;
 }
 
 // -----------------------------------------------------------------------------
 // getEntryName()
 // -----------------------------------------------------------------------------
-const std::string& cta::exception::InvalidConfigEntry::getEntryName() {
+const std::string& cta::exception::InvalidConfigEntry::getEntryName() const {
   return m_entryName;
 }
 
 // -----------------------------------------------------------------------------
 // getEntryValue()
 // -----------------------------------------------------------------------------
-const std::string& cta::exception::InvalidConfigEntry::getEntryValue() {
+const std::string& cta::exception::InvalidConfigEntry::getEntryValue() const {
   return m_entryValue;
 }

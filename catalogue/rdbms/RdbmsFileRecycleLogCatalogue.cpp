@@ -59,7 +59,7 @@ void RdbmsFileRecycleLogCatalogue::restoreArchiveFileInRecycleLog(
   rdbms::Conn& conn,
   const cta::common::dataStructures::FileRecycleLog& fileRecycleLog,
   std::string_view newFid,
-  log::LogContext&) {
+  log::LogContext&) const {
   cta::catalogue::ArchiveFileRowWithoutTimestamps row;
   row.diskFileId = newFid;
   row.archiveFileId = fileRecycleLog.archiveFileId;

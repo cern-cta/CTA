@@ -59,7 +59,7 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(AgentNotSet);
 
 private:
-  void assertAgentAddressSet();
+  void assertAgentAddressSet() const;
 
 public:
   CTA_GENERATE_EXCEPTION_CLASS(NotImplemented);
@@ -79,7 +79,7 @@ private:
 
     void start() { cta::threading::Thread::start(); }
 
-    void wait() { cta::threading::Thread::wait(); }
+    void wait() const { cta::threading::Thread::wait(); }
 
   private:
     void run() override;
@@ -246,8 +246,8 @@ public:
     void asyncSucceedTransfer();
     /** Returns true if the jobs was the last one and the request should be queued for report. */
     void waitAsyncSucceed();
-    objectstore::ArchiveRequest::RepackInfo getRepackInfoAfterAsyncSuccess();
-    bool isLastAfterAsyncSuccess();
+    objectstore::ArchiveRequest::RepackInfo getRepackInfoAfterAsyncSuccess() const;
+    bool isLastAfterAsyncSuccess() const;
     void asyncDeleteRequest();
     void waitAsyncDelete();
 

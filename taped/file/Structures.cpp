@@ -23,7 +23,7 @@ void tapeFile::VOL1::fill(const std::string& VSN, unsigned char LBPMethod) {
   setString(m_LBPMethod, hexLBP.str());
 }
 
-void tapeFile::VOL1::verify(const char* const expectedLblStandard) {
+void tapeFile::VOL1::verify(const char* const expectedLblStandard) const {
   if (cmpString(m_label, "VOL1")) {
     throw cta::exception::Exception(std::string("Failed verify for the VOL1: ") + tapeFile::toString(m_label));
   }

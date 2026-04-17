@@ -17,7 +17,8 @@ TapePoolLsResponseStream::TapePoolLsResponseStream(cta::catalogue::Catalogue& ca
     : CtaAdminResponseStream(catalogue, scheduler, instanceName),
       m_tapePools(buildTapePoolList(adminCmd)) {}
 
-std::vector<cta::catalogue::TapePool> TapePoolLsResponseStream::buildTapePoolList(const admin::AdminCmd& admincmd) {
+std::vector<cta::catalogue::TapePool>
+TapePoolLsResponseStream::buildTapePoolList(const admin::AdminCmd& admincmd) const {
   cta::frontend::AdminCmdOptions request(admincmd);
 
   cta::catalogue::TapePoolSearchCriteria searchCriteria;

@@ -103,7 +103,7 @@ public:
   /**
        * Throws an exception if the structure does not match expectations.
        */
-  void verify(const char* const expectedLblStandard = "3");
+  void verify(const char* const expectedLblStandard = "3") const;
 };
 
 class VOL1withCrc : public VOL1 {

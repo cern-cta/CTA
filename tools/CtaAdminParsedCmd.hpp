@@ -43,7 +43,7 @@ private:
   void addOption(const Option& option, const std::string& value);
 
   //! Read a list of string options from a file
-  void readListFromFile(cta::admin::OptionStrList& str_list, const std::string& filename);
+  void readListFromFile(cta::admin::OptionStrList& str_list, const std::string& filename) const;
 
   // Member variables
 

@@ -6,6 +6,7 @@
 #pragma once
 
 #include "ObjectOps.hpp"
+
 #include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {
@@ -30,7 +31,7 @@ public:
   void commit() override;
 
   /** Get the object's type (type is forced implicitly in other classes) */
-  serializers::ObjectType type();
+  serializers::ObjectType type() const;
 
   /** Overload of ObjectOps's implementation: this operation is forbidden. Generic
    * Object is only used to manipulate existing objects */
@@ -80,7 +81,7 @@ public:
    * The source (this) will be emptied.
    * @param destination pointed to the new object's destination
    */
-  void transplantHeader(ObjectOpsBase& destination);
+  void transplantHeader(ObjectOpsBase& destination) const;
 
   /**
    * This method exposes the reference to the object store.

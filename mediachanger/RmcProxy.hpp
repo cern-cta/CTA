@@ -116,7 +116,7 @@ protected:
    * @param fd The file descriptor of the connection.
    * @return The message header.
    */
-  MessageHeader readRmcMsgHeader(const int fd);
+  MessageHeader readRmcMsgHeader(const int fd) const;
 
   /**
    * Sends the specified request to the rmcd daemon and receives the reply
@@ -168,7 +168,7 @@ protected:
    * @param The RMC return code.
    */
   template<typename T>
-  int rmcSendRecv(const T& rqstBody, std::ostringstream& rmcErrorStream) {
+  int rmcSendRecv(const T& rqstBody, std::ostringstream& rmcErrorStream) const {
     // Connect to rmcd and send request
     cta::SmartFd fd(connectToRmc());
     {
@@ -220,7 +220,7 @@ protected:
    * @param replyType The reply type.
    * @return The string representation.
    */
-  std::string rmcReplyTypeToStr(const int replyType);
+  std::string rmcReplyTypeToStr(const int replyType) const;
 
   /**
    * Handles a MSG_ERR reply from rmcd.
@@ -229,7 +229,7 @@ protected:
    * @param fd The file descriptor of the connection with rmcd daemon.
    * @return The message contained within the MSG_ERR reply.
    */
-  std::string handleMSG_ERR(const MessageHeader& header, const int fd);
+  std::string handleMSG_ERR(const MessageHeader& header, const int fd) const;
 };
 
 }  // namespace cta::mediachanger

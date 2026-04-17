@@ -64,7 +64,7 @@ protected:
   void restoreArchiveFileInRecycleLog(rdbms::Conn& conn,
                                       const cta::common::dataStructures::FileRecycleLog& fileRecycleLog,
                                       std::string_view newFid,
-                                      log::LogContext& lc);
+                                      log::LogContext& lc) const;
 
   // TapeFile
   friend class OracleTapeFileCatalogue;

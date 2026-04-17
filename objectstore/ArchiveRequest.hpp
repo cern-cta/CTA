@@ -54,15 +54,15 @@ public:
     uint64_t maxReportRetries = 0;
   };
 
-  RetryStatus getRetryStatus(uint32_t copyNumber);
-  std::list<std::string> getFailures();
-  std::list<std::string> getReportFailures();
+  RetryStatus getRetryStatus(uint32_t copyNumber) const;
+  std::list<std::string> getFailures() const;
+  std::list<std::string> getReportFailures() const;
   serializers::ArchiveJobStatus getJobStatus(uint32_t copyNumber);
   void setJobStatus(uint32_t copyNumber, const serializers::ArchiveJobStatus& status);
-  std::string getTapePoolForJob(uint32_t copyNumber);
+  std::string getTapePoolForJob(uint32_t copyNumber) const;
   static std::string statusToString(const serializers::ArchiveJobStatus& status);
   enum class JobEvent { TransferFailed, ReportFailed };
-  std::string eventToString(JobEvent jobEvent);
+  std::string eventToString(JobEvent jobEvent) const;
 
   struct EnqueueingNextStep {
     enum class NextStep {
@@ -120,7 +120,7 @@ public:
   };
 
   void setRepackInfo(const RepackInfo& repackInfo);
-  RepackInfo getRepackInfo();
+  RepackInfo getRepackInfo() const;
   EnqueueingNextStep addTransferFailure(uint32_t copyNumber,
                                         uint64_t sessionId,
                                         const std::string& failureReason,
@@ -130,7 +130,7 @@ public:
                                       const std::string& failureReason,
                                       log::LogContext& lc);  //< returns next step to take with the job
   CTA_GENERATE_EXCEPTION_CLASS(JobNotQueueable);
-  common::dataStructures::JobQueueType getJobQueueType(uint32_t copyNumber);
+  common::dataStructures::JobQueueType getJobQueueType(uint32_t copyNumber) const;
   CTA_GENERATE_EXCEPTION_CLASS(NoSuchJob);
   // Set a job ownership
   void setJobOwner(uint32_t copyNumber, const std::string& owner);
@@ -141,13 +141,13 @@ public:
 
   public:
     void wait();
-    const common::dataStructures::ArchiveFile& getArchiveFile();
-    const std::string& getSrcURL();
-    const std::string& getArchiveReportURL();
-    const std::string& getArchiveErrorReportURL();
-    const std::string& getLastestError();
-    RepackInfo getRepackInfo();                                            // cppcheck-suppress returnByReference
-    std::map<uint32_t, serializers::ArchiveJobStatus> getJobsStatusMap();  // cppcheck-suppress returnByReference
+    const common::dataStructures::ArchiveFile& getArchiveFile() const;
+    const std::string& getSrcURL() const;
+    const std::string& getArchiveReportURL() const;
+    const std::string& getArchiveErrorReportURL() const;
+    const std::string& getLastestError() const;
+    RepackInfo getRepackInfo() const;                                            // cppcheck-suppress returnByReference
+    std::map<uint32_t, serializers::ArchiveJobStatus> getJobsStatusMap() const;  // cppcheck-suppress returnByReference
 
     // TODO: use the more general structure from utils.
     struct TimingsReport {
@@ -178,7 +178,7 @@ public:
                                             const std::optional<serializers::ArchiveJobStatus>& newStatus);
 
   struct RepackInfoSerDeser : public RepackInfo {
-    void serialize(cta::objectstore::serializers::ArchiveRequestRepackInfo& arri) {
+    void serialize(cta::objectstore::serializers::ArchiveRequestRepackInfo& arri) const {
       if (!isRepack) {
         throw exception::Exception("In ArchiveRequest::RepackInfoSerDeser::serialize(): isRepack is false.");
       }
@@ -233,7 +233,7 @@ public:
 
   AsyncRequestDeleter* asyncDeleteRequest();
   // Get a job owner
-  std::string getJobOwner(uint32_t copyNumber);
+  std::string getJobOwner(uint32_t copyNumber) const;
 
   // Utility to convert status to queue type
   static common::dataStructures::JobQueueType getQueueType(const serializers::ArchiveJobStatus& status);
@@ -241,28 +241,28 @@ public:
   // ===========================================================================
   // TODO: ArchiveFile comes with extraneous information.
   void setArchiveFile(const cta::common::dataStructures::ArchiveFile& archiveFile);
-  cta::common::dataStructures::ArchiveFile getArchiveFile();
+  cta::common::dataStructures::ArchiveFile getArchiveFile() const;
 
   void setArchiveReportURL(const std::string& URL);
-  std::string getArchiveReportURL();
+  std::string getArchiveReportURL() const;
 
   void setArchiveErrorReportURL(const std::string& URL);
-  std::string getArchiveErrorReportURL();
+  std::string getArchiveErrorReportURL() const;
 
   void setRequester(const cta::common::dataStructures::RequesterIdentity& requester);
-  cta::common::dataStructures::RequesterIdentity getRequester();
+  cta::common::dataStructures::RequesterIdentity getRequester() const;
 
   void setSrcURL(const std::string& srcURL);
-  std::string getSrcURL();
+  std::string getSrcURL() const;
 
   void setEntryLog(const cta::common::dataStructures::EntryLog& creationLog);
-  cta::common::dataStructures::EntryLog getEntryLog();
+  cta::common::dataStructures::EntryLog getEntryLog() const;
 
   void setMountPolicy(const cta::common::dataStructures::MountPolicy& mountPolicy);
-  cta::common::dataStructures::MountPolicy getMountPolicy();
+  cta::common::dataStructures::MountPolicy getMountPolicy() const;
 
   void setFailed();
-  bool isFailed();
+  bool isFailed() const;
 
   class JobDump {
   public:
@@ -272,12 +272,12 @@ public:
     serializers::ArchiveJobStatus status;
   };
 
-  std::list<JobDump> dumpJobs();
+  std::list<JobDump> dumpJobs() const;
   void garbageCollect(const std::string& presumedOwner,
                       AgentReference& agentReference,
                       log::LogContext& lc,
                       cta::catalogue::Catalogue& catalogue) override;
-  std::string dump();
+  std::string dump() const;
 };
 
 }  // namespace cta::objectstore

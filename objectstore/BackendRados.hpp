@@ -106,7 +106,7 @@ private:
                           uint64_t timeout_us,
                           LockType lockType,
                           const std::string& clientId,
-                          librados::IoCtx& radosCtx);
+                          librados::IoCtx& radosCtx) const;
   inline void lockNotify(const std::string& name,
                          uint64_t timeout_us,
                          LockType lockType,
@@ -126,7 +126,7 @@ private:
     LockWatcher(librados::IoCtx& context, const std::string& name, log::Logger& logger);
     virtual ~LockWatcher();
     using durationUs = std::chrono::microseconds;
-    void wait(const durationUs& timeout);
+    void wait(const durationUs& timeout) const;
 
   private:
     /** An internal class containing the internals exposed to the callback of Rados.
@@ -177,7 +177,7 @@ private:
 
     void start() { cta::threading::Thread::start(); }
 
-    void wait() { cta::threading::Thread::wait(); }
+    void wait() const { cta::threading::Thread::wait(); }
 
   private:
     BackendRados& m_parentBackend;

@@ -29,23 +29,23 @@ public:
   void setVid(const std::string& vid);
   void setType(common::dataStructures::RepackInfo::Type repackType);
   void setStatus(common::dataStructures::RepackInfo::Status repackStatus);
-  common::dataStructures::RepackInfo getInfo();
+  common::dataStructures::RepackInfo getInfo() const;
   void setBufferURL(const std::string& bufferURL);
   void setMaxFilesToSelect(const uint64_t masFilesToExpand);
   void setExpandFinished(const bool expandFinished);
-  bool isExpandFinished();
+  bool isExpandFinished() const;
   void setExpandStarted(const bool expandStarted);
   void setTotalStats(const cta::SchedulerDatabase::RepackRequest::TotalStatsFiles& totalStatsFiles);
-  cta::SchedulerDatabase::RepackRequest::TotalStatsFiles getTotalStatsFile();
+  cta::SchedulerDatabase::RepackRequest::TotalStatsFiles getTotalStatsFile() const;
   void setMountPolicy(const common::dataStructures::MountPolicy& mp);
-  common::dataStructures::MountPolicy getMountPolicy();
+  common::dataStructures::MountPolicy getMountPolicy() const;
   void deleteAllSubrequests();
   void setIsComplete(const bool complete);
   void updateRepackDestinationInfos(const common::dataStructures::ArchiveFile& archiveFile,
                                     const std::string& destinationVid);
-  std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> getRepackDestinationInfos();
+  std::list<common::dataStructures::RepackInfo::RepackDestinationInfo> getRepackDestinationInfos() const;
   void setCreationLog(const common::dataStructures::EntryLog& creationLog);
-  common::dataStructures::EntryLog getCreationLog();
+  common::dataStructures::EntryLog getCreationLog() const;
 
   /**
    * Set the flag noRecall to only inject files that are in the buffer. This will prevent
@@ -54,7 +54,7 @@ public:
    * if false, the expansion will create Retrieve subrequests for files that are not in the buffer
    */
   void setNoRecall(const bool noRecall);
-  bool getNoRecall();
+  bool getNoRecall() const;
 
   /**
    * Automatically set the new status of the Repack Request
@@ -97,14 +97,14 @@ private:
     std::set<uint32_t> archiveCopyNbsAccounted;
     bool subrequestDeleted;
     using Map = std::map<uint64_t, RepackSubRequestPointer>;
-    void serialize(serializers::RepackSubRequestPointer& rsrp);
+    void serialize(serializers::RepackSubRequestPointer& rsrp) const;
     void deserialize(const serializers::RepackSubRequestPointer& rsrp);
   };
 
 public:
   /// Set the last fully created sub-requests address
   void setLastExpandedFSeq(uint64_t lastExpandedFSeq);
-  uint64_t getLastExpandedFSeq();
+  uint64_t getLastExpandedFSeq() const;
 
   void setTotalFilesOnTapeAtStart(const uint64_t nbFilesOnTapeAtStart);
   void setTotalBytesOnTapeAtStart(const uint64_t nbBytesOnTapeAtStart);
@@ -149,7 +149,7 @@ public:
     uint64_t bytes = 0;
   };
 
-  std::map<StatsType, StatsValues> getStats();
+  std::map<StatsType, StatsValues> getStats() const;
 
   void reportRetrieveCreationFailures(
     const std::list<cta::SchedulerDatabase::RepackRequest::Subrequest>& notCreatedSubrequests);
@@ -161,7 +161,7 @@ public:
                       log::LogContext& lc,
                       cta::catalogue::Catalogue& catalogue) override;
 
-  std::string dump();
+  std::string dump() const;
 
   // An asynchronous request ownership updating class.
   class AsyncOwnerAndStatusUpdater {
@@ -169,7 +169,7 @@ public:
 
   public:
     void wait();
-    common::dataStructures::RepackInfo getInfo();
+    common::dataStructures::RepackInfo getInfo() const;
 
   private:
     std::function<std::string(const std::string&)> m_updaterCallback;

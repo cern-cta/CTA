@@ -109,7 +109,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
 //------------------------------------------------------------------------------
 // disable
 //------------------------------------------------------------------------------
-bool EncryptionControl::disable(castor::tape::tapeserver::drive::DriveInterface& m_drive) {
+bool EncryptionControl::disable(castor::tape::tapeserver::drive::DriveInterface& m_drive) const {
   return m_drive.clearEncryptionKey();
 }
 
@@ -119,13 +119,13 @@ const std::string& EncryptionControl::getScriptPath() const {
 
 namespace {
 struct JsonObjectDeleter {
-  void operator()(json_object* jo) { json_object_put(jo); }
+  void operator()(json_object* jo) const { json_object_put(jo); }
 };
 }  // namespace
 
 namespace {
 struct JsonTokenerDeleter {
-  void operator()(json_tokener* jt) { json_tokener_free(jt); }
+  void operator()(json_tokener* jt) const { json_tokener_free(jt); }
 };
 }  // namespace
 
@@ -181,7 +181,7 @@ std::map<std::string, std::string> EncryptionControl::flatten_json_object_to_map
   return ret;
 }
 
-std::string EncryptionControl::argsToString(std::list<std::string> args, const std::string& delimiter) {
+std::string EncryptionControl::argsToString(std::list<std::string> args, const std::string& delimiter) const {
   if (args.empty()) {
     return "";
   }

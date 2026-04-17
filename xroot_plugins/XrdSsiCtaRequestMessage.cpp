@@ -13,7 +13,9 @@
 
 namespace cta::xrd {
 
-void RequestMessage::process(const cta::xrd::Request& request, cta::xrd::Response& response, XrdSsiStream*& stream) {
+void RequestMessage::process(const cta::xrd::Request& request,
+                             cta::xrd::Response& response,
+                             XrdSsiStream*& stream) const {
   // Branch on the Request payload type
   switch (request.request_case()) {
     using namespace cta::xrd;

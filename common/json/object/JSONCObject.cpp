@@ -47,7 +47,7 @@ void JSONCObject::reinitializeJSONCObject() {
   initializeJSONCObject();
 }
 
-json_type JSONCObject::getJSONObjectType(const std::string& key) {
+json_type JSONCObject::getJSONObjectType(const std::string& key) const {
   if (json_object* objectRet; json_object_object_get_ex(m_jsonObject, key.c_str(), &objectRet)) {
     return json_object_get_type(objectRet);
   }

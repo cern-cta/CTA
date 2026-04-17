@@ -45,10 +45,10 @@ public:
                       AgentReference& agentReference,
                       log::LogContext& lc,
                       cta::catalogue::Catalogue& catalogue) override;
-  bool isEmpty();
+  bool isEmpty() const;
   CTA_GENERATE_EXCEPTION_CLASS(NotEmpty);
   void removeIfEmpty(log::LogContext& lc);
-  std::string dump();
+  std::string dump() const;
 
   // Retrieve jobs management ==================================================
   void addJobsAndCommit(std::list<common::dataStructures::RetrieveJobToAdd>& jobsToAdd,
@@ -145,7 +145,7 @@ public:
                                     log::LogContext& lc);
 
   //! Return a summary of the number of jobs and number of bytes in the queue
-  CandidateJobList getCandidateSummary();
+  CandidateJobList getCandidateSummary() const;
 
   //! Return the mount policy names for the queue object
   std::list<std::string> getMountPolicyNames();
@@ -163,7 +163,7 @@ public:
   void tickQueueCleanupHeartbeat();
 
   // -- Generic parameters
-  std::string getVid();
+  std::string getVid() const;
 
   // Support for sleep waiting free space (back pressure).
   // This data is queried through getJobsSummary().
@@ -187,18 +187,18 @@ private:
     size_t shardIndex = std::numeric_limits<size_t>::max();
   };
 
-  void updateShardLimits(uint64_t fSeq, ShardForAddition& sfa);
+  void updateShardLimits(uint64_t fSeq, ShardForAddition& sfa) const;
 
   void addJobToShardAndMaybeSplit(common::dataStructures::RetrieveJobToAdd& jobToAdd,
                                   std::list<ShardForAddition>::iterator& shardForAddition,
-                                  std::list<ShardForAddition>& shardList);
+                                  std::list<ShardForAddition>& shardList) const;
 
 public:
   /** Helper function for unit tests: use smaller shard size to validate ordered insertion */
   void setShardSize(uint64_t shardSize);
 
   /** Helper function for unit tests: validate that we have the expected shards */
-  std::list<std::string> getShardAddresses();
+  std::list<std::string> getShardAddresses() const;
 
 private:
   // The shard size. From experience, 100k is where we start to see performance difference,

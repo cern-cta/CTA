@@ -20,7 +20,8 @@
 
 namespace cta::admin {
 
-void CtaAdminGrpcCmd::setupJwtAuthenticatedAdminCall(grpc::ClientContext& context, const std::string& token_path) {
+void CtaAdminGrpcCmd::setupJwtAuthenticatedAdminCall(grpc::ClientContext& context,
+                                                     const std::string& token_path) const {
   // read the token from the path
   std::string token_contents = cta::utils::file2string(token_path);
 
@@ -30,7 +31,7 @@ void CtaAdminGrpcCmd::setupJwtAuthenticatedAdminCall(grpc::ClientContext& contex
 void CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
                                                       grpc::ClientContext& context,
                                                       const std::string& GSS_SPN,
-                                                      cta::log::FileLogger& log) {
+                                                      cta::log::FileLogger& log) const {
   // First do a negotiation call to obtain a kerberos token, which will be attached to the call metadata
   // Storage for the KRB token
   std::string strToken {""};
@@ -65,7 +66,7 @@ void CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Chan
 }
 
 // Implement the send() method here, by wrapping the Admin rpc call
-void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string& config_file) {
+void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string& config_file) const {
   cta::common::Config config(config_file);
   const auto& request = parsedCmd.getRequest();
   // Validate the Protocol Buffer

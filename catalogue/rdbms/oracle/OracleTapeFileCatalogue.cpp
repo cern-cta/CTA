@@ -365,7 +365,7 @@ void OracleTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWrittenP
   conn.commit();
 }
 
-uint64_t OracleTapeFileCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn& conn, const std::string& vid) {
+uint64_t OracleTapeFileCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn& conn, const std::string& vid) const {
   const char* const sql = R"SQL(
     SELECT
       LAST_FSEQ AS LAST_FSEQ
@@ -386,7 +386,7 @@ uint64_t OracleTapeFileCatalogue::selectTapeForUpdateAndGetLastFSeq(rdbms::Conn&
 }
 
 void OracleTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn& conn,
-                                                                const std::set<TapeFileWritten>& events) {
+                                                                const std::set<TapeFileWritten>& events) const {
   ArchiveFileBatch archiveFileBatch(events.size());
   const time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   std::vector<uint32_t> adler32(events.size());
@@ -526,7 +526,7 @@ void OracleTapeFileCatalogue::idempotentBatchInsertArchiveFiles(rdbms::Conn& con
 }
 
 std::vector<cta::catalogue::InsertFileRecycleLog>
-OracleTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn) {
+OracleTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn) const {
   std::vector<cta::catalogue::InsertFileRecycleLog> fileRecycleLogsToInsert;
   //Get the TAPE_FILE entry to put on the file recycle log
   const char* const sql = R"SQL(

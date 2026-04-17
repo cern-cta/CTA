@@ -96,7 +96,7 @@ int ChildProcess::exitCode() {
   return m_exitCode;
 }
 
-void ChildProcess::kill() {
+void ChildProcess::kill() const {
   if (!m_started) {
     throw ProcessNeverStarted();
   }

@@ -37,7 +37,7 @@ private:
    * In order for this position estimator to work, we need to check that the mediatype given in the constructor contains
    * the information we need.
    */
-  void checkMediaTypeConsistency();
+  void checkMediaTypeConsistency() const;
 
   /**
    * Determine the physical position of the blockId passed in parameter

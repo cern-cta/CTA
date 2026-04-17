@@ -61,7 +61,7 @@ private:
    * @param drvOrd The drive ordinal.
    * @return The string representation.
    */
-  std::string librarySlotToString(const uint16_t drvOrd);
+  std::string librarySlotToString(const uint16_t drvOrd) const;
 
 };  // class ScsiLibrarySlot
 

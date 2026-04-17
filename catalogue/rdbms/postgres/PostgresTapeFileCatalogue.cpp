@@ -337,7 +337,7 @@ void PostgresTapeFileCatalogue::filesWrittenToTape(const std::set<TapeItemWritte
 }
 
 std::vector<cta::catalogue::InsertFileRecycleLog>
-PostgresTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn) {
+PostgresTapeFileCatalogue::insertOldCopiesOfFilesIfAnyOnFileRecycleLog(rdbms::Conn& conn) const {
   std::vector<cta::catalogue::InsertFileRecycleLog> fileRecycleLogsToInsert;
   //Get the TAPE_FILE entry to put on the file recycle log
   const char* const sql = R"SQL(

@@ -26,7 +26,7 @@ public:
   void insOrIncAndReset(const std::string&, utils::Timer&);
   void insertAndReset(const std::string&, utils::Timer&);
   TimingList& operator+=(const TimingList&);
-  void addToLog(ScopedParamContainer&);
+  void addToLog(ScopedParamContainer&) const;
 
 private:
   double& at(const std::string&);

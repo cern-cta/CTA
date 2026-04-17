@@ -100,16 +100,16 @@ public:
                                 cta::catalogue::Catalogue& catalogue,
                                 log::LogContext& lc);
 
-  const DiskSystemList& getDiskSystemList() { return m_systemList; }
+  const DiskSystemList& getDiskSystemList() const { return m_systemList; }
 
 private:
   DiskSystemList& m_systemList;
-  uint64_t fetchConstantFreeSpace(const std::string& instanceAddress);
+  uint64_t fetchConstantFreeSpace(const std::string& instanceAddress) const;
   uint64_t fetchFreeDiskSpaceWithScript(const std::string& scriptPath,
                                         const std::string& diskInstanceName,
                                         const std::string& spaceName,
                                         const std::string& jsonInput,
-                                        log::LogContext& lc);
+                                        log::LogContext& lc) const;
   void updateFreeSpaceEntry(const std::string& diskSystemName,
                             uint64_t freeSpace,
                             cta::catalogue::Catalogue& catalogue,

@@ -43,7 +43,7 @@ public:
     * allows the reader to know which block sizes to provide.
     * @return the block size in bytes.
     */
-  size_t getBlockSize();
+  size_t getBlockSize() const;
 
   /**
     * Reads the next data block from the file. The buffer should be equal to or bigger than the

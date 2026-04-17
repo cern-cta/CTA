@@ -372,7 +372,7 @@ void BackendRados::LockWatcher::Internal::handle_notify(uint64_t notify_id,
   m_promiseSet = true;
 }
 
-void BackendRados::LockWatcher::wait(const durationUs& timeout) {
+void BackendRados::LockWatcher::wait(const durationUs& timeout) const {
   m_internal->m_future.wait_for(timeout);
 }
 
@@ -524,7 +524,7 @@ void BackendRados::lockBackoff(const std::string& name,
                                uint64_t timeout_us,
                                LockType lockType,
                                const std::string& clientId,
-                               librados::IoCtx& radosCtx) {
+                               librados::IoCtx& radosCtx) const {
   // In Rados, locking a non-existing object will create it. This is not our intended
   // behavior. We will lock anyway, test the object and re-delete it if it has a size of 0
   // (while we own the lock).

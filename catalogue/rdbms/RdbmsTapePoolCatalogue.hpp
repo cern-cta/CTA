@@ -123,8 +123,9 @@ private:
   std::pair<std::set<std::string>, std::set<std::string>>
   getTapePoolSupplySourcesAndDestinations(rdbms::Conn& conn, const std::string& tapePoolName) const;
 
-  void populateSupplyTable(rdbms::Conn& conn, std::string tapePoolName, const std::vector<std::string>& supply_list);
-  void deleteAllTapePoolSupplyEntries(rdbms::Conn& conn);
+  void
+  populateSupplyTable(rdbms::Conn& conn, std::string tapePoolName, const std::vector<std::string>& supply_list) const;
+  void deleteAllTapePoolSupplyEntries(rdbms::Conn& conn) const;
 };
 
 }  // namespace catalogue

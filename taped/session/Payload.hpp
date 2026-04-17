@@ -91,14 +91,14 @@ public:
    * Write the complete buffer to a diskFile::WriteFile
    * @param to reference to the diskFile::WriteFile
    */
-  void write(cta::disk::WriteFile& to) { to.write(m_data, m_size); }
+  void write(cta::disk::WriteFile& to) const { to.write(m_data, m_size); }
 
   /**
    * Write the complete buffer to a tapeFile::FileWriter, tape block by
    * tape block
    * @param to reference to the tapeFile::FileWriter
    */
-  void write(tape::tapeFile::FileWriter& to) {
+  void write(tape::tapeFile::FileWriter& to) const {
     size_t blockSize = to.getBlockSize();
     size_t writePosition = 0;
     // Write all possible full tape blocks
@@ -126,7 +126,7 @@ public:
     * @param previous The previous adler32 checksum from all previous datablock
     * @return the updated checksum
     */
-  unsigned long adler32(unsigned long previous) { return ::adler32(previous, m_data, m_size); }
+  unsigned long adler32(unsigned long previous) const { return ::adler32(previous, m_data, m_size); }
 
   /**
    * Return the initial value for computing Adler32 checksum

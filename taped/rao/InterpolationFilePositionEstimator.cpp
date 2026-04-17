@@ -96,7 +96,7 @@ InterpolationFilePositionEstimator::determineEndBlockId(const cta::common::dataS
   return file.blockId + (file.fileSize / c_blockSize) + 1;
 }
 
-void InterpolationFilePositionEstimator::checkMediaTypeConsistency() {
+void InterpolationFilePositionEstimator::checkMediaTypeConsistency() const {
   if (!m_mediaType.minLPos.has_value() || !m_mediaType.maxLPos.has_value()) {
     std::string errorMsg = "In InterpolationFilePositionEstimator::checkMediaTypeConsistency(), the media type ("
                            + m_mediaType.name

@@ -110,7 +110,7 @@ public:
   /**
    * Wait for the inner thread to finish
    */
-  void waitThreads();
+  void waitThreads() const;
 
   /**
    * Start the inner thread
@@ -134,7 +134,7 @@ public:
    */
   void initRAO(const castor::tape::tapeserver::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue);
 
-  void waitForPromise();
+  void waitForPromise() const;
 
   void setPromise();
 
@@ -150,7 +150,7 @@ public:
    * so that TapeReadSingleThread will wait the first batch
    * of tasks to be injected by the RecallTaskInjector
    */
-  void waitForFirstTasksInjectedPromise();
+  void waitForFirstTasksInjectedPromise() const;
 
   /**
    * Tests if the mount is able to reserve disk space for a job batch

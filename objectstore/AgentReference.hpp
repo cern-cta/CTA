@@ -147,7 +147,10 @@ private:
    * @param action
    * @param agent
    */
-  void appyAction(Action& action, objectstore::Agent& agent, std::set<std::string>& ownershipSet, log::LogContext& lc);
+  void applyAction(Action& action,
+                   objectstore::Agent& agent,
+                   std::set<std::string>& ownershipSet,
+                   log::LogContext& lc) const;
 
   /**
    * The global function actually doing the job: creates a queue if needed, add

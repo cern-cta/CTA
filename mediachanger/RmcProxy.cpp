@@ -99,7 +99,7 @@ int RmcProxy::connectToRmc() const {
 //-----------------------------------------------------------------------------
 // readRmcMsgHeader
 //-----------------------------------------------------------------------------
-MessageHeader RmcProxy::readRmcMsgHeader(const int fd) {
+MessageHeader RmcProxy::readRmcMsgHeader(const int fd) const {
   char buf[12];  // Magic + type + len
   MessageHeader header;
 
@@ -129,7 +129,7 @@ MessageHeader RmcProxy::readRmcMsgHeader(const int fd) {
 //-----------------------------------------------------------------------------
 // rmcReplyTypeToStr
 //-----------------------------------------------------------------------------
-std::string RmcProxy::rmcReplyTypeToStr(const int replyType) {
+std::string RmcProxy::rmcReplyTypeToStr(const int replyType) const {
   std::ostringstream oss;
   switch (replyType) {
     case RMC_RC:
@@ -147,7 +147,7 @@ std::string RmcProxy::rmcReplyTypeToStr(const int replyType) {
 //-----------------------------------------------------------------------------
 // handleMSG_ERR
 //-----------------------------------------------------------------------------
-std::string RmcProxy::handleMSG_ERR(const MessageHeader& header, const int fd) {
+std::string RmcProxy::handleMSG_ERR(const MessageHeader& header, const int fd) const {
   char errorBuf[1024];
   const int nbBytesToRead = header.lenOrStatus > sizeof(errorBuf) ? sizeof(errorBuf) : header.lenOrStatus;
   readBytes(fd, m_netTimeout, nbBytesToRead, errorBuf);

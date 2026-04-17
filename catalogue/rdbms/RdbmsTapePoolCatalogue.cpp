@@ -684,7 +684,7 @@ void RdbmsTapePoolCatalogue::setTapePoolEncryption(const common::dataStructures:
 
 void RdbmsTapePoolCatalogue::populateSupplyTable(rdbms::Conn& conn,
                                                  std::string tapePoolName,
-                                                 const std::vector<std::string>& supply_list) {
+                                                 const std::vector<std::string>& supply_list) const {
   /* wipe the previous supply sources for this tapepool, as we are resetting them now */
   std::string sql_drop_old = "DELETE FROM TAPE_POOL_SUPPLY WHERE SUPPLY_DESTINATION_TAPE_POOL_ID = "
                              "(SELECT TAPE_POOL_ID FROM TAPE_POOL WHERE TAPE_POOL_NAME = :TAPE_POOL_NAME)";
@@ -880,7 +880,7 @@ void RdbmsTapePoolCatalogue::deleteAllTapePoolSupplyEntries() {
   deleteAllTapePoolSupplyEntries(conn);
 }
 
-void RdbmsTapePoolCatalogue::deleteAllTapePoolSupplyEntries(rdbms::Conn& conn) {
+void RdbmsTapePoolCatalogue::deleteAllTapePoolSupplyEntries(rdbms::Conn& conn) const {
   std::string sql = "DELETE FROM TAPE_POOL_SUPPLY";
   auto stmt = conn.createStmt(sql);
   stmt.executeNonQuery();

@@ -32,7 +32,7 @@ public:
    * @param[out]    response        Response protocol buffer
    * @param[out]    stream          Reference to Response stream pointer
    */
-  void process(const cta::xrd::Request& request, cta::xrd::Response& response, XrdSsiStream*& stream);
+  void process(const cta::xrd::Request& request, cta::xrd::Response& response, XrdSsiStream*& stream) const;
 
 private:
   // Member variables

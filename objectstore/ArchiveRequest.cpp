@@ -99,7 +99,7 @@ void ArchiveRequest::addJob(uint32_t copyNumber,
 //------------------------------------------------------------------------------
 // ArchiveRequest::getJobQueueType()
 //------------------------------------------------------------------------------
-common::dataStructures::JobQueueType ArchiveRequest::getJobQueueType(uint32_t copyNumber) {
+common::dataStructures::JobQueueType ArchiveRequest::getJobQueueType(uint32_t copyNumber) const {
   checkPayloadReadable();
   for (auto& j : m_payload.jobs()) {
     if (j.copynb() == copyNumber) {
@@ -212,7 +212,7 @@ auto ArchiveRequest::addReportFailure(uint32_t copyNumber,
 //------------------------------------------------------------------------------
 // ArchiveRequest::getRetryStatus()
 //------------------------------------------------------------------------------
-ArchiveRequest::RetryStatus ArchiveRequest::getRetryStatus(const uint32_t copyNumber) {
+ArchiveRequest::RetryStatus ArchiveRequest::getRetryStatus(const uint32_t copyNumber) const {
   checkPayloadReadable();
   for (auto& j : m_payload.jobs()) {
     if (copyNumber == j.copynb()) {
@@ -250,7 +250,7 @@ void ArchiveRequest::setArchiveFile(const cta::common::dataStructures::ArchiveFi
 //------------------------------------------------------------------------------
 // ArchiveRequest::getArchiveFile()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() {
+cta::common::dataStructures::ArchiveFile ArchiveRequest::getArchiveFile() const {
   checkPayloadReadable();
   cta::common::dataStructures::ArchiveFile ret;
   ret.archiveFileID = m_payload.archivefileid();
@@ -278,7 +278,7 @@ void ArchiveRequest::setArchiveReportURL(const std::string& URL) {
 //------------------------------------------------------------------------------
 // ArchiveRequest::getArchiveReportURL()
 //------------------------------------------------------------------------------
-std::string ArchiveRequest::getArchiveReportURL() {
+std::string ArchiveRequest::getArchiveReportURL() const {
   checkPayloadReadable();
   return m_payload.archivereporturl();
 }
@@ -294,7 +294,7 @@ void ArchiveRequest::setArchiveErrorReportURL(const std::string& URL) {
 //------------------------------------------------------------------------------
 // ArchiveRequest::getArchiveErrorReportURL()
 //------------------------------------------------------------------------------
-std::string ArchiveRequest::getArchiveErrorReportURL() {
+std::string ArchiveRequest::getArchiveErrorReportURL() const {
   checkPayloadReadable();
   return m_payload.archiveerrorreporturl();
 }
@@ -311,7 +311,7 @@ void ArchiveRequest::setMountPolicy(const cta::common::dataStructures::MountPoli
 //------------------------------------------------------------------------------
 // ArchiveRequest::getMountPolicy()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::MountPolicy ArchiveRequest::getMountPolicy() {
+cta::common::dataStructures::MountPolicy ArchiveRequest::getMountPolicy() const {
   checkPayloadReadable();
   MountPolicySerDeser mp;
   mp.deserialize(m_payload.mountpolicy());
@@ -331,7 +331,7 @@ void ArchiveRequest::setRequester(const cta::common::dataStructures::RequesterId
 //------------------------------------------------------------------------------
 // ArchiveRequest::getRequester()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::RequesterIdentity ArchiveRequest::getRequester() {
+cta::common::dataStructures::RequesterIdentity ArchiveRequest::getRequester() const {
   checkPayloadReadable();
   cta::common::dataStructures::RequesterIdentity requester;
   auto payloadRequester = m_payload.requester();
@@ -351,7 +351,7 @@ void ArchiveRequest::setSrcURL(const std::string& srcURL) {
 //------------------------------------------------------------------------------
 // ArchiveRequest::getSrcURL()
 //------------------------------------------------------------------------------
-std::string ArchiveRequest::getSrcURL() {
+std::string ArchiveRequest::getSrcURL() const {
   checkPayloadReadable();
   return m_payload.srcurl();
 }
@@ -367,7 +367,7 @@ void ArchiveRequest::setFailed() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::isFailed()
 //------------------------------------------------------------------------------
-bool ArchiveRequest::isFailed() {
+bool ArchiveRequest::isFailed() const {
   checkPayloadReadable();
   return m_payload.isfailed();
 }
@@ -386,7 +386,7 @@ void ArchiveRequest::setEntryLog(const cta::common::dataStructures::EntryLog& cr
 //------------------------------------------------------------------------------
 // ArchiveRequest::getEntryLog()
 //------------------------------------------------------------------------------
-cta::common::dataStructures::EntryLog ArchiveRequest::getEntryLog() {
+cta::common::dataStructures::EntryLog ArchiveRequest::getEntryLog() const {
   checkPayloadReadable();
   EntryLogSerDeser el;
   el.deserialize(m_payload.creationlog());
@@ -396,7 +396,7 @@ cta::common::dataStructures::EntryLog ArchiveRequest::getEntryLog() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::dumpJobs()
 //------------------------------------------------------------------------------
-auto ArchiveRequest::dumpJobs() -> std::list<ArchiveRequest::JobDump> {
+auto ArchiveRequest::dumpJobs() const -> std::list<ArchiveRequest::JobDump> {
   checkPayloadReadable();
   std::list<JobDump> ret;
   auto& jl = m_payload.jobs();
@@ -660,49 +660,49 @@ void ArchiveRequest::AsyncJobOwnerUpdater::wait() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile()
 //------------------------------------------------------------------------------
-const common::dataStructures::ArchiveFile& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile() {
+const common::dataStructures::ArchiveFile& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveFile() const {
   return m_archiveFile;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL()
 //------------------------------------------------------------------------------
-const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL() {
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveReportURL() const {
   return m_archiveReportURL;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getArchiveErrorReportURL()
 //------------------------------------------------------------------------------
-const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveErrorReportURL() {
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getArchiveErrorReportURL() const {
   return m_archiveErrorReportURL;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL()
 //------------------------------------------------------------------------------
-const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() {
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getSrcURL() const {
   return m_srcURL;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getArchiveJobsStatusMap()
 //------------------------------------------------------------------------------
-std::map<uint32_t, serializers::ArchiveJobStatus> ArchiveRequest::AsyncJobOwnerUpdater::getJobsStatusMap() {
+std::map<uint32_t, serializers::ArchiveJobStatus> ArchiveRequest::AsyncJobOwnerUpdater::getJobsStatusMap() const {
   return m_jobsStatusMap;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getRepackInfo()
 //------------------------------------------------------------------------------
-ArchiveRequest::RepackInfo ArchiveRequest::AsyncJobOwnerUpdater::getRepackInfo() {
+ArchiveRequest::RepackInfo ArchiveRequest::AsyncJobOwnerUpdater::getRepackInfo() const {
   return m_repackInfo;
 }
 
 //------------------------------------------------------------------------------
 // ArchiveRequest::AsyncJobOwnerUpdater::getLastestError()
 //------------------------------------------------------------------------------
-const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getLastestError() {
+const std::string& ArchiveRequest::AsyncJobOwnerUpdater::getLastestError() const {
   return m_latestError;
 }
 
@@ -801,7 +801,7 @@ void ArchiveRequest::AsyncRequestDeleter::wait() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::getJobOwner()
 //------------------------------------------------------------------------------
-std::string ArchiveRequest::getJobOwner(uint32_t copyNumber) {
+std::string ArchiveRequest::getJobOwner(uint32_t copyNumber) const {
   checkPayloadReadable();
   auto jl = m_payload.jobs();
   auto j = std::find_if(jl.begin(), jl.end(), [&copyNumber](const auto& j2) { return j2.copynb() == copyNumber; });
@@ -868,7 +868,7 @@ std::string ArchiveRequest::statusToString(const serializers::ArchiveJobStatus& 
 //------------------------------------------------------------------------------
 // ArchiveRequest::eventToString()
 //------------------------------------------------------------------------------
-std::string ArchiveRequest::eventToString(JobEvent jobEvent) {
+std::string ArchiveRequest::eventToString(JobEvent jobEvent) const {
   switch (jobEvent) {
     case JobEvent::ReportFailed:
       return "ReportFailed";
@@ -965,7 +965,7 @@ auto ArchiveRequest::determineNextStep(uint32_t copyNumberUpdated, JobEvent jobE
 //------------------------------------------------------------------------------
 // ArchiveRequest::getRepackInfo()
 //------------------------------------------------------------------------------
-ArchiveRequest::RepackInfo ArchiveRequest::getRepackInfo() {
+ArchiveRequest::RepackInfo ArchiveRequest::getRepackInfo() const {
   checkPayloadReadable();
   cta::objectstore::serializers::ArchiveRequestRepackInfo repackInfo = m_payload.repack_info();
   ArchiveRequest::RepackInfo ret;
@@ -995,7 +995,7 @@ void ArchiveRequest::setRepackInfo(const RepackInfo& repackInfo) {
 //------------------------------------------------------------------------------
 // ArchiveRequest::dump()
 //------------------------------------------------------------------------------
-std::string ArchiveRequest::dump() {
+std::string ArchiveRequest::dump() const {
   checkPayloadReadable();
   google::protobuf::util::JsonPrintOptions options;
   options.add_whitespace = true;
@@ -1008,7 +1008,7 @@ std::string ArchiveRequest::dump() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::getFailures()
 //------------------------------------------------------------------------------
-std::list<std::string> ArchiveRequest::getFailures() {
+std::list<std::string> ArchiveRequest::getFailures() const {
   checkPayloadReadable();
   std::list<std::string> ret;
   for (auto& j : m_payload.jobs()) {
@@ -1022,7 +1022,7 @@ std::list<std::string> ArchiveRequest::getFailures() {
 //------------------------------------------------------------------------------
 // ArchiveRequest::getReportFailures()
 //------------------------------------------------------------------------------
-std::list<std::string> ArchiveRequest::getReportFailures() {
+std::list<std::string> ArchiveRequest::getReportFailures() const {
   checkPayloadReadable();
   std::list<std::string> ret;
   for (auto& j : m_payload.jobs()) {
@@ -1050,7 +1050,7 @@ void ArchiveRequest::setJobStatus(uint32_t copyNumber, const serializers::Archiv
 //------------------------------------------------------------------------------
 // ArchiveRequest::getTapePoolForJob()
 //------------------------------------------------------------------------------
-std::string ArchiveRequest::getTapePoolForJob(uint32_t copyNumber) {
+std::string ArchiveRequest::getTapePoolForJob(uint32_t copyNumber) const {
   checkPayloadReadable();
   for (auto j : m_payload.jobs()) {
     if (j.copynb() == copyNumber) {

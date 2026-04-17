@@ -42,7 +42,7 @@ void RecallTaskInjector::requestInjection(bool lastCall) {
 //------------------------------------------------------------------------------
 //waitThreads
 //------------------------------------------------------------------------------
-void RecallTaskInjector::waitThreads() {
+void RecallTaskInjector::waitThreads() const {
   m_thread.wait();
 }
 
@@ -72,7 +72,7 @@ void RecallTaskInjector::initRAO(const castor::tape::tapeserver::rao::RAOParams&
 //------------------------------------------------------------------------------
 //waitForPromise
 //------------------------------------------------------------------------------
-void RecallTaskInjector::waitForPromise() {
+void RecallTaskInjector::waitForPromise() const {
   m_raoFuture.wait();
 }
 
@@ -106,7 +106,7 @@ void RecallTaskInjector::setFirstTasksInjectedPromise() {
  * This method is used by the TapeReadSingleThread to wait
  * the first injection of TapeRead tasks
  */
-void RecallTaskInjector::waitForFirstTasksInjectedPromise() {
+void RecallTaskInjector::waitForFirstTasksInjectedPromise() const {
   m_firstTasksInjectedFuture.wait();
 }
 

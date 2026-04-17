@@ -18,7 +18,7 @@ cta::mediachanger::ScsiLibrarySlot::ScsiLibrarySlot() : LibrarySlot(TAPE_LIBRARY
 //------------------------------------------------------------------------------
 // librarySlotToString
 //------------------------------------------------------------------------------
-std::string cta::mediachanger::ScsiLibrarySlot::librarySlotToString(const uint16_t drvOrd) {
+std::string cta::mediachanger::ScsiLibrarySlot::librarySlotToString(const uint16_t drvOrd) const {
   std::ostringstream oss;
   oss << "smc" << drvOrd;
   return oss.str();

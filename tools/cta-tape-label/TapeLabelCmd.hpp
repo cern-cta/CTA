@@ -283,7 +283,7 @@ private:
    * @param value The boolean value.
    * @return The string representation.
    */
-  const char* boolToStr(const bool value);
+  const char* boolToStr(const bool value) const;
 };  // class TapeLabelCmd
 
 }  // namespace tapeserver::tapelabel

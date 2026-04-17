@@ -129,7 +129,7 @@ std::string cta::ArchiveMount::getMountTransactionId() const {
 // updateCatalogueWithTapeFilesWritten
 //------------------------------------------------------------------------------
 void cta::ArchiveMount::updateCatalogueWithTapeFilesWritten(
-  const std::set<cta::catalogue::TapeItemWrittenPointer>& tapeFilesWritten) {
+  const std::set<cta::catalogue::TapeItemWrittenPointer>& tapeFilesWritten) const {
   m_catalogue.TapeFile()->filesWrittenToTape(tapeFilesWritten);
 }
 

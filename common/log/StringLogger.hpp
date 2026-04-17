@@ -38,7 +38,7 @@ public:
   /**
    * Extractor for the resulting logs
    */
-  std::string getLog() { return m_log.str(); }
+  std::string getLog() const { return m_log.str(); }
 
   /**
    * Clear the log

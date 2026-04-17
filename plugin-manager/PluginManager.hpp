@@ -61,7 +61,7 @@ public:
     return *this;
   }
 
-  const std::string& File() { return m_strFile; }
+  const std::string& File() const { return m_strFile; }
 
   template<typename HANDLER, typename RETURN, typename... ARGS>
   RETURN call(ARGS&... args) {
