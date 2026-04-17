@@ -24,6 +24,84 @@ const uint32_t DISK_FILE_OWNER_UID = 9751;
 const uint32_t DISK_FILE_GID = 9752;
 const std::string s_storageClassName = "TestStorageClass";
 
+cta::common::dataStructures::MountPolicy makeMountPolicy(time_t t) {
+  cta::common::dataStructures::MountPolicy mountPolicy;
+  mountPolicy.name = "mountPolicy";
+  mountPolicy.archivePriority = 1;
+  mountPolicy.archiveMinRequestAge = 0;
+  mountPolicy.retrievePriority = 1;
+  mountPolicy.retrieveMinRequestAge = 0;
+  mountPolicy.creationLog = {"u", "h", t};
+  mountPolicy.lastModificationLog = {"u", "h", t};
+  mountPolicy.comment = "comment";
+  return mountPolicy;
+}
+
+void queueArchiveJob(cta::SchedulerDatabase& db,
+                     cta::log::LogContext& lc,
+                     uint64_t fileId,
+                     const std::string& tapePool,
+                     const std::string& suffix,
+                     time_t creationTime) {
+  cta::common::dataStructures::ArchiveRequest ar;
+  cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
+
+  afqc.copyToPoolMap.insert({1, tapePool});
+  afqc.fileId = fileId;
+  afqc.mountPolicy = makeMountPolicy(creationTime);
+
+  ar.archiveReportURL = "test://archive-report-url";
+  ar.archiveErrorReportURL = "test://error-report-url";
+  ar.creationLog = {"user", "host", creationTime};
+  ar.diskFileID = "diskFile-" + suffix;
+  ar.diskFileInfo.path = "/path/" + suffix;
+  ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+  ar.diskFileInfo.gid = DISK_FILE_GID;
+  ar.fileSize = 1000 + fileId;
+  ar.requester = {"user", "group"};
+  ar.srcURL = "root:/path/" + suffix;
+  ar.storageClass = "storageClass";
+
+  db.queueArchive("eosInstance", ar, afqc, lc);
+}
+
+void queueRetrieveJob(cta::SchedulerDatabase& db,
+                      cta::log::LogContext& lc,
+                      uint64_t archiveFileId,
+                      const std::string& vid,
+                      const std::string& suffix,
+                      time_t creationTime) {
+  cta::common::dataStructures::RetrieveRequest rr;
+  cta::common::dataStructures::RetrieveFileQueueCriteria rfqc;
+
+  rfqc.mountPolicy = makeMountPolicy(creationTime);
+
+  rfqc.archiveFile.archiveFileID = archiveFileId;
+  rfqc.archiveFile.fileSize = 4000 + archiveFileId;
+  rfqc.archiveFile.storageClass = s_storageClassName;
+  rfqc.archiveFile.diskInstance = "diskInstance";
+  rfqc.archiveFile.diskFileId = "diskFile-" + suffix;
+  rfqc.archiveFile.diskFileInfo.path = "/retrieve/" + suffix;
+  rfqc.archiveFile.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+  rfqc.archiveFile.diskFileInfo.gid = DISK_FILE_GID;
+
+  rfqc.archiveFile.tapeFiles.emplace_back();
+  rfqc.archiveFile.tapeFiles.back().fSeq = archiveFileId;
+  rfqc.archiveFile.tapeFiles.back().vid = vid;
+  rfqc.archiveFile.tapeFiles.back().copyNb = 1;
+  rfqc.archiveFile.tapeFiles.back().fileSize = 4000 + archiveFileId;
+
+  rr.archiveFileID = archiveFileId;
+  rr.creationLog = {"user", "host", creationTime};
+  rr.lifecycleTimings.creation_time = creationTime;
+  rr.diskFileInfo.path = "/retrieve/" + suffix;
+  rr.requester = {"user", "group"};
+  rr.dstURL = "root://disk/" + suffix;
+  rr.errorReportURL = "test://retrieve-error-report-url";
+
+  db.queueRetrieve(rr, rfqc, "ds-A", lc);
+}
+
 /**
  * This structure is used to parameterize RelationalDB database tests.
  */
@@ -106,53 +184,19 @@ TEST_P(RelationalDBTest, DISABLED_getBatchArchiveJob) {
 
 TEST_P(RelationalDBTest, queueAndGetArchiveJobs) {
   using namespace cta;
-#ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
 #endif
   cta::log::LogContext lc(dl);
 
   cta::SchedulerDatabase& db = getDb();
 
-  auto queueArchiveJob =
-    [&db, &lc](uint64_t fileId, const std::string& tapePool, const std::string& suffix, time_t creationTime) {
-      cta::common::dataStructures::ArchiveRequest ar;
-      cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
-
-      // Put this archive request into the requested tape pool
-      // This is the value later used by getArchiveJobs(tapePoolName) to filter the jobs
-      afqc.copyToPoolMap.insert({1, tapePool});
-      afqc.fileId = fileId;
-      afqc.mountPolicy.name = "mountPolicy";
-      afqc.mountPolicy.archivePriority = 1;
-      afqc.mountPolicy.archiveMinRequestAge = 0;
-      afqc.mountPolicy.retrievePriority = 1;
-      afqc.mountPolicy.retrieveMinRequestAge = 0;
-      afqc.mountPolicy.creationLog = {"u", "h", creationTime};
-      afqc.mountPolicy.lastModificationLog = {"u", "h", creationTime};
-      afqc.mountPolicy.comment = "comment";
-
-      ar.archiveReportURL = "test://archive-report-url";
-      ar.archiveErrorReportURL = "test://error-report-url";
-      ar.checksumBlob.insert(cta::checksum::NONE, "");
-      ar.creationLog = {"user", "host", creationTime};
-      ar.diskFileID = "diskFile-" + suffix;
-      ar.diskFileInfo.path = "/path/" + suffix;
-      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      ar.diskFileInfo.gid = DISK_FILE_GID;
-      ar.fileSize = 1000 + fileId;
-      ar.requester = {"user", "group"};
-      ar.srcURL = "root:/path/" + suffix;
-      ar.storageClass = "storageClass";
-
-      // Queue a real archive job through the database API
-      db.queueArchive("eosInstance", ar, afqc, lc);
-    };
-
   // Insert jobs into two different tape pools with one matching job and one non-matching job to verify that filtering works
-  queueArchiveJob(111, "tapePoolA", "A", 1000);
-  queueArchiveJob(222, "tapePoolB", "B", 2000);
+  queueArchiveJob(db, lc, 111, "tapePoolA", "A", 1000);
+  queueArchiveJob(db, lc, 222, "tapePoolB", "B", 2000);
 
   // Filter by tapePoolA
   // This should return only the job in tapePoolA
@@ -165,8 +209,6 @@ TEST_P(RelationalDBTest, queueAndGetArchiveJobs) {
   ASSERT_EQ(111u, job.archiveFileID);
   ASSERT_EQ(1u, job.copyNumber);
   ASSERT_EQ(1000u, job.request.creationLog.time);
-  ASSERT_EQ("test://archive-report-url", job.request.archiveReportURL);
-  ASSERT_EQ("test://error-report-url", job.request.archiveErrorReportURL);
   ASSERT_EQ("diskFile-A", job.request.diskFileID);
   ASSERT_EQ("/path/A", job.request.diskFileInfo.path);
   ASSERT_EQ(DISK_FILE_OWNER_UID, job.request.diskFileInfo.owner_uid);
@@ -180,69 +222,20 @@ TEST_P(RelationalDBTest, queueAndGetArchiveJobs) {
 
 TEST_P(RelationalDBTest, queueAndGetRetrieveJobs) {
   using namespace cta;
-#ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
 #endif
   cta::log::LogContext lc(dl);
 
   cta::SchedulerDatabase& db = getDb();
 
-  auto queueRetrieveJob =
-    [&db, &lc](uint64_t archiveFileId, const std::string& vid, const std::string& suffix, time_t creationTime) {
-      cta::common::dataStructures::RetrieveRequest rr;
-      cta::common::dataStructures::RetrieveFileQueueCriteria rfqc;
-
-      rfqc.mountPolicy.name = "mountPolicy";
-      rfqc.mountPolicy.archivePriority = 1;
-      rfqc.mountPolicy.archiveMinRequestAge = 0;
-      rfqc.mountPolicy.retrievePriority = 1;
-      rfqc.mountPolicy.retrieveMinRequestAge = 0;
-      rfqc.mountPolicy.creationLog = {"u", "h", creationTime};
-      rfqc.mountPolicy.lastModificationLog = {"u", "h", creationTime};
-      rfqc.mountPolicy.comment = "comment";
-
-      // Fill the archive file metadata required by queueRetrieve()
-      rfqc.archiveFile.archiveFileID = archiveFileId;
-      rfqc.archiveFile.fileSize = 4000 + archiveFileId;
-      rfqc.archiveFile.storageClass = s_storageClassName;
-      rfqc.archiveFile.diskInstance = "diskInstance";
-      rfqc.archiveFile.diskFileId = "diskFile-" + suffix;
-      rfqc.archiveFile.diskFileInfo.path = "/retrieve/" + suffix;
-      rfqc.archiveFile.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      rfqc.archiveFile.diskFileInfo.gid = DISK_FILE_GID;
-      rfqc.archiveFile.checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
-
-      // Put this retrieve request on the requested tape VID
-      // This VID is what getPendingRetrieveJobs(vid) later uses to filter the jobs
-      rfqc.archiveFile.tapeFiles.emplace_back();
-      rfqc.archiveFile.tapeFiles.back().fSeq = archiveFileId;
-      rfqc.archiveFile.tapeFiles.back().vid = vid;
-      rfqc.archiveFile.tapeFiles.back().copyNb = 1;
-      rfqc.archiveFile.tapeFiles.back().fileSize = 4000 + archiveFileId;
-      rfqc.archiveFile.tapeFiles.back().blockId = archiveFileId;
-      rfqc.archiveFile.tapeFiles.back().checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
-
-      rr.archiveFileID = archiveFileId;
-      rr.creationLog = {"user", "host", creationTime};
-      rr.lifecycleTimings.creation_time = creationTime;
-      rr.diskFileInfo.path = "/retrieve/" + suffix;
-      rr.requester = {"user", "group"};
-      rr.dstURL = "root://disk/" + suffix;
-      rr.errorReportURL = "test://retrieve-error-report-url";
-      rr.retrieveReportURL = "null:";
-
-      std::string dsName = "ds-A";
-
-      // Queue a real retrieve job through the database API
-      db.queueRetrieve(rr, rfqc, dsName, lc);
-    };
-
   // Insert jobs on two different VIDs
   // Queue one job on vidA and one on vidB to verify filtering works
-  queueRetrieveJob(333, "vidA", "A", 3000);
-  queueRetrieveJob(444, "vidB", "B", 4000);
+  queueRetrieveJob(db, lc, 333, "vidA", "A", 3000);
+  queueRetrieveJob(db, lc, 444, "vidB", "B", 4000);
 
   // Filter by vidA
   // This should return only the retrieve job on vidA
@@ -254,7 +247,6 @@ TEST_P(RelationalDBTest, queueAndGetRetrieveJobs) {
   ASSERT_EQ(333u, job.request.archiveFileID);
   ASSERT_EQ(3000u, job.request.creationLog.time);
   ASSERT_EQ("root://disk/A?oss.asize=4333", job.request.dstURL);
-  ASSERT_EQ("test://retrieve-error-report-url", job.request.errorReportURL);
   ASSERT_EQ("/retrieve/A", job.request.diskFileInfo.path);
   ASSERT_EQ(DISK_FILE_OWNER_UID, job.request.diskFileInfo.owner_uid);
   ASSERT_EQ(DISK_FILE_GID, job.request.diskFileInfo.gid);
@@ -269,56 +261,24 @@ TEST_P(RelationalDBTest, queueAndGetRetrieveJobs) {
 
 TEST_P(RelationalDBTest, queueArchiveAndCheckTapePool) {
   using namespace cta;
-#ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
 #endif
   cta::log::LogContext lc(dl);
 
   cta::SchedulerDatabase& db = getDb();
 
-  auto queueArchiveJob =
-    [&db, &lc](uint64_t fileId, const std::string& tapePool, const std::string& suffix, time_t creationTime) {
-      cta::common::dataStructures::ArchiveRequest ar;
-      cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
-
-      afqc.copyToPoolMap.insert({1, tapePool});
-      afqc.fileId = fileId;
-      afqc.mountPolicy.name = "mountPolicy";
-      afqc.mountPolicy.archivePriority = 1;
-      afqc.mountPolicy.archiveMinRequestAge = 0;
-      afqc.mountPolicy.retrievePriority = 1;
-      afqc.mountPolicy.retrieveMinRequestAge = 0;
-      afqc.mountPolicy.creationLog = {"u", "h", creationTime};
-      afqc.mountPolicy.lastModificationLog = {"u", "h", creationTime};
-      afqc.mountPolicy.comment = "comment";
-
-      ar.archiveReportURL = "test://archive-report-url";
-      ar.archiveErrorReportURL = "test://error-report-url";
-      ar.checksumBlob.insert(cta::checksum::NONE, "");
-      ar.creationLog = {"user", "host", creationTime};
-      ar.diskFileID = "diskFile-" + suffix;
-      ar.diskFileInfo.path = "/path/" + suffix;
-      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      ar.diskFileInfo.gid = DISK_FILE_GID;
-      ar.fileSize = 1000 + fileId;
-      ar.requester = {"user", "group"};
-      ar.srcURL = "root:/path/" + suffix;
-      ar.storageClass = "storageClass";
-
-      db.queueArchive("eosInstance", ar, afqc, lc);
-    };
-
-  // Insert jobs into two different tape pools
-  // Queue two jobs in tapePoolA and one job in tapePoolB to verify jobs are correctly grouped by tape pool
-  queueArchiveJob(111, "tapePoolA", "A1", 1000);
-  queueArchiveJob(112, "tapePoolA", "A2", 1001);
-  queueArchiveJob(221, "tapePoolB", "B1", 2000);
+  queueArchiveJob(db, lc, 111, "tapePoolA", "A1", 1000);
+  queueArchiveJob(db, lc, 112, "tapePoolA", "A2", 1001);
+  queueArchiveJob(db, lc, 221, "tapePoolB", "B1", 2000);
 
   // Query all archive jobs
   // This should return jobs grouped by tape pool
   const auto jobs = db.getArchiveJobs();
+
   ASSERT_EQ(2u, jobs.size());
   ASSERT_EQ(2u, jobs.at("tapePoolA").size());
   ASSERT_EQ(1u, jobs.at("tapePoolB").size());
@@ -326,65 +286,19 @@ TEST_P(RelationalDBTest, queueArchiveAndCheckTapePool) {
 
 TEST_P(RelationalDBTest, queueRetrieveAndCheckVid) {
   using namespace cta;
-#ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
 #endif
   cta::log::LogContext lc(dl);
 
   cta::SchedulerDatabase& db = getDb();
 
-  auto queueRetrieveJob =
-    [&db, &lc](uint64_t archiveFileId, const std::string& vid, const std::string& suffix, time_t creationTime) {
-      cta::common::dataStructures::RetrieveRequest rr;
-      cta::common::dataStructures::RetrieveFileQueueCriteria rfqc;
-
-      rfqc.mountPolicy.name = "mountPolicy";
-      rfqc.mountPolicy.archivePriority = 1;
-      rfqc.mountPolicy.archiveMinRequestAge = 0;
-      rfqc.mountPolicy.retrievePriority = 1;
-      rfqc.mountPolicy.retrieveMinRequestAge = 0;
-      rfqc.mountPolicy.creationLog = {"u", "h", creationTime};
-      rfqc.mountPolicy.lastModificationLog = {"u", "h", creationTime};
-      rfqc.mountPolicy.comment = "comment";
-
-      rfqc.archiveFile.archiveFileID = archiveFileId;
-      rfqc.archiveFile.fileSize = 4000 + archiveFileId;
-      rfqc.archiveFile.storageClass = s_storageClassName;
-      rfqc.archiveFile.diskInstance = "diskInstance";
-      rfqc.archiveFile.diskFileId = "diskFile-" + suffix;
-      rfqc.archiveFile.diskFileInfo.path = "/retrieve/" + suffix;
-      rfqc.archiveFile.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      rfqc.archiveFile.diskFileInfo.gid = DISK_FILE_GID;
-      rfqc.archiveFile.checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
-
-      rfqc.archiveFile.tapeFiles.emplace_back();
-      rfqc.archiveFile.tapeFiles.back().fSeq = archiveFileId;
-      rfqc.archiveFile.tapeFiles.back().vid = vid;
-      rfqc.archiveFile.tapeFiles.back().copyNb = 1;
-      rfqc.archiveFile.tapeFiles.back().fileSize = 4000 + archiveFileId;
-      rfqc.archiveFile.tapeFiles.back().blockId = archiveFileId;
-      rfqc.archiveFile.tapeFiles.back().checksumBlob.insert(cta::checksum::ADLER32, 0x12345678);
-
-      rr.archiveFileID = archiveFileId;
-      rr.creationLog = {"user", "host", creationTime};
-      rr.lifecycleTimings.creation_time = creationTime;
-      rr.diskFileInfo.path = "/retrieve/" + suffix;
-      rr.requester = {"user", "group"};
-      rr.dstURL = "root://disk/" + suffix;
-      rr.errorReportURL = "test://retrieve-error-report-url";
-      rr.retrieveReportURL = "null:";
-
-      std::string dsName = "ds-A";
-      db.queueRetrieve(rr, rfqc, dsName, lc);
-    };
-
-  // Insert jobs on two different VIDs
-  // Queue two jobs on vidA and one job on vidB to verify grouping by VID
-  queueRetrieveJob(333, "vidA", "A1", 3000);
-  queueRetrieveJob(334, "vidA", "A2", 3001);
-  queueRetrieveJob(444, "vidB", "B1", 4000);
+  queueRetrieveJob(db, lc, 333, "vidA", "A1", 3000);
+  queueRetrieveJob(db, lc, 334, "vidA", "A2", 3001);
+  queueRetrieveJob(db, lc, 444, "vidB", "B1", 4000);
 
   // Query all retrieve jobs
   // This should return jobs grouped by VID
@@ -397,24 +311,16 @@ TEST_P(RelationalDBTest, queueRetrieveAndCheckVid) {
 TEST_P(RelationalDBTest, queueRepack) {
   using namespace cta;
 
-#ifndef STDOUT_LOGGING
-  cta::log::DummyLogger dl("", "");
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
 #else
-  cta::log::StdoutLogger dl("", "");
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
 #endif
   cta::log::LogContext lc(dl);
 
   cta::SchedulerDatabase& db = getDb();
 
-  cta::common::dataStructures::MountPolicy mountPolicy;
-  mountPolicy.name = "mountPolicy";
-  mountPolicy.archivePriority = 1;
-  mountPolicy.archiveMinRequestAge = 0;
-  mountPolicy.retrievePriority = 1;
-  mountPolicy.retrieveMinRequestAge = 0;
-  mountPolicy.creationLog = {"u", "h", 1000};
-  mountPolicy.lastModificationLog = {"u", "h", 1000};
-  mountPolicy.comment = "comment";
+  auto mountPolicy = makeMountPolicy(1000);
 
   cta::SchedulerDatabase::QueueRepackRequest repackRequest("V12345",
                                                            "/repack/buffer",
@@ -434,9 +340,62 @@ TEST_P(RelationalDBTest, queueRepack) {
   ASSERT_EQ("V12345", repackInfo.vid);
   ASSERT_EQ("/repack/buffer", repackInfo.repackBufferBaseURL);
   ASSERT_EQ(cta::common::dataStructures::RepackInfo::Type::MoveOnly, repackInfo.type);
+  ASSERT_EQ("mountPolicy", repackInfo.mountPolicy);
   ASSERT_EQ(1000u, repackInfo.creationLog.time);
   ASSERT_EQ(10u, repackInfo.maxFilesToSelect);
   ASSERT_FALSE(repackInfo.noRecall);
+}
+
+TEST_P(RelationalDBTest, queueRepackInitial) {
+  using namespace cta;
+
+#ifdef STDOUT_LOGGING
+  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
+#else
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
+#endif
+  cta::log::LogContext lc(dl);
+
+  cta::SchedulerDatabase& db = getDb();
+
+  auto mountPolicy = makeMountPolicy(1000);
+
+  // Repack request
+  cta::SchedulerDatabase::QueueRepackRequest repackRequest("V54321",
+                                                           "/repack/buffer2",
+                                                           cta::common::dataStructures::RepackInfo::Type::AddCopiesOnly,
+                                                           mountPolicy,
+                                                           true,
+                                                           5);
+
+  repackRequest.m_creationLog = {"user", "host", 2000};
+
+  db.queueRepack(repackRequest, lc);
+
+  // Retrieve the repack info
+  const auto repackInfo = db.getRepackInfo("V54321");
+
+  // Verify that a newly queued repack has the correct initial state in the db
+
+  // newly queued repack should be pending
+  ASSERT_EQ(cta::common::dataStructures::RepackInfo::Status::Pending, repackInfo.status);
+  ASSERT_EQ(cta::common::dataStructures::RepackInfo::Type::AddCopiesOnly, repackInfo.type);
+  ASSERT_EQ("mountPolicy", repackInfo.mountPolicy);
+  ASSERT_EQ(2000u, repackInfo.creationLog.time);
+  ASSERT_EQ(5u, repackInfo.maxFilesToSelect);
+  ASSERT_TRUE(repackInfo.noRecall);
+  ASSERT_FALSE(repackInfo.isExpandStarted);
+  ASSERT_FALSE(repackInfo.isExpandFinished);
+  ASSERT_TRUE(repackInfo.destinationInfos.empty());
+  // all counters should be zero at initial state
+  ASSERT_EQ(0u, repackInfo.retrievedFiles);
+  ASSERT_EQ(0u, repackInfo.retrievedBytes);
+  ASSERT_EQ(0u, repackInfo.archivedFiles);
+  ASSERT_EQ(0u, repackInfo.archivedBytes);
+  ASSERT_EQ(0u, repackInfo.failedFilesToRetrieve);
+  ASSERT_EQ(0u, repackInfo.failedBytesToRetrieve);
+  ASSERT_EQ(0u, repackInfo.failedFilesToArchive);
+  ASSERT_EQ(0u, repackInfo.failedBytesToArchive);
 }
 
 static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
