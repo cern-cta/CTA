@@ -281,24 +281,16 @@ def test_wait_for_archival(eos_mgm, stress_params):
     assert loss_acceptable, f"Too many files lost during archival: {num_missing_files} files missing"
 
 
-# In client_stress_ar.sh there is an archiveonly mode, after which we exit, maybe consider setting that here too
-# Now retrieve the files as poweruser1
-
-# functions in client_stress_ar.sh
-# delete_files_from_eos_and_tapes
-# Look at the work done in branches:
-
-
 @pytest.mark.eos
 def test_kinit_poweruser(eos_client, krb5_realm):
-    """Initialize Kerberos credentials for poweruser1 (needed for prepare/retrieve)."""
+    """Initialize Kerberos credentials for poweruser1 (needed for retrieve)."""
     eos_client.exec("mkdir -p /tmp/poweruser1")
     eos_client.exec(f"KRB5CCNAME=/tmp/poweruser1/krb5cc_0 kinit -kt /root/poweruser1.keytab poweruser1@{krb5_realm}")
 
 
 @pytest.mark.eos
 @pytest.mark.asyncio
-async def test_prepare_files(cta_cli, eos_client, eos_mgm, stress_params):
+async def test_retrieve_files(cta_cli, eos_client, eos_mgm, stress_params):
     archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
     mgm_ip = eos_mgm.get_ip()
 
@@ -317,12 +309,12 @@ async def test_prepare_files(cta_cli, eos_client, eos_mgm, stress_params):
         num_dirs=stress_params.num_dirs,
         num_procs=stress_params.io_threads,
     )
-    print("Retrieve (prepare) process started")
+    print("Retrieve process started")
 
     drives_up = not stress_params.prequeue.enabled
     stop_monitoring = asyncio.Event()
 
-    async def monitor_prepare_and_put_drives_up():
+    async def monitor_retrieve_and_put_drives_up():
         """Monitor tape-only file count and put drives up when threshold reached (for prequeue mode)."""
         nonlocal drives_up
         while not stop_monitoring.is_set():
@@ -331,7 +323,7 @@ async def test_prepare_files(cta_cli, eos_client, eos_mgm, stress_params):
                 dir_path = f"{archive_directory}/{i}"
                 total_tape_only += eos_mgm.num_files_on_tape_only(str(dir_path))
 
-            print(f"\t[prepare monitor] {total_tape_only} files still on tape only", flush=True)
+            print(f"\t[retrieve monitor] {total_tape_only} files still on tape only", flush=True)
 
             if not drives_up:
                 if total_tape_only >= stress_params.prequeue.num_files_to_put_drives_up:
@@ -352,7 +344,7 @@ async def test_prepare_files(cta_cli, eos_client, eos_mgm, stress_params):
             with contextlib.suppress(asyncio.TimeoutError):
                 await asyncio.wait_for(stop_monitoring.wait(), sleep_time)
 
-    monitor_task = asyncio.create_task(monitor_prepare_and_put_drives_up())
+    monitor_task = asyncio.create_task(monitor_retrieve_and_put_drives_up())
     exec_result = await retrieve_future
     stop_monitoring.set()
     await monitor_task
@@ -369,7 +361,7 @@ async def test_prepare_files(cta_cli, eos_client, eos_mgm, stress_params):
         print("Retrieve process failed")
         print(exec_result.stderr)
 
-    print(f"Prepare phase completed in {timer_end - timer_start:.1f}s")
+    print(f"Retrieve phase completed in {timer_end - timer_start:.1f}s")
 
 
 @pytest.mark.eos
