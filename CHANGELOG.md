@@ -1,3 +1,36 @@
+## 5.11.18.0-1
+
+### New Features
+
+- [maintd] Add catalogue and telemetry conf files to runtime directory (cta/CTA!1303)
+- [Misc] Package basic JSON logging schema (cta/CTA!1304)
+- [Misc] Add source location and CTA version to log lines (cta/CTA!1348)
+
+### Changes
+
+- [frontend] Allow admin commands or physics workflows to be disabled on CTA frontend (cta/CTA!1336)
+- [Misc] Replace reflect-cpp library with custom implementation (cta/CTA!1291)
+- [Misc] Change Catalogue backend install behaviour (cta/CTA!1295)
+
+### Bug Fixes
+
+- [catalogue] Improve CTA resilience to catalogue DB outages during data fetching (cta/CTA!1334)
+- [taped] Improve readExactBlock error message contents (cta/CTA!1311)
+- [taped] Enabling reading of tapes with misformed OSM tape format (cta/CTA!1343)
+- [frontend] Prevent 'cta-admin dr rm' command from crashing the cta-frontend (cta/CTA!1305)
+- [frontend] Remove race conditions in NegotiationRequestHandler (cta/CTA!1310)
+- [frontend] Fix broken cta-admin fr ls command (cta/CTA!1340)
+- [Misc] Fix compile issues when building CTA in Release mode (cta/CTA!1207)
+
+### Performance Improvements
+
+- [CI] Use python xrootd persistent clients for archive instead of xrdcp --parallel (cta/CTA!1274)
+
+### Other
+
+- [Misc] Update opentelemetry-cpp to v1.26.0 (cta/CTA!1321)
+
+
 ## 5.11.17.0-1
 
 ### New Features
