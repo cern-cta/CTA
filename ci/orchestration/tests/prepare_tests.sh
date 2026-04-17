@@ -129,9 +129,18 @@ kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin --j
 
 # registers only library which is the one used for the drives
 for ((i=0; i<${#LIBRARY_NAMES_IN_USE[@]}; i++)); do
-  kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin logicallibrary add \
-    --name ${LIBRARY_NAMES_IN_USE[${i}]}                                            \
-    --comment "ctasystest library name added to the catalogue: ${LIBRARY_NAMES_IN_USE[${i}]}"
+  LIB_NAME="${LIBRARY_NAMES_IN_USE[$i]}"
+
+  if kubectl --namespace "${NAMESPACE}" exec "${CTA_CLI_POD}" -c cta-cli -- \
+       cta-admin logicallibrary ls | grep -qw "${LIB_NAME}"; then
+    echo "Library ${LIB_NAME} already exists, skipping."
+  else
+    echo "Creating library ${LIB_NAME}..."
+    kubectl --namespace "${NAMESPACE}" exec "${CTA_CLI_POD}" -c cta-cli -- \
+      cta-admin logicallibrary add \
+        --name "${LIB_NAME}" \
+        --comment "ctasystest library name added to the catalogue: ${LIB_NAME}"
+  fi
 done
 
 kubectl --namespace ${NAMESPACE} exec ${CTA_CLI_POD} -c cta-cli -- cta-admin diskinstance add  \

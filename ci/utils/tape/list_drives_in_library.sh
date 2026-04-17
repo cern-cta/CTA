@@ -84,7 +84,7 @@ for drive_device in $drive_devices; do
   drive_name="${vendor}-${serial}"
   if [ "$enable_one_logical_library_only" = true ]; then
     if [[ -z "$logical_lib_name" ]]; then
-      logical_lib_name="${drive_name}"+"_LOGICAL_LIBRARY_NAME"
+      logical_lib_name="${drive_name}_LOGICAL_LIBRARY_NAME"
     fi
   else
     logical_lib_name="$drive_name"

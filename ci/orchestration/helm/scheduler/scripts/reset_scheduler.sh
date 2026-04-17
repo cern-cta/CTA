@@ -28,8 +28,6 @@ if [[ "$SCHEDULER_BACKEND" == "vfs" ]] || [[ "$SCHEDULER_BACKEND" == "vfsDepreca
 elif [[ "$SCHEDULER_BACKEND" == "postgres" ]]; then
   echo "Installing the cta-scheduler-utils"
   dnf install -y cta-scheduler-utils
-  echo "Postgres scheduler config file content: "
-  cat /etc/cta/cta-scheduler.conf
   echo "Dropping the scheduler DB schema"
   echo "yes" | cta-scheduler-schema-drop /etc/cta/cta-scheduler.conf || die "ERROR: Could not drop scheduler schema. cta-scheduler-schema-drop /etc/cta/cta-scheduler.conf FAILED"
   echo "Creating the scheduler DB schema"
