@@ -6,7 +6,7 @@
 Retrieve files from tape using persistent XRootD Python client connections.
 
 Runs inside the client pod. Discovers tape-only files, then issues
-prepare (stage-in) requests in parallel via multiprocessing.
+retrieve (prepare/stage-in) requests in parallel via multiprocessing.
 
 Output: prints progress lines, then a summary on the last line.
 """
@@ -24,7 +24,7 @@ def parse_args():
     p.add_argument("--dest-dir", required=True, help="EOS directory containing archived files")
     p.add_argument("--num-dirs", type=int, required=True, help="Number of subdirectories")
     p.add_argument("--num-procs", type=int, default=8, help="Number of parallel worker processes")
-    p.add_argument("--krb5-cache", default="/tmp/poweruser1/krb5cc_0", help="Kerberos credential cache for prepare")
+    p.add_argument("--krb5-cache", default="/tmp/poweruser1/krb5cc_0", help="Kerberos credential cache for retrieve")
     p.add_argument("--activity", default="T0Reprocess", help="Activity string appended to prepare targets")
     return p.parse_args()
 
@@ -51,7 +51,7 @@ def list_tape_only_files(eos_host, dest_dir, num_dirs):
     return tape_files
 
 
-def prepare_worker(work_q, wid, eos_host, krb5_cache):
+def retrieve_worker(work_q, wid, eos_host, krb5_cache):
     """Worker process that issues prepare (stage-in) requests via XRootD."""
     # Switch from SSS to Kerberos (poweruser1) for prepare permissions
     for k in ("XrdSecsssKT", "XRDSSSKT"):
@@ -74,7 +74,7 @@ def prepare_worker(work_q, wid, eos_host, krb5_cache):
         status, _ = fs.prepare([target], PrepareFlags.STAGE)
 
         if not status.ok and err_budget > 0:
-            print(f"[prepare worker {wid}] prepare failed: {target}, error: {status.message}", flush=True)
+            print(f"[retrieve worker {wid}] prepare failed: {target}, error: {status.message}", flush=True)
             err_budget -= 1
 
         work_q.task_done()
@@ -108,7 +108,7 @@ def main():
     procs = []
     for wid in range(args.num_procs):
         p = mp.Process(
-            target=prepare_worker,
+            target=retrieve_worker,
             args=(work_q, wid, args.eos_host, args.krb5_cache),
             daemon=True,
         )
@@ -130,7 +130,7 @@ def main():
     elapsed = time.time() - t0
     rate = num_targets / max(elapsed, 0.001)
 
-    print(f"Prepare done: {num_targets} files in {elapsed:.1f}s ({rate:.1f} files/s)", flush=True)
+    print(f"Retrieve done: {num_targets} files in {elapsed:.1f}s ({rate:.1f} files/s)", flush=True)
 
 
 if __name__ == "__main__":
