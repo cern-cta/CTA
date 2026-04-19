@@ -290,7 +290,7 @@ def test_kinit_poweruser(eos_client, krb5_realm):
 
 @pytest.mark.eos
 @pytest.mark.asyncio
-async def test_retrieve_files(cta_cli, eos_client, eos_mgm, stress_params):
+async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_params):
     archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
     mgm_ip = eos_mgm.get_ip()
 
