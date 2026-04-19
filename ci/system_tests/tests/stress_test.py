@@ -104,18 +104,9 @@ def test_setup_xrootd_client(eos_client):
     eos_client.install_xrootd_python()
 
     script_dir = Path(__file__).parent / "remote_scripts" / "eos_client"
-    eos_client.copy_to(
-        str(script_dir / "xrootd_archive.py"),
-        "/root/xrootd_archive.py",
-    )
-    eos_client.copy_to(
-        str(script_dir / "count_files.py"),
-        "/root/count_files.py",
-    )
-    eos_client.copy_to(
-        str(script_dir / "xrootd_retrieve.py"),
-        "/root/xrootd_retrieve.py",
-    )
+    eos_client.copy_to(str(script_dir / "xrootd_archive.py"), "/root/xrootd_archive.py")
+    eos_client.copy_to(str(script_dir / "count_files.py"), "/root/count_files.py")
+    eos_client.copy_to(str(script_dir / "xrootd_retrieve.py"), "/root/xrootd_retrieve.py")
 
 
 @pytest.mark.eos
