@@ -9,7 +9,7 @@
 
     # Leave empty to have it checkout the destination version (tag needs to exist)
     # Set it to a commit if the tag has not been created yet
-    schema_checkout_ref = ""
+    schema_checkout_ref = "c8f00835b13b4b8817cfc6c4823dc1b0cfc9a38f"
 
   [tests.gfal]
 
