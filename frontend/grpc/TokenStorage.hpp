@@ -8,9 +8,12 @@
 #include <mutex>
 #include <shared_mutex>
 #include <string>
+#include <time.h>
 #include <unordered_map>
 
 namespace cta::frontend::grpc::server {
+
+enum class Krb5TokenValidationResult { EXPIRED, NOT_FOUND, VALID };
 
 class TokenStorage {
 public:
@@ -26,7 +29,7 @@ public:
    * Token validation
    * @param strEncodedToken The session token encoded in base64 format
    */
-  bool validate(const std::string& strEncodedToken) const;
+  Krb5TokenValidationResult validate(const std::string& strEncodedToken) const;
 
   /*
    * Get the client principal (username) for a validated token
@@ -42,7 +45,8 @@ public:
   void remove(const std::string& strEncodedToken);
 
 private:
-  std::unordered_map<std::string, std::string> m_umapTokens;
+  // map token -> [clientPrincipal, expirationTime]
+  std::unordered_map<std::string, std::pair<std::string, time_t>> m_umapTokens;
   mutable std::shared_mutex m_mtxLockStorage;
 };
 

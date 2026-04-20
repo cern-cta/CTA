@@ -9,6 +9,7 @@
 #include "RequestMessage.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
+#include "common/utils/utils.hpp"
 
 cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandler(
   cta::log::Logger& log,
@@ -195,10 +196,16 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
                                            &m_negotiationService.completionQueue(),
                                            &m_negotiationService.completionQueue(),
                                            m_tag);
+      m_streamState = StreamState::ADVERTISE_SPN;
+      break;
+    case StreamState::ADVERTISE_SPN:
+      m_negotiationService.registerHandler().next(bOk);
+      m_response.set_service_principal_name(m_strService);
+      m_rwNegotiation.Write(m_response, m_tag);  // advertise SPN to client
       m_streamState = StreamState::PROCESSING;
+      m_response.set_service_principal_name("");
       break;
     case StreamState::PROCESSING:
-      m_negotiationService.registerHandler().next(bOk);
       m_rwNegotiation.Read(&m_request, m_tag);  // read first m_request
       m_streamState = StreamState::WRITE;
       break;
@@ -247,12 +254,14 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
         case GSS_S_COMPLETE: {
           m_streamState = StreamState::FINISH;
           m_response.set_is_complete(true);
-          m_response.set_challenge("");
+          m_response.set_challenge(std::string(reinterpret_cast<const char*>(gssSendToken.value), gssSendToken.length));
           /*
              * The token can be of any type
-             * now KRB token is used
+             * in the past, KRB token was used
+             * now we pass a nonce to the client instead for extra security
              */
-          m_response.set_token(std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length));
+          auto nonce = cta::utils::generate256BitHex();
+          m_response.set_token(nonce);
 
           // Extract the local username (without realm) from the GSS context
           gss_buffer_desc gssLocalNameBuf;
@@ -281,9 +290,8 @@ bool cta::frontend::grpc::server::NegotiationRequestHandler::next(const bool bOk
           }
 
           // Store token with both client principal (username) and service principal
-          m_negotiationService.tokenStorage().store(
-            std::string(reinterpret_cast<const char*>(gssRecvToken.value), gssRecvToken.length),
-            clientPrincipal);  // Client principal (authenticated user)
+          m_negotiationService.tokenStorage().store(nonce,
+                                                    clientPrincipal);  // Client principal (authenticated user)
 
           m_rwNegotiation.Write(m_response, m_tag);
           break;

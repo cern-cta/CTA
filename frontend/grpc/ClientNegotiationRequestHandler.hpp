@@ -23,8 +23,7 @@ public:
   NegotiationRequestHandler() = delete;
   NegotiationRequestHandler(cta::log::Logger& log,
                             cta::xrd::Negotiation::Stub& stub,
-                            ::grpc::CompletionQueue& completionQueue,
-                            const std::string& strSpn);
+                            ::grpc::CompletionQueue& completionQueue);
   ~NegotiationRequestHandler() override = default;
 
   void init() override { /* Nothing todo */ };
@@ -33,12 +32,12 @@ public:
   inline const std::string& token() const { return m_strToken; }
 
 private:
-  enum class StreamState : unsigned int { NEW = 1, WRITE, READ, FINISH };
+  enum class StreamState : unsigned int { NEW = 1, WRITE, READ, FINISH, READ_SPN };
 
   cta::log::Logger& m_log;
   cta::xrd::Negotiation::Stub& m_stub;
   ::grpc::CompletionQueue& m_completionQueue;
-  const std::string& m_strSpn;
+  std::string m_strSpn;
   cta::frontend::grpc::request::Tag m_tag;
 
   StreamState m_streamState = StreamState::NEW;

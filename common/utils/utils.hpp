@@ -179,6 +179,13 @@ std::string preEllipsis(const std::string& s, size_t maxSize);
 std::string generateUuid();
 
 /**
+ * Generates a random 256-bit value, encoded as a 64-character lowercase hex string.
+ *
+ * @return The random value as a hex string.
+ */
+std::string generate256BitHex();
+
+/**
  * Returns true if the specified string ends with the specifie character.
  *
  * @param str The string to be tested.

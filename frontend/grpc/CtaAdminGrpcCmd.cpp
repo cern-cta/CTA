@@ -30,7 +30,6 @@ void CtaAdminGrpcCmd::setupJwtAuthenticatedAdminCall(grpc::ClientContext& contex
 
 void CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Channel> spChannelNegotiation,
                                                       grpc::ClientContext& context,
-                                                      const std::string& GSS_SPN,
                                                       cta::log::FileLogger& log) const {
   // First do a negotiation call to obtain a kerberos token, which will be attached to the call metadata
   // Storage for the KRB token
@@ -39,7 +38,7 @@ void CtaAdminGrpcCmd::setupKrb5AuthenticatedAdminCall(std::shared_ptr<grpc::Chan
   std::string strEncodedToken {""};
   cta::frontend::grpc::client::AsyncClient<cta::xrd::Negotiation> clientNeg(log, spChannelNegotiation);
   try {
-    strToken = clientNeg.exe<cta::frontend::grpc::client::NegotiationRequestHandler>(GSS_SPN)->token();
+    strToken = clientNeg.exe<cta::frontend::grpc::client::NegotiationRequestHandler>()->token();
     /*
      * TODO: ???
      *        Move encoder to client::NegotiationRequestHandler
@@ -104,10 +103,8 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
   }
 
   // gRPC stream server
-  std::string strGrpcHost = "cta-frontend-grpc";
   const std::string GRPC_SERVER = endpoint.value();
   // Service name
-  const std::string GSS_SPN = "cta/" + strGrpcHost;
   // Create a channel to the KRB-GSI negotiation service
   std::shared_ptr<::grpc::Channel> spChannel {::grpc::CreateChannel(GRPC_SERVER, credentials)};
   cta::log::FileLogger log(GRPC_SERVER, "cta-admin-grpc", "/var/log/cta-admin-grpc.log", cta::log::INFO);
@@ -140,7 +137,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
       }
       setupJwtAuthenticatedAdminCall(context, token_path);
     } else if (auth_method == "krb5") {
-      setupKrb5AuthenticatedAdminCall(spChannel, context, GSS_SPN, log);
+      setupKrb5AuthenticatedAdminCall(spChannel, context, log);
     } else {
       throw cta::exception::UserError("Unrecognized authentication method '" + auth_method + "' specified");
     }

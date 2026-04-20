@@ -35,7 +35,7 @@ public:
 private:
   const unsigned int CHUNK_SIZE = 4 * 1024;
 
-  enum class StreamState : unsigned int { NEW = 1, PROCESSING, READ, WRITE, ERROR, FINISH };
+  enum class StreamState : unsigned int { NEW = 1, PROCESSING, READ, WRITE, ERROR, FINISH, ADVERTISE_SPN };
 
   cta::log::Logger& m_log;
   cta::frontend::grpc::request::Tag m_tag;
