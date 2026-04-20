@@ -24,8 +24,8 @@ def parse_args():
     p.add_argument("--dest-dir", required=True, help="EOS directory containing archived files")
     p.add_argument("--num-dirs", type=int, required=True, help="Number of subdirectories")
     p.add_argument("--num-procs", type=int, default=8, help="Number of parallel worker processes")
-    p.add_argument("--krb5-cache", default="/tmp/poweruser1/krb5cc_0", help="Kerberos credential cache for retrieve")
-    p.add_argument("--activity", default="T0Reprocess", help="Activity string appended to prepare targets")
+    p.add_argument("--krb5-cache", required=True, help="Kerberos credential cache for retrieve")
+    p.add_argument("--activity", required=True, help="Activity string appended to prepare targets")
     return p.parse_args()
 
 
