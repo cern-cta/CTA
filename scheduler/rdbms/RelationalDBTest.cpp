@@ -37,6 +37,14 @@ cta::common::dataStructures::MountPolicy makeMountPolicy(time_t t) {
   return mountPolicy;
 }
 
+std::unique_ptr<cta::log::Logger> makeLogger() {
+#ifdef STDOUT_LOGGING
+  return std::make_unique<cta::log::StdoutLogger>("dummy", "unitTest");
+#else
+  return std::make_unique<cta::log::DummyLogger>("dummy", "unitTest");
+#endif
+}
+
 void queueArchiveJob(cta::SchedulerDatabase& db,
                      cta::log::LogContext& lc,
                      uint64_t fileId,
@@ -178,19 +186,11 @@ private:
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 };  // class RelationalDBTest
 
-TEST_P(RelationalDBTest, DISABLED_getBatchArchiveJob) {
-  ASSERT_EQ(0, 1);
-}
-
 TEST_P(RelationalDBTest, queueAndGetArchiveJobs) {
   using namespace cta;
 
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
-#endif
-  cta::log::LogContext lc(dl);
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
 
   cta::SchedulerDatabase& db = getDb();
 
@@ -223,12 +223,8 @@ TEST_P(RelationalDBTest, queueAndGetArchiveJobs) {
 TEST_P(RelationalDBTest, queueAndGetRetrieveJobs) {
   using namespace cta;
 
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
-#endif
-  cta::log::LogContext lc(dl);
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
 
   cta::SchedulerDatabase& db = getDb();
 
@@ -262,12 +258,8 @@ TEST_P(RelationalDBTest, queueAndGetRetrieveJobs) {
 TEST_P(RelationalDBTest, queueArchiveAndCheckTapePool) {
   using namespace cta;
 
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
-#endif
-  cta::log::LogContext lc(dl);
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
 
   cta::SchedulerDatabase& db = getDb();
 
@@ -287,12 +279,8 @@ TEST_P(RelationalDBTest, queueArchiveAndCheckTapePool) {
 TEST_P(RelationalDBTest, queueRetrieveAndCheckVid) {
   using namespace cta;
 
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
-#endif
-  cta::log::LogContext lc(dl);
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
 
   cta::SchedulerDatabase& db = getDb();
 
@@ -311,12 +299,8 @@ TEST_P(RelationalDBTest, queueRetrieveAndCheckVid) {
 TEST_P(RelationalDBTest, queueRepack) {
   using namespace cta;
 
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
-#endif
-  cta::log::LogContext lc(dl);
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
 
   cta::SchedulerDatabase& db = getDb();
 
@@ -349,12 +333,8 @@ TEST_P(RelationalDBTest, queueRepack) {
 TEST_P(RelationalDBTest, queueRepackInitial) {
   using namespace cta;
 
-#ifdef STDOUT_LOGGING
-  cta::log::StdoutLogger dl("RelationalDBTest", "unitTest");
-#else
-  cta::log::DummyLogger dl("dummy", "dummyLogger");
-#endif
-  cta::log::LogContext lc(dl);
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
 
   cta::SchedulerDatabase& db = getDb();
 
