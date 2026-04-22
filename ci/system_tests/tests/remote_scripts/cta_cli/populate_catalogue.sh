@@ -6,14 +6,14 @@
 # Exit on first failure
 set -e
 
-# Usage ./populate_catalogue.sh <disk instance name>
+# Usage ./populate_catalogue.sh <disk instance name> <cta_storage_class>
 
-if [ "$#" -ne 1 ]; then
-    echo "Please provide a diskinstance name"
+if [ "$#" -ne 2 ]; then
+    echo "Please provide a disk instance name and storage class"
     exit 1
 fi
 DISK_INSTANCE_NAME="$1"
-CTA_STORAGE_CLASS="ctaStorageClass"
+CTA_STORAGE_CLASS="$2"
 
 # add the media types of the tapes in production
 cta-admin mediatype add \

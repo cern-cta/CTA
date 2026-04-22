@@ -14,7 +14,6 @@ EOS_MGM_HOST="ctaeos"
 EOS_BASEDIR=/eos/ctaeos/cta
 TEST_FILE_NAME_BASE=test
 ARCHIVEONLY=0 # Only archive files or do the full test?
-DONOTARCHIVE=0 # files were already archived in a previous run NEED TARGETDIR
 TARGETDIR=''
 LOGDIR='/var/log'
 CLI_TARGET="xrd"
@@ -29,7 +28,6 @@ NB_DIRS=1
 FILE_KB_SIZE=1
 VERBOSE=0
 REMOVE=0
-TAPEAWAREGC=0
 
 NB_BATCH_PROCS=500  # number of parallel batch processes
 BATCH_SIZE=20    # number of files per batch process
@@ -44,11 +42,9 @@ die() {
 
 
 usage() { cat <<EOF 1>&2
-Usage: $0 [-n <nb_files_perdir>] [-N <nb_dir>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-r]
-  -v    Verbose mode: displays live logs of rmcd to see tapes being mounted/dismounted in real time
+Usage: $0 [-n <nb_files_perdir>] [-s <file_kB_size>] [-p <# parallel procs>] [-v] [-d <eos_dest_dir>] [-e <eos_instance>] [-r]
   -r    Remove files at the end: launches the delete workflow on the files that were deleted. WARNING: THIS CAN BE FATAL TO THE NAMESPACE IF THERE ARE TOO MANY FILES AND XROOTD STARTS TO TIMEOUT.
   -a    Archiveonly mode: exits after file archival
-  -g    Tape aware GC?
   -c    CLI tool to execute
 EOF
 exit 1
@@ -68,32 +64,17 @@ while getopts "Z:d:e:n:N:s:p:vS:rAPGt:c:" o; do
         n)
             NB_FILES=${OPTARG}
             ;;
-        N)
-            NB_DIRS=${OPTARG}
-            ;;
         s)
             FILE_KB_SIZE=${OPTARG}
             ;;
         p)
             NB_PROCS=${OPTARG}
             ;;
-        v)
-            VERBOSE=1
-            ;;
         r)
             REMOVE=1
             ;;
         A)
             ARCHIVEONLY=1
-            ;;
-        P)
-            DONOTARCHIVE=1
-            ;;
-        G)
-            TAPEAWAREGC=1
-            ;;
-        t)
-            TARGETDIR=${OPTARG}
             ;;
         Z)
             GFAL2_PROTOCOL=${OPTARG}
@@ -132,20 +113,6 @@ case "${CLI_TARGET}" in
     echo "ERROR: CLI target ${CLI_TARGET} not supported. Valid options: xrd, gfal2"
     exit 1
 esac
-
-
-if [[ $DONOTARCHIVE == 1 ]]; then
-    if [[ "x${TARGETDIR}" = "x" ]]; then
-      echo "You must provide a target directory to run a test and skip archival"
-      exit 1
-    fi
-    eos root://${EOS_MGM_HOST} ls -d ${EOS_BASEDIR}/${TARGETDIR} || die "target directory does not exist and there is no archive phase to create it."
-fi
-
-if [[ $TAPEAWAREGC == 1 ]]; then
-    echo "Enabling tape aware garbage collector"
-    ssh ${SSH_OPTIONS} -l root ${EOS_MGM_HOST} eos space config default space.filearchivedgc=off || die "Could not disable filearchivedgc"
-fi
 
 EOS_DIR=''
 if [[ "x${TARGETDIR}" = "x" ]]; then

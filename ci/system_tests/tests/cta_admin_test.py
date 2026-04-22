@@ -19,8 +19,6 @@ from ..helpers.utils import (
     canonicalize,
 )
 
-from ..helpers.hosts import CtaCliHost, CtaTapedHost, DiskClientHost, DiskInstanceHost
-
 # NOTE: these tests are only meant for cta-admin tests. Other tools should get their own test suite
 #
 # The tests below are relative simple as they all (mostly) follow the same pattern:
@@ -52,31 +50,6 @@ def is_in_repacking_state(cta_cli, vid_to_check):
     if len(ta_ls_json) != 1:
         return False
     return ta_ls_json[0]["state"] == "REPACKING"
-
-
-@pytest.fixture
-def cta_cli(env) -> CtaCliHost:
-    return env.cta_cli[0]
-
-
-@pytest.fixture
-def cta_taped(env) -> CtaTapedHost:
-    return env.cta_taped[0]
-
-
-@pytest.fixture
-def disk_client(env) -> DiskClientHost:
-    return env.disk_client[0]
-
-
-@pytest.fixture
-def disk_instance(env) -> DiskInstanceHost:
-    return env.disk_instance[0]
-
-
-@pytest.fixture
-def disk_instance_name(disk_instance) -> str:
-    return disk_instance.instance_name
 
 
 #####################################################################################################################
@@ -327,14 +300,14 @@ def test_cta_admin_tape(cta_cli):
 
 
 @pytest.mark.eos
-def test_cta_admin_tape_file(cta_cli, disk_client, disk_instance, disk_instance_name):
+def test_cta_admin_tape_file(cta_cli, disk_client, disk_instance, disk_instance_name, test_dir):
     vids: list[str] = cta_cli.list_all_tape_vids()
     assert vids, "No tape VIDs available to test tape file commands."
 
     ls_before = [cta_cli.exec_with_output(f"cta-admin --json tf ls -v {vid}") for vid in vids]
 
     # Archive one file
-    test_file_path = "/eos/ctaeos/cta/cta_admin_tf_testfile"
+    test_file_path = test_dir / "cta_admin_tf_testfile"
     test_file_path = disk_client.generate_and_archive_file(
         disk_instance_name, destination_path=test_file_path, wait=True, append_uid=True
     )
@@ -598,12 +571,12 @@ def test_cta_admin_media_type(cta_cli):
 
 
 @pytest.mark.eos
-def test_cta_admin_recycle_tape_file_ls(cta_cli, disk_client, disk_instance, disk_instance_name):
+def test_cta_admin_recycle_tape_file_ls(cta_cli, disk_client, disk_instance, disk_instance_name, test_dir):
     vids: list[str] = cta_cli.list_all_tape_vids()
     assert vids, "Need at least one VID for rtf ls test."
 
     # Archive one file
-    test_file_path = "/eos/ctaeos/cta/cta_admin_rtf_testfile"
+    test_file_path = test_dir / "cta_admin_rtf_testfile"
     test_file_path = disk_client.generate_and_archive_file(
         disk_instance_name, destination_path=test_file_path, wait=True, append_uid=True
     )
@@ -770,8 +743,10 @@ def test_cta_admin_archive_route(cta_cli, disk_instance_name):
 
 
 @pytest.mark.eos
-def test_cta_admin_archive_file_ch(cta_cli, disk_client, disk_instance, disk_instance_name):
-    source_sc = "ctaStorageClass"
+def test_cta_admin_archive_file_ch(
+    cta_cli, disk_client, disk_instance, disk_instance_name, test_dir, cta_storage_class
+):
+    source_sc = cta_storage_class
     target_sc = "test_cta_admin_archive_file_ch_sc"
     id_file = "/tmp/cta_admin_af_ids.txt"
 
@@ -783,7 +758,7 @@ def test_cta_admin_archive_file_ch(cta_cli, disk_client, disk_instance, disk_ins
 
     with TempStorageClass(cta_cli, target_sc, vo_name):
         # Archive one file
-        test_file_path = "/eos/ctaeos/cta/cta_admin_af_testfile"
+        test_file_path = test_dir / "cta_admin_af_testfile"
         test_file_path = disk_client.generate_and_archive_file(
             disk_instance_name,
             destination_path=test_file_path,
@@ -897,7 +872,7 @@ def test_cta_admin_storage_class(cta_cli, disk_instance_name):
 
 
 @pytest.mark.eos
-def test_cta_admin_show_queue(cta_cli, disk_client, disk_instance_name):
+def test_cta_admin_show_queue(cta_cli, disk_client, disk_instance_name, test_dir):
 
     ls_before = cta_cli.exec_with_output("cta-admin --json sq")
     # Ensure we didn't have anything in the queue at this point
@@ -907,7 +882,7 @@ def test_cta_admin_show_queue(cta_cli, disk_client, disk_instance_name):
     cta_cli.set_all_drives_down(wait=True)
 
     # Trigger an archive request
-    file_path = "/eos/ctaeos/cta/cta_admin_sq_testfile"
+    file_path = test_dir / "cta_admin_sq_testfile"
     file_path = disk_client.generate_and_archive_file(
         disk_instance_name, destination_path=file_path, wait=False, append_uid=True
     )

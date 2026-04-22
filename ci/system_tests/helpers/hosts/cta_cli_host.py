@@ -66,3 +66,7 @@ class CtaCliHost(RemoteHost):
         filtered_list = list(filter(filter_func, ls_json))
         assert len(filtered_list) == 1
         return filtered_list[0]
+
+    def writable_tapes(self):
+        tape_ls_json = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
+        return [tape for tape in tape_ls_json if not tape.get("full", False)]

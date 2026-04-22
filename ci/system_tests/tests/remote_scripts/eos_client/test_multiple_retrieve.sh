@@ -29,21 +29,18 @@
 #
 ################################################################################
 
+if [ "$#" -ne 1 ]; then
+    echo "Please provide an EOS base directory"
+    exit 1
+fi
 
 EOS_MGM_HOST="ctaeos"
-EOS_BASEDIR=/eos/ctaeos/cta
+EOS_BASEDIR="$1"
 EVICT_COUNTER_ATTR="sys.retrieve.evict_counter"
 
 NB_RETRIEVES=2
 NB_RETRIEVES_EXTRA=2
 NB_FILES=4
-
-
-if /opt/eos/xrootd/bin/xrdcp -V 2>&1 | grep -q -e '^v*4\.'; then
-   echo "Test disabled on eos 4 versions"
-   exit 0
-fi
-# This means that eos version >= 5.2.17 and we are good to go with xattr call
 
 # get some common useful helpers for krb5
 . /root/client_helper.sh

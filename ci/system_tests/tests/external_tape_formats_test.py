@@ -2,34 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import uuid
-import pytest
-
-from ..helpers.hosts import CtaRmcdHost, CtaTapedHost
-
-#####################################################################################################################
-# Helpers
-#####################################################################################################################
-
-
-@pytest.fixture(scope="session")
-def cta_rmcd(env) -> CtaRmcdHost:
-    return env.cta_rmcd[0]
-
-
-@pytest.fixture(scope="session")
-def cta_taped(env) -> CtaTapedHost:
-    return env.cta_taped[0]
-
-
-@pytest.fixture(scope="session")
-def drive_name(cta_taped) -> str:
-    return cta_taped.drive_name
-
-
-@pytest.fixture(scope="session")
-def drive_device(cta_taped) -> str:
-    return cta_taped.drive_device
-
 
 #####################################################################################################################
 # Tests
@@ -53,7 +25,8 @@ def test_load_tape(cta_rmcd):
     cta_rmcd.exec("mtx -f /dev/smc status")
 
 
-def test_read_osm_tape(cta_rmcd, drive_device):
+def test_read_osm_tape(cta_rmcd, cta_taped):
+    drive_device = cta_taped.drive_device
     osm_dir = "/osm_mhvtl_" + str(uuid.uuid4())[:8]
 
     # Download OSM sample tape
@@ -79,9 +52,9 @@ def test_read_osm_tape(cta_rmcd, drive_device):
     cta_rmcd.exec(f"mt -f {drive_device} rewind")
 
 
-def test_osm_reader(cta_taped, drive_name, drive_device):
-    print(f"Using drive: {drive_name}, device: {drive_device}")
-    cta_taped.exec(f"cta-osmReaderTest {drive_name} {drive_device}")
+def test_osm_reader(cta_taped):
+    print(f"Using drive: {cta_taped.drive_name}, device: {cta_taped.drive_device}")
+    cta_taped.exec(f"cta-osmReaderTest {cta_taped.drive_name} {cta_taped.drive_device}")
 
 
 def test_unload_tape(cta_rmcd):

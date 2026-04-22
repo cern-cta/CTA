@@ -13,3 +13,7 @@ class CtaMaintdHost(RemoteHost):
     @cached_property
     def log_file_location(self) -> str:
         return "/var/log/cta/cta-maintd.log"
+
+    @cached_property
+    def process_name(self) -> str:
+        return "maintd"

@@ -7,7 +7,18 @@ import json
 from pathlib import Path
 
 import pytest
+import uuid
 
+from .helpers.hosts import (
+    CtaCliHost,
+    CtaFrontendHost,
+    CtaMaintdHost,
+    CtaRmcdHost,
+    CtaTapedHost,
+    EosClientHost,
+    EosMgmHost,
+    DiskInstanceHost,
+)
 from .helpers.hosts.disk.disk_instance_host import DiskInstanceImplementation
 from .helpers.test_env import TestEnv
 
@@ -64,6 +75,81 @@ def krb5_realm(request) -> str:
 def project_json():
     project_json_path = (Path(__file__).resolve().parent / ".." / ".." / "project.json").resolve()
     return json.loads(project_json_path.read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="session")
+def namespace(request):
+    return request.config.getoption("--namespace", default=None)
+
+
+@pytest.fixture(scope="session")
+def cta_storage_class():
+    return "cta_storage_class"
+
+
+@pytest.fixture(scope="session")
+def eos_workflow_dir(eos_mgm):
+    return eos_mgm.base_dir_path / "proc" / "cta" / "workflow"
+
+
+@pytest.fixture(scope="session")
+def cta_dir(disk_instance):
+    return disk_instance.base_dir_path / "cta"
+
+
+# Very important that this is module scoped to ensure each test module gets it's own unique test directory
+@pytest.fixture(scope="module")
+def test_dir(cta_dir, request):
+    module_name = Path(request.module.__file__).stem
+    return cta_dir / "tests" / f"{module_name}_{uuid.uuid4().hex[:8]}"
+
+
+# These are just convenience fixtures to easily access one of the hosts
+
+
+@pytest.fixture(scope="session")
+def eos_client(env) -> EosClientHost:
+    return env.eos_client[0]
+
+
+@pytest.fixture(scope="session")
+def eos_mgm(env) -> EosMgmHost:
+    return env.eos_mgm[0]
+
+
+@pytest.fixture(scope="session")
+def disk_instance(env) -> DiskInstanceHost:
+    return env.disk_instance[0]
+
+
+@pytest.fixture(scope="session")
+def cta_taped(env) -> CtaTapedHost:
+    return env.cta_taped[0]
+
+
+@pytest.fixture(scope="session")
+def cta_rmcd(env) -> CtaRmcdHost:
+    return env.cta_rmcd[0]
+
+
+@pytest.fixture(scope="session")
+def cta_maintd(env) -> CtaMaintdHost:
+    return env.cta_maintd[0]
+
+
+@pytest.fixture(scope="session")
+def cta_frontend(env) -> CtaFrontendHost:
+    return env.cta_frontend[0]
+
+
+@pytest.fixture(scope="session")
+def cta_cli(env) -> CtaCliHost:
+    return env.cta_cli[0]
+
+
+@pytest.fixture(scope="session")
+def disk_instance_name(disk_instance) -> str:
+    return disk_instance.instance_name
 
 
 #####################################################################################################################

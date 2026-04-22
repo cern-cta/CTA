@@ -17,6 +17,13 @@
     file_size_kb  = 10
     process_count = 20
 
+  [tests.client]
+
+    file_count    = 2000
+    file_size_kb  = 10
+    directory_count = 3
+    process_count = 20
+
   [tests.stress]
 
     # For the actual stress test we currently have 40 directories with 50.000 files each
