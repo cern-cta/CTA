@@ -530,9 +530,9 @@ void MigrationReportPacker::WorkerThread::run() {
     int demangleStatus;
     char* demangleExceptionType = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
     if (!demangleStatus) {
-      params.add(semconv::log::exceptionType, demangleExceptionType);
+      params.add(cta::semconv::log::exceptionType, demangleExceptionType);
     } else {
-      params.add(semconv::log::exceptionType, typeid(e).name());
+      params.add(cta::semconv::log::exceptionType, typeid(e).name());
     }
     lc.log(cta::log::ERR,
            "In MigrationReportPacker::WorkerThread::run(): Received a standard exception while reporting archive mount "
