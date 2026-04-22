@@ -37,11 +37,16 @@
 #
 ################################################################################
 
-EOS_MGM_HOST="ctaeos"
+if [ "$#" -ne 1 ]; then
+    echo "Please provide an EOS base directory"
+    exit 1
+fi
 
-MULTICOPY_DIR_1=/eos/ctaeos/preprod/dir_1_copy
-MULTICOPY_DIR_2=/eos/ctaeos/preprod/dir_2_copy
-MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
+EOS_MGM_HOST="ctaeos"
+EOS_BASEDIR="$1"
+MULTICOPY_DIR_1="${EOS_BASEDIR}/dir_1_copy"
+MULTICOPY_DIR_2="${EOS_BASEDIR}/dir_2_copy"
+MULTICOPY_DIR_3="${EOS_BASEDIR}/dir_3_copy"
 
 # get some common useful helpers for krb5
 . /root/client_helper.sh
@@ -81,9 +86,9 @@ fi
 
 # Save file with 1, 2, 3 replicas
 
-FILE_1_COPY=${MULTICOPY_DIR_1}/$(uuidgen)
-FILE_2_COPY=${MULTICOPY_DIR_2}/$(uuidgen)
-FILE_3_COPY=${MULTICOPY_DIR_3}/$(uuidgen)
+FILE_1_COPY=${MULTICOPY_DIR_1}/copy1_$(uuidgen)
+FILE_2_COPY=${MULTICOPY_DIR_2}/copy2_$(uuidgen)
+FILE_3_COPY=${MULTICOPY_DIR_3}/copy3_$(uuidgen)
 
 put_all_drives_up
 xrdcp /etc/group root://${EOS_MGM_HOST}/${FILE_1_COPY}

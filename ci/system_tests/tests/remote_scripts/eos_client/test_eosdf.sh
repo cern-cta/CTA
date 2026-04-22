@@ -1,6 +1,11 @@
 # SPDX-FileCopyrightText: 2022 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+if [ "$#" -ne 1 ]; then
+    echo "Please provide an EOS base directory"
+    exit 1
+fi
+
 #default CI EOS instance
 EOS_MGM_HOST="ctaeos"
 EOS_INSTANCE_NAME="ctaeos"
@@ -8,10 +13,8 @@ EOS_INSTANCE_NAME="ctaeos"
 REPORT_DIRECTORY=/var/log
 
 # would be eosdf but apparently this will not archive stuff to tape
-EOSDF_BUFFER_BASEDIR=/eos/ctaeos/cta
+EOSDF_BUFFER_BASEDIR="$1"
 EOSDF_BUFFER_URL=${EOSDF_BUFFER_BASEDIR}
-
-FULL_EOSDF_BUFFER_URL=root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_BASEDIR}
 
 # get some common useful helpers for krb5
 . /root/client_helper.sh ## wait_for_archive is defined in this file

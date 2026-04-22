@@ -52,6 +52,7 @@ class DiskInstanceHost(RemoteHost):
         self,
         archive_dir_path: str,
         check_archive_interval_sec: int,
+        *,
         max_no_progress_intervals: int = 3,
     ) -> tuple[int, float]:
         # Few problems to solve here:
@@ -136,6 +137,7 @@ class DiskInstanceHost(RemoteHost):
         self,
         archive_dir_path: str,
         check_retrieve_interval_sec: int,
+        *,
         max_no_progress_intervals: int = 3,
     ) -> tuple[int, float]:
         directories = self.list_subdirectories_in_directory(archive_dir_path)

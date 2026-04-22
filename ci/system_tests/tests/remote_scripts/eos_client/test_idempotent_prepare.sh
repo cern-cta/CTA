@@ -43,10 +43,9 @@ NB_FILES_TAPE=4
 NB_FILES_NO_P=4
 NB_FILES_MISS=4
 
-EOS_BASEDIR=/eos/ctaeos
-EOS_TAPE_BASEDIR=$EOS_BASEDIR/cta               # Exists on tape: for testing files on tape
+EOS_TAPE_BASEDIR=/eos/ctaeos/cta               # Exists on tape: for testing files on tape
 EOS_NO_P_BASEDIR=$EOS_TAPE_BASEDIR/no_prepare  # Exists on tape but without prepare permissions
-EOS_NONE_BASEDIR=$EOS_BASEDIR/none              # Does not exist: for testing non-existing files
+EOS_NONE_BASEDIR=$EOS_TAPE_BASEDIR/none        # Does not exist: for testing non-existing files
 
 # get some common useful helpers for krb5
 . /root/client_helper.sh
@@ -57,7 +56,6 @@ eospower_kinit &>/dev/null
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
 
-
 ################################################################
 # Test preparing single file (exists on tape)
 ################################################################
@@ -65,7 +63,7 @@ admin_kinit &>/dev/null
 # File is valid and exists on tape
 #   - Prepare command should succeed
 
-TEMP_FILE_OK=${EOS_TAPE_BASEDIR}/$(uuidgen)
+TEMP_FILE_OK=${EOS_TAPE_BASEDIR}/idempotent_prepare_$(uuidgen)
 echo
 echo "Testing normal 'prepare -s' request..."
 

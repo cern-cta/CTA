@@ -118,7 +118,8 @@ class TestEnv:
             cta_rmcd_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-rmcd", "cta-rmcd", allow_partial_label_value_match=True
             ),
-            cta_maintd_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-maintd"),
+            # maintd has many routines, so we select by component
+            cta_maintd_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/component", "maintd"),
             cta_taped_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-taped", "cta-taped", allow_partial_label_value_match=True
             ),

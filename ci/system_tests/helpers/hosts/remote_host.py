@@ -42,13 +42,15 @@ class RemoteHost:
             throw_on_failure,
         )
 
-    def copy_to(self, src_path: str, dst_path: str, throw_on_failure=True, permissions: Optional[str] = None) -> None:
+    def copy_to(
+        self, src_path: str, dst_path: str, *, throw_on_failure=True, permissions: Optional[str] = None
+    ) -> None:
         return self.conn.copy_to(src_path, dst_path, throw_on_failure=throw_on_failure, permissions=permissions)
 
-    def copy_from(self, src_path: str, dst_path: str, throw_on_failure=True) -> None:
+    def copy_from(self, src_path: str, dst_path: str, *, throw_on_failure=True) -> None:
         return self.conn.copy_from(src_path, dst_path, throw_on_failure=throw_on_failure)
 
-    def restart(self, wait_for_restart=True, throw_on_failure=True) -> None:
+    def restart(self, *, wait_for_restart=True, throw_on_failure=True) -> None:
         print(f"Restarting {self.name}...")
         self.conn.restart(throw_on_failure)
         if wait_for_restart:
@@ -57,7 +59,7 @@ class RemoteHost:
     def is_host_up(self) -> bool:
         return self.conn.is_up()
 
-    def wait_for_host_up(self, wait_timeout_secs: int = 120) -> None:
+    def wait_for_host_up(self, *, wait_timeout_secs: int = 120) -> None:
         print(f"Waiting for {self.name} to be up...")
         with Timeout(wait_timeout_secs) as t:
             while not self.is_host_up() and not t.expired:

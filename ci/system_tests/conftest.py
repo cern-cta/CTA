@@ -7,7 +7,20 @@ import json
 from pathlib import Path
 
 import pytest
+from datetime import datetime
+import uuid
 
+from .helpers.hosts import (
+    CtaCliHost,
+    CtaFrontendHost,
+    CtaMaintdHost,
+    CtaRmcdHost,
+    CtaTapedHost,
+    EosClientHost,
+    EosMgmHost,
+    DiskInstanceHost,
+    DiskClientHost,
+)
 from .helpers.hosts.disk.disk_instance_host import DiskInstanceImplementation
 from .helpers.test_env import TestEnv
 
@@ -64,6 +77,92 @@ def krb5_realm(request) -> str:
 def project_json():
     project_json_path = (Path(__file__).resolve().parent / ".." / ".." / "project.json").resolve()
     return json.loads(project_json_path.read_text(encoding="utf-8"))
+
+
+@pytest.fixture(scope="session")
+def namespace(request):
+    return request.config.getoption("--namespace", default=None)
+
+
+@pytest.fixture(scope="session")
+def cta_storage_class():
+    return "cta_storage_class"
+
+
+@pytest.fixture(scope="session")
+def eos_workflow_dir(eos_mgm):
+    return eos_mgm.base_dir_path / "proc" / "cta" / "workflow"
+
+
+@pytest.fixture(scope="session")
+def cta_dir(disk_instance):
+    return disk_instance.base_dir_path / "cta"
+
+
+# Very important that this is module scoped to ensure each test module gets it's own unique test directory
+@pytest.fixture(scope="module")
+def test_dir(cta_dir, request):
+    module_name = Path(request.module.__file__).stem
+    # Put the time in there so that it's easy from multiple runs to identify which one was last
+    return cta_dir / "tests" / f"{module_name}_{datetime.now():%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:6]}"
+
+
+@pytest.fixture(scope="session")
+def remote_scripts_dir():
+    return Path(__file__).parent / "tests" / "remote_scripts"
+
+
+# These are just convenience fixtures to easily access one of the hosts
+
+
+@pytest.fixture(scope="session")
+def eos_client(env) -> EosClientHost:
+    return env.eos_client[0]
+
+
+@pytest.fixture(scope="session")
+def disk_client(env) -> DiskClientHost:
+    return env.disk_client[0]
+
+
+@pytest.fixture(scope="session")
+def eos_mgm(env) -> EosMgmHost:
+    return env.eos_mgm[0]
+
+
+@pytest.fixture(scope="session")
+def disk_instance(env) -> DiskInstanceHost:
+    return env.disk_instance[0]
+
+
+@pytest.fixture(scope="session")
+def cta_taped(env) -> CtaTapedHost:
+    return env.cta_taped[0]
+
+
+@pytest.fixture(scope="session")
+def cta_rmcd(env) -> CtaRmcdHost:
+    return env.cta_rmcd[0]
+
+
+@pytest.fixture(scope="session")
+def cta_maintd(env) -> CtaMaintdHost:
+    return env.cta_maintd[0]
+
+
+@pytest.fixture(scope="session")
+def cta_frontend(env) -> CtaFrontendHost:
+    return env.cta_frontend[0]
+
+
+@pytest.fixture(scope="session")
+def cta_cli(env) -> CtaCliHost:
+    return env.cta_cli[0]
+
+
+@pytest.fixture(scope="session")
+def disk_instance_name(disk_instance) -> str:
+    return disk_instance.instance_name
 
 
 #####################################################################################################################
@@ -160,7 +259,6 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--no-modify"):
         return
-    # TODO: figure out how to do all this cleanly when you do something like --ff
     # Always check for errors after the run
     add_test_into_existing_collection("tests/cleanup/error_test.py", items, prepend=False)
 
@@ -168,7 +266,8 @@ def pytest_collection_modifyitems(config, items):
     # any marked tests for disk instances not in our environment
     present_disk_instances: list[DiskInstanceImplementation] = [di.implementation for di in config.env.disk_instance]
 
-    if not config.getoption("--no-setup"):
+    # For now a solution not to run the setup when we do things like --ff, but this should be cleaner in the future
+    if not config.getoption("--no-setup") and not config.getoption("--ff") and not config.getoption("--lf"):
         add_test_into_existing_collection("tests/setup/setup_cta_test.py", items, prepend=True)
         if DiskInstanceImplementation.EOS in present_disk_instances:
             add_test_into_existing_collection("tests/setup/setup_eos_test.py", items, prepend=True)

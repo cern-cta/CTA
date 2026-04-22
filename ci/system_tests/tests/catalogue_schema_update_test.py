@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from dataclasses import dataclass
 from ..helpers.connections.k8s_connection import K8sConnection
-from ..helpers.hosts import CtaFrontendHost, RemoteHost
+from ..helpers.hosts import RemoteHost
 
 
 #####################################################################################################################
@@ -18,13 +18,13 @@ class CatalogueSchemaUpdateParams:
     schema_checkout_ref: str
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def catalogue_schema_update_params(request):
     catalogue_schema_update_config = request.config.test_config["tests"]["catalogue_schema_update"]
     return CatalogueSchemaUpdateParams(schema_checkout_ref=catalogue_schema_update_config["schema_checkout_ref"])
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def catalogue_from_version(project_json):
     supported_major_versions = project_json["supportedCatalogueVersions"]
     supported_major_versions.sort()
@@ -32,7 +32,7 @@ def catalogue_from_version(project_json):
     return str(supported_major_versions[0]) + ".0"
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def catalogue_to_version(project_json):
     supported_major_versions = project_json["supportedCatalogueVersions"]
     supported_major_versions.sort()
@@ -40,28 +40,14 @@ def catalogue_to_version(project_json):
     return str(supported_major_versions[-1]) + ".0"
 
 
-@pytest.fixture(scope="class")
-def namespace(request):
-    return request.config.getoption("--namespace", default=None)
-
-
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def catalogue_updater(namespace):
     return RemoteHost(K8sConnection(namespace, "liquibase-update", "liquibase-update"))
-
-
-@pytest.fixture
-def cta_frontend(env) -> CtaFrontendHost:
-    return env.cta_frontend[0]
 
 
 #####################################################################################################################
 # Tests
 #####################################################################################################################
-
-
-def test_hosts_present_liquibase(env):
-    assert len(env.cta_frontend) > 0
 
 
 def test_multiple_versions_supported(project_json):

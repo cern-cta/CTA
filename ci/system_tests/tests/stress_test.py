@@ -7,7 +7,6 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..helpers.hosts import CtaCliHost, EosClientHost, EosMgmHost
 import pytest
 
 
@@ -46,7 +45,7 @@ class StressParams:
             raise ValueError(f"num_files_per_dir too high: {self.num_files_per_dir}, max allowed value is 100000")
 
 
-@pytest.fixture(scope="class")
+@pytest.fixture(scope="module")
 def stress_params(request):
     stress_config = request.config.test_config["tests"]["stress"]
     prequeue_config = stress_config["prequeue"]
@@ -70,32 +69,9 @@ def stress_params(request):
     )
 
 
-@pytest.fixture
-def cta_cli(env) -> CtaCliHost:
-    return env.cta_cli[0]
-
-
-@pytest.fixture
-def eos_client(env) -> EosClientHost:
-    return env.eos_client[0]
-
-
-@pytest.fixture
-def eos_mgm(env) -> EosMgmHost:
-    return env.eos_mgm[0]
-
-
 #####################################################################################################################
 # Tests
 #####################################################################################################################
-
-
-@pytest.mark.eos
-def test_hosts_present_stress(env):
-    assert len(env.eos_mgm) > 0
-    assert len(env.eos_client) > 0
-    assert len(env.cta_frontend) > 0
-    assert len(env.cta_taped) > 0
 
 
 @pytest.mark.eos
@@ -130,15 +106,12 @@ def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
 
 @pytest.mark.eos
 @pytest.mark.asyncio
-async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_params):
-    archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
+async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_params, test_dir):
     # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
     mgm_ip = eos_mgm.get_ip()
 
     # Create an archive directory on eos
-    print(f"Cleaning up previous archive directory: {archive_directory}")
-    eos_mgm.force_remove_directory(archive_directory)
-    eos_client.exec(f"eos root://{mgm_ip} mkdir {archive_directory}")
+    eos_client.exec(f"eos root://{mgm_ip} mkdir {test_dir}")
 
     total_file_count = stress_params.num_files_per_dir * stress_params.num_dirs
 
@@ -167,7 +140,7 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
     timer_start = time.time()
     archive_future = eos_client.archive_async(
         eos_host=mgm_ip,
-        dest_dir=archive_directory,
+        dest_dir=test_dir,
         num_files=total_file_count,
         num_dirs=stress_params.num_dirs,
         num_procs=stress_params.io_threads,
@@ -190,12 +163,12 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
         while not stop_monitoring.is_set():
             num_files_so_far = eos_client.count_files_in_namespace(
                 eos_host=mgm_ip,
-                dest_dir=archive_directory,
+                dest_dir=test_dir,
                 num_dirs=stress_params.num_dirs,
                 count_procs=5,
             )
             # num_files_so_far = int(
-            #     mgm.exec_with_output(f"eos find -f {archive_directory} | wc -l")
+            #     mgm.exec_with_output(f"eos find -f {test_dir} | wc -l")
             # )
             print(f"\t[copy monitor] {num_files_so_far}/{total_file_count} files created", flush=True)
 
@@ -242,14 +215,14 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
 
     num_files_copied = eos_client.count_files_in_namespace(
         eos_host=mgm_ip,
-        dest_dir=archive_directory,
+        dest_dir=test_dir,
         num_dirs=stress_params.num_dirs,
         count_procs=5,
     )
     if num_files_copied != total_file_count:
         print(f"Some files failed to copy over, expected: {total_file_count} and actual: {num_files_copied}")
     else:
-        print(f"All {total_file_count} files copied successfully to {archive_directory}")
+        print(f"All {total_file_count} files copied successfully to {test_dir}")
 
     # Some stats
     duration_seconds = timer_end - timer_start
@@ -266,11 +239,9 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
 # After everything has been moved, wait for the archival to complete
 # We execute this directly on the mgm to bypass some networking between pods (should be negligible though)
 @pytest.mark.eos
-def test_wait_for_archival(eos_mgm, stress_params):
-    archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
-
+def test_wait_for_archival(eos_mgm, stress_params, test_dir):
     num_missing_files, loss_percent = eos_mgm.wait_for_archival_in_directory(
-        archive_dir_path=archive_directory,
+        archive_dir_path=test_dir,
         check_archive_interval_sec=stress_params.check_archive_interval_sec,
         max_no_progress_intervals=stress_params.max_no_progress_intervals,
     )

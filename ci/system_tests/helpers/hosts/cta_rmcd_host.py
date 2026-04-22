@@ -4,6 +4,7 @@
 import re
 from functools import cached_property
 from typing import List, Tuple
+from pathlib import Path
 
 from .remote_host import RemoteHost
 
@@ -13,8 +14,8 @@ class CtaRmcdHost(RemoteHost):
         super().__init__(conn)
 
     @cached_property
-    def log_file_location(self) -> str:
-        return "/var/log/cta/cta-rmcd.log"
+    def log_file_path(self) -> Path:
+        return Path("/var") / "log" / "cta" / "cta-rmcd.log"
 
     @cached_property
     def library_device(self) -> str:
@@ -56,10 +57,10 @@ class CtaRmcdHost(RemoteHost):
             self.exec(f"mtx -f {library_device} unload {slot} {drive}")
 
     @staticmethod
-    def list_all_tapes_in_libraries(ctarmcd_hosts) -> list[str]:
+    def list_all_tapes_in_libraries(cta_rmcd_hosts) -> list[str]:
         """Lists unique volume tags from multiple tape libraries."""
         volume_tags = set()
-        for rmcd in ctarmcd_hosts:
+        for rmcd in cta_rmcd_hosts:
             for tape in rmcd.list_tapes_in_library():
                 volume_tags.add(tape)
         return sorted(volume_tags)

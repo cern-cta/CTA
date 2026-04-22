@@ -11,7 +11,7 @@ from ...helpers.hosts.cta_rmcd_host import CtaRmcdHost
 #####################################################################################################################
 
 
-def test_hosts_present_cta_setup(krb5_realm, env):
+def test_hosts_present_cta_setup(env):
     assert len(env.disk_instance) > 0, "To setup CTA, there must be at least one disk instance"
     assert len(env.cta_frontend) > 0, "To setup CTA, there must be at least one cta-frontend instance"
     assert len(env.cta_taped) > 0, "To setup CTA, there must be at least one cta-taped instance"
@@ -34,8 +34,17 @@ def test_copy_scripts_to_ctacli(env):
 
 
 def test_kinit_clients(env, krb5_realm):
+    # This whole kerberos thing needs to be revised in the future
+    # We are relying too much on the default principal in many cases
     for cta_cli in env.cta_cli:
         cta_cli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
+
+    for eos_client in env.eos_client:
+        eos_client.exec("mkdir -p /tmp/ctaadmin2")
+        eos_client.exec("mkdir -p /tmp/eosadmin1")
+        eos_client.exec("mkdir -p /tmp/poweruser1")
+        eos_client.exec(f"kinit -kt /root/ctaadmin2.keytab ctaadmin2@{krb5_realm}")
+        eos_client.exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
 
 
 #####################################################################################################################
@@ -43,30 +52,30 @@ def test_kinit_clients(env, krb5_realm):
 #####################################################################################################################
 
 
-def test_verify_catalogue(env):
-    env.cta_frontend[0].exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
+def test_verify_catalogue(cta_frontend):
+    cta_frontend.exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
 
 
-def test_add_admins(env):
-    env.cta_frontend[0].exec(
+def test_add_admins(cta_frontend, cta_cli):
+    cta_frontend.exec(
         "cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 --comment ctaadmin1"
     )
     print("Adding user ctaadmin2 as CTA admin")
     # TODO: we should explicitly specify the user we are executing admin commands (should we?)
-    env.cta_cli[0].exec("cta-admin admin add --username ctaadmin2 --comment ctaadmin2")
+    cta_cli.exec("cta-admin admin add --username ctaadmin2 --comment ctaadmin2")
 
 
-def test_version_info(env):
+def test_version_info(cta_cli):
     print("Versions:")
-    env.cta_cli[0].exec("cta-admin --json version | jq")
+    cta_cli.exec("cta-admin --json version | jq")
 
 
-def test_populate_catalogue(env):
+def test_populate_catalogue(cta_cli, disk_instance_name, cta_storage_class):
     print("Populating catalogue")
-    env.cta_cli[0].exec(f"./test/populate_catalogue.sh {env.disk_instance[0].instance_name}")
+    cta_cli.exec(f"./test/populate_catalogue.sh {disk_instance_name} {cta_storage_class}")
 
 
-def test_register_logical_libraries_in_catalogue(env):
+def test_register_logical_libraries_in_catalogue(env, cta_cli):
     logical_library_names_in_use = {taped.logical_library_name for taped in env.cta_taped}
     print("Using logical libraries:")
     for logical_library_name in logical_library_names_in_use:
@@ -82,10 +91,10 @@ def test_register_logical_libraries_in_catalogue(env):
                                 --name {logical_library_name} \
                                 --comment "ctasystest logical library {logical_library_name} was registered in the catalogue"'
         )
-        env.cta_cli[0].exec(add_ll_cmd)
+        cta_cli.exec(add_ll_cmd)
 
 
-def test_register_tapes_per_logical_library_in_catalogue(env):
+def test_register_tapes_per_logical_library_in_catalogue(env, cta_cli):
     logical_library_names_in_use: list[str] = [taped.logical_library_name for taped in env.cta_taped]
     print("Using logical libraries:")
     for logical_library_name in logical_library_names_in_use:
@@ -109,7 +118,7 @@ def test_register_tapes_per_logical_library_in_catalogue(env):
                                 --full false \
                                 --comment ctasystest"
         )
-        env.cta_cli[0].exec(add_tape_cmd)
+        cta_cli.exec(add_tape_cmd)
 
 
 #####################################################################################################################
@@ -145,5 +154,5 @@ def test_label_tapes(env):
             f.result()
 
 
-def test_set_all_drives_up(env):
-    env.cta_cli[0].set_all_drives_up()
+def test_set_all_drives_up(cta_cli):
+    cta_cli.set_all_drives_up()
