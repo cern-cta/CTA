@@ -422,7 +422,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
           cta::log::Param(cta::semconv::log::errorMessage, "Aborted: empty recall mount"));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
-        cta::log::LogContext::ScopedParam sp12(logContext, cta::log::Param("notificationError", ex.getMessageValue()));
+        cta::log::LogContext::ScopedParam sp12(
+          logContext,
+          cta::log::Param(cta::semconv::log::exceptionMessage, ex.getMessageValue()));
         logContext.log(cta::log::ERR, "Failed to notified client of end session with error");
       }
       // Empty mount, hardware is OK
@@ -560,7 +562,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
-        cta::log::LogContext::ScopedParam sp12(logContext, cta::log::Param("notificationError", ex.getMessageValue()));
+        cta::log::LogContext::ScopedParam sp12(
+          logContext,
+          cta::log::Param(cta::semconv::log::exceptionMessage, ex.getMessageValue()));
         logContext.log(cta::log::ERR, "Failed to notified client of end session with error");
       }
       // Empty mount, hardware safe
