@@ -89,24 +89,10 @@ kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_se
 TEST_PRERUN=". /root/client_env "
 TEST_POSTRUN=""
 
-# We launch this in test_client for now as this is the one with opentelemetry enabled (meaning the config file has more options to check)
-echo "Checking drive config correctness..."
-python3 compare_taped_config_to_dr_ls.py --namespace ${NAMESPACE}
-
-echo "Setting up client pod for HTTPs REST API test"
-echo " Copying CA certificates to client pod from ${EOS_MGM_POD} pod."
-kubectl -n ${NAMESPACE} cp "${EOS_MGM_POD}:etc/grid-security/certificates/" /tmp/certificates/ -c eos-mgm
-kubectl -n ${NAMESPACE} cp /tmp/certificates ${CLIENT_POD}:/etc/grid-security/ -c client
-rm -rf /tmp/certificates
 
 echo "Launching brief Keycloak test"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_testKeycloak.sh || exit 1
 
-# We don'y care about the tapesrv logs so we don't need the TEST_[PRERUN|POSTRUN].
-# We just test the .well-known/wlcg-tape-rest-api endpoint and REST API compliance
-# with the specification.
-echo " Launching client_rest_api.sh on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_rest_api.sh || exit 1
 
 # Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
 TEST_METADATA=$(echo "{\"scheduling_hints\": \"test 4\"}" | base64)
@@ -116,69 +102,12 @@ echo " Launching grep_eosreport_for_archive_metadata.sh on ${EOS_MGM_POD} pod"
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
 
 echo
-echo "Launching immutable file test on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && echo yes | cta-immutable-file-test root://${EOS_MGM_HOST}/\${EOS_DIR}/immutable_file ${TEST_POSTRUN} || die 'The cta-immutable-file-test failed.'" || exit 1
-
-echo
 echo "Launching client_simple_ar.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
-EOSDF_BUFFER_BASEDIR=/eos/ctaeos/eosdf
-EOSDF_BUFFER_URL=${EOSDF_BUFFER_BASEDIR}
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos mkdir ${EOSDF_BUFFER_URL}
-kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos chmod 1777 ${EOSDF_BUFFER_URL}
-# Test correct script execution
-echo "Launching eosdf_systemtest.sh, expecting script to run properly"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
-## Verify proper execution of script by grepping for the debug log line
-# Set the TAPES and DRIVE_NAME based on the config in CTA_TAPED_POD
-echo "Reading library configuration from ${CTA_TAPED_POD}"
-DRIVE_NAME=$(kubectl exec -n ${NAMESPACE} ${CTA_TAPED_POD} -c cta-taped -- printenv DRIVE_NAME)
-CTA_TAPED_LOG=/var/log/cta/cta-taped.log
-
-if kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "grep -q 'unable to get the free disk space with the script' ${CTA_TAPED_LOG}"; then
-  echo "Script unexpectedly failed to get free disk space"
-  exit 1
-fi
-
-## The idea is that we run it once without script, and once without executable permission on the script
-## Both times we should get a success, because when the script is the problem, we allow staging to continue
-echo "Launching eosdf_systemtest.sh with a nonexistent script"
-# rename the script on taped so that it cannot be found
-# error to grep for in the logs is 'No such file or directory'
-kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh" || exit 1
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
-if kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "grep -q 'No such file or directory' ${CTA_TAPED_LOG}"; then
-  echo "Subprocess threw 'No such file or directory', as expected"
-else
-  exit 1
-fi
-# now give it back its original name but remove the executable permission, should still succeed
-# now the error to grep for is 'Permission denied'
-echo "Launching eosdf_systemtest.sh with correct script without executable permissions"
-kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "chmod -x /usr/bin/cta-eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
-if kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "grep -q 'Permission denied' ${CTA_TAPED_LOG}"; then
-  echo "Subprocess threw 'Permission denied', as expected"
-else
-  exit 1
-fi
-# Test what happens when we get an error from the eos client (fake instance not reachable by specifying a nonexistent instance name in the script)
-# grep for 'could not be used to get the FreeSpace'
-echo "Launching eosdf_systemtest.sh with script that throws an eos-client error"
-# fake instance not reachable
-kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "sed -i 's|root://\$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "chmod +x /usr/bin/cta-eosdf.sh" || exit 1
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/eosdf_systemtest.sh ${TEST_POSTRUN}" || exit 1
-kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash -c "sed -i 's|root://nonexistentinstance|root://\$diskInstance|g' /usr/bin/cta-eosdf.sh" || exit 1
-
-echo
-echo " Launching client_timestamp.sh on client pod"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_timestamp.sh ${TEST_POSTRUN}" || exit 1
 
 echo
 echo "Launching client_archive.sh on client pod"
@@ -262,36 +191,5 @@ echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_retrieve_queue_cleanup.sh || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
-
-echo
-echo "Launching taped_refresh_log_fd.sh on ${CTA_TAPED_POD} pod"
-kubectl -n ${NAMESPACE} exec ${CTA_TAPED_POD} -c cta-taped -- bash /root/taped_refresh_log_fd.sh || exit 1
-
-# Once we get the Python system tests, we should have a set of standardised tests for each process:
-# - Correct log rotation
-# - Correct config reloading
-echo
-echo "Launching maintd_refresh_log_fd.sh on ${CTA_MAINTD_POD} pod"
-kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- bash /root/maintd_refresh_log_fd.sh || exit 1
-
-echo
-echo "Checking correctness of example config files"
-kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- cta-maintd --config-strict --config /etc/cta/cta-maintd.example.toml --config-check || exit 1
-echo "Checking correctness of runtime directory"
-kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- comm /etc/cta/cta-maintd.toml /run/cta/config.toml -3 || exit 1
-kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3 || exit 1
-kubectl -n ${NAMESPACE} exec ${CTA_MAINTD_POD} -c cta-maintd -- comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3 || exit 1
-kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- sh -c 'jq -e -r ".service == \"cta-maintd\"" /run/cta/version.json >/dev/null' || exit 1
-
-echo "Checking correctness of log schema"
-
-kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- bash -c "dnf install -y python3-pip && python3 -m pip install jsonschema"
-kubectl -n "${NAMESPACE}" exec "${CTA_FRONTEND_POD}" -c cta-frontend -- bash -c "dnf install -y python3-pip && python3 -m pip install jsonschema"
-kubectl -n "${NAMESPACE}" exec "${CTA_TAPED_POD}" -c cta-taped -- bash -c "dnf install -y python3-pip && python3 -m pip install jsonschema"
-
-kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- python3 /root/verify_log_schema.py --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast || exit 1
-kubectl -n "${NAMESPACE}" exec "${CTA_FRONTEND_POD}" -c cta-frontend -- python3 /root/verify_log_schema.py --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-frontend.log --fail-fast || exit 1
-kubectl -n "${NAMESPACE}" exec "${CTA_TAPED_POD}" -c cta-taped -- python3 /root/verify_log_schema.py --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-taped.log --fail-fast || exit 1
-
 
 exit 0

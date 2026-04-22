@@ -4,6 +4,7 @@
 from functools import cached_property
 
 from .remote_host import RemoteHost
+from pathlib import Path
 
 
 class CtaTapedHost(RemoteHost):
@@ -11,8 +12,8 @@ class CtaTapedHost(RemoteHost):
         super().__init__(conn)
 
     @cached_property
-    def log_file_location(self) -> str:
-        return f"/var/log/cta/cta-taped-{self.drive_name}.log"
+    def log_file_path(self) -> Path:
+        return Path("/var" / "log" / "cta" / "cta-taped.log"
 
     @cached_property
     def drive_name(self) -> str:

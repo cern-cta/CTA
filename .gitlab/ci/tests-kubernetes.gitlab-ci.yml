@@ -192,11 +192,10 @@
 
 test-client:
   extends:
-    - .kubernetes-test
+    - .kubernetes-test-python
   stage: system-test
   variables:
-    TEST_SCRIPT: "tests/test_client.sh"
-    EXTRA_RUN_ARGS: "--test-timeout 2400"
+    PYTESTS: "tests/client_test.py"
 
 test-client-gfal2:
   extends:
