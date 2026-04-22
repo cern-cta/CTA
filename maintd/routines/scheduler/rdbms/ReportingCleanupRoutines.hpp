@@ -36,9 +36,9 @@ public:
 private:
   cta::log::LogContext& m_lc;
   cta::RelationalDB& m_RelationalDB;
-  size_t m_batchSize;
+  const size_t m_batchSize;
   const std::string m_routineName = "ResubmitInactiveReportingRoutine";
-  uint64_t m_inactiveTimeLimit;
+  const uint64_t m_inactiveTimeLimit;
 };
 
 }  // namespace cta::maintd

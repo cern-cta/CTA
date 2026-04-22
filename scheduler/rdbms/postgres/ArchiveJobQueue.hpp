@@ -286,7 +286,6 @@ public:
      )
     )SQL";
     auto stmt = conn.createStmt(sql);
-    //stmt.bindUint64(":ARCHIVE_REQUEST_ID", reqId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindString(":TAPE_POOL", tapePool);
@@ -556,7 +555,6 @@ VALUES )SQL";
       if (isRepack) {
         stmt.bindUint64(":REPACK_REQUEST_ID" + idx, row.repackRequestId);
       }
-      //stmt.bindUint64(":ARCHIVE_REQUEST_ID" + idx, row.reqId);
       stmt.bindUint32(":REQUEST_JOB_COUNT" + idx, row.reqJobCount);
       stmt.bindString(":STATUS" + idx, to_string(row.status));
       stmt.bindString(":TAPE_POOL" + idx, row.tapePool);
