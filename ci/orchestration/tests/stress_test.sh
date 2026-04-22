@@ -81,6 +81,12 @@ kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin mp ls
 kubectl -n ${NAMESPACE} exec ${CTA_CLI_POD} -it -c cta-cli -- cta-admin dr ls
 
 FST_COUNT=$(kubectl -n "${NAMESPACE}" exec "${EOS_MGM_POD}" -c eos-mgm -- bash -c "eos fs ls | grep -c 'booted'")
+# Decrease the logging level
+kubectl -n "${NAMESPACE}" exec "${EOS_MGM_POD}" -c eos-mgm -- bash -c "eos debug warning '*'"
+# Increase the number of EOS WFE  to 1500 and frequency to 1 sec (1.5 kHz)
+kubectl -n "${NAMESPACE}" exec "${EOS_MGM_POD}" -c eos-mgm -- bash -c "eos space config default space.wfe.ntx=1500"
+kubectl -n "${NAMESPACE}" exec "${EOS_MGM_POD}" -c eos-mgm -- bash -c "eos space config default space.wfe.interval=1"
+
 echo "Found ${FST_COUNT} FTSs booted in EOS. We will now set the scaninterval to 0 on all of them."
 # Loop using that value
 for ((i=1; i<=FST_COUNT; i++)); do

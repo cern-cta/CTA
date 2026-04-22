@@ -123,7 +123,7 @@ def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
     )
     # Decrease the logging level
     eos_mgm.exec('eos debug warning "*"')
-    # Increase the number of threads to 1500 and frequency to 1 sec (1.5 kHz)
+    # Increase the number of EOS WFE  to 1500 and frequency to 1 sec (1.5 kHz)
     eos_mgm.exec("eos space config default space.wfe.ntx=1500")
     eos_mgm.exec("eos space config default space.wfe.interval=1")
     # Get number of "booted" filesystems
