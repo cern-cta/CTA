@@ -339,9 +339,9 @@ const std::map<std::string, OptionString::Key> strOptions = {
  * Map string list options to Protocol Buffer enum values
  */
 const std::map<std::string, OptionStrList::Key> strListOptions = {
-  {"--fxidfile", OptionStrList::FILE_ID},
-  {"--vidfile",  OptionStrList::VID    },
-  {"--id",       OptionStrList::FILE_ID}
+  {"--fxidfile", OptionStrList::FILE_ID        },
+  {"--vidfile",  OptionStrList::VID            },
+  {"--idfile",   OptionStrList::ARCHIVE_FILE_ID}
 };
 
 /**
@@ -469,7 +469,7 @@ const Option opt_diskinstancespace_alias {Option::OPT_STR,
                                           "--diskinstancespace"};
 const Option opt_verificationstatus {Option::OPT_STR, "--verificationstatus", "--vs", " <verification_status>"};
 const Option opt_disabledreason {Option::OPT_STR, "--disabledreason", "--dr", " <disabled_reason>"};
-const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--id", "-I", " <archive_file_id>"};
+const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--idfile", "-I", " <archive_file_id>"};
 const Option opt_physical_library_alias {Option::OPT_STR,
                                          "--name",
                                          "-n",
