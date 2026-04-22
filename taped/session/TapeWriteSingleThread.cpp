@@ -7,7 +7,6 @@
 
 #include "MigrationTaskInjector.hpp"
 #include "TapeSessionReporter.hpp"
-#include "common/semconv/Logging.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor for TapeWriteSingleThread

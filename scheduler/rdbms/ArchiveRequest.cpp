@@ -6,7 +6,6 @@
 #include "scheduler/rdbms/ArchiveRequest.hpp"
 
 #include "common/exception/NotImplementedException.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 

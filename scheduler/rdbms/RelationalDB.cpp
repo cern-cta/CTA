@@ -10,7 +10,6 @@
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/TimingList.hpp"
 #include "common/process/threading/MutexLocker.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/NullDbValue.hpp"
 #include "scheduler/LogicalLibrary.hpp"

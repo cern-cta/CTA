@@ -8,7 +8,6 @@
 #include "TapeReadSingleThread.hpp"
 #include "TapeReadTask.hpp"
 #include "common/log/LogContext.hpp"
-#include "common/semconv/Logging.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/drive/DriveGeneric.hpp"
 #include "taped/drive/DriveInterface.hpp"

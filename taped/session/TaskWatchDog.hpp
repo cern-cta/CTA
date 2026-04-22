@@ -11,7 +11,6 @@
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/AtomicFlag.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "taped/daemon/TapedProxy.hpp"

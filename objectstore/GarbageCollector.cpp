@@ -18,7 +18,6 @@
 #include "common/dataStructures/RetrieveJobToAdd.cpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/semconv/Logging.hpp"
 
 #include <algorithm>
 #include <unistd.h>
@@ -509,7 +508,7 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(
           params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
             .add("copyNb", arup.copyNb)
             .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-            .add("exceptionType", debugType);
+            .add(semconv::log::exceptionType, debugType);
           lc.log(log::INFO,
                  "In GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(): "
                  "failed to requeue gone/not owned archive job. Removed from queue.");
@@ -519,7 +518,7 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(
           params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
             .add("copyNb", arup.copyNb)
             .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-            .add("exceptionType", debugType)
+            .add(semconv::log::exceptionType, debugType)
             .add(semconv::log::exceptionMessage, e.getMessageValue());
           lc.log(log::ERR,
                  "In GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(): "
@@ -819,7 +818,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
               params.add("retrieveRequestObject", rrup.retrieveRequest->getAddressIfSet())
                 .add("copyNb", rrup.copyNb)
                 .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
-                .add("exceptionType", debugType);
+                .add(semconv::log::exceptionType, debugType);
               lc.log(log::ERR,
                      "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): "
                      "failed to requeue gone/not owned retrieve job. Removing from queue.");
@@ -830,7 +829,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
               params.add("retrieveRequestObject", rrup.retrieveRequest->getAddressIfSet())
                 .add("copyNb", rrup.copyNb)
                 .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
-                .add("exceptionType", debugType)
+                .add(semconv::log::exceptionType, debugType)
                 .add(semconv::log::exceptionMessage, e.getMessageValue());
               lc.log(log::ERR,
                      "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): "

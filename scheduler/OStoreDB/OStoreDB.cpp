@@ -18,7 +18,6 @@
 #include "common/exception/TimeoutException.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/utils/utils.hpp"
 #include "disk/DiskFile.hpp"
 #include "objectstore/AgentWrapper.hpp"
@@ -4059,7 +4058,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
         } catch (cta::exception::Exception& ex) {
           params.add(semconv::log::exceptionMessage, ex.getMessageValue());
         } catch (std::exception& ex) {
-          params.add(semconv::log::exceptionMessage, ex.what()).add("exceptionTypeName", typeid(ex).name());
+          params.add(semconv::log::exceptionMessage, ex.what()).add(semconv::log::exceptionType, typeid(ex).name());
         }
         lc.log(priority, logMessage);
         // Add the failed request to the set.
@@ -4123,7 +4122,7 @@ void OStoreDB::RetrieveMount::flushAsyncSuccessReports(std::list<cta::SchedulerD
         } catch (cta::exception::Exception& ex) {
           params.add(semconv::log::exceptionMessage, ex.getMessageValue());
         } catch (std::exception& ex) {
-          params.add(semconv::log::exceptionMessage, ex.what()).add("exceptionTypeName", typeid(ex).name());
+          params.add(semconv::log::exceptionMessage, ex.what()).add(semconv::log::exceptionType, typeid(ex).name());
         }
         lc.log(priority, logMessage);
         // Add the failed request to the set.

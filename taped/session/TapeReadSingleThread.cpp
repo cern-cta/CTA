@@ -7,7 +7,6 @@
 
 #include "RecallTaskInjector.hpp"
 #include "TapeSessionReporter.hpp"
-#include "common/semconv/Logging.hpp"
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/file/ReadSession.hpp"
 #include "taped/file/ReadSessionFactory.hpp"

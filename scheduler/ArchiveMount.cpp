@@ -8,7 +8,6 @@
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "common/semconv/Logging.hpp"
 
 //------------------------------------------------------------------------------
 // constructor

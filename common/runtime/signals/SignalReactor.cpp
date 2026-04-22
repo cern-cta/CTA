@@ -9,7 +9,6 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/semconv/Logging.hpp"
 
 #include <chrono>
 #include <poll.h>

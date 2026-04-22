@@ -11,7 +11,6 @@
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 // includes for debug timings only below
 #include "common/log/TimingList.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 

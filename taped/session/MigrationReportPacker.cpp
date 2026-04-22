@@ -8,7 +8,6 @@
 #include "TaskWatchDog.hpp"
 #include "catalogue/TapeFileWritten.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 #include "taped/drive/DriveInterface.hpp"
@@ -531,9 +530,9 @@ void MigrationReportPacker::WorkerThread::run() {
     int demangleStatus;
     char* demangleExceptionType = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &demangleStatus);
     if (!demangleStatus) {
-      params.add("exceptionType", demangleExceptionType);
+      params.add(semconv::log::exceptionType, demangleExceptionType);
     } else {
-      params.add("exceptionType", typeid(e).name());
+      params.add(semconv::log::exceptionType, typeid(e).name());
     }
     lc.log(cta::log::ERR,
            "In MigrationReportPacker::WorkerThread::run(): Received a standard exception while reporting archive mount "

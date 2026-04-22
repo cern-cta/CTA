@@ -8,7 +8,6 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/telemetry/metrics/instruments/MaintdInstruments.hpp"
 #include "common/utils/Timer.hpp"
 #include "rdbms/Login.hpp"

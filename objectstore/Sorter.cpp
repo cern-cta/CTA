@@ -8,7 +8,6 @@
 #include "Helpers.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/process/threading/MutexLocker.hpp"
-#include "common/semconv/Logging.hpp"
 
 #include <iostream>
 

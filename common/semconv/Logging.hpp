@@ -14,6 +14,9 @@ namespace cta::semconv::log {
 // https://opentelemetry.io/docs/specs/semconv/registry/attributes/exception/#exception-attributes
 static constexpr const char* exceptionMessage = "exception_message";
 
+// https://opentelemetry.io/docs/specs/semconv/registry/attributes/exception/#exception-attributes
+static constexpr const char* exceptionType = "exception_type";
+
 // https://opentelemetry.io/docs/specs/semconv/registry/attributes/error/#error-attributes
 // Note that error_messages is deprecated and the recommendation is to use domain-specific error messages
 static constexpr const char* errorMessage = "error_message";

@@ -8,7 +8,6 @@
 #include "TransferTaskTracker.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
 

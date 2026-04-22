@@ -5,7 +5,6 @@
 
 #include "JwtValidation.hpp"
 
-#include "common/semconv/Logging.hpp"
 #include "jwt-cpp/jwt.h"
 
 namespace cta::auth {

@@ -9,7 +9,6 @@
 #include "RetrieveQueue.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
-#include "common/semconv/Logging.hpp"
 
 namespace cta::objectstore {
 

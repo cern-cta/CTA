@@ -6,7 +6,6 @@
 #include "scheduler/rdbms/RetrieveRequest.hpp"
 
 #include "common/exception/NotImplementedException.hpp"
-#include "common/semconv/Logging.hpp"
 
 namespace cta::schedulerdb {
 

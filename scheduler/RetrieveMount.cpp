@@ -8,7 +8,6 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/TimingList.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "disk/DiskSystem.hpp"
 

@@ -19,7 +19,6 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RetrieveJob.hpp"
 #include "common/exception/NoSuchObject.hpp"
-#include "common/semconv/Logging.hpp"
 
 #include <cxxabi.h>
 #include <google/protobuf/util/json_util.h>

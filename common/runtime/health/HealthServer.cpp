@@ -8,7 +8,6 @@
 #include "common/exception/Errnum.hpp"
 #include "common/exception/TimeOut.hpp"
 #include "common/exception/UserError.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/utils/utils.hpp"
 
 #include <httplib.h>

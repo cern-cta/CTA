@@ -6,7 +6,6 @@
 #include "AgentHeartbeatThread.hpp"
 
 #include "common/log/LogContext.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 

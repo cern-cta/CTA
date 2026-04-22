@@ -13,7 +13,6 @@
 #include "common/log/Logger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/semconv/Attributes.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/telemetry/OtelInit.hpp"
 #include "common/utils/FileUtils.hpp"
 #include "common/utils/utils.hpp"

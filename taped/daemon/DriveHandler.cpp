@@ -15,7 +15,6 @@
 #include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/process/ProcessCap.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "rdbms/Login.hpp"
 #include "taped/session/CleanerSession.hpp"

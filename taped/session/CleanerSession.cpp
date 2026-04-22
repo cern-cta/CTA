@@ -7,7 +7,6 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "common/process/ProcessCap.hpp"
-#include "common/semconv/Logging.hpp"
 #include "taped/file/HeaderChecker.hpp"
 
 #include <exception>

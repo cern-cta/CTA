@@ -6,7 +6,6 @@
 #include "QueueCleanup.hpp"
 
 #include "common/semconv/Attributes.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/telemetry/metrics/instruments/ObjectstoreInstruments.hpp"
 #include "objectstore/GenericObject.hpp"
 #include "objectstore/Sorter.hpp"

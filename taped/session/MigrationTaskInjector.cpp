@@ -6,7 +6,6 @@
 #include "MigrationTaskInjector.hpp"
 
 #include "ErrorFlag.hpp"
-#include "common/semconv/Logging.hpp"
 
 #include <memory>
 

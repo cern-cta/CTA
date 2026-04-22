@@ -11,7 +11,6 @@
 #include "MountPolicySerDeser.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/JobQueueType.hpp"
-#include "common/semconv/Logging.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -525,7 +524,7 @@ void ArchiveRequest::garbageCollect(const std::string& presumedOwner,
         } catch (std::exception& ex) {
           params.add(semconv::log::exceptionMessage, ex.what());
         } catch (...) {
-          params.add("exceptionType", "unknown");
+          params.add(semconv::log::exceptionType, "unknown");
         }
         commit();
         lc.log(log::ERR,

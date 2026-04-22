@@ -11,7 +11,6 @@
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 #include "RAOAlgorithmFactoryFactory.hpp"
 #include "catalogue/Catalogue.hpp"
-#include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 
 namespace castor::tape::tapeserver::rao {
