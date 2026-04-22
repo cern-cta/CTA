@@ -19,6 +19,7 @@ usage() {
 }
 
 max_drives=1000
+enable_one_logical_library_only=false
 
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
@@ -30,6 +31,9 @@ while [[ "$#" -gt 0 ]]; do
     -m|--max-drives)
       max_drives="$2"
       shift ;;
+    -l|--enable-one-logical-library)
+      enable_one_logical_library_only=true
+      ;;
     *)
       echo "Unsupported argument: $1"
       usage ;;
@@ -66,6 +70,7 @@ echo '['
 
 index=0
 first=1
+logical_lib_name=""
 
 for drive_device in $drive_devices; do
   (( index >= max_drives )) && break
@@ -77,14 +82,20 @@ for drive_device in $drive_devices; do
   serial=$(sg_inq "$sg_device" 2>/dev/null | awk '/Unit serial number/ {print $4; exit}')
 
   drive_name="${vendor}-${serial}"
-
+  if [ "$enable_one_logical_library_only" = true ]; then
+    if [[ -z "$logical_lib_name" ]]; then
+      logical_lib_name="${drive_name}_LOGICAL_LIBRARY_NAME"
+    fi
+  else
+    logical_lib_name="$drive_name"
+  fi
   (( first )) || echo ","
   first=0
 
   echo '  {'
   echo "    \"name\": \"${drive_name}\","
   echo "    \"device\": \"${nst_device}\","
-  echo "    \"logicalLibraryName\": \"${drive_name}\","
+  echo "    \"logicalLibraryName\": \"${logical_lib_name}\","
   echo "    \"controlPath\": \"smc${index}\""
   echo -n '  }'
 

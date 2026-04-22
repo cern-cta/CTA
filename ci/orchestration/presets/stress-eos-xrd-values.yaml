@@ -51,6 +51,8 @@ mgm:
 
   xrd:
     # Additional tape-specific config
+    # Allowing half the production (4k) size of the thread pool rather than the default 256.
+    sched: "mint 16 maxt 2048 idle 128"
     extraConfig: |
       xrootd.chksum  adler32
       mgmofs.archivedir /var/eos/archive
@@ -115,13 +117,15 @@ fst:
     annotations: {}
     accessModes:
       - ReadWriteOnce
-    size: 800Gi
+    size: 40Gi
 
   pod:
     extraSpec:
       terminationGracePeriodSeconds: 1
 
   xrd:
+    # Increasing 2x the thread pool size w.r.t. the minimal default 256.
+    sched: "mint 16 maxt 512 idle 64"
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
       fstofs.protowfendpoint cta-frontend:10955
@@ -172,7 +176,7 @@ qdb:
     annotations: {}
     accessModes:
       - ReadWriteOnce
-    size: 800Gi
+    size: 40Gi
 
   pod:
     extraSpec:

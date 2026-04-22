@@ -32,6 +32,10 @@ class CtaTapedHost(RemoteHost):
             device = "/dev/" + device
         return device
 
+    @cached_property
+    def logical_library_name(self) -> str:
+        return self.exec_with_output("printenv LOGICAL_LIBRARY_NAME")
+
     def label_tapes(self, tapes: list[str]) -> None:
         for tape in tapes:
             self.label_tape(tape)

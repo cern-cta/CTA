@@ -39,8 +39,6 @@ def test_general_settings(env):
     env.eos_mgm[0].exec("eos space config default space.scanrate=0")
     env.eos_mgm[0].exec("eos space config default space.scaninterval=0")
     env.eos_mgm[0].exec("eos space config default space.token.generation=1")
-    env.eos_mgm[0].exec("eos space config default space.scanrate=0")
-    env.eos_mgm[0].exec("eos space config default space.scaninterval=0")
     env.eos_mgm[0].exec("eos attr -r set default=replica /eos")
     env.eos_mgm[0].exec("eos attr -r set sys.forced.nstripes=1 /eos")
 

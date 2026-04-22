@@ -1,0 +1,59 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+global:
+
+  # It should be noted that many logs also go to stdout which is still written to /var/log on the node itself
+  # So this means not all log-related writes go to an SSD
+  extraVolumes:
+    volumes:
+      - name: coredumps
+        emptyDir: {}
+    volumeMounts:
+      - name: coredumps
+        mountPath: /var/log/tmp
+
+frontend:
+  grpc:
+    enabled: false
+  xrd:
+    enabled: true
+    conf:
+      catalogue:
+        numberOfConnections: 50
+      logger:
+        logLevel: "WARNING"
+taped:
+  conf:
+    taped:
+      # number of parallel files to be buffered (bufferCount) conincides with
+      # the increased batchSizes for pgsched deployment
+      bufferCount: 10000
+      logMask: "WARNING"
+
+maintd:
+  logging:
+    level: "WARNING"
+  routines:
+    # Note that the snake_case version of all these options (including the names)
+    # should match the corresponding names in the maintd conf file
+    # So diskReportArchive:softTimeout will map to cta.routines.disk_report_archive.soft_timeout
+    # To disable a routine, set replicas to 0
+    diskReportArchive:
+      replicas: 2
+      sleepIntervalSecs: 5
+      batchSize: 4000
+      softTimeoutSecs: 30
+    diskReportRetrieve:
+      replicas: 2
+      sleepIntervalSecs: 5
+      batchSize: 4000
+      softTimeoutSecs: 30
+    repackExpand:
+      replicas: 1
+      sleepIntervalSecs: 10
+      maxToToExpand: 2
+    repackReport:
+      replicas: 1
+      sleepIntervalSecs: 10
+      softTimeoutSecs: 30

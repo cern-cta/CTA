@@ -73,25 +73,31 @@ def test_populate_catalogue(env):
     env.cta_cli[0].exec(f"./test/populate_catalogue.sh {env.disk_instance[0].instance_name}")
 
 
-def test_populate_catalogue_tapes(env):
-    tape_drives_in_use: list[str] = [taped.drive_name for taped in env.cta_taped]
-    print("Using drives:")
-    for drive in tape_drives_in_use:
-        print(f"  - {drive}")
+def test_register_logical_libraries_in_catalogue(env):
+    logical_library_names_in_use: list[str] = [taped.logical_library_name for taped in env.cta_taped]
+    print("Using logical libraries:")
+    for logical_library_name in logical_library_names_in_use:
+        print(f"  - {logical_library_name}")
 
-    libraries_in_use: list[str] = [rmcd.library_device for rmcd in env.cta_rmcd]
-    print("Using libraries:")
-    for lib in libraries_in_use:
+    library_devices_in_use: list[str] = [rmcd.library_device for rmcd in env.cta_rmcd]
+    print("Using library devices:")
+    for lib in library_devices_in_use:
         print(f"  - {lib}")
 
-    for drive in tape_drives_in_use:
-        # Each drive will have its own logical library. This has to do with how the scheduler works
+    for logical_library_name in logical_library_names_in_use:
         add_ll_cmd: str = (
             f'cta-admin logicallibrary add \
-                                --name {drive} \
-                                --comment "ctasystest library mapped to drive {drive}"'
+                                --name {logical_library_name} \
+                                --comment "ctasystest logical library {logical_library_name} was registered in the catalogue"'
         )
         env.cta_cli[0].exec(add_ll_cmd)
+
+
+def test_register_tapes_per_logical_library_in_catalogue(env):
+    logical_library_names_in_use: list[str] = [taped.logical_library_name for taped in env.cta_taped]
+    print("Using logical libraries:")
+    for logical_library_name in logical_library_names_in_use:
+        print(f"  - {logical_library_name}")
 
     tapes: list[str] = CtaRmcdHost.list_all_tapes_in_libraries(env.cta_rmcd)
     print("Using tapes:")
@@ -99,9 +105,7 @@ def test_populate_catalogue_tapes(env):
         print(f"  - {tape}")
 
     for idx, tape in enumerate(tapes):
-        # The logical libraries correspond to the tape drive names by design.
-        # For reference, look at how the drives are registered in the catalogue
-        logical_library: str = tape_drives_in_use[idx % len(tape_drives_in_use)]
+        logical_library: str = logical_library_names_in_use[idx % len(logical_library_names_in_use)]
         add_tape_cmd: str = (
             f"cta-admin tape add \
                                 --mediatype LTO8 \
