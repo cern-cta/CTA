@@ -6,7 +6,6 @@
 #pragma once
 
 #include "common/log/Logger.hpp"
-#include "common/semconv/Logging.hpp"
 
 #include <ostream>
 #include <set>

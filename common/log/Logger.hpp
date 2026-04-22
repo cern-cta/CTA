@@ -7,6 +7,8 @@
 
 #include "common/log/Constants.hpp"
 #include "common/log/Param.hpp"
+// Ensure all places using the logger have access to the semantic conventions
+#include "common/semconv/Logging.hpp"
 
 #include <atomic>
 #include <chrono>
