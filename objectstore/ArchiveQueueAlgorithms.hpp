@@ -249,7 +249,7 @@ bool ContainerTraits<ArchiveQueue, C>::trimContainerIfNeeded(Container& cont,
     log::ScopedParamContainer params(lc);
     params.add("tapepool", cId)
       .add("queueObject", cont.getAddressIfSet())
-      .add("exceptionMessage", ex.getMessageValue());
+      .add(semconv::log::exceptionMessage, ex.getMessageValue());
     tl.addToLog(params);
     lc.log(log::INFO,
            "In ContainerTraits<ArchiveQueue_t,ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably "
@@ -326,7 +326,7 @@ retry:
       log::ScopedParamContainer params(lc);
       params.add("tapepool", cId)
         .add("queueObject", cont.getAddressIfSet())
-        .add("exceptionMessage", ex.getMessageValue());
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       tl.addToLog(params);
       lc.log(log::INFO,
              "In ContainerTraits<ArchiveQueue,C>::getLockedAndFetchedNoCreate(): could not de-referenced missing queue "

@@ -106,7 +106,7 @@ void Sorter::insertArchiveRequest(std::shared_ptr<ArchiveRequest> archiveRequest
     } catch (const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
       params.add("fileId", archiveRequest->getArchiveFile().archiveFileID)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .add("status", ArchiveRequest::statusToString(job.status));
       lc.log(log::ERR, "In Sorter::insertArchiveJob() Failed to determine destination queue for Archive Job.");
     }
@@ -327,7 +327,8 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
       return;
     } catch (const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
-      params.add("fileId", accessor.getArchiveFile().archiveFileID).add("exceptionMessage", ex.getMessageValue());
+      params.add("fileId", accessor.getArchiveFile().archiveFileID)
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR,
              "In Sorter::insertRetrieveRequest() Failed to determine destination queue for retrieve request.");
       throw;
@@ -352,7 +353,8 @@ void Sorter::insertRetrieveRequest(RetrieveRequestInfosAccessorInterface& access
       lc.log(log::INFO, "Selected the vid of the job to be queued for retrieve request.");
     } catch (const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
-      params.add("fileId", accessor.getArchiveFile().archiveFileID).add("exceptionMessage", ex.getMessageValue());
+      params.add("fileId", accessor.getArchiveFile().archiveFileID)
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR,
              "In Sorter::insertRetrieveRequest() Failed to determine destination queue for retrieve request.");
       throw;

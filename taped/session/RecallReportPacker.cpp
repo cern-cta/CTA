@@ -109,7 +109,7 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent) {
     parent.m_successfulRetrieveJobs.push(std::move(m_successfulRetrieveJob));
   } catch (const cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(parent.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", archiveFileID);
+    params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue()).add("fileId", archiveFileID);
     parent.m_lc.log(cta::log::WARNING,
                     "In RecallReportPacker::ReportSuccessful::execute(): call to "
                     "m_successfulRetrieveJob->asyncSetSuccessful() failed, job does not exist in the objectstore.");
@@ -209,13 +209,15 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& reportPacker) 
     m_failedRetrieveJob->transferFailed(m_failureLog, reportPacker.m_lc);
   } catch (const cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
+    params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
+      .add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(cta::log::WARNING,
                           "In RecallReportPacker::ReportError::execute(): call to m_failedRetrieveJob->failed() , job "
                           "does not exist in the objectstore.");
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(reportPacker.m_lc);
-    params.add("ExceptionMSG", ex.getMessageValue()).add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
+    params.add(cta::semconv::log::exceptionMessage, ex.getMessageValue())
+      .add("fileId", m_failedRetrieveJob->archiveFile.archiveFileID);
     reportPacker.m_lc.log(
       cta::log::ERR,
       "In RecallReportPacker::ReportError::execute(): call to m_failedRetrieveJob->failed() threw an exception.");
@@ -279,7 +281,8 @@ void RecallReportPacker::WorkerThread::run() {
       //we get there because to tried to close the connection and it failed
       //either from the catch a few lines above or directly from rep->execute
       cta::log::ScopedParamContainer params(m_parent.m_lc);
-      params.add("exceptionWhat", e.getMessageValue()).add("exceptionType", typeid(e).name());
+      params.add(cta::semconv::log::exceptionMessage, e.getMessageValue())
+        .add(cta::semconv::log::exceptionType, typeid(e).name());
       m_parent.m_lc.log(
         cta::log::ERR,
         "In RecallReportPacker::WorkerThread::run(): Received a CTA exception while reporting retrieve mount results.");
@@ -291,7 +294,7 @@ void RecallReportPacker::WorkerThread::run() {
       //we get there because to tried to close the connection and it failed
       //either from the catch a few lines above or directly from rep->execute
       cta::log::ScopedParamContainer params(m_parent.m_lc);
-      params.add("exceptionWhat", e.what()).add("exceptionType", typeid(e).name());
+      params.add(cta::semconv::log::exceptionMessage, e.what()).add(cta::semconv::log::exceptionType, typeid(e).name());
       m_parent.m_lc.log(cta::log::ERR,
                         "In RecallReportPacker::WorkerThread::run(): Received a standard exception while reporting "
                         "retrieve mount results.");
@@ -328,7 +331,8 @@ void RecallReportPacker::WorkerThread::run() {
     }
   } catch (const cta::exception::Exception& e) {
     cta::log::ScopedParamContainer params(m_parent.m_lc);
-    params.add("exceptionWhat", e.getMessageValue()).add("exceptionType", typeid(e).name());
+    params.add(cta::semconv::log::exceptionMessage, e.getMessageValue())
+      .add(cta::semconv::log::exceptionType, typeid(e).name());
     m_parent.m_lc.log(
       cta::log::ERR,
       "In RecallReportPacker::WorkerThread::run(): Received a CTA exception while reporting retrieve mount results.");
@@ -338,7 +342,7 @@ void RecallReportPacker::WorkerThread::run() {
     }
   } catch (const std::exception& e) {
     cta::log::ScopedParamContainer params(m_parent.m_lc);
-    params.add("exceptionWhat", e.what()).add("exceptionType", typeid(e).name());
+    params.add(cta::semconv::log::exceptionMessage, e.what()).add(cta::semconv::log::exceptionType, typeid(e).name());
     m_parent.m_lc.log(cta::log::ERR,
                       "In RecallReportPacker::WorkerThread::run(): Received a standard exception while reporting "
                       "retrieve mount results.");

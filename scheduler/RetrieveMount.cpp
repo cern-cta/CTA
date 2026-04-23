@@ -251,7 +251,7 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(
     for (const auto& [failedDiskSystemName, failedDiskSystemError] : ex.m_failedDiskSystems) {
       cta::log::ScopedParamContainer(logContext)
         .add("diskSystemName", failedDiskSystemName)
-        .add("failureReason", failedDiskSystemError.getMessageValue())
+        .add(semconv::log::exceptionMessage, failedDiskSystemError.getMessageValue())
         .log(cta::log::WARNING,
              "In cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(): unable to request EOS free space for "
              "disk system using external script, backpressure will not be applied");
@@ -260,7 +260,7 @@ bool cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(
   } catch (std::exception& ex) {
     // Leave a log message before letting the possible exception go up the stack.
     cta::log::ScopedParamContainer(logContext)
-      .add("exceptionWhat", ex.what())
+      .add(semconv::log::exceptionMessage, ex.what())
       .log(cta::log::ERR,
            "In cta::RetrieveMount::checkOrReserveFreeDiskSpaceForRequest(): got an exception from "
            "diskSystemFreeSpace.fetchDiskSystemFreeSpace().");
@@ -401,7 +401,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
     }
   } catch (const cta::exception::NoSuchObject& ex) {
     cta::log::ScopedParamContainer params(logContext);
-    params.add("exceptionMessageValue", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     if (job.get()) {
       params.add("fileId", job->archiveFile.archiveFileID)
         .add("diskInstance", job->archiveFile.diskInstance)
@@ -413,7 +413,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
     logContext.log(cta::log::WARNING, msg_error);
   } catch (const cta::exception::Exception& e) {
     cta::log::ScopedParamContainer params(logContext);
-    params.add("exceptionMessageValue", e.getMessageValue());
+    params.add(semconv::log::exceptionMessage, e.getMessageValue());
     if (job.get()) {
       params.add("fileId", job->archiveFile.archiveFileID)
         .add("diskInstance", job->archiveFile.diskInstance)
@@ -427,7 +427,7 @@ void cta::RetrieveMount::setJobBatchTransferred(std::queue<std::unique_ptr<cta::
     // will be retried.
   } catch (const std::exception& e) {
     cta::log::ScopedParamContainer params(logContext);
-    params.add("exceptionWhat", e.what());
+    params.add(semconv::log::exceptionMessage, e.what());
     if (job.get()) {
       params.add("fileId", job->archiveFile.archiveFileID)
         .add("diskInstance", job->archiveFile.diskInstance)

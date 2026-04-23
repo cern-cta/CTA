@@ -72,7 +72,7 @@ public:
       logContext.log(log::INFO, "Reported to the client that a batch of files was written on tape");
     } catch (const cta::exception::Exception& e) {
       cta::log::ScopedParamContainer params(logContext);
-      params.add("exceptionMessageValue", e.getMessageValue());
+      params.add(semconv::log::exceptionMessage, e.getMessageValue());
       const std::string msg_error = "In ArchiveMount::reportJobsBatchWritten(): got an exception";
       logContext.log(cta::log::ERR, msg_error);
       if (catalogue_updated) {

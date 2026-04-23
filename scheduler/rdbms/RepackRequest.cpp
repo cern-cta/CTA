@@ -279,7 +279,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
           failedCreationStats.bytes += rsr.archiveFile.fileSize;
           failedArchiveReq += rsr.copyNbsToRearchive.size();
           cta::log::ScopedParamContainer params(m_lc);
-          params.add("exceptionMessage", ex.getMessageValue());
+          params.add(semconv::log::exceptionMessage, ex.getMessageValue());
           m_lc.log(log::ERR, "Failed to create subrequest.");
         }
       }
@@ -299,7 +299,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
         m_lc.log(log::INFO,
                  "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'ToTransfer' retrieve jobs.");
       } catch (exception::Exception& ex) {
-        params.add("exceptionMessage", ex.getMessageValue());
+        params.add(semconv::log::exceptionMessage, ex.getMessageValue());
         m_lc.log(log::ERR,
                  "In RepackRequest::addSubrequestsAndUpdateStats(): failed to insert 'ToTransfer' retrieve jobs.");
         conn.rollback();
@@ -323,7 +323,7 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
         m_lc.log(log::INFO,
                  "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'NoRecall' retrieve jobs.");
       } catch (exception::Exception& ex) {
-        params.add("exceptionMessage", ex.getMessageValue());
+        params.add(semconv::log::exceptionMessage, ex.getMessageValue());
         m_lc.log(log::ERR,
                  "In RepackRequest::addSubrequestsAndUpdateStats(): failed to insert 'NoRecall' retrieve jobs.");
         conn.rollback();
@@ -564,7 +564,7 @@ void RepackRequest::insert() {
     auto conn = m_connPool.getConn();
     rjr.insert(conn);
   } catch (exception::Exception& ex) {
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
     throw;
   }

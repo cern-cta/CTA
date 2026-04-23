@@ -260,7 +260,7 @@ RelationalDB::getNextArchiveJobsToReportBatch(uint64_t filesRequested, log::LogC
     lc.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR, "In RelationalDB::getNextArchiveJobsToReportBatch(): failed to flagReportingJobsByStatus.");
     txn.abort();
     return ret;
@@ -403,7 +403,7 @@ void RelationalDB::setArchiveJobBatchReported(std::list<SchedulerDatabase::Archi
 
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR,
            "In schedulerdb::RelationalDB::setArchiveJobBatchReported(): failed to update job status. "
            "Aborting the transaction.");
@@ -493,7 +493,7 @@ RelationalDB::queueRetrieve(cta::common::dataStructures::RetrieveRequest& rqst,
       .add("tfvids", tfvids)
       .add("ret.selectedVid", ret.selectedVid)
       .add("totalTime", timeTotal.secs())
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR, "In schedulerdb::RelationalDB::queueRetrieve(): failed to queue retrieve.");
     return ret;
   }
@@ -516,7 +516,7 @@ void RelationalDB::cancelRetrieve(const std::string& instanceName,
     txn.commit();
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR,
            "In RelationalDB::cancelRetrieve(): failed to cancel retrieve job. Aborting the transaction.");
     txn.abort();
@@ -559,7 +559,7 @@ void RelationalDB::cancelArchive(const common::dataStructures::DeleteArchiveRequ
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR, "In RelationalDB::cancelArchive(): failed to cancel archive job. Aborting the transaction.");
     txn.abort();
     throw;
@@ -734,7 +734,7 @@ std::list<common::dataStructures::RepackInfo> RelationalDB::fetchRepackInfo(cons
     }
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR, "In RelationalDB::getRepackInfo(): failed to get repack info.");
     throw;
   }
@@ -770,7 +770,7 @@ void RelationalDB::cancelRepack(const std::string& vid, log::LogContext& lc) {
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR,
            "In RelationalDB::cancelRepack(): failed to cancel repack request. Aborting the transaction.");
     txn.abort();
@@ -825,7 +825,7 @@ auto RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForEx
     ret.toExpandAfter = ret.toExpandBefore + nrows;
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR,
            "In RelationalDB::RepackRequestPromotionStatistics::promotePendingRequestsForExpansion(): failed to update "
            "rows.");
@@ -918,7 +918,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> RelationalDB::getNextRepackJob
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR, "In RelationalDB::getNextRepackJobToExpand(): failed to mark IS_EXPAND_STARTED.");
     txn.abort();
     return nullptr;
@@ -962,7 +962,7 @@ RelationalDB::getNextRetrieveJobsToReportBatch(uint64_t filesRequested, log::Log
     lc.log(cta::log::INFO, "Successfully flagged jobs for reporting.");
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR, "In RelationalDB::getNextRetrieveJobsToReportBatch(): failed to flagReportingJobsByStatus: ");
     txn.abort();
     return ret;
@@ -990,7 +990,7 @@ RelationalDB::getRetrieveJobs(uint64_t filesRequested, bool fetchFailed, log::Lo
     lc.log(cta::log::INFO, "Successfully fetched jobs for unit test.");
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR, "In RelationalDB::getRetrieveJobs(): fetched retrieve jobs for unit test.");
     txn.abort();
     return ret;
@@ -1051,7 +1051,7 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     timings.addToLog(params);
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR,
            "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to transform retrieve jobs to "
            "archive jobs: ");
@@ -1080,7 +1080,7 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     txn2.commit();
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR,
            "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): failed to updateRepackRequestsProgress(): ");
     txn2.abort();
@@ -1109,14 +1109,14 @@ bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, 
       if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
         log::ScopedParamContainer(lc)
           .add("jobUrl", jobUrl)
-          .add("exceptionMessage", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::WARNING,
                "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed, file "
                "not found.");
       } else {
         log::ScopedParamContainer(lc)
           .add("jobUrl", jobUrl)
-          .add("exceptionMessage", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(log::ERR,
                "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async deletion of disk file failed.");
         return false;
@@ -1130,12 +1130,12 @@ bool RelationalDB::deleteDiskFiles(std::unordered_set<std::string>& jobSrcUrls, 
     } catch (const cta::exception::Exception& ex) {
       if (ex.getMessageValue().find("No such file or directory") != std::string::npos) {
         cta::log::ScopedParamContainer params(lc);
-        params.add("exceptionMessage", ex.getMessageValue());
+        params.add(semconv::log::exceptionMessage, ex.getMessageValue());
         lc.log(log::WARNING,
                "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not found anymore.");
       } else {
         log::ScopedParamContainer(lc)
-          .add("exceptionMessage", ex.getMessageValue())
+          .add(semconv::log::exceptionMessage, ex.getMessageValue())
           .log(
             log::ERR,
             "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): async file not deleted. Exception thrown: ");
@@ -1169,7 +1169,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     }
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to get jobs.");
     txn.abort();
     return ret;
@@ -1204,7 +1204,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       timings.insertAndReset("deletedArchiveRepackJobs", t);
     } catch (exception::Exception& ex) {
       log::ScopedParamContainer(lc)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(cta::log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: ");
       txn.abort();
       return ret;
@@ -1249,7 +1249,7 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     txn3.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(
       cta::log::ERR,
       "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to update  Repack progress statistics.");
@@ -1297,7 +1297,7 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
     }
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR, "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): Failed to move failed jobs: ");
     txn.abort();
     return ret;
@@ -1314,7 +1314,7 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
       .log(log::INFO, "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): updated repack request statistics.");
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR,
            "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): Failed to updateRepackRequestFailuresBatch() "
            "aborting the entire transaction.");
@@ -1352,7 +1352,7 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
     }
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR, "In RelationalDB::getNextFailedArchiveRepackReportBatch(): Failed to move failed jobs: ");
     txn.abort();
     return ret;
@@ -1376,7 +1376,7 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
       .log(log::INFO, "In RelationalDB::getNextFailedRetrieveRepackReportBatch(): updated repack request statistics.");
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR,
            "In RelationalDB::getNextFailedArchiveRepackReportBatch(): Failed to updateRepackRequestFailuresBatch() "
            "aborting the entire transaction.");
@@ -1478,7 +1478,7 @@ void RelationalDB::setRetrieveJobBatchReportedToUser(std::list<SchedulerDatabase
 
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR,
            "In schedulerdb::RelationalDB::setRetrieveJobBatchReportedToUser(): failed to update job status. "
            "Aborting the transaction.");
@@ -1712,7 +1712,7 @@ void RelationalDB::cleanRetrieveQueueForVid(const std::string& vid, log::LogCont
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR,
            "In RelationalDB::cleanRetrieveQueueForVid(): failed to remove retrieve jobs from the pending queue of the "
            "specified tape VID. Aborting the transaction.");
@@ -1834,7 +1834,7 @@ RelationalDB::getActiveSleepDiskSystemNamesToFilter(log::LogContext& lc) {
           "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Removed disk system sleep entries from the DB.");
     } catch (const std::exception& ex) {
       cta::log::ScopedParamContainer(lc)
-        .add("exceptionMessage", ex.what())
+        .add(semconv::log::exceptionMessage, ex.what())
         .log(cta::log::ERR,
              "In RelationalDB::getActiveSleepDiskSystemNamesToFilter(): Failed to remove disk system sleep entries "
              "from DB.");
@@ -1884,7 +1884,7 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::fetchDeadMountC
     txn.commit();
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR, "In RelationalDB::fetchDeadMountCandidates(): failed to get distinct MOUNT_IDs from the queues.");
     txn.abort();
   }
@@ -2019,7 +2019,7 @@ uint64_t RelationalDB::handleInactiveMountPendingQueues(const std::vector<uint64
     return njobs;
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR, "In RelationalDB::handleInactiveMountQueues(): Failed cleaned up PENDING table.");
     txn.abort();
   }
@@ -2108,7 +2108,7 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
     return njobs;
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR,
            "In RelationalDB::handleInactiveMountActiveQueues(): failed to requeue rows from ACTIVE to PENDING queue.");
     txn.abort();
@@ -2153,7 +2153,7 @@ void RelationalDB::deleteOldFailedQueues(uint64_t deletionAge, uint64_t batchSiz
              "In RelationalDB::deleteOldFailedQueues(): Deleted old rows from failed queue tables successfully.");
     } catch (exception::Exception& ex) {
       log::ScopedParamContainer(lc)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .log(log::ERR,
              "In RelationalDB::deleteOldFailedQueues(): Failed to delete old rows from failed queue tables: ");
       txn.abort();
@@ -2193,7 +2193,7 @@ void RelationalDB::cleanOldMountLastFetchTimes(uint64_t deletionAge, uint64_t ba
            "In RelationalDB::cleanOldMountLastFetchTimes(): Deleted old rows from mount last fetch time table.");
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(
         log::ERR,
         "In RelationalDB::cleanOldMountLastFetchTimes(): Failed to delete old rows from mount last fetch time table.");
@@ -2246,7 +2246,7 @@ void RelationalDB::cleanMountLastFetchTimes(std::vector<uint64_t> deadMountIds,
            "In RelationalDB::cleanMountLastFetchTimes(): Deleted rows from mount last fetch time table.");
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(log::ERR,
            "In RelationalDB::cleanMountLastFetchTimes(): Failed to delete old rows from mount last fetch time table.");
     txn.abort();

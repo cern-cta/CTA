@@ -102,7 +102,7 @@ BackendRados::~BackendRados() {
     } catch (const exception::Exception& ex) {
       log::LogContext lc(m_logger);
       log::ScopedParamContainer params(lc);
-      params.add("exceptionMessage", ex.what());
+      params.add(semconv::log::exceptionMessage, ex.what());
       lc.log(log::ERR, "In BackendRados::~BackendRados(): caught unexpected exception.");
     }
   }

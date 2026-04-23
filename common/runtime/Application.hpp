@@ -141,7 +141,7 @@ int safeRunWithLog(log::Logger& log, F&& func) {
     log(log::CRIT,
         "FATAL: User Error",
         {
-          {"exceptionMessage", ex.getMessage().str()}
+          {semconv::log::exceptionMessage, ex.getMessage().str()}
     });
     sleep(1);
     return EXIT_FAILURE;
@@ -149,7 +149,7 @@ int safeRunWithLog(log::Logger& log, F&& func) {
     log(log::CRIT,
         "FATAL: Caught an unexpected CTA exception",
         {
-          {"exceptionMessage", ex.getMessage().str()}
+          {semconv::log::exceptionMessage, ex.getMessage().str()}
     });
     sleep(1);
     return EXIT_FAILURE;
@@ -157,7 +157,7 @@ int safeRunWithLog(log::Logger& log, F&& func) {
     log(log::CRIT,
         "FATAL: Caught an unexpected exception",
         {
-          {"error", se.what()}
+          {semconv::log::exceptionMessage, se.what()}
     });
     sleep(1);
     return EXIT_FAILURE;
@@ -450,7 +450,7 @@ private:
         throw ex;
       }
       cta::log::ScopedParamContainer params(lc);
-      params.add("exceptionMessage", ex.getMessage().str());
+      params.add(semconv::log::exceptionMessage, ex.getMessage().str());
       lc.log(log::ERR, "Failed to instantiate OpenTelemetry");
       cta::telemetry::cleanupOpenTelemetry(lc);
     }

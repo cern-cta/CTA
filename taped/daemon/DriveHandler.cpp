@@ -175,7 +175,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::fork() {
     }
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(m_lc);
-    params.add("tapeDrive", m_driveConfig.unitName).add("Error", ex.getMessageValue());
+    params.add("tapeDrive", m_driveConfig.unitName).add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::ERR, "Failed to fork drive process. Initiating shutdown with SIGTERM.");
     // Wipe all previous states as we are shutting down
     m_processingStatus = SubprocessHandler::ProcessingStatus();
@@ -276,7 +276,7 @@ void DriveHandler::kill() {
       m_lc.log(cta::log::INFO, "Tape session finished");
       m_pid = -1;
     } catch (exception::Exception& ex) {
-      params.add("Exception", ex.getMessageValue());
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
       m_lc.log(log::ERR, "In DriveHandler::kill(): failed to kill existing subprocess");
     }
   } else {
@@ -333,13 +333,13 @@ SubprocessHandler::ProcessingStatus DriveHandler::processEvent() {
     }
     // We expect to be woken up by the child's signal.
     cta::log::ScopedParamContainer params(m_lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::DEBUG,
              "In DriveHandler::processEvent(): Got a peer disconnect: closing socket and waiting for SIGCHILD");
     return m_processingStatus;
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(m_lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::ERR, "In DriveHandler::processEvent(): failed. Backtrace follows.");
     m_lc.logBacktrace(log::INFO, ex.backtrace());
     return m_processingStatus;
@@ -446,7 +446,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
     cta::log::ScopedParamContainer scoped(m_lc);
     scoped.add("subprocessPid", m_pid)
       .add("tapeDrive", m_driveConfig.unitName)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .add("SessionState", session::toString(m_sessionState))
       .add("SessionType", toString(m_sessionType));
     m_lc.log(log::WARNING,
@@ -587,7 +587,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
     exception::Errnum::throwOnMinusOne(::kill(m_pid, SIGKILL));
     m_lc.log(log::WARNING, "In DriveHandler::processTimeout(): Killed subprocess.");
   } catch (exception::Exception& ex) {
-    params.add("Error", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::ERR, "In DriveHandler::processTimeout(): Failed to kill subprocess.");
   }
   // We now should receive the sigchild, so we ask nothing from process manager
@@ -641,7 +641,7 @@ int DriveHandler::runChild() {
                                 m_tapedConfig.mountCriteria.value().maxBytes);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
-    param.add("errorMessage", ex.getMessageValue());
+    param.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate scheduler. Reporting fatal error.");
     driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
@@ -769,7 +769,7 @@ int DriveHandler::runChild() {
       scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, m_lc);
       scheduler->reportDriveConfig(m_driveConfig, m_tapedConfig, m_lc);
     } catch (cta::exception::Exception& ex) {
-      params.add("exceptionMessage", ex.getMessageValue()).add("Backtrace", ex.backtrace());
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue()).add("Backtrace", ex.backtrace());
       m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
       // This is a fatal error (failure to access the scheduler). Shut daemon down.
       driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
@@ -828,7 +828,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
     scheduler = createScheduler("DriveHandlerShutdown-", 0, 0);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
-    param.add("errorMessage", ex.getMessageValue());
+    param.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::CRIT, "In DriveHandler::shutdown(): failed to instantiate scheduler. Reporting fatal error.");
     // Putting the drive down
     try {
@@ -836,7 +836,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
     } catch (const cta::exception::Exception& ex) {
       params.add("tapeVid", m_sessionVid)
         .add("tapeDrive", m_driveConfig.unitName)
-        .add("exceptionMessage", ex.getMessageValue());
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       m_lc.log(cta::log::ERR, "In DriveHandler::shutdown(). Failed to put the drive down.");
     }
     return exitShutdown();
@@ -920,13 +920,13 @@ bool DriveHandler::schedulerPing(IScheduler* scheduler, cta::tape::daemon::Taped
     return true;
   } catch (const cta::catalogue::WrongSchemaVersionException& ex) {
     log::ScopedParamContainer param(m_lc);
-    param.add("errorMessage", ex.getMessageValue());
+    param.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::CRIT, "In DriveHandler::runChild(): catalogue MAJOR version mismatch. Reporting fatal error.");
     driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     return false;
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
-    param.add("errorMessage", ex.getMessageValue());
+    param.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::CRIT,
              "In DriveHandler::runChild(): failed to ping central storage before session. Reporting fatal error.");
     driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
@@ -955,7 +955,7 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
     scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, m_lc);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
-    param.add("errorMessage", ex.getMessageValue());
+    param.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set the drive down. Reporting fatal error.");
     driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
@@ -1015,7 +1015,7 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
       std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), m_lc.logger(), true);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
-    param.add("errorMessage", ex.getMessageValue());
+    param.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::CRIT,
              "In DriveHandler::createScheduler(): failed to connect to objectstore or "
              "failed to instantiate agent entry. Reporting fatal error.");
@@ -1028,7 +1028,7 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
     m_sched_db = m_sched_db_init->getSchedDB(*m_catalogue, m_lc.logger());
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
-    param.add("errorMessage", ex.getMessageValue());
+    param.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::CRIT,
              "In DriveHandler::createScheduler(): failed to instantiate catalogue. "
              "Reporting fatal error.");

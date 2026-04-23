@@ -1002,7 +1002,7 @@ bool Scheduler::checkDriveCanBeCreated(const cta::common::dataStructures::DriveI
     param.add("tapeDrive", driveInfo.driveName)
       .add("logicalLibrary", driveInfo.logicalLibrary)
       .add("host", driveInfo.host)
-      .add("exceptionMsg", ex.getMessageValue());
+      .add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(log::CRIT, "In Scheduler::checkDriveCanBeCreated(): drive already exists. Reporting fatal error.");
     return false;
   }
@@ -1670,7 +1670,7 @@ void Scheduler::deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackB
     }
   } catch (const exception::XrdClException& ex) {
     log::ScopedParamContainer spc(lc);
-    spc.add("exceptionMsg", ex.getMessageValue());
+    spc.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(log::ERR,
            "In Scheduler::deleteRepackBuffer() unable to delete the directory located in " + repackBuffer->getURL());
   }
@@ -2298,7 +2298,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
             return std::unique_ptr<TapeMount>(internalRet.release());
           } catch (cta::exception::Exception& ex) {
             log::ScopedParamContainer params(lc);
-            params.add("exceptionMessage", ex.getMessage().str());
+            params.add(semconv::log::exceptionMessage, ex.getMessage().str());
             lc.log(
               log::WARNING,
               "In Scheduler::getNextMount(): got an exception trying to schedule an archive mount. Trying others.");
@@ -2378,7 +2378,7 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
         return std::unique_ptr<TapeMount>(internalRet.release());
       } catch (exception::Exception& ex) {
         log::ScopedParamContainer params(lc);
-        params.add("exceptionMessage", ex.getMessage().str());
+        params.add(semconv::log::exceptionMessage, ex.getMessage().str());
         lc.log(log::WARNING,
                "In Scheduler::getNextMount(): got an exception trying to schedule a retrieve mount. Trying others.");
         continue;
@@ -2485,7 +2485,7 @@ std::vector<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAn
       log::ScopedParamContainer params(lc);
       params.add("vid", pm.vid);
       params.add("tapepool", pm.tapePool);
-      params.add("errorMessage", ex.getMessage().str());
+      params.add(semconv::log::exceptionMessage, ex.getMessage().str());
       lc.log(log::WARNING,
              "In Scheduler::getQueuesAndMountSummaries(): "
              "got an exception trying to create a queue summary entry. Invalid mount type. Skipping.");
@@ -2554,7 +2554,7 @@ std::vector<common::dataStructures::QueueAndMountSummary> Scheduler::getQueuesAn
     } catch (exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
       params.add("driveName", em.driveName);
-      params.add("errorMessage", ex.getMessage().str());
+      params.add(semconv::log::exceptionMessage, ex.getMessage().str());
       lc.log(log::WARNING,
              "In Scheduler::getQueuesAndMountSummaries(): "
              "got an exception trying to create a queue summary entry. Invalid mount type. Skipping.");
@@ -2675,7 +2675,7 @@ void Scheduler::updateTapeStateFromPending(const std::string& queueVid, cta::log
     tapeDataRefreshed = vidToTapesMapRefreshed.at(queueVid);
   } catch (const catalogue::TapeNotFound& ex) {
     log::ScopedParamContainer params(logContext);
-    params.add("tapeVid", queueVid).add("exceptionMessage", ex.getMessageValue());
+    params.add("tapeVid", queueVid).add(semconv::log::exceptionMessage, ex.getMessageValue());
     logContext.log(log::WARNING,
                    "In Scheduler::updateTapeStateFromPending(): Failed to find a tape in the database. Unable to "
                    "update tape state.");
@@ -3000,14 +3000,14 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
       log::ScopedParamContainer params(lc);
       params.add("fileId", j->archiveFile.archiveFileID)
         .add("reportType", j->reportType())
-        .add("exceptionMSG", ex.getMessageValue());
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to launch reporter.");
       try {
         j->reportFailed(ex.getMessageValue(), lc);
       } catch (const cta::exception::NoSuchObject& ex) {
         params.add("fileId", j->archiveFile.archiveFileID)
           .add("reportType", j->reportType())
-          .add("exceptionMSG", ex.getMessageValue());
+          .add(semconv::log::exceptionMessage, ex.getMessageValue());
         lc.log(log::WARNING,
                "In Scheduler::reportArchiveJobsBatch(): failed to reportFailed the job because it does not exist in "
                "the objectstore.");
@@ -3024,14 +3024,14 @@ void Scheduler::reportArchiveJobsBatch(std::list<std::unique_ptr<ArchiveJob>>& a
       log::ScopedParamContainer params(lc);
       params.add("fileId", current.archiveJob->archiveFile.archiveFileID)
         .add("reportType", current.archiveJob->reportType())
-        .add("exceptionMSG", ex.getMessageValue());
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR, "In Scheduler::reportArchiveJobsBatch(): failed to report.");
       try {
         current.archiveJob->reportFailed(ex.getMessageValue(), lc);
       } catch (const cta::exception::NoSuchObject& ex) {
         params.add("fileId", current.archiveJob->archiveFile.archiveFileID)
           .add("reportType", current.archiveJob->reportType())
-          .add("exceptionMSG", ex.getMessageValue());
+          .add(semconv::log::exceptionMessage, ex.getMessageValue());
         lc.log(log::WARNING,
                "In Scheduler::reportArchiveJobsBatch(): failed to reportFailed the current job because it does not "
                "exist in the objectstore.");
@@ -3103,7 +3103,7 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
       log::ScopedParamContainer params(lc);
       params.add("fileId", j->archiveFile.archiveFileID)
         .add("reportType", j->reportType())
-        .add("exceptionMSG", ex.getMessageValue());
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR, "In Scheduler::reportRetrieveJobsBatch(): failed to launch reporter.");
       j->reportFailed(ex.getMessageValue(), lc);
     }
@@ -3118,7 +3118,7 @@ void Scheduler::reportRetrieveJobsBatch(std::list<std::unique_ptr<RetrieveJob>>&
       log::ScopedParamContainer params(lc);
       params.add("fileId", current.retrieveJob->archiveFile.archiveFileID)
         .add("reportType", current.retrieveJob->reportType())
-        .add("exceptionMSG", ex.getMessageValue());
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR, "In Scheduler::reportRetrieveJobsBatch(): failed to report.");
       current.retrieveJob->reportFailed(ex.getMessageValue(), lc);
     }

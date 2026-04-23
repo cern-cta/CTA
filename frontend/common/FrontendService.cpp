@@ -146,7 +146,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
       cta::log::LogContext lc(log);  // temporary log context
       cta::telemetry::initTelemetry(telemetryConfig, lc);
     } catch (exception::Exception& ex) {
-      std::vector<cta::log::Param> params = {cta::log::Param("exceptionMessage", ex.getMessage().str())};
+      std::vector<cta::log::Param> params = {cta::log::Param(semconv::log::exceptionMessage, ex.getMessage().str())};
       log(log::ERR, "Failed to instantiate OpenTelemetry", params);
       cta::log::LogContext lc(log);
       cta::telemetry::shutdownTelemetry(lc);

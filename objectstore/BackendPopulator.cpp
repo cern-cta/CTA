@@ -70,7 +70,7 @@ BackendPopulator::~BackendPopulator() noexcept {
     agent.removeAndUnregisterSelf(m_lc);
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer params(m_lc);
-    params.add("errorMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(
       log::CRIT,
       "In BackendPopulator::~BackendPopulator(): error deleting agent (cta::exception::Exception). Backtrace follows.");
@@ -78,7 +78,7 @@ BackendPopulator::~BackendPopulator() noexcept {
     ::exit(EXIT_FAILURE);
   } catch (std::exception& ex) {
     cta::log::ScopedParamContainer params(m_lc);
-    params.add("exceptionWhat", ex.what());
+    params.add(semconv::log::exceptionMessage, ex.what());
     m_lc.log(log::CRIT, "In BackendPopulator::~BackendPopulator(): error deleting agent (std::exception).");
     ::exit(EXIT_FAILURE);
   }

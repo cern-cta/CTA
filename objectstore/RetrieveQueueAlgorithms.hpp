@@ -287,7 +287,7 @@ retry:
       log::ScopedParamContainer params(lc);
       params.add("tapeVid", cId)
         .add("queueObject", cont.getAddressIfSet())
-        .add("exceptionMessage", ex.getMessageValue());
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::INFO,
              "In ContainerTraits<RetrieveQueue,C>::getLockedAndFetchedNoCreate(): could not dereference missing queue "
              "from root entry");
@@ -494,7 +494,9 @@ bool ContainerTraits<RetrieveQueue, C>::trimContainerIfNeeded(Container& cont,
     lc.log(log::INFO, "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): deleted empty queue");
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer params(lc);
-    params.add("tapeVid", cId).add("queueObject", cont.getAddressIfSet()).add("exceptionMessage", ex.getMessageValue());
+    params.add("tapeVid", cId)
+      .add("queueObject", cont.getAddressIfSet())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(log::INFO,
            "In ContainerTraits<RetrieveQueue,C>::trimContainerIfNeeded(): could not delete a presumably empty queue");
     if (typeid(ex) == typeid(cta::objectstore::RootEntry::RetrieveQueueNotEmpty)) {

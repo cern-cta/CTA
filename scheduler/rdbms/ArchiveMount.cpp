@@ -87,7 +87,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
       return ret;
     }
   } catch (exception::Exception& ex) {
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(cta::log::ERR, "In postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue: failed to queue jobs.");
     txn.abort();
     throw;
@@ -162,7 +162,7 @@ uint64_t ArchiveMount::requeueJobBatch(const std::list<std::string>& jobIDsList,
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR,
            "In schedulerdb::ArchiveMount::requeueJobBatch(): failed to update job status for failed task queue.");
     txn.abort();
@@ -315,7 +315,7 @@ void ArchiveMount::recycleTransferredJobs(std::list<std::unique_ptr<SchedulerDat
     }
   } catch (const exception::Exception& ex) {
     cta::log::ScopedParamContainer(lc)
-      .add("exceptionMessage", ex.getMessageValue())
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
       .log(cta::log::ERR,
            "In ArchiveMount::recycleTransferredJobs(): Failed to recycle all job objects for the job pool: ");
   }

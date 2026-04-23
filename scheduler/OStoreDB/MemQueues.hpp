@@ -403,12 +403,12 @@ MemQueue<Request, Queue>::sharedAddToNewQueue(typename Request::JobDump& job,
       std::rethrow_exception(std::current_exception());
     } catch (cta::exception::Exception& ex) {
       log::ScopedParamContainer params(logContext);
-      params.add("exceptionMessage", ex.getMessageValue());
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
       logContext.log(log::ERR,
                      "In MemQueue::sharedAddToNewQueue(): got an exception writing. Will propagate to other threads.");
     } catch (std::exception& ex) {
       log::ScopedParamContainer params(logContext);
-      params.add("exceptionWhat", ex.what());
+      params.add(semconv::log::exceptionMessage, ex.what());
       logContext.log(
         log::ERR,
         "In MemQueue::sharedAddToNewQueue(): got a standard exception writing. Will propagate to other threads.");

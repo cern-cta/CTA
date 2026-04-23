@@ -158,7 +158,7 @@ retry:
       log::ScopedParamContainer params(lc);
       params.add("tapePool", cId)
         .add("queueObject", cont.getAddressIfSet())
-        .add("exceptionMessage", ex.getMessageValue());
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::INFO, "In ArchiveMount::getNextJobBatch(): could not de-referenced missing queue from root entry");
     } catch (RootEntry::NoSuchArchiveQueue& ex) {
       // Somebody removed the queue in the mean time. Barely worth mentioning.
@@ -273,7 +273,7 @@ void ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(Container& cont,
       log::ScopedParamContainer params(lc);
       params.add("tapePool", cId)
         .add("queueObject", cont.getAddressIfSet())
-        .add("exceptionMessage", ex.getMessageValue());
+        .add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::INFO,
              "In ContainerTraits<ArchiveQueue>::trimContainerIfNeeded(): could not delete a presumably empty queue");
     }

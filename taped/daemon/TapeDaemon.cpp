@@ -48,7 +48,7 @@ int TapeDaemon::mainImpl() {
     m_log(log::ERR,
           "Aborting cta-taped on uncaught exception. Stack trace follows.",
           {
-            {"exceptionMessage", ex.getMessage().str()}
+            {semconv::log::exceptionMessage, ex.getMessage().str()}
     });
     log::LogContext lc(m_log);
     lc.logBacktrace(log::INFO, ex.backtrace());

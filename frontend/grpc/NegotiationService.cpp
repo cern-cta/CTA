@@ -108,7 +108,7 @@ void NegotiationService::startProcessing() {
         registerHandler();
       } catch (const cta::exception::Exception& e) {
         log::ScopedParamContainer errorParams(lc);
-        errorParams.add("error", e.getMessageValue());
+        errorParams.add(semconv::log::exceptionMessage, e.getMessageValue());
         lc.log(cta::log::ERR, "Failed to initialize negotiation handler");
         throw;
       }
@@ -184,7 +184,7 @@ void NegotiationService::process(unsigned int threadId,
     } catch (const cta::exception::Exception& ex) {
       log::ScopedParamContainer params(lc);
       params.add("thread", threadId);
-      params.add("exceptionMessage", ex.getMessageValue());
+      params.add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR, "NegotiationService::process(): Got an exception.");
     }
   }

@@ -85,7 +85,7 @@ TapeMountDecisionInfo::createArchiveMount(const cta::SchedulerDatabase::Potentia
     std::unique_ptr<SchedulerDatabase::ArchiveMount> ret(privateRet.release());
     return ret;
   } catch (exception::Exception& ex) {
-    log::ScopedParamContainer(m_lc).add("exceptionMessage", ex.getMessageValue());
+    log::ScopedParamContainer(m_lc).add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(cta::log::ERR,
              "In TapeMountDecisionInfo::createArchiveMount: failed to commit the new archive mount to the "
              "DB and release the named DB lock on the logical library.");

@@ -239,7 +239,7 @@ void GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(Agent& agent,
       ownedObjects.pop_back();
       // Log the error.
       log::ScopedParamContainer params(lc);
-      params.add("objectAddress", obj).add("exceptionMessage", ex.getMessageValue());
+      params.add("objectAddress", obj).add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR,
              "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): "
              "failed to asyncLockfreeFetch(): skipping object. Garbage collection will be incomplete.");
@@ -265,7 +265,7 @@ void GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(Agent& agent,
     } catch (cta::exception::Exception& ex) {
       // Again, we have a problem. We will skip the object and have an incomplete GC.
       skippedObjects.push_back(obj->getAddressIfSet());
-      params2.add("exceptionMessage", ex.getMessageValue());
+      params2.add(semconv::log::exceptionMessage, ex.getMessageValue());
       lc.log(log::ERR,
              "In GarbageCollector::OwnedObjectSorter::fetchOwnedObjects(): "
              "failed to AsyncLockfreeFetch::wait(): skipping object. Garbage collection will be incomplete.");
@@ -403,7 +403,8 @@ doGCObject:
             break;
           } catch (cta::exception::Exception& ex) {
             log::ScopedParamContainer params3(lc);
-            params3.add("fileId", rr->getArchiveFile().archiveFileID).add("exceptionMessage", ex.getMessageValue());
+            params3.add("fileId", rr->getArchiveFile().archiveFileID)
+              .add(semconv::log::exceptionMessage, ex.getMessageValue());
             lc.log(log::ERR,
                    "In GargageCollector::OwnedObjectSorter::sortFetchedObjects(): Failed to determine destination "
                    "queue for retrieve request. Marking request for normal GC (and probably deletion).");
@@ -507,7 +508,7 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(
           params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
             .add("copyNb", arup.copyNb)
             .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-            .add("exceptionType", debugType);
+            .add(semconv::log::exceptionType, debugType);
           lc.log(log::INFO,
                  "In GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(): "
                  "failed to requeue gone/not owned archive job. Removed from queue.");
@@ -517,8 +518,8 @@ void GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(
           params.add("archiveRequestObject", arup.archiveRequest->getAddressIfSet())
             .add("copyNb", arup.copyNb)
             .add("fileId", arup.archiveRequest->getArchiveFile().archiveFileID)
-            .add("exceptionType", debugType)
-            .add("exceptionMessage", e.getMessageValue());
+            .add(semconv::log::exceptionType, debugType)
+            .add(semconv::log::exceptionMessage, e.getMessageValue());
           lc.log(log::ERR,
                  "In GarbageCollector::OwnedObjectSorter::executeArchiveAlgorithm(): "
                  "failed to requeue archive job with unexpected error. "
@@ -817,7 +818,7 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
               params.add("retrieveRequestObject", rrup.retrieveRequest->getAddressIfSet())
                 .add("copyNb", rrup.copyNb)
                 .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
-                .add("exceptionType", debugType);
+                .add(semconv::log::exceptionType, debugType);
               lc.log(log::ERR,
                      "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): "
                      "failed to requeue gone/not owned retrieve job. Removing from queue.");
@@ -828,8 +829,8 @@ void GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(Agent& 
               params.add("retrieveRequestObject", rrup.retrieveRequest->getAddressIfSet())
                 .add("copyNb", rrup.copyNb)
                 .add("fileId", rrup.retrieveRequest->getArchiveFile().archiveFileID)
-                .add("exceptionType", debugType)
-                .add("exceptionMessage", e.getMessageValue());
+                .add(semconv::log::exceptionType, debugType)
+                .add(semconv::log::exceptionMessage, e.getMessageValue());
               lc.log(log::ERR,
                      "In GarbageCollector::OwnedObjectSorter::lockFetchAndUpdateRetrieveJobs(): "
                      "failed to requeue retrieve job with unexpected error. Removing from queue and will re-run "

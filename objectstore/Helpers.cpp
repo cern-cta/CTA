@@ -113,7 +113,7 @@ void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQue
           log::ScopedParamContainer params(lc);
           params.add("tapePool", tapePool.value())
             .add("queueObject", archiveQueue.getAddressIfSet())
-            .add("exceptionMsg", ex.getMessageValue());
+            .add(semconv::log::exceptionMessage, ex.getMessageValue());
           lc.log(log::INFO,
                  "In Helpers::getLockedAndFetchedQueue<ArchiveQueue>(): removed reference to gone archive queue from "
                  "root entry.");
@@ -126,7 +126,7 @@ void Helpers::getLockedAndFetchedJobQueue<ArchiveQueue>(ArchiveQueue& archiveQue
       }
       log::ScopedParamContainer params(lc);
       params.add("attemptNb", i + 1)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .add("queueObject", archiveQueue.getAddressIfSet())
         .add("rootFetchNoLockTime", rootFetchNoLockTime)
         .add("rootRefetchTime", rootRefetchTime)
@@ -247,7 +247,7 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
           log::ScopedParamContainer params(lc);
           params.add("tapeVid", vid.value())
             .add("queueObject", retrieveQueue.getAddressIfSet())
-            .add("exceptionMsg", ex.getMessageValue());
+            .add(semconv::log::exceptionMessage, ex.getMessageValue());
           lc.log(log::INFO,
                  "In Helpers::getLockedAndFetchedQueue<RetrieveQueue>(): removed reference to gone retrieve queue from "
                  "root entry.");
@@ -260,7 +260,7 @@ void Helpers::getLockedAndFetchedJobQueue<RetrieveQueue>(RetrieveQueue& retrieve
       }
       log::ScopedParamContainer params(lc);
       params.add("attemptNb", i + 1)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .add("queueObject", retrieveQueue.getAddressIfSet())
         .add("rootFetchNoLockTime", rootFetchNoLockTime)
         .add("rootRefetchTime", rootRefetchTime)
@@ -355,7 +355,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue,
           re.removeRepackQueueAndCommit(queueType, lc);
           timings.insOrIncAndReset("rootQueueDereferenceTime", t);
           log::ScopedParamContainer params(lc);
-          params.add("queueObject", queue.getAddressIfSet()).add("exceptionMsg", ex.getMessageValue());
+          params.add("queueObject", queue.getAddressIfSet()).add(semconv::log::exceptionMessage, ex.getMessageValue());
           lc.log(
             log::INFO,
             "In Helpers::getLockedAndFetchedRepackQueue(): removed reference to gone repack queue from root entry.");
@@ -369,7 +369,7 @@ void Helpers::getLockedAndFetchedRepackQueue(RepackQueue& queue,
       }
       log::ScopedParamContainer params(lc);
       params.add("attemptNb", i + 1)
-        .add("exceptionMessage", ex.getMessageValue())
+        .add(semconv::log::exceptionMessage, ex.getMessageValue())
         .add("queueObject", queue.getAddressIfSet());
       timings.addToLog(params);
       lc.log(log::INFO, "In Helpers::getLockedAndFetchedRepackQueue(): failed to fetch an existing queue. Retrying.");

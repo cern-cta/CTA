@@ -847,7 +847,7 @@ void RootEntry::removeRepackIndexAndCommit(log::LogContext& lc) {
     lc.log(log::INFO, "In RootEntry::removeRepackIndexAndCommit(): removed repack tape register object.");
   } catch (const cta::exception::NoSuchObject& ex) {
     log::ScopedParamContainer params(lc);
-    params.add("errorMsg", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(
       log::INFO,
       "In RootEntry::removeRepackIndexAndCommit(): the repack tape register object does not exist in the objectstore.");

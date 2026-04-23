@@ -91,7 +91,7 @@ void ArchiveRequest::insert() {
     }
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer params(m_lc);
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(log::ERR, "In ArchiveRequest::insert(): failed to queue job.");
     m_conn.rollback();  // Rollback on error
     throw;

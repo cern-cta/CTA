@@ -175,7 +175,7 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,
 
     m_stats.waitReportingTime += localTime.secs(cta::utils::Timer::resetCounter);
     cta::log::ScopedParamContainer params(lc);
-    params.add("errorMessage", e.getMessageValue());
+    params.add(cta::semconv::log::exceptionMessage, e.getMessageValue());
     logWithStat(cta::log::ERR, isVerifyOnly ? "File verification failed" : "File writing to disk failed", lc);
     lc.logBacktrace(cta::log::INFO, e.backtrace());
     reporter.reportFailedJob(std::move(m_retrieveJob), e, lc);

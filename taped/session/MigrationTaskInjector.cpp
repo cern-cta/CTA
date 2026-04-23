@@ -110,7 +110,7 @@ bool MigrationTaskInjector::synchronousInjection(bool& noFilesToMigrate) {
     scoped.add("transactionId", m_archiveMount.getMountTransactionId())
       .add("byteSizeThreshold", m_maxBytes)
       .add("maxFiles", m_maxFiles)
-      .add("exceptionMessage", ex.getMessageValue());
+      .add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
     m_lc.log(cta::log::ERR, "Failed to getFilesToMigrate");
     return false;
   }
@@ -206,7 +206,7 @@ void MigrationTaskInjector::WorkerThread::run() {
     //we end up there because we could not talk to the client
 
     cta::log::ScopedParamContainer container(m_parent.m_lc);
-    container.add("exception message", ex.getMessageValue());
+    container.add(cta::semconv::log::exceptionMessage, ex.getMessageValue());
     m_parent.m_lc.logBacktrace(cta::log::INFO, ex.backtrace());
     m_parent.m_lc.log(cta::log::ERR,
                       "In MigrationTaskInjector::WorkerThread::run(): "

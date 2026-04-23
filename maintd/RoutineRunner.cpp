@@ -51,11 +51,11 @@ void RoutineRunner::safeRunRoutine(IRoutine& routine, cta::log::LogContext& lc) 
     },
       opentelemetry::context::RuntimeContext::GetCurrent());
   } catch (cta::exception::Exception& ex) {
-    params.add("exceptionMessage", ex.getMessageValue());
+    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(log::ERR, "In RoutineRunner::safeRunRoutine(): received an exception. Backtrace follows.");
     lc.logBacktrace(log::INFO, ex.backtrace());
   } catch (std::exception& ex) {
-    params.add("exceptionMessage", ex.what());
+    params.add(semconv::log::exceptionMessage, ex.what());
     lc.log(log::ERR, "In RoutineRunner::safeRunRoutine(): received a std::exception.");
   } catch (...) {
     lc.log(log::ERR, "In RoutineRunner::safeRunRoutine(): received an unknown exception.");
