@@ -1,3 +1,9 @@
+## 5.11.18.0-2
+
+### Bug Fixes
+
+- [Misc] Update required runtime version of opentelemetry-cpp to v1.26.0 (cta/CTA!1370)
+
 ## 5.11.18.0-1
 
 ### New Features
