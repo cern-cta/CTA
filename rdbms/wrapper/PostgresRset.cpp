@@ -50,7 +50,7 @@ PostgresRset::~PostgresRset() {
 //------------------------------------------------------------------------------
 int PostgresRset::getColumnIndex(const std::string& colName) const {
   if (nullptr == m_resItr->get()) {
-    throw exception::Exception("No row available");
+    throw exception::NoSuchObject("No row available");
   }
   if (auto it = m_columnPQindexCache.find(colName); it != m_columnPQindexCache.end()) {
     return it->second;
@@ -67,7 +67,7 @@ int PostgresRset::getColumnIndex(const std::string& colName) const {
 bool PostgresRset::columnIsNull(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   return isPGColumnNull(ifield);
 }
@@ -88,7 +88,7 @@ std::string PostgresRset::columnBlob(const std::string& colName) const {
 std::unique_ptr<rdbms::wrapper::IBlobView> PostgresRset::columnBlobView(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
     return std::make_unique<BlobView>(nullptr, 0);
@@ -119,7 +119,7 @@ bool PostgresRset::columnBoolNoOpt(const std::string& colName) const {
 std::string PostgresRset::columnStringNoOpt(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   if (isPGColumnNull(ifield)) {
     throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
@@ -136,7 +136,7 @@ std::string PostgresRset::columnStringNoOpt(const std::string& colName) const {
 uint8_t PostgresRset::columnUint8NoOpt(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   if (isPGColumnNull(ifield)) {
     throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
@@ -152,7 +152,7 @@ uint8_t PostgresRset::columnUint8NoOpt(const std::string& colName) const {
 uint16_t PostgresRset::columnUint16NoOpt(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   if (isPGColumnNull(ifield)) {
     throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
@@ -169,7 +169,7 @@ uint16_t PostgresRset::columnUint16NoOpt(const std::string& colName) const {
 uint32_t PostgresRset::columnUint32NoOpt(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   if (isPGColumnNull(ifield)) {
     throw NullDbValue(std::string("Database column ") + colName + " contains a null value");
@@ -200,7 +200,7 @@ bool PostgresRset::columnExists(const std::string& colName) const {
 uint64_t PostgresRset::columnUint64NoOpt(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
 
   if (isPGColumnNull(ifield)) {
@@ -218,7 +218,7 @@ uint64_t PostgresRset::columnUint64NoOpt(const std::string& colName) const {
 double PostgresRset::columnDoubleNoOpt(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
 
   if (isPGColumnNull(ifield)) {
@@ -236,7 +236,7 @@ double PostgresRset::columnDoubleNoOpt(const std::string& colName) const {
 std::optional<std::string> PostgresRset::columnOptionalString(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
@@ -255,7 +255,7 @@ std::optional<std::string> PostgresRset::columnOptionalString(const std::string&
 std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
@@ -271,7 +271,7 @@ std::optional<uint8_t> PostgresRset::columnOptionalUint8(const std::string& colN
 std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
@@ -281,7 +281,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string& co
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
   if (!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue
+    throw exception::Mismatch(std::string("Column ") + colName + " contains the value " + stringValue
                                + " which is not a valid unsigned integer");
   }
 
@@ -294,7 +294,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string& co
 std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
@@ -304,7 +304,7 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string& co
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
   if (!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue
+    throw exception::Mismatch(std::string("Column ") + colName + " contains the value " + stringValue
                                + " which is not a valid unsigned integer");
   }
 
@@ -317,7 +317,7 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string& co
 std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
@@ -327,7 +327,7 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string& co
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
   if (!utils::isValidUInt(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue
+    throw exception::Mismatch(std::string("Column ") + colName + " contains the value " + stringValue
                                + " which is not a valid unsigned integer");
   }
 
@@ -340,7 +340,7 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string& co
 std::optional<double> PostgresRset::columnOptionalDouble(const std::string& colName) const {
   const int ifield = getColumnIndex(colName);
   if (ifield < 0) {
-    throw exception::Exception("Column does not exist: " + colName);
+    throw exception::NoSuchObject("Column does not exist: " + colName);
   }
   // the value can be null
   if (PQgetisnull(m_resItr->get(), 0, ifield)) {
@@ -350,7 +350,7 @@ std::optional<double> PostgresRset::columnOptionalDouble(const std::string& colN
   const std::string stringValue(PQgetvalue(m_resItr->get(), 0, ifield));
 
   if (!utils::isValidDecimal(stringValue)) {
-    throw exception::Exception(std::string("Column ") + colName + " contains the value " + stringValue
+    throw exception::Mismatch(std::string("Column ") + colName + " contains the value " + stringValue
                                + " which is not a valid decimal");
   }
 
