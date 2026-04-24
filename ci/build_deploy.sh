@@ -72,8 +72,7 @@ build_deploy() {
   local cta_version="5"
   local vcs_version="dev"
   local xrootd_ssi_version
-  xrootd_ssi_version=e1b6e8fcbbecabec080e8564cc01433d97313bda
-  #$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
+  xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
 
   # Input args
   local clean_build_dir=false
