@@ -115,8 +115,7 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
                                                           false /* isArchive */);
     txn.commit();
     if (nmountrows < 1) {
-      lc.log(cta::log::WARNING,
-             "In postgres::updateMountQueueLastFetch(): did not update any row.");
+      lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch(): did not update any row.");
     }
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
