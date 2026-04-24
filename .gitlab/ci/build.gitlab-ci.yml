@@ -50,7 +50,7 @@ build-cta-rpms:
       fi
     - echo "Building package CTA_VERSION=${CTA_VERSION} - CTA_RELEASE=${VCS_VERSION}"
     - git -C "$XRD_SSI_PATH" fetch --tags
-    - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
+    - export XRD_SSI_VERSION=e1b6e8fcbbecabec080e8564cc01433d97313bda
     - |
       if [[ -z "$XRD_SSI_VERSION" ]]; then
         echo "Error: failed to find tag for submodule $XRD_SSI_PATH"
