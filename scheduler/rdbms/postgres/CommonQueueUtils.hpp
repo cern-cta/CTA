@@ -32,6 +32,6 @@ namespace cta::schedulerdb::postgres {
 *
 * @return The number of rows affected by the insert or update operation.
 */
-uint64_t updateMountQueueLastFetch(Transaction& txn, uint64_t mountId, bool isActive, bool isRepack, , bool isArchive);
+uint64_t updateMountQueueLastFetch(Transaction& txn, uint64_t mountId, bool isActive, bool isRepack, bool isArchive);
 
 };  // namespace cta::schedulerdb::postgres
