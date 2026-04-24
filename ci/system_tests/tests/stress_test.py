@@ -305,6 +305,11 @@ async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_p
     drives_up = not stress_params.prequeue.enabled
     stop_monitoring = asyncio.Event()
 
+    total_file_count = 0
+    for i in range(stress_params.num_dirs):
+        dir_path = f"{archive_directory}/{i}"
+        total_file_count += eos_mgm.num_files_on_tape_only(str(dir_path))
+
     async def monitor_retrieve_and_put_drives_up():
         """Monitor tape-only file count and put drives up when threshold reached (for prequeue mode)."""
         nonlocal drives_up
@@ -352,7 +357,9 @@ async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_p
         print("Retrieve process failed")
         print(exec_result.stderr)
 
-    print(f"Retrieve phase completed in {timer_end - timer_start:.1f}s")
+    duration_seconds = timer_end - timer_start
+    avg_fps = total_file_count / duration_seconds
+    print(f"Retrieve request queueing completed in {duration_seconds:.1f}s, files/s: {avg_fps:.2f}")
 
 
 @pytest.mark.eos
