@@ -2175,7 +2175,6 @@ void RelationalDB::resubmitInactiveReporting(uint64_t deletionAge, uint64_t batc
     schedulerdb::Transaction txn(m_connPool, lc);
     txn.takeNamedLock(tbl + "_resubmitInactiveReporting");
     try {
-      ///
       std::string sql = R"SQL(
       WITH SET_SELECTION AS (
         SELECT JOB_ID FROM )SQL";

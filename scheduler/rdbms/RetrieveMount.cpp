@@ -12,6 +12,7 @@
 #include "common/process/threading/MutexLocker.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
+#include "scheduler/rdbms/postgres/CommonQueueUtils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
 namespace cta::schedulerdb {
@@ -107,17 +108,20 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
   }
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   try {
-    auto nmountrows =
-      postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(txn, mountInfo.mountId, true /* isActive */, m_isRepack);
+    auto nmountrows = postgres::updateMountQueueLastFetch(txn,
+                                                          mountInfo.mountId,
+                                                          true /* isActive */,
+                                                          m_isRepack,
+                                                          false /* isArchive */);
     txn.commit();
     if (nmountrows < 1) {
       lc.log(cta::log::WARNING,
-             "In postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(): did not update any row.");
+             "In postgres::updateMountQueueLastFetch(): did not update any row.");
     }
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
     params.add("exceptionMessage", ex.getMessageValue());
-    lc.log(cta::log::WARNING, "In postgres::RetrieveJobQueueRow::updateMountQueueLastFetch(): failed to update table.");
+    lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch(): failed to update table.");
     txn.abort();
   }
   return ret;
