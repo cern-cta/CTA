@@ -359,6 +359,13 @@ stress-test:
                           --chart-install-timeout 15
                           --test-script tests/prepare_tests.sh
                           "${extra_args[@]}"
+    # Set up monitoring
+    - git clone https://gitlab+deploy-token-3624:${CI_MONITORING_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
+    - helm install ci-monitoring ci_monitoring/ci-monitoring
+                  --namespace ${NAMESPACE}
+                  --set logsClaimName=logstorage-pvc
+                  --set image.pullSecrets={reg-eoscta-operations}
+                  --wait --timeout 5m
     # Run the actual stress test
     - cd tests
     - ./stress_test.sh -n ${NAMESPACE} ${EXTRA_STRESS_TEST_OPTIONS}
@@ -417,7 +424,7 @@ stress-test-python:
       fi
       if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
-        EXTRA_SPAWN_ARGS+=" --one-logical-library"
+        EXTRA_PYTEST_ARGS+=" --one-logical-library --test-config config/test_pgsched_params.toml"
       fi
       if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
 
@@ -436,6 +443,14 @@ stress-test-python:
                            --scheduler-config ${SCHEDULER_CONFIG}
                            --chart-install-timeout 15
                            ${EXTRA_SPAWN_ARGS}
+    # Set up monitoring
+    - git clone https://gitlab+deploy-token-3624:${CI_MONITORING_DEPLOY_TOKEN_READONLY}@gitlab.cern.ch/cta/sandbox/ci_monitoring.git
+    - helm install ci-monitoring ci_monitoring/ci-monitoring
+                  --namespace ${NAMESPACE}
+                  --set logsClaimName=logstorage-pvc
+                  --set image.pullSecrets={reg-eoscta-operations}
+                  --wait
+                  --timeout 5m
     # Run the actual stress test
     - cd ../system_tests
     - pytest tests/stress_test.py --namespace ${NAMESPACE}
