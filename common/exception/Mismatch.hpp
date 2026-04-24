@@ -17,7 +17,7 @@ public:
   /**
    * Constructor
    */
-  Mismatch() : cta::exception::Exception() {}
+  Mismatch(const std::string& what = "") : cta::exception::Exception(what) {}
 
 };  // class Mismatch
 
