@@ -6,6 +6,8 @@
 #include "rdbms/wrapper/PostgresRset.hpp"
 
 #include "common/exception/Exception.hpp"
+#include "common/exception/Mismatch.hpp"
+#include "common/exception/NoSuchObject.hpp"
 #include "common/process/threading/RWLockWrLocker.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/NullDbValue.hpp"
@@ -282,7 +284,7 @@ std::optional<uint16_t> PostgresRset::columnOptionalUint16(const std::string& co
 
   if (!utils::isValidUInt(stringValue)) {
     throw exception::Mismatch(std::string("Column ") + colName + " contains the value " + stringValue
-                               + " which is not a valid unsigned integer");
+                              + " which is not a valid unsigned integer");
   }
 
   return utils::toUint16(stringValue);
@@ -305,7 +307,7 @@ std::optional<uint32_t> PostgresRset::columnOptionalUint32(const std::string& co
 
   if (!utils::isValidUInt(stringValue)) {
     throw exception::Mismatch(std::string("Column ") + colName + " contains the value " + stringValue
-                               + " which is not a valid unsigned integer");
+                              + " which is not a valid unsigned integer");
   }
 
   return utils::toUint32(stringValue);
@@ -328,7 +330,7 @@ std::optional<uint64_t> PostgresRset::columnOptionalUint64(const std::string& co
 
   if (!utils::isValidUInt(stringValue)) {
     throw exception::Mismatch(std::string("Column ") + colName + " contains the value " + stringValue
-                               + " which is not a valid unsigned integer");
+                              + " which is not a valid unsigned integer");
   }
 
   return utils::toUint64(stringValue);
@@ -351,7 +353,7 @@ std::optional<double> PostgresRset::columnOptionalDouble(const std::string& colN
 
   if (!utils::isValidDecimal(stringValue)) {
     throw exception::Mismatch(std::string("Column ") + colName + " contains the value " + stringValue
-                               + " which is not a valid decimal");
+                              + " which is not a valid decimal");
   }
 
   return utils::toDouble(stringValue);
