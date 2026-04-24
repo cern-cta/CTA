@@ -792,5 +792,8 @@ VALUES )SQL";
    * Increments the number of retries and updates the last failed mount accordingly.
    */
   void updateRetryCounts(uint64_t mountId);
+
+  static rdbms::Rset getNextSuccessfulArchiveRepackReportBatch(Transaction& txn, const size_t limit);
+  static rdbms::Rset deleteSuccessfulRepackArchiveJobBatch(Transaction& txn, std::vector<std::string>& jobIDs);
 };
 };  // namespace cta::schedulerdb::postgres
