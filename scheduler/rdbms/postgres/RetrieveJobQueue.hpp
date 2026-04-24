@@ -967,6 +967,5 @@ public:
    * Increments the number of retries and updates the last failed mount accordingly.
    */
   void updateRetryCounts(uint64_t mountId);
-
 };
 };  // namespace cta::schedulerdb::postgres
