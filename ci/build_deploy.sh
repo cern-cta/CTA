@@ -100,6 +100,7 @@ build_deploy() {
   local extra_spawn_options=""
   local extra_image_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
+  local eos_image_repository=""
   local eos_image_tag=""
   local container_runtime="podman"
   local platform
@@ -139,6 +140,14 @@ build_deploy() {
     --publish-telemetry) publish_telemetry=true ;;
     --no-setup) no_setup=true ;;
     --enable-address-sanitizer) enable_address_sanitizer=true ;;
+    --eos-image-repository)
+      if [[ $# -gt 1 ]]; then
+        eos_image_repository="$2"
+        shift
+      else
+        error_usage "--eos-image-repository requires an argument"
+      fi
+      ;;
     --eos-image-tag)
       if [[ $# -gt 1 ]]; then
         eos_image_tag="$2"
@@ -450,7 +459,7 @@ build_deploy() {
     elif [[ "$upgrade_eos" = true ]]; then
       print_header "UPGRADING EOS INSTANCE"
       cd ci/orchestration
-      ./deploy_eos_instance.sh --namespace "${deploy_namespace}" --eos-image-tag "${eos_image_tag}"
+      ./deploy_eos_instance.sh --namespace "${deploy_namespace}" --eos-image-repository "${eos_image_repository}" --eos-image-tag "${eos_image_tag}"
     else
       print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development
@@ -459,6 +468,10 @@ build_deploy() {
       print_header "DEPLOYING CTA INSTANCE"
       if [[ -n "${tapeservers_config}" ]]; then
         extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
+      fi
+
+      if [[ -n "${eos_image_repository}" ]]; then
+        extra_spawn_options+=" --eos-image-repository ${eos_image_repository}"
       fi
 
       if [[ -n "${eos_image_tag}" ]]; then
