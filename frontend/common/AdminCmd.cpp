@@ -1698,7 +1698,7 @@ void AdminCmd::processModifyArchiveFile(xrd::Response& response) const {
     std::optional<std::string> diskFileIdStr = getAndValidateDiskFileIdOptional();
     std::optional<std::string> diskInstance = getOptional(OptionString::DISK_INSTANCE);
 
-    auto archiveFileIds = getRequired(OptionStrList::FILE_ID);
+    auto archiveFileIds = getRequired(OptionStrList::ARCHIVE_FILE_ID);
 
     // call is from cta-change-storageclass
     if (newStorageClassName) {
