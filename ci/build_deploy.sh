@@ -459,7 +459,7 @@ build_deploy() {
     elif [[ "$upgrade_eos" = true ]]; then
       print_header "UPGRADING EOS INSTANCE"
       cd ci/orchestration
-      ./deploy_eos_instance.sh --namespace "${deploy_namespace}" --eos-image-repository "${eos_image_repository}" --eos-image-tag "${eos_image_tag}"
+      ./deploy_eos.sh --namespace "${deploy_namespace}" --eos-image-repository "${eos_image_repository}" --eos-image-tag "${eos_image_tag}"
     else
       print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development

@@ -44,6 +44,7 @@ deploy() {
   project_json_path="../../project.json"
   eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
   setup_enabled=true
+  eos_config="presets/dev-eos-xrd-values.yaml"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
