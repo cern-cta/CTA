@@ -174,6 +174,8 @@ const cmdLookup_t cmdLookup = {
   {"ad",                  AdminCmd::CMD_ADMIN              },
   {"archiveroute",        AdminCmd::CMD_ARCHIVEROUTE       },
   {"ar",                  AdminCmd::CMD_ARCHIVEROUTE       },
+  {"archivefile",         AdminCmd::CMD_ARCHIVEFILE        },
+  {"af",                  AdminCmd::CMD_ARCHIVEFILE        },
   {"drive",               AdminCmd::CMD_DRIVE              },
   {"dr",                  AdminCmd::CMD_DRIVE              },
   {"failedrequest",       AdminCmd::CMD_FAILEDREQUEST      },
@@ -351,6 +353,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
   {AdminCmd::CMD_ACTIVITYMOUNTRULE,   {"activitymountrule", "amr", {"add", "ch", "rm", "ls"}} },
   {AdminCmd::CMD_ADMIN,               {"admin", "ad", {"add", "ch", "rm", "ls"}}              },
   {AdminCmd::CMD_ARCHIVEROUTE,        {"archiveroute", "ar", {"add", "ch", "rm", "ls"}}       },
+  {AdminCmd::CMD_ARCHIVEFILE,         {"archivefile", "af", {"ch"}}                           },
   {AdminCmd::CMD_DISKINSTANCE,        {"diskinstance", "di", {"add", "ch", "rm", "ls"}}       },
   {AdminCmd::CMD_DISKINSTANCESPACE,   {"diskinstancespace", "dis", {"add", "ch", "rm", "ls"}} },
   {AdminCmd::CMD_DISKSYSTEM,          {"disksystem", "ds", {"add", "ch", "rm", "ls"}}         },
@@ -597,6 +600,13 @@ archiveroute (ar)
    {opt_storageclass, opt_copynb, opt_archive_route_type, opt_tapepool.optional(), opt_comment.optional()}                   },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM},         {opt_storageclass, opt_copynb, opt_archive_route_type}         },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS},         {}                                                             },
+
+  /**md
+archivefile (af)
+
+:   Change the storage class of archive files.
+  */
+  {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},          {opt_archive_file_ids, opt_storageclass}                       },
 
   /**md
 diskinstance (di)
@@ -1165,11 +1175,7 @@ virtualorganization (vo)
 
   // Used by cta-change-storageclass and cta-eos-namespace-inject
   {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
-   {opt_storageclass.optional(),
-    opt_archive_file_ids,
-    opt_fid.optional(),
-    opt_diskfileid.optional(),
-    opt_diskinstance.optional()}                                                                                             },
+   {opt_fid.optional(), opt_diskfileid.optional(), opt_diskinstance.optional()}                                              },
   // Used by cta-restore-deleted-files
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE},
    {opt_vid.optional(),
