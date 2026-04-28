@@ -101,10 +101,11 @@ public:
     MountPolicySerDeser m_MountPolicy;
 
   private:
-    // The updater stores a reference to this callback, so it must be declared after the callback to be destroyed first.
-    //Callback to be executed by the AsyncUpdater
+    // Callback to be executed by the AsyncUpdater
     std::function<std::string(const std::string&)> m_updaterCallback;
-    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    // Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    // The updater must be declared after m_updaterCallback, so that it's destroyed first.
+    // This ensures that it's internal reference to m_updaterCallback is never invalid.
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
 
@@ -119,9 +120,11 @@ public:
     MountPolicySerDeser m_MountPolicy;
 
   private:
-    //Callback to be executed by the AsyncUpdater
+    // Callback to be executed by the AsyncUpdater
     std::function<std::string(const std::string&)> m_updaterCallback;
-    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    // Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    // The updater must be declared after m_updaterCallback, so that it's destroyed first.
+    // This ensures that it's internal reference to m_updaterCallback is never invalid.
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
 
@@ -136,9 +139,11 @@ public:
     void wait();
 
   private:
-    //Callback to be executed by the AsyncUpdater
+    // Callback to be executed by the AsyncUpdater
     std::function<std::string(const std::string&)> m_updaterCallback;
-    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    // Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    // The updater must be declared after m_updaterCallback, so that it's destroyed first.
+    // This ensures that it's internal reference to m_updaterCallback is never invalid.
     std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
 
