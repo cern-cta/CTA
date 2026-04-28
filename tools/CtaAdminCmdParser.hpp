@@ -424,7 +424,7 @@ const Option opt_partialtapes {Option::OPT_UINT, "--partialtapesnumber", "-p", "
 const Option opt_primarydensitycode {Option::OPT_UINT, "--primarydensitycode", "-p", " <primary_density_code>"};
 const Option opt_retrievepriority {Option::OPT_UINT, "--retrievepriority", "--rp", " <priority_value>"};
 const Option opt_secondarydensitycode {Option::OPT_UINT, "--secondarydensitycode", "-s", " <secondary_density_code>"};
-const Option opt_storageclass {Option::OPT_STR, "--storageclass", "-s", " <storage_class_name>"};
+const Option opt_storageclass {Option::OPT_STR, "--storageclass", "-s", " <targetStorageClass>"};
 const Option opt_storageclass_alias {Option::OPT_STR, "--name", "-n", " <storage_class_name>", "--storageclass"};
 const Option opt_summary {Option::OPT_FLAG, "--summary", "-S", ""};
 const Option opt_supply {Option::OPT_STR, "--supply", "-s", " <supply_value>"};
@@ -472,7 +472,7 @@ const Option opt_diskinstancespace_alias {Option::OPT_STR,
                                           "--diskinstancespace"};
 const Option opt_verificationstatus {Option::OPT_STR, "--verificationstatus", "--vs", " <verification_status>"};
 const Option opt_disabledreason {Option::OPT_STR, "--disabledreason", "--dr", " <disabled_reason>"};
-const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--idfile", "-I", " <archive_file_id>"};
+const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--idfile", "-I", " <archive_file_id_file>"};
 const Option opt_physical_library_alias {Option::OPT_STR,
                                          "--name",
                                          "-n",
