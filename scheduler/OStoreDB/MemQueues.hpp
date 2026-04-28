@@ -398,7 +398,7 @@ MemQueue<Request, Queue>::sharedAddToNewQueue(typename Request::JobDump& job,
     // And finally release all the user threads
     for (auto& maqr : maq->m_requests) {
       {
-        threading::MutexLocker(maqr->m_mutex);
+        threading::MutexLocker ml(maqr->m_mutex);
         maqr->m_returnValue = ret;
         maqr->m_promise->set_value();
       }
@@ -428,7 +428,7 @@ MemQueue<Request, Queue>::sharedAddToNewQueue(typename Request::JobDump& job,
     // Something went wrong. We should inform the other threads
     for (auto& maqr : maq->m_requests) {
       try {
-        threading::MutexLocker(maqr->m_mutex);
+        threading::MutexLocker ml(maqr->m_mutex);
         maqr->m_promise->set_exception(std::current_exception());
       } catch (...) {
         exceptionsNotPassed++;
