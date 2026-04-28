@@ -140,18 +140,10 @@ void RetrieveRequest::garbageCollectRetrieveRequest(const std::string& presumedO
   for (auto& j : m_payload.jobs()) {
     switch (j.status()) {
       case RetrieveJobStatus::RJS_ToTransfer:
-        // Find the job details in tape file
         for (auto& tf : m_payload.archivefile().tapefiles()) {
-          if (tf.copynb() == j.copynb()) {
-            candidateVids.insert(tf.vid());
-            goto found;
-          }
+          candidateVids.insert(tf.vid());
         }
-        {
-          std::stringstream err;
-          err << (logHead + "could not find tapefile for copynb ") << j.copynb();
-          throw exception::Exception(err.str());
-        }
+        goto found;
       case RetrieveJobStatus::RJS_ToReportToRepackForSuccess:
       case RetrieveJobStatus::RJS_ToReportToRepackForFailure:
         //We don't have any vid to find, we just need to
