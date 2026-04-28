@@ -101,10 +101,11 @@ public:
     MountPolicySerDeser m_MountPolicy;
 
   private:
-    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
-    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
+    // The updater stores a reference to this callback, so it must be declared after the callback to be destroyed first.
     //Callback to be executed by the AsyncUpdater
     std::function<std::string(const std::string&)> m_updaterCallback;
+    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
 
   class AsyncJobSucceedForRepackReporter {
@@ -118,10 +119,10 @@ public:
     MountPolicySerDeser m_MountPolicy;
 
   private:
-    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
-    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     //Callback to be executed by the AsyncUpdater
     std::function<std::string(const std::string&)> m_updaterCallback;
+    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
 
   /**
@@ -135,10 +136,10 @@ public:
     void wait();
 
   private:
-    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
-    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
     //Callback to be executed by the AsyncUpdater
     std::function<std::string(const std::string&)> m_updaterCallback;
+    //Hold the AsyncUpdater that will run asynchronously the m_updaterCallback
+    std::unique_ptr<Backend::AsyncUpdater> m_backendUpdater;
   };
 
   /**
