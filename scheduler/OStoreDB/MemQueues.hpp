@@ -127,7 +127,10 @@ class MemQueueRequest {
 public:
   MemQueueRequest(typename Request::JobDump& job, Request& archiveRequest) : m_job(job), m_request(archiveRequest) {}
 
-  virtual ~MemQueueRequest() { threading::MutexLocker ml(m_mutex); }
+  virtual ~MemQueueRequest() {
+    threading::MutexLocker ml(m_mutex);
+    m_returnValue.reset();
+  }
 
 private:
   typename Request::JobDump m_job;
@@ -264,7 +267,11 @@ MemQueue<Request, Queue>::sharedAddToQueue(typename Request::JobDump& job,
   globalLock.unlock();
   // Wait for our request completion (this could throw, if there was a problem)
   resultFuture.get();
-  auto ret = maqr->m_returnValue;
+  std::shared_ptr<SharedQueueLock<Queue, Request>> ret;
+  {
+    threading::MutexLocker ml(maqr->m_mutex);
+    ret = maqr->m_returnValue;
+  }
   __attribute__((unused)) auto debugMaqr = maqr.get();
   maqr.reset();
   return ret;
@@ -391,7 +398,7 @@ MemQueue<Request, Queue>::sharedAddToNewQueue(typename Request::JobDump& job,
     // And finally release all the user threads
     for (auto& maqr : maq->m_requests) {
       {
-        threading::MutexLocker(maqr->m_mutex);
+        threading::MutexLocker ml(maqr->m_mutex);
         maqr->m_returnValue = ret;
         maqr->m_promise->set_value();
       }
@@ -421,7 +428,7 @@ MemQueue<Request, Queue>::sharedAddToNewQueue(typename Request::JobDump& job,
     // Something went wrong. We should inform the other threads
     for (auto& maqr : maq->m_requests) {
       try {
-        threading::MutexLocker(maqr->m_mutex);
+        threading::MutexLocker ml(maqr->m_mutex);
         maqr->m_promise->set_exception(std::current_exception());
       } catch (...) {
         exceptionsNotPassed++;
