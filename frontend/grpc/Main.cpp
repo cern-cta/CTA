@@ -163,10 +163,14 @@ int main(const int argc, char* const* const argv) {
 
   // get number of threads
   int threads = frontendService->getThreads().value_or(8 * std::thread::hardware_concurrency());
+  grpc_ssl_client_certificate_request_type cert_request_type = GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE;
 
   if (useTLS) {
     lc.log(log::INFO, "Using gRPC over TLS");
-    grpc::SslServerCredentialsOptions tls_options(GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE);
+    if (auto useMutualTls = frontendService->getMutualTls(); useMutualTls.has_value() && useMutualTls.value()) {
+      cert_request_type = GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY;
+    }
+    grpc::SslServerCredentialsOptions tls_options(cert_request_type);
     grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
 
     if (!frontendService->getTlsKey().has_value()) {

@@ -407,6 +407,9 @@ FrontendService::FrontendService(const std::string& configFilename) {
   // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
   std::optional<bool> tls = config.getOptionValueBool("grpc.tls.enabled");
   m_tls = tls.value_or(false);  // default value is false
+  if (auto mutualTls = config.getOptionValueBool("grpc.tls.mutual_tls.enabled"); mutualTls.has_value()) {
+    m_mutualTls = mutualTls.value();
+  }
   if (auto TlsKey = config.getOptionValueStr("grpc.tls.server_key_path"); TlsKey.has_value()) {
     m_tlsKey = TlsKey.value();
   }
