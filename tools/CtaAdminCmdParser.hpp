@@ -472,7 +472,7 @@ const Option opt_diskinstancespace_alias {Option::OPT_STR,
                                           "--diskinstancespace"};
 const Option opt_verificationstatus {Option::OPT_STR, "--verificationstatus", "--vs", " <verification_status>"};
 const Option opt_disabledreason {Option::OPT_STR, "--disabledreason", "--dr", " <disabled_reason>"};
-const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--idfile", "-I", " <archive_file_id_file>"};
+const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--idfile", "-I", " <filename>"};
 const Option opt_physical_library_alias {Option::OPT_STR,
                                          "--name",
                                          "-n",
