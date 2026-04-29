@@ -231,7 +231,7 @@ xrd::Response AdminCmd::process() {
         processRecycleTapeFile_Restore(response);
         break;
       case cmd_pair(admin::AdminCmd::CMD_ARCHIVEFILE, admin::AdminCmd::SUBCMD_CH):
-        processModifyArchiveFile(response);
+        processArchiveFile_Ch(response);
         break;
       default:
         throw exception::PbException("Admin command pair <" + AdminCmd_Cmd_Name(m_adminCmd.cmd()) + ", "
@@ -1689,7 +1689,7 @@ void AdminCmd::processRecycleTapeFile_Restore(xrd::Response& response) const {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmd::processModifyArchiveFile(xrd::Response& response) const {
+void AdminCmd::processArchiveFile_Ch(xrd::Response& response) const {
   using namespace cta::admin;
 
   try {
