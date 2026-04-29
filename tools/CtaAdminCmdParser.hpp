@@ -1173,7 +1173,6 @@ virtualorganization (vo)
    COMMANDS DEFINED IN CTA FRONTEND BUT NOT AVAILABLE TO CTA-ADMIN
    -------------------------------------------------------------------------------------------------------------------------*/
 
-  // Used by cta-change-storageclass and cta-eos-namespace-inject
   {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
    {opt_fid.optional(), opt_diskfileid.optional(), opt_diskinstance.optional()}                                              },
   // Used by cta-restore-deleted-files

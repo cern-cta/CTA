@@ -141,7 +141,7 @@ private:
   void processPhysicalLibrary_Ch(xrd::Response& response) const;
   void processPhysicalLibrary_Rm(xrd::Response& response) const;
   void processRecycleTapeFile_Restore(xrd::Response& response) const;
-  void processModifyArchiveFile(xrd::Response& response) const;
+  void processArchiveFile_Ch(xrd::Response& response) const;
 
   void triggerTapeStateChange(const common::dataStructures::SecurityIdentity& admin,
                               const std::string& vid,
