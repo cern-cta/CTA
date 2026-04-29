@@ -113,6 +113,11 @@ public:
   bool getTls() const { return m_tls; }
 
   /*
+   * Get the TLS value
+   */
+  const std::optional<bool> getMutualTls() const { return m_mutualTls; }
+
+  /*
    * Get the TlsKey
    */
   const std::optional<std::string> getTlsKey() const { return m_tlsKey; }
@@ -220,6 +225,8 @@ private:
   std::optional<std::string>                    m_servicePrincipal;             //!< The service principal to be used for Kerberos authentication by the gRPC server
   std::optional<int>                            m_threads;                      //!< The number of threads used by the gRPC server
   bool                                          m_tls;                          //!< Use TLS encryption for gRPC
+  std::optional<bool>                           m_mutualTls;                    //!< Use mutual TLS for authentication
+  std::optional<std::string>                    m_certMap;                      //!< The file that maps certificates to clients for authorization purposes
   std::optional<std::string>                    m_tlsKey;                       //!< The TLS service key file
   std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file
   std::optional<std::string>                    m_tlsChain;                     //!< The TLS CA chain file
