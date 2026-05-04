@@ -35,8 +35,8 @@
         catalogue_version=$(jq -r '.catalogueVersion' project.json)
         git restore project.json
       else
-        # If the project.json does not exist, just assume catalogue version 15.0
-        catalogue_version=15.0
+        # If the project.json does not exist, just assume catalogue version 16.0
+        catalogue_version=16.0
       fi
       EXTRA_SPAWN_ARGS+=" --catalogue-version ${catalogue_version}"
     fi
