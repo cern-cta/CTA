@@ -290,7 +290,7 @@ private:
    * @param colName
    * @return index of the column
    */
-  size_t getColumnIndex(const std::string& colName) const;
+  int getColumnIndex(const std::string& colName) const;
 
   /**
    * Template method that converts a string to a required numeric type

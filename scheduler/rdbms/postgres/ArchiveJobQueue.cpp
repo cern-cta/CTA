@@ -11,6 +11,7 @@
 #include "scheduler/rdbms/ArchiveMount.hpp"
 
 namespace cta::schedulerdb::postgres {
+
 std::pair<rdbms::Rset, uint64_t>
 ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
                                             ArchiveJobStatus newStatus,
@@ -39,29 +40,17 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
       FOR UPDATE SKIP LOCKED
     ),
     SELECTION_WITH_CUMULATIVE_SUMS AS (
-      SELECT JOB_ID, PRIORITY,
-             SUM(SIZE_IN_BYTES) OVER (ORDER BY PRIORITY DESC, JOB_ID) AS CUMULATIVE_SIZE
-      FROM SET_SELECTION
-    ),
-    CUMULATIVE_SELECTION AS (
-        SELECT JOB_ID, PRIORITY, CUMULATIVE_SIZE
-        FROM SELECTION_WITH_CUMULATIVE_SUMS
-        WHERE CUMULATIVE_SIZE <= :BYTES_REQUESTED
-    ),
-    UPDATED_MOUNT_QUEUE_LAST_FETCH AS (
-       INSERT INTO MOUNT_QUEUE_LAST_FETCH (MOUNT_ID, LAST_UPDATE_TIME, QUEUE_TYPE)
-         VALUES (:MOUNT_ID_HB, EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER, :QUEUE_TYPE)
-       ON CONFLICT (MOUNT_ID, QUEUE_TYPE)
-         DO UPDATE SET
-           LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME,
-           QUEUE_TYPE = EXCLUDED.QUEUE_TYPE
+      SELECT JOB_ID FROM (
+        SELECT JOB_ID, SUM(SIZE_IN_BYTES) OVER (ORDER BY PRIORITY DESC, JOB_ID) AS CUMULATIVE_SIZE
+          FROM SET_SELECTION ) s
+      WHERE s.CUMULATIVE_SIZE <= :BYTES_REQUESTED
     ),
     MOVED_ROWS AS (
         DELETE FROM
       )SQL";
   sql += prefix + "ARCHIVE_PENDING_QUEUE ";
   sql += R"SQL( AIQ
-        USING CUMULATIVE_SELECTION CSEL
+        USING SELECTION_WITH_CUMULATIVE_SUMS CSEL
         WHERE AIQ.JOB_ID = CSEL.JOB_ID
         RETURNING AIQ.*
     )
@@ -160,11 +149,8 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":TAPE_POOL", mountInfo.tapePool);
   stmt.bindString(":STATUS", to_string(newStatus));
-  std::string queueType = isRepack ? "REPACK_ARCHIVE_ACTIVE" : "ARCHIVE_ACTIVE";
-  stmt.bindString(":QUEUE_TYPE", queueType);
   stmt.bindUint32(":LIMIT", limit);
   stmt.bindUint64(":MOUNT_ID", mountInfo.mountId);
-  stmt.bindUint64(":MOUNT_ID_HB", mountInfo.mountId);
   stmt.bindUint64(":SAME_MOUNT_ID", mountInfo.mountId);
   stmt.bindString(":VID", mountInfo.vid);
   stmt.bindString(":DRIVE", mountInfo.drive);
@@ -343,7 +329,7 @@ rdbms::Rset ArchiveJobQueueRow::getNextSuccessfulArchiveRepackReportBatch(Transa
   std::string sql = R"SQL(
         SELECT SRC_URL, JOB_ID FROM REPACK_ARCHIVE_ACTIVE_QUEUE
             WHERE STATUS = :STATUS
-                ORDER BY JOB_ID
+                ORDER BY PRIORITY DESC, JOB_ID
                 LIMIT :LIMIT FOR UPDATE SKIP LOCKED
   )SQL";
 
@@ -494,6 +480,8 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
     )
   )SQL";
   if (keepMountId) {
+    // To optimise this query, one may consider creating separate call
+    // similar to updateMountQueueLastFetch and remove UPDATED_MOUNT_QUEUE_LAST_FETCH
     sql += R"SQL(
       , UPDATED_MOUNT_QUEUE_LAST_FETCH AS (
        INSERT INTO MOUNT_QUEUE_LAST_FETCH (MOUNT_ID, LAST_UPDATE_TIME, QUEUE_TYPE)
@@ -506,6 +494,8 @@ uint64_t ArchiveJobQueueRow::requeueFailedJob(Transaction& txn,
          DO UPDATE SET
            LAST_UPDATE_TIME = EXCLUDED.LAST_UPDATE_TIME,
            QUEUE_TYPE = EXCLUDED.QUEUE_TYPE
+             WHERE MOUNT_QUEUE_LAST_FETCH.LAST_UPDATE_TIME
+               < EXCLUDED.LAST_UPDATE_TIME - 5
     ) )SQL";
   }
   sql += R"SQL(
@@ -814,7 +804,7 @@ rdbms::Rset ArchiveJobQueueRow::moveFailedRepackJobBatchToFailedQueueTable(Trans
             SELECT JOB_ID
             FROM REPACK_ARCHIVE_ACTIVE_QUEUE
             WHERE STATUS = 'AJS_ToReportToRepackForFailure'
-            ORDER BY JOB_ID
+            ORDER BY PRIORITY DESC, JOB_ID
             LIMIT :LIMIT
             FOR UPDATE SKIP LOCKED
         )
@@ -859,9 +849,7 @@ uint64_t ArchiveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, Ar
 
 rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
                                                           std::list<ArchiveJobStatus> statusList,
-                                                          uint64_t gc_delay,
                                                           uint64_t limit) {
-  uint64_t gc_now_minus_delay = (uint64_t) cta::utils::getCurrentEpochTime() - gc_delay;
   std::string sql = R"SQL(
       WITH SET_SELECTION AS (
         SELECT JOB_ID FROM ARCHIVE_ACTIVE_QUEUE
@@ -882,8 +870,7 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
     j++;
   }
   sql += R"SQL(
-        ]::ARCHIVE_JOB_STATUS[]) AND ( IS_REPORTING IS FALSE
-        OR (IS_REPORTING IS TRUE AND LAST_UPDATE_TIME < :NOW_MINUS_DELAY) )
+        ]::ARCHIVE_JOB_STATUS[]) AND IS_REPORTING IS FALSE
         ORDER BY PRIORITY DESC, JOB_ID
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
       UPDATE ARCHIVE_ACTIVE_QUEUE SET
@@ -899,8 +886,6 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
     stmt.bindString(placeholderVec[i], statusVec[i]);
   }
   stmt.bindUint64(":LIMIT", limit);
-  stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
-
   return stmt.executeQuery();
 }
 
