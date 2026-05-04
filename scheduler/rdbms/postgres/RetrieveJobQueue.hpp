@@ -402,7 +402,6 @@ public:
     sql += R"(    ) )";
 
     auto stmt = conn.createStmt(sql);
-    //stmt.bindUint64(":RETRIEVE_REQUEST_ID", retrieveRequestId);
     stmt.bindUint32(":REQUEST_JOB_COUNT", reqJobCount);
     stmt.bindString(":STATUS", to_string(status));
     stmt.bindUint64(":CREATION_TIME", static_cast<uint64_t>(creationTime));
@@ -698,7 +697,6 @@ public:
         stmt.bindString(":REPACK_REARCHIVE_COPY_NBS" + std::to_string(i), row.rearchiveCopyNbs);
         stmt.bindString(":REPACK_REARCHIVE_TAPE_POOLS" + std::to_string(i), row.rearchiveTapePools);
       }
-      //stmt.bindUint64(":RETRIEVE_REQUEST_ID" + std::to_string(i), row.retrieveRequestId);
       stmt.bindUint32(":REQUEST_JOB_COUNT" + std::to_string(i), row.reqJobCount);
       stmt.bindString(":STATUS" + std::to_string(i), to_string(row.status));
       stmt.bindUint64(":CREATION_TIME" + std::to_string(i), static_cast<uint64_t>(row.creationTime));
