@@ -26,6 +26,7 @@ TEST(cta_Daemon, TapedConfiguration) {
 
                               "general InstanceName production\n"
                               "general SchedulerBackendName dummyProdUser\n"
+                              "general SchedulerNumberOfConnections 3\n"
                               "general ServiceName dummy-service-name\n");
 
   ASSERT_THROW(cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(incompleteConfFile.path()),
@@ -53,6 +54,7 @@ TEST(cta_Daemon, TapedConfigurationFull) {
 
                               "general InstanceName production\n"
                               "general SchedulerBackendName dummyProdUser\n"
+                              "general SchedulerNumberOfConnections 3\n"
                               "general ServiceName dummy-service-name\n");
 
   // The log parameter can be uncommented to inspect the result on the output.
@@ -83,6 +85,7 @@ TempFile getDummyDriveConfig(const std::string& driveName) {
 
                                 "general InstanceName production\n"
                                 "general SchedulerBackendName dummyProdUser\n"
+                                "general SchedulerNumberOfConnections 3\n"
                                 "general ServiceName dummy-service-name\n"
 
                                 "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n");
