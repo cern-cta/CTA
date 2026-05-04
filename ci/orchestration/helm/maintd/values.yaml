@@ -33,6 +33,7 @@ logging:
 scheduler:
   tapeCacheMaxAgeSecs: 600
   retrieveQueueCacheMaxAgeSecs: 10
+  numberOfConnections: 2
 
 # OpenTelemetry is entirely configured through declarative configuration
 # Simply put the config verbatim here under telemetryConfig:

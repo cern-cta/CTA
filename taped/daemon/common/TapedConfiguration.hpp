@@ -233,11 +233,13 @@ struct TapedConfiguration {
   cta::SourcedParameter<std::string> driveControlPath {"taped", "DriveControlPath"};
 
   //----------------------------------------------------------------------------
-  // Drive Options
+  // General Options
   //----------------------------------------------------------------------------
   cta::SourcedParameter<std::string> instanceName {"general", "InstanceName"};
 
   cta::SourcedParameter<std::string> schedulerBackendName {"general", SCHEDULER_NAME_CONFIG_KEY};
+
+  cta::SourcedParameter<uint16_t> schedulerNumberOfConnections {"general", "SchedulerNumberOfConnections"};
 
   //----------------------------------------------------------------------------
   // Telemetry Options

@@ -34,6 +34,9 @@ data:
     # CTA Scheduler DB options - Cache timeout options (decreased for tests)
     cta.schedulerdb.tape_cache_max_age_secs {{ .Values.xrd.conf.schedulerdb.tapeCacheMaxAgeSecs }}
     cta.schedulerdb.retrieve_queue_cache_max_age_secs {{ .Values.xrd.conf.schedulerdb.retrieveQueueCacheMaxAgeSecs }}
+    
+    # CTA Scheduler DB - number of connection in the pool
+    cta.schedulerdb.numberofconnections {{ .Values.xrd.conf.schedulerdb.numberOfConnections }}
 
     # CTA Catalogue options
     cta.catalogue.numberofconnections {{ .Values.xrd.conf.catalogue.numberOfConnections }}

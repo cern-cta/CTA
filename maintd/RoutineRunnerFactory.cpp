@@ -53,8 +53,13 @@ RoutineRunnerFactory::RoutineRunnerFactory(const MaintdConfig& config, cta::log:
   m_schedDbInit =
     std::make_unique<SchedulerDBInit_t>("Maintd", m_config.scheduler.objectstore_backend_path, m_lc.logger());
 #else
-  m_schedDbInit =
-    std::make_unique<SchedulerDBInit_t>("Maintd", utils::file2string(m_config.scheduler.config_file), m_lc.logger());
+  log::ScopedParamContainer(m_lc)
+    .add("numberofconnections", m_config.scheduler.number_of_connections)
+    .log(log::INFO, "Setting number of connections for PG Scheduler for the Routine process pool.");
+  m_schedDbInit = std::make_unique<SchedulerDBInit_t>("Maintd",
+                                                      utils::file2string(m_config.scheduler.config_file),
+                                                      m_config.scheduler.number_of_connections,
+                                                      m_lc.logger());
 #endif
   m_schedDb = m_schedDbInit->getSchedDB(*m_catalogue, m_lc.logger());
   // Set Scheduler DB cache timeouts

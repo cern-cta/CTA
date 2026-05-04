@@ -20,10 +20,12 @@ class RelationalDBInit {
 public:
   RelationalDBInit(const std::string& client_process,
                    const std::string& db_conn_str,
+                   uint16_t db_nb_conns,
                    log::Logger& log,
-                   bool leaveNonEmptyAgentsBehind = false) {
-    connStr = db_conn_str;
-    clientProc = client_process;
+                   bool leaveNonEmptyAgentsBehind = false)
+      : connStr(db_conn_str),
+        numberOfConnections(db_nb_conns),
+        clientProc(client_process) {
     login = rdbms::Login::parseString(connStr);
     if (login.dbType != rdbms::Login::DBTYPE_POSTGRESQL) {
       std::runtime_error("scheduler dbconnect string must specify postgres.");
@@ -54,12 +56,12 @@ public:
   }
 
   std::unique_ptr<RelationalDB> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
-    const uint64_t nbConns = 20;
-    return std::make_unique<RelationalDB>(clientProc, log, catalogue, login, nbConns);
+    return std::make_unique<RelationalDB>(clientProc, log, catalogue, login, numberOfConnections);
   }
 
 private:
   std::string connStr;
+  const uint16_t numberOfConnections;
   std::string clientProc;
   rdbms::Login login;
 };

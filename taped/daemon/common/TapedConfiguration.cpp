@@ -208,6 +208,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   // General options
   ret.instanceName.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.schedulerBackendName.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.schedulerNumberOfConnections.setFromConfigurationFile(cf, driveTapedConfigPath);
 
   // Caching options
   ret.tapeCacheMaxAgeSecs.setFromConfigurationFile(cf, driveTapedConfigPath);

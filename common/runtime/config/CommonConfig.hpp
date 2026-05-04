@@ -59,8 +59,9 @@ struct SchedulerConfig final {
 #endif
   int tape_cache_max_age_secs = 600;
   int retrieve_queue_cache_max_age_secs = 10;
+  int number_of_connections = 3;
 
-  static constexpr std::size_t memberCount() { return 4; }
+  static constexpr std::size_t memberCount() { return 5; }
 };
 
 /**
