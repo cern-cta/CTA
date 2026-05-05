@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-echo "$(date +%s): Trigerring EOS evict workflow as poweruser1:powerusers (12001:1200)"
+echo "$(date +%s): Triggering EOS evict workflow as poweruser1:powerusers (12001:1200)"
 
 TO_EVICT=$((${NB_FILES}*${NB_DIRS}))
 echo "$(date +%s): $TO_EVICT files to be evicted from EOS using 'xrdfs prepare -e'"

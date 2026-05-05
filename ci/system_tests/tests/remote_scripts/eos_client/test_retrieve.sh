@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 
-echo "$(date +%s): Trigerring EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
+echo "$(date +%s): Triggering EOS retrieve workflow as poweruser1:powerusers (12001:1200)"
 
 # Build initial string without expanding subdir
 
