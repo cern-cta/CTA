@@ -63,7 +63,7 @@ spec:
   volumes:
   - name: scripts-volume
     configMap:
-      name: {{ .Release.Name }}-kdc-scripts
+      name: {{ .Release.Name }}-scripts
       defaultMode: 0777
   - name: krb5-conf
     configMap:

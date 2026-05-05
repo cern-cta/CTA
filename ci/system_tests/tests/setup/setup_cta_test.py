@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import pytest
 
 from concurrent.futures import ThreadPoolExecutor
 
@@ -37,12 +36,6 @@ def test_copy_scripts_to_ctacli(env):
 def test_kinit_clients(env, krb5_realm):
     for cta_cli in env.cta_cli:
         cta_cli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
-
-
-@pytest.mark.grpc_frontend
-def test_obtain_grpc_jwt(env):
-    for cta_cli in env.cta_cli:
-        cta_cli.exec("/test/grpc_obtain_jwt.sh")
 
 
 #####################################################################################################################

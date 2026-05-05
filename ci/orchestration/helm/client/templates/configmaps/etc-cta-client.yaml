@@ -16,5 +16,5 @@ data:
     grpc.tls.enabled {{ .Values.conf.cta.grpc.tls.enabled }}
     grpc.tls.chain_cert_path {{ .Values.conf.cta.grpc.tls.chain_cert_path }}
     grpc.cta_admin_auth_method {{ .Values.conf.cta.grpc.cta_admin_auth_method }}
-    grpc.jwt_token_path {{ .Values.conf.cta.grpc.jwt_token_path }}
+    grpc.jwt_token_path /etc/cta/ctaadmin.jwt
     {{- end }}
