@@ -61,7 +61,7 @@ python3 /scripts/generate_jwt.py \
   --cert "$SECRETS_DIR/server.crt" \
   --key "$SECRETS_DIR/server.key" \
   --sub ctaeos \
-  --sub ctaadmin
+  --sub ctaadmin1
 
 # --- Generate K8s secrets for all of these --- #
 

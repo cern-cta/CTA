@@ -100,9 +100,9 @@ spec:
           mountPath: /etc/cta/cta-cli.conf
           subPath: cta-cli.conf
         {{- if .Values.useGrpc }}
-        - name: ctaadmin-jwt
-          mountPath: /etc/cta/ctaadmin.jwt
-          subPath: ctaadmin.jwt
+        - name: ctaadmin1-jwt
+          mountPath: /etc/cta/ctaadmin1.jwt
+          subPath: ctaadmin1.jwt
         {{- end }}
         - name: krb5-conf
           mountPath: /etc/krb5.conf
@@ -122,9 +122,9 @@ spec:
         configMap:
           name: etc-cta-client
       {{- if .Values.useGrpc }}
-      - name: ctaadmin-jwt
+      - name: ctaadmin1-jwt
         secret:
-          secretName: ctaadmin-jwt
+          secretName: ctaadmin1-jwt
       {{- end }}
       - name: xrootd-client-conf
         configMap:

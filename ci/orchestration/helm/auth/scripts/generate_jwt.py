@@ -14,10 +14,6 @@ from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 
 
-def b64url_uint(val: int) -> str:
-    return base64.urlsafe_b64encode(val.to_bytes((val.bit_length() + 7) // 8, "big")).rstrip(b"=").decode("ascii")
-
-
 def sanitize_filename(s: str) -> str:
     return re.sub(r"[^a-zA-Z0-9._-]", "_", s)
 
@@ -33,14 +29,9 @@ def load_cert_x5c(cert_path: str) -> str:
     return base64.b64encode(cert).decode("ascii")
 
 
-def generate_jwk_from_cert(key, cert_path):
-    public_key = key.public_key()
-    numbers = public_key.public_numbers()
-
+def generate_jwk_from_cert(cert_path):
     jwk = {
         "kty": "RSA",
-        "n": b64url_uint(numbers.n),
-        "e": b64url_uint(numbers.e),
         "alg": "RS256",
         "use": "sig",
         "x5c": [load_cert_x5c(cert_path)],
@@ -48,7 +39,7 @@ def generate_jwk_from_cert(key, cert_path):
 
     thumbprint = hashlib.sha256(
         json.dumps(
-            {"e": jwk["e"], "kty": jwk["kty"], "n": jwk["n"]},
+            {"kty": jwk["kty"]},
             separators=(",", ":"),
         ).encode()
     ).digest()
@@ -106,7 +97,7 @@ def main():
 
     with open(args.key, "rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
-    jwk = generate_jwk_from_cert(key, args.cert)
+    jwk = generate_jwk_from_cert(args.cert)
 
     # Save JWKS
     jwks = {"keys": [jwk]}

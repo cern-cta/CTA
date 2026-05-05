@@ -63,7 +63,7 @@ mgm:
       mgmofs.protowfresource /ctafrontend
       mgmofs.protowfusegrpc true
       mgmofs.protowfusegrpctls true
-      mgmofs.jwttokenpath /etc/cta/ctaeos-jwt
+      mgmofs.jwttokenpath /etc/cta/ctaeos.jwt
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
@@ -140,7 +140,7 @@ fst:
       fstofs.filemd_handler  attr
       fstofs.protowfusegrpc true
       fstofs.protowfusegrpctls true
-      fstofs.jwttokenpath /etc/cta/ctaeos-jwt
+      fstofs.jwttokenpath /etc/cta/ctaeos.jwt
       tpc.trace  all
 
   probes:
