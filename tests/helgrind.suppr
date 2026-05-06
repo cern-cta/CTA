@@ -872,7 +872,7 @@
   Mutex_properly_throws_exceptions_PthAPIerror
   Helgrind:PthAPIerror
   ...
-  fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv.cold.60
+  fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv*
   ...
 }
 
@@ -880,7 +880,7 @@
   Mutex_properly_throws_exceptions_UnlockUnlocked
   Helgrind:UnlockUnlocked
   ...
-  fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv.cold.60
+  fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv*
   ...
 }
 

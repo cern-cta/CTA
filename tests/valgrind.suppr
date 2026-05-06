@@ -722,20 +722,14 @@
 }
 
 {
-   <insert_a_suppression_name_here>
+   sqlite3_step_possible_leak_optimized
    Memcheck:Leak
    match-leak-kinds: possible
    fun:malloc
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   obj:/usr/lib64/libsqlite3.so.0.8.6
+   obj:/usr/lib64/libsqlite3.so*
+   ...
    fun:sqlite3_step
-   fun:_ZN3cta5rdbms7wrapper10SqliteStmt15executeNonQueryEv
-   fun:_ZN3cta5rdbms7wrapper10SqliteConn15executeNonQueryERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
-   fun:_ZN3cta5rdbms4Conn15executeNonQueryERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
+   ...
    fun:_ZNK3cta9catalogue29SchemaCreatingSqliteCatalogue17executeNonQueriesERNS_5rdbms4ConnERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
 }
 
@@ -773,24 +767,6 @@
    obj:/usr/lib64/libsqlite3.so.0.8.6
    fun:sqlite3_step
    fun:_ZN3cta5rdbms7wrapper10SqliteStmt15executeNonQueryEv
-}
-
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Leak
-   match-leak-kinds: possible
-   fun:malloc
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   obj:/usr/lib64/libsqlite3.so.0.8.6
-   fun:sqlite3_step
-   fun:_ZN3cta5rdbms7wrapper10SqliteStmt15executeNonQueryEv
-   fun:_ZN3cta5rdbms7wrapper10SqliteConn15executeNonQueryERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
-   fun:_ZN3cta5rdbms4Conn15executeNonQueryERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
-   fun:_ZNK3cta9catalogue29SchemaCreatingSqliteCatalogue17executeNonQueriesERNS_5rdbms4ConnERKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEE
 }
 
 {
