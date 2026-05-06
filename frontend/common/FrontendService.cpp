@@ -233,7 +233,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
   params.emplace_back("numberofconnections", db_nb_conns.value_or(2));
   log(log::INFO, "Setting number of connections for PG Scheduler for the Frontent process pool.", params);
   m_scheddbInit = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.value(), db_nb_conns.value_or(2), *m_log);
-#elif
+#else
   m_scheddbInit = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.value(), *m_log);
 #endif
 

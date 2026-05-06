@@ -1016,7 +1016,7 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
                                                           m_tapedConfig.schedulerNumberOfConnections.value(),
                                                           m_lc.logger(),
                                                           true);
-#elif
+#else
     m_lc.log(log::DEBUG,
              "In DriveHandler::createScheduler(): will create agent entry. "
              "Enabling leaving non-empty agent behind.");
