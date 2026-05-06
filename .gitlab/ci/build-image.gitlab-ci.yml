@@ -25,7 +25,7 @@
     TARGET_NAME: # Should be overwritten by one of the child jobs
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for these jobs
-    DOCKERFILE: ci/docker/${PLATFORM}/prod-minimal.Dockerfile
+    DOCKERFILE: ci/docker/${PLATFORM}/prod.Dockerfile
     IMAGE_NAME: ctageneric/${TARGET_NAME}
     EXTRA_BUILD_ARGS: ""
     CTA_REPO_URL: ""
@@ -38,11 +38,9 @@
       else
         CTA_REPO_URL="http://host.containers.internal:8000/"
       fi
-    # For the Postgres scheduler, choose a different Dockerfile and add the "-pg" suffix to the image
-    # TODO: add this minimal image
+    # For the Postgres scheduler add the "-pg" suffix to the image
     - |
       if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
-        DOCKERFILE="ci/docker/${PLATFORM}/prod-minimal-pg.Dockerfile"
         IMAGE_NAME="${IMAGE_NAME}-pg"
       fi
   script:

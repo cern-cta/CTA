@@ -36,7 +36,7 @@ buildImage() {
   local container_runtime="podman"
   local rpm_default_src="image_rpms"
   local defaultPlatform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
-  local dockerfile="ci/docker/${defaultPlatform}/prod-minimal.Dockerfile"
+  local dockerfile="ci/docker/${defaultPlatform}/prod.Dockerfile"
   local load_into_k8s=false
   # Note that the capitalization here is intentional as this is passed directly as a build arg
   local use_internal_repos="FALSE"
