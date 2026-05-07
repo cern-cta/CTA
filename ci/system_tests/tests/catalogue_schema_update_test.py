@@ -127,6 +127,7 @@ def test_liquibase_update(cta_frontend, catalogue_updater, catalogue_to_version)
     assert (
         cta_frontend.get_schema_version() == catalogue_to_version
     ), 'Catalogue version should be equal to the "to" version after rollback'
+    cta_frontend.verify_schema()
 
 
 def test_liquibase_rollback(cta_frontend, catalogue_updater, catalogue_from_version):
@@ -135,6 +136,7 @@ def test_liquibase_rollback(cta_frontend, catalogue_updater, catalogue_from_vers
     assert (
         cta_frontend.get_schema_version() == catalogue_from_version
     ), 'Catalogue version should be equal to the "from" version after rollback'
+    cta_frontend.verify_schema()
 
 
 def test_cleanup_catalogue_updater(env, namespace):
