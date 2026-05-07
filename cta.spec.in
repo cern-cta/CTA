@@ -126,7 +126,7 @@ Summary: CERN Tape Archive: tape daemon
 Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-taped
@@ -162,7 +162,7 @@ Summary: CERN Tape Archive: maintenance daemon
 Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 %description -n cta-maintd
 CERN Tape Archive:
@@ -201,7 +201,7 @@ Summary: CERN Tape Archive: Xrootd plugin
 Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires: xrootd-server %{xrootdVersionConstraint}
@@ -236,7 +236,7 @@ Summary: CERN Tape Archive: gRPC based frontend
 Group: Application/CTA
 Requires: logrotate
 Requires: cta-common = %{version}-%{release}
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 %description -n cta-frontend-grpc
 CERN Tape Archive:
@@ -423,7 +423,7 @@ Requires: cta-lib-catalogue-postgres = %{version}-%{release}
 Requires: cta-lib-catalogue-occi = %{version}-%{release}
 %endif
 Requires: valgrind %{valgrindVersionConstraint}
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-taped = %{ctaVersion}-%{ctaRelease}%{mydist}
 Requires: make
 Requires: moreutils
@@ -502,7 +502,7 @@ Command-line tool for testing immutable files
 %package -n cta-objectstore-tools
 Summary: CERN Tape Archive: object store tools
 Group: Application/CTA
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 %description -n cta-objectstore-tools
@@ -599,7 +599,7 @@ The client of the Remote Media Changer Daemon (rmcd)
 %package -n cta-tape-label
 Summary: The command-line tool for pre-labelling a CTA tape.
 Group: Application/CTA
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires(post): /usr/sbin/setcap
 %description -n cta-tape-label
@@ -615,7 +615,7 @@ The command-line tool for pre-labelling a CTA tape.
 %package -n cta-readtp
 Summary: The command-line tool for reading files from a CTA tape.
 Group: Application/CTA
-Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-scheduler = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 Requires(post): /usr/sbin/setcap
 %description -n cta-readtp
