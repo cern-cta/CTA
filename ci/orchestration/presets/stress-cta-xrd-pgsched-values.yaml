@@ -30,6 +30,8 @@ taped:
       # the increased batchSizes for pgsched deployment
       bufferCount: 10000
       logMask: "WARNING"
+      # Number of connection to the backend PG DB
+      schedulerNumberOfConnections: 3
 
 maintd:
   logging:

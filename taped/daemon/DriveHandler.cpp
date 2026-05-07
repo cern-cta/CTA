@@ -1008,11 +1008,19 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
     processName = prefixProcessName + m_driveConfig.unitName;
     log::ScopedParamContainer params(m_lc);
     params.add("processName", processName);
+#ifdef CTA_PGSCHED
+    m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName,
+                                                          m_tapedConfig.backendPath.value(),
+                                                          m_tapedConfig.schedulerNumberOfConnections.value(),
+                                                          m_lc.logger(),
+                                                          true);
+#else
     m_lc.log(log::DEBUG,
              "In DriveHandler::createScheduler(): will create agent entry. "
              "Enabling leaving non-empty agent behind.");
     m_sched_db_init =
       std::make_unique<SchedulerDBInit_t>(processName, m_tapedConfig.backendPath.value(), m_lc.logger(), true);
+#endif
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
     param.add(semconv::log::exceptionMessage, ex.getMessageValue());

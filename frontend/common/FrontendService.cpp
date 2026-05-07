@@ -227,8 +227,13 @@ FrontendService::FrontendService(const std::string& configFilename) {
     params.emplace_back("value", db_conn.value());
     log(log::INFO, "Configuration entry", params);
   }
-
+#ifdef CTA_PGSCHED
+  auto db_nb_conns = config.getOptionValueUInt("cta.schedulerdb.numberofconnections");
+  m_scheddbInit = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.value(), db_nb_conns.value_or(2), *m_log);
+#else
   m_scheddbInit = std::make_unique<SchedulerDBInit_t>("Frontend", db_conn.value(), *m_log);
+#endif
+
   m_scheddb = m_scheddbInit->getSchedDB(*m_catalogue, *m_log);
 
   // Set Scheduler DB cache timeouts

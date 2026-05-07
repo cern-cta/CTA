@@ -29,6 +29,7 @@ grpc:
       # repackBufferUrl
 
     schedulerdb:
+      numberOfConnections: 3
       numberOfThreads: 500
       threadStackSizeMb: 1
       disableRepackRequests: false
@@ -95,6 +96,7 @@ xrd:
       zeroLengthFilesForbiddenVoExceptionList: ""
 
     schedulerdb:
+      numberOfConnections: 3
       numberOfThreads: 500
       threadStackSizeMb: 1
       tapeCacheMaxAgeSecs: 1

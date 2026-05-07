@@ -23,7 +23,8 @@
   tape_cache_max_age_secs = 600
   # If omitted, 10 is used.
   retrieve_queue_cache_max_age_secs = 10
-
+  # The number of DB connections to the backend in the pool
+  number_of_connections = 3
 
 [logging]
   # Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,

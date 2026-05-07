@@ -29,6 +29,10 @@ taped:
       #!/usr/bin/bash
       echo "Process crashed. Sleeping..."
       sleep infinity
+  conf:
+    taped:
+      # Number of connection to the backend PG DB
+      schedulerNumberOfConnections: 3
 
 rmcd:
   # Enabled to allow debugging after a crash

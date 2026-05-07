@@ -24,12 +24,13 @@ data:
 
       {{- if eq $schedulerConfig.backend "postgres" }}
       config_file = "/etc/cta/cta-scheduler.conf"
+      number_of_connections = {{ $.Values.scheduler.numberOfConnections }}
       {{- else }}
       objectstore_backend_path = {{ include "global.schedulerUrl" $ | quote }}
       {{- end }}
       tape_cache_max_age_secs = {{ $.Values.scheduler.tapeCacheMaxAgeSecs }}
       retrieve_queue_cache_max_age_secs = {{ $.Values.scheduler.retrieveQueueCacheMaxAgeSecs }}
-
+      
     [logging]
       level = {{ $.Values.logging.level | quote }}
       format = "json"

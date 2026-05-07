@@ -112,6 +112,12 @@ struct TapedConfiguration {
     {50L * 1000 * 1000 * 1000, 10000},
     "Compile time default"
   };
+
+  cta::SourcedParameter<uint16_t> schedulerNumberOfConnections {"taped",
+                                                                "SchedulerNumberOfConnections",
+                                                                2,
+                                                                "Compile time default"};
+
   //----------------------------------------------------------------------------
   // Disk file access parameters
   //----------------------------------------------------------------------------
@@ -233,7 +239,7 @@ struct TapedConfiguration {
   cta::SourcedParameter<std::string> driveControlPath {"taped", "DriveControlPath"};
 
   //----------------------------------------------------------------------------
-  // Drive Options
+  // General Options
   //----------------------------------------------------------------------------
   cta::SourcedParameter<std::string> instanceName {"general", "InstanceName"};
 
