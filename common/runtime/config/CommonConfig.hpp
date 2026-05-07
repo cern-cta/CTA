@@ -53,15 +53,17 @@ struct SchedulerConfig final {
   std::string backend_name = "";
 
 #ifndef CTA_PGSCHED
+  static constexpr std::size_t memberCount() { return 4; }
+
   std::string objectstore_backend_path = "";
 #else
+  static constexpr std::size_t memberCount() { return 5; }
+
   std::string config_file = "/etc/cta/cta-scheduler.conf";
   int number_of_connections = 3;
 #endif
   int tape_cache_max_age_secs = 600;
   int retrieve_queue_cache_max_age_secs = 10;
-
-  static constexpr std::size_t memberCount() { return 5; }
 };
 
 /**
