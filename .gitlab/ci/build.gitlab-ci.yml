@@ -84,6 +84,10 @@ build-cta-rpms:
         # debugsource packages are not happy with the cxxflags above, so skip for now
         RPMDEFS="--define '_debugsource_packages 0'"
       fi
+    - |
+      if [[ "COMPILE_WITH_PERF_TELEMETRY" == "TRUE" ]]; then
+        BUILD_OPTIONS+=" --perf-telemetry"
+      fi
     - if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then BUILD_OPTIONS+=" --use-internal-repos"; fi
     - if [[ "$ENABLE_ADDRESS_SANITIZER" == "TRUE" ]]; then BUILD_OPTIONS+=" --enable-address-sanitizer"; fi
     - ./ci/build/build_rpm.sh --build-dir build_rpm

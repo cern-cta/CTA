@@ -106,6 +106,13 @@ variables:
       - "TRUE"
       - "FALSE"
 
+  COMPILE_WITH_PERF_TELEMETRY:
+    description: "Compile with telemetry instrumentation for stress test performance measurements."
+    value: "FALSE"
+    options:
+      - "TRUE"
+      - "FALSE"
+
   # CTA Configuration
   SCHEDULER_TYPE:
     description: "Specifies what scheduler should be used to build CTA and run the tests"
