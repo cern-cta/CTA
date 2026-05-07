@@ -6,6 +6,7 @@
   "license": "GPLv3+",
   "catalogueVersion": 16.0,
   "supportedCatalogueVersions": [
+    15,
     16
   ],
   "dev": {

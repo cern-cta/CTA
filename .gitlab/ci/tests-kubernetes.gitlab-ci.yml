@@ -261,9 +261,14 @@ test-catalogue-schema-update:
   before_script:
     - !reference [.kubernetes-test-python, before_script]
     - |
-      if [[ "$(jq '.supportedCatalogueVersions | length' project.json)" -eq 1 ]]; then
+      if [[ "$(jq '.supportedCatalogueVersions | length' project.json)" -lt 2 ]]; then
         echo "We are not currently in a catalogue release. No update to test."
-        exit 0
+        echo "Update the project.json file to include both the new and the old CTA Catalogue version."
+        exit 1
+      fi
+      if [[ "$(jq '.supportedCatalogueVersions | length' project.json)" -gt 2 ]]; then
+        echo "There are more than two supported CTA Catalogue versions."
+        echo "The current CI test can only be performed between two versions."
       fi
     # The version we are upgrading from is the lowest supported version
     - FROM_CATALOGUE_VERSION=$(jq '.supportedCatalogueVersions | sort[]' project.json | head -1)
