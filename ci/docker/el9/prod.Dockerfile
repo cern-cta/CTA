@@ -40,7 +40,8 @@ gpgcheck=0\n\
 enabled=1\n\
 priority=2" > /etc/yum.repos.d/cta.repo && \
     mkdir -p /etc/yum/pluginconf.d && touch /etc/yum/pluginconf.d/versionlock.list && \
-    microdnf clean all
+    microdnf clean all && \
+    rm -rf /var/lib/dnf/history.*
 
 ###############################################
 # SERVICE cta-taped
@@ -64,7 +65,8 @@ RUN microdnf install -y --nodocs --setopt='install_weak_deps=0' \
     microdnf remove -y \
       python* && \
     rpm -e systemd-* --nodeps && \
-    microdnf clean all
+    microdnf clean all && \
+    rm -rf /var/lib/dnf/history.*
 
 
 CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--log-to-file=/var/log/cta/cta-taped.log"]
@@ -91,7 +93,8 @@ RUN microdnf install -y --nodocs --setopt='install_weak_deps=0' \
     microdnf remove -y \
       python* && \
     rpm -e systemd-* --nodeps && \
-    microdnf clean all
+    microdnf clean all && \
+    rm -rf /var/lib/dnf/history.*
 
 CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
 
@@ -113,7 +116,8 @@ RUN microdnf install -y --nodocs --setopt='install_weak_deps=0' \
     microdnf remove -y \
       python* && \
     rpm -e systemd-* --nodeps && \
-    microdnf clean all
+    microdnf clean all && \
+    rm -rf /var/lib/dnf/history.*
 
 # USER cta
 CMD ["/usr/bin/cta-maintd", "--foreground", "--log-to-file=/var/log/cta/cta-maintd.log", "--log-format", "json", "--config", "/etc/cta/cta-maintd.conf"]
@@ -137,7 +141,8 @@ RUN microdnf install -y --nodocs --setopt='install_weak_deps=0' \
     microdnf remove -y \
       python* && \
     rpm -e systemd-* --nodeps && \
-    microdnf clean all
+    microdnf clean all && \
+    rm -rf /var/lib/dnf/history.*
 
 # USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
@@ -160,7 +165,8 @@ RUN microdnf install -y --nodocs --setopt='install_weak_deps=0' \
     microdnf remove -y \
       python* && \
     rpm -e systemd-* --nodeps && \
-    microdnf clean all
+    microdnf clean all && \
+    rm -rf /var/lib/dnf/history.*
 
 # USER cta
 WORKDIR /home/cta
@@ -186,7 +192,8 @@ RUN microdnf install -y --nodocs --setopt='install_weak_deps=0' \
       epel-release && \
     microdnf remove -y \
       python* && \
-    microdnf clean all
+    microdnf clean all && \
+    rm -rf /var/lib/dnf/history.*
 
 # USER cta
 ENTRYPOINT ["/bin/bash"]
@@ -211,7 +218,8 @@ RUN microdnf install -y --nodocs --setopt='install_weak_deps=0' \
       epel-release && \
     microdnf remove -y \
       python* && \
-    microdnf clean all
+    microdnf clean all && \
+    rm -rf /var/lib/dnf/history.*
 
 # USER cta
 ENTRYPOINT ["/bin/bash"]
@@ -239,6 +247,7 @@ RUN microdnf install -y --nodocs --setopt='install_weak_deps=0' \
       cta-release \
       epel-release && \
     rpm -e systemd-* --nodeps && \
-    microdnf clean all
+    microdnf clean all && \
+    rm -rf /var/lib/dnf/history.*
 
 ENTRYPOINT ["/bin/bash"]
