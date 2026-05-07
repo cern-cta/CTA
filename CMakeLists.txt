@@ -30,6 +30,11 @@ set (BUILD_CMDLINE_ONLY FALSE)
 # giving -DCTA_USE_PGSCHED:Bool=true on the cmake command line.
 set (CTA_USE_PGSCHED FALSE CACHE BOOL "Build with the postgres scheduler")
 
+# By default Telemetry is instrumented only for metrics useful for production
+# To compile with instrumentation with performance measurements for stress test,
+# provide -DCTA_USE_PERF_TELEMETRY:Bool=true on the cmake command line.
+set (CTA_USE_PERF_TELEMETRY FALSE CACHE BOOL "Build with telemetry instrumentation for postgres performance measurements")
+
 execute_process(
   COMMAND ${CMAKE_C_COMPILER} -dumpversion
   OUTPUT_VARIABLE GCC_VERSION)
@@ -68,6 +73,11 @@ if (DISABLE_ORACLE_SUPPORT)
 else ()
   set(RPM_ORACLE "%{nil}" CACHE STRING "" FORCE)
   set(RPM_USING_ORACLE "1" CACHE STRING "" FORCE)
+endif ()
+
+if (CTA_USE_PERF_TELEMETRY)
+    add_definitions (-DCTA_USE_PERF_TELEMETRY)
+    set(RPM_SCHEDOPT "-DCTA_USE_PERF_TELEMETRY:Bool=TRUE" CACHE STRING "" FORCE)
 endif ()
 
 if (CTA_USE_PGSCHED)
