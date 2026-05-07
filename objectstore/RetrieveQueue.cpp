@@ -105,7 +105,7 @@ void RetrieveQueue::rebuild() {
   uint64_t totalJobs = 0;
   uint64_t totalBytes = 0;
   time_t oldestJobCreationTime = std::numeric_limits<time_t>::max();
-  time_t youngestJobCreationTime = std::numeric_limits<time_t>::min();
+  time_t youngestJobCreationTime = 0;
 
   while (s != shards.end()) {
     // Each shard could be gone or be empty
@@ -188,7 +188,8 @@ nextShard:;
   }
   m_payload.set_retrievejobscount(totalJobs);
   m_payload.set_retrievejobstotalsize(totalBytes);
-  m_payload.set_oldestjobcreationtime(oldestJobCreationTime);
+  m_payload.set_oldestjobcreationtime(
+    oldestJobCreationTime != std::numeric_limits<time_t>::max() ? oldestJobCreationTime : 0);
   m_payload.set_youngestjobcreationtime(youngestJobCreationTime);
   // We went through all the shard, re-updated the summaries, removed references to
   // gone shards. Done.}
