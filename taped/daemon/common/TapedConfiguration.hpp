@@ -113,7 +113,10 @@ struct TapedConfiguration {
     "Compile time default"
   };
 
-  cta::SourcedParameter<uint16_t> schedulerNumberOfConnections {"taped", "SchedulerNumberOfConnections", 2, "Compile time default"};
+  cta::SourcedParameter<uint16_t> schedulerNumberOfConnections {"taped",
+                                                                "SchedulerNumberOfConnections",
+                                                                2,
+                                                                "Compile time default"};
 
   //----------------------------------------------------------------------------
   // Disk file access parameters
