@@ -103,7 +103,7 @@ unit-test-postgresql:
   before_script:
     - *setup-cta-install
   script:
-    - dnf -y install cta-catalogueutils
+    - dnf -y install cta-catalogue-utils
     - POSTGRESQL_DATA_DIR=/usr/local/cta_test_pgsql_data
     - POSTGRESQL_LOG_DIR=/var/log/postgres
     - echo POSTGRESQL_DATA_DIR=${POSTGRESQL_DATA_DIR}
@@ -156,7 +156,7 @@ unit-test-oracle:
   before_script:
     - *setup-cta-install
   script:
-    - dnf -y install cta-catalogueutils
+    - dnf -y install cta-catalogue-utils
     - CTA_CATALOGUE_CONF=/etc/cta/cta-catalogue.conf
     - echo CTA_CATALOGUE_CONF=${CTA_CATALOGUE_CONF}
     - echo oracle:${ORACLE_USERNAME}/${ORACLE_PASSWORD}@${ORACLE_DATABASE} > ${CTA_CATALOGUE_CONF}
@@ -199,7 +199,7 @@ test-cta-release:
     - cta-versionlock apply
     - dnf install --nogpgcheck -y cta-cli
                                   cta-admin-grpc
-                                  cta-catalogueutils
+                                  cta-catalogue-utils
                                   cta-frontend
                                   cta-frontend-grpc
                                   cta-maintd
