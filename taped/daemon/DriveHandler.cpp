@@ -1009,8 +1009,6 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
     log::ScopedParamContainer params(m_lc);
     params.add("processName", processName);
 #ifdef CTA_PGSCHED
-    params.add("schedulerNumberOfConnections", m_tapedConfig.schedulerNumberOfConnections.value());
-    m_lc.log(log::INFO, "In DriveHandler::createScheduler(): creating conn pool to the DB");
     m_sched_db_init = std::make_unique<SchedulerDBInit_t>(processName,
                                                           m_tapedConfig.backendPath.value(),
                                                           m_tapedConfig.schedulerNumberOfConnections.value(),

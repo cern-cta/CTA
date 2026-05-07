@@ -56,6 +56,9 @@ public:
   }
 
   std::unique_ptr<RelationalDB> getSchedDB(catalogue::Catalogue& catalogue, log::Logger& log) {
+    log(log::INFO,
+        "Setting number of connections for Postgres Scheduler pool.",
+        {cta::log::Param("numberOfConnections", numberOfConnections)});
     return std::make_unique<RelationalDB>(clientProc, log, catalogue, login, numberOfConnections);
   }
 
