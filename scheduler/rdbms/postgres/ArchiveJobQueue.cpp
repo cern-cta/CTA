@@ -158,7 +158,6 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(mountInfo.mountType));
   stmt.bindString(":LOGICAL_LIBRARY", mountInfo.logicalLibrary);
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
-  // testing telemetry measurement of duration including conn commit time !
   txn.getConn().setDbQuerySummary("move archive to active queue");
   auto result = stmt.executeQuery();
   auto nrows = stmt.getNbAffectedRows();
@@ -923,7 +922,6 @@ rdbms::Rset ArchiveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
     stmt.bindString(placeholderVec[i], statusVec[i]);
   }
   stmt.bindUint64(":LIMIT", limit);
-  stmt.bindUint64(":NOW_MINUS_DELAY", gc_now_minus_delay);
   txn.getConn().setDbQuerySummary("update archive report");
   return stmt.executeQuery();
 }

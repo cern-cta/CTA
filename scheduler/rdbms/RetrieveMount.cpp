@@ -115,7 +115,6 @@ RetrieveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested,
                                                           true /* isActive */,
                                                           m_isRepack,
                                                           false /* isArchive */);
-    txn.setRowCountForTelemetry(nmountrows);
     txn.commit();
     if (nmountrows < 1) {
       lc.log(cta::log::WARNING, "In postgres::updateMountQueueLastFetch(): did not update any row.");
@@ -137,7 +136,6 @@ uint64_t RetrieveMount::requeueJobBatch(const std::list<std::string>& jobIDsList
   try {
     nrows =
       postgres::RetrieveJobQueueRow::requeueJobBatch(txn, RetrieveJobStatus::RJS_ToTransfer, jobIDsList, m_isRepack);
-    txn.setRowCountForTelemetry(nrows);
     if (nrows != jobIDsList.size()) {
       cta::log::ScopedParamContainer params(lc);
       params.add("jobsToRequeue", jobIDsList.size());
@@ -244,7 +242,6 @@ void RetrieveMount::updateRetrieveJobStatusWrapper(const std::vector<std::string
         txn.abort();
         return;
       }
-      txn.setRowCountForTelemetry(nrows);
       txn.commit();
       log::ScopedParamContainer(lc)
         .add("rowUpdateCount", nrows)
