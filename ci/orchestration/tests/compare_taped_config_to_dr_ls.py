@@ -8,7 +8,11 @@ import json
 import subprocess
 import sys
 
-KEY_SKIP_LIST = ["MountCriteria", "SchedulerNumberOfConnections"]
+KEY_SKIP_LIST = ["MountCriteria",
+                 "SchedulerNumberOfConnections",
+                 "RmcHost",
+                 "telemetryEnabled",
+                 "retainInstanceIdOnRestart"]
 
 
 def run(cmd):
