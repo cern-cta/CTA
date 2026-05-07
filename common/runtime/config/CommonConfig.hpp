@@ -56,10 +56,10 @@ struct SchedulerConfig final {
   std::string objectstore_backend_path = "";
 #else
   std::string config_file = "/etc/cta/cta-scheduler.conf";
+  int number_of_connections = 3;
 #endif
   int tape_cache_max_age_secs = 600;
   int retrieve_queue_cache_max_age_secs = 10;
-  int number_of_connections = 3;
 
   static constexpr std::size_t memberCount() { return 5; }
 };
