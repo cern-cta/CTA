@@ -58,6 +58,7 @@ mgm:
       mgmofs.archivedir /var/eos/archive
       mgmofs.prepare.dest.space default
       mgmofs.tapeenabled true
+      mgmofs.prepare.lateabortsevict true
       mgmofs.protowfendpoint cta-frontend:10955
       mgmofs.protowfresource /ctafrontend
       mgmofs.protowfusegrpc false
