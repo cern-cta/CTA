@@ -132,6 +132,7 @@ void Conn::setRowCountForTelemetry(uint64_t rowCount) {
 void Conn::commit() {
   if (nullptr != m_connAndStmts && nullptr != m_connAndStmts->conn) {
     m_connAndStmts->conn->commit();
+#ifdef CTA_USE_PERF_TELEMETRY
     if (!m_querySummary.empty()) {
       auto end = std::chrono::steady_clock::now();
       auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - m_executionStartTime).count();
@@ -152,6 +153,7 @@ void Conn::commit() {
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
     }
+#endif
   } else {
     throw exception::Exception("Conn does not contain a connection");
   }
