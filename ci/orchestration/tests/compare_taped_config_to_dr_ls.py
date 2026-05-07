@@ -8,7 +8,7 @@ import json
 import subprocess
 import sys
 
-KEY_SKIP_LIST = ["MountCriteria"]
+KEY_SKIP_LIST = ["MountCriteria", "SchedulerNumberOfConnections"]
 
 
 def run(cmd):
@@ -39,7 +39,7 @@ def main():
     drive_json = run(f"kubectl -n {ns} exec {cta_cli_pod} -c cta-cli -- " "cta-admin --json dr ls")
 
     entries = [e for e in json.loads(drive_json) if e.get("driveName") == drive_name]
-
+    
     if not entries:
         print("Drive not found")
         sys.exit(1)

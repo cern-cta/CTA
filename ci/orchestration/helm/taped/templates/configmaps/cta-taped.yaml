@@ -34,7 +34,7 @@ data:
     # General
     general InstanceName {{ $.Release.Namespace }}
     general SchedulerBackendName {{ $schedulerConfig.backend }}
-    general SchedulerNumberOfConnections {{ $schedulerConfig.numberOfConnections }}
+    taped SchedulerNumberOfConnections {{ $.Values.conf.taped.schedulerNumberOfConnections }}
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
 
     # Rmcd

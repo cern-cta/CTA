@@ -23,10 +23,10 @@ TEST(cta_Daemon, TapedConfiguration) {
                               "taped DriveLogicalLibrary dummyLL\n"
                               "taped DriveDevice /dummy/Device\n"
                               "taped DriveControlPath dummyControlPath\n"
+                              "taped SchedulerNumberOfConnections 3\n"
 
                               "general InstanceName production\n"
                               "general SchedulerBackendName dummyProdUser\n"
-                              "general SchedulerNumberOfConnections 3\n"
                               "general ServiceName dummy-service-name\n");
 
   ASSERT_THROW(cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(incompleteConfFile.path()),
@@ -51,10 +51,10 @@ TEST(cta_Daemon, TapedConfigurationFull) {
                               "taped DriveLogicalLibrary dummyLL\n"
                               "taped DriveDevice /dummy/Device\n"
                               "taped DriveControlPath dummyControlPath\n"
+                              "taped SchedulerNumberOfConnections 3\n"
 
                               "general InstanceName production\n"
                               "general SchedulerBackendName dummyProdUser\n"
-                              "general SchedulerNumberOfConnections 3\n"
                               "general ServiceName dummy-service-name\n");
 
   // The log parameter can be uncommented to inspect the result on the output.
@@ -79,13 +79,14 @@ TempFile getDummyDriveConfig(const std::string& driveName) {
                               "taped DriveName "
                               + driveName
                               + "\n"
+                                "taped SchedulerNumberOfConnections 3\n"
                                 "taped DriveLogicalLibrary dummyLL\n"
                                 "taped DriveDevice /dummy/Device\n"
                                 "taped DriveControlPath dummyControlPath\n"
+                                "taped SchedulerNumberOfConnections 3\n"
 
                                 "general InstanceName production\n"
                                 "general SchedulerBackendName dummyProdUser\n"
-                                "general SchedulerNumberOfConnections 3\n"
                                 "general ServiceName dummy-service-name\n"
 
                                 "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n");

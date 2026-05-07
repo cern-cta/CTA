@@ -29,7 +29,7 @@ data:
       {{- end }}
       tape_cache_max_age_secs = {{ $.Values.scheduler.tapeCacheMaxAgeSecs }}
       retrieve_queue_cache_max_age_secs = {{ $.Values.scheduler.retrieveQueueCacheMaxAgeSecs }}
-      number_of_connections {{ .Values.scheduler.numberOfConnections }}
+      number_of_connections = {{ $.Values.scheduler.numberOfConnections }}
 
     [logging]
       level = {{ $.Values.logging.level | quote }}
