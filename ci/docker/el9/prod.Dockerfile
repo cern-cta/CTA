@@ -149,7 +149,7 @@ FROM base AS cta-tools-grpc
 RUN dnf install -y \
       cta-admin-grpc \
       cta-catalogue-utils \
-      cta-objectstore-tools && \
+      cta-scheduler-utils && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
@@ -166,7 +166,7 @@ FROM base AS cta-tools-xrd
 RUN dnf install -y \
       cta-cli \
       cta-catalogue-utils \
-      cta-objectstore-tools && \
+      cta-scheduler-utils && \
     dnf clean all
 
 # Remove the local RPMs to reduce size
