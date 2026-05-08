@@ -71,12 +71,14 @@ def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate CI files containing JWTs and JWKS")
+    parser = argparse.ArgumentParser(
+        description="Generate CI files containing a JWKS and one JWT for each --sub passed. Files are put in the --output-dir directory."
+    )
     parser.add_argument(
         "--sub",
         action="append",
         required=True,
-        help="Subject claim (repeatable)",
+        help="Subject claim (repeatable). Each --sub argument will generate a separate JWT with the name of the sub.",
     )
     parser.add_argument(
         "--lifetime",
