@@ -8,13 +8,7 @@ import json
 import subprocess
 import sys
 
-KEY_SKIP_LIST = [
-    "MountCriteria",
-    "SchedulerNumberOfConnections",
-    "RmcHost",
-    "telemetryEnabled",
-    "retainInstanceIdOnRestart",
-]
+KEY_SKIP_LIST = ["MountCriteria"]
 
 
 def run(cmd):
@@ -57,6 +51,8 @@ def main():
 
     indexed = {(e["category"], e["key"], e["value"]) for e in config_json}
 
+    missing: bool = False
+
     for line in taped_config.splitlines():
         line = line.strip()
         if not line or line.startswith("#"):
@@ -71,6 +67,13 @@ def main():
             continue
         if (cat, key, val) not in indexed:
             print(f"Missing: {cat} {key} {val}")
+            missing = True
+
+    if missing:
+        print("Failure: Found entries missing from the catalogue")
+        sys.exit(1)
+
+    print("Comparison successful. All entries from the taped config were found in the catalogue")
 
 
 if __name__ == "__main__":

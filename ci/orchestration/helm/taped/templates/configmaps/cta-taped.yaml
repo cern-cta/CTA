@@ -34,7 +34,9 @@ data:
     # General
     general InstanceName {{ $.Release.Namespace }}
     general SchedulerBackendName {{ $schedulerConfig.backend }}
+    {{- if eq $schedulerConfig.backend "postgres" }}
     taped SchedulerNumberOfConnections {{ $.Values.conf.taped.schedulerNumberOfConnections }}
+    {{- end }}
     taped externalFreeDiskSpaceScript {{ $.Values.conf.taped.externalFreeDiskSpaceScript }}
 
     # Rmcd

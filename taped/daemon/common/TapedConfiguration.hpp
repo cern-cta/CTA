@@ -112,11 +112,12 @@ struct TapedConfiguration {
     {50L * 1000 * 1000 * 1000, 10000},
     "Compile time default"
   };
-
+#ifdef CTA_PGSCHED
   cta::SourcedParameter<uint16_t> schedulerNumberOfConnections {"taped",
                                                                 "SchedulerNumberOfConnections",
                                                                 2,
                                                                 "Compile time default"};
+#endif
 
   //----------------------------------------------------------------------------
   // Disk file access parameters
