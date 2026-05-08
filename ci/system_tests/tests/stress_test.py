@@ -127,7 +127,7 @@ def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
     eos_mgm.exec("eos space config default space.wfe.ntx=1500")
     eos_mgm.exec("eos space config default space.wfe.interval=1")
     # Get number of "booted" filesystems
-    result = eos_mgm.exec("eos fs ls | grep -c 'booted'")
+    result = eos_mgm.exec_with_output("eos fs ls | grep -c 'booted'")
     count_fs = int(result.strip())
     for i in range(1, count_fs + 1):
         eos_mgm.exec(f"eos fs config {i} scaninterval=0")

@@ -32,6 +32,7 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfigu
   setConfigToDB(tapedConfiguration.retrieveFetchBytesFiles, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.mountCriteria, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.nbDiskThreads, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.rmcHost, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.useRAO, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.raoLtoAlgorithm, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.useEncryption, catalogue, tapeDriveName);
@@ -53,6 +54,7 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfigu
   setConfigToDB(tapedConfiguration.tapeCacheMaxAgeSecs, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.retrieveQueueCacheMaxAgeSecs, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.telemetryEnabled, catalogue, tapeDriveName);
+  setConfigToDB(tapedConfiguration.retainInstanceIdOnRestart, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsBackend, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsFileEndpoint, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsExportInterval, catalogue, tapeDriveName);
@@ -60,6 +62,9 @@ void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfigu
   setConfigToDB(tapedConfiguration.metricsOtlpAuthBasicUsername, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsOtlpAuthBasicPasswordFile, catalogue, tapeDriveName);
   setConfigToDB(tapedConfiguration.metricsOtlpEndpoint, catalogue, tapeDriveName);
+#ifdef CTA_PGSCHED
+  setConfigToDB(tapedConfiguration.schedulerNumberOfConnections, catalogue, tapeDriveName);
+#endif
 }
 
 void DriveConfig::checkConfigInDB(catalogue::Catalogue* catalogue,
@@ -149,7 +154,7 @@ void DriveConfig::setConfigToDB(const SourcedParameter<bool>& sourcedParameter,
   catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
                                                   sourcedParameter.category(),
                                                   sourcedParameter.key(),
-                                                  std::to_string(sourcedParameter.value()),
+                                                  sourcedParameter.value() ? "true" : "false",
                                                   sourcedParameter.source());
 }
 

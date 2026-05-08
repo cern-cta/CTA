@@ -23,8 +23,9 @@ TEST(cta_Daemon, TapedConfiguration) {
                               "taped DriveLogicalLibrary dummyLL\n"
                               "taped DriveDevice /dummy/Device\n"
                               "taped DriveControlPath dummyControlPath\n"
+#ifdef CTA_PGSCHED
                               "taped SchedulerNumberOfConnections 2\n"
-
+#endif
                               "general InstanceName production\n"
                               "general SchedulerBackendName dummyProdUser\n"
                               "general ServiceName dummy-service-name\n");
@@ -51,8 +52,9 @@ TEST(cta_Daemon, TapedConfigurationFull) {
                               "taped DriveLogicalLibrary dummyLL\n"
                               "taped DriveDevice /dummy/Device\n"
                               "taped DriveControlPath dummyControlPath\n"
+#ifdef CTA_PGSCHED
                               "taped SchedulerNumberOfConnections 2\n"
-
+#endif
                               "general InstanceName production\n"
                               "general SchedulerBackendName dummyProdUser\n"
                               "general ServiceName dummy-service-name\n");
@@ -79,11 +81,12 @@ TempFile getDummyDriveConfig(const std::string& driveName) {
                               "taped DriveName "
                               + driveName
                               + "\n"
-                                "taped SchedulerNumberOfConnections 3\n"
                                 "taped DriveLogicalLibrary dummyLL\n"
                                 "taped DriveDevice /dummy/Device\n"
                                 "taped DriveControlPath dummyControlPath\n"
+#ifdef CTA_PGSCHED
                                 "taped SchedulerNumberOfConnections 2\n"
+#endif
 
                                 "general InstanceName production\n"
                                 "general SchedulerBackendName dummyProdUser\n"

@@ -162,7 +162,9 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   ret.logFormat.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.externalEncryptionKeyScript.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.useEncryption.setFromConfigurationFile(cf, driveTapedConfigPath);
+#ifdef CTA_PGSCHED
   ret.schedulerNumberOfConnections.setFromConfigurationFile(cf, driveTapedConfigPath);
+#endif
   // Memory management
   ret.bufferSizeBytes.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.bufferCount.setFromConfigurationFile(cf, driveTapedConfigPath);
@@ -230,7 +232,9 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   ret.logMask.log(log);
   ret.externalEncryptionKeyScript.log(log);
   ret.useEncryption.log(log);
+#ifdef CTA_PGSCHED
   ret.schedulerNumberOfConnections.log(log);
+#endif
 
   ret.bufferSizeBytes.log(log);
   ret.bufferCount.log(log);
