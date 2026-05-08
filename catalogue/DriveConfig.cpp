@@ -114,6 +114,17 @@ void DriveConfig::setConfigToDB(
                                                   sourcedParameter.source());
 }
 
+void DriveConfig::setConfigToDB(const SourcedParameter<uint16_t>& sourcedParameter,
+                                catalogue::Catalogue* catalogue,
+                                const std::string& tapeDriveName) {
+  checkConfigInDB(catalogue, tapeDriveName, sourcedParameter.key());
+  catalogue->DriveConfig()->createTapeDriveConfig(tapeDriveName,
+                                                  sourcedParameter.category(),
+                                                  sourcedParameter.key(),
+                                                  std::to_string(sourcedParameter.value()),
+                                                  sourcedParameter.source());
+}
+
 void DriveConfig::setConfigToDB(const SourcedParameter<uint32_t>& sourcedParameter,
                                 catalogue::Catalogue* catalogue,
                                 const std::string& tapeDriveName) {
