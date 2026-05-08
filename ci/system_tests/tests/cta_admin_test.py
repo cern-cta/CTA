@@ -772,58 +772,65 @@ def test_cta_admin_archive_route(cta_cli, disk_instance_name):
 @pytest.mark.eos
 def test_cta_admin_archive_file_ch(cta_cli, disk_client, disk_instance, disk_instance_name):
     source_sc = "ctaStorageClass"
-    target_sc = "ctaStorageClass_2_copy"
+    target_sc = "test_cta_admin_archive_file_ch_sc"
     id_file = "/tmp/cta_admin_af_ids.txt"
 
-    # Archive one file
-    test_file_path = "/eos/ctaeos/cta/cta_admin_af_testfile"
-    test_file_path = disk_client.generate_and_archive_file(
-        disk_instance_name,
-        destination_path=test_file_path,
-        wait=True,
-        append_uid=True,
+    source_sc_created = cta_cli.get_single_ls_item(
+        "sc ls",
+        lambda x: x["name"] == source_sc,
     )
+    vo_name = source_sc_created["vo"]
 
-    # Figure out the fxid and archive file ID
-    file_info_out = disk_instance.exec_with_output(f"eos -j file info {test_file_path}")
-    fxid = json.loads(file_info_out)["fxid"]
+    with TempStorageClass(cta_cli, target_sc, vo_name):
+        # Archive one file
+        test_file_path = "/eos/ctaeos/cta/cta_admin_af_testfile"
+        test_file_path = disk_client.generate_and_archive_file(
+            disk_instance_name,
+            destination_path=test_file_path,
+            wait=True,
+            append_uid=True,
+        )
 
-    af_created = cta_cli.get_single_ls_item(
-        f"tf ls --fxid {fxid} -i {disk_instance_name}",
-        lambda x: True,
-    )
+        # Figure out the fxid and archive file ID
+        file_info_out = disk_instance.exec_with_output(f"eos -j file info {test_file_path}")
+        fxid = json.loads(file_info_out)["fxid"]
 
-    archive_id = af_created["af"]["archiveId"]
-    assert af_created["af"]["storageClass"] == source_sc
-
-    # Write archive file ID to idfile
-    cta_cli.exec(f"echo {archive_id} > {id_file}")
-
-    try:
-        # Update archive file storage class
-        cta_cli.exec(f"cta-admin af ch --idfile {id_file} --storageclass {target_sc}")
-
-        # Verify updated storage class
-        af_updated = cta_cli.get_single_ls_item(
+        af_created = cta_cli.get_single_ls_item(
             f"tf ls --fxid {fxid} -i {disk_instance_name}",
             lambda x: True,
         )
 
-        assert_dict_equals(af_updated["af"], af_created["af"], ["storageClass"])
-        assert af_updated["af"]["storageClass"] == target_sc
+        archive_id = af_created["af"]["archiveId"]
+        assert af_created["af"]["storageClass"] == source_sc
 
-    finally:
-        # Restore original storage class
-        cta_cli.exec(
-            f"cta-admin af ch --idfile {id_file} --storageclass {source_sc}",
-            throw_on_failure=False,
-        )
+        # Write archive file ID to idfile
+        cta_cli.exec(f"echo {archive_id} > {id_file}")
 
-        # Delete
-        cta_cli.exec(f"rm -f {id_file}", throw_on_failure=False)
+        try:
+            # Update archive file storage class
+            cta_cli.exec(f"cta-admin af ch --idfile {id_file} --storageclass {target_sc}")
 
-        # Delete
-        disk_client.delete_file(disk_instance_name, path=test_file_path)
+            # Verify updated storage class
+            af_updated = cta_cli.get_single_ls_item(
+                f"tf ls --fxid {fxid} -i {disk_instance_name}",
+                lambda x: True,
+            )
+
+            assert_dict_equals(af_updated["af"], af_created["af"], ["storageClass"])
+            assert af_updated["af"]["storageClass"] == target_sc
+
+        finally:
+            # Restore original storage class
+            cta_cli.exec(
+                f"cta-admin af ch --idfile {id_file} --storageclass {source_sc}",
+                throw_on_failure=False,
+            )
+
+            # Delete
+            cta_cli.exec(f"rm -f {id_file}", throw_on_failure=False)
+
+            # Delete
+            disk_client.delete_file(disk_instance_name, path=test_file_path)
 
 
 def test_cta_admin_mount_policy(cta_cli):
