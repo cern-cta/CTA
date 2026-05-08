@@ -13,16 +13,13 @@ usage() {
   echo "Builds an image based on the CTA rpms"
   echo "  -t, --tag <image_tag>:          Docker image tag. For example \"-t dev\""
   echo "  -s, --rpm-src <rpm source>:     Path to the RPMs to be installed. Can be absolute or relative to where the script is executed from. For example \"-s build_rpm/RPM/RPMS/x86_64\""
-  echo "      --rpm-version <version>:    Version of the RPMs to ensure the correct RPMs are copied from the RPM source. Only files of the structure \"*{version}*.rpm\" will be copied."
   echo
   echo "options:"
   echo "  -h, --help:                         Shows help output."
-  echo "  -n, --name:                         The Docker image name. Defaults to ctageneric"
   echo "  -l, --load-into-k8s:                Takes the image from the podman registry and ensures that it is present in the image registry used by the local K8s setup."
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
-  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/{defaultplatform}/dev-local-rpms.Dockerfile'). Should be relative to the repository root."
+  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/{defaultplatform}/prod.Dockerfile')."
   echo "      --use-internal-repos:           Use the internal yum repos instead of the public repos."
-  echo "      --target <target>:              Set the target build stage to build."
   echo
   exit 1
 }
@@ -34,14 +31,11 @@ buildImage() {
   local rpm_src=""
   local image_tag=""
   local container_runtime="podman"
-  local rpm_default_src="image_rpms"
-  local defaultPlatform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
-  local dockerfile="ci/docker/${defaultPlatform}/prod.Dockerfile"
+  local default_platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
+  local dockerfile_path="ci/docker/${default_platform}/prod.Dockerfile"
   local load_into_k8s=false
   # Note that the capitalization here is intentional as this is passed directly as a build arg
   local use_internal_repos="FALSE"
-  local rpm_version=""
-  local target=""
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -65,28 +59,12 @@ buildImage() {
         error_usage "-s|--rpm-src requires an argument"
       fi
       ;;
-    --rpm-version)
-      if [[ $# -gt 1 ]]; then
-        rpm_version="$2"
-        shift
-      else
-        error_usage "--rpm-version requires an argument"
-      fi
-      ;;
     -t | --tag)
       if [[ $# -gt 1 ]]; then
         image_tag="$2"
         shift
       else
         error_usage "-t|--tag requires an argument"
-      fi
-      ;;
-    --target)
-      if [[ $# -gt 1 ]]; then
-        target="$2"
-        shift
-      else
-        error_usage "--target requires an argument"
       fi
       ;;
     -l | --load-into-k8s)
@@ -97,7 +75,7 @@ buildImage() {
       ;;
     --dockerfile)
       if [[ $# -gt 1 ]]; then
-        dockerfile="$2"
+        dockerfile_path="$2"
         shift
       else
         error_usage "--dockerfile requires an argument"
@@ -118,29 +96,8 @@ buildImage() {
     die_usage "Missing mandatory argument -s | --rpm-src"
   fi
 
-  if [[ -z "${rpm_version}" ]]; then
-    die_usage "Missing mandatory argument --rpm-version"
-  fi
-
-  # navigate to root directory
-  cd "${project_root}"
-
-  # Ensure we clean up before we start to ensure we don't copy any existing and potentially unrelated things
-  rm -rf "${rpm_default_src}"
-  mkdir -p "${rpm_default_src}"
-
-  # Copy the rpms into a predefined rpm directory
-  # This is important to ensure that the RPMs are accessible from the Docker build context
-  # (as the provided location might be outside of the project root)
-  cp -r ${rpm_src}/*${rpm_version}*.rpm "${rpm_default_src}"
-  # TODO: ensure createrepo is installed
-  createrepo "${rpm_default_src}"
-
-  # start HTTP server in background
-  pushd "${rpm_default_src}"
-  python3 -m http.server 8000 >/dev/null 2>&1 &
-  SERVER_PID=$!
-  popd
+  cd "$(dirname ${dockerfile_path})"
+  dockerfile="$(basename ${dockerfile_path})"
 
   # TODO: handle grpc
   targets=(
@@ -154,19 +111,17 @@ buildImage() {
   # Build
   for target in "${targets[@]}"; do
     image_ref="cta/${target}:${image_tag}"
-
-    echo "Building ${tag} from $dockerfile --target $target"
-
     (
       set -x
       ${container_runtime} build . -f ${dockerfile} \
         -t ${image_ref} \
+        --build-context rpm_context="${rpm_src}" \
         --network host \
-        --build-arg CTA_REPO_URL="http://host.containers.internal:8000/" \
         --target $target
     )
   done
 
+  # Push to local minikube/K3s
   if [[ "$load_into_k8s" == "true" ]]; then
     # Note that the below checks are rather crude (for speed)
 
@@ -193,10 +148,6 @@ buildImage() {
     fi
     echo "Done"
   fi
-
-  # Clean up again
-  rm -rf "${rpm_default_src}"
-  kill ${SERVER_PID} 2>/dev/null || true # TODO: figure out why failing
 
   # Clean up build context temp files left by podman/docker
   rm -f /tmp/build.*.tar 2>/dev/null || true

@@ -426,13 +426,11 @@ build_deploy() {
     # shellcheck disable=SC2086
     ./ci/build/build_image.sh --tag ${image_tag} \
       --rpm-src "${rpm_src}" \
-      --rpm-version "${cta_version}-${vcs_version}" \
       --container-runtime "${container_runtime}" \
       --load-into-k8s \
       ${extra_image_build_options}
     if [[ ${image_cleanup} = true ]]; then
       # Pruning of unused images is done after image building to ensure we maintain caching
-      podman image ls | grep ctageneric | grep -v "${image_tag}" | awk '{ print "localhost/ctageneric:" $2 }' | xargs -r podman rmi || true
       podman image prune -f >/dev/null
     fi
   else

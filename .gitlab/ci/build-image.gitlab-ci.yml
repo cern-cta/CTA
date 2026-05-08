@@ -30,19 +30,8 @@
     EXTRA_BUILD_ARGS: ""
     CTA_REPO_URL: ""
   before_script:
-    # TODO: createrepo and start http server in build_rpm/RPM/RPMS/x86_64
-    # TODO: add version build arg for regression test
-    - |
-      if [[ "${PIPELINE_TYPE}" == "REGR_AGAINST_CTA_VERSION" || "${PIPELINE_TYPE}" == "IMAGE_FROM_CTA_VERSION" ]]; then
-        CTA_REPO_URL="https://cta-public-repo.web.cern.ch/testing/cta-5/el9/cta/x86_64/"
-      else
-        CTA_REPO_URL="http://host.containers.internal:8000/"
-      fi
-    # For the Postgres scheduler add the "-pg" suffix to the image
-    - |
-      if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
-        IMAGE_NAME="${IMAGE_NAME}-pg"
-      fi
+    # TODO: handle regression testing
+    - echo TODO
   script:
     # image comes with sh instead of bash, so no bash syntax allowed
     - |
