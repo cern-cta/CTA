@@ -87,7 +87,7 @@ build-cta-rpms:
         RPMDEFS="--define '_debugsource_packages 0'"
       fi
     - |
-      if [[ "COMPILE_WITH_PERF_TELEMETRY" == "TRUE" ]]; then
+      if [[ "$COMPILE_WITH_PERF_TELEMETRY" == "TRUE" ]]; then
         BUILD_OPTIONS+=" --perf-telemetry"
       fi
     - if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then BUILD_OPTIONS+=" --use-internal-repos"; fi
