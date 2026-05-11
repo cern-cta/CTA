@@ -15,13 +15,26 @@
 
 namespace cta::frontend {
 
+using MapOfSets = std::map<std::string, std::set<std::string, std::less<>>, std::less<>>;
+
+enum class AuthMethod { JWT, KERBEROS, MTLS };
+
+std::optional<std::string> authMethodAsString(const AuthMethod& method);
+
 class FrontendService {
 public:
-  explicit FrontendService(const std::string& configFilename);
+  explicit FrontendService(const std::string& configFilename, const std::optional<std::string>& mtlsMappingFilename);
 
   FrontendService(const FrontendService&) = delete;
 
   ~FrontendService() = default;
+
+  /*!
+   * Load the MTLS mapping table from the TOML file path
+   */
+  void loadMtlsMappingTable(const std::string& filePath);
+
+  std::set<std::string, std::less<>> getMtlsCertIdentitiesForInstance(const std::string& identity);
 
   /*!
    * Get the log context
@@ -113,11 +126,6 @@ public:
   bool getTls() const { return m_tls; }
 
   /*
-   * Get the TLS value
-   */
-  const std::optional<bool> getMutualTls() const { return m_mutualTls; }
-
-  /*
    * Get the TlsKey
    */
   const std::optional<std::string> getTlsKey() const { return m_tlsKey; }
@@ -178,9 +186,22 @@ public:
   std::optional<int> getJwksTotalTimeout() const { return m_jwksTotalTimeout; }
 
   /*
-   * Get the jwtAuth value
+   * Get the authentication method which is configured for the WFE
    */
-  bool getJwtAuth() const { return m_jwtAuth; }
+  AuthMethod getWFEAuthMethod() const { return m_wfeAuthMethod; }
+
+  /*
+   * Get the authentication method which is configured for the Admin API
+   */
+  std::set<AuthMethod, std::less<>> getAdminAuthMethods() const { return m_adminAuthMethods; }
+
+  /*
+   * Check whether a particular auth method is used by the Admin API
+   */
+  bool usesAdminAuthMethod(const AuthMethod method) const {
+    return std::find(std::begin(m_adminAuthMethods), std::end(m_adminAuthMethods), method)
+           != std::end(m_adminAuthMethods);
+  }
 
   /*
    * Get the feature flag to disable admin commands
@@ -207,7 +228,6 @@ private:
   std::unique_ptr<SchedulerDBInit_t>            m_scheddbInit;                  //!< Persistent initialiser object for Scheduler DB
   std::unique_ptr<cta::SchedulerDB_t>           m_scheddb;                      //!< Scheduler DB for persistent objects (queues and requests)
   std::unique_ptr<cta::Scheduler>               m_scheduler;                    //!< The scheduler
-
   common::AdminCmdMode                          m_adminCommandMode;             //!< Option to select which admin command mode will be used
   bool                                          m_workflowEventsEnabled;        //!< Flag to allow the processing of workflow events
   std::optional<uint64_t>                       m_tapeCacheMaxAgeSecs;          //!< Option to override the tape cache timeout value in the scheduler DB
@@ -225,7 +245,6 @@ private:
   std::optional<std::string>                    m_servicePrincipal;             //!< The service principal to be used for Kerberos authentication by the gRPC server
   std::optional<int>                            m_threads;                      //!< The number of threads used by the gRPC server
   bool                                          m_tls;                          //!< Use TLS encryption for gRPC
-  std::optional<bool>                           m_mutualTls;                    //!< Use mutual TLS for authentication
   std::optional<std::string>                    m_certMap;                      //!< The file that maps certificates to clients for authorization purposes
   std::optional<std::string>                    m_tlsKey;                       //!< The TLS service key file
   std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file
@@ -236,7 +255,9 @@ private:
   std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
   std::optional<int>                            m_pubkeyTimeout;                //!< The number of seconds after which to update the cache entry for a cached key
   std::optional<int>                            m_jwksTotalTimeout;             //!< The total timeout in seconds for JWKS endpoint (default 60)
-  bool                                          m_jwtAuth;                      //!< Feature flag to guard JWT auth when TLS is enabled
+  AuthMethod                                    m_wfeAuthMethod;                //!< The authentication method which is currently set for the WFE
+  std::set<AuthMethod, std::less<>>             m_adminAuthMethods;             //!< The authentication method which is currently set for the Admin API
+  MapOfSets                                     m_mtlsMappingTable; //!< Table which maps instance name -> certificate identities
   // clang-format on
 };
 

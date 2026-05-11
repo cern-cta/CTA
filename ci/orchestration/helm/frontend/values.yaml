@@ -46,8 +46,12 @@ grpc:
       serverKey: /etc/grpc-certs/key/server.key
       serverCert: /etc/grpc-certs/cert/server.crt
       caCert: /etc/grpc-certs/ca/ca.crt
-      mutualTls:
-        enabled: true
+
+    auth:
+      admin:
+        - kerberos
+        - jwt
+      wfe: mtls
 
     experimental:
       ctaAdminCommands:
