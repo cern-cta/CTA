@@ -122,7 +122,7 @@ void ArchiveQueue::rebuild() {
   uint64_t totalJobs = 0;
   uint64_t totalBytes = 0;
   time_t oldestJobCreationTime = std::numeric_limits<time_t>::max();
-  time_t youngestJobCreationTime = std::numeric_limits<time_t>::min();
+  time_t youngestJobCreationTime = 0;
 
   while (s != shards.end()) {
     // Each shard could be gone or be empty
@@ -195,7 +195,8 @@ nextShard:;
   }
   m_payload.set_archivejobscount(totalJobs);
   m_payload.set_archivejobstotalsize(totalBytes);
-  m_payload.set_oldestjobcreationtime(oldestJobCreationTime);
+  m_payload.set_oldestjobcreationtime(
+    oldestJobCreationTime != std::numeric_limits<time_t>::max() ? oldestJobCreationTime : 0);
   m_payload.set_youngestjobcreationtime(youngestJobCreationTime);
   m_payload.set_mapsrebuildcount(m_payload.mapsrebuildcount() + 1);
   // We went through all the shard, re-updated the summaries, removed references to
@@ -216,7 +217,7 @@ void ArchiveQueue::recomputeOldestAndYoungestJobCreationTime() {
   auto s = shards.begin();
   auto sf = shardsFetchers.begin();
   time_t oldestJobCreationTime = std::numeric_limits<time_t>::max();
-  time_t youngestJobCreationTime = std::numeric_limits<time_t>::min();
+  time_t youngestJobCreationTime = 0;
 
   while (s != shards.end()) {
     // Each shard could be gone or be empty
@@ -253,12 +254,9 @@ nextShard:;
     s++;
     sf++;
   }
-  if (oldestJobCreationTime != std::numeric_limits<time_t>::max()) {
-    m_payload.set_oldestjobcreationtime(oldestJobCreationTime);
-  }
-  if (youngestJobCreationTime != std::numeric_limits<time_t>::min()) {
-    m_payload.set_youngestjobcreationtime(youngestJobCreationTime);
-  }
+  m_payload.set_oldestjobcreationtime(
+    oldestJobCreationTime != std::numeric_limits<time_t>::max() ? oldestJobCreationTime : 0);
+  m_payload.set_youngestjobcreationtime(youngestJobCreationTime);
 }
 
 bool ArchiveQueue::isEmpty() {

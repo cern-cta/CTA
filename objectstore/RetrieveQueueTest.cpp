@@ -46,6 +46,51 @@ TEST_F(ObjectStore, RetrieveQueueBasicAccess) {
   ASSERT_FALSE(rq.exists());
 }
 
+TEST_F(ObjectStore, RetrieveQueueYoungestJobCreationTimeAfterEmptyRebuild) {
+  cta::objectstore::BackendVFS be;
+  cta::log::DummyLogger dl("dummy", "dummyLogger");
+  cta::log::LogContext lc(dl);
+  cta::objectstore::AgentReference agentRef("unitTest", dl);
+
+  auto makeJob = [](const std::string& address, uint64_t fSeq, time_t startTime) {
+    cta::common::dataStructures::RetrieveJobToAdd jta;
+    jta.copyNb = 1;
+    jta.fSeq = fSeq;
+    jta.fileSize = 1000;
+    jta.policy.retrieveMinRequestAge = 10;
+    jta.policy.retrievePriority = 1;
+    jta.startTime = startTime;
+    jta.retrieveRequestAddress = address;
+    return jta;
+  };
+
+  const std::string retrieveQueueAddress = agentRef.nextId("RetrieveQueue");
+
+  cta::objectstore::RetrieveQueue rq(retrieveQueueAddress, be);
+  rq.initialize("V12345");
+  rq.insert();
+
+  cta::objectstore::ScopedExclusiveLock lock(rq);
+
+  std::list jobsToAdd {makeJob("request-0", 0, 1656508139)};
+  rq.addJobsAndCommit(jobsToAdd, agentRef, lc);
+  rq.removeJobsAndCommit({"request-0"}, lc);
+
+  auto emptySummary = rq.getJobsSummary();
+  ASSERT_EQ(0, emptySummary.jobs);
+  ASSERT_EQ(0, emptySummary.oldestJobStartTime);
+  ASSERT_EQ(0, emptySummary.youngestJobStartTime);
+
+  constexpr time_t nextJobStartTime = 1656508200;
+  std::list laterJobsToAdd {makeJob("request-1", 1, nextJobStartTime)};
+  rq.addJobsAndCommit(laterJobsToAdd, agentRef, lc);
+
+  auto jobsSummary = rq.getJobsSummary();
+  ASSERT_EQ(1, jobsSummary.jobs);
+  ASSERT_EQ(nextJobStartTime, jobsSummary.oldestJobStartTime);
+  ASSERT_EQ(nextJobStartTime, jobsSummary.youngestJobStartTime);
+}
+
 TEST_F(ObjectStore, RetrieveQueueShardingAndOrderingTest) {
   cta::objectstore::BackendVFS be;
   cta::log::DummyLogger dl("dummy", "dummyLogger");
