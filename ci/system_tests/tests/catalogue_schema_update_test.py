@@ -105,9 +105,12 @@ def test_init_catalogue_updater(
     print(f"Catalogue destination version: {catalogue_to_version}")
     print("Install catalogue-updater chart...")
 
-    extraFlags = ""
-    if catalogue_schema_update_params.schema_checkout_ref:
-        extraFlags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_update_params.schema_checkout_ref}'"
+    catalogue_schema_ref = (
+        catalogue_schema_update_params.schema_checkout_ref
+        if catalogue_schema_update_params.schema_checkout_ref
+        else env.exec_local('git -C "$(git rev-parse --show-toplevel)/catalogue/cta-catalogue-schema" rev-parse HEAD')
+    )
+    extraFlags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
 
     env.exec_local(
         f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
