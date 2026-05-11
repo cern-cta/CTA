@@ -114,7 +114,9 @@ def test_init_catalogue_updater(
             / "cta-catalogue-schema"
         ).resolve()
         catalogue_schema_ref = (
-            env.exec_local(f"git -C {catalogue_schema_path} rev-parse --short HEAD").stdout.decode().strip()
+            env.exec_local(f"git -C {catalogue_schema_path} rev-parse --short HEAD", capture_output=True)
+            .stdout.decode()
+            .strip()
         )
         print(f"Using catalogue schema ref from submodule: {catalogue_schema_ref}")
 
