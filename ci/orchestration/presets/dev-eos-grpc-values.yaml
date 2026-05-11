@@ -65,6 +65,8 @@ mgm:
       mgmofs.protowfusegrpc true
       mgmofs.protowfusegrpctls true
       mgmofs.jwttokenpath /etc/cta/ctaeos.jwt
+      mgmofs.protowfusegrpctlscert /etc/grid-security/certificates/ctaeos-self-signed.crt.pem
+      mgmofs.protowfusegrpctlskey /etc/grid-security/certificates/ctaeos-self-signed.key.pem
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
@@ -87,20 +89,31 @@ mgm:
       value: "CET"
 
   # Generate the self-signed certificates for http
-  initContainer:
+  initContainer: &eos-init-container
     enabled: true
     script: |
       #!/usr/bin/bash
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
       cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
+      cp /etc/grpc-certs-client/ctaeos-self-signed.crt.pem /etc/grid-security/certificates/
+      cp /etc/grpc-certs-client/ctaeos-self-signed.key.pem /etc/grid-security/certificates/
+      chmod 0600 /etc/grid-security/certificates/ctaeos-self-signed.key.pem
+      chown daemon:daemon /etc/grid-security/certificates/ctaeos-self-signed.{key,crt}.pem
+
     volumeMounts:
       - name: grid-security
         mountPath: /etc/grid-security
       - name: grpc-certs
         mountPath: /etc/grpc-certs
+      - name: ctaeos-self-signed-crt
+        mountPath: /etc/grpc-certs-client/ctaeos-self-signed.crt.pem
+        subPath: ctaeos-self-signed.crt.pem
+      - name: ctaeos-self-signed-key
+        mountPath: /etc/grpc-certs-client/ctaeos-self-signed.key.pem
+        subPath: ctaeos-self-signed.key.pem
 
-  extraVolumes:
+  extraVolumes: &eos-extra-volumes
     volumeMounts:
       # varlog-tmp is the location where core dumps will end up
       - name: varlog-tmp
@@ -122,6 +135,12 @@ mgm:
       - name: ctaeos-jwt
         secret:
           secretName: ctaeos-jwt
+      - name: ctaeos-self-signed-crt
+        secret:
+          secretName: ctaeos-self-signed-crt-pem
+      - name: ctaeos-self-signed-key
+        secret:
+          secretName: ctaeos-self-signed-key-pem
 
 fst:
   replicaCount: 1
@@ -142,6 +161,8 @@ fst:
       fstofs.protowfusegrpc true
       fstofs.protowfusegrpctls true
       fstofs.jwttokenpath /etc/cta/ctaeos.jwt
+      fstofs.protowfusegrpctlscert /etc/grid-security/certificates/ctaeos-self-signed.crt.pem
+      fstofs.protowfusegrpctlskey /etc/grid-security/certificates/ctaeos-self-signed.key.pem
       tpc.trace  all
 
   probes:
@@ -154,40 +175,8 @@ fst:
     - name: TZ
       value: "CET"
 
-  initContainer:
-    enabled: true
-    script: |
-      #!/usr/bin/bash
-      /mkcert-ssl.sh
-      chown -R daemon:daemon /etc/grid-security/certificates
-      cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
-    volumeMounts:
-      - name: grid-security
-        mountPath: /etc/grid-security
-      - name: grpc-certs
-        mountPath: /etc/grpc-certs
-
-  extraVolumes:
-    volumeMounts:
-      - name: varlog-tmp
-        mountPath: /var/log/tmp
-      - name: grid-security
-        mountPath: /etc/grid-security
-        readOnly: true
-      - name: ctaeos-jwt
-        mountPath: /etc/cta
-        readOnly: true
-    volumes:
-      - name: varlog-tmp
-        emptyDir: {}
-      - name: grid-security
-        emptyDir: {}
-      - name: grpc-certs
-        secret:
-          secretName: ca-crt
-      - name: ctaeos-jwt
-        secret:
-          secretName: ctaeos-jwt
+  initContainer: *eos-init-container
+  extraVolumes: *eos-extra-volumes
 
 qdb:
   replicaCount: 1
