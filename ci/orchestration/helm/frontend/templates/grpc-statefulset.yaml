@@ -150,6 +150,9 @@ spec:
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
+        - name: jwks-json
+          mountPath: /etc/cta/jwks.json
+          subPath: jwks.json
         - name: grpc-server-crt
           mountPath: /etc/grpc-certs/cert
         - name: grpc-server-key
@@ -171,6 +174,9 @@ spec:
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
+      - name: jwks-json
+        secret:
+          secretName: jwks-json
       {{- if eq $schedulerConfig.backend "postgres" }}
       - name: scheduler-config
         configMap:

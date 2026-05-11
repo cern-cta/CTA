@@ -82,8 +82,8 @@ data:
     grpc.tls.enabled {{ .Values.grpc.conf.tls.enabled }}
     grpc.tls.server_key_path {{ .Values.grpc.conf.tls.serverKey }}
     grpc.tls.server_cert_path {{ .Values.grpc.conf.tls.serverCert }}
-    grpc.jwks.uri {{ .Values.grpc.conf.jwtAuth.jwksUri }}
-    grpc.jwt.enabled {{ .Values.grpc.conf.jwtAuth.enabled }}
+    grpc.jwks.uri file:///etc/cta/jwks.json
+    grpc.jwt.enabled true
 
     # Telemetry
     cta.experimental.telemetry.enabled {{ .Values.grpc.conf.telemetry.enabled }}

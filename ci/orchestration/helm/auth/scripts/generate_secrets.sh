@@ -4,7 +4,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -euo pipefail
-set -x
 
 SECRETS_DIR="/secrets"
 : "${NAMESPACE:?NAMESPACE env var must be set}"
@@ -12,7 +11,18 @@ SECRETS_DIR="/secrets"
 # --- Setup --- #
 
 mkdir -p "$SECRETS_DIR"
-microdnf install -y --disablerepo=* --enablerepo=baseos openssl
+# Extra flags are to improve speed
+microdnf install -y \
+  --setopt=install_weak_deps=0 \
+  --nodocs \
+  --disablerepo=* \
+  --enablerepo=baseos \
+  --enablerepo=appstream \
+  openssl python3 python3-pip
+python3 -m pip install \
+  --disable-pip-version-check \
+  --no-cache-dir \
+  pyjwt cryptography
 
 # --- SSS Keytabs --- #
 
@@ -41,8 +51,17 @@ openssl x509 -req -passin pass:1234 -days 365 -in server.csr -CA $SECRETS_DIR/ca
 # Remove passphrase from the server key
 openssl rsa -passin pass:1234 -in $SECRETS_DIR/server.key -out $SECRETS_DIR/server.key
 
-chmod 0644 /$SECRETS_DIR/ca.key
-chmod 0644 /$SECRETS_DIR/server.key
+chmod 0644 $SECRETS_DIR/ca.key
+chmod 0644 $SECRETS_DIR/server.key
+
+# --- JWT for Frontend Auth --- #
+
+python3 /scripts/generate_jwt.py \
+  --output-dir "$SECRETS_DIR" \
+  --cert "$SECRETS_DIR/server.crt" \
+  --key "$SECRETS_DIR/server.key" \
+  --sub ctaeos \
+  --sub ctaadmin1
 
 # --- Generate K8s secrets for all of these --- #
 
