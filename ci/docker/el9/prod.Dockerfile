@@ -58,14 +58,14 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
 ###############################################
 FROM base AS cta-taped
 
+COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
+
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
-
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
-    --mount=type=cache,target=/var/cache/yum,sharing=locked \
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-taped \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-taped \
     /usr/local/bin/build-service.sh "cta-taped cta-tape-label cta-eosdf mt-st lsscsi sg3_utils"
 
 # USER cta
@@ -76,14 +76,14 @@ CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--l
 ###############################################
 FROM base AS cta-rmcd
 
+COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
+
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
-
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
-    --mount=type=cache,target=/var/cache/yum,sharing=locked \
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-rmcd \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-rmcd \
     /usr/local/bin/build-service.sh "cta-rmcd cta-smc sg3_utils lsscsi mtx mt-st"
 
 # USER cta
@@ -94,14 +94,14 @@ CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
 ###############################################
 FROM base AS cta-maintd
 
+COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
+
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
-
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
-    --mount=type=cache,target=/var/cache/yum,sharing=locked \
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-maintd \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-maintd \
     /usr/local/bin/build-service.sh "cta-maintd"
 
 # USER cta
@@ -112,14 +112,14 @@ CMD ["/usr/bin/cta-maintd", "--foreground", "--log-to-file=/var/log/cta/cta-main
 ###############################################
 FROM base AS cta-frontend-grpc
 
+COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
+
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
-
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
-    --mount=type=cache,target=/var/cache/yum,sharing=locked \
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend-grpc \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend-grpc \
     /usr/local/bin/build-service.sh "cta-frontend-grpc krb5-workstation"
 
 # USER cta
@@ -130,14 +130,14 @@ CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend
 ###############################################
 FROM base AS cta-frontend-xrd
 
+COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
+
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
-
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
-    --mount=type=cache,target=/var/cache/yum,sharing=locked \
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend-xrd \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend-xrd \
     /usr/local/bin/build-service.sh "cta-frontend krb5-workstation"
 
 # USER cta
@@ -149,15 +149,16 @@ CMD ["xrootd", "-l", "/var/log/cta-frontend-xrootd.log", "-k", "fifo", "-n", "ct
 ###############################################
 FROM base AS cta-tools-grpc
 
-ARG USE_INTERNAL_REPOS
-ARG USE_ORACLE_CATALOGUE
 
 COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
 
+ARG USE_INTERNAL_REPOS
+ARG USE_ORACLE_CATALOGUE
+
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
-    --mount=type=cache,target=/var/cache/yum,sharing=locked \
-    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation"
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools-grpc \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools-grpc \
+    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogueutils cta-objectstore-tools krb5-workstation"
 
 # USER cta
 ENTRYPOINT ["/bin/bash"]
@@ -167,15 +168,15 @@ ENTRYPOINT ["/bin/bash"]
 ###############################################
 FROM base AS cta-tools-xrd
 
+COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
+
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
-
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
-    --mount=type=cache,target=/var/cache/yum,sharing=locked \
-    /usr/local/bin/build-service.sh "cta-cli cta-catalogue-utils cta-scheduler-utils krb5-workstation"
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools-xrd \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools-xrd \
+    /usr/local/bin/build-service.sh "cta-cli cta-catalogueutils cta-objectstore-tools krb5-workstation"
 
 # USER cta
 ENTRYPOINT ["/bin/bash"]
@@ -189,8 +190,8 @@ FROM base AS cta-debug
 # Also the repo to which this Dockerfile points in a local dev environment may not be accessible from the Kubernetes
 # As such, there is not much point in keeping cta-release around (except wasting space), because downloads would fail anyway
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
-    --mount=type=cache,target=/var/cache/yum,sharing=locked \
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-debug \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-debug \
     microdnf install -y \
       cta-release && \
     cta-versionlock apply && \
@@ -205,11 +206,3 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     rm -rf /var/lib/dnf/history.*
 
 ENTRYPOINT ["/bin/bash"]
-
-# FROM scratch AS build-all-stages
-
-# COPY --from=cta-taped /etc/group .
-# COPY --from=cta-maintd /etc/group .
-# COPY --from=cta-rmcd /etc/group .
-# COPY --from=cta-frontend-xrd /etc/group .
-# COPY --from=cta-tools-xrd /etc/group .

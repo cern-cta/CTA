@@ -3,8 +3,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 set -e
 
+# Script for installing an arbitrary number of RPMs packages through (micro)dnf while also cleaning up everything nicely.
 # While all of this logic could be executed directly in the Dockerfile, it causes a significant amount of code duplication
 # It is important that everything runs in a single stage to ensure we don't bloat the layer sizes
+
+# Since we are building in parallel, suppress stdout to reduce noise and make errors easier to spot
+exec 1> /dev/null
 
 TARGET_PACKAGES=$1
 
@@ -14,13 +18,11 @@ cta-versionlock apply
 
 # Conditionally overwrite public repos
 if [ "$USE_INTERNAL_REPOS" = "1" ]; then
-    echo "Applying internal repository overrides..."
     cp -f /tmp/internal-repos/* /etc/yum.repos.d/
 fi
 
 # Conditionally add Oracle support
 if [ "$USE_ORACLE_CATALOGUE" = "1" ]; then
-    echo "Installing Oracle RPMs..."
     microdnf install -y cta-catalogue-occi
 fi
 
@@ -28,7 +30,6 @@ fi
 microdnf install -y --enablerepo crb $TARGET_PACKAGES
 
 # Cleanup to reduce image size
-echo "Cleaning up"
 microdnf remove -y cta-release python*
 rpm -q systemd-* > /dev/null && rpm -e systemd-* --nodeps || true
 rm -rf /var/lib/dnf/history.* /tmp/internal-repos

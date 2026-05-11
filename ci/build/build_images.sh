@@ -111,17 +111,6 @@ buildImage() {
     "cta-tools-xrd"
   )
 
-  # Trick to get stages to build in parallel. Needs correctly sharing= flag though
-  # (
-  #     set -x
-  #     ${container_runtime} build . -f ${dockerfile} \
-  #       --build-context rpm_context="${rpm_src}" \
-  #       --build-arg USE_INTERNAL_REPOS=${use_internal_repos} \
-  #       --build-arg USE_ORACLE_CATALOGUE=0 \
-  #       --network host \
-  #       --target build-all-stages --jobs 0
-  #   )
-
   SECONDS=0
 
   # Build
@@ -136,8 +125,9 @@ buildImage() {
         --build-arg USE_ORACLE_CATALOGUE=0 \
         --network host \
         --target $target
-    )
+    ) &
   done
+  wait
 
   # Push to local minikube/K3s
   if [[ "$load_into_k8s" == "true" ]]; then
