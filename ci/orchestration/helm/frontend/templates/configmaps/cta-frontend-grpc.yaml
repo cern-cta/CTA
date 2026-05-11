@@ -84,6 +84,10 @@ data:
     grpc.tls.server_cert_path {{ .Values.grpc.conf.tls.serverCert }}
     grpc.jwks.uri file:///etc/cta/jwks.json
     grpc.jwt.enabled true
+    {{- if .Values.grpc.conf.tls.caCert }}
+    grpc.tls.chain_cert_path {{ .Values.grpc.conf.tls.caCert }}
+    {{- end }}
+    grpc.tls.mutual_tls.enabled {{ .Values.grpc.conf.tls.mutualTls.enabled }}
 
     # Telemetry
     cta.experimental.telemetry.enabled {{ .Values.grpc.conf.telemetry.enabled }}
