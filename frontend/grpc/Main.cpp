@@ -169,6 +169,7 @@ int main(const int argc, char* const* const argv) {
     lc.log(log::INFO, "Using gRPC over TLS");
     if (auto useMutualTls = frontendService->getMutualTls(); useMutualTls.has_value() && useMutualTls.value()) {
       cert_request_type = GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY;
+      lc.log(log::INFO, "Using mutual TLS to authenticate client requests");
     }
     grpc::SslServerCredentialsOptions tls_options(cert_request_type);
     grpc::SslServerCredentialsOptions::PemKeyCertPair cert;

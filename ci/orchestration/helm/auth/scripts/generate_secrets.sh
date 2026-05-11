@@ -33,13 +33,18 @@ openssl req -passin pass:1234 -new -x509 -days 365 -key $SECRETS_DIR/ca.key -out
 
 # Generate server key and CSR
 openssl genrsa -passout pass:1234 -des3 -out $SECRETS_DIR/server.key 4096
-openssl req -passin pass:1234 -new -key $SECRETS_DIR/server.key -out server.csr -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=cta-frontend-grpc"
+openssl req -passin pass:1234 -new -key $SECRETS_DIR/server.key -out server.csr -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=cta-frontend-grpc" -addext "subjectAltName=DNS:cta-frontend-grpc"
 
 # Sign the server cert with the CA
-openssl x509 -req -passin pass:1234 -days 365 -in server.csr -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -set_serial 01 -out $SECRETS_DIR/server.crt
+openssl x509 -req -passin pass:1234 -days 365 -in server.csr -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -set_serial 01 -copy_extensions copy -out $SECRETS_DIR/server.crt
 
 # Remove passphrase from the server key
 openssl rsa -passin pass:1234 -in $SECRETS_DIR/server.key -out $SECRETS_DIR/server.key
+
+# generate self-signed cert for ctaeos
+openssl req -newkey rsa:4096 -keyout $SECRETS_DIR/ctaeos-self-signed.key.pem -out $SECRETS_DIR/ctaeos-self-signed.csr -sha256 -nodes -subj "/C=CH/O=CERN/CN=ctaeos" -addext "subjectAltName=DNS:ctaeos" && \
+openssl x509 -req -passin pass:1234 -days 3650 -in $SECRETS_DIR/ctaeos-self-signed.csr -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -set_serial 01 -copy_extensions copy -out $SECRETS_DIR/ctaeos-self-signed.crt.pem && \
+rm $SECRETS_DIR/ctaeos-self-signed.csr
 
 chmod 0644 /$SECRETS_DIR/ca.key
 chmod 0644 /$SECRETS_DIR/server.key

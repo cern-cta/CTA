@@ -62,6 +62,8 @@ mgm:
       mgmofs.protowfusegrpc true
       mgmofs.protowfusegrpctls true
       mgmofs.jwttokenpath /etc/grid-security/jwt-token-grpc
+      mgmofs.protowfusegrpctlscert /etc/grid-security/certificates/ctaeos-self-signed.crt.pem
+      mgmofs.protowfusegrpctlskey /etc/grid-security/certificates/ctaeos-self-signed.key.pem
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
@@ -91,6 +93,10 @@ mgm:
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
       cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
+      cp /etc/grpc-certs-client/ctaeos-self-signed.crt.pem /etc/grid-security/certificates/
+      cp /etc/grpc-certs-client/ctaeos-self-signed.key.pem /etc/grid-security/certificates/
+      chmod 0600 /etc/grid-security/certificates/ctaeos-self-signed.key.pem
+      chown daemon:daemon /etc/grid-security/certificates/ctaeos-self-signed.crt.pem /etc/grid-security/certificates/ctaeos-self-signed.key.pem
 
       response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
         -H "Content-Type: application/x-www-form-urlencoded" \
@@ -164,6 +170,12 @@ mgm:
         mountPath: /etc/grid-security
       - name: grpc-certs
         mountPath: /etc/grpc-certs
+      - name: ctaeos-self-signed-crt
+        mountPath: /etc/grpc-certs-client/ctaeos-self-signed.crt.pem
+        subPath: ctaeos-self-signed.crt.pem
+      - name: ctaeos-self-signed-key
+        mountPath: /etc/grpc-certs-client/ctaeos-self-signed.key.pem
+        subPath: ctaeos-self-signed.key.pem
 
   extraVolumes:
     volumeMounts:
@@ -181,6 +193,12 @@ mgm:
       - name: grpc-certs
         secret:
           secretName: ca-crt
+      - name: ctaeos-self-signed-crt
+        secret:
+          secretName: ctaeos-self-signed-crt-pem
+      - name: ctaeos-self-signed-key
+        secret:
+          secretName: ctaeos-self-signed-key-pem
 
 fst:
   replicaCount: 1
@@ -199,6 +217,8 @@ fst:
       fstofs.protowfusegrpc true
       fstofs.protowfusegrpctls true
       fstofs.jwttokenpath /etc/grid-security/jwt-token-grpc
+      fstofs.protowfusegrpctlscert /etc/grid-security/certificates/ctaeos-self-signed.crt.pem
+      fstofs.protowfusegrpctlskey /etc/grid-security/certificates/ctaeos-self-signed.key.pem
       tpc.trace  all
 
   probes:
@@ -218,6 +238,10 @@ fst:
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
       cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
+      cp /etc/grpc-certs-client/ctaeos-self-signed.crt.pem /etc/grid-security/certificates/
+      cp /etc/grpc-certs-client/ctaeos-self-signed.key.pem /etc/grid-security/certificates/
+      chmod 0600 /etc/grid-security/certificates/ctaeos-self-signed.key.pem
+      chown daemon:daemon /etc/grid-security/certificates/ctaeos-self-signed.crt.pem /etc/grid-security/certificates/ctaeos-self-signed.key.pem
 
       response=$(curl -X POST http://auth-keycloak:8080/realms/master/protocol/openid-connect/token \
       -H "Content-Type: application/x-www-form-urlencoded" \
@@ -292,6 +316,12 @@ fst:
         mountPath: /etc/grid-security
       - name: grpc-certs
         mountPath: /etc/grpc-certs
+      - name: ctaeos-self-signed-crt
+        mountPath: /etc/grpc-certs-client/ctaeos-self-signed.crt.pem
+        subPath: ctaeos-self-signed.crt.pem
+      - name: ctaeos-self-signed-key
+        mountPath: /etc/grpc-certs-client/ctaeos-self-signed.key.pem
+        subPath: ctaeos-self-signed.key.pem
 
   extraVolumes:
     volumeMounts:
@@ -308,6 +338,12 @@ fst:
       - name: grpc-certs
         secret:
           secretName: ca-crt
+      - name: ctaeos-self-signed-crt
+        secret:
+          secretName: ctaeos-self-signed-crt-pem
+      - name: ctaeos-self-signed-key
+        secret:
+          secretName: ctaeos-self-signed-key-pem
 
 qdb:
   replicaCount: 1

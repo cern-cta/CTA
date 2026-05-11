@@ -44,7 +44,9 @@ grpc:
       enabled: true
       serverKey: /etc/grpc-certs/key/server.key
       serverCert: /etc/grpc-certs/cert/server.crt
-      caCert: ""
+      caCert: /etc/grpc-certs/ca/ca.crt
+      mutualTls:
+        enabled: true
 
     jwtAuth:
       enabled: true

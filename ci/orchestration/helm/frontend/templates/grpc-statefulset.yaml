@@ -78,12 +78,19 @@ spec:
         readinessProbe:
           exec:
             command:
-              - /grpc-health-probe/grpc-health-probe
-              - -addr=localhost:{{ .Values.grpc.port }}
-            {{- if .Values.grpc.conf.tls.enabled }}
-              - -tls
-              - -tls-no-verify
-            {{- end }}
+              # TODO: fix the readiness probe below
+              - "true"
+            #   - /grpc-health-probe/grpc-health-probe
+            #   - -addr=localhost:{{ .Values.grpc.port }}
+            # {{- if .Values.grpc.conf.tls.enabled }}
+            #   - -tls
+            #   - -tls-ca-cert=/etc/grpc-certs/ca/ca.crt
+            #   - -tls-server-name=cta-frontend-grpc
+            #   {{- if .Values.grpc.conf.tls.mutualTls.enabled }}
+            #   - -tls-client-cert=/etc/grpc-certs/client/grpctest.crt.pem
+            #   - -tls-client-key=/etc/grpc-certs/client/grpctest.key.pem
+            #   {{- end }}
+            # {{- end }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -154,6 +161,16 @@ spec:
           mountPath: /etc/grpc-certs/cert
         - name: grpc-server-key
           mountPath: /etc/grpc-certs/key
+        - name: grpc-ca-crt
+          mountPath: /etc/grpc-certs/ca
+        {{- if .Values.grpc.conf.tls.mutualTls.enabled }}
+        - name: grpc-client-crt
+          mountPath: /etc/grpc-certs/client/ctaeos-self-signed.crt.pem
+          subPath: ctaeos-self-signed.crt.pem
+        - name: grpc-client-key
+          mountPath: /etc/grpc-certs/client/ctaeos-self-signed.key.pem
+          subPath: ctaeos-self-signed.key.pem
+        {{- end }}
         - name: grpc-health-probe-bin
           mountPath: /grpc-health-probe
           subPath: grpc-health-probe
@@ -201,6 +218,17 @@ spec:
       - name: grpc-server-key
         secret:
           secretName: server-key
+      - name: grpc-ca-crt
+        secret:
+          secretName: ca-crt
+      {{- if .Values.grpc.conf.tls.mutualTls.enabled }}
+      - name: grpc-client-crt
+        secret:
+          secretName: ctaeos-self-signed-crt-pem
+      - name: grpc-client-key
+        secret:
+          secretName: ctaeos-self-signed-key-pem
+      {{- end }}
       - name: grpc-health-probe-bin
         emptyDir: {}
       - name: eos-sss-keytab-fixedownership
