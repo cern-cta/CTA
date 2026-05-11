@@ -200,6 +200,7 @@ test-cta-release:
     - dnf install --nogpgcheck -y cta-cli
                                   cta-admin-grpc
                                   cta-catalogue-utils
+                                  cta-scheduler-utils
                                   cta-frontend
                                   cta-frontend-grpc
                                   cta-maintd
