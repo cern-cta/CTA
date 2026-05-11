@@ -103,15 +103,19 @@ def test_init_catalogue_updater(
 
     print(f"Catalogue source version: {catalogue_from_version}")
     print(f"Catalogue destination version: {catalogue_to_version}")
-    print("Install catalogue-updater chart...")
 
-    catalogue_schema_ref = (
-        catalogue_schema_update_params.schema_checkout_ref
-        if catalogue_schema_update_params.schema_checkout_ref
-        else env.exec_local('git -C "$(git rev-parse --show-toplevel)/catalogue/cta-catalogue-schema" rev-parse HEAD')
-    )
+    if catalogue_schema_update_params.schema_checkout_ref:
+        catalogue_schema_ref = catalogue_schema_update_params.schema_checkout_ref
+        print(f"Using catalogue schema ref from config: {catalogue_schema_ref}")
+    else:
+        catalogue_schema_ref = env.exec_local(
+            'git -C "$(git rev-parse --show-toplevel)/catalogue/cta-catalogue-schema" rev-parse HEAD'
+        ).stdout
+        print(f"Using catalogue schema ref from submodule: {catalogue_schema_ref}")
+
     extraFlags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
 
+    print("Install catalogue-updater chart...")
     env.exec_local(
         f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
                                                         --set catalogueSourceVersion={catalogue_from_version} \
