@@ -12,6 +12,10 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 data:
+  mtls-map.toml: |-
+    [aliases]
+    ctaeos = ["ctaeos.biglab", "ctaeos.biglab.ch"]
+    orange = "pear"
   cta-frontend-grpc.conf: |-
     #
     # CTA options
@@ -83,11 +87,12 @@ data:
     grpc.tls.server_key_path {{ .Values.grpc.conf.tls.serverKey }}
     grpc.tls.server_cert_path {{ .Values.grpc.conf.tls.serverCert }}
     grpc.jwks.uri file:///etc/cta/jwks.json
-    grpc.jwt.enabled true
     {{- if .Values.grpc.conf.tls.caCert }}
     grpc.tls.chain_cert_path {{ .Values.grpc.conf.tls.caCert }}
     {{- end }}
-    grpc.tls.mutual_tls.enabled {{ .Values.grpc.conf.tls.mutualTls.enabled }}
+
+    grpc.wfe.auth_method {{ .Values.grpc.conf.auth.wfe }}
+    grpc.admin.auth_methods {{ join " " .Values.grpc.conf.auth.admin }}
 
     # Telemetry
     cta.experimental.telemetry.enabled {{ .Values.grpc.conf.telemetry.enabled }}

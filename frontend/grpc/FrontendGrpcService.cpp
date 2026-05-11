@@ -30,24 +30,55 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
                                         const cta::xrd::Request* request,
                                         cta::log::LogContext& lc) {
   // Retrieve metadata from the incoming request
-  auto metadata = context->client_metadata();
 
-  // skip any metadata checks in case JWT Auth is disabled
-  if (bool jwtAuthEnabled = m_frontendService->getJwtAuth(); !jwtAuthEnabled) {
-    lc.log(cta::log::INFO, "Skipping token validation step as token authentication is disabled");
-    cta::common::dataStructures::SecurityIdentity clientIdentity(request->notification().wf().instance().name(),
-                                                                 context->peer());
+  if (m_frontendService->getWFEAuthMethod() == AuthMethod::MTLS) {
+    auto auth_context = context->auth_context();
+    // fetch the certificate identities from the auth context
+    auto cert_idents = auth_context->GetPeerIdentity();
+    auto instance_name = request->notification().wf().instance().name();
+
+    std::set<std::string, std::less<>> cert_identities;
+    std::ranges::transform(cert_idents, std::inserter(cert_identities, cert_identities.begin()), [](const auto& ref) {
+      return std::string(ref.data(), ref.size());
+    });
+
+    lc.log(cta::log::DEBUG,
+           "Received mTLS identities: "
+             + cta::utils::joinCommaSeparated(std::vector(cert_identities.begin(), cert_identities.end())));
+
+    auto instance_identities = m_frontendService->getMtlsCertIdentitiesForInstance(instance_name);
+
+    lc.log(cta::log::DEBUG,
+           "Resolved certificate identities for instance: "
+             + cta::utils::joinCommaSeparated(std::vector(instance_identities.begin(), instance_identities.end())));
+
+    std::set<std::string, std::less<>> intersect_set {};
+    std::ranges::set_intersection(cert_identities,
+                                  instance_identities,
+                                  std::inserter(intersect_set, intersect_set.begin()));
+
+    if (intersect_set.empty()) {
+      // No identities match
+      lc.log(cta::log::ERR, "Username " + instance_name + " doesn't match any of the certificate identities.");
+      return {::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Certificate doesn't match identity"), std::nullopt};
+    }
+
+    cta::common::dataStructures::SecurityIdentity clientIdentity(instance_name, context->peer());
     return {::grpc::Status::OK, clientIdentity};
+  } else if (m_frontendService->getWFEAuthMethod() == AuthMethod::JWT) {
+    const auto& metadata = context->client_metadata();
+
+    auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
+      metadata,
+      m_frontendService->getWFEAuthMethod() != AuthMethod::JWT,
+      m_pubkeyCache,
+      m_tokenStorage,
+      request->notification().wf().instance().name(),
+      context->peer(),
+      lc);
+    return {status, clientIdentity};
   } else {
-    auto [status, clientIdentity] =
-      cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                                m_frontendService->getJwtAuth(),
-                                                                m_pubkeyCache,
-                                                                m_tokenStorage,
-                                                                request->notification().wf().instance().name(),
-                                                                context->peer(),
-                                                                lc);
-    return std::make_pair(status, clientIdentity);
+    __builtin_unreachable();
   }
 }
 
@@ -316,7 +347,7 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
 
   auto [status, clientIdentity] =
     cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
-                                                              m_frontendService->getJwtAuth(),
+                                                              m_frontendService->usesAdminAuthMethod(AuthMethod::JWT),
                                                               m_pubkeyCache,
                                                               m_tokenStorage,
                                                               request->notification().wf().instance().name(),
