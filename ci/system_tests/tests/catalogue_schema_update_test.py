@@ -122,7 +122,7 @@ def test_tag_liquibase(catalogue_updater):
 
 
 def test_liquibase_update(cta_frontend, catalogue_updater, catalogue_to_version):
-    result = catalogue_updater.exec("/launch_liquibase.sh update", capture_output=True)
+    result = catalogue_updater.exec("/launch_liquibase.sh update", capture_output=True, throw_on_failure=False)
     assert result.success, "Liquibase update failed\n" f"stdout:\n{result.stdout}\n" f"stderr:\n{result.stderr}"
 
     # Now the current version should be equal to the "to" version
