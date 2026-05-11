@@ -94,7 +94,7 @@ def test_init_catalogue_updater(
     except Exception:
         print("Nothing to clean up")
 
-    top_path = Path(env.exec_local("git rev-parse --show-toplevel").stdout)
+    top_path = Path(env.exec_local("git rev-parse --show-toplevel", capture_output=True).stdout.decode().strip())
 
     # If the configmap generation would need to be done through Helm the file in question needs to be within the chart
     defaultPlatform = project_json["dev"]["defaultPlatform"]
@@ -109,7 +109,9 @@ def test_init_catalogue_updater(
         print(f"Using catalogue schema ref from config: {catalogue_schema_ref}")
     else:
         catalogue_schema_path = (
-            Path(env.exec_local("git rev-parse --show-toplevel").stout) / "catalogue" / "cta-catalogue-schema"
+            Path(env.exec_local("git rev-parse --show-toplevel", capture_output=True).stdout.decode().strip())
+            / "catalogue"
+            / "cta-catalogue-schema"
         ).resolve()
         catalogue_schema_ref = env.exec_local(f"git -C {catalogue_schema_path} rev-parse --short HEAD").stdout
         print(f"Using catalogue schema ref from submodule: {catalogue_schema_ref}")
