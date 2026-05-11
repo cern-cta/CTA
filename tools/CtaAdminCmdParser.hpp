@@ -174,6 +174,8 @@ const cmdLookup_t cmdLookup = {
   {"ad",                  AdminCmd::CMD_ADMIN              },
   {"archiveroute",        AdminCmd::CMD_ARCHIVEROUTE       },
   {"ar",                  AdminCmd::CMD_ARCHIVEROUTE       },
+  {"archivefile",         AdminCmd::CMD_ARCHIVEFILE        },
+  {"af",                  AdminCmd::CMD_ARCHIVEFILE        },
   {"drive",               AdminCmd::CMD_DRIVE              },
   {"dr",                  AdminCmd::CMD_DRIVE              },
   {"failedrequest",       AdminCmd::CMD_FAILEDREQUEST      },
@@ -351,6 +353,7 @@ const std::map<AdminCmd::Cmd, CmdHelp> cmdHelp = {
   {AdminCmd::CMD_ACTIVITYMOUNTRULE,   {"activitymountrule", "amr", {"add", "ch", "rm", "ls"}} },
   {AdminCmd::CMD_ADMIN,               {"admin", "ad", {"add", "ch", "rm", "ls"}}              },
   {AdminCmd::CMD_ARCHIVEROUTE,        {"archiveroute", "ar", {"add", "ch", "rm", "ls"}}       },
+  {AdminCmd::CMD_ARCHIVEFILE,         {"archivefile", "af", {"ch"}}                           },
   {AdminCmd::CMD_DISKINSTANCE,        {"diskinstance", "di", {"add", "ch", "rm", "ls"}}       },
   {AdminCmd::CMD_DISKINSTANCESPACE,   {"diskinstancespace", "dis", {"add", "ch", "rm", "ls"}} },
   {AdminCmd::CMD_DISKSYSTEM,          {"disksystem", "ds", {"add", "ch", "rm", "ls"}}         },
@@ -469,7 +472,7 @@ const Option opt_diskinstancespace_alias {Option::OPT_STR,
                                           "--diskinstancespace"};
 const Option opt_verificationstatus {Option::OPT_STR, "--verificationstatus", "--vs", " <verification_status>"};
 const Option opt_disabledreason {Option::OPT_STR, "--disabledreason", "--dr", " <disabled_reason>"};
-const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--idfile", "-I", " <archive_file_id>"};
+const Option opt_archive_file_ids {Option::OPT_STR_LIST, "--idfile", "-I", " <filename>"};
 const Option opt_physical_library_alias {Option::OPT_STR,
                                          "--name",
                                          "-n",
@@ -597,6 +600,18 @@ archiveroute (ar)
    {opt_storageclass, opt_copynb, opt_archive_route_type, opt_tapepool.optional(), opt_comment.optional()}                   },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_RM},         {opt_storageclass, opt_copynb, opt_archive_route_type}         },
   {{AdminCmd::CMD_ARCHIVEROUTE, AdminCmd::SUBCMD_LS},         {}                                                             },
+
+  /**md
+archivefile (af)
+
+:   Change the storage class of archive files.
+  */
+  {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
+   {opt_storageclass.optional(),
+    opt_archive_file_ids,
+    opt_fid.optional(),
+    opt_diskfileid.optional(),
+    opt_diskinstance.optional()}                                                                                             },
 
   /**md
 diskinstance (di)
@@ -1163,13 +1178,6 @@ virtualorganization (vo)
    COMMANDS DEFINED IN CTA FRONTEND BUT NOT AVAILABLE TO CTA-ADMIN
    -------------------------------------------------------------------------------------------------------------------------*/
 
-  // Used by cta-change-storageclass and cta-eos-namespace-inject
-  {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
-   {opt_storageclass.optional(),
-    opt_archive_file_ids,
-    opt_fid.optional(),
-    opt_diskfileid.optional(),
-    opt_diskinstance.optional()}                                                                                             },
   // Used by cta-restore-deleted-files
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE},
    {opt_vid.optional(),
