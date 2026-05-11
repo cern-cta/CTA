@@ -12,9 +12,11 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/runtime/config/parsing/TomlParser.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/Login.hpp"
 #include "version.hpp"
 
@@ -23,13 +25,33 @@
 
 namespace cta::frontend {
 
-FrontendService::FrontendService(const std::string& configFilename) {
+// TODO: Rewrite this once we have std::format
+std::optional<std::string> authMethodAsString(const AuthMethod& method) {
+  using enum AuthMethod;
+
+  if (method == JWT) {
+    return "JWT";
+  } else if (method == KERBEROS) {
+    return "Kerberos";
+  } else if (method == MTLS) {
+    return "mTLS";
+  }
+  return std::nullopt;
+}
+
+FrontendService::FrontendService(const std::string& configFilename,
+                                 const std::optional<std::string>& mtlsMappingFilename) {
   int logToStdout = 0;
   int logtoFile = 0;
   std::string logFilePath = "";
 
   // Read CTA namespaced configuration options from XRootD config file
   cta::common::Config config(configFilename);
+
+  if (mtlsMappingFilename.has_value()) {
+    // Read MTLS mapping table
+    loadMtlsMappingTable(mtlsMappingFilename.value());
+  }
 
   // Instantiate the CTA logging system
   try {
@@ -162,7 +184,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
     params.emplace_back("source", missingFileCopiesMinAgeSecs.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.catalogue");
     params.emplace_back("key", "missingFileCopiesMinAgeSecs");
-    params.push_back(log::Param("value", std::to_string(missingFileCopiesMinAgeSecs.value_or(0))));
+    params.emplace_back("value", std::to_string(missingFileCopiesMinAgeSecs.value_or(0)));
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -412,9 +434,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
   // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
   std::optional<bool> tls = config.getOptionValueBool("grpc.tls.enabled");
   m_tls = tls.value_or(false);  // default value is false
-  if (auto mutualTls = config.getOptionValueBool("grpc.tls.mutual_tls.enabled"); mutualTls.has_value()) {
-    m_mutualTls = mutualTls.value();
-  }
+
   if (auto TlsKey = config.getOptionValueStr("grpc.tls.server_key_path"); TlsKey.has_value()) {
     m_tlsKey = TlsKey.value();
   }
@@ -444,18 +464,60 @@ FrontendService::FrontendService(const std::string& configFilename) {
     m_jwksUri = jwksUri.value();
   }
 
-  std::optional<bool> jwtAuth = config.getOptionValueBool("grpc.jwt.enabled");
-  m_jwtAuth = jwtAuth.value_or(false);  // default value is false
+  auto authMethods = config.getOptionValueStrVector("grpc.admin.auth_methods");
 
-  if (!m_tls && m_jwtAuth) {
-    throw exception::UserError("grpc.jwt.auth is set to true when grpc.tls is set to false in configuration file "
+  if (authMethods.empty()) {
+    log(log::WARNING, "Admin API authentication methods not explicitly set. Defaulting to JWT.");
+    authMethods.emplace_back("jwt");
+  }
+
+  for (auto& method : authMethods) {
+    cta::utils::toLower(method);
+    m_adminAuthMethods = {};
+    if (method == "jwt") {
+      m_adminAuthMethods.emplace(AuthMethod::JWT);
+    } else if (method == "kerberos") {
+      m_adminAuthMethods.emplace(AuthMethod::KERBEROS);
+    } else {
+      throw exception::UserError("'" + method + "' is not a valid authorization method (" + configFilename + ")");
+    }
+  }
+
+  auto optAuthMethod = config.getOptionValueStr("grpc.wfe.auth_method");
+
+  if (!optAuthMethod.has_value()) {
+    log(log::WARNING, "WFE authentication method not explicitly set. Defaulting to JWT.");
+  }
+
+  auto authMethod = optAuthMethod.value_or("jwt");
+  cta::utils::toLower(authMethod);
+
+  if (authMethod == "jwt") {
+    m_wfeAuthMethod = AuthMethod::JWT;
+  } else if (authMethod == "mtls") {
+    m_wfeAuthMethod = AuthMethod::MTLS;
+  } else {
+    throw exception::UserError("'" + authMethod + "' is not a valid authorization method (" + configFilename + ")");
+  }
+
+  auto admin_methods = cta::utils::joinWithMap(m_adminAuthMethods, std::string {", "}, [](const auto& method) {
+    return authMethodAsString(method).value();
+  });
+
+  log(log::INFO,
+      "Using auth methods: " + authMethodAsString(m_wfeAuthMethod).value() + " (WFE) and {" + admin_methods
+        + "} (Admin API)");
+
+  const bool usingJWT = usesAdminAuthMethod(AuthMethod::JWT) || m_wfeAuthMethod == AuthMethod::JWT;
+
+  if (!m_tls && usingJWT) {
+    throw exception::UserError("JWT is being set up when grpc.tls is set to false in configuration file "
                                + configFilename + ". Cannot use tokens over unencrypted channel, tls must be enabled.");
   }
 
-  if (m_jwtAuth && !m_jwksUri.has_value()) {
-    throw exception::UserError(
-      "grpc.jwt.auth is set to true but no endpoint is provided in grpc.jwks.uri in configuration file "
-      + configFilename);
+  if (!m_jwksUri.has_value() && usingJWT) {
+    throw exception::UserError("JWT is being setup but no endpoint is provided in grpc.jwks.uri in configuration file "
+                               + configFilename);
   }
 
   auto cacheRefreshInterval = config.getOptionValueInt("grpc.jwks.cache.refresh_interval_secs");
@@ -479,7 +541,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
   }
   m_jwksTotalTimeout = jwksTotalTimeout;
 
-  if (m_jwtAuth) {
+  if (usingJWT) {
     if (!m_cacheRefreshInterval.has_value()) {
       log(log::WARNING, "No value set for grpc.jwks.cache.refresh_interval_secs, using default value");
       m_cacheRefreshInterval = 600;
@@ -502,6 +564,65 @@ FrontendService::FrontendService(const std::string& configFilename) {
 
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
+}
+
+/**
+ * @brief Load the instance -> certificate identity map from its TOML file into memory
+ * @param filePath the path to the TOML file
+ */
+void FrontendService::loadMtlsMappingTable(const std::string& filePath) {
+  toml::table tbl;
+  try {
+    tbl = toml::parse_file(filePath);
+  } catch (const toml::parse_error& e) {
+    std::ostringstream oss;
+    oss << e;
+    throw cta::exception::UserError("Failed to parse toml file '" + filePath + "': " + oss.str(), false);
+  }
+
+  // get `[aliases]`
+  auto aliases = tbl.get("aliases");
+
+  if (!aliases) {
+    throw cta::exception::UserError("Invalid config in '" + filePath + "': missing [aliases] section", false);
+  }
+
+  // go over each (key, string|array<string>) pair and add them to the table
+  aliases->as_table()->for_each([&](const toml::key& key, const auto& val_node) {
+    std::set<std::string, std::less<>> elems {};
+
+    if constexpr (toml::is_string<decltype(val_node)>) {
+      elems.emplace(val_node);
+    } else if constexpr (toml::is_array<decltype(val_node)>) {
+      val_node.as_array()->for_each([&elems, filePath](auto&& elem) {
+        if constexpr (toml::is_string<decltype(elem)>) {
+          elems.emplace(*elem.as_string());
+        } else {
+          throw cta::exception::UserError("Invalid config in '" + filePath + "': alias identities should be strings");
+        }
+      });
+      m_mtlsMappingTable.try_emplace(std::string {key.str()}, elems);
+    } else {
+      throw cta::exception::UserError("Invalid config in '" + filePath
+                                      + "': alias value should be either a string or an array");
+    }
+  });
+}
+
+/**
+  * @brief Look up and identity in the instance -> certificate identity map
+  * @param instance the name of the instance to look for in the map
+  * @return the set of found certificate identities
+**/
+std::set<std::string, std::less<>> FrontendService::getMtlsCertIdentitiesForInstance(const std::string& instance) {
+  std::set<std::string, std::less<>> cert_identities;
+  if (const auto& search = m_mtlsMappingTable.find(instance); search != m_mtlsMappingTable.end()) {
+    for (const auto& ident : search->second) {
+      cert_identities.insert(ident);
+    }
+  }
+
+  return cert_identities;
 }
 
 }  // namespace cta::frontend

@@ -84,6 +84,7 @@ void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwkCache> weakCache,
 
 int main(const int argc, char* const* const argv) {
   std::string config_file("/etc/cta/cta-frontend-grpc.conf");
+  std::string mtls_mapping_file("/etc/cta/mtls-map.toml");
 
   char c;
   int option_index = 0;
@@ -91,7 +92,7 @@ int main(const int argc, char* const* const argv) {
   bool useTLS = false;
   std::string port;
 
-  while ((c = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != EOF) {
+  while ((c = getopt_long(argc, argv, "c:m:hv", long_options, &option_index)) != EOF) {
     switch (c) {
       case 'h':
         printHelpAndExit(0);
@@ -102,13 +103,16 @@ int main(const int argc, char* const* const argv) {
       case 'c':
         config_file = optarg;
         break;
+      case 'm':
+        mtls_mapping_file = optarg;
+        break;
       default:
         printHelpAndExit(1);
     }
   }
 
   // Initialize frontend service first to get configuration
-  auto frontendService = std::make_shared<cta::frontend::FrontendService>(config_file);
+  auto frontendService = std::make_shared<cta::frontend::FrontendService>(config_file, mtls_mapping_file);
 
   // get the log context
   log::LogContext lc = frontendService->getLogContext();
@@ -129,7 +133,8 @@ int main(const int argc, char* const* const argv) {
   std::future<void> shouldStopThreadFuture = shouldStopThreadPromise.get_future();
   std::thread cacheRefreshThread;
   // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
-  if (frontendService->getJwtAuth()) {
+  if (frontendService->usesAdminAuthMethod(cta::frontend::AuthMethod::JWT)
+      || frontendService->getWFEAuthMethod() == cta::frontend::AuthMethod::JWT) {
     lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
     cacheRefreshThread = std::thread(JwksCacheRefreshLoop,
                                      weakCache,
@@ -167,7 +172,7 @@ int main(const int argc, char* const* const argv) {
 
   if (useTLS) {
     lc.log(log::INFO, "Using gRPC over TLS");
-    if (auto useMutualTls = frontendService->getMutualTls(); useMutualTls.has_value() && useMutualTls.value()) {
+    if (frontendService->getWFEAuthMethod() == cta::frontend::AuthMethod::MTLS) {
       cert_request_type = GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY;
       lc.log(log::INFO, "Using mutual TLS to authenticate client requests");
     }
@@ -248,7 +253,7 @@ int main(const int argc, char* const* const argv) {
                                              frontendService->getCatalogueConnString(),
                                              frontendService->getMissingFileCopiesMinAgeSecs(),
                                              frontendService->getLogContext(),
-                                             frontendService->getJwtAuth(),
+                                             frontendService->getAdminAuthMethods(),
                                              jwkCache,
                                              tokenStorage);
   builder.RegisterService(&streamSvc);

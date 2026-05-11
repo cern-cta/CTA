@@ -70,7 +70,7 @@ public:
                    const std::string& connstr,
                    uint64_t missingFileCopiesMinAgeSecs,
                    const cta::log::LogContext& logContext,
-                   bool jwtAuthEnabled,
+                   std::set<AuthMethod, std::less<>> authMethods,
                    std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
                    server::TokenStorage& tokenStorage)
       : m_lc(logContext),
@@ -80,7 +80,7 @@ public:
         m_schedDb(schedDB),
         m_catalogueConnString(connstr),
         m_missingFileCopiesMinAgeSecs(missingFileCopiesMinAgeSecs),
-        m_jwtAuthEnabled(jwtAuthEnabled),
+        m_authMethods(authMethods),
         m_pubkeyCache(pubkeyCache),
         m_tokenStorage(tokenStorage) {}
 
@@ -98,7 +98,7 @@ private:
   cta::SchedulerDB_t& m_schedDb;                       //!< Reference to CTA SchedulerDB
   std::string m_catalogueConnString;                   //!< Provided by frontendService
   uint64_t m_missingFileCopiesMinAgeSecs;              //!< Provided by the frontendService
-  bool m_jwtAuthEnabled;                               //!< Whether JWT authentication is enabled
+  std::set<AuthMethod, std::less<>> m_authMethods;     //!< The authentication methods used
   std::shared_ptr<cta::auth::JwkCache> m_pubkeyCache;  //!< Shared JWK cache for token validation
   server::TokenStorage& m_tokenStorage;                //!< Required for Kerberos token validation
 };
@@ -110,9 +110,11 @@ CtaRpcStreamImpl::GenericAdminStream(::grpc::CallbackServerContext* context, con
   cta::log::LogContext lc(m_lc);
   // get the client metadata for authentication
   auto client_metadata = context->client_metadata();
+  auto usingJWT =
+    std::find(std::begin(m_authMethods), std::end(m_authMethods), AuthMethod::JWT) != std::end(m_authMethods);
 
   auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(client_metadata,
-                                                                                            m_jwtAuthEnabled,
+                                                                                            usingJWT,
                                                                                             m_pubkeyCache,
                                                                                             m_tokenStorage,
                                                                                             m_instanceName,
