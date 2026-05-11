@@ -94,11 +94,11 @@ def test_init_catalogue_updater(
     except Exception:
         print("Nothing to clean up")
 
+    top_path = Path(env.exec_local("git rev-parse --show-toplevel").stdout)
+
     # If the configmap generation would need to be done through Helm the file in question needs to be within the chart
     defaultPlatform = project_json["dev"]["defaultPlatform"]
-    yum_repos_file = (
-        Path(__file__).resolve().parent / ".." / ".." / "docker" / defaultPlatform / "etc" / "yum.repos.d-internal"
-    ).resolve()
+    yum_repos_file = (top_path / "ci" / "docker" / defaultPlatform / "etc" / "yum.repos.d-internal").resolve()
     env.exec_local(f"kubectl -n {namespace} create configmap yum.repos.d-config --from-file={yum_repos_file}")
 
     print(f"Catalogue source version: {catalogue_from_version}")
@@ -108,9 +108,10 @@ def test_init_catalogue_updater(
         catalogue_schema_ref = catalogue_schema_update_params.schema_checkout_ref
         print(f"Using catalogue schema ref from config: {catalogue_schema_ref}")
     else:
-        catalogue_schema_ref = env.exec_local(
-            'git -C "$(git rev-parse --show-toplevel)/catalogue/cta-catalogue-schema" rev-parse HEAD'
-        ).stdout
+        catalogue_schema_path = (
+            Path(env.exec_local("git rev-parse --show-toplevel").stout) / "catalogue" / "cta-catalogue-schema"
+        ).resolve()
+        catalogue_schema_ref = env.exec_local(f"git -C {catalogue_schema_path} rev-parse --short HEAD").stdout
         print(f"Using catalogue schema ref from submodule: {catalogue_schema_ref}")
 
     extraFlags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
