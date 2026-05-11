@@ -8,6 +8,7 @@
 #include "Regex.hpp"
 #include "common/utils/StringConversions.hpp"
 
+#include <algorithm>
 #include <chrono>
 #include <functional>
 #include <list>
@@ -428,13 +429,59 @@ std::string file2string(const std::string& filename);
 void waitForCondition(const std::function<bool()>& condition, int64_t timeoutMsec, int64_t checkIntervalMsec = 100);
 
 /**
- * @brief Joins a vector of strings into a single comma separated list.
+ * @brief Joins a range of strings into a single string, separated using
+ * a custom string
+ * 
+ * @param values The range to join. Can be a set, vector, etc...
+ * @param separator The separator string to use between the values
+ * @return std::string The comma-separated string representing the list.
+ */
+template<std::ranges::input_range R>
+std::string joinWithSeparator(const R& values, const std::string_view separator) {
+  std::stringstream result;
+  bool first = true;
+  for (const auto& value : values) {
+    if (!first) {
+      result << separator;
+    }
+    result << value;
+    first = false;
+  }
+  return result.str();
+}
+
+/**
+ * @brief Joins a range of strings into a single comma separated list.
  * For example, the vector ["string1", "another string", yes] would become:
  * "string1, another string, yes"
  *
- * @param v The vector to join.
- * @return std::string A comma separated list.
+ * @param values The range to join. Can be a set, vector, etc...
+ * @param separator The separator string to use between the values
+ * @param converter The "converter" function (can be a lambda)
+ * @return std::string The comma-separated string representing the list.
  */
-std::string joinCommaSeparated(const std::vector<std::string>& v);
+template<std::ranges::input_range R>
+std::string joinCommaSeparated(const R& values) {
+  return joinWithSeparator(values, std::string {", "});
+}
+
+/**
+ * @brief Joins a range of strings into a single string, separated using
+ * a custom string as well as mapped using a given "converter" function.
+ * 
+ * @param values The range to join. Can be a set, vector, etc...
+ * @param separator The separator string to use between the values
+ * @param converter The "converter" function (can be a lambda)
+ * @return std::string The joined string
+ */
+template<std::ranges::input_range R, typename Converter>
+std::string joinWithMap(const R& values, const std::string& separator, Converter converter) {
+  std::vector<std::string> ret;
+  if constexpr (std::ranges::sized_range<R>) {
+    ret.reserve(std::ranges::size(values));
+  }
+  std::ranges::transform(values, std::back_inserter(ret), converter);
+  return joinWithSeparator(ret, separator);
+}
 
 }  // namespace cta::utils

@@ -78,19 +78,17 @@ spec:
         readinessProbe:
           exec:
             command:
-              # TODO: fix the readiness probe below
-              - "true"
-            #   - /grpc-health-probe/grpc-health-probe
-            #   - -addr=localhost:{{ .Values.grpc.port }}
-            # {{- if .Values.grpc.conf.tls.enabled }}
-            #   - -tls
-            #   - -tls-ca-cert=/etc/grpc-certs/ca/ca.crt
-            #   - -tls-server-name=cta-frontend-grpc
-            #   {{- if .Values.grpc.conf.tls.mutualTls.enabled }}
-            #   - -tls-client-cert=/etc/grpc-certs/client/grpctest.crt.pem
-            #   - -tls-client-key=/etc/grpc-certs/client/grpctest.key.pem
-            #   {{- end }}
-            # {{- end }}
+              - /grpc-health-probe/grpc-health-probe
+              - -addr=localhost:{{ .Values.grpc.port }}
+            {{- if .Values.grpc.conf.tls.enabled }}
+              - -tls
+              - -tls-ca-cert=/etc/grpc-certs/ca/ca.crt
+              - -tls-server-name=cta-frontend-grpc
+              {{- if eq .Values.grpc.conf.auth.wfe "mtls" }}
+              - -tls-client-cert=/etc/grpc-certs/client/ctaeos-self-signed.crt.pem
+              - -tls-client-key=/etc/grpc-certs/client/ctaeos-self-signed.key.pem
+              {{- end }}
+            {{- end }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -151,6 +149,9 @@ spec:
         - name: grpc-config
           mountPath: /etc/cta/cta-frontend-grpc.conf
           subPath: cta-frontend-grpc.conf
+        - name: grpc-config
+          mountPath: /etc/cta/mtls-map.toml
+          subPath: mtls-map.toml
         - name: cta-frontend-krb5-keytab
           mountPath: /etc/cta/cta-frontend.krb5.keytab
           subPath: cta-frontend.krb5.keytab
@@ -166,7 +167,7 @@ spec:
           mountPath: /etc/grpc-certs/key
         - name: grpc-ca-crt
           mountPath: /etc/grpc-certs/ca
-        {{- if .Values.grpc.conf.tls.mutualTls.enabled }}
+        {{- if eq .Values.grpc.conf.auth.wfe "mtls" }}
         - name: grpc-client-crt
           mountPath: /etc/grpc-certs/client/ctaeos-self-signed.crt.pem
           subPath: ctaeos-self-signed.crt.pem
@@ -227,7 +228,7 @@ spec:
       - name: grpc-ca-crt
         secret:
           secretName: ca-crt
-      {{- if .Values.grpc.conf.tls.mutualTls.enabled }}
+      {{- if eq .Values.grpc.conf.auth.wfe "mtls" }}
       - name: grpc-client-crt
         secret:
           secretName: ctaeos-self-signed-crt-pem

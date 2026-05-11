@@ -61,7 +61,7 @@ openssl req \
   -sha256 \
   -nodes \
   -subj "/C=CH/O=CERN/CN=ctaeos" \
-  -addext "subjectAltName=DNS:ctaeos"
+  -addext "subjectAltName=DNS:ctaeos.biglab"
 
 openssl x509 \
   -req \
