@@ -606,7 +606,12 @@ archivefile (af)
 
 :   Change the storage class of archive files.
   */
-  {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},          {opt_archive_file_ids, opt_storageclass}                       },
+  {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
+   {opt_storageclass.optional(),
+    opt_archive_file_ids,
+    opt_fid.optional(),
+    opt_diskfileid.optional(),
+    opt_diskinstance.optional()}                                                                                             },
 
   /**md
 diskinstance (di)
@@ -1173,8 +1178,6 @@ virtualorganization (vo)
    COMMANDS DEFINED IN CTA FRONTEND BUT NOT AVAILABLE TO CTA-ADMIN
    -------------------------------------------------------------------------------------------------------------------------*/
 
-  {{AdminCmd::CMD_ARCHIVEFILE, AdminCmd::SUBCMD_CH},
-   {opt_fid.optional(), opt_diskfileid.optional(), opt_diskinstance.optional()}                                              },
   // Used by cta-restore-deleted-files
   {{AdminCmd::CMD_RECYCLETAPEFILE, AdminCmd::SUBCMD_RESTORE},
    {opt_vid.optional(),
