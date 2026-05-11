@@ -32,7 +32,7 @@ prepare-rootfs:
           --releasever=9
           --setopt=install_weak_deps=False
           --setopt=tsflags=nodocs
-          cta-release epel-release
+          cta-release
     - cta-versionlock apply
     - dnf install -y --installroot="${ROOTFS}"
           --releasever=9

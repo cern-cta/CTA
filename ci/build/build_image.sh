@@ -34,8 +34,8 @@ buildImage() {
   local default_platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
   local dockerfile_path="ci/docker/${default_platform}/prod.Dockerfile"
   local load_into_k8s=false
-  # Note that the capitalization here is intentional as this is passed directly as a build arg
-  local use_internal_repos="FALSE"
+  local use_internal_repos="0"
+  local use_oracle_catalogue="0"
 
   while [[ "$#" -gt 0 ]]; do
     case "$1" in
@@ -71,7 +71,10 @@ buildImage() {
       load_into_k8s=true
       ;;
     --use-internal-repos)
-      use_internal_repos="TRUE"
+      use_internal_repos="1"
+      ;;
+    --use-oracle-catalogue)
+      use_oracle_catalogue="1"
       ;;
     --dockerfile)
       if [[ $# -gt 1 ]]; then
@@ -108,6 +111,19 @@ buildImage() {
     "cta-tools-xrd"
   )
 
+  # Trick to get stages to build in parallel. Needs correctly sharing= flag though
+  # (
+  #     set -x
+  #     ${container_runtime} build . -f ${dockerfile} \
+  #       --build-context rpm_context="${rpm_src}" \
+  #       --build-arg USE_INTERNAL_REPOS=${use_internal_repos} \
+  #       --build-arg USE_ORACLE_CATALOGUE=0 \
+  #       --network host \
+  #       --target build-all-stages --jobs 0
+  #   )
+
+  SECONDS=0
+
   # Build
   for target in "${targets[@]}"; do
     image_ref="cta/${target}:${image_tag}"
@@ -116,6 +132,8 @@ buildImage() {
       ${container_runtime} build . -f ${dockerfile} \
         -t ${image_ref} \
         --build-context rpm_context="${rpm_src}" \
+        --build-arg USE_INTERNAL_REPOS=${use_internal_repos} \
+        --build-arg USE_ORACLE_CATALOGUE=0 \
         --network host \
         --target $target
     )
@@ -146,12 +164,9 @@ buildImage() {
       done
       wait
     fi
-    echo "Done"
   fi
 
-  # Clean up build context temp files left by podman/docker
-  rm -f /tmp/build.*.tar 2>/dev/null || true
-
+  echo "Image Building and Loading completed in ${SECONDS}s"
 }
 
 buildImage "$@"

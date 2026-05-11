@@ -668,6 +668,7 @@ Summary: Repository configuration for CTA and its dependencies
 Group: Application/CTA
 Requires: python3-dnf-plugin-versionlock
 Requires: python
+Requires: epel-release
 Requires: jq
 %description -n cta-release
 Repository configuration for CTA and its dependencies
