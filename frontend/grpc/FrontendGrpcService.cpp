@@ -39,6 +39,26 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
                                                                  context->peer());
     return {::grpc::Status::OK, clientIdentity};
   } else {
+    auto auth_context = context->auth_context();
+
+    /// XXXXXXXXXX DEBUG XXXXXXXXXX
+    auto ident = auth_context->GetPeerIdentity();
+    for (uint32_t i = 0; i < ident.size(); i++) {
+      auto identProp = ident[i];
+      lc.log(cta::log::INFO,
+             " * Client certificate identity: " + std::to_string(i) + ": "
+               + std::string(identProp.data(), identProp.size()));
+    }
+
+    // Iterate over ALL properties
+    for (const auto& [first, second] : *auth_context) {
+      std::string key(first.data(), first.size());
+      std::string value(second.data(), second.size());
+      // use key/value
+      lc.log(cta::log::INFO, "P: {" + key + " => " + value + "}");
+    }
+    /// XXXXXXXXXX DEBUG XXXXXXXXXX
+
     auto [status, clientIdentity] =
       cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
                                                                 m_frontendService->getJwtAuth(),
