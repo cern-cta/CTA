@@ -2,12 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Few notes on decisions that may seem strange at first sight:
+# - Alma9-minimal vs alma. dnf vs microdnf
 # - We install and remove cta-release in the same layer to minimise image size. Putting it in the base image would increase the image size substantially
 # - cta-release pulls in python, but microdnf does not autoremove it when uninstalling cta-release. Hence we remove python3* separately. Must happen in a separate remove as it complains otherwise (cta-release still needs it)
 # - We don't care about systemd, so we remove it using rpm -e systemd-* --nodeps at the end. Ideally the base image doesn't contain systemd in the first place, but the layer in which we install the majority of the packages still pull in quite some systemd specific stuff
 # - note on installing RPMs and multiple build contexts
 # - no microdnf clean all because cache is mounted
-# - note sharing=locked
+# - note sharing=locked and id for concurrency
+# - At some point the USER should be uncommented. However, this can only happen after cta-taped and all tests have been updated to not rely on root-specific functionality.
 
 ###############################################
 # 1. REPO BUILDER
@@ -36,21 +38,23 @@ COPY build-service.sh /usr/local/bin/build-service.sh
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
-    # Add some basic flags to all (micro)dnf commands to improve speed
-    echo -e "[main]\ntsflags=nodocs\ninstall_weak_deps=False" > /etc/dnf/dnf.conf && \
-    # Ensure consistent group and user for CTA services
+    # Ensure consistent group and user ID for CTA services
+    # cta-common adds this user already, but it gives no guarantees on its ID, which we need to be stable for Kubernetes
     useradd -m -u 1000 -g tape cta && \
-    # Ensure cta-versionlock can create the right versionlock file
+    # Ensure cta-versionlock can update the versionlock file (file needs to exist)
     mkdir -p /etc/yum/pluginconf.d && \
     touch /etc/yum/pluginconf.d/versionlock.list && \
     # Ensure we can execute the script that installs packages
     chmod +x /usr/local/bin/build-service.sh && \
     # Create a .repo file pointing to the RPM repo we created in rep-builder
     echo -e "[cta]\nname=Repo containing CTA RPMS\nbaseurl=file:///mnt/rpms\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta.repo && \
+    # Add some basic flags to all (micro)dnf commands to improve speed and reduce image size
+    echo -e "[main]\ntsflags=nodocs\ninstall_weak_deps=False" > /etc/dnf/dnf.conf && \
     # Some basic utils (tar for kubectl cp and jq for many of the tests and convenience)
     microdnf install -y \
       tar \
       jq && \
+    # Cleanup
     rm -rf /var/lib/dnf/history.*
 
 ###############################################
