@@ -16,3 +16,5 @@ data:
     {{ .Files.Get "scripts/generate_secrets.sh" | nindent 4 }}
   generate_jwt.py: |
     {{ .Files.Get "scripts/generate_jwt.py" | nindent 4 }}
+  create_k8s_secrets.py: |
+    {{ .Files.Get "scripts/create_k8s_secrets.py" | nindent 4 }}
