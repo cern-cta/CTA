@@ -11,7 +11,7 @@
   "dev": {
     "cppVersion": "c++20",
     "defaultPlatform": "el9",
-    "defaultBuildType": "Debug",
+    "defaultBuildType": "RelWithDebInfo",
     "ctaImageRepository": "gitlab-registry.cern.ch/cta/ctageneric",
     "eosImageRepository": "gitlab-registry.cern.ch/dss/eos/eos-ci",
     "eosImageTag": "5.3.23.el9",
