@@ -83,7 +83,7 @@ def create_test_env_from_commandline_options(config):
             "Missing mandatory argument: one of --namespace or --connection-config must be provided"
         )
 
-    if connection_config is None:
+    if namespace is not None:
         # No connection configuration provided, so assume everything is running in a cluster
         return TestEnv.from_namespace(namespace)
     else:
