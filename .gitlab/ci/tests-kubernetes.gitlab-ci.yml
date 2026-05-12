@@ -269,6 +269,7 @@ test-catalogue-schema-update:
       if [[ "$(jq '.supportedCatalogueVersions | length' project.json)" -gt 2 ]]; then
         echo "There are more than two supported CTA Catalogue versions."
         echo "The current CI test can only be performed between two versions."
+        exit 1
       fi
     # The version we are upgrading from is the lowest supported version
     - FROM_CATALOGUE_VERSION=$(jq '.supportedCatalogueVersions | sort[]' project.json | head -1)
