@@ -12,17 +12,7 @@ SECRETS_DIR="/secrets"
 
 mkdir -p "$SECRETS_DIR"
 # Extra flags are to improve speed
-microdnf install -y \
-  --setopt=install_weak_deps=0 \
-  --nodocs \
-  --disablerepo=* \
-  --enablerepo=baseos \
-  --enablerepo=appstream \
-  openssl python3 python3-pip
-python3 -m pip install \
-  --disable-pip-version-check \
-  --no-cache-dir \
-  pyjwt cryptography
+pip install --no-cache-dir --no-deps pyjwt cryptography cffi
 
 # --- SSS Keytabs --- #
 
@@ -65,68 +55,6 @@ python3 /scripts/generate_jwt.py \
 
 # --- Generate K8s secrets for all of these --- #
 
-k8s_create_secret() {
-  local secret_name="$1"
-  local filename="$2"
-  local filepath="$3"
-
-  # Encode file contents base64 (no line wraps)
-  local filedata
-  filedata=$(base64 -w0 < "$filepath")
-
-  # Construct JSON payload
-  payload=$(cat <<EOF
-{
-  "apiVersion": "v1",
-  "kind": "Secret",
-  "metadata": {
-    "name": "${secret_name}",
-    "namespace": "${NAMESPACE}"
-  },
-  "type": "Opaque",
-  "data": {
-    "${filename}": "${filedata}"
-  }
-}
-EOF
-  )
-
-  # Set up API access from in-cluster env
-  local host="https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}"
-  local token
-  token=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-  local cacert="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
-
-  # POST to create a new secret
-  curl -sS --cacert "$cacert" \
-       -H "Authorization: Bearer $token" \
-       -H "Content-Type: application/json" \
-       -X POST \
-       -d "$payload" \
-       "${host}/api/v1/namespaces/${NAMESPACE}/secrets"
-}
-
-
-
-# Regex: DNS label must be <= 63 chars, start/end with alphanum, contain only a-z0-9- (no consecutive dashes at ends)
-is_valid_name() {
-  [[ "$1" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]] && [[ ${#1} -le 63 ]]
-}
-
-# Create a secret for every file in the input directory
-# The secret name is equivalent to the file name (lowercase and dots replaced by dashes)
-for filepath in "$SECRETS_DIR"/*; do
-  [[ -f "$filepath" ]] || continue
-
-  filename=$(basename "$filepath")
-  secret_name="${filename//./-}"      # Replace . with -
-  secret_name=$(echo "$secret_name" | tr '[:upper:]' '[:lower:]')  # Lowercase
-
-  if ! is_valid_name "$secret_name"; then
-    echo "Warning: Skipping file '$filename'. Invalid secret name: '$secret_name'" >&2
-    continue
-  fi
-
-  echo "Creating secret: $secret_name from $filename"
-  k8s_create_secret "$secret_name" "$filename" "$filepath"
-done
+python3 /scripts/create_k8s_secrets.py \
+  --namespace "$NAMESPACE" \
+  --dir "$SECRETS_DIR"

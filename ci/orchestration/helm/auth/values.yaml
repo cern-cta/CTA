@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 secrets:
-  image: registry.cern.ch/docker.io/almalinux/9-minimal:9.7
+  image: registry.cern.ch/docker.io/python:3.12-slim
 
 kerberos:
   image: registry.cern.ch/docker.io/almalinux/9-minimal:9.7
