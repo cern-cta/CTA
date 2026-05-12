@@ -26,6 +26,7 @@
 #include "callback_api/CtaAdminServer.hpp"
 #include "common/utils/utils.hpp"
 
+#include <cstdlib>
 #include <future>
 #include <getopt.h>
 #include <grpcpp/ext/proto_server_reflection_plugin.h>
@@ -90,6 +91,9 @@ int main(const int argc, char* const* const argv) {
   const std::string shortHostName = utils::getShortHostname();
   bool useTLS = false;
   std::string port;
+
+  setenv("GRPC_VERBOSITY", "debug", 1);
+  setenv("GRPC_TRACE", "tcp, http, secure_endpoint, trasnport_security", 1);
 
   while ((c = getopt_long(argc, argv, "c:hv", long_options, &option_index)) != EOF) {
     switch (c) {

@@ -41,10 +41,56 @@ openssl x509 -req -passin pass:1234 -days 365 -in server.csr -CA $SECRETS_DIR/ca
 # Remove passphrase from the server key
 openssl rsa -passin pass:1234 -in $SECRETS_DIR/server.key -out $SECRETS_DIR/server.key
 
-# generate self-signed cert for ctaeos
-openssl req -newkey rsa:4096 -keyout $SECRETS_DIR/ctaeos-self-signed.key.pem -out $SECRETS_DIR/ctaeos-self-signed.csr -sha256 -nodes -subj "/C=CH/O=CERN/CN=ctaeos" -addext "subjectAltName=DNS:ctaeos" && \
-openssl x509 -req -passin pass:1234 -days 3650 -in $SECRETS_DIR/ctaeos-self-signed.csr -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -set_serial 01 -copy_extensions copy -out $SECRETS_DIR/ctaeos-self-signed.crt.pem && \
-rm $SECRETS_DIR/ctaeos-self-signed.csr
+# generate cert for ctaeos (CA-signed, modelled after a CERN Grid CA user cert)
+cat > $SECRETS_DIR/ctaeos-self-signed.cnf <<'EOF'
+[req]
+distinguished_name = dn
+req_extensions     = v3_req
+prompt             = no
+string_mask        = utf8only
+
+[dn]
+0.DC = ch
+1.DC = cern
+0.OU = Organic Units
+1.OU = Users
+0.CN = ctaeos
+1.CN = 000000
+2.CN = Robot: CTA EOS service account
+
+[v3_req]
+subjectAltName = @alt_names
+
+[v3_ext]
+subjectKeyIdentifier   = hash
+authorityKeyIdentifier = keyid,issuer
+keyUsage               = critical, digitalSignature, keyEncipherment
+extendedKeyUsage       = clientAuth, emailProtection
+subjectAltName         = @alt_names
+crlDistributionPoints  = URI:http://cafiles.cern.ch/cafiles/crl/CERN%20Grid%20Certification%20Authority.crl
+authorityInfoAccess    = caIssuers;URI:http://cafiles.cern.ch/cafiles/certificates/CERN%20Grid%20Certification%20Authority(1).crt, OCSP;URI:http://ocsp.cern.ch/ocsp
+certificatePolicies    = 1.3.6.1.4.1.96.10.4.2.2.3.1, 1.2.840.113612.5.2.2.1
+
+[alt_names]
+DNS.1       = ctaeos
+otherName.1 = 1.3.6.1.4.1.311.20.2.3;UTF8:ctaeos@cern.ch
+email.1     = ctaeos@cern.ch
+EOF
+
+openssl req -newkey rsa:2048 -keyout $SECRETS_DIR/ctaeos-self-signed.key.pem \
+  -out $SECRETS_DIR/ctaeos-self-signed.csr -sha512 -nodes \
+  -config $SECRETS_DIR/ctaeos-self-signed.cnf
+
+# Random 152-bit serial (some older openssl x509 builds don't accept -rand_serial)
+CTAEOS_SERIAL="0x$(openssl rand -hex 19)"
+openssl x509 -req -passin pass:1234 -days 400 \
+  -in $SECRETS_DIR/ctaeos-self-signed.csr \
+  -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key \
+  -set_serial "$CTAEOS_SERIAL" -sha512 \
+  -extfile $SECRETS_DIR/ctaeos-self-signed.cnf -extensions v3_ext \
+  -out $SECRETS_DIR/ctaeos-self-signed.crt.pem
+
+rm $SECRETS_DIR/ctaeos-self-signed.csr $SECRETS_DIR/ctaeos-self-signed.cnf
 
 chmod 0644 /$SECRETS_DIR/ca.key
 chmod 0644 /$SECRETS_DIR/server.key
