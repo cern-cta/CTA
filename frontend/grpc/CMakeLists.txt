@@ -19,6 +19,10 @@ add_executable(cta-frontend-grpc
   ServerNegotiationRequestHandler.cpp
   TokenStorage.cpp
   utils.cpp)
+
+# To prevent failing due to warning
+# #warning "<ciso646> is not a standard header since C++20, use <version> to detect implementation-specific macros"
+target_compile_options(cta-frontend-grpc PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-error=cpp>)
 # target_link_libraries(cta-frontend-grpc ProtoCtaFrontend)
 
 if(CTA_USE_PGSCHED)
@@ -58,6 +62,10 @@ add_executable(cta-admin-grpc
   ClientNegotiationRequestHandler.cpp
   utils.cpp
 )
+
+# To prevent failing due to warning
+# #warning "<ciso646> is not a standard header since C++20, use <version> to detect implementation-specific macros"
+target_compile_options(cta-admin-grpc PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-error=cpp>)
 
 if (CTA_USE_PGSCHED)
   target_link_libraries(cta-admin-grpc

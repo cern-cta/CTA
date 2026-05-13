@@ -41,6 +41,10 @@ add_library(ctagrpc ${GrpcSourcesCtaFrontend})
 set_target_properties(ctagrpc PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
+
+# To prevent failing due to warning
+# #warning "<ciso646> is not a standard header since C++20, use <version> to detect implementation-specific macros"
+target_compile_options(ctagrpc PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-error=cpp>)
 target_link_libraries(ctagrpc gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES} ${GRPC_GRPC++_LIBRARY})
 
 add_dependencies(ctagrpc ctaprotobuf)
@@ -50,4 +54,5 @@ add_library(ProtoEOSMGM ${ProtoSourcesEOSMGM} ${GrpcSourcesEOSMGM})
 set_target_properties(ProtoEOSMGM PROPERTIES
   LINKER_LANGUAGE CXX
   POSITION_INDEPENDENT_CODE TRUE)
+target_compile_options(ProtoEOSMGM PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-error=cpp>)
 target_link_libraries(ProtoEOSMGM gpr absl_synchronization ${PROTOBUF3_GRPC_LIBRARIES} ${GRPC_GRPC++_LIBRARY})
