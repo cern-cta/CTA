@@ -45,7 +45,6 @@ build-cta-rpms:
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     RPM_SIZE_METRICS_ID: "relwithdebinfo" # Default build is a debug build
-    BUILD_CACHE_POLICY: pull-push
     # Will only be used if ccache is enabled
     CCACHE_BASEDIR: $CI_PROJECT_DIR
     CCACHE_DIR: $CI_PROJECT_DIR/.ccache

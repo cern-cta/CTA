@@ -239,12 +239,13 @@ workflow:
           - '**/*'
       variables:
         ENABLE_DEBUG_INFO: "FALSE"
+        BUILD_CACHE_POLICY: pull-push
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
       auto_cancel:
         on_new_commit: none
       variables:
         ENABLE_CCACHE: "TRUE"
-        BUILD_CACHE_POLICY: pull-push # Only for push events do we rebuild the main cache
+        BUILD_CACHE_POLICY: push # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:
         on_new_commit: none
