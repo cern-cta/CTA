@@ -275,6 +275,50 @@ def test_xrootd_activity(eos_client, eos_mgm):
     assert "&activity=XRootD_Act&" in xrd_line, f"Activity not set correctly for XRootD: {xrd_line}"
 
 
+# Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
+# This test should eventually be moved outside of the gfal test, but because the eos report functionality is here, we keep it
+
+
+@pytest.mark.eos
+def test_archive_metadata_activity(eos_client, eos_mgm):
+    disk_instance_name = eos_mgm.instance_name
+    archive_directory = eos_mgm.base_dir_path / "cta" / "gfal"
+    test_file = archive_directory / "test_xrootd_activity"
+    test_file = eos_client.generate_and_archive_file(disk_instance_name, test_file, wait=True)
+
+    # TODO: eventually move definitions like this to a central place
+    EOSPOWER_USER = "poweruser1"
+
+    # Retrieve with activity
+    eos_client.exec(
+        f"KRB5CCNAME=/tmp/{EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {disk_instance_name} prepare -s {test_file}?activity=XRootD_Act"
+    )
+
+    # Evict
+    eos_client.exec(
+        f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{EOSPOWER_USER}/krb5cc_0 xrdfs {disk_instance_name} prepare -e {test_file}"
+    )
+
+    # Check activity is set for XRootD staging request through xrdfs
+    report_file = _get_report_file_path()
+    print(f"Report file: {report_file}")
+    content = eos_mgm.exec_with_output(f"cat {report_file}")
+
+    xrd_line = _find_line(content, "event=stage", "XRootD_Act")
+
+    assert xrd_line, "Missing log line for XRootD activity"
+
+    assert "&activity=XRootD_Act&" in xrd_line, f"Activity not set correctly for XRootD: {xrd_line}"
+
+
+TEST_METADATA=$(echo "{\"scheduling_hints\": \"test 4\"}" | base64)
+echo " Launching client_archive_metadata.sh on client pod"
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_archive_metadata.sh ${TEST_METADATA} || exit 1
+echo " Launching grep_eosreport_for_archive_metadata.sh on ${EOS_MGM_POD} pod"
+kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
+
+
+
 @pytest.mark.eos
 def test_cleanup_archive_directory(eos_mgm):
     archive_directory = eos_mgm.base_dir_path / "cta" / "gfal"

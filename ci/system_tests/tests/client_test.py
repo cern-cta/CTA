@@ -4,7 +4,6 @@
 
 import pytest
 
-import datetime
 import json
 import time
 from dataclasses import dataclass
@@ -46,7 +45,6 @@ def eos_mgm(env) -> EosMgmHost:
     return env.eos_mgm[0]
 
 
-
 #####################################################################################################################
 # Tests
 #####################################################################################################################
@@ -60,27 +58,23 @@ def test_hosts_present_client_gfal(env):
     assert len(env.eos_mgm) > 0
 
 
-def test_copy_scripts(eos_client):
+def test_copy_scripts(eos_client, cta_taped, cta_maintd, cta_frontend):
     remote_scripts_dir = Path(__file__).parent / "remote_scripts"
-    eos_client_script_dir = remote_scripts_dir / "eos_client"
-    eos_client.copy_to(str(eos_client_script_dir / "client_setup.sh"), "/root/", permissions="+x")
-    eos_client.copy_to(str(eos_client_script_dir / "client_helper.sh"), "/root/", permissions="+x")
-    eos_client.copy_to(str(eos_client_script_dir / "cli_calls.sh"), "/root/", permissions="+x")
-    eos_client.copy_to(str(eos_client_script_dir / "test_archive.sh"), "/root/", permissions="+x")
-    eos_client.copy_to(str(eos_client_script_dir / "test_retrieve.sh"), "/root/", permissions="+x")
-    eos_client.copy_to(str(eos_client_script_dir / "test_evict.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "*"), "/root/", permissions="+x")
+
+    # TODO: logs directly in python instead of remote script
+    eos_client.copy_to(str(eos_client_script_dir / "test_delete.sh"), "/root/", permissions="+x")
     eos_client.copy_to(str(eos_client_script_dir / "test_delete.sh"), "/root/", permissions="+x")
 
 
-
-    echo "Copying test scripts to ${CLIENT_POD}, ${EOS_MGM_POD} and ${CTA_TAPED_POD} pods."
-kubectl -n ${NAMESPACE} cp . "${CLIENT_POD}:/root/" -c client
-kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
-kubectl -n ${NAMESPACE} cp taped_refresh_log_fd.sh "${CTA_TAPED_POD}:/root/" -c cta-taped
-kubectl -n ${NAMESPACE} cp maintd_refresh_log_fd.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
-kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_MAINTD_POD}:/root/" -c cta-maintd
-kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_TAPED_POD}:/root/" -c cta-taped
-kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_FRONTEND_POD}:/root/" -c cta-frontend
+#     echo "Copying test scripts to ${CLIENT_POD}, ${EOS_MGM_POD} and ${CTA_TAPED_POD} pods."
+# kubectl -n ${NAMESPACE} cp . "${CLIENT_POD}:/root/" -c client
+# kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
+# kubectl -n ${NAMESPACE} cp taped_refresh_log_fd.sh "${CTA_TAPED_POD}:/root/" -c cta-taped
+# kubectl -n ${NAMESPACE} cp maintd_refresh_log_fd.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
+# kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_MAINTD_POD}:/root/" -c cta-maintd
+# kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_TAPED_POD}:/root/" -c cta-taped
+# kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_FRONTEND_POD}:/root/" -c cta-frontend
 
 
 # For now only the "glue" has been migrated to Python. All the scripts invoked in the tests below still need to be migrated at a later point in time
@@ -92,6 +86,7 @@ def test_kinit_client(eos_client):
     eos_client.exec("mkdir -p /tmp/poweruser1")
     eos_client.exec(". /root/client_helper.sh && admin_kinit")
 
+
 # workflow tests
 
 
@@ -102,21 +97,26 @@ def test_setup_archive_directory(eos_client, eos_mgm):
     eos_mgm.force_remove_directory(archive_directory)
     eos_client.exec(f"eos root://{eos_mgm.instance_name} mkdir {archive_directory}")
 
+
 @pytest.mark.eos
 def test_setup_client(eos_client, eos_mgm, gfal_params):
     archive_directory = eos_mgm.base_dir_path / "cta" / "gfal"
-    eos_client.exec("dnf install -y python3-gfal2-util gfal2-plugin-xrootd")
     eos_client.exec(
         f"/root/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {archive_directory} -r -c gfal2 -Z root"
     )
 
 
 @pytest.mark.eos
+def test_simple_archive_retrieve(eos_client):
+    eos_client.exec(". /root/client_env && /root/test_simple_archive_retrieve.sh")
+
+
+@pytest.mark.eos
 def test_archive(eos_client):
     eos_client.exec(". /root/client_env && /root/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
-    print("Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion.")
-    time.sleep(10)
+    print("Sleeping 5 seconds to allow MGM-FST communication to settle after disk copy deletion.")
+    time.sleep(5)
 
 
 @pytest.mark.eos
@@ -128,14 +128,41 @@ def test_retrieve(eos_client):
 def test_evict(eos_client):
     eos_client.exec(". /root/client_env && /root/test_evict.sh")
 
+
 @pytest.mark.eos
-def test_evict(eos_client):
-    eos_client.exec(". /root/client_env && /root/client_abortPrepare.sh")
+def client_abort_prepare(eos_client):
+    eos_client.exec(". /root/client_env && /root/client_abort_prepare.sh")
 
 
 @pytest.mark.eos
-def test_delete(eos_client):
-    eos_client.exec(". /root/client_env && /root/test_delete.sh")
+def test_multiple_retrieve(eos_client):
+    eos_client.exec(". /root/client_env && /root/test_multiple_retrieve.sh")
+
+
+@pytest.mark.eos
+def test_idempotent_prepare(eos_client):
+    eos_client.exec(". /root/client_env && /root/test_idempotent_prepare.sh")
+
+
+@pytest.mark.eos
+def test_delete_on_closew_error(eos_client):
+    eos_client.exec(". /root/client_env && /root/test_delete_on_closew_error.sh")
+
+
+@pytest.mark.eos
+def test_archive_zero_length_file(eos_client):
+    eos_client.exec(". /root/client_env && /root/test_archive_zero_length_file.sh")
+
+
+@pytest.mark.eos
+def test_eos_evict(eos_client):
+    eos_client.exec(". /root/client_env && /root/test_eos_evict.sh")
+
+
+@pytest.mark.eos
+def test_retrieve_queue_cleanup(eos_client):
+    eos_client.exec(". /root/client_env && /root/test_retrieve_queue_cleanup.sh")
+
 
 @pytest.mark.eos
 def test_cleanup_archive_directory(eos_mgm):
@@ -149,16 +176,22 @@ def test_eos_http_rest_api(eos_client, eos_mgm, tmp_path):
     # Copy over CA certificates
     eos_mgm.copy_from("etc/grid-security/certificates/", tmp_path)
     eos_client.copy_to(tmp_path, "/etc/grid-security")
-    eos_client.exec("bash /root/client_rest_api.sh")
+    eos_client.exec("bash /root/test_rest_api.sh")
+
 
 def test_eos_immutable_file(eos_client, eos_mgm):
     # TODO: test if this cleans up properly?
-    eos_client.exec(f". /root/client_env && echo yes | cta-immutable-file-test root://{eos_mgm.instance_name}/{eos_mgm.base_dir_path}/immutable_file")
+    eos_client.exec(
+        f". /root/client_env && echo yes | cta-immutable-file-test root://{eos_mgm.instance_name}/{eos_mgm.base_dir_path}/immutable_file"
+    )
 
-def test_eos_timestamp_correctness(eos_client):
-    eos_client.exec(". /root/client_env && /root/client_timestamp.sh")
+
+def test_eos_timestamps_correctness(eos_client):
+    eos_client.exec(". /root/client_env && /root/test_eos_timestamps.sh")
+
 
 # Tests for eosdf
+
 
 def test_eosdf_create_archive_directory(eos_client, eos_mgm):
     archive_directory = eos_mgm.base_dir_path / "cta" / "eosdf"
@@ -166,42 +199,49 @@ def test_eosdf_create_archive_directory(eos_client, eos_mgm):
     eos_mgm.force_remove_directory(archive_directory)
     eos_client.exec(f"eos root://{eos_mgm.instance_name} mkdir {archive_directory}")
 
+
 def test_eosdf(cta_client):
-    cta_client.exec(". /root/client_env && /root/eosdf_systemtest.sh")
+    cta_client.exec(". /root/client_env && /root/test_eosdf.sh")
+
 
 ## The idea is that we run it once without script, and once without executable permission on the script
 ## Both times we should get a success, because when the script is the problem, we allow staging to continue
 def test_eosdf_with_nonexistent_script(cta_taped, cta_client):
     cta_taped.exec("mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
     try:
-        cta_client.exec(". /root/client_env && /root/eosdf_systemtest.sh")
+        cta_client.exec(". /root/client_env && /root/test_eosdf.sh")
         cta_taped.exec(f"grep -q 'No such file or directory' {cta_taped.log_file_path}")
     finally:
         cta_taped.exec("mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh")
 
+
 def test_eosdf_without_executable_permissions(cta_taped, cta_client):
     cta_taped.exec("chmod -x /usr/bin/cta-eosdf.sh")
     try:
-        cta_client.exec(". /root/client_env && /root/eosdf_systemtest.sh")
+        cta_client.exec(". /root/client_env && /root/test_eosdf.sh")
         cta_taped.exec(f"grep -q 'Permission denied' {cta_taped.log_file_path}")
     finally:
         cta_taped.exec("chmod +x /usr/bin/cta-eosdf.sh")
+
 
 # Test what happens when we get an error from the eos client (fake instance not reachable by specifying a nonexistent instance name in the script)
 # grep for 'could not be used to get the FreeSpace'
 def test_eosdf_with_script_that_throws_exception(cta_taped, cta_client):
     cta_taped.exec("sed -i 's|root://\$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
     try:
-        cta_client.exec(". /root/client_env && /root/eosdf_systemtest.sh")
+        cta_client.exec(". /root/client_env && /root/test_eosdf.sh")
         cta_taped.exec(f"grep -q 'could not be used to get the FreeSpace' {cta_taped.log_file_path}")
     finally:
         cta_taped.exec("sed -i 's|root://nonexistentinstance|root://\$diskInstance|g' /usr/bin/cta-eosdf.sh")
+
 
 def test_eosdf_dlete_archive_directory(eos_mgm):
     archive_directory = eos_mgm.base_dir_path / "cta" / "eosdf"
     eos_mgm.force_remove_directory(archive_directory)
 
+
 # Tests for correct runtime behaviour w.r.t. logs, config files, etc
+
 
 def test_taped_config_dr_ls_consistency(cta_cli, cta_taped):
 
@@ -233,18 +273,23 @@ def test_taped_config_dr_ls_consistency(cta_cli, cta_taped):
 def test_example_config_file_correctness_maintd(cta_maintd):
     cta_maintd.exec("cta-maintd --config-strict --config /etc/cta/cta-maintd.example.toml --config-check")
 
+
 def test_runtime_directory_correctness_maintd(cta_maintd):
     cta_maintd.exec("comm /etc/cta/cta-maintd.toml /run/cta/config.toml -3")
     cta_maintd.exec("comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3")
     cta_maintd.exec("comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3")
     cta_maintd.exec("jq -e -r '.service == \"cta-maintd\"' /run/cta/version.json >/dev/null")
 
+
 def test_log_rotation_maintd(cta_maintd):
     cta_maintd.exec("bash /root/refresh_log_fd.sh")
+
 
 def test_log_rotation_taped(cta_taped):
     cta_taped.exec("bash /root/refresh_log_fd.sh")
 
+
+# Maybe it makes sense to run this after all tests?
 def test_install_jsonschema(cta_maintd, cta_frontend, cta_taped):
     cta_maintd.exec("dnf install -y python3-pip && python3 -m pip install jsonschema")
     cta_frontend.exec("dnf install -y python3-pip && python3 -m pip install jsonschema")
@@ -252,10 +297,18 @@ def test_install_jsonschema(cta_maintd, cta_frontend, cta_taped):
 
 
 def test_log_schema_correctness_maintd(cta_maintd):
-    cta_maintd.exec("python3 /root/verify_log_schema.py --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast")
+    cta_maintd.exec(
+        "python3 /root/verify_log_schema.py --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast"
+    )
+
 
 def test_log_schema_correctness_frontend(cta_frontend):
-    cta_frontend.exec("python3 /root/verify_log_schema.py --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast")
+    cta_frontend.exec(
+        "python3 /root/verify_log_schema.py --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast"
+    )
+
 
 def test_log_schema_correctness_taped(cta_taped):
-    cta_taped.exec("python3 /root/verify_log_schema.py --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast")
+    cta_taped.exec(
+        "python3 /root/verify_log_schema.py --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast"
+    )
