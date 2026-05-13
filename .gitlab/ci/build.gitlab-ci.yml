@@ -40,6 +40,8 @@ build-cta-rpms:
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     RPM_SIZE_METRICS_ID: "relwithdebinfo" # Default build is a debug build
   before_script:
+    - dnf install -y gcc-toolset-15
+    - source /opt/rh/gcc-toolset-15/enable
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
         export VCS_VERSION=$CTA_BUILD_ID
