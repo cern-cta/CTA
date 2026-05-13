@@ -59,4 +59,22 @@ OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn& conn,
   return tempTableName;
 }
 
+std::string OracleCatalogue::createAndPopulateTempTableArchiveFileIds(rdbms::Conn& conn,
+                                                                      const std::list<uint64_t>& archiveFileIds) const {
+  const std::string tempTableName = "ORA$PTT_ARCHIVE_FILE_IDS";
+
+  conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+  std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName + "(ARCHIVE_FILE_ID NUMERIC)";
+  conn.executeNonQuery(sql);
+
+  std::string sql2 = "INSERT INTO " + tempTableName + " VALUES(:ARCHIVE_FILE_ID)";
+  auto stmt = conn.createStmt(sql2);
+  for (const auto archiveFileId : archiveFileIds) {
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    stmt.executeNonQuery();
+  }
+
+  return tempTableName;
+}
+
 }  // namespace cta::catalogue

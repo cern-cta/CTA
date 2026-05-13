@@ -66,4 +66,27 @@ PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn& conn,
   return tempTableName;
 }
 
+std::string
+PostgresCatalogue::createAndPopulateTempTableArchiveFileIds(rdbms::Conn& conn,
+                                                            const std::list<uint64_t>& archiveFileIds) const {
+  const std::string tempTableName = "TEMP_ARCHIVE_FILE_IDS";
+
+  std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(ARCHIVE_FILE_ID BIGINT)";
+  try {
+    conn.executeNonQuery(sql);
+  } catch (exception::Exception&) {
+    std::string sql2 = "TRUNCATE TABLE " + tempTableName;
+    conn.executeNonQuery(sql2);
+  }
+
+  std::string sql3 = "INSERT INTO " + tempTableName + " VALUES(:ARCHIVE_FILE_ID)";
+  auto stmt = conn.createStmt(sql3);
+  for (const auto archiveFileId : archiveFileIds) {
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    stmt.executeNonQuery();
+  }
+
+  return tempTableName;
+}
+
 }  // namespace cta::catalogue

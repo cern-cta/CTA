@@ -46,6 +46,9 @@ public:
    */
   std::string createAndPopulateTempTableFxid(rdbms::Conn& conn,
                                              const std::optional<std::vector<std::string>>& diskFileIds) const override;
+
+  std::string createAndPopulateTempTableArchiveFileIds(rdbms::Conn& conn,
+                                                       const std::list<uint64_t>& archiveFileIds) const override;
 };  // class PostgresCatalogue
 
 }  // namespace cta::catalogue

@@ -67,4 +67,22 @@ SqliteCatalogue::createAndPopulateTempTableFxid(rdbms::Conn& conn,
   return tempTableName;
 }
 
+//------------------------------------------------------------------------------
+// createAndPopulateTempTableArchiveFileIds
+//------------------------------------------------------------------------------
+std::string SqliteCatalogue::createAndPopulateTempTableArchiveFileIds(rdbms::Conn& conn,
+                                                                      const std::list<uint64_t>& archiveFileIds) const {
+  const std::string tempTableName = "TEMP.ARCHIVE_FILE_IDS";
+
+  conn.executeNonQuery("DROP TABLE IF EXISTS " + tempTableName);
+  conn.executeNonQuery("CREATE TEMPORARY TABLE " + tempTableName + "(ARCHIVE_FILE_ID INTEGER)");
+
+  auto stmt = conn.createStmt("INSERT INTO " + tempTableName + " VALUES(:ARCHIVE_FILE_ID)");
+  for (const auto archiveFileId : archiveFileIds) {
+    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+    stmt.executeNonQuery();
+  }
+
+  return tempTableName;
+}
 }  // namespace cta::catalogue
