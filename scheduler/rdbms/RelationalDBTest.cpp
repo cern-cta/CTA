@@ -139,7 +139,7 @@ public:
     const auto& factory = GetParam().dbFactory;
     m_catalogue = std::make_unique<cta::catalogue::DummyCatalogue>();
     // Get the PostgresSched DB from the factory.
-    auto psdb = std::move(factory.create(m_catalogue));
+    auto psdb = factory.create(m_catalogue);
     // Make sure the type of the SchedulerDatabase is correct (it should be an RelationalDBTestWrapper).
     dynamic_cast<cta::RelationalDBTestWrapper*>(psdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory).

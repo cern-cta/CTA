@@ -133,7 +133,7 @@ public:
     //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
     m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
     // Get the SchedulerDatabase from the factory
-    auto sdb = std::move(factory.create(m_catalogue));
+    auto sdb = factory.create(m_catalogue);
     // We don't check the specific type of the SchedulerDatabase as we intend to ge generic
     m_db = std::move(sdb);
     m_scheduler = std::make_unique<Scheduler>(*m_catalogue,

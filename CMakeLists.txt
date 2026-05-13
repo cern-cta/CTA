@@ -9,6 +9,19 @@ include(cmake/LoadProjectJson.cmake)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS on)
 
+list(APPEND CMAKE_BUILD_RPATH
+  "${CMAKE_BINARY_DIR}/catalogue"
+  "${CMAKE_BINARY_DIR}/rdbms/wrapper")
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER MATCHES "^/opt/rh/[^/]+/root/usr/bin/")
+  get_filename_component(GCC_TOOLSET_USR_DIR "${CMAKE_CXX_COMPILER}" DIRECTORY)
+  get_filename_component(GCC_TOOLSET_USR_DIR "${GCC_TOOLSET_USR_DIR}" DIRECTORY)
+  set(GCC_TOOLSET_LIBDIR "${GCC_TOOLSET_USR_DIR}/lib64")
+  list(APPEND CMAKE_BUILD_RPATH "${GCC_TOOLSET_LIBDIR}")
+  set(CMAKE_INSTALL_RPATH "${GCC_TOOLSET_LIBDIR}")
+  set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif()
+
 set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 
 # Please note that the -fms-extensions option should be dropped when this
