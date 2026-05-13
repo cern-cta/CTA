@@ -16,14 +16,14 @@ namespace cta::catalogue {
 class InsertFileRecycleLog {
 public:
   std::string vid;
-  uint64_t fSeq;
-  uint64_t blockId;
-  uint8_t copyNb;
-  time_t tapeFileCreationTime;
-  uint64_t archiveFileId;
+  uint64_t fSeq = 0;
+  uint64_t blockId = 0;
+  uint8_t copyNb = 0;
+  time_t tapeFileCreationTime = 0;
+  uint64_t archiveFileId = 0;
   std::optional<std::string> diskFilePath;
   std::string reasonLog;
-  time_t recycleLogTime;
+  time_t recycleLogTime = 0;
 
   static std::string getRepackReasonLog() { return "REPACK"; }
 

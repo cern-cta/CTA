@@ -154,7 +154,7 @@ public:
     //m_catalogue = std::make_unique<catalogue::SchemaCreatingSqliteCatalogue>(m_tempSqliteFile.path(), nbConns);
     m_catalogue = std::make_unique<catalogue::InMemoryCatalogue>(m_dummyLog, nbConns, nbArchiveFileListingConns);
     // Get the OStore DB from the factory
-    auto osdb = std::move(factory.create(m_catalogue));
+    auto osdb = factory.create(m_catalogue);
     // Make sure the type of the SchedulerDatabase is correct (it should be an OStoreDBWrapperInterface)
     dynamic_cast<cta::objectstore::OStoreDBWrapperInterface*>(osdb.get());
     // We know the cast will not fail, so we can safely do it (otherwise we could leak memory)

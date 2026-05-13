@@ -26,6 +26,7 @@ public:
   void initialize() override;
 
   // Initializer
+  using ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t>::initialize;
   void initialize(const std::string& owner);
 
   // dumper

@@ -40,6 +40,7 @@ public:
   explicit ArchiveQueue(GenericObject& go);
 
   // In memory initialiser
+  using ObjectOps<serializers::ArchiveQueue, serializers::ArchiveQueue_t>::initialize;
   void initialize(const std::string& name);
 
   // Commit with sanity checks (overload from ObjectOps)

@@ -40,6 +40,7 @@
 #include "taped/system/Wrapper.hpp"
 #include "tests/TempFile.hpp"
 
+#include <cerrno>
 #include <dirent.h>
 #include <fcntl.h>
 #include <gtest/gtest.h>
@@ -183,11 +184,14 @@ public:
     m_catalogue.reset();
     m_db.reset();
 
-    // If Setup() created a temporary directory
-    if (m_tmpDir) {
-      // Open the directory
+    if (m_tmpDir[0] != '\0') {
+      // If Setup() created a temporary directory, open it for cleanup.
+      errno = 0;
       std::unique_ptr<DIR, std::function<int(DIR*)>> dir(opendir(m_tmpDir), closedir);
       if (nullptr == dir) {
+        if (errno == ENOENT) {
+          return;
+        }
         const std::string errMsg = cta::utils::errnoToString(errno);
         std::ostringstream msg;
         msg << "Failed to open directory " << m_tmpDir << ": " << errMsg;
@@ -474,7 +478,7 @@ protected:
    * Please note that a new temporary directory is created and deleted for each
    * test by the Setup() and TearDown() methods.
    */
-  char m_tmpDir[100];
+  char m_tmpDir[100] = {};
 
 };  // class DataTransferSessionTest
 

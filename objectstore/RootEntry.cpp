@@ -187,13 +187,12 @@ RootEntry::mutableRetrieveQueuePointers(common::dataStructures::JobQueueType que
 // ========== Archive queues manipulations =====================================
 // =============================================================================
 
-// This operator will be used in the following usage of the findElement
-// removeOccurences
-namespace {
-bool operator==(std::string_view tp, const serializers::ArchiveQueuePointer& tpp) {
+// These operators are used by serializers::findElement() and serializers::removeOccurences().
+namespace serializers {
+bool operator==(std::string_view tp, const ArchiveQueuePointer& tpp) {
   return tpp.name() == tp;
 }
-}  // namespace
+}  // namespace serializers
 
 std::string RootEntry::addOrGetArchiveQueueAndCommit(const std::string& tapePool,
                                                      AgentReference& agentRef,
@@ -348,13 +347,12 @@ auto RootEntry::dumpArchiveQueues(common::dataStructures::JobQueueType queueType
 // ========== Retrieve queues manipulations ====================================
 // =============================================================================
 
-// This operator will be used in the following usage of the findElement
-// removeOccurences
-namespace {
-bool operator==(std::string_view vid, const serializers::RetrieveQueuePointer& tpp) {
+// These operators are used by serializers::findElement() and serializers::removeOccurences().
+namespace serializers {
+bool operator==(std::string_view vid, const RetrieveQueuePointer& tpp) {
   return tpp.vid() == vid;
 }
-}  // namespace
+}  // namespace serializers
 
 std::string RootEntry::addOrGetRetrieveQueueAndCommit(const std::string& vid,
                                                       AgentReference& agentRef,

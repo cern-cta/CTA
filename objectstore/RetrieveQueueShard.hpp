@@ -27,6 +27,7 @@ public:
   void initialize() override;
 
   // Initializer
+  using ObjectOps<serializers::RetrieveQueueShard, serializers::RetrieveQueueShard_t>::initialize;
   void initialize(const std::string& owner);
 
   // dumper

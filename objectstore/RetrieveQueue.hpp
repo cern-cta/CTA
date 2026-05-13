@@ -31,6 +31,7 @@ public:
   // Undefined object constructor
   explicit RetrieveQueue(Backend& os);
   explicit RetrieveQueue(GenericObject& go);
+  using ObjectOps<serializers::RetrieveQueue, serializers::RetrieveQueue_t>::initialize;
   void initialize(const std::string& vid);
   void commit() override;
   void getPayloadFromHeader() override;

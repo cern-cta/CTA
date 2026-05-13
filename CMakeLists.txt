@@ -18,6 +18,9 @@ set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 #
 #   ClientSimulator.hpp:65: error: ISO C++ prohibits anonymous structs
 set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all")
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 15)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error=cpp")
+endif()
 #
 # A maximalist error checking parameter combo has been suggested by S. Ponce and D. Come:
 # to be tested (note that a lot of these are already covered by Wall and Wextra; additionally not all of them are useful or valid)

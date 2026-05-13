@@ -147,6 +147,7 @@ struct MockRecallReportPacker : public RecallReportPacker {
 };
 
 struct MockTaskInjector : public RecallTaskInjector {
+  using RecallTaskInjector::requestInjection;
   MOCK_METHOD3(requestInjection, void(int maxFiles, int maxBlocks, bool lastCall));
 };
 
