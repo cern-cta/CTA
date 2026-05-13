@@ -193,14 +193,13 @@ public:
   /*
    * Get the authentication method which is configured for the Admin API
    */
-  std::set<AuthMethod, std::less<>> getAdminAuthMethods() const { return m_adminAuthMethods; }
+  const std::set<AuthMethod, std::less<>>& getAdminAuthMethods() const { return m_adminAuthMethods; }
 
   /*
    * Check whether a particular auth method is used by the Admin API
    */
   bool usesAdminAuthMethod(const AuthMethod method) const {
-    return std::find(std::begin(m_adminAuthMethods), std::end(m_adminAuthMethods), method)
-           != std::end(m_adminAuthMethods);
+    return std::ranges::find(m_adminAuthMethods, method) != std::end(m_adminAuthMethods);
   }
 
   /*
