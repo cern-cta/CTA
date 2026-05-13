@@ -94,21 +94,31 @@ def test_init_catalogue_updater(
     except Exception:
         print("Nothing to clean up")
 
+    project_root = Path(env.exec_local("git rev-parse --show-toplevel", capture_output=True).stdout.decode().strip())
+
     # If the configmap generation would need to be done through Helm the file in question needs to be within the chart
     defaultPlatform = project_json["dev"]["defaultPlatform"]
-    yum_repos_file = (
-        Path(__file__).resolve().parent / ".." / ".." / "docker" / defaultPlatform / "etc" / "yum.repos.d-internal"
-    ).resolve()
+    yum_repos_file = project_root / "ci" / "docker" / defaultPlatform / "etc" / "yum.repos.d-internal"
     env.exec_local(f"kubectl -n {namespace} create configmap yum.repos.d-config --from-file={yum_repos_file}")
 
     print(f"Catalogue source version: {catalogue_from_version}")
     print(f"Catalogue destination version: {catalogue_to_version}")
-    print("Install catalogue-updater chart...")
 
-    extraFlags = ""
     if catalogue_schema_update_params.schema_checkout_ref:
-        extraFlags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_update_params.schema_checkout_ref}'"
+        catalogue_schema_ref = catalogue_schema_update_params.schema_checkout_ref
+        print(f"Using catalogue schema ref from config: {catalogue_schema_ref}")
+    else:
+        catalogue_schema_path = project_root / "catalogue" / "cta-catalogue-schema"
+        catalogue_schema_ref = (
+            env.exec_local(f"git -C {catalogue_schema_path} rev-parse --short HEAD", capture_output=True)
+            .stdout.decode()
+            .strip()
+        )
+        print(f"Using catalogue schema ref from submodule: {catalogue_schema_ref}")
 
+    extraFlags = f"--set extraFlags='--schema-checkout-ref {catalogue_schema_ref}'"
+
+    print("Install catalogue-updater chart...")
     env.exec_local(
         f"helm install catalogue-updater ../orchestration/helm/catalogue-updater --namespace {namespace} \
                                                         --set catalogueSourceVersion={catalogue_from_version} \
@@ -123,10 +133,12 @@ def test_tag_liquibase(catalogue_updater):
 
 def test_liquibase_update(cta_frontend, catalogue_updater, catalogue_to_version):
     catalogue_updater.exec("/launch_liquibase.sh update")
+
     # Now the current version should be equal to the "to" version
     assert (
         cta_frontend.get_schema_version() == catalogue_to_version
     ), 'Catalogue version should be equal to the "to" version after rollback'
+    cta_frontend.verify_schema()
 
 
 def test_liquibase_rollback(cta_frontend, catalogue_updater, catalogue_from_version):
@@ -135,6 +147,7 @@ def test_liquibase_rollback(cta_frontend, catalogue_updater, catalogue_from_vers
     assert (
         cta_frontend.get_schema_version() == catalogue_from_version
     ), 'Catalogue version should be equal to the "from" version after rollback'
+    cta_frontend.verify_schema()
 
 
 def test_cleanup_catalogue_updater(env, namespace):

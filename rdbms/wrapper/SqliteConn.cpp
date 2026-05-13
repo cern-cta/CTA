@@ -14,6 +14,7 @@
 #include "rdbms/wrapper/SqliteStmt.hpp"
 
 #include <iostream>
+#include <regex>
 #include <stdexcept>
 #include <string.h>
 #include <string>
@@ -357,22 +358,12 @@ std::vector<std::string> SqliteConn::getConstraintNames(const std::string& table
   auto stmt = createStmt(sql);
   stmt->bindString(":TABLE_NAME", tableName);
   if (auto rset = stmt->executeQuery(); rset->next()) {
-    auto tableSql = rset->columnOptionalString("SQL").value();
-    tableSql += std::string(",");  // hack for parsing
-    std::string::size_type searchPosComma = 0;
-    std::string::size_type findResultComma = std::string::npos;
-    while (std::string::npos != (findResultComma = tableSql.find(',', searchPosComma))) {
-      const std::string::size_type stmtLenComma = findResultComma - searchPosComma;
-      const std::string sqlStmtComma = utils::trimString(tableSql.substr(searchPosComma, stmtLenComma));
-      searchPosComma = findResultComma + 1;
-      if (0 < sqlStmtComma.size()) {  // Ignore empty statements
-        const std::string constraintSQL = "CONSTRAINT ([a-zA-Z_0-9]+)";
-        cta::utils::Regex constraintSQLRegex(constraintSQL);
-        auto constraintSql = constraintSQLRegex.exec(sqlStmtComma);
-        if (2 == constraintSql.size()) {
-          constraintNames.emplace_back(constraintSql[1]);
-        }
-      }
+    const auto tableSql = rset->columnOptionalString("SQL").value();
+    const std::regex constraintRegex(R"(\bCONSTRAINT\s+([a-zA-Z_0-9]+)\b)");
+    for (auto constraint = std::sregex_iterator(tableSql.begin(), tableSql.end(), constraintRegex);
+         constraint != std::sregex_iterator();
+         ++constraint) {
+      constraintNames.emplace_back((*constraint)[1].str());
     }
   }
   return constraintNames;
