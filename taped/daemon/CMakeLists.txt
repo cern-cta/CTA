@@ -36,6 +36,10 @@ target_link_libraries(ctatapedaemon
 add_library(ctadaemonunittests SHARED
   DriveHandlerTests.cpp
 )
+# To prevent failing due to warning
+target_compile_options(ctadaemonunittests PRIVATE
+  $<$<CXX_COMPILER_ID:GNU>:-Wno-error=uninitialized>
+  $<$<CXX_COMPILER_ID:GNU>:-Wno-error=maybe-uninitialized>)
 set_property(TARGET ctadaemonunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadaemonunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
@@ -44,6 +48,10 @@ add_library(ctadaemonunittests-multiprocess SHARED
   ProcessManagerTests.cpp
   SignalHandlerTests.cpp
 )
+# To prevent failing due to warning
+target_compile_options(ctadaemonunittests-multiprocess PRIVATE
+  $<$<CXX_COMPILER_ID:GNU>:-Wno-error=uninitialized>
+  $<$<CXX_COMPILER_ID:GNU>:-Wno-error=maybe-uninitialized>)
 set_property(TARGET ctadaemonunittests-multiprocess PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctadaemonunittests-multiprocess PROPERTY   VERSION "${CTA_LIBVERSION}")
 

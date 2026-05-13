@@ -48,6 +48,10 @@ add_library(ctatapedsessionunittests SHARED
   RecallTaskInjectorTest.cpp
   TaskWatchDogTest.cpp
 )
+# To prevent failing due to warning
+target_compile_options(ctatapedsessionunittests PRIVATE
+  $<$<CXX_COMPILER_ID:GNU>:-Wno-error=uninitialized>
+  $<$<CXX_COMPILER_ID:GNU>:-Wno-error=maybe-uninitialized>)
 set_property(TARGET ctatapedsessionunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapedsessionunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 if (NOT CTA_USE_PGSCHED)
