@@ -19,7 +19,6 @@ include_directories(${CMAKE_BINARY_DIR}/eos_cta ${PROTOBUF3_INCLUDE_DIRS})
 add_library(EosGrpcClient STATIC GrpcClient.cpp GrpcUtils.cpp GrpcEndpoint.cpp)
 
 # To prevent failing due to warning
-# #warning "<ciso646> is not a standard header since C++20, use <version> to detect implementation-specific macros"
 target_compile_options(EosGrpcClient PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-error=cpp>)
 target_link_libraries(EosGrpcClient ${PROTOBUF3_LIBRARIES} ${GRPC_LIBRARY} ${GRPC_GRPC++_LIBRARY})
 set_property (TARGET EosGrpcClient APPEND PROPERTY INSTALL_RPATH ${PROTOBUF3_RPATH})

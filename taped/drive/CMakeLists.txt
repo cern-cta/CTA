@@ -24,6 +24,8 @@ target_link_libraries(cta-TapeDriveReadWriteTest
 
 add_library(ctatapeddriveunittests SHARED
   DriveTest.cpp)
+# To prevent failing due to warning
+target_compile_options(ctatapeddriveunittests PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-error=uninitialized>)
 set_property(TARGET ctatapeddriveunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctatapeddriveunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 

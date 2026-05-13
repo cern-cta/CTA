@@ -9,6 +9,8 @@ target_link_libraries(ctascsi ctacommon)
 add_library(ctascsiunittests SHARED
   DeviceTest.cpp
   StructuresTest.cpp)
+# To prevent failing due to warning
+target_compile_options(ctascsiunittests PRIVATE $<$<CXX_COMPILER_ID:GNU>:-Wno-error=uninitialized>)
 set_property(TARGET ctascsiunittests PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctascsiunittests PROPERTY   VERSION "${CTA_LIBVERSION}")
 
