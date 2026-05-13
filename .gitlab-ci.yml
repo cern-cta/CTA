@@ -111,10 +111,6 @@ variables:
       - "push"
       - "pull-push"
 
-  BUILD_CACHE_EXPIRY:
-    description: "Expiry time for the cache(s) generated in the build-cta-rpms job"
-    value: "2 weeks"
-
   GENERATE_SBOM:
     description: "Whether to generate a Software Bill of Materials in the pipeline"
     value: "FALSE"
@@ -245,7 +241,6 @@ workflow:
         ENABLE_DEBUG_INFO: "FALSE"
         ENABLE_CCACHE: "TRUE"
         BUILD_CACHE_POLICY: pull-push
-        BUILD_CACHE_EXPIRY: "2 days" # Lower the retention rate significantly to prevent overloading the storage backend
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
       auto_cancel:
         on_new_commit: none

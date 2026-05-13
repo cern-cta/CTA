@@ -134,7 +134,6 @@ build-cta-rpms:
         # Faster downloads :o
         - /var/cache/dnf
         - /var/cache/yum
-      expire_in: $BUILD_CACHE_EXPIRY
 
 
 # Specifically to build CTA without ccache and with debug packages enabled
