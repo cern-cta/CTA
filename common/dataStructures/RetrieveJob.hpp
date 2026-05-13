@@ -8,6 +8,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <string>

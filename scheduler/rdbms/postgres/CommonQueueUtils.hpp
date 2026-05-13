@@ -7,6 +7,8 @@
 
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <cstdint>
+
 namespace cta::schedulerdb::postgres {
 
 /**

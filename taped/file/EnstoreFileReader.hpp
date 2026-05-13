@@ -8,6 +8,7 @@
 #include "CpioFileHeaderStructure.hpp"
 #include "FileReader.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <memory>
 

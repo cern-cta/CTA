@@ -28,6 +28,7 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>

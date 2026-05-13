@@ -7,6 +7,7 @@
 
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <sstream>

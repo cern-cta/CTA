@@ -7,6 +7,8 @@
 
 #include "catalogue/interfaces/MediaTypeCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class DummyMediaTypeCatalogue : public MediaTypeCatalogue {

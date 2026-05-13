@@ -8,6 +8,7 @@
 #include "TapeItemWritten.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

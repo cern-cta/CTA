@@ -8,6 +8,7 @@
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 #include "rdbms/Conn.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

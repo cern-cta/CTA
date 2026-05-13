@@ -7,6 +7,7 @@
 
 #include "common/dataStructures/MountPolicy.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 

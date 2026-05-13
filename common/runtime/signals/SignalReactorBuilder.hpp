@@ -8,6 +8,7 @@
 #include "SignalReactor.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
 #include <functional>
 #include <unordered_map>
 

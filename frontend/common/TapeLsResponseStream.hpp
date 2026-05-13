@@ -9,6 +9,8 @@
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
 
+#include <cstdint>
+
 #include "cta_admin.pb.h"
 
 namespace cta::frontend {

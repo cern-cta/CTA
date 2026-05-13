@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include <cstdint>
+
 namespace cta {
 /**
    * Description of the criteria to mount a tape

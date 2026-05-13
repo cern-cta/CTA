@@ -14,6 +14,8 @@
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <cstdint>
+
 namespace cta::schedulerdb {
 
 CTA_GENERATE_EXCEPTION_CLASS(ArchiveRequestHasNoCopies);

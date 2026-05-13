@@ -7,6 +7,8 @@
 
 #include "catalogue/rdbms/RdbmsCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 /**

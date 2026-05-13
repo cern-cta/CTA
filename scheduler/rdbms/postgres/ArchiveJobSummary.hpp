@@ -8,6 +8,7 @@
 #include "rdbms/NullDbValue.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
+#include <cstdint>
 #include <sstream>
 
 namespace cta::schedulerdb::postgres {

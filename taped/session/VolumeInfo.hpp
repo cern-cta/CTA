@@ -8,6 +8,7 @@
 #include "common/dataStructures/LabelFormat.hpp"
 
 #include <common/dataStructures/MountType.hpp>
+#include <cstdint>
 #include <string>
 
 namespace castor::tape::tapeserver::daemon {

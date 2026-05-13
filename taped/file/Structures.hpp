@@ -8,6 +8,7 @@
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/scsi/Structures.hpp"
 
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 

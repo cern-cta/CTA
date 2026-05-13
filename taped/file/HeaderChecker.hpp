@@ -7,6 +7,7 @@
 
 #include "common/dataStructures/LabelFormat.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta {

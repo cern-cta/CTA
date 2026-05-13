@@ -8,6 +8,8 @@
 #include "TapeMount.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
+#include <cstdint>
+
 namespace cta {
 
 /**

@@ -9,6 +9,8 @@
 #include "catalogue/Catalogue.hpp"
 #include "frontend/common/FrontendService.hpp"
 
+#include <cstdint>
+
 #include "cta_frontend.pb.h"
 
 namespace cta::frontend {

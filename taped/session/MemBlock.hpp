@@ -8,6 +8,7 @@
 #include "Payload.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 

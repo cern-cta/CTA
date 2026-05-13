@@ -9,6 +9,7 @@
 #include "MaintdConfig.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
 #include <vector>
 
 namespace cta::maintd {

@@ -8,6 +8,7 @@
 #include "FileStatistics.hpp"
 #include "rdbms/Rset.hpp"
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <string>

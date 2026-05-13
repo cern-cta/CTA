@@ -23,6 +23,7 @@
 #include "mediachanger/MediaChangerFacade.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
+#include <cstdint>
 #include <opentelemetry/context/runtime_context.h>
 
 namespace castor::tape::tapeserver::daemon {

@@ -11,6 +11,7 @@
 #include "rdbms/Conn.hpp"
 #include "scheduler/rdbms/RelationalDB.hpp"
 
+#include <cstdint>
 #include <unordered_map>
 
 namespace cta::maintd {

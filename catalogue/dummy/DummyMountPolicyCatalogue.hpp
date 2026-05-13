@@ -7,6 +7,8 @@
 
 #include "catalogue/interfaces/MountPolicyCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class DummyMountPolicyCatalogue : public MountPolicyCatalogue {

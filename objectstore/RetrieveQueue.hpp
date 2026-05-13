@@ -12,6 +12,8 @@
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "scheduler/RetrieveRequestDump.hpp"
 
+#include <cstdint>
+
 #include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {

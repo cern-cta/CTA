@@ -10,6 +10,7 @@
 #include "common/process/threading/SocketPair.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <string>
 #include <sys/types.h>
 #include <sys/wait.h>

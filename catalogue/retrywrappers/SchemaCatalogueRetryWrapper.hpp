@@ -8,6 +8,7 @@
 #include "catalogue/interfaces/SchemaCatalogue.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

@@ -8,6 +8,7 @@
 #include "CtaReadSession.hpp"
 #include "FileReader.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace castor::tape::tapeFile {

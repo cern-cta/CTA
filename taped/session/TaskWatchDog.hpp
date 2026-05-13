@@ -15,6 +15,7 @@
 #include "scheduler/TapeMount.hpp"
 #include "taped/daemon/TapedProxy.hpp"
 
+#include <cstdint>
 #include <map>
 #include <set>
 #include <unistd.h>

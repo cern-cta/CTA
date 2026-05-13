@@ -8,6 +8,8 @@
 #include "objectstore/BackendVFS.hpp"
 #include "objectstore/Sorter.hpp"
 
+#include <cstdint>
+
 /**
  * Plan => Cleanup runner keeps track of queues that need to be emptied
  * If a queue is signaled for cleanup, the cleanup runner should take ownership of it, and move all the requests

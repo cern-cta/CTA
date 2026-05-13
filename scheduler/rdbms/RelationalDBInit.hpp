@@ -11,6 +11,7 @@
 #include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

@@ -15,6 +15,7 @@
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <cstdint>
 #include <vector>
 
 #define __STDC_FORMAT_MACROS

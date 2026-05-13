@@ -6,6 +6,7 @@
 #pragma once
 
 #include <common/checksum/ChecksumBlob.hpp>
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>

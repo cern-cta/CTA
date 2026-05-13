@@ -8,6 +8,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

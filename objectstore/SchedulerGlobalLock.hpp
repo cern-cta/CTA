@@ -7,6 +7,8 @@
 
 #include "ObjectOps.hpp"
 
+#include <cstdint>
+
 #include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {

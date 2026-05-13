@@ -7,6 +7,7 @@
 
 #include "common/dataStructures/TapeFile.hpp"
 
+#include <cstdint>
 #include <iostream>
 #include <map>
 

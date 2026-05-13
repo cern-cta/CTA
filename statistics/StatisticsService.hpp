@@ -7,6 +7,7 @@
 
 #include "Statistics.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::statistics {

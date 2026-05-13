@@ -13,6 +13,7 @@
 #include "common/utils/Timer.hpp"
 #include "rados/librados.hpp"
 
+#include <cstdint>
 #include <future>
 
 // RADOS_LOCKING can be NOTIFY or BACKOFF

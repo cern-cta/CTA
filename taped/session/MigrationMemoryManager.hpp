@@ -9,6 +9,8 @@
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
 
+#include <cstdint>
+
 namespace castor {
 namespace exception {
 class Exception;

@@ -7,6 +7,7 @@
 
 #include "common/dataStructures/Tape.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>

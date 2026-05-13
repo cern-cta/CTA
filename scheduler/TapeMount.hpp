@@ -11,6 +11,7 @@
 #include "common/log/LogContext.hpp"
 #include "taped/session/TapeSessionStats.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 

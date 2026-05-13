@@ -14,6 +14,8 @@
 #include "rdbms/Rset.hpp"
 #include "rdbms/Stmt.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 /**

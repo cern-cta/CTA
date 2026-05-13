@@ -12,6 +12,7 @@
 #include "scheduler/TapeMount.hpp"
 
 #include <atomic>
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <queue>

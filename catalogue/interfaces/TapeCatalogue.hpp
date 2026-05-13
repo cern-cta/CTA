@@ -9,6 +9,7 @@
 #include "common/dataStructures/VidToTapeMap.hpp"
 #include "common/exception/UserError.hpp"
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <set>

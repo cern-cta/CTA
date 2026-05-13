@@ -7,6 +7,7 @@
 
 #include "catalogue/rdbms/RdbmsStorageClassCatalogue.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

@@ -7,6 +7,7 @@
 
 #include "catalogue/interfaces/VirtualOrganizationCatalogue.hpp"
 
+#include <cstdint>
 #include <list>
 #include <string>
 

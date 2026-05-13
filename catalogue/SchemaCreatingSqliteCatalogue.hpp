@@ -7,6 +7,8 @@
 
 #include "catalogue/rdbms/sqlite/SqliteCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class CatalogueFactory;

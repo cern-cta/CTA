@@ -9,6 +9,7 @@
 #include "catalogue/interfaces/FileRecycleLogCatalogue.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

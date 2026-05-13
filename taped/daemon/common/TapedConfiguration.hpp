@@ -4,12 +4,14 @@
  */
 
 #pragma once
+
 #include "FetchReportOrFlushLimits.hpp"
 #include "common/Constants.hpp"
 #include "common/config/SourcedParameter.hpp"
 #include "common/exception/Exception.hpp"
 #include "common/log/DummyLogger.hpp"
 
+#include <cstdint>
 #include <limits>
 #include <map>
 #include <optional>

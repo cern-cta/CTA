@@ -14,6 +14,7 @@
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <cstdint>
 #include <vector>
 
 namespace cta::schedulerdb::postgres {

@@ -15,6 +15,7 @@
 #include "common/dataStructures/RequesterIdentity.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <cstdint>
 #include <list>
 #include <optional>
 

@@ -10,6 +10,7 @@
 #include "RepackRequest.hpp"
 #include "common/exception/NoSuchObject.hpp"
 
+#include <cstdint>
 #include <optional>
 
 namespace cta::objectstore {

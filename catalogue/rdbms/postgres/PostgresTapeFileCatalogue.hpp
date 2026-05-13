@@ -8,6 +8,7 @@
 #include "catalogue/InsertFileRecycleLog.hpp"
 #include "catalogue/rdbms/RdbmsTapeFileCatalogue.hpp"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

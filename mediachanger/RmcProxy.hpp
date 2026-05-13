@@ -14,6 +14,7 @@
 #include "mediachanger/SmartFd.hpp"
 #include "mediachanger/io.hpp"
 
+#include <cstdint>
 #include <sys/types.h>
 #include <unistd.h>
 

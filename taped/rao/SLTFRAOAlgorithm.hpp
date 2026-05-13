@@ -12,6 +12,7 @@
 #include "RAOParams.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
+#include <cstdint>
 #include <map>
 
 namespace castor::tape::tapeserver::rao {

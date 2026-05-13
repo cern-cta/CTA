@@ -8,6 +8,7 @@
 #include "catalogue/interfaces/DiskSystemCatalogue.hpp"
 #include "disk/DiskSystem.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

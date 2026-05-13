@@ -18,6 +18,7 @@
 #include "common/utils/Timer.hpp"
 #include "taped/file/FileReaderFactory.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

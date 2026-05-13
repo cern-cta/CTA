@@ -8,6 +8,7 @@
 #include "TapeFseqRange.hpp"
 #include "TapeFseqRangeSequence.hpp"
 
+#include <cstdint>
 #include <list>
 #include <ostream>
 

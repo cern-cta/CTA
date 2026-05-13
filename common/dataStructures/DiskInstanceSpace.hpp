@@ -7,6 +7,7 @@
 
 #include "EntryLog.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::common::dataStructures {

@@ -4,6 +4,8 @@
  */
 
 #pragma once
+
+#include <cstdint>
 #include <string>
 
 namespace cta::tape::session {

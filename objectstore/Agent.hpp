@@ -8,6 +8,7 @@
 #include "ObjectOps.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <cstdint>
 #include <cxxabi.h>
 #include <list>
 

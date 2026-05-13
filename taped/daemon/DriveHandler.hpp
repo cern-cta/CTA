@@ -7,6 +7,7 @@
 
 #include "common/process/threading/SocketPair.hpp"
 
+#include <cstdint>
 #include <memory>
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"

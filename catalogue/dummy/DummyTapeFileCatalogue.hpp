@@ -7,6 +7,8 @@
 
 #include "catalogue/interfaces/TapeFileCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class DummyTapeFileCatalogue : public TapeFileCatalogue {

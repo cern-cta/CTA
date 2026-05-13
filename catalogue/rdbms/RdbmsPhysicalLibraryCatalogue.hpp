@@ -7,6 +7,7 @@
 
 #include "catalogue/interfaces/PhysicalLibraryCatalogue.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <optional>

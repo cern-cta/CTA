@@ -8,6 +8,7 @@
 #include "Backend.hpp"
 #include "common/process/threading/Thread.hpp"
 
+#include <cstdint>
 #include <functional>
 #include <future>
 #include <list>

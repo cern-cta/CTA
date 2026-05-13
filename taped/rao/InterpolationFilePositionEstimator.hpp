@@ -9,6 +9,7 @@
 #include "catalogue/MediaType.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
+#include <cstdint>
 #include <vector>
 
 namespace castor::tape::tapeserver::rao {

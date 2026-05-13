@@ -8,6 +8,7 @@
 #include "ObjectOps.hpp"
 #include "RetrieveQueue.hpp"
 
+#include <cstdint>
 #include <list>
 #include <set>
 #include <string>

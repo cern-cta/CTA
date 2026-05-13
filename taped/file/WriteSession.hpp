@@ -8,6 +8,7 @@
 #include "Exceptions.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace castor::tape {

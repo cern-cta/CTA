@@ -13,6 +13,7 @@
 #include "scheduler/OStoreDB/OStoreDB.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <future>
 #include <list>

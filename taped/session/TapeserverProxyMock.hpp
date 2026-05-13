@@ -7,6 +7,7 @@
 
 #include "taped/daemon/TapedProxy.hpp"
 
+#include <cstdint>
 #include <gmock/gmock.h>
 
 namespace cta::tape::daemon {

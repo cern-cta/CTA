@@ -7,6 +7,8 @@
 
 #include "catalogue/rdbms/RdbmsMediaTypeCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class RdbmsCatalogue;

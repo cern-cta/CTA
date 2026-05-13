@@ -7,6 +7,8 @@
 #include "DriveInterface.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::drive {
 
 CTA_GENERATE_EXCEPTION_CLASS(DriveDoesNotSupportRAOException);

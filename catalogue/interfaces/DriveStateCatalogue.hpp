@@ -9,6 +9,7 @@
 #include "common/dataStructures/DriveStatus.hpp"
 #include "common/dataStructures/MountType.hpp"
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <string>

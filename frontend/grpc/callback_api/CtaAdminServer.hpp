@@ -37,6 +37,7 @@
 #include "frontend/common/VirtualOrganizationLsResponseStream.hpp"
 #include "frontend/grpc/common/GrpcAuthUtils.hpp"
 
+#include <cstdint>
 #include <grpcpp/grpcpp.h>
 #include <memory>
 #include <mutex>

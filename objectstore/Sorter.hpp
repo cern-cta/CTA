@@ -20,6 +20,7 @@
 #include "objectstore/RetrieveRequest.hpp"
 #include "objectstore/SorterArchiveJob.hpp"
 
+#include <cstdint>
 #include <future>
 #include <list>
 #include <map>

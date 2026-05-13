@@ -11,6 +11,7 @@
 #include "taped/file/Structures.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
+#include <cstdint>
 #include <xrootd/XrdCl/XrdClFile.hh>
 
 namespace cta::disk {

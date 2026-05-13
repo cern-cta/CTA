@@ -16,6 +16,7 @@
 #include "scheduler/rdbms/postgres/RetrieveJobQueue.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <set>

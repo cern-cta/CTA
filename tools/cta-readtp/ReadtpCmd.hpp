@@ -21,6 +21,7 @@
 #include "taped/session/EncryptionControl.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta {

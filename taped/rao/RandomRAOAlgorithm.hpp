@@ -8,6 +8,8 @@
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 #include "RAOAlgorithm.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::rao {
 
 class NonConfigurableRAOAlgorithmFactory;

@@ -8,6 +8,7 @@
 #include "common/config/SourcedParameter.hpp"
 #include "taped/daemon/common/TapedConfiguration.hpp"
 
+#include <cstdint>
 #include <ctime>
 #include <memory>
 #include <string>

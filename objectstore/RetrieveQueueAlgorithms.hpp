@@ -10,6 +10,8 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 
+#include <cstdint>
+
 namespace cta::objectstore {
 
 template<typename C>

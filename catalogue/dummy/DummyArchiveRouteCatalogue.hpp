@@ -7,6 +7,8 @@
 
 #include "catalogue/interfaces/ArchiveRouteCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class DummyArchiveRouteCatalogue : public ArchiveRouteCatalogue {

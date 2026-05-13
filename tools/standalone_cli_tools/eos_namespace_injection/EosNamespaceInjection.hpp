@@ -9,6 +9,7 @@
 #include "tools/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
 #include "xrootd-ssi-protobuf-interface/eos_cta/include/CtaFrontendApi.hpp"
 
+#include <cstdint>
 #include <filesystem>
 #include <vector>
 

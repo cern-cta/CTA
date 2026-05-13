@@ -8,6 +8,7 @@
 #include "catalogue/rdbms/RdbmsTapeFileCatalogue.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 
+#include <cstdint>
 #include <string>
 #include <vector>
 

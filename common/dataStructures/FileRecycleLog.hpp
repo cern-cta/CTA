@@ -7,6 +7,7 @@
 
 #include "common/checksum/ChecksumBlob.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 

@@ -7,6 +7,8 @@
 
 #include "ArchiveQueue.hpp"
 
+#include <cstdint>
+
 namespace cta::objectstore {
 
 class ArchiveQueueShard : public ObjectOps<serializers::ArchiveQueueShard, serializers::ArchiveQueueShard_t> {

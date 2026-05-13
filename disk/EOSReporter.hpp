@@ -8,6 +8,7 @@
 #include "DiskReporter.hpp"
 
 #include <XrdCl/XrdClFileSystem.hh>
+#include <cstdint>
 #include <future>
 
 namespace cta::disk {

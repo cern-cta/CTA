@@ -8,6 +8,8 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "rdbms/Login.hpp"
 
+#include <cstdint>
+
 namespace cta {
 
 namespace log {

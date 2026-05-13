@@ -11,6 +11,8 @@
 #include "common/utils/Timer.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
+#include <cstdint>
+
 #include "objectstore/cta.pb.h"
 
 namespace cta::objectstore {

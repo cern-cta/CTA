@@ -10,6 +10,7 @@
 #include <common/exception/ChecksumBlobSizeMismatch.hpp>
 #include <common/exception/ChecksumTypeMismatch.hpp>
 #include <common/exception/ChecksumValueMismatch.hpp>
+#include <cstdint>
 #include <map>
 
 namespace cta::checksum {

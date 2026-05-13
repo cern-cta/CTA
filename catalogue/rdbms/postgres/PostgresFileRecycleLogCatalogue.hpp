@@ -7,6 +7,7 @@
 
 #include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta {

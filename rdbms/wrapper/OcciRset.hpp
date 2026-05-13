@@ -11,6 +11,7 @@
 #include "rdbms/wrapper/ColumnNameToIdx.hpp"
 #include "rdbms/wrapper/RsetWrapper.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <occi.h>
 

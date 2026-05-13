@@ -37,6 +37,7 @@
 #include "scheduler/TapeMount.hpp"
 #include "taped/daemon/common/TapedConfiguration.hpp"
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <memory>

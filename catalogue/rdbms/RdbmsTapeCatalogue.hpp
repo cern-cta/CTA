@@ -9,6 +9,7 @@
 #include "common/log/Logger.hpp"
 #include "common/process/threading/Mutex.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta {

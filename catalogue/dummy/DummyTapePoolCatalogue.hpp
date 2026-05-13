@@ -7,6 +7,8 @@
 
 #include "catalogue/interfaces/TapePoolCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class DummyTapePoolCatalogue : public TapePoolCatalogue {

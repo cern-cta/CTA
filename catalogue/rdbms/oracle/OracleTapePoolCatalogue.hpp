@@ -7,6 +7,7 @@
 
 #include "catalogue/rdbms/RdbmsTapePoolCatalogue.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

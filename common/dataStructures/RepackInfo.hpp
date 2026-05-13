@@ -8,6 +8,7 @@
 #include "EntryLog.hpp"
 #include "RepackQueueType.hpp"
 
+#include <cstdint>
 #include <list>
 #include <optional>
 #include <string>

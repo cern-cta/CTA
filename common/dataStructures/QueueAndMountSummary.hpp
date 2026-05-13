@@ -9,6 +9,7 @@
 #include "MountType.hpp"
 #include "VidToTapeMap.hpp"
 
+#include <cstdint>
 #include <list>
 #include <string>
 

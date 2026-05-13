@@ -7,6 +7,8 @@
 
 #include "catalogue/interfaces/ArchiveFileCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class DummyArchiveFileCatalogue : public ArchiveFileCatalogue {

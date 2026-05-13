@@ -6,6 +6,7 @@
 #pragma once
 
 #include <XrdCl/XrdClFile.hh>
+#include <cstdint>
 #include <iostream>
 
 namespace cta {

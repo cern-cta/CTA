@@ -9,6 +9,7 @@
 #include "catalogue/interfaces/DriveConfigCatalogue.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <optional>

@@ -10,6 +10,7 @@
 #include "scheduler/PositioningMethod.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <string>

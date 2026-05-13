@@ -8,6 +8,7 @@
 #include "common/log/TimingList.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 

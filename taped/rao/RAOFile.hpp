@@ -7,6 +7,7 @@
 
 #include "FilePositionInfos.hpp"
 
+#include <cstdint>
 #include <list>
 #include <utility>
 

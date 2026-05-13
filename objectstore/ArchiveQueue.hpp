@@ -14,6 +14,7 @@
 #include "common/dataStructures/CreationLog.hpp"
 #include "common/dataStructures/MountControl.hpp"
 
+#include <cstdint>
 #include <string>
 
 #include "objectstore/cta.pb.h"

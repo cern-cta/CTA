@@ -11,6 +11,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/utils/Regex.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <set>
 #include <string>

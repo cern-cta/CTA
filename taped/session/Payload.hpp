@@ -12,6 +12,7 @@
 #include "taped/file/FileReader.hpp"
 #include "taped/file/FileWriter.hpp"
 
+#include <cstdint>
 #include <zlib.h>
 
 namespace castor::tape::tapeserver::daemon {

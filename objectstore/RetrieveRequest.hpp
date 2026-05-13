@@ -17,6 +17,7 @@
 #include "common/dataStructures/RetrieveRequest.hpp"
 #include "objectstore/RetrieveActivityCountMap.hpp"
 
+#include <cstdint>
 #include <list>
 #include <string_view>
 

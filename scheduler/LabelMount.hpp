@@ -10,6 +10,7 @@
 #include "scheduler/TapeMount.hpp"
 
 #include <atomic>
+#include <cstdint>
 #include <memory>
 #include <string>
 

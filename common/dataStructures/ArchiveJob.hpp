@@ -7,6 +7,7 @@
 
 #include "common/dataStructures/ArchiveRequest.hpp"
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <string>

@@ -8,6 +8,7 @@
 #include "catalogue/interfaces/MediaTypeCatalogue.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta {

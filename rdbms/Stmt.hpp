@@ -8,6 +8,7 @@
 #include "rdbms/AutocommitMode.hpp"
 #include "rdbms/Rset.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <mutex>

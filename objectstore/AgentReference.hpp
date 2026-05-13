@@ -13,6 +13,7 @@
 #include "objectstore/Backend.hpp"
 
 #include <atomic>
+#include <cstdint>
 #include <future>
 #include <list>
 #include <set>

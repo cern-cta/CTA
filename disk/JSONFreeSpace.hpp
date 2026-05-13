@@ -7,6 +7,8 @@
 
 #include "common/json/object/JSONCObject.hpp"
 
+#include <cstdint>
+
 namespace cta::disk {
 
 /**

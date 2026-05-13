@@ -9,6 +9,8 @@
 #include "RAOAlgorithm.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::rao {
 
 class EnterpriseRAOAlgorithmFactory;

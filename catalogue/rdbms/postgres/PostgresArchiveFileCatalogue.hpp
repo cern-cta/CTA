@@ -8,6 +8,7 @@
 #include "catalogue/rdbms/RdbmsArchiveFileCatalogue.hpp"
 #include "common/checksum/ChecksumBlob.hpp"
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <set>

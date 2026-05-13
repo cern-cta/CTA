@@ -11,6 +11,7 @@
 #include "common/dataStructures/TapeCopyToPoolMap.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta {

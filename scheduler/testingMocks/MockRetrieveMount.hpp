@@ -9,6 +9,7 @@
 #include "scheduler/RetrieveMount.hpp"
 #include "scheduler/testingMocks/MockRetrieveJob.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <queue>

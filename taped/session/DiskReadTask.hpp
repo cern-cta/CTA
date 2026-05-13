@@ -14,6 +14,8 @@
 #include "common/process/threading/AtomicFlag.hpp"
 #include "disk/DiskFile.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::daemon {
 
 class DiskReadTask {

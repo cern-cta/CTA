@@ -9,6 +9,7 @@
 #include "common/dataStructures/MountType.hpp"
 #include "common/exception/UserError.hpp"
 
+#include <cstdint>
 #include <limits>
 #include <optional>
 #include <string>

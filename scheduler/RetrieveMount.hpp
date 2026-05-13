@@ -12,6 +12,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <queue>

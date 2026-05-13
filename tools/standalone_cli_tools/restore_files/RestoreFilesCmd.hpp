@@ -9,6 +9,7 @@
 #include "tools/standalone_cli_tools/common/CmdLineArgs.hpp"
 #include "tools/standalone_cli_tools/common/CmdLineTool.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 

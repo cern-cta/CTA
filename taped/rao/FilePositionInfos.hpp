@@ -7,6 +7,8 @@
 
 #include "Position.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::rao {
 
 /**

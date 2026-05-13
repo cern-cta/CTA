@@ -8,6 +8,7 @@
 #include "catalogue/interfaces/TapeFileCatalogue.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

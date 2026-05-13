@@ -8,6 +8,7 @@
 #include "catalogue/interfaces/LogicalLibraryCatalogue.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <string>

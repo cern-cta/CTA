@@ -9,6 +9,8 @@
 #include "Namespace.hpp"
 #include "common/exception/UserError.hpp"
 
+#include <cstdint>
+
 namespace eos::client {
 
 class Endpoint {

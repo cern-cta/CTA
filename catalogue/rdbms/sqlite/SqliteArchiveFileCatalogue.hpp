@@ -7,6 +7,7 @@
 
 #include "catalogue/rdbms/RdbmsArchiveFileCatalogue.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

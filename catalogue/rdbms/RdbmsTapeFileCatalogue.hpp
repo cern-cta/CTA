@@ -8,6 +8,7 @@
 #include "catalogue/interfaces/TapeFileCatalogue.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

@@ -19,6 +19,8 @@
 #include "taped/file/FileWriter.hpp"
 #include "taped/file/WriteSession.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::daemon {
 
 /**

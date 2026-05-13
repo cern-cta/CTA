@@ -7,6 +7,8 @@
 
 #include "scheduler/rdbms/postgres/Enums.hpp"
 
+#include <cstdint>
+
 namespace cta::schedulerdb::postgres {
 /*
  * Retrieve job table summary object

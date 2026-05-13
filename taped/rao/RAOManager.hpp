@@ -12,6 +12,7 @@
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/scsi/Structures.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>

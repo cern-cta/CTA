@@ -8,6 +8,8 @@
 #include "RetrieveQueue.hpp"
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 
+#include <cstdint>
+
 namespace cta::objectstore {
 
 class RetrieveQueueShard : public ObjectOps<serializers::RetrieveQueueShard, serializers::RetrieveQueueShard_t> {

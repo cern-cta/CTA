@@ -7,6 +7,7 @@
 
 #include "TapeFseqRange.hpp"
 
+#include <cstdint>
 #include <list>
 
 namespace cta::tapeserver::readtp {

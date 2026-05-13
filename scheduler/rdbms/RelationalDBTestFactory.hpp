@@ -14,6 +14,7 @@
 #include "scheduler/rdbms/RelationalDB.hpp"
 #include "scheduler/rdbms/TemporaryPostgresInstance.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

@@ -9,6 +9,7 @@
 #include "common/dataStructures/DiskFileInfo.hpp"
 #include "common/dataStructures/TapeFile.hpp"
 
+#include <cstdint>
 #include <map>
 #include <string>
 #include <vector>

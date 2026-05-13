@@ -15,6 +15,7 @@
 #include "taped/scsi/Structures.hpp"
 #include "taped/system/Wrapper.hpp"
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <string>

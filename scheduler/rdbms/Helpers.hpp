@@ -14,6 +14,7 @@
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <cstdint>
 #include <future>
 #include <set>
 #include <string>

@@ -15,6 +15,7 @@
 #include "taped/file/Structures.hpp"
 #include "taped/scsi/Device.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

@@ -7,6 +7,8 @@
 
 #include "AdminCmdMode.hpp"
 #include "scheduler/Scheduler.hpp"
+
+#include <cstdint>
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else

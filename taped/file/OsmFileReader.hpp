@@ -9,6 +9,7 @@
 #include "FileReader.hpp"
 #include "OsmFileStructure.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace castor::tape::tapeFile {

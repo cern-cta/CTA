@@ -10,6 +10,8 @@
 #include "common/process/threading/Mutex.hpp"
 #include "common/process/threading/MutexLocker.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class DummyTapeCatalogue : public TapeCatalogue {

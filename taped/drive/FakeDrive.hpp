@@ -6,6 +6,7 @@
 
 #include "DriveInterface.hpp"
 
+#include <cstdint>
 #include <limits>
 #include <list>
 #include <map>

@@ -8,6 +8,8 @@
 #include "catalogue/CatalogueFactory.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 /**

@@ -7,6 +7,7 @@
 
 #include "catalogue/interfaces/StorageClassCatalogue.hpp"
 
+#include <cstdint>
 #include <list>
 #include <string>
 

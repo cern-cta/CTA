@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <rpc/xdr.h>  //!< xdrmem_create for decode_legato
 
 namespace castor::tape::tapeFile::osm::xdr {

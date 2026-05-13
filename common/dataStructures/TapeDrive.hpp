@@ -10,6 +10,7 @@
 #include "common/dataStructures/MountType.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
 #include <map>
 #include <optional>
 #include <string>

@@ -7,6 +7,7 @@
 
 #include "catalogue/interfaces/DiskInstanceSpaceCatalogue.hpp"
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <string>

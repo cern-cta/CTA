@@ -13,6 +13,7 @@
 #include "rdbms/wrapper/ConnFactory.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 

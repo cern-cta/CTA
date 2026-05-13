@@ -10,6 +10,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

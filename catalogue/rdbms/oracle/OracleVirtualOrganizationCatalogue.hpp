@@ -7,6 +7,8 @@
 
 #include "catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class RdbmsCatalogue;

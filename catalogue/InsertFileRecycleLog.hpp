@@ -8,6 +8,7 @@
 #include "TapeFileWritten.hpp"
 #include "TapeItemWritten.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

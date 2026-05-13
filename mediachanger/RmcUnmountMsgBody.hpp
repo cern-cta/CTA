@@ -9,6 +9,8 @@
 #include "common/Constants.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <cstdint>
+
 namespace cta::mediachanger {
 
 /**

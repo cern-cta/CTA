@@ -9,6 +9,8 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <cstdint>
+
 namespace cta::objectstore {
 
 class AgentWatchdog {

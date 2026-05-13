@@ -7,6 +7,7 @@
 
 #include "EntryLog.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 

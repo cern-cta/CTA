@@ -9,6 +9,7 @@
 #include "common/Constants.hpp"
 #include "taped/scsi/Structures.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace castor::tape::tapeFile {

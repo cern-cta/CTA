@@ -13,6 +13,7 @@
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <cstdint>
 #include <set>
 #include <string>
 #include <unordered_map>

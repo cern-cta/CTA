@@ -7,6 +7,8 @@
 
 #include "catalogue/SchemaCreatingSqliteCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 class CatalogueFactory;

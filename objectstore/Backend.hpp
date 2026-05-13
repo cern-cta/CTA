@@ -7,6 +7,7 @@
 
 #include "common/exception/Exception.hpp"
 
+#include <cstdint>
 #include <functional>
 #include <list>
 #include <memory>

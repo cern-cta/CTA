@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <list>
 
 #include "objectstore/cta.pb.h"

@@ -9,6 +9,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::daemon {
 
 /* A double fixed payload pipeline: at creation time, we know how many blocks

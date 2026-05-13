@@ -9,6 +9,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/SocketPair.hpp"
 
+#include <cstdint>
 #include <future>
 
 namespace cta::tape::daemon {

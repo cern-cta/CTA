@@ -13,6 +13,8 @@
 #include "common/log/LogContext.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::daemon {
 
 /**

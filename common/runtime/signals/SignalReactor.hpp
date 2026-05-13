@@ -7,6 +7,7 @@
 
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <functional>
 #include <thread>
 #include <unordered_map>

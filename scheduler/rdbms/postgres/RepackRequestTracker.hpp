@@ -11,6 +11,8 @@
 #include "scheduler/rdbms/postgres/Enums.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <cstdint>
+
 namespace cta::schedulerdb::postgres {
 
 struct RepackRequestProgress {

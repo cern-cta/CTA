@@ -18,6 +18,7 @@
 #include "taped/file/FileWriter.hpp"
 #include "taped/file/WriteSession.hpp"
 
+#include <cstdint>
 #include <iostream>
 #include <stdio.h>
 

@@ -13,6 +13,7 @@
 #include "TaskWatchDog.hpp"
 #include "taped/file/FileWriter.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace castor::tape::tapeserver::daemon {

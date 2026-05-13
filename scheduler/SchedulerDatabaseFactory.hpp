@@ -9,6 +9,7 @@
 #include "scheduler/RetrieveRequestDump.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <memory>
