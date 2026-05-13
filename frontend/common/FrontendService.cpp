@@ -307,7 +307,7 @@ FrontendService::FrontendService(const std::string& configFilename,
     params.emplace_back("source", archiveFileMaxSize.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.archivefile");
     params.emplace_back("key", "max_size_gb");
-    params.push_back(log::Param("value", std::to_string(archiveFileMaxSize.value_or(0))));
+    params.emplace_back("value", std::to_string(archiveFileMaxSize.value_or(0)));
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -320,8 +320,8 @@ FrontendService::FrontendService(const std::string& configFilename,
     params.emplace_back("source", zeroLengthFilesForbidden.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.archivefile");
     params.emplace_back("key", "zero_length_files_forbidden");
-    params.push_back(
-      log::Param("value", config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("true")));
+    params.emplace_back("value",
+                        config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("true"));
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -330,13 +330,13 @@ FrontendService::FrontendService(const std::string& configFilename,
   {
     // Log cta.archivefile.zero_length_files_forbidden_vo_exception_list
     std::vector<log::Param> params;
-    params.push_back(
-      log::Param("source", m_zeroLengthFilesForbidden_voExceptions.empty() ? "Compile time default" : configFilename));
+    params.emplace_back("source",
+                        m_zeroLengthFilesForbidden_voExceptions.empty() ? "Compile time default" : configFilename);
     params.emplace_back("category", "cta.archivefile");
     params.emplace_back("key", "zero_length_files_forbidden_vo_exception_list");
     std::ostringstream oss;
     bool is_first = true;
-    for (auto& val : m_zeroLengthFilesForbidden_voExceptions) {
+    for (const auto& val : m_zeroLengthFilesForbidden_voExceptions) {
       if (!is_first) {
         oss << ",";
       }
