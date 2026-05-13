@@ -49,7 +49,7 @@ build-cta-rpms:
     CCACHE_BASEDIR: $CI_PROJECT_DIR
     CCACHE_DIR: $CI_PROJECT_DIR/.ccache
     CCACHE_COMPILERCHECK: content
-    CCACHE_MAXSIZE: "1G"
+    CCACHE_MAXSIZE: "2G"
   before_script:
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
@@ -68,6 +68,8 @@ build-cta-rpms:
         exit 1
       fi
     - ccache --zero-stats
+    - echo "CCache enabled ${ENABLE_CCACHE}"
+    - echo "CCache policy ${BUILD_CACHE_POLICY}"
   script:
     # SRPMS
     - ./ci/build/build_srpm.sh --build-dir build_srpm
@@ -154,6 +156,7 @@ build-cta-rpms-pgsched:
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
+    ENABLE_CCACHE: "FALSE"
     RPM_SIZE_METRICS_ID: "relwithdebinfo_pgsched_no_cache"
   cache: [] # Explicitly disable the cache
 

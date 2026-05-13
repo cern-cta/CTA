@@ -239,6 +239,7 @@ workflow:
           - '**/*'
       variables:
         ENABLE_DEBUG_INFO: "FALSE"
+        ENABLE_CCACHE: "TRUE"
         BUILD_CACHE_POLICY: pull-push
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
       auto_cancel:
