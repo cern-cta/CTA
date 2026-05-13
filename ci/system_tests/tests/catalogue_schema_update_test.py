@@ -98,7 +98,7 @@ def test_init_catalogue_updater(
 
     # If the configmap generation would need to be done through Helm the file in question needs to be within the chart
     defaultPlatform = project_json["dev"]["defaultPlatform"]
-    yum_repos_file = (project_root / "ci" / "docker" / defaultPlatform / "etc" / "yum.repos.d-internal").resolve()
+    yum_repos_file = project_root / "ci" / "docker" / defaultPlatform / "etc" / "yum.repos.d-internal"
     env.exec_local(f"kubectl -n {namespace} create configmap yum.repos.d-config --from-file={yum_repos_file}")
 
     print(f"Catalogue source version: {catalogue_from_version}")
@@ -108,7 +108,7 @@ def test_init_catalogue_updater(
         catalogue_schema_ref = catalogue_schema_update_params.schema_checkout_ref
         print(f"Using catalogue schema ref from config: {catalogue_schema_ref}")
     else:
-        catalogue_schema_path = (project_root / "catalogue" / "cta-catalogue-schema").resolve()
+        catalogue_schema_path = project_root / "catalogue" / "cta-catalogue-schema"
         catalogue_schema_ref = (
             env.exec_local(f"git -C {catalogue_schema_path} rev-parse --short HEAD", capture_output=True)
             .stdout.decode()
