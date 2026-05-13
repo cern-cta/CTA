@@ -69,10 +69,10 @@ build-cta-rpms:
                                --jobs $(nproc --ignore=1)
     # RPMS
     - BUILD_OPTIONS=""
-    - |
-      if [[ "$ENABLE_DEBUG_INFO" == "FALSE" ]]; then
-        BUILD_OPTIONS+=" --skip-debug-packages"
-      fi
+    # - |
+    #   if [[ "$ENABLE_DEBUG_INFO" == "FALSE" ]]; then
+    #     BUILD_OPTIONS+=" --skip-debug-packages"
+    #   fi
     - |
       if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
         BUILD_OPTIONS+=" --use-internal-repos"
