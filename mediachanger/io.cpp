@@ -13,6 +13,7 @@
 #include "mediachanger/SmartFd.hpp"
 
 #include <arpa/inet.h>
+#include <cstdint>
 #include <fcntl.h>
 #include <list>
 #include <netdb.h>

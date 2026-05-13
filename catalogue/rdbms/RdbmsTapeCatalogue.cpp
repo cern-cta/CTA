@@ -31,6 +31,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
 #include <list>
 #include <memory>
 #include <string>

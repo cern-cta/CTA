@@ -9,6 +9,7 @@
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
 #include "common/dataStructures/StorageClass.hpp"
 
+#include <cstdint>
 #include <list>
 #include <string>
 

@@ -9,6 +9,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
 
+#include <cstdint>
 #include <iomanip>
 #include <sstream>
 #include <sys/syscall.h>

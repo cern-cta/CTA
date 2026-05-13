@@ -10,6 +10,7 @@
 #include "scheduler/rdbms/schema/DropSchemaCmdLineArgs.hpp"
 
 #include <algorithm>
+#include <cstdint>
 
 namespace cta::schedulerdb {
 

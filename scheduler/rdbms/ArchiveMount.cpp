@@ -16,6 +16,7 @@
 #include "scheduler/rdbms/postgres/CommonQueueUtils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <cstdint>
 #include <unordered_map>
 
 namespace cta::schedulerdb {

@@ -8,6 +8,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <sstream>
 #include <utility>

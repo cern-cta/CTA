@@ -7,6 +7,8 @@
 
 #include "common/exception/NotImplementedException.hpp"
 
+#include <cstdint>
+
 namespace cta {
 
 LabelMount::LabelMount(catalogue::Catalogue& catalogue) : m_catalogue(catalogue) {

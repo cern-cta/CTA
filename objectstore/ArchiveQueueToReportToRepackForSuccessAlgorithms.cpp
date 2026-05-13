@@ -4,6 +4,8 @@
  */
 #include "ArchiveQueueAlgorithms.hpp"
 
+#include <cstdint>
+
 namespace cta::objectstore {
 
 template<>

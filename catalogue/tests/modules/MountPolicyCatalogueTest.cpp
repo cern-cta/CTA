@@ -12,6 +12,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace unitTests {

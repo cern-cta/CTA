@@ -7,6 +7,7 @@
 
 #include "taped/scsi/Structures.hpp"
 
+#include <cstdint>
 #include <errno.h>
 #include <stddef.h>
 #include <stdexcept>

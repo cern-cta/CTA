@@ -16,6 +16,8 @@
 #include "routines/disk/DiskReportRetrieveRoutine.hpp"
 #include "routines/repack/RepackExpandRoutine.hpp"
 #include "routines/repack/RepackReportRoutine.hpp"
+
+#include <cstdint>
 #ifndef CTA_PGSCHED
 #include "routines/scheduler/objectstore/GarbageCollectRoutine.hpp"
 #include "routines/scheduler/objectstore/QueueCleanupRoutine.hpp"

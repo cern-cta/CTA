@@ -8,6 +8,7 @@
 #include "common/utils/Timer.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <numeric>
 
 namespace castor::tape::tapeserver::rao {

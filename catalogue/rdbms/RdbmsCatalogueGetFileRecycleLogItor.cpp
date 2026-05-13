@@ -10,6 +10,8 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------

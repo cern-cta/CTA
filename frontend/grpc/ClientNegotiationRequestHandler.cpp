@@ -8,6 +8,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
+
 cta::frontend::grpc::client::NegotiationRequestHandler::NegotiationRequestHandler(
   cta::log::Logger& log,
   cta::xrd::Negotiation::Stub& stub,

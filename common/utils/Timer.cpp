@@ -5,6 +5,8 @@
 
 #include "Timer.hpp"
 
+#include <cstdint>
+
 namespace cta::utils {
 
 //------------------------------------------------------------------------------

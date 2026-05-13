@@ -8,6 +8,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 void DummyArchiveRouteCatalogue::createArchiveRoute(const common::dataStructures::SecurityIdentity& admin,

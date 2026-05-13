@@ -20,6 +20,7 @@
 #include "taped/drive/DriveInterface.hpp"
 
 #include <catalogue/Catalogue.hpp>
+#include <cstdint>
 #include <gtest/gtest.h>
 
 using ::testing::_;

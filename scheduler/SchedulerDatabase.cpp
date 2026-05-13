@@ -5,6 +5,8 @@
 
 #include "scheduler/SchedulerDatabase.hpp"
 
+#include <cstdint>
+
 namespace cta {
 
 //------------------------------------------------------------------------------

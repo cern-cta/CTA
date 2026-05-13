@@ -7,6 +7,8 @@
 
 #include "common/exception/NotImplementedException.hpp"
 
+#include <cstdint>
+
 namespace cta::schedulerdb {
 
 std::unique_ptr<postgres::RetrieveJobQueueRow> RetrieveRequest::makeJobRow() const {

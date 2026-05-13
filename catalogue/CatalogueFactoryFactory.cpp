@@ -12,6 +12,7 @@
 #include "plugin-manager/PluginManager.hpp"
 #include "rdbms/Login.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

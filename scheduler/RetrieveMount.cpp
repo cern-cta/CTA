@@ -12,6 +12,7 @@
 #include "disk/DiskSystem.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <iterator>
 #include <numeric>
 

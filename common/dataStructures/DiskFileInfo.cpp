@@ -8,6 +8,8 @@
 #include "common/dataStructures/utils.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <cstdint>
+
 namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------

@@ -12,6 +12,7 @@
 #include "common/telemetry/metrics/instruments/FrontendInstruments.hpp"
 #include "frontend/common/RequestTracker.hpp"
 
+#include <cstdint>
 #include <opentelemetry/context/runtime_context.h>
 
 namespace cta::frontend {

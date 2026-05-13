@@ -6,6 +6,7 @@
 #include "RAOFile.hpp"
 
 #include <algorithm>
+#include <cstdint>
 
 namespace castor::tape::tapeserver::rao {
 

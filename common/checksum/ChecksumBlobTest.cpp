@@ -5,6 +5,7 @@
 
 #include "common/checksum/ChecksumBlob.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace unitTests {

@@ -10,6 +10,8 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
+#include <cstdint>
+
 namespace cta::schedulerdb::postgres {
 
 std::string getQueueType(bool isActive, bool isRepack, bool isArchive) {

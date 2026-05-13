@@ -5,6 +5,7 @@
 
 #include "Constants.hpp"
 
+#include <cstdint>
 #include <sstream>
 
 std::string castor::tape::SCSI::tapeAlertToString(uint16_t parameterCode) {

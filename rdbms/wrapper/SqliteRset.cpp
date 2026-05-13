@@ -14,6 +14,7 @@
 #include "rdbms/wrapper/Sqlite.hpp"
 #include "rdbms/wrapper/SqliteStmt.hpp"
 
+#include <cstdint>
 #include <cstring>
 #include <sstream>
 #include <stdexcept>

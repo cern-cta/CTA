@@ -10,6 +10,7 @@
 #include "common/exception/NotImplementedException.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <list>
 #include <map>
 #include <string>

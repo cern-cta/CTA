@@ -18,6 +18,7 @@
 #include "rdbms/wrapper/OcciConn.hpp"
 #include "rdbms/wrapper/OcciRset.hpp"
 
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <map>

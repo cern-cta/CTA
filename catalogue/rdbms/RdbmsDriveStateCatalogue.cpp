@@ -15,6 +15,7 @@
 #include "common/log/LogContext.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
 #include <list>
 #include <map>
 #include <optional>

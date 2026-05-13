@@ -5,6 +5,8 @@
 
 #include "JSONDiskSystem.hpp"
 
+#include <cstdint>
+
 namespace cta::disk {
 
 JSONDiskSystem::JSONDiskSystem() : JSONCObject() {

@@ -13,6 +13,7 @@
 #include "common/dataStructures/ArchiveFileQueueCriteria.hpp"
 #include "common/dataStructures/ArchiveFileSummary.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

@@ -15,6 +15,7 @@
 #include "common/utils/utils.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 
+#include <cstdint>
 #include <dirent.h>
 #include <fcntl.h>
 #include <fstream>

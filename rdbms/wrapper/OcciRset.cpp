@@ -12,6 +12,8 @@
 #include "rdbms/DBException.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
 
+#include <cstdint>
+
 namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------

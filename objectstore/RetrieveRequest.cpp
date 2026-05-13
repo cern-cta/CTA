@@ -19,6 +19,7 @@
 #include "common/utils/utils.hpp"
 
 #include <cmath>
+#include <cstdint>
 #include <google/protobuf/util/json_util.h>
 
 #include "objectstore/cta.pb.h"

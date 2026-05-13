@@ -7,6 +7,7 @@
 
 #include "catalogue/TapeFileWritten.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <set>
 

@@ -9,6 +9,8 @@
 #include "rdbms/NullDbValue.hpp"
 #include "rdbms/wrapper/RsetWrapper.hpp"
 
+#include <cstdint>
+
 namespace cta::rdbms {
 
 //------------------------------------------------------------------------------

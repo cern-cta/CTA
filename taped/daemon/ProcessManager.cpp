@@ -9,6 +9,7 @@
 #include "common/telemetry/TelemetryInit.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <sys/epoll.h>
 #include <unistd.h>
 

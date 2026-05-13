@@ -25,6 +25,7 @@
 #include "rdbms/Login.hpp"
 
 #include <bits/unique_ptr.h>
+#include <cstdint>
 #include <iostream>
 #include <optional>
 #include <stdexcept>

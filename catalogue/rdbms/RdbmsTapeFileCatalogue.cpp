@@ -22,6 +22,7 @@
 #include "rdbms/ConnPool.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>

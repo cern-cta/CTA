@@ -15,6 +15,7 @@
 #include "scheduler/rdbms/schema/PostgresSchedulerSchema.hpp"
 
 #include <algorithm>
+#include <cstdint>
 
 namespace cta::schedulerdb {
 

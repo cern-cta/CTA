@@ -5,6 +5,8 @@
 
 #include "JSONFreeSpace.hpp"
 
+#include <cstdint>
+
 namespace cta::disk {
 
 JSONFreeSpace::JSONFreeSpace() : JSONCObject() {}

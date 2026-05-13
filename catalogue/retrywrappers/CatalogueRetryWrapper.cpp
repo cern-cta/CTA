@@ -29,6 +29,7 @@
 #include "catalogue/retrywrappers/VirtualOrganizationCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

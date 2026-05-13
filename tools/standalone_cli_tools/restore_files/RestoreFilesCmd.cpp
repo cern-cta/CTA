@@ -15,6 +15,7 @@
 
 #include <XrdSsiPbIStreamBuffer.hpp>
 #include <XrdSsiPbLog.hpp>
+#include <cstdint>
 #include <grpc++/grpc++.h>
 #include <iostream>
 #include <memory>

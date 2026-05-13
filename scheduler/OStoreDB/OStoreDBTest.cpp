@@ -18,6 +18,7 @@
 #include "scheduler/OStoreDB/OStoreDBFactory.hpp"
 #include "scheduler/OStoreDB/OStoreDBTest.hpp"
 
+#include <cstdint>
 #include <limits>
 #include <list>
 #include <memory>

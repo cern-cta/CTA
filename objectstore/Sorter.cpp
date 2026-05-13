@@ -9,6 +9,7 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/process/threading/MutexLocker.hpp"
 
+#include <cstdint>
 #include <iostream>
 
 namespace cta::objectstore {

@@ -10,6 +10,7 @@
 #include "common/log/LogContext.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <iterator>
 #include <limits>

@@ -8,6 +8,7 @@
 #include "common/utils/Timer.hpp"
 #include "taped/scsi/Structures.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <numeric>
 #include <string>

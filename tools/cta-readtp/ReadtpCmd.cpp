@@ -27,6 +27,8 @@
 #include "taped/session/EncryptionControl.hpp"
 #include "taped/session/Payload.hpp"
 
+#include <cstdint>
+
 namespace cta::tapeserver::readtp {
 
 //------------------------------------------------------------------------------

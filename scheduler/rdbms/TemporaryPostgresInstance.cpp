@@ -12,6 +12,7 @@
 #include <atomic>
 #include <cerrno>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <fcntl.h>
 #include <fstream>

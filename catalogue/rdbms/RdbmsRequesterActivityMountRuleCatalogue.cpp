@@ -13,6 +13,7 @@
 #include "common/exception/UserError.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

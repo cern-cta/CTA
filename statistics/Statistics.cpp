@@ -6,6 +6,7 @@
 #include "Statistics.hpp"
 
 #include <chrono>
+#include <cstdint>
 
 namespace cta::statistics {
 

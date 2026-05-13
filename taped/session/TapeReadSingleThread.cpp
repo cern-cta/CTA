@@ -11,6 +11,8 @@
 #include "taped/file/ReadSession.hpp"
 #include "taped/file/ReadSessionFactory.hpp"
 
+#include <cstdint>
+
 //------------------------------------------------------------------------------
 // Constructor for TapeReadSingleThread
 //------------------------------------------------------------------------------

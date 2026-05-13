@@ -15,6 +15,8 @@
 #include "scheduler/rdbms/postgres/CommonQueueUtils.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
+#include <cstdint>
+
 namespace cta::schedulerdb {
 
 const SchedulerDatabase::RetrieveMount::MountInfo& RetrieveMount::getMountInfo() {

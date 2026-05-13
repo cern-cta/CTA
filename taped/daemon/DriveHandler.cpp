@@ -23,6 +23,7 @@
 #include "taped/session/Session.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <set>
 #include <signal.h>
 #include <sys/prctl.h>

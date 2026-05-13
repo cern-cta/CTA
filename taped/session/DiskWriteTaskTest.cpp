@@ -18,6 +18,7 @@
 #include "scheduler/TapeMountDummy.hpp"
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 

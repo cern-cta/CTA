@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <google/protobuf/util/json_util.h>
 
 namespace cta::objectstore {

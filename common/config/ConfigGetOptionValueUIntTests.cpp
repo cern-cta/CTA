@@ -6,6 +6,7 @@
 #include "Config.hpp"
 #include "tests/TempFile.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <sstream>
 #include <string>

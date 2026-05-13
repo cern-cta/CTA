@@ -13,6 +13,7 @@
 #include "scheduler/rdbms/RetrieveRequest.hpp"
 
 #include <algorithm>
+#include <cstdint>
 
 namespace cta::schedulerdb {
 

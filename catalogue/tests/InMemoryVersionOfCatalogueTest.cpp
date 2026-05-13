@@ -26,6 +26,8 @@
 #include "catalogue/tests/modules/TapeFileCatalogueTest.hpp"
 #include "catalogue/tests/modules/TapePoolCatalogueTest.hpp"
 #include "catalogue/tests/modules/VirtualOrganizationCatalogueTest.hpp"
+
+#include <cstdint>
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #else

@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <attr/xattr.h>
+#include <cstdint>
 #include <fstream>
 #include <iomanip>
 #include <iostream>

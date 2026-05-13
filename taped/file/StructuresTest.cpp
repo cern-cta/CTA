@@ -5,6 +5,7 @@
 
 #include "Structures.hpp"
 
+#include <cstdint>
 #include <gmock/gmock-cardinalities.h>
 #include <gtest/gtest.h>
 

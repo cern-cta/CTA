@@ -8,6 +8,8 @@
 #include "catalogue/InMemoryCatalogue.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 #include "scheduler/SchedulerDatabaseFactory.hpp"
+
+#include <cstdint>
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #endif

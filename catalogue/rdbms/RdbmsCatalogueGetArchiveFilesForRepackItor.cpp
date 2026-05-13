@@ -10,6 +10,8 @@
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/UserError.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 namespace {

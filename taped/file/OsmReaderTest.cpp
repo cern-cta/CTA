@@ -19,6 +19,7 @@
 #include "taped/session/VolumeInfo.hpp"
 #include "taped/system/Wrapper.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <string>
 

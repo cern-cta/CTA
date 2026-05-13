@@ -23,6 +23,7 @@
 #include "taped/system/Wrapper.hpp"
 #include "tests/TempFile.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 

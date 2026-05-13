@@ -9,6 +9,8 @@
 #include "common/semconv/Attributes.hpp"
 #include "scheduler/Scheduler.hpp"
 
+#include <cstdint>
+
 namespace cta::maintd {
 
 RepackReportRoutine::RepackReportRoutine(cta::log::LogContext& lc, cta::Scheduler& scheduler, int timeout)

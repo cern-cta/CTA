@@ -9,6 +9,8 @@
 #include "common/process/threading/MutexLocker.hpp"
 #include "rdbms/wrapper/ConnWrapper.hpp"
 
+#include <cstdint>
+
 namespace cta::rdbms {
 
 //------------------------------------------------------------------------------

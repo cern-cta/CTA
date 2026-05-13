@@ -11,6 +11,7 @@
 #include "common/dataStructures/JobQueueType.hpp"
 #include "common/log/DummyLogger.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"

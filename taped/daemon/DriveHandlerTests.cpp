@@ -21,6 +21,7 @@
 #include "taped/session/Session.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <memory>

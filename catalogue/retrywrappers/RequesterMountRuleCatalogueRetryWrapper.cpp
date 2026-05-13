@@ -11,6 +11,7 @@
 #include "common/dataStructures/RequesterMountRule.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

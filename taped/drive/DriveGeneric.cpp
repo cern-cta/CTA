@@ -11,6 +11,7 @@
 #include "common/exception/MemException.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <cstdint>
 #include <errno.h>
 #include <list>
 #include <map>

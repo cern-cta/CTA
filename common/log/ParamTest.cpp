@@ -5,6 +5,7 @@
 
 #include "common/log/Param.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 

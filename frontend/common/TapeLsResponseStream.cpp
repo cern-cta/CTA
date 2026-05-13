@@ -8,6 +8,8 @@
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
 
+#include <cstdint>
+
 namespace cta::frontend {
 
 TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,

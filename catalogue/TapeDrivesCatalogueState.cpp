@@ -17,6 +17,7 @@
 #include "version.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <list>
 
 namespace cta {

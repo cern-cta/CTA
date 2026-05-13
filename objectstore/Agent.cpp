@@ -11,6 +11,7 @@
 #include "RootEntry.hpp"
 #include "common/exception/Errnum.hpp"
 
+#include <cstdint>
 #include <ctime>
 #include <cxxabi.h>
 #include <google/protobuf/util/json_util.h>

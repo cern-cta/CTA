@@ -9,6 +9,7 @@
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

@@ -10,6 +10,7 @@
 #include "common/log/Logger.hpp"
 #include "disk/DiskSystem.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

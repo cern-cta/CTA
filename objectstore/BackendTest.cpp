@@ -14,6 +14,7 @@
 #include "tests/TestsCompileTimeSwitches.hpp"
 
 #include <atomic>
+#include <cstdint>
 #include <future>
 
 namespace unitTests {

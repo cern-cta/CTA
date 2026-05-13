@@ -5,6 +5,8 @@
 
 #include "AncientRowRoutines.hpp"
 
+#include <cstdint>
+
 namespace cta::maintd {
 
 DeleteOldFailedQueuesRoutine::DeleteOldFailedQueuesRoutine(log::LogContext& lc,

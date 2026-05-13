@@ -19,6 +19,7 @@
 #include "catalogue/rdbms/postgres/PostgresVirtualOrganizationCatalogue.hpp"
 #include "rdbms/Login.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

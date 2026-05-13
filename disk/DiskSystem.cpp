@@ -15,6 +15,7 @@
 #include "disk/JSONFreeSpace.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
 #include <string>
 

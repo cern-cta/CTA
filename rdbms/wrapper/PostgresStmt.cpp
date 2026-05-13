@@ -15,6 +15,7 @@
 #include "rdbms/wrapper/PostgresRset.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <exception>
 #include <regex>
 #include <sstream>

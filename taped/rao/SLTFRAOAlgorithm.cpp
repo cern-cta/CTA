@@ -12,6 +12,8 @@
 #include "RAOHelpers.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::rao {
 
 std::vector<uint64_t> SLTFRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {

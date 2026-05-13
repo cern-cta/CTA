@@ -16,6 +16,7 @@
 #include "common/dataStructures/VirtualOrganization.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <optional>
 #include <string>

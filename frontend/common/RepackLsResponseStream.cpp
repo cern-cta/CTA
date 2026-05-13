@@ -9,6 +9,7 @@
 #include "frontend/common/AdminCmdOptions.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <set>
 
 namespace cta::frontend {

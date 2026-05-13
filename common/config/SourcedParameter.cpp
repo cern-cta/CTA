@@ -8,6 +8,7 @@
 #include "common/utils/StringConversions.hpp"
 
 #include <algorithm>
+#include <cstdint>
 
 namespace cta {
 

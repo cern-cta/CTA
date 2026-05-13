@@ -9,6 +9,8 @@
 #include "common/exception/NotImplementedException.hpp"
 #include "taped/scsi/Structures.hpp"
 
+#include <cstdint>
+
 namespace {
 const long unsigned int max_fake_drive_record_length = 1000;
 const char filemark[] = "";

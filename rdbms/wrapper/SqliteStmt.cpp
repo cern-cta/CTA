@@ -17,6 +17,7 @@
 #include "rdbms/wrapper/SqliteConn.hpp"
 #include "rdbms/wrapper/SqliteRset.hpp"
 
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <sstream>

@@ -9,6 +9,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
 #include <opentelemetry/sdk/common/attribute_utils.h>
 #include <variant>
 

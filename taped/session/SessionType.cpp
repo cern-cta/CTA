@@ -5,6 +5,7 @@
 
 #include "SessionType.hpp"
 
+#include <cstdint>
 #include <sstream>
 
 namespace cta::tape::session {

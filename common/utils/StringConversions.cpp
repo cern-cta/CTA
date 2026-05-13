@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <stdlib.h>

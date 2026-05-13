@@ -10,6 +10,7 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 #include "common/dataStructures/RetrieveFileQueueCriteria.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

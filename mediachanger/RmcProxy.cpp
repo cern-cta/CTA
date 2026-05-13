@@ -12,6 +12,8 @@
 #include "mediachanger/SmartFd.hpp"
 #include "mediachanger/io.hpp"
 
+#include <cstdint>
+
 namespace cta::mediachanger {
 
 //------------------------------------------------------------------------------

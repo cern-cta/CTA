@@ -10,6 +10,8 @@
 #include "common/dataStructures/TapeDrive.hpp"
 #include "common/log/Logger.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 DriveStateCatalogueRetryWrapper::DriveStateCatalogueRetryWrapper(Catalogue& catalogue,

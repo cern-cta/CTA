@@ -9,6 +9,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/InvalidArgument.hpp"
 
+#include <cstdint>
 #include <errno.h>
 #include <getopt.h>
 #include <list>

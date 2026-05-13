@@ -11,6 +11,7 @@
 #include "common/log/LogContext.hpp"
 #include "disk/DiskSystem.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace unitTests {

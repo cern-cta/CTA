@@ -18,6 +18,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/utils/utils.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 

@@ -13,6 +13,7 @@
 #include "common/log/Logger.hpp"
 #include "rdbms/Conn.hpp"
 
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>

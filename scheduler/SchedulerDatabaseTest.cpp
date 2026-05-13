@@ -14,6 +14,7 @@
 #include "tests/TestsCompileTimeSwitches.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <exception>
 #include <future>
 #include <gtest/gtest.h>

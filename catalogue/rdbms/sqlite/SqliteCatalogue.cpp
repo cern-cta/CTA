@@ -19,6 +19,8 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------

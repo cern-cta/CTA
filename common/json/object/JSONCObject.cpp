@@ -7,6 +7,8 @@
 
 #include "JSONObjectException.hpp"
 
+#include <cstdint>
+
 namespace cta::utils::json::object {
 
 JSONCObject::JSONCObject() : JSONObject() {

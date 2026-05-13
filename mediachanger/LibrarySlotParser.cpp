@@ -10,6 +10,7 @@
 #include "mediachanger/DummyLibrarySlot.hpp"
 #include "mediachanger/ScsiLibrarySlot.hpp"
 
+#include <cstdint>
 #include <sstream>
 #include <vector>
 

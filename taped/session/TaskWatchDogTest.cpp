@@ -10,6 +10,7 @@
 #include "common/log/StringLogger.hpp"
 #include "scheduler/TapeMountDummy.hpp"
 
+#include <cstdint>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 

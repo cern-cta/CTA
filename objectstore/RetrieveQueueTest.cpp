@@ -13,6 +13,7 @@
 #include "common/exception/NoSuchObject.hpp"
 #include "common/log/DummyLogger.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <random>
 

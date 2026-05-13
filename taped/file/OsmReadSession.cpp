@@ -11,6 +11,7 @@
 #include "Structures.hpp"
 #include "common/exception/Errnum.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

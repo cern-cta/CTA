@@ -33,6 +33,7 @@
 #include "rdbms/wrapper/OcciStmt.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

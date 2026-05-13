@@ -8,6 +8,8 @@
 #include "MemBlock.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------

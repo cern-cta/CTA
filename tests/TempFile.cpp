@@ -8,6 +8,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/utils/utils.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <memory>
 #include <stdlib.h>

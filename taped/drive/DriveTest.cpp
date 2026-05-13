@@ -9,6 +9,7 @@
 #include "taped/scsi/Device.hpp"
 #include "taped/system/Wrapper.hpp"
 
+#include <cstdint>
 #include <gmock/gmock-cardinalities.h>
 #include <gtest/gtest.h>
 #include <memory>

@@ -20,6 +20,7 @@
 #include "common/semconv/Attributes.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <unistd.h>
 
 namespace cta::objectstore {

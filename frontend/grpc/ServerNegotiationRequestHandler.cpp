@@ -11,6 +11,8 @@
 #include "common/log/LogContext.hpp"
 #include "common/utils/utils.hpp"
 
+#include <cstdint>
+
 cta::frontend::grpc::server::NegotiationRequestHandler::NegotiationRequestHandler(
   cta::log::Logger& log,
   NegotiationService& negotiationService,

@@ -9,6 +9,8 @@
 #include "common/utils/Regex.hpp"
 #include "common/utils/utils.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------

@@ -16,6 +16,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>

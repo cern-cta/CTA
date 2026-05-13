@@ -12,6 +12,7 @@
 #include "common/utils/utils.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
+#include <cstdint>
 #include <cstdio>
 #include <memory>
 #include <numeric>

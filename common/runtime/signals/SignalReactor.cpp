@@ -11,6 +11,7 @@
 #include "common/semconv/Attributes.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <poll.h>
 #include <signal.h>
 #include <sys/prctl.h>

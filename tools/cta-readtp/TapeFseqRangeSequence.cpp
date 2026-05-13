@@ -8,6 +8,7 @@
 #include "TapeFseqRange.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <cstdint>
 #include <getopt.h>
 #include <list>
 #include <ostream>

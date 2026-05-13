@@ -20,6 +20,7 @@
 #include "rdbms/ConnPool.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <map>
 
 namespace cta::catalogue {

@@ -28,6 +28,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/PrimaryKeyError.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

@@ -10,6 +10,7 @@
 #include "common/exception/Exception.hpp"
 #include "plugin-manager/PluginInterface.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>

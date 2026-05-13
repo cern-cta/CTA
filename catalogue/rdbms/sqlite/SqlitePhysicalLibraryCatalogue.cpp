@@ -10,6 +10,8 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 SqlitePhysicalLibraryCatalogue::SqlitePhysicalLibraryCatalogue(log::Logger& log,

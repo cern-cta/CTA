@@ -13,6 +13,8 @@
 #include "common/log/DummyLogger.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------

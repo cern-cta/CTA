@@ -8,6 +8,7 @@
 #include "GenericObject.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
+#include <cstdint>
 #include <google/protobuf/util/json_util.h>
 #include <iostream>
 #include <set>

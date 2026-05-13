@@ -12,6 +12,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "statistics/StatisticsUpdateCmdLineArgs.hpp"
 
+#include <cstdint>
 #include <cstdlib>
 #include <memory>
 

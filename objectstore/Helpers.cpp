@@ -18,6 +18,7 @@
 #include "common/log/TimingList.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <random>
 
 namespace cta::objectstore {

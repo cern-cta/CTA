@@ -9,6 +9,7 @@
 #include "common/exception/Exception.hpp"
 
 #include <algorithm>
+#include <cstdint>
 
 namespace cta::common::dataStructures {
 

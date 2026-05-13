@@ -8,6 +8,7 @@
 #include "GenericObject.hpp"
 #include "RootEntry.hpp"
 
+#include <cstdint>
 #include <google/protobuf/util/json_util.h>
 
 namespace cta::objectstore {

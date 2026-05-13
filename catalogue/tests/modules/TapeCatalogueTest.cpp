@@ -21,6 +21,7 @@
 #include "common/log/DummyLogger.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 #include <optional>

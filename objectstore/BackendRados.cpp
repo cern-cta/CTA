@@ -13,6 +13,7 @@
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
 
+#include <cstdint>
 #include <errno.h>
 #include <rados/librados.hpp>
 #include <random>

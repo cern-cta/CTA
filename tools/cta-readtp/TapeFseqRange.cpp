@@ -7,6 +7,7 @@
 
 #include "common/exception/InvalidArgument.hpp"
 
+#include <cstdint>
 #include <getopt.h>
 #include <ostream>
 #include <string.h>

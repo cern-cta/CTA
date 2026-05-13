@@ -24,6 +24,7 @@
 #include "common/log/StdoutLogger.hpp"
 #include "tests/TestsCompileTimeSwitches.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 

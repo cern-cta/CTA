@@ -8,6 +8,7 @@
 #include "CtaAdminTextFormatter.hpp"
 #include "taped/daemon/common/TapedConfiguration.hpp"
 
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <iostream>

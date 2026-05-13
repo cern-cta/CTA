@@ -10,6 +10,8 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/Scheduler.hpp"
 
+#include <cstdint>
+
 namespace cta::maintd {
 
 DiskReportArchiveRoutine::DiskReportArchiveRoutine(cta::log::LogContext& lc,

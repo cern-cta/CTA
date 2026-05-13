@@ -22,6 +22,8 @@
 #include "rdbms/wrapper/OcciColumn.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 OracleArchiveFileCatalogue::OracleArchiveFileCatalogue(log::Logger& log,

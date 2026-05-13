@@ -11,6 +11,7 @@
 #include "common/telemetry/metrics/instruments/RdbmsInstruments.hpp"
 #include "rdbms/wrapper/ConnFactoryFactory.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::rdbms {

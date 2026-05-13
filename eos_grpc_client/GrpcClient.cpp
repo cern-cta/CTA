@@ -7,6 +7,7 @@
 
 #include "common/exception/GrpcError.hpp"
 
+#include <cstdint>
 #include <sstream>
 #include <sys/stat.h>
 

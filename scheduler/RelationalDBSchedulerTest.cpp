@@ -33,6 +33,7 @@
 #include "tests/TestsCompileTimeSwitches.hpp"
 
 #include <bits/unique_ptr.h>
+#include <cstdint>
 #include <exception>
 #include <gtest/gtest.h>
 #include <memory>

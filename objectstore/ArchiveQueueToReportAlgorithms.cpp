@@ -6,6 +6,8 @@
 #include "ArchiveQueueAlgorithms.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <cstdint>
+
 namespace cta::objectstore {
 
 // ArchiveQueueToReport full specialisations for ContainerTraits.

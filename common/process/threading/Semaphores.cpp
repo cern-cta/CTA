@@ -10,6 +10,7 @@
 #include "common/process/threading/MutexLocker.hpp"
 #include "common/process/threading/Thread.hpp"
 
+#include <cstdint>
 #include <errno.h>
 #include <sys/time.h>
 

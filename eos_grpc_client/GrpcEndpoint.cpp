@@ -8,6 +8,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/UserError.hpp"
 
+#include <cstdint>
+
 std::string eos::client::Endpoint::getPath(const std::string& diskFileId) const {
   // diskFileId is sent to CTA as a uint64_t, but we store it as a decimal string, cf.:
   //   XrdSsiCtaRequestMessage.cpp: request.diskFileID = std::to_string(notification.file().fid());

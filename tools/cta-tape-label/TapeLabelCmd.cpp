@@ -18,6 +18,8 @@
 #include "taped/file/LabelSession.hpp"
 #include "taped/file/Structures.hpp"
 
+#include <cstdint>
+
 namespace cta::tapeserver::tapelabel {
 
 //------------------------------------------------------------------------------

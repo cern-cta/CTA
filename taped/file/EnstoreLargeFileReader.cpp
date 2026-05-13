@@ -12,6 +12,7 @@
 #include "scheduler/RetrieveJob.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <sstream>

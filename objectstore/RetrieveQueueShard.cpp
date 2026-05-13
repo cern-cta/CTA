@@ -10,6 +10,7 @@
 #include "common/dataStructures/MountPolicy.hpp"
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 
+#include <cstdint>
 #include <google/protobuf/util/json_util.h>
 
 namespace cta::objectstore {

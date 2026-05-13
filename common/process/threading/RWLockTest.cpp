@@ -9,6 +9,7 @@
 #include "common/process/threading/RWLockWrLocker.hpp"
 #include "common/process/threading/Thread.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <iostream>
 

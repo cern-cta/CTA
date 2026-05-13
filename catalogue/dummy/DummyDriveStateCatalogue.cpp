@@ -13,6 +13,8 @@
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/LogContext.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 void DummyDriveStateCatalogue::createTapeDrive(const common::dataStructures::TapeDrive& tapeDrive) {

@@ -7,6 +7,7 @@
 
 #include "ErrorFlag.hpp"
 
+#include <cstdint>
 #include <memory>
 
 using cta::log::LogContext;

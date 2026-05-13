@@ -9,6 +9,8 @@
 #include "catalogue/TapeItemWrittenPointer.hpp"
 #include "common/exception/NoSuchObject.hpp"
 
+#include <cstdint>
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------

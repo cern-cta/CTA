@@ -8,6 +8,8 @@
 #include "MigrationTaskInjector.hpp"
 #include "TapeSessionReporter.hpp"
 
+#include <cstdint>
+
 //------------------------------------------------------------------------------
 // Constructor for TapeWriteSingleThread
 //------------------------------------------------------------------------------

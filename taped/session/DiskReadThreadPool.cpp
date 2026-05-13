@@ -8,6 +8,7 @@
 #include "MigrationReportPacker.hpp"
 #include "MigrationTaskInjector.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <sstream>
 

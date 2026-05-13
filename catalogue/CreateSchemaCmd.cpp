@@ -6,6 +6,8 @@
 #include "catalogue/CreateSchemaCmd.hpp"
 
 #include "catalogue/CreateSchemaCmdLineArgs.hpp"
+
+#include <cstdint>
 #ifdef SUPPORT_OCCI
 #include "catalogue/OracleCatalogueSchema.hpp"
 #endif

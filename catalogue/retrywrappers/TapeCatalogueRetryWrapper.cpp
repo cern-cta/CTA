@@ -11,6 +11,7 @@
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
 #include "common/dataStructures/VirtualOrganization.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

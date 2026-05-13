@@ -22,6 +22,7 @@
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <utility>

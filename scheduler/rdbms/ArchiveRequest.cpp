@@ -9,6 +9,8 @@
 #include "common/utils/Timer.hpp"
 #include "scheduler/rdbms/postgres/ArchiveJobQueue.hpp"
 
+#include <cstdint>
+
 namespace cta::schedulerdb {
 
 [[noreturn]] void ArchiveRequest::update() const {

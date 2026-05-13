@@ -11,6 +11,8 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 PostgresTapePoolCatalogue::PostgresTapePoolCatalogue(log::Logger& log,

@@ -5,6 +5,8 @@
 
 #include "catalogue/InMemoryCatalogue.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------

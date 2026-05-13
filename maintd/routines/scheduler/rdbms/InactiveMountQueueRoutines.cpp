@@ -5,6 +5,8 @@
 
 #include "InactiveMountQueueRoutines.hpp"
 
+#include <cstdint>
+
 namespace cta::maintd {
 
 InactiveMountQueueRoutineBase::InactiveMountQueueRoutineBase(log::LogContext& lc,

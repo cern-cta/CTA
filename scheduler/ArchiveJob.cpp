@@ -11,6 +11,7 @@
 #include "scheduler/ArchiveMount.hpp"
 
 #include <cryptopp/base64.h>
+#include <cstdint>
 #include <limits>
 
 //------------------------------------------------------------------------------

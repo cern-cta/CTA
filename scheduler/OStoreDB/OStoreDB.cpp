@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <bits/unique_ptr.h>
 #include <cmath>
+#include <cstdint>
 #include <iostream>
 #include <limits>
 #include <numeric> /* std::accumulate */

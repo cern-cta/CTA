@@ -7,6 +7,8 @@
 
 #include "taped/drive/DriveInterface.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::rao {
 
 void RAOHelpers::improveEndOfLastWrapPositionIfPossible(std::vector<drive::endOfWrapPosition>& endOfWrapPositions) {

@@ -18,6 +18,7 @@
 #include "common/log/LogContext.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace unitTests {

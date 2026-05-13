@@ -5,6 +5,8 @@
 
 #include "JSONCTestObject.hpp"
 
+#include <cstdint>
+
 namespace unitTests {
 
 JSONCTestObject::JSONCTestObject() : JSONCObject(), TestObject() {}

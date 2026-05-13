@@ -12,6 +12,7 @@
 #include <common/dataStructures/ArchiveRouteTypeSerDeser.hpp>
 #include <common/dataStructures/DriveStatusSerDeser.hpp>
 #include <common/dataStructures/MountTypeSerDeser.hpp>
+#include <cstdint>
 #include <iomanip>
 #include <iostream>
 

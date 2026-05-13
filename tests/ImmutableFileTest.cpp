@@ -11,6 +11,7 @@
 
 #include <XrdCl/XrdClFile.hh>
 #include <XrdVersion.hh>
+#include <cstdint>
 #include <iostream>
 #include <list>
 #include <sstream>

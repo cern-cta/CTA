@@ -10,6 +10,7 @@
 #include "common/telemetry/metrics/MetricsUtils.hpp"
 #include "version.h"
 
+#include <cstdint>
 #include <opentelemetry/metrics/provider.h>
 
 namespace cta::telemetry::metrics {

@@ -8,6 +8,8 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
+#include <cstdint>
+
 namespace cta::schedulerdb::postgres {
 
 std::pair<rdbms::Rset, uint64_t>

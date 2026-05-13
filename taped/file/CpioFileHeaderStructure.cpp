@@ -7,6 +7,7 @@
 
 #include "Exceptions.hpp"
 
+#include <cstdint>
 #include <cstring>  // memeset
 #include <string>   // std::string to_string
 

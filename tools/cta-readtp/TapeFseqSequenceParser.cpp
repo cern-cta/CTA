@@ -8,6 +8,7 @@
 #include "common/exception/InvalidArgument.hpp"
 #include "common/utils/utils.hpp"
 
+#include <cstdint>
 #include <list>
 #include <string>
 #include <vector>

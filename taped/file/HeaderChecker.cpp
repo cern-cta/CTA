@@ -12,6 +12,7 @@
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <sstream>
 #include <string>

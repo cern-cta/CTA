@@ -9,6 +9,7 @@
 #include "OsmXdrStructure.hpp"
 #include "common/exception/Exception.hpp"
 
+#include <cstdint>
 #include <cstring>    // memeset
 #include <rpc/xdr.h>  // xdrmem_create for decode_legato
 #include <string>     // std::string to_string

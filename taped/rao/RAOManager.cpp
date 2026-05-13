@@ -13,6 +13,8 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::rao {
 
 bool RAOManager::useRAO() const {

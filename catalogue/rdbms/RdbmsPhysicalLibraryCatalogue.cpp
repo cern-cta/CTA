@@ -18,6 +18,7 @@
 #include "rdbms/IntegrityConstraintError.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>

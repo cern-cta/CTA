@@ -15,6 +15,7 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
 #include <cctype>
+#include <cstdint>
 #include <utility>
 
 namespace cta::rdbms::wrapper {

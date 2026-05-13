@@ -10,6 +10,7 @@
 #include "common/exception/NotImplementedException.hpp"
 #include "disk/DiskSystem.hpp"
 
+#include <cstdint>
 #include <map>
 #include <string>
 

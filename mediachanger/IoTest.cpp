@@ -8,6 +8,7 @@
 #include "common/exception/Errnum.hpp"
 #include "mediachanger/SmartFd.hpp"
 
+#include <cstdint>
 #include <fcntl.h>
 #include <gtest/gtest.h>
 #include <sys/socket.h>

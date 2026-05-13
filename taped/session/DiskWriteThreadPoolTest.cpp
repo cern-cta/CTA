@@ -16,6 +16,7 @@
 #include "common/log/StringLogger.hpp"
 #include "scheduler/TapeMountDummy.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace unitTests {

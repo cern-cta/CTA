@@ -18,6 +18,7 @@
 #include "rdbms/Login.hpp"
 #include "version.h"
 
+#include <cstdint>
 #include <fstream>
 #include <opentelemetry/sdk/common/global_log_handler.h>
 

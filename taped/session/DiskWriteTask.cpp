@@ -13,6 +13,8 @@
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::daemon {
 
 //------------------------------------------------------------------------------

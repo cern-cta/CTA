@@ -9,6 +9,7 @@
 #include "common/utils/utils.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <regex>

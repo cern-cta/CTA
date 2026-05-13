@@ -7,6 +7,8 @@
 
 #include "rdbms/rdbms.hpp"
 
+#include <cstdint>
+
 namespace cta::rdbms::wrapper {
 
 //------------------------------------------------------------------------------

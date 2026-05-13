@@ -13,6 +13,7 @@
 #include "rdbms/Login.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <opentelemetry/context/runtime_context.h>
 #include <signal.h>
 #include <sys/prctl.h>

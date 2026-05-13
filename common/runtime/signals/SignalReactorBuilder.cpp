@@ -9,6 +9,7 @@
 #include "common/exception/Errnum.hpp"
 #include "common/semconv/Attributes.hpp"
 
+#include <cstdint>
 #include <signal.h>
 
 namespace cta::runtime {

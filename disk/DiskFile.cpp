@@ -8,6 +8,7 @@
 #include "disk/DiskFileImplementations.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <uuid/uuid.h>

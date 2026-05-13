@@ -5,6 +5,7 @@
 
 #include "ValueCountMap.hpp"
 
+#include <cstdint>
 #include <limits>
 #include <string>
 

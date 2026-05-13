@@ -11,6 +11,7 @@
 #include "scheduler/ArchiveJob.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <memory>
 #include <sstream>
 #include <string>

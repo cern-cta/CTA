@@ -12,6 +12,7 @@
 #include "scheduler/rdbms/RelationalDBTest.hpp"
 #include "scheduler/rdbms/RelationalDBTestFactory.hpp"
 
+#include <cstdint>
 #include <limits>
 #include <list>
 #include <memory>

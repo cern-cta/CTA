@@ -10,6 +10,8 @@
 #include "common/utils/utils.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------

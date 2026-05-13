@@ -5,6 +5,8 @@
 
 #include "common/dataStructures/ArchiveFileQueueCriteriaAndFileId.hpp"
 
+#include <cstdint>
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------

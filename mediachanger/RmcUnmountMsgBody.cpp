@@ -5,6 +5,7 @@
 
 #include "mediachanger/RmcUnmountMsgBody.hpp"
 
+#include <cstdint>
 #include <string.h>
 
 namespace cta::mediachanger {

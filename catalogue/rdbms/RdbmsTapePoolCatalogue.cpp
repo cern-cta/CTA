@@ -20,6 +20,7 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
 #include <list>
 #include <optional>
 #include <regex>

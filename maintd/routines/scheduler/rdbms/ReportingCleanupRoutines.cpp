@@ -5,6 +5,8 @@
 
 #include "ReportingCleanupRoutines.hpp"
 
+#include <cstdint>
+
 namespace cta::maintd {
 
 ResubmitInactiveReportingRoutine::ResubmitInactiveReportingRoutine(log::LogContext& lc,

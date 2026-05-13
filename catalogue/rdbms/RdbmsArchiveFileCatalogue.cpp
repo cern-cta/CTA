@@ -32,6 +32,7 @@
 #include "rdbms/AutoRollback.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

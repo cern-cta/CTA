@@ -8,6 +8,7 @@
 #include "common/exception/CommandLineNotParsed.hpp"
 
 #include <climits>
+#include <cstdint>
 #include <fstream>
 #include <getopt.h>
 #include <iostream>

@@ -11,6 +11,7 @@
 #include "common/exception/UserError.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
 #include <iterator>
 #include <set>
 #include <string>

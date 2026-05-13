@@ -8,6 +8,7 @@
 #include "scheduler/rdbms/postgres/RetrieveJobSummary.hpp"
 
 #include <algorithm>
+#include <cstdint>
 
 namespace cta::schedulerdb {
 

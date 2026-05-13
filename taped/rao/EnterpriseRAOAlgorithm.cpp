@@ -9,6 +9,7 @@
 #include "taped/scsi/Structures.hpp"
 
 #include <charconv>
+#include <cstdint>
 #include <list>
 
 namespace castor::tape::tapeserver::rao {

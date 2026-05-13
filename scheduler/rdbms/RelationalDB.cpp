@@ -27,6 +27,7 @@
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <mutex>
 #include <thread>
 #include <vector>

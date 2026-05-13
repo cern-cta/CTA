@@ -29,6 +29,7 @@
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

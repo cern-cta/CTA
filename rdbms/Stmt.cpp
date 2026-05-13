@@ -12,6 +12,7 @@
 #include "rdbms/StmtPool.hpp"
 #include "rdbms/wrapper/StmtWrapper.hpp"
 
+#include <cstdint>
 #include <opentelemetry/context/runtime_context.h>
 
 namespace cta::rdbms {

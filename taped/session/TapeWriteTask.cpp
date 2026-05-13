@@ -19,6 +19,7 @@
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <string>
 

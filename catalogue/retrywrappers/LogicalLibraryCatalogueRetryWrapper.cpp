@@ -10,6 +10,7 @@
 #include "common/dataStructures/LogicalLibrary.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

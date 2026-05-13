@@ -7,6 +7,7 @@
 
 #include "mediachanger/io.hpp"
 
+#include <cstdint>
 #include <errno.h>
 #include <iostream>
 #include <string.h>

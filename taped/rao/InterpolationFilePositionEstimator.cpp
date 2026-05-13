@@ -7,6 +7,8 @@
 
 #include "RAOHelpers.hpp"
 
+#include <cstdint>
+
 namespace castor::tape::tapeserver::rao {
 
 InterpolationFilePositionEstimator::InterpolationFilePositionEstimator(

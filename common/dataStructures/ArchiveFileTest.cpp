@@ -6,6 +6,7 @@
 #include "common/dataStructures/ArchiveFile.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace unitTests {

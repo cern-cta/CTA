@@ -10,6 +10,7 @@
 #include "common/log/DummyLogger.hpp"
 #include "common/utils/Regex.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace unitTests {

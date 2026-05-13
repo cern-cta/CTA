@@ -7,6 +7,7 @@
 
 #include "ChecksumBlobSerDeser.hpp"
 
+#include <cstdint>
 #include <iomanip>
 
 namespace cta::checksum {

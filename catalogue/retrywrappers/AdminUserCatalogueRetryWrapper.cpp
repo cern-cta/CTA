@@ -9,6 +9,7 @@
 #include "catalogue/retrywrappers/retryOnLostConnection.hpp"
 #include "common/dataStructures/AdminUser.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

@@ -8,6 +8,7 @@
 #include "mediachanger/Constants.hpp"
 #include "mediachanger/io.hpp"
 
+#include <cstdint>
 #include <string.h>
 
 namespace cta::mediachanger {

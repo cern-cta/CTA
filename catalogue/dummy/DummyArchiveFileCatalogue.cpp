@@ -12,6 +12,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 uint64_t

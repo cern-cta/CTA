@@ -5,6 +5,8 @@
 
 #include "common/dataStructures/utils.hpp"
 
+#include <cstdint>
+
 namespace cta::common::dataStructures {
 
 std::ostream& operator<<(std::ostream& os, const std::vector<TapeFile>& list) {

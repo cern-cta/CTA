@@ -9,6 +9,7 @@
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
+#include <cstdint>
 #include <opentelemetry/context/runtime_context.h>
 
 namespace castor::tape::tapeserver::daemon {

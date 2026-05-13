@@ -10,6 +10,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <set>

@@ -5,6 +5,8 @@
 
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "catalogue/DropSchemaCmd.hpp"
+
+#include <cstdint>
 #ifdef STDOUT_LOGGING
 #include "common/log/StdoutLogger.hpp"
 #else

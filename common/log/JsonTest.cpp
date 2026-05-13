@@ -9,6 +9,7 @@
 #include "common/log/Param.hpp"
 #include "common/log/StringLogger.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <memory>
 

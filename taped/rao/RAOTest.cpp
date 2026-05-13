@@ -7,6 +7,7 @@
 #include "RAOHelpers.hpp"
 #include "SLTFRAOAlgorithm.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 #include <map>
 #include <vector>

@@ -10,6 +10,7 @@
 #include "catalogue/SchemaChecker.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::statistics {

@@ -13,6 +13,7 @@
 #include "RepackQueueAlgorithms.hpp"
 #include "common/exception/NoSuchObject.hpp"
 
+#include <cstdint>
 #include <google/protobuf/util/json_util.h>
 #include <iostream>
 

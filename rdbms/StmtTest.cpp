@@ -13,6 +13,7 @@
 #include "rdbms/PrimaryKeyError.hpp"
 #include "rdbms/UniqueConstraintError.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace unitTests {

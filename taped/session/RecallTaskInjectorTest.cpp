@@ -20,6 +20,7 @@
 #include "scheduler/testingMocks/MockRetrieveMount.hpp"
 #include "taped/drive/FakeDrive.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 using namespace castor::tape::tapeserver::daemon;

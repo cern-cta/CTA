@@ -10,6 +10,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 
+#include <cstdint>
 #include <unistd.h>
 
 namespace cta::catalogue {

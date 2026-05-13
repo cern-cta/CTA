@@ -18,6 +18,7 @@
 #include "common/utils/Timer.hpp"
 #include "rdbms/Conn.hpp"
 
+#include <cstdint>
 #include <string>
 
 namespace cta::catalogue {

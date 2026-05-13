@@ -8,6 +8,8 @@
 #include "rdbms/wrapper/PostgresColumn.hpp"
 #include "rdbms/wrapper/PostgresStmt.hpp"
 
+#include <cstdint>
+
 namespace cta::schedulerdb::postgres {
 
 uint64_t RepackRequestTrackingRow::cancelRepack(Transaction& txn, const std::string& vid) {

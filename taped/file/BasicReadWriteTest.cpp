@@ -23,6 +23,7 @@
 #include "taped/system/Wrapper.hpp"
 
 #include <assert.h>
+#include <cstdint>
 #include <iostream>
 #include <list>
 #include <memory>

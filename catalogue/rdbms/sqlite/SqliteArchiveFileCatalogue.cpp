@@ -19,6 +19,8 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 SqliteArchiveFileCatalogue::SqliteArchiveFileCatalogue(log::Logger& log,

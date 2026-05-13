@@ -7,6 +7,8 @@
 
 #include "common/exception/NotImplementedException.hpp"
 
+#include <cstdint>
+
 #include "WatchdogMessage.pb.h"
 
 namespace cta::tape::daemon {

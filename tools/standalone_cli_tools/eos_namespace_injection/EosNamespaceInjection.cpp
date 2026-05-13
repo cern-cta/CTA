@@ -18,6 +18,7 @@
 #include "tools/standalone_cli_tools/common/ConnectionConfiguration.hpp"
 #include "tools/standalone_cli_tools/eos_namespace_injection/MetaData.hpp"
 
+#include <cstdint>
 #include <ctime>
 #include <grpc++/grpc++.h>
 #include <memory>

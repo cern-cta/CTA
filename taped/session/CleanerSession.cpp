@@ -9,6 +9,7 @@
 #include "common/process/ProcessCap.hpp"
 #include "taped/file/HeaderChecker.hpp"
 
+#include <cstdint>
 #include <exception>
 #include <list>
 #include <vector>

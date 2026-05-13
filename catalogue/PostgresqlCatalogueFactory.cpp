@@ -12,6 +12,8 @@
 #include "common/log/LogContext.hpp"
 #include "plugin-manager/PluginInterface.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 //------------------------------------------------------------------------------

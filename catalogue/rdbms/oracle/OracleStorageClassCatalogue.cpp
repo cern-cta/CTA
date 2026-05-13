@@ -10,6 +10,8 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/ConnPool.hpp"
 
+#include <cstdint>
+
 namespace cta::catalogue {
 
 OracleStorageClassCatalogue::OracleStorageClassCatalogue(log::Logger& log,

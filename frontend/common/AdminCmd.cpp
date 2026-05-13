@@ -15,6 +15,7 @@
 #include "frontend/common/RequestTracker.hpp"
 #include "tools/CtaAdminCmdParser.hpp"
 
+#include <cstdint>
 #include <opentelemetry/context/runtime_context.h>
 
 namespace cta::frontend {

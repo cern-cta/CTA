@@ -10,6 +10,7 @@
 #include "taped/daemon/common/FetchReportOrFlushLimits.hpp"
 
 #include <algorithm>
+#include <cstdint>
 #include <string>
 #include <utility>
 

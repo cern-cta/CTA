@@ -9,6 +9,7 @@
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Login.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace unitTests {

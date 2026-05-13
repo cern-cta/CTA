@@ -29,6 +29,7 @@
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
+#include <cstdint>
 #include <google/protobuf/stubs/common.h>
 #include <memory>
 #include <string>

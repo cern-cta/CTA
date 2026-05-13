@@ -31,6 +31,7 @@
 #include "catalogue/rdbms/RdbmsVirtualOrganizationCatalogue.hpp"
 #include "common/dataStructures/SecurityIdentity.hpp"
 
+#include <cstdint>
 #include <memory>
 
 namespace cta::catalogue {

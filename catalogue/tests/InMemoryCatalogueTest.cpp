@@ -8,6 +8,7 @@
 #include "catalogue/rdbms/RdbmsSchemaCatalogue.hpp"
 #include "common/log/DummyLogger.hpp"
 
+#include <cstdint>
 #include <gtest/gtest.h>
 
 namespace unitTests {

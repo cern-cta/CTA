@@ -7,6 +7,8 @@
 
 #include "common/exception/Exception.hpp"
 
+#include <cstdint>
+
 namespace cta {
 
 void DiskSpaceReservationRequest::addRequest(const std::string& diskSystemName, uint64_t size) {

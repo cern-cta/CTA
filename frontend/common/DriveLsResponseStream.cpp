@@ -9,6 +9,8 @@
 #include "common/dataStructures/MountTypeSerDeser.hpp"
 #include "frontend/common/AdminCmdOptions.hpp"
 
+#include <cstdint>
+
 namespace cta::frontend {
 
 DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogue,

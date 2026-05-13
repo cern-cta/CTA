@@ -8,6 +8,8 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
+
+#include <cstdint>
 // includes for debug timings only below
 #include "common/log/TimingList.hpp"
 #include "common/utils/Timer.hpp"

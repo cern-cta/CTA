@@ -14,6 +14,7 @@
 #include "common/dataStructures/RetrieveJobToAdd.hpp"
 #include "common/exception/NoSuchObject.hpp"
 
+#include <cstdint>
 #include <google/protobuf/util/json_util.h>
 
 namespace cta::objectstore {
