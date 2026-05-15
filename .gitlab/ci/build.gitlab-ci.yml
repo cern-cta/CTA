@@ -113,6 +113,7 @@ build-cta-rpms:
     - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_kb $(find ${BUILD_PATH} -type f -name '*.rpm' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n", s/1000}' | cut -f1)" > metrics.txt
   after_script:
     - if [[ "$ENABLE_CCACHE" == "TRUE" ]]; then ccache --show-stats --verbose; fi
+    - du -h .dnf_cache/
   artifacts:
     expire_in: 30 days
     paths:
@@ -163,7 +164,7 @@ build-cta-rpms-debug:
     - build-cta-rpms
   rules:
     # Debug builds are not really expected to break when the RelWithDebInfo build passes, so only run this in main
-    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
     - !reference [.build-image, rules]
   variables:
