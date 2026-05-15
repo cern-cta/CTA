@@ -521,15 +521,18 @@ Tools allowing initialization and inspection of the object store.
 %post -n cta-integrationtests -p /sbin/ldconfig
 %postun -n cta-integrationtests -p /sbin/ldconfig
 
-%package -n cta-catalogueutils
+%package -n cta-catalogue-utils
 Summary: Utilities to faciliate working with the CTA catalogue
 Group: Application/CTA
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
-%description -n cta-catalogueutils
+# cta-catalogue-utils used to be called so this ensures we don't keep the old package around
+# Can be removed again at some point
+Obsoletes: cta-catalogueutils < 5.11.19
+%description -n cta-catalogue-utils
 CERN Tape Archive:
 Scripts and utilities to faciliate working with the CTA catalogue
-%files -n cta-catalogueutils
+%files -n cta-catalogue-utils
 %attr(0755,root,root) %{_bindir}/cta-catalogue-admin-user-create
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-create
 %attr(0755,root,root) %{_bindir}/cta-catalogue-schema-drop

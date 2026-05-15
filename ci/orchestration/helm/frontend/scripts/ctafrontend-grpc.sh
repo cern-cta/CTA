@@ -5,7 +5,7 @@
 
 # By default, only Postgres is installed, if we detect Oracle, we install OCCI instead
 grep -q oracle /etc/cta/cta-catalogue.conf && dnf install -y cta-lib-catalogue-occi
-dnf install -y cta-frontend-grpc cta-catalogueutils
+dnf install -y cta-frontend-grpc cta-catalogue-utils
 
 tail -F /var/log/cta/cta-frontend.log &
 runuser --shell='/bin/bash' --session-command='/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log' cta

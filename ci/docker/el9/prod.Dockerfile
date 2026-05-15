@@ -148,7 +148,7 @@ FROM base AS cta-tools-grpc
 
 RUN dnf install -y \
       cta-admin-grpc \
-      cta-catalogueutils \
+      cta-catalogue-utils \
       cta-objectstore-tools && \
     dnf clean all
 
@@ -165,7 +165,7 @@ FROM base AS cta-tools-xrd
 
 RUN dnf install -y \
       cta-cli \
-      cta-catalogueutils \
+      cta-catalogue-utils \
       cta-objectstore-tools && \
     dnf clean all
 
