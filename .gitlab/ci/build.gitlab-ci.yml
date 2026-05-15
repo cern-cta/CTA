@@ -52,7 +52,7 @@ build-cta-rpms:
     CCACHE_COMPRESS: "true"
     CCACHE_COMPRESSLEVEL: "6" # 1-9; 6 should provide decent balance between speed and size
     CCACHE_COMPILERCHECK: "content"
-    CCACHE_MAXSIZE: "2G"
+    CCACHE_MAXSIZE: "1G"
     CXXFLAGS: "-fdebug-prefix-map=/builds/cta=. -ffile-prefix-map=/builds/cta=."
   before_script:
     - |
@@ -120,7 +120,7 @@ build-cta-rpms:
                               ${BUILD_OPTIONS}
     - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_kb $(find ${BUILD_PATH} -type f -name '*.rpm' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n", s/1000}' | cut -f1)" > metrics.txt
   after_script:
-    - ccache --show-stats
+    - ccache --show-stats --verbose
   artifacts:
     expire_in: 30 days
     paths:
@@ -177,8 +177,7 @@ build-cta-rpms-debug:
 reset-ccache:
   allow_failure: true
   stage: build
-  needs:
-    - job: build-cta-rpms
+  needs: []
   rules:
     - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
       when: manual
