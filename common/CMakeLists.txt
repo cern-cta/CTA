@@ -159,6 +159,7 @@ target_include_directories(ctacommon PRIVATE ${OPENTELEMETRY_CPP_INCLUDE_DIRS})
 
 target_link_libraries (ctacommon
   ctaprotobuf
+  ctaversioninfo
   uuid
   cap
   json-c
