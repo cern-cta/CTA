@@ -62,7 +62,9 @@
       )
     # TODO: disable layer push on MR pipelines? We don't get much from it
     - if [ -n "$EXTRA_BUILD_ARGS" ]; then BUILDAH_ARGS+=($EXTRA_BUILD_ARGS); fi
-    - buildah bud "${BUILDAH_ARGS[@]}" "${CI_PROJECT_DIR}"
+    # ensure build context is correct
+    - cd "$(dirname "${DOCKERFILE}")"
+    - buildah bud "${BUILDAH_ARGS[@]}" .
     # TODO: add a sanity check here if oracle is in the image and if the registry is public
     # if so, fail the job so that we prevent accidentally pushing oracle rpms somewhere public
     - echo "Pushing to ${IMAGE_REF}"
