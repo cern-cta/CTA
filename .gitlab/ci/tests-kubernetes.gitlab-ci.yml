@@ -264,8 +264,11 @@ test-catalogue-schema-update:
       if [[ "$(jq '.supportedCatalogueVersions | length' project.json)" -lt 2 ]]; then
         echo "We are not currently in a catalogue release. No update to test."
         echo "Update the project.json file to include both the new and the old CTA Catalogue version."
-        exit 1
+        exit 0
       fi
+    # Not sure this is necessary. The from version should be the lowest version and the to version will be the current (highest) version
+    # So even if we have 5 supported versions, the test should test that we can upgrade from the lowest to the highest supported version
+    - |
       if [[ "$(jq '.supportedCatalogueVersions | length' project.json)" -gt 2 ]]; then
         echo "There are more than two supported CTA Catalogue versions."
         echo "The current CI test can only be performed between two versions."
