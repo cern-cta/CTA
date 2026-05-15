@@ -50,9 +50,12 @@
     - echo "Building target ${TARGET_NAME}"
     # TODO: dnf caching
     # TODO: internal repo and oracle flag
+    # ensure build context is correct
+    - cd "$(dirname "${DOCKERFILE}")"
+    - DOCKERFILE_NAME="$(filename "${DOCKERFILE}")"
     - BUILDAH_ARGS=(
         --target "${TARGET_NAME}"
-        --file "${DOCKERFILE}"
+        --file "${DOCKERFILE_NAME}"
         --tag "${IMAGE_REF}"
         --build-context rpm_context="${RPM_CONTEXT}"
         --build-arg USE_INTERNAL_REPOS=1
@@ -62,8 +65,6 @@
       )
     # TODO: disable layer push on MR pipelines? We don't get much from it
     - if [ -n "$EXTRA_BUILD_ARGS" ]; then BUILDAH_ARGS+=($EXTRA_BUILD_ARGS); fi
-    # ensure build context is correct
-    - cd "$(dirname "${DOCKERFILE}")"
     - buildah bud "${BUILDAH_ARGS[@]}" .
     # TODO: add a sanity check here if oracle is in the image and if the registry is public
     # if so, fail the job so that we prevent accidentally pushing oracle rpms somewhere public
