@@ -23,7 +23,7 @@ fi
 
 # Conditionally add Oracle support
 if [ "$USE_ORACLE_CATALOGUE" = "1" ]; then
-    microdnf install -y cta-lib-catalogue-occi
+    TARGET_PACKAGES="$TARGET_PACKAGES cta-lib-catalogue-occi"
 fi
 
 # Install the target-specific packages

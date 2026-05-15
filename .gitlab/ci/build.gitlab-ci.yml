@@ -100,8 +100,6 @@ build-cta-rpms:
     expire_in: 30 days
     paths:
       - ${BUILD_PATH}
-    reports:
-      metrics: metrics.txt
 
 # These are not (and ideally should not) be used further down the pipeline; just a compilation checks
 
