@@ -63,31 +63,31 @@
 
 build-image-taped:
   extends:
-    - build-cta-image
+    - .build-cta-image
   variables:
     TARGET_NAME: "cta-taped"
 
 build-image-rmcd:
   extends:
-    - build-cta-image
+    - .build-cta-image
   variables:
     TARGET_NAME: "cta-rmcd"
 
 build-image-maintd:
   extends:
-    - build-cta-image
+    - .build-cta-image
   variables:
     TARGET_NAME: "cta-maintd"
 
 # TODO: conditionally switch the variable to -grpc
 build-image-frontend:
   extends:
-    - build-cta-image
+    - .build-cta-image
   variables:
     TARGET_NAME: "cta-frontend-xrd"
 
 build-image-tools:
   extends:
-    - build-cta-image
+    - .build-cta-image
   variables:
     TARGET_NAME: "cta-tools-xrd"
