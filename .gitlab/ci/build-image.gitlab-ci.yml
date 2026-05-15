@@ -52,7 +52,7 @@
     # TODO: internal repo and oracle flag
     # ensure build context is correct
     - cd "$(dirname "${DOCKERFILE}")"
-    - DOCKERFILE_NAME="$(filename "${DOCKERFILE}")"
+    - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"
     - BUILDAH_ARGS=(
         --target "${TARGET_NAME}"
         --file "${DOCKERFILE_NAME}"
