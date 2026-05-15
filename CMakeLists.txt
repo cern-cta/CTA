@@ -25,6 +25,8 @@ set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter
 
 set (BUILD_CMDLINE_ONLY FALSE)
 
+set(CMAKE_COLOR_DIAGNOSTICS ON)
+
 # By default the objectstore based scheduler is used.
 # A postgres scheduler may be enabled and the objectstore one disabled by
 # giving -DCTA_USE_PGSCHED:Bool=true on the cmake command line.

@@ -3,7 +3,7 @@
 
 image:
   registry: gitlab-registry.cern.ch
-  repository: cta/cta-maintd
+  repository: cta/ctageneric/cta-maintd
   tag: latest
 
 # Note that by default this chart does not enable any routines for the objectstore/scheduler cleanup

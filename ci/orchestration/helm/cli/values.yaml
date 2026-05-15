@@ -3,7 +3,7 @@
 
 image:
   registry: gitlab-registry.cern.ch
-  repository: cta/cta-tools-xrd
+  repository: cta/ctageneric/cta-tools-xrd
   tag: latest
 
 replicaCount: 1

@@ -3,7 +3,7 @@
 
 image:
   registry: gitlab-registry.cern.ch
-  repository: cta/cta-taped
+  repository: cta/ctageneric/cta-taped
   tag: latest
 
 conf:

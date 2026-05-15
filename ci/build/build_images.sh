@@ -24,7 +24,7 @@ usage() {
   exit 1
 }
 
-buildImage() {
+build_all_images() {
   project_root=$(git rev-parse --show-toplevel)
 
   # Default values
@@ -113,9 +113,9 @@ buildImage() {
 
   SECONDS=0
 
-  # Build
+  # Build and load all targets
   for target in "${targets[@]}"; do
-    image_ref="cta/${target}:${image_tag}"
+    image_ref="cta/ctageneric/${target}:${image_tag}"
     (
       set -x
       ${container_runtime} build . -f ${dockerfile} \
@@ -125,38 +125,25 @@ buildImage() {
         --build-arg USE_ORACLE_CATALOGUE=0 \
         --network host \
         --target $target
+      set +x
+      # Note that the below checks are rather crude (for speed)
+      if [[ "$load_into_k8s" == "true" ]]; then
+        # Load into minikube (use stdin to avoid a temp file)
+        if command -v minikube >/dev/null 2>&1; then
+          echo "Minikube detected -> loading $image_ref into minikube"
+          ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
+        fi
+
+        # Load into k3s (stream into containerd)
+        if command -v k3s >/dev/null 2>&1; then
+          echo "k3s detected -> loading $image_ref into k3s/containerd"
+          ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
+        fi
+      fi
     ) &
   done
   wait
-
-  # Push to local minikube/K3s
-  if [[ "$load_into_k8s" == "true" ]]; then
-    # Note that the below checks are rather crude (for speed)
-
-    # Load into minikube (use stdin to avoid a temp file)
-    if command -v minikube >/dev/null 2>&1; then
-      echo "Minikube detected -> loading images into minikube"
-      for target in "${targets[@]}"; do
-        image_ref="cta/${target}:${image_tag}"
-        echo "Loading $image_ref..."
-        ${container_runtime} save "${image_ref}" | minikube image load --overwrite - &
-      done
-      wait
-    fi
-
-    # Load into k3s (stream into containerd)
-    if command -v k3s >/dev/null 2>&1; then
-      echo "k3s detected -> loading images into k3s/containerd"
-      for target in "${targets[@]}"; do
-        image_ref="cta/${target}:${image_tag}"
-        echo "Loading $image_ref..."
-        ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import - &
-      done
-      wait
-    fi
-  fi
-
   echo "Image Building and Loading completed in ${SECONDS}s"
 }
 
-buildImage "$@"
+build_all_images "$@"

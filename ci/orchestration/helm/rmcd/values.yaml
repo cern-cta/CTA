@@ -3,7 +3,7 @@
 
 image:
   registry: gitlab-registry.cern.ch
-  repository: cta/cta-rmcd
+  repository: cta/ctageneric/cta-rmcd
   tag: latest
 
 # Script to execute in the main container before starting the rmcd services
