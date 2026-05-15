@@ -498,26 +498,25 @@ Command-line tool for testing immutable files
 %{_bindir}/cta-immutable-file-test
 
 %if "%{usingObjectstore}" != "0"
-%package -n cta-objectstore-tools
+%package -n cta-scheduler-utils
 Summary: CERN Tape Archive: object store tools
 Group: Application/CTA
 Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
-# Allow this package to also be installed using cta-scheduler-utils to ensure we don't need to install different RPMs
-# for the objectstore and pgsched builds.
-Provides: cta-scheduler-utils = %{version}-%{release}
-%description -n cta-objectstore-tools
+# Used to be called cta-objectstore-tools so this ensures we don't keep the old package around
+Obsoletes: cta-objectstore-tools < %{version}-%{release}
+%description -n cta-scheduler-utils
 CERN Tape Archive:
 Tools allowing initialization and inspection of the object store.
-%files -n cta-objectstore-tools
+%files -n cta-scheduler-utils
 %attr(0755,root,root) %{_bindir}/cta-objectstore-initialize
 %attr(0755,root,root) %{_bindir}/cta-objectstore-list
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dump-object
 %attr(0755,root,root) %{_bindir}/cta-objectstore-dereference-removed-queues
 %attr(0755,root,root) %{_bindir}/cta-objectstore-collect-orphaned-object
 %attr(0755,root,root) %{_bindir}/cta-objectstore-create-missing-repack-index
-%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-objectstore-tools.example.conf
+%attr(0644,root,root) %config(noreplace) %{_sysconfdir}/cta/cta-scheduler-utils.example.conf
 %endif
 
 #cta-integrationtests installs libraries so we need ldconfig.
