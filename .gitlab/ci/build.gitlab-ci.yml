@@ -49,7 +49,8 @@ build-cta-rpms:
     CCACHE_BASEDIR: "/builds/cta"
     CCACHE_NOHASHDIR: "true"
     CCACHE_DIR: "$CI_PROJECT_DIR/.ccache"
-    # CCACHE_COMPRESS: "true"
+    CCACHE_COMPRESS: "true"
+    CCACHE_COMPRESSLEVEL: "6" # 1-9; 6 should provide decent balance between speed and size
     CCACHE_COMPILERCHECK: "content"
     CCACHE_MAXSIZE: "2G"
     CXXFLAGS: "-fdebug-prefix-map=/builds/cta=. -ffile-prefix-map=/builds/cta=."
@@ -73,7 +74,6 @@ build-cta-rpms:
     - ccache --zero-stats
     - echo "CCache enabled ${ENABLE_CCACHE}"
     - echo "CCache policy ${BUILD_CACHE_POLICY}"
-    - export CCACHE_LOGFILE=$CI_PROJECT_DIR/ccache.log
   script:
     # SRPMS
     - ./ci/build/build_srpm.sh --build-dir build_srpm
@@ -121,7 +121,6 @@ build-cta-rpms:
     - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_kb $(find ${BUILD_PATH} -type f -name '*.rpm' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n", s/1000}' | cut -f1)" > metrics.txt
   after_script:
     - ccache --show-stats
-    - tail -n 100 $CI_PROJECT_DIR/ccache.log
   artifacts:
     expire_in: 30 days
     paths:
