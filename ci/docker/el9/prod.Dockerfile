@@ -35,7 +35,8 @@ FROM registry.cern.ch/docker.io/almalinux/9-minimal:latest AS base
 COPY build-service.sh /usr/local/bin/build-service.sh
 
 # Core dependencies
-RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
+RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
+    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
     # Ensure consistent group and user ID for CTA services
     # cta-common adds this user already, but it gives no guarantees on its ID, which we need to be stable for Kubernetes
