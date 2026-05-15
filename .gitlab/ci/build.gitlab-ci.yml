@@ -49,8 +49,10 @@ build-cta-rpms:
     CCACHE_BASEDIR: "/builds/cta"
     CCACHE_NOHASHDIR: "true"
     CCACHE_DIR: "$CI_PROJECT_DIR/.ccache"
+    # CCACHE_COMPRESS: "true"
     CCACHE_COMPILERCHECK: "content"
     CCACHE_MAXSIZE: "2G"
+    CXXFLAGS: "-fdebug-prefix-map=/builds/cta=. -ffile-prefix-map=/builds/cta=."
   before_script:
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
