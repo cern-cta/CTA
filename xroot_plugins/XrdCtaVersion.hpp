@@ -7,7 +7,7 @@
 
 #include "catalogue/SchemaVersion.hpp"
 #include "frontend/common/Version.hpp"
-#include "version.h"
+#include "version.hpp"
 #include "xroot_plugins/XrdCtaStream.hpp"
 
 #include <string>

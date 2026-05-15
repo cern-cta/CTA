@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "version.h"
+#include "version.hpp"
 
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/resource_quota.h>

@@ -8,7 +8,7 @@
 #include "CommonCliOptions.hpp"
 #include "common/exception/UserError.hpp"
 #include "common/runtime/RuntimeTestHelpers.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <chrono>
 #include <functional>

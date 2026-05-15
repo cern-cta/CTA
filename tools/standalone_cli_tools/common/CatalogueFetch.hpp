@@ -6,7 +6,7 @@
 #pragma once
 
 #include "common/log/StdoutLogger.hpp"
-#include "version.h"
+#include "version.hpp"
 #include "xrootd-ssi-protobuf-interface/eos_cta/include/CtaFrontendApi.hpp"
 
 #include <XrdSsiPbIStreamBuffer.hpp>

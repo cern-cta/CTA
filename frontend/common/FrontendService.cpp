@@ -16,7 +16,7 @@
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
 #include "rdbms/Login.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <fstream>
 #include <opentelemetry/sdk/common/global_log_handler.h>

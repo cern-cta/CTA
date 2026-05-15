@@ -8,7 +8,7 @@
 #include "common/exception/UserError.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/utils/utils.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <XrdSsiPbIStreamBuffer.hpp>
 #include <XrdSsiPbLog.hpp>

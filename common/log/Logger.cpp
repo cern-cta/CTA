@@ -9,7 +9,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/utils/utils.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <iomanip>
 #include <ranges>
