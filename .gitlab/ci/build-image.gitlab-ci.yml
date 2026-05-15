@@ -47,25 +47,22 @@
   script:
     # Configure distributed caching
     # This pulls cache from the registry and pushes new layers back to it
-    - CACHE_ARGS="--cache-from ${CI_REGISTRY_IMAGE}/cache --cache-to ${CI_REGISTRY_IMAGE}/cache"
-    # Eventually uncomment this because we don't get much from pushing branch caches
-    # - |
-    #   if [ $CI_PIPELINE_SOURCE = "merge_request_event" ]; then
-    #     CACHE_ARGS="$CACHE_ARGS --no-push-cache"
-    #   fi
     - echo "Building target ${TARGET_NAME}"
     # TODO: dnf caching
     # TODO: internal repo and oracle flag
-    - buildah bud \
-        --target "${TARGET_NAME}" \
-        --file "${DOCKERFILE}" \
-        --tag "${IMAGE_REF}" \
-        --build-context rpm_context="${RPM_CONTEXT}" \
-        --build-arg USE_INTERNAL_REPOS=1 \
-        --build-arg USE_ORACLE_CATALOGUE=0 \
-        ${CACHE_ARGS} \
-        ${EXTRA_BUILD_ARGS} \
-        "${CI_PROJECT_DIR}"
+    - BUILDAH_ARGS=(
+        --target "${TARGET_NAME}"
+        --file "${DOCKERFILE}"
+        --tag "${IMAGE_REF}"
+        --build-context rpm_context="${RPM_CONTEXT}"
+        --build-arg USE_INTERNAL_REPOS=1
+        --build-arg USE_ORACLE_CATALOGUE=0
+        --cache-from "${CI_REGISTRY_IMAGE}/cache"
+        --cache-to "${CI_REGISTRY_IMAGE}/cache"
+      )
+    # TODO: disable layer push on MR pipelines? We don't get much from it
+    - if [ -n "$EXTRA_BUILD_ARGS" ]; then BUILDAH_ARGS+=($EXTRA_BUILD_ARGS); fi
+    - buildah bud "${BUILDAH_ARGS[@]}" "${CI_PROJECT_DIR}"
     # TODO: add a sanity check here if oracle is in the image and if the registry is public
     # if so, fail the job so that we prevent accidentally pushing oracle rpms somewhere public
     - echo "Pushing to ${IMAGE_REF}"
@@ -105,3 +102,10 @@ build-image-tools:
     - .build-cta-image
   variables:
     TARGET_NAME: "cta-tools-xrd"
+
+###############################################
+# Publishing
+###############################################
+
+# TODO: add job that uses buildah to retag images. This way we can publish them
+# We'll need the usual checks
