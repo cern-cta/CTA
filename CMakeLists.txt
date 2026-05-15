@@ -116,9 +116,6 @@ else()
     MESSAGE(STATUS "Using default ${JOBS_COUNT} concurrent build jobs")
 endif()
 
-
-SET(CPACK_ZSTD_COMPRESSION_LEVEL 1) # Reduce cpack compression level to improve speed (don't care about size; we don't distribute it anyway)
-
 # Load additional CMake modules:
 # Version information
 include(cmake/CTAVersions.cmake)
@@ -214,6 +211,8 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
   # as it is trying to pack the build directory as well
   set(CPACK_SOURCE_IGNORE_FILES
     "/.git/"
+    "/.ccache/"
+    "/.dnf_cache/"
     "/ci/system_tests"
     "/ci/orchestration"
     "/build_srpm/"
