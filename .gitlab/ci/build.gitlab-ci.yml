@@ -46,7 +46,7 @@ build-cta-rpms:
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     RPM_SIZE_METRICS_ID: "relwithdebinfo" # Default build is a debug build
     # Will only be used if ccache is enabled
-    CCACHE_BASEDIR: $CI_PROJECT_DIR
+    CCACHE_BASEDIR: "/builds/cta"
     CCACHE_DIR: $CI_PROJECT_DIR/.ccache
     CCACHE_COMPILERCHECK: content
     CCACHE_MAXSIZE: "2G"
@@ -70,6 +70,7 @@ build-cta-rpms:
     - ccache --zero-stats
     - echo "CCache enabled ${ENABLE_CCACHE}"
     - echo "CCache policy ${BUILD_CACHE_POLICY}"
+    - export CCACHE_LOGFILE=$CI_PROJECT_DIR/ccache.log
   script:
     # SRPMS
     - ./ci/build/build_srpm.sh --build-dir build_srpm
@@ -117,6 +118,7 @@ build-cta-rpms:
     - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_kb $(find ${BUILD_PATH} -type f -name '*.rpm' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n", s/1000}' | cut -f1)" > metrics.txt
   after_script:
     - ccache --show-stats
+    - tail -n 100 $CI_PROJECT_DIR/ccache.log
   artifacts:
     expire_in: 30 days
     paths:
@@ -131,9 +133,6 @@ build-cta-rpms:
       policy: $BUILD_CACHE_POLICY
       paths:
         - .ccache/
-        # Faster downloads :o
-        - /var/cache/dnf
-        - /var/cache/yum
 
 
 # Specifically to build CTA without ccache and with debug packages enabled
