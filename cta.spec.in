@@ -505,7 +505,7 @@ Requires: cta-lib = %{version}-%{release}
 Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 # Used to be called cta-objectstore-tools so this ensures we don't keep the old package around
-Obsoletes: cta-objectstore-tools < %{version}-%{release}
+Obsoletes: cta-objectstore-tools < 5.11.19
 %description -n cta-scheduler-utils
 CERN Tape Archive:
 Tools allowing initialization and inspection of the object store.
