@@ -67,7 +67,7 @@ build-cta-rpms:
         export VCS_VERSION=$(echo ${CI_COMMIT_TAG} | awk -F '-' '{if(NF>1) print $2; else print 0}')
       fi
     - echo "Building package CTA_VERSION=${CTA_VERSION} - CTA_RELEASE=${VCS_VERSION}"
-    - git -C "$XRD_SSI_PATH" fetch --tags
+    - git -C "$XRD_SSI_PATH" fetch --tags > /dev/null
     - export XRD_SSI_VERSION=$(git --git-dir=$XRD_SSI_PATH/.git --work-tree=$XRD_SSI_PATH describe --tags --abbrev=0)
     - |
       if [[ -z "$XRD_SSI_VERSION" ]]; then
@@ -90,22 +90,10 @@ build-cta-rpms:
                                --jobs $(nproc --ignore=1)
     # RPMS
     - BUILD_OPTIONS=""
-    - |
-      if [[ "$ENABLE_CCACHE" == "TRUE" ]]; then
-        BUILD_OPTIONS+=" --enable-ccache"
-      fi
-    - |
-      if [[ "$ENABLE_DEBUG_INFO" == "FALSE" ]]; then
-        BUILD_OPTIONS+=" --skip-debug-packages"
-      fi
-    - |
-      if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
-        BUILD_OPTIONS+=" --use-internal-repos"
-      fi
-    - |
-      if [[ "$ENABLE_ADDRESS_SANITIZER" == "TRUE" ]]; then
-        BUILD_OPTIONS+=" --enable-address-sanitizer"
-      fi
+    - if [[ "$ENABLE_CCACHE" == "TRUE" ]]; then BUILD_OPTIONS+=" --enable-ccache"; fi
+    - if [[ "$ENABLE_DEBUG_INFO" == "FALSE" ]]; then BUILD_OPTIONS+=" --skip-debug-packages"; fi
+    - if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then BUILD_OPTIONS+=" --use-internal-repos"; fi
+    - if [[ "$ENABLE_ADDRESS_SANITIZER" == "TRUE" ]]; then BUILD_OPTIONS+=" --enable-address-sanitizer"; fi
     - ./ci/build/build_rpm.sh --build-dir build_rpm
                               --build-generator "${BUILD_GENERATOR}"
                               --create-build-dir
@@ -123,7 +111,7 @@ build-cta-rpms:
                               ${BUILD_OPTIONS}
     - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_kb $(find ${BUILD_PATH} -type f -name '*.rpm' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n", s/1000}' | cut -f1)" > metrics.txt
   after_script:
-    - ccache --show-stats --verbose
+    - if [[ "$ENABLE_CCACHE" == "TRUE" ]]; then ccache --show-stats --verbose; fi
   artifacts:
     expire_in: 30 days
     paths:
