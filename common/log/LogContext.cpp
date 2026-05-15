@@ -71,7 +71,7 @@ void LogContext::logBacktrace(const int priority, std::string_view backtrace) no
       line = backtrace.substr(position);
     }
     if (line.size()) {
-      ScopedParam sp1(*this, Param("traceFrameNumber arbitrary change", lineNumber++));
+      ScopedParam sp1(*this, Param("traceFrameNumber", lineNumber++));
       ScopedParam sp2(*this, Param("traceFrame", line));
       log(priority, "Stack trace");
     }
