@@ -50,10 +50,13 @@ build-cta-rpms:
     CCACHE_NOHASHDIR: "true"
     CCACHE_DIR: "$CI_PROJECT_DIR/.ccache"
     CCACHE_COMPRESS: "true"
-    CCACHE_COMPRESSLEVEL: "6" # 1-9; 6 should provide decent balance between speed and size
-    CCACHE_COMPILERCHECK: "content"
-    CCACHE_MAXSIZE: "1G"
+    CCACHE_MAXSIZE: "2G"
+    # Necessary to ensure builds in different jobs don't cause all kinds of cache misses
     CXXFLAGS: "-fdebug-prefix-map=/builds/cta=. -ffile-prefix-map=/builds/cta=."
+    # Faster GitLab cache performance
+    FF_USE_FASTZIP: "true"
+    ARTIFACT_COMPRESSION_LEVEL: "fastest"
+    CACHE_COMPRESSION_LEVEL: "fastest"
   before_script:
     - |
       if [[ -z "${CI_COMMIT_TAG}" ]]; then
