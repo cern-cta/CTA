@@ -12,9 +12,6 @@ die() {
 
 echo "Using scheduler backend: $SCHEDULER_BACKEND"
 
-echo "Installing the cta-scheduler-utils"
-dnf install -y cta-scheduler-utils
-
 # Clean up scheduler
 if [[ "$SCHEDULER_BACKEND" == "vfs" ]] || [[ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]]; then
   echo "Wiping objectstore"

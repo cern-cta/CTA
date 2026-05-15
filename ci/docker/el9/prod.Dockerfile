@@ -35,8 +35,7 @@ FROM registry.cern.ch/docker.io/almalinux/9-minimal:latest AS base
 COPY build-service.sh /usr/local/bin/build-service.sh
 
 # Core dependencies
-RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,sharing=locked \
+RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
     # Ensure consistent group and user ID for CTA services
     # cta-common adds this user already, but it gives no guarantees on its ID, which we need to be stable for Kubernetes
@@ -162,7 +161,7 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools-grpc \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools-grpc \
-    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogueutils cta-objectstore-tools krb5-workstation"
+    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation"
 
 # USER cta
 ENTRYPOINT ["/bin/bash"]
@@ -180,7 +179,7 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools-xrd \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools-xrd \
-    /usr/local/bin/build-service.sh "cta-cli cta-catalogueutils cta-objectstore-tools krb5-workstation"
+    /usr/local/bin/build-service.sh "cta-cli cta-catalogue-utils cta-scheduler-utils krb5-workstation"
 
 # USER cta
 ENTRYPOINT ["/bin/bash"]
