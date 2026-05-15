@@ -202,7 +202,7 @@ variables:
   IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2026-05-12-14753535.el9
   IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2026-05-12-14753535.el9
   IMAGE_DANGER: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2026-05-12-14753535.el9
-  IMAGE_DOCKER_IMAGE_BUILDER: registry.cern.ch/quay.io/buildah/stable:v1.35
+  IMAGE_DOCKER_IMAGE_BUILDER: registry.cern.ch/quay.io/buildah/stable:v1.43-immutable
   IMAGE_LICENSE_CHECK: registry.cern.ch/docker.io/fsfe/reuse:6.2
 
 default:
