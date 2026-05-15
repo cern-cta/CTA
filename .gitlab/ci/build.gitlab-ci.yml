@@ -123,6 +123,7 @@ build-cta-rpms-debug:
     # Debug builds are not really expected to break when the RelWithDebInfo build passes, so only run this in main
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
+      allow_failure: true
     - !reference [.build-image, rules]
   variables:
     CMAKE_BUILD_TYPE: "Debug"
