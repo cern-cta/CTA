@@ -31,8 +31,12 @@ microdnf install -y --enablerepo crb $TARGET_PACKAGES
 
 # Cleanup to reduce image size
 # cta-release brings in Python, but uninstalling it for some reason does not remove it
+microdnf remove -y cta-release
+
 # Nothing in CTA requires python and it adds a lot to the final image size, so we remove it here explicitly
-microdnf remove -y cta-release python*
+# TODO: handle this gracefully. Basically we try to remove python but if there are packages requiring it, we don't
+microdnf remove -y python* || true
+
 # Remove systemd stuff because we don't rely on systemd in containers
 rpm -q systemd-* > /dev/null && rpm -e systemd-* --nodeps || true
 # Clean up history and internal repos

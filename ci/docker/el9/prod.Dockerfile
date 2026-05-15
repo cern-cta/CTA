@@ -124,7 +124,8 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend-grpc \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend-grpc \
-    /usr/local/bin/build-service.sh "cta-frontend-grpc krb5-workstation"
+    /usr/local/bin/build-service.sh "cta-frontend-grpc cta-catalogue-utils krb5-workstation"
+# TODO: remove the catalogue utils once the tests have been updated
 
 # USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
@@ -142,7 +143,8 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend-xrd \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend-xrd \
-    /usr/local/bin/build-service.sh "cta-frontend krb5-workstation"
+    /usr/local/bin/build-service.sh "cta-frontend cta-catalogue-utils krb5-workstation"
+# TODO: remove the catalogue utils once the tests have been updated
 
 # USER cta
 WORKDIR /home/cta
@@ -162,7 +164,7 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools-grpc \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools-grpc \
-    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation"
+    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common"
 
 # USER cta
 ENTRYPOINT ["/bin/bash"]
@@ -180,7 +182,7 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools-xrd \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools-xrd \
-    /usr/local/bin/build-service.sh "cta-cli cta-catalogue-utils cta-scheduler-utils krb5-workstation"
+    /usr/local/bin/build-service.sh "cta-cli cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common"
 
 # USER cta
 ENTRYPOINT ["/bin/bash"]
