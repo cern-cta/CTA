@@ -17,6 +17,7 @@
     name: $IMAGE_DOCKER_IMAGE_BUILDER
     entrypoint: [""]
   variables:
+    CONTAINER_STORAGE: "/builds/container-storage"
     TARGET_NAME: # Should be overwritten by one of the child jobs
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for these jobs
@@ -27,9 +28,23 @@
     RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
     EXTRA_BUILD_ARGS: ""
   before_script:
-    - buildah login -u "$DOCKER_LOGIN_USERNAME" -p "$DOCKER_LOGIN_PASSWORD" $CI_REGISTRY
+    # configure storage:
+    - mkdir -p ${CONTAINER_STORAGE}
+    - mkdir -p ~/.config/containers/
+    - |
+      cat > ~/.config/containers/storage.conf << EOF
+      [storage]
+       driver = "overlay"
+       runroot = "${CONTAINER_STORAGE}/run/containers/storage"
+       graphroot = "${CONTAINER_STORAGE}/.local/share/containers/storage"
+       rootless_storage_path = "${CONTAINER_STORAGE}/.local/share/containers/storage"
+       [storage.options]
+       pull_options = {enable_partial_images = "true", use_hard_links = "false", ostree_repos=""}
+       [storage.options.overlay]
+      EOF
+    - cp ~/.config/containers/storage.conf /etc/containers/storage.conf || true
+    - echo "$DOCKER_LOGIN_PASSWORD" | buildah login -u "$DOCKER_LOGIN_USERNAME" --password-stdin $CI_REGISTRY
   script:
-
     # Configure distributed caching
     # This pulls cache from the registry and pushes new layers back to it
     - CACHE_ARGS="--cache-from ${CI_REGISTRY_IMAGE}/cache --cache-to ${CI_REGISTRY_IMAGE}/cache"
@@ -48,7 +63,6 @@
         --build-context rpm_context="${RPM_CONTEXT}" \
         --build-arg USE_INTERNAL_REPOS=1 \
         --build-arg USE_ORACLE_CATALOGUE=0 \
-        --network host \
         ${CACHE_ARGS} \
         ${EXTRA_BUILD_ARGS} \
         "${CI_PROJECT_DIR}"
