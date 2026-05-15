@@ -45,6 +45,7 @@ build-cta-rpms:
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     RPM_SIZE_METRICS_ID: "relwithdebinfo" # Default build is a debug build
+    DNF_CACHE_DIR: "$CI_PROJECT_DIR/.dnf_cache"
     # Will only be used if ccache is enabled
     CCACHE_BASEDIR: "/builds/cta"
     CCACHE_NOHASHDIR: "true"
@@ -126,6 +127,7 @@ build-cta-rpms:
       policy: $BUILD_CACHE_POLICY
       paths:
         - .ccache/
+        - .dnf_cache/
 
 
 # Specifically to build CTA without ccache and with debug packages enabled

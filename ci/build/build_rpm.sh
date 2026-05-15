@@ -244,8 +244,18 @@ build_rpm() {
     if [[ ${use_internal_repos} = true ]]; then
       cp -f ci/docker/${platform}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     fi
-    dnf clean all
-    dnf builddep --nogpgcheck -y "${srpm_dir}"/*
+    # dnf clean all
+    # dnf builddep --nogpgcheck -y "${srpm_dir}"/*
+    # Create the directory
+    mkdir -p "${DNF_CACHE_DIR}"
+
+    # Run builddep using the custom cache directory
+    dnf builddep --nogpgcheck -y \
+        --setopt=cachedir="${DNF_CACHE_DIR}" \
+        --setopt=keepcache=1 \
+        --setopt=max_parallel_downloads=8 \
+        --setopt=metadata_expire=24h \
+        "${srpm_dir}"/*
   fi
 
   # Cmake

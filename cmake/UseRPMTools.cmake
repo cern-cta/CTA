@@ -162,6 +162,8 @@ rm -rf build_tree
 	ENDIF ("${SPECFILE_EXT}" STREQUAL ".spec")
       ENDIF("${ARGV1}" STREQUAL "")
 
+      SET(CPACK_ZSTD_COMPRESSION_LEVEL 1) # Reduce cpack compression level to improve speed (don't care about size; we don't distribute it anyway)
+
       ADD_CUSTOM_TARGET(${RPMNAME}_srpm
 	COMMAND cpack3 -G TZST --config CPackSourceConfig.cmake
 	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.zst ${RPM_ROOTDIR}/SOURCES
