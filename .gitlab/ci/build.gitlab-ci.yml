@@ -124,7 +124,7 @@ build-cta-rpms-debug:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true
-    - !reference [.build-cta-rpms, rules]
+    - !reference [build-cta-rpms, rules]
   variables:
     CMAKE_BUILD_TYPE: "Debug"
     RPM_SIZE_METRICS_ID: "debug"
