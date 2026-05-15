@@ -528,7 +528,7 @@ Requires: cta-lib-catalogue = %{version}-%{release}
 Requires: xrootd-client-libs %{xrootdVersionConstraint}
 # cta-catalogue-utils used to be called so this ensures we don't keep the old package around
 # Can be removed again at some point
-Obsoletes: cta-catalogueutils < %{version}-%{release}
+Obsoletes: cta-catalogueutils < 5.11.19
 %description -n cta-catalogue-utils
 CERN Tape Archive:
 Scripts and utilities to faciliate working with the CTA catalogue
