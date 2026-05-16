@@ -4,5 +4,5 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # to get rmcd logs to stdout
-tail -F /var/log/cta/cta-rmcd.log &
+tail -F /var/log/cta/cta-rmcd.log 2>/dev/null &
 runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
