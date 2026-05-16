@@ -45,8 +45,6 @@
     - cp ~/.config/containers/storage.conf /etc/containers/storage.conf || true
     - echo "$DOCKER_LOGIN_PASSWORD" | buildah login -u "$DOCKER_LOGIN_USERNAME" --password-stdin $CI_REGISTRY
   script:
-    # Configure distributed caching
-    # This pulls cache from the registry and pushes new layers back to it
     - echo "Building target ${TARGET_NAME}"
     # TODO: dnf caching
     # TODO: internal repo and oracle flag
@@ -66,7 +64,7 @@
     - buildah bud "${BUILDAH_ARGS[@]}" .
     # TODO: add a sanity check here if oracle is in the image and if the registry is public
     # if so, fail the job so that we prevent accidentally pushing oracle rpms somewhere public
-    - echo "docker_image_${TARGET_NAME//-/_}_size_mb $(buildah images --json ${IMAGE_REF} | jq '.[0].size / 1000000 | round')" > metrics.txt
+    # TODO: image size metric?
     - echo "Pushing to ${IMAGE_REF}"
     - buildah push "${IMAGE_REF}"
 
