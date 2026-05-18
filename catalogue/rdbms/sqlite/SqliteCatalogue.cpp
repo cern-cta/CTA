@@ -77,9 +77,30 @@ std::string SqliteCatalogue::createAndPopulateTempTableArchiveFileIds(rdbms::Con
   conn.executeNonQuery("DROP TABLE IF EXISTS " + tempTableName);
   conn.executeNonQuery("CREATE TEMPORARY TABLE " + tempTableName + "(ARCHIVE_FILE_ID INTEGER)");
 
-  auto stmt = conn.createStmt("INSERT INTO " + tempTableName + " VALUES(:ARCHIVE_FILE_ID)");
-  for (const auto archiveFileId : archiveFileIds) {
-    stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
+  constexpr size_t maxBulkInsertSize = 500;
+
+  auto it = archiveFileIds.begin();
+
+  while (it != archiveFileIds.end()) {
+    std::string insertSql = "INSERT INTO " + tempTableName + " (ARCHIVE_FILE_ID) VALUES ";
+
+    size_t i = 0;
+    auto chunkBegin = it;
+
+    for (; it != archiveFileIds.end() && i < maxBulkInsertSize; ++it, ++i) {
+      if (i != 0) {
+        insertSql += ", ";
+      }
+      insertSql += "(:ARCHIVE_FILE_ID_" + std::to_string(i) + ")";
+    }
+
+    auto stmt = conn.createStmt(insertSql);
+
+    i = 0;
+    for (auto bindIt = chunkBegin; bindIt != it; ++bindIt, ++i) {
+      stmt.bindUint64(":ARCHIVE_FILE_ID_" + std::to_string(i), *bindIt);
+    }
+
     stmt.executeNonQuery();
   }
 
