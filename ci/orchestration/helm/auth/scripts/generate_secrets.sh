@@ -12,7 +12,7 @@ SECRETS_DIR="/secrets"
 
 mkdir -p "$SECRETS_DIR"
 # Extra flags are to improve speed
-pip install --no-cache-dir --no-deps pyjwt cryptography cffi
+pip install --no-cache-dir --no-deps --only-binary :all: pyjwt cryptography cffi
 
 # --- SSS Keytabs --- #
 
