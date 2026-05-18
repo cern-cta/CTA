@@ -216,6 +216,7 @@ delete_instance() {
 
   # Delete the actual namespace
   echo "Deleting ${namespace} instance"
+  kubectl delete pods,jobs,deployments,statefulsets,pvc --all -n ${namespace} --grace-period=0 --force --wait=false > /dev/null
   kubectl delete namespace ${namespace} --now
   echo "Deletion finished"
 
