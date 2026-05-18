@@ -89,13 +89,6 @@ variables:
       - "TRUE"
       - "FALSE"
 
-  ENABLE_DEBUG_INFO:
-    description: "Whether to the extraction and building of debuginfo and debugsource"
-    value: "TRUE"
-    options:
-      - "TRUE"
-      - "FALSE"
-
   # CTA Configuration
   SCHEDULER_TYPE:
     description: "Specifies what scheduler should be used to build CTA and run the tests"
@@ -220,8 +213,6 @@ workflow:
         compare_to: "refs/heads/$CI_DEFAULT_BRANCH"
         paths:
           - '**/*'
-      variables:
-        ENABLE_DEBUG_INFO: "FALSE"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CI_PIPELINE_SOURCE == "push"
       auto_cancel:
         on_new_commit: none

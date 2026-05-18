@@ -44,6 +44,9 @@
 %define debug_package %{nil}
 %endif
 
+# Disable compression of debuginfo, because this takes a huge amount of time
+%define _find_debuginfo_dwz_opts %{nil}
+
 # Setting ccache (for developers)
 #-------------------------------------
 %define enableCCache @ENABLE_CCACHE@
