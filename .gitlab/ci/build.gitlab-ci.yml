@@ -114,8 +114,11 @@ build-cta-rpms-pgsched:
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
-    RPM_SIZE_METRICS_ID: "relwithdebinfo_pgsched"
-  artifacts: [] # Disable artifacts
+  # Disable artifacts
+  artifacts:
+    paths: []
+    reports:
+      metrics: []
 
 build-cta-rpms-debug:
   extends:
@@ -128,8 +131,11 @@ build-cta-rpms-debug:
     - !reference [.build-image, rules]
   variables:
     CMAKE_BUILD_TYPE: "Debug"
-    RPM_SIZE_METRICS_ID: "debug"
-  artifacts: [] # Disable artifacts
+  # Disable artifacts
+  artifacts:
+    paths: []
+    reports:
+      metrics: []
 
 # Documentation export
 export-docs:
