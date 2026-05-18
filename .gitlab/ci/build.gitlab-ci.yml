@@ -96,7 +96,7 @@ build-cta-rpms:
                               --platform ${PLATFORM}
                               --skip-unit-tests
                               ${BUILD_OPTIONS}
-    - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_kb $(find ${BUILD_PATH} -type f -name '*.rpm' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n", s/1000}' | cut -f1)" > metrics.txt
+    - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_mb $(find ${BUILD_PATH} -type f -name '*.rpm' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n", s/1000000}' | cut -f1)" > metrics.txt
   artifacts:
     expire_in: 30 days
     paths:
@@ -115,6 +115,7 @@ build-cta-rpms-pgsched:
     SCHEDULER_TYPE: "pgsched"
     SKIP_UNIT_TESTS: "TRUE"
     RPM_SIZE_METRICS_ID: "relwithdebinfo_pgsched"
+  artifacts: [] # Disable artifacts
 
 build-cta-rpms-debug:
   extends:
@@ -128,6 +129,7 @@ build-cta-rpms-debug:
   variables:
     CMAKE_BUILD_TYPE: "Debug"
     RPM_SIZE_METRICS_ID: "debug"
+  artifacts: [] # Disable artifacts
 
 # Documentation export
 export-docs:
