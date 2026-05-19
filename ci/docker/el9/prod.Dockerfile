@@ -34,6 +34,8 @@ FROM registry.cern.ch/docker.io/almalinux/9-minimal:latest AS base
 
 COPY build-service.sh /usr/local/bin/build-service.sh
 
+COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
+
 # Core dependencies
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,sharing=locked \
@@ -62,8 +64,6 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
 ###############################################
 FROM base AS cta-taped
 
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
-
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
@@ -79,8 +79,6 @@ CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--l
 # SERVICE cta-rmcd
 ###############################################
 FROM base AS cta-rmcd
-
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
 
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
@@ -98,8 +96,6 @@ CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
 ###############################################
 FROM base AS cta-maintd
 
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
-
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
@@ -115,8 +111,6 @@ CMD ["/usr/bin/cta-maintd", "--foreground", "--log-to-file=/var/log/cta/cta-main
 # SERVICE cta-frontend-grpc
 ###############################################
 FROM base AS cta-frontend-grpc
-
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
 
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
@@ -134,8 +128,6 @@ CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend
 # SERVICE cta-frontend-xrd
 ###############################################
 FROM base AS cta-frontend-xrd
-
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
 
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
@@ -155,9 +147,6 @@ CMD ["xrootd", "-l", "/var/log/cta-frontend-xrootd.log", "-k", "fifo", "-n", "ct
 ###############################################
 FROM base AS cta-tools-grpc
 
-
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
-
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
@@ -173,8 +162,6 @@ ENTRYPOINT ["/bin/bash"]
 # TOOLS cta-tools-xrd
 ###############################################
 FROM base AS cta-tools-xrd
-
-COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
 
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
