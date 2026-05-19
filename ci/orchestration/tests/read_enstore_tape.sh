@@ -14,6 +14,7 @@ ens_mhvtl_root="/ens-mhvtl"
 layout_dir="${ens_mhvtl_root}/enstore/FL1212_f1"
 device="$1"
 changer="${2:-/dev/smc}"
+drive_index="${3:-0}"
 
 wait_for_device_ready() {
   local device_path="$1"
@@ -43,7 +44,7 @@ done
 
 # Load tape in a tapedrive
 mtx -f ${changer} status
-mtx -f ${changer} load 2 0
+mtx -f ${changer} load 2 "${drive_index}"
 mtx -f ${changer} status
 
 # Get the device status where the tape is loaded and rewind it.

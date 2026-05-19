@@ -41,7 +41,6 @@ exit 1
 "
 }
 
-# Unload any loaded tapes, so probing does not accidentally match another loaded drive
 unload_all_loaded_drives() {
   local status
   status=$(rmcd_exec mtx -f /dev/smc status)
@@ -58,11 +57,8 @@ unload_all_loaded_drives() {
 done
 }
 
-# Determine which /dev/nstX corresponds to changer "drive element 0"
-resolve_device_for_drive0_slot() {
+verify_slot_full() {
   local slot="$1"
-
-  # Verify the selected slot exists and is full
   local status
   status=$(rmcd_exec mtx -f /dev/smc status)
   if ! echo "$status" | grep -Eq "Storage Element ${slot}:Full"; then
@@ -70,50 +66,27 @@ resolve_device_for_drive0_slot() {
     echo "$status" >&2
     exit 1
   fi
-
-  unload_all_loaded_drives
-
-  echo "Temporarily loading slot ${slot} into drive 0 to resolve the tape device node..." >&2
-  rmcd_exec mtx -f /dev/smc load "${slot}" 0 >&2
-
-  # Probe /dev/nst* and find which one reports a valid position via mt tell
-  local found=""
-  found=$(rmcd_exec bash -c '
-shopt -s nullglob
-for d in /dev/nst*; do
-  mt -f "$d" tell >/dev/null 2>&1 && { echo "$d"; exit 0; }
-done
-exit 1
-') || {
-    echo "Failed to resolve tape device for drive element 0. /dev/nst* probe did not find a loaded drive." >&2
-    rmcd_exec mtx -f /dev/smc unload "${slot}" 0 || true
-    exit 1
-  }
-
-  echo "Resolved drive element 0 -> ${found}" >&2
-
-  echo "Unloading back to slot ${slot}..." >&2
-  rmcd_exec mtx -f /dev/smc unload "${slot}" 0 >&2
-
-  echo "${found}"
 }
 
-select_taped_pod_for_device() {
-  local target_device="$1"
-  local pod dev
+select_taped_drive() {
+  local pod dev control_path
 
   for pod in "${TAPED_PODS[@]}"; do
     dev=$(kubectl -n "${NAMESPACE}" exec "${pod}" -c cta-taped -- printenv DRIVE_DEVICE | tr -d '\r' | xargs || true)
-    if [[ -n "${dev}" && "${dev}" == "${target_device}" ]]; then
-      echo "${pod}"
+    control_path=$(kubectl -n "${NAMESPACE}" exec "${pod}" -c cta-taped -- awk '$1 == "taped" && $2 == "DriveControlPath" { print $3; exit }' /etc/cta/cta-taped.conf | tr -d '\r' | xargs || true)
+    if [[ -n "${dev}" && "${control_path}" =~ ^smc[0-9]+$ ]]; then
+      CTA_TAPED_POD="${pod}"
+      device="${dev}"
+      drive_index="${control_path#smc}"
       return 0
     fi
   done
 
-  echo "No taped pod advertises DRIVE_DEVICE='${target_device}'. Available taped pods/devices:" >&2
+  echo "No taped pod advertises a usable DRIVE_DEVICE and DriveControlPath. Available taped pods:" >&2
   for pod in "${TAPED_PODS[@]}"; do
     dev=$(kubectl -n "${NAMESPACE}" exec "${pod}" -c cta-taped -- printenv DRIVE_DEVICE | tr -d '\r' | xargs || true)
-    echo "  ${pod}: ${dev}" >&2
+    control_path=$(kubectl -n "${NAMESPACE}" exec "${pod}" -c cta-taped -- awk '$1 == "taped" && $2 == "DriveControlPath" { print $3; exit }' /etc/cta/cta-taped.conf | tr -d '\r' | xargs || true)
+    echo "  ${pod}: DRIVE_DEVICE=${dev:-<unset>} DriveControlPath=${control_path:-<unset>}" >&2
   done
   exit 1
 }
@@ -125,12 +98,12 @@ reload_loaded_tape() {
 
   # Pair drive+slot from the same line
   local drive slot
-  read -r drive slot < <(echo "${status}" | awk '
+  read -r drive slot < <(echo "${status}" | awk -v target_drive="${drive_index}" '
 /Data Transfer Element/ && /:Full/ && /Storage Element/ && /Loaded/ {
   match($0, /Data Transfer Element ([0-9]+)/, d)
   match($0, /Storage Element ([0-9]+)/, s)
-  if (d[1] != "" && s[1] != "") { print d[1], s[1]; exit }
-}')
+  if (d[1] == target_drive && s[1] != "") { print d[1], s[1]; exit }
+}') || true
 
   if [[ -z "${drive:-}" || -z "${slot:-}" ]]; then
     echo "Failed to determine loaded drive/slot from changer status:" >&2
@@ -154,7 +127,7 @@ run_tape_format_test() {
   local remote_script="/root/${prep_script}"
 
   kubectl -n "${NAMESPACE}" cp "${prep_script}" "${CTA_RMCD_POD}:${remote_script}" -c cta-rmcd
-  rmcd_exec bash "${remote_script}" "${device}"
+  rmcd_exec bash "${remote_script}" "${device}" /dev/smc "${drive_index}"
 
   wait_for_drive_ready 30
   reload_loaded_tape
@@ -216,13 +189,11 @@ if (( ${#TAPED_PODS[@]} == 0 )); then
   exit 1
 fi
 
-# Resolve which /dev/nstX corresponds to drive element 0.
-device=$(resolve_device_for_drive0_slot "${test_slot}")
+select_taped_drive
+echo "Selected taped pod: ${CTA_TAPED_POD}; device ${device}; changer drive ${drive_index}"
 
-# Select the taped pod that actually owns that device
-CTA_TAPED_POD=$(select_taped_pod_for_device "${device}")
-
-echo "Selected taped pod: ${CTA_TAPED_POD}"
+unload_all_loaded_drives
+verify_slot_full "${test_slot}"
 
 echo "Installing cta systest rpms in ${CTA_TAPED_POD}..."
 taped_exec bash -c "dnf -y install cta-integrationtests"

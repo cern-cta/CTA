@@ -11,10 +11,13 @@ git lfs install --skip-repo
 git clone https://gitlab.desy.de/mwai.karimi/osm-mhvtl.git /osm-mhvtl
 
 device="$1"
+changer="${2:-/dev/smc}"
+drive_index="${3:-0}"
+
 # Load tape in a tapedrive
-mtx -f /dev/smc status
-mtx -f /dev/smc load 1 0
-mtx -f /dev/smc status
+mtx -f "${changer}" status
+mtx -f "${changer}" load 1 "${drive_index}"
+mtx -f "${changer}" status
 
 # Get the device status where the tape is loaded and rewind it.
 mt -f ${device} status
