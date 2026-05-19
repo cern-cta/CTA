@@ -71,7 +71,7 @@ PostgresCatalogue::createAndPopulateTempTableArchiveFileIds(rdbms::Conn& conn,
                                                             const std::list<uint64_t>& archiveFileIds) const {
   const std::string tempTableName = "TEMP_ARCHIVE_FILE_IDS";
 
-  std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(ARCHIVE_FILE_ID_NUMERIC(20, 0))";
+  std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(ARCHIVE_FILE_ID NUMERIC(20, 0))";
   try {
     conn.executeNonQuery(sql);
   } catch (exception::Exception&) {

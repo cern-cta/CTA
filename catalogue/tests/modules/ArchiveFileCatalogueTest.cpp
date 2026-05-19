@@ -5573,4 +5573,82 @@ TEST_P(cta_catalogue_ArchiveFileTest, getTapesWithMissingTapeFileCopies) {
   }
 }
 
+TEST_P(cta_catalogue_ArchiveFileTest, modifyArchiveFileStorageClassId_many_archive_files) {
+  const bool logicalLibraryIsDisabled = false;
+  const uint64_t nbPartialTapes = 2;
+  const std::string encryptionKeyName = "encryption_key_name";
+  const std::vector<std::string> supply;
+  const std::string diskInstance = m_diskInstance.name;
+  std::optional<std::string> physicalLibraryName;
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
+
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
+
+  m_catalogue->Tape()->createTape(m_admin, m_tape1);
+
+  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
+  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassDualCopy);
+
+  constexpr uint64_t nbArchiveFiles = 501;
+
+  std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
+  std::list<uint64_t> archiveFileIds;
+
+  for (uint64_t i = 0; i < nbArchiveFiles; ++i) {
+    const uint64_t archiveFileId = 1000 + i;
+
+    archiveFileIds.push_back(archiveFileId);
+
+    auto fileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto& fileWritten = *fileWrittenUP;
+
+    fileWritten.archiveFileId = archiveFileId;
+    fileWritten.diskInstance = diskInstance;
+    fileWritten.diskFileId = std::to_string(5000 + i);
+
+    fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+    fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+    fileWritten.size = 1;
+
+    fileWritten.checksumBlob.insert(cta::checksum::ADLER32, "1234");
+
+    fileWritten.storageClassName = m_storageClassSingleCopy.name;
+
+    fileWritten.vid = m_tape1.vid;
+    fileWritten.fSeq = i + 1;
+    fileWritten.blockId = 4321 + i;
+    fileWritten.copyNb = 1;
+    fileWritten.tapeDrive = "tape_drive";
+
+    fileWrittenSet.insert(fileWrittenUP.release());
+  }
+
+  m_catalogue->TapeFile()->filesWrittenToTape(fileWrittenSet);
+
+  m_catalogue->ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileIds, m_storageClassDualCopy.name);
+
+  for (const auto archiveFileId : archiveFileIds) {
+    const auto archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+
+    ASSERT_EQ(m_storageClassDualCopy.name, archiveFile.storageClass);
+  }
+}
+
 }  // namespace unitTests
