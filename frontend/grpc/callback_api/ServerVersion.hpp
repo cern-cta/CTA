@@ -7,7 +7,7 @@
 #include "catalogue/SchemaVersion.hpp"
 #include "common/dataStructures/LabelFormatSerDeser.hpp"
 #include "frontend/common/Version.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <catalogue/Catalogue.hpp>
 #include <grpcpp/grpcpp.h>

@@ -21,7 +21,7 @@
 #include "health/HealthServer.hpp"
 #include "signals/SignalReactor.hpp"
 #include "signals/SignalReactorBuilder.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <concepts>
 #include <signal.h>

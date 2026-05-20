@@ -6,7 +6,7 @@
 #include "CtaFrontendApi.hpp"
 #include "common/CmdLineArgs.hpp"
 #include "common/exception/CommandLineNotParsed.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <XrdSsiPbLog.hpp>
 #include <algorithm>

@@ -52,6 +52,20 @@ endif(DEFINED VCS_VERSION)
 
 message(STATUS "CTA version is ${CTA_VERSION}-${CTA_RELEASE}")
 
+configure_file(
+  ${PROJECT_SOURCE_DIR}/version.cpp.in
+  ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+  @ONLY
+)
+
+# Create a library target for versioning so that we can link against it where needed instead of manually adding the cpp file everywhere
+add_library(ctaversioninfo STATIC
+  ${PROJECT_SOURCE_DIR}/version.hpp
+  ${CMAKE_CURRENT_BINARY_DIR}/version.cpp
+)
+
+target_include_directories(ctaversioninfo PUBLIC ${PROJECT_SOURCE_DIR})
+
 # Shared library versioning
 set(CTA_LIBVERSION ${CTA_SOMAJOR}.${CTA_SOMINOR}.${CTA_SOPATCH})
 message(STATUS "CTA shared object version is ${CTA_LIBVERSION} (${CTA_SOVERSION})")

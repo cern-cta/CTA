@@ -8,7 +8,7 @@
 #include "common/config/Config.hpp"
 #include "common/log/FileLogger.hpp"
 #include "tools/CtaAdminParsedCmd.hpp"
-#include "version.h"
+#include "version.hpp"
 
 #include <grpcpp/grpcpp.h>
 

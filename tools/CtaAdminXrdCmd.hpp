@@ -6,7 +6,7 @@
 #pragma once
 
 #include "CtaAdminParsedCmd.hpp"
-#include "version.h"
+#include "version.hpp"
 
 namespace cta::admin {
 

@@ -17,7 +17,7 @@ set(CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 # following:
 #
 #   ClientSimulator.hpp:65: error: ISO C++ prohibits anonymous structs
-set(CMAKE_CXX_FLAGS "-fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pedantic -Wall -Wextra -Werror -Wno-unused-parameter -fstack-protector-all")
 #
 # A maximalist error checking parameter combo has been suggested by S. Ponce and D. Come:
 # to be tested (note that a lot of these are already covered by Wall and Wextra; additionally not all of them are useful or valid)
@@ -195,9 +195,6 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory(tools)
   add_subdirectory(cta-release)
 
-  #Generate version information
-  configure_file(${PROJECT_SOURCE_DIR}/version.hpp.in
-    ${CMAKE_BINARY_DIR}/version.h)
 ENDIF(DEFINED PackageOnly)
 
 ################################################################################
@@ -213,7 +210,9 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
   # Note that not ignoring build folders within the repository here will cause cpack to take longer and longer
   # as it is trying to pack the build directory as well
   set(CPACK_SOURCE_IGNORE_FILES
-    "/.git/"
+    # Ignore any file or directory starting with a dot
+    # This is important for e.g. the caching directories in the gitlab CI
+    "/[.]"
     "/ci/system_tests"
     "/ci/orchestration"
     "/build_srpm/"
