@@ -11,7 +11,7 @@ git lfs install --skip-repo
 git clone https://github.com/LTrestka/ens-mhvtl.git /ens-mhvtl
 
 ens_mhvtl_root="/ens-mhvtl"
-layout_dir="${ens_mhvtl_root}/enstorelarge/FL1587"
+layout_dir="${ens_mhvtl_root}/enstorelarge/FL1587_f1"
 device="$1"
 changer="${2:-/dev/smc}"
 drive_index="${3:-0}"
@@ -35,7 +35,32 @@ wait_for_device_ready() {
   done
 }
 
-for segment in L1 L2 file1 file2; do
+write_tape_file() {
+  local input_path="$1"
+  local block_size="$2"
+  local description="$3"
+  local rc=1
+
+  wait_for_device_ready "${device}" || exit 1
+  for attempt in {1..5}; do
+    if dd if="${input_path}" of="${device}" bs="${block_size}"; then
+      return 0
+    fi
+    rc=$?
+    echo "Failed to write ${description} to ${device} (attempt ${attempt}/5), waiting for mhvtl to settle" >&2
+    sleep 2
+    wait_for_device_ready "${device}" || true
+  done
+  return "${rc}"
+}
+
+write_filemark() {
+  mt -f "${device}" weof
+  sleep 2
+  wait_for_device_ready "${device}" || exit 1
+}
+
+for segment in vol1_FL1587.bin fseq1_header.bin fseq1_payload.bin fseq1_trailer.bin; do
   [[ -f "${layout_dir}/${segment}" ]] || {
     echo "Missing layout segment: ${layout_dir}/${segment}" >&2
     exit 1
@@ -53,17 +78,16 @@ wait_for_device_ready "${device}" || exit 1
 mt -f ${device} rewind
 wait_for_device_ready "${device}" || exit 1
 
-# Write EnstoreLarge logical segments in deterministic order:
-# label file (L1) then data file (L2 + payload segments).
-wait_for_device_ready "${device}" || exit 1
-dd if="${layout_dir}/L1" of="${device}" bs=80
-mt -f $device weof
-wait_for_device_ready "${device}" || exit 1
-dd if="${layout_dir}/L2" of="${device}" bs=80
-dd if="${layout_dir}/file1" of="${device}" bs=262144
-dd if="${layout_dir}/file2" of="${device}" bs=262144
-
-mt -f $device weof
+# Write EnstoreLarge logical files in deterministic order:
+# VOL1, file header, payload, trailer, each separated by a filemark.
+write_tape_file "${layout_dir}/vol1_FL1587.bin" 80 "EnstoreLarge VOL1 label"
+write_filemark
+write_tape_file "${layout_dir}/fseq1_header.bin" 262144 "EnstoreLarge file header"
+write_filemark
+write_tape_file "${layout_dir}/fseq1_payload.bin" 262144 "EnstoreLarge payload"
+write_filemark
+write_tape_file "${layout_dir}/fseq1_trailer.bin" 262144 "EnstoreLarge trailer"
+write_filemark
 
 wait_for_device_ready "$device" || exit 1
 mt -f $device rewind
