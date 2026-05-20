@@ -45,33 +45,6 @@ static void ObserveSessionState(opentelemetry::metrics::ObserverResult observer_
   }
 }
 
-static void ObserveMountId(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
-  // Recover the object pointer
-  const auto driveSessionTracker = static_cast<DriveSessionTracker*>(state);
-  if (!driveSessionTracker) {
-    return;
-  }
-
-  const auto optionalTapeDrive = driveSessionTracker->getCurrentDriveState();
-  if (!optionalTapeDrive.has_value()) {
-    return;
-  }
-  const auto actualDriveState = optionalTapeDrive.value();
-  const auto sessionId = actualDriveState.sessionId;
-  if (sessionId.has_value()) {
-    uint64_t mountId = sessionId.value();
-    if (std::holds_alternative<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result)) {
-      auto typed_observer =
-        std::get<std::shared_ptr<opentelemetry::metrics::ObserverResultT<int64_t>>>(observer_result);
-      typed_observer->Observe(
-        mountId,
-        {
-          {semconv::attr::kTapeDriveName, driveSessionTracker->getDriveName()}  // label for this drive
-      });
-    }
-  }
-}
-
 static void ObserveMountType(opentelemetry::metrics::ObserverResult observer_result, void* state) noexcept {
   // Recover the object pointer
   const auto driveSessionTracker = static_cast<DriveSessionTracker*>(state);
@@ -110,13 +83,11 @@ DriveSessionTracker::DriveSessionTracker(std::shared_ptr<catalogue::Catalogue> c
       m_driveName(driveName) {
   telemetry::metrics::CtaTapedDriveStatus->AddCallback(ObserveSessionState, this);
   telemetry::metrics::ctaTapedMountType->AddCallback(ObserveMountType, this);
-  telemetry::metrics::ctaTapedMountId->AddCallback(ObserveMountId, this);
 }
 
 DriveSessionTracker::~DriveSessionTracker() {
   telemetry::metrics::CtaTapedDriveStatus->RemoveCallback(ObserveSessionState, this);
   telemetry::metrics::ctaTapedMountType->RemoveCallback(ObserveMountType, this);
-  telemetry::metrics::ctaTapedMountId->RemoveCallback(ObserveMountId, this);
 }
 
 std::optional<common::dataStructures::MountType> DriveSessionTracker::getCurrentMountType() const {

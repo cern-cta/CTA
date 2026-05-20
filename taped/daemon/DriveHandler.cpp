@@ -650,7 +650,6 @@ int DriveHandler::runChild() {
   // Needs to be done after the catalogue initialization
   [[maybe_unused]] castor::tape::tapeserver::daemon::DriveSessionTracker driveSessionTracker(m_catalogue,
                                                                                              driveInfo.driveName);
-
   // Before launching the transfer session, we validate that the scheduler is reachable.
   m_lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
   if (!schedulerPing(scheduler.get(), driveHandlerProxy.get())) {
@@ -781,6 +780,7 @@ int DriveHandler::runChild() {
   driveHandlerProxy->setRefreshLoggerHandler([this]() { m_processManager.logContext().logger().refresh(); });
 
   resetLogParams(driveHandlerProxy.get());
+
   auto ret = executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
 
   return ret;
