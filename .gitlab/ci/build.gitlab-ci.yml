@@ -155,12 +155,12 @@ build-cta-rpms-pgsched:
     SKIP_UNIT_TESTS: "TRUE"
     ENABLE_CCACHE: "FALSE"
     RPM_SIZE_METRICS_ID: "relwithdebinfo_pgsched_no_cache"
-  cache: [] # Explicitly disable the cache
   # Disable artifacts
   artifacts:
     paths: []
     reports:
       metrics: []
+  cache: [] # Explicitly disable the cache
 
 build-cta-rpms-debug:
   extends:
@@ -175,12 +175,12 @@ build-cta-rpms-debug:
     CMAKE_BUILD_TYPE: "Debug"
     RPM_SIZE_METRICS_ID: "debug_no_cache"
     ENABLE_CCACHE: "FALSE"
-  cache: [] # Explicitly disable the cache
   # Disable artifacts
   artifacts:
     paths: []
     reports:
       metrics: []
+  cache: [] # Explicitly disable the cache
 
 reset-ccache:
   allow_failure: true
