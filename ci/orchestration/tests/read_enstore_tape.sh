@@ -44,6 +44,8 @@ write_tape_file() {
   wait_for_device_ready "${device}" || exit 1
   for attempt in {1..5}; do
     if dd if="${input_path}" of="${device}" bs="${block_size}"; then
+      sleep 2
+      wait_for_device_ready "${device}" || exit 1
       return 0
     fi
     rc=$?
@@ -52,12 +54,6 @@ write_tape_file() {
     wait_for_device_ready "${device}" || true
   done
   return "${rc}"
-}
-
-write_filemark() {
-  mt -f "${device}" weof
-  sleep 2
-  wait_for_device_ready "${device}" || exit 1
 }
 
 for segment in vol1_FL1212.bin fseq1_payload.bin; do
@@ -80,9 +76,7 @@ wait_for_device_ready "${device}" || exit 1
 
 # Write Enstore label and payload to tape.
 write_tape_file "${layout_dir}/vol1_FL1212.bin" 80 "Enstore VOL1 label"
-write_filemark
 write_tape_file "${layout_dir}/fseq1_payload.bin" 1048576 "Enstore payload"
-write_filemark
 
 wait_for_device_ready "$device" || exit 1
 mt -f $device rewind

@@ -41,6 +41,24 @@ exit 1
 "
 }
 
+wait_for_drive_readable() {
+  local timeout_seconds="${1:-30}"
+  echo "Waiting for tape device ${device} to become readable (timeout ${timeout_seconds}s)..."
+  taped_exec bash -c "
+for i in \$(seq 1 ${timeout_seconds}); do
+  if mt -f '${device}' rewind >/dev/null 2>&1 &&
+     dd if='${device}' of=/dev/null bs=262144 count=1 >/dev/null 2>&1 &&
+     mt -f '${device}' rewind >/dev/null 2>&1; then
+    exit 0
+  fi
+  sleep 1
+done
+echo 'Tape device still not readable after ${timeout_seconds}s' >&2
+mt -f '${device}' status || true
+exit 1
+"
+}
+
 unload_all_loaded_drives() {
   local status
   status=$(rmcd_exec mtx -f /dev/smc status)
@@ -131,7 +149,7 @@ run_tape_format_test() {
 
   wait_for_drive_ready 30
   reload_loaded_tape
-  wait_for_drive_ready 30
+  wait_for_drive_readable 30
 
   taped_exec "${reader_test}" "${device_name}" "${device}"
 }

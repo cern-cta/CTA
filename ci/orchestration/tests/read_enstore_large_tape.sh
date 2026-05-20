@@ -44,6 +44,8 @@ write_tape_file() {
   wait_for_device_ready "${device}" || exit 1
   for attempt in {1..5}; do
     if dd if="${input_path}" of="${device}" bs="${block_size}"; then
+      sleep 2
+      wait_for_device_ready "${device}" || exit 1
       return 0
     fi
     rc=$?
@@ -52,12 +54,6 @@ write_tape_file() {
     wait_for_device_ready "${device}" || true
   done
   return "${rc}"
-}
-
-write_filemark() {
-  mt -f "${device}" weof
-  sleep 2
-  wait_for_device_ready "${device}" || exit 1
 }
 
 for segment in vol1_FL1587.bin fseq1_header.bin fseq1_payload.bin fseq1_trailer.bin; do
@@ -78,16 +74,12 @@ wait_for_device_ready "${device}" || exit 1
 mt -f ${device} rewind
 wait_for_device_ready "${device}" || exit 1
 
-# Write EnstoreLarge logical files in deterministic order:
-# VOL1, file header, payload, trailer, each separated by a filemark.
+# Write EnstoreLarge logical files in deterministic order. Closing /dev/nst*
+# after each dd writes the filemark between tape files.
 write_tape_file "${layout_dir}/vol1_FL1587.bin" 80 "EnstoreLarge VOL1 label"
-write_filemark
 write_tape_file "${layout_dir}/fseq1_header.bin" 262144 "EnstoreLarge file header"
-write_filemark
 write_tape_file "${layout_dir}/fseq1_payload.bin" 262144 "EnstoreLarge payload"
-write_filemark
 write_tape_file "${layout_dir}/fseq1_trailer.bin" 262144 "EnstoreLarge trailer"
-write_filemark
 
 wait_for_device_ready "$device" || exit 1
 mt -f $device rewind
