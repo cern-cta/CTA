@@ -66,6 +66,10 @@ build-cta-rpms:
     - ccache --zero-stats
     - echo "CCache enabled ${ENABLE_CCACHE}"
     - echo "CCache policy ${BUILD_CACHE_POLICY}"
+    - echo "$CACHE_BRANCH"
+    - echo "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME"
+    - echo "$CI_COMMIT_BRANCH"
+    - echo "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_BRANCH}"
   script:
     # SRPMS
     - ./ci/build/build_srpm.sh --build-dir build_srpm
