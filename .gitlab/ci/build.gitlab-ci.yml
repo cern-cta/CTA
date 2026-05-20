@@ -26,25 +26,20 @@ build-cta-rpms:
         # To be safe, all files in all sub-directories
         # Once we have a src/ directory, we can be a bit more specific without having to specify a long list here
         - '*/**/*'
-      variables:
-        CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
       when: on_success
     # If only "trivial" changes were done and we are in a MR, set this job to manual
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: manual
       allow_failure: true  # Ensures the pipeline counts as "passed" instead of "blocked"
-      variables:
-        CACHE_BRANCH: '$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME'
     # Ensure we cover any other cases that might trigger this
     - when: on_success
-      variables:
-        CACHE_BRANCH: '$CI_COMMIT_BRANCH'
   image: $IMAGE_BUILD
   variables:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     RPM_SIZE_METRICS_ID: "relwithdebinfo" # Default build is a relwithdebinfo build
+    CACHE_BRANCH: ${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-$CI_COMMIT_BRANCH}
     # Will only be used if ccache is enabled
     CCACHE_BASEDIR: "/builds/cta"
     CCACHE_NOHASHDIR: "true"
