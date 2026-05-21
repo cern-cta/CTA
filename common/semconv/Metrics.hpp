@@ -139,8 +139,7 @@ static constexpr const char* descrCtaTapedMountType = "Number of drive sessions 
 static constexpr const char* unitCtaTapedMountType = "1";
 
 static constexpr const char* kMetricCtaTapedMountAttempt = "cta.taped.mount.attempt";
-static constexpr const char* descrCtaTapedMountAttempt =
-  "Number of attempts to mount a tape";
+static constexpr const char* descrCtaTapedMountAttempt = "Number of attempts to mount a tape";
 static constexpr const char* unitCtaTapedMountAttempt = "1";
 
 static constexpr const char* kMetricCtaTapedDriveStatus = "cta.taped.drive.status";
