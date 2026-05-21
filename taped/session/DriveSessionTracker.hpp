@@ -29,7 +29,6 @@ public:
 
   std::optional<cta::common::dataStructures::MountType> getCurrentMountType() const;
   std::optional<cta::common::dataStructures::DriveStatus> getCurrentDriveStatus() const;
-  std::optional<cta::common::dataStructures::TapeDrive> getCurrentDriveState() const;
   const std::string& getDriveName() const;
 
 private:

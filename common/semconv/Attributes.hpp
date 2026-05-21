@@ -27,6 +27,7 @@ static constexpr const char* kState = "state";
 static constexpr const char* kLockType = "lock.type";
 
 static constexpr const char* kDbSystemName = "db.system.name";
+static constexpr const char* kDbOperationName = "db.operation.name";
 static constexpr const char* kDbNamespace = "db.namespace";
 static constexpr const char* kDbQuerySummary = "db.query.summary";
 
@@ -118,5 +119,10 @@ static constexpr const char* kOracle = "oracle";
 static constexpr const char* kPostgres = "postgres";
 static constexpr const char* kSqlite = "sqlite";
 }  // namespace DbSystemNameValues
+
+namespace DbOperationNameValues {
+static constexpr const char* kTransaction = "TRANSACTION";
+static constexpr const char* kCommit = "COMMIT";
+}  // namespace DbOperationNameValues
 
 }  // namespace cta::semconv::attr
