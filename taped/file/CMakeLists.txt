@@ -55,6 +55,7 @@ add_library(ctatapedfileunittests SHARED
   StructuresTest.cpp
   FileTest.cpp
   OSMFileTest.cpp
+  EnstoreFileTest.cpp
 )
 
 target_link_libraries(ctatapedfileunittests
@@ -77,3 +78,15 @@ target_link_libraries(cta-osmReaderTest
 )
 
 install(TARGETS cta-osmReaderTest DESTINATION usr/bin)
+
+add_executable(cta-enstoreLargeReaderTest
+  EnstoreLargeReaderTest.cpp)
+
+target_link_libraries(cta-enstoreLargeReaderTest
+  ctacommon
+  ctatapedsession
+  ctatapedfile
+  gtest
+)
+
+install(TARGETS cta-enstoreLargeReaderTest DESTINATION usr/bin)

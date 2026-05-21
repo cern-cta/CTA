@@ -282,12 +282,17 @@ test-catalogue-schema-update:
 
 test-external-tape-formats:
   extends:
-    - .kubernetes-test-python
+    - .kubernetes-test
   stage: system-test
   rules:
     - !reference [.manual-rules, rules]
   variables:
-    PYTESTS: "tests/external_tape_formats_test.py"
+    TEST_SCRIPT: "tests/test_external_tape_formats.sh"
+    EXTRA_RUN_ARGS: "--test-timeout 2400"
+  resource_group: external-tape-formats-mhvtl
+  parallel:
+    matrix:
+      - EXTRA_TEST_ARGS: ["-f osm", "-f enstore", "-f enstore-large"]
 
 test-regression-dCache:
   extends:
