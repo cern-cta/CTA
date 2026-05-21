@@ -23,7 +23,7 @@ usage() {
   echo "      --clean-build-dir:                Empties the build directory, ensuring a fresh build from scratch."
   echo "      --create-build-dir                Creates the build directory if it does not exist."
   echo "      --oracle-support <ON/OFF>:        When set to OFF, will disable Oracle support. Oracle support is enabled by default."
-  echo "      --perf-telemetry                  Compile with telemetry instrumentation for performance measurements."
+  echo "      --extra-telemetry                  Compile with telemetry instrumentation for performance measurements."
   echo
   exit 1
 }
@@ -42,7 +42,7 @@ build_srpm() {
   local num_jobs=$(nproc --ignore=2)
   local oracle_support=true
   local cmake_build_type=""
-  local perf_telemetry=false
+  local extra_telemetry=false
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
@@ -67,7 +67,7 @@ build_srpm() {
         error_usage "--build-generator requires an argument"
       fi
       ;;
-    --perf-telemetry) perf_telemetry=true ;;
+    --extra-telemetry) extra_telemetry=true ;;
     --clean-build-dir) clean_build_dir=true ;;
     --create-build-dir) create_build_dir=true ;;
     --cta-version)
@@ -188,7 +188,7 @@ build_srpm() {
     cmake_options+=" -D DISABLE_ORACLE_SUPPORT:BOOL=OFF"
   fi
 
-  if [[ ${perf_telemetry} = true ]]; then
+  if [[ ${extra_telemetry} = true ]]; then
       echo "Building with telemetry instrumentation for performance measurements."
       cmake_options+=" -D CTA_USE_PERF_TELEMETRY:BOOL=TRUE"
   fi

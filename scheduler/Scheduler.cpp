@@ -2420,14 +2420,14 @@ std::unique_ptr<TapeMount> Scheduler::getNextMount(const std::string& logicalLib
     tteltime,
     {
       {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
-      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kAll     }
+      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kMount     }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   cta::telemetry::metrics::ctaSchedulerOperationJobCount->Add(
     totalJobCount,
     {
       {cta::semconv::attr::kSchedulerOperationName,     cta::semconv::attr::SchedulerOperationNameValues::kGetNextMount},
-      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kAll     }
+      {cta::semconv::attr::kSchedulerOperationWorkflow, cta::semconv::attr::SchedulerOperationWorkflowValues::kMount     }
   },
     opentelemetry::context::RuntimeContext::GetCurrent());
   schedulerDbTime = getMountInfoTime + queueTrimingTime + mountCreationTime + driveStatusSetTime;

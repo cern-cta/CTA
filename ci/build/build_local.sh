@@ -27,7 +27,7 @@ usage() {
   echo "      --skip-srpms:                     Skips the building of the SRPMs."
   echo "      --install <platform>:             Installs the required yum packages for the given platform."
   echo "      --scheduler-type <type>:          The scheduler type. Ex: objectstore."
-  echo "      --perf-telemetry:                 Compile with performance metric instrumentation for stress test measurements."
+  echo "      --extra-telemetry:                 Compile with performance metric instrumentation for stress test measurements."
   echo
   exit 1
 }
@@ -48,7 +48,7 @@ build_local() {
   local enable_ccache=true
   local install=false
   local install_platform=""
-  local perf_telemetry=false
+  local extra_telemetry=false
 
   # Defaults
   local num_jobs=8
@@ -69,7 +69,7 @@ build_local() {
       --skip-unit-tests) skip_unit_tests=true ;;
       --skip-debug-packages) skip_debug_packages=true ;;
       --skip-srpms) skip_srpms=true ;;
-      --perf-telemetry) perf_telemetry=true ;;
+      --extra-telemetry) extra_telemetry=true ;;
       --install)
         if [[ $# -gt 1 ]]; then
           install_platform="$2"
@@ -121,8 +121,8 @@ build_local() {
     if [[ ${clean_build_dirs} = true ]]; then
       build_srpm_flags+=" --clean-build-dir"
     fi
-    if [[ "${perf_telemetry}" = true ]]; then
-      build_srpm_flags+=" --perf-telemetry"
+    if [[ "${extra_telemetry}" = true ]]; then
+      build_srpm_flags+=" --extra-telemetry"
     fi
     if [[ ${install} = true ]]; then
       if [[ ${install_platform} == "el9" ]]; then
@@ -171,8 +171,8 @@ build_local() {
     build_rpm_flags+=" --enable-ccache"
   fi
 
-  if [[ "${perf_telemetry}" = true ]]; then
-      build_rpm_flags+=" --perf-telemetry"
+  if [[ "${extra_telemetry}" = true ]]; then
+      build_rpm_flags+=" --extra-telemetry"
   fi
 
   echo "Building RPMs..."

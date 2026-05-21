@@ -56,7 +56,7 @@ usage() {
   echo "      --publish-telemetry:              Publishes telemetry to a pre-configured central observability backend."
   echo "      --deploy-namespace <namespace>:   Deploy the CTA instance in a given namespace. Defaults to dev."
   echo "      --no-setup:                       Skip the setup scripts in create_instance.sh (required for the new Python tests)."
-  echo "      --perf-telemetry:                 Compile with performance metric instrumentation for stress test measurements."
+  echo "      --extra-telemetry:                 Compile with performance metric instrumentation for stress test measurements."
   exit 1
 }
 
@@ -110,7 +110,7 @@ build_deploy() {
   local eos_enabled=true
   local dcache_enabled=false
   local enable_address_sanitizer=false
-  local perf_telemetry=false
+  local extra_telemetry=false
 
 
   # Parse command line arguments
@@ -142,7 +142,7 @@ build_deploy() {
     --publish-telemetry) publish_telemetry=true ;;
     --no-setup) no_setup=true ;;
     --enable-address-sanitizer) enable_address_sanitizer=true ;;
-    --perf-telemetry) perf_telemetry=true ;;
+    --extra-telemetry) extra_telemetry=true ;;
     --eos-image-repository)
       if [[ $# -gt 1 ]]; then
         eos_image_repository="$2"
@@ -316,8 +316,8 @@ build_deploy() {
         build_srpm_flags+=" --clean-build-dir"
       fi
 
-      if [[ "${perf_telemetry}" = true ]]; then
-        build_srpm_flags+=" --perf-telemetry"
+      if [[ "${extra_telemetry}" = true ]]; then
+        build_srpm_flags+=" --extra-telemetry"
       fi
 
       # shellcheck disable=SC2086
@@ -369,8 +369,8 @@ build_deploy() {
       build_rpm_flags+=" --enable-address-sanitizer"
     fi
 
-    if [[ "${perf_telemetry}" = true ]]; then
-      build_rpm_flags+=" --perf-telemetry"
+    if [[ "${extra_telemetry}" = true ]]; then
+      build_rpm_flags+=" --extra-telemetry"
     fi
 
     print_header "BUILDING RPMS"
