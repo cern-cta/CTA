@@ -45,10 +45,10 @@ static constexpr const char* descrDbClientOperationDuration = "Duration of datab
 static constexpr const char* unitDbClientOperationDuration = "ms";
 
 // See https://opentelemetry.io/docs/specs/semconv/db/database-metrics/#metric-dbclientresponsereturned_rows
-static constexpr const char* kMetricDbClientOperationReturnedRows = "db.client.operation.returned_rows";
-static constexpr const char* descrDbClientOperationReturnedRows =
+static constexpr const char* kMetricDbClientResponseReturnedRows = "db.client.response.returned_rows";
+static constexpr const char* descrDbClientResponseReturnedRows =
   "The actual number of records returned by the database operation.";
-static constexpr const char* unitDbClientOperationReturnedRows = "1";
+static constexpr const char* unitDbClientResponseReturnedRows = "1";
 
 // See https://opentelemetry.io/docs/specs/semconv/database/database-metrics/#metric-dbclientconnectioncount
 static constexpr const char* kMetricDbClientConnectionCount = "db.client.connection.count";
