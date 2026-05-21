@@ -98,10 +98,6 @@ std::optional<common::dataStructures::DriveStatus> DriveSessionTracker::getCurre
   return m_catalogue->DriveState()->getTapeDriveStatus(m_driveName);
 }
 
-std::optional<common::dataStructures::TapeDrive> DriveSessionTracker::getCurrentDriveState() const {
-  return m_catalogue->DriveState()->getTapeDrive(m_driveName);
-}
-
 const std::string& DriveSessionTracker::getDriveName() const {
   return m_driveName;
 }

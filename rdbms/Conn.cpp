@@ -139,17 +139,19 @@ void Conn::commit() {
       cta::telemetry::metrics::dbClientOperationDuration->Record(
         duration,
         {
-          {cta::semconv::attr::kDbSystemName,   m_pool->m_connFactory->getDbSystemName()},
-          {cta::semconv::attr::kDbNamespace,    m_pool->m_connFactory->getDbNamespace() },
-          {cta::semconv::attr::kDbQuerySummary, m_querySummary                          }
+          {cta::semconv::attr::kDbSystemName,    m_pool->m_connFactory->getDbSystemName()          },
+          {cta::semconv::attr::kDbNamespace,     m_pool->m_connFactory->getDbNamespace()           },
+          {cta::semconv::attr::kDbQuerySummary,  m_querySummary                                    },
+          {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kCommit}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
       cta::telemetry::metrics::dbClientOperationReturnedRows->Record(
         m_rowCount,
         {
-          {cta::semconv::attr::kDbSystemName,   m_pool->m_connFactory->getDbSystemName()},
-          {cta::semconv::attr::kDbNamespace,    m_pool->m_connFactory->getDbNamespace() },
-          {cta::semconv::attr::kDbQuerySummary, m_querySummary                          }
+          {cta::semconv::attr::kDbSystemName,    m_pool->m_connFactory->getDbSystemName()          },
+          {cta::semconv::attr::kDbNamespace,     m_pool->m_connFactory->getDbNamespace()           },
+          {cta::semconv::attr::kDbQuerySummary,  m_querySummary                                    },
+          {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kCommit}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
     }
