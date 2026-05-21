@@ -23,6 +23,7 @@
 #include "common/log/Logger.hpp"
 #include "common/process/ProcessCap.hpp"
 #include "common/process/threading/System.hpp"
+#include "common/semconv/Attributes.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/rao/RAOParams.hpp"
@@ -163,7 +164,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
       if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
         cta::telemetry::metrics::ctaTapedMountAttempt->Add(1,
                                                            {
-                                                             {semconv::attr::kTapeDriveName, m_driveConfig.unitName}
+                                                             {cta::semconv::attr::kTapeDriveName, m_driveConfig.unitName}
         });
 
         tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary,
