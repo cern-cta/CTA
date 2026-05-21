@@ -145,7 +145,7 @@ void Conn::commit() {
           {cta::semconv::attr::kDbOperationName, cta::semconv::attr::DbOperationNameValues::kCommit}
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
-      cta::telemetry::metrics::dbClientOperationReturnedRows->Record(
+      cta::telemetry::metrics::dbClientResponseReturnedRows->Record(
         m_rowCount,
         {
           {cta::semconv::attr::kDbSystemName,    m_pool->m_connFactory->getDbSystemName()          },

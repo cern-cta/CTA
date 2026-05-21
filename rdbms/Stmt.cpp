@@ -239,7 +239,7 @@ void Stmt::executeNonQuery() {
       },
         opentelemetry::context::RuntimeContext::GetCurrent());
       uint64_t nrows = m_stmt->getNbAffectedRows();
-      cta::telemetry::metrics::dbClientOperationReturnedRows->Record(
+      cta::telemetry::metrics::dbClientResponseReturnedRows->Record(
         nrows,
         {
           {cta::semconv::attr::kDbSystemName,    m_stmt->getDbSystemName()                              },
