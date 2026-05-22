@@ -59,4 +59,41 @@ OracleCatalogue::createAndPopulateTempTableFxid(rdbms::Conn& conn,
   return tempTableName;
 }
 
+std::string OracleCatalogue::createAndPopulateTempTableArchiveFileIds(rdbms::Conn& conn,
+                                                                      const std::list<uint64_t>& archiveFileIds) const {
+  const std::string tempTableName = "ORA$PTT_ARCHIVE_FILE_IDS";
+
+  conn.setAutocommitMode(rdbms::AutocommitMode::AUTOCOMMIT_OFF);
+  std::string sql = "CREATE PRIVATE TEMPORARY TABLE " + tempTableName + "(ARCHIVE_FILE_ID NUMERIC)";
+  conn.executeNonQuery(sql);
+
+  constexpr size_t maxBulkInsertSize = 500;
+
+  auto it = archiveFileIds.begin();
+
+  while (it != archiveFileIds.end()) {
+    std::string insertSql = "INSERT ALL ";
+
+    size_t i = 0;
+    auto chunkBegin = it;
+
+    for (; it != archiveFileIds.end() && i < maxBulkInsertSize; ++it, ++i) {
+      insertSql += "INTO " + tempTableName + " (ARCHIVE_FILE_ID) VALUES (:ARCHIVE_FILE_ID_" + std::to_string(i) + ") ";
+    }
+
+    insertSql += "SELECT 1 FROM DUAL";
+
+    auto stmt = conn.createStmt(insertSql);
+
+    i = 0;
+    for (auto bindIt = chunkBegin; bindIt != it; ++bindIt, ++i) {
+      stmt.bindUint64(":ARCHIVE_FILE_ID_" + std::to_string(i), *bindIt);
+    }
+
+    stmt.executeNonQuery();
+  }
+
+  return tempTableName;
+}
+
 }  // namespace cta::catalogue

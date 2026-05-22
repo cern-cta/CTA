@@ -100,12 +100,12 @@ common::dataStructures::ArchiveFile ArchiveFileCatalogueRetryWrapper::getArchive
     m_maxTriesToConnect);
 }
 
-void ArchiveFileCatalogueRetryWrapper::modifyArchiveFileStorageClassId(const uint64_t archiveFileId,
+void ArchiveFileCatalogueRetryWrapper::modifyArchiveFileStorageClassId(const std::list<uint64_t>& archiveFileIds,
                                                                        const std::string& newStorageClassName) const {
   return retryOnLostConnection(
     m_log,
-    [this, &archiveFileId, &newStorageClassName] {
-      return m_catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName);
+    [this, &archiveFileIds, &newStorageClassName] {
+      return m_catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileIds, newStorageClassName);
     },
     m_maxTriesToConnect);
 }

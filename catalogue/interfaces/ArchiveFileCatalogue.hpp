@@ -7,6 +7,7 @@
 
 #include "catalogue/TapeFileSearchCriteria.hpp"
 
+#include <list>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -149,7 +150,7 @@ public:
   * @param archiveFileId Id for file found in ARCHIVE_FILE
   * @param newStorageClassName The name of the storage class
   */
-  virtual void modifyArchiveFileStorageClassId(const uint64_t archiveFileId,
+  virtual void modifyArchiveFileStorageClassId(const std::list<uint64_t>& archiveFileIds,
                                                const std::string& newStorageClassName) const = 0;
 
   /**

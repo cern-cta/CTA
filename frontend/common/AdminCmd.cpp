@@ -1702,16 +1702,23 @@ void AdminCmd::processArchiveFile_Ch(xrd::Response& response) const {
 
     // call is from cta-change-storageclass
     if (newStorageClassName) {
+      std::list<uint64_t> archiveFileIdsUint64;
+
       for (const auto& id : archiveFileIds) {
-        const uint64_t archiveFileId = utils::toUint64(id);
-        m_catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileId, newStorageClassName.value());
+        archiveFileIdsUint64.push_back(utils::toUint64(id));
       }
+      m_catalogue.ArchiveFile()->modifyArchiveFileStorageClassId(archiveFileIdsUint64, *newStorageClassName);
     }
     // call is from cta-eos-namespace-inject
     else if (diskFileIdStr && diskInstance) {
-      m_catalogue.ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(utils::toUint64(archiveFileIds[0]),
-                                                                      diskFileIdStr.value(),
-                                                                      diskInstance.value());
+      if (archiveFileIds.size() != 1) {
+        throw exception::UserError(
+          "Exactly one archive file ID must be specified when using Disk File ID and Disk Instance");
+      }
+
+      m_catalogue.ArchiveFile()->modifyArchiveFileFxIdAndDiskInstance(utils::toUint64(archiveFileIds.front()),
+                                                                      *diskFileIdStr,
+                                                                      *diskInstance);
     } else {
       throw exception::UserError("Must specify either Storage Class or Disk File ID and Disk Instance");
     }

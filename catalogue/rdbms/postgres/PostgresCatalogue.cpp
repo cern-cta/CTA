@@ -66,4 +66,47 @@ PostgresCatalogue::createAndPopulateTempTableFxid(rdbms::Conn& conn,
   return tempTableName;
 }
 
+std::string
+PostgresCatalogue::createAndPopulateTempTableArchiveFileIds(rdbms::Conn& conn,
+                                                            const std::list<uint64_t>& archiveFileIds) const {
+  const std::string tempTableName = "TEMP_ARCHIVE_FILE_IDS";
+
+  std::string sql = "CREATE TEMPORARY TABLE " + tempTableName + "(ARCHIVE_FILE_ID NUMERIC(20, 0))";
+  try {
+    conn.executeNonQuery(sql);
+  } catch (exception::Exception&) {
+    std::string sql2 = "TRUNCATE TABLE " + tempTableName;
+    conn.executeNonQuery(sql2);
+  }
+
+  constexpr size_t maxBulkInsertSize = 500;
+
+  auto it = archiveFileIds.begin();
+
+  while (it != archiveFileIds.end()) {
+    std::string insertSql = "INSERT INTO " + tempTableName + " (ARCHIVE_FILE_ID) VALUES ";
+
+    size_t i = 0;
+    auto chunkBegin = it;
+
+    for (; it != archiveFileIds.end() && i < maxBulkInsertSize; ++it, ++i) {
+      if (i != 0) {
+        insertSql += ", ";
+      }
+      insertSql += "(:ARCHIVE_FILE_ID_" + std::to_string(i) + ")";
+    }
+
+    auto stmt = conn.createStmt(insertSql);
+
+    i = 0;
+    for (auto bindIt = chunkBegin; bindIt != it; ++bindIt, ++i) {
+      stmt.bindUint64(":ARCHIVE_FILE_ID_" + std::to_string(i), *bindIt);
+    }
+
+    stmt.executeNonQuery();
+  }
+
+  return tempTableName;
+}
+
 }  // namespace cta::catalogue

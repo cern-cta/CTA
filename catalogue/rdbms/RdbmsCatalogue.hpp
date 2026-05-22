@@ -121,6 +121,8 @@ protected:
   friend class RdbmsRequesterMountRuleCatalogue;
   friend class RdbmsRequesterGroupMountRuleCatalogue;
 
+  virtual std::string createAndPopulateTempTableArchiveFileIds(rdbms::Conn& conn,
+                                                               const std::list<uint64_t>& archiveFileIds) const = 0;
   /**
    * Cached versions of mount policies for specific user groups.
    */

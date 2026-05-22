@@ -7,6 +7,8 @@
 
 #include "catalogue/interfaces/ArchiveFileCatalogue.hpp"
 
+#include <list>
+
 namespace cta::catalogue {
 
 class DummyArchiveFileCatalogue : public ArchiveFileCatalogue {
@@ -39,7 +41,7 @@ public:
 
   common::dataStructures::ArchiveFile getArchiveFileById(const uint64_t id) const override;
 
-  void modifyArchiveFileStorageClassId(const uint64_t archiveFileId,
+  void modifyArchiveFileStorageClassId(const std::list<uint64_t>& archiveFileIds,
                                        const std::string& newStorageClassName) const override;
 
   void modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId,

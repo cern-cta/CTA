@@ -676,29 +676,35 @@ uint64_t RdbmsArchiveFileCatalogue::getExpectedNbArchiveRoutes(rdbms::Conn& conn
   return rset.columnUint64("NB_ROUTES");
 }
 
-void RdbmsArchiveFileCatalogue::modifyArchiveFileStorageClassId(const uint64_t archiveFileId,
+void RdbmsArchiveFileCatalogue::modifyArchiveFileStorageClassId(const std::list<uint64_t>& archiveFileIds,
                                                                 const std::string& newStorageClassName) const {
   auto conn = m_connPool->getConn();
   if (!RdbmsCatalogueUtils::storageClassExists(conn, newStorageClassName)) {
     exception::UserError ue;
-    ue.getMessage() << "Cannot modify archive file " << ": " << archiveFileId << " because storage class "
+    ue.getMessage() << "Cannot modify archive files because storage class "
                     << ":" << newStorageClassName << " does not exist";
     throw ue;
   }
 
-  const char* const sql = R"SQL(
+  const auto tempArchiveFileIdsTableName =
+    m_rdbmsCatalogue->createAndPopulateTempTableArchiveFileIds(conn, archiveFileIds);
+
+  const std::string sql = R"SQL(
     UPDATE ARCHIVE_FILE
     SET STORAGE_CLASS_ID = (
-      SELECT STORAGE_CLASS_ID FROM STORAGE_CLASS WHERE STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
+      SELECT STORAGE_CLASS_ID
+      FROM STORAGE_CLASS
+      WHERE STORAGE_CLASS_NAME = :STORAGE_CLASS_NAME
     )
-    WHERE
-      ARCHIVE_FILE.ARCHIVE_FILE_ID = :ARCHIVE_FILE_ID
+    WHERE ARCHIVE_FILE_ID IN (
+      SELECT ARCHIVE_FILE_ID FROM )SQL"
+                          + tempArchiveFileIdsTableName + R"SQL(
+    )
   )SQL";
 
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":STORAGE_CLASS_NAME", newStorageClassName);
-  stmt.bindUint64(":ARCHIVE_FILE_ID", archiveFileId);
-  auto rset = stmt.executeQuery();
+  stmt.executeNonQuery();
 }
 
 void RdbmsArchiveFileCatalogue::modifyArchiveFileFxIdAndDiskInstance(const uint64_t archiveId,

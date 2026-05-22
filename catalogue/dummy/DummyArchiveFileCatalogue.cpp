@@ -58,7 +58,7 @@ common::dataStructures::ArchiveFile DummyArchiveFileCatalogue::getArchiveFileByI
   throw exception::NotImplementedException();
 }
 
-void DummyArchiveFileCatalogue::modifyArchiveFileStorageClassId(const uint64_t archiveFileId,
+void DummyArchiveFileCatalogue::modifyArchiveFileStorageClassId(const std::list<uint64_t>& archiveFileIds,
                                                                 const std::string& newStorageClassName) const {
   throw exception::NotImplementedException();
 }
