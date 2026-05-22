@@ -172,7 +172,7 @@ upload_to_eos() {
   if [[ -n "${eos_source_dir}" ]]; then
     # Rely on xrootd to copy the files, inside EOS, with the provided cta-version
     xrdfs root://eoshome.cern.ch/ ls -R "${eos_source_dir}" \
-      | grep "${cta_version}" \
+      | grep "${cta_version}." \
       | sed "s|^${eos_source_dir}||" \
       | xargs -I {} xrdcp --force --recursive root://eoshome.cern.ch/"${eos_source_dir}"/{} root://eoshome.cern.ch/"${eos_target_dir}"/{} 2>&1 >/dev/null
     if [[ $? -ne 0 ]]; then
