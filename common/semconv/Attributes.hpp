@@ -101,7 +101,7 @@ static constexpr const char* kScopedExclusive = "exclusive";
 
 namespace SchedulerOperationNameValues {
 static constexpr const char* kSelectCatalogueDB =
-  "select_catalogue_db";  // happens during retrieve_queue_insert so not used for the moment
+  "select catalogue db";  // happens during retrieve queue insert so not used for the moment
 static constexpr const char* kEnqueue = "queue insert";
 static constexpr const char* kGetNextMount = "select work summary";
 static constexpr const char* kInsertForProcessing = "insert for processing";
