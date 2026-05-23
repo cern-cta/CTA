@@ -417,7 +417,8 @@ stress-test-python:
       fi
       if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
-        EXTRA_PYTEST_ARGS+=" --one-logical-library --test-config config/test_pgsched_params.toml"
+        EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
+        EXTRA_SPAWN_ARGS+=" --one-logical-library"
       fi
       if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
 
