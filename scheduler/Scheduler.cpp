@@ -218,7 +218,17 @@ std::string Scheduler::queueRetrieve(const std::string& instanceName,
   queueCriteria.archiveFile.diskFileInfo = request.diskFileInfo;
 
   auto diskSystemList = m_catalogue.DiskSystem()->getAllDiskSystems();
+  auto catalogueTimeMSecs = t.msecs();
   auto catalogueTime = t.secs(cta::utils::Timer::resetCounter);
+  cta::telemetry::metrics::ctaSchedulerOperationDuration->Record(
+    catalogueTimeMSecs,
+    {
+      {cta::semconv::attr::kSchedulerOperationName,
+       cta::semconv::attr::SchedulerOperationNameValues::kSelectCatalogueDB},
+      {cta::semconv::attr::kSchedulerOperationWorkflow,
+       cta::semconv::attr::SchedulerOperationWorkflowValues::kRetrieve     }
+  },
+    opentelemetry::context::RuntimeContext::GetCurrent());
   // By default, the scheduler makes its decision based on all available vids. But if a vid is specified in the protobuf,
   // ignore all the others.
   if (request.vid) {

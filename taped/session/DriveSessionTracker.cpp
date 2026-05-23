@@ -98,7 +98,4 @@ std::optional<common::dataStructures::DriveStatus> DriveSessionTracker::getCurre
   return m_catalogue->DriveState()->getTapeDriveStatus(m_driveName);
 }
 
-const std::string& DriveSessionTracker::getDriveName() const {
-  return m_driveName;
-}
 }  // namespace castor::tape::tapeserver::daemon
