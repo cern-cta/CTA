@@ -162,9 +162,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     nextMountTimeout = false;
     try {
       if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
-        cta::telemetry::metrics::ctaTapedMountAttempt->Add(1,
-                                                           {
-                                                             {cta::semconv::attr::kTapeDriveName, m_driveConfig.unitName}
+        cta::telemetry::metrics::ctaTapedMountAttempt->Add(
+          1,
+          {
+            {cta::semconv::attr::kTapeDriveName, m_driveConfig.unitName}
         });
 
         tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary,
