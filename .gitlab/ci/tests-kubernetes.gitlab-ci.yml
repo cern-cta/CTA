@@ -317,7 +317,7 @@ stress-test:
       extra_args=($EXTRA_ARGS)
       EXTRA_STRESS_TEST_OPTIONS=""
       if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
-        STRESS_CTA_VALUES_FILE= "presets/stress-cta-xrd-pgsched-values.yaml"
+        STRESS_CTA_VALUES_FILE="presets/stress-cta-xrd-pgsched-values.yaml"
       fi
       EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_FILE} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
       if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
@@ -396,7 +396,7 @@ stress-test-python:
   script:
     - |
       if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
-        STRESS_CTA_VALUES_FILE= "presets/stress-cta-xrd-pgsched-values.yaml"
+        STRESS_CTA_VALUES_FILE="presets/stress-cta-xrd-pgsched-values.yaml"
       fi
       EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_FILE} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
       if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
