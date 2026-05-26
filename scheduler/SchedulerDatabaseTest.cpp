@@ -574,6 +574,78 @@ TEST_P(SchedulerDatabaseTest, createQueueAndPutToSleep) {
   ASSERT_EQ("ds-A", mi->potentialMounts.begin()->diskSystemName);
 }
 
+TEST_P(SchedulerDatabaseTest, archiveMountGetNextJobBatchReturnsQueuedJobMetadata) {
+  using namespace cta;
+
+#ifndef STDOUT_LOGGING
+  cta::log::DummyLogger dl("", "");
+#else
+  cta::log::StdoutLogger dl("", "");
+#endif
+  cta::log::LogContext lc(dl);
+
+  cta::SchedulerDatabase& db = getDb();
+
+  const uint64_t archiveFileId = 12345;
+  const uint64_t fileSize = 1000;
+  const time_t creationTime = 1000;
+
+  cta::common::dataStructures::ArchiveRequest ar;
+  cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
+
+  afqc.copyToPoolMap.insert({1, "tapePool"});
+  afqc.fileId = archiveFileId;
+  afqc.mountPolicy.name = "mountPolicy";
+  afqc.mountPolicy.archivePriority = 1;
+  afqc.mountPolicy.archiveMinRequestAge = 0;
+  afqc.mountPolicy.retrievePriority = 1;
+  afqc.mountPolicy.retrieveMinRequestAge = 0;
+  afqc.mountPolicy.creationLog = {"u", "h", creationTime};
+  afqc.mountPolicy.lastModificationLog = {"u", "h", creationTime};
+  afqc.mountPolicy.comment = "comment";
+
+  ar.archiveReportURL = "test://archive-report-url";
+  ar.archiveErrorReportURL = "test://archive-error-report-url";
+  ar.checksumBlob.insert(cta::checksum::NONE, "");
+  ar.creationLog = {"user", "host", creationTime};
+  ar.diskFileID = "disk-file-id";
+  ar.diskFileInfo.path = "/archive/file";
+  ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+  ar.diskFileInfo.gid = DISK_FILE_GID;
+  ar.fileSize = fileSize;
+  ar.requester = {"user", "group"};
+  ar.srcURL = "root:/archive/file";
+  ar.storageClass = "storageClass";
+
+  db.queueArchive("eosInstance", ar, afqc, lc);
+  db.waitSubthreadsComplete();
+
+  auto mountInfo = db.getMountInfo(lc);
+  ASSERT_EQ(1, mountInfo->potentialMounts.size());
+
+  cta::catalogue::TapeForWriting tfw;
+  tfw.tapePool = "tapePool";
+  tfw.vid = "vid";
+
+  auto archiveMount =
+    mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw, "drive", "library", "host");
+
+  auto jobs = archiveMount->getNextJobBatch(1, fileSize, lc);
+
+  ASSERT_EQ(1, jobs.size());
+
+  const auto& job = jobs.front();
+
+  ASSERT_EQ(archiveFileId, job->archiveFile.archiveFileID);
+  ASSERT_EQ(fileSize, job->archiveFile.fileSize);
+  ASSERT_EQ("storageClass", job->archiveFile.storageClass);
+  ASSERT_EQ("eosInstance", job->archiveFile.diskInstance);
+  ASSERT_EQ("disk-file-id", job->archiveFile.diskFileId);
+  ASSERT_EQ("/archive/file", job->archiveFile.diskFileInfo.path);
+  ASSERT_EQ(DISK_FILE_OWNER_UID, job->archiveFile.diskFileInfo.owner_uid);
+  ASSERT_EQ(DISK_FILE_GID, job->archiveFile.diskFileInfo.gid);
+}
+
 TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
   using namespace cta;
 #ifndef STDOUT_LOGGING
