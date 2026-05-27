@@ -56,6 +56,39 @@ public:
   }
 };
 
+cta::common::dataStructures::MountPolicy makeSchedulerTestMountPolicy(time_t creationTime) {
+  cta::common::dataStructures::MountPolicy mountPolicy;
+  mountPolicy.name = "mountPolicy";
+  mountPolicy.archivePriority = 1;
+  mountPolicy.archiveMinRequestAge = 0;
+  mountPolicy.retrievePriority = 1;
+  mountPolicy.retrieveMinRequestAge = 0;
+  mountPolicy.creationLog = {"u", "h", creationTime};
+  mountPolicy.lastModificationLog = {"u", "h", creationTime};
+  mountPolicy.comment = "comment";
+  return mountPolicy;
+}
+
+cta::common::dataStructures::ArchiveRequest makeArchiveRequest(uint64_t fileSize,
+                                                               time_t creationTime,
+                                                               const std::string& diskFileId,
+                                                               const std::string& diskFilePath) {
+  cta::common::dataStructures::ArchiveRequest ar;
+  ar.archiveReportURL = "test://archive-report-url";
+  ar.archiveErrorReportURL = "test://error-report-url";
+  ar.checksumBlob.insert(cta::checksum::NONE, "");
+  ar.creationLog = {"user", "host", creationTime};
+  ar.diskFileID = diskFileId;
+  ar.diskFileInfo.path = diskFilePath;
+  ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
+  ar.diskFileInfo.gid = DISK_FILE_GID;
+  ar.fileSize = fileSize;
+  ar.requester = {"user", "group"};
+  ar.srcURL = "root:" + diskFilePath;
+  ar.storageClass = "storageClass";
+  return ar;
+}
+
 /**
  * The scheduler database test is a parameterized test.  It takes a
  * scheduler database factory as a parameter.
@@ -172,40 +205,21 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
     // }
     for (size_t i = 0; i < filesToDo; i++) {
       lambdas.emplace_back([i, &db, &lc]() {
-        cta::common::dataStructures::ArchiveRequest ar;
         cta::log::LogContext locallc = lc;
-        cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
-        afqc.copyToPoolMap.insert({1, "tapePool"});
-        afqc.fileId = 0;
-        afqc.mountPolicy.name = "mountPolicy";
-        afqc.mountPolicy.archivePriority = 1;
-        afqc.mountPolicy.archiveMinRequestAge = 0;
-        afqc.mountPolicy.retrievePriority = 1;
-        afqc.mountPolicy.retrieveMinRequestAge = 0;
-        afqc.mountPolicy.creationLog = {"u",
-                                        "h",
-                                        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-        afqc.mountPolicy.lastModificationLog = {"u",
-                                                "h",
-                                                std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-        afqc.mountPolicy.comment = "comment";
-        afqc.fileId = i;
-        ar.archiveReportURL = "test://archive-report-url";
-        ar.archiveErrorReportURL = "test://error-report-url";
-        ar.checksumBlob.insert(cta::checksum::NONE, "");
-        ar.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+        const auto creationTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
         uuid_t fileUUID;
         uuid_generate(fileUUID);
         char fileUUIDStr[37];
         uuid_unparse(fileUUID, fileUUIDStr);
-        ar.diskFileID = fileUUIDStr;
-        ar.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
-        ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-        ar.diskFileInfo.gid = DISK_FILE_GID;
-        ar.fileSize = 1000;
-        ar.requester = {"user", "group"};
-        ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
-        ar.storageClass = "storageClass";
+
+        cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
+        afqc.copyToPoolMap.insert({1, "tapePool"});
+        afqc.fileId = i;
+        afqc.mountPolicy = makeSchedulerTestMountPolicy(creationTime);
+
+        auto ar = makeArchiveRequest(1000, creationTime, fileUUIDStr, std::string("/uuid/") + fileUUIDStr);
+
         db.queueArchive("eosInstance", ar, afqc, locallc);
       });
       jobInsertions.emplace_back(std::async(std::launch::async, lambdas.back()));
@@ -262,37 +276,20 @@ TEST_P(SchedulerDatabaseTest, createManyArchiveJobs) {
   const size_t filesToDo2 = 200;
   for (size_t i = 0; i < filesToDo2; i++) {
     lambdas.emplace_back([i, &db, &lc]() {
-      cta::common::dataStructures::ArchiveRequest ar;
       cta::log::LogContext locallc = lc;
-      cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
-      afqc.copyToPoolMap.insert({1, "tapePool"});
-      afqc.fileId = 0;
-      afqc.mountPolicy.name = "mountPolicy";
-      afqc.mountPolicy.archivePriority = 1;
-      afqc.mountPolicy.archiveMinRequestAge = 0;
-      afqc.mountPolicy.retrievePriority = 1;
-      afqc.mountPolicy.retrieveMinRequestAge = 0;
-      afqc.mountPolicy.creationLog = {"u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-      afqc.mountPolicy.lastModificationLog = {"u",
-                                              "h",
-                                              std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-      afqc.mountPolicy.comment = "comment";
-      afqc.fileId = i;
-      ar.archiveReportURL = "";
-      ar.checksumBlob.insert(cta::checksum::NONE, "");
-      ar.creationLog = {"user", "host", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
+      const auto creationTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
-      ar.diskFileID = fileUUIDStr;
-      ar.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
-      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      ar.diskFileInfo.gid = DISK_FILE_GID;
-      ar.fileSize = 1000;
-      ar.requester = {"user", "group"};
-      ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
-      ar.storageClass = "storageClass";
+
+      cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
+      afqc.copyToPoolMap.insert({1, "tapePool"});
+      afqc.fileId = i;
+      afqc.mountPolicy = makeSchedulerTestMountPolicy(creationTime);
+
+      auto ar = makeArchiveRequest(1000, creationTime, fileUUIDStr, std::string("/uuid/") + fileUUIDStr);
       ar.archiveReportURL = "test://archive-report-url";
       ar.archiveErrorReportURL = "test://error-report-url";
       db.queueArchive("eosInstance", ar, afqc, locallc);
@@ -590,32 +587,12 @@ TEST_P(SchedulerDatabaseTest, archiveMountGetNextJobBatchReturnsQueuedJobMetadat
   const uint64_t fileSize = 1000;
   const time_t creationTime = 1000;
 
-  cta::common::dataStructures::ArchiveRequest ar;
   cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
-
   afqc.copyToPoolMap.insert({1, "tapePool"});
   afqc.fileId = archiveFileId;
-  afqc.mountPolicy.name = "mountPolicy";
-  afqc.mountPolicy.archivePriority = 1;
-  afqc.mountPolicy.archiveMinRequestAge = 0;
-  afqc.mountPolicy.retrievePriority = 1;
-  afqc.mountPolicy.retrieveMinRequestAge = 0;
-  afqc.mountPolicy.creationLog = {"u", "h", creationTime};
-  afqc.mountPolicy.lastModificationLog = {"u", "h", creationTime};
-  afqc.mountPolicy.comment = "comment";
+  afqc.mountPolicy = makeSchedulerTestMountPolicy(creationTime);
 
-  ar.archiveReportURL = "test://archive-report-url";
-  ar.archiveErrorReportURL = "test://archive-error-report-url";
-  ar.checksumBlob.insert(cta::checksum::NONE, "");
-  ar.creationLog = {"user", "host", creationTime};
-  ar.diskFileID = "disk-file-id";
-  ar.diskFileInfo.path = "/archive/file";
-  ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-  ar.diskFileInfo.gid = DISK_FILE_GID;
-  ar.fileSize = fileSize;
-  ar.requester = {"user", "group"};
-  ar.srcURL = "root:/archive/file";
-  ar.storageClass = "storageClass";
+  auto ar = makeArchiveRequest(fileSize, creationTime, "disk-file-id", "/archive/file");
 
   db.queueArchive("eosInstance", ar, afqc, lc);
   db.waitSubthreadsComplete();
@@ -630,11 +607,15 @@ TEST_P(SchedulerDatabaseTest, archiveMountGetNextJobBatchReturnsQueuedJobMetadat
   auto archiveMount =
     mountInfo->createArchiveMount(mountInfo->potentialMounts.front(), tfw, "drive", "library", "host");
 
+  ASSERT_NE(nullptr, archiveMount);
+
   auto jobs = archiveMount->getNextJobBatch(1, fileSize, lc);
 
   ASSERT_EQ(1, jobs.size());
 
   const auto& job = jobs.front();
+
+  ASSERT_NE(nullptr, job);
 
   ASSERT_EQ(archiveFileId, job->archiveFile.archiveFileID);
   ASSERT_EQ(fileSize, job->archiveFile.fileSize);
@@ -664,38 +645,19 @@ TEST_P(SchedulerDatabaseTest, popAndRequeueArchiveRequests) {
   auto creationTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   for (size_t id = 0; id < filesToDo; id++) {
     lambdas.emplace_back([id, &db, creationTime, &lc]() {
-      cta::common::dataStructures::ArchiveRequest ar;
       cta::log::LogContext locallc = lc;
-      cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
-      afqc.copyToPoolMap.insert({1, "tapePool"});
-      afqc.fileId = 0;
-      afqc.mountPolicy.name = "mountPolicy";
-      afqc.mountPolicy.archivePriority = 1;
-      afqc.mountPolicy.archiveMinRequestAge = 0;
-      afqc.mountPolicy.retrievePriority = 1;
-      afqc.mountPolicy.retrieveMinRequestAge = 0;
-      afqc.mountPolicy.creationLog = {"u", "h", std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-      afqc.mountPolicy.lastModificationLog = {"u",
-                                              "h",
-                                              std::chrono::system_clock::to_time_t(std::chrono::system_clock::now())};
-      afqc.mountPolicy.comment = "comment";
-      afqc.fileId = id;
-      ar.archiveReportURL = "test://archive-report-url";
-      ar.archiveErrorReportURL = "test://error-report-url";
-      ar.checksumBlob.insert(cta::checksum::NONE, "");
-      ar.creationLog = {"user", "host", creationTime};
+
       uuid_t fileUUID;
       uuid_generate(fileUUID);
       char fileUUIDStr[37];
       uuid_unparse(fileUUID, fileUUIDStr);
-      ar.diskFileID = fileUUIDStr;
-      ar.diskFileInfo.path = std::string("/uuid/") + fileUUIDStr;
-      ar.diskFileInfo.owner_uid = DISK_FILE_OWNER_UID;
-      ar.diskFileInfo.gid = DISK_FILE_GID;
-      ar.fileSize = 1000;
-      ar.requester = {"user", "group"};
-      ar.srcURL = std::string("root:/") + ar.diskFileInfo.path;
-      ar.storageClass = "storageClass";
+
+      cta::common::dataStructures::ArchiveFileQueueCriteriaAndFileId afqc;
+      afqc.copyToPoolMap.insert({1, "tapePool"});
+      afqc.fileId = id;
+      afqc.mountPolicy = makeSchedulerTestMountPolicy(creationTime);
+
+      auto ar = makeArchiveRequest(1000, creationTime, fileUUIDStr, std::string("/uuid/") + fileUUIDStr);
       db.queueArchive("eosInstance", ar, afqc, locallc);
     });
     jobInsertions.emplace_back(std::async(std::launch::async, lambdas.back()));
