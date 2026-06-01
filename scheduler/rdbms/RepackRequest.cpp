@@ -540,6 +540,10 @@ void RepackRequest::setMaxFilesToSelect(const uint64_t maxFilesToSelect) {
   m_maxFilesToSelect = maxFilesToSelect;
 }
 
+void RepackRequest::setStorageClass(const std::string& storageClass) {
+  m_storageClass = storageClass;
+}
+
 void RepackRequest::insert() {
   log::ScopedParamContainer params(m_lc);
 
@@ -554,6 +558,7 @@ void RepackRequest::insert() {
     rjr.isMove = m_isMove;
     rjr.isAddCopies = m_addCopies;
     rjr.maxFilesToSelect = m_maxFilesToSelect;
+    rjr.storageClass = m_storageClass;
 
     if (repackInfo.destinationInfos.size() > 0 || m_subreqp.size() > 0) {
       throw cta::exception::Exception("RepackRequest::insert expected zero subreqs and desintionInfos in new request");
@@ -658,6 +663,7 @@ RepackRequest& RepackRequest::operator=(const schedulerdb::postgres::RepackReque
   repackInfo.creationLog = row.createLog;
   repackInfo.repackFinishedTime = row.repackFinishedTime;
   repackInfo.maxFilesToSelect = row.maxFilesToSelect;
+  repackInfo.storageClass = row.storageClass;
   // The repackInfo.destinationInfos are not filled here, but rather separately
   // when getRepackInfo is requested explicitly
   // This could be improved by refactoring.
@@ -672,6 +678,7 @@ RepackRequest& RepackRequest::operator=(const schedulerdb::postgres::RepackReque
   m_isMove = row.isMove;
   m_isComplete = row.isComplete;
   m_maxFilesToSelect = row.maxFilesToSelect;
+  m_storageClass = row.storageClass;
   m_failedToCreateArchiveReq = row.failedToCreateArchiveReq;
   return *this;
 }

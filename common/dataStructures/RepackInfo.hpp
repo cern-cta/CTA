@@ -57,6 +57,7 @@ struct RepackInfo {
   uint64_t archivedFiles;
   uint64_t archivedBytes;
   uint64_t maxFilesToSelect;
+  std::string storageClass;
   bool isExpandFinished;
   bool isExpandStarted;
   bool noRecall;

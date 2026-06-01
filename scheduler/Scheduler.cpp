@@ -437,6 +437,7 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
     .add("creationTime", repackRequestToQueue.m_creationLog.time)
     .add("bufferURL", repackRequest.m_repackBufferURL)
     .add("maxFilesToSelect", repackRequest.m_maxFilesToSelect)
+    .add("storageClass", repackRequest.m_storageClass)
     .add("repackRequestAddress", repackRequestAddress);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
@@ -640,9 +641,15 @@ void Scheduler::expandRepackRequest(const RepackRequest& repackRequest,
     uint64_t numberOfBytesCount = 0;
     bool allFilesSelected = true;
     while (archiveFilesForCatalogue.hasMore()) {
+      auto archiveFile = archiveFilesForCatalogue.next();
+
+      // Apply the optional storage class filter and only select matching files for repack
+      if (!repackInfo.storageClass.empty() && archiveFile.storageClass != repackInfo.storageClass) {
+        continue;
+      }
       if (repackInfo.maxFilesToSelect == 0 || numberOfFilesCount < repackInfo.maxFilesToSelect) {
-        archiveFilesFromCatalogue.push_back(archiveFilesForCatalogue.next());
-        numberOfBytesCount += archiveFilesFromCatalogue.back().fileSize;
+        archiveFilesFromCatalogue.push_back(archiveFile);
+        numberOfBytesCount += archiveFile.fileSize;
       } else if (totalFilesOnTapeAlreadyChecked) {
         // Break if the total number of files/bytes on tape has already been counted before
         allFilesSelected = false;
@@ -650,7 +657,7 @@ void Scheduler::expandRepackRequest(const RepackRequest& repackRequest,
       } else {
         // Count the number of bytes of the all the remaining files
         allFilesSelected = false;
-        numberOfBytesCount += archiveFilesForCatalogue.next().fileSize;
+        numberOfBytesCount += archiveFile.fileSize;
       }
       numberOfFilesCount += 1;
     }

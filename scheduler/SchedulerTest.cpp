@@ -3230,6 +3230,179 @@ TEST_P(SchedulerTest, expandRepackRequestWithMaxFiles) {
   }
 }
 
+TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
+  using namespace cta;
+  using cta::common::dataStructures::JobQueueType;
+  unitTests::TempDirectory tempDirectory;
+
+  auto& catalogue = getCatalogue();
+  auto& scheduler = getScheduler();
+  auto& schedulerDB = getSchedulerDB();
+
+  setupDefaultCatalogue();
+  catalogue.DiskInstance()->createDiskInstance({"user", "host"}, "diskInstance", "no comment");
+  catalogue.DiskInstanceSpace()->createDiskInstanceSpace({"user", "host"},
+                                                         "diskInstanceSpace",
+                                                         "diskInstance",
+                                                         "constantFreeSpace:10",
+                                                         10,
+                                                         "no comment");
+  catalogue.DiskSystem()->createDiskSystem({"user", "host"},
+                                           "diskSystem",
+                                           "diskInstance",
+                                           "diskInstanceSpace",
+                                           "/public_dir/public_file",
+                                           10L * 1000 * 1000 * 1000,
+                                           15 * 60,
+                                           "no comment");
+
+#ifdef STDOUT_LOGGING
+  log::StdoutLogger dl("dummy", "unitTest");
+#else
+  log::DummyLogger dl("", "");
+#endif
+  log::LogContext lc(dl);
+
+  cta::common::dataStructures::SecurityIdentity admin;
+  admin.username = "admin_user_name";
+  admin.host = "admin_host";
+
+  const bool libraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  catalogue.LogicalLibrary()->createLogicalLibrary(admin,
+                                                   s_libraryName,
+                                                   libraryIsDisabled,
+                                                   physicalLibraryName,
+                                                   "Create logical library");
+
+  const std::string vid = s_vid + "_storage_class_filter";
+  auto tape = getDefaultTape();
+  tape.vid = vid;
+  tape.full = true;
+  tape.state = common::dataStructures::Tape::REPACKING;
+  tape.stateReason = "Test";
+  catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
+
+  const std::string storageClassToSelect = "StorageClassA";
+  const std::string storageClassToSkip = "StorageClassB";
+
+  common::dataStructures::StorageClass storageClassA;
+  storageClassA.name = storageClassToSelect;
+  storageClassA.nbCopies = 2;
+  storageClassA.comment = "Create storage class A";
+  catalogue.StorageClass()->createStorageClass(s_adminOnAdminHost, storageClassA);
+
+  common::dataStructures::StorageClass storageClassB;
+  storageClassB.name = storageClassToSkip;
+  storageClassB.nbCopies = 2;
+  storageClassB.comment = "Create storage class B";
+  catalogue.StorageClass()->createStorageClass(s_adminOnAdminHost, storageClassB);
+
+  const std::string tapeDrive = "tape_drive";
+  const uint64_t nbArchiveFilesOnTape = 10;
+  const uint64_t nbFilesMatchingStorageClass = 5;
+  const uint64_t maxFilesToSelect = 3;
+  const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
+
+  std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
+  checksum::ChecksumBlob checksumBlob;
+  checksumBlob.insert(cta::checksum::ADLER32, "1234");
+
+  uint64_t archiveFileId = 1;
+
+  // Create 10 files on tape:
+  // 5 matching the requested storage class
+  // 5 belonging to a different storage class
+  for (uint64_t j = 1; j <= nbArchiveFilesOnTape; ++j) {
+    std::ostringstream diskFileId;
+    diskFileId << (12345677 + archiveFileId);
+
+    auto fileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+    auto& fileWritten = *fileWrittenUP;
+    fileWritten.archiveFileId = archiveFileId++;
+    fileWritten.diskInstance = s_diskInstance;
+    fileWritten.diskFileId = diskFileId.str();
+    fileWritten.diskFileOwnerUid = PUBLIC_OWNER_UID;
+    fileWritten.diskFileGid = PUBLIC_GID;
+    fileWritten.size = archiveFileSize;
+    fileWritten.checksumBlob = checksumBlob;
+
+    // Only the first half of the files should be selected by the repack request
+    fileWritten.storageClassName = (j <= nbFilesMatchingStorageClass) ? storageClassToSelect : storageClassToSkip;
+
+    fileWritten.vid = vid;
+    fileWritten.fSeq = j;
+    fileWritten.blockId = j * 100;
+    fileWritten.copyNb = 1;
+    fileWritten.tapeDrive = tapeDrive;
+    tapeFilesWrittenCopy1.emplace(fileWrittenUP.release());
+  }
+
+  catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
+
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  cta::SchedulerDatabase::QueueRepackRequest qrr(vid,
+                                                 "file://" + tempDirectory.path(),
+                                                 common::dataStructures::RepackInfo::Type::MoveOnly,
+                                                 common::dataStructures::MountPolicy::s_defaultMountPolicyForRepack,
+                                                 s_defaultRepackNoRecall,
+                                                 maxFilesToSelect,
+                                                 storageClassToSelect);
+
+  scheduler.queueRepack(admin, qrr, lc);
+
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  scheduler.promoteRepackRequestsToToExpand(lc, 1);
+
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  {
+    log::TimingList tl;
+    utils::Timer t;
+    auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
+    ASSERT_NE(nullptr, repackRequestToExpand);
+    scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
+  }
+
+  scheduler.waitSchedulerDbSubthreadsComplete();
+
+  {
+    std::list<common::dataStructures::RetrieveJob> retrieveJobs = scheduler.getPendingRetrieveJobs(vid, lc);
+
+    // Verify that both storage class filtering and maxFilesToSelect were applied
+    ASSERT_EQ(maxFilesToSelect, retrieveJobs.size());
+
+    for (const auto& job : retrieveJobs) {
+      ASSERT_EQ(storageClassToSelect, job.storageClass);
+    }
+  }
+
+  {
+    cta::objectstore::RootEntry re(schedulerDB.getBackend());
+    re.fetchNoLock();
+
+    objectstore::RepackIndex ri(re.getRepackIndexAddress(), schedulerDB.getBackend());
+    ri.fetchNoLock();
+
+    cta::objectstore::RepackRequest rr(ri.getRepackRequestAddress(vid), schedulerDB.getBackend());
+
+    rr.fetchNoLock();
+
+    auto repackInfo = rr.getInfo();
+
+    ASSERT_EQ(storageClassToSelect, repackInfo.storageClass);
+    ASSERT_FALSE(repackInfo.allFilesSelectedAtStart);
+    ASSERT_EQ(nbFilesMatchingStorageClass, repackInfo.totalFilesOnTapeAtStart);
+    ASSERT_EQ(nbFilesMatchingStorageClass * archiveFileSize, repackInfo.totalBytesOnTapeAtStart);
+    ASSERT_EQ(maxFilesToSelect, repackInfo.totalFilesToRetrieve);
+    ASSERT_EQ(maxFilesToSelect * archiveFileSize, repackInfo.totalBytesToRetrieve);
+    ASSERT_EQ(maxFilesToSelect, repackInfo.totalFilesToArchive);
+    ASSERT_EQ(maxFilesToSelect * archiveFileSize, repackInfo.totalBytesToArchive);
+  }
+}
+
 TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
   using namespace cta;
   using namespace cta::objectstore;

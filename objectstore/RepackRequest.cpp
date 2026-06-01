@@ -371,6 +371,13 @@ void RepackRequest::setMaxFilesToSelect(const uint64_t masFilesToExpand) {
 }
 
 //------------------------------------------------------------------------------
+// RepackRequest::setStorageClass()
+//------------------------------------------------------------------------------
+void RepackRequest::setStorageClass(const std::string& storageClass) {
+  m_payload.set_storageclass(storageClass);
+}
+
+//------------------------------------------------------------------------------
 // RepackRequest::RepackSubRequestPointer::serialize()
 //------------------------------------------------------------------------------
 void RepackRequest::RepackSubRequestPointer::serialize(serializers::RepackSubRequestPointer& rsrp) const {

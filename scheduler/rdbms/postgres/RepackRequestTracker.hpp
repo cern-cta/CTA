@@ -32,6 +32,7 @@ struct RepackRequestTrackingRow {
   bool isAddCopies = true;
   bool isMove = true;
   uint64_t maxFilesToSelect = 0;
+  std::string storageClass;
   uint64_t totalFilesOnTapeAtStart = 0;
   uint64_t totalBytesOnTapeAtStart = 0;
   bool allFilesSelectedAtStart = true;
@@ -82,6 +83,7 @@ struct RepackRequestTrackingRow {
     isMove = rset.columnBool("IS_MOVE");
     isNoRecall = rset.columnBool("IS_NO_RECALL");
     maxFilesToSelect = rset.columnUint64("MAX_FILES_TO_EXPAND");
+    storageClass = rset.columnOptionalString("STORAGE_CLASS").value_or("");
     totalFilesOnTapeAtStart = rset.columnUint64("TOTAL_FILES_ON_TAPE_AT_START");
     totalBytesOnTapeAtStart = rset.columnUint64("TOTAL_BYTES_ON_TAPE_AT_START");
     allFilesSelectedAtStart = rset.columnBool("ALL_FILES_SELECTED_AT_START");
@@ -128,6 +130,7 @@ struct RepackRequestTrackingRow {
         IS_ADD_COPIES,
         IS_MOVE,
         MAX_FILES_TO_EXPAND,
+        STORAGE_CLASS,
         TOTAL_FILES_ON_TAPE_AT_START,
         TOTAL_BYTES_ON_TAPE_AT_START,
         ALL_FILES_SELECTED_AT_START,
@@ -166,6 +169,7 @@ struct RepackRequestTrackingRow {
         :IS_ADD_COPIES,
         :IS_MOVE,
         :MAX_FILES_TO_EXPAND,
+        :STORAGE_CLASS,
         :TOTAL_FILES_ON_TAPE_AT_START,
         :TOTAL_BYTES_ON_TAPE_AT_START,
         :ALL_FILES_SELECTED_AT_START,
@@ -207,6 +211,11 @@ struct RepackRequestTrackingRow {
     stmt.bindBool(":IS_ADD_COPIES", isAddCopies);
     stmt.bindBool(":IS_MOVE", isMove);
     stmt.bindUint64(":MAX_FILES_TO_EXPAND", maxFilesToSelect);
+    if (storageClass.empty()) {
+      stmt.bindString(":STORAGE_CLASS", std::nullopt);
+    } else {
+      stmt.bindString(":STORAGE_CLASS", storageClass);
+    }
     stmt.bindUint64(":TOTAL_FILES_ON_TAPE_AT_START", totalFilesOnTapeAtStart);
     stmt.bindUint64(":TOTAL_BYTES_ON_TAPE_AT_START", totalBytesOnTapeAtStart);
     stmt.bindBool(":ALL_FILES_SELECTED_AT_START", allFilesSelectedAtStart);
@@ -251,6 +260,7 @@ struct RepackRequestTrackingRow {
     params.add("isAddCopies", isAddCopies);
     params.add("isMove", isMove);
     params.add("maxFilesToSelect", maxFilesToSelect);
+    params.add("storageClass", storageClass);
     params.add("totalFilesOnTapeAtStart", totalFilesOnTapeAtStart);
     params.add("totalBytesOnTapeAtStart", totalBytesOnTapeAtStart);
     params.add("allFilesSelectedAtStart", allFilesSelectedAtStart);
@@ -326,6 +336,7 @@ struct RepackRequestTrackingRow {
         trk.IS_ADD_COPIES,
         trk.IS_MOVE,
         trk.MAX_FILES_TO_EXPAND,
+        trk.STORAGE_CLASS,
         trk.TOTAL_FILES_ON_TAPE_AT_START,
         trk.TOTAL_BYTES_ON_TAPE_AT_START,
         trk.ALL_FILES_SELECTED_AT_START,

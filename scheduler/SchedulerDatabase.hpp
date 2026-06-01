@@ -159,13 +159,15 @@ public:
                        const common::dataStructures::RepackInfo::Type& repackType,
                        const common::dataStructures::MountPolicy& mountPolicy,
                        const bool noRecall,
-                       const uint64_t maxFilesToSelect)
+                       const uint64_t maxFilesToSelect,
+                       const std::string& storageClass = "")
         : m_vid(vid),
           m_repackBufferURL(repackBufferURL),
           m_repackType(repackType),
           m_mountPolicy(mountPolicy),
           m_noRecall(noRecall),
-          m_maxFilesToSelect(maxFilesToSelect) {}
+          m_maxFilesToSelect(maxFilesToSelect),
+          m_storageClass(storageClass) {}
 
     std::string m_vid;
     std::string m_repackBufferURL;
@@ -173,6 +175,7 @@ public:
     common::dataStructures::MountPolicy m_mountPolicy;
     bool m_noRecall;
     uint64_t m_maxFilesToSelect;
+    std::string m_storageClass;
     common::dataStructures::EntryLog m_creationLog;
   };
 
