@@ -3275,7 +3275,7 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
                                                    physicalLibraryName,
                                                    "Create logical library");
 
-  const std::string vid = s_vid + "_storage_class_filter";
+  const std::string vid = s_vid + "_STORAGE_CLASS_FILTER";
   auto tape = getDefaultTape();
   tape.vid = vid;
   tape.full = true;

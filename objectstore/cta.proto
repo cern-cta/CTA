@@ -644,7 +644,7 @@ message RepackRequest {
   required EntryLog creation_log = 11572;
   required uint64 repack_finished_time = 11573;
   optional uint64 maxfilestoselect = 11574;
-  optional string storageclass = 11576;
+  optional string storageclass                     = 11576;
 }
 
 message RepackRequestIndexPointer {
