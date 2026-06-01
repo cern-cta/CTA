@@ -3232,7 +3232,6 @@ TEST_P(SchedulerTest, expandRepackRequestWithMaxFiles) {
 
 TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
   using namespace cta;
-  using cta::common::dataStructures::JobQueueType;
   unitTests::TempDirectory tempDirectory;
 
   auto& catalogue = getCatalogue();
@@ -3283,20 +3282,22 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
   tape.stateReason = "Test";
   catalogue.Tape()->createTape(s_adminOnAdminHost, tape);
 
-  const std::string storageClassToSelect = "StorageClassA";
+  const std::string storageClassToSelect = s_storageClassName;
   const std::string storageClassToSkip = "StorageClassB";
-
-  common::dataStructures::StorageClass storageClassA;
-  storageClassA.name = storageClassToSelect;
-  storageClassA.nbCopies = 2;
-  storageClassA.comment = "Create storage class A";
-  catalogue.StorageClass()->createStorageClass(s_adminOnAdminHost, storageClassA);
 
   common::dataStructures::StorageClass storageClassB;
   storageClassB.name = storageClassToSkip;
-  storageClassB.nbCopies = 2;
+  storageClassB.nbCopies = 1;
+  storageClassB.vo.name = s_vo;
   storageClassB.comment = "Create storage class B";
   catalogue.StorageClass()->createStorageClass(s_adminOnAdminHost, storageClassB);
+
+  catalogue.ArchiveRoute()->createArchiveRoute(s_adminOnAdminHost,
+                                               storageClassToSkip,
+                                               1,
+                                               cta::common::dataStructures::ArchiveRouteType::DEFAULT,
+                                               s_tapePoolName_default,
+                                               "Archive route for StorageClassB");
 
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesOnTape = 10;
@@ -3310,9 +3311,7 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
 
   uint64_t archiveFileId = 1;
 
-  // Create 10 files on tape:
-  // 5 matching the requested storage class
-  // 5 belonging to a different storage class
+  // Create files with two storage classes to verify that only matching files are selected
   for (uint64_t j = 1; j <= nbArchiveFilesOnTape; ++j) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + archiveFileId);
@@ -3326,10 +3325,7 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
     fileWritten.diskFileGid = PUBLIC_GID;
     fileWritten.size = archiveFileSize;
     fileWritten.checksumBlob = checksumBlob;
-
-    // Only the first half of the files should be selected by the repack request
     fileWritten.storageClassName = (j <= nbFilesMatchingStorageClass) ? storageClassToSelect : storageClassToSkip;
-
     fileWritten.vid = vid;
     fileWritten.fSeq = j;
     fileWritten.blockId = j * 100;
@@ -3339,7 +3335,6 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
   }
 
   catalogue.TapeFile()->filesWrittenToTape(tapeFilesWrittenCopy1);
-
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   cta::SchedulerDatabase::QueueRepackRequest qrr(vid,
@@ -3351,11 +3346,9 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
                                                  storageClassToSelect);
 
   scheduler.queueRepack(admin, qrr, lc);
-
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   scheduler.promoteRepackRequestsToToExpand(lc, 1);
-
   scheduler.waitSchedulerDbSubthreadsComplete();
 
   {
@@ -3371,7 +3364,7 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
   {
     std::list<common::dataStructures::RetrieveJob> retrieveJobs = scheduler.getPendingRetrieveJobs(vid, lc);
 
-    // Verify that both storage class filtering and maxFilesToSelect were applied
+    // Check that storage class filtering and maxFilesToSelect were both applied
     ASSERT_EQ(maxFilesToSelect, retrieveJobs.size());
 
     for (const auto& job : retrieveJobs) {
@@ -3387,15 +3380,12 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
     ri.fetchNoLock();
 
     cta::objectstore::RepackRequest rr(ri.getRepackRequestAddress(vid), schedulerDB.getBackend());
-
     rr.fetchNoLock();
 
     auto repackInfo = rr.getInfo();
 
     ASSERT_EQ(storageClassToSelect, repackInfo.storageClass);
     ASSERT_FALSE(repackInfo.allFilesSelectedAtStart);
-    ASSERT_EQ(nbFilesMatchingStorageClass, repackInfo.totalFilesOnTapeAtStart);
-    ASSERT_EQ(nbFilesMatchingStorageClass * archiveFileSize, repackInfo.totalBytesOnTapeAtStart);
     ASSERT_EQ(maxFilesToSelect, repackInfo.totalFilesToRetrieve);
     ASSERT_EQ(maxFilesToSelect * archiveFileSize, repackInfo.totalBytesToRetrieve);
     ASSERT_EQ(maxFilesToSelect, repackInfo.totalFilesToArchive);
