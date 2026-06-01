@@ -3311,7 +3311,8 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
 
   uint64_t archiveFileId = 1;
 
-  // Create files with two storage classes to verify that only matching files are selected
+  // Create 10 files on the tape, 5 matching the requested storage class,
+  // and verify that only 3 matching files are selected during repack expansion
   for (uint64_t j = 1; j <= nbArchiveFilesOnTape; ++j) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + archiveFileId);
