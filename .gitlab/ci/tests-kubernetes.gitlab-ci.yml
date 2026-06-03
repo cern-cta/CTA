@@ -288,6 +288,7 @@ test-external-tape-formats:
     - !reference [.manual-rules, rules]
   variables:
     PYTESTS: "tests/external_tape_formats_test.py"
+  resource_group: external-tape-formats-mhvtl
 
 test-regression-dCache:
   extends:
