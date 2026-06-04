@@ -600,7 +600,44 @@ private:
   const uint64_t m_minBytesToWarrantAMount;
 
   std::unique_ptr<TapeDrivesCatalogueState> m_tapeDrivesState;
+  /**
+   * Forbidden tape state transitions when connected to a repack-only Scheduler DB
+   */
+  static const inline std::pair c_forbiddenTransitionsRepackMode {
+    // From
+    std::set {
+              common::dataStructures::Tape::State::ACTIVE,
+              common::dataStructures::Tape::State::DISABLED,
+              common::dataStructures::Tape::State::REPACKING_PENDING,
+              common::dataStructures::Tape::State::BROKEN_PENDING,
+              common::dataStructures::Tape::State::EXPORTED_PENDING,
+              },
+    // To
+    std::set {
+              common::dataStructures::Tape::State::REPACKING,
+              common::dataStructures::Tape::State::BROKEN,
+              common::dataStructures::Tape::State::EXPORTED,
+              }
+  };
 
+  /**
+   * Forbidden tape state transitions when connected to a user-only Scheduler DB
+   */
+  static const inline std::pair c_forbiddenTransitionsUserMode {
+    // From
+    std::set {
+              common::dataStructures::Tape::State::REPACKING,
+              common::dataStructures::Tape::State::REPACKING_DISABLED,
+              },
+    // To
+    std::set {
+              common::dataStructures::Tape::State::ACTIVE,
+              common::dataStructures::Tape::State::DISABLED,
+              common::dataStructures::Tape::State::REPACKING,
+              common::dataStructures::Tape::State::BROKEN,
+              common::dataStructures::Tape::State::EXPORTED,
+              }
+  };
   uint64_t processEnqueuedBatch(std::vector<cta::common::dataStructures::ArchiveInsertQueueItem>& batch,
                                 log::LogContext& lc);
   bool m_enqueueBatchInProgress = false;
