@@ -131,3 +131,66 @@ class DiskInstanceHost(RemoteHost):
         print(f"{total_files_to_archive - missing_archives}/{total_files_to_archive} files archived to tape")
 
         return missing_archives, loss_percent
+
+    def wait_for_retrieval_in_directory(
+        self,
+        archive_dir_path: str,
+        check_retrieve_interval_sec: int,
+        max_no_progress_intervals: int = 3,
+    ) -> tuple[int, float]:
+        directories = self.list_subdirectories_in_directory(archive_dir_path)
+
+        num_tape_only: dict[str, int] = {}
+        num_files_total: dict[str, int] = {}
+
+        dirs_left_queue = deque()
+        for directory in directories:
+            full_path: str = f"{archive_dir_path}/{directory}"
+            num_files_total[full_path] = self.num_files_in_directory(full_path)
+            num_tape_only[full_path] = self.num_files_on_tape_only(full_path)
+            if num_tape_only[full_path] > 0:
+                dirs_left_queue.append(full_path)
+
+        total_files_to_retrieve = sum(num_tape_only.values())
+
+        print(f"Waiting for retrieval in {len(directories)} directories ({total_files_to_retrieve} files on tape)")
+        consecutive_no_progress_intervals = 0
+        previous_remaining_files = total_files_to_retrieve
+
+        while dirs_left_queue and consecutive_no_progress_intervals < max_no_progress_intervals:
+            next_queue = deque()
+            for full_dir_path in dirs_left_queue:
+                tape_only = self.num_files_on_tape_only(full_dir_path)
+                num_tape_only[full_dir_path] = tape_only
+
+                if tape_only > 0:
+                    next_queue.append(full_dir_path)
+
+            dirs_left_queue = next_queue
+            current_remaining_files = sum(num_tape_only.values())
+
+            print(f"{current_remaining_files} files still on tape only ({len(dirs_left_queue)} directories left)")
+
+            if current_remaining_files < previous_remaining_files:
+                consecutive_no_progress_intervals = 0
+                previous_remaining_files = current_remaining_files
+            else:
+                consecutive_no_progress_intervals += 1
+                print(f"No progress in this interval ({consecutive_no_progress_intervals}/{max_no_progress_intervals})")
+
+            if dirs_left_queue and consecutive_no_progress_intervals < max_no_progress_intervals:
+                time.sleep(check_retrieve_interval_sec)
+
+        missing_retrievals = sum(num_tape_only.values())
+
+        if consecutive_no_progress_intervals >= max_no_progress_intervals:
+            print(f"No progress for {max_no_progress_intervals} consecutive intervals, waiting for retrieval stopped")
+
+        if total_files_to_retrieve > 0:
+            loss_percent = (missing_retrievals / total_files_to_retrieve) * 100
+        else:
+            loss_percent = 0.0
+
+        print(f"{total_files_to_retrieve - missing_retrievals}/{total_files_to_retrieve} files retrieved from tape")
+
+        return missing_retrievals, loss_percent

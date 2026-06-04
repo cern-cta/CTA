@@ -67,7 +67,7 @@ def test_populate_catalogue(env):
 
 
 def test_register_logical_libraries_in_catalogue(env):
-    logical_library_names_in_use: list[str] = [taped.logical_library_name for taped in env.cta_taped]
+    logical_library_names_in_use = {taped.logical_library_name for taped in env.cta_taped}
     print("Using logical libraries:")
     for logical_library_name in logical_library_names_in_use:
         print(f"  - {logical_library_name}")
@@ -76,7 +76,6 @@ def test_register_logical_libraries_in_catalogue(env):
     print("Using library devices:")
     for lib in library_devices_in_use:
         print(f"  - {lib}")
-
     for logical_library_name in logical_library_names_in_use:
         add_ll_cmd: str = (
             f'cta-admin logicallibrary add \

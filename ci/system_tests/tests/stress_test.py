@@ -104,14 +104,9 @@ def test_setup_xrootd_client(eos_client):
     eos_client.install_xrootd_python()
 
     script_dir = Path(__file__).parent / "remote_scripts" / "eos_client"
-    eos_client.copy_to(
-        str(script_dir / "xrootd_archive.py"),
-        "/root/xrootd_archive.py",
-    )
-    eos_client.copy_to(
-        str(script_dir / "count_files.py"),
-        "/root/count_files.py",
-    )
+    eos_client.copy_to(str(script_dir / "xrootd_archive.py"), "/root/xrootd_archive.py")
+    eos_client.copy_to(str(script_dir / "count_files.py"), "/root/count_files.py")
+    eos_client.copy_to(str(script_dir / "xrootd_retrieve.py"), "/root/xrootd_retrieve.py")
 
 
 @pytest.mark.eos
@@ -284,3 +279,109 @@ def test_wait_for_archival(eos_mgm, stress_params):
     print(f"Loss: {loss_percent:.2f}% (threshold: {stress_params.max_acceptable_loss_percent}%)")
 
     assert loss_acceptable, f"Too many files lost during archival: {num_missing_files} files missing"
+
+
+@pytest.mark.eos
+def test_kinit_poweruser(eos_client, krb5_realm):
+    """Initialize Kerberos credentials for poweruser1 (needed for retrieve)."""
+    eos_client.exec("mkdir -p /tmp/poweruser1")
+    eos_client.exec(f"KRB5CCNAME=/tmp/poweruser1/krb5cc_0 kinit -kt /root/poweruser1.keytab poweruser1@{krb5_realm}")
+
+
+@pytest.mark.eos
+@pytest.mark.asyncio
+async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_params):
+    archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
+    mgm_ip = eos_mgm.get_ip()
+
+    print("Sleeping 60 seconds to allow MGM-FST communication to settle after disk copy deletion", flush=True)
+    await asyncio.sleep(60)
+
+    if stress_params.prequeue.enabled:
+        cta_cli.set_all_drives_down()
+    else:
+        cta_cli.set_all_drives_up()
+
+    timer_start = time.time()
+    retrieve_future = eos_client.retrieve_async(
+        eos_host=mgm_ip,
+        dest_dir=archive_directory,
+        num_dirs=stress_params.num_dirs,
+        num_procs=stress_params.io_threads,
+    )
+    print("Retrieve process started")
+
+    drives_up = not stress_params.prequeue.enabled
+    stop_monitoring = asyncio.Event()
+
+    total_file_count = 0
+    for i in range(stress_params.num_dirs):
+        dir_path = f"{archive_directory}/{i}"
+        total_file_count += eos_mgm.num_files_on_tape_only(str(dir_path))
+
+    async def monitor_retrieve_and_put_drives_up():
+        """Monitor tape-only file count and put drives up when threshold reached (for prequeue mode)."""
+        nonlocal drives_up
+        while not stop_monitoring.is_set():
+            total_tape_only = 0
+            for i in range(stress_params.num_dirs):
+                dir_path = f"{archive_directory}/{i}"
+                total_tape_only += eos_mgm.num_files_on_tape_only(str(dir_path))
+
+            print(f"\t[retrieve monitor] {total_tape_only} files still on tape only", flush=True)
+
+            if not drives_up:
+                if total_tape_only >= stress_params.prequeue.num_files_to_put_drives_up:
+                    print(
+                        f"\tThreshold ({stress_params.prequeue.num_files_to_put_drives_up}) reached — putting drives UP",
+                        flush=True,
+                    )
+                    cta_cli.set_all_drives_up(wait=False)
+                    drives_up = True
+                elif time.time() - timer_start > stress_params.prequeue.timeout_to_put_drives_up_sec:
+                    print("\tTimeout reached — putting drives UP", flush=True)
+                    cta_cli.set_all_drives_up(wait=False)
+                    drives_up = True
+
+            sleep_time = (
+                stress_params.prequeue.check_interval_sec if not drives_up else stress_params.check_copy_interval_sec
+            )
+            with contextlib.suppress(asyncio.TimeoutError):
+                await asyncio.wait_for(stop_monitoring.wait(), sleep_time)
+
+    monitor_task = asyncio.create_task(monitor_retrieve_and_put_drives_up())
+    exec_result = await retrieve_future
+    stop_monitoring.set()
+    await monitor_task
+
+    if stress_params.prequeue.enabled and not drives_up:
+        print("\tDisregarding drive-up threshold — putting drives UP now")
+        cta_cli.set_all_drives_up(wait=False)
+
+    timer_end = time.time()
+
+    if exec_result.stdout:
+        print(f"Retrieve script output:\n{exec_result.stdout}")
+    if not exec_result.success:
+        print("Retrieve process failed")
+        print(exec_result.stderr)
+
+    duration_seconds = timer_end - timer_start
+    avg_fps = total_file_count / duration_seconds
+    print(f"Retrieve request queueing completed in {duration_seconds:.1f}s, files/s: {avg_fps:.2f}")
+
+
+@pytest.mark.eos
+def test_wait_for_retrieval(eos_mgm, stress_params):
+    archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
+
+    num_missing, loss_percent = eos_mgm.wait_for_retrieval_in_directory(
+        archive_dir_path=archive_directory,
+        check_retrieve_interval_sec=stress_params.check_archive_interval_sec,
+        max_no_progress_intervals=stress_params.max_no_progress_intervals,
+    )
+    loss_acceptable = loss_percent <= stress_params.max_acceptable_loss_percent
+    print(f"Missing retrievals: {num_missing}")
+    print(f"Loss: {loss_percent:.2f}% (threshold: {stress_params.max_acceptable_loss_percent}%)")
+
+    assert loss_acceptable, f"Too many files not retrieved: {num_missing} files still on tape"
