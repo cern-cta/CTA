@@ -780,7 +780,10 @@ int DriveHandler::runChild() {
   driveHandlerProxy->setRefreshLoggerHandler([this]() { m_processManager.logContext().logger().refresh(); });
 
   resetLogParams(driveHandlerProxy.get());
-
+  cta::telemetry::metrics::ctaTapedMountAttempt->Add(1,
+                                                     {
+                                                       {cta::semconv::attr::kTapeDriveName, m_driveConfig.unitName}
+  });
   auto ret = executeDataTransferSession(scheduler.get(), driveHandlerProxy.get());
 
   return ret;
