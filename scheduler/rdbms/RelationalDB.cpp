@@ -2128,6 +2128,7 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
       .add("njobs_found", rset.getNbRowsRetrieved())
       .add("queueTypePrefix", queueTypePrefix)
       .log(cta::log::INFO, "In RelationalDB::handleInactiveMountQueues(): Selected rows for cleaning up ACTIVE table.");
+    uint64_t nrows = 0;
     if (isArchive) {
       auto status = isRepack ? schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack :
                                schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser;
