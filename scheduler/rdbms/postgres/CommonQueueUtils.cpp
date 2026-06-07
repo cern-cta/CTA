@@ -39,8 +39,7 @@ uint64_t updateMountQueueLastFetch(Transaction& txn, uint64_t mountId, bool isAc
   stmt.bindString(":QUEUE_TYPE", queueType);
   stmt.bindUint64(":MOUNT_ID", mountId);
   stmt.executeQuery();
-  auto nrows = stmt.getNbAffectedRows();
-  txn.setRowCountForTelemetry(nrows);
+  txn.setRowCountForTelemetry(1);
   return nrows;
 }
 

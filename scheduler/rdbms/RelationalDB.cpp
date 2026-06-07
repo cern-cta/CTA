@@ -273,15 +273,13 @@ SchedulerDatabase::JobsFailedSummary RelationalDB::getArchiveJobsFailedSummary(l
   // Get the jobs from DB
   cta::schedulerdb::Transaction txn(m_connPool, lc);
   auto rset = cta::schedulerdb::postgres::ArchiveJobSummaryRow::selectFailedJobSummary(txn);
-  auto count = 0;
   while (rset.next()) {
     cta::schedulerdb::postgres::ArchiveJobSummaryRow afjsr(rset);
     ret.totalFiles += afjsr.jobsCount;
     ret.totalBytes += afjsr.jobsTotalSize;
-    count++;
   }
   try {
-    txn.setRowCountForTelemetry(count);
+    txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
     txn.commit();
   } catch (cta::exception::Exception& e) {
     std::string bt = e.backtrace();
@@ -913,9 +911,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> RelationalDB::getNextRepackJob
   bool found = false;
   try {
     auto rset = schedulerdb::postgres::RepackRequestTrackingRow::markStartOfExpansion(txn);
-    auto count = 0;
     while (rset.next()) {
-      count++;
       found = true;
       rrjtr = cta::schedulerdb::postgres::RepackRequestTrackingRow(rset);
       log::ScopedParamContainer params(lc);
@@ -923,7 +919,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> RelationalDB::getNextRepackJob
       params.add("row.bufferUrl", rrjtr.bufferUrl);
       lc.log(log::DEBUG, "In RelationalDB::getNextRepackJobToExpand(): RepackRequest row constructed.");
     }
-    txn.setRowCountForTelemetry(count);
+    txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
@@ -1079,12 +1075,10 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
   // report back to the REPACK_REQUEST_TRACKING table
   try {
     auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn2, statUpdates);
-    uint64_t nrepreq = 0;
-    while (vidrset.next()) {
-      nrepreq++;
-    }
+    while (vidrset.next()) {}
     log::ScopedParamContainer params(lc);
-    params.add("updatedRepackRequests", nrepreq);
+    params.add("updatedRepackRequests", vidrset.getNbRowsRetrieved());
+    txn.setRowCountForTelemetry(vidrset.getNbRowsRetrieved());
     lc.log(cta::log::INFO,
            "In RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(): no Repack Retrieve jobs finished, nothing "
            "to archive.");
@@ -1174,13 +1168,11 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     auto batch_rset = schedulerdb::postgres::ArchiveJobQueueRow::getNextSuccessfulArchiveRepackReportBatch(
       txn,
       c_repackArchiveReportBatchSize);
-    auto count = 0;
     while (batch_rset.next()) {
       jobIDs.emplace_back(batch_rset.columnString("JOB_ID"));
       jobSrcUrls.insert(batch_rset.columnString("SRC_URL"));
-      count++;
     }
-    txn.setRowCountForTelemetry(count);
+    txn.setRowCountForTelemetry(batch_rset.getNbRowsRetrieved());
     txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer(lc)
@@ -1238,12 +1230,10 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
 
   schedulerdb::Transaction txn3(m_connPool, lc);
   // report back to the REPACK_REQUEST_TRACKING table
-  uint64_t nrepreq = 0;
   std::vector<std::string> repackBufferUrlsToDelete;
   try {
     auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn3, statUpdates);
     while (vidrset.next()) {
-      nrepreq++;
       // Get the repack request VID for which files were deleted !
       // PS: the deletion from the catalogue was handled by the Scheduler before,
       // PPS: the deletion of the temporary file from EOS disk was handled above
@@ -1261,7 +1251,8 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
       }
     }
     log::ScopedParamContainer params(lc);
-    params.add("updatedRepackRequests", nrepreq);
+    params.add("updatedRepackRequests", vidrset.getNbRowsRetrieved());
+    txn.setRowCountForTelemetry(vidrset.getNbRowsRetrieved());
     lc.log(cta::log::INFO,
            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Updated Repack progress statistics.");
     txn3.commit();
@@ -1313,6 +1304,7 @@ RelationalDB::getNextFailedRetrieveRepackReportBatch(log::LogContext& lc) {
       rrIDs.emplace_back(batch_rset.columnUint64NoOpt("REPACK_REQUEST_ID"));
       flcnts.emplace_back(batch_rset.columnUint64NoOpt("FILE_COUNT"));
       flbytes.emplace_back(batch_rset.columnUint64NoOpt("FILE_BYTES"));
+      // nrows affected = cummulative sum of count column values
       nrows += flcnts.back();
     }
     txn.setRowCountForTelemetry(nrows);
@@ -1372,6 +1364,7 @@ RelationalDB::getNextFailedArchiveRepackReportBatch(log::LogContext& lc) {
     for (const auto& [reqId, count] : summaryFlCountMap) {
       rrIDs.emplace_back(reqId);
       flcnts.emplace_back(count);
+      // nrows affected = cummulative sum of count column values
       nrows += flcnts.back();
       flbytes.emplace_back(summaryFlBytesMap[reqId]);  // safe lookup
     }
@@ -1795,16 +1788,14 @@ RelationalDB::getDiskSystemSleepStatus(rdbms::Conn& conn) {
   auto rset = stmt.executeQuery();
 
   std::unordered_map<std::string, RelationalDB::DiskSleepEntry> sleepEntries;
-  auto count = 0;
   while (rset.next()) {
     std::string name = rset.columnString("DISK_SYSTEM_NAME");
     uint64_t sleepTime = rset.columnUint64("SLEEP_TIME");
     uint64_t ts = rset.columnUint64("LAST_UPDATE_TIME");
     sleepEntries[name] = RelationalDB::DiskSleepEntry(sleepTime, ts);
-    count++;
   }
   conn.setDbQuerySummary("disk sleep tracking");
-  conn.setRowCountForTelemetry(count);
+  conn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
   return sleepEntries;
 }
 
@@ -1906,7 +1897,6 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::fetchDeadMountC
     stmt.bindUint64(":OLDER_THAN_TIMESTAMP", mount_gc_timestamp);
     txn.getConn().setDbQuerySummary("select dead mount candidates");
     auto rset = stmt.executeQuery();
-    auto count = 0;
     while (rset.next()) {
       std::string queueType = rset.columnString("QUEUE_TYPE");
       uint64_t mountId = rset.columnUint64("MOUNT_ID");
@@ -1929,9 +1919,8 @@ cta::common::dataStructures::DeadMountCandidateIDs RelationalDB::fetchDeadMountC
       } else {
         lc.log(log::WARNING, "In RelationalDB::fetchDeadMountCandidates(): Unknown QUEUE_TYPE: " + queueType);
       }
-      count++;
     }
-    txn.setRowCountForTelemetry(count);
+    txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
     txn.commit();
   } catch (exception::Exception& ex) {
     log::ScopedParamContainer(lc)
@@ -2086,7 +2075,7 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
                                                        log::LogContext& lc) {
   uint64_t njobs = 0;
   if (deadMountIds.empty()) {
-    return njobs;
+    return 0;
   }
   std::string queueTypePrefix = getQueueTypePrefix(isArchive, isRepack);
   // Getting the JOB IDs of dead mounts to requeue from ACTIVE to PENDING TABLE
@@ -2132,15 +2121,13 @@ uint64_t RelationalDB::handleInactiveMountActiveQueues(const std::vector<uint64_
     std::list<std::string> jobIDsList;
     while (rset.next()) {
       jobIDsList.emplace_back(std::to_string(rset.columnUint64("JOB_ID")));
-      ++njobs;
     }
     txn.getConn().setDbQuerySummary("select inactive mount in active queue");
-    txn.setRowCountForTelemetry(njobs);
+    txn.setRowCountForTelemetry(rset.getNbRowsRetrieved());
     cta::log::ScopedParamContainer(lc)
-      .add("njobs_found", njobs)
+      .add("njobs_found", rset.getNbRowsRetrieved())
       .add("queueTypePrefix", queueTypePrefix)
       .log(cta::log::INFO, "In RelationalDB::handleInactiveMountQueues(): Selected rows for cleaning up ACTIVE table.");
-    uint64_t nrows = 0;
     if (isArchive) {
       auto status = isRepack ? schedulerdb::ArchiveJobStatus::AJS_ToTransferForRepack :
                                schedulerdb::ArchiveJobStatus::AJS_ToTransferForUser;

@@ -320,7 +320,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
     stmt.bindUint64(":FAILED_BYTES" + idx, fb);
   }
   txn.getConn().setDbQuerySummary("update repack failures");
-  stmt.executeQuery();
+  stmt.executeNonQuery();
 
   return stmt.getNbAffectedRows();
 }
