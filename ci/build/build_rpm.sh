@@ -324,7 +324,7 @@ build_rpm() {
 
     if [[ ${extra_telemetry} = true ]]; then
       echo "Building with telemetry instrumentation for performance measurements."
-      cmake_options+=" -D CTA_USE_PERF_TELEMETRY:BOOL=TRUE"
+      cmake_options+=" -D CTA_USE_EXTRA_TELEMETRY:BOOL=TRUE"
     fi
 
     cd "${build_dir}"

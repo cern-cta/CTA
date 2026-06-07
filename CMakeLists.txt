@@ -32,8 +32,8 @@ set (CTA_USE_PGSCHED FALSE CACHE BOOL "Build with the postgres scheduler")
 
 # By default Telemetry is instrumented only for metrics useful for production
 # To compile with instrumentation with performance measurements for stress test,
-# provide -DCTA_USE_PERF_TELEMETRY:Bool=true on the cmake command line.
-set (CTA_USE_PERF_TELEMETRY FALSE CACHE BOOL "Build with telemetry instrumentation for postgres performance measurements")
+# provide -DCTA_USE_EXTRA_TELEMETRY:Bool=true on the cmake command line.
+set (CTA_USE_EXTRA_TELEMETRY FALSE CACHE BOOL "Build with telemetry instrumentation for postgres performance measurements")
 
 execute_process(
   COMMAND ${CMAKE_C_COMPILER} -dumpversion
@@ -75,14 +75,14 @@ else ()
   set(RPM_USING_ORACLE "1" CACHE STRING "" FORCE)
 endif ()
 
-if (CTA_USE_PERF_TELEMETRY)
-    message (STATUS "Setting CTA_USE_PERF_TELEMETRY to TRUE")
-    add_definitions (-DCTA_USE_PERF_TELEMETRY)
-    set(RPM_PERF_TELEMETRY_OPT "-DCTA_USE_PERF_TELEMETRY:Bool=TRUE" CACHE STRING "" FORCE)
+if (CTA_USE_EXTRA_TELEMETRY)
+    message (STATUS "Setting CTA_USE_EXTRA_TELEMETRY to TRUE")
+    add_definitions (-DCTA_USE_EXTRA_TELEMETRY)
+    set(RPM_PERF_TELEMETRY_OPT "-DCTA_USE_EXTRA_TELEMETRY:Bool=TRUE" CACHE STRING "" FORCE)
 else ()
-    message (STATUS "Setting CTA_USE_PERF_TELEMETRY to FALSE")
-    add_definitions (-DCTA_USE_PERF_TELEMETRY)
-    set(RPM_PERF_TELEMETRY_OPT "-DCTA_USE_PERF_TELEMETRY:Bool=FALSE" CACHE STRING "" FORCE)
+    message (STATUS "Setting CTA_USE_EXTRA_TELEMETRY to FALSE")
+    add_definitions (-DCTA_USE_EXTRA_TELEMETRY)
+    set(RPM_PERF_TELEMETRY_OPT "-DCTA_USE_EXTRA_TELEMETRY:Bool=FALSE" CACHE STRING "" FORCE)
 endif ()
 
 if (CTA_USE_PGSCHED)

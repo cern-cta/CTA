@@ -12,13 +12,12 @@
 
 namespace cta::schedulerdb::postgres {
 
-std::pair<rdbms::Rset, uint64_t>
-ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
-                                            ArchiveJobStatus newStatus,
-                                            const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
-                                            uint64_t maxBytesRequested,
-                                            uint64_t limit,
-                                            bool isRepack) {
+rdbms::Rset ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
+                                                        ArchiveJobStatus newStatus,
+                                                        const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
+                                                        uint64_t maxBytesRequested,
+                                                        uint64_t limit,
+                                                        bool isRepack) {
   /* using write row lock FOR UPDATE for the select statement
    * since it is the same lock used for UPDATE
    * we first apply the LIMIT on the selection to limit
@@ -160,8 +159,7 @@ ArchiveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
   txn.getConn().setDbQuerySummary("move archive to active queue");
   auto result = stmt.executeQuery();
-  auto nrows = stmt.getNbAffectedRows();
-  return std::make_pair(std::move(result), nrows);
+  return result;
 }
 
 uint64_t ArchiveJobQueueRow::updateMultiCopyJobSuccess(Transaction& txn, const std::vector<std::string>& jobIDs) {

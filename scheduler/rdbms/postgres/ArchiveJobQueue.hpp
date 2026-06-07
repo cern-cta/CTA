@@ -665,13 +665,12 @@ VALUES )SQL";
    *
    * @return  result set containing job IDs of the rows which were updated
    */
-  static std::pair<rdbms::Rset, uint64_t>
-  moveJobsToDbActiveQueue(Transaction& txn,
-                          ArchiveJobStatus newStatus,
-                          const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
-                          uint64_t maxBytesRequested,
-                          uint64_t limit,
-                          bool isRepack);
+  static rdbms::Rset moveJobsToDbActiveQueue(Transaction& txn,
+                                             ArchiveJobStatus newStatus,
+                                             const SchedulerDatabase::ArchiveMount::MountInfo& mountInfo,
+                                             uint64_t maxBytesRequested,
+                                             uint64_t limit,
+                                             bool isRepack);
 
   /**
    * Update job status for jobs from single-copy user request

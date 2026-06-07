@@ -53,16 +53,15 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
     std::vector<std::unique_ptr<SchedulerDatabase::ArchiveJob>> retVector;
     cta::log::ScopedParamContainer params(lc);
     try {
-      auto [queuedJobs, nrows] = postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue(txn,
-                                                                                       queriedJobStatus,
-                                                                                       mountInfo,
-                                                                                       bytesRequested,
-                                                                                       filesRequested,
-                                                                                       m_isRepack);
+      auto queuedJobs = postgres::ArchiveJobQueueRow::moveJobsToDbActiveQueue(txn,
+                                                                              queriedJobStatus,
+                                                                              mountInfo,
+                                                                              bytesRequested,
+                                                                              filesRequested,
+                                                                              m_isRepack);
       timings.insertAndReset("mountUpdateBatchTime", t);
-      params.add("updateMountInfoRowCount", nrows);
       params.add("MountID", mountInfo.mountId);
-      retVector.reserve(nrows);
+      retVector.reserve(filesRequested);
       // Fetch job info only in case there were jobs found and updated
       if (!queuedJobs.isEmpty()) {
         // Construct the return value
@@ -80,7 +79,7 @@ ArchiveMount::getNextJobBatch(uint64_t filesRequested, uint64_t bytesRequested, 
           tapeFile.fSeq = ++nbFilesCurrentlyOnTape;
           tapeFile.blockId = maxBlockId;
         }
-        txn.setRowCountForTelemetry(retVector.size());
+        txn.setRowCountForTelemetry(queuedJobs.getNbRowsRetrieved());
         txn.commit();
         params.add("queuedJobCount", retVector.size());
         timings.insertAndReset("mountJobInitBatchTime", t);

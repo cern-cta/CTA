@@ -87,6 +87,7 @@ void ArchiveRequest::insert() {
       }
       m_conn.setRowCountForTelemetry(rows.size());
       postgres::ArchiveJobQueueRow::insertBatch(m_conn, rows, false);
+      m_conn.setRowCountForTelemetry(rows.size());
       rows.back()->addParamsToLogContext(params);
       m_lc.log(log::INFO,
                "In ArchiveRequest::insert(): added jobs to queue. Parameters logged only for last job of the bunch "

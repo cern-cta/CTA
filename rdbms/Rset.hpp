@@ -329,11 +329,27 @@ public:
    */
   std::optional<double> columnOptionalDouble(const std::string& colName) const;
 
+  /**
+   * Returns the number of rows that have been retrieved from this result set.
+   *
+   * The counter is incremented each time a call to next() successfully
+   * advances to a row. This value therefore reflects the number of rows
+   * consumed by the caller so far and does not require an additional pass
+   * over the result set.
+   *
+   * @return Number of rows retrieved via next().
+   */
+  uint64_t getNbRowsRetrieved() const {
+    return m_nbRowsRetrieved;
+  }
 private:
   /**
    * The object actually implementing this result set.
    */
   std::unique_ptr<wrapper::RsetWrapper> m_impl;
+
+  // cumulative number of rows retrieved by next()
+  uint64_t m_nbRowsRetrieved = 0;
 
 };  // class Rset
 

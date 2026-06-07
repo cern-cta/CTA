@@ -10,14 +10,13 @@
 
 namespace cta::schedulerdb::postgres {
 
-std::pair<rdbms::Rset, uint64_t>
-RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
-                                             RetrieveJobStatus newStatus,
-                                             const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
-                                             std::vector<std::string>& noSpaceDiskSystemNames,
-                                             uint64_t maxBytesRequested,
-                                             uint64_t limit,
-                                             bool isRepack) {
+rdbms::Rset RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
+                                                         RetrieveJobStatus newStatus,
+                                                         const SchedulerDatabase::RetrieveMount::MountInfo& mountInfo,
+                                                         std::vector<std::string>& noSpaceDiskSystemNames,
+                                                         uint64_t maxBytesRequested,
+                                                         uint64_t limit,
+                                                         bool isRepack) {
   // we first check if there are any disk systems
   // we should avoid querying jobs for
   std::string sql_dsn_exclusion_part = "";
@@ -219,8 +218,7 @@ RetrieveJobQueueRow::moveJobsToDbActiveQueue(Transaction& txn,
   stmt.bindUint64(":BYTES_REQUESTED", maxBytesRequested);
   txn.getConn().setDbQuerySummary("move retrieve to active queue");
   auto result = stmt.executeQuery();
-  auto nrows = stmt.getNbAffectedRows();
-  return std::make_pair(std::move(result), nrows);
+  return result;
 }
 
 uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,

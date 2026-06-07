@@ -248,9 +248,11 @@ bool Rset::next() {
   }
 
   const bool aRowHasBeenRetrieved = m_impl->next();
-
-  // Release resources of result set when its end has been reached
-  if (!aRowHasBeenRetrieved) {
+  if (aRowHasBeenRetrieved) {
+    // count rows as they are consumed
+    ++m_nbRowsRetrieved;
+  } else {
+    // Release resources of result set when its end has been reached
     m_impl.reset(nullptr);
   }
 
