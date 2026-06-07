@@ -339,9 +339,8 @@ public:
    *
    * @return Number of rows retrieved via next().
    */
-  uint64_t getNbRowsRetrieved() const {
-    return m_nbRowsRetrieved;
-  }
+  uint64_t getNbRowsRetrieved() const { return m_nbRowsRetrieved; }
+
 private:
   /**
    * The object actually implementing this result set.
