@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "catalogue/rdbms/RdbmsCatalogueUtils.hpp"
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/log/LogContext.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
@@ -211,11 +212,8 @@ struct RepackRequestTrackingRow {
     stmt.bindBool(":IS_ADD_COPIES", isAddCopies);
     stmt.bindBool(":IS_MOVE", isMove);
     stmt.bindUint64(":MAX_FILES_TO_EXPAND", maxFilesToSelect);
-    if (storageClass.empty()) {
-      stmt.bindString(":STORAGE_CLASS", std::nullopt);
-    } else {
-      stmt.bindString(":STORAGE_CLASS", storageClass);
-    }
+    stmt.bindString(":STORAGE_CLASS",
+                    cta::catalogue::RdbmsCatalogueUtils::nulloptIfEmptyStr(std::make_optional(storageClass)));
     stmt.bindUint64(":TOTAL_FILES_ON_TAPE_AT_START", totalFilesOnTapeAtStart);
     stmt.bindUint64(":TOTAL_BYTES_ON_TAPE_AT_START", totalBytesOnTapeAtStart);
     stmt.bindBool(":ALL_FILES_SELECTED_AT_START", allFilesSelectedAtStart);

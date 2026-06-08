@@ -3230,7 +3230,7 @@ TEST_P(SchedulerTest, expandRepackRequestWithMaxFiles) {
   }
 }
 
-TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
+TEST_P(SchedulerTest, expandRepackRequestWithStorageClass) {
   using namespace cta;
   unitTests::TempDirectory tempDirectory;
 
@@ -3302,7 +3302,7 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
   const std::string tapeDrive = "tape_drive";
   const uint64_t nbArchiveFilesOnTape = 10;
   const uint64_t nbFilesMatchingStorageClass = 5;
-  const uint64_t maxFilesToSelect = 3;
+  const uint64_t maxFilesToSelect = 0;
   const uint64_t archiveFileSize = 2 * 1000 * 1000 * 1000;
 
   std::set<catalogue::TapeItemWrittenPointer> tapeFilesWrittenCopy1;
@@ -3312,7 +3312,7 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
   uint64_t archiveFileId = 1;
 
   // Create 10 files on the tape, 5 matching the requested storage class,
-  // and verify that only 3 matching files are selected during repack expansion
+  // and verify that only the matching files are selected during repack expansion
   for (uint64_t j = 1; j <= nbArchiveFilesOnTape; ++j) {
     std::ostringstream diskFileId;
     diskFileId << (12345677 + archiveFileId);
@@ -3357,6 +3357,9 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
     utils::Timer t;
     auto repackRequestToExpand = scheduler.getNextRepackRequestToExpand();
     ASSERT_NE(nullptr, repackRequestToExpand);
+
+    auto repackInfoBeforeExpand = repackRequestToExpand->getRepackInfo();
+
     scheduler.expandRepackRequest(*repackRequestToExpand, tl, t, lc);
   }
 
@@ -3365,8 +3368,8 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
   {
     std::list<common::dataStructures::RetrieveJob> retrieveJobs = scheduler.getPendingRetrieveJobs(vid, lc);
 
-    // Check that storage class filtering and maxFilesToSelect were both applied
-    ASSERT_EQ(maxFilesToSelect, retrieveJobs.size());
+    // Check that only files matching the requested storage class were selected
+    ASSERT_EQ(nbFilesMatchingStorageClass, retrieveJobs.size());
 
     for (const auto& job : retrieveJobs) {
       ASSERT_EQ(storageClassToSelect, job.storageClass);
@@ -3387,10 +3390,10 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClassAndMaxFiles) {
 
     ASSERT_EQ(storageClassToSelect, repackInfo.storageClass);
     ASSERT_FALSE(repackInfo.allFilesSelectedAtStart);
-    ASSERT_EQ(maxFilesToSelect, repackInfo.totalFilesToRetrieve);
-    ASSERT_EQ(maxFilesToSelect * archiveFileSize, repackInfo.totalBytesToRetrieve);
-    ASSERT_EQ(maxFilesToSelect, repackInfo.totalFilesToArchive);
-    ASSERT_EQ(maxFilesToSelect * archiveFileSize, repackInfo.totalBytesToArchive);
+    ASSERT_EQ(nbFilesMatchingStorageClass, repackInfo.totalFilesToRetrieve);
+    ASSERT_EQ(nbFilesMatchingStorageClass * archiveFileSize, repackInfo.totalBytesToRetrieve);
+    ASSERT_EQ(nbFilesMatchingStorageClass, repackInfo.totalFilesToArchive);
+    ASSERT_EQ(nbFilesMatchingStorageClass * archiveFileSize, repackInfo.totalBytesToArchive);
   }
 }
 

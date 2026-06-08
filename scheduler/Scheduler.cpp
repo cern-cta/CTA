@@ -643,23 +643,24 @@ void Scheduler::expandRepackRequest(const RepackRequest& repackRequest,
     while (archiveFilesForCatalogue.hasMore()) {
       auto archiveFile = archiveFilesForCatalogue.next();
 
-      // Apply the optional storage class filter and only select matching files for repack
-      if (!repackInfo.storageClass.empty() && archiveFile.storageClass != repackInfo.storageClass) {
-        continue;
-      }
-      if (repackInfo.maxFilesToSelect == 0 || numberOfFilesCount < repackInfo.maxFilesToSelect) {
+      const bool storageClassMatches =
+        repackInfo.storageClass.empty() || archiveFile.storageClass == repackInfo.storageClass;
+
+      if (storageClassMatches
+          && (repackInfo.maxFilesToSelect == 0 || archiveFilesFromCatalogue.size() < repackInfo.maxFilesToSelect)) {
         archiveFilesFromCatalogue.push_back(archiveFile);
-        numberOfBytesCount += archiveFile.fileSize;
-      } else if (totalFilesOnTapeAlreadyChecked) {
+      } else if (storageClassMatches && totalFilesOnTapeAlreadyChecked) {
         // Break if the total number of files/bytes on tape has already been counted before
         allFilesSelected = false;
         break;
-      } else {
-        // Count the number of bytes of the all the remaining files
+      } else if (storageClassMatches) {
         allFilesSelected = false;
+      }
+
+      if (!totalFilesOnTapeAlreadyChecked) {
+        numberOfFilesCount += 1;
         numberOfBytesCount += archiveFile.fileSize;
       }
-      numberOfFilesCount += 1;
     }
 
     // Only update the total number of files if the value hasn't been already set. Otherwise, reuse old value.
