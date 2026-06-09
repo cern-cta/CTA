@@ -2260,6 +2260,7 @@ std::unique_ptr<SchedulerDatabase::RepackRequest> OStoreDB::getNextRepackJobToEx
   ret->repackInfo.repackBufferBaseURL = repackInfo.repackBufferBaseURL;
   ret->repackInfo.noRecall = repackInfo.noRecall;
   ret->repackInfo.maxFilesToSelect = repackInfo.maxFilesToSelect;
+  ret->repackInfo.storageClass = repackInfo.storageClass;
   return ret;
 }
 
