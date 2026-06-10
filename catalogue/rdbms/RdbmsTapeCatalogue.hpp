@@ -57,6 +57,8 @@ public:
 
   uint64_t getNbFilesOnTape(const std::string& vid) const override;
 
+  uint64_t getNbFilesInRecycleLog(const std::string& vid) const override;
+
   void modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
                            const std::string& vid,
                            const std::string& mediaType) override;
@@ -166,6 +168,7 @@ private:
    */
   uint64_t getNbFilesOnTape(rdbms::Conn& conn, const std::string& vid) const;
 
+  uint64_t getNbFilesInRecycleLog(rdbms::Conn& conn, const std::string& vid) const;
   /**
    * Reset the counters of a tape
    * @param conn the database connection

@@ -548,6 +548,11 @@ uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(const std::string& vid) const {
   return getNbFilesOnTape(conn, vid);
 }
 
+uint64_t RdbmsTapeCatalogue::getNbFilesInRecycleLog(const std::string& vid) const {
+  auto conn = m_connPool->getConn();
+  return getNbFilesInRecycleLog(conn, vid);
+}
+
 void RdbmsTapeCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
                                              const std::string& vid,
                                              const std::string& mediaType) {
@@ -1285,6 +1290,22 @@ uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::stri
   stmt.bindString(":VID", vid);
   auto rset = stmt.executeQuery();
   rset.next();
+  return rset.columnUint64("NB_FILES");
+}
+
+uint64_t RdbmsTapeCatalogue::getNbFilesInRecycleLog(rdbms::Conn& conn, const std::string& vid) const {
+  const char* const sql = R"SQL(
+    SELECT COUNT(*) AS NB_FILES
+    FROM FILE_RECYCLE_LOG
+    WHERE VID = :VID
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+
+  stmt.bindString(":VID", vid);
+  auto rset = stmt.executeQuery();
+  rset.next();
+
   return rset.columnUint64("NB_FILES");
 }
 

@@ -84,6 +84,10 @@ uint64_t DummyTapeCatalogue::getNbFilesOnTape(const std::string& vid) const {
   throw exception::NotImplementedException();
 }
 
+uint64_t DummyTapeCatalogue::getNbFilesInRecycleLog(const std::string& vid) const {
+  throw exception::NotImplementedException();
+}
+
 void DummyTapeCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
                                              const std::string& vid,
                                              const std::string& mediaType) {

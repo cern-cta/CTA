@@ -113,6 +113,13 @@ uint64_t TapeCatalogueRetryWrapper::getNbFilesOnTape(const std::string& vid) con
     m_maxTriesToConnect);
 }
 
+uint64_t TapeCatalogueRetryWrapper::getNbFilesInRecycleLog(const std::string& vid) const {
+  return retryOnLostConnection(
+    m_log,
+    [this, &vid] { return m_catalogue.Tape()->getNbFilesInRecycleLog(vid); },
+    m_maxTriesToConnect);
+}
+
 void TapeCatalogueRetryWrapper::modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
                                                     const std::string& vid,
                                                     const std::string& mediaType) {

@@ -48,6 +48,8 @@ public:
 
   uint64_t getNbFilesOnTape(const std::string& vid) const override;
 
+  uint64_t getNbFilesInRecycleLog(const std::string& vid) const override;
+
   void modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
                            const std::string& vid,
                            const std::string& mediaType) override;
