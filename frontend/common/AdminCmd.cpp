@@ -1147,9 +1147,6 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
   auto verificationStatus = getOptional(OptionString::VERIFICATION_STATUS);
 
   if (mediaType.has_value()) {
-    if (m_catalogue.Tape()->getNbFilesOnTape(vid) != 0) {
-      throw cta::exception::UserError("Unable to modify media type of tape " + vid + " because it contains files");
-    }
     m_catalogue.Tape()->modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
   }
   if (vendor.has_value()) {

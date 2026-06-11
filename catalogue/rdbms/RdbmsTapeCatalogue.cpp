@@ -732,6 +732,9 @@ void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructure
       VID = :VID
   )SQL";
   auto conn = m_connPool->getConn();
+  if (getNbFilesOnTape(conn, vid) > 0 || getNbFilesInRecycleLog(conn, vid) > 0) {
+    throw exception::UserError("ERROR: forbidden to set an encryption key on a non empty tape.");
+  }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":ENCRYPTION_KEY_NAME", optionalEncryptionKeyName);
   stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);

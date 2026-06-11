@@ -1428,6 +1428,146 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName_nonExistentTape) {
                cta::exception::UserError);
 }
 
+TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName_nonEmptyTape) {
+  const bool logicalLibraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  const uint64_t nbPartialTapes = 2;
+  const std::string encryptionKeyName = "encryption_key_name";
+  const std::vector<std::string> supply;
+  const std::string diskInstance = m_diskInstance.name;
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
+
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
+
+  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  m_catalogue->Tape()->createTape(m_admin, m_tape1);
+
+  auto fileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& fileWritten = *fileWrittenUP;
+
+  std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
+  fileWrittenSet.insert(fileWrittenUP.release());
+
+  fileWritten.archiveFileId = 1234;
+  fileWritten.diskInstance = diskInstance;
+  fileWritten.diskFileId = "5678";
+  fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+  fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+  fileWritten.size = 1000;
+  fileWritten.checksumBlob.insert(cta::checksum::ADLER32, "1234");
+  fileWritten.storageClassName = m_storageClassSingleCopy.name;
+  fileWritten.vid = m_tape1.vid;
+  fileWritten.fSeq = 1;
+  fileWritten.blockId = 4321;
+  fileWritten.copyNb = 1;
+  fileWritten.tapeDrive = "tape_drive";
+
+  m_catalogue->TapeFile()->filesWrittenToTape(fileWrittenSet);
+
+  ASSERT_EQ(1, m_catalogue->Tape()->getNbFilesOnTape(m_tape1.vid));
+
+  ASSERT_THROW(m_catalogue->Tape()->modifyTapeEncryptionKeyName(m_admin, m_tape1.vid, "new_encryption_key"),
+               cta::exception::UserError);
+}
+
+TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName_tapeWithFilesInRecycleLog) {
+  cta::log::LogContext dummyLc(m_dummyLog);
+
+  const bool logicalLibraryIsDisabled = false;
+  std::optional<std::string> physicalLibraryName;
+  const uint64_t nbPartialTapes = 2;
+  const std::string encryptionKeyName = "encryption_key_name";
+  const std::vector<std::string> supply;
+  const std::string diskInstance = m_diskInstance.name;
+
+  m_catalogue->MediaType()->createMediaType(m_admin, m_mediaType);
+  m_catalogue->LogicalLibrary()->createLogicalLibrary(m_admin,
+                                                      m_tape1.logicalLibraryName,
+                                                      logicalLibraryIsDisabled,
+                                                      physicalLibraryName,
+                                                      "Create logical library");
+
+  m_catalogue->DiskInstance()->createDiskInstance(m_admin, m_diskInstance.name, m_diskInstance.comment);
+  m_catalogue->VO()->createVirtualOrganization(m_admin, m_vo);
+  m_catalogue->StorageClass()->createStorageClass(m_admin, m_storageClassSingleCopy);
+
+  m_catalogue->TapePool()->createTapePool(m_admin,
+                                          m_tape1.tapePoolName,
+                                          m_vo.name,
+                                          nbPartialTapes,
+                                          encryptionKeyName,
+                                          supply,
+                                          "Create tape pool");
+
+  m_catalogue->Tape()->createTape(m_admin, m_tape1);
+
+  const uint64_t fileSize = 1234 * 1000000000UL;
+  const uint64_t archiveFileId = 1234;
+  const std::string diskFileId = "5678";
+
+  auto fileWrittenUP = std::make_unique<cta::catalogue::TapeFileWritten>();
+  auto& fileWritten = *fileWrittenUP;
+  std::set<cta::catalogue::TapeItemWrittenPointer> fileWrittenSet;
+  fileWrittenSet.insert(fileWrittenUP.release());
+
+  fileWritten.archiveFileId = archiveFileId;
+  fileWritten.diskInstance = diskInstance;
+  fileWritten.diskFileId = diskFileId;
+  fileWritten.diskFileOwnerUid = PUBLIC_DISK_USER;
+  fileWritten.diskFileGid = PUBLIC_DISK_GROUP;
+  fileWritten.size = fileSize;
+  fileWritten.checksumBlob.insert(cta::checksum::ADLER32, "1234");
+  fileWritten.storageClassName = m_storageClassSingleCopy.name;
+  fileWritten.vid = m_tape1.vid;
+  fileWritten.fSeq = 1;
+  fileWritten.blockId = 4321;
+  fileWritten.copyNb = 1;
+  fileWritten.tapeDrive = "tape_drive";
+
+  m_catalogue->TapeFile()->filesWrittenToTape(fileWrittenSet);
+
+  ASSERT_EQ(1, m_catalogue->Tape()->getNbFilesOnTape(m_tape1.vid));
+
+  cta::common::dataStructures::DeleteArchiveRequest deletedArchiveReq;
+  deletedArchiveReq.archiveFile = m_catalogue->ArchiveFile()->getArchiveFileById(archiveFileId);
+  deletedArchiveReq.diskInstance = diskInstance;
+  deletedArchiveReq.archiveFileID = archiveFileId;
+  deletedArchiveReq.diskFileId = diskFileId;
+  deletedArchiveReq.recycleTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  deletedArchiveReq.requester = cta::common::dataStructures::RequesterIdentity(m_admin.username, "group");
+  deletedArchiveReq.diskFilePath = "/path/";
+
+  m_catalogue->ArchiveFile()->moveArchiveFileToRecycleLog(deletedArchiveReq, dummyLc);
+
+  ASSERT_EQ(0, m_catalogue->Tape()->getNbFilesOnTape(m_tape1.vid));
+
+  // A tape with files in FILE_RECYCLE_LOG is considered non-empty
+  ASSERT_EQ(1, m_catalogue->Tape()->getNbFilesInRecycleLog(m_tape1.vid));
+
+  // Changing the encryption key must be forbidden on non-empty tapes,
+  // including tapes whose files are only present in the recycle log
+  ASSERT_THROW(m_catalogue->Tape()->modifyTapeEncryptionKeyName(m_admin, m_tape1.vid, "new_encryption_key"),
+               cta::exception::UserError);
+}
+
 TEST_P(cta_catalogue_TapeTest, modifyTapeState_nonExistentTape) {
   cta::common::dataStructures::Tape::State state = cta::common::dataStructures::Tape::State::ACTIVE;
   ASSERT_THROW(m_catalogue->Tape()->modifyTapeState(m_admin, "DOES_NOT_EXIST", state, std::nullopt, std::nullopt),
