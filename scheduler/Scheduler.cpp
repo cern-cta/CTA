@@ -643,17 +643,19 @@ void Scheduler::expandRepackRequest(const RepackRequest& repackRequest,
     while (archiveFilesForCatalogue.hasMore()) {
       auto archiveFile = archiveFilesForCatalogue.next();
 
-      const bool storageClassMatches =
+      const bool storageClassCheck =
         repackInfo.storageClass.empty() || archiveFile.storageClass == repackInfo.storageClass;
 
-      if (storageClassMatches
-          && (repackInfo.maxFilesToSelect == 0 || archiveFilesFromCatalogue.size() < repackInfo.maxFilesToSelect)) {
+      const bool maxFilesToSelectCheck =
+        repackInfo.maxFilesToSelect == 0 || archiveFilesFromCatalogue.size() < repackInfo.maxFilesToSelect;
+
+      if (storageClassCheck && maxFilesToSelectCheck) {
         archiveFilesFromCatalogue.push_back(archiveFile);
-      } else if (storageClassMatches && totalFilesOnTapeAlreadyChecked) {
+      } else if (totalFilesOnTapeAlreadyChecked) {
         // Break if the total number of files/bytes on tape has already been counted before
         allFilesSelected = false;
         break;
-      } else if (storageClassMatches) {
+      } else {
         allFilesSelected = false;
       }
 
@@ -667,8 +669,8 @@ void Scheduler::expandRepackRequest(const RepackRequest& repackRequest,
     if (!totalFilesOnTapeAlreadyChecked) {
       totalStatsFile.totalFilesOnTapeAtStart = numberOfFilesCount;
       totalStatsFile.totalBytesOnTapeAtStart = numberOfBytesCount;
-      totalStatsFile.allFilesSelectedAtStart = allFilesSelected;
     }
+    totalStatsFile.allFilesSelectedAtStart = allFilesSelected;
   }
 
   if (repackInfo.noRecall) {

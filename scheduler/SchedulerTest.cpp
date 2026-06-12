@@ -3389,7 +3389,7 @@ TEST_P(SchedulerTest, expandRepackRequestWithStorageClass) {
     auto repackInfo = rr.getInfo();
 
     ASSERT_EQ(storageClassToSelect, repackInfo.storageClass);
-    ASSERT_TRUE(repackInfo.allFilesSelectedAtStart);
+    ASSERT_FALSE(repackInfo.allFilesSelectedAtStart);
     ASSERT_EQ(nbFilesMatchingStorageClass, repackInfo.totalFilesToRetrieve);
     ASSERT_EQ(nbFilesMatchingStorageClass * archiveFileSize, repackInfo.totalBytesToRetrieve);
     ASSERT_EQ(nbFilesMatchingStorageClass, repackInfo.totalFilesToArchive);
