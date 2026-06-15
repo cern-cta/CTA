@@ -49,7 +49,7 @@ test 0 -eq ${CHECK_CERTIFICATES} && CURL_OPTS+="--insecure"
 
 # Discover endpoint
 
-REST_API_URI=$(curl ${CURL_OPTS} "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri')
+REST_API_URI=$(curl ${CURL_OPTS} "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri')
 
 ########################################################################################################################
 # Archive files with the sci_token
@@ -67,17 +67,17 @@ curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${S
 curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}"
 curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}"
 
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE1})"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE2})"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE3})"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE4})"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE1}")"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE2}")"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE3}")"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE4}")"
 
 # Now add the new files
 
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE1})"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE2})"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE3})"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE4})"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE1}")"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE2}")"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE3}")"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE4}")"
 
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
@@ -153,7 +153,7 @@ done
 
 echo "Checking stage request"
 
-STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}"
+STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}")
 STAGE_REQUEST_COUNT=$(echo ${STAGE_REQUEST_QUERY} | jq '.files[] | select(.onDisk == true) | .path' | wc -l)
 echo ${STAGE_REQUEST_COUNT}
 
