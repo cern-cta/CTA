@@ -111,7 +111,7 @@ while test "${FINAL_COUNT}" -ne 4; do
     exit 1
   fi
 
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
   if [ "${FINAL_COUNT}" -ne 4 ]; then
     sleep 1
@@ -144,7 +144,7 @@ while test "${FINAL_COUNT}" -ne 4; do
     exit 1
   fi
 
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "DISK_AND_TAPE" ) | .locality' | wc -l)
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "DISK_AND_TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
   if [ "${FINAL_COUNT}" -ne 4 ]; then
     sleep 1
@@ -185,7 +185,7 @@ while test "${FINAL_COUNT}" -ne 4; do
     exit 1
   fi
 
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
   if [ "${FINAL_COUNT}" -ne 4 ]; then
     sleep 1
@@ -215,7 +215,7 @@ while test "${FINAL_COUNT}" -ne 4; do
     exit 1
   fi
 
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
   if [ "${FINAL_COUNT}" -ne 4 ]; then
     sleep 1
