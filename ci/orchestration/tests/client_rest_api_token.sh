@@ -7,20 +7,21 @@
 
 . /root/client_helper.sh
 
-admin_kdestroy &>/dev/null
-admin_kinit &>/dev/null
+#admin_kdestroy &>/dev/null
+#admin_kinit &>/dev/null
 
-eosadmin_kdestroy &>/dev/null
-eosadmin_kinit &>/dev/null
+#eosadmin_kdestroy &>/dev/null
+#eosadmin_kinit &>/dev/null
 
 #NOTE: In this context it should be eos service names.
 EOS_MGM_HOST="ctaeos"
+EOS_MGM_PORT="8443"
 NOW=$(date +%s)
 LATER=$(echo "${NOW}+86400" | bc)
 
 # Generate Tokens
-TOKEN_EOSUSER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
-TOKEN_EOSPOWER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner poweruser1 --group powerusers --permission prwx)
+#TOKEN_EOSUSER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner user1 --group eosusers --permission rwx)
+#TOKEN_EOSPOWER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner poweruser1 --group powerusers --permission prwx)
 
 # Get SCI token
 SCI_TOKEN=$(cat /token_file)
@@ -39,40 +40,68 @@ test ${CHECK_CERTIFICATES} -eq 0 && echo -e "\n\nWARNING: Certificate checks are
 CURL_OPTS=""
 test 0 -eq ${CHECK_CERTIFICATES} && CURL_OPTS+="--insecure"
 
-echo "Printing eosuser token dump"
-eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSUSER1}" | jq .
-echo
-echo "Printing poweruser token dump"
-eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSPOWER1}" | jq .
-echo
+#echo "Printing eosuser token dump"
+#eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSUSER1}" | jq .
+#echo
+#echo "Printing poweruser token dump"
+#eos root://"${EOS_MGM_HOST}" token --token "${TOKEN_EOSPOWER1}" | jq .
+#echo
 
-# Discover endpoint of v1, /.well-known/wlcg-tape-rest-api in instance http(s)://ctaeos:8443
-HTTPS_URI=$(curl --insecure "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri')
+# Discover endpoint
 
-tmp_file=$(mktemp)
-echo "Dummy" > "${tmp_file}"
+REST_API_URI=$(curl ${CURL_OPTS} "https://${EOS_MGM_HOST}:8443/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri')
 
+########################################################################################################################
 # Archive files with the sci_token
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4"
-
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test1/file" --upload-file "${tmp_file}"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test2/file" --upload-file "${tmp_file}"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test3/file" --upload-file "${tmp_file}"
-curl -L --insecure -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:8443/eos/ctaeos/preprod/test4/file" --upload-file "${tmp_file}"
+########################################################################################################################
 
 FILE1="/eos/ctaeos/preprod/test1/file"
 FILE2="/eos/ctaeos/preprod/test2/file"
 FILE3="/eos/ctaeos/preprod/test3/file"
 FILE4="/eos/ctaeos/preprod/test4/file"
 
-echo "Waiting for files to be archived..."
+# Start by cleaning up any leftovers from previous tests
+
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE1}"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE2}"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}"
+
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE1})"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE2})"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE3})"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE4})"
+
+# Now add the new files
+
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE1})"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE2})"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE3})"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname ${FILE4})"
+
+tmp_file=$(mktemp)
+echo "Dummy" > "${tmp_file}"
+
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE1}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE2}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}" --upload-file "${tmp_file}"
+
+rm -f "${tmp_file}"
+
+########################################################################################################################
+# Check that files have been archived with the sci_token and Tape REST API (ARCHIVEINFO)
+########################################################################################################################
+
+ARCHIVEINFO_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\", \"${FILE3}\", \"${FILE4}\"]}"
+
+echo "Archiving files..."
+
 FINAL_COUNT=0
 TIMEOUT=90
 SECONDS_PASSED=0
-REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\", \"${FILE3}\", \"${FILE4}\"]}"
+
+# Wait for files to be archived
 
 while test "${FINAL_COUNT}" -ne 4; do
 
@@ -82,130 +111,144 @@ while test "${FINAL_COUNT}" -ne 4; do
     exit 1
   fi
 
-  FINAL_COUNT=$(curl -L --insecure --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/archiveinfo/   -d "${REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
   if [ "${FINAL_COUNT}" -ne 4 ]; then
     sleep 1
   fi
 done
-rm -f "${tmp_file}"
 
-# Full demo
-EOS_MGM_HOST="ctaeos"
+echo "All files archived."
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
 
-HTTPS_URI=$(curl -sk "https://ctaeos:8443/.well-known/wlcg-tape-rest-api" | jq -r '.endpoints[] | select(.version == "v1") | .uri')
-curl -sk -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/archiveinfo/ -d '{"paths":["/eos/ctaeos/preprod/test1/file", "/eos/ctaeos/preprod/test2/file"]}' | jq .
-curl -sk -H "Authorization: Bearer ${SCI_TOKEN}" https://ctaeos:8443/archiveinfo/ -d '{"paths":["/eos/ctaeos/preprod/test1/file", "/eos/ctaeos/preprod/test2/file"]}' | jq .
+########################################################################################################################
+# Request files to be staged with the sci_token and Tape REST API (STAGE)
+########################################################################################################################
 
-curl -sk -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test1/file"}, {"path":"/eos/ctaeos/preprod/test2/file"}]}' | jq .
-REQ_ID=$(curl -sk -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test1/file"}, {"path":"/eos/ctaeos/preprod/test2/file"}]}' | jq -r .requestId)
-echo ${REQ_ID}
+echo "Staging files..."
 
-curl -sk -H "Authorization: Bearer ${SCI_TOKEN}" "${HTTPS_URI}/stage/${REQ_ID}" | jq .
-
-echo "$(date +%s): Showing archiveinfo..."
-curl -L --insecure --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/archiveinfo/ \
-  -d "${REQ_BODY}" | jq .
-
-/bin/bash
-
-# Stage
-# Request that tape-stored files are made available with disk latency.
-REQ_BODY="{\"files\":[{\"path\":\"${FILE1}\"}, {\"path\":\"${FILE2}\"}, {\"path\":\"${FILE3}\"}, {\"path\":\"${FILE4}\"}]}"
-REQ_ID=$(curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" ${HTTPS_URI}/stage/ -d "$REQ_BODY" | jq -r .requestId)
-
-SECONDS_PASSED=0
 FINAL_COUNT=0
-while test "${FINAL_COUNT}" -eq 0; do
-  echo "$(date +%s): Waiting for file to be staged."
+TIMEOUT=90
+SECONDS_PASSED=0
 
+STAGE_REQ_BODY="{\"files\":[{\"path\":\"${FILE1}\"}, {\"path\":\"${FILE2}\"}, {\"path\":\"${FILE3}\"}, {\"path\":\"${FILE4}\"}]}"
+REQ_ID=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/" -d "$STAGE_REQ_BODY" | jq -r .requestId)
+
+# Wait for files to be staged
+
+while test "${FINAL_COUNT}" -ne 4; do
+
+  echo "$(date +%s): Waiting for files to be staged."
   if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
-    echo "$(date +%s): Timed out waiting for file to be staged."
+    echo "$(date +%s): Timed out waiting for files to be staged."
     exit 1
   fi
 
-  FINAL_COUNT=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod | grep 'test_http-rest-api' | grep 'd1::t1' | wc -l)
-
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "DISK_AND_TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
-  sleep 1
-done
-echo "$(date +%s): File staged successfully."
-eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod
-
-# Release
-# Indicate that files previously staged through STAGE are no longer required to have disk like latency.
-# For CTA the actual REQ_ID is not necessary, any character after 'release/'
-# will make the request valid. But dCache and StoRM use them. More info:
-#      https://gitlab.cern.ch/cta/CTA/-/issues/384
-curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" "${HTTPS_URI}/release/${REQ_ID}" -d '{"paths":["/eos/ctaeos/preprod/test_http-rest-api"]}'
-
-EVICT_COUNT=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod | grep 'test_http-rest-api' | grep 'd0::t1' | wc -l)
-test "${EVICT_COUNT}" -eq 1 || { echo "$(date +%s): File did not get evicted.";  exit 1; }
-echo "$(date +%s): File successfully evicted."
-eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod
-
-# Cancellation and deletion.
-# Steps:
-# 1. Check file evict counter.
-echo "$(date +%s): Checking evict counter before abort prepare."
-OLDIFS=$IFS
-IFS='::'
-tmp=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod | grep test_http-rest-api | awk '{ print $1 }')
-split1=( $tmp )
-EVICT_INIT=${split1[0]}
-echo "Evict start counter: ${EVICT_INIT}"
-
-
-#    2. Put drive down
-IFS=' ' read -r -a dr_names <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="UP") | .driveName')
-IFS=' ' read -r -a dr_names_down <<< $(admin_cta --json dr ls | jq -r '.[] | select(.driveStatus=="DOWN") | .driveName')
-echo "$(date +%s): Putting drives down."
-
-for drive in "${dr_names[@]}"; do
-  echo "Putting drive $drive down."
-  admin_cta dr down "$drive" -r "Tape Rest API abort prepare test"
-  sleep 3
+  if [ "${FINAL_COUNT}" -ne 4 ]; then
+    sleep 1
+  fi
 done
 
+echo "Checking stage request"
 
-#    3. Do request.
-IFS=$OLDIFS
-REQ_ID=$(curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test_http-rest-api"}]}' | jq -r .requestId)
-echo "$(date +%s): Request id 1 - ${REQ_ID}"
+STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}"
+STAGE_REQUEST_COUNT=$(echo ${STAGE_REQUEST_QUERY} | jq '.files[] | select(.onDisk == true) | .path' | wc -l)
+echo ${STAGE_REQUEST_COUNT}
 
-#    3.1 Check progress of request.
-echo "$(date +%s): Checking progress of request"
-curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" "${HTTPS_URI}/stage/${REQ_ID}"
+if test "${STAGE_REQUEST_COUNT}" -ne 4; then
+  echo "Stage request query not showing all files on disk"
+  exit 1
+fi
 
-#    4. Cancel request.
-echo "$(date +%s): Cancelling stage request"
-curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" "${HTTPS_URI}/stage/${REQ_ID}/cancel/" -d '{"paths":["/eos/ctaeos/preprod/test_http-rest-api"]}'
+echo "All files staged."
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
 
-#    5. Do another request.
-IFS=$OLDIFS
-REQ_ID=$(curl ${CURL_OPTS} -L --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" ${HTTPS_URI}/stage/ -d '{"files":[{"path":"/eos/ctaeos/preprod/test_http-rest-api"}]}' | jq -r .requestId)
-echo "$(date +%s): Request id 2 - ${REQ_ID}"
+########################################################################################################################
+# Request files to be released with the sci_token and Tape REST API (RELEASE)
+########################################################################################################################
 
-# 6. Delete the request.
-curl ${CURL_OPTS} -L -X DELETE --capath /etc/grid-security/certificates -H "Accept: application/json" -H "Authorization: Bearer ${TOKEN_EOSPOWER1}" "${HTTPS_URI}/stage/${REQ_ID}"
+echo "Releasing files..."
 
-#    5. Put drive up.
-for drive in "${dr_names[@]}"; do
-  echo "Putting drive $drive up."
-  admin_cta dr up "$drive"
-  sleep 3
+FINAL_COUNT=0
+TIMEOUT=90
+SECONDS_PASSED=0
+RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\", \"${FILE3}\", \"${FILE4}\"]}"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
+
+while test "${FINAL_COUNT}" -ne 4; do
+
+  echo "$(date +%s): Waiting for files to be released."
+  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
+    echo "$(date +%s): Timed out waiting for files to be released."
+    exit 1
+  fi
+
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  let SECONDS_PASSED=SECONDS_PASSED+1
+  if [ "${FINAL_COUNT}" -ne 4 ]; then
+    sleep 1
+  fi
 done
 
-#    6. Check evict counter reamins the same.
-tmp=$(eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod | grep test_http-rest-api | awk '{ print $1 }')
-IFS='::'
-split1=( $tmp  )
-EVICT_FINAL=${split1[0]}
-echo "Evict final counter: ${EVICT_FINAL}"
+echo "All files released."
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
 
-test "${EVICT_INIT}" == "${EVICT_FINAL}" &&
-echo "$(date +%s): Request aborted successfully." || { echo "$(date +%s): File got staged despite abortion call."; exit 1; }
-eos root://"${EOS_MGM_HOST}" ls -y /eos/ctaeos/preprod
+########################################################################################################################
+# Request files to be cancelled with the sci_token and Tape REST API (CANCEL)
+########################################################################################################################
+
+echo "Cancelling files..."
+
+FINAL_COUNT=0
+TIMEOUT=90
+SECONDS_PASSED=0
+CANCEL_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\", \"${FILE3}\", \"${FILE4}\"]}"
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}/cancel" -d "${CANCEL_REQ_BODY}"
+
+while test "${FINAL_COUNT}" -ne 4; do
+
+  echo "$(date +%s): Waiting for files to be cancelled."
+  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
+    echo "$(date +%s): Timed out waiting for files to be cancelled."
+    exit 1
+  fi
+
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  let SECONDS_PASSED=SECONDS_PASSED+1
+  if [ "${FINAL_COUNT}" -ne 4 ]; then
+    sleep 1
+  fi
+done
+
+echo "All files cancelled."
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
+
+########################################################################################################################
+# Request request to be deleted (DELETE)
+########################################################################################################################
+
+echo "Deleting request..."
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
+
+# Check that request no longer exists
+
+STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L --fail -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}")
+
+if [ "$?" -eq 0 ]; then
+  echo "Stage request still exists"
+  echo "${STAGE_REQUEST_QUERY}"
+  exit 1
+else
+  echo "Stage request deleted"
+fi
+
+########################################################################################################################
+# Test completed. Clean resources.
+########################################################################################################################
+
+echo "$(date +%s): Rest API test completed successfully. OK."
 
 # Remove the file manually.
 eos root://"${EOS_MGM_HOST}" rm /eos/ctaeos/preprod/test_http-rest-api
