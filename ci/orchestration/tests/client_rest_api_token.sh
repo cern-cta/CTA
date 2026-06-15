@@ -62,30 +62,30 @@ FILE4="/eos/ctaeos/preprod/test4/file"
 
 # Start by cleaning up any leftovers from previous tests
 
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE1}"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE2}"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE1}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE2}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}"
 
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE1}")"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE2}")"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE3}")"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE4}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE1}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE2}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE3}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE4}")"
 
 # Now add the new files
 
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE1}")"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE2}")"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE3}")"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE4}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE1}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE2}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE3}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE4}")"
 
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE1}" --upload-file "${tmp_file}"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE2}" --upload-file "${tmp_file}"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}" --upload-file "${tmp_file}"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE1}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE2}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}" --upload-file "${tmp_file}"
 
 rm -f "${tmp_file}"
 
@@ -132,7 +132,7 @@ TIMEOUT=90
 SECONDS_PASSED=0
 
 STAGE_REQ_BODY="{\"files\":[{\"path\":\"${FILE1}\"}, {\"path\":\"${FILE2}\"}, {\"path\":\"${FILE3}\"}, {\"path\":\"${FILE4}\"}]}"
-REQ_ID=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/" -d "$STAGE_REQ_BODY" | jq -r .requestId)
+REQ_ID=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/" -d "$STAGE_REQ_BODY" | jq -r .requestId)
 
 # Wait for files to be staged
 
@@ -153,7 +153,7 @@ done
 
 echo "Checking stage request"
 
-STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}")
+STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}")
 STAGE_REQUEST_COUNT=$(echo ${STAGE_REQUEST_QUERY} | jq '.files[] | select(.onDisk == true) | .path' | wc -l)
 echo ${STAGE_REQUEST_COUNT}
 
@@ -163,7 +163,7 @@ if test "${STAGE_REQUEST_COUNT}" -ne 4; then
 fi
 
 echo "All files staged."
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
 
 ########################################################################################################################
 # Request files to be released with the sci_token and Tape REST API (RELEASE)
@@ -175,7 +175,7 @@ FINAL_COUNT=0
 TIMEOUT=90
 SECONDS_PASSED=0
 RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\", \"${FILE3}\", \"${FILE4}\"]}"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
 
 while test "${FINAL_COUNT}" -ne 4; do
 
@@ -193,7 +193,7 @@ while test "${FINAL_COUNT}" -ne 4; do
 done
 
 echo "All files released."
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
 
 ########################################################################################################################
 # Request files to be cancelled with the sci_token and Tape REST API (CANCEL)
@@ -205,7 +205,7 @@ FINAL_COUNT=0
 TIMEOUT=90
 SECONDS_PASSED=0
 CANCEL_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\", \"${FILE3}\", \"${FILE4}\"]}"
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}/cancel" -d "${CANCEL_REQ_BODY}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}/cancel" -d "${CANCEL_REQ_BODY}"
 
 while test "${FINAL_COUNT}" -ne 4; do
 
@@ -223,34 +223,31 @@ while test "${FINAL_COUNT}" -ne 4; do
 done
 
 echo "All files cancelled."
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
 
 ########################################################################################################################
 # Request request to be deleted (DELETE)
 ########################################################################################################################
 
 echo "Deleting request..."
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
 
 # Check that request no longer exists
 
-STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L --fail -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}")
+HTTP_CODE=$(curl ${CURL_OPTS} -L --fail -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}" -w "%{http_code}")
 
-if [ "$?" -eq 0 ]; then
+if [[ "$?" -eq 0 ]]; then
   echo "Stage request still exists"
-  echo "${STAGE_REQUEST_QUERY}"
+  exit 1
+elif [[ "${HTTP_CODE}" -ne 404 ]]; then
+  echo "Wrong HTTP code returned: ${HTTP_CODE}"
   exit 1
 else
-  echo "Stage request deleted"
+  echo "Stage request no longer exists"
 fi
 
 ########################################################################################################################
 # Test completed. Clean resources.
 ########################################################################################################################
 
-echo "$(date +%s): Rest API test completed successfully. OK."
-
-# Remove the file manually.
-eos root://"${EOS_MGM_HOST}" rm /eos/ctaeos/preprod/test_http-rest-api
-IFS=$OLDIFS
-echo "$(date +%s): Rest API test completed successfully. OK."
+echo "Rest API test completed successfully. OK."
