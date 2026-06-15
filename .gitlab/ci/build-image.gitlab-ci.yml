@@ -78,7 +78,7 @@ build-ctageneric-from-remote-rpms:
   variables:
     DOCKERFILE: ci/docker/${PLATFORM}/dev-remote-rpms.Dockerfile
     IMAGE_NAME: ctageneric
-    EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --build-arg PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}.${PLATFORM}"
+    EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --build-arg PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"
 
 ###############################################
 # Immutable images
