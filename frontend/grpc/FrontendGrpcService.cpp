@@ -23,19 +23,21 @@
 
 constexpr const char* CLIENT_IDENTITY_NOT_SET_ERROR = "clientIdentity not set in gRPC authentication";
 
+using cta::common::dataStructures::SecurityIdentity;
+
 namespace cta::frontend::grpc {
 
-std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
+std::pair<::grpc::Status, std::optional<SecurityIdentity>>
 CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
                                         const cta::xrd::Request* request,
                                         cta::log::LogContext& lc) {
-  // Retrieve metadata from the incoming request
+  std::string clientHost = request->notification().wf().instance().name();
+  std::string ourHost = m_frontendService->getInstanceName();
 
-  if (m_frontendService->getWFEAuthMethod() == AuthMethod::MTLS) {
+  if (m_frontendService->getWfeAuthMethod() == AuthMethod::MTLS) {
     auto auth_context = context->auth_context();
     // fetch the certificate identities from the auth context
     auto cert_idents = auth_context->GetPeerIdentity();
-    auto instance_name = request->notification().wf().instance().name();
 
     std::set<std::string, std::less<>> cert_identities;
     std::ranges::transform(cert_idents, std::inserter(cert_identities, cert_identities.begin()), [](const auto& ref) {
@@ -46,7 +48,7 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
            "Received mTLS identities: "
              + cta::utils::joinCommaSeparated(std::vector(cert_identities.begin(), cert_identities.end())));
 
-    auto instance_identities = m_frontendService->getMtlsCertIdentitiesForInstance(instance_name);
+    auto instance_identities = m_frontendService->getMtlsCertIdentitiesForInstance(clientHost);
 
     lc.log(cta::log::DEBUG,
            "Resolved certificate identities for instance: "
@@ -59,34 +61,34 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
 
     if (intersect_set.empty()) {
       // No identities match
-      lc.log(cta::log::ERR, "Username " + instance_name + " doesn't match any of the certificate identities.");
+      lc.log(cta::log::ERR, "Name " + clientHost + " doesn't match any of the certificate identities.");
       return {::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Certificate doesn't match identity"), std::nullopt};
     }
 
-    cta::common::dataStructures::SecurityIdentity clientIdentity(instance_name, context->peer());
+    SecurityIdentity clientIdentity(clientHost, ourHost, context->peer(), "grpc_mtls");
     return {::grpc::Status::OK, clientIdentity};
-  } else if (m_frontendService->getWFEAuthMethod() == AuthMethod::JWT) {
+  } else if (m_frontendService->getWfeAuthMethod() == AuthMethod::JWT) {
     const auto& metadata = context->client_metadata();
 
     auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
       metadata,
-      m_frontendService->getWFEAuthMethod() != AuthMethod::JWT,
+      m_frontendService->getWfeAuthMethod() != AuthMethod::JWT,
       m_pubkeyCache,
       m_tokenStorage,
-      request->notification().wf().instance().name(),
+      ourHost,
       context->peer(),
       lc);
     return {status, clientIdentity};
   } else {
     throw cta::exception::UserError("Unsupported authentication method for WFE requests: "
-                                    + authMethodAsString(m_frontendService->getWFEAuthMethod()).value());
+                                    + toString(m_frontendService->getWfeAuthMethod()));
   }
 }
 
 Status CtaRpcImpl::processGrpcRequest(const cta::xrd::Request* request,
                                       cta::xrd::Response* response,
                                       cta::log::LogContext& lc,
-                                      const cta::common::dataStructures::SecurityIdentity& clientIdentity) const {
+                                      const SecurityIdentity& clientIdentity) const {
   try {
     cta::frontend::WorkflowEvent wfe(*m_frontendService, clientIdentity, request->notification());
     *response = wfe.process();
@@ -344,14 +346,14 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
   cta::log::ScopedParamContainer sp(lc);
 
   // Retrieve metadata from the incoming request
-  auto metadata = context->client_metadata();
+  const auto& metadata = context->client_metadata();
 
   auto [status, clientIdentity] =
     cta::frontend::grpc::common::extractAuthHeaderAndValidate(metadata,
                                                               m_frontendService->usesAdminAuthMethod(AuthMethod::JWT),
                                                               m_pubkeyCache,
                                                               m_tokenStorage,
-                                                              request->notification().wf().instance().name(),
+                                                              m_frontendService->getInstanceName(),
                                                               context->peer(),
                                                               lc);
   if (!status.ok()) {
@@ -405,7 +407,7 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
  * and makes the rpc calls available through this class
  */
 CtaRpcImpl::CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService,
-                       std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
+                       std::optional<std::shared_ptr<cta::auth::JwkCache>> pubkeyCache,
                        server::TokenStorage& tokenStorage)
     : m_frontendService(frontendService),
       m_pubkeyCache(pubkeyCache),

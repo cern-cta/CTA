@@ -24,7 +24,7 @@ extraVolumes:
   volumes:
     - name: grpc-certs
       secret:
-        secretName: ca-crt
+        secretName: ca-crt-pem
   volumeMounts:
     - name: grpc-certs
       mountPath: /etc/grpc-certs

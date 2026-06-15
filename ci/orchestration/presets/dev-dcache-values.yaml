@@ -5,7 +5,7 @@ dcache:
   plugins:
     cta:
       enabled: true
-      endpoint: "cta-frontend-grpc:10956"
+      endpoint: "cta-frontend-grpc-wfe:10956"
       user: dcacheuser
       group: dcacheusers
       instance: dcache

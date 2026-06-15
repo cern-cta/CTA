@@ -30,21 +30,41 @@ def load_cert_x5c(cert_path: str) -> str:
 
 
 def generate_jwk_from_cert(cert_path):
+    with open(cert_path, "rb") as f:
+        cert_data = f.read()
+
+    if b"BEGIN CERTIFICATE" in cert_data:
+        cert_obj = x509.load_pem_x509_certificate(cert_data)
+    else:
+        cert_obj = x509.load_der_x509_certificate(cert_data)
+
+    pub_numbers = cert_obj.public_key().public_numbers()
+
+    def int_to_base64url(n: int) -> str:
+        byte_length = (n.bit_length() + 7) // 8
+        return base64.urlsafe_b64encode(n.to_bytes(byte_length, "big")).rstrip(b"=").decode()
+
+    n_b64 = int_to_base64url(pub_numbers.n)
+    e_b64 = int_to_base64url(pub_numbers.e)
+
+    # RFC 7638 thumbprint: SHA-256 over sorted, minimal JSON of {e, kty, n}
+    thumbprint_input = json.dumps(
+        {"e": e_b64, "kty": "RSA", "n": n_b64},
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode()
+    thumbprint = hashlib.sha256(thumbprint_input).digest()
+    kid = base64.urlsafe_b64encode(thumbprint).rstrip(b"=").decode()
+
     jwk = {
         "kty": "RSA",
         "alg": "RS256",
         "use": "sig",
+        "kid": kid,
+        "n": n_b64,
+        "e": e_b64,
         "x5c": [load_cert_x5c(cert_path)],
     }
-
-    thumbprint = hashlib.sha256(
-        json.dumps(
-            {"kty": jwk["kty"]},
-            separators=(",", ":"),
-        ).encode()
-    ).digest()
-
-    jwk["kid"] = base64.urlsafe_b64encode(thumbprint).rstrip(b"=").decode()
 
     return jwk
 
@@ -94,6 +114,7 @@ def main():
     )
     parser.add_argument("--cert", required=True, help="Path to server certificate")
     parser.add_argument("--key", required=True, help="Path to private key")
+    parser.add_argument("--jwks", help="Filename for the generated JWKS file")
 
     args = parser.parse_args()
 
@@ -101,13 +122,21 @@ def main():
         key = serialization.load_pem_private_key(f.read(), password=None)
     jwk = generate_jwk_from_cert(args.cert)
 
-    # Save JWKS
-    jwks = {"keys": [jwk]}
-    jwks_path = Path(args.output_dir) / "jwks.json"
-    with open(jwks_path, "w") as f:
-        json.dump(jwks, f, indent=2)
+    if args.jwks is not None:
+        print(f"Adding key from cert {args.cert} to JWKS file {args.jwks}")
+        jwks_path = Path(args.output_dir) / args.jwks
+        if jwks_path.exists():
+            print("JWKS file already exists, appending key")
+            with open(jwks_path) as f:
+                jwks = json.load(f)
+            jwks["keys"].append(jwk)
+        else:
+            jwks = {"keys": [jwk]}
 
-    print(f"Generated {jwks_path}")
+        with open(jwks_path, "w") as f:
+            json.dump(jwks, f, indent=2)
+
+        print(f"Generated {jwks_path}")
 
     # Generate one file per sub
     for sub in args.sub:

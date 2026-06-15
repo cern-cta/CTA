@@ -8,6 +8,9 @@ replicaCount: 1
 grpc:
   enabled: false
   port: 10956
+  statefulSet:
+    admin:
+      enableKrb5: true
   conf:
     numberOfThreads: 512
 
@@ -43,9 +46,13 @@ grpc:
 
     tls:
       enabled: true
-      serverKey: /etc/grpc-certs/key/server.key
-      serverCert: /etc/grpc-certs/cert/server.crt
-      caCert: /etc/grpc-certs/ca/ca.crt
+      admin:
+        serverKey: /etc/grpc-certs/key/server-admin.key.pem
+        serverCert: /etc/grpc-certs/cert/server-admin.crt.pem
+      wfe:
+        serverKey: /etc/grpc-certs/key/server-wfe.key.pem
+        serverCert: /etc/grpc-certs/cert/server-wfe.crt.pem
+      caCert: /etc/grpc-certs/ca/ca.crt.pem
 
     auth:
       admin:
@@ -75,7 +82,7 @@ grpc:
 
   # Kerberos authentication
   keytab: /etc/cta/cta-frontend.krb5.keytab
-  service_principal: "cta/cta-frontend-grpc@TEST.CTA"  # Will use default cta/<pod-name>@realm format if empty
+  service_principal: "cta/cta-frontend-grpc-admin@TEST.CTA" # Will use default cta/<pod-name>@realm format if empty
 
 xrd:
   enabled: true

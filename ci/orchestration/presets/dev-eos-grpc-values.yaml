@@ -28,7 +28,6 @@ global:
         type: ExternalName
         externalName: {{ include "utils.mgm_address" . }}
 
-
 mgm:
   # Must match the authentication chart
   kerberos:
@@ -60,7 +59,7 @@ mgm:
       mgmofs.archivedir /var/eos/archive
       mgmofs.prepare.dest.space default
       mgmofs.tapeenabled true
-      mgmofs.protowfendpoint cta-frontend-grpc:10956
+      mgmofs.protowfendpoint cta-frontend-grpc-wfe:10956
       mgmofs.protowfresource /ctafrontend
       mgmofs.protowfusegrpc true
       mgmofs.protowfusegrpctls true
@@ -87,7 +86,6 @@ mgm:
     # For some reason EOS is on another time zone, so set this to CET
     - name: TZ
       value: "CET"
-
   # Generate the self-signed certificates for http
   initContainer: &eos-init-container
     enabled: true
@@ -95,7 +93,7 @@ mgm:
       #!/usr/bin/bash
       /mkcert-ssl.sh
       chown -R daemon:daemon /etc/grid-security/certificates
-      cp /etc/grpc-certs/ca.crt /etc/grid-security/certificates
+      cp /etc/grpc-certs/ca.crt.pem /etc/grid-security/certificates
       cp /etc/grpc-certs-client/ctaeos-self-signed.crt.pem /etc/grid-security/certificates/
       cp /etc/grpc-certs-client/ctaeos-self-signed.key.pem /etc/grid-security/certificates/
       chmod 0600 /etc/grid-security/certificates/ctaeos-self-signed.key.pem
@@ -131,7 +129,7 @@ mgm:
         emptyDir: {}
       - name: grpc-certs
         secret:
-          secretName: ca-crt
+          secretName: ca-crt-pem
       - name: ctaeos-jwt
         secret:
           secretName: ctaeos-jwt
@@ -155,7 +153,7 @@ fst:
     sched: "mint 16 maxt 512 idle 64"
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
-      fstofs.protowfendpoint cta-frontend-grpc:10956
+      fstofs.protowfendpoint cta-frontend-grpc-wfe:10956
       fstofs.protowfresource /ctafrontend
       fstofs.filemd_handler  attr
       fstofs.protowfusegrpc true

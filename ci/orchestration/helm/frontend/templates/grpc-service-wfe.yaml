@@ -1,0 +1,22 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- if .Values.grpc.enabled }}
+{{- $name := include "ctafrontendgrpc.fullname" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}-wfe
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ $name }}-wfe
+  clusterIP: None
+  ports:
+  - name: {{ $name }}
+    port: {{ .Values.grpc.port }}
+    protocol: TCP
+{{- end }}

@@ -42,7 +42,7 @@ WorkflowEvent::WorkflowEvent(const frontend::FrontendService& frontendService,
     .add("diskFileId", diskFileId);
 
   // Check that we are allowed to run workflow events on this frontend
-  if (!frontendService.getWorkflowEventsEnabled()) {
+  if (frontendService.getOperationMode() != OperationMode::WFE) {
     m_lc.log(log::ERR, "In WorkflowEvent::WorkflowEvent(): received workflow event on disabled frontend.");
     throw exception::UserError("Workflow events are disabled on this frontend");
   }
