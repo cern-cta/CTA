@@ -117,34 +117,42 @@ int main(const int argc, char* const* const argv) {
   // get the log context
   log::LogContext lc = frontendService->getLogContext();
 
-  // Build the shared JWK cache here even if JWT is disabled, in this case it will never be populated
-  cta::auth::CurlJwksFetcher jwksFetcher(frontendService->getJwksTotalTimeout().value_or(60));
-  auto jwkCache = std::make_shared<cta::auth::JwkCache>(jwksFetcher,
-                                                        frontendService->getJwksUri().value_or(""),
-                                                        frontendService->getPubkeyTimeout().value_or(0),
-                                                        frontendService->getLogContext());
+  const auto jwtConfig = frontendService->getJwtConfig();
+
+  std::optional<std::shared_ptr<cta::auth::JwkCache>> jwkCache;
+  std::optional<std::jthread> cacheRefreshThread;
+  std::promise<void> shouldStopThreadPromise;
+
+  if (jwtConfig.has_value()) {
+    // Build the shared JWK cache here even if JWT is disabled, in this case it will never be populated
+    auto jwksFetcher {std::make_shared<cta::auth::CurlJwksFetcher>(jwtConfig->m_jwksTotalTimeout)};
+    jwkCache = std::make_shared<cta::auth::JwkCache>(jwksFetcher,
+                                                     jwtConfig->m_jwksUri,
+                                                     jwtConfig->m_pubkeyTimeout,
+                                                     frontendService->getLogContext());
+
+    lc.log(log::INFO,
+           "JWT authentication enabled. JWKs URI: " + jwtConfig->m_jwksUri
+             + " | total_timeout: " + std::to_string(jwtConfig->m_jwksTotalTimeout)
+             + " | key_timeout: " + std::to_string(jwtConfig->m_pubkeyTimeout)
+             + " | cache_refresh_interval: " + std::to_string(jwtConfig->m_cacheRefreshInterval));
+
+    std::weak_ptr<cta::auth::JwkCache> weakCache {jwkCache.value()};
+    std::future<void> shouldStopThreadFuture {shouldStopThreadPromise.get_future()};
+
+    lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
+    cacheRefreshThread = std::jthread(JwksCacheRefreshLoop,
+                                      weakCache,
+                                      std::move(shouldStopThreadFuture),
+                                      jwtConfig->m_cacheRefreshInterval,
+                                      std::cref(lc));
+  }
+
   // Setup TokenStorage for Kerberos authentication
   cta::frontend::grpc::server::TokenStorage tokenStorage;
 
   // Initialize RPC service with shared frontend service and cache
   frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache, tokenStorage);
-  std::weak_ptr<cta::auth::JwkCache> weakCache = jwkCache;
-  std::promise<void> shouldStopThreadPromise;
-  std::future<void> shouldStopThreadFuture = shouldStopThreadPromise.get_future();
-  std::thread cacheRefreshThread;
-  // if token authentication is specified, then also start the refresh thread, otherwise no point in doing this
-  if (frontendService->usesAdminAuthMethod(cta::frontend::AuthMethod::JWT)
-      || frontendService->getWFEAuthMethod() == cta::frontend::AuthMethod::JWT) {
-    lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
-    cacheRefreshThread = std::thread(JwksCacheRefreshLoop,
-                                     weakCache,
-                                     std::move(shouldStopThreadFuture),
-                                     frontendService->getCacheRefreshInterval().value_or(600),
-                                     std::cref(lc));
-  }
-
-  // use castor config to avoid dependency on xroot-ssi
-  // Configuration config(config_file);
 
   lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
@@ -172,9 +180,10 @@ int main(const int argc, char* const* const argv) {
 
   if (useTLS) {
     lc.log(log::INFO, "Using gRPC over TLS");
-    if (frontendService->getWFEAuthMethod() == cta::frontend::AuthMethod::MTLS) {
+    if (frontendService->getOperationMode() == cta::frontend::OperationMode::WFE
+        && frontendService->getWfeAuthMethod() == cta::frontend::AuthMethod::MTLS) {
       cert_request_type = GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY;
-      lc.log(log::INFO, "Using mutual TLS to authenticate client requests");
+      lc.log(log::INFO, "Using mutual TLS to authenticate WFE client requests");
     }
     grpc::SslServerCredentialsOptions tls_options(cert_request_type);
     grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
@@ -184,22 +193,25 @@ int main(const int argc, char* const* const argv) {
     } else if (!frontendService->getTlsCert().has_value()) {
       throw exception::UserError("TLS specified but TLS cert is not defined.");  // cppcheck-suppress throwInEntryPoint
     } else {
+      std::stringstream logMsg;
       auto key_file = frontendService->getTlsKey().value();
-      lc.log(log::INFO, "TLS service key file: " + key_file);
+      logMsg << "TLS key: " << key_file;
       cert.private_key = cta::utils::file2string(key_file);
 
       auto cert_file = frontendService->getTlsCert().value();
-      lc.log(log::INFO, "TLS service certificate file: " + cert_file);
+      logMsg << " | cert: " + cert_file;
       cert.cert_chain = cta::utils::file2string(cert_file);
 
       if (auto ca_chain = frontendService->getTlsChain(); ca_chain.has_value()) {
-        lc.log(log::INFO, "TLS CA chain file: " + ca_chain.value());
+        logMsg << " | chain: " + ca_chain.value();
         tls_options.pem_root_certs = cta::utils::file2string(ca_chain.value());
       } else {
-        lc.log(log::INFO, "TLS CA chain file not defined ...");
+        logMsg << " | <no chain file>";
         tls_options.pem_root_certs = "";
       }
       tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
+
+      lc.log(log::INFO, logMsg.str());
 
       creds = grpc::SslServerCredentials(tls_options);
     }
@@ -221,30 +233,38 @@ int main(const int argc, char* const* const argv) {
   lc.log(log::INFO, "Using " + std::to_string(threads) + " request processing threads");
   builder.SetResourceQuota(quota);
 
-  // Get Kerberos configuration
-  std::string strKeytab = frontendService->getKeytab().value_or("/etc/cta/cta-frontend.keytab");
-  std::string strService = frontendService->getServicePrincipal().value_or("cta/" + shortHostName);
+  std::optional<std::unique_ptr<cta::frontend::grpc::server::NegotiationService>> negotiationService;
 
-  lc.log(log::INFO, "Using keytab: " + strKeytab);
-  lc.log(log::INFO, "Using service principal: " + strService);
+  // If we're in Admin Command mode and using Kerberos, we need to set up the negotiation service for Kerberos authentication
+  if (frontendService->getOperationMode() != cta::frontend::OperationMode::WFE
+      && frontendService->usesAdminAuthMethod(cta::frontend::AuthMethod::KERBEROS)) {
+    // Get Kerberos configuration
+    std::string strKeytab = frontendService->getKeytab().value_or("/etc/cta/cta-frontend.keytab");
+    std::string strService = frontendService->getServicePrincipal().value_or("cta/" + shortHostName);
 
-  // Create completion queue that will be used only for the Kerberos negotiation service
-  std::unique_ptr<::grpc::ServerCompletionQueue> negCq = builder.AddCompletionQueue();
+    lc.log(log::INFO,
+           "Using Kerberos authentication with keytab '" + strKeytab + "' and service principal '" + strService + "'");
 
-  // Create negotiation service
-  auto negotiationService = std::make_unique<cta::frontend::grpc::server::NegotiationService>(lc.logger(),
-                                                                                              tokenStorage,
-                                                                                              std::move(negCq),
-                                                                                              strKeytab,
-                                                                                              strService,
-                                                                                              1 /* threads */);
+    // Create completion queue that will be used only for the Kerberos negotiation service
+    std::unique_ptr<::grpc::ServerCompletionQueue> negCq = builder.AddCompletionQueue();
 
-  // Register negotiation service on main builder
-  builder.RegisterService(&negotiationService->getService());
+    // Create negotiation service
+    negotiationService = std::make_unique<cta::frontend::grpc::server::NegotiationService>(lc.logger(),
+                                                                                           tokenStorage,
+                                                                                           std::move(negCq),
+                                                                                           strKeytab,
+                                                                                           strService,
+                                                                                           1 /* threads */);
+
+    // Register negotiation service on main builder
+    builder.RegisterService(&negotiationService.value()->getService());
+  }
 
   // Register "service" as the instance through which we'll communicate with
   // clients. In this case it corresponds to an *synchronous* service.
   builder.RegisterService(&svc);
+
+  lc.log(log::DEBUG, "Instance name is: '" + frontendService->getInstanceName() + "'");
 
   frontend::grpc::CtaRpcStreamImpl streamSvc(frontendService->getCatalogue(),
                                              frontendService->getScheduler(),
@@ -263,16 +283,21 @@ int main(const int argc, char* const* const argv) {
   // Build and start server
   std::unique_ptr<Server> server(builder.BuildAndStart());
 
-  // Start negotiation service processing (after server is built)
-  negotiationService->startProcessing();
+  // if we're using Kerberos, we need to start the negotiation service processing loop after the server is built
+  if (negotiationService.has_value()) {
+    // Start negotiation service processing (after server is built)
+    negotiationService.value()->startProcessing();
+  }
 
   lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
   server->Wait();
 
-  // if we ever receive a shutdown, or want to handle termination of the frontend gracefully,
-  // add the following line:
-  shouldStopThreadPromise.set_value();
-  if (cacheRefreshThread.joinable()) {
-    cacheRefreshThread.join();
+  if (cacheRefreshThread.has_value()) {
+    // if we ever receive a shutdown, or want to handle termination of the frontend gracefully,
+    // add the following line:
+    shouldStopThreadPromise.set_value();
+    if (cacheRefreshThread->joinable()) {
+      cacheRefreshThread->join();
+    }
   }
 }

@@ -28,54 +28,52 @@ echo "0 u:ctaeos g:ctaeos n:ctaeos+ N:7570028795780923393 c:1762534677 e:0 f:0 k
 # --- Certificates --- #
 
 # Generate CA key and cert
-openssl genrsa -passout pass:1234 -des3 -out $SECRETS_DIR/ca.key 4096
-openssl req -passin pass:1234 -new -x509 -days 365 -key $SECRETS_DIR/ca.key -out $SECRETS_DIR/ca.crt -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Test/CN=Root CA"
+openssl genrsa -passout pass:1234 -des3 -out $SECRETS_DIR/ca.key.pem 4096
+openssl req -passin pass:1234 -new -x509 -days 365 -key $SECRETS_DIR/ca.key.pem -out $SECRETS_DIR/ca.crt.pem -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Test/CN=Root CA"
 
-# Generate server key and CSR
-openssl genrsa -passout pass:1234 -des3 -out $SECRETS_DIR/server.key 4096
-openssl req -passin pass:1234 -new -key $SECRETS_DIR/server.key -out server.csr -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=cta-frontend-grpc" -addext "subjectAltName=DNS:cta-frontend-grpc"
+generate_signed_cert() {
+  local file_prefix="$1"
+  local host="$2"
+  local key="$SECRETS_DIR/${file_prefix}.key.pem"
+  local csr="$SECRETS_DIR/${file_prefix}.csr.pem"
+  local crt="$SECRETS_DIR/${file_prefix}.crt.pem"
 
-# Sign the server cert with the CA
-openssl x509 -req -passin pass:1234 -days 365 -in server.csr -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -set_serial 01 -copy_extensions copy -out $SECRETS_DIR/server.crt
+  echo "Generating cert/key pair '$file_prefix' for '$host'"
 
-# Remove passphrase from the server key
-openssl rsa -passin pass:1234 -in $SECRETS_DIR/server.key -out $SECRETS_DIR/server.key
+  openssl genrsa -passout pass:1234 -des3 -out $key 4096
+  openssl req -passin pass:1234 -new -key $key -out $csr \
+    -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=$host" \
+    -addext "subjectAltName=DNS:$host"
+  openssl x509 -req -passin pass:1234 -days 365 -in $csr -CA $SECRETS_DIR/ca.crt.pem -CAkey $SECRETS_DIR/ca.key.pem \
+    -set_serial 01 -copy_extensions copy -out $crt
+  openssl rsa -passin pass:1234 -in $key -out $key
+  rm -f $csr
+}
 
-chmod 0644 $SECRETS_DIR/ca.key
-chmod 0644 $SECRETS_DIR/server.key
+# Generate server certs for the WFE and admin frontends
+generate_signed_cert server-admin cta-frontend-grpc-admin
+generate_signed_cert server-wfe cta-frontend-grpc-wfe
 
-# --- JWT for Frontend Auth --- #
+chmod 0644 $SECRETS_DIR/ca.key.pem
+chmod 0644 $SECRETS_DIR/server-admin.key.pem
+chmod 0644 $SECRETS_DIR/server-wfe.key.pem
 
+# Generate corresponding JWT tokens for these certs, along with a JWKs file
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
-  --cert "$SECRETS_DIR/server.crt" \
-  --key "$SECRETS_DIR/server.key" \
-  --sub ctaeos \
+  --cert "$SECRETS_DIR/server-admin.crt.pem" \
+  --key "$SECRETS_DIR/server-admin.key.pem" \
+  --jwks "jwks.json" \
   --sub ctaadmin1
+python3 /scripts/generate_jwt.py \
+  --output-dir "$SECRETS_DIR" \
+  --cert "$SECRETS_DIR/server-wfe.crt.pem" \
+  --key "$SECRETS_DIR/server-wfe.key.pem" \
+  --jwks "jwks.json" \
+  --sub ctaeos
 
-# generate self-signed cert for ctaeos
-openssl req \
-  -newkey rsa:4096 \
-  -keyout $SECRETS_DIR/ctaeos-self-signed.key.pem \
-  -out $SECRETS_DIR/ctaeos-self-signed.csr \
-  -sha256 \
-  -nodes \
-  -subj "/C=CH/O=CERN/CN=ctaeos" \
-  -addext "subjectAltName=DNS:ctaeos.biglab"
-
-openssl x509 \
-  -req \
-  -passin pass:1234 \
-  -days 3650 \
-  -in $SECRETS_DIR/ctaeos-self-signed.csr \
-  -CA $SECRETS_DIR/ca.crt \
-  -CAkey $SECRETS_DIR/ca.key \
-  -set_serial 01 \
-  -copy_extensions copy \
-  -out $SECRETS_DIR/ctaeos-self-signed.crt.pem
-
-rm $SECRETS_DIR/ctaeos-self-signed.csr
-
+# generate cert for ctaeos (to be used with mTLS)
+generate_signed_cert ctaeos-self-signed eos-mgm.biglab
 # --- Generate K8s secrets for all of these --- #
 
 python3 /scripts/create_k8s_secrets.py \

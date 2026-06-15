@@ -5,8 +5,11 @@
 
 #pragma once
 
-#include "AdminCmdMode.hpp"
+#include "OperationModes.hpp"
+#include "common/config/Config.hpp"
 #include "scheduler/Scheduler.hpp"
+
+#include <stdexcept>
 #ifdef CTA_PGSCHED
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
@@ -17,9 +20,29 @@ namespace cta::frontend {
 
 using MapOfSets = std::map<std::string, std::set<std::string, std::less<>>, std::less<>>;
 
+/**
+ * @brief Authentication methods supported by the CTA frontend
+ */
 enum class AuthMethod { JWT, KERBEROS, MTLS };
 
-std::optional<std::string> authMethodAsString(const AuthMethod& method);
+/**
+ * @brief Convert an AuthMethod to its string representation
+ * @param method The enum value
+ * @return A string representing the method
+ */
+std::string toString(AuthMethod method);
+
+/**
+ * @brief Wrapper for JWT configuration options
+ */
+struct JWTConfig {
+  // clang-format off
+  std::string m_jwksUri;       //!< The endpoint to obtain public keys from, for validating tokens
+  int m_cacheRefreshInterval;  //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
+  int m_pubkeyTimeout;         //!< The number of seconds after which to update the cache entry for a cached key
+  int m_jwksTotalTimeout;      //!< The total timeout in seconds for JWKS endpoint (default 60)
+  // clang-format on
+};
 
 class FrontendService {
 public:
@@ -29,12 +52,55 @@ public:
 
   ~FrontendService() = default;
 
-  /*!
-   * Load the MTLS mapping table from the TOML file path
+  /**
+   * @brief Configure the authentication methods for the Admin API and related settings
+   * @param configFileName The name of the configuration file (for error messages)
+   * @param config The configuration object
+   * @param log A logger
+   */
+  void
+  loadAdminAuthConfigParams(const std::string& configFileName, const cta::common::Config& config, log::Logger& log);
+
+  /**
+   * @brief Configure the authentication method for WFE mode and related settings
+   * @param configFileName The name of the configuration file (for logging/errors)
+   * @param mtlsMappingFilename The optional filename of the MTLS mapping table (required if MTLS authentication is enabled)
+   * @param config The configuration object
+   * @param log A logger
+   */
+  void loadWFEAuthConfigParams(const std::string& configFileName,
+                               const std::optional<std::string>& mtlsMappingFilename,
+                               const cta::common::Config& config,
+                               log::Logger& log);
+
+  /**
+   * @brief Load the instance -> certificate identity map from its TOML file into memory
+   * @param filePath the path to the TOML file
    */
   void loadMtlsMappingTable(const std::string& filePath);
 
-  std::set<std::string, std::less<>> getMtlsCertIdentitiesForInstance(const std::string& identity);
+  /**
+   * @brief Load the GRPC config parameters
+   * @param configFileName The name of the configuration file (for logging/errors)
+   * @param config The configuration object
+   * @param log A logger
+   */
+  void loadGrpcConfigParams(const std::string& configFileName, const cta::common::Config& config, log::Logger& log);
+
+  /**
+   * @brief Load the JWT config parameters
+   * @param configFileName The name of the configuration file (for logging/errors)
+   * @param config The configuration object
+   * @param log A logger
+   */
+  void loadJWTConfigParams(const std::string& configFileName, const cta::common::Config& config, log::Logger& log);
+
+  /**
+    * @brief Look up and identity in the instance -> certificate identity map
+    * @param instance the name of the instance to look for in the map
+    * @return the set of found certificate identities
+    */
+  std::set<std::string, std::less<>> getMtlsCertIdentitiesForInstance(const std::string& instance) const;
 
   /*!
    * Get the log context
@@ -74,14 +140,9 @@ public:
   uint64_t getMissingFileCopiesMinAgeSecs() const { return m_missingFileCopiesMinAgeSecs; }
 
   /*!
-   * Get the mode of operation of the CTA admin interface
+   * Get the frontend's operation mode (wfe / admin_*)
    */
-  cta::common::AdminCmdMode getAdminCommandMode() const { return m_adminCommandMode; }
-
-  /*!
-   * Get the enabled status of the workflow event handler
-   */
-  bool getWorkflowEventsEnabled() const { return m_workflowEventsEnabled; }
+  OperationMode getOperationMode() const { return m_operationMode; }
 
   /*!
    * Get a reference to the Scheduler
@@ -128,37 +189,42 @@ public:
   /*
    * Get the TlsKey
    */
-  const std::optional<std::string> getTlsKey() const { return m_tlsKey; }
+  std::optional<std::string> getTlsKey() const { return m_tlsKey; }
 
   /*
    * Get the TlsCert
    */
-  const std::optional<std::string> getTlsCert() const { return m_tlsCert; }
+  std::optional<std::string> getTlsCert() const { return m_tlsCert; }
 
   /*
    * Get the TlsChain
    */
-  const std::optional<std::string> getTlsChain() const { return m_tlsChain; }
+  std::optional<std::string> getTlsChain() const { return m_tlsChain; }
 
   /*
    * Get the gRPC server port
    */
-  const std::optional<std::string> getPort() const { return m_port; }
+  std::optional<std::string> getPort() const { return m_port; }
 
   /*
    * Get the gRPC server keytab
    */
-  const std::optional<std::string> getKeytab() const { return m_keytab; }
+  std::optional<std::string> getKeytab() const { return m_keytab; }
 
   /*
    * Get the gRPC server service principal
    */
-  const std::optional<std::string> getServicePrincipal() const { return m_servicePrincipal; }
+  std::optional<std::string> getServicePrincipal() const { return m_servicePrincipal; }
 
   /*
    * Get the number of threads
    */
-  const std::optional<int> getThreads() const { return m_threads; }
+  std::optional<int> getThreads() const { return m_threads; }
+
+  /*
+   * Get the JWT Config
+   */
+  std::optional<JWTConfig> getJwtConfig() const { return m_jwtConfig; }
 
   /*
    * Get the instanceName from config file
@@ -166,29 +232,9 @@ public:
   const std::string& getInstanceName() const { return m_instanceName; }
 
   /*
-   * Get the url to query for the public keys
-   */
-  std::optional<std::string> getJwksUri() const { return m_jwksUri; }
-
-  /*
-   * Get the interval (in seconds) after which to update the cache of public keys
-   */
-  std::optional<int> getCacheRefreshInterval() const { return m_cacheRefreshInterval; }
-
-  /*
-   * Get the interval (in seconds) after which to update public key entries in the cache
-   */
-  std::optional<int> getPubkeyTimeout() const { return m_pubkeyTimeout; }
-
-  /*
-   * Get the total timeout (in seconds) for JWKS endpoint
-   */
-  std::optional<int> getJwksTotalTimeout() const { return m_jwksTotalTimeout; }
-
-  /*
    * Get the authentication method which is configured for the WFE
    */
-  AuthMethod getWFEAuthMethod() const { return m_wfeAuthMethod; }
+  AuthMethod getWfeAuthMethod() const { return m_wfeAuthMethod; }
 
   /*
    * Get the authentication method which is configured for the Admin API
@@ -201,16 +247,6 @@ public:
   bool usesAdminAuthMethod(const AuthMethod method) const {
     return std::ranges::find(m_adminAuthMethods, method) != std::end(m_adminAuthMethods);
   }
-
-  /*
-   * Get the feature flag to disable admin commands
-   */
-  //bool getEnableAdminCommands() const { return m_enableAdminCommands; }
-
-  /*
-   * Get the feature flag to disable workflow events
-   */
-  //bool getEnableWorkflowEvents() const { return m_enableWorkflowEvents; }
 
 private:
   /*!
@@ -227,8 +263,7 @@ private:
   std::unique_ptr<SchedulerDBInit_t>            m_scheddbInit;                  //!< Persistent initialiser object for Scheduler DB
   std::unique_ptr<cta::SchedulerDB_t>           m_scheddb;                      //!< Scheduler DB for persistent objects (queues and requests)
   std::unique_ptr<cta::Scheduler>               m_scheduler;                    //!< The scheduler
-  common::AdminCmdMode                          m_adminCommandMode;             //!< Option to select which admin command mode will be used
-  bool                                          m_workflowEventsEnabled;        //!< Flag to allow the processing of workflow events
+  OperationMode                                 m_operationMode;                //!< Which operation mode (wfe / admin_*) is being used
   std::optional<uint64_t>                       m_tapeCacheMaxAgeSecs;          //!< Option to override the tape cache timeout value in the scheduler DB
   std::optional<uint64_t>                       m_retrieveQueueCacheMaxAgeSecs; //!< Option to override the retrieve queue timeout value in the scheduler DB
   std::string                                   m_catalogue_conn_string;        //!< The catalogue connection string (without the password)
@@ -239,6 +274,8 @@ private:
   std::optional<std::string>                    m_repackBufferURL;              //!< The repack buffer URL
   std::optional<uint64_t>                       m_repackMaxFilesToSelect;       //!< The max number of files to expand during a repack
   std::string                                   m_verificationMountPolicy;      //!< The mount policy for verification requests
+
+  // GRPC Options
   std::optional<std::string>                    m_port;                         //!< The port for the gRPC server
   std::optional<std::string>                    m_keytab;                       //!< The keytab file to be used for Kerberos authentication by the gRPC server
   std::optional<std::string>                    m_servicePrincipal;             //!< The service principal to be used for Kerberos authentication by the gRPC server
@@ -248,16 +285,30 @@ private:
   std::optional<std::string>                    m_tlsKey;                       //!< The TLS service key file
   std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file
   std::optional<std::string>                    m_tlsChain;                     //!< The TLS CA chain file
+  std::optional<JWTConfig>                      m_jwtConfig;                     //!< The JWT configuration parameters
+
   uint64_t                                      m_missingFileCopiesMinAgeSecs;  //!< Missing tape file copies minimum age.
   std::string                                   m_instanceName;                 //!< value of cta.instance_name in the CTA frontend configuration file
-  std::optional<std::string>                    m_jwksUri;                      //!< The endpoint to obtain public keys from, for validating tokens
-  std::optional<int>                            m_cacheRefreshInterval;         //!< The number of seconds after which to update the cache of public keys used to sign JWT tokens
-  std::optional<int>                            m_pubkeyTimeout;                //!< The number of seconds after which to update the cache entry for a cached key
-  std::optional<int>                            m_jwksTotalTimeout;             //!< The total timeout in seconds for JWKS endpoint (default 60)
   AuthMethod                                    m_wfeAuthMethod;                //!< The authentication method which is currently set for the WFE
-  std::set<AuthMethod, std::less<>>             m_adminAuthMethods;             //!< The authentication method which is currently set for the Admin API
-  MapOfSets                                     m_mtlsMappingTable; //!< Table which maps instance name -> certificate identities
+  std::set<AuthMethod, std::less<>>             m_adminAuthMethods;             //!< The authentication methods which are currently set for the Admin API
+  MapOfSets                                     m_mtlsMappingTable;             //!< Table which maps instance name -> certificate identities
   // clang-format on
 };
 
 }  // namespace cta::frontend
+
+template<>
+struct cta::common::FromString<cta::frontend::AuthMethod> {
+  static std::optional<cta::frontend::AuthMethod> tryFrom(std::string_view text) {
+    using enum cta::frontend::AuthMethod;
+    if (text == "jwt") {
+      return JWT;
+    } else if (text == "kerberos") {
+      return KERBEROS;
+    } else if (text == "mtls") {
+      return MTLS;
+    } else {
+      return std::nullopt;
+    }
+  }
+};

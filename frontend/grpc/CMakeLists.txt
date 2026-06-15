@@ -52,6 +52,7 @@ add_executable(cta-admin-grpc
   ${PROJECT_SOURCE_DIR}/frontend/common/RequestTracker.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmd.cpp
   ${PROJECT_SOURCE_DIR}/frontend/common/AdminCmdOptions.cpp
+  ${PROJECT_SOURCE_DIR}/frontend/common/OperationModes.cpp
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminParsedCmd.cpp
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminTextFormatter.cpp
   ${PROJECT_SOURCE_DIR}/tools/CtaAdminCmdParser.cpp
