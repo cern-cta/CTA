@@ -99,6 +99,9 @@ spec:
           mountPath: /etc/cta/ctaadmin1.jwt
           subPath: ctaadmin1.jwt
         {{- end }}
+        - name: scitokens-jwt
+          mountPath: /etc/cta/scitokens.jwt
+          subPath: scitokens.jwt
         - name: "{{ .Values.krb5PrincName }}-keytab"
           mountPath: /root/{{ .Values.krb5PrincName }}.keytab
           subPath: "{{ .Values.krb5PrincName }}.keytab"
@@ -116,6 +119,9 @@ spec:
         secret:
           secretName: ctaadmin1-jwt
       {{- end }}
+      - name: scitokens-jwt
+        secret:
+          secretName: scitokens-jwt
       - name: cta-conf-volume
         configMap:
           name: etc-cta-ctacli

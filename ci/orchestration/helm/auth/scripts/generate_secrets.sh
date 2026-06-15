@@ -53,8 +53,13 @@ python3 /scripts/generate_jwt.py \
   --sub ctaeos \
   --sub ctaadmin1
 
+echo '{ "jwks_uri": "https://dteam-auth.cern.ch/jwk" }' >> "$SECRETS_DIR/scitokens-well-known"
+echo '{  }' >> "$SECRETS_DIR/scitokens.jwks"
+echo '{  }' >> "$SECRETS_DIR/scitokens.jwt"
+
 # --- Generate K8s secrets for all of these --- #
 
 python3 /scripts/create_k8s_secrets.py \
   --namespace "$NAMESPACE" \
   --dir "$SECRETS_DIR"
+

@@ -51,8 +51,6 @@ mgm:
     sciTokens:
       enabled: true
       config: |
-        [Global]
-        audience = https://wlcg.cern.ch/jwt/v1/any
         [Issuer OSG-Connect]
         issuer = https://dteam-auth.cern.ch/
         base_path = /
@@ -111,11 +109,23 @@ mgm:
       - name: grid-security
         mountPath: /etc/grid-security
         readOnly: true
+      - name: scitokens-well-known
+        mountPath: /etc/cta/scitokens-well-known
+        subPath: scitokens-well-known
+      - name: scitokens-jwks
+        mountPath: /etc/cta/scitokens.jwks
+        subPath: scitokens.jwks
     volumes:
       - name: varlog-tmp
         emptyDir: {}
       - name: grid-security
         emptyDir: {}
+      - name: scitokens-well-known
+        secret:
+          secretName: scitokens-well-known
+      - name: scitokens-jwks
+        secret:
+          secretName: scitokens-jwks
 
 fst:
   replicaCount: 1

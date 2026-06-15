@@ -104,6 +104,9 @@ spec:
           mountPath: /etc/cta/ctaadmin1.jwt
           subPath: ctaadmin1.jwt
         {{- end }}
+        - name: scitokens-jwt
+          mountPath: /etc/cta/scitokens.jwt
+          subPath: scitokens.jwt
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
@@ -126,6 +129,9 @@ spec:
         secret:
           secretName: ctaadmin1-jwt
       {{- end }}
+      - name: scitokens-jwt
+        secret:
+          secretName: scitokens-jwt
       - name: xrootd-client-conf
         configMap:
           name: xrootd-client-conf
