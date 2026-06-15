@@ -155,7 +155,7 @@ private:
   const std::optional<std::uint64_t> m_repackMaxFilesToSelect;  //!< Repack max files to expand
   const uint64_t m_missingFileCopiesMinAgeSecs;                 //!< Missing tape file copies minimum age
   const std::optional<std::string> m_schedulerBackendName;      //!< Name of the Scheduler DB to which Frontend connects
-  const common::AdminCmdMode m_adminCommandMode;  //!< Option to select which admin command mode will be used
+  const AdminCmdMode m_adminCommandMode;  //!< Option to select which admin command mode will be used
 };
 
 }  // namespace cta::frontend

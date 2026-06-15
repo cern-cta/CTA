@@ -13,7 +13,6 @@ set(FRONTEND_COMMON_SRC_FILES
   AdminCmd.cpp
   RequestTracker.cpp
   AdminCmdOptions.cpp
-  AdminCmdMode.cpp
   ActivityMountRuleLsResponseStream.cpp
   AdminLsResponseStream.cpp
   ArchiveRouteLsResponseStream.cpp
@@ -26,6 +25,7 @@ set(FRONTEND_COMMON_SRC_FILES
   LogicalLibraryLsResponseStream.cpp
   MediaTypeLsResponseStream.cpp
   MountPolicyLsResponseStream.cpp
+  OperationModes.cpp
   PhysicalLibraryLsResponseStream.cpp
   RecycleTapeFileLsResponseStream.cpp
   RepackLsResponseStream.cpp

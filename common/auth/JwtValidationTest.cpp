@@ -110,17 +110,21 @@ class ValidateJwtTestFixture : public ::testing::Test {
 protected:
   cta::log::StringLogger log;
   cta::log::LogContext lc;
-  MockJwksFetcherValidateJwt m_mockFetcher;
 
   ValidateJwtTestFixture() : log("dummy", "ValidateJwtTests", cta::log::DEBUG), lc(log) {}
 
-  std::shared_ptr<cta::auth::JwkCache> createCacheWithMockFetcher() {
-    return std::make_shared<cta::auth::JwkCache>(m_mockFetcher, "http://fake-jwks-uri", 1200, lc);
+  std::shared_ptr<cta::auth::JwkCache> createCacheWithMockFetcher() const {
+    return std::make_shared<cta::auth::JwkCache>(std::make_unique<MockJwksFetcherValidateJwt>(),
+                                                 "http://fake-jwks-uri",
+                                                 1200,
+                                                 lc);
   }
 
-  std::shared_ptr<cta::auth::JwkCache> createCacheWithEmptyMockFetcher() {
-    auto cache = std::make_shared<cta::auth::JwkCache>(m_mockFetcher, "http://fake-jwks-uri", 1200, lc);
-    m_mockFetcher.setJwks("");
+  std::shared_ptr<cta::auth::JwkCache> createCacheWithEmptyMockFetcher() const {
+    auto mockFetcher = std::make_unique<MockJwksFetcherValidateJwt>();
+    mockFetcher->setJwks("");
+
+    const auto cache = std::make_shared<cta::auth::JwkCache>(std::move(mockFetcher), "http://fake-jwks-uri", 1200, lc);
     return cache;
   }
 };

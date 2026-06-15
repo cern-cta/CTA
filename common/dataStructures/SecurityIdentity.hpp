@@ -32,11 +32,12 @@ struct SecurityIdentity {
   bool operator<(const SecurityIdentity& rhs) const;
 
   // Security protocol used to connect
-  enum class Protocol { NONE, SSS, KRB5, GRPC_TOKEN, OTHER };
+  enum class Protocol { NONE, SSS, KRB5, GRPC_TOKEN, GRPC_MTLS, OTHER };
   inline static const std::map<std::string, Protocol> m_authProtoMap = {
     {"sss",        Protocol::SSS       },
     {"krb5",       Protocol::KRB5      },
-    {"grpc_token", Protocol::GRPC_TOKEN}
+    {"grpc_token", Protocol::GRPC_TOKEN},
+    {"grpc_mtls",  Protocol::GRPC_MTLS }
   };
 
   std::string username;
