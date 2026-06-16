@@ -146,13 +146,7 @@ mgm:
       enabled: true
       config: |
         [Issuer Local]
-        issuer = https://scitokens-issuer:8443/
-        base_path = /
-        map_subject = false
-        default_user = poweruser1
-
-        [Issuer DTEAM]
-        issuer = https://dteam-auth.cern.ch/
+        issuer = https://scitokens-issuer:8443
         base_path = /
         map_subject = false
         default_user = poweruser1
@@ -162,6 +156,8 @@ mgm:
     # Allowing half the production (4k) size of the thread pool rather than the default 256.
     sched: "mint 16 maxt 2048 idle 128"
     extraConfig: |
+      xrd.tlsca certfile /etc/grid-security/certificates/ca.crt
+      scitokens.trace all
       xrootd.chksum  adler32
       mgmofs.archivedir /var/eos/archive
       mgmofs.prepare.dest.space default
@@ -189,6 +185,10 @@ mgm:
     # For some reason EOS is on another time zone, so set this to CET
     - name: TZ
       value: "CET"
+    - name: XDG_CACHE_HOME
+      value: "/tmp/scitokens-cache"
+    - name: SCITOKEN_CONFIG_TLS_CA_FILE
+      value: "/etc/grid-security/certificates/ca.crt"
 
   # Generate the self-signed certificates for http
   initContainer:

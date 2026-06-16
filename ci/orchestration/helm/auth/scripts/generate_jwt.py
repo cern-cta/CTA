@@ -7,6 +7,7 @@ import base64
 import hashlib
 import argparse
 import re
+import uuid
 from pathlib import Path
 from typing import Optional
 
@@ -30,6 +31,11 @@ def load_cert_x5c(cert_path: str) -> str:
     return base64.b64encode(cert).decode("ascii")
 
 
+def base64url_uint(value: int) -> str:
+    value_bytes = value.to_bytes((value.bit_length() + 7) // 8, byteorder="big")
+    return base64.urlsafe_b64encode(value_bytes).rstrip(b"=").decode("ascii")
+
+
 def generate_jwk_from_cert(cert_path):
     jwk = {
         "kty": "RSA",
@@ -50,7 +56,29 @@ def generate_jwk_from_cert(cert_path):
     return jwk
 
 
-def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int, issuer: Optional[str], scopes: list[str]):
+def generate_jwk_from_key(private_key, kid: str):
+    public_numbers = private_key.public_key().public_numbers()
+
+    return {
+        "kty": "RSA",
+        "alg": "RS256",
+        "use": "sig",
+        "e": base64url_uint(public_numbers.e),
+        "kid": kid,
+        "n": base64url_uint(public_numbers.n),
+    }
+
+
+def generate_jwt(
+    private_key,
+    kid: str,
+    sub: str,
+    lifetime_sec: int,
+    issuer: Optional[str],
+    scopes: list[str],
+    audience: Optional[str],
+    wlcg_version: Optional[str],
+):
     """Generates a JWT with all required claims the CTA frontend needs to verify it"""
     now = int(time.time())
 
@@ -64,6 +92,12 @@ def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int, issuer: Opt
         payload["iss"] = issuer
     if scopes:
         payload["scope"] = " ".join(scopes)
+    if audience:
+        payload["aud"] = audience
+    if wlcg_version:
+        payload["nbf"] = now
+        payload["wlcg.ver"] = wlcg_version
+        payload["jti"] = str(uuid.uuid4())
 
     token = jwt.encode(
         payload,
@@ -115,12 +149,36 @@ def main():
         "--jwt-filename",
         help="Name of the generated JWT file. Only valid with a single --sub.",
     )
+    parser.add_argument(
+        "--jwk-format",
+        choices=["x5c", "rsa"],
+        default="x5c",
+        help="JWKS key format to generate.",
+    )
+    parser.add_argument(
+        "--key-id",
+        help="Key ID to use in the JWKS and JWT header.",
+    )
+    parser.add_argument(
+        "--audience",
+        help="Audience claim to include in generated JWTs.",
+    )
+    parser.add_argument(
+        "--wlcg-version",
+        help="WLCG profile version claim to include in generated JWTs.",
+    )
 
     args = parser.parse_args()
 
     with open(args.key, "rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
-    jwk = generate_jwk_from_cert(args.cert)
+
+    if args.jwk_format == "rsa":
+        jwk = generate_jwk_from_key(key, args.key_id or "rsa1")
+    else:
+        jwk = generate_jwk_from_cert(args.cert)
+        if args.key_id:
+            jwk["kid"] = args.key_id
 
     if args.jwt_filename and len(args.sub) != 1:
         parser.error("--jwt-filename can only be used with a single --sub")
@@ -135,7 +193,16 @@ def main():
 
     # Generate one file per sub
     for sub in args.sub:
-        token = generate_jwt(key, jwk["kid"], sub, args.lifetime, args.issuer, args.scope)
+        token = generate_jwt(
+            key,
+            jwk["kid"],
+            sub,
+            args.lifetime,
+            args.issuer,
+            args.scope,
+            args.audience,
+            args.wlcg_version,
+        )
 
         safe_sub = sanitize_filename(sub)
         jwt_path = Path(args.output_dir) / (args.jwt_filename or f"{safe_sub}.jwt")

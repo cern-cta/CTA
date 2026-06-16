@@ -36,11 +36,6 @@ if [ ! -z "${error}" ]; then
     exit 1
 fi
 
-if [ -z "${SCI_TOKEN}" ]; then
-    echo -e "ERROR:\n\$SCI_TOKEN env not defined"
-    exit 1
-fi
-
 CLIENT_POD="cta-client-0"
 EOS_MGM_POD="eos-mgm-0"
 

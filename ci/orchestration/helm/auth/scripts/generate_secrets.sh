@@ -29,7 +29,7 @@ echo "0 u:ctaeos g:ctaeos n:ctaeos+ N:7570028795780923393 c:1762534677 e:0 f:0 k
 
 # Generate CA key and cert
 openssl genrsa -passout pass:1234 -des3 -out $SECRETS_DIR/ca.key 4096
-openssl req -passin pass:1234 -new -x509 -days 365 -key $SECRETS_DIR/ca.key -out $SECRETS_DIR/ca.crt -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Test/CN=Root CA"
+openssl req -passin pass:1234 -new -x509 -days 365 -key $SECRETS_DIR/ca.key -out $SECRETS_DIR/ca.crt -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Test/CN=Root CA" -addext "basicConstraints = critical, CA:TRUE" -addext "keyUsage = critical, keyCertSign, cRLSign"
 
 # Generate server key and CSR
 openssl genrsa -passout pass:1234 -des3 -out $SECRETS_DIR/server.key 4096
@@ -43,7 +43,14 @@ openssl rsa -passin pass:1234 -in $SECRETS_DIR/server.key -out $SECRETS_DIR/serv
 
 # Generate SciTokens issuer TLS key and cert
 openssl genrsa -out $SECRETS_DIR/scitokens-issuer.key 2048
-openssl req -new -key $SECRETS_DIR/scitokens-issuer.key -out $SECRETS_DIR/scitokens-issuer.crt -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=scitokens-issuer" -addext "subjectAltName = DNS:scitokens-issuer" -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -passin pass:1234 -days 365 -set_serial 02
+openssl req -new -key $SECRETS_DIR/scitokens-issuer.key -out /tmp/scitokens-issuer.csr -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=scitokens-issuer"
+cat > /tmp/scitokens-issuer.ext <<EOF
+basicConstraints = critical, CA:FALSE
+keyUsage = critical, digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+subjectAltName = DNS:scitokens-issuer
+EOF
+openssl x509 -req -passin pass:1234 -days 365 -in /tmp/scitokens-issuer.csr -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -set_serial 02 -out $SECRETS_DIR/scitokens-issuer.crt -extfile /tmp/scitokens-issuer.ext
 
 chmod 0644 $SECRETS_DIR/ca.key
 chmod 0644 $SECRETS_DIR/server.key
@@ -62,15 +69,21 @@ python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --cert "$SECRETS_DIR/scitokens-issuer.crt" \
   --key "$SECRETS_DIR/scitokens-issuer.key" \
-  --issuer "https://scitokens-issuer:8443/" \
+  --issuer "https://scitokens-issuer:8443" \
+  --audience "https://wlcg.cern.ch/jwt/v1/any" \
+  --wlcg-version "1.0" \
+  --jwk-format rsa \
+  --key-id rsa1 \
   --jwks-filename scitokens.jwks \
   --jwt-filename scitokens.jwt \
+  --scope "storage.create:/" \
   --scope "storage.read:/" \
   --scope "storage.modify:/" \
+  --scope "storage.poll:/" \
   --scope "storage.stage:/" \
   --sub poweruser1
 
-echo '{ "issuer": "https://scitokens-issuer:8443/", "jwks_uri": "https://scitokens-issuer:8443/jwk" }' > "$SECRETS_DIR/scitokens-well-known"
+echo '{ "issuer": "https://scitokens-issuer:8443", "jwks_uri": "https://scitokens-issuer:8443/jwk" }' > "$SECRETS_DIR/scitokens-well-known"
 
 # --- Generate K8s secrets for all of these --- #
 
