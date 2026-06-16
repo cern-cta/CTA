@@ -51,28 +51,63 @@ chmod 0644 $SECRETS_DIR/scitokens-issuer.key
 
 # --- JWT for Frontend Auth --- #
 
+JWT_ISSUED_AT=$(date +%s)
+JWT_EXPIRATION=$((JWT_ISSUED_AT + 60 * 60 * 24 * 90))
+
+CTAEOS_JWT_CLAIMS=$(cat <<EOF
+{
+  "iat": ${JWT_ISSUED_AT},
+  "exp": ${JWT_EXPIRATION},
+  "sub": "ctaeos",
+  "typ": "Bearer"
+}
+EOF
+)
+
+CTAADMIN1_JWT_CLAIMS=$(cat <<EOF
+{
+  "iat": ${JWT_ISSUED_AT},
+  "exp": ${JWT_EXPIRATION},
+  "sub": "ctaadmin1",
+  "typ": "Bearer"
+}
+EOF
+)
+
+SCITOKENS_JWT_CLAIMS=$(cat <<EOF
+{
+  "iat": ${JWT_ISSUED_AT},
+  "exp": ${JWT_EXPIRATION},
+  "sub": "poweruser1",
+  "typ": "Bearer",
+  "iss": "https://scitokens-issuer:8443",
+  "scope": "storage.create:/ storage.read:/ storage.modify:/ storage.stage:/",
+  "aud": "cta",
+  "nbf": ${JWT_ISSUED_AT},
+  "wlcg.ver": "1.0"
+}
+EOF
+)
+
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --cert "$SECRETS_DIR/server.crt" \
   --key "$SECRETS_DIR/server.key" \
-  --sub ctaeos \
-  --sub ctaadmin1
+  --claims "$CTAEOS_JWT_CLAIMS"
+
+python3 /scripts/generate_jwt.py \
+  --output-dir "$SECRETS_DIR" \
+  --cert "$SECRETS_DIR/server.crt" \
+  --key "$SECRETS_DIR/server.key" \
+  --claims "$CTAADMIN1_JWT_CLAIMS"
 
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --cert "$SECRETS_DIR/scitokens-issuer.crt" \
   --key "$SECRETS_DIR/scitokens-issuer.key" \
-  --issuer "https://scitokens-issuer:8443" \
-  --audience "https://wlcg.cern.ch/jwt/v1/any" \
-  --wlcg-version "1.0" \
-  --jwk-format rsa \
   --jwks-filename scitokens.jwks \
   --jwt-filename scitokens.jwt \
-  --scope "storage.create:/" \
-  --scope "storage.read:/" \
-  --scope "storage.modify:/" \
-  --scope "storage.stage:/" \
-  --sub poweruser1
+  --claims "$SCITOKENS_JWT_CLAIMS"
 
 echo '{ "issuer": "https://scitokens-issuer:8443", "jwks_uri": "https://scitokens-issuer:8443/jwk" }' > "$SECRETS_DIR/scitokens-well-known"
 

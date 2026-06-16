@@ -2,14 +2,10 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
-import time
 import base64
-import hashlib
 import argparse
 import re
-import uuid
 from pathlib import Path
-from typing import Optional
 
 import jwt
 from cryptography import x509
@@ -36,33 +32,14 @@ def base64url_uint(value: int) -> str:
     return base64.urlsafe_b64encode(value_bytes).rstrip(b"=").decode("ascii")
 
 
-def generate_jwk_from_cert(cert_path):
-    jwk = {
-        "kty": "RSA",
-        "alg": "RS256",
-        "use": "sig",
-        "x5c": [load_cert_x5c(cert_path)],
-    }
-
-    thumbprint = hashlib.sha256(
-        json.dumps(
-            {"kty": jwk["kty"]},
-            separators=(",", ":"),
-        ).encode()
-    ).digest()
-
-    jwk["kid"] = base64.urlsafe_b64encode(thumbprint).rstrip(b"=").decode()
-
-    return jwk
-
-
-def generate_jwk_from_key(private_key, kid: str):
+def generate_jwk(private_key, cert_path: str, kid: str):
     public_numbers = private_key.public_key().public_numbers()
 
     return {
         "kty": "RSA",
         "alg": "RS256",
         "use": "sig",
+        "x5c": [load_cert_x5c(cert_path)],
         "e": base64url_uint(public_numbers.e),
         "kid": kid,
         "n": base64url_uint(public_numbers.n),
@@ -72,35 +49,11 @@ def generate_jwk_from_key(private_key, kid: str):
 def generate_jwt(
     private_key,
     kid: str,
-    sub: str,
-    lifetime_sec: int,
-    issuer: Optional[str],
-    scopes: list[str],
-    audience: Optional[str],
-    wlcg_version: Optional[str],
+    claims: dict,
 ):
-    """Generates a JWT with all required claims the CTA frontend needs to verify it"""
-    now = int(time.time())
-
-    payload = {
-        "iat": now,
-        "exp": now + lifetime_sec,
-        "sub": sub,
-        "typ": "Bearer",
-    }
-    if issuer:
-        payload["iss"] = issuer
-    if scopes:
-        payload["scope"] = " ".join(scopes)
-    if audience:
-        payload["aud"] = audience
-    if wlcg_version:
-        payload["nbf"] = now
-        payload["wlcg.ver"] = wlcg_version
-        payload["jti"] = str(uuid.uuid4())
-
+    """Generates a JWT with the given claims."""
     token = jwt.encode(
-        payload,
+        claims,
         private_key,
         algorithm="RS256",
         headers={"kid": kid, "typ": "JWT"},
@@ -111,19 +64,12 @@ def generate_jwt(
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate CI files containing a JWKS and one JWT for each --sub passed. Files are put in the --output-dir directory."
+        description="Generate CI files containing a JWKS and one JWT. Files are put in the --output-dir directory."
     )
     parser.add_argument(
-        "--sub",
-        action="append",
+        "--claims",
         required=True,
-        help="Subject claim (repeatable). Each --sub argument will generate a separate JWT with the name of the sub.",
-    )
-    parser.add_argument(
-        "--lifetime",
-        type=int,
-        default=60 * 60 * 24 * 90,
-        help="Token lifetime in seconds",
+        help="JWT payload claims as a JSON object.",
     )
     parser.add_argument(
         "--output-dir",
@@ -131,14 +77,15 @@ def main():
         default="/tmp",
         help="Directory to put the generated files in",
     )
-    parser.add_argument("--cert", required=True, help="Path to server certificate")
-    parser.add_argument("--key", required=True, help="Path to private key")
-    parser.add_argument("--issuer", help="Issuer claim to include in generated JWTs")
     parser.add_argument(
-        "--scope",
-        action="append",
-        default=[],
-        help="Scope claim value (repeatable). Multiple values are joined with spaces.",
+        "--cert",
+        required=True,
+        help="Path to server certificate",
+    )
+    parser.add_argument(
+        "--key",
+        required=True,
+        help="Path to private key",
     )
     parser.add_argument(
         "--jwks-filename",
@@ -147,41 +94,28 @@ def main():
     )
     parser.add_argument(
         "--jwt-filename",
-        help="Name of the generated JWT file. Only valid with a single --sub.",
-    )
-    parser.add_argument(
-        "--jwk-format",
-        choices=["x5c", "rsa"],
-        default="x5c",
-        help="JWKS key format to generate.",
+        help="Name of the generated JWT file.",
     )
     parser.add_argument(
         "--key-id",
+        default="rsa1",
         help="Key ID to use in the JWKS and JWT header.",
-    )
-    parser.add_argument(
-        "--audience",
-        help="Audience claim to include in generated JWTs.",
-    )
-    parser.add_argument(
-        "--wlcg-version",
-        help="WLCG profile version claim to include in generated JWTs.",
     )
 
     args = parser.parse_args()
 
+    try:
+        claims = json.loads(args.claims)
+    except json.JSONDecodeError as err:
+        parser.error(f"--claims must be a valid JSON: {err}")
+
+    if not isinstance(claims, dict):
+        parser.error("--claims must be a JSON object")
+
     with open(args.key, "rb") as f:
         key = serialization.load_pem_private_key(f.read(), password=None)
 
-    if args.jwk_format == "rsa":
-        jwk = generate_jwk_from_key(key, args.key_id or "rsa1")
-    else:
-        jwk = generate_jwk_from_cert(args.cert)
-        if args.key_id:
-            jwk["kid"] = args.key_id
-
-    if args.jwt_filename and len(args.sub) != 1:
-        parser.error("--jwt-filename can only be used with a single --sub")
+    jwk = generate_jwk(key, args.cert, args.key_id)
 
     # Save JWKS
     jwks = {"keys": [jwk]}
@@ -191,26 +125,19 @@ def main():
 
     print(f"Generated {jwks_path}")
 
-    # Generate one file per sub
-    for sub in args.sub:
-        token = generate_jwt(
-            key,
-            jwk["kid"],
-            sub,
-            args.lifetime,
-            args.issuer,
-            args.scope,
-            args.audience,
-            args.wlcg_version,
-        )
+    token = generate_jwt(
+        key,
+        jwk["kid"],
+        claims,
+    )
 
-        safe_sub = sanitize_filename(sub)
-        jwt_path = Path(args.output_dir) / (args.jwt_filename or f"{safe_sub}.jwt")
+    safe_sub = sanitize_filename(str(claims.get("sub", "token")))
+    jwt_path = Path(args.output_dir) / (args.jwt_filename or f"{safe_sub}.jwt")
 
-        with open(jwt_path, "w") as f:
-            f.write(token)
+    with open(jwt_path, "w") as f:
+        f.write(token)
 
-        print(f"Generated {jwt_path}")
+    print(f"Generated {jwt_path}")
 
 
 if __name__ == "__main__":
