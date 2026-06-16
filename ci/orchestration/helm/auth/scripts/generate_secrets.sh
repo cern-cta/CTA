@@ -83,7 +83,6 @@ SCITOKENS_JWT_CLAIMS=$(cat <<EOF
   "iss": "https://scitokens-issuer:8443",
   "scope": "storage.create:/ storage.read:/ storage.modify:/ storage.stage:/",
   "aud": "cta",
-  "nbf": ${JWT_ISSUED_AT},
   "wlcg.ver": "1.0"
 }
 EOF
