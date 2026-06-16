@@ -8,6 +8,7 @@ import hashlib
 import argparse
 import re
 from pathlib import Path
+from typing import Optional
 
 import jwt
 from cryptography import x509
@@ -49,7 +50,7 @@ def generate_jwk_from_cert(cert_path):
     return jwk
 
 
-def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int):
+def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int, issuer: Optional[str], scopes: list[str]):
     """Generates a JWT with all required claims the CTA frontend needs to verify it"""
     now = int(time.time())
 
@@ -59,6 +60,10 @@ def generate_jwt(private_key, kid: str, sub: str, lifetime_sec: int):
         "sub": sub,
         "typ": "Bearer",
     }
+    if issuer:
+        payload["iss"] = issuer
+    if scopes:
+        payload["scope"] = " ".join(scopes)
 
     token = jwt.encode(
         payload,
@@ -94,6 +99,22 @@ def main():
     )
     parser.add_argument("--cert", required=True, help="Path to server certificate")
     parser.add_argument("--key", required=True, help="Path to private key")
+    parser.add_argument("--issuer", help="Issuer claim to include in generated JWTs")
+    parser.add_argument(
+        "--scope",
+        action="append",
+        default=[],
+        help="Scope claim value (repeatable). Multiple values are joined with spaces.",
+    )
+    parser.add_argument(
+        "--jwks-filename",
+        default="jwks.json",
+        help="Name of the generated JWKS file",
+    )
+    parser.add_argument(
+        "--jwt-filename",
+        help="Name of the generated JWT file. Only valid with a single --sub.",
+    )
 
     args = parser.parse_args()
 
@@ -101,9 +122,12 @@ def main():
         key = serialization.load_pem_private_key(f.read(), password=None)
     jwk = generate_jwk_from_cert(args.cert)
 
+    if args.jwt_filename and len(args.sub) != 1:
+        parser.error("--jwt-filename can only be used with a single --sub")
+
     # Save JWKS
     jwks = {"keys": [jwk]}
-    jwks_path = Path(args.output_dir) / "jwks.json"
+    jwks_path = Path(args.output_dir) / args.jwks_filename
     with open(jwks_path, "w") as f:
         json.dump(jwks, f, indent=2)
 
@@ -111,10 +135,10 @@ def main():
 
     # Generate one file per sub
     for sub in args.sub:
-        token = generate_jwt(key, jwk["kid"], sub, args.lifetime)
+        token = generate_jwt(key, jwk["kid"], sub, args.lifetime, args.issuer, args.scope)
 
         safe_sub = sanitize_filename(sub)
-        jwt_path = Path(args.output_dir) / f"{safe_sub}.jwt"
+        jwt_path = Path(args.output_dir) / (args.jwt_filename or f"{safe_sub}.jwt")
 
         with open(jwt_path, "w") as f:
             f.write(token)

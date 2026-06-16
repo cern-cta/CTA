@@ -42,7 +42,8 @@ openssl x509 -req -passin pass:1234 -days 365 -in server.csr -CA $SECRETS_DIR/ca
 openssl rsa -passin pass:1234 -in $SECRETS_DIR/server.key -out $SECRETS_DIR/server.key
 
 # Generate SciTokens issuer TLS key and cert
-openssl req -newkey rsa:2048 -nodes -keyout $SECRETS_DIR/scitokens-issuer.key -out $SECRETS_DIR/scitokens-issuer.crt -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=scitokens-issuer" -addext "subjectAltName = DNS:scitokens-issuer" -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -passin pass:1234 -days 365 -set_serial 02
+openssl genrsa -out $SECRETS_DIR/scitokens-issuer.key 2048
+openssl req -new -key $SECRETS_DIR/scitokens-issuer.key -out $SECRETS_DIR/scitokens-issuer.crt -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=scitokens-issuer" -addext "subjectAltName = DNS:scitokens-issuer" -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -passin pass:1234 -days 365 -set_serial 02
 
 chmod 0644 $SECRETS_DIR/ca.key
 chmod 0644 $SECRETS_DIR/server.key
@@ -57,9 +58,19 @@ python3 /scripts/generate_jwt.py \
   --sub ctaeos \
   --sub ctaadmin1
 
-echo '{ "jwks_uri": "https://dteam-auth.cern.ch/jwk" }' >> "$SECRETS_DIR/scitokens-well-known"
-echo '{  }' >> "$SECRETS_DIR/scitokens.jwks"
-echo '{  }' >> "$SECRETS_DIR/scitokens.jwt"
+python3 /scripts/generate_jwt.py \
+  --output-dir "$SECRETS_DIR" \
+  --cert "$SECRETS_DIR/scitokens-issuer.crt" \
+  --key "$SECRETS_DIR/scitokens-issuer.key" \
+  --issuer "https://scitokens-issuer:8443/" \
+  --jwks-filename scitokens.jwks \
+  --jwt-filename scitokens.jwt \
+  --scope "storage.read:/" \
+  --scope "storage.modify:/" \
+  --scope "storage.stage:/" \
+  --sub poweruser1
+
+echo '{ "issuer": "https://scitokens-issuer:8443/", "jwks_uri": "https://scitokens-issuer:8443/jwk" }' > "$SECRETS_DIR/scitokens-well-known"
 
 # --- Generate K8s secrets for all of these --- #
 
