@@ -145,8 +145,14 @@ mgm:
     sciTokens:
       enabled: true
       config: |
-        [Issuer OSG-Connect]
+        [Issuer Local]
         issuer = https://scitokens-issuer:8443/
+        base_path = /
+        map_subject = false
+        default_user = poweruser1
+
+        [Issuer DTEAM]
+        issuer = https://dteam-auth.cern.ch/
         base_path = /
         map_subject = false
         default_user = poweruser1
