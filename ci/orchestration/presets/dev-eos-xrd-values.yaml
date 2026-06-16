@@ -94,6 +94,7 @@ global:
                       -out /tmp/scitokens-issuer.csr \
                       -config /tmp/scitokens-issuer-openssl.cnf
                     openssl x509 -req \
+                      -passin pass:1234 \
                       -in /tmp/scitokens-issuer.csr \
                       -CA /ca/ca.crt \
                       -CAkey /ca/ca.key \
