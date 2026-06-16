@@ -680,6 +680,7 @@ std::string RelationalDB::queueRepack(const SchedulerDatabase::QueueRepackReques
   rr->setNoRecall(repackRequest.m_noRecall);
   rr->setCreationLog(repackRequest.m_creationLog);
   rr->setMaxFilesToSelect(repackRequest.m_maxFilesToSelect);
+  rr->setStorageClass(repackRequest.m_storageClass);
   rr->insert();
   lc.log(log::INFO, "RelationalDB::queueRepack() successfully queued request.");
   return rr->getIdStr();

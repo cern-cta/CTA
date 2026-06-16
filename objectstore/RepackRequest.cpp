@@ -158,6 +158,7 @@ common::dataStructures::RepackInfo RepackRequest::getInfo() const {
   ret.creationLog = creationLog;
   ret.repackFinishedTime = m_payload.repack_finished_time();
   ret.maxFilesToSelect = m_payload.maxfilestoselect();
+  ret.storageClass = m_payload.storageclass();
   for (auto& rdi : m_payload.destination_infos()) {
     RepackInfo::RepackDestinationInfo rdiToInsert;
     rdiToInsert.vid = rdi.vid();
@@ -368,6 +369,13 @@ void RepackRequest::setBufferURL(const std::string& bufferURL) {
 void RepackRequest::setMaxFilesToSelect(const uint64_t masFilesToExpand) {
   checkPayloadWritable();
   m_payload.set_maxfilestoselect(masFilesToExpand);
+}
+
+//------------------------------------------------------------------------------
+// RepackRequest::setStorageClass()
+//------------------------------------------------------------------------------
+void RepackRequest::setStorageClass(const std::string& storageClass) {
+  m_payload.set_storageclass(storageClass);
 }
 
 //------------------------------------------------------------------------------
@@ -858,6 +866,7 @@ RepackRequest::asyncUpdateOwnerAndStatus(const std::string& owner,
     retRef.m_repackInfo.repackBufferBaseURL = payload.buffer_url();
     retRef.m_repackInfo.noRecall = payload.no_recall();
     retRef.m_repackInfo.maxFilesToSelect = payload.maxfilestoselect();
+    retRef.m_repackInfo.storageClass = payload.storageclass();
     if (payload.move_mode()) {
       if (payload.add_copies_mode()) {
         retRef.m_repackInfo.type = RepackInfo::Type::MoveAndAddCopies;

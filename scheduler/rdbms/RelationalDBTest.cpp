@@ -378,6 +378,34 @@ TEST_P(RelationalDBTest, queueRepackInitial) {
   ASSERT_EQ(0u, repackInfo.failedBytesToArchive);
 }
 
+TEST_P(RelationalDBTest, queueRepackWithStorageClass) {
+  using namespace cta;
+
+  auto logger = makeLogger();
+  cta::log::LogContext lc(*logger);
+
+  cta::SchedulerDatabase& db = getDb();
+  auto mountPolicy = makeMountPolicy(1000);
+
+  const std::string storageClass = "TestStorageClass";
+
+  cta::SchedulerDatabase::QueueRepackRequest repackRequest("V99999",
+                                                           "/repack/buffer",
+                                                           cta::common::dataStructures::RepackInfo::Type::MoveOnly,
+                                                           mountPolicy,
+                                                           false,
+                                                           10,
+                                                           storageClass);
+
+  repackRequest.m_creationLog = {"user", "host", 1000};
+
+  db.queueRepack(repackRequest, lc);
+
+  const auto repackInfo = db.getRepackInfo("V99999");
+
+  ASSERT_EQ(storageClass, repackInfo.storageClass);
+}
+
 static cta::RelationalDBTestFactory RelationalDBTestFactoryStatic;
 INSTANTIATE_TEST_CASE_P(RelationalDBTest,
                         RelationalDBTest,

@@ -64,6 +64,7 @@ public:
   void setNoRecall(const bool noRecall);
   void setCreationLog(const common::dataStructures::EntryLog& creationLog);
   void setMaxFilesToSelect(const uint64_t maxFilesToSelect);
+  void setStorageClass(const std::string& storageClass);
 
   std::string getIdStr() const { return "??"; }
 
@@ -86,6 +87,7 @@ public:
   bool m_isMove = true;
   bool m_isComplete = false;
   uint64_t m_maxFilesToSelect = 0;
+  std::string m_storageClass;
   uint64_t m_failedToCreateArchiveReq = 0;
 
   struct StatsValues {

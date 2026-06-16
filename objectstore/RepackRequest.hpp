@@ -32,6 +32,7 @@ public:
   common::dataStructures::RepackInfo getInfo() const;
   void setBufferURL(const std::string& bufferURL);
   void setMaxFilesToSelect(const uint64_t masFilesToExpand);
+  void setStorageClass(const std::string& storageClass);
   void setExpandFinished(const bool expandFinished);
   bool isExpandFinished() const;
   void setExpandStarted(const bool expandStarted);

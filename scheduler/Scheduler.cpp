@@ -437,6 +437,7 @@ void Scheduler::queueRepack(const common::dataStructures::SecurityIdentity& cliI
     .add("creationTime", repackRequestToQueue.m_creationLog.time)
     .add("bufferURL", repackRequest.m_repackBufferURL)
     .add("maxFilesToSelect", repackRequest.m_maxFilesToSelect)
+    .add("storageClass", repackRequest.m_storageClass)
     .add("repackRequestAddress", repackRequestAddress);
   tl.addToLog(params);
   lc.log(log::INFO, "In Scheduler::queueRepack(): success.");
@@ -640,27 +641,36 @@ void Scheduler::expandRepackRequest(const RepackRequest& repackRequest,
     uint64_t numberOfBytesCount = 0;
     bool allFilesSelected = true;
     while (archiveFilesForCatalogue.hasMore()) {
-      if (repackInfo.maxFilesToSelect == 0 || numberOfFilesCount < repackInfo.maxFilesToSelect) {
-        archiveFilesFromCatalogue.push_back(archiveFilesForCatalogue.next());
-        numberOfBytesCount += archiveFilesFromCatalogue.back().fileSize;
+      auto archiveFile = archiveFilesForCatalogue.next();
+
+      const bool storageClassCheck =
+        repackInfo.storageClass.empty() || archiveFile.storageClass == repackInfo.storageClass;
+
+      const bool maxFilesToSelectCheck =
+        repackInfo.maxFilesToSelect == 0 || archiveFilesFromCatalogue.size() < repackInfo.maxFilesToSelect;
+
+      if (storageClassCheck && maxFilesToSelectCheck) {
+        archiveFilesFromCatalogue.push_back(archiveFile);
       } else if (totalFilesOnTapeAlreadyChecked) {
         // Break if the total number of files/bytes on tape has already been counted before
         allFilesSelected = false;
         break;
       } else {
-        // Count the number of bytes of the all the remaining files
         allFilesSelected = false;
-        numberOfBytesCount += archiveFilesForCatalogue.next().fileSize;
       }
-      numberOfFilesCount += 1;
+
+      if (!totalFilesOnTapeAlreadyChecked) {
+        numberOfFilesCount += 1;
+        numberOfBytesCount += archiveFile.fileSize;
+      }
     }
 
     // Only update the total number of files if the value hasn't been already set. Otherwise, reuse old value.
     if (!totalFilesOnTapeAlreadyChecked) {
       totalStatsFile.totalFilesOnTapeAtStart = numberOfFilesCount;
       totalStatsFile.totalBytesOnTapeAtStart = numberOfBytesCount;
-      totalStatsFile.allFilesSelectedAtStart = allFilesSelected;
     }
+    totalStatsFile.allFilesSelectedAtStart = allFilesSelected;
   }
 
   if (repackInfo.noRecall) {
