@@ -60,11 +60,6 @@ echo
 echo "Setting up environment for tests."
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "/root/client_setup.sh -n ${NB_FILES} -s ${FILE_SIZE_KB} -p ${NB_PROCS} -d /eos/ctaeos/preprod -r -c xrd" || exit 1
 
-token_file=$(mktemp)
-echo $SCI_TOKEN >> $token_file
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -- sh -c "rm -rf ${token_file}"
-kubectl -n ${NAMESPACE} cp $token_file ${CLIENT_POD}:/token_file
-
 # Test are run under the cta user account which doesn't have a login
 # option so to be able to export the test setup we need to source the file
 # client_env (file generated in client_setup with all env varss and fucntions)

@@ -42,15 +42,8 @@ openssl x509 -req -passin pass:1234 -days 365 -in server.csr -CA $SECRETS_DIR/ca
 openssl rsa -passin pass:1234 -in $SECRETS_DIR/server.key -out $SECRETS_DIR/server.key
 
 # Generate SciTokens issuer TLS key and cert
-openssl genrsa -out $SECRETS_DIR/scitokens-issuer.key 2048
-openssl req -new -key $SECRETS_DIR/scitokens-issuer.key -out /tmp/scitokens-issuer.csr -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=scitokens-issuer"
-cat > /tmp/scitokens-issuer.ext <<EOF
-basicConstraints = critical, CA:FALSE
-keyUsage = critical, digitalSignature, keyEncipherment
-extendedKeyUsage = serverAuth
-subjectAltName = DNS:scitokens-issuer
-EOF
-openssl x509 -req -passin pass:1234 -days 365 -in /tmp/scitokens-issuer.csr -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -set_serial 02 -out $SECRETS_DIR/scitokens-issuer.crt -extfile /tmp/scitokens-issuer.ext
+openssl genrsa -out $SECRETS_DIR/scitokens-issuer.key 4096
+openssl req -new -key $SECRETS_DIR/scitokens-issuer.key -out $SECRETS_DIR/scitokens-issuer.crt -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=scitokens-issuer" -addext "basicConstraints = critical, CA:FALSE" -addext "keyUsage = critical, digitalSignature, keyEncipherment" -addext "extendedKeyUsage = serverAuth" -addext "subjectAltName = DNS:scitokens-issuer" -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -passin pass:1234 -days 365 -set_serial 02
 
 chmod 0644 $SECRETS_DIR/ca.key
 chmod 0644 $SECRETS_DIR/server.key
@@ -73,13 +66,11 @@ python3 /scripts/generate_jwt.py \
   --audience "https://wlcg.cern.ch/jwt/v1/any" \
   --wlcg-version "1.0" \
   --jwk-format rsa \
-  --key-id rsa1 \
   --jwks-filename scitokens.jwks \
   --jwt-filename scitokens.jwt \
   --scope "storage.create:/" \
   --scope "storage.read:/" \
   --scope "storage.modify:/" \
-  --scope "storage.poll:/" \
   --scope "storage.stage:/" \
   --sub poweruser1
 
