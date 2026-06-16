@@ -41,8 +41,12 @@ openssl x509 -req -passin pass:1234 -days 365 -in server.csr -CA $SECRETS_DIR/ca
 # Remove passphrase from the server key
 openssl rsa -passin pass:1234 -in $SECRETS_DIR/server.key -out $SECRETS_DIR/server.key
 
+# Generate SciTokens issuer TLS key and cert
+openssl req -newkey rsa:2048 -nodes -keyout $SECRETS_DIR/scitokens-issuer.key -out $SECRETS_DIR/scitokens-issuer.crt -subj "/C=CH/ST=Geneva/L=Geneva/O=Test/OU=Server/CN=scitokens-issuer" -addext "subjectAltName = DNS:scitokens-issuer" -CA $SECRETS_DIR/ca.crt -CAkey $SECRETS_DIR/ca.key -passin pass:1234 -days 365 -set_serial 02
+
 chmod 0644 $SECRETS_DIR/ca.key
 chmod 0644 $SECRETS_DIR/server.key
+chmod 0644 $SECRETS_DIR/scitokens-issuer.key
 
 # --- JWT for Frontend Auth --- #
 
@@ -62,4 +66,3 @@ echo '{  }' >> "$SECRETS_DIR/scitokens.jwt"
 python3 /scripts/create_k8s_secrets.py \
   --namespace "$NAMESPACE" \
   --dir "$SECRETS_DIR"
-

@@ -67,52 +67,6 @@ global:
             labels:
               app: scitokens-issuer
           spec:
-            initContainers:
-              - name: generate-cert
-                image: docker.io/alpine/openssl:latest
-                securityContext:
-                  runAsUser: 0
-                command:
-                  - /bin/sh
-                  - -c
-                  - |
-                    set -eu
-                    cat > /tmp/scitokens-issuer-openssl.cnf <<'EOF'
-                    [req]
-                    distinguished_name = dn
-                    req_extensions = v3_req
-                    prompt = no
-
-                    [dn]
-                    CN = scitokens-issuer
-
-                    [v3_req]
-                    subjectAltName = DNS:scitokens-issuer
-                    EOF
-                    openssl req -newkey rsa:2048 -nodes \
-                      -keyout /tls/tls.key \
-                      -out /tmp/scitokens-issuer.csr \
-                      -config /tmp/scitokens-issuer-openssl.cnf
-                    openssl x509 -req \
-                      -passin pass:1234 \
-                      -in /tmp/scitokens-issuer.csr \
-                      -CA /ca/ca.crt \
-                      -CAkey /ca/ca.key \
-                      -set_serial 02 \
-                      -out /tls/tls.crt \
-                      -days 365 \
-                      -extensions v3_req \
-                      -extfile /tmp/scitokens-issuer-openssl.cnf
-                    chmod 0644 /tls/tls.crt /tls/tls.key
-                volumeMounts:
-                  - name: tls
-                    mountPath: /tls
-                  - name: ca-crt
-                    mountPath: /ca/ca.crt
-                    subPath: ca.crt
-                  - name: ca-key
-                    mountPath: /ca/ca.key
-                    subPath: ca.key
             containers:
               - name: nginx
                 image: docker.io/nginxinc/nginx-unprivileged:stable-alpine
@@ -131,6 +85,7 @@ global:
                     subPath: scitokens.jwks
                   - name: tls
                     mountPath: /tls
+                    readOnly: true
             volumes:
               - name: nginx-conf
                 configMap:
@@ -141,14 +96,19 @@ global:
               - name: scitokens-jwks
                 secret:
                   secretName: scitokens-jwks
-              - name: ca-crt
-                secret:
-                  secretName: ca-crt
-              - name: ca-key
-                secret:
-                  secretName: ca-key
               - name: tls
-                emptyDir: {}
+                projected:
+                  sources:
+                    - secret:
+                        name: scitokens-issuer-crt
+                        items:
+                          - key: scitokens-issuer.crt
+                            path: tls.crt
+                    - secret:
+                        name: scitokens-issuer-key
+                        items:
+                          - key: scitokens-issuer.key
+                            path: tls.key
     - |
       apiVersion: v1
       kind: Service
