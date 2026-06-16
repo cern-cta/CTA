@@ -69,7 +69,7 @@ global:
           spec:
             initContainers:
               - name: generate-cert
-                image: nginxinc/nginx-unprivileged:stable-alpine
+                image: docker.io/alpine/openssl:latest
                 securityContext:
                   runAsUser: 0
                 command:
@@ -114,7 +114,7 @@ global:
                     subPath: ca.key
             containers:
               - name: nginx
-                image: nginxinc/nginx-unprivileged:stable-alpine
+                image: docker.io/nginxinc/nginx-unprivileged:stable-alpine
                 ports:
                   - name: https
                     containerPort: 8443
