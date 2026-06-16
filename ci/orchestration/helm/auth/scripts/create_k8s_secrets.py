@@ -26,25 +26,22 @@ def k8s_create_secret(namespace, secret_name, filename, filepath, host):
         "data": {filename: filedata},
     }
 
-    try:
-        with open(token_path, "r") as f:
-            token = f.read().strip()
+    with open(token_path, "r") as f:
+        token = f.read().strip()
 
-        context = ssl.create_default_context()
-        context.load_verify_locations(cafile=ca_cert_path)
-        url = f"{host}/api/v1/namespaces/{namespace}/secrets"
+    context = ssl.create_default_context()
+    context.load_verify_locations(cafile=ca_cert_path)
+    url = f"{host}/api/v1/namespaces/{namespace}/secrets"
 
-        req = urllib.request.Request(url, data=json.dumps(payload).encode(), method="POST")
-        req.add_header("Authorization", f"Bearer {token}")
-        req.add_header("Content-Type", "application/json")
+    req = urllib.request.Request(url, data=json.dumps(payload).encode(), method="POST")
+    req.add_header("Authorization", f"Bearer {token}")
+    req.add_header("Content-Type", "application/json")
 
-        with urllib.request.urlopen(req, context=context) as response:
-            if response.status in (200, 201):
-                print(f"Successfully created secret: {secret_name}")
-            else:
-                print(f"Unexpected status code {response.status} for {secret_name}")
-    except Exception as e:
-        print(f"Error creating {secret_name}: {e}")
+    with urllib.request.urlopen(req, context=context) as response:
+        if response.status in (200, 201):
+            print(f"Successfully created secret: {secret_name}")
+        else:
+            raise RuntimeError(f"Unexpected status code {response.status} for {secret_name}")
 
 
 def is_valid_name(name):
