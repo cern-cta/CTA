@@ -27,6 +27,139 @@ global:
       spec:
         type: ExternalName
         externalName: {{ include "utils.mgm_address" . }}
+    # Serve the local SciTokens discovery and JWKS files over HTTPS.
+    - |
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: scitokens-issuer-nginx
+      data:
+        default.conf: |
+          server {
+            listen 8443 ssl;
+            server_name scitokens-issuer;
+
+            ssl_certificate /tls/tls.crt;
+            ssl_certificate_key /tls/tls.key;
+
+            default_type application/json;
+
+            location = /.well-known/openid-configuration {
+              alias /srv/scitokens/scitokens-well-known;
+            }
+
+            location = /jwk {
+              alias /srv/scitokens/scitokens.jwks;
+            }
+          }
+    - |
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: scitokens-issuer
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: scitokens-issuer
+        template:
+          metadata:
+            labels:
+              app: scitokens-issuer
+          spec:
+            initContainers:
+              - name: generate-cert
+                image: nginxinc/nginx-unprivileged:stable-alpine
+                securityContext:
+                  runAsUser: 0
+                command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    set -eu
+                    cat > /tmp/scitokens-issuer-openssl.cnf <<'EOF'
+                    [req]
+                    distinguished_name = dn
+                    req_extensions = v3_req
+                    prompt = no
+
+                    [dn]
+                    CN = scitokens-issuer
+
+                    [v3_req]
+                    subjectAltName = DNS:scitokens-issuer
+                    EOF
+                    openssl req -newkey rsa:2048 -nodes \
+                      -keyout /tls/tls.key \
+                      -out /tmp/scitokens-issuer.csr \
+                      -config /tmp/scitokens-issuer-openssl.cnf
+                    openssl x509 -req \
+                      -in /tmp/scitokens-issuer.csr \
+                      -CA /ca/ca.crt \
+                      -CAkey /ca/ca.key \
+                      -set_serial 02 \
+                      -out /tls/tls.crt \
+                      -days 365 \
+                      -extensions v3_req \
+                      -extfile /tmp/scitokens-issuer-openssl.cnf
+                    chmod 0644 /tls/tls.crt /tls/tls.key
+                volumeMounts:
+                  - name: tls
+                    mountPath: /tls
+                  - name: ca-crt
+                    mountPath: /ca/ca.crt
+                    subPath: ca.crt
+                  - name: ca-key
+                    mountPath: /ca/ca.key
+                    subPath: ca.key
+            containers:
+              - name: nginx
+                image: nginxinc/nginx-unprivileged:stable-alpine
+                ports:
+                  - name: https
+                    containerPort: 8443
+                volumeMounts:
+                  - name: nginx-conf
+                    mountPath: /etc/nginx/conf.d/default.conf
+                    subPath: default.conf
+                  - name: scitokens-well-known
+                    mountPath: /srv/scitokens/scitokens-well-known
+                    subPath: scitokens-well-known
+                  - name: scitokens-jwks
+                    mountPath: /srv/scitokens/scitokens.jwks
+                    subPath: scitokens.jwks
+                  - name: tls
+                    mountPath: /tls
+            volumes:
+              - name: nginx-conf
+                configMap:
+                  name: scitokens-issuer-nginx
+              - name: scitokens-well-known
+                secret:
+                  secretName: scitokens-well-known
+              - name: scitokens-jwks
+                secret:
+                  secretName: scitokens-jwks
+              - name: ca-crt
+                secret:
+                  secretName: ca-crt
+              - name: ca-key
+                secret:
+                  secretName: ca-key
+              - name: tls
+                emptyDir: {}
+    - |
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: scitokens-issuer
+      spec:
+        selector:
+          app: scitokens-issuer
+        ports:
+          - name: https
+            port: 8443
+            targetPort: https
 
 
 mgm:
@@ -52,7 +185,7 @@ mgm:
       enabled: true
       config: |
         [Issuer OSG-Connect]
-        issuer = https://dteam-auth.cern.ch/
+        issuer = https://scitokens-issuer:8443/
         base_path = /
         map_subject = false
         default_user = poweruser1
@@ -96,10 +229,13 @@ mgm:
     script: |
       #!/usr/bin/bash
       /mkcert-ssl.sh
+      cp /etc/scitokens-issuer-ca/ca.crt /etc/grid-security/certificates
       chown -R daemon:daemon /etc/grid-security/certificates
     volumeMounts:
       - name: grid-security
         mountPath: /etc/grid-security
+      - name: scitokens-issuer-ca
+        mountPath: /etc/scitokens-issuer-ca
 
   extraVolumes:
     volumeMounts:
@@ -126,6 +262,9 @@ mgm:
       - name: scitokens-jwks
         secret:
           secretName: scitokens-jwks
+      - name: scitokens-issuer-ca
+        secret:
+          secretName: ca-crt
 
 fst:
   replicaCount: 1
