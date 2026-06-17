@@ -34,11 +34,8 @@ variables:
       - "IMAGE_FROM_CTA_VERSION"
 
   # Custom variables for image building and run environment packages
-  CUSTOM_EOS_VERSION:
-    description: "Custom EOS version to use running. If provided in conjunction with CUSTOM_EOS_IMAGE_TAG, then this variable affects only the client versions."
-    value: ""
   CUSTOM_EOS_IMAGE_TAG:
-    description: "Custom EOS image tag to use running. If not provided while CUSTOM_EOS_VERSION is provided, this will be deduced automatically"
+    description: "Custom EOS image tag to use running. Note that this does not affect the EOS client version"
     value: ""
   CUSTOM_XROOTD_VERSION:
     description: "Custom XRootD version to use for building and running."

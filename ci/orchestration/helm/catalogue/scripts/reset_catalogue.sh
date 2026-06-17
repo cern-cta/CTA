@@ -23,4 +23,10 @@ fi
 echo "Catalogue wiped"
 
 echo "Creating catalogue schema..."
-cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf
+# Eventually this if statement can be removed, since the schema-create supports -v latest
+# However, to allow us to test older versions, we need keep it around for now
+if [[ "$SCHEMA_VERSION" == "latest" ]]; then
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
+else
+    cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf
+fi

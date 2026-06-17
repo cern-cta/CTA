@@ -50,7 +50,8 @@ containing the connection details of the CTA Catalogue database.
     **cta-catalogue-schema-create** creates the latest version of the
     schema. This option allows the creation of an earlier version. This
     is useful for testing the upgrade from an older schema version to a
-    newer version.
+    newer version. If the string "latest" is provided, the command works
+    the same as if the -v was not provided.
 
 # EXIT STATUS
 
