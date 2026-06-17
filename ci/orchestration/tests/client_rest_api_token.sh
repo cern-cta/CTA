@@ -24,7 +24,7 @@ LATER=$(echo "${NOW}+86400" | bc)
 #TOKEN_EOSPOWER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner poweruser1 --group powerusers --permission prwx)
 
 # Get locally generated SciToken
-SCI_TOKEN=$(cat /etc/cta/scitokens.jwt)
+SCI_TOKEN=$(cat /etc/cta/wlgc-token.jwt)
 #SCI_TOKEN_EXP=$(echo $SCI_TOKEN | cut -d. -f2 | base64 --decode | jq '.exp')
 #if [ -z "$SCI_TOKEN_EXP" ] || [ "$SCI_TOKEN_EXP" -lt "$(date +%s)" ]; then
 #  echo "$(date +%s): SCI_TOKEN expired on $SCI_TOKEN_EXP."

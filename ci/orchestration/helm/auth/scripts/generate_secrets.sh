@@ -93,7 +93,7 @@ python3 /scripts/generate_jwt.py \
 
 # Generate JWT and JWKS for WLCG Staging Tokens
 
-SCITOKENS_JWT_CLAIMS=$(cat <<EOF
+WLCG_TOKEN_CLAIMS=$(cat <<EOF
 {
   "iat": ${JWT_ISSUED_AT},
   "exp": ${JWT_EXPIRATION},
@@ -116,8 +116,8 @@ python3 /scripts/generate_jwks.py \
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --key "$SECRETS_DIR/scitokens-issuer.key" \
-  --jwt-filename scitokens.jwt \
-  --claims "$SCITOKENS_JWT_CLAIMS"
+  --jwt-filename wlgc-token.jwt \
+  --claims "$WLCG_TOKEN_CLAIMS"
 
 echo '{ "issuer": "https://scitokens-issuer:8443", "jwks_uri": "https://scitokens-issuer:8443/jwk" }' > "$SECRETS_DIR/scitokens-well-known"
 
