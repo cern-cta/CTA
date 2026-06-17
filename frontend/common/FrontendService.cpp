@@ -207,6 +207,7 @@ FrontendService::getMtlsCertIdentitiesForInstance(const std::string& instance) c
 }
 
 FrontendService::FrontendService(const std::string& configFilename,
+                                 const bool inGrpcMode,
                                  const std::optional<std::string>& mtlsMappingFileName) {
   int logToStdout = 0;
   int logtoFile = 0;
@@ -549,10 +550,21 @@ FrontendService::FrontendService(const std::string& configFilename,
 
   log(log::INFO, "Working in " + toString(m_operationMode) + " mode.");
 
-  if (m_operationMode == OperationMode::WFE) {
-    loadWFEAuthConfigParams(configFilename, mtlsMappingFileName, config, log);
-  } else {
-    loadAdminAuthConfigParams(configFilename, config, log);
+  if (inGrpcMode) {
+    // We're in Grpc mode, so authentication matters
+    if (m_operationMode == OperationMode::WFE) {
+      loadWFEAuthConfigParams(configFilename, mtlsMappingFileName, config, log);
+    } else {
+      loadAdminAuthConfigParams(configFilename, config, log);
+    }
+
+    loadGrpcConfigParams(configFilename, config, log);
+
+    if ((m_operationMode != OperationMode::WFE && usesAdminAuthMethod(AuthMethod::JWT))
+        || m_wfeAuthMethod == AuthMethod::JWT) {
+      // JWT has been enabled
+      loadJWTConfigParams(configFilename, config, log);
+    }
   }
 
   if (auto tapeCacheMaxAgeSecsConf = config.getOptionValueUInt("cta.schedulerdb.tape_cache_max_age_secs");
@@ -576,14 +588,6 @@ FrontendService::FrontendService(const std::string& configFilename,
     params.emplace_back("key", "retrieve_queue_cache_max_age_secs");
     params.emplace_back("value", retrieveQueueCacheMaxAgeSecsConf.value());
     log(log::INFO, "Configuration entry", params);
-  }
-
-  loadGrpcConfigParams(configFilename, config, log);
-
-  if ((m_operationMode != OperationMode::WFE && usesAdminAuthMethod(AuthMethod::JWT))
-      || m_wfeAuthMethod == AuthMethod::JWT) {
-    // JWT has been enabled
-    loadJWTConfigParams(configFilename, config, log);
   }
 
   // All done

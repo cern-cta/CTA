@@ -143,7 +143,11 @@ public:
       if (!str.has_value()) {
         return std::nullopt;
       }
-      return FromString<T>::tryFrom(str.value());
+      auto parsedVal = FromString<T>::tryFrom(str.value());
+      if (!parsedVal.has_value()) {
+        throw std::invalid_argument("Can't parse: " + str.value());
+      }
+      return parsedVal;
     } else if constexpr (is_vector<T>::value && HasFromString<typename T::value_type>) {
       // if T has been tagged as a vector of FromString, we'll parse it element by element
       auto options = getOptionValueStrVector(keyStr);
