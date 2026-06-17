@@ -24,11 +24,12 @@ modify-project-json:
     # Replace EOS image tag
     - trimmed_eos_image_tag=$(echo "$CUSTOM_EOS_IMAGE_TAG" | xargs)
     # Grab the latest stable EOS release if not provided
+    # Note that EOS uses "el-9" instead of "el9" for the repository >:(, so we just hardcode the platform instead of relying on $PLATFORM
     - |
       if [[ -z "$trimmed_eos_image_tag" ]]; then
-        EOS_REPO_URL="https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/${PLATFORM}/x86_64/"
+        EOS_REPO_URL="https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/el-9/x86_64/"
         echo "No CUSTOM_EOS_IMAGE_TAG provided. Getting latest release from: $EOS_REPO_URL"
-        trimmed_eos_image_tag="$(dnf -q --repofrompath=temprepo,$EOS_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}" eos-server).${PLATFORM}"
+        trimmed_eos_image_tag="$(dnf -q --repofrompath=temprepo,$EOS_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}" eos-server).el9"
         echo "Using latest stable release: $trimmed_eos_image_tag"
       fi
     - echo "Updating EOS image tag to $trimmed_eos_image_tag."
