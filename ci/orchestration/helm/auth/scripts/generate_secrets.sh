@@ -78,7 +78,7 @@ SCITOKENS_JWT_CLAIMS=$(cat <<EOF
 {
   "iat": ${JWT_ISSUED_AT},
   "exp": ${JWT_EXPIRATION},
-  "sub": "poweruser1",
+  "sub": "user",
   "typ": "Bearer",
   "iss": "https://scitokens-issuer:8443",
   "scope": "storage.create:/ storage.read:/ storage.modify:/ storage.stage:/",

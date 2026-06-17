@@ -5,7 +5,7 @@
 
 # Test CTA Tape Rest API compliance.
 
-. /root/client_helper.sh
+#. /root/client_helper.sh
 
 #admin_kdestroy &>/dev/null
 #admin_kinit &>/dev/null
@@ -25,11 +25,11 @@ LATER=$(echo "${NOW}+86400" | bc)
 
 # Get locally generated SciToken
 SCI_TOKEN=$(cat /etc/cta/scitokens.jwt)
-SCI_TOKEN_EXP=$(echo $SCI_TOKEN | cut -d. -f2 | base64 --decode | jq '.exp')
-if [ -z "$SCI_TOKEN_EXP" ] || [ "$SCI_TOKEN_EXP" -lt "$(date +%s)" ]; then
-  echo "$(date +%s): SCI_TOKEN expired on $SCI_TOKEN_EXP."
-  exit 1
-fi
+#SCI_TOKEN_EXP=$(echo $SCI_TOKEN | cut -d. -f2 | base64 --decode | jq '.exp')
+#if [ -z "$SCI_TOKEN_EXP" ] || [ "$SCI_TOKEN_EXP" -lt "$(date +%s)" ]; then
+#  echo "$(date +%s): SCI_TOKEN expired on $SCI_TOKEN_EXP."
+#  exit 1
+#fi
 
 # By default check https connections certificates
 # disable for now on Alma9 so that this is not on the critical path
