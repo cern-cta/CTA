@@ -46,7 +46,9 @@ struct JWTConfig {
 
 class FrontendService {
 public:
-  explicit FrontendService(const std::string& configFilename, const std::optional<std::string>& mtlsMappingFilename);
+  explicit FrontendService(const std::string& configFilename,
+                           const bool inGrpcMode,
+                           const std::optional<std::string>& mtlsMappingFilename);
 
   FrontendService(const FrontendService&) = delete;
 

@@ -83,7 +83,7 @@ void JwksCacheRefreshLoop(std::weak_ptr<cta::auth::JwkCache> weakCache,
 }
 
 int main(const int argc, char* const* const argv) {
-  std::string config_file("/etc/cta/cta-frontend-grpc.conf");
+  std::string config_file("/etc/cta/cta-frontend.conf");
   std::string mtls_mapping_file("/etc/cta/mtls-map.toml");
 
   char c;
@@ -112,7 +112,7 @@ int main(const int argc, char* const* const argv) {
   }
 
   // Initialize frontend service first to get configuration
-  auto frontendService = std::make_shared<cta::frontend::FrontendService>(config_file, mtls_mapping_file);
+  auto frontendService = std::make_shared<cta::frontend::FrontendService>(config_file, true, mtls_mapping_file);
 
   // get the log context
   log::LogContext lc = frontendService->getLogContext();
