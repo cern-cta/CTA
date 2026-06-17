@@ -50,8 +50,6 @@ build-ctageneric-from-local-rpms:
   rules:
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
-    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
-      when: never
     - !reference [.build-image, rules]
   variables:
     DOCKERFILE: ci/docker/${PLATFORM}/dev-local-rpms.Dockerfile
@@ -69,16 +67,22 @@ build-ctageneric-from-remote-rpms:
     - .build-image
   needs:
     - job: modify-project-json
-      optional: true
+      artifacts: true
   rules:
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
-    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
     - when: never
-    - !reference [.build-image, rules]
   variables:
     DOCKERFILE: ci/docker/${PLATFORM}/dev-remote-rpms.Dockerfile
     IMAGE_NAME: ctageneric
-    EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --build-arg PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}.${PLATFORM}"
+  before_script:
+    # CUSTOM_CTA_VERSION can be populated in the dotenv file provided by the modify-project-json
+    - |
+      if [[ -z "$CUSTOM_CTA_VERSION" ]]; then
+        CUSTOM_CTA_VERSION="$CUSTOM_CTA_VERSION_ENV"
+      fi
+    - echo "Current value of CUSTOM_CTA_VERSION $CUSTOM_CTA_VERSION"
+    # We do the export here instead of in the variables: as GitLab evaluates the variables section before it parses the dotenv report
+    - export EXTRA_BUILD_ARGS="--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --build-arg PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"
 
 ###############################################
 # Immutable images
@@ -94,8 +98,6 @@ build-images:
       optional: true
   rules:
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
-      when: never
-    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
       when: never

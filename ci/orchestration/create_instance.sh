@@ -228,8 +228,8 @@ create_instance() {
     die_usage "Missing mandatory argument: -i | --cta-image-tag"
   fi
   if [[ -z "${catalogue_schema_version}" ]]; then
-    echo "No catalogue schema version provided: using project.json value"
-    catalogue_schema_version=$(jq .catalogueVersion ${project_json_path})
+    echo "No catalogue schema version provided: using latest"
+    catalogue_schema_version="latest"
   fi
 
   if [[ "$local_telemetry" == "true" ]] && [[ "$publish_telemetry" == "true" ]]; then

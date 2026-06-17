@@ -7,7 +7,8 @@ set -e
 
 # By default, only Postgres is installed, if we detect Oracle, we install OCCI instead
 grep oracle /etc/cta/cta-catalogue.conf && dnf install -y cta-lib-catalogue-occi
-dnf install -y cta-catalogue-utils
+# The || section can be removed once we have a stable release with the cta-catalogue-utils name
+dnf install -y  cta-catalogue-utils || dnf install -y cta-catalogueutils
 
 echo "Wiping catalogue"
 echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf
@@ -23,4 +24,10 @@ fi
 echo "Catalogue wiped"
 
 echo "Creating catalogue schema..."
-cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf
+# Eventually this if statement can be removed, since the schema-create supports -v latest
+# However, to allow us to test older versions, we need keep it around for now
+if [[ "$SCHEMA_VERSION" == "latest" ]]; then
+    cta-catalogue-schema-create /etc/cta/cta-catalogue.conf
+else
+    cta-catalogue-schema-create -v $SCHEMA_VERSION /etc/cta/cta-catalogue.conf
+fi

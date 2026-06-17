@@ -11,8 +11,6 @@ build-cta-rpms:
       when: never
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
-    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
-      when: never
     # These rules serve to prevent the rest of the pipeline from triggering when only trivial files such as the CHANGELOG have been modified
     # GitLab only allows a whitelist and not a blacklist, so we have to list all file changes that should trigger the build job
     - changes:

@@ -58,7 +58,7 @@ int CreateSchemaCmd::exceptionThrowingMain(const int argc, char* const* const ar
       std::cerr << "Creating the database schema for an sqlite database is not supported" << std::endl;
       return 1;
     case rdbms::Login::DBTYPE_POSTGRESQL: {
-      if (cmdLineArgs.catalogueVersion) {
+      if (cmdLineArgs.catalogueVersion && cmdLineArgs.catalogueVersion.value() != "latest") {
         PostgresVersionedCatalogueSchema schema(cmdLineArgs.catalogueVersion.value());
         executeNonQueries(conn, schema.sql);
       } else {

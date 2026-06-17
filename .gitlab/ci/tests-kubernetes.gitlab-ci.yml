@@ -27,19 +27,6 @@
     else
       IMAGE_TAG=${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     fi
-  # If we are testing from a CTA tag, get the Catalogue version for that tag
-  - |
-    if [[ -n "${CUSTOM_CTA_VERSION}" ]]; then
-      git fetch --tags --force
-      if git checkout "tags/$CUSTOM_CTA_VERSION" -- project.json; then
-        catalogue_version=$(jq -r '.catalogueVersion' project.json)
-        git restore project.json
-      else
-        # If the project.json does not exist, just assume catalogue version 15.0
-        catalogue_version=15.0
-      fi
-      EXTRA_SPAWN_ARGS+=" --catalogue-version ${catalogue_version}"
-    fi
   # Export all variables here so that it is clear which ones are available
   - export SCHEDULER_CONFIG CATALOGUE_CONFIG IMAGE_TAG EXTRA_SPAWN_ARGS
 
@@ -54,8 +41,6 @@
       optional: true
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
-    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - when: on_success
   variables:
@@ -116,8 +101,6 @@
       optional: true
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
-    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - when: on_success
   variables:
@@ -317,8 +300,6 @@ stress-test:
       optional: true
   rules:
     - if: $CI_COMMIT_TAG
-      when: never
-    - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
       when: never
     - when: manual
       allow_failure: true  # Otherwise this blocks the pipeline

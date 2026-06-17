@@ -13,7 +13,8 @@ die() {
 echo "Using scheduler backend: $SCHEDULER_BACKEND"
 
 echo "Installing the cta-scheduler-utils"
-dnf install -y cta-scheduler-utils
+# The || section can be removed once we have a stable release with the cta-scheduler-utils name
+dnf install -y cta-scheduler-utils || dnf install -y cta-objectstore-tools
 
 # Clean up scheduler
 if [[ "$SCHEDULER_BACKEND" == "vfs" ]] || [[ "$SCHEDULER_BACKEND" == "vfsDeprecated" ]]; then

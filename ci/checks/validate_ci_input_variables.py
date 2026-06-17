@@ -16,7 +16,6 @@ SUPPORTED = {
         "DEFAULT",
         "REGR_AGAINST_CTA_MAIN",
         "REGR_AGAINST_CTA_VERSION",
-        "IMAGE_FROM_CTA_VERSION",
         "SYSTEM_TEST_ONLY",
         "CUSTOM_SYSTEM_TEST_IMAGE_TAG",
     ]
@@ -25,10 +24,9 @@ SUPPORTED = {
 SUPPORTED_ENV_VARS = [
     "PIPELINE_TYPE",
     "CUSTOM_XROOTD_VERSION",
-    "CUSTOM_EOS_VERSION",
     "CUSTOM_CTA_VERSION",
-    "PLATFORM",
     "CUSTOM_EOS_IMAGE_TAG",
+    "PLATFORM",
 ]
 
 
@@ -102,7 +100,6 @@ def validate_default(ci_input_vars):
     Validation for the DEFAULT pipeline type.
     """
     exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
-    exit_if_defined("CUSTOM_EOS_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
@@ -114,40 +111,12 @@ def validate_regr_against_cta_main(ci_input_vars):
     """
     exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
-    if (
-        not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars)
-        and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
-        and not env_var_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
-    ):
-        sys.exit(
-            "ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION, CUSTOM_EOS_IMAGE_TAG] must be provided when running a regression test."
-        )
 
 
 def validate_regr_against_cta_version(ci_input_vars):
     """
     Validation for the pipeline type `EOS_REGR_AGAINST_CTA_VERSION`.
     """
-    exit_if_not_defined("CUSTOM_CTA_VERSION", ci_input_vars)
-    exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
-    if (
-        not env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars)
-        and not env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
-        and not env_var_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
-    ):
-        sys.exit(
-            "ERROR: at least one of [CUSTOM_EOS_VERSION, CUSTOM_XROOTD_VERSION, CUSTOM_EOS_IMAGE_TAG] must be provided when running a regression test."
-        )
-
-
-def validate_image_from_cta_version(ci_input_vars):
-    """
-    Validation for the pipeline type `IMAGE_FROM_CTA_VERSION`.
-    """
-    exit_if_not_defined("CUSTOM_CTA_VERSION", ci_input_vars)
-    exit_if_defined("CUSTOM_EOS_VERSION", ci_input_vars)
-    exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
-    exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
 
 
@@ -156,7 +125,6 @@ def validate_system_test_only(ci_input_vars):
     Validation for the pipeline type `SYSTEM_TEST_ONLY`.
     """
     exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
-    exit_if_defined("CUSTOM_EOS_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
 
@@ -200,16 +168,6 @@ def main():
                 f"ERROR: CUSTOM_XROOTD_VERSION must be equal to value in project.json ({xrootd_version} != {project_xrootd_version}). Please verify the logic in the modify-project-json job."
             )
 
-    if env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars):
-        eos_version = ci_input_vars["CUSTOM_EOS_VERSION"]
-        project_eos_version = project_json["platforms"][ci_input_vars["PLATFORM"]]["versionlock"]["group-eos"]
-        check_rpm_available("eos-server", eos_version)
-        # Check that at this point the project.json contains the same version
-        if eos_version != project_eos_version:
-            sys.exit(
-                f"ERROR: CUSTOM_EOS_VERSION must be equal to value in project.json ({eos_version} != {project_eos_version}). Please verify the logic in the modify-project-json job."
-            )
-
     if env_var_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars):
         check_image_tag_available(
             ci_input_vars["CUSTOM_SYSTEM_TEST_IMAGE_TAG"], project_json["dev"]["ctaImageRepository"]
@@ -224,18 +182,6 @@ def main():
             sys.exit(
                 f"ERROR: CUSTOM_EOS_IMAGE_TAG must be equal to value in project.json ({eos_image_tag} != {project_eos_image_tag}). Please verify the logic in the modify-project-json job."
             )
-    elif env_var_defined("CUSTOM_EOS_VERSION", ci_input_vars):
-        # Deduce from CUSTOM_EOS_VERSION if provided. Must match the logic in the setup CI stage
-        custom_eos_version = ci_input_vars["CUSTOM_EOS_VERSION"]
-        eos_base_version = custom_eos_version.rsplit("-", 1)[0]  # Strip the release number
-        eos_image_tag = f"{eos_base_version}.{ci_input_vars['PLATFORM']}"
-        check_image_tag_available(eos_image_tag, project_json["dev"]["eosImageRepository"])
-        # Check that at this point the project.json contains the same version
-        if eos_image_tag != project_eos_image_tag:
-            sys.exit(
-                f"ERROR: EOS image tag deduced from CUSTOM_EOS_VERSION must be equal to value in project.json ({eos_image_tag} != {project_eos_image_tag}). Please verify the logic in the modify-project-json job."
-            )
-
     print("Validation was successful")
 
 

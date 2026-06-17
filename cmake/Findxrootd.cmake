@@ -31,7 +31,7 @@ find_path (XROOTD_PRIVATE_INCLUDE_DIR XrdOss/XrdOssApi.hh
 find_library (XROOTD_XRDCL_LIB XrdCl)
 find_library (XROOTD_XRDPOSIX_LIB XrdPosixPreload)
 find_library (XROOTD_XRDSERVER_LIB XrdServer)
-find_library (XROOTD_XRDSSI_LIB NAMES XrdSsi-4 XrdSsi-5)
+find_library (XROOTD_XRDSSI_LIB NAMES XrdSsi-4 XrdSsi-5 XrdSsi-6)
 find_library (XROOTD_XRDUTILS_LIB XrdUtils)
 
 message (STATUS "XROOTD_INCLUDE_DIR         = ${XROOTD_INCLUDE_DIR}")
