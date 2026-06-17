@@ -75,7 +75,11 @@ build-ctageneric-from-remote-rpms:
     DOCKERFILE: ci/docker/${PLATFORM}/dev-remote-rpms.Dockerfile
     IMAGE_NAME: ctageneric
   before_script:
-    # CUSTOM_CTA_VERSION is populated in the dotenv file provided by the modify-project-json
+    # CUSTOM_CTA_VERSION can be populated in the dotenv file provided by the modify-project-json
+    - |
+      if [[ -z "$CUSTOM_CTA_VERSION" ]]; then
+        CUSTOM_CTA_VERSION="$CUSTOM_CTA_VERSION_ENV"
+      fi
     - echo "Current value of CUSTOM_CTA_VERSION $CUSTOM_CTA_VERSION"
     # We do the export here instead of in the variables: as GitLab evaluates the variables section before it parses the dotenv report
     - export EXTRA_BUILD_ARGS="--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --build-arg PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"

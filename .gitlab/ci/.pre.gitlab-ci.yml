@@ -45,12 +45,11 @@ modify-project-json:
         echo "No CUSTOM_CTA_VERSION provided. Getting latest release from: $CTA_REPO_URL"
         CUSTOM_CTA_VERSION=$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)
         echo "Using latest stable release: $CUSTOM_CTA_VERSION"
-        echo "CUSTOM_CTA_VERSION=$CUSTOM_CTA_VERSION" >> pipeline.env
+        echo "CUSTOM_CTA_VERSION_ENV=$CUSTOM_CTA_VERSION" >> pipeline.env
       fi
     # Done
     - echo "File content after replacement"
     - cat "${project_json_file}" | jq
-    - cat pipeline.env
   artifacts:
     paths:
       - project.json
