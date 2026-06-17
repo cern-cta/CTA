@@ -32,7 +32,7 @@ modify-project-json:
         trimmed_eos_image_tag="$(dnf -q --repofrompath=temprepo,$EOS_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}" eos-server).el9"
         echo "Using latest stable release: $trimmed_eos_image_tag"
       fi
-    - echo "Updating EOS image tag to $trimmed_eos_image_tag."
+    - echo "Updating EOS image tag to $trimmed_eos_image_tag"
     - tmp_file=$(mktemp)
     - jq --arg new_eos_image_tag "$trimmed_eos_image_tag"
           '.dev.eosImageTag = $new_eos_image_tag'
@@ -45,6 +45,7 @@ modify-project-json:
         CUSTOM_CTA_VERSION=$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)
         echo "Using latest stable release: $CUSTOM_CTA_VERSION"
         echo "CUSTOM_CTA_VERSION=$CUSTOM_CTA_VERSION" >> pipeline_vars.env
+        cat pipeline_vars.env
       fi
     # Done
     - echo "File content after replacement"
