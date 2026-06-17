@@ -39,7 +39,7 @@ modify-project-json:
       if [[ "$PIPELINE_TYPE" == "REGR_AGAINST_CTA_VERSION" ]] && [[ -z "$CUSTOM_CTA_VERSION" ]]; then
         CTA_REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/${PLATFORM}/cta/x86_64/"
         CUSTOM_CTA_VERSION=$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)
-        echp "No CUSTOM_CTA_VERSION provided. Using latest stable release: $CUSTOM_CTA_VERSION"
+        echo "No CUSTOM_CTA_VERSION provided. Using latest stable release: $CUSTOM_CTA_VERSION"
         echo "CUSTOM_CTA_VERSION=$CUSTOM_CTA_VERSION" >> pipeline_vars.env
       fi
     # Done
