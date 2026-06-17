@@ -8,6 +8,7 @@ modify-project-json:
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
   script:
     - project_json_file="project.json"
+    - touch pipeline.env
     # Replace XRootD
     - trimmed_xrootd_version=$(echo "$CUSTOM_XROOTD_VERSION" | xargs)
     - |
@@ -44,8 +45,7 @@ modify-project-json:
         echo "No CUSTOM_CTA_VERSION provided. Getting latest release from: $CTA_REPO_URL"
         CUSTOM_CTA_VERSION=$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)
         echo "Using latest stable release: $CUSTOM_CTA_VERSION"
-        echo "CUSTOM_CTA_VERSION=$CUSTOM_CTA_VERSION" >> pipeline_vars.env
-        cat pipeline_vars.env
+        echo "CUSTOM_CTA_VERSION=$CUSTOM_CTA_VERSION" >> pipeline.env
       fi
     # Done
     - echo "File content after replacement"
@@ -54,6 +54,5 @@ modify-project-json:
     paths:
       - project.json
     reports:
-      dotenv:
-        pipeline_vars.env
+      dotenv: pipeline.env
   when: on_success

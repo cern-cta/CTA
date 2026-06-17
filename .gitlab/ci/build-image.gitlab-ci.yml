@@ -75,15 +75,10 @@ build-ctageneric-from-remote-rpms:
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
     - if: $PIPELINE_TYPE == "IMAGE_FROM_CTA_VERSION"
     - when: never
-    - !reference [.build-image, rules]
   variables:
     DOCKERFILE: ci/docker/${PLATFORM}/dev-remote-rpms.Dockerfile
     IMAGE_NAME: ctageneric
   before_script:
-    - echo "Checking if dotenv file exists:"
-    - ls -la pipeline_vars.env || echo "File not found!"
-    - echo "Contents of file:"
-    - cat pipeline_vars.env || echo "Cannot read file"
     - echo "Current value of CUSTOM_CTA_VERSION $CUSTOM_CTA_VERSION"
     # CUSTOM_CTA_VERSION is populated in the dotenv file provided by the modify-project-json
     # We do the export here instead of in the variables: as GitLab evaluates the variables section before it parses the dotenv report
