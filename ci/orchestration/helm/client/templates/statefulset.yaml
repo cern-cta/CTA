@@ -104,16 +104,16 @@ spec:
           mountPath: /etc/cta/ctaadmin1.jwt
           subPath: ctaadmin1.jwt
         {{- end }}
-        - name: wlgc-token-other
+        - name: wlcg-token-other-jwt
           mountPath: /etc/cta/wlcg-token-other.jwt
           subPath: wlcg-token-other.jwt
-        - name: wlgc-token-stage-all
+        - name: wlcg-token-stage-all-jwt
           mountPath: /etc/cta/wlcg-token-stage-all.jwt
           subPath: wlcg-token-stage-all.jwt
-        - name: wlgc-token-poll-all
+        - name: wlcg-token-poll-all-jwt
           mountPath: /etc/cta/wlcg-token-poll-all.jwt
           subPath: wlcg-token-poll-all.jwt
-        - name: wlgc-token-state-test1
+        - name: wlcg-token-stage-test1-jwt
           mountPath: /etc/cta/wlcg-token-stage-test1.jwt
           subPath: wlcg-token-stage-test1.jwt
         - name: krb5-conf
@@ -138,9 +138,18 @@ spec:
         secret:
           secretName: ctaadmin1-jwt
       {{- end }}
-      - name: wlcg-token-jwt
+      - name: wlcg-token-other-jwt
         secret:
-          secretName: wlcg-token-jwt
+          secretName: wlcg-token-other-jwt
+      - name: wlcg-token-stage-all-jwt
+        secret:
+          secretName: wlcg-token-stage-all-jwt
+      - name: wlcg-token-poll-all-jwt
+        secret:
+          secretName: wlcg-token-poll-all-jwt
+      - name: wlcg-token-stage-test1-jwt
+        secret:
+          secretName: wlcg-token-stage-test1-jwt
       - name: xrootd-client-conf
         configMap:
           name: xrootd-client-conf

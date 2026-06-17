@@ -158,26 +158,26 @@ python3 /scripts/generate_jwks.py \
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --key "$SECRETS_DIR/scitokens-issuer.key" \
-  --jwt-filename wlgc-token-other.jwt \
+  --jwt-filename wlcg-token-other.jwt \
   --claims "$WLCG_TOKEN_OTHER_CLAIMS"
 
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --key "$SECRETS_DIR/scitokens-issuer.key" \
-  --jwt-filename wlgc-token-stage-all.jwt \
+  --jwt-filename wlcg-token-stage-all.jwt \
   --claims "$WLCG_TOKEN_STAGE_ALL_CLAIMS"
 
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --key "$SECRETS_DIR/scitokens-issuer.key" \
-  --jwt-filename wlgc-token-poll-all.jwt \
+  --jwt-filename wlcg-token-poll-all.jwt \
   --claims "$WLCG_TOKEN_POLL_ALL_CLAIMS"
 
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --key "$SECRETS_DIR/scitokens-issuer.key" \
-  --jwt-filename wlgc-token-stage-test1.jwt \
-  --claims "WLCG_TOKEN_STAGE_TEST1_CLAIMS"
+  --jwt-filename wlcg-token-stage-test1.jwt \
+  --claims "$WLCG_TOKEN_STAGE_TEST1_CLAIMS"
 
 echo '{ "issuer": "https://scitokens-issuer:8443", "jwks_uri": "https://scitokens-issuer:8443/jwk" }' > "$SECRETS_DIR/scitokens-well-known"
 
