@@ -70,7 +70,7 @@ SECONDS_PASSED=0
 
 # Wait for files to be archived
 
-while test "${FINAL_COUNT}" -ne 4; do
+while test "${FINAL_COUNT}" -ne 2; do
 
   echo "$(date +%s): Waiting for files to be archived."
   if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
@@ -80,7 +80,7 @@ while test "${FINAL_COUNT}" -ne 4; do
 
   FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
-  if [ "${FINAL_COUNT}" -ne 4 ]; then
+  if [ "${FINAL_COUNT}" -ne 2 ]; then
     sleep 1
   fi
 done
@@ -103,7 +103,7 @@ REQ_ID=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization
 
 # Wait for files to be staged
 
-while test "${FINAL_COUNT}" -ne 4; do
+while test "${FINAL_COUNT}" -ne 2; do
 
   echo "$(date +%s): Waiting for files to be staged."
   if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
@@ -113,7 +113,7 @@ while test "${FINAL_COUNT}" -ne 4; do
 
   FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "DISK_AND_TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
-  if [ "${FINAL_COUNT}" -ne 4 ]; then
+  if [ "${FINAL_COUNT}" -ne 2 ]; then
     sleep 1
   fi
 done
@@ -124,7 +124,7 @@ STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "
 STAGE_REQUEST_COUNT=$(echo ${STAGE_REQUEST_QUERY} | jq '.files[] | select(.onDisk == true) | .path' | wc -l)
 echo ${STAGE_REQUEST_COUNT}
 
-if test "${STAGE_REQUEST_COUNT}" -ne 4; then
+if test "${STAGE_REQUEST_COUNT}" -ne 2; then
   echo "Stage request query not showing all files on disk"
   exit 1
 fi
@@ -144,7 +144,7 @@ SECONDS_PASSED=0
 RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
 curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
 
-while test "${FINAL_COUNT}" -ne 4; do
+while test "${FINAL_COUNT}" -ne 2; do
 
   echo "$(date +%s): Waiting for files to be released."
   if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
@@ -154,7 +154,7 @@ while test "${FINAL_COUNT}" -ne 4; do
 
   FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
-  if [ "${FINAL_COUNT}" -ne 4 ]; then
+  if [ "${FINAL_COUNT}" -ne 2 ]; then
     sleep 1
   fi
 done
@@ -174,7 +174,7 @@ SECONDS_PASSED=0
 CANCEL_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
 curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}/cancel" -d "${CANCEL_REQ_BODY}"
 
-while test "${FINAL_COUNT}" -ne 4; do
+while test "${FINAL_COUNT}" -ne 2; do
 
   echo "$(date +%s): Waiting for files to be cancelled."
   if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
@@ -184,7 +184,7 @@ while test "${FINAL_COUNT}" -ne 4; do
 
   FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
-  if [ "${FINAL_COUNT}" -ne 4 ]; then
+  if [ "${FINAL_COUNT}" -ne 2 ]; then
     sleep 1
   fi
 done
