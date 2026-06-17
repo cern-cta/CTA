@@ -24,7 +24,8 @@ LATER=$(echo "${NOW}+86400" | bc)
 #TOKEN_EOSPOWER1=$(eosadmin_eos root://"${EOS_MGM_HOST}" token --tree --path '/eos/ctaeos/://:/api/' --expires "${LATER}" --owner poweruser1 --group powerusers --permission prwx)
 
 # Get locally generated SciToken
-SCI_TOKEN=$(cat /etc/cta/wlgc-token.jwt)
+WLCG_TOKEN_OTHER=$(cat /etc/cta/wlgc-token-other.jwt)
+WLCG_TOKEN_STAGE_ALL=$(cat /etc/cta/wlgc-token-stage-all.jwt)
 #SCI_TOKEN_EXP=$(echo $SCI_TOKEN | cut -d. -f2 | base64 --decode | jq '.exp')
 #if [ -z "$SCI_TOKEN_EXP" ] || [ "$SCI_TOKEN_EXP" -lt "$(date +%s)" ]; then
 #  echo "$(date +%s): SCI_TOKEN expired on $SCI_TOKEN_EXP."
@@ -62,30 +63,30 @@ FILE4="/eos/ctaeos/preprod/test4/file"
 
 # Start by cleaning up any leftovers from previous tests
 
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE1}"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE2}"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE1}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE2}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}"
 
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE1}")"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE2}")"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE3}")"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE4}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE1}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE2}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE3}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X DELETE "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE4}")"
 
 # Now add the new files
 
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE1}")"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE2}")"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE3}")"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE4}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE1}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE2}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE3}")"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" -X MKCOL "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/$(dirname "${FILE4}")"
 
 tmp_file=$(mktemp)
 echo "Dummy" > "${tmp_file}"
 
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE1}" --upload-file "${tmp_file}"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE2}" --upload-file "${tmp_file}"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}" --upload-file "${tmp_file}"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE1}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE2}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE3}" --upload-file "${tmp_file}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" "https://${EOS_MGM_HOST}:${EOS_MGM_PORT}/${FILE4}" --upload-file "${tmp_file}"
 
 rm -f "${tmp_file}"
 
@@ -111,7 +112,7 @@ while test "${FINAL_COUNT}" -ne 4; do
     exit 1
   fi
 
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
   if [ "${FINAL_COUNT}" -ne 4 ]; then
     sleep 1
@@ -119,10 +120,10 @@ while test "${FINAL_COUNT}" -ne 4; do
 done
 
 echo "All files archived."
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
+curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
 
 ########################################################################################################################
-# Request files to be staged with the sci_token and Tape REST API (STAGE)
+# Request files to be staged with the WLCG_TOKEN_STAGE_ALL and Tape REST API (STAGE)
 ########################################################################################################################
 
 echo "Staging files..."
@@ -132,7 +133,7 @@ TIMEOUT=90
 SECONDS_PASSED=0
 
 STAGE_REQ_BODY="{\"files\":[{\"path\":\"${FILE1}\"}, {\"path\":\"${FILE2}\"}, {\"path\":\"${FILE3}\"}, {\"path\":\"${FILE4}\"}]}"
-REQ_ID=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/" -d "$STAGE_REQ_BODY" | jq -r .requestId)
+REQ_ID=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/" -d "$STAGE_REQ_BODY" | jq -r .requestId)
 
 # Wait for files to be staged
 
@@ -144,7 +145,7 @@ while test "${FINAL_COUNT}" -ne 4; do
     exit 1
   fi
 
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "DISK_AND_TAPE" ) | .locality' | wc -l)
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "DISK_AND_TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
   if [ "${FINAL_COUNT}" -ne 4 ]; then
     sleep 1
@@ -153,7 +154,7 @@ done
 
 echo "Checking stage request"
 
-STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}")
+STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}")
 STAGE_REQUEST_COUNT=$(echo ${STAGE_REQUEST_QUERY} | jq '.files[] | select(.onDisk == true) | .path' | wc -l)
 echo ${STAGE_REQUEST_COUNT}
 
@@ -163,10 +164,10 @@ if test "${STAGE_REQUEST_COUNT}" -ne 4; then
 fi
 
 echo "All files staged."
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
 
 ########################################################################################################################
-# Request files to be released with the sci_token and Tape REST API (RELEASE)
+# Request files to be released with the WLCG_TOKEN_STAGE_ALL and Tape REST API (RELEASE)
 ########################################################################################################################
 
 echo "Releasing files..."
@@ -175,7 +176,7 @@ FINAL_COUNT=0
 TIMEOUT=90
 SECONDS_PASSED=0
 RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\", \"${FILE3}\", \"${FILE4}\"]}"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
 
 while test "${FINAL_COUNT}" -ne 4; do
 
@@ -185,7 +186,7 @@ while test "${FINAL_COUNT}" -ne 4; do
     exit 1
   fi
 
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
   if [ "${FINAL_COUNT}" -ne 4 ]; then
     sleep 1
@@ -193,10 +194,10 @@ while test "${FINAL_COUNT}" -ne 4; do
 done
 
 echo "All files released."
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
 
 ########################################################################################################################
-# Request files to be cancelled with the sci_token and Tape REST API (CANCEL)
+# Request files to be cancelled with the WLCG_TOKEN_STAGE_ALL and Tape REST API (CANCEL)
 ########################################################################################################################
 
 echo "Cancelling files..."
@@ -205,7 +206,7 @@ FINAL_COUNT=0
 TIMEOUT=90
 SECONDS_PASSED=0
 CANCEL_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\", \"${FILE3}\", \"${FILE4}\"]}"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}/cancel" -d "${CANCEL_REQ_BODY}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}/cancel" -d "${CANCEL_REQ_BODY}"
 
 while test "${FINAL_COUNT}" -ne 4; do
 
@@ -215,7 +216,7 @@ while test "${FINAL_COUNT}" -ne 4; do
     exit 1
   fi
 
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
   let SECONDS_PASSED=SECONDS_PASSED+1
   if [ "${FINAL_COUNT}" -ne 4 ]; then
     sleep 1
@@ -223,18 +224,18 @@ while test "${FINAL_COUNT}" -ne 4; do
 done
 
 echo "All files cancelled."
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
 
 ########################################################################################################################
 # Request request to be deleted (DELETE)
 ########################################################################################################################
 
 echo "Deleting request..."
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
 
 # Check that request no longer exists
 
-HTTP_CODE=$(curl ${CURL_OPTS} -L --fail -s -H "Accept: application/json" -H "Authorization: Bearer ${SCI_TOKEN}" "${REST_API_URI}/stage/${REQ_ID}" -w "%{http_code}")
+HTTP_CODE=$(curl ${CURL_OPTS} -L --fail -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -w "%{http_code}")
 
 if [[ "$?" -eq 0 ]]; then
   echo "Stage request still exists"

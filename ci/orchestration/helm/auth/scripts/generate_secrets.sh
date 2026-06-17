@@ -93,14 +93,56 @@ python3 /scripts/generate_jwt.py \
 
 # Generate JWT and JWKS for WLCG Staging Tokens
 
-WLCG_TOKEN_CLAIMS=$(cat <<EOF
+WLCG_TOKEN_OTHER_CLAIMS=$(cat <<EOF
 {
   "iat": ${JWT_ISSUED_AT},
   "exp": ${JWT_EXPIRATION},
   "sub": "user",
   "typ": "Bearer",
   "iss": "https://scitokens-issuer:8443",
-  "scope": "storage.create:/ storage.read:/ storage.modify:/ storage.stage:/",
+  "scope": "storage.create:/ storage.read:/ storage.modify:/",
+  "aud": "cta",
+  "wlcg.ver": "1.0"
+}
+EOF
+)
+
+WLCG_TOKEN_STAGE_ALL_CLAIMS=$(cat <<EOF
+{
+  "iat": ${JWT_ISSUED_AT},
+  "exp": ${JWT_EXPIRATION},
+  "sub": "user",
+  "typ": "Bearer",
+  "iss": "https://scitokens-issuer:8443",
+  "scope": "storage.stage:/",
+  "aud": "cta",
+  "wlcg.ver": "1.0"
+}
+EOF
+)
+
+WLCG_TOKEN_POLL_ALL_CLAIMS=$(cat <<EOF
+{
+  "iat": ${JWT_ISSUED_AT},
+  "exp": ${JWT_EXPIRATION},
+  "sub": "user",
+  "typ": "Bearer",
+  "iss": "https://scitokens-issuer:8443",
+  "scope": "storage.poll:/",
+  "aud": "cta",
+  "wlcg.ver": "1.0"
+}
+EOF
+)
+
+WLCG_TOKEN_STAGE_TEST1_CLAIMS=$(cat <<EOF
+{
+  "iat": ${JWT_ISSUED_AT},
+  "exp": ${JWT_EXPIRATION},
+  "sub": "user",
+  "typ": "Bearer",
+  "iss": "https://scitokens-issuer:8443",
+  "scope": "storage.stage:/eos/ctaeos/preprod/test1",
   "aud": "cta",
   "wlcg.ver": "1.0"
 }
@@ -116,8 +158,26 @@ python3 /scripts/generate_jwks.py \
 python3 /scripts/generate_jwt.py \
   --output-dir "$SECRETS_DIR" \
   --key "$SECRETS_DIR/scitokens-issuer.key" \
-  --jwt-filename wlgc-token.jwt \
-  --claims "$WLCG_TOKEN_CLAIMS"
+  --jwt-filename wlgc-token-other.jwt \
+  --claims "$WLCG_TOKEN_OTHER_CLAIMS"
+
+python3 /scripts/generate_jwt.py \
+  --output-dir "$SECRETS_DIR" \
+  --key "$SECRETS_DIR/scitokens-issuer.key" \
+  --jwt-filename wlgc-token-stage-all.jwt \
+  --claims "$WLCG_TOKEN_STAGE_ALL_CLAIMS"
+
+python3 /scripts/generate_jwt.py \
+  --output-dir "$SECRETS_DIR" \
+  --key "$SECRETS_DIR/scitokens-issuer.key" \
+  --jwt-filename wlgc-token-poll-all.jwt \
+  --claims "$WLCG_TOKEN_POLL_ALL_CLAIMS"
+
+python3 /scripts/generate_jwt.py \
+  --output-dir "$SECRETS_DIR" \
+  --key "$SECRETS_DIR/scitokens-issuer.key" \
+  --jwt-filename wlgc-token-stage-test1.jwt \
+  --claims "WLCG_TOKEN_STAGE_TEST1_CLAIMS"
 
 echo '{ "issuer": "https://scitokens-issuer:8443", "jwks_uri": "https://scitokens-issuer:8443/jwk" }' > "$SECRETS_DIR/scitokens-well-known"
 

@@ -99,9 +99,6 @@ spec:
           mountPath: /etc/cta/ctaadmin1.jwt
           subPath: ctaadmin1.jwt
         {{- end }}
-        - name: wlcg-token-jwt
-          mountPath: /etc/cta/wlgc-token.jwt
-          subPath: wlgc-token.jwt
         - name: "{{ .Values.krb5PrincName }}-keytab"
           mountPath: /root/{{ .Values.krb5PrincName }}.keytab
           subPath: "{{ .Values.krb5PrincName }}.keytab"
@@ -119,9 +116,6 @@ spec:
         secret:
           secretName: ctaadmin1-jwt
       {{- end }}
-      - name: wlcg-token-jwt
-        secret:
-          secretName: wlgc-token-jwt
       - name: cta-conf-volume
         configMap:
           name: etc-cta-ctacli

@@ -104,9 +104,18 @@ spec:
           mountPath: /etc/cta/ctaadmin1.jwt
           subPath: ctaadmin1.jwt
         {{- end }}
-        - name: wlgc-token-jwt
-          mountPath: /etc/cta/wlcg-token.jwt
-          subPath: wlcg-token.jwt
+        - name: wlgc-token-other
+          mountPath: /etc/cta/wlcg-token-other.jwt
+          subPath: wlcg-token-other.jwt
+        - name: wlgc-token-stage-all
+          mountPath: /etc/cta/wlcg-token-stage-all.jwt
+          subPath: wlcg-token-stage-all.jwt
+        - name: wlgc-token-poll-all
+          mountPath: /etc/cta/wlcg-token-poll-all.jwt
+          subPath: wlcg-token-poll-all.jwt
+        - name: wlgc-token-state-test1
+          mountPath: /etc/cta/wlcg-token-stage-test1.jwt
+          subPath: wlcg-token-stage-test1.jwt
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
