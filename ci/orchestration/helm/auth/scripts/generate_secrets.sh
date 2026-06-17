@@ -49,10 +49,11 @@ chmod 0644 $SECRETS_DIR/ca.key
 chmod 0644 $SECRETS_DIR/server.key
 chmod 0644 $SECRETS_DIR/scitokens-issuer.key
 
-# --- JWT for Frontend Auth --- #
-
 JWT_ISSUED_AT=$(date +%s)
 JWT_EXPIRATION=$((JWT_ISSUED_AT + 60 * 60 * 24 * 90))
+
+
+# Generate JWT and JWKS for gRPC Frontend authentication
 
 CTAEOS_JWT_CLAIMS=$(cat <<EOF
 {
@@ -74,6 +75,24 @@ CTAADMIN1_JWT_CLAIMS=$(cat <<EOF
 EOF
 )
 
+python3 /scripts/generate_jwks.py \
+  --output-dir "$SECRETS_DIR" \
+  --cert "$SECRETS_DIR/server.crt" \
+  --key "$SECRETS_DIR/server.key"
+
+python3 /scripts/generate_jwt.py \
+  --output-dir "$SECRETS_DIR" \
+  --key "$SECRETS_DIR/server.key" \
+  --claims "$CTAEOS_JWT_CLAIMS"
+
+python3 /scripts/generate_jwt.py \
+  --output-dir "$SECRETS_DIR" \
+  --key "$SECRETS_DIR/server.key" \
+  --claims "$CTAADMIN1_JWT_CLAIMS"
+
+
+# Generate JWT and JWKS for WLCG Staging Tokens
+
 SCITOKENS_JWT_CLAIMS=$(cat <<EOF
 {
   "iat": ${JWT_ISSUED_AT},
@@ -88,23 +107,15 @@ SCITOKENS_JWT_CLAIMS=$(cat <<EOF
 EOF
 )
 
-python3 /scripts/generate_jwt.py \
-  --output-dir "$SECRETS_DIR" \
-  --cert "$SECRETS_DIR/server.crt" \
-  --key "$SECRETS_DIR/server.key" \
-  --claims "$CTAEOS_JWT_CLAIMS"
-
-python3 /scripts/generate_jwt.py \
-  --output-dir "$SECRETS_DIR" \
-  --cert "$SECRETS_DIR/server.crt" \
-  --key "$SECRETS_DIR/server.key" \
-  --claims "$CTAADMIN1_JWT_CLAIMS"
-
-python3 /scripts/generate_jwt.py \
+python3 /scripts/generate_jwks.py \
   --output-dir "$SECRETS_DIR" \
   --cert "$SECRETS_DIR/scitokens-issuer.crt" \
   --key "$SECRETS_DIR/scitokens-issuer.key" \
-  --jwks-filename scitokens.jwks \
+  --jwks-filename scitokens.jwks
+
+python3 /scripts/generate_jwt.py \
+  --output-dir "$SECRETS_DIR" \
+  --key "$SECRETS_DIR/scitokens-issuer.key" \
   --jwt-filename scitokens.jwt \
   --claims "$SCITOKENS_JWT_CLAIMS"
 
