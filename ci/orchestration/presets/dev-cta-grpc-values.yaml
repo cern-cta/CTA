@@ -7,12 +7,16 @@ global:
     allowPrivilegeEscalation: True
     privileged: True
 
-frontend:
-  grpc:
+frontend-wfe:
+  # Enabled to allow debugging after a crash
+  postRun:
     enabled: true
-  xrd:
-    enabled: false
+    script: |
+      #!/usr/bin/bash
+      echo "Process crashed. Sleeping..."
+      sleep infinity
 
+frontend-admin:
   # Enabled to allow debugging after a crash
   postRun:
     enabled: true
@@ -56,7 +60,7 @@ cli:
   useGrpc: true
   conf:
     cta:
-      endpoint: cta-frontend-grpc-admin:10956
+      endpoint: cta-frontend-admin:10956
       grpc:
         cta_admin_auth_method: jwt
         jwt_token_path: /etc/grid-security/jwt-token-grpc
@@ -90,7 +94,7 @@ client:
   useGrpc: true
   conf:
     cta:
-      endpoint: cta-frontend-grpc-wfe:10956
+      endpoint: cta-frontend-admin:10956
       grpc:
         cta_admin_auth_method: jwt
         jwt_token_path: /etc/grid-security/jwt-token-grpc

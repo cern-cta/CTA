@@ -3,20 +3,20 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- if .Values.grpc.enabled }}
-{{- $name := include "ctafrontendgrpc.fullname" . }}
+{{- if .Values.enabled }}
+{{- $name := "cta-frontend-wfe" }}
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ $name }}-admin
+  name: {{ $name }}
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   selector:
-    app.kubernetes.io/name: {{ $name }}-admin
+    app.kubernetes.io/name: {{ $name }}
   clusterIP: None
   ports:
   - name: {{ $name }}
-    port: {{ .Values.grpc.port }}
+    port: {{ .Values.port }}
     protocol: TCP
 {{- end }}

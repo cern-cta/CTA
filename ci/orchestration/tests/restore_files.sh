@@ -56,9 +56,9 @@ echo "kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash eos root://
 grpc_key=$(openssl rand -hex 12)
 
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- sh -c "echo 'ctaeos ctaeos:50051 ${grpc_key}' > /etc/cta/eos.grpc.keytab"
-# This will fail currently as /etc/cta/cta-frontend-xrootd.conf is a configmap and therefore readonly
+# This will fail currently as /etc/cta/cta-frontend.conf is a configmap and therefore readonly
 # If this needs to be tested, the dev should manually update the configmap to include this
-# kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- sh -c "echo 'cta.ns.config /etc/cta/eos.grpc.keytab' >> /etc/cta/cta-frontend-xrootd.conf"
+# kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- sh -c "echo 'cta.ns.config /etc/cta/eos.grpc.keytab' >> /etc/cta/cta-frontend.conf"
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos vid set map -grpc key:${grpc_key} vuid:2 vgid:2
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos -r 0 0 vid add gateway ${FRONTEND_IP} grpc
 
