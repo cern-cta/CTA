@@ -50,9 +50,9 @@ modify-project-json:
     # Done
     - echo "File content after replacement"
     - cat "${project_json_file}" | jq
+    - cat pipeline.env
   artifacts:
     paths:
       - project.json
     reports:
       dotenv: pipeline.env
-  when: on_success

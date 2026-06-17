@@ -16,7 +16,6 @@ SUPPORTED = {
         "DEFAULT",
         "REGR_AGAINST_CTA_MAIN",
         "REGR_AGAINST_CTA_VERSION",
-        "IMAGE_FROM_CTA_VERSION",
         "SYSTEM_TEST_ONLY",
         "CUSTOM_SYSTEM_TEST_IMAGE_TAG",
     ]
@@ -118,16 +117,6 @@ def validate_regr_against_cta_version(ci_input_vars):
     """
     Validation for the pipeline type `EOS_REGR_AGAINST_CTA_VERSION`.
     """
-    exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
-
-
-def validate_image_from_cta_version(ci_input_vars):
-    """
-    Validation for the pipeline type `IMAGE_FROM_CTA_VERSION`.
-    """
-    exit_if_not_defined("CUSTOM_CTA_VERSION", ci_input_vars)
-    exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
-    exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
 
 
