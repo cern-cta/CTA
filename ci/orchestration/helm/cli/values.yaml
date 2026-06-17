@@ -6,7 +6,7 @@ useGrpc: false
 
 conf:
   cta:
-    endpoint: cta-frontend:10955
+    endpoint: cta-frontend-admin:10955
 
 krb5PrincName: ctaadmin1
 

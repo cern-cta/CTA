@@ -1,9 +1,21 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-frontend:
-  xrd:
+frontend-wfe:
+  port: 10955
+  legacy_xrootd_mode: true
+
+  # Enabled to allow debugging after a crash
+  postRun:
     enabled: true
+    script: |
+      #!/usr/bin/bash
+      echo "Process crashed. Sleeping..."
+      sleep infinity
+
+frontend-admin:
+  port: 10955
+  legacy_xrootd_mode: true
 
   # Enabled to allow debugging after a crash
   postRun:
@@ -25,6 +37,7 @@ taped:
     taped:
       # Number of connection to the backend PG DB
       schedulerNumberOfConnections: 3
+
 rmcd:
   # Enabled to allow debugging after a crash
   postRun:

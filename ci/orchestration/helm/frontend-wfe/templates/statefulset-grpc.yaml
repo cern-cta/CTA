@@ -3,50 +3,19 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- define "ctafrontend.fullname" -}}
-  {{ include "common.names.fullname" . }}
-{{- end }}
-
-{{- define "ctafrontendgrpc.fullname" -}}
-  {{ printf "%s-grpc" (include "common.names.fullname" .) }}
-{{- end }}
-
-{{- define "ctafrontend.image" -}}
-  {{ include "common.images.image" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
-{{- end }}
-
-{{- define "ctafrontend.imagePullPolicy" -}}
-  {{ include "common.images.pullPolicy" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
-{{- end }}
-
-{{- define "ctafrontend.imagePullSecrets" -}}
-  {{ include "common.images.pullSecrets" (dict "imageRoot" .Values.image "global" .Values.global.image) }}
-{{- end }}
-
-{{- define "scheduler.config" -}}
-  {{- $schedulerConfig := .Values.global.configuration.scheduler }}
-  {{- if ne (typeOf $schedulerConfig) "string" -}}
-    {{- $schedulerConfig = $schedulerConfig | toYaml }}
-  {{- end }}
-  {{- $schedulerConfig -}}
-{{- end }}
-
-{{- define "ctafrontend.grpcStatefulSet" -}}
-{{- $root := .root }}
-{{- $role := default "wfe" .role }}
-{{- $name := printf "%s-%s" (include "ctafrontendgrpc.fullname" $root) $role }}
-{{- $schedulerConfig := include "scheduler.config" $root | fromYaml }}
-{{- $configMapName := printf "cta-frontend-grpc-%s-conf" $role }}
+{{- if and .Values.enabled (not .Values.legacy_xrootd_mode) }}
+{{- $name := include "ctafrontend.fullname" . }}
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ $name }}
-  namespace: {{ $root.Release.Namespace | quote }}
+  namespace: {{ .Release.Namespace | quote }}
   labels:
-    {{- include "common.labels.standard" $root | nindent 4 }}
+    {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   serviceName: {{ $name }}
-  replicas: {{ $root.Values.replicas }}
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ $name }}
@@ -55,36 +24,16 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $name }}
-        {{- include "common.labels.withoutname" $root | nindent 8 }}
+        {{- include "common.labels.withoutname" . | nindent 8 }}
     spec:
       imagePullSecrets:
-      {{ include "ctafrontend.imagePullSecrets" $root | nindent 6 }}
-      {{- if $root.Values.pod.extraSpec }}
-      {{ $root.Values.pod.extraSpec | toYaml | nindent 6 }}
+      {{ include "ctafrontend.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.pod.extraSpec }}
+      {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
       initContainers:
-      {{- if and (eq $role "admin") $root.Values.grpc.statefulSet.admin.enableKrb5 }}
-      - name: init1-get-krb5-keytab
-        image: {{ include "ctafrontend.image" $root }}
-        imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" $root }}
-        command: ["/bin/bash", "-c"]
-        args:
-        - |
-          sukadmin() { echo {{ $root.Values.global.kerberos.adminPrinc.password }} | kadmin -r {{ $root.Values.global.kerberos.defaultRealm | upper }} -p {{ $root.Values.global.kerberos.adminPrinc.name }}/admin $@; };
-          sukadmin addprinc -randkey cta/{{ $name }};
-          sukadmin ktadd -k /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab cta/{{ $name }};
-          chmod 400 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
-          # Make CTA user owner (group 33 is tape)
-          chown -R 1000:33 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
-        volumeMounts:
-        - name: krb5-conf
-          mountPath: /etc/krb5.conf
-          subPath: krb5.conf
-        - name: cta-frontend-krb5-keytab
-          mountPath: /root/ctafrontend_keytab/output
-      {{- end }}
-      - name: init2-download-grpc-health-probe
-        image: {{ include "common.images.busybox" $root }}
+      - name: init1-download-grpc-health-probe
+        image: {{ include "common.images.busybox" . }}
         command: ["sh", "-c"]
         args:
           - |
@@ -97,11 +46,11 @@ spec:
             subPath: grpc-health-probe
       containers:
       - name: cta-frontend
-        image: {{ include "ctafrontend.image" $root }}
-        imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" $root }}
+        image: {{ include "ctafrontend.image" . }}
+        imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
         command: ["/bin/bash", "-c"]
-        args: ["{{- if $root.Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-grpc.sh; {{- if $root.Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-grpc.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
         startupProbe:
           exec:
             command: ["rpm", "-q", "cta-frontend-grpc"]
@@ -112,12 +61,12 @@ spec:
           exec:
             command:
               - /grpc-health-probe/grpc-health-probe
-              - -addr=localhost:{{ $root.Values.grpc.port }}
-            {{- if $root.Values.grpc.conf.tls.enabled }}
+              - -addr=localhost:{{ .Values.port }}
+            {{- if .Values.conf.tls.enabled }}
               - -tls
               - -tls-ca-cert=/etc/grpc-certs/ca/ca.crt.pem
-              - -tls-server-name={{ printf "cta-frontend-grpc-%s" $role }}
-              {{- if and (eq $role "wfe") (eq $root.Values.grpc.conf.auth.wfe "mtls") }}
+              - -tls-server-name={{ $name }}
+              {{- if eq .Values.conf.auth.method "mtls" }}
               - -tls-client-cert=/etc/grpc-certs/client/ctaeos-self-signed.crt.pem
               - -tls-client-key=/etc/grpc-certs/client/ctaeos-self-signed.key.pem
               {{- end }}
@@ -128,15 +77,15 @@ spec:
           successThreshold: 1
           failureThreshold: 60
         securityContext:
-          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $root }}
-          privileged: {{ include "common.securityContext.privileged" $root }}
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+          privileged: {{ include "common.securityContext.privileged" . }}
         env:
         - name: MY_NAME
           value: {{ $name }}
         - name: MY_NAMESPACE
-          value: {{ $root.Release.Namespace | quote }}
+          value: {{ .Release.Namespace | quote }}
         - name: INSTANCE_NAME
-          value: {{ $root.Release.Namespace | quote }}
+          value: {{ .Release.Namespace | quote }}
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote }}
         {{- if eq $schedulerConfig.backend "ceph" }}
@@ -149,7 +98,7 @@ spec:
         {{- end }}
         - name: TERM
           value: "xterm"
-        {{- with $root.Values.extraEnv }}
+        {{- with .Values.extraEnv }}
         {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
         volumeMounts:
@@ -179,11 +128,11 @@ spec:
         - name: vfs-storage-volume
           mountPath: /objectstore
         {{- end }}
-        - name: grpc-config
-          mountPath: /etc/cta/cta-frontend-grpc.conf
-          subPath: cta-frontend-grpc.conf
-        {{- if and (eq $role "wfe") (eq $root.Values.grpc.conf.auth.wfe "mtls") }}
-        - name: grpc-config
+        - name: frontend-config
+          mountPath: /etc/cta/cta-frontend.conf
+          subPath: cta-frontend.conf
+        {{- if eq .Values.conf.auth.method "mtls" }}
+        - name: frontend-config
           mountPath: /etc/cta/mtls-map.toml
           subPath: mtls-map.toml
         {{- end }}
@@ -196,7 +145,7 @@ spec:
           mountPath: /etc/grpc-certs/key
         - name: grpc-ca-crt
           mountPath: /etc/grpc-certs/ca
-        {{- if and (eq $role "wfe") (eq $root.Values.grpc.conf.auth.wfe "mtls") }}
+        {{- if eq .Values.conf.auth.method "mtls" }}
         - name: grpc-client-crt
           mountPath: /etc/grpc-certs/client/ctaeos-self-signed.crt.pem
           subPath: ctaeos-self-signed.crt.pem
@@ -204,27 +153,19 @@ spec:
           mountPath: /etc/grpc-certs/client/ctaeos-self-signed.key.pem
           subPath: ctaeos-self-signed.key.pem
         {{- end }}
-        {{- if and (eq $role "admin") $root.Values.grpc.statefulSet.admin.enableKrb5 }}
-        - name: cta-frontend-krb5-keytab
-          mountPath: /etc/cta/cta-frontend.krb5.keytab
-          subPath: cta-frontend.krb5.keytab
-        - name: krb5-conf
-          mountPath: /etc/krb5.conf
-          subPath: krb5.conf
-        {{- end }}
         - name: grpc-health-probe-bin
           mountPath: /grpc-health-probe
           subPath: grpc-health-probe
-        {{- if $root.Values.grpc.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+        {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
         - name: otlp-basic-auth-pwd
           mountPath: /etc/cta/otlp-basic-auth-pwd.conf
           subPath: otlp-basic-auth-pwd.conf
         {{- end }}
-        {{- include "common.extraVolumeMounts" $root | nindent 8 }}
+        {{- include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
         configMap:
-          name: scripts-ctafrontend
+          name: cta-frontend-wfe-scripts
           defaultMode: 0777
       - name: catalogue-config
         configMap:
@@ -251,19 +192,19 @@ spec:
         persistentVolumeClaim:
           claimName: scheduler-vfs-pvc
       {{- end }}
-      - name: grpc-config
+      - name: frontend-config
         configMap:
-          name: {{ $configMapName }}
+          name: cta-frontend-wfe-conf
       - name: grpc-server-crt
         secret:
-          secretName: {{ printf "server-%s-crt-pem" $role }}
+          secretName: server-wfe-crt-pem
       - name: grpc-server-key
         secret:
-          secretName: {{ printf "server-%s-key-pem" $role }}
+          secretName: server-wfe-key-pem
       - name: grpc-ca-crt
         secret:
           secretName: ca-crt-pem
-      {{- if and (eq $role "wfe") (eq $root.Values.grpc.conf.auth.wfe "mtls") }}
+      {{- if eq .Values.conf.auth.method "mtls" }}
       - name: grpc-client-crt
         secret:
           secretName: ctaeos-self-signed-crt-pem
@@ -271,21 +212,12 @@ spec:
         secret:
           secretName: ctaeos-self-signed-key-pem
       {{- end }}
-      {{- if and (eq $role "admin") $root.Values.grpc.statefulSet.admin.enableKrb5 }}
-      - name: cta-frontend-krb5-keytab
-        emptyDir: {}
-      - name: eos-sss-keytab-fixedownership
-        emptyDir: {}
-      - name: krb5-conf
-        configMap:
-          name: {{ $root.Values.global.kerberos.clientConfig.configMap }}
-      {{- end }}
       - name: grpc-health-probe-bin
         emptyDir: {}
-      {{- if $root.Values.grpc.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+      {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       - name: otlp-basic-auth-pwd
         secret:
-          secretName: {{ $root.Values.grpc.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+          secretName: {{ .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       {{- end }}
-      {{ include "common.extraVolumes" $root | nindent 6 }}
+      {{ include "common.extraVolumes" . | nindent 6 }}
 {{- end }}

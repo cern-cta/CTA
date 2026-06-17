@@ -51,8 +51,8 @@ generate_signed_cert() {
 }
 
 # Generate server certs for the WFE and admin frontends
-generate_signed_cert server-admin cta-frontend-grpc-admin
-generate_signed_cert server-wfe cta-frontend-grpc-wfe
+generate_signed_cert server-admin cta-frontend-admin
+generate_signed_cert server-wfe cta-frontend-wfe
 
 chmod 0644 $SECRETS_DIR/ca.key.pem
 chmod 0644 $SECRETS_DIR/server-admin.key.pem

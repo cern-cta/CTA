@@ -5,7 +5,7 @@ replicaCount: 1
 
 conf:
   cta:
-    endpoint: cta-frontend:10955
+    endpoint: cta-frontend-admin:10955
 
 users:
   - user1
