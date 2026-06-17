@@ -27,7 +27,9 @@ modify-project-json:
     - |
       if [[ -z "$trimmed_eos_image_tag" ]]; then
         EOS_REPO_URL="https://storage-ci.web.cern.ch/storage-ci/eos/diopside/tag/testing/${PLATFORM}/x86_64/"
+        echo "No CUSTOM_EOS_IMAGE_TAG provided. Getting latest release from: $EOS_REPO_URL"
         trimmed_eos_image_tag="$(dnf -q --repofrompath=temprepo,$EOS_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}" eos-server).${PLATFORM}"
+        echo "Using latest stable release: $trimmed_eos_image_tag"
       fi
     - echo "Updating EOS image tag to $trimmed_eos_image_tag."
     - tmp_file=$(mktemp)
@@ -38,8 +40,9 @@ modify-project-json:
     - |
       if [[ "$PIPELINE_TYPE" == "REGR_AGAINST_CTA_VERSION" ]] && [[ -z "$CUSTOM_CTA_VERSION" ]]; then
         CTA_REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/${PLATFORM}/cta/x86_64/"
+        echo "No CUSTOM_CTA_VERSION provided. Getting latest release from: $CTA_REPO_URL"
         CUSTOM_CTA_VERSION=$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)
-        echo "No CUSTOM_CTA_VERSION provided. Using latest stable release: $CUSTOM_CTA_VERSION"
+        echo "Using latest stable release: $CUSTOM_CTA_VERSION"
         echo "CUSTOM_CTA_VERSION=$CUSTOM_CTA_VERSION" >> pipeline_vars.env
       fi
     # Done

@@ -78,10 +78,15 @@ build-ctageneric-from-remote-rpms:
   variables:
     DOCKERFILE: ci/docker/${PLATFORM}/dev-remote-rpms.Dockerfile
     IMAGE_NAME: ctageneric
-    # CUSTOM_CTA_VERSION is populated in the dotenv file provided by the modify-project-json
-    EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --build-arg PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"
   before_script:
-    - echo $CUSTOM_CTA_VERSION
+    - echo "Checking if dotenv file exists:"
+    - ls -la pipeline_vars.env || echo "File not found!"
+    - echo "Contents of file:"
+    - cat pipeline_vars.env || echo "Cannot read file"
+    - echo "Current value of CUSTOM_CTA_VERSION $CUSTOM_CTA_VERSION"
+    # CUSTOM_CTA_VERSION is populated in the dotenv file provided by the modify-project-json
+    # We do the export here instead of in the variables: as GitLab evaluates the variables section before it parses the dotenv report
+    - export EXTRA_BUILD_ARGS="--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --build-arg PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"
 
 ###############################################
 # Immutable images
