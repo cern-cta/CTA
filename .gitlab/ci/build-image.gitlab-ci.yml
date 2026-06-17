@@ -80,6 +80,8 @@ build-ctageneric-from-remote-rpms:
     IMAGE_NAME: ctageneric
     # CUSTOM_CTA_VERSION is populated in the dotenv file provided by the modify-project-json
     EXTRA_BUILD_ARGS: "--build-arg USE_INTERNAL_REPOS=${USE_INTERNAL_REPOS} --build-arg PUBLIC_REPO_VER=${CUSTOM_CTA_VERSION}"
+  before_script:
+    - echo $CUSTOM_CTA_VERSION
 
 ###############################################
 # Immutable images
