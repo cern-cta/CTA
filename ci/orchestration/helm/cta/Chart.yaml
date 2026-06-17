@@ -9,8 +9,11 @@ version: 0.2.0
 appVersion: "5.11.10.1"
 
 dependencies:
-  - name: frontend
-    repository: "file://../frontend"
+  - name: frontend-admin
+    repository: "file://../frontend-admin"
+    version: 0.2.0
+  - name: frontend-wfe
+    repository: "file://../frontend-wfe"
     version: 0.2.0
   - name: cli
     repository: "file://../cli"

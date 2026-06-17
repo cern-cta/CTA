@@ -41,7 +41,7 @@ MULTICOPY_DIR_3=/eos/ctaeos/preprod/dir_3_copy
 
 CTA_RMCD_POD=$(get_pods_by_type rmcd $NAMESPACE | head -1)
 CTA_TAPED_POD=$(get_pods_by_type taped $NAMESPACE | head -1)
-CTA_FRONTEND_POD=$(get_pods_by_type frontend $NAMESPACE | head -1)
+CTA_FRONTEND_POD=$(get_pods_by_type frontend-admin $NAMESPACE | head -1)
 CLIENT_POD=$(get_pods_by_type client $NAMESPACE | head -1)
 CTA_CLI_POD=$(get_pods_by_type cli $NAMESPACE | head -1)
 

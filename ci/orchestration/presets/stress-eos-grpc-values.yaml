@@ -58,7 +58,7 @@ mgm:
       mgmofs.archivedir /var/eos/archive
       mgmofs.prepare.dest.space default
       mgmofs.tapeenabled true
-      mgmofs.protowfendpoint cta-frontend-grpc-wfe:10956
+      mgmofs.protowfendpoint cta-frontend-wfe:10956
       mgmofs.protowfresource /ctafrontend
       mgmofs.protowfusegrpc true
       mgmofs.protowfusegrpctls true
@@ -142,7 +142,7 @@ fst:
     sched: "mint 16 maxt 512 idle 64"
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
-      fstofs.protowfendpoint cta-frontend-grpc-wfe:10956
+      fstofs.protowfendpoint cta-frontend-wfe:10956
       fstofs.protowfresource /ctafrontend
       fstofs.filemd_handler  attr
       fstofs.protowfusegrpc true

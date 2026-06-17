@@ -28,7 +28,6 @@ global:
         type: ExternalName
         externalName: {{ include "utils.mgm_address" . }}
 
-
 mgm:
   # Must match the authentication chart
   kerberos:
@@ -59,7 +58,7 @@ mgm:
       mgmofs.archivedir /var/eos/archive
       mgmofs.prepare.dest.space default
       mgmofs.tapeenabled true
-      mgmofs.protowfendpoint cta-frontend:10955
+      mgmofs.protowfendpoint cta-frontend-wfe:10955
       mgmofs.protowfresource /ctafrontend
       mgmofs.protowfusegrpc false
       tpc.trace  all
@@ -121,7 +120,7 @@ fst:
     sched: "mint 16 maxt 512 idle 64"
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
-      fstofs.protowfendpoint cta-frontend:10955
+      fstofs.protowfendpoint cta-frontend-wfe:10955
       fstofs.protowfresource /ctafrontend
       fstofs.protowfusegrpc false
       fstofs.filemd_handler  attr

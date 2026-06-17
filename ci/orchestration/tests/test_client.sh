@@ -43,7 +43,7 @@ fi
 
 CTA_RMCD_POD=$(get_pods_by_type rmcd $NAMESPACE | head -1)
 CTA_TAPED_POD=$(get_pods_by_type taped $NAMESPACE | head -1)
-CTA_FRONTEND_POD=$(get_pods_by_type frontend $NAMESPACE | head -1)
+CTA_FRONTEND_POD=$(get_pods_by_type frontend-admin $NAMESPACE | head -1)
 CLIENT_POD=$(get_pods_by_type client $NAMESPACE | head -1)
 CTA_CLI_POD=$(get_pods_by_type cli $NAMESPACE | head -1)
 CTA_MAINTD_POD=$(get_pods_by_type maintd $NAMESPACE | head -1)
@@ -120,7 +120,7 @@ echo
 echo "Launching client_simple_ar.sh on client pod"
 echo " Archiving file: xrdcp as user1"
 echo " Retrieving it as poweruser1"
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
+  kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "${TEST_PRERUN} && /root/client_simple_ar.sh ${TEST_POSTRUN}" || exit 1
 kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_xrdlog_mgm_for_error.sh || exit 1
 
 EOSDF_BUFFER_BASEDIR=/eos/ctaeos/eosdf

@@ -3,8 +3,8 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- if .Values.xrd.enabled }}
-{{- $name := include "ctafrontend.fullname" . }}
+{{- if .Values.enabled }}
+{{- $name := "cta-frontend-admin" }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -17,6 +17,6 @@ spec:
   clusterIP: None
   ports:
   - name: {{ $name }}
-    port: {{ .Values.xrd.port }}
+    port: {{ .Values.port }}
     protocol: TCP
 {{- end }}
