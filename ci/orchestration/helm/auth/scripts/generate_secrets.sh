@@ -142,7 +142,7 @@ WLCG_TOKEN_STAGE_TEST1_CLAIMS=$(cat <<EOF
   "sub": "user",
   "typ": "Bearer",
   "iss": "https://scitokens-issuer:8443",
-  "scope": "storage.stage:/eos/ctaeos/preprod/test1",
+  "scope": "storage.stage:/eos/ctaeos/preprod/test1/",
   "aud": "cta",
   "wlcg.ver": "1.0"
 }
