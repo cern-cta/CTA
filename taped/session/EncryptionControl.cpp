@@ -32,6 +32,7 @@ EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scri
 auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& m_drive,
                                castor::tape::tapeserver::daemon::VolumeInfo& volInfo,
                                cta::catalogue::Catalogue& catalogue,
+                               const std::string& tapeDrive,
                                bool isWriteSession) -> EncryptionStatus {
   EncryptionStatus encStatus;
   if (m_path.empty()) {
@@ -88,18 +89,21 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
   // In write session check if we need to set the key name for the new tape
   // If tape pool encryption is enabled and key name is empty, it means we are writing to the new tape
   if (isWriteSession && (pool->encryptionKeyName || pool->encryption) && !volInfo.encryptionKeyName.has_value()) {
-    const cta::common::dataStructures::SecurityIdentity admin {"ctaops", cta::utils::getShortHostname()};
+    const std::string hostname = cta::utils::getShortHostname();
+
+    cta::common::dataStructures::SecurityIdentity admin;
+    admin.username = c_defaultUserNameUpdate + " " + tapeDrive;
+    admin.host = hostname;
 
     try {
       catalogue.Tape()->modifyTapeEncryptionKeyName(admin, volInfo.vid, encStatus.keyName);
-    } catch (const cta::exception::UserError&) {
+    } catch (const cta::catalogue::UserSpecifiedANonEmptyTapeForEncryptionKey&) {
       const std::string disabledReason = "[cta-taped] forbidden to set an encryption key on a non empty tape.";
-      const auto tape = catalogue.Tape()->getTapesByVid(volInfo.vid).at(volInfo.vid);
 
       catalogue.Tape()->modifyTapeState(admin,
                                         volInfo.vid,
                                         cta::common::dataStructures::Tape::DISABLED,
-                                        tape.state,
+                                        cta::common::dataStructures::Tape::ACTIVE,
                                         disabledReason);
 
       throw cta::exception::Exception(disabledReason);

@@ -84,7 +84,7 @@ uint64_t DummyTapeCatalogue::getNbFilesOnTape(const std::string& vid) const {
   throw exception::NotImplementedException();
 }
 
-uint64_t DummyTapeCatalogue::getNbFilesInRecycleLog(const std::string& vid) const {
+bool DummyTapeCatalogue::tapeHasFilesInRecycleLog(const std::string& vid) const {
   throw exception::NotImplementedException();
 }
 

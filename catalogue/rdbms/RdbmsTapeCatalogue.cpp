@@ -548,9 +548,9 @@ uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(const std::string& vid) const {
   return getNbFilesOnTape(conn, vid);
 }
 
-uint64_t RdbmsTapeCatalogue::getNbFilesInRecycleLog(const std::string& vid) const {
+bool RdbmsTapeCatalogue::tapeHasFilesInRecycleLog(const std::string& vid) const {
   auto conn = m_connPool->getConn();
-  return getNbFilesInRecycleLog(conn, vid);
+  return tapeHasFilesInRecycleLog(conn, vid);
 }
 
 void RdbmsTapeCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
@@ -732,8 +732,8 @@ void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructure
       VID = :VID
   )SQL";
   auto conn = m_connPool->getConn();
-  if (getNbFilesOnTape(conn, vid) > 0 || getNbFilesInRecycleLog(conn, vid) > 0) {
-    throw exception::UserError("ERROR: forbidden to set an encryption key on a non empty tape.");
+  if (tapeHasFiles(conn, vid) || tapeHasFilesInRecycleLog(conn, vid)) {
+    throw UserSpecifiedANonEmptyTapeForEncryptionKey("Cannot modify tape encryption key because the tape is not empty");
   }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":ENCRYPTION_KEY_NAME", optionalEncryptionKeyName);
@@ -1296,20 +1296,43 @@ uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::stri
   return rset.columnUint64("NB_FILES");
 }
 
-uint64_t RdbmsTapeCatalogue::getNbFilesInRecycleLog(rdbms::Conn& conn, const std::string& vid) const {
+bool RdbmsTapeCatalogue::tapeHasFiles(rdbms::Conn& conn, const std::string& vid) const {
   const char* const sql = R"SQL(
-    SELECT COUNT(*) AS NB_FILES
-    FROM FILE_RECYCLE_LOG
+    SELECT VID
+    FROM TAPE
     WHERE VID = :VID
+    AND EXISTS (
+      SELECT 1
+      FROM TAPE_FILE
+      WHERE TAPE_FILE.VID = TAPE.VID
+    )
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":VID", vid);
+  auto rset = stmt.executeQuery();
+
+  return rset.next();
+}
+
+bool RdbmsTapeCatalogue::tapeHasFilesInRecycleLog(rdbms::Conn& conn, const std::string& vid) const {
+  const char* const sql = R"SQL(
+    SELECT VID
+    FROM TAPE
+    WHERE VID = :VID
+    AND EXISTS (
+      SELECT 1 FROM
+      FILE_RECYCLE_LOG
+      WHERE FILE_RECYCLE_LOG.VID = TAPE.VID
+    )
   )SQL";
 
   auto stmt = conn.createStmt(sql);
 
   stmt.bindString(":VID", vid);
   auto rset = stmt.executeQuery();
-  rset.next();
 
-  return rset.columnUint64("NB_FILES");
+  return rset.next();
 }
 
 void RdbmsTapeCatalogue::resetTapeCounters(rdbms::Conn& conn,

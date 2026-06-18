@@ -558,7 +558,7 @@ void ReadtpCmd::configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo
     // status:
     std::vector<cta::log::Param> params;
     {
-      auto encryptionStatus = m_encryptionControl->enable(drive, volInfo, *m_catalogue, false);
+      auto encryptionStatus = m_encryptionControl->enable(drive, volInfo, *m_catalogue, m_unitName, false);
       if (encryptionStatus.on) {
         params.emplace_back("encryption", "on");
         params.emplace_back("encryptionKeyName", encryptionStatus.keyName);

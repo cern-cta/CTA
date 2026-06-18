@@ -34,6 +34,7 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyTape);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTape);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAWrongPrevState);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapeState);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyTapeForEncryptionKey);
 CTA_GENERATE_EXCEPTION_CLASS(TapeNotFound);
 
 class CreateTapeAttributes;
@@ -163,7 +164,7 @@ public:
    */
   virtual uint64_t getNbFilesOnTape(const std::string& vid) const = 0;
 
-  virtual uint64_t getNbFilesInRecycleLog(const std::string& vid) const = 0;
+  virtual bool tapeHasFilesInRecycleLog(const std::string& vid) const = 0;
 
   virtual void modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
                                    const std::string& vid,

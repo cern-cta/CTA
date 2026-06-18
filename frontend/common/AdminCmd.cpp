@@ -1147,6 +1147,9 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
   auto verificationStatus = getOptional(OptionString::VERIFICATION_STATUS);
 
   if (mediaType.has_value()) {
+    if (m_catalogue.Tape()->getNbFilesOnTape(vid) != 0) {
+      throw cta::exception::UserError("Unable to modify media type of tape " + vid + " because it contains files");
+    }
     m_catalogue.Tape()->modifyTapeMediaType(m_cliIdentity, vid, mediaType.value());
   }
   if (vendor.has_value()) {
@@ -1166,10 +1169,11 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
     m_catalogue.Tape()->modifyTapeComment(m_cliIdentity, vid, comment);
   }
   if (encryptionkeyName.has_value()) {
-    if (m_catalogue.Tape()->getNbFilesOnTape(vid) > 0 || m_catalogue.Tape()->getNbFilesInRecycleLog(vid) > 0) {
+    try {
+      m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
+    } catch (const cta::catalogue::UserSpecifiedANonEmptyTapeForEncryptionKey&) {
       throw cta::exception::UserError("ERROR: forbidden to set an encryption key on a non empty tape.");
     }
-
     m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
   }
   if (purchaseOrder.has_value()) {
