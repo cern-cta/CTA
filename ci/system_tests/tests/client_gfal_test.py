@@ -46,7 +46,7 @@ def eos_mgm(env) -> EosMgmHost:
 
 def _get_report_file_path() -> Path:
     now = datetime.datetime.now()
-    base_path = Path("/var") / "eos" / "report" / f"{now:%Y}" / f"{now:%m}"
+    base_path = Path("/var") / "log" / "eos" / "report" / f"{now:%Y}" / f"{now:%m}"
     file_name = f"{now:%Y}{now:%m}{now:%d}.eosreport"
     return base_path / file_name
 

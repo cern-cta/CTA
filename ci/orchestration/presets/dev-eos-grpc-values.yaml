@@ -55,6 +55,7 @@ mgm:
     # Allowing half the production (4k) size of the thread pool rather than the default 256.
     sched: "mint 16 maxt 2048 idle 128"
     extraConfig: |
+      mgmofs.reportstorepath /var/log/eos/report
       xrootd.chksum  adler32
       mgmofs.archivedir /var/eos/archive
       mgmofs.prepare.dest.space default
