@@ -11,6 +11,7 @@ from pathlib import Path
 
 import jwt
 from cryptography import x509
+from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
 from cryptography.hazmat.primitives import serialization
 
 
@@ -38,7 +39,11 @@ def generate_jwk_from_cert(cert_path):
     else:
         cert_obj = x509.load_der_x509_certificate(cert_data)
 
-    pub_numbers = cert_obj.public_key().public_numbers()
+    public_key = cert_obj.public_key()
+    if not isinstance(public_key, RSAPublicKey):
+        raise ValueError("Certificate public key must be RSA")
+
+    pub_numbers = public_key.public_numbers()
 
     def int_to_base64url(n: int) -> str:
         byte_length = (n.bit_length() + 7) // 8
