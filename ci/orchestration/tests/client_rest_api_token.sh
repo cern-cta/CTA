@@ -230,6 +230,92 @@ if ! "${SUCCESS}"; then
   exit 1
 fi
 
+echo "Releasing and deleting request..."
+RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
+
+# Check that request no longer exists
+
+HTTP_CODE=$(curl ${CURL_OPTS} -L --fail -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -w "%{http_code}")
+
+if [[ "$?" -eq 0 ]]; then
+  echo "Stage request still exists"
+  exit 1
+elif [[ "${HTTP_CODE}" -ne 404 ]]; then
+  echo "Wrong HTTP code returned: ${HTTP_CODE}"
+  exit 1
+fi
+
+echo "Test completed."
+
+
+########################################################################################################################
+# Request files to be staged with the WLCG_TOKEN_STAGE_TEST1 and Tape REST API (STAGE)
+########################################################################################################################
+
+echo "New staging request submission (POST STAGE) with ${WLCG_TOKEN_STAGE_TEST1_TEXT} token..."
+
+FINAL_COUNT=0
+TIMEOUT=90
+SECONDS_PASSED=0
+
+STAGE_REQ_BODY="{\"files\":[{\"path\":\"${FILE1}\"}, {\"path\":\"${FILE2}\"}]}"
+REQ_ID=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_TEST1}" "${REST_API_URI}/stage/" -d "$STAGE_REQ_BODY" | jq -r .requestId)
+
+# Wait for file to be staged
+# Only 1 file should be staged
+
+while test "${FINAL_COUNT}" -ne 1; do
+
+  echo "$(date +%s): Waiting for files to be staged."
+  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
+    echo "$(date +%s): Timed out waiting for files to be staged."
+    exit 1
+  fi
+
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "DISK_AND_TAPE" ) | .locality' | wc -l)
+  let SECONDS_PASSED=SECONDS_PASSED+1
+  if [ "${FINAL_COUNT}" -ne 1 ]; then
+    sleep 1
+  fi
+done
+
+echo "All files staged."
+
+echo "Checking stage request (GET STAGE) result with ${WLCG_TOKEN_STAGE_ALL_TEXT} token..."
+
+GET_STAGE_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}")
+
+if [[ "$(echo ${GET_STAGE_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 1 ]] &&
+   [[ "$(echo ${GET_STAGE_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 1 ]]; then
+  echo "OK"
+else
+  echo "ERROR: Unexpected result"
+  echo ${GET_STAGE_RESP}
+  exit 1
+fi
+
+echo "Releaseing and deleting request..."
+RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
+
+# Check that request no longer exists
+
+HTTP_CODE=$(curl ${CURL_OPTS} -L --fail -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -w "%{http_code}")
+
+if [[ "$?" -eq 0 ]]; then
+  echo "Stage request still exists"
+  exit 1
+elif [[ "${HTTP_CODE}" -ne 404 ]]; then
+  echo "Wrong HTTP code returned: ${HTTP_CODE}"
+  exit 1
+fi
+
+echo "Test completed."
+
+
 ########################################################################################################################
 # Request files to be released with the WLCG_TOKEN_STAGE_ALL and Tape REST API (RELEASE)
 ########################################################################################################################
