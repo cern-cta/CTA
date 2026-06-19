@@ -92,7 +92,7 @@ done
 
 echo "All files archived."
 
-echo "Checking ARCHIVEINFO with different tokens..."
+echo "Checking archive info (GET ARCHIVEINFO) with different tokens..."
 
 ARCHIVEINFO_OTHER_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}")
 ARCHIVEINFO_STAGE_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}")
@@ -101,7 +101,7 @@ ARCHIVEINFO_STAGE_TEST1_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/j
 
 SUCCESS=true
 
-echo "With no ${WLCG_TOKEN_OTHER_TEXT} token: "
+echo "With ${WLCG_TOKEN_OTHER_TEXT} token: "
 if [[ "$(echo ${ARCHIVEINFO_OTHER_RESP} | jq -r '.[] | select(has("error")) | .error' | wc -l)" -eq 2 ]] &&
    [[ "$(echo ${ARCHIVEINFO_OTHER_RESP} | jq -r '.[] | select(has("locality")) | .locality' | wc -l)" -eq 0 ]]; then
   echo "OK"
@@ -149,7 +149,7 @@ fi
 # Request files to be staged with the WLCG_TOKEN_STAGE_ALL and Tape REST API (STAGE)
 ########################################################################################################################
 
-echo "Staging files..."
+echo "New staging request submission (POST STAGE) with ${WLCG_TOKEN_STAGE_ALL_TEXT} token..."
 
 FINAL_COUNT=0
 TIMEOUT=90
@@ -177,7 +177,7 @@ done
 
 echo "All files staged."
 
-echo "Checking STAGE with different tokens..."
+echo "Checking stage request (GET STAGE) with different tokens..."
 
 GET_STAGE_OTHER_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" "${REST_API_URI}/stage/${REQ_ID}")
 GET_STAGE_STAGE_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}")
@@ -186,7 +186,7 @@ GET_STAGE_POLL_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" 
 
 SUCCESS=true
 
-echo "With no ${WLCG_TOKEN_OTHER_TEXT} token: "
+echo "With ${WLCG_TOKEN_OTHER_TEXT} token: "
 if [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 2 ]] &&
    [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 0 ]]; then
   echo "OK"
