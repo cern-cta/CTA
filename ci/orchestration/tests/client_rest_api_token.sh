@@ -15,6 +15,11 @@ WLCG_TOKEN_STAGE_ALL=$(cat /etc/cta/wlcg-token-stage-all.jwt)
 WLCG_TOKEN_POLL_ALL=$(cat /etc/cta/wlcg-token-poll-all.jwt)
 WLCG_TOKEN_STAGE_TEST1=$(cat /etc/cta/wlcg-token-stage-test1.jwt)
 
+WLCG_TOKEN_OTHER_TEXT="no 'storage.stage/poll'"
+WLCG_TOKEN_STAGE_ALL_TEXT="'storage.stage:/'"
+WLCG_TOKEN_POLL_ALL_TEXT="'storage.poll:/'"
+WLCG_TOKEN_STAGE_TEST1_TEXT="'storage.stage:/eos/ctaeos/preprod/test1/'"
+
 # By default check https connections certificates
 
 CHECK_CERTIFICATES=1
@@ -86,7 +91,59 @@ while test "${FINAL_COUNT}" -ne 2; do
 done
 
 echo "All files archived."
-curl ${CURL_OPTS} -L -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
+
+echo "Checking ARCHIVEINFO with different tokens..."
+
+ARCHIVEINFO_OTHER_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}")
+ARCHIVEINFO_STAGE_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}")
+ARCHIVEINFO_POLL_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_POLL_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}")
+ARCHIVEINFO_STAGE_TEST1_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_TEST1}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}")
+
+SUCCESS=true
+
+echo "With no ${WLCG_TOKEN_OTHER_TEXT} token: "
+if [[ "$(echo ${ARCHIVEINFO_OTHER_RESP} | jq -r '.[] | select(has("error")) | .error' | wc -l)" -eq 2 ]] &&
+   [[ "$(echo ${ARCHIVEINFO_OTHER_RESP} | jq -r '.[] | select(has("locality")) | .locality' | wc -l)" -eq 0 ]]; then
+  echo "OK"
+else
+  echo "ERROR: Unexpected result"
+  echo ${ARCHIVEINFO_OTHER_RESP}
+  SUCCESS=false
+fi
+
+echo "With ${WLCG_TOKEN_STAGE_ALL_TEXT} token: "
+if [[ "$(echo ${ARCHIVEINFO_STAGE_ALL_RESP} | jq -r '.[] | select(has("error")) | .error' | wc -l)" -eq 0 ]] &&
+   [[ "$(echo ${ARCHIVEINFO_STAGE_ALL_RESP} | jq -r '.[] | select(has("locality")) | .locality' | wc -l)" -eq 2 ]]; then
+  echo "OK"
+else
+  echo "ERROR: Unexpected result"
+  echo ${ARCHIVEINFO_STAGE_ALL_RESP}
+  SUCCESS=false
+fi
+
+echo "With ${WLCG_TOKEN_POLL_ALL_TEXT} token: "
+if [[ "$(echo ${ARCHIVEINFO_POLL_ALL_RESP} | jq -r '.[] | select(has("error")) | .error' | wc -l)" -eq 0 ]] &&
+   [[ "$(echo ${ARCHIVEINFO_POLL_ALL_RESP} | jq -r '.[] | select(has("locality")) | .locality' | wc -l)" -eq 2 ]]; then
+  echo "OK"
+else
+  echo "ERROR: Unexpected result"
+  echo ${ARCHIVEINFO_POLL_ALL_RESP}
+  SUCCESS=false
+fi
+
+echo "With ${WLCG_TOKEN_STAGE_TEST1_TEXT} token: "
+if [[ "$(echo ${ARCHIVEINFO_STAGE_TEST1_RESP} | jq -r '.[] | select(has("error")) | .error' | wc -l)" -eq 1 ]] &&
+   [[ "$(echo ${ARCHIVEINFO_STAGE_TEST1_RESP} | jq -r '.[] | select(has("locality")) | .locality')" == "${FILE1}" ]]; then
+  echo "OK"
+else
+  echo "ERROR: Unexpected result"
+  echo ${ARCHIVEINFO_STAGE_TEST1_RESP}
+  SUCCESS=false
+fi
+
+if ! "${SUCCESS}"; then
+  exit 1
+fi
 
 ########################################################################################################################
 # Request files to be staged with the WLCG_TOKEN_STAGE_ALL and Tape REST API (STAGE)
@@ -118,19 +175,60 @@ while test "${FINAL_COUNT}" -ne 2; do
   fi
 done
 
-echo "Checking stage request"
+echo "All files staged."
 
-STAGE_REQUEST_QUERY=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}")
-STAGE_REQUEST_COUNT=$(echo ${STAGE_REQUEST_QUERY} | jq '.files[] | select(.onDisk == true) | .path' | wc -l)
-echo ${STAGE_REQUEST_COUNT}
+echo "Checking STAGE with different tokens..."
 
-if test "${STAGE_REQUEST_COUNT}" -ne 2; then
-  echo "Stage request query not showing all files on disk"
-  exit 1
+GET_STAGE_OTHER_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" "${REST_API_URI}/stage/${REQ_ID}")
+GET_STAGE_STAGE_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}")
+GET_STAGE_OTHER_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_POLL_ALL}" "${REST_API_URI}/stage/${REQ_ID}")
+GET_STAGE_POLL_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_TEST1}" "${REST_API_URI}/stage/${REQ_ID}")
+
+SUCCESS=true
+
+echo "With no ${WLCG_TOKEN_OTHER_TEXT} token: "
+if [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r 'files[] | select(has("error")) | .error' | wc -l)" -eq 2 ]] &&
+   [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r 'files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 0 ]]; then
+  echo "OK"
+else
+  echo "ERROR: Unexpected result"
+  echo ${GET_STAGE_OTHER_RESP}
+  SUCCESS=false
 fi
 
-echo "All files staged."
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
+echo "With ${WLCG_TOKEN_STAGE_ALL_TEXT} token: "
+if [[ "$(echo ${GET_STAGE_STAGE_ALL_RESP} | jq -r 'files[] | select(has("error")) | .error' | wc -l)" -eq 0 ]] &&
+   [[ "$(echo ${GET_STAGE_STAGE_ALL_RESP} | jq -r 'files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 2 ]]; then
+  echo "OK"
+else
+  echo "ERROR: Unexpected result"
+  echo ${GET_STAGE_STAGE_ALL_RESP}
+  SUCCESS=false
+fi
+
+echo "With ${WLCG_TOKEN_POLL_ALL_TEXT} token: "
+if [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r 'files[] | select(has("error")) | .error' | wc -l)" -eq 0 ]] &&
+   [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r 'files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 2 ]]; then
+  echo "OK"
+else
+  echo "ERROR: Unexpected result"
+  echo ${GET_STAGE_OTHER_RESP}
+  SUCCESS=false
+fi
+
+echo "With ${WLCG_TOKEN_STAGE_TEST1_TEXT} token: "
+if [[ "$(echo ${GET_STAGE_POLL_ALL_RESP} | jq -r '.[] | select(has("error")) | .error' | wc -l)" -eq 1 ]] &&
+   [[ "$(echo ${GET_STAGE_POLL_ALL_RESP} | jq -r '.[] | select(has("onDisk")) | .onDisk')" == "true" ]]; then
+  echo "OK"
+else
+  echo "ERROR: Unexpected result"
+  echo ${GET_STAGE_POLL_ALL_RESP}
+  SUCCESS=false
+fi
+
+if ! "${SUCCESS}"; then
+  exit 1
+fi
 
 ########################################################################################################################
 # Request files to be released with the WLCG_TOKEN_STAGE_ALL and Tape REST API (RELEASE)
