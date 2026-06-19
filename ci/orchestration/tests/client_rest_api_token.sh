@@ -292,6 +292,8 @@ if [[ "$(echo ${GET_STAGE_RESP} | jq -r '.files[] | select(has("error")) | .erro
    [[ "$(echo ${GET_STAGE_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 2 ]]; then
   echo "OK"
 else
+  echo "$(echo ${GET_STAGE_RESP} | jq -r '.files[] | select(has("error")) | .path' | wc -l)"
+  echo "${FILE2}"
   echo "ERROR: Unexpected result"
   echo ${GET_STAGE_RESP}
   exit 1
