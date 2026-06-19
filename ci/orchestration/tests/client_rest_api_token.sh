@@ -181,8 +181,8 @@ echo "Checking stage request (GET STAGE) with different tokens..."
 
 GET_STAGE_OTHER_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" "${REST_API_URI}/stage/${REQ_ID}")
 GET_STAGE_STAGE_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}")
-GET_STAGE_OTHER_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_POLL_ALL}" "${REST_API_URI}/stage/${REQ_ID}")
-GET_STAGE_POLL_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_TEST1}" "${REST_API_URI}/stage/${REQ_ID}")
+GET_STAGE_POLL_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_POLL_ALL}" "${REST_API_URI}/stage/${REQ_ID}")
+GET_STAGE_STAGE_TEST1_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_TEST1}" "${REST_API_URI}/stage/${REQ_ID}")
 
 SUCCESS=true
 
@@ -207,22 +207,22 @@ else
 fi
 
 echo "With ${WLCG_TOKEN_POLL_ALL_TEXT} token: "
-if [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 0 ]] &&
-   [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 2 ]]; then
-  echo "OK"
-else
-  echo "ERROR: Unexpected result"
-  echo ${GET_STAGE_OTHER_RESP}
-  SUCCESS=false
-fi
-
-echo "With ${WLCG_TOKEN_STAGE_TEST1_TEXT} token: "
-if [[ "$(echo ${GET_STAGE_POLL_ALL_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 1 ]] &&
-   [[ "$(echo ${GET_STAGE_POLL_ALL_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk')" == "true" ]]; then
+if [[ "$(echo ${GET_STAGE_POLL_ALL_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 0 ]] &&
+   [[ "$(echo ${GET_STAGE_POLL_ALL_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 2 ]]; then
   echo "OK"
 else
   echo "ERROR: Unexpected result"
   echo ${GET_STAGE_POLL_ALL_RESP}
+  SUCCESS=false
+fi
+
+echo "With ${WLCG_TOKEN_STAGE_TEST1_TEXT} token: "
+if [[ "$(echo ${GET_STAGE_STAGE_TEST1_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 1 ]] &&
+   [[ "$(echo ${GET_STAGE_STAGE_TEST1_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk')" == "true" ]]; then
+  echo "OK"
+else
+  echo "ERROR: Unexpected result"
+  echo ${GET_STAGE_STAGE_TEST1_RESP}
   SUCCESS=false
 fi
 
