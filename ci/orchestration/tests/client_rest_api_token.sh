@@ -133,7 +133,7 @@ fi
 
 echo "With ${WLCG_TOKEN_STAGE_TEST1_TEXT} token: "
 if [[ "$(echo ${ARCHIVEINFO_STAGE_TEST1_RESP} | jq -r '.[] | select(has("error")) | .error' | wc -l)" -eq 1 ]] &&
-   [[ "$(echo ${ARCHIVEINFO_STAGE_TEST1_RESP} | jq -r '.[] | select(has("locality")) | .locality')" == "${FILE1}" ]]; then
+   [[ "$(echo ${ARCHIVEINFO_STAGE_TEST1_RESP} | jq -r '.[] | select(has("locality")) | .locality')" == "TAPE" ]]; then
   echo "OK"
 else
   echo "ERROR: Unexpected result"
