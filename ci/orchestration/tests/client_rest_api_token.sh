@@ -230,9 +230,71 @@ if ! "${SUCCESS}"; then
   exit 1
 fi
 
-echo "Releasing and deleting request..."
+echo "Test completed."
+
+########################################################################################################################
+# Request files to be released with the WLCG_TOKEN_STAGE_ALL and Tape REST API (RELEASE)
+########################################################################################################################
+
+echo "Releasing files..."
+
+FINAL_COUNT=0
+TIMEOUT=90
+SECONDS_PASSED=0
 RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
 curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
+
+while test "${FINAL_COUNT}" -ne 2; do
+
+  echo "$(date +%s): Waiting for files to be released."
+  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
+    echo "$(date +%s): Timed out waiting for files to be released."
+    exit 1
+  fi
+
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  let SECONDS_PASSED=SECONDS_PASSED+1
+  if [ "${FINAL_COUNT}" -ne 2 ]; then
+    sleep 1
+  fi
+done
+
+echo "All files released."
+
+########################################################################################################################
+# Request files to be cancelled with the WLCG_TOKEN_STAGE_ALL and Tape REST API (CANCEL)
+########################################################################################################################
+
+echo "Cancelling files..."
+
+FINAL_COUNT=0
+TIMEOUT=90
+SECONDS_PASSED=0
+CANCEL_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
+curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}/cancel" -d "${CANCEL_REQ_BODY}"
+
+while test "${FINAL_COUNT}" -ne 2; do
+
+  echo "$(date +%s): Waiting for files to be cancelled."
+  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
+    echo "$(date +%s): Timed out waiting for files to be cancelled."
+    exit 1
+  fi
+
+  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
+  let SECONDS_PASSED=SECONDS_PASSED+1
+  if [ "${FINAL_COUNT}" -ne 2 ]; then
+    sleep 1
+  fi
+done
+
+echo "All files cancelled."
+
+########################################################################################################################
+# Request request to be deleted (DELETE)
+########################################################################################################################
+
+echo "Deleting request..."
 curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
 
 # Check that request no longer exists
@@ -245,9 +307,9 @@ if [[ "$?" -eq 0 ]]; then
 elif [[ "${HTTP_CODE}" -ne 404 ]]; then
   echo "Wrong HTTP code returned: ${HTTP_CODE}"
   exit 1
+else
+  echo "Stage request no longer exists"
 fi
-
-echo "Test completed."
 
 ########################################################################################################################
 # Request files to be staged with the WLCG_TOKEN_OTHER and Tape REST API (STAGE)
@@ -278,7 +340,7 @@ else
   exit 1
 fi
 
-echo "Releaseing and deleting request..."
+echo "Releasing and deleting request..."
 RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
 curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
 curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
@@ -326,7 +388,7 @@ else
   exit 1
 fi
 
-echo "Releaseing and deleting request..."
+echo "Releasing and deleting request..."
 RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
 curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
 curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
@@ -392,7 +454,7 @@ else
   exit 1
 fi
 
-echo "Releaseing and deleting request..."
+echo "Releasing and deleting request..."
 RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
 curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
 curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
@@ -410,88 +472,6 @@ elif [[ "${HTTP_CODE}" -ne 404 ]]; then
 fi
 
 echo "Test completed."
-
-
-########################################################################################################################
-# Request files to be released with the WLCG_TOKEN_STAGE_ALL and Tape REST API (RELEASE)
-########################################################################################################################
-
-echo "Releasing files..."
-
-FINAL_COUNT=0
-TIMEOUT=90
-SECONDS_PASSED=0
-RELEASE_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/release/${REQ_ID}" -d "${RELEASE_REQ_BODY}"
-
-while test "${FINAL_COUNT}" -ne 2; do
-
-  echo "$(date +%s): Waiting for files to be released."
-  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
-    echo "$(date +%s): Timed out waiting for files to be released."
-    exit 1
-  fi
-
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
-  let SECONDS_PASSED=SECONDS_PASSED+1
-  if [ "${FINAL_COUNT}" -ne 2 ]; then
-    sleep 1
-  fi
-done
-
-echo "All files released."
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
-
-########################################################################################################################
-# Request files to be cancelled with the WLCG_TOKEN_STAGE_ALL and Tape REST API (CANCEL)
-########################################################################################################################
-
-echo "Cancelling files..."
-
-FINAL_COUNT=0
-TIMEOUT=90
-SECONDS_PASSED=0
-CANCEL_REQ_BODY="{\"paths\":[\"${FILE1}\", \"${FILE2}\"]}"
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}/cancel" -d "${CANCEL_REQ_BODY}"
-
-while test "${FINAL_COUNT}" -ne 2; do
-
-  echo "$(date +%s): Waiting for files to be cancelled."
-  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
-    echo "$(date +%s): Timed out waiting for files to be cancelled."
-    exit 1
-  fi
-
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "TAPE" ) | .locality' | wc -l)
-  let SECONDS_PASSED=SECONDS_PASSED+1
-  if [ "${FINAL_COUNT}" -ne 2 ]; then
-    sleep 1
-  fi
-done
-
-echo "All files cancelled."
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq
-
-########################################################################################################################
-# Request request to be deleted (DELETE)
-########################################################################################################################
-
-echo "Deleting request..."
-curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -X DELETE
-
-# Check that request no longer exists
-
-HTTP_CODE=$(curl ${CURL_OPTS} -L --fail -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}" -w "%{http_code}")
-
-if [[ "$?" -eq 0 ]]; then
-  echo "Stage request still exists"
-  exit 1
-elif [[ "${HTTP_CODE}" -ne 404 ]]; then
-  echo "Wrong HTTP code returned: ${HTTP_CODE}"
-  exit 1
-else
-  echo "Stage request no longer exists"
-fi
 
 ########################################################################################################################
 # Test completed. Clean resources.
