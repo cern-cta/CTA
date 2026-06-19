@@ -288,7 +288,8 @@ echo "Checking stage request (GET STAGE) result with ${WLCG_TOKEN_STAGE_ALL_TEXT
 GET_STAGE_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/stage/${REQ_ID}")
 
 if [[ "$(echo ${GET_STAGE_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 1 ]] &&
-   [[ "$(echo ${GET_STAGE_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 1 ]]; then
+   [[ "$(echo ${GET_STAGE_RESP} | jq -r '.files[] | select(has("error")) | .path' | wc -l)" == "${FILE2}" ]] &&
+   [[ "$(echo ${GET_STAGE_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 2 ]]; then
   echo "OK"
 else
   echo "ERROR: Unexpected result"
