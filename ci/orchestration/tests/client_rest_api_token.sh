@@ -262,25 +262,8 @@ SECONDS_PASSED=0
 STAGE_REQ_BODY="{\"files\":[{\"path\":\"${FILE1}\"}, {\"path\":\"${FILE2}\"}]}"
 REQ_ID=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_OTHER}" "${REST_API_URI}/stage/" -d "$STAGE_REQ_BODY" | jq -r .requestId)
 
-# Wait for file to be staged
-# Only 1 file should be staged
-
-while test "${FINAL_COUNT}" -ne 1; do
-
-  echo "$(date +%s): Waiting for files to be staged."
-  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
-    echo "$(date +%s): Timed out waiting for files to be staged."
-    exit 1
-  fi
-
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "DISK_AND_TAPE" ) | .locality' | wc -l)
-  let SECONDS_PASSED=SECONDS_PASSED+1
-  if [ "${FINAL_COUNT}" -ne 1 ]; then
-    sleep 1
-  fi
-done
-
-echo "All files staged."
+# Request will never complete, because tokens gives no permission to stage files
+echo "Bypassing stage request completion check."
 
 echo "Checking stage request (GET STAGE) result with ${WLCG_TOKEN_STAGE_ALL_TEXT} token..."
 
@@ -327,25 +310,8 @@ SECONDS_PASSED=0
 STAGE_REQ_BODY="{\"files\":[{\"path\":\"${FILE1}\"}, {\"path\":\"${FILE2}\"}]}"
 REQ_ID=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_POLL_ALL}" "${REST_API_URI}/stage/" -d "$STAGE_REQ_BODY" | jq -r .requestId)
 
-# Wait for file to be staged
-# Only 1 file should be staged
-
-while test "${FINAL_COUNT}" -ne 1; do
-
-  echo "$(date +%s): Waiting for files to be staged."
-  if test "${SECONDS_PASSED}" -eq "${TIMEOUT}"; then
-    echo "$(date +%s): Timed out waiting for files to be staged."
-    exit 1
-  fi
-
-  FINAL_COUNT=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" -H "Authorization: Bearer ${WLCG_TOKEN_STAGE_ALL}" "${REST_API_URI}/archiveinfo/" -d "${ARCHIVEINFO_REQ_BODY}" | jq '.[] | select(.locality == "DISK_AND_TAPE" ) | .locality' | wc -l)
-  let SECONDS_PASSED=SECONDS_PASSED+1
-  if [ "${FINAL_COUNT}" -ne 1 ]; then
-    sleep 1
-  fi
-done
-
-echo "All files staged."
+# Request will never complete, because tokens gives no permission to stage files
+echo "Bypassing stage request completion check."
 
 echo "Checking stage request (GET STAGE) result with ${WLCG_TOKEN_STAGE_ALL_TEXT} token..."
 
