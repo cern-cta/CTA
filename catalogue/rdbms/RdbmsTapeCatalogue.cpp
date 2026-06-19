@@ -548,11 +548,6 @@ uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(const std::string& vid) const {
   return getNbFilesOnTape(conn, vid);
 }
 
-bool RdbmsTapeCatalogue::tapeHasFilesInRecycleLog(const std::string& vid) const {
-  auto conn = m_connPool->getConn();
-  return tapeHasFilesInRecycleLog(conn, vid);
-}
-
 void RdbmsTapeCatalogue::modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
                                              const std::string& vid,
                                              const std::string& mediaType) {

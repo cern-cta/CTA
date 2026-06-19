@@ -1559,9 +1559,6 @@ TEST_P(cta_catalogue_TapeTest, modifyTapeEncryptionKeyName_tapeWithFilesInRecycl
 
   ASSERT_EQ(0, m_catalogue->Tape()->getNbFilesOnTape(m_tape1.vid));
 
-  // A tape with files in FILE_RECYCLE_LOG is considered non-empty
-  ASSERT_TRUE(m_catalogue->Tape()->tapeHasFilesInRecycleLog(m_tape1.vid));
-
   // Changing the encryption key must be forbidden on non-empty tapes,
   // including tapes whose files are only present in the recycle log
   ASSERT_THROW(m_catalogue->Tape()->modifyTapeEncryptionKeyName(m_admin, m_tape1.vid, "new_encryption_key"),

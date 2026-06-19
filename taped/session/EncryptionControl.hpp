@@ -39,14 +39,12 @@ public:
    * @param m_drive The drive object on which the encryption is to be enabled.
    * @param volInfo The volume info used by encryption script: VID, tape pool name, encryption ID
    * @param catalogue Catalogue instance to modify tape encryption key
-   * @param tapeDrive The tape drive name
    * @param isWriteSession if true, set encryption key when writing to the new tape.
    * @return {true, keyName, key, stdout} if the encryption has been set, {false, "", "", stdout} otherwise.
    */
   EncryptionStatus enable(castor::tape::tapeserver::drive::DriveInterface& m_drive,
                           castor::tape::tapeserver::daemon::VolumeInfo& volInfo,
                           cta::catalogue::Catalogue& catalogue,
-                          const std::string& tapeDrive,
                           bool isWriteSession = false);
 
   /**

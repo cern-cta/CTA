@@ -164,8 +164,6 @@ public:
    */
   virtual uint64_t getNbFilesOnTape(const std::string& vid) const = 0;
 
-  virtual bool tapeHasFilesInRecycleLog(const std::string& vid) const = 0;
-
   virtual void modifyTapeMediaType(const common::dataStructures::SecurityIdentity& admin,
                                    const std::string& vid,
                                    const std::string& mediaType) = 0;

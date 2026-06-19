@@ -32,7 +32,6 @@ EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scri
 auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& m_drive,
                                castor::tape::tapeserver::daemon::VolumeInfo& volInfo,
                                cta::catalogue::Catalogue& catalogue,
-                               const std::string& tapeDrive,
                                bool isWriteSession) -> EncryptionStatus {
   EncryptionStatus encStatus;
   if (m_path.empty()) {
@@ -92,7 +91,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
     const std::string hostname = cta::utils::getShortHostname();
 
     cta::common::dataStructures::SecurityIdentity admin;
-    admin.username = c_defaultUserNameUpdate + " " + tapeDrive;
+    admin.username = c_defaultUserNameUpdate + " " + m_drive.config.unitName;
     admin.host = hostname;
 
     try {
@@ -106,7 +105,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
                                         cta::common::dataStructures::Tape::ACTIVE,
                                         disabledReason);
 
-      throw cta::exception::Exception(disabledReason);
+      throw;
     }
     encStatus.on = true;
   }
