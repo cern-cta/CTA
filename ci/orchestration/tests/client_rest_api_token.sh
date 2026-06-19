@@ -187,8 +187,8 @@ GET_STAGE_POLL_ALL_RESP=$(curl ${CURL_OPTS} -L -s -H "Accept: application/json" 
 SUCCESS=true
 
 echo "With no ${WLCG_TOKEN_OTHER_TEXT} token: "
-if [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r 'files[] | select(has("error")) | .error' | wc -l)" -eq 2 ]] &&
-   [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r 'files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 0 ]]; then
+if [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 2 ]] &&
+   [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 0 ]]; then
   echo "OK"
 else
   echo "ERROR: Unexpected result"
@@ -197,8 +197,8 @@ else
 fi
 
 echo "With ${WLCG_TOKEN_STAGE_ALL_TEXT} token: "
-if [[ "$(echo ${GET_STAGE_STAGE_ALL_RESP} | jq -r 'files[] | select(has("error")) | .error' | wc -l)" -eq 0 ]] &&
-   [[ "$(echo ${GET_STAGE_STAGE_ALL_RESP} | jq -r 'files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 2 ]]; then
+if [[ "$(echo ${GET_STAGE_STAGE_ALL_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 0 ]] &&
+   [[ "$(echo ${GET_STAGE_STAGE_ALL_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 2 ]]; then
   echo "OK"
 else
   echo "ERROR: Unexpected result"
@@ -207,8 +207,8 @@ else
 fi
 
 echo "With ${WLCG_TOKEN_POLL_ALL_TEXT} token: "
-if [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r 'files[] | select(has("error")) | .error' | wc -l)" -eq 0 ]] &&
-   [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r 'files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 2 ]]; then
+if [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 0 ]] &&
+   [[ "$(echo ${GET_STAGE_OTHER_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk' | wc -l)" -eq 2 ]]; then
   echo "OK"
 else
   echo "ERROR: Unexpected result"
@@ -217,8 +217,8 @@ else
 fi
 
 echo "With ${WLCG_TOKEN_STAGE_TEST1_TEXT} token: "
-if [[ "$(echo ${GET_STAGE_POLL_ALL_RESP} | jq -r '.[] | select(has("error")) | .error' | wc -l)" -eq 1 ]] &&
-   [[ "$(echo ${GET_STAGE_POLL_ALL_RESP} | jq -r '.[] | select(has("onDisk")) | .onDisk')" == "true" ]]; then
+if [[ "$(echo ${GET_STAGE_POLL_ALL_RESP} | jq -r '.files[] | select(has("error")) | .error' | wc -l)" -eq 1 ]] &&
+   [[ "$(echo ${GET_STAGE_POLL_ALL_RESP} | jq -r '.files[] | select(has("onDisk")) | .onDisk')" == "true" ]]; then
   echo "OK"
 else
   echo "ERROR: Unexpected result"
