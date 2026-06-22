@@ -727,6 +727,9 @@ void RdbmsTapeCatalogue::modifyTapeEncryptionKeyName(const common::dataStructure
       VID = :VID
   )SQL";
   auto conn = m_connPool->getConn();
+  if (tapeHasFiles(conn, vid) || tapeHasFilesInRecycleLog(conn, vid)) {
+    throw UserSpecifiedANonEmptyTapeForEncryptionKey("Cannot modify tape encryption key because the tape is not empty");
+  }
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":ENCRYPTION_KEY_NAME", optionalEncryptionKeyName);
   stmt.bindString(":LAST_UPDATE_USER_NAME", admin.username);
@@ -1286,6 +1289,45 @@ uint64_t RdbmsTapeCatalogue::getNbFilesOnTape(rdbms::Conn& conn, const std::stri
   auto rset = stmt.executeQuery();
   rset.next();
   return rset.columnUint64("NB_FILES");
+}
+
+bool RdbmsTapeCatalogue::tapeHasFiles(rdbms::Conn& conn, const std::string& vid) const {
+  const char* const sql = R"SQL(
+    SELECT VID
+    FROM TAPE
+    WHERE VID = :VID
+    AND EXISTS (
+      SELECT 1
+      FROM TAPE_FILE
+      WHERE TAPE_FILE.VID = TAPE.VID
+    )
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":VID", vid);
+  auto rset = stmt.executeQuery();
+
+  return rset.next();
+}
+
+bool RdbmsTapeCatalogue::tapeHasFilesInRecycleLog(rdbms::Conn& conn, const std::string& vid) const {
+  const char* const sql = R"SQL(
+    SELECT VID
+    FROM TAPE
+    WHERE VID = :VID
+    AND EXISTS (
+      SELECT 1 FROM
+      FILE_RECYCLE_LOG
+      WHERE FILE_RECYCLE_LOG.VID = TAPE.VID
+    )
+  )SQL";
+
+  auto stmt = conn.createStmt(sql);
+
+  stmt.bindString(":VID", vid);
+  auto rset = stmt.executeQuery();
+
+  return rset.next();
 }
 
 void RdbmsTapeCatalogue::resetTapeCounters(rdbms::Conn& conn,

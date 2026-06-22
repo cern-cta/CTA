@@ -88,9 +88,25 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
   // In write session check if we need to set the key name for the new tape
   // If tape pool encryption is enabled and key name is empty, it means we are writing to the new tape
   if (isWriteSession && (pool->encryptionKeyName || pool->encryption) && !volInfo.encryptionKeyName.has_value()) {
-    catalogue.Tape()->modifyTapeEncryptionKeyName({"ctaops", cta::utils::getShortHostname()},
-                                                  volInfo.vid,
-                                                  encStatus.keyName);
+    const std::string hostname = cta::utils::getShortHostname();
+
+    cta::common::dataStructures::SecurityIdentity admin;
+    admin.username = c_defaultUserNameUpdate + " " + m_drive.config.unitName;
+    admin.host = hostname;
+
+    try {
+      catalogue.Tape()->modifyTapeEncryptionKeyName(admin, volInfo.vid, encStatus.keyName);
+    } catch (const cta::catalogue::UserSpecifiedANonEmptyTapeForEncryptionKey&) {
+      const std::string disabledReason = "[cta-taped] forbidden to set an encryption key on a non empty tape.";
+
+      catalogue.Tape()->modifyTapeState(admin,
+                                        volInfo.vid,
+                                        cta::common::dataStructures::Tape::DISABLED,
+                                        cta::common::dataStructures::Tape::ACTIVE,
+                                        disabledReason);
+
+      throw;
+    }
     encStatus.on = true;
   }
 
