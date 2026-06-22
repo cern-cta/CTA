@@ -141,7 +141,7 @@ int main(const int argc, char* const* const argv) {
   // use castor config to avoid dependency on xroot-ssi
   // Configuration config(config_file);
 
-  lc.logEvent(log::INFO, "Starting cta-frontend-grpc", semconv::log::EventNameValues::kProgramStarting);
+  lc.log(log::INFO, "Starting cta-frontend-grpc");
 
   // try to update port from config
   if (frontendService->getPort().has_value()) {

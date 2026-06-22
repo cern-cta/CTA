@@ -286,9 +286,9 @@ kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- bash -c "dnf
 kubectl -n "${NAMESPACE}" exec "${CTA_FRONTEND_POD}" -c cta-frontend -- bash -c "dnf install -y python3-pip && python3 -m pip install jsonschema"
 kubectl -n "${NAMESPACE}" exec "${CTA_TAPED_POD}" -c cta-taped -- bash -c "dnf install -y python3-pip && python3 -m pip install jsonschema"
 
-kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- python3 /root/verify_log_schema.py --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast || exit 1
-kubectl -n "${NAMESPACE}" exec "${CTA_FRONTEND_POD}" -c cta-frontend -- python3 /root/verify_log_schema.py --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-frontend.log --fail-fast || exit 1
-kubectl -n "${NAMESPACE}" exec "${CTA_TAPED_POD}" -c cta-taped -- python3 /root/verify_log_schema.py --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-taped.log --fail-fast || exit 1
+kubectl -n "${NAMESPACE}" exec "${CTA_MAINTD_POD}" -c cta-maintd -- python3 /root/verify_log_schema.py --program-name cta-maintd --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast || exit 1
+kubectl -n "${NAMESPACE}" exec "${CTA_FRONTEND_POD}" -c cta-frontend -- python3 /root/verify_log_schema.py --program-name cta-frontend --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-frontend.log --fail-fast || exit 1
+kubectl -n "${NAMESPACE}" exec "${CTA_TAPED_POD}" -c cta-taped -- python3 /root/verify_log_schema.py --program-name cta-taped --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-taped.log --fail-fast || exit 1
 
 
 exit 0
