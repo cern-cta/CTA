@@ -154,7 +154,7 @@
             "minimum": 0
           },
           "dataVolume": {
-            "type": "integer",
+            "type": "number",
             "minimum": 0
           },
           "driveTransferSpeedMBps": {
