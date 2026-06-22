@@ -665,12 +665,11 @@ void castor::tape::tapeserver::daemon::DataTransferSession::putDriveDown(const s
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
                                 logContext);
-  cta::common::dataStructures::SecurityIdentity cliId;
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = false;
   driveState.forceDown = false;
   driveState.setReasonFromLogMsg(cta::log::ERR, headerErrMsg);
-  m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, driveState, logContext);
+  m_scheduler.setDesiredDriveState(m_driveConfig.unitName, driveState, logContext);
 
   logContext.log(cta::log::ERR, "Notified client of end session with error");
 }

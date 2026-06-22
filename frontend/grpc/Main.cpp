@@ -141,7 +141,7 @@ int main(const int argc, char* const* const argv) {
   // use castor config to avoid dependency on xroot-ssi
   // Configuration config(config_file);
 
-  lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
+  lc.logEvent(log::INFO, "Starting cta-frontend-grpc", semconv::log::EventNameValues::kProgramStarting);
 
   // try to update port from config
   if (frontendService->getPort().has_value()) {
@@ -259,6 +259,7 @@ int main(const int argc, char* const* const argv) {
   lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
   server->Wait();
 
+  lc.logEvent(log::INFO, "Exiting cta-frontend-grpc", semconv::log::EventNameValues::kProgramExiting);
   // if we ever receive a shutdown, or want to handle termination of the frontend gracefully,
   // add the following line:
   shouldStopThreadPromise.set_value();

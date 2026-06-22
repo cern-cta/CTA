@@ -37,8 +37,7 @@ public:
                                  cta::common::dataStructures::DriveStatus status,
                                  log::LogContext& lc) = 0;
 
-  virtual void setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity& cliIdentity,
-                                    const std::string& driveName,
+  virtual void setDesiredDriveState(const std::string& driveName,
                                     const common::dataStructures::DesiredDriveState& desiredState,
                                     log::LogContext& lc) = 0;
 
