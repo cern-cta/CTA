@@ -39,7 +39,7 @@ validateKrb5Token(const std::string& token, server::TokenStorage& tokenStorage, 
 std::pair<Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
 extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::string_ref>& client_metadata,
                              bool jwtAuthEnabled,
-                             std::optional<std::shared_ptr<cta::auth::JwkCache>> pubkeyCache,
+                             std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
                              server::TokenStorage& tokenStorage,
                              const std::string& ourHost,
                              const std::string& clientHost,
@@ -65,7 +65,7 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
         return {Status(StatusCode::UNAUTHENTICATED, "Missing Authorization token"), std::nullopt};
       }
 
-      auto validationResult = cta::auth::ValidateJwt(token, pubkeyCache.value(), lc);
+      auto validationResult = cta::auth::ValidateJwt(token, pubkeyCache, lc);
 
       if (validationResult.isValid) {
         lc.log(cta::log::DEBUG,

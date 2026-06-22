@@ -30,7 +30,7 @@ namespace cta::frontend::grpc::common {
 std::pair<::grpc::Status, std::optional<cta::common::dataStructures::SecurityIdentity>>
 extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::string_ref>& client_metadata,
                              bool jwtAuthEnabled,
-                             std::optional<std::shared_ptr<cta::auth::JwkCache>> pubkeyCache,
+                             std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
                              server::TokenStorage& tokenStorage,
                              const std::string& ourHost,
                              const std::string& clientHost,

@@ -119,14 +119,14 @@ int main(const int argc, char* const* const argv) {
 
   const auto jwtConfig = frontendService->getJwtConfig();
 
-  std::optional<std::shared_ptr<cta::auth::JwkCache>> jwkCache;
+  std::shared_ptr<cta::auth::JwkCache> jwkCache;
   std::optional<std::jthread> cacheRefreshThread;
   std::promise<void> shouldStopThreadPromise;
 
   if (jwtConfig.has_value()) {
     // Build the shared JWK cache here even if JWT is disabled, in this case it will never be populated
-    auto jwksFetcher {std::make_shared<cta::auth::CurlJwksFetcher>(jwtConfig->m_jwksTotalTimeout)};
-    jwkCache = std::make_shared<cta::auth::JwkCache>(jwksFetcher,
+    auto jwksFetcher {std::make_unique<cta::auth::CurlJwksFetcher>(jwtConfig->m_jwksTotalTimeout)};
+    jwkCache = std::make_shared<cta::auth::JwkCache>(std::move(jwksFetcher),
                                                      jwtConfig->m_jwksUri,
                                                      jwtConfig->m_pubkeyTimeout,
                                                      frontendService->getLogContext());
@@ -137,7 +137,7 @@ int main(const int argc, char* const* const argv) {
              + " | key_timeout: " + std::to_string(jwtConfig->m_pubkeyTimeout)
              + " | cache_refresh_interval: " + std::to_string(jwtConfig->m_cacheRefreshInterval));
 
-    std::weak_ptr<cta::auth::JwkCache> weakCache {jwkCache.value()};
+    std::weak_ptr<cta::auth::JwkCache> weakCache {jwkCache};
     std::future<void> shouldStopThreadFuture {shouldStopThreadPromise.get_future()};
 
     lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
