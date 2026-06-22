@@ -540,9 +540,13 @@ FrontendService::FrontendService(const std::string& configFilename,
   }
 
   auto operationMode = config.getOptionValue<OperationMode>("cta.operation_mode");
-  m_operationMode = operationMode.value_or(OperationMode::ADMIN_ALL);
+
+  if (!operationMode.has_value()) {
+    throw exception::UserError("cta.operation_mode is not set in configuration file " + configFilename);
+  }
+  m_operationMode = operationMode.value();
+
   std::vector<log::Param> params;
-  params.emplace_back("source", operationMode.has_value() ? configFilename : "Compile time default");
   params.emplace_back("category", "cta.operation_mode");
   params.emplace_back("key", "mode");
   params.emplace_back("value", toString(m_operationMode));

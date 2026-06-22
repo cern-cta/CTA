@@ -72,7 +72,7 @@ public:
                    uint64_t missingFileCopiesMinAgeSecs,
                    const cta::log::LogContext& logContext,
                    std::set<AuthMethod, std::less<>> authMethods,
-                   std::optional<std::shared_ptr<cta::auth::JwkCache>> pubkeyCache,
+                   std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
                    server::TokenStorage& tokenStorage)
       : m_lc(logContext),
         m_catalogue(catalogue),
@@ -92,16 +92,16 @@ public:
                                                                            const cta::xrd::Request* request) final;
 
 private:
-  cta::log::LogContext m_lc;                                          // <! Provided by the frontendService
-  cta::catalogue::Catalogue& m_catalogue;                             //!< Reference to CTA Catalogue
-  cta::Scheduler& m_scheduler;                                        //!< Reference to CTA Scheduler
-  std::string m_instanceName;                                         //!< Instance name
-  cta::SchedulerDB_t& m_schedDb;                                      //!< Reference to CTA SchedulerDB
-  std::string m_catalogueConnString;                                  //!< Provided by frontendService
-  uint64_t m_missingFileCopiesMinAgeSecs;                             //!< Provided by the frontendService
-  std::set<AuthMethod, std::less<>> m_authMethods;                    //!< The authentication methods used
-  std::optional<std::shared_ptr<cta::auth::JwkCache>> m_pubkeyCache;  //!< Shared JWK cache for token validation
-  server::TokenStorage& m_tokenStorage;                               //!< Required for Kerberos token validation
+  cta::log::LogContext m_lc;                           // <! Provided by the frontendService
+  cta::catalogue::Catalogue& m_catalogue;              //!< Reference to CTA Catalogue
+  cta::Scheduler& m_scheduler;                         //!< Reference to CTA Scheduler
+  std::string m_instanceName;                          //!< Instance name
+  cta::SchedulerDB_t& m_schedDb;                       //!< Reference to CTA SchedulerDB
+  std::string m_catalogueConnString;                   //!< Provided by frontendService
+  uint64_t m_missingFileCopiesMinAgeSecs;              //!< Provided by the frontendService
+  std::set<AuthMethod, std::less<>> m_authMethods;     //!< The authentication methods used
+  std::shared_ptr<cta::auth::JwkCache> m_pubkeyCache;  //!< Shared JWK cache for token validation
+  server::TokenStorage& m_tokenStorage;                //!< Required for Kerberos token validation
 };
 
 // request object will be filled in by the Parser of the command on the client-side.

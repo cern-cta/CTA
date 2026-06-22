@@ -164,7 +164,7 @@ public:
       });
       return vec;
     } else {
-      static_assert(always_false<T>::value, "No getOptionValue specialization for vector element type");
+      static_assert(always_false<T>::value, "No getOptionValue specialization for element type");
     }
   }
 
