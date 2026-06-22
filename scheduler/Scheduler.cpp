@@ -151,7 +151,6 @@ std::string Scheduler::queueArchiveWithGivenId(const uint64_t archiveFileId,
                                                                                 queueCriteria.copyToPoolMap,
                                                                                 queueCriteria.mountPolicy);
 
-  cta::utils::Timer t2;
   std::string archiveReqAddr = m_db.queueArchive(instanceName, request, catalogueInfo, lc);
   auto schedulerDbTime = t.secs();
   auto schedulerDbTimeMSecs = t.msecs();
