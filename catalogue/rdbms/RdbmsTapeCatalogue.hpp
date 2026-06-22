@@ -166,6 +166,9 @@ private:
    */
   uint64_t getNbFilesOnTape(rdbms::Conn& conn, const std::string& vid) const;
 
+  bool tapeHasFiles(rdbms::Conn& conn, const std::string& vid) const;
+
+  bool tapeHasFilesInRecycleLog(rdbms::Conn& conn, const std::string& vid) const;
   /**
    * Reset the counters of a tape
    * @param conn the database connection

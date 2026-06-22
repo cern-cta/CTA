@@ -34,6 +34,7 @@ CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyTape);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTape);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedAWrongPrevState);
 CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonExistentTapeState);
+CTA_GENERATE_USER_EXCEPTION_CLASS(UserSpecifiedANonEmptyTapeForEncryptionKey);
 CTA_GENERATE_EXCEPTION_CLASS(TapeNotFound);
 
 class CreateTapeAttributes;

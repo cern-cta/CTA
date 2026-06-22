@@ -1169,6 +1169,11 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
     m_catalogue.Tape()->modifyTapeComment(m_cliIdentity, vid, comment);
   }
   if (encryptionkeyName.has_value()) {
+    try {
+      m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
+    } catch (const cta::catalogue::UserSpecifiedANonEmptyTapeForEncryptionKey&) {
+      throw cta::exception::UserError("ERROR: forbidden to set an encryption key on a non empty tape.");
+    }
     m_catalogue.Tape()->modifyTapeEncryptionKeyName(m_cliIdentity, vid, encryptionkeyName.value());
   }
   if (purchaseOrder.has_value()) {

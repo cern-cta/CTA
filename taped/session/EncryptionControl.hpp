@@ -61,6 +61,7 @@ public:
   const std::string& getScriptPath() const;
 
 private:
+  const std::string c_defaultUserNameUpdate = "cta-taped";
   bool m_useEncryption;  // Wether encryption must be enabled for the tape
 
   std::string m_path;  // Path to the key management script file
