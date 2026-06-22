@@ -72,7 +72,7 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
 
     auto [status, clientIdentity] = cta::frontend::grpc::common::extractAuthHeaderAndValidate(
       metadata,
-      m_frontendService->getWfeAuthMethod() != AuthMethod::JWT,
+      m_frontendService->getWfeAuthMethod() == AuthMethod::JWT,
       m_pubkeyCache,
       m_tokenStorage,
       ourHost,
@@ -407,7 +407,7 @@ CtaRpcImpl::Admin(::grpc::ServerContext* context, const cta::xrd::Request* reque
  * and makes the rpc calls available through this class
  */
 CtaRpcImpl::CtaRpcImpl(std::shared_ptr<cta::frontend::FrontendService> frontendService,
-                       std::optional<std::shared_ptr<cta::auth::JwkCache>> pubkeyCache,
+                       std::shared_ptr<cta::auth::JwkCache> pubkeyCache,
                        server::TokenStorage& tokenStorage)
     : m_frontendService(frontendService),
       m_pubkeyCache(pubkeyCache),

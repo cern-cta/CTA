@@ -51,7 +51,7 @@ private:
 
 class JwkCache {
 public:
-  JwkCache(std::shared_ptr<JwksFetcher> jwksFetcher,
+  JwkCache(std::unique_ptr<JwksFetcher> jwksFetcher,
            const std::string& jwkUri,
            int pubkeyTimeout,
            const cta::log::LogContext& lc);
@@ -59,8 +59,10 @@ public:
   void updateCache(time_t now);
   std::optional<JwkCacheEntry> find(const std::string& key);
 
+  JwksFetcher& getFetcher() { return *m_jwksFetcher; }
+
 private:
-  std::shared_ptr<JwksFetcher> m_jwksFetcher;
+  std::unique_ptr<JwksFetcher> m_jwksFetcher;
   const std::string m_jwksUri;
   std::shared_mutex m_mutex;  //!< mutex to handle parallel requests
   std::map<std::string, JwkCacheEntry, std::less<>> m_keymap;

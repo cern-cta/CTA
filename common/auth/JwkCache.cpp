@@ -11,11 +11,11 @@
 #include <mutex>
 
 namespace cta::auth {
-JwkCache::JwkCache(std::shared_ptr<JwksFetcher> fetcher,
+JwkCache::JwkCache(std::unique_ptr<JwksFetcher> fetcher,
                    const std::string& jwkUri,
                    int pubkeyTimeout,
                    const log::LogContext& lc)
-    : m_jwksFetcher(fetcher),
+    : m_jwksFetcher(std::move(fetcher)),
       m_jwksUri(jwkUri),
       m_pubkeyTimeout(pubkeyTimeout),
       m_lc(lc) {};
