@@ -629,7 +629,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -870,7 +870,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -1145,7 +1145,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -1365,7 +1365,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -1591,7 +1591,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -1818,7 +1818,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -2050,7 +2050,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
   DataTransferConfig castorConf;
@@ -2274,7 +2274,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // 8) Create the data transfer session
   DataTransferConfig castorConf;
@@ -2440,7 +2440,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // 8) Create the data transfer session
   DataTransferConfig castorConf;
@@ -2613,7 +2613,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -2802,7 +2802,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -3003,7 +3003,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -3206,7 +3206,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -3406,7 +3406,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -3607,7 +3607,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -3828,7 +3828,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
   DataTransferConfig castorConf;
@@ -3993,7 +3993,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = true;
   driveState.forceDown = false;
-  scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
+  scheduler.setDesiredDriveState(driveConfig.unitName, driveState, logContext);
 
   // Create cleaner session
   DataTransferConfig castorConf;

@@ -766,7 +766,7 @@ int DriveHandler::runChild() {
         driveState.reason = currentDesiredDriveState.reason.value();
       }
 
-      scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, m_lc);
+      scheduler->setDesiredDriveState(m_driveConfig.unitName, driveState, m_lc);
       scheduler->reportDriveConfig(m_driveConfig, m_tapedConfig, m_lc);
     } catch (cta::exception::Exception& ex) {
       params.add(semconv::log::exceptionMessage, ex.getMessageValue()).add("Backtrace", ex.backtrace());
