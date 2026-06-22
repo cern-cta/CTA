@@ -986,21 +986,10 @@ common::dataStructures::DesiredDriveState Scheduler::getDesiredDriveState(const 
 //------------------------------------------------------------------------------
 // setDesiredDriveState
 //------------------------------------------------------------------------------
-void Scheduler::setDesiredDriveState(const common::dataStructures::SecurityIdentity& cliIdentity,
-                                     const std::string& driveName,
+void Scheduler::setDesiredDriveState(const std::string& driveName,
                                      const common::dataStructures::DesiredDriveState& desiredState,
                                      log::LogContext& lc) {
-  utils::Timer t;
   m_tapeDrivesState->setDesiredDriveState(driveName, desiredState, lc);
-  auto schedulerDbTime = t.secs();
-  log::ScopedParamContainer spc(lc);
-  spc.add("drive", driveName)
-    .add("up", desiredState.up ? "up" : "down")
-    .add("force", desiredState.forceDown ? "yes" : "no")
-    .add("reason", desiredState.reason.value_or(""))
-    .add("comment", desiredState.comment.value_or(""))
-    .add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Scheduler::setDesiredDriveState(): success.");
 }
 
 bool Scheduler::checkDriveCanBeCreated(const cta::common::dataStructures::DriveInfo& driveInfo, log::LogContext& lc) {

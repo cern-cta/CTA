@@ -273,7 +273,7 @@ void DriveHandler::kill() {
       scoped.add("killSignal", WTERMSIG(status));
       scoped.add("status", "failure");
       scoped.add("tapeDrive", m_driveConfig.unitName);
-      m_lc.log(cta::log::INFO, "Tape session finished");
+      m_lc.logEvent(cta::log::INFO, "Tape session finished", cta::semconv::log::EventNameValues::kTapeSessionFinished);
       m_pid = -1;
     } catch (exception::Exception& ex) {
       params.add(semconv::log::exceptionMessage, ex.getMessageValue());
@@ -498,13 +498,13 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
       scoped.add("Error_sessionKilled", 1);
       scoped.add("killSignal", WTERMSIG(processStatus));
       scoped.add("status", "failure");
-      m_lc.log(cta::log::INFO, "Tape session finished");
+      m_lc.logEvent(cta::log::INFO, "Tape session finished", cta::semconv::log::EventNameValues::kTapeSessionFinished);
     }
     // In all cases we log the end of the session.
     log::ScopedParamContainer scoped(m_lc);
     scoped.add("tapeDrive", m_driveConfig.unitName);
     scoped.add("killSignal", WTERMSIG(processStatus));
-    m_lc.log(cta::log::INFO, "Tape session finished");
+    m_lc.logEvent(cta::log::INFO, "Tape session finished", cta::semconv::log::EventNameValues::kTapeSessionFinished);
     // And record we do not have a process anymore.
     m_pid = -1;
   }
@@ -765,7 +765,7 @@ int DriveHandler::runChild() {
         driveState.reason = currentDesiredDriveState.reason.value();
       }
 
-      scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, m_lc);
+      scheduler->setDesiredDriveState(m_driveConfig.unitName, driveState, m_lc);
       scheduler->reportDriveConfig(m_driveConfig, m_tapedConfig, m_lc);
     } catch (cta::exception::Exception& ex) {
       params.add(semconv::log::exceptionMessage, ex.getMessageValue()).add("Backtrace", ex.backtrace());
@@ -940,18 +940,17 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
   log::ScopedParamContainer params(m_lc);
   int logLevel = log::ERR;
   params.add("tapeDrive", m_driveConfig.unitName);
-  m_lc.log(logLevel, errorMsg);
+  m_lc.logEvent(logLevel, errorMsg, cta::semconv::log::EventNameValues::kPuttingTapeDriveDown);
   try {
     scheduler->reportDriveStatus(driveInfo,
                                  cta::common::dataStructures::MountType::NoMount,
                                  cta::common::dataStructures::DriveStatus::Down,
                                  m_lc);
-    cta::common::dataStructures::SecurityIdentity securityIdentity;
     cta::common::dataStructures::DesiredDriveState driveState;
     driveState.up = false;
     driveState.forceDown = false;
     driveState.setReasonFromLogMsg(logLevel, errorMsg);
-    scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, m_lc);
+    scheduler->setDesiredDriveState(m_driveConfig.unitName, driveState, m_lc);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer param(m_lc);
     param.add(semconv::log::exceptionMessage, ex.getMessageValue());

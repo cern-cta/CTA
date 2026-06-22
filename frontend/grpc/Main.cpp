@@ -158,7 +158,7 @@ int main(const int argc, char* const* const argv) {
   frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache, tokenStorage);
   std::weak_ptr<cta::auth::JwkCache> weakCache = jwkCache;
 
-  lc.log(log::INFO, "Starting cta-frontend-grpc " + std::string(CTA_VERSION));
+  lc.log(log::INFO, "Starting cta-frontend-grpc");
 
   // try to update port from config
   if (frontendService->getPort().has_value()) {
@@ -298,6 +298,7 @@ int main(const int argc, char* const* const argv) {
   lc.log(cta::log::INFO, "Listening on socket address: " + server_address);
   server->Wait();
 
+<<<<<<< HEAD
   if (cacheRefreshThread.has_value()) {
     // if we ever receive a shutdown, or want to handle termination of the frontend gracefully,
     // add the following line:
@@ -305,5 +306,13 @@ int main(const int argc, char* const* const argv) {
     if (cacheRefreshThread->joinable()) {
       cacheRefreshThread->join();
     }
+=======
+  lc.logEvent(log::INFO, "Exiting cta-frontend-grpc", semconv::log::EventNameValues::kProgramExiting);
+  // if we ever receive a shutdown, or want to handle termination of the frontend gracefully,
+  // add the following line:
+  shouldStopThreadPromise.set_value();
+  if (cacheRefreshThread.joinable()) {
+    cacheRefreshThread.join();
+>>>>>>> 4b6ce4d071 (Improve log schema)
   }
 }

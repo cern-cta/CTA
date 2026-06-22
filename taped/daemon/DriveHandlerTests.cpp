@@ -96,9 +96,8 @@ public:
                     cta::common::dataStructures::MountType type,
                     cta::common::dataStructures::DriveStatus status,
                     cta::log::LogContext& lc));
-  MOCK_METHOD4(setDesiredDriveState,
-               void(const cta::common::dataStructures::SecurityIdentity& cliIdentity,
-                    const std::string& driveName,
+  MOCK_METHOD3(setDesiredDriveState,
+               void(const std::string& driveName,
                     const cta::common::dataStructures::DesiredDriveState& desiredState,
                     cta::log::LogContext& lc));
   MOCK_METHOD2(checkDriveCanBeCreated,
@@ -170,7 +169,7 @@ public:
     m_scheduler = std::make_shared<NiceMock<cta::SchedulerMock>>();
     ON_CALL(*m_scheduler, ping(_)).WillByDefault(Return());
     ON_CALL(*m_scheduler, reportDriveStatus(_, _, _, _)).WillByDefault(Return());
-    ON_CALL(*m_scheduler, setDesiredDriveState(_, _, _, _)).WillByDefault(Return());
+    ON_CALL(*m_scheduler, setDesiredDriveState(_, _, _)).WillByDefault(Return());
     ON_CALL(*m_scheduler, checkDriveCanBeCreated(_, _)).WillByDefault(Return(true));
     ON_CALL(*m_scheduler, getDesiredDriveState(_, _))
       .WillByDefault(Return(cta::common::dataStructures::DesiredDriveState()));
@@ -480,7 +479,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   // It cannot set desired drive state into the catalogue, so it should mark the drive as down, and the session
   // cannot continue.
   m_logger.clearLog();
-  EXPECT_CALL(*m_scheduler, setDesiredDriveState(_, _, _, _))
+  EXPECT_CALL(*m_scheduler, setDesiredDriveState(_, _, _))
     .WillOnce(Throw(cta::exception::Exception("Failed to set desired drive state")))
     .WillRepeatedly(Return());
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
@@ -586,7 +585,7 @@ TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
   ASSERT_NE(std::string::npos, logToCheck.find("the cleaner session crashed. Putting the drive down."));
 
   // Session crashed during the cleaning session something happens with scheduler method setDesiredDriveState
-  EXPECT_CALL(*m_scheduler, setDesiredDriveState(_, _, _, _))
+  EXPECT_CALL(*m_scheduler, setDesiredDriveState(_, _, _))
     .WillOnce(Throw(cta::exception::Exception("Failed to set desired drive state.")))
     .WillRepeatedly(Return());
   m_logger.clearLog();

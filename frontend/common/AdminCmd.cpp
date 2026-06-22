@@ -1645,7 +1645,7 @@ std::string AdminCmd::setDriveState(const std::string& regex,
     const auto regexResult = driveNameRegex.exec(tapeDriveName);
     if (!regexResult.empty()) {
       is_found = true;
-      m_scheduler.setDesiredDriveState(m_cliIdentity, tapeDriveName, desiredDriveState, m_lc);
+      m_scheduler.setDesiredDriveState(tapeDriveName, desiredDriveState, m_lc);
 
       cmdlineOutput << "Drive " << tapeDriveName << ": set ";
       if (!desiredDriveState.comment) {

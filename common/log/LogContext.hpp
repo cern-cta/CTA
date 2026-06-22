@@ -88,6 +88,25 @@ public:
            const std::source_location location = std::source_location::current()) noexcept;
 
   /**
+   * Writes a message into the CTA logging system. This method adds an additional
+   * Event Name attribute to the log entry.
+   *
+   * Note that this version of logMsg() implicitly uses the current time as
+   * the time stamp of the message.
+   *
+   * All the parameters present in the context will be added to the log message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   * @param eventName the event name.
+   * @param location source location of where the log statement was executed
+   */
+  void logEvent(int priority,
+                std::string_view msg,
+                std::string_view eventName,
+                const std::source_location location = std::source_location::current()) noexcept;
+
+  /**
    * Logs a multiline backtrace as multiple entries in the logs, without
    * the context
    * @param priority the logging priority

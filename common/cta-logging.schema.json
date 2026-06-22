@@ -25,7 +25,7 @@
       "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}[+-]\\d{4}$"
     },
     "log_schema_version": {
-      "const": "0.1.0",
+      "const": "0.2.0",
       "description": "Version identifier of the log schema."
     },
     "cta_version": {
@@ -79,7 +79,142 @@
     "message": {
       "type": "string",
       "description": "Human-readable log message describing the event."
+    },
+    "event_name": {
+      "type": "string",
+      "enum": [
+        "program_starting",
+        "program_exiting",
+        "tape_session_finished",
+        "putting_tape_drive_down",
+        "putting_tape_drive_up"
+      ],
+      "description": "The name of the specific event triggering this log."
     }
   },
-  "additionalProperties": true
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "event_name": {
+            "const": "tape_session_finished"
+          },
+          "program": {
+            "const": "cta-taped"
+          }
+        },
+        "required": [
+          "event_name",
+          "program"
+        ]
+      },
+      "then": {
+        "required": [
+          "logicalLibrary",
+          "mountType",
+          "status",
+          "tapePool",
+          "tapeVid",
+          "vo",
+          "volReqId",
+          "tapeDrive",
+          "filesCount",
+          "dataVolume",
+          "driveTransferSpeedMBps",
+          "mountAttempted"
+        ],
+        "properties": {
+          "logicalLibrary": {
+            "type": "string"
+          },
+          "mountType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "tapePool": {
+            "type": "string"
+          },
+          "tapeVid": {
+            "type": "string"
+          },
+          "vo": {
+            "type": "string"
+          },
+          "volReqId": {
+            "type": "string"
+          },
+          "tapeDrive": {
+            "type": "string"
+          },
+          "filesCount": {
+            "type": "string"
+          },
+          "dataVolume": {
+            "type": "string"
+          },
+          "driveTransferSpeedMBps": {
+            "type": "string"
+          },
+          "mountAttempted": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_name": {
+            "const": "putting_tape_drive_down"
+          },
+          "program": {
+            "const": "cta-taped"
+          }
+        },
+        "required": [
+          "event_name",
+          "program"
+        ]
+      },
+      "then": {
+        "required": [
+          "drive_name"
+        ],
+        "properties": {
+          "drive_name": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "event_name": {
+            "const": "putting_tape_drive_up"
+          },
+          "program": {
+            "const": "cta-frontend"
+          }
+        },
+        "required": [
+          "event_name",
+          "program"
+        ]
+      },
+      "then": {
+        "required": [
+          "drive_name"
+        ],
+        "properties": {
+          "drive_name": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  ]
 }

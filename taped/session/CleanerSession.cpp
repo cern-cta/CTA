@@ -88,12 +88,11 @@ void cta::tape::daemon::CleanerSession::setDriveDownAfterCleanerFailed(const std
                                 cta::common::dataStructures::MountType::NoMount,
                                 cta::common::dataStructures::DriveStatus::Down,
                                 lc);
-  cta::common::dataStructures::SecurityIdentity cliId;
   cta::common::dataStructures::DesiredDriveState driveState;
   driveState.up = false;
   driveState.forceDown = false;
   driveState.setReasonFromLogMsg(cta::log::ERR, errorMsg);
-  m_scheduler.setDesiredDriveState(cliId, m_driveConfig.unitName, driveState, lc);
+  m_scheduler.setDesiredDriveState(m_driveConfig.unitName, driveState, lc);
 }
 
 //------------------------------------------------------------------------------

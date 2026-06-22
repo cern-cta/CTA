@@ -212,12 +212,10 @@ public:
    * Sets the desired drive state. This function is used by the front end to pass instructions to the
    * object store for the requested drive status. The status is reset to down by the drives
    * on hardware failures.
-   * @param cliIdentity The identity of the user requesting the drive to put up of down.
    * @param driveName The drive name
    * @param desiredState, the structure that contains the desired state informations
    */
-  void setDesiredDriveState(const cta::common::dataStructures::SecurityIdentity& cliIdentity,
-                            const std::string& driveName,
+  void setDesiredDriveState(const std::string& driveName,
                             const common::dataStructures::DesiredDriveState& desiredState,
                             log::LogContext& lc) override;
 
