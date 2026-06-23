@@ -65,7 +65,7 @@ CtaRpcImpl::checkWFERequestAuthMetadata(::grpc::ServerContext* context,
       return {::grpc::Status(::grpc::StatusCode::UNAUTHENTICATED, "Certificate doesn't match identity"), std::nullopt};
     }
 
-    SecurityIdentity clientIdentity(clientHost, ourHost, context->peer(), "grpc_mtls");
+    SecurityIdentity clientIdentity(clientHost, ourHost, context->peer(), SecurityIdentity::Protocol::MTLS);
     return {::grpc::Status::OK, clientIdentity};
   } else if (m_frontendService->getWfeAuthMethod() == AuthMethod::JWT) {
     const auto& metadata = context->client_metadata();

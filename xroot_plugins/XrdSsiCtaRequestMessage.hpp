@@ -21,9 +21,7 @@ namespace cta::xrd {
  */
 class RequestMessage {
 public:
-  RequestMessage(const XrdSsiEntity& client, const XrdSsiCtaServiceProvider* service)
-      : m_cliIdentity(client.name, cta::utils::getShortHostname(), client.host, client.prot),
-        m_service(*service) {}
+  RequestMessage(const XrdSsiEntity& client, const XrdSsiCtaServiceProvider* service);
 
   /*!
    * Process a Notification request or an Admin command request

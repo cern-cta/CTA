@@ -154,7 +154,7 @@ int main(const int argc, char* const* const argv) {
   // Initialize RPC service with shared frontend service and cache
   frontend::grpc::CtaRpcImpl svc(frontendService, jwkCache, tokenStorage);
 
-  lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
+  lc.log(log::INFO, "Starting cta-frontend-grpc " + std::string(CTA_VERSION));
 
   // try to update port from config
   if (frontendService->getPort().has_value()) {
