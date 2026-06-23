@@ -11,6 +11,8 @@
 using ::grpc::Status;
 using ::grpc::StatusCode;
 
+using cta::common::dataStructures::SecurityIdentity;
+
 namespace cta::frontend::grpc::common {
 
 std::pair<Status, std::string>
@@ -70,10 +72,10 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
       if (validationResult.isValid) {
         lc.log(cta::log::DEBUG,
                "JWT token validation successful. Our host: '" + ourHost + "', client host: '" + clientHost + "'");
-        cta::common::dataStructures::SecurityIdentity clientIdentity(validationResult.subjectClaim.value(),
-                                                                     std::string(ourHost),
-                                                                     std::string(clientHost),
-                                                                     "grpc_token");
+        SecurityIdentity clientIdentity(validationResult.subjectClaim.value(),
+                                        std::string(ourHost),
+                                        std::string(clientHost),
+                                        SecurityIdentity::Protocol::JWT);
         return {Status::OK, clientIdentity};
       } else {
         lc.log(cta::log::WARNING, "JWT authorization process error. Token validation failed.");
@@ -92,10 +94,10 @@ extractAuthHeaderAndValidate(const std::multimap<::grpc::string_ref, ::grpc::str
       auto [validationStatus, username] = validateKrb5Token(token, tokenStorage, lc);
 
       if (validationStatus.ok()) {
-        cta::common::dataStructures::SecurityIdentity clientIdentity(username,
-                                                                     std::string(ourHost),
-                                                                     std::string(clientHost),
-                                                                     "grpc_krb5");
+        SecurityIdentity clientIdentity(username,
+                                        std::string(ourHost),
+                                        std::string(clientHost),
+                                        SecurityIdentity::Protocol::KRB5);
         return {Status::OK, clientIdentity};
       } else {
         lc.log(cta::log::WARNING, "Kerberos authorization process error. Token validation failed.");

@@ -6,12 +6,31 @@
 #include "XrdSsiCtaRequestMessage.hpp"
 
 #include "AdminCmdStream.hpp"
+#include "common/dataStructures/SecurityIdentity.hpp"
 #include "frontend/common/AdminCmd.hpp"
 #include "frontend/common/PbException.hpp"
 #include "frontend/common/WorkflowEvent.hpp"
 #include "tools/CtaAdminCmdParser.hpp"
 
 namespace cta::xrd {
+
+using cta::common::dataStructures::SecurityIdentity;
+
+RequestMessage::RequestMessage(const XrdSsiEntity& client, const XrdSsiCtaServiceProvider* service)
+    : m_service(*service) {
+  std::string protoStr {client.prot};
+  SecurityIdentity::Protocol proto;
+
+  if (protoStr == "krb5") {
+    proto = SecurityIdentity::Protocol::KRB5;
+  } else if (protoStr == "sss") {
+    proto = SecurityIdentity::Protocol::SSS;
+  } else {
+    throw exception::PbException("Unrecognized protocol in XrdSsiEntity: " + protoStr);
+  }
+
+  m_cliIdentity = SecurityIdentity(client.name, cta::utils::getShortHostname(), client.host, proto);
+}
 
 void RequestMessage::process(const cta::xrd::Request& request,
                              cta::xrd::Response& response,

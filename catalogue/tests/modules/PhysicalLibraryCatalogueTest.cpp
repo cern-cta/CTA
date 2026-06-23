@@ -23,7 +23,7 @@ namespace unitTests {
 
 cta_catalogue_PhysicalLibraryTest::cta_catalogue_PhysicalLibraryTest()
     : m_dummyLog("dummy", "dummy"),
-      m_admin("admin", "admin", "admin", ""),
+      m_admin("admin", "admin", "admin"),
       m_physicalLibrary1(CatalogueTestUtils::getPhysicalLibrary1()),
       m_physicalLibrary2(CatalogueTestUtils::getPhysicalLibrary2()),
       m_physicalLibrary3(CatalogueTestUtils::getPhysicalLibrary3()) {}
