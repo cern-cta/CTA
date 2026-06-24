@@ -74,10 +74,10 @@ public:
       m_value.reset();
     } else if constexpr (std::is_same_v<U, std::string>) {
       m_value.emplace(std::in_place_type<std::string>, std::forward<T>(value));
-    } else if constexpr (std::is_convertible_v<T, std::string_view>) {
-      m_value.emplace(std::in_place_type<std::string>, std::string_view(value));
     } else if constexpr (std::is_same_v<U, bool>) {
       m_value.emplace(std::in_place_type<bool>, static_cast<bool>(value));
+    } else if constexpr (std::is_same_v<U, char>) {
+      m_value.emplace(std::in_place_type<std::string>, 1, value);
     } else if constexpr (std::is_integral_v<U>) {
       if constexpr (std::is_signed_v<U>) {
         m_value.emplace(std::in_place_type<int64_t>, static_cast<int64_t>(value));
@@ -92,6 +92,8 @@ public:
       std::ostringstream oss;
       oss << value;
       m_value.emplace(std::in_place_type<std::string>, std::move(oss).str());
+    } else if constexpr (std::is_convertible_v<U, std::string_view>) {
+      m_value.emplace(std::in_place_type<std::string>, std::string_view(value));
     } else {
       static_assert(always_false<U>::value, "Type not supported");
     }

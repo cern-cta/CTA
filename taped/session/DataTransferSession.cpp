@@ -396,6 +396,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
       cta::log::Param mountTypeParam("mountType", mountType);
       cta::log::Param statusParam("status", status);
       cta::log::Param mountAttemptedParam("mountAttempted", 0);
+      cta::log::Param logicalLibraryParam("logicalLibrary", std::nullopt);
+      cta::log::Param tapePoolParam("tapePool", std::nullopt);
+      cta::log::Param tapeVidParam("tapeVid", std::nullopt);
+      cta::log::Param voParam("vo", std::nullopt);
+      cta::log::Param volReqIdParam("volReqId", std::nullopt);
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
@@ -414,12 +419,14 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
                                                 mountIdParam,
                                                 mountTypeParam,
                                                 statusParam,
-                                                mountAttemptedParam};
+                                                mountAttemptedParam,
+                                                logicalLibraryParam,
+                                                tapePoolParam,
+                                                tapeVidParam,
+                                                voParam,
+                                                volReqIdParam};
         m_initialProcess.addLogParams(paramList);
         cta::log::LogContext::ScopedParam sp08(logContext, cta::log::Param("MountTransactionId", mountId));
-        cta::log::LogContext::ScopedParam sp11(
-          logContext,
-          cta::log::Param(cta::semconv::log::errorMessage, "Aborted: empty recall mount"));
         logContext.log(priority, "Notified client of end session with error");
       } catch (cta::exception::Exception& ex) {
         cta::log::LogContext::ScopedParam sp12(
@@ -542,6 +549,11 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
       cta::log::Param mountTypeParam("mountType", mountType);
       cta::log::Param statusParam("status", status);
       cta::log::Param mountAttemptedParam("mountAttempted", 0);
+      cta::log::Param logicalLibraryParam("logicalLibrary", std::nullopt);
+      cta::log::Param tapePoolParam("tapePool", std::nullopt);
+      cta::log::Param tapeVidParam("tapeVid", std::nullopt);
+      cta::log::Param voParam("vo", std::nullopt);
+      cta::log::Param volReqIdParam("volReqId", std::nullopt);
 
       cta::log::LogContext::ScopedParam sp1(logContext, errorMessageParam);
       try {
@@ -557,7 +569,12 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
                                                 mountIdParam,
                                                 mountTypeParam,
                                                 statusParam,
-                                                mountAttemptedParam};
+                                                mountAttemptedParam,
+                                                logicalLibraryParam,
+                                                tapePoolParam,
+                                                tapeVidParam,
+                                                voParam,
+                                                volReqIdParam};
         m_initialProcess.addLogParams(paramList);
         cta::log::LogContext::ScopedParam sp11(logContext, cta::log::Param("MountTransactionId", mountId));
         logContext.log(priority, "Notified client of end session with error");

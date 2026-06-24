@@ -144,25 +144,22 @@
             "type": "string"
           },
           "volReqId": {
-            "type": "integer"
+            "type": "string"
           },
           "tapeDrive": {
             "type": "string"
           },
           "filesCount": {
-            "type": "integer",
-            "minimum": 0
+            "type": "string"
           },
           "dataVolume": {
-            "type": "number",
-            "minimum": 0
+            "type": "string"
           },
           "driveTransferSpeedMBps": {
-            "type": "number"
+            "type": "string"
           },
           "mountAttempted": {
-            "type": "integer",
-            "minimum": 0
+            "type": "string"
           }
         }
       }
@@ -200,7 +197,7 @@
             "const": "putting_tape_drive_up"
           },
           "program": {
-            "const": "cta-taped"
+            "const": "cta-frontend"
           }
         },
         "required": [
