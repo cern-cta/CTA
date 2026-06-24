@@ -107,88 +107,6 @@ const std::map<SessionState, DriveHandler::Timeout> DriveHandler::m_dataMovement
 };
 
 //------------------------------------------------------------------------------
-// DriveHandler::getInitialStatus
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::getInitialStatus() {
-  // As we just start, we need to fork the first subprocess
-  m_processingStatus.forkRequested = true;
-  return m_processingStatus;
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::prepareForFork
-//------------------------------------------------------------------------------
-void DriveHandler::postForkCleanup() {
-  // We are in the child process of another handler. We can close our socket pair
-  // without re-registering it from poll.
-  m_socketPair.reset(nullptr);
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::fork
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::fork() {
-  // If anything fails while attempting to fork, we will have to declare ourselves
-  // failed and ask for a shutdown by sending the TERM signal to the parent process
-  // This will ensure the shutdown-kill sequence managed by the signal handler without code duplication.
-  // Record we no longer ask for fork
-  m_processingStatus.forkRequested = false;
-  try {
-    // Check we are in the right state (sanity check)
-    if (m_sessionState != SessionState::PendingFork) {
-      std::stringstream err;
-      err << "In DriveHandler::fork(): called while not in the expected state: " << session::toString(m_sessionState)
-          << " instead of " << session::toString(SessionState::PendingFork);
-      throw exception::Exception(err.str());
-    }
-    // First prepare a socket pair for this new subprocess
-    m_socketPair = std::make_unique<cta::server::SocketPair>();
-    // We don't want to fork telemetry state
-    cta::telemetry::shutdownTelemetry(m_lc);
-    // and fork
-    m_pid = ::fork();
-    exception::Errnum::throwOnMinusOne(m_pid, "In DriveHandler::fork(): failed to fork()");
-    m_sessionState = SessionState::StartingUp;
-    m_lastStateChangeTime = std::chrono::steady_clock::now();
-    if (!m_pid) {
-      // We are in the child process
-      SubprocessHandler::ProcessingStatus ret;
-      ret.forkState = SubprocessHandler::ForkState::child;
-      return ret;
-    } else {
-      // We are in the parent process
-      m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
-      // Compute the next timeout
-      m_processingStatus.nextTimeout = nextTimeout();
-      // Register our socket pair side for epoll
-      m_processManager.addFile(m_socketPair->getFdForAccess(server::SocketPair::Side::child), this);
-      // Ensure the parent has telemetry available
-      cta::telemetry::reinitTelemetry(m_lc);
-      // Create a catalogue handler in the parent process,
-      // to be able to properly handle a drive shutdown without having to reload the plugin catalogue libraries
-      if (!m_catalogue) {
-        const std::string catalogueHandlerName = "DriveHandlerParent-" + m_driveConfig.unitName;
-        m_catalogue = createCatalogue(catalogueHandlerName);
-      }
-      // We are now ready to react to timeouts and messages from the child process.
-      return m_processingStatus;
-    }
-  } catch (cta::exception::Exception& ex) {
-    cta::log::ScopedParamContainer params(m_lc);
-    params.add("tapeDrive", m_driveConfig.unitName).add(semconv::log::exceptionMessage, ex.getMessageValue());
-    m_lc.log(log::ERR, "Failed to fork drive process. Initiating shutdown with SIGTERM.");
-    // Wipe all previous states as we are shutting down
-    m_processingStatus = SubprocessHandler::ProcessingStatus();
-    m_sessionState = SessionState::Shutdown;
-    m_processingStatus.shutdownComplete = true;
-    m_processingStatus.forkState = SubprocessHandler::ForkState::parent;
-    // Initiate shutdown
-    ::kill(::getpid(), SIGTERM);
-    return m_processingStatus;
-  }
-}
-
-//------------------------------------------------------------------------------
 // DriveHandler::nextTimeout
 //------------------------------------------------------------------------------
 decltype(SubprocessHandler::ProcessingStatus::nextTimeout) DriveHandler::nextTimeout() {
@@ -512,23 +430,6 @@ SubprocessHandler::ProcessingStatus DriveHandler::processSigChild() {
 }
 
 //------------------------------------------------------------------------------
-// DriveHandler::processRefreshLoggerRequest
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::processRefreshLoggerRequest() {
-  // This subclass does not need to do refresh logger requests.
-  // If this function is called it means something went wrong.
-  throw cta::exception::Exception("In DriveHandler::processRefreshLoggerRequest(): should not have been called");
-}
-
-//------------------------------------------------------------------------------
-// DriveHandler::refreshLogger
-//------------------------------------------------------------------------------
-SubprocessHandler::ProcessingStatus DriveHandler::refreshLogger() {
-  m_socketPair->send("refresh_logger", server::SocketPair::Side::child);
-  return m_processingStatus;
-}
-
-//------------------------------------------------------------------------------
 // DriveHandler::processTimeout
 //------------------------------------------------------------------------------
 SubprocessHandler::ProcessingStatus DriveHandler::processTimeout() {
@@ -767,7 +668,6 @@ int DriveHandler::runChild() {
       }
 
       scheduler->setDesiredDriveState(securityIdentity, m_driveConfig.unitName, driveState, m_lc);
-      scheduler->reportDriveConfig(m_driveConfig, m_tapedConfig, m_lc);
     } catch (cta::exception::Exception& ex) {
       params.add(semconv::log::exceptionMessage, ex.getMessageValue()).add("Backtrace", ex.backtrace());
       m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
@@ -1103,13 +1003,6 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
     *(dynamic_cast<cta::Scheduler*>(scheduler)));
 
   return dataTransferSession->execute();
-}
-
-std::shared_ptr<cta::tape::daemon::TapedProxy> DriveHandler::createDriveHandlerProxy() const {
-  if (!m_socketPair) {
-    throw exception::Exception("In DriveHandler::createDriveHandlerProxy(): socket pair is null.");
-  }
-  return std::make_shared<cta::tape::daemon::DriveHandlerProxy>(*m_socketPair, m_lc);
 }
 
 }  // namespace cta::tape::daemon

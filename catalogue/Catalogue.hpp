@@ -11,7 +11,6 @@
 #include "catalogue/interfaces/DiskInstanceCatalogue.hpp"
 #include "catalogue/interfaces/DiskInstanceSpaceCatalogue.hpp"
 #include "catalogue/interfaces/DiskSystemCatalogue.hpp"
-#include "catalogue/interfaces/DriveConfigCatalogue.hpp"
 #include "catalogue/interfaces/DriveStateCatalogue.hpp"
 #include "catalogue/interfaces/FileRecycleLogCatalogue.hpp"
 #include "catalogue/interfaces/LogicalLibraryCatalogue.hpp"
@@ -63,7 +62,6 @@ public:
   virtual const std::unique_ptr<PhysicalLibraryCatalogue>& PhysicalLibrary() const = 0;
   virtual const std::unique_ptr<TapeFileCatalogue>& TapeFile() const = 0;
   virtual const std::unique_ptr<FileRecycleLogCatalogue>& FileRecycleLog() const = 0;
-  virtual const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() const = 0;
   virtual const std::unique_ptr<DriveStateCatalogue>& DriveState() const = 0;
   virtual const std::unique_ptr<ArchiveFileCatalogue>& ArchiveFile() const = 0;
 };  // class Catalogue

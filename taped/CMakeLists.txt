@@ -20,15 +20,3 @@ install (FILES ${CMAKE_CURRENT_BINARY_DIR}/cta-taped.1cta DESTINATION /usr/share
 install (FILES cta-taped.logrotate DESTINATION /etc/logrotate.d RENAME cta-taped)
 install (FILES cta-taped.sysconfig DESTINATION /etc/sysconfig RENAME cta-taped)
 install (FILES cta-taped.service DESTINATION /etc/systemd/system)
-
-# CTA's cta-taped integration tests.
-add_library(cta-tapedIntegrationTests SHARED
-  cta-tapedIntegrationTests.cpp)
-set_property(TARGET cta-tapedIntegrationTests PROPERTY SOVERSION "${CTA_SOVERSION}")
-set_property(TARGET cta-tapedIntegrationTests PROPERTY   VERSION "${CTA_LIBVERSION}")
-
-target_link_libraries(cta-tapedIntegrationTests
-  unitTestHelper
-  ctacommon)
-
-install(TARGETS cta-tapedIntegrationTests DESTINATION usr/${CMAKE_INSTALL_LIBDIR})

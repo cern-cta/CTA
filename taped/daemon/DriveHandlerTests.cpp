@@ -116,10 +116,6 @@ public:
                const tape::daemon::DriveConfigEntry& driveConfigEntry,
                const common::dataStructures::SecurityIdentity& identity,
                log::LogContext& lc));
-  MOCK_METHOD3(reportDriveConfig,
-               void(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-                    const cta::tape::daemon::common::TapedConfiguration& tapedConfig,
-                    log::LogContext& lc));
 };
 
 }  // namespace cta
@@ -177,7 +173,6 @@ public:
     ON_CALL(*m_scheduler, getDesiredDriveState(_, _))
       .WillByDefault(Return(cta::common::dataStructures::DesiredDriveState()));
     ON_CALL(*m_scheduler, createTapeDriveStatus(_, _, _, _, _, _, _)).WillByDefault(Return());
-    ON_CALL(*m_scheduler, reportDriveConfig(_, _, _)).WillByDefault(Return());
   }
 
 protected:
@@ -498,9 +493,6 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
   // It cannot report the drive configuration to the catalogue, so it should mark the drive as down, and the session
   // cannot continue.
   m_logger.clearLog();
-  EXPECT_CALL(*m_scheduler, reportDriveConfig(_, _, _))
-    .WillOnce(Throw(cta::exception::Exception("Failed to report drive config")))
-    .WillRepeatedly(Return());
   ASSERT_EQ(m_driveHandler->runChild(), EndOfSessionAction::MARK_DRIVE_AS_DOWN);
   checkReport();
   logToCheck = m_logger.getLog();

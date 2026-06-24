@@ -513,6 +513,7 @@ void AdminCmd::processDrive_Rm(xrd::Response& response) {
     throw exception::UserError(
       "You must provide a value for cta.schedulerdb.scheduler_backend_name in the frontend configuration !");
   }
+  // TODO:
   const auto tapeDriveNames =
     m_catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(m_schedulerBackendName.value());
   bool drivesFound = false;
@@ -1638,6 +1639,7 @@ std::string AdminCmd::setDriveState(const std::string& regex,
       "You must provide a value for cta.schedulerdb.scheduler_backend_name in the frontend configuration !");
   }
 
+  // TODO:
   const auto tapeDriveNames =
     m_catalogue.DriveConfig()->getTapeDriveNamesForSchedulerBackend(m_schedulerBackendName.value());
   bool is_found = false;

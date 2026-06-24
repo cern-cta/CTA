@@ -87,10 +87,6 @@ const std::unique_ptr<FileRecycleLogCatalogue>& DummyCatalogue::FileRecycleLog()
   return m_fileRecycleLog;
 }
 
-const std::unique_ptr<DriveConfigCatalogue>& DummyCatalogue::DriveConfig() const {
-  return m_driveConfig;
-}
-
 const std::unique_ptr<ArchiveFileCatalogue>& DummyCatalogue::ArchiveFile() const {
   return m_archiveFile;
 }

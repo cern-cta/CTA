@@ -32,7 +32,6 @@ file (GLOB CATALOGUE_LIB_SRC_FILES
   CatalogueFactoryFactory.cpp
   CatalogueSchema.cpp
   CmdLineTool.cpp
-  DriveConfig.cpp
   dummy/*.cpp
   rdbms/*.cpp
   retrywrappers/*.cpp

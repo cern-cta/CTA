@@ -11,7 +11,6 @@
 #include "catalogue/retrywrappers/DiskInstanceCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/DiskInstanceSpaceCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/DiskSystemCatalogueRetryWrapper.hpp"
-#include "catalogue/retrywrappers/DriveConfigCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/DriveStateCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/FileRecycleLogCatalogueRetryWrapper.hpp"
 #include "catalogue/retrywrappers/LogicalLibraryCatalogueRetryWrapper.hpp"
@@ -63,7 +62,6 @@ CatalogueRetryWrapper::CatalogueRetryWrapper(log::Logger& log,
         std::make_unique<PhysicalLibraryCatalogueRetryWrapper>(*m_catalogue, m_log, m_maxTriesToConnect)),
       m_tapeFile(std::make_unique<TapeFileCatalogueRetryWrapper>(*m_catalogue, m_log, m_maxTriesToConnect)),
       m_fileRecycleLog(std::make_unique<FileRecycleLogCatalogueRetryWrapper>(*m_catalogue, m_log, m_maxTriesToConnect)),
-      m_driveConfig(std::make_unique<DriveConfigCatalogueRetryWrapper>(*m_catalogue, m_log, m_maxTriesToConnect)),
       m_driveState(std::make_unique<DriveStateCatalogueRetryWrapper>(*m_catalogue, m_log, m_maxTriesToConnect)),
       m_archiveFile(std::make_unique<ArchiveFileCatalogueRetryWrapper>(*m_catalogue, m_log, m_maxTriesToConnect)) {}
 
@@ -141,10 +139,6 @@ const std::unique_ptr<TapeFileCatalogue>& CatalogueRetryWrapper::TapeFile() cons
 
 const std::unique_ptr<FileRecycleLogCatalogue>& CatalogueRetryWrapper::FileRecycleLog() const {
   return m_fileRecycleLog;
-}
-
-const std::unique_ptr<DriveConfigCatalogue>& CatalogueRetryWrapper::DriveConfig() const {
-  return m_driveConfig;
 }
 
 const std::unique_ptr<ArchiveFileCatalogue>& CatalogueRetryWrapper::ArchiveFile() const {

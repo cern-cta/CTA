@@ -25,12 +25,6 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
 
   // Get drives and drive configs
   m_tapeDrives = m_catalogue.DriveState()->getTapeDrives();
-  auto driveConfigs = m_catalogue.DriveConfig()->getTapeDriveConfigs();
-
-  // Convert to searchable map
-  for (const auto& config : driveConfigs) {
-    m_tapeDriveNameConfigMap[config.tapeDriveName].emplace_back(config);
-  }
 
   // Get scheduler backend name
   m_schedulerBackendName = m_scheduler.getSchedulerBackendName();
@@ -55,25 +49,14 @@ DriveLsResponseStream::DriveLsResponseStream(cta::catalogue::Catalogue& catalogu
   // Apply scheduler backend filter if not listing all drives
   if (!m_listAllDrives) {
     std::erase_if(m_tapeDrives, [this](const auto& drive) {
-      const auto& driveConfigs = m_tapeDriveNameConfigMap[drive.driveName];
       std::string driveSchedulerBackendName = "unknown";
 
       // Extract the SchedulerBackendName configuration if it exists
-      auto config_it =
-        std::find_if(driveConfigs.begin(),
-                     driveConfigs.end(),
-                     [&driveSchedulerBackendName](const cta::catalogue::DriveConfigCatalogue::DriveConfig& config) {
-                       if (config.keyName == "SchedulerBackendName") {
-                         driveSchedulerBackendName = config.value;
-                         return true;
-                       }
-                       return false;
-                     });
+      // TODO: if we want to filter by this it should be an explicit column in the catalogue
 
-      if (config_it == driveConfigs.end()) {
+      if (true) {
         m_lc.log(cta::log::ERR,
-                 "DriveLsStream::fillBuffer could not find SchedulerBackendName configuration for drive "
-                   + drive.driveName);
+                 "Unimplemented: could not find SchedulerBackendName configuration for drive " + drive.driveName);
       }
 
       return m_schedulerBackendName.value_or("") != driveSchedulerBackendName;
@@ -97,25 +80,13 @@ cta::xrd::Data DriveLsResponseStream::next() {
 
   const auto dr = m_tapeDrives[m_tapeDrivesIdx++];
 
-  const auto& driveConfigs = m_tapeDriveNameConfigMap[dr.driveName];
-
   // Extract the SchedulerBackendName configuration if it exists
   std::string driveSchedulerBackendName = "unknown";
   {
-    auto it =
-      std::find_if(driveConfigs.begin(),
-                   driveConfigs.end(),
-                   [&driveSchedulerBackendName](const cta::catalogue::DriveConfigCatalogue::DriveConfig& config) {
-                     if (config.keyName == "SchedulerBackendName") {
-                       driveSchedulerBackendName = config.value;
-                       return true;
-                     }
-                     return false;
-                   });
-    if (it == driveConfigs.end()) {
+    // TODO
+    if (true) {
       m_lc.log(cta::log::ERR,
-               "DriveLsResponseStream::next could not find SchedulerBackendName configuration for drive "
-                 + dr.driveName);
+               "Unimplemented: could not find SchedulerBackendName configuration for drive " + dr.driveName);
     }
   }
   cta::xrd::Data data;
@@ -155,16 +126,6 @@ cta::xrd::Data DriveLsResponseStream::next() {
     driveItem->set_reserved_bytes(dr.reservedBytes.value_or(0));
   }
   driveItem->set_session_elapsed_time(dr.sessionElapsedTime.value_or(0));
-
-  auto driveConfig = driveItem->mutable_drive_config();
-
-  for (const auto& config : driveConfigs) {
-    auto driveConfigItemProto = driveConfig->Add();
-    driveConfigItemProto->set_key(config.keyName);
-    driveConfigItemProto->set_category(config.category);
-    driveConfigItemProto->set_value(config.value);
-    driveConfigItemProto->set_source(config.source);
-  }
 
   // set the time spent in the current state
   uint64_t drive_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());

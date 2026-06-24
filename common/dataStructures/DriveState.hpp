@@ -25,13 +25,6 @@ struct DriveState {
 
   bool operator!=(const DriveState& rhs) const;
 
-  struct DriveConfigItem {
-    std::string category;
-    std::string key;
-    std::string value;
-    std::string source;
-  };
-
   std::string driveName;
   std::string host;
   std::string logicalLibrary;
@@ -65,7 +58,6 @@ struct DriveState {
   std::string nextVo;
   uint64_t nextPriority = 0;
   std::optional<std::string> nextActivity;
-  std::vector<DriveConfigItem> driveConfigItems;
   std::string devFileName;
   std::string rawLibrarySlot;
 };  // struct DriveState

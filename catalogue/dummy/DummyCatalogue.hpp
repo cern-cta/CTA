@@ -12,7 +12,6 @@
 #include "catalogue/dummy/DummyDiskInstanceCatalogue.hpp"
 #include "catalogue/dummy/DummyDiskInstanceSpaceCatalogue.hpp"
 #include "catalogue/dummy/DummyDiskSystemCatalogue.hpp"
-#include "catalogue/dummy/DummyDriveConfigCatalogue.hpp"
 #include "catalogue/dummy/DummyDriveStateCatalogue.hpp"
 #include "catalogue/dummy/DummyFileRecycleLogCatalogue.hpp"
 #include "catalogue/dummy/DummyMountPolicyCatalogue.hpp"
@@ -61,7 +60,6 @@ public:
   const std::unique_ptr<TapeFileCatalogue>& TapeFile() const override;
   const std::unique_ptr<FileRecycleLogCatalogue>& FileRecycleLog() const override;
   const std::unique_ptr<ArchiveFileCatalogue>& ArchiveFile() const override;
-  const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() const override;
   const std::unique_ptr<DriveStateCatalogue>& DriveState() const override;
 
 protected:
@@ -87,7 +85,6 @@ protected:
   std::unique_ptr<PhysicalLibraryCatalogue> m_physicalLibrary = nullptr;
   std::unique_ptr<TapeFileCatalogue> m_tapeFile = std::make_unique<DummyTapeFileCatalogue>();
   std::unique_ptr<FileRecycleLogCatalogue> m_fileRecycleLog = std::make_unique<DummyFileRecycleLogCatalogue>();
-  std::unique_ptr<DriveConfigCatalogue> m_driveConfig = std::make_unique<DummyDriveConfigCatalogue>();
   std::unique_ptr<ArchiveFileCatalogue> m_archiveFile = std::make_unique<DummyArchiveFileCatalogue>();
   std::unique_ptr<DriveStateCatalogue> m_driveState = std::make_unique<DummyDriveStateCatalogue>();
 };

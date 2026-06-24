@@ -94,7 +94,6 @@ add_executable(cta-integrationTests
 
 target_link_libraries(cta-integrationTests
   integrationTestHelperTests
-  cta-tapedIntegrationTests
   gtest
   pthread)
 

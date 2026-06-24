@@ -7,7 +7,6 @@
 
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueItor.hpp"
-#include "catalogue/DriveConfig.hpp"
 #include "catalogue/TapeDrivesCatalogueState.hpp"
 #include "catalogue/TapePool.hpp"
 #include "common/Constants.hpp"
@@ -1028,20 +1027,6 @@ void Scheduler::removeDrive(const std::string& driveName, log::LogContext& lc) c
   log::ScopedParamContainer spc(lc);
   spc.add("drive", driveName).add("schedulerDbTime", schedulerDbTime);
   lc.log(log::INFO, "In Scheduler::removeDrive(): success.");
-}
-
-//------------------------------------------------------------------------------
-// reportDriveConfig
-//------------------------------------------------------------------------------
-void Scheduler::reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-                                  const cta::tape::daemon::common::TapedConfiguration& tapedConfig,
-                                  log::LogContext& lc) {
-  utils::Timer t;
-  DriveConfig::setTapedConfiguration(tapedConfig, &m_catalogue, driveConfigEntry.unitName);
-  auto schedulerDbTime = t.secs();
-  log::ScopedParamContainer spc(lc);
-  spc.add("drive", driveConfigEntry.unitName).add("schedulerDbTime", schedulerDbTime);
-  lc.log(log::INFO, "In Scheduler::reportDriveConfig(): success.");
 }
 
 //------------------------------------------------------------------------------

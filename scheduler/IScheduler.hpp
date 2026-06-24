@@ -22,10 +22,6 @@ namespace tape::daemon {
 class DriveConfigEntry;
 }
 
-namespace tape::daemon::common {
-struct TapedConfiguration;
-}
-
 class IScheduler {
 public:
   virtual ~IScheduler() = default;
@@ -54,10 +50,6 @@ public:
                                      const tape::daemon::DriveConfigEntry& driveConfigEntry,
                                      const common::dataStructures::SecurityIdentity& identity,
                                      log::LogContext& lc) = 0;
-
-  virtual void reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-                                 const cta::tape::daemon::common::TapedConfiguration& tapedConfig,
-                                 log::LogContext& lc) = 0;
 };
 
 }  // namespace cta

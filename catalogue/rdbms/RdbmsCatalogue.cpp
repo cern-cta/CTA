@@ -17,7 +17,6 @@
 #include "catalogue/rdbms/RdbmsDiskInstanceCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsDiskInstanceSpaceCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsDiskSystemCatalogue.hpp"
-#include "catalogue/rdbms/RdbmsDriveConfigCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsDriveStateCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsFileRecycleLogCatalogue.hpp"
 #include "catalogue/rdbms/RdbmsMediaTypeCatalogue.hpp"
@@ -55,7 +54,6 @@ RdbmsCatalogue::RdbmsCatalogue(log::Logger& log,
       m_requesterActivityMountRule(std::make_unique<RdbmsRequesterActivityMountRuleCatalogue>(m_log, m_connPool, this)),
       m_requesterMountRule(std::make_unique<RdbmsRequesterMountRuleCatalogue>(m_log, m_connPool, this)),
       m_requesterGroupMountRule(std::make_unique<RdbmsRequesterGroupMountRuleCatalogue>(m_log, m_connPool, this)),
-      m_driveConfig(std::make_unique<RdbmsDriveConfigCatalogue>(m_log, m_connPool)),
       m_driveState(std::make_unique<RdbmsDriveStateCatalogue>(m_log, m_connPool)) {}
 
 const std::unique_ptr<SchemaCatalogue>& RdbmsCatalogue::Schema() const {
@@ -132,10 +130,6 @@ const std::unique_ptr<TapeFileCatalogue>& RdbmsCatalogue::TapeFile() const {
 
 const std::unique_ptr<FileRecycleLogCatalogue>& RdbmsCatalogue::FileRecycleLog() const {
   return m_fileRecycleLog;
-}
-
-const std::unique_ptr<DriveConfigCatalogue>& RdbmsCatalogue::DriveConfig() const {
-  return m_driveConfig;
 }
 
 const std::unique_ptr<ArchiveFileCatalogue>& RdbmsCatalogue::ArchiveFile() const {

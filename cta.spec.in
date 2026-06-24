@@ -446,7 +446,6 @@ Unit tests and integration tests with virtual tape drives
 %files -n cta-integrationtests
 %defattr(0755,root,root,-)
 %{_libdir}/libintegrationTestHelperTests.so*
-%{_libdir}/libcta-tapedIntegrationTests.so*
 %{_bindir}/cta-rdbmsUnitTests
 %if "%{occiSupport}" == "1"
 %{_bindir}/cta-rdbmsUnitTests-oracle.sh

@@ -1,0 +1,239 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+####################################################################################################
+#
+# CTA Maintd Service Configuration
+#
+####################################################################################################
+
+
+[catalogue]
+  # Path to the CTA Catalogue configuration file.
+  config_file = "/etc/cta/cta-catalogue.conf"
+
+
+[scheduler]
+  # The unique string to identify the backend scheduler resources. As an example, it can be structured as:
+  # "[ceph|postgres|vfs][User|Repack]".
+  backend_name = "cephUser"
+  # URL of the objectstore (CTA Scheduler Database). Usually this will be the URL of a Ceph RADOS.
+  # objectstore. For testing or small installations, a file-based objectstore can be used instead.
+  objectstore_backend_path = "rados://cta@tapecta:cta"
+  # If omitted, 600 is used.
+  tape_cache_max_age_secs = 600
+  # If omitted, 10 is used.
+  retrieve_queue_cache_max_age_secs = 10
+
+
+[logging]
+  # Logs with a level lower than the LogMask value will be masked. Possible values are EMERG, ALERT,
+  # CRIT, ERR, WARNING, NOTICE (USERERR), INFO, DEBUG.
+  # If omitted INFO is used.
+  level = "INFO"
+
+  # Log format. Possible values are "json" and "kv" (key-value).
+  # If omitted json is used.
+  format = "json"
+
+  # The following key-value pairs are added to all log lines.
+  # All keys are optional as this is purely for monitoring purposes.
+  [logging.attributes]
+    # Unique string to identify CTA's instance the maintd process is serving (i.e: production, preproduction).
+    # Each of these instances should be associated with a specific CTA catalogue instance.
+    instance = "production"
+    # The unique string to identify the backend scheduler resources. As an example, it can be structured as:
+    # "[ceph|postgres|vfs][User|Repack]".
+    sched_backend = "cephUser"
+
+
+# Note that telemetry is experimental and disabled by default.
+# To make use of this experimental feature, ensure telemetry is enabled under [experimental].
+[telemetry]
+  # Path to the declarative config file to initialise the OpenTelemetry SDK.
+  # If omitted or an empty string, telemetry will be disabled.
+  config_file = "/etc/cta/cta-otel.yaml"
+  # Controls how the application reacts if telemetry initialization fails.
+  # Possible values:
+  #   "warn": log a warning and continue startup without telemetry.
+  #   "fatal": treat the failure as an error and abort startup.
+  # If omitted, "warn" is used
+  on_init_failure = "warn"
+
+
+# Configuration for a health server. The health server, if enabled, will expose the following endpoints:
+# - host:port/health/ready
+# - host:port/health/live
+# This allows for configuring readiness and liveness probes if so desired.
+[health_server]
+  # Whether to enable the health server or not.
+  # If omitted, false is used.
+  enabled = false
+  # Where to accept connections from. Setting this to 127.0.0.1 will make it only accept connections from localhost.
+  # Set to 0.0.0.0 to accept connections from anywhere.
+  # When use_unix_domain_socket is enabled, this host value will be unused.
+  # If omitted, 127.0.0.1 is used.
+  host = "127.0.0.1"
+  # What port to expose the health server on. Note that multiple processes running on the same host cannot share the same port.
+  # When use_unix_domain_socket is enabled, this port value will be unused.
+  # If omitted, 8080 is used.
+  port = 8080
+  # If enabled, expose the health server over a unix domain socket instead. In this case, the values for host and port are ignored.
+  # Enabling this will put the corresponding socket file in <runtime-dir>/health.sock.
+  # Note that if use_unix_domain_socket is enabled, the service  MUST be started --runtime-dir <runtime-dir> flag.
+  # If omitted, false is used.
+  use_unix_domain_socket = false
+
+
+# Makes XRootD environment variables explicit.
+# XRootD is what is used to connect to the disk instance.
+[xrootd]
+  # Overrides XrdSecPROTOCOL.
+  # If omitted, sss is used.
+  security_protocol = "sss"
+  # Overrides XrdSecSSSKT.
+  sss_keytab_path = "/etc/cta/cta.sss.keytab"
+
+[experimental]
+  telemetry_enabled = false
+
+[drive]
+  # The name of the drive. Will be included for every line in the logs.
+  # TODO: list constraints
+  name = ""
+
+  # Path to the character special device used to access the drive.
+  # Must be nst?
+  device = ""
+
+  # The SCSI media changer address of the drive. This is "smc" + the drive ordinal number of the
+  # device, which can be obtained with "cta-smc -q D"
+  control_path = ""
+
+  # CTA logical library the tape drive will be linked to.
+  logical_library_name = ""
+
+[memory]
+
+  # Number of memory buffers per drive in the data transfer cache. This value should be configured
+  # according to the physical memory available.
+  buffer_count = 5000
+
+  # Size of one memory buffer in the data transfer cache, in bytes. Default is 5 MB.
+  buffer_size_bytes = 5000000
+
+[scheduling]
+  # Criteria to mount a tape. An archival or retrieval queue must contain at least this number of bytes or this number of files before a tape mount
+  # will be triggered. This does not apply when the timeout specified in the applicable mount rule is
+  # exceeded. Defaults to 500 GB and 10000 files.
+  mount_criteria_bytes = 500000000000
+  mount_criteria_files = 10000
+
+
+  # Maximum batch size (number of bytes) for processing archive requests. Defaults to 80 GB
+  archive_fetch_bytes = 80000000000
+  # Maximum batch size (number of files) for processing archive requests. Defaults to 4000 files
+  archive_fetch_files = 4000
+
+
+  # Flush  to tape criteria. During archiving operations, this parameter defines the maximum number of
+  # bytes that will be written to tape before a flush to tape (synchronised tape mark). Defaults to 32 GB.
+  archive_flush_bytes = 32000000000
+  # Flush  to tape criteria. During archiving operations, this parameter defines the maximum number of
+  # files that will be written to tape before a flush to tape (synchronised tape mark). Defaults to 200 files.
+  archive_flush_files = 200
+
+
+  # Maximum batch size for processing retrieve requests. When cta-taped fetches a batch of retrieve requests,
+  # the batch cannot exceed the number of bytes specified by this parameter. Defaults to 80 GB.
+  retrieve_fetch_bytes = 80000000000
+  # Maximum batch size for processing retrieve requests. When cta-taped fetches a batch of retrieve requests,
+  # the batch cannot exceed the number of files specified by this parameter. Defaults to 4000 files.
+  retrieve_fetch_files = 4000
+
+[encryption]
+
+  # Enable tape hardware encryption. Encryption will be enabled only for tapes where a valid encryption
+  # key has been configured for the tape or tape pool.
+  enabled = true
+
+  # Path to the external script used to obtain encryption keys.
+  external_encryption_key_script = "/usr/local/bin/cta-get-encryption-key.sh"
+
+[disk]
+
+  # The number of disk I/O threads. This determines the maximum number of parallel file transfers.
+  io_threads = 10
+
+  # Path to the external script used to determine free disk space in the retrieve buffer.
+  external_free_disk_space_script = "/usr/bin/cta-eosdf.sh"
+
+[rao]
+
+  # ##### WARNING #####
+  #
+  # The default RAO options should provide the best retrieve performance out of the box. These options
+  # should only be changed by expert users for specific tests.
+  #
+  # ##### WARNING #####
+
+  # Enable Recommended Access Order (RAO) if available. This setting is used to enable both hardware
+  # and software RAO for all drives that support it. Hardware RAO in IBM Enterprise and LTO drives
+  # generation 9 or later needs no further configuration. The additional RAO options below are for
+  # software RAO on LTO-8 drives.
+  enabled = true
+
+  # On LTO-8 tape drives, specify which software RAO algorithm to use. Valid options are linear,
+  # random, sltf. This should be set to sltf in production environments.
+  lto_algorithm = "sltf"
+
+  # Specify options for the software RAO algorithm.
+  lto_algorithm_options = "cost_heuristic_name:cta"
+
+# TODO: better name for this
+[timeout]
+
+  # Maximum time to wait for a tape to load, in seconds.
+  tape_load_timeout_secs = 300
+
+  # Maximum time allowed to determine a drive is ready, in seconds.
+  # TODO: figure out this one
+  drive_ready_timeout_secs = 120
+
+  # Maximum time allowed to schedule a single mount, in seconds.
+  schedule_timeout_secs = 300
+
+  # Maximum time allowed to mount a tape, in seconds.
+  mount_timeout_secs = 600
+
+  # Maximum time allowed to unmount a tape, in seconds.
+  unmount_timeout_secs = 600
+
+  # Maximum time allowed to drain a file to disk during retrieve, in seconds.
+  drain_to_disk_timeout_secs = 1800
+
+  # Maximum time allowed to shutdown of a tape session, in seconds.
+  shutdown_timeout_secs = 900
+
+  # Maximum time allowed after mounting without any tape blocks being read/written, in seconds.
+  no_block_move_timeout_secs = 1800
+
+  # Maximum time to wait after scheduling came up idle, in seconds.
+  idle_scheduling_interval_secs = 10
+
+  # Time to wait after which the tape server stops trying to get the next mount, in seconds.
+  get_next_mount_timeout_secs = 900
+
+[rmc]
+  # The host on which the remote media changer daemon (RMCD) is running. Defaults to localhost.
+  rmc_host = "localhost"
+
+  # The TCP/IP port on which RMCD listens for incoming TCP/IP connections from the tape daemon.
+  rmc_port = 5014
+
+  # The network timeout of rmc communications should be several minutes due
+  # to the time it takes to mount and unmount tapes.
+  rmc_timeout_secs = 600
+
+  # The number of attempts a retriable RMC request should be issued.
+  rmc_request_attempts = 10

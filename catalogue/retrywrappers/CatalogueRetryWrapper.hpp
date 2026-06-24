@@ -52,7 +52,6 @@ public:
   const std::unique_ptr<RequesterGroupMountRuleCatalogue>& RequesterGroupMountRule() const override;
   const std::unique_ptr<LogicalLibraryCatalogue>& LogicalLibrary() const override;
   const std::unique_ptr<PhysicalLibraryCatalogue>& PhysicalLibrary() const override;
-  const std::unique_ptr<DriveConfigCatalogue>& DriveConfig() const override;
   const std::unique_ptr<DriveStateCatalogue>& DriveState() const override;
   const std::unique_ptr<TapeFileCatalogue>& TapeFile() const override;
   const std::unique_ptr<FileRecycleLogCatalogue>& FileRecycleLog() const override;
@@ -95,7 +94,6 @@ private:
   std::unique_ptr<PhysicalLibraryCatalogue> m_physicalLibrary;
   std::unique_ptr<TapeFileCatalogue> m_tapeFile;
   std::unique_ptr<FileRecycleLogCatalogue> m_fileRecycleLog;
-  std::unique_ptr<DriveConfigCatalogue> m_driveConfig;
   std::unique_ptr<DriveStateCatalogue> m_driveState;
   std::unique_ptr<ArchiveFileCatalogue> m_archiveFile;
 };  // class CatalogueRetryWrapper

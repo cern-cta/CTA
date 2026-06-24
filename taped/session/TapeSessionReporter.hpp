@@ -9,7 +9,7 @@
 #include "common/log/LogContext.hpp"
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
-#include "taped/daemon/DriveConfigEntry.hpp"
+#include "taped/TapedConfig.hpp"
 #include "taped/daemon/TapedProxy.hpp"
 #include "taped/session/SessionState.hpp"
 #include "taped/session/SessionType.hpp"
@@ -30,7 +30,7 @@ public:
    * @param lc
    */
   TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy,
-                      const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                      const cta::taped::DriveConfig& driveConfig,
                       std::string_view hostname,
                       const cta::log::LogContext& lc);
 

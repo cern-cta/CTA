@@ -30,8 +30,6 @@ private:
 
   std::vector<common::dataStructures::TapeDrive> m_tapeDrives;
   std::size_t m_tapeDrivesIdx = 0;
-  std::unordered_map<std::string, std::list<cta::catalogue::DriveConfigCatalogue::DriveConfig>>
-    m_tapeDriveNameConfigMap;
   bool m_listAllDrives = false;
   std::optional<std::string> m_schedulerBackendName;
 };

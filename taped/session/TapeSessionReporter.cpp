@@ -17,14 +17,14 @@ namespace castor::tape::tapeserver::daemon {
 //constructor
 //------------------------------------------------------------------------------
 TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy,
-                                         const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                                         const cta::taped::DriveConfig& driveConfig,
                                          std::string_view hostname,
                                          const cta::log::LogContext& lc)
     : m_tapeserverProxy(tapeserverProxy),
       m_lc(lc),
       m_server(hostname),
-      m_unitName(driveConfig.unitName),
-      m_logicalLibrary(driveConfig.logicalLibrary) {
+      m_unitName(driveConfig.name),
+      m_logicalLibrary(driveConfig.logical_library_name) {
   //change the thread's name in the log
   m_lc.push(cta::log::Param("thread", "TapeSessionReporter"));
 }

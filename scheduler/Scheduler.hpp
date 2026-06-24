@@ -35,7 +35,6 @@
 #include "scheduler/RepackRequest.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 #include "scheduler/TapeMount.hpp"
-#include "taped/daemon/common/TapedConfiguration.hpp"
 
 #include <list>
 #include <map>
@@ -259,15 +258,6 @@ public:
                              const tape::daemon::DriveConfigEntry& driveConfigEntry,
                              const common::dataStructures::SecurityIdentity& identity,
                              log::LogContext& lc) override;
-
-  /**
-   * Reports the configuration of the drive to the objectstore.
-   * @param driveName the name of the drive to report the config to the objectstore
-   * @param tapedConfig the config of the drive to report to the objectstore.
-   */
-  void reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-                         const cta::tape::daemon::common::TapedConfiguration& tapedConfig,
-                         log::LogContext& lc) override;
 
   /**
    * Returns the status of a specific drive

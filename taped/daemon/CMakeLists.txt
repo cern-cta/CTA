@@ -2,8 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 cmake_minimum_required (VERSION 3.17)
 
-add_subdirectory(common)
-
 find_package(Protobuf3 REQUIRED)
 
 # So that we can see WatchdogMessage.pb.h
@@ -28,7 +26,6 @@ add_library(ctatapedaemon
 
 target_link_libraries(ctatapedaemon
   ctatapedsession
-  ctatapedaemoncommon
   ctascsi
   ctatapeddrive
   ctatapedfile)
@@ -49,7 +46,6 @@ set_property(TARGET ctadaemonunittests-multiprocess PROPERTY   VERSION "${CTA_LI
 
 target_link_libraries(ctadaemonunittests
   ctatapedaemon
-  ctatapedaemoncommonunittests
   unitTestHelper)
 
 target_link_libraries(ctadaemonunittests-multiprocess
