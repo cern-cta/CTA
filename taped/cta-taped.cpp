@@ -4,11 +4,11 @@
  */
 
 #include "common/CmdLineParams.hpp"
+#include "common/System.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/log/FileLogger.hpp"
 #include "common/log/StdoutLogger.hpp"
 #include "common/process/ProcessCap.hpp"
-#include "common/process/threading/System.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"

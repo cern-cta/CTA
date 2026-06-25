@@ -16,55 +16,6 @@
 #include "common/exception/Errnum.hpp"
 
 //------------------------------------------------------------------------------
-// getHostName
-//------------------------------------------------------------------------------
-std::string cta::System::getHostName() {
-  // All this to get the hostname, thanks to C !
-  int len = 64;
-  char* hostname;
-  hostname = (char*) calloc(len, 1);
-  if (nullptr == hostname) {
-    OutOfMemory ex;
-    ex.getMessage() << "Could not allocate hostname with length " << len;
-    throw ex;
-  }
-  if (gethostname(hostname, len) < 0) {
-    // Test whether error is due to a name too long
-    // The errno depends on the glibc version
-    if (EINVAL != errno && ENAMETOOLONG != errno) {
-      free(hostname);
-      cta::exception::Errnum e(errno);
-      e.getMessage() << "gethostname error";
-      throw e;
-    }
-    // So the name was too long
-    while (hostname[len - 1] != 0) {
-      len *= 2;
-      char* hostnameLonger = (char*) realloc(hostname, len);
-      if (nullptr == hostnameLonger) {
-        free(hostname);
-        cta::exception::Errnum e(ENOMEM);
-        e.getMessage() << "Could not allocate memory for hostname";
-        throw e;
-      }
-      hostname = hostnameLonger;
-      memset(hostname, 0, len);
-      // Test whether error is due to a name too long
-      // The errno depends on the glibc version
-      if ((gethostname(hostname, len) < 0) && (EINVAL != errno) && (ENAMETOOLONG != errno)) {
-        free(hostname);
-        cta::exception::Errnum e(errno);
-        e.getMessage() << "Could not get hostname" << strerror(errno);
-        throw e;
-      }
-    }
-  }
-  std::string res(hostname);  // copy the string
-  free(hostname);
-  return res;
-}
-
-//------------------------------------------------------------------------------
 // setUserAndGroup
 //------------------------------------------------------------------------------
 void cta::System::setUserAndGroup(const std::string& userName, const std::string& groupName) {
