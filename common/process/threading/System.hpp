@@ -23,15 +23,6 @@ public:
   static std::string getHostName();
 
   /**
-     * Converts a string into a port number, checking
-     * that the value is in range [0-65535]
-     * @param str the string giving the port number
-     * @return the port as an int
-     * @exception in case of invalid value
-     */
-  static int porttoi(char* str);
-
-  /**
      * Sets the user and group of the current process to the specified values.
      *
      * @param userName The name of the user.

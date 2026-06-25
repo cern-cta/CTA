@@ -65,26 +65,6 @@ std::string cta::System::getHostName() {
 }
 
 //------------------------------------------------------------------------------
-// porttoi
-//------------------------------------------------------------------------------
-int cta::System::porttoi(char* str) {
-  char* dp = str;
-  errno = 0;
-  int iport = strtoul(str, &dp, 0);
-  if (*dp != 0) {
-    cta::exception::Errnum e(errno);
-    e.getMessage() << "Bad port value." << std::endl;
-    throw e;
-  }
-  if ((iport > 65535) || (iport < 0)) {
-    cta::exception::Errnum e(errno);
-    e.getMessage() << "Invalid port value : " << iport << ". Must be < 65535 and > 0." << std::endl;
-    throw e;
-  }
-  return iport;
-}
-
-//------------------------------------------------------------------------------
 // setUserAndGroup
 //------------------------------------------------------------------------------
 void cta::System::setUserAndGroup(const std::string& userName, const std::string& groupName) {
