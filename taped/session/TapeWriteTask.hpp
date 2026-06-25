@@ -19,7 +19,7 @@
 #include "taped/file/FileWriter.hpp"
 #include "taped/file/WriteSession.hpp"
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * @brief Used when an error happens during a migration that should not result in unmounting the tape,
@@ -63,7 +63,7 @@ public:
    * @param lc For logging
    * @param timer
    */
-  virtual void execute(castor::tape::tapeFile::WriteSession& session,
+  virtual void execute(cta::tape::tapeFile::WriteSession& session,
                        MigrationReportPacker& reportPacker,
                        MigrationWatchDog& watchdog,
                        cta::log::LogContext& lc,
@@ -145,8 +145,8 @@ private:
    * @param lc for logging purpose
    * @return the FileWriter if everything went well
    */
-  std::unique_ptr<castor::tape::tapeFile::FileWriter> openFileWriter(castor::tape::tapeFile::WriteSession& session,
-                                                                     cta::log::LogContext& lc);
+  std::unique_ptr<cta::tape::tapeFile::FileWriter> openFileWriter(cta::tape::tapeFile::WriteSession& session,
+                                                                  cta::log::LogContext& lc);
 
   /**
    * All we need to know about the file we are migrating
@@ -205,4 +205,4 @@ private:
   std::string m_srcURL;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

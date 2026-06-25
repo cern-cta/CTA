@@ -8,7 +8,7 @@
 #include "FilePositionInfos.hpp"
 #include "scheduler/RetrieveJob.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * This abstract class allows its implementations to return the position
@@ -27,4 +27,4 @@ public:
   virtual FilePositionInfos getFilePosition(const cta::RetrieveJob& job) const = 0;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

@@ -7,7 +7,7 @@
 
 #include "EnterpriseRAOAlgorithm.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 std::unique_ptr<RAOAlgorithm> EnterpriseRAOAlgorithmFactory::createRAOAlgorithm() {
   //For now we only have the EnterpriseRAOAlgorithm, but we could maybe have another one,
@@ -15,4 +15,4 @@ std::unique_ptr<RAOAlgorithm> EnterpriseRAOAlgorithmFactory::createRAOAlgorithm(
   return std::unique_ptr<RAOAlgorithm>(new EnterpriseRAOAlgorithm(m_drive, m_maxFilesSupported));
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

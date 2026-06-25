@@ -14,7 +14,7 @@ namespace cta::tape::daemon {
 /**
  * A mock taped-proxy.
  */
-class TapeserverProxyMock : public TapedProxy {
+class TapedProxyMock : public TapedProxy {
 public:
   MOCK_METHOD(void,
               reportState,

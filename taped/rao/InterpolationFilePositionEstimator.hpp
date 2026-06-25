@@ -11,7 +11,7 @@
 
 #include <vector>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * This class implements an interpolation file position estimator.
@@ -65,4 +65,4 @@ private:
   uint64_t determineEndBlockId(const cta::common::dataStructures::TapeFile& file) const;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

@@ -14,11 +14,10 @@
 #include <memory>
 #include <sstream>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
-std::unique_ptr<ReadSession> ReadSessionFactory::create(tapeserver::drive::DriveInterface& drive,
-                                                        const tapeserver::daemon::VolumeInfo& volInfo,
-                                                        const bool useLbp) {
+std::unique_ptr<ReadSession>
+ReadSessionFactory::create(drive::DriveInterface& drive, const daemon::VolumeInfo& volInfo, const bool useLbp) {
   using LabelFormat = cta::common::dataStructures::Label::Format;
   const LabelFormat labelFormat = volInfo.labelFormat;
   switch (labelFormat) {
@@ -39,4 +38,4 @@ std::unique_ptr<ReadSession> ReadSessionFactory::create(tapeserver::drive::Drive
   }
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

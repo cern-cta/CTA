@@ -10,9 +10,9 @@
 
 #include <string>
 
-namespace castor::tape {
+namespace cta::tape {
 
-namespace tapeserver::drive {
+namespace drive {
 class DriveInterface;
 }
 
@@ -36,10 +36,10 @@ public:
     * @param volId: volume name of the tape we would like to write to
     * @param last_fseq: fseq of the last active (undeleted) file on tape
     * @param compression: set this to true in case the drive has compression enabled (x000GC)
-    * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
+    * @param useLbp: option to enable Logical Block Protection in taped
     */
-  WriteSession(tapeserver::drive::DriveInterface& drive,
-               const tapeserver::daemon::VolumeInfo& volInfo,
+  WriteSession(drive::DriveInterface& drive,
+               const daemon::VolumeInfo& volInfo,
                const uint32_t last_fseq,
                const bool compression,
                const bool useLbp);
@@ -47,7 +47,7 @@ public:
   /**
     * DriveGeneric object referencing the drive used during this write session
     */
-  tapeserver::drive::DriveInterface& m_drive;
+  drive::DriveInterface& m_drive;
 
   /**
     * Volume Serial Number
@@ -93,7 +93,7 @@ public:
     m_locked = false;
   }
 
-  inline const tapeserver::daemon::VolumeInfo& getVolumeInfo() const { return m_volInfo; }
+  inline const daemon::VolumeInfo& getVolumeInfo() const { return m_volInfo; }
 
   /**
     * Checks that a fSeq we are intending to write the the proper one,
@@ -164,7 +164,7 @@ private:
     */
   bool m_locked = false;
 
-  const tapeserver::daemon::VolumeInfo m_volInfo;
+  const daemon::VolumeInfo m_volInfo;
 
   /**
   * The boolean variable indicates that the tape has VOL1 with enabled LBP
@@ -175,4 +175,4 @@ private:
 };
 
 }  // namespace tapeFile
-}  // namespace castor::tape
+}  // namespace cta::tape

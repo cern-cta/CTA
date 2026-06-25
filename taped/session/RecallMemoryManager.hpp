@@ -9,12 +9,7 @@
 #include "common/process/threading/BlockingQueue.hpp"
 #include "common/process/threading/Thread.hpp"
 
-namespace castor {
-namespace exception {
-class Exception;
-}
-
-namespace tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 class MemBlock;
 
@@ -94,5 +89,4 @@ private:
   cta::log::LogContext& m_lc;
 };
 
-}  // namespace tape::tapeserver::daemon
-}  // namespace castor
+}  // namespace cta::tape::daemon

@@ -16,16 +16,16 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(cta::mediachanger::MediaChangerFacade& mc,
-                                                                 cta::log::Logger& log,
-                                                                 const cta::tape::daemon::DriveConfigEntry& driveConfig,
-                                                                 System::virtualWrapper& sysWrapper,
-                                                                 const std::string& vid,
-                                                                 const bool waitMediaInDrive,
-                                                                 const uint32_t waitMediaInDriveTimeout,
-                                                                 const std::string& externalEncryptionKeyScript,
-                                                                 cta::catalogue::Catalogue& catalogue,
-                                                                 cta::Scheduler& scheduler)
+cta::tape::daemon::CleanerSession::CleanerSession(cta::mediachanger::MediaChangerFacade& mc,
+                                                  cta::log::Logger& log,
+                                                  const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                                                  System::virtualWrapper& sysWrapper,
+                                                  const std::string& vid,
+                                                  const bool waitMediaInDrive,
+                                                  const uint32_t waitMediaInDriveTimeout,
+                                                  const std::string& externalEncryptionKeyScript,
+                                                  cta::catalogue::Catalogue& catalogue,
+                                                  cta::Scheduler& scheduler)
     : m_mc(mc),
       m_log(log),
       m_driveConfig(driveConfig),
@@ -40,8 +40,7 @@ castor::tape::tapeserver::daemon::CleanerSession::CleanerSession(cta::mediachang
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-castor::tape::tapeserver::daemon::CleanerSession::execute() noexcept {
+cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession::execute() noexcept {
   std::string errorMessage;
 
   try {
@@ -73,7 +72,7 @@ castor::tape::tapeserver::daemon::CleanerSession::execute() noexcept {
   return MARK_DRIVE_AS_DOWN;
 }
 
-void castor::tape::tapeserver::daemon::CleanerSession::setDriveDownAfterCleanerFailed(const std::string& errorMsg) {
+void cta::tape::daemon::CleanerSession::setDriveDownAfterCleanerFailed(const std::string& errorMsg) {
   std::string logicalLibrary = m_driveConfig.logicalLibrary;
   std::string hostname = cta::utils::getShortHostname();
   std::string driveName = m_driveConfig.unitName;
@@ -100,8 +99,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::setDriveDownAfterCleanerF
 //------------------------------------------------------------------------------
 // exceptionThrowingExecute
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute() {
+cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession::exceptionThrowingExecute() {
   // Make effective the raw I/O process capability.
   {
     cta::server::ProcessCap::setProcText("cap_sys_rawio+ep");
@@ -181,7 +179,7 @@ castor::tape::tapeserver::daemon::CleanerSession::exceptionThrowingExecute() {
 //------------------------------------------------------------------------------
 // cleanDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::cleanDrive(drive::DriveInterface& drive) {
+void cta::tape::daemon::CleanerSession::cleanDrive(drive::DriveInterface& drive) {
   if (m_waitMediaInDrive) {
     waitUntilMediaIsReady(drive);
   }
@@ -211,7 +209,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::cleanDrive(drive::DriveIn
 //------------------------------------------------------------------------------
 // logAndClearTapeAlerts
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterface& drive) noexcept {
+void cta::tape::daemon::CleanerSession::logAndClearTapeAlerts(drive::DriveInterface& drive) noexcept {
   std::string errorMessage;
   try {
     if (std::vector<uint16_t> tapeAlertCodes = drive.getTapeAlertCodes(); !tapeAlertCodes.empty()) {
@@ -244,13 +242,12 @@ void castor::tape::tapeserver::daemon::CleanerSession::logAndClearTapeAlerts(dri
 //------------------------------------------------------------------------------
 // createDrive
 //------------------------------------------------------------------------------
-std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
-castor::tape::tapeserver::daemon::CleanerSession::createDrive() {
+std::unique_ptr<cta::tape::drive::DriveInterface> cta::tape::daemon::CleanerSession::createDrive() {
   SCSI::DeviceVector dv(m_sysWrapper);
   SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
 
   // Instantiate the drive object
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(drive::createDrive(driveInfo, m_sysWrapper));
+  std::unique_ptr<cta::tape::drive::DriveInterface> drive(drive::createDrive(driveInfo, m_sysWrapper));
 
   if (nullptr == drive.get()) {
     cta::exception::Exception ex;
@@ -264,7 +261,7 @@ castor::tape::tapeserver::daemon::CleanerSession::createDrive() {
 //------------------------------------------------------------------------------
 // waitUntilDriveIsReady
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::waitUntilMediaIsReady(drive::DriveInterface& drive) {
+void cta::tape::daemon::CleanerSession::waitUntilMediaIsReady(drive::DriveInterface& drive) {
   std::vector<cta::log::Param> params;
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeDrive", m_driveConfig.unitName);
@@ -286,7 +283,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::waitUntilMediaIsReady(dri
 //------------------------------------------------------------------------------
 // rewindDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::rewindDrive(drive::DriveInterface& drive) {
+void cta::tape::daemon::CleanerSession::rewindDrive(drive::DriveInterface& drive) {
   std::vector<cta::log::Param> params;
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeDrive", m_driveConfig.unitName);
@@ -299,7 +296,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::rewindDrive(drive::DriveI
 //------------------------------------------------------------------------------
 // checkTapeContainsData
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::checkTapeContainsData(drive::DriveInterface& drive) {
+void cta::tape::daemon::CleanerSession::checkTapeContainsData(drive::DriveInterface& drive) {
   std::vector<cta::log::Param> params;
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeDrive", m_driveConfig.unitName);
@@ -316,7 +313,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::checkTapeContainsData(dri
 //------------------------------------------------------------------------------
 // checkVolumeLabel
 //------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(drive::DriveInterface& drive) {
+std::string cta::tape::daemon::CleanerSession::checkVolumeLabel(drive::DriveInterface& drive) {
   std::vector<cta::log::Param> params;
   params.emplace_back("tapeVid", m_vid);
   params.emplace_back("tapeDrive", m_driveConfig.unitName);
@@ -344,8 +341,7 @@ std::string castor::tape::tapeserver::daemon::CleanerSession::checkVolumeLabel(d
 //------------------------------------------------------------------------------
 // unloadTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(const std::string& vid,
-                                                                  drive::DriveInterface& drive) {
+void cta::tape::daemon::CleanerSession::unloadTape(const std::string& vid, drive::DriveInterface& drive) {
   const cta::mediachanger::LibrarySlot& librarySlot = m_driveConfig.librarySlot();
   std::vector<cta::log::Param> params;
   params.emplace_back("tapeVid", vid);
@@ -366,7 +362,7 @@ void castor::tape::tapeserver::daemon::CleanerSession::unloadTape(const std::str
 //------------------------------------------------------------------------------
 // dismountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CleanerSession::dismountTape(const std::string& vid) {
+void cta::tape::daemon::CleanerSession::dismountTape(const std::string& vid) {
   const cta::mediachanger::LibrarySlot& librarySlot = m_driveConfig.librarySlot();
   std::vector<cta::log::Param> params;
   params.emplace_back("tapeVid", vid);

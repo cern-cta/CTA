@@ -13,7 +13,7 @@ namespace cta {
 class RetrieveJob;
 }
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 class FileReader;
 class ReadSession;
@@ -23,4 +23,4 @@ public:
   static std::unique_ptr<FileReader> create(ReadSession& readSession, const cta::RetrieveJob& fileToRecall);
 };
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

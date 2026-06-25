@@ -15,7 +15,7 @@
 #include <sstream>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 FileWriter::FileWriter(WriteSession& ws, const cta::ArchiveJob& fileToMigrate, const size_t blockSize)
     : m_currentBlockSize(blockSize),
@@ -129,4 +129,4 @@ const std::string& FileWriter::getLBPMode() const {
   return m_LBPMode;
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

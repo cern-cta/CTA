@@ -9,7 +9,7 @@
 
 #include <memory>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * Factory of concrete CostHeuristic objects
@@ -27,4 +27,4 @@ public:
   std::unique_ptr<CostHeuristic> createCostHeuristic(const RAOOptions::CostHeuristicType& costHeuristicType);
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

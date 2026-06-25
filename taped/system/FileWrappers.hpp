@@ -11,7 +11,7 @@
 #include <sys/mtio.h>
 #include <sys/types.h>
 
-namespace castor::tape::System {
+namespace cta::tape::System {
 
 /**
  * A dummy class allowing simple open/read/close/ioctl interface simulating
@@ -415,4 +415,4 @@ public:
 
   virtual int ioctlInquiry(sg_io_hdr_t* sgio_h);
 };
-}  // namespace castor::tape::System
+}  // namespace cta::tape::System

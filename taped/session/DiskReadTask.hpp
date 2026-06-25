@@ -14,7 +14,7 @@
 #include "common/process/threading/AtomicFlag.hpp"
 #include "disk/DiskFile.hpp"
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 class DiskReadTask {
 public:
@@ -50,7 +50,7 @@ private:
   void checkMigrationFailing() const {
     //if a task has signaled an error, we stop our job
     if (m_errorFlag) {
-      throw castor::tape::tapeserver::daemon::ErrorFlag();
+      throw cta::tape::daemon::ErrorFlag();
     }
   }
 
@@ -93,4 +93,4 @@ private:
   cta::threading::AtomicFlag& m_errorFlag;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

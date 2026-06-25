@@ -24,7 +24,7 @@
 
 using ::testing::_;
 using ::testing::Invoke;
-using namespace castor::tape;
+using namespace cta::tape;
 
 namespace unitTests {
 
@@ -33,9 +33,9 @@ const uint32_t TEST_GROUP_1 = 9752;
 const uint32_t TEST_USER_2 = 9753;
 const uint32_t TEST_GROUP_2 = 9754;
 
-class castor_tape_tapeserver_daemon_MigrationReportPackerTest : public ::testing::Test {
+class cta_tape_daemon_MigrationReportPackerTest : public ::testing::Test {
 public:
-  castor_tape_tapeserver_daemon_MigrationReportPackerTest() : m_dummyLog("dummy", "dummy") {}
+  cta_tape_daemon_MigrationReportPackerTest() : m_dummyLog("dummy", "dummy") {}
 
 protected:
   void SetUp() {
@@ -85,7 +85,7 @@ protected:
   cta::log::DummyLogger m_dummyLog;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
 
-};  // class castor_tape_tapeserver_daemon_MigrationReportPackerTest
+};  // class cta_tape_daemon_MigrationReportPackerTest
 
 class MockArchiveJobExternalStats : public cta::MockArchiveJob {
 public:
@@ -127,7 +127,7 @@ private:
   int& failuresRef;
 };
 
-TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerNominal) {
+TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerNominal) {
   cta::MockArchiveMount tam(*m_catalogue);
 
   const std::string vid1 = "VTEST001";
@@ -233,15 +233,15 @@ TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportP
   job2->tapeFile.checksumBlob.insert(cta::checksum::MD5,
                                      cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
 
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_MigrationReportPackerNominal", cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_MigrationReportPackerNominal", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  tapeserver::daemon::MigrationReportPacker mrp(&tam, lc);
+  daemon::MigrationReportPacker mrp(&tam, lc);
   mrp.startThreads();
 
   mrp.reportCompletedJob(std::move(job1), lc);
   mrp.reportCompletedJob(std::move(job2), lc);
 
-  const tapeserver::drive::compressionStats statsCompress;
+  const drive::compressionStats statsCompress;
   mrp.reportFlush(statsCompress, lc);
   mrp.reportEndOfSession(lc);
   mrp.reportTestGoingToEnd(lc);
@@ -254,7 +254,7 @@ TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportP
   ASSERT_EQ(1, job2completes);
 }
 
-TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerFailure) {
+TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerFailure) {
   cta::MockArchiveMount tam(*m_catalogue);
 
   ::testing::InSequence dummy;
@@ -276,9 +276,9 @@ TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportP
     job3.reset(mockJob.release());
   }
 
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_MigrationReportPackerFailure", cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_MigrationReportPackerFailure", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  tapeserver::daemon::MigrationReportPacker mrp(&tam, lc);
+  daemon::MigrationReportPacker mrp(&tam, lc);
   mrp.startThreads();
 
   mrp.reportCompletedJob(std::move(job1), lc);
@@ -288,7 +288,7 @@ TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportP
   const cta::exception::Exception ex(error_msg);
   mrp.reportFailedJob(std::move(job3), ex, lc);
 
-  const tapeserver::drive::compressionStats statsCompress;
+  const drive::compressionStats statsCompress;
   mrp.reportFlush(statsCompress, lc);
   mrp.reportEndOfSession(lc);
   mrp.reportTestGoingToEnd(lc);
@@ -300,7 +300,7 @@ TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportP
   ASSERT_EQ(1, job3failures);
 }
 
-TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportPackerBadFile) {
+TEST_F(cta_tape_daemon_MigrationReportPackerTest, MigrationReportPackerBadFile) {
   cta::MockArchiveMount tam(*m_catalogue);
 
   const std::string vid1 = "VTEST001";
@@ -438,17 +438,15 @@ TEST_F(castor_tape_tapeserver_daemon_MigrationReportPackerTest, MigrationReportP
     cta::checksum::MD5,
     cta::checksum::ChecksumBlob::HexToByteArray("b170288bf1f61b26a648358866f4d6c6"));
 
-  cta::log::StringLogger log("dummy",
-                             "castor_tape_tapeserver_daemon_MigrationReportPackerOneByteFile",
-                             cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_MigrationReportPackerOneByteFile", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  tapeserver::daemon::MigrationReportPacker mrp(&tam, lc);
+  daemon::MigrationReportPacker mrp(&tam, lc);
   mrp.startThreads();
 
   mrp.reportCompletedJob(std::move(migratedBigFile), lc);
   mrp.reportCompletedJob(std::move(migratedFileSmall), lc);
   mrp.reportCompletedJob(std::move(migratedNullFile), lc);
-  tapeserver::drive::compressionStats stats;
+  drive::compressionStats stats;
   stats.toTape = (100000 + 1) / 3;
   mrp.reportFlush(stats, lc);
   mrp.reportEndOfSession(lc);

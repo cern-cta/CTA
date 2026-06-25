@@ -10,7 +10,7 @@
 #include <optional>
 #include <string>
 
-namespace cta::tapeserver::readtp {
+namespace cta::tape::readtp {
 
 /**
  * Structure to store the command-line arguments of the command-line tool
@@ -59,4 +59,4 @@ struct ReadtpCmdLineArgs {
   static void printUsage(std::ostream& os);
 };  // class ReadtpCmdLineArgs
 
-}  // namespace cta::tapeserver::readtp
+}  // namespace cta::tape::readtp

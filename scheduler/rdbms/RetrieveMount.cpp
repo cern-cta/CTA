@@ -202,7 +202,7 @@ void RetrieveMount::setDriveStatus(common::dataStructures::DriveStatus status,
   m_RelationalDB.m_tapeDrivesState->updateDriveStatus(driveInfo, inputs, lc);
 }
 
-void RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {
+void RetrieveMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
   // We just report the tape session statistics as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;

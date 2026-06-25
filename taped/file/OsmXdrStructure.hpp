@@ -7,7 +7,7 @@
 
 #include <rpc/xdr.h>  //!< xdrmem_create for decode_legato
 
-namespace castor::tape::tapeFile::osm::xdr {
+namespace cta::tape::tapeFile::osm::xdr {
 
 struct Chunk {
 public:
@@ -134,4 +134,4 @@ private:
   }
 };
 
-}  // namespace castor::tape::tapeFile::osm::xdr
+}  // namespace cta::tape::tapeFile::osm::xdr

@@ -8,7 +8,7 @@
 //------------------------------------------------------------------------------
 // ExceptionLauncher
 //------------------------------------------------------------------------------
-void castor::tape::SCSI::ExceptionLauncher(const SCSI::Structures::LinuxSGIO_t& sgio, const std::string& context) {
+void cta::tape::SCSI::ExceptionLauncher(const SCSI::Structures::LinuxSGIO_t& sgio, const std::string& context) {
   std::stringstream contextWithStatuses;
   contextWithStatuses << context << std::hex << std::nouppercase << std::showbase
                       << " status=" << static_cast<unsigned int>(sgio.status) << " host_status=" << sgio.host_status
@@ -22,20 +22,20 @@ void castor::tape::SCSI::ExceptionLauncher(const SCSI::Structures::LinuxSGIO_t& 
 //------------------------------------------------------------------------------
 // checkAndThrowSgStatus
 //------------------------------------------------------------------------------
-void castor::tape::SCSI::checkAndThrowSgStatus(const SCSI::Structures::LinuxSGIO_t& sgio, const std::string& context) {
+void cta::tape::SCSI::checkAndThrowSgStatus(const SCSI::Structures::LinuxSGIO_t& sgio, const std::string& context) {
   if (SCSI::Status::GOOD != sgio.status) {
     if (SCSI::Status::CHECK_CONDITION == sgio.status) {
       unsigned char senseKey;
-      castor::tape::SCSI::Structures::senseData_t<255>* sense = (SCSI::Structures::senseData_t<255>*) sgio.sbp;
+      cta::tape::SCSI::Structures::senseData_t<255>* sense = (SCSI::Structures::senseData_t<255>*) sgio.sbp;
       try {
         senseKey = sense->getSenseKey();
       } catch (...) {
         throw Exception(sgio.status, (SCSI::Structures::senseData_t<255>*) sgio.sbp, context);
       }
       switch (senseKey) {
-        case castor::tape::SCSI::senseKeys::notReady:
+        case cta::tape::SCSI::senseKeys::notReady:
           throw NotReadyException(sgio.status, (SCSI::Structures::senseData_t<255>*) sgio.sbp, context);
-        case castor::tape::SCSI::senseKeys::unitAttention:
+        case cta::tape::SCSI::senseKeys::unitAttention:
           throw UnitAttentionException(sgio.status, (SCSI::Structures::senseData_t<255>*) sgio.sbp, context);
         default:
           throw Exception(sgio.status, (SCSI::Structures::senseData_t<255>*) sgio.sbp, context);
@@ -49,8 +49,7 @@ void castor::tape::SCSI::checkAndThrowSgStatus(const SCSI::Structures::LinuxSGIO
 //------------------------------------------------------------------------------
 // checkAndThrowSgHostStatus
 //------------------------------------------------------------------------------
-void castor::tape::SCSI::checkAndThrowSgHostStatus(const SCSI::Structures::LinuxSGIO_t& sgio,
-                                                   const std::string& context) {
+void cta::tape::SCSI::checkAndThrowSgHostStatus(const SCSI::Structures::LinuxSGIO_t& sgio, const std::string& context) {
   if (SCSI::HostStatus::OK != sgio.host_status) {
     throw HostException(sgio.host_status, context);
   }
@@ -59,8 +58,8 @@ void castor::tape::SCSI::checkAndThrowSgHostStatus(const SCSI::Structures::Linux
 //------------------------------------------------------------------------------
 // checkAndThrowSgDriverStatus
 //------------------------------------------------------------------------------
-void castor::tape::SCSI::checkAndThrowSgDriverStatus(const SCSI::Structures::LinuxSGIO_t& sgio,
-                                                     const std::string& context) {
+void cta::tape::SCSI::checkAndThrowSgDriverStatus(const SCSI::Structures::LinuxSGIO_t& sgio,
+                                                  const std::string& context) {
   if (SCSI::DriverStatus::OK != sgio.driver_status) {
     throw DriverException(sgio.driver_status, (SCSI::Structures::senseData_t<255>*) sgio.sbp, context);
   }
@@ -69,9 +68,9 @@ void castor::tape::SCSI::checkAndThrowSgDriverStatus(const SCSI::Structures::Lin
 //------------------------------------------------------------------------------
 // Exception
 //------------------------------------------------------------------------------
-castor::tape::SCSI::Exception::Exception(unsigned char status,
-                                         castor::tape::SCSI::Structures::senseData_t<255>* sense,
-                                         const std::string& context)
+cta::tape::SCSI::Exception::Exception(unsigned char status,
+                                      cta::tape::SCSI::Structures::senseData_t<255>* sense,
+                                      const std::string& context)
     : cta::exception::Exception("") {
   std::stringstream w;
   w << context << (context.size() ? " " : "") << "SCSI command failed with status " << SCSI::statusToString(status);
@@ -94,7 +93,7 @@ castor::tape::SCSI::Exception::Exception(unsigned char status,
 //------------------------------------------------------------------------------
 // HostException
 //------------------------------------------------------------------------------
-castor::tape::SCSI::HostException::HostException(const unsigned short int host_status, const std::string& context)
+cta::tape::SCSI::HostException::HostException(const unsigned short int host_status, const std::string& context)
     : cta::exception::Exception("") {
   std::stringstream w;
   w << context << (context.size() ? " " : "")
@@ -105,9 +104,9 @@ castor::tape::SCSI::HostException::HostException(const unsigned short int host_s
 //------------------------------------------------------------------------------
 // DriverException
 //------------------------------------------------------------------------------
-castor::tape::SCSI::DriverException::DriverException(const unsigned short int driver_status,
-                                                     castor::tape::SCSI::Structures::senseData_t<255>* sense,
-                                                     const std::string& context)
+cta::tape::SCSI::DriverException::DriverException(const unsigned short int driver_status,
+                                                  cta::tape::SCSI::Structures::senseData_t<255>* sense,
+                                                  const std::string& context)
     : cta::exception::Exception("") {
   std::stringstream w;
   const std::string driverSuggestions = SCSI::driverStatusSuggestionsToString(driver_status);

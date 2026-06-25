@@ -30,9 +30,9 @@ TEST(cta_Daemon, TapedConfiguration) {
                               "general SchedulerBackendName dummyProdUser\n"
                               "general ServiceName dummy-service-name\n");
 
-  ASSERT_THROW(cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(incompleteConfFile.path()),
+  ASSERT_THROW(cta::tape::daemon::TapedConfiguration::createFromConfigPath(incompleteConfFile.path()),
                cta::SourcedParameter<std::string>::MandatoryParameterNotDefined);
-  auto completeConfig = cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
+  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromConfigPath(completeConfFile.path());
   ASSERT_EQ(completeConfFile.path() + ":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
 }
@@ -60,8 +60,7 @@ TEST(cta_Daemon, TapedConfigurationFull) {
                               "general ServiceName dummy-service-name\n");
 
   // The log parameter can be uncommented to inspect the result on the output.
-  auto completeConfig =
-    cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path() /*, log*/);
+  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromConfigPath(completeConfFile.path() /*, log*/);
   ASSERT_EQ(completeConfFile.path() + ":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
   ASSERT_EQ(completeConfFile.path() + ":3", completeConfig.fileCatalogConfigFile.source());
@@ -103,7 +102,7 @@ TEST(cta_Daemon, constructProcessName) {
   const auto driveName = "SPECTRALIB3-LTO9-F10B1S2";
   const auto postfix = "parent";
   TempFile completeConfFile = getDummyDriveConfig(driveName);
-  auto completeConfig = cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
+  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromConfigPath(completeConfFile.path());
 
   const auto actualProcessName = completeConfig.constructProcessName(lc, postfix);
   const auto expectedProcessName = "F10B1S2-parent";
@@ -117,7 +116,7 @@ TEST(cta_Daemon, constructProcessNameDriveNameTooLong) {
   const auto driveName = "SPECTRALIB3-LTO9-F10B1S21TOOLONG";
   const auto postfix = "parent";
   TempFile completeConfFile = getDummyDriveConfig(driveName);
-  auto completeConfig = cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
+  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromConfigPath(completeConfFile.path());
 
   const auto actualProcessName = completeConfig.constructProcessName(lc, postfix);
   // Should keep the first 8 characters of the drive name when the shortname is too long
@@ -132,7 +131,7 @@ TEST(cta_Daemon, constructProcessNameWithoutHyphen) {
   const auto driveName = "F10B1S2";
   const auto postfix = "parent";
   TempFile completeConfFile = getDummyDriveConfig(driveName);
-  auto completeConfig = cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
+  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromConfigPath(completeConfFile.path());
 
   const auto actualProcessName = completeConfig.constructProcessName(lc, postfix);
   // Should be just the full drive name
@@ -147,7 +146,7 @@ TEST(cta_Daemon, constructProcessNameWithoutHyphenTooLong) {
   const auto driveName = "F10B1S21TOOLONG";
   const auto postfix = "parent";
   TempFile completeConfFile = getDummyDriveConfig(driveName);
-  auto completeConfig = cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
+  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromConfigPath(completeConfFile.path());
 
   const auto actualProcessName = completeConfig.constructProcessName(lc, postfix);
   // Should keep the first 8 characters of the full drive name in case the name is too long
@@ -162,7 +161,7 @@ TEST(cta_Daemon, constructProcessNameNoPostfix) {
   const auto driveName = "SPECTRALIB3-LTO9-F10B1S2";
   const auto postfix = "";
   TempFile completeConfFile = getDummyDriveConfig(driveName);
-  auto completeConfig = cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
+  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromConfigPath(completeConfFile.path());
 
   const auto actualProcessName = completeConfig.constructProcessName(lc, postfix);
   // Without a postfix, just the drivename
@@ -177,7 +176,7 @@ TEST(cta_Daemon, constructProcessNamePostfixTooLong) {
   const auto driveName = "SPECTRALIB3-LTO9-F10B1S2";
   const auto postfix = "parenttoolong";
   TempFile completeConfFile = getDummyDriveConfig(driveName);
-  auto completeConfig = cta::tape::daemon::common::TapedConfiguration::createFromConfigPath(completeConfFile.path());
+  auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromConfigPath(completeConfFile.path());
 
   const auto actualProcessName = completeConfig.constructProcessName(lc, postfix);
   // Postfix can be at most 6 characters; rest is truncated

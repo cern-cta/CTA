@@ -21,7 +21,7 @@
 #include <memory>
 #include <string>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 class TapeReadTask {
 public:
@@ -273,7 +273,7 @@ private:
     using cta::log::Param;
     using ScopedParam = cta::log::LogContext::ScopedParam;
 
-    std::unique_ptr<castor::tape::tapeFile::FileReader> reader;
+    std::unique_ptr<cta::tape::tapeFile::FileReader> reader;
     try {
       reader = tapeFile::FileReaderFactory::create(session, *m_retrieveJob);
       lc.log(cta::log::DEBUG, "Successfully opened the tape file");
@@ -302,4 +302,4 @@ private:
   RecallMemoryManager& m_mm;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

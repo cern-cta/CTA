@@ -64,7 +64,7 @@ protected:
   void daemonizeIfNotRunInForeground();
 
   /**
-   * Object representing the API of the CASTOR logging system.
+   * Object representing the API of the CTA logging system.
    */
   cta::log::Logger& m_log;
 

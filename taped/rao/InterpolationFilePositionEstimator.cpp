@@ -7,7 +7,7 @@
 
 #include "RAOHelpers.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 InterpolationFilePositionEstimator::InterpolationFilePositionEstimator(
   const std::vector<drive::endOfWrapPosition>& endOfWrapPositions,
@@ -111,4 +111,4 @@ void InterpolationFilePositionEstimator::checkMediaTypeConsistency() const {
   }
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

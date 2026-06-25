@@ -15,7 +15,7 @@
 #include <memory>
 #include <sstream>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 std::unique_ptr<FileReader> FileReaderFactory::create(ReadSession& readSession, const cta::RetrieveJob& fileToRecall) {
   using LabelFormat = cta::common::dataStructures::Label::Format;
@@ -49,4 +49,4 @@ std::unique_ptr<FileReader> FileReaderFactory::create(ReadSession& readSession, 
   return reader;
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

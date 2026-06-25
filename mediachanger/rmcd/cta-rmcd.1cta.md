@@ -42,7 +42,7 @@ system service management software.
 # CONFIGURATION
 
 The port number that **cta-rmcd** will listen on should be defined on client hosts and on the
-tapeserver host. The default port number is 5014. It is possible to configure a different port
+taped host. The default port number is 5014. It is possible to configure a different port
 number in */etc/services*:
 
 > rmc 657/tcp \# CTA Remote Media Changer (cta-rmcd)\

@@ -48,45 +48,6 @@
 }
 
 {
-   pthread_tests4
-   Helgrind:Misc
-   fun:pthread_mutex_*
-   ...
-   fun:*unitTests*castor_messages_Mutex*
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8internal12TestInfoImpl3RunEv
-   fun:_ZN7testing8TestCase3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:main
-}
-
-{
-   pthread_tests5
-   Helgrind:PthAPIerror
-   fun:pthread_mutex_*
-   ...
-   fun:*unitTests*castor_messages_Mutex*
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8internal12TestInfoImpl3RunEv
-   fun:_ZN7testing8TestCase3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:main
-}
-
-{
-   pthread_tests6
-   Helgrind:UnlockUnlocked
-   fun:pthread_mutex_*
-   ...
-   fun:*unitTests*castor_messages_Mutex*
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8internal12TestInfoImpl3RunEv
-   fun:_ZN7testing8TestCase3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   fun:main
-}
-
-{
    pthread_test7
    Helgrind:Misc
    fun:pthread_cond_*
@@ -148,75 +109,6 @@
    ...
    fun:_ZN7testing8UnitTest3RunEv
    fun:main
-}
-
-{
-   pthread_test1m_cc7
-   Helgrind:Misc
-   fun:pthread_mutex_*
-   ...
-   fun:_ZN9unitTests*castor_messages_Mutex*
-   ...
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8TestInfo3RunEv
-   fun:_ZN7testing8TestCase3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   ...
-   fun:_ZN7testing8UnitTest3RunEv
-   fun:main
-}
-
-{
-   pthread_test2m_cc7
-   Helgrind:PthAPIerror
-   fun:pthread_mutex_*
-   ...
-   fun:_ZN9unitTests*castor_messages_Mutex*
-   ...
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8TestInfo3RunEv
-   fun:_ZN7testing8TestCase3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   ...
-   fun:_ZN7testing8UnitTest3RunEv
-   fun:main
-}
-
-{
-   pthread_test3m_cc7
-   Helgrind:UnlockUnlocked
-   fun:pthread_mutex_*
-   ...
-   fun:_ZN9unitTests*castor_messages_Mutex*
-   ...
-   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS_4TestEvEET0_PT_MS4_FS3_vEPKc
-   fun:_ZN7testing4Test3RunEv
-   fun:_ZN7testing8TestInfo3RunEv
-   fun:_ZN7testing8TestCase3RunEv
-   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
-   ...
-   fun:_ZN7testing8UnitTest3RunEv
-   fun:main
-}
-
-{
-   pthread_destroy_castor
-   Helgrind:Race
-   fun:my_memcmp
-   fun:pthread_mutex_destroy
-   fun:_ZN6castor6server5MutexD1Ev
-   ...
-}
-
-{
-   pthread_destroy_castor_jenkins
-   Helgrind:Race
-   obj:/usr/lib64/valgrind/vgpreload_helgrind-amd64-linux.so
-   fun:pthread_mutex_destroy
-   fun:_ZN3cta9threading5MutexD1Ev
-   ...
 }
 
 {
@@ -881,24 +773,6 @@
   Helgrind:UnlockUnlocked
   ...
   fun:_ZN9unitTests51cta_threading_Mutex_properly_throws_exceptions_Test8TestBodyEv*
-  ...
-}
-
-{
-   TapeServerDaemon_TapeWrite
-   Helgrind:Race
-   ...
-   fun:_ZN6castor4tape10tapeserver6daemon13TapeWriteTaskD1Ev
-   fun:_ZN6castor4tape10tapeserver6daemon13TapeWriteTaskD0Ev
-   ...
-}
-
-{
-  TapeServerDaemon_DiskWrite
-  Helgrind:Race
-  ...
-  fun:_ZN6castor4tape10tapeserver6daemon13DiskWriteTaskD1Ev
-  fun:_ZN6castor4tape10tapeserver6daemon13DiskWriteTaskD0Ev
   ...
 }
 

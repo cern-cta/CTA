@@ -22,7 +22,7 @@ namespace cta::catalogue {
 class Catalogue;
 }
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
   * Class responsible for cleaning up a tape drive left in a (possibly) dirty state.
@@ -33,7 +33,7 @@ public:
     * Constructor
     *
     * @param mc Object representing the media changer.
-    * @param log Object representing the API to the CASTOR logging system.
+    * @param log Object representing the API to the CTA logging system.
     * @param driveConfig Configuration of the tape drive to be cleaned.
     * @param sysWrapper Object representing the operating system.
     * @param vid The volume identifier of the mounted tape if known,
@@ -210,4 +210,4 @@ private:
   void setDriveDownAfterCleanerFailed(const std::string& errorMsg);
 };  // class CleanerSession
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

@@ -7,7 +7,7 @@
 
 #include "RAOHelpers.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 double CTACostHeuristic::getCost(const FilePositionInfos& file1, const FilePositionInfos& file2) const {
   double cost = 0.0;
@@ -25,4 +25,4 @@ double CTACostHeuristic::getCost(const FilePositionInfos& file1, const FilePosit
   return cost;
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

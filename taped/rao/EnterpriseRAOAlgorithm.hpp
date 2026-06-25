@@ -9,7 +9,7 @@
 #include "RAOAlgorithm.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 class EnterpriseRAOAlgorithmFactory;
 
@@ -43,11 +43,11 @@ private:
         m_maxFilesSupported(maxFilesSupported) {}
 
   //Interface to the drive
-  castor::tape::tapeserver::drive::DriveInterface* m_drive;
+  cta::tape::drive::DriveInterface* m_drive;
   //Maximum number of files supported by the drive to perform the RAO
   uint64_t m_maxFilesSupported;
 
   const uint32_t c_blockSize = 262144;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

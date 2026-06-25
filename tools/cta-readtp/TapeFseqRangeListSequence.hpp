@@ -11,7 +11,7 @@
 #include <list>
 #include <ostream>
 
-namespace cta::tapeserver::readtp {
+namespace cta::tape::readtp {
 
 /**
  * A list of tape file sequence ranges.
@@ -103,9 +103,9 @@ private:
 
 };  // class TapeFseqRangeListSequence
 
-}  // namespace cta::tapeserver::readtp
+}  // namespace cta::tape::readtp
 
 /**
- * ostream << operator for cta::tapeserver::readtp::TapeFseqRangeList
+ * ostream << operator for cta::tape::readtp::TapeFseqRangeList
  */
-std::ostream& operator<<(std::ostream& os, const cta::tapeserver::readtp::TapeFseqRangeList& value);
+std::ostream& operator<<(std::ostream& os, const cta::tape::readtp::TapeFseqRangeList& value);

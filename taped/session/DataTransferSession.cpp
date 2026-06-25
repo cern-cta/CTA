@@ -36,16 +36,15 @@
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
-  [[maybe_unused]] const std::string& hostname,
-  cta::log::Logger& log,
-  System::virtualWrapper& sysWrapper,
-  const cta::tape::daemon::DriveConfigEntry& driveConfig,
-  cta::mediachanger::MediaChangerFacade& mc,
-  cta::tape::daemon::TapedProxy& initialProcess,
+cta::tape::daemon::DataTransferSession::DataTransferSession([[maybe_unused]] const std::string& hostname,
+                                                            cta::log::Logger& log,
+                                                            System::virtualWrapper& sysWrapper,
+                                                            const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                                                            cta::mediachanger::MediaChangerFacade& mc,
+                                                            cta::tape::daemon::TapedProxy& initialProcess,
 
-  const DataTransferConfig& dataTransferConfig,
-  cta::Scheduler& scheduler)
+                                                            const DataTransferConfig& dataTransferConfig,
+                                                            cta::Scheduler& scheduler)
     : m_log(log),
       m_sysWrapper(sysWrapper),
       m_driveConfig(driveConfig),
@@ -66,8 +65,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
  * 2b) Log The result
  * Then branch to the right execution
  */
-castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-castor::tape::tapeserver::daemon::DataTransferSession::execute() {
+cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSession::execute() {
   // 1) Prepare the logging environment
   cta::log::LogContext lc(m_log);
   // Create a sticky thread name, which will be overridden by the other threads
@@ -83,7 +81,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
     lc.log(cta::log::ERR, "DataTransferSession failed to make effective raw I/O capabilty to use tape");
   }
 
-  TapeSessionReporter tapeServerReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
+  TapeSessionReporter tapeSessionReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
 
   std::unique_ptr<cta::TapeMount> tapeMount;
   cta::utils::Timer t;
@@ -134,7 +132,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
                                     cta::common::dataStructures::MountType::NoMount,
                                     cta::common::dataStructures::DriveStatus::Probing,
                                     lc);
-      castor::tape::tapeserver::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveConfig, m_sysWrapper);
+      cta::tape::daemon::EmptyDriveProbe emptyDriveProbe(m_log, m_driveConfig, m_sysWrapper);
       lc.log(cta::log::INFO, "Transition from down to up detected. Will check if a tape is in the drive.");
       if (!emptyDriveProbe.driveIsEmpty()) {
         std::string errorMsg = "A tape was detected in the drive. Putting the drive down.";
@@ -151,8 +149,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
                                   cta::common::dataStructures::MountType::NoMount,
                                   cta::common::dataStructures::DriveStatus::Up,
                                   lc);
-    tapeServerReporter.reportState(cta::tape::session::SessionState::Scheduling,
-                                   cta::tape::session::SessionType::Undetermined);
+    tapeSessionReporter.reportState(cta::tape::session::SessionState::Scheduling,
+                                    cta::tape::session::SessionType::Undetermined);
 
     if (!nextMountTimeout) {
       t.reset();
@@ -214,7 +212,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   m_volInfo.labelFormat = tapeMount->getLabelFormat();
   m_volInfo.encryptionKeyName = tapeMount->getEncryptionKeyName();
   m_volInfo.tapePool = tapeMount->getPoolName();
-  tapeServerReporter.setVolInfo(m_volInfo);
+  tapeSessionReporter.setVolInfo(m_volInfo);
   // Report drive status and mount info through tapeMount interface
   tapeMount->setDriveStatus(cta::common::dataStructures::DriveStatus::Starting);
   // 2c) ... and log.
@@ -233,10 +231,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
   // Depending on the type of session, branch into the right execution
   switch (m_volInfo.mountType) {
     case cta::common::dataStructures::MountType::Retrieve:
-      return executeRead(lc, dynamic_cast<cta::RetrieveMount*>(tapeMount.get()), tapeServerReporter);
+      return executeRead(lc, dynamic_cast<cta::RetrieveMount*>(tapeMount.get()), tapeSessionReporter);
     case cta::common::dataStructures::MountType::ArchiveForUser:
     case cta::common::dataStructures::MountType::ArchiveForRepack:
-      return executeWrite(lc, dynamic_cast<cta::ArchiveMount*>(tapeMount.get()), tapeServerReporter);
+      return executeWrite(lc, dynamic_cast<cta::ArchiveMount*>(tapeMount.get()), tapeSessionReporter);
     case cta::common::dataStructures::MountType::Label:
       return executeLabel(lc, dynamic_cast<cta::LabelMount*>(tapeMount.get()));
     default:
@@ -247,17 +245,17 @@ castor::tape::tapeserver::daemon::DataTransferSession::execute() {
 //------------------------------------------------------------------------------
 //DataTransferSession::executeRead
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::LogContext& logContext,
-                                                                   cta::RetrieveMount* retrieveMount,
-                                                                   TapeSessionReporter& reporter) {
+cta::tape::daemon::Session::EndOfSessionAction
+cta::tape::daemon::DataTransferSession::executeRead(cta::log::LogContext& logContext,
+                                                    cta::RetrieveMount* retrieveMount,
+                                                    TapeSessionReporter& reporter) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A nullptr is returned on failure
   retrieveMount->setExternalFreeDiskSpaceScript(m_dataTransferConfig.externalFreeDiskSpaceScript);
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
+  std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, retrieveMount));
 
   if (!drive) {
     reporter.bailout();
@@ -331,10 +329,10 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
         logContext.log(cta::log::INFO,
                        "DataTransferSession::executeRead Tape LabelFormat incompatible with RAO. Setting RAO false.");
       } else {
-        castor::tape::tapeserver::rao::RAOParams raoDataConfig(m_dataTransferConfig.useRAO,
-                                                               m_dataTransferConfig.raoLtoAlgorithm,
-                                                               m_dataTransferConfig.raoLtoAlgorithmOptions,
-                                                               m_volInfo.vid);
+        cta::tape::rao::RAOParams raoDataConfig(m_dataTransferConfig.useRAO,
+                                                m_dataTransferConfig.raoLtoAlgorithm,
+                                                m_dataTransferConfig.raoLtoAlgorithmOptions,
+                                                m_volInfo.vid);
         taskInjector.initRAO(raoDataConfig, &m_scheduler.getCatalogue());
       }
     }
@@ -440,15 +438,15 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeRead(cta::log::Log
 //------------------------------------------------------------------------------
 //DataTransferSession::executeWrite
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logContext,
-                                                                    cta::ArchiveMount* archiveMount,
-                                                                    TapeSessionReporter& reporter) {
+cta::tape::daemon::Session::EndOfSessionAction
+cta::tape::daemon::DataTransferSession::executeWrite(cta::log::LogContext& logContext,
+                                                     cta::ArchiveMount* archiveMount,
+                                                     TapeSessionReporter& reporter) {
   // We are ready to start the session. We need to create the whole machinery
   // in order to get the task injector ready to check if we actually have a
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(findDrive(logContext, archiveMount));
+  std::unique_ptr<cta::tape::drive::DriveInterface> drive(findDrive(logContext, archiveMount));
   if (!drive) {
     reporter.bailout();
     return MARK_DRIVE_AS_DOWN;
@@ -580,10 +578,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(cta::log::Lo
 //------------------------------------------------------------------------------
 //DataTransferSession::executeLabel
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(
-  [[maybe_unused]] cta::log::LogContext& logContext,
-  [[maybe_unused]] cta::LabelMount* labelMount) const {
+cta::tape::daemon::Session::EndOfSessionAction
+cta::tape::daemon::DataTransferSession::executeLabel([[maybe_unused]] cta::log::LogContext& logContext,
+                                                     [[maybe_unused]] cta::LabelMount* labelMount) const {
   throw cta::exception::NotImplementedException();
   // TODO
 }
@@ -604,15 +601,14 @@ castor::tape::tapeserver::daemon::DataTransferSession::executeLabel(
  * @param logContext For logging purpose
  * @return the drive if found, nullptr otherwise
  */
-castor::tape::tapeserver::drive::DriveInterface*
-castor::tape::tapeserver::daemon::DataTransferSession::findDrive(cta::log::LogContext& logContext,
-                                                                 cta::TapeMount* mount) {
+cta::tape::drive::DriveInterface* cta::tape::daemon::DataTransferSession::findDrive(cta::log::LogContext& logContext,
+                                                                                    cta::TapeMount* mount) {
   // Find the drive in the system's SCSI devices
-  castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
-  castor::tape::SCSI::DeviceInfo driveInfo;
+  cta::tape::SCSI::DeviceVector dv(m_sysWrapper);
+  cta::tape::SCSI::DeviceInfo driveInfo;
   try {
     driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
-  } catch (castor::tape::SCSI::DeviceVector::NotFound&) {
+  } catch (cta::tape::SCSI::DeviceVector::NotFound&) {
     // We could not find this drive in the system's SCSI devices
     putDriveDown("Drive not found on this path", mount, logContext);
     return nullptr;
@@ -626,7 +622,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(cta::log::LogCo
     return nullptr;
   }
   try {
-    auto drive = castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper);
+    auto drive = cta::tape::drive::createDrive(driveInfo, m_sysWrapper);
     if (drive) {
       drive->config = m_driveConfig;
     }
@@ -645,9 +641,9 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(cta::log::LogCo
 //------------------------------------------------------------------------------
 // Get drive down with reason
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DataTransferSession::putDriveDown(const std::string& headerErrMsg,
-                                                                         cta::TapeMount* mount,
-                                                                         cta::log::LogContext& logContext) {
+void cta::tape::daemon::DataTransferSession::putDriveDown(const std::string& headerErrMsg,
+                                                          cta::TapeMount* mount,
+                                                          cta::log::LogContext& logContext) {
   cta::log::ScopedParamContainer params(logContext);
   params.add("devFilename", m_driveConfig.devFilename).add(cta::semconv::log::errorMessage, headerErrMsg);
 
@@ -678,7 +674,7 @@ void castor::tape::tapeserver::daemon::DataTransferSession::putDriveDown(const s
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession() noexcept {
+cta::tape::daemon::DataTransferSession::~DataTransferSession() noexcept {
   try {
     google::protobuf::ShutdownProtobufLibrary();
   } catch (...) {

@@ -11,7 +11,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 /**
      * Helper template to fill with space a structure.
@@ -46,17 +46,17 @@ protected:
   char m_accessibility[1];  // A space indicates that the volume is authorized.
   char m_reserved1[13];     // Reserved.
   char m_implID[13];        // The Implementation Identifier - spaces.
-  char m_ownerID[14];       // CASTOR or stagesuperuser name padded with spaces.
+  char m_ownerID[14];       // CTA or stagesuperuser name padded with spaces.
   char m_reserved2[26];     // Reserved
   char m_LBPMethod[2];      // Logic block protection checksum type.
-                            // This field is a CASTOR variation from the ECMA 013/ISO1001
+                            // This field is a variation from the ECMA 013/ISO1001
                             // standard. It contains 2 spaces or '00'. Otherwise, contains
                             // the ASCII representation of the hexadecimal value of the
                             // Logical block protection method, as defined in the SSC-5 (latest drafts)
                             // In practice we intend to use "  " (double space) or "00"
                             // for no LBP, "02" for CRC32C where possible (enterprise drives)
                             // and "01" for ECMA-319 Reed-Solomon where not (LTO drives).
-  char m_lblStandard[1];    // The label standard level - ASCII 3 for the CASTOR
+  char m_lblStandard[1];    // The label standard level - ASCII 3
 public:
   /**
        * Fills up all fields of the VOL1 structure with proper values and data provided.
@@ -122,7 +122,7 @@ public:
 
 protected:
   char m_label[4];           // The characters HDR1.
-  char m_fileId[17];         // The CASTOR NS file Id in ACSII hex or PRELABEL
+  char m_fileId[17];         // The NS file Id in ACSII hex or PRELABEL
   char m_VSN[6];             // The Volume Serial Number.
   char m_fSec[4];            // The file section number - '0001'.
   char m_fSeq[4];            // The file sequence number is modulus by 10000.
@@ -138,7 +138,7 @@ protected:
        * Fills up all common fields of the HDR1, EOF1 and PRELABEL HDR1
        * structures with proper values and data provided.
        *
-       * @param fileId       The CASTOR NS file Id in ACSII hex.
+       * @param fileId       The NS file Id in ACSII hex.
        * @param VSN          The tape serial number.
        * @param fSeq         The file sequence number on the tape.
        */
@@ -157,7 +157,7 @@ public:
   inline std::string getVSN() const { return toString(m_VSN); }
 
   /**
-       * @return The CASTOR NS file Id
+       * @return The NS file Id
        */
   inline std::string getFileId() const { return toString(m_fileId); }
 
@@ -178,7 +178,7 @@ public:
        * Fills up only a few fields of the HDR1 structure with proper values
        * and data provided.
        *
-       * @param fileId       The CASTOR NS file Id in ACSII hex.
+       * @param fileId       The NS file Id in ACSII hex.
        * @param VSN          The tape serial number.
        * @param fSeq         The file sequence number on the tape.
        */
@@ -196,7 +196,7 @@ public:
        * Fills up only a few fields of the EOF1 structure with proper values
        * and data provided.
        *
-       * @param fileId       The CASTOR NS file Id in ACSII hex.
+       * @param fileId       The NS file Id in ACSII hex.
        * @param VSN          The tape serial number.
        * @param fSeq         The file sequence number on the tape.
        * @param blockCount   The number of written data blocks. It is
@@ -249,7 +249,7 @@ protected:
        * Fills up all common fields of the HDR2 and EOF2 structures
        * with proper values and data provided.
        *
-       * @param blockLength          The CASTOR block size.
+       * @param blockLength          The block size.
        * @param driveHasCompression  The boolean to set If the drive is
        *                             configured to use compression or not.
        */
@@ -273,7 +273,7 @@ public:
        * Fills up a few specific fields fields of the HDR2 structure
        * with proper values and data provided.
        *
-       * @param blockLength  The CASTOR block size.
+       * @param blockLength  The block size.
        * @param driveHasCompression  The boolean to set If the drive is
        *                             configured to use compression or not.
        *                             By default it is true.
@@ -292,7 +292,7 @@ public:
        * Fills up only a few specific fields of the HDR2 structure
        * with proper values and data provided.
        *
-       * @param blockLength          The CASTOR block size.
+       * @param blockLength          The block size.
        * @param driveHasCompression  The boolean to set If the drive is
        *                             configured to use compression or not.
        *                             By default it si true.
@@ -335,7 +335,7 @@ protected:
                   int blockSize,
                   const std::string& siteName,
                   const std::string& hostName,
-                  const castor::tape::tapeserver::drive::deviceInfo& deviceInfo);
+                  const cta::tape::drive::deviceInfo& deviceInfo);
   /**
        * Throws an exception if the common part structure does
        * not match expectations.
@@ -370,7 +370,7 @@ public:
             int blockSize,
             const std::string& siteName,
             const std::string& hostName,
-            const castor::tape::tapeserver::drive::deviceInfo& deviceInfo);
+            const cta::tape::drive::deviceInfo& deviceInfo);
   /**
        * Throws an exception if the structure does not match expectations.
        */
@@ -393,7 +393,7 @@ public:
             int blockSize,
             const std::string& siteName,
             const std::string& hostName,
-            const castor::tape::tapeserver::drive::deviceInfo& deviceInfo);
+            const cta::tape::drive::deviceInfo& deviceInfo);
   /**
        * Throws an exception if the structure does not match expectations.
        */
@@ -485,4 +485,4 @@ public:
   inline std::string getTargetFileSize() const { return toString(m_actualFileSize); }
 };
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

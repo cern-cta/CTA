@@ -16,7 +16,7 @@
 #include <sstream>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 EnstoreFileReader::EnstoreFileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall)
     : FileReader(rs, fileToRecall) {
@@ -137,4 +137,4 @@ size_t EnstoreFileReader::readNextDataBlock(void* data, const size_t size) {
   return bytes_read;
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

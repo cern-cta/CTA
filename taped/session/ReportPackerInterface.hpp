@@ -9,7 +9,7 @@
 
 #include <memory>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 namespace detail {
 //nameholder
@@ -103,4 +103,4 @@ public:
   TaskWatchDog* m_watchdog = nullptr;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

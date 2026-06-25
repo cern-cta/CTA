@@ -14,7 +14,7 @@
 
 #include <zlib.h>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * Class managing a fixed size payload buffer. Some member functions also
@@ -66,11 +66,11 @@ public:
 
   /**
    * Reads one block from a tapeFile::readFile
-   * @throws castor::tape::daemon::Payload::EOF
+   * @throws cta::tape::daemon::Payload::EOF
    * @param from reference to the tapeFile::ReadFile
    * @return whether another tape block will fit in the memory block.
    */
-  bool append(castor::tape::tapeFile::FileReader& from) {
+  bool append(cta::tape::tapeFile::FileReader& from) {
     if (from.getBlockSize() > remainingFreeSpace()) {
       std::stringstream err;
       err << "Trying to read a tape file block with too little space left: BlockSize=" << from.getBlockSize()
@@ -80,8 +80,8 @@ public:
     size_t readSize;
     try {
       readSize = from.readNextDataBlock(m_data + m_size, from.getBlockSize());
-    } catch (castor::tape::tapeFile::EndOfFile&) {
-      throw cta::exception::EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
+    } catch (cta::tape::tapeFile::EndOfFile&) {
+      throw cta::exception::EndOfFile("In cta::tape::daemon::Payload::append: reached end of file");
     }
     m_size += readSize;
     return from.getBlockSize() <= remainingFreeSpace();
@@ -139,4 +139,4 @@ private:
   size_t m_size;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

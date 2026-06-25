@@ -13,7 +13,7 @@
 #include <optional>
 #include <string>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * The purpose of this class is to observe the session state of a given drive and emit corresponding metrics about this.
@@ -34,4 +34,4 @@ private:
   std::string m_driveName;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

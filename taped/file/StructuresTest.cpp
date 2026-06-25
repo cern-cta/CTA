@@ -10,15 +10,15 @@
 
 namespace unitTests {
 
-class testVOL1 : public castor::tape::tapeFile::VOL1 {
+class testVOL1 : public cta::tape::tapeFile::VOL1 {
 public:
   void backdoorSetLBPMethodString(const char (&value)[sizeof(m_LBPMethod) + 1]) {
     memcpy(m_LBPMethod, value, sizeof(m_LBPMethod));
   }
 };
 
-TEST(castor_tape_AULFile, VOL1) {
-  using LBPM = castor::tape::SCSI::logicBlockProtectionMethod;
+TEST(cta_tape_AULFile, VOL1) {
+  using LBPM = cta::tape::SCSI::logicBlockProtectionMethod;
   testVOL1 vol1Label;
   /**
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -58,15 +58,15 @@ TEST(castor_tape_AULFile, VOL1) {
   ASSERT_THROW(vol1Label.getLBPMethod(), cta::exception::Exception);
 }
 
-class testVOL1withCRC : public castor::tape::tapeFile::VOL1withCrc {
+class testVOL1withCRC : public cta::tape::tapeFile::VOL1withCrc {
 public:
   void backdoorSetLBPMethodString(const char (&value)[sizeof(m_LBPMethod) + 1]) {
     memcpy(m_LBPMethod, value, sizeof(m_LBPMethod));
   }
 };
 
-TEST(castor_tape_AULFile, VOL1WithCRC) {
-  using LBPM = castor::tape::SCSI::logicBlockProtectionMethod;
+TEST(cta_tape_AULFile, VOL1WithCRC) {
+  using LBPM = cta::tape::SCSI::logicBlockProtectionMethod;
   testVOL1withCRC vol1LabelWithCRC;
   /**
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -107,8 +107,8 @@ TEST(castor_tape_AULFile, VOL1WithCRC) {
   ASSERT_EQ(0U, *((uint32_t*) &buf[80]));
 }
 
-TEST(castor_tape_AULFile, HDR1) {
-  castor::tape::tapeFile::HDR1 hdr1Label;
+TEST(cta_tape_AULFile, HDR1) {
+  cta::tape::tapeFile::HDR1 hdr1Label;
   /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -123,8 +123,8 @@ TEST(castor_tape_AULFile, HDR1) {
   ASSERT_EQ("2345", hdr1Label.getfSeq());
 }
 
-TEST(castor_tape_AULFile, HDR1PRELABEL) {
-  castor::tape::tapeFile::HDR1PRELABEL hdr1Prelabel;
+TEST(cta_tape_AULFile, HDR1PRELABEL) {
+  cta::tape::tapeFile::HDR1PRELABEL hdr1Prelabel;
   /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -139,8 +139,8 @@ TEST(castor_tape_AULFile, HDR1PRELABEL) {
   ASSERT_EQ("0001", hdr1Prelabel.getfSeq());
 }
 
-TEST(castor_tape_AULFile, EOF1) {
-  castor::tape::tapeFile::EOF1 eof1Label;
+TEST(cta_tape_AULFile, EOF1) {
+  cta::tape::tapeFile::EOF1 eof1Label;
   /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -156,8 +156,8 @@ TEST(castor_tape_AULFile, EOF1) {
   ASSERT_EQ("007654", eof1Label.getBlockCount());
 }
 
-TEST(castor_tape_AULFile, HDR2) {
-  castor::tape::tapeFile::HDR2 hdr2Label;
+TEST(cta_tape_AULFile, HDR2) {
+  cta::tape::tapeFile::HDR2 hdr2Label;
   /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -172,8 +172,8 @@ TEST(castor_tape_AULFile, HDR2) {
   ASSERT_EQ("32760", hdr2Label.getBlockLength());
 }
 
-TEST(castor_tape_AULFile, EOF2) {
-  castor::tape::tapeFile::EOF2 eof2Label;
+TEST(cta_tape_AULFile, EOF2) {
+  cta::tape::tapeFile::EOF2 eof2Label;
   /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -188,8 +188,8 @@ TEST(castor_tape_AULFile, EOF2) {
   ASSERT_EQ("32760", eof2Label.getBlockLength());
 }
 
-TEST(castor_tape_AULFile, UHL1) {
-  castor::tape::tapeFile::UHL1 uhl1Label;
+TEST(cta_tape_AULFile, UHL1) {
+  cta::tape::tapeFile::UHL1 uhl1Label;
   /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -197,7 +197,7 @@ TEST(castor_tape_AULFile, UHL1) {
   ASSERT_EQ(80U, sizeof(uhl1Label));
   /* test that verify throws exceptions */
   EXPECT_ANY_THROW({ uhl1Label.verify(); });
-  castor::tape::tapeserver::drive::deviceInfo deviceInfo;
+  cta::tape::drive::deviceInfo deviceInfo;
   deviceInfo.vendor = "TEST";
   deviceInfo.serialNumber = "XXYYTEST";
   deviceInfo.product = "TEST DRIVE";
@@ -207,8 +207,8 @@ TEST(castor_tape_AULFile, UHL1) {
   ASSERT_EQ("0000012345", uhl1Label.getfSeq());
 }
 
-TEST(castor_tape_AULFile, UTL1) {
-  castor::tape::tapeFile::UTL1 utl1Label;
+TEST(cta_tape_AULFile, UTL1) {
+  cta::tape::tapeFile::UTL1 utl1Label;
   /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -216,7 +216,7 @@ TEST(castor_tape_AULFile, UTL1) {
   ASSERT_EQ(80U, sizeof(utl1Label));
   /* test that verify throws exceptions */
   EXPECT_ANY_THROW({ utl1Label.verify(); });
-  castor::tape::tapeserver::drive::deviceInfo deviceInfo;
+  cta::tape::drive::deviceInfo deviceInfo;
   deviceInfo.vendor = "TEST";
   deviceInfo.serialNumber = "XXYYTEST";
   deviceInfo.product = "TEST DRIVE";
@@ -226,10 +226,10 @@ TEST(castor_tape_AULFile, UTL1) {
   ASSERT_EQ("0000012345", utl1Label.getfSeq());
 }
 
-TEST(castor_tape_AULFile, setDateTest) {
+TEST(cta_tape_AULFile, setDateTest) {
   const size_t lengthOfStr = 6;
   char str[lengthOfStr];
-  castor::tape::tapeFile::setDate(str);
+  cta::tape::tapeFile::setDate(str);
   const std::string buff(str);
   ASSERT_EQ(buff.length(), lengthOfStr);
   // 22088 is the date at 29/03/2022

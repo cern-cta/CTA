@@ -17,7 +17,7 @@ using ::testing::A;
 using ::testing::An;
 using ::testing::Invoke;
 
-using namespace castor::tape;
+using namespace cta::tape;
 
 DIR* System::fakeWrapper::opendir(const char* name) {
   /* Manage absence of directory */
@@ -178,13 +178,13 @@ int System::fakeWrapper::stat(const char* path, struct stat* buf) {
   return 0;
 }
 
-castor::tape::tapeserver::drive::DriveInterface* System::fakeWrapper::getDriveByPath(const std::string& path) {
-  std::map<std::string, castor::tape::tapeserver::drive::DriveInterface*>::iterator drive = m_pathToDrive.find(path);
+cta::tape::drive::DriveInterface* System::fakeWrapper::getDriveByPath(const std::string& path) {
+  std::map<std::string, cta::tape::drive::DriveInterface*>::iterator drive = m_pathToDrive.find(path);
   if (m_pathToDrive.end() == drive) {
     return nullptr;
   } else {
     /* The drive will be deleted by the user, so we remove references to it */
-    castor::tape::tapeserver::drive::DriveInterface* ret = drive->second;
+    cta::tape::drive::DriveInterface* ret = drive->second;
     m_pathToDrive.erase(drive);
     return ret;
   }
@@ -896,7 +896,7 @@ void System::fakeWrapper::setupSLC6() {
   referenceFiles();
 }
 
-void castor::tape::System::fakeWrapper::setupForVirtualDriveSLC6() {
+void cta::tape::System::fakeWrapper::setupForVirtualDriveSLC6() {
   setupSLC6();
   // Change the type of the drive to VIRTUAL so we get the proper drive for the test.
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/model"] = "VIRTUAL         \n";

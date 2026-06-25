@@ -19,13 +19,13 @@ using ::testing::Invoke;
 
 namespace unitTests {
 
-class castor_tape_tapeserver_daemon_RecallReportPackerTest : public ::testing::Test {
+class cta_tape_daemon_RecallReportPackerTest : public ::testing::Test {
 protected:
   void SetUp() {}
 
   void TearDown() {}
 
-};  // class castor_tape_tapeserver_daemon_RecallReportPackerTest
+};  // class cta_tape_daemon_RecallReportPackerTest
 
 class MockRetrieveJobExternalStats : public cta::MockRetrieveJob {
 public:
@@ -43,7 +43,7 @@ private:
   int& failuresRef;
 };
 
-TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerNominal) {
+TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerNominal) {
   auto catalogue = cta::catalogue::DummyCatalogue();
   cta::MockRetrieveMount retrieveMount(catalogue);
 
@@ -63,9 +63,9 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
     job2.reset(mockJob.release());
   }
 
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_RecallReportPackerNominal", cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_RecallReportPackerNominal", cta::log::DEBUG);
   cta::log::LogContext lc(log);
-  castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount, lc);
+  cta::tape::daemon::RecallReportPacker rrp(&retrieveMount, lc);
   rrp.startThreads();
 
   rrp.reportCompletedJob(std::move(job1), lc);
@@ -85,7 +85,7 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerN
   ASSERT_EQ(1, retrieveMount.completes);
 }
 
-TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
+TEST_F(cta_tape_daemon_RecallReportPackerTest, RecallReportPackerBadBadEnd) {
   auto catalogue = cta::catalogue::DummyCatalogue();
   cta::MockRetrieveMount retrieveMount(catalogue);
 
@@ -112,10 +112,10 @@ TEST_F(castor_tape_tapeserver_daemon_RecallReportPackerTest, RecallReportPackerB
     job3.reset(mockJob.release());
   }
 
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_RecallReportPackerBadBadEnd", cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_RecallReportPackerBadBadEnd", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  castor::tape::tapeserver::daemon::RecallReportPacker rrp(&retrieveMount, lc);
+  cta::tape::daemon::RecallReportPacker rrp(&retrieveMount, lc);
   rrp.startThreads();
 
   rrp.reportCompletedJob(std::move(job1), lc);

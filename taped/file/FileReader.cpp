@@ -15,7 +15,7 @@
 #include <sstream>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 FileReader::FileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall)
     : m_session(rs),
@@ -57,4 +57,4 @@ void FileReader::position(const cta::RetrieveJob& fileToRecall) {
   }
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

@@ -10,7 +10,7 @@
 
 #include <vector>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 class RAOHelpers {
 public:
@@ -89,4 +89,4 @@ public:
   static uint64_t computeLongitudinalDistance(const FilePositionInfos& file1, const FilePositionInfos& file2);
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

@@ -24,7 +24,7 @@
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)
  * to allow unit testing against system wrapper.
  */
-namespace castor::tape::tapeserver::drive {
+namespace cta::tape::drive {
 
 /**
  * Compressions statistics container, returned by Drive::getCompression()
@@ -266,4 +266,4 @@ std::unique_ptr<DriveInterface> createDrive(const SCSI::DeviceInfo& di, System::
 
 std::string getSerialNumber(const int& fd, System::virtualWrapper& sw);
 
-}  // namespace castor::tape::tapeserver::drive
+}  // namespace cta::tape::drive

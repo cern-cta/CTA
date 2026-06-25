@@ -212,7 +212,7 @@ public:
                                 time_t completionTime,
                                 const std::optional<std::string>& reason = std::nullopt) = 0;
 
-    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) = 0;
+    virtual void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) = 0;
     virtual void setJobBatchTransferred(std::list<std::unique_ptr<cta::SchedulerDatabase::ArchiveJob>>& jobsBatch,
                                         log::LogContext& lc) = 0;
 
@@ -518,7 +518,7 @@ public:
                                 time_t completionTime,
                                 const std::optional<std::string>& reason = std::nullopt) = 0;
 
-    virtual void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) = 0;
+    virtual void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) = 0;
 
     virtual void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                           log::LogContext& lc) = 0;

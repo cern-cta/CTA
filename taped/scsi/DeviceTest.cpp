@@ -17,20 +17,20 @@ using ::testing::Return;
 
 namespace unitTests {
 
-TEST(castor_tape_SCSI_DeviceList, TriesToFind) {
+TEST(cta_tape_SCSI_DeviceList, TriesToFind) {
   /* Give minimal service output from mock system calls:
    * at least pretend there is a directory to scan */
   /* _ means anything goes */
-  castor::tape::System::mockWrapper sysWrapper;
+  cta::tape::System::mockWrapper sysWrapper;
   EXPECT_CALL(sysWrapper, opendir(_)).Times(1);
   EXPECT_CALL(sysWrapper, readdir(sysWrapper.m_DIR)).Times(1);
   EXPECT_CALL(sysWrapper, closedir(sysWrapper.m_DIR)).Times(1);
 
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
 }
 
-TEST(castor_tape_SCSI_DeviceList, ScansCorrectly) {
-  castor::tape::System::mockWrapper sysWrapper;
+TEST(cta_tape_SCSI_DeviceList, ScansCorrectly) {
+  cta::tape::System::mockWrapper sysWrapper;
   /* Configure the mock to use fake */
   sysWrapper.delegateToFake();
   /* Populate the test harness */
@@ -51,15 +51,15 @@ TEST(castor_tape_SCSI_DeviceList, ScansCorrectly) {
 
   /* Everything should have been found correctly */
 
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
 
   ASSERT_EQ(6U, dl.size());
-  ASSERT_EQ(castor::tape::SCSI::Types::mediumChanger, dl[0].type);
-  ASSERT_EQ(castor::tape::SCSI::Types::tape, dl[1].type);
-  ASSERT_EQ(castor::tape::SCSI::Types::tape, dl[2].type);
-  ASSERT_EQ(castor::tape::SCSI::Types::mediumChanger, dl[3].type);
-  ASSERT_EQ(castor::tape::SCSI::Types::tape, dl[4].type);
-  ASSERT_EQ(castor::tape::SCSI::Types::tape, dl[5].type);
+  ASSERT_EQ(cta::tape::SCSI::Types::mediumChanger, dl[0].type);
+  ASSERT_EQ(cta::tape::SCSI::Types::tape, dl[1].type);
+  ASSERT_EQ(cta::tape::SCSI::Types::tape, dl[2].type);
+  ASSERT_EQ(cta::tape::SCSI::Types::mediumChanger, dl[3].type);
+  ASSERT_EQ(cta::tape::SCSI::Types::tape, dl[4].type);
+  ASSERT_EQ(cta::tape::SCSI::Types::tape, dl[5].type);
 
   ASSERT_EQ("/dev/sg2", dl[0].sg_dev);
   ASSERT_EQ("/dev/sg0", dl[1].sg_dev);
@@ -145,8 +145,8 @@ TEST(castor_tape_SCSI_DeviceList, ScansCorrectly) {
   ASSERT_EQ("460E", dl[5].productRevisionLevel);
 }
 
-TEST(castor_tape_SCSI_DeviceList, FindBySymlink) {
-  castor::tape::System::mockWrapper sysWrapper;
+TEST(cta_tape_SCSI_DeviceList, FindBySymlink) {
+  cta::tape::System::mockWrapper sysWrapper;
   sysWrapper.delegateToFake();
   sysWrapper.fake.setupForVirtualDriveSLC6();
 
@@ -162,11 +162,11 @@ TEST(castor_tape_SCSI_DeviceList, FindBySymlink) {
   EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(AtLeast(3));
   EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(7));
 
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
   ASSERT_NO_THROW(dl.findBySymlink("/dev/tape_T10D6116"));
   ASSERT_THROW(dl.findBySymlink("NoSuchPath"), cta::exception::Errnum);
-  ASSERT_THROW(dl.findBySymlink("/dev/noSuchTape"), castor::tape::SCSI::DeviceVector::NotFound);
-  castor::tape::SCSI::DeviceInfo& di = dl.findBySymlink("/dev/tape_T10D6116");
+  ASSERT_THROW(dl.findBySymlink("/dev/noSuchTape"), cta::tape::SCSI::DeviceVector::NotFound);
+  cta::tape::SCSI::DeviceInfo& di = dl.findBySymlink("/dev/tape_T10D6116");
   // The symlink is supposed to point to nst0 which is 9,128 (maj,min)
   ASSERT_EQ(9U, di.nst.major);
   ASSERT_EQ(128U, di.nst.minor);

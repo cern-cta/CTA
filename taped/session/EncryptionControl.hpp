@@ -15,7 +15,7 @@
 #include <map>
 #include <string>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * A class allowing the enabling and disabling of tape encryption via a script
@@ -42,8 +42,8 @@ public:
    * @param isWriteSession if true, set encryption key when writing to the new tape.
    * @return {true, keyName, key, stdout} if the encryption has been set, {false, "", "", stdout} otherwise.
    */
-  EncryptionStatus enable(castor::tape::tapeserver::drive::DriveInterface& m_drive,
-                          castor::tape::tapeserver::daemon::VolumeInfo& volInfo,
+  EncryptionStatus enable(cta::tape::drive::DriveInterface& m_drive,
+                          cta::tape::daemon::VolumeInfo& volInfo,
                           cta::catalogue::Catalogue& catalogue,
                           bool isWriteSession = false);
 
@@ -52,7 +52,7 @@ public:
    * @param m_drive The drive object on which the encryption is to be disabled.
    * @return true if encryption parameters cleared, false otherwise.
    */
-  bool disable(castor::tape::tapeserver::drive::DriveInterface& m_drive) const;
+  bool disable(cta::tape::drive::DriveInterface& m_drive) const;
 
   /**
    * Get script path
@@ -92,4 +92,4 @@ private:
   std::string argsToString(std::list<std::string> args, const std::string& delimiter) const;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

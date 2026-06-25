@@ -8,7 +8,7 @@
 #include "RAOAlgorithmFactory.hpp"
 #include "taped/drive/DriveInterface.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * Factory of EnterpriseRAOAlgorithm.
@@ -36,4 +36,4 @@ private:
   uint64_t m_maxFilesSupported;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

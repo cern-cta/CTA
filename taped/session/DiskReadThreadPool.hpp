@@ -16,7 +16,7 @@
 #include <stdint.h>
 #include <vector>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 class MigrationTaskInjector;
 
@@ -183,7 +183,7 @@ private:
   /**
    * Reference to the watchdog, for error reporting.
    */
-  castor::tape::tapeserver::daemon::MigrationWatchDog& m_watchdog;
+  cta::tape::daemon::MigrationWatchDog& m_watchdog;
 
   /** The log context. This is copied on construction to prevent interferences
    * between threads.
@@ -209,4 +209,4 @@ private:
   std::atomic<int> m_nbActiveThread = 0;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

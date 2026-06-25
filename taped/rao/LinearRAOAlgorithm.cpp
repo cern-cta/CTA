@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <numeric>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 std::vector<uint64_t> LinearRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   std::vector<uint64_t> raoIndices(jobs.size());
@@ -32,4 +32,4 @@ std::string LinearRAOAlgorithm::getName() const {
   return "linear";
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

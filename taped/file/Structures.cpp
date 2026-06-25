@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <time.h>
 
-using namespace castor::tape;
+using namespace cta::tape;
 
 void tapeFile::VOL1::fill(const std::string& VSN, unsigned char LBPMethod) {
   setString(m_label, "VOL1");
@@ -244,7 +244,7 @@ void tapeFile::UHL1UTL1::fillCommon(int fSeq,
                                     int blockSize,
                                     const std::string& siteName,
                                     const std::string& hostName,
-                                    const tapeserver::drive::deviceInfo& deviceInfo) {
+                                    const drive::deviceInfo& deviceInfo) {
   setInt(m_actualfSeq, fSeq);
   setInt(m_actualBlockSize, blockSize);
   setInt(m_actualRecordLength, blockSize);
@@ -290,7 +290,7 @@ void tapeFile::UHL1::fill(int fSeq,
                           int blockSize,
                           const std::string& siteName,
                           const std::string& hostName,
-                          const tapeserver::drive::deviceInfo& deviceInfo) {
+                          const drive::deviceInfo& deviceInfo) {
   setString(m_label, "UHL1");
 
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);
@@ -308,7 +308,7 @@ void tapeFile::UTL1::fill(int fSeq,
                           int blockSize,
                           const std::string& siteName,
                           const std::string& hostName,
-                          const tapeserver::drive::deviceInfo& deviceInfo) {
+                          const drive::deviceInfo& deviceInfo) {
   setString(m_label, "UTL1");
 
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);

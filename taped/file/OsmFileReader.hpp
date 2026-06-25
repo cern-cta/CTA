@@ -11,7 +11,7 @@
 
 #include <memory>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 class OsmFileReader : public FileReader {
   using FileReader::FileReader;
@@ -33,7 +33,7 @@ private:
    * it may happen that CRC32C is included twice e.g.:
    * Last 16 bytes of data block:
    *
-   *  00 3c 00 38 00 43 00 39 93 3c 5d 26 c7 4b 67 48 
+   *  00 3c 00 38 00 43 00 39 93 3c 5d 26 c7 4b 67 48
    *  -----------------------|-----------|
    *     DATA BLOCK              CRC32C
    *  -----------------------------------|-----------|
@@ -61,4 +61,4 @@ private:
   void setBlockSize(size_t uiBlockSize);
 };
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

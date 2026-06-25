@@ -2862,7 +2862,7 @@ TEST_P(SchedulerTest, expandRepackRequest) {
         executedJobs.push_back(std::move(retrieveJob));
       }
       //Now, report the retrieve jobs to be completed
-      castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+      cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
 
       rrp.startThreads();
       for (auto it = executedJobs.begin(); it != executedJobs.end(); ++it) {
@@ -3539,7 +3539,7 @@ TEST_P(SchedulerTest, expandRepackRequestRetrieveFailed) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
 
     rrp.startThreads();
 
@@ -3768,7 +3768,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
 
     rrp.startThreads();
 
@@ -3822,7 +3822,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       executedJobs.push_back(std::move(archiveJob));
     }
 
-    castor::tape::tapeserver::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
+    cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
     mrp.startThreads();
 
     //Report all archive jobs as succeeded
@@ -3830,7 +3830,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveSuccess) {
       mrp.reportCompletedJob(std::move(*it), lc);
     }
 
-    castor::tape::tapeserver::drive::compressionStats compressStats;
+    cta::tape::drive::compressionStats compressStats;
     mrp.reportFlush(compressStats, lc);
     mrp.reportEndOfSession(lc);
     mrp.reportTestGoingToEnd(lc);
@@ -4033,7 +4033,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
 
     rrp.startThreads();
 
@@ -4088,7 +4088,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
     }
 
     {
-      castor::tape::tapeserver::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
+      cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
       mrp.startThreads();
 
       //Report all archive jobs as succeeded except the first one
@@ -4100,7 +4100,7 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
         it++;
       }
 
-      castor::tape::tapeserver::drive::compressionStats compressStats;
+      cta::tape::drive::compressionStats compressStats;
       mrp.reportFlush(compressStats, lc);
       mrp.reportEndOfSession(lc);
       mrp.reportTestGoingToEnd(lc);
@@ -4152,14 +4152,14 @@ TEST_P(SchedulerTest, expandRepackRequestArchiveFailed) {
       archiveJob.reset(jobBatch.front().release());
       ASSERT_NE(nullptr, archiveJob.get());
 
-      castor::tape::tapeserver::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
+      cta::tape::daemon::MigrationReportPacker mrp(archiveMount.get(), lc);
       mrp.startThreads();
 
       mrp.reportFailedJob(std::move(archiveJob),
                           cta::exception::Exception("FailedJob expandRepackRequestFailedArchive"),
                           lc);
 
-      castor::tape::tapeserver::drive::compressionStats compressStats;
+      cta::tape::drive::compressionStats compressStats;
       mrp.reportFlush(compressStats, lc);
       mrp.reportEndOfSession(lc);
       mrp.reportTestGoingToEnd(lc);
@@ -5397,7 +5397,7 @@ TEST_P(SchedulerTest, expandRepackRequestAddCopiesOnly) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
 
     rrp.startThreads();
 
@@ -5875,7 +5875,7 @@ TEST_P(SchedulerTest, expandRepackRequestMoveAndAddCopies) {
       executedJobs.push_back(std::move(retrieveJob));
     }
     //Now, report the retrieve jobs to be completed
-    castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
 
     rrp.startThreads();
 
@@ -6176,7 +6176,7 @@ TEST_P(SchedulerTest, cancelRepackRequest) {
         executedJobs.push_back(std::move(retrieveJob));
       }
       //Now, report the retrieve jobs to be completed
-      castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+      cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
 
       rrp.startThreads();
 
@@ -6992,7 +6992,7 @@ TEST_P(SchedulerTest, expandRepackRequestShouldNotThrowIfTapeDisabledButNoRecall
 TEST_P(SchedulerTest, archiveUserQueueMaxDrivesVoInFlightChangeScheduleMount) {
   // This test will try to schedule one ArchiveForUser.
   // The VOs (including default repack VO) writeMaxDrives will be changed to ensure that it works well.
-  // This test emulates 1 tapeserver
+  // This test emulates 1 taped
   using namespace cta;
 
   setupDefaultCatalogue();
@@ -7081,7 +7081,7 @@ TEST_P(SchedulerTest, archiveUserQueueMaxDrivesVoInFlightChangeScheduleMount) {
 TEST_P(SchedulerTest, retrieveUserQueueMaxDrivesVoInFlightChangeScheduleMount) {
   // This test will try to schedule one retrieve (forUser).
   // The VOs (including default repack VO) readMaxDrives will be changed to ensure that it works well.
-  // This test emulates 1 tapeserver
+  // This test emulates 1 taped
   using namespace cta;
   using namespace cta::objectstore;
   unitTests::TempDirectory tempDirectory;
@@ -7190,7 +7190,7 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
   // This test will try to schedule one retrieve (for repack) followed by one archive
   // (after converting the repack retrieve requests into repack archive requests)
   // The VOs (including default repack VO) readMaxDrives and writeMaxDrives will be changed to ensure that it works well.
-  // This test emulates 1 tapeserver
+  // This test emulates 1 taped
   using namespace cta;
   using namespace cta::objectstore;
   unitTests::TempDirectory tempDirectory;
@@ -7334,7 +7334,7 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
 
     // For each tape we will see if the retrieve jobs are not null
     // Then we will report them as complete
-    castor::tape::tapeserver::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
+    cta::tape::daemon::RecallReportPacker rrp(retrieveMount.get(), lc);
     rrp.startThreads();
     for (uint64_t j = 1; j <= nbArchiveFilesPerTape; ++j) {
       auto jobBatch = retrieveMount->getNextJobBatch(1, archiveFileSize, lc);
@@ -7382,7 +7382,7 @@ TEST_P(SchedulerTest, retrieveArchiveRepackQueueMaxDrivesVoInFlightChangeSchedul
 }
 
 TEST_P(SchedulerTest, retrieveArchiveAllTypesMaxDrivesVoInFlightChangeScheduleMount) {
-  //This test will emulate 3 tapeservers that will try to schedule one ArchiveForRepack, one ArchiveForUser and one Retrieve mount at the same time
+  //This test will emulate 3 taped processes that will try to schedule one ArchiveForRepack, one ArchiveForUser and one Retrieve mount at the same time
   //The VO readMaxDrives and writeMaxDrives will be changed to test that it works well.
   //Also we will create two tapepools within the same VO to ensure that the readMaxDrives and writeMaxDrives are not per-tapepool
   using namespace cta;

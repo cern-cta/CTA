@@ -8,7 +8,7 @@
 #include "LinearRAOAlgorithm.hpp"
 #include "RandomRAOAlgorithm.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 std::unique_ptr<RAOAlgorithm> NonConfigurableRAOAlgorithmFactory::createRAOAlgorithm() {
   std::unique_ptr<RAOAlgorithm> ret;
@@ -28,4 +28,4 @@ std::unique_ptr<RAOAlgorithm> NonConfigurableRAOAlgorithmFactory::createRAOAlgor
   return ret;
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

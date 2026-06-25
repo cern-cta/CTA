@@ -10,7 +10,7 @@
 #include <common/dataStructures/MountType.hpp>
 #include <string>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * Struct holding the result of a Volume request
@@ -25,4 +25,4 @@ struct VolumeInfo {
   std::string tapePool;                                    //!< Name of the tape pool that contains the tape
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

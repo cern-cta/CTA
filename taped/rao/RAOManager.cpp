@@ -13,7 +13,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/utils/Timer.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 bool RAOManager::useRAO() const {
   return m_raoParams.useRAO();
@@ -84,4 +84,4 @@ void RAOManager::logWarningAfterRAOOperationFailed(const std::string& warningMsg
   lc.log(cta::log::WARNING, warningMsg);
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

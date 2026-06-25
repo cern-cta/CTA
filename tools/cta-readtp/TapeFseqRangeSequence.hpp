@@ -9,7 +9,7 @@
 
 #include <list>
 
-namespace cta::tapeserver::readtp {
+namespace cta::tape::readtp {
 
 /**
  * Generates a sequence of tape file sequence numbers from a range of tape file
@@ -78,4 +78,4 @@ private:
 
 };  // class TapeFseqRangeSequence
 
-}  // namespace cta::tapeserver::readtp
+}  // namespace cta::tape::readtp

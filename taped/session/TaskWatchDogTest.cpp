@@ -6,7 +6,7 @@
 #include "TaskWatchDog.hpp"
 
 #include "ReportPackerInterface.hpp"
-#include "TapeserverProxyMock.hpp"
+#include "TapedProxyMock.hpp"
 #include "common/log/StringLogger.hpp"
 #include "scheduler/TapeMountDummy.hpp"
 
@@ -14,21 +14,21 @@
 #include <gtest/gtest.h>
 
 namespace unitTests {
-using namespace castor::tape;
+using namespace cta::tape;
 using ::testing::_;
 
-TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
+TEST(cta_tape_daemon, WatchdogTestStuckWithNothing) {
   const double reportPeriodSecs = 10;  // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
 
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_WatchdogTestStuck", cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_WatchdogTestStuck", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
-  tapeserver::daemon::RecallWatchDog
+  daemon::RecallWatchDog
     watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
 
   watchdog.startThread();
@@ -39,19 +39,19 @@ TEST(castor_tape_tapeserver_daemon, WatchdogTestStuckWithNothing) {
   ASSERT_EQ(std::string::npos, log.getLog().find("No tape block movement for too long"));
 }
 
-TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
+TEST(cta_tape_daemon, MigrationWatchdogTestStuck) {
   const double reportPeriodSecs = 10;  // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
 
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_WatchdogTestStuck", cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_WatchdogTestStuck", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
   // We will poll for a
-  tapeserver::daemon::MigrationWatchDog
+  daemon::MigrationWatchDog
     watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
 
   watchdog.startThread();
@@ -62,20 +62,18 @@ TEST(castor_tape_tapeserver_daemon, MigrationWatchdogTestStuck) {
   ASSERT_NE(std::string::npos, log.getLog().find("No tape block movement for too long"));
 }
 
-TEST(castor_tape_tapeserver_daemon, MigrationWatchdog_DoNotReportParamsAddedAndDeleted) {
+TEST(cta_tape_daemon, MigrationWatchdog_DoNotReportParamsAddedAndDeleted) {
   const double reportPeriodSecs = 10;  // We wont report in practice
   const double stuckPeriod = 0.01;
   const double pollPeriod = 0.01;
 
-  cta::log::StringLogger log("dummy",
-                             "castor_tape_tapeserver_daemon_DoNotReportParamsAddedAndDeleted",
-                             cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_DoNotReportParamsAddedAndDeleted", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
-  tapeserver::daemon::RecallWatchDog
+  daemon::RecallWatchDog
     watchdog(reportPeriodSecs, stuckPeriod, dummyInitialProcess, dummyTapeMount, "testTapeDrive", lc, pollPeriod);
 
   std::vector<cta::log::Param> paramsToAdd {

@@ -19,7 +19,7 @@
 #include <set>
 #include <unistd.h>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * Virtual class for watching tape read or write operation (mostly complete)
@@ -562,4 +562,4 @@ public:
   }
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

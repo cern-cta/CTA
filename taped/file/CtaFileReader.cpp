@@ -16,7 +16,7 @@
 #include <sstream>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 void CtaFileReader::positionByFseq(const cta::RetrieveJob& fileToRecall) {
   if (m_session.getCurrentFilePart() != PartOfFile::Header) {
@@ -194,4 +194,4 @@ void CtaFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) {
   setBlockSize(uhl1);
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

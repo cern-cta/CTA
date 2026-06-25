@@ -11,7 +11,7 @@
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -137,7 +137,7 @@ void DiskReadTask::execute(cta::log::LogContext& lc,
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kRead},
         {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kDisk   }
     });
-  } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
+  } catch (const cta::tape::daemon::ErrorFlag&) {
     lc.log(cta::log::DEBUG,
            "DiskReadTask: a previous file has failed for migration "
            "Do nothing except circulating blocks");
@@ -233,4 +233,4 @@ const DiskStats& DiskReadTask::getTaskStats() const {
   return m_stats;
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

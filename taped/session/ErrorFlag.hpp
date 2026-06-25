@@ -7,7 +7,7 @@
 
 #include "common/exception/Exception.hpp"
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * Used to signal an error has happened during the migration process
@@ -19,4 +19,4 @@ public:
   ~ErrorFlag() final = default;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

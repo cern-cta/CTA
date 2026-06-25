@@ -7,7 +7,7 @@
 
 #include "RAOAlgorithm.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * Abstract class that will be extended by subclasses in order
@@ -27,4 +27,4 @@ public:
   std::unique_ptr<RAOAlgorithm> createDefaultLinearAlgorithm();
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

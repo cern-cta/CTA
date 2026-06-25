@@ -5,7 +5,7 @@
 
 #pragma once
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 class MemBlock;
 
@@ -34,4 +34,4 @@ public:
   virtual ~DataConsumer() = default;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

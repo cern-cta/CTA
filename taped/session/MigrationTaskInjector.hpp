@@ -13,7 +13,7 @@
 #include "common/log/LogContext.hpp"
 #include "scheduler/ArchiveMount.hpp"
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * This class is responsible for creating the tasks in case of a recall job
@@ -205,4 +205,4 @@ private:
   uint64_t m_firstFseqToWrite = 0;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

@@ -13,7 +13,7 @@
 
 namespace unitTests {
 
-using namespace castor::tape::tapeserver;
+using namespace cta::tape;
 
 class RAOTestEnvironment : public ::testing::Environment {
 public:

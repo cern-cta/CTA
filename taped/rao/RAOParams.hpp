@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
   * This class contains the configuration of the CTA RAO Algorithm
@@ -94,4 +94,4 @@ private:
   static const std::map<std::string, RAOAlgorithmType> c_raoAlgoStringTypeMap;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

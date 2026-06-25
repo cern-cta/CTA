@@ -14,7 +14,7 @@
 #include <ostream>
 #include <string.h>
 
-namespace cta::tapeserver::readtp {
+namespace cta::tape::readtp {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -110,4 +110,4 @@ void ReadtpCmdLineArgs::printUsage(std::ostream& os) {
      << "                                          files read will be written to file:///dev/null." << std::endl;
 }
 
-}  // namespace cta::tapeserver::readtp
+}  // namespace cta::tape::readtp

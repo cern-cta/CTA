@@ -19,7 +19,7 @@
 #include <memory>
 #include <stdio.h>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 class TapeSessionReporter;
 
@@ -34,7 +34,7 @@ public:
   /**
    * Constructor
    */
-  TapeReadSingleThread(castor::tape::tapeserver::drive::DriveInterface& drive,
+  TapeReadSingleThread(cta::tape::drive::DriveInterface& drive,
                        cta::mediachanger::MediaChangerFacade& mediaChanger,
                        TapeSessionReporter& reporter,
                        const VolumeInfo& volInfo,
@@ -87,7 +87,7 @@ private:
    * of the object through unique_ptr's copy constructor
    * @return
    */
-  std::unique_ptr<castor::tape::tapeFile::ReadSession> openReadSession();
+  std::unique_ptr<cta::tape::tapeFile::ReadSession> openReadSession();
 
   /**
    * This function is from Thread, it is the function that will do all the job
@@ -147,4 +147,4 @@ protected:
   void logSCSIMetrics() override;
 };  // class TapeReadSingleThread
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

@@ -11,9 +11,9 @@
 #include <memory>
 #include <string>
 
-namespace castor::tape {
+namespace cta::tape {
 
-namespace tapeserver::drive {
+namespace drive {
 class DriveInterface;
 }
 
@@ -35,7 +35,7 @@ public:
   /**
     * DriveGeneric object referencing the drive used during this read session
     */
-  tapeserver::drive::DriveInterface& m_drive;
+  drive::DriveInterface& m_drive;
 
   /**
     * Volume Serial Number
@@ -75,7 +75,7 @@ public:
 
   inline uint32_t getCurrentFseq() const { return m_fseq; }
 
-  inline const tapeserver::daemon::VolumeInfo& getVolumeInfo() const { return m_volInfo; }
+  inline const daemon::VolumeInfo& getVolumeInfo() const { return m_volInfo; }
 
   inline void setCurrentFilePart(const PartOfFile& currentFilePart) { m_currentFilePart = currentFilePart; }
 
@@ -98,11 +98,9 @@ protected:
     * volId value. Throws an exception in case of mismatch.
     * @param drive: drive object to which we bind the session
     * @param vid: volume name of the tape we would like to read from
-    * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
+    * @param useLbp: option to enable Logical Block Protection in taped
     */
-  ReadSession(tapeserver::drive::DriveInterface& drive,
-              const tapeserver::daemon::VolumeInfo& volInfo,
-              const bool useLbp);
+  ReadSession(drive::DriveInterface& drive, const daemon::VolumeInfo& volInfo, const bool useLbp);
 
   /**
     * set to true in case the destructor of ReadFile finds a missing lock on its session
@@ -124,7 +122,7 @@ protected:
     */
   PartOfFile m_currentFilePart = PartOfFile::Header;
 
-  const tapeserver::daemon::VolumeInfo m_volInfo;
+  const daemon::VolumeInfo m_volInfo;
 
   /**
   * The boolean variable indicates that the tape has VOL1 with enabled LBP
@@ -133,4 +131,4 @@ protected:
 };
 
 }  // namespace tapeFile
-}  // namespace castor::tape
+}  // namespace cta::tape

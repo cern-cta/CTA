@@ -7,7 +7,7 @@
 
 #include "CostHeuristic.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * This class implements the CTA CostHeuristic that is documented here:
@@ -26,4 +26,4 @@ public:
   double getCost(const FilePositionInfos& file1, const FilePositionInfos& file2) const override;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

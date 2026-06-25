@@ -16,7 +16,7 @@
 #include <sstream>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 void OsmFileReader::positionByFseq(const cta::RetrieveJob& fileToRecall) {
   if (m_session.getCurrentFilePart() != PartOfFile::Header) {
@@ -73,7 +73,7 @@ void OsmFileReader::moveToFirstFile() {
   osm::LABEL osmLabel;
   /*
    * Some mutated OSM labels may have extra CRC32C bytes e.g.:
-   * 00 3c 00 38 00 43 00 39 93 3c 5d 26 c7 4b 67 48 
+   * 00 3c 00 38 00 43 00 39 93 3c 5d 26 c7 4b 67 48
    * -----------------------|-----------|
    *   DATA BLOCK              CRC32C
    * -----------------------|-----------|-----------|
@@ -215,4 +215,4 @@ size_t OsmFileReader::readNextDataBlock(void* data, const size_t size) {
   return uiBytesRead;
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

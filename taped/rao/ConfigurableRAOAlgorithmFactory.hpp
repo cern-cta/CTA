@@ -15,7 +15,7 @@ namespace cta::catalogue {
 class Catalogue;
 }
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * This factory instanciates a configurable RAO algorithm
@@ -67,4 +67,4 @@ private:
   RAOParams m_raoParams;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

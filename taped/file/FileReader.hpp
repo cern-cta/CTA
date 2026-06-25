@@ -14,7 +14,7 @@ namespace cta {
 class RetrieveJob;
 }
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 class ReadSession;
 
@@ -103,4 +103,4 @@ private:
   void position(const cta::RetrieveJob& fileToRecall);
 };
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

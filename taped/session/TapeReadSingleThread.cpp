@@ -14,22 +14,21 @@
 //------------------------------------------------------------------------------
 // Constructor for TapeReadSingleThread
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
-  castor::tape::tapeserver::drive::DriveInterface& drive,
-  cta::mediachanger::MediaChangerFacade& mediaChanger,
-  TapeSessionReporter& reporter,
-  const VolumeInfo& volInfo,
-  uint64_t maxFilesRequest,
-  RecallWatchDog& watchdog,
-  const cta::log::LogContext& logContext,
-  RecallReportPacker& reportPacker,
-  const bool useLbp,
-  const bool useRAO,
-  const bool useEncryption,
-  const std::string& externalEncryptionKeyScript,
-  const cta::RetrieveMount& retrieveMount,
-  const uint32_t tapeLoadTimeout,
-  cta::catalogue::Catalogue& catalogue)
+cta::tape::daemon::TapeReadSingleThread::TapeReadSingleThread(cta::tape::drive::DriveInterface& drive,
+                                                              cta::mediachanger::MediaChangerFacade& mediaChanger,
+                                                              TapeSessionReporter& reporter,
+                                                              const VolumeInfo& volInfo,
+                                                              uint64_t maxFilesRequest,
+                                                              RecallWatchDog& watchdog,
+                                                              const cta::log::LogContext& logContext,
+                                                              RecallReportPacker& reportPacker,
+                                                              const bool useLbp,
+                                                              const bool useRAO,
+                                                              const bool useEncryption,
+                                                              const std::string& externalEncryptionKeyScript,
+                                                              const cta::RetrieveMount& retrieveMount,
+                                                              const uint32_t tapeLoadTimeout,
+                                                              cta::catalogue::Catalogue& catalogue)
     : TapeSingleThreadInterface<TapeReadTask>(drive,
                                               mediaChanger,
                                               reporter,
@@ -49,7 +48,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeReadSingleThread(
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
+cta::tape::daemon::TapeReadSingleThread::TapeCleaning::~TapeCleaning() {
   m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp,
                                           std::nullopt,
                                           m_this.m_logContext);
@@ -202,8 +201,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::TapeCleaning::~TapeClean
 //------------------------------------------------------------------------------
 //TapeReadSingleThread::popAndRequestMoreJobs()
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeReadTask*
-castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs() {
+cta::tape::daemon::TapeReadTask* cta::tape::daemon::TapeReadSingleThread::popAndRequestMoreJobs() {
   // Take the next task for the tape thread to execute and check how many left.
   // m_tasks queue gets more tasks when requestInjection() is called.
   // The queue may contain many small files that will be processed quickly
@@ -235,10 +233,9 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::popAndRequestMoreJobs() 
 //------------------------------------------------------------------------------
 // TapeReadSingleThread::openReadSession()
 //------------------------------------------------------------------------------
-std::unique_ptr<castor::tape::tapeFile::ReadSession>
-castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
+std::unique_ptr<cta::tape::tapeFile::ReadSession> cta::tape::daemon::TapeReadSingleThread::openReadSession() {
   try {
-    auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, m_useLbp);
+    auto readSession = cta::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, m_useLbp);
     return readSession;
   } catch (cta::exception::Exception& ex) {
     cta::log::ScopedParamContainer scoped(m_logContext);
@@ -251,7 +248,7 @@ castor::tape::tapeserver::daemon::TapeReadSingleThread::openReadSession() {
 //------------------------------------------------------------------------------
 //TapeReadSingleThread::run()
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
+void cta::tape::daemon::TapeReadSingleThread::run() {
   cta::log::ScopedParamContainer threadGlobalParams(m_logContext);
   threadGlobalParams.add("thread", "TapeRead");
   cta::utils::Timer timer, totalTimer;
@@ -365,7 +362,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
 
         if (readSession->isTapeWithLbp() && !m_useLbp) {
           m_logContext.log(cta::log::WARNING,
-                           "Tapeserver started without LBP support"
+                           "Taped started without LBP support"
                            " but the tape with LBP label mounted");
         }
         switch (m_drive.getLbpToUse()) {
@@ -496,9 +493,9 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::run() {
 //------------------------------------------------------------------------------
 //TapeReadSingleThread::logWithStat()
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(int level,
-                                                                         const std::string& msg,
-                                                                         cta::log::ScopedParamContainer& params) {
+void cta::tape::daemon::TapeReadSingleThread::logWithStat(int level,
+                                                          const std::string& msg,
+                                                          cta::log::ScopedParamContainer& params) {
   params.add("type", "read")
     .add("tapeVid", m_volInfo.vid)
     .add("mountTime", m_stats.mountTime)
@@ -525,7 +522,7 @@ void castor::tape::tapeserver::daemon::TapeReadSingleThread::logWithStat(int lev
 //------------------------------------------------------------------------------
 //logSCSIMetrics
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeReadSingleThread::logSCSIMetrics() {
+void cta::tape::daemon::TapeReadSingleThread::logSCSIMetrics() {
   try {
     // mount general statistics
     cta::log::ScopedParamContainer scopedContainer(m_logContext);

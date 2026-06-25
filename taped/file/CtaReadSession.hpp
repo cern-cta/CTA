@@ -11,7 +11,7 @@
 #include <memory>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 /**
   * Class keeping track of a whole tape read session over an AUL formatted
@@ -27,13 +27,11 @@ public:
     * volId value. Throws an exception in case of mismatch.
     * @param drive: drive object to which we bind the session
     * @param vid: volume name of the tape we would like to read from
-    * @param useLbp: castor.conf option to use or not to use LBP in tapeserverd
+    * @param useLbp: option to enable logical block protection in taped
     */
-  CtaReadSession(tapeserver::drive::DriveInterface& drive,
-                 const tapeserver::daemon::VolumeInfo& volInfo,
-                 const bool useLbp);
+  CtaReadSession(drive::DriveInterface& drive, const daemon::VolumeInfo& volInfo, const bool useLbp);
 
   ~CtaReadSession() override = default;
 };
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

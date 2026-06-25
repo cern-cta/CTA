@@ -13,10 +13,10 @@
 #include <memory>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
-EnstoreLargeReadSession::EnstoreLargeReadSession(tapeserver::drive::DriveInterface& drive,
-                                                 const tapeserver::daemon::VolumeInfo& volInfo,
+EnstoreLargeReadSession::EnstoreLargeReadSession(drive::DriveInterface& drive,
+                                                 const daemon::VolumeInfo& volInfo,
                                                  const bool useLbp)
     : ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
@@ -51,4 +51,4 @@ EnstoreLargeReadSession::EnstoreLargeReadSession(tapeserver::drive::DriveInterfa
   m_drive.readFileMark("Reading filemark");
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

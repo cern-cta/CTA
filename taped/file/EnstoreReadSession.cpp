@@ -12,10 +12,10 @@
 #include <memory>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
-EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface& drive,
-                                       const tapeserver::daemon::VolumeInfo& volInfo,
+EnstoreReadSession::EnstoreReadSession(drive::DriveInterface& drive,
+                                       const daemon::VolumeInfo& volInfo,
                                        const bool useLbp)
     : ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
@@ -49,4 +49,4 @@ EnstoreReadSession::EnstoreReadSession(tapeserver::drive::DriveInterface& drive,
   // after which we are at the end of VOL1 header (e.g. beginning of first file)
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

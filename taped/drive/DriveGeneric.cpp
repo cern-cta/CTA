@@ -16,7 +16,7 @@
 #include <map>
 #include <string>
 
-namespace castor::tape::tapeserver::drive {
+namespace cta::tape::drive {
 
 std::unique_ptr<DriveInterface> createDrive(const SCSI::DeviceInfo& di, System::virtualWrapper& sw) {
   // For now we need this code as we can only determine that the drive
@@ -1513,15 +1513,15 @@ drive::compressionStats drive::DriveLTO::getCompression() {
   return driveCompressionStats;
 }
 
-std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> drive::DriveLTO::getEndOfWrapPositions() {
-  std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> ret;
+std::vector<cta::tape::drive::endOfWrapPosition> drive::DriveLTO::getEndOfWrapPositions() {
+  std::vector<cta::tape::drive::endOfWrapPosition> ret;
   SCSI::Structures::readEndOfWrapPositionCDB_t cdb;
   //WrapNumberValid = 0, ReportAll = 1 and WrapNumber = 0 as we want all the end of wraps positions
   cdb.WNV = 0;
   cdb.RA = 1;
   cdb.wrapNumber = 0;
   //Each wrap descriptor is 12 bytes
-  SCSI::Structures::setU32(cdb.allocationLength, 12 * castor::tape::SCSI::maxLTOTapeWraps);
+  SCSI::Structures::setU32(cdb.allocationLength, 12 * cta::tape::SCSI::maxLTOTapeWraps);
 
   SCSI::Structures::readEndOfWrapPositionDataLongForm_t data;
 
@@ -1538,7 +1538,7 @@ std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> drive::DriveLTO:
   int nbWrapReturned = data.getNbWrapsReturned();
   //Loop over the list of wraps of the tape returned by the drive
   for (int i = 0; i < nbWrapReturned; ++i) {
-    castor::tape::tapeserver::drive::endOfWrapPosition position;
+    cta::tape::drive::endOfWrapPosition position;
     auto wrapDescriptor = data.wrapDescriptor[i];
     position.wrapNumber = SCSI::Structures::toU16(wrapDescriptor.wrapNumber);
     position.partition = SCSI::Structures::toU16(wrapDescriptor.partition);
@@ -2899,7 +2899,7 @@ std::map<std::string, uint32_t> drive::DriveMHVTL::getDriveStats() {
   return std::map<std::string, uint32_t>();
 }
 
-std::map<std::string, uint32_t> castor::tape::tapeserver::drive::DriveMHVTL::getVolumeStats() {
+std::map<std::string, uint32_t> cta::tape::drive::DriveMHVTL::getVolumeStats() {
   // No available data
   return std::map<std::string, uint32_t>();
 }
@@ -2971,9 +2971,9 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond) const 
     try {
       testUnitReady();
       return;
-    } catch (castor::tape::SCSI::NotReadyException& ex) {
+    } catch (cta::tape::SCSI::NotReadyException& ex) {
       lastTestUnitReadyExceptionMsg = ex.getMessage().str();
-    } catch (castor::tape::SCSI::UnitAttentionException& ex) {
+    } catch (cta::tape::SCSI::UnitAttentionException& ex) {
       lastTestUnitReadyExceptionMsg = ex.getMessage().str();
     } catch (...) {
       throw;
@@ -2989,4 +2989,4 @@ void drive::DriveGeneric::waitTestUnitReady(const uint32_t timeoutSecond) const 
   throw ex;
 }
 
-}  // namespace castor::tape::tapeserver::drive
+}  // namespace cta::tape::drive

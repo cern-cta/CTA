@@ -7,9 +7,9 @@
 
 #include <string>
 
-namespace castor::tape {
+namespace cta::tape {
 
-namespace tapeserver::drive {
+namespace drive {
 class DriveInterface;
 }
 
@@ -32,8 +32,8 @@ public:
     *            without otherwise.
     *
     */
-  static void label(tapeserver::drive::DriveInterface* drive, const std::string& vid, const bool lbp);
+  static void label(drive::DriveInterface* drive, const std::string& vid, const bool lbp);
 };
 
 }  // namespace tapeFile
-}  // namespace castor::tape
+}  // namespace cta::tape

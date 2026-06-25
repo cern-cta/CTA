@@ -12,7 +12,7 @@
 #include <algorithm>
 #include <memory>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -29,8 +29,8 @@ EncryptionControl::EncryptionControl(bool useEncryption, const std::string& scri
 //------------------------------------------------------------------------------
 // enable
 //------------------------------------------------------------------------------
-auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& m_drive,
-                               castor::tape::tapeserver::daemon::VolumeInfo& volInfo,
+auto EncryptionControl::enable(cta::tape::drive::DriveInterface& m_drive,
+                               cta::tape::daemon::VolumeInfo& volInfo,
                                cta::catalogue::Catalogue& catalogue,
                                bool isWriteSession) -> EncryptionStatus {
   EncryptionStatus encStatus;
@@ -39,7 +39,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
       // If encryption is enabled, an external script is required
       throw cta::exception::Exception("In EncryptionControl::enableEncryption: "
                                       "failed to enable encryption: path provided is empty "
-                                      "but tapeserver is configured to use encryption");
+                                      "but taped is configured to use encryption");
     }
     encStatus = {false, "", "", ""};
     disable(m_drive);
@@ -114,7 +114,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
     m_drive.setEncryptionKey(encStatus.key);
   } else {
     /*
-     * If tapeserver fails completely and leaves drive in dirty state, we should always clear
+     * If taped fails completely and leaves drive in dirty state, we should always clear
      * encryption key from the drive if data are to be written unencrypted.
      */
     disable(m_drive);
@@ -125,7 +125,7 @@ auto EncryptionControl::enable(castor::tape::tapeserver::drive::DriveInterface& 
 //------------------------------------------------------------------------------
 // disable
 //------------------------------------------------------------------------------
-bool EncryptionControl::disable(castor::tape::tapeserver::drive::DriveInterface& m_drive) const {
+bool EncryptionControl::disable(cta::tape::drive::DriveInterface& m_drive) const {
   return m_drive.clearEncryptionKey();
 }
 
@@ -208,4 +208,4 @@ std::string EncryptionControl::argsToString(std::list<std::string> args, const s
   return toBeReturned.str();
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

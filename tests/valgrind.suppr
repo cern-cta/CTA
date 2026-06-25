@@ -269,74 +269,6 @@
 }
 
 {
-   tape_cleaning
-   Memcheck:Leak
-   fun:_Znwm
-   fun:_ZN6castor4tape10tapeserver6daemon21MigrationReportPacker17reportDriveStatusEN3cta11DriveStatusE
-   fun:_ZN6castor4tape10tapeserver6daemon21TapeWriteSingleThread12TapeCleaningD1Ev
-   fun:_ZN6castor4tape10tapeserver6daemon21TapeWriteSingleThread3runEv
-   fun:_ZN6castor6server6Thread14pthread_runnerEPv
-   fun:start_thread
-   fun:clone
-}
-
-{
-   recall_packer
-   Memcheck:Leak
-   fun:_Znwm
-   fun:_ZN6castor4tape10tapeserver6daemon18RecallReportPacker18reportCompletedJobESt10unique_ptrIN3cta11RetrieveJobESt14default_deleteIS6_EE
-   fun:_ZN6castor4tape10tapeserver6daemon13DiskWriteTask7executeERNS2_18RecallReportPackerERNS_3log10LogContextERNS0_8diskFile15DiskFileFactoryERNS2_14RecallWatchDogE
-   fun:_ZN6castor4tape10tapeserver6daemon19DiskWriteThreadPool21DiskWriteWorkerThread3runEv
-   fun:_ZN6castor6server6Thread14pthread_runnerEPv
-   fun:start_thread
-   fun:clone
-}
-
-{
-   migration_packer
-   Memcheck:Leak
-   fun:_Znwm
-   fun:_ZN6castor4tape10tapeserver6daemon21MigrationReportPacker28reportEndOfSessionWithErrorsESsi
-   fun:_ZN6castor4tape10tapeserver6daemon21TapeWriteSingleThread3runEv
-   fun:_ZN6castor6server6Thread14pthread_runnerEPv
-   fun:start_thread
-   fun:clone
-}
-
-{
-   recall_packer_2
-   Memcheck:Leak
-   fun:_Znwm
-   fun:_ZN6castor4tape10tapeserver6daemon18RecallReportPacker28reportEndOfSessionWithErrorsESsi
-   fun:_ZN6castor4tape10tapeserver6daemon19DiskWriteThreadPool21DiskWriteWorkerThread3runEv
-   fun:_ZN6castor6server6Thread14pthread_runnerEPv
-   fun:start_thread
-   fun:clone
-}
-
-{
-   recall_packer_3
-   Memcheck:Leak
-   fun:_Znwm
-   fun:_ZN6castor4tape10tapeserver6daemon18RecallReportPacker18reportEndOfSessionEv
-   fun:_ZN6castor4tape10tapeserver6daemon19DiskWriteThreadPool21DiskWriteWorkerThread3runEv
-   fun:_ZN6castor6server6Thread14pthread_runnerEPv
-   fun:start_thread
-   fun:clone
-}
-
-{
-   recall_packer_4
-   Memcheck:Leak
-   fun:_Znwm
-   fun:_ZN6castor4tape10tapeserver6daemon18RecallReportPacker17reportDriveStatusEN3cta11DriveStatusE
-   fun:_ZN6castor4tape10tapeserver6daemon20TapeReadSingleThread12TapeCleaningD1Ev
-   fun:_ZN6castor4tape10tapeserver6daemon20TapeReadSingleThread3runEv
-   fun:_ZN6castor6server6Thread14pthread_runnerEPv
-   fun:start_thread
-   fun:clone
-}
-{
    oracle_lfvini1
    Memcheck:Cond
    fun:__intel_sse2_strcpy
@@ -675,15 +607,6 @@
    ...
    fun:_ZN3cta11objectstore12ArchiveQueue16addJobsAndCommitERNSt7__cxx114listINS1_8JobToAddESaIS4_EEERNS0_14AgentReferenceERNS_3log10LogContextE
    fun:_ZN9unitTests49SchedulerTest_getQueuesAndMountSummariesTest_Test8TestBodyEv
-   ...
-}
-
-{
-   <insert_a_suppression_name_here>
-   Memcheck:Free
-   ...
-   fun:_ZN6castor4tape8tapeFile3osm5LABEL6encodeEmmmmRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEESB_SB_
-   fun:_ZN9unitTests15OSMTapeFileTest5SetUpEv
    ...
 }
 

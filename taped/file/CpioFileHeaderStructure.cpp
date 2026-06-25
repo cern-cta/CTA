@@ -13,7 +13,7 @@
 /**
  * CPIO
  */
-size_t castor::tape::tapeFile::CPIO::decode(const uint8_t* puiData, const size_t uiSize) {
+size_t cta::tape::tapeFile::CPIO::decode(const uint8_t* puiData, const size_t uiSize) {
   if (uiSize < (CPIO::HEADER + CPIO::PATHLEN)) {
     std::ostringstream ex_str;
     ex_str << "[CPIO::decode] - Invalid data block size: " << uiSize << " "
@@ -76,7 +76,7 @@ size_t castor::tape::tapeFile::CPIO::decode(const uint8_t* puiData, const size_t
 /**
  *
  */
-bool castor::tape::tapeFile::CPIO::valid() const {
+bool cta::tape::tapeFile::CPIO::valid() const {
   if (m_strMagic != ASCIIMAGIC) {
     return false;
   }

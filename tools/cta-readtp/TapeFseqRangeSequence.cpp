@@ -12,7 +12,7 @@
 #include <list>
 #include <ostream>
 
-namespace cta::tapeserver::readtp {
+namespace cta::tape::readtp {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -86,4 +86,4 @@ const TapeFseqRange& TapeFseqRangeSequence::range() const noexcept {
   return m_range;
 }
 
-}  // namespace cta::tapeserver::readtp
+}  // namespace cta::tape::readtp

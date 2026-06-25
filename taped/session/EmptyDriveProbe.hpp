@@ -15,7 +15,7 @@
 #include <memory>
 #include <optional>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
    * Class responsible for probing a tape drive to see if it empty and
@@ -26,7 +26,7 @@ public:
   /**
      * Constructor
      *
-     * @param log Object representing the API to the CASTOR logging system.
+     * @param log Object representing the API to the CTA logging system.
      * @param driveConfig Configuration of the tape drive to be probed.
      * @param sysWrapper Object representing the operating system.
      */
@@ -84,4 +84,4 @@ private:
 
 };  // class EmptyDriveProbe
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

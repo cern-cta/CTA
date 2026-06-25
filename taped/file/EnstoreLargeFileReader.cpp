@@ -17,7 +17,7 @@
 #include <sstream>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 EnstoreLargeFileReader::EnstoreLargeFileReader(ReadSession& rs, const cta::RetrieveJob& fileToRecall)
     : FileReader(rs, fileToRecall) {
@@ -191,4 +191,4 @@ void EnstoreLargeFileReader::checkHeaders(const cta::RetrieveJob& fileToRecall) 
   setTargetFileSize(uhl2);
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

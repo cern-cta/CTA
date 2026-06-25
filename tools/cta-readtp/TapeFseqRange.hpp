@@ -8,7 +8,7 @@
 #include <ostream>
 #include <string>
 
-namespace cta::tapeserver::readtp {
+namespace cta::tape::readtp {
 
 /**
  * A range of tape file sequence numbers specified by an inclusive lower
@@ -97,9 +97,9 @@ private:
   uint32_t m_upper;
 };
 
-}  // namespace cta::tapeserver::readtp
+}  // namespace cta::tape::readtp
 
 /**
- * ostream << operator for cta::tapeserver::readtp::TapeFseqRange
+ * ostream << operator for cta::tape::readtp::TapeFseqRange
  */
-std::ostream& operator<<(std::ostream& os, const cta::tapeserver::readtp::TapeFseqRange& value);
+std::ostream& operator<<(std::ostream& os, const cta::tape::readtp::TapeFseqRange& value);

@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace castor::tape::SCSI {
+namespace cta::tape::SCSI {
 
 /* Extracted from linux kernel's include/scsi/scsi.h. System-level include
    is less complete */
@@ -705,4 +705,4 @@ std::string LBPMethodToString(const unsigned char LBPMethod);
    */
 const unsigned char controlDataProtectionModePageLengthAddition = 4;
 
-}  // namespace castor::tape::SCSI
+}  // namespace cta::tape::SCSI

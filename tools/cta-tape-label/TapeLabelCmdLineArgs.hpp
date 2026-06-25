@@ -8,7 +8,7 @@
 #include <optional>
 #include <string>
 
-namespace cta::tapeserver::tapelabel {
+namespace cta::tape::tapelabel {
 
 /**
  * Structure to store the command-line arguments of the command-line tool
@@ -68,4 +68,4 @@ struct TapeLabelCmdLineArgs {
   static void printUsage(std::ostream& os);
 };
 
-}  // namespace cta::tapeserver::tapelabel
+}  // namespace cta::tape::tapelabel

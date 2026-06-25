@@ -69,13 +69,13 @@ protected:
     // Create drive object and open tape device
     m_dev.product = "ULT3580-TD8";
     m_dev.nst_dev = m_nstDev;
-    m_drive = castor::tape::tapeserver::drive::createDrive(m_dev, m_sWrapper);
+    m_drive = cta::tape::drive::createDrive(m_dev, m_sWrapper);
 
     try {
       /**
         * Gets generic device info for the drive object.
         */
-      castor::tape::tapeserver::drive::deviceInfo devInfo;
+      cta::tape::drive::deviceInfo devInfo;
       devInfo = m_drive->getDeviceInfo();
       auto removeWhiteSpaces = [](std::string* str) -> std::string {
         str->erase(std::remove_if(str->begin(), str->end(), [](uint8_t x) { return std::isspace(x); }), str->end());
@@ -101,9 +101,9 @@ protected:
     m_drive->rewind();
   }
 
-  castor::tape::System::realWrapper m_sWrapper;
-  castor::tape::SCSI::DeviceInfo m_dev;
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> m_drive;
+  cta::tape::System::realWrapper m_sWrapper;
+  cta::tape::SCSI::DeviceInfo m_dev;
+  std::unique_ptr<cta::tape::drive::DriveInterface> m_drive;
   std::unique_ptr<cta::SchedulerDatabase> m_db;
   std::unique_ptr<cta::catalogue::Catalogue> m_catalogue;
   std::string m_vid;
@@ -114,7 +114,7 @@ protected:
 TEST_F(OsmReaderTest, ReadOsmTape) {
   createDrive();
   try {
-    castor::tape::tapeserver::daemon::VolumeInfo m_volInfo;
+    cta::tape::daemon::VolumeInfo m_volInfo;
     m_volInfo.vid = m_vid;
     m_volInfo.nbFiles = 1;
     m_volInfo.labelFormat =
@@ -123,7 +123,7 @@ TEST_F(OsmReaderTest, ReadOsmTape) {
 
     // Now read a random file
     // Create Read Session OSM
-    auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(*m_drive, m_volInfo, false);
+    auto readSession = cta::tape::tapeFile::ReadSessionFactory::create(*m_drive, m_volInfo, false);
     BasicRetrieveJob fileToRecall;
     fileToRecall.selectedCopyNb = 0;
     fileToRecall.archiveFile.tapeFiles.emplace_back();
@@ -133,7 +133,7 @@ TEST_F(OsmReaderTest, ReadOsmTape) {
     fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
 
     // Create Read File OSM
-    auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, fileToRecall);
+    auto reader = cta::tape::tapeFile::FileReaderFactory::create(*readSession, fileToRecall);
     size_t bs = reader->getBlockSize();
     char* data = new char[bs + 1];
     size_t j = 0;
@@ -156,7 +156,7 @@ TEST_F(OsmReaderTest, CleanDrive) {
 
   auto scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_db, "schedulerBackendName");
 
-  castor::tape::tapeserver::daemon::CleanerSession
+  cta::tape::daemon::CleanerSession
     cleanerSession(mc, strlogger, driveConfig, m_sWrapper, m_vid, false, 0, "", *m_catalogue, *scheduler);
 
   cleanerSession.execute();

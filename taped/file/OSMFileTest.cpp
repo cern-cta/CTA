@@ -77,11 +77,11 @@ protected:
     m_volInfo.labelFormat = cta::common::dataStructures::Label::Format::OSM;
 
     // Write OSM label
-    castor::tape::tapeFile::osm::LABEL osmLabel;
-    osmLabel.encode(0, 1, castor::tape::tapeFile::osm::LIMITS::MAXMRECSIZE, 1, m_label, "DESY", "1.1");
-    m_drive.writeBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), castor::tape::tapeFile::osm::LIMITS::MAXMRECSIZE);
-    m_drive.writeBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + castor::tape::tapeFile::osm::LIMITS::MAXMRECSIZE),
-                       castor::tape::tapeFile::osm::LIMITS::MAXMRECSIZE);
+    cta::tape::tapeFile::osm::LABEL osmLabel;
+    osmLabel.encode(0, 1, cta::tape::tapeFile::osm::LIMITS::MAXMRECSIZE, 1, m_label, "DESY", "1.1");
+    m_drive.writeBlock(reinterpret_cast<void*>(osmLabel.rawLabel()), cta::tape::tapeFile::osm::LIMITS::MAXMRECSIZE);
+    m_drive.writeBlock(reinterpret_cast<void*>(osmLabel.rawLabel() + cta::tape::tapeFile::osm::LIMITS::MAXMRECSIZE),
+                       cta::tape::tapeFile::osm::LIMITS::MAXMRECSIZE);
 
     m_drive.writeSyncFileMarks(1);
     // Write OSM file
@@ -133,60 +133,59 @@ protected:
 
   virtual void TearDown() {}
 
-  castor::tape::tapeserver::drive::FakeDrive m_drive;
+  cta::tape::drive::FakeDrive m_drive;
   uint32_t m_block_size;
   std::string m_label;
   TestingRetrieveJob m_fileToRecall;
   TestingArchiveJob m_fileToMigrate;
-  castor::tape::tapeserver::daemon::VolumeInfo m_volInfo;
+  cta::tape::daemon::VolumeInfo m_volInfo;
 
   std::string m_strTestName;
   std::vector<std::string> m_vTestToSkipp;
 };
 
 TEST_F(OSMTapeFileTest, throwsWhenReadingAnEmptyTape) {
-  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
+  const auto readSession = cta::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
   ASSERT_NE(readSession, nullptr);
   m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
   // cannot read a file on an empty tape
-  ASSERT_THROW(castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall),
-               cta::exception::Exception);
+  ASSERT_THROW(cta::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall), cta::exception::Exception);
 }
 
 TEST_F(OSMTapeFileTest, throwsWhenUnexpectedLabelFormat) {
   m_volInfo.labelFormat = static_cast<cta::common::dataStructures::Label::Format>(0xFF);
-  std::unique_ptr<castor::tape::tapeFile::ReadSession> readSession;
-  ASSERT_THROW(readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false),
-               castor::tape::tapeFile::TapeFormatError);
+  std::unique_ptr<cta::tape::tapeFile::ReadSession> readSession;
+  ASSERT_THROW(readSession = cta::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false),
+               cta::tape::tapeFile::TapeFormatError);
   ASSERT_EQ(readSession, nullptr);
 }
 
 TEST_F(OSMTapeFileTest, throwsWhenUsingSessionTwice) {
   const std::string testString("Hello World!");
 
-  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
+  const auto readSession = cta::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
   {
     m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
-    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
+    const auto reader = cta::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     // cannot have two FileReader's on the same session
-    ASSERT_THROW(castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall),
-                 castor::tape::tapeFile::SessionAlreadyInUse);
+    ASSERT_THROW(cta::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall),
+                 cta::tape::tapeFile::SessionAlreadyInUse);
   }
 }
 
 TEST_F(OSMTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
   const std::string testString("Hello World!");
 
-  auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, true);
+  auto readSession = cta::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, true);
   {
     m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
-    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
+    const auto reader = cta::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
     char* data = new char[blockSize + 1];
     // block size needs to be the same provided by the headers
-    ASSERT_THROW(reader->readNextDataBlock(data, 1), castor::tape::tapeFile::WrongBlockSize);
+    ASSERT_THROW(reader->readNextDataBlock(data, 1), cta::tape::tapeFile::WrongBlockSize);
     // it is normal to reach end of file after a loop of reads
-    ASSERT_THROW(while (true) { reader->readNextDataBlock(data, blockSize); }, castor::tape::tapeFile::EndOfFile);
+    ASSERT_THROW(while (true) { reader->readNextDataBlock(data, blockSize); }, cta::tape::tapeFile::EndOfFile);
     delete[] data;
   }
 }
@@ -194,9 +193,9 @@ TEST_F(OSMTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
 TEST_F(OSMTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {
   // Verify label
   {
-    const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
+    const auto readSession = cta::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, false);
     ASSERT_NE(readSession, nullptr);
-    ASSERT_EQ(readSession->getCurrentFilePart(), castor::tape::tapeFile::PartOfFile::Header);
+    ASSERT_EQ(readSession->getCurrentFilePart(), cta::tape::tapeFile::PartOfFile::Header);
     ASSERT_EQ(readSession->getCurrentFseq(), static_cast<uint32_t>(1));
     ASSERT_EQ(readSession->isCorrupted(), false);
     ASSERT_EQ(readSession->m_vid.compare(m_label), 0);
@@ -204,16 +203,16 @@ TEST_F(OSMTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {
 
   const std::string testString("Hello World!");
   // Read it back and compare
-  const auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, true);
+  const auto readSession = cta::tape::tapeFile::ReadSessionFactory::create(m_drive, m_volInfo, true);
   ASSERT_NE(readSession, nullptr);
-  ASSERT_EQ(readSession->getCurrentFilePart(), castor::tape::tapeFile::PartOfFile::Header);
+  ASSERT_EQ(readSession->getCurrentFilePart(), cta::tape::tapeFile::PartOfFile::Header);
   ASSERT_EQ(readSession->getCurrentFseq(), static_cast<uint32_t>(1));
   ASSERT_EQ(readSession->isCorrupted(), false);
   ASSERT_EQ(readSession->m_vid.compare(m_label), 0);
   ASSERT_EQ(readSession->m_useLbp, true);
   {
     m_fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
-    const auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
+    const auto reader = cta::tape::tapeFile::FileReaderFactory::create(*readSession, m_fileToRecall);
     size_t blockSize = reader->getBlockSize();
     ASSERT_EQ(blockSize, m_block_size);
     char* data = new char[blockSize + 1];

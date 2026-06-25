@@ -181,7 +181,7 @@ void CtaAdminParsedCmd::addOption(const Option& option, const std::string& value
       new_opt->set_key(key);
       if (option == opt_drivename_cmd && value == "first") {
         try {
-          new_opt->set_value(cta::tape::daemon::common::TapedConfiguration::getFirstDriveName());
+          new_opt->set_value(cta::tape::daemon::TapedConfiguration::getFirstDriveName());
         } catch (cta::exception::Exception&) {
           throw std::runtime_error(
             "Could not find a taped configuration file. This option should only be run from a tapeserver.");

@@ -15,7 +15,7 @@
 
 #include <memory>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 class MemBlock;
 
@@ -114,4 +114,4 @@ private:
   void logWithStat(int level, std::string_view msg, cta::log::LogContext& lc) const;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

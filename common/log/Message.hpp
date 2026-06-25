@@ -13,8 +13,8 @@ namespace cta {
 namespace log {
 
 /**
-     * Container for a CASTOR log message
-     */
+ * Container for a CTA log message
+ */
 struct Message {
   /// Message number
   int number;

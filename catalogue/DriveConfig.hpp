@@ -23,7 +23,7 @@ class Catalogue;
  */
 class DriveConfig {
 public:
-  static void setTapedConfiguration(const cta::tape::daemon::common::TapedConfiguration& tapedConfiguration,
+  static void setTapedConfiguration(const cta::tape::daemon::TapedConfiguration& tapedConfiguration,
                                     catalogue::Catalogue* catalogue,
                                     const std::string& tapeDriveName);
 
@@ -33,10 +33,9 @@ private:
   static void setConfigToDB(const cta::SourcedParameter<std::string>& sourcedParameter,
                             catalogue::Catalogue* catalogue,
                             const std::string& tapeDriveName);
-  static void
-  setConfigToDB(const cta::SourcedParameter<cta::tape::daemon::common::FetchReportOrFlushLimits>& sourcedParameter,
-                catalogue::Catalogue* catalogue,
-                const std::string& tapeDriveName);
+  static void setConfigToDB(const cta::SourcedParameter<cta::tape::daemon::FetchReportOrFlushLimits>& sourcedParameter,
+                            catalogue::Catalogue* catalogue,
+                            const std::string& tapeDriveName);
   static void setConfigToDB(const cta::SourcedParameter<std::uint16_t>& sourcedParameter,
                             catalogue::Catalogue* catalogue,
                             const std::string& tapeDriveName);

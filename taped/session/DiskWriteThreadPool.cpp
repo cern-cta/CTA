@@ -12,7 +12,7 @@
 #include <sstream>
 #include <utility>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -212,4 +212,4 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::logWithStat(int level, const st
   m_lc.log(level, msg);
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

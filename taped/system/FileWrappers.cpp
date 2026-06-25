@@ -12,7 +12,7 @@
 #include <stdexcept>
 #include <sys/mtio.h>
 
-using namespace castor::tape;
+using namespace cta::tape;
 
 ssize_t System::vfsFile::read(void* buf, size_t nbytes) {
   /* The vfsFile's operations always fail */

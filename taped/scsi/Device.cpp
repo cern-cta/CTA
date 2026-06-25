@@ -9,7 +9,7 @@
 
 #include <cstdlib>
 
-using namespace castor::tape;
+using namespace cta::tape;
 
 /**
  * Fill up the array that the device list is with all the system's

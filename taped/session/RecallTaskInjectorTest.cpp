@@ -8,7 +8,7 @@
 #include "DiskWriteThreadPool.hpp"
 #include "TapeReadSingleThread.hpp"
 #include "TapeSessionReporter.hpp"
-#include "TapeserverProxyMock.hpp"
+#include "TapedProxyMock.hpp"
 #include "TaskWatchDog.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/NotImplementedException.hpp"
@@ -22,19 +22,19 @@
 
 #include <gtest/gtest.h>
 
-using namespace castor::tape::tapeserver::daemon;
-using namespace castor::tape;
+using namespace cta::tape::daemon;
+using namespace cta::tape;
 
 namespace unitTests {
 const int blockSize = 4096;
 
-class castor_tape_tapeserver_daemonTest : public ::testing::Test {
+class cta_tape_daemonTest : public ::testing::Test {
 protected:
   void SetUp() {}
 
   void TearDown() {}
 
-};  // class castor_tape_tapeserver_daemonTest
+};  // class cta_tape_daemonTest
 
 struct MockRecallReportPacker : public RecallReportPacker {
   void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
@@ -89,10 +89,10 @@ class FakeSingleTapeReadThread : public TapeSingleThreadInterface<TapeReadTask> 
 public:
   using TapeSingleThreadInterface<TapeReadTask>::m_tasks;
 
-  FakeSingleTapeReadThread(tapeserver::drive::DriveInterface& drive,
+  FakeSingleTapeReadThread(drive::DriveInterface& drive,
                            cta::mediachanger::MediaChangerFacade& mc,
-                           tapeserver::daemon::TapeSessionReporter& tsr,
-                           const tapeserver::daemon::VolumeInfo& volInfo,
+                           daemon::TapeSessionReporter& tsr,
+                           const daemon::VolumeInfo& volInfo,
                            const uint32_t tapeLoadTimeout,
                            cta::log::LogContext& lc)
       : TapeSingleThreadInterface<TapeReadTask>(drive, mc, tsr, volInfo, lc, false, "", tapeLoadTimeout) {}
@@ -129,7 +129,7 @@ class TestingDatabaseRetrieveMount : public cta::SchedulerDatabase::RetrieveMoun
     throw cta::exception::NotImplementedException();
   }
 
-  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override {
+  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override {
     throw cta::exception::NotImplementedException();
   }
 
@@ -163,20 +163,20 @@ class TestingDatabaseRetrieveMount : public cta::SchedulerDatabase::RetrieveMoun
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
+TEST_F(cta_tape_daemonTest, RecallTaskInjectorNominal) {
   const int nbJobs = 15;
   const int maxNbJobsInjectedAtOnce = 6;
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_RecallTaskInjectorTest", cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_RecallTaskInjectorTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
   RecallMemoryManager mm(50U, 50U, lc);
-  castor::tape::tapeserver::drive::FakeDrive drive;
+  cta::tape::drive::FakeDrive drive;
 
   auto catalogue = cta::catalogue::DummyCatalogue();
   cta::MockRetrieveMount trm(catalogue);
   trm.createRetrieveJobs(nbJobs);
   //EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
   cta::TapeMountDummy tmd;
   RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
@@ -185,16 +185,13 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  castor::tape::tapeserver::daemon::VolumeInfo volume;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  cta::tape::daemon::VolumeInfo volume;
   volume.vid = "V12345";
   volume.mountType = cta::common::dataStructures::MountType::Retrieve;
-  castor::tape::tapeserver::daemon::TapeSessionReporter gsr(initialProcess,
-                                                            cta::tape::daemon::DriveConfigEntry(),
-                                                            "0.0.0.0",
-                                                            lc);
+  cta::tape::daemon::TapeSessionReporter gsr(initialProcess, cta::tape::daemon::DriveConfigEntry(), "0.0.0.0", lc);
   FakeSingleTapeReadThread tapeRead(drive, mc, gsr, volume, 60, lc);
-  tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, rwd, lc);
+  daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, maxNbJobsInjectedAtOnce, blockSize, rwd, lc);
 
   bool noFilesToRecall;
   ASSERT_EQ(true, rti.synchronousFetch(noFilesToRecall));
@@ -232,17 +229,17 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNominal) {
   }
 }
 
-TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNoFiles) {
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_RecallTaskInjectorTest", cta::log::DEBUG);
+TEST_F(cta_tape_daemonTest, RecallTaskInjectorNoFiles) {
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_RecallTaskInjectorTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
   RecallMemoryManager mm(50U, 50U, lc);
-  castor::tape::tapeserver::drive::FakeDrive drive;
+  cta::tape::drive::FakeDrive drive;
   auto catalogue = cta::catalogue::DummyCatalogue();
   cta::MockRetrieveMount trm(catalogue);
   trm.createRetrieveJobs(0);
   //EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
   cta::TapeMountDummy tmd;
   RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
@@ -251,16 +248,13 @@ TEST_F(castor_tape_tapeserver_daemonTest, RecallTaskInjectorNoFiles) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  castor::tape::tapeserver::daemon::VolumeInfo volume;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  cta::tape::daemon::VolumeInfo volume;
   volume.vid = "V12345";
   volume.mountType = cta::common::dataStructures::MountType::Retrieve;
-  castor::tape::tapeserver::daemon::TapeSessionReporter tsr(initialProcess,
-                                                            cta::tape::daemon::DriveConfigEntry(),
-                                                            "0.0.0.0",
-                                                            lc);
+  cta::tape::daemon::TapeSessionReporter tsr(initialProcess, cta::tape::daemon::DriveConfigEntry(), "0.0.0.0", lc);
   FakeSingleTapeReadThread tapeRead(drive, mc, tsr, volume, 60, lc);
-  tapeserver::daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, rwd, lc);
+  daemon::RecallTaskInjector rti(mm, tapeRead, diskWrite, trm, 6, blockSize, rwd, lc);
 
   bool noFilesToRecall;
   ASSERT_FALSE(rti.synchronousFetch(noFilesToRecall));

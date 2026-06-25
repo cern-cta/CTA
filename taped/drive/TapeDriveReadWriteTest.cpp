@@ -22,7 +22,7 @@ namespace {
  * assertion and exits.
  * @param expected_position expected position
  */
-void print_and_assert_position(castor::tape::tapeserver::drive::DriveInterface& drive, int expected_position) {
+void print_and_assert_position(cta::tape::drive::DriveInterface& drive, int expected_position) {
   int curPos = (int) drive.getPositionInfo().currentPosition;
   std::cout << "CurrentPosition: " << curPos << " (Expected: " << expected_position << ")" << std::endl;
   assert(expected_position == curPos);
@@ -45,16 +45,15 @@ void print_and_assert_data(const char* expected_data, const char* actual_data) {
 
 int main() {
   int fail = 0;
-  castor::tape::System::realWrapper sWrapper;
-  castor::tape::SCSI::DeviceVector dl(sWrapper);
-  for (castor::tape::SCSI::DeviceVector::iterator i = dl.begin(); i != dl.end(); ++i) {
-    castor::tape::SCSI::DeviceInfo& dev = (*i);
+  cta::tape::System::realWrapper sWrapper;
+  cta::tape::SCSI::DeviceVector dl(sWrapper);
+  for (cta::tape::SCSI::DeviceVector::iterator i = dl.begin(); i != dl.end(); ++i) {
+    cta::tape::SCSI::DeviceInfo& dev = (*i);
     std::cout << std::endl << "-- SCSI device: " << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
-    if (dev.type == castor::tape::SCSI::Types::tape) {
+    if (dev.type == cta::tape::SCSI::Types::tape) {
       try {
         // Create drive object and open tape device
-        std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-          castor::tape::tapeserver::drive::createDrive(dev, sWrapper));
+        std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(dev, sWrapper));
 
         /**
          * From now we could use generic SCSI request for the drive object.
@@ -66,7 +65,7 @@ int main() {
           /**
            * Gets generic device info for the drive object.
            */
-          castor::tape::tapeserver::drive::deviceInfo devInfo;
+          cta::tape::drive::deviceInfo devInfo;
           devInfo = drive->getDeviceInfo();
           std::cout << "-- INFO --------------------------------------" << std::endl
                     << "  devInfo.vendor               : '" << devInfo.vendor << "'" << std::endl
@@ -121,7 +120,7 @@ int main() {
         }
 
         try {
-          castor::tape::tapeserver::drive::positionInfo posInfo = drive->getPositionInfo();
+          cta::tape::drive::positionInfo posInfo = drive->getPositionInfo();
           std::cout << "-- INFO --------------------------------------" << std::endl
                     << "  posInfo.currentPosition   : " << posInfo.currentPosition << std::endl
                     << "  posInfo.oldestDirtyObject : " << posInfo.oldestDirtyObject << std::endl
@@ -150,7 +149,7 @@ int main() {
            * Trying to get compression from the drive-> Read or write should be
            * done before to have something in the data fields.
            */
-          castor::tape::tapeserver::drive::compressionStats comp = drive->getCompression();
+          cta::tape::drive::compressionStats comp = drive->getCompression();
           std::cout << "-- INFO --------------------------------------" << std::endl
                     << "  fromHost : " << comp.fromHost << std::endl
                     << "  toHost   : " << comp.toHost << std::endl

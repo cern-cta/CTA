@@ -10,7 +10,7 @@
 #include "catalogue/Catalogue.hpp"
 #include "common/utils/Timer.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 std::unique_ptr<FilePositionEstimator>
 FilePositionEstimatorFactory::createInterpolationFilePositionEstimator(const std::string& vid,
@@ -37,4 +37,4 @@ std::unique_ptr<FilePositionEstimator> FilePositionEstimatorFactory::createInter
   return ret;
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

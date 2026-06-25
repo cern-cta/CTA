@@ -15,7 +15,7 @@
 
 namespace cta {
 
-void DriveConfig::setTapedConfiguration(const tape::daemon::common::TapedConfiguration& tapedConfiguration,
+void DriveConfig::setTapedConfiguration(const tape::daemon::TapedConfiguration& tapedConfiguration,
                                         catalogue::Catalogue* catalogue,
                                         const std::string& tapeDriveName) {
   setConfigToDB(tapedConfiguration.driveName, catalogue, tapeDriveName);
@@ -92,10 +92,9 @@ void DriveConfig::setConfigToDB(const SourcedParameter<std::string>& sourcedPara
                                                   sourcedParameter.source());
 }
 
-void DriveConfig::setConfigToDB(
-  const SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>& sourcedParameter,
-  catalogue::Catalogue* catalogue,
-  const std::string& tapeDriveName) {
+void DriveConfig::setConfigToDB(const SourcedParameter<tape::daemon::FetchReportOrFlushLimits>& sourcedParameter,
+                                catalogue::Catalogue* catalogue,
+                                const std::string& tapeDriveName) {
   std::string key = sourcedParameter.key();
   utils::searchAndReplace(key, "Bytes", "");
   utils::searchAndReplace(key, "Files", "");

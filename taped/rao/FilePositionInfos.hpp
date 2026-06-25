@@ -7,7 +7,7 @@
 
 #include "Position.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * This class holds the position informations about a file : its physical position (start and end) and
@@ -99,4 +99,4 @@ private:
   uint8_t m_endLandingZone = 0;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

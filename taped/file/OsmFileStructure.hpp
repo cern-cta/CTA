@@ -10,7 +10,7 @@
 
 #include <string>
 
-namespace castor::tape::tapeFile::osm {
+namespace cta::tape::tapeFile::osm {
 
 struct LIMITS {
 public:
@@ -86,4 +86,4 @@ protected:
   uint64_t m_ulVolId = 0;
 };
 
-}  // namespace castor::tape::tapeFile::osm
+}  // namespace cta::tape::tapeFile::osm

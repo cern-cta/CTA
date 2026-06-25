@@ -21,6 +21,6 @@ int main(const int argc, char* const* const argv) {
   }
   cta::log::StdoutLogger log(hostName, "cta-tape-label");
 
-  cta::tapeserver::tapelabel::TapeLabelCmd cmd {std::cin, std::cout, std::cerr, log};
+  cta::tape::tapelabel::TapeLabelCmd cmd {std::cin, std::cout, std::cerr, log};
   return cmd.mainImpl(argc, argv);
 }

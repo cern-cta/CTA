@@ -16,7 +16,7 @@
 #include <string>
 #include <type_traits>
 
-namespace cta::tape::daemon::common {
+namespace cta::tape::daemon {
 /**
  * Class containing all the parameters needed by the watchdog process
  * to spawn a transfer session per drive.
@@ -292,4 +292,4 @@ private:
    * functions (just unconditionally log things). */
   static cta::log::DummyLogger gDummyLogger;
 };
-}  // namespace cta::tape::daemon::common
+}  // namespace cta::tape::daemon

@@ -70,7 +70,7 @@ public:
   void setDriveStatus(cta::common::dataStructures::DriveStatus status,
                       const std::optional<std::string>& reason) override {};
 
-  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override {};
+  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override {};
 
   void setTapeMounted(log::LogContext& logContext) const override {};
 

@@ -10,7 +10,7 @@
 
 #include <list>
 
-namespace cta::tapeserver::readtp {
+namespace cta::tape::readtp {
 
 /**
  * Helper class to parse tape file sequence parameter strings.
@@ -37,4 +37,4 @@ public:
 
 };  // class TapeFileSequenceParser
 
-}  // namespace cta::tapeserver::readtp
+}  // namespace cta::tape::readtp

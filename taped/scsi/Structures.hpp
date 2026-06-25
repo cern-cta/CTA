@@ -18,7 +18,7 @@
 #include <scsi/sg.h>
 #include <sstream>
 
-namespace castor::tape::SCSI {
+namespace cta::tape::SCSI {
 const unsigned int defaultTimeout = 900000;  //millisecs
 
 /**
@@ -1117,8 +1117,8 @@ public:
        * Returns the Sense Key value as string.
        */
   std::string getSenseKeyString() {
-    if (castor::tape::SCSI::senseKeys::lastWithText >= getSenseKey()) {
-      return castor::tape::SCSI::senseKeys::senseKeysText[getSenseKey()];
+    if (cta::tape::SCSI::senseKeys::lastWithText >= getSenseKey()) {
+      return cta::tape::SCSI::senseKeys::senseKeysText[getSenseKey()];
     } else {
       std::stringstream err;
       err << "In senseData_t::getSenseKeyString: no Sense Key with this "
@@ -1675,4 +1675,4 @@ std::string hexDump(const unsigned char (&d)[n]) {
   return hex.str();
 }
 }  // namespace Structures
-}  // namespace castor::tape::SCSI
+}  // namespace cta::tape::SCSI

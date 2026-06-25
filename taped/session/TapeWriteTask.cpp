@@ -22,7 +22,7 @@
 #include <memory>
 #include <string>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -56,7 +56,7 @@ uint64_t TapeWriteTask::fileSize() {
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession& session,
+void TapeWriteTask::execute(cta::tape::tapeFile::WriteSession& session,
                             MigrationReportPacker& reportPacker,
                             MigrationWatchDog& watchdog,
                             cta::log::LogContext& lc,
@@ -89,7 +89,7 @@ void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession& session,
     // Try to open the session
     currentErrorToCount = "Error_tapeWriteHeader";
     watchdog.notifyBeginNewJob(m_archiveJob->archiveFile.archiveFileID, m_archiveJob->tapeFile.fSeq);
-    std::unique_ptr<castor::tape::tapeFile::FileWriter> output(openFileWriter(session, lc));
+    std::unique_ptr<cta::tape::tapeFile::FileWriter> output(openFileWriter(session, lc));
     m_LBPMode = output->getLBPMode();
     m_taskStats.readWriteTime += timer.secs(cta::utils::Timer::resetCounter);
     m_taskStats.headerVolume += TapeSessionStats::headerVolumePerFile;
@@ -178,7 +178,7 @@ void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession& session,
         {cta::semconv::attr::kCtaIoDirection, cta::semconv::attr::CtaIoDirectionValues::kWrite},
         {cta::semconv::attr::kCtaIoMedium,    cta::semconv::attr::CtaIoMediumValues::kTape    }
     });
-  } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
+  } catch (const cta::tape::daemon::ErrorFlag&) {
     // We end up there because another task has failed
     // so we just log, circulate blocks and don't even send a report
     lc.log(cta::log::DEBUG,
@@ -434,4 +434,4 @@ bool TapeWriteTask::hasArchiveJob() const {
   return static_cast<bool>(m_archiveJob);  // true if non-null
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

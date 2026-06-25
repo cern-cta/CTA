@@ -47,7 +47,7 @@ class TapeMountDummy : public TapeMount {
     throw exception::NotImplementedException();
   }
 
-  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override {};
+  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override {};
   void setTapeMounted(log::LogContext& logContext) const override {};
 };
 

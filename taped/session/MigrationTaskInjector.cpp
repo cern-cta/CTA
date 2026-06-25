@@ -12,7 +12,7 @@
 using cta::log::LogContext;
 using cta::log::Param;
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 //Constructor
@@ -154,7 +154,7 @@ void MigrationTaskInjector::WorkerThread::run() {
   try {
     while (true) {
       if (m_parent.m_errorFlag) {
-        throw castor::tape::tapeserver::daemon::ErrorFlag();
+        throw cta::tape::daemon::ErrorFlag();
       }
       Request req = m_parent.m_queue.pop();
       m_parent.m_lc.log(cta::log::DEBUG,
@@ -195,7 +195,7 @@ void MigrationTaskInjector::WorkerThread::run() {
         }
       }
     }  //end of while(1)
-  } catch (const castor::tape::tapeserver::daemon::ErrorFlag&) {
+  } catch (const cta::tape::daemon::ErrorFlag&) {
     //we end up there because a task screw up somewhere
     m_parent.m_lc.log(cta::log::INFO,
                       "In MigrationTaskInjector::WorkerThread::run(): a task failed, "
@@ -236,4 +236,4 @@ uint64_t MigrationTaskInjector::firstFseqToWrite() const {
   return m_firstFseqToWrite;
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

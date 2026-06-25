@@ -17,7 +17,7 @@ namespace cta {
 // addLogParamForValue
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext& lc) {
+void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::addLogParamForValue(log::LogContext& lc) {
   lc.push({"maxBytes", m_value.maxBytes});
   lc.push({"maxFiles", m_value.maxFiles});
 }  // namespace cta
@@ -26,8 +26,8 @@ void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::addLogPar
 // set
 //------------------------------------------------------------------------------
 template<>
-void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::set(const std::string& value,
-                                                                           const std::string& source) {
+void SourcedParameter<tape::daemon::FetchReportOrFlushLimits>::set(const std::string& value,
+                                                                   const std::string& source) {
   // We expect an entry in the form "<size limit>, <file limit>"
   // There should be one and only one comma in the parameter.
   if (1 != std::count(value.begin(), value.end(), ',')) {
@@ -59,7 +59,7 @@ void SourcedParameter<tape::daemon::common::FetchReportOrFlushLimits>::set(const
 }  // namespace cta
 }  // namespace cta
 
-namespace cta::tape::daemon::common {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // TapedConfiguration::getDriveConfigFile
@@ -303,4 +303,4 @@ TapedConfiguration TapedConfiguration::createFromOptionalDriveName(const std::op
 //------------------------------------------------------------------------------
 cta::log::DummyLogger TapedConfiguration::gDummyLogger("", "");
 
-}  // namespace cta::tape::daemon::common
+}  // namespace cta::tape::daemon

@@ -138,9 +138,6 @@ int main(const int argc, char* const* const argv) {
                                      std::cref(lc));
   }
 
-  // use castor config to avoid dependency on xroot-ssi
-  // Configuration config(config_file);
-
   lc.log(log::INFO, "Starting cta-frontend-grpc- " + std::string(CTA_VERSION));
 
   // try to update port from config
