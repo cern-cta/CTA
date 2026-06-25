@@ -16,13 +16,6 @@ public:
   CTA_GENERATE_EXCEPTION_CLASS(OutOfMemory);
 
   /**
-     * Gets the host name. Handles all errors that may occur with
-     * the gethostname() API.
-     * @exception in case of an error
-     */
-  static std::string getHostName();
-
-  /**
      * Sets the user and group of the current process to the specified values.
      *
      * @param userName The name of the user.

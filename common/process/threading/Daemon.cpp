@@ -4,9 +4,8 @@
  */
 
 #include "common/process/threading/Daemon.hpp"
-
+#include "common/System.hpp"
 #include "common/exception/Errnum.hpp"
-#include "common/process/threading/System.hpp"
 
 #include <getopt.h>
 #include <signal.h>

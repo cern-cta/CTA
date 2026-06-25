@@ -23,6 +23,7 @@ set_source_files_properties(checksum/CRC.cpp PROPERTIES COMPILE_FLAGS -O2)
 set (COMMON_LIB_SRC_FILES
   CmdLineTool.cpp
   CmdLineParams.cpp
+  System.cpp
   checksum/ChecksumBlob.cpp
   checksum/CRC.cpp
   config/Config.cpp
@@ -112,7 +113,6 @@ set (COMMON_LIB_SRC_FILES
   process/threading/Semaphores.cpp
   process/threading/SocketPair.cpp
   process/threading/SubProcess.cpp
-  process/threading/System.cpp
   process/threading/Thread.cpp
   remoteFS/RemoteFileStatus.cpp
   remoteFS/RemotePath.cpp
