@@ -8,7 +8,7 @@
 #include "RecallReportPacker.hpp"
 #include "RecallTaskInjector.hpp"
 #include "ReportPackerInterface.hpp"
-#include "TapeserverProxyMock.hpp"
+#include "TapedProxyMock.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/LogContext.hpp"
@@ -37,7 +37,7 @@ class TestingDatabaseRetrieveMount : public cta::SchedulerDatabase::RetrieveMoun
     throw cta::exception::NotImplementedException();
   }
 
-  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override {
+  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override {
     throw cta::exception::NotImplementedException();
   }
 
@@ -88,8 +88,8 @@ public:
                          cta::PositioningMethod::ByBlock) {}
 };
 
-using namespace castor::tape::tapeserver::daemon;
-using namespace castor::tape::tapeserver::client;
+using namespace cta::tape::daemon;
+using namespace cta::tape::client;
 using namespace cta::disk;
 
 struct MockRecallReportPacker : public RecallReportPacker {
@@ -148,10 +148,10 @@ struct MockRecallReportPacker : public RecallReportPacker {
   bool m_diskThreadComplete;
 };
 
-TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock) {
+TEST(cta_tape_daemon, DiskWriteTaskFailedBlock) {
   using ::testing::_;
 
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_DiskWriteTaskFailedBlock", cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_DiskWriteTaskFailedBlock", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
@@ -182,7 +182,7 @@ TEST(castor_tape_tapeserver_daemon, DiskWriteTaskFailedBlock) {
 
   t.pushDataBlock(mb);
   t.pushDataBlock(nullptr);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
   cta::TapeMountDummy tmd;
   RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
   t.execute(report, lc, fileFactory, rwd, 0);

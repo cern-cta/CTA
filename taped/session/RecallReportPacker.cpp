@@ -17,7 +17,7 @@
 using cta::log::LogContext;
 using cta::log::Param;
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 //Constructor
@@ -439,4 +439,4 @@ bool RecallReportPacker::allThreadsDone() {
   return m_tapeThreadComplete && m_diskThreadComplete;
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

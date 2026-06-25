@@ -11,7 +11,7 @@
 #include <memory>
 #include <vector>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * Abstract class that represents an RAO algorithm
@@ -45,4 +45,4 @@ public:
   virtual std::string getName() const = 0;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

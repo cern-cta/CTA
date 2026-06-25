@@ -7,7 +7,7 @@
 
 #include "taped/drive/DriveInterface.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 void RAOHelpers::improveEndOfLastWrapPositionIfPossible(std::vector<drive::endOfWrapPosition>& endOfWrapPositions) {
   uint64_t nbBlocksPerWrap = 0;
@@ -90,4 +90,4 @@ uint64_t RAOHelpers::computeLongitudinalDistance(const FilePositionInfos& file1P
                                                  beginningOfFile2Lpos - endOfFile1Lpos;
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

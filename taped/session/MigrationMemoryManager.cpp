@@ -9,7 +9,7 @@
 #include "MemBlock.hpp"
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // Callbacks for observing metrics
@@ -65,7 +65,6 @@ MigrationMemoryManager::MigrationMemoryManager(const uint32_t numberOfBlocks,
 MigrationMemoryManager::~MigrationMemoryManager() noexcept {
   // Make sure the thread is finished: this should be done by the caller,
   // who should have called waitThreads.
-  // castor::server::Thread::wait();
   // we expect to be called after all users are finished. Just "free"
   // the memory blocks we still have.
   cta::threading::BlockingQueue<MemBlock*>::valueRemainingPair ret;
@@ -162,4 +161,4 @@ void MigrationMemoryManager::run() {
   }
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

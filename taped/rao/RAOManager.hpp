@@ -16,7 +16,7 @@
 #include <optional>
 #include <vector>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * This class will be used to manage everything that is linked to RAO.
@@ -91,8 +91,8 @@ private:
   bool m_hasUDS = false;
   //! The maximum number of files that will be considered for RAO
   std::optional<uint64_t> m_maxFilesSupported;
-  //! Pointer to the drive interface of the drive currently used by the tapeserver
-  castor::tape::tapeserver::drive::DriveInterface* m_drive = nullptr;
+  //! Pointer to the drive interface of the drive currently used by taped
+  cta::tape::drive::DriveInterface* m_drive = nullptr;
   bool m_isDriveEnterpriseEnabled = false;
   cta::catalogue::Catalogue* m_catalogue = nullptr;
 
@@ -105,7 +105,7 @@ private:
   /**
    * Returns the pointer to the interface of the drive currently mounting the tape
    */
-  castor::tape::tapeserver::drive::DriveInterface* getDrive() const { return m_drive; }
+  cta::tape::drive::DriveInterface* getDrive() const { return m_drive; }
 
   /**
    * Returns the pointer to the catalogue of this manager
@@ -127,4 +127,4 @@ private:
                                          cta::log::LogContext& lc) const;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

@@ -12,7 +12,7 @@
 #include "RAOHelpers.hpp"
 #include "common/utils/Timer.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 std::vector<uint64_t> SLTFRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   std::vector<uint64_t> ret;
@@ -122,4 +122,4 @@ std::unique_ptr<cta::RetrieveJob> SLTFRAOAlgorithm::createFakeRetrieveJobForFile
   return ret;
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

@@ -12,11 +12,9 @@
 #include <memory>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
-CtaReadSession::CtaReadSession(tapeserver::drive::DriveInterface& drive,
-                               const tapeserver::daemon::VolumeInfo& volInfo,
-                               const bool useLbp)
+CtaReadSession::CtaReadSession(drive::DriveInterface& drive, const daemon::VolumeInfo& volInfo, const bool useLbp)
     : ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
@@ -60,4 +58,4 @@ CtaReadSession::CtaReadSession(tapeserver::drive::DriveInterface& drive,
   }
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

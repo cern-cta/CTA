@@ -41,7 +41,7 @@ static int exceptionThrowingMain(const cta::common::CmdLineParams& commandLine, 
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const cta::common::CmdLineParams& commandLine, cta::log::Logger& log) {
-  using namespace cta::tape::daemon::common;
+  using namespace cta::tape::daemon;
 
   {
     std::vector<cta::log::Param> params = {cta::log::Param("version", CTA_VERSION)};
@@ -79,10 +79,10 @@ static int exceptionThrowingMain(const cta::common::CmdLineParams& commandLine, 
     log(log::INFO, "Set log mask", params);
   }
 
-  // Create the main tapeserverd object
+  // Create the main taped object
   cta::tape::daemon::TapeDaemon daemon(commandLine, log, globalConfig);
 
-  // Run the tapeserverd daemon
+  // Run the tape daemon
   return daemon.mainImpl();
 }
 
@@ -112,10 +112,9 @@ int main(const int argc, char** const argv) {
   logPtr.reset(new log::StdoutLogger(shortHostName, "cta-taped"));
 
   // Initial parse of config file
-  tape::daemon::common::TapedConfiguration globalConfig;
+  tape::daemon::TapedConfiguration globalConfig;
   try {
-    globalConfig =
-      tape::daemon::common::TapedConfiguration::createFromConfigPath(commandLine->configFileLocation, *logPtr);
+    globalConfig = tape::daemon::TapedConfiguration::createFromConfigPath(commandLine->configFileLocation, *logPtr);
   } catch (const exception::Exception& ex) {
     std::vector<cta::log::Param> params = {cta::log::Param(semconv::log::exceptionMessage, ex.getMessage().str())};
     (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);

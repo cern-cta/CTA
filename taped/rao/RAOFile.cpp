@@ -7,7 +7,7 @@
 
 #include <algorithm>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 void RAOFile::addDistanceToFile(const double distance, const RAOFile& file) {
   m_distancesWithOtherFiles.push_back(DistanceToFile(distance, file.getIndex()));
@@ -20,4 +20,4 @@ uint64_t RAOFile::getClosestFileIndex() const {
   return minElementItor->getDestinationFileIndex();
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

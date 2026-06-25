@@ -7,7 +7,7 @@
 
 #include "FilePositionInfos.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 class CostHeuristic {
 public:
@@ -21,4 +21,4 @@ public:
   virtual ~CostHeuristic() = default;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

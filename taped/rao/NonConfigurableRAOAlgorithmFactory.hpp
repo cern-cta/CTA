@@ -8,7 +8,7 @@
 #include "RAOAlgorithmFactory.hpp"
 #include "RAOParams.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * This factory allows to instanciate RAO algorithm that do not need any
@@ -37,4 +37,4 @@ private:
   RAOParams::RAOAlgorithmType m_type;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

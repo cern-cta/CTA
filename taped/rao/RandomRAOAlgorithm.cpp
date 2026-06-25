@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   std::vector<uint64_t> raoIndices(jobs.size());
@@ -24,4 +24,4 @@ std::vector<uint64_t> RandomRAOAlgorithm::performRAO(const std::vector<std::uniq
   return raoIndices;
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

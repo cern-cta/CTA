@@ -16,7 +16,7 @@
 #include <sstream>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 void HeaderChecker::checkVOL1(const VOL1& vol1, const std::string& volId) {
   if (vol1.getVSN().compare(volId)) {
@@ -58,9 +58,7 @@ bool HeaderChecker::checkHeaderNumericalField(const std::string& headerField,
   return value == res;
 }
 
-void HeaderChecker::checkHDR1(const HDR1& hdr1,
-                              const cta::RetrieveJob& filetoRecall,
-                              const tape::tapeserver::daemon::VolumeInfo& volInfo) {
+void HeaderChecker::checkHDR1(const HDR1& hdr1, const RetrieveJob& filetoRecall, const daemon::VolumeInfo& volInfo) {
   const std::string& volId = volInfo.vid;
   if (!checkHeaderNumericalField(hdr1.getFileId(),
                                  filetoRecall.retrieveRequest.archiveFileID,
@@ -100,9 +98,9 @@ void HeaderChecker::checkUTL1(const UTL1& utl1, const uint32_t fSeq) {
   }
 }
 
-std::string HeaderChecker::checkVolumeLabel(tapeserver::drive::DriveInterface& drive, LabelFormat labelFormat) {
+std::string HeaderChecker::checkVolumeLabel(drive::DriveInterface& drive, LabelFormat labelFormat) {
   std::string volumeLabelVSN;
-  auto vol1Label = [](tapeserver::drive::DriveInterface& drive, const std::string& expectedLblStandard) {
+  auto vol1Label = [](drive::DriveInterface& drive, const std::string& expectedLblStandard) {
     tapeFile::VOL1 vol1;
     drive.readExactBlock(reinterpret_cast<void*>(&vol1),
                          sizeof(vol1),
@@ -111,7 +109,7 @@ std::string HeaderChecker::checkVolumeLabel(tapeserver::drive::DriveInterface& d
     return vol1.getVSN();
   };
 
-  auto osmLabel = [](tapeserver::drive::DriveInterface& drive) {
+  auto osmLabel = [](drive::DriveInterface& drive) {
     tapeFile::osm::LABEL osmLabel;
     drive.readExactBlock(reinterpret_cast<void*>(osmLabel.rawLabel()),
                          tapeFile::osm::LIMITS::MAXMRECSIZE,
@@ -123,7 +121,7 @@ std::string HeaderChecker::checkVolumeLabel(tapeserver::drive::DriveInterface& d
     return osmLabel.name();
   };
 
-  auto enstoreLabel = [](tapeserver::drive::DriveInterface& drive) {
+  auto enstoreLabel = [](drive::DriveInterface& drive) {
     tapeFile::VOL1 vol1;
 
     size_t blockSize = 256 * 1024;
@@ -177,4 +175,4 @@ std::string HeaderChecker::checkVolumeLabel(tapeserver::drive::DriveInterface& d
   return volumeLabelVSN;
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

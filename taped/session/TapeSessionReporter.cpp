@@ -11,16 +11,16 @@
 
 #include <unistd.h>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //-----------------------------------------------------------------------------
 //constructor
 //------------------------------------------------------------------------------
-TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy,
+TapeSessionReporter::TapeSessionReporter(cta::tape::daemon::TapedProxy& tapedProxy,
                                          const cta::tape::daemon::DriveConfigEntry& driveConfig,
                                          std::string_view hostname,
                                          const cta::log::LogContext& lc)
-    : m_tapeserverProxy(tapeserverProxy),
+    : m_tapedProxy(tapedProxy),
       m_lc(lc),
       m_server(hostname),
       m_unitName(driveConfig.unitName),
@@ -108,7 +108,7 @@ TapeSessionReporter::ReportStateChange::ReportStateChange(cta::tape::session::Se
 // ReportStateChange::execute())
 //------------------------------------------------------------------------------
 void TapeSessionReporter::ReportStateChange::execute(TapeSessionReporter& parent) {
-  parent.m_tapeserverProxy.reportState(m_state, m_type, parent.m_volume.vid);
+  parent.m_tapedProxy.reportState(m_state, m_type, parent.m_volume.vid);
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

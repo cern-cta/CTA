@@ -15,7 +15,7 @@
 #include <memory>
 #include <utility>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 class MigrationReportPacker : public ReportPackerInterface<detail::Migration> {
 public:
@@ -288,4 +288,4 @@ private:
   std::queue<cta::catalogue::TapeItemWritten> m_skippedFiles;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

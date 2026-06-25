@@ -13,7 +13,7 @@
 #include <rpc/xdr.h>  // xdrmem_create for decode_legato
 #include <string>     // std::string to_string
 
-castor::tape::tapeFile::osm::LABEL::LABEL() {
+cta::tape::tapeFile::osm::LABEL::LABEL() {
   // Fill the structre with space & 0
   memset(m_tcRawLabel, 0x20, sizeof(m_tcRawLabel));
   memset(m_tcVersion, 0x20, sizeof(m_tcVersion));
@@ -21,7 +21,7 @@ castor::tape::tapeFile::osm::LABEL::LABEL() {
   memset(m_tcOwner, 0x20, sizeof(m_tcOwner));
 }
 
-void castor::tape::tapeFile::osm::LABEL::decode() {
+void cta::tape::tapeFile::osm::LABEL::decode() {
   xdr::Record record;
   xdr::VolLabel volLabel, *pVolLabel;
   XDR xdr;  // XDR handle
@@ -68,13 +68,13 @@ void castor::tape::tapeFile::osm::LABEL::decode() {
   memcpy(m_tcVersion, rawLabel() + LIMITS::MAXMRECSIZE + LIMITS::CIDLEN, LIMITS::LABELVERSIONLEN);
 }
 
-void castor::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime,
-                                                uint64_t ulExpireTime,
-                                                uint64_t ulRecSize,
-                                                uint64_t ulVolId,
-                                                const std::string& strVolName,
-                                                const std::string& strOwner,
-                                                const std::string& strVersion) {
+void cta::tape::tapeFile::osm::LABEL::encode(uint64_t ulCreateTime,
+                                             uint64_t ulExpireTime,
+                                             uint64_t ulRecSize,
+                                             uint64_t ulVolId,
+                                             const std::string& strVolName,
+                                             const std::string& strOwner,
+                                             const std::string& strVersion) {
   if (strVolName.size() > LIMITS::VOLNAMELEN) {
     throw cta::exception::Exception(std::string("The size of the VolName is greater than LIMITS::VOLNAMELEN"));
   }

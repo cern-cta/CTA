@@ -20,7 +20,7 @@
 #include "taped/daemon/TapedProxy.hpp"
 #include "taped/system/Wrapper.hpp"
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * The main class handling a tape session. This is the main container started
@@ -32,7 +32,7 @@ public:
   /**
    * Constructor.
    *
-   * @param log Object representing the API of the CASTOR logging system.
+   * @param log Object representing the API of the CTA logging system.
    */
   DataTransferSession(const std::string& hostname,
                       cta::log::Logger& log,
@@ -75,7 +75,7 @@ public:
 
 private:
   /**
-   * Object representing the API of the CASTOR logging system.
+   * Object representing the API of the CTA logging system.
    */
   cta::log::Logger& m_log;
   VolumeInfo m_volInfo {};
@@ -94,7 +94,7 @@ private:
   /** utility to find the drive on the system. This function logs
    * all errors and hence does not throw exceptions. It returns nullptr
    * in case of failure. */
-  castor::tape::tapeserver::drive::DriveInterface* findDrive(cta::log::LogContext& logContext, cta::TapeMount* mount);
+  cta::tape::drive::DriveInterface* findDrive(cta::log::LogContext& logContext, cta::TapeMount* mount);
 
   /**
    * Put drive down with reason with [cta-taped] prefix, update the desired state (which is also down).
@@ -127,4 +127,4 @@ private:
   cta::Scheduler& m_scheduler;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

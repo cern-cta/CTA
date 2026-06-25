@@ -38,7 +38,7 @@ namespace cta::log {
 using ParamValType = std::optional<std::variant<std::string, int64_t, uint64_t, float, double, bool>>;
 
 /**
- * A name/value parameter for the CASTOR logging system.
+ * A name/value parameter for the CTA logging system.
  */
 class Param {
 public:

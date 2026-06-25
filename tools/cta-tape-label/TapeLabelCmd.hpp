@@ -21,7 +21,7 @@ namespace catalogue {
 class Catalogue;
 }
 
-namespace tapeserver::tapelabel {
+namespace tape::tapelabel {
 
 /**
  * Command-line tool for pre-labeling a CTA tape.
@@ -64,7 +64,7 @@ private:
   /**
    * The system wrapper used to find the device and instantiate the drive object.
    */
-  castor::tape::System::realWrapper m_sysWrapper;
+  cta::tape::System::realWrapper m_sysWrapper;
 
   /**
    * The filename of the device file of the tape drive.
@@ -104,7 +104,7 @@ private:
   /**
    * Encryption helper object
    */
-  castor::tape::tapeserver::daemon::EncryptionControl m_encryptionControl {false, ""};
+  cta::tape::daemon::EncryptionControl m_encryptionControl {false, ""};
 
   /**
    * Object representeing the rmc proxy
@@ -175,7 +175,7 @@ private:
    *
    * @return The drive object.
    */
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> createDrive();
+  std::unique_ptr<cta::tape::drive::DriveInterface> createDrive();
 
   /**
    * Mounts the tape to be labeled.
@@ -190,7 +190,7 @@ private:
    * @param timeoutSecond The number of seconds to wait for the tape to be
    * loaded into the tape drive.
    */
-  void waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface& drive, const int timeoutSecond);
+  void waitUntilTapeLoaded(cta::tape::drive::DriveInterface& drive, const int timeoutSecond);
 
   /**
    * Writes the label file with logical block protection to the tape.
@@ -199,7 +199,7 @@ private:
    *
    * @param drive The tape drive.
    */
-  void writeLabelWithLbpToTape(castor::tape::tapeserver::drive::DriveInterface& drive);
+  void writeLabelWithLbpToTape(cta::tape::drive::DriveInterface& drive);
 
   /**
    * Writes the label file to the tape.
@@ -208,7 +208,7 @@ private:
    *
    * @param drive The tape drive.
    */
-  void writeLabelToTape(castor::tape::tapeserver::drive::DriveInterface& drive);
+  void writeLabelToTape(cta::tape::drive::DriveInterface& drive);
 
   /**
    * Unloads the specified tape from the specified tape drive.
@@ -217,7 +217,7 @@ private:
    * that the value of this field is only used for logging purposes.
    * @param drive The tape drive.
    */
-  void unloadTape(const std::string& vid, castor::tape::tapeserver::drive::DriveInterface& drive);
+  void unloadTape(const std::string& vid, cta::tape::drive::DriveInterface& drive);
 
   /**
    * Dismounts the specified tape.
@@ -231,7 +231,7 @@ private:
    *
    * @param drive The tape drive.
    */
-  void rewindDrive(castor::tape::tapeserver::drive::DriveInterface& drive);
+  void rewindDrive(cta::tape::drive::DriveInterface& drive);
 
   /**
    * Checks the specified tape on the specified tape drive.
@@ -242,7 +242,7 @@ private:
    * @param drive The tape drive.
    * @param labelToCheck The label for what the tape should be checked for.
    */
-  void checkTapeLabel(castor::tape::tapeserver::drive::DriveInterface& drive, const std::string& labelToCheck);
+  void checkTapeLabel(cta::tape::drive::DriveInterface& drive, const std::string& labelToCheck);
 
   /**
    * Writes the label file with or without logical block protection to the tape
@@ -254,8 +254,7 @@ private:
    * @param useLbp The configuration parameter for LBP mode.
    * @param driveSupportLbp The detected parameter for the drive.
    */
-  void
-  writeTapeLabel(castor::tape::tapeserver::drive::DriveInterface& drive, const bool useLbp, const bool driveSupportLbp);
+  void writeTapeLabel(cta::tape::drive::DriveInterface& drive, const bool useLbp, const bool driveSupportLbp);
 
   /**
    * Sets the logical block protection mode on the drive
@@ -266,8 +265,7 @@ private:
    * @param useLbp The configuration parameter for LBP mode.
    * @param driveSupportLbp The detected parameter for the drive.
    */
-  void
-  setLbpMode(castor::tape::tapeserver::drive::DriveInterface& drive, const bool useLbp, const bool driveSupportLbp);
+  void setLbpMode(cta::tape::drive::DriveInterface& drive, const bool useLbp, const bool driveSupportLbp);
 
   /**
    * Detects if the drive supports the logical block protection.
@@ -275,7 +273,7 @@ private:
    * @param drive The tape drive.
    * @return The boolean value true if the drive supports LBP or false otherwise.
    */
-  bool isDriveSupportLbp(castor::tape::tapeserver::drive::DriveInterface& drive) const;
+  bool isDriveSupportLbp(cta::tape::drive::DriveInterface& drive) const;
 
   /**
    * Returns the string representation of the specified boolean value.
@@ -286,5 +284,5 @@ private:
   const char* boolToStr(const bool value) const;
 };  // class TapeLabelCmd
 
-}  // namespace tapeserver::tapelabel
+}  // namespace tape::tapelabel
 }  // namespace cta

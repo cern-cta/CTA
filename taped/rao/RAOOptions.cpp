@@ -8,7 +8,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 std::map<std::string, RAOOptions::CostHeuristicType> RAOOptions::c_mapStringCostHeuristicType = {
   {"cta", RAOOptions::CostHeuristicType::cta},
@@ -91,4 +91,4 @@ RAOOptions::FilePositionEstimatorType RAOOptions::getFilePositionEstimatorType()
   return RAOOptions::FilePositionEstimatorType::interpolation;
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

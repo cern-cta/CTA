@@ -19,12 +19,12 @@
 #include <unistd.h>
 #include <vector>
 
-namespace castor::tape {
+namespace cta::tape {
 
 /**
  * Forward declaration for pointer type in virtualWrapper.
  */
-namespace tapeserver::drive {
+namespace drive {
 class DriveInterface;
 }
 
@@ -55,7 +55,7 @@ public:
   virtual ~virtualWrapper() = default;
   /** Hook allowing the pre-allocation of a tape drive in the test environment.
      * will  */
-  virtual castor::tape::tapeserver::drive::DriveInterface* getDriveByPath(const std::string& path) = 0;
+  virtual cta::tape::drive::DriveInterface* getDriveByPath(const std::string& path) = 0;
 };
 
 /**
@@ -95,7 +95,7 @@ public:
 
   virtual int stat(const char* path, struct stat* buf) { return ::stat(path, buf); }
 
-  virtual castor::tape::tapeserver::drive::DriveInterface* getDriveByPath(const std::string&) { return nullptr; }
+  virtual cta::tape::drive::DriveInterface* getDriveByPath(const std::string&) { return nullptr; }
 };
 
 /**
@@ -119,7 +119,7 @@ public:
   virtual ssize_t write(int fd, const void* buf, size_t nbytes);
   virtual int close(int fd);
   virtual int stat(const char* path, struct stat* buf);
-  virtual castor::tape::tapeserver::drive::DriveInterface* getDriveByPath(const std::string& path);
+  virtual cta::tape::drive::DriveInterface* getDriveByPath(const std::string& path);
   std::map<std::string, std::vector<std::string>> m_directories;
   std::map<std::string, std::string> m_links;
   std::map<std::string, std::string> m_realpathes;
@@ -127,7 +127,7 @@ public:
   std::map<std::string, struct stat> m_stats;
   std::map<std::string, regularFile> m_regularFiles;
   std::map<std::string, stDeviceFile*> m_stFiles;
-  std::map<std::string, castor::tape::tapeserver::drive::DriveInterface*> m_pathToDrive;
+  std::map<std::string, cta::tape::drive::DriveInterface*> m_pathToDrive;
   void setupSLC5();
   void setupSLC6();
   void setupForVirtualDriveSLC6();
@@ -165,7 +165,7 @@ public:
   MOCK_METHOD3(ioctl, int(int fd, unsigned long int request, sg_io_hdr_t* sgh));
   MOCK_METHOD1(close, int(int fd));
   MOCK_METHOD2(stat, int(const char*, struct stat*));
-  MOCK_METHOD1(getDriveByPath, castor::tape::tapeserver::drive::DriveInterface*(const std::string&) );
+  MOCK_METHOD1(getDriveByPath, cta::tape::drive::DriveInterface*(const std::string&) );
   DIR* m_DIR;
   int m_DIRfake;
   void delegateToFake();
@@ -173,4 +173,4 @@ public:
   fakeWrapper fake;
 };
 }  // namespace System
-}  // namespace castor::tape
+}  // namespace cta::tape

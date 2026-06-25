@@ -8,4 +8,4 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Session::~Session() = default;
+cta::tape::daemon::Session::~Session() = default;

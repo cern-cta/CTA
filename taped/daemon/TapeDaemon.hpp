@@ -20,9 +20,7 @@ public:
    * @param commandLine The parameters extracted from the command line.
    * @param log The object representing the API of the CTA logging system.
    * @param globalConfig The configuration of the tape server. */
-  TapeDaemon(const cta::common::CmdLineParams& commandLine,
-             cta::log::Logger& log,
-             const common::TapedConfiguration& globalConfig);
+  TapeDaemon(const common::CmdLineParams& commandLine, cta::log::Logger& log, const TapedConfiguration& globalConfig);
 
   ~TapeDaemon() final;
 
@@ -43,7 +41,7 @@ protected:
   void mainEventLoop();
 
   /** The tape server's configuration */
-  const common::TapedConfiguration& m_globalConfiguration;
+  const TapedConfiguration& m_globalConfiguration;
 
   /**
    * The program name of the daemon.

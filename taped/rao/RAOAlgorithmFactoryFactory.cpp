@@ -10,7 +10,7 @@
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithmFactory() {
   std::unique_ptr<RAOAlgorithmFactory> ret;
@@ -31,7 +31,7 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
       //log a warning
       std::string msg = "In RAOAlgorithmFactoryFactory::createAlgorithmFactory(), unable to determine the RAO "
                         "algorithm to use, the algorithm name provided"
-                        " in the tapeserver configuration is "
+                        " in the taped configuration is "
                         + raoParams.getRAOAlgorithmName() + " the available algorithm names are "
                         + raoParams.getCTARAOAlgorithmNameAvailable() + ". We will apply a linear algorithm instead.";
       m_lc.log(cta::log::WARNING, msg);
@@ -57,4 +57,4 @@ std::unique_ptr<RAOAlgorithmFactory> RAOAlgorithmFactoryFactory::createAlgorithm
   return ret;
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

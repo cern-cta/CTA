@@ -14,7 +14,7 @@
 #include <memory>
 #include <string>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 class TapeReadTask;
 }
 
@@ -32,7 +32,7 @@ class RetrieveJob {
    */
   friend class RetrieveMount;
   friend class Scheduler;
-  friend class castor::tape::tapeserver::daemon::TapeReadTask;
+  friend class cta::tape::daemon::TapeReadTask;
 
 public:
   /**

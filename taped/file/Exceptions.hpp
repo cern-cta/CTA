@@ -9,7 +9,7 @@
 
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 class TapeFormatError : public cta::exception::Exception {
 public:
@@ -61,4 +61,4 @@ public:
   WrongBlockSize() : Exception("Trying to use a wrong block size") {}
 };
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

@@ -17,7 +17,7 @@
 #include <sys/types.h>
 #include <vector>
 
-namespace castor::tape::SCSI {
+namespace cta::tape::SCSI {
 
 /**
  * Bare-bones representation of a SCSI device
@@ -63,7 +63,7 @@ public:
    *
    * (all code using templates must be in the header file)
    */
-  explicit DeviceVector(castor::tape::System::virtualWrapper& sysWrapper);
+  explicit DeviceVector(cta::tape::System::virtualWrapper& sysWrapper);
 
   /**
    * Find an array element that shares the same device files as one pointed
@@ -81,7 +81,7 @@ public:
   };
 
 private:
-  castor::tape::System::virtualWrapper& m_sysWrapper;
+  cta::tape::System::virtualWrapper& m_sysWrapper;
 
   static const size_t readfileBlockSize = 1024;
 
@@ -106,4 +106,4 @@ private:
   DeviceInfo getDeviceInfo(const char* path);
 }; /* class DeviceVector */
 
-}  // namespace castor::tape::SCSI
+}  // namespace cta::tape::SCSI

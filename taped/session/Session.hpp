@@ -5,11 +5,10 @@
 
 #pragma once
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
- * Abstract class responsible for defining the interface to a tapeserverd
- * child-process session.
+ * Abstract class responsible for defining the interface to a taped child-process session.
  */
 class Session {
 public:
@@ -55,4 +54,4 @@ public:
 
 };  // class Session
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

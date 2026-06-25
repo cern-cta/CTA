@@ -8,7 +8,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 const std::map<std::string, RAOParams::RAOAlgorithmType> RAOParams::c_raoAlgoStringTypeMap = {
   {"linear", RAOParams::RAOAlgorithmType::linear},
@@ -44,4 +44,4 @@ std::string RAOParams::getMountedVid() const {
   return m_vid;
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

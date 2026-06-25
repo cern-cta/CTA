@@ -14,7 +14,7 @@
 #include <list>
 #include <ostream>
 
-namespace cta::tapeserver::readtp {
+namespace cta::tape::readtp {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -41,7 +41,7 @@ void TapeFseqRangeListSequence::reset(const TapeFseqRangeList* const list) {
     m_totalSize = 0;
   } else {
     m_rangeItor = list->begin();
-    m_nbSequence = static_cast<cta::tapeserver::readtp::TapeFseqRangeSequence>(*m_rangeItor);
+    m_nbSequence = static_cast<cta::tape::readtp::TapeFseqRangeSequence>(*m_rangeItor);
 
     // Determine the values of m_isFinite and m_totalSize
     m_isFinite = true;  // Initial guess
@@ -95,7 +95,7 @@ uint32_t TapeFseqRangeListSequence::next() {
     // Move on to the next if there is one
     ++m_rangeItor;
     if (m_rangeItor != m_list->end()) {
-      m_nbSequence = static_cast<cta::tapeserver::readtp::TapeFseqRangeSequence>(*m_rangeItor);
+      m_nbSequence = static_cast<cta::tape::readtp::TapeFseqRangeSequence>(*m_rangeItor);
     }
   }
 
@@ -116,15 +116,15 @@ uint32_t TapeFseqRangeListSequence::totalSize() const noexcept {
   return m_totalSize;
 }
 
-}  // namespace cta::tapeserver::readtp
+}  // namespace cta::tape::readtp
 
 //------------------------------------------------------------------------------
-// ostream << operator for castor::tape::tpcp::TapeFseqRangeList
+// ostream << operator for cta::tape::readtp::TapeFseqRangeList
 //------------------------------------------------------------------------------
-std::ostream& operator<<(std::ostream& os, const cta::tapeserver::readtp::TapeFseqRangeList& value) {
+std::ostream& operator<<(std::ostream& os, const cta::tape::readtp::TapeFseqRangeList& value) {
   os << '{';
 
-  for (cta::tapeserver::readtp::TapeFseqRangeList::const_iterator itor = value.begin(); itor != value.end(); ++itor) {
+  for (cta::tape::readtp::TapeFseqRangeList::const_iterator itor = value.begin(); itor != value.end(); ++itor) {
     // Write a separating comma if not the first item in the list
     if (itor != value.begin()) {
       os << ",";

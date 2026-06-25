@@ -11,7 +11,7 @@
 
 #include <opentelemetry/context/runtime_context.h>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 using namespace cta;
 
@@ -98,4 +98,4 @@ std::optional<common::dataStructures::DriveStatus> DriveSessionTracker::getCurre
   return m_catalogue->DriveState()->getTapeDriveStatus(m_driveName);
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

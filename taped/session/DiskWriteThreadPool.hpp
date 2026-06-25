@@ -21,7 +21,7 @@
 
 #include <inttypes.h>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * Container for the threads that will execute the disk writes tasks in the
@@ -191,4 +191,4 @@ private:
   cta::log::LogContext m_lc;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

@@ -74,16 +74,15 @@ std::vector<std::string> split(std::string& to_split, const std::string& delimit
 
 int main(int argc, char* argv[]) {
   int fail = 0;
-  castor::tape::System::realWrapper sWrapper;
-  castor::tape::SCSI::DeviceVector dl(sWrapper);
-  for (castor::tape::SCSI::DeviceVector::iterator i = dl.begin(); i != dl.end(); ++i) {
-    castor::tape::SCSI::DeviceInfo& dev = (*i);
+  cta::tape::System::realWrapper sWrapper;
+  cta::tape::SCSI::DeviceVector dl(sWrapper);
+  for (cta::tape::SCSI::DeviceVector::iterator i = dl.begin(); i != dl.end(); ++i) {
+    cta::tape::SCSI::DeviceInfo& dev = (*i);
     std::cout << std::endl << "-- SCSI device: " << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
-    if (dev.type == castor::tape::SCSI::Types::tape) {
+    if (dev.type == cta::tape::SCSI::Types::tape) {
       try {
         // Create drive object and open tape device
-        std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-          castor::tape::tapeserver::drive::createDrive(dev, sWrapper));
+        std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(dev, sWrapper));
 
         /**
          * From now we could use generic SCSI request for the drive object.
@@ -95,7 +94,7 @@ int main(int argc, char* argv[]) {
           /**
            * Gets generic device info for the drive object.
            */
-          castor::tape::tapeserver::drive::deviceInfo devInfo;
+          cta::tape::drive::deviceInfo devInfo;
           devInfo = drive->getDeviceInfo();
           std::cout << "-- INFO --------------------------------------" << std::endl
                     << "  devInfo.vendor               : '" << devInfo.vendor << "'" << std::endl
@@ -156,15 +155,14 @@ int main(int argc, char* argv[]) {
             drive->rewind();
 
             std::string label = "TW8510";
-            castor::tape::tapeFile::LabelSession::label(drive.get(), label, true);
+            cta::tape::tapeFile::LabelSession::label(drive.get(), label, true);
 
-            castor::tape::tapeserver::daemon::VolumeInfo m_volInfo;
+            cta::tape::daemon::VolumeInfo m_volInfo;
             m_volInfo.vid = label;
             m_volInfo.nbFiles = 0;
             m_volInfo.mountType = cta::common::dataStructures::MountType::ArchiveForUser;
 
-            auto writeSession =
-              std::make_unique<castor::tape::tapeFile::WriteSession>(*drive, m_volInfo, 0, true, true);
+            auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(*drive, m_volInfo, 0, true, true);
 
             uint32_t block_size = 262144;
             uint32_t no_blocks = 100;
@@ -175,8 +173,7 @@ int main(int argc, char* argv[]) {
               fileToMigrate.archiveFile.fileSize = block_size * 100;
               fileToMigrate.archiveFile.archiveFileID = j;
               fileToMigrate.tapeFile.fSeq = j;
-              auto writer =
-                std::make_unique<castor::tape::tapeFile::FileWriter>(*writeSession, fileToMigrate, block_size);
+              auto writer = std::make_unique<cta::tape::tapeFile::FileWriter>(*writeSession, fileToMigrate, block_size);
 
               std::string testString = "";
               for (uint32_t i = 0; i < block_size - 5; i++) {
@@ -192,7 +189,7 @@ int main(int argc, char* argv[]) {
             drive->rewind();
 
             // Now read a random file
-            auto readSession = castor::tape::tapeFile::ReadSessionFactory::create(*drive, m_volInfo, true);
+            auto readSession = cta::tape::tapeFile::ReadSessionFactory::create(*drive, m_volInfo, true);
             BasicRetrieveJob fileToRecall;
             fileToRecall.selectedCopyNb = 1;
             fileToRecall.archiveFile.tapeFiles.emplace_back();
@@ -201,7 +198,7 @@ int main(int argc, char* argv[]) {
             fileToRecall.retrieveRequest.archiveFileID = 2;
             fileToRecall.positioningMethod = cta::PositioningMethod::ByBlock;
 
-            auto reader = castor::tape::tapeFile::FileReaderFactory::create(*readSession, fileToRecall);
+            auto reader = cta::tape::tapeFile::FileReaderFactory::create(*readSession, fileToRecall);
             size_t bs = reader->getBlockSize();
             char* data = new char[bs + 1];
             for (int j = 0; j < 100; ++j) {
@@ -216,13 +213,13 @@ int main(int argc, char* argv[]) {
             } else {
               drive->rewind();
 
-              std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
+              std::list<cta::tape::SCSI::Structures::RAO::blockLims> files;
               std::ifstream ns_file_pick(argv[1]);
               if (ns_file_pick.is_open()) {
                 std::string line;
                 while (getline(ns_file_pick, line)) {
                   std::vector<std::string> tokens = split(line, ":");
-                  castor::tape::SCSI::Structures::RAO::blockLims lims;
+                  cta::tape::SCSI::Structures::RAO::blockLims lims;
                   std::cout << tokens[0].c_str() << std::endl;
                   tokens[0] += '\0';
                   strcpy(reinterpret_cast<char*>(lims.fseq), tokens[0].c_str());
@@ -233,7 +230,7 @@ int main(int argc, char* argv[]) {
               } else {
                 throw -1;
               }
-              castor::tape::SCSI::Structures::RAO::udsLimits limits = drive->getLimitUDS();
+              cta::tape::SCSI::Structures::RAO::udsLimits limits = drive->getLimitUDS();
               drive->queryRAO(files, limits.maxSupported);
             }
           }

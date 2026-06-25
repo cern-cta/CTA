@@ -25,7 +25,7 @@
 
 #include <opentelemetry/context/runtime_context.h>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 // Forward declaration
 class TapeSessionReporter;
@@ -46,7 +46,7 @@ protected:
    * An interface to manipulate the drive to manipulate the tape
    * with the requested vid
    */
-  castor::tape::tapeserver::drive::DriveInterface& m_drive;
+  cta::tape::drive::DriveInterface& m_drive;
 
   /** Reference to the mount interface */
   cta::mediachanger::MediaChangerFacade& m_mediaChanger;
@@ -63,7 +63,7 @@ protected:
   VolumeInfo m_volInfo;
 
   /**
-   * Integer to notify the tapeserver if the drive has to be put down or not.
+   * Integer to notify taped if the drive has to be put down or not.
    */
   Session::EndOfSessionAction m_hardwareStatus = Session::MARK_DRIVE_AS_UP;
 
@@ -252,7 +252,7 @@ public:
    */
   virtual void setWaitForInstructionsTime(double secs) { m_stats.waitInstructionsTime = secs; }
 
-  virtual castor::tape::tapeserver::drive::DriveInterface* getDriveReference() { return &m_drive; }
+  virtual cta::tape::drive::DriveInterface* getDriveReference() { return &m_drive; }
 
   /**
    * Constructor
@@ -264,7 +264,7 @@ public:
    * @param lc lc The log context, later on copied
    * @param tapeLoadTimeout the timeout after which the mount of the tape is considered failed
    */
-  TapeSingleThreadInterface(castor::tape::tapeserver::drive::DriveInterface& drive,
+  TapeSingleThreadInterface(cta::tape::drive::DriveInterface& drive,
                             cta::mediachanger::MediaChangerFacade& mc,
                             TapeSessionReporter& tsr,
                             const VolumeInfo& volInfo,
@@ -282,4 +282,4 @@ public:
         m_tapeLoadTimeout(tapeLoadTimeout) {}
 };  // class TapeSingleThreadInterface
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

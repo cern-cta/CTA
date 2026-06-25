@@ -11,22 +11,21 @@
 //------------------------------------------------------------------------------
 // Constructor for TapeWriteSingleThread
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
-  castor::tape::tapeserver::drive::DriveInterface& drive,
-  cta::mediachanger::MediaChangerFacade& mediaChanger,
-  TapeSessionReporter& reporter,
-  MigrationWatchDog& watchdog,
-  const VolumeInfo& volInfo,
-  const cta::log::LogContext& logContext,
-  MigrationReportPacker& reportPacker,
-  uint64_t filesBeforeFlush,
-  uint64_t bytesBeforeFlush,
-  const bool useLbp,
-  const bool useEncryption,
-  const std::string& externalEncryptionKeyScript,
-  const cta::ArchiveMount& archiveMount,
-  const uint64_t tapeLoadTimeout,
-  cta::catalogue::Catalogue& catalogue)
+cta::tape::daemon::TapeWriteSingleThread::TapeWriteSingleThread(cta::tape::drive::DriveInterface& drive,
+                                                                cta::mediachanger::MediaChangerFacade& mediaChanger,
+                                                                TapeSessionReporter& reporter,
+                                                                MigrationWatchDog& watchdog,
+                                                                const VolumeInfo& volInfo,
+                                                                const cta::log::LogContext& logContext,
+                                                                MigrationReportPacker& reportPacker,
+                                                                uint64_t filesBeforeFlush,
+                                                                uint64_t bytesBeforeFlush,
+                                                                const bool useLbp,
+                                                                const bool useEncryption,
+                                                                const std::string& externalEncryptionKeyScript,
+                                                                const cta::ArchiveMount& archiveMount,
+                                                                const uint64_t tapeLoadTimeout,
+                                                                cta::catalogue::Catalogue& catalogue)
     : TapeSingleThreadInterface<TapeWriteTask>(drive,
                                                mediaChanger,
                                                reporter,
@@ -46,7 +45,7 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeWriteSingleThread(
 //------------------------------------------------------------------------------
 //TapeCleaning::~TapeCleaning()
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
+cta::tape::daemon::TapeWriteSingleThread::TapeCleaning::~TapeCleaning() {
   m_this.m_reportPacker.reportDriveStatus(cta::common::dataStructures::DriveStatus::CleaningUp,
                                           std::nullopt,
                                           m_this.m_logContext);
@@ -189,21 +188,20 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::TapeCleaning::~TapeClea
 //------------------------------------------------------------------------------
 //setlastFseq
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::setlastFseq(uint64_t lastFseq) {
+void cta::tape::daemon::TapeWriteSingleThread::setlastFseq(uint64_t lastFseq) {
   m_lastFseq = lastFseq;
 }
 
 //------------------------------------------------------------------------------
 //openWriteSession
 //------------------------------------------------------------------------------
-std::unique_ptr<castor::tape::tapeFile::WriteSession>
-castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
+std::unique_ptr<cta::tape::tapeFile::WriteSession> cta::tape::daemon::TapeWriteSingleThread::openWriteSession() {
   cta::log::ScopedParamContainer params(m_logContext);
   params.add("lastFseq", m_lastFseq).add("compression", m_compress).add("useLbp", m_useLbp);
 
   try {
     auto writeSession =
-      std::make_unique<castor::tape::tapeFile::WriteSession>(m_drive, m_volInfo, m_lastFseq, m_compress, m_useLbp);
+      std::make_unique<cta::tape::tapeFile::WriteSession>(m_drive, m_volInfo, m_lastFseq, m_compress, m_useLbp);
 
     return writeSession;
   } catch (cta::exception::Exception& e) {
@@ -219,10 +217,10 @@ castor::tape::tapeserver::daemon::TapeWriteSingleThread::openWriteSession() {
 //------------------------------------------------------------------------------
 //tapeFlush
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::tapeFlush(const std::string& message,
-                                                                        uint64_t bytes,
-                                                                        uint64_t files,
-                                                                        cta::utils::Timer& timer) {
+void cta::tape::daemon::TapeWriteSingleThread::tapeFlush(const std::string& message,
+                                                         uint64_t bytes,
+                                                         uint64_t files,
+                                                         cta::utils::Timer& timer) {
   m_drive.flush();
   double flushTime = timer.secs(cta::utils::Timer::resetCounter);
   cta::log::ScopedParamContainer params(m_logContext);
@@ -237,7 +235,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::tapeFlush(const st
 //------------------------------------------------------------------------
 //   logAndCheckTapeAlertsForWrite
 //------------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::TapeWriteSingleThread::logAndCheckTapeAlertsForWrite() {
+bool cta::tape::daemon::TapeWriteSingleThread::logAndCheckTapeAlertsForWrite() {
   std::vector<uint16_t> tapeAlertCodes = m_drive.getTapeAlertCodes();
   if (tapeAlertCodes.empty()) {
     return false;
@@ -261,7 +259,7 @@ bool castor::tape::tapeserver::daemon::TapeWriteSingleThread::logAndCheckTapeAle
 //------------------------------------------------------------------------------
 //   isTapeWritable
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::isTapeWritable() const {
+void cta::tape::daemon::TapeWriteSingleThread::isTapeWritable() const {
   // check that drive is not write protected
   if (m_drive.isWriteProtected()) {
     cta::exception::Exception ex;
@@ -273,7 +271,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::isTapeWritable() c
 //------------------------------------------------------------------------------
 // TapeWriteSingleThread::run()
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
+void cta::tape::daemon::TapeWriteSingleThread::run() {
   cta::log::ScopedParamContainer threadGlobalParams(m_logContext);
   threadGlobalParams.add("thread", "TapeWrite");
   cta::utils::Timer timer, totalTimer;
@@ -384,7 +382,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 
         if (!writeSession->isTapeWithLbp() && m_useLbp) {
           m_logContext.log(cta::log::INFO,
-                           "Tapeserver started with LBP support but "
+                           "Taped started with LBP support but "
                            "the tape without LBP label mounted");
         }
         switch (m_drive.getLbpToUse()) {
@@ -560,9 +558,9 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::run() {
 //------------------------------------------------------------------------------
 //logWithStats
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(int level,
-                                                                           const std::string& msg,
-                                                                           cta::log::ScopedParamContainer& params) {
+void cta::tape::daemon::TapeWriteSingleThread::logWithStats(int level,
+                                                            const std::string& msg,
+                                                            cta::log::ScopedParamContainer& params) {
   params.add("type", "write")
     .add("tapeVid", m_volInfo.vid)
     .add("mountTime", m_stats.mountTime)
@@ -591,9 +589,8 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logWithStats(int l
 //------------------------------------------------------------------------------
 //   requeueFailedTask - for PGCHED
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::requeueUnprocessedTasks(
-  const std::list<std::string>& jobIDsList,
-  cta::log::LogContext& lc) const {
+void cta::tape::daemon::TapeWriteSingleThread::requeueUnprocessedTasks(const std::list<std::string>& jobIDsList,
+                                                                       cta::log::LogContext& lc) const {
   uint64_t njobs = m_archiveMount.requeueJobBatch(jobIDsList, lc);
   cta::log::ScopedParamContainer requeueparam(lc);
   requeueparam.add("requeuedTaskQueueJobs", njobs);
@@ -616,7 +613,7 @@ void castor::tape::tapeserver::daemon::TapeWriteSingleThread::requeueUnprocessed
 //------------------------------------------------------------------------------
 //logSCSIMetrics
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeWriteSingleThread::logSCSIMetrics() {
+void cta::tape::daemon::TapeWriteSingleThread::logSCSIMetrics() {
   try {
     // mount general statistics
     cta::log::ScopedParamContainer scopedContainer(m_logContext);

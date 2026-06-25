@@ -8,7 +8,7 @@
 #include "RAOManager.hpp"
 #include "common/log/LogContext.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * Factory of RAOAlgorithmFactory
@@ -40,4 +40,4 @@ private:
   cta::log::LogContext& m_lc;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

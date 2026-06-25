@@ -67,8 +67,7 @@ public:
   virtual void resetLogParams() = 0;
 
   /**
-   * Notifies the tapeserverd daemon that a label session has encountered the
-   * specified error.
+   * Notifies taped that a label session has encountered the specified error.
    *
    * @param unitName The unit name of the tape drive.
    * @param message The error message.
@@ -81,7 +80,6 @@ public:
    * @param handler to be run to refresh the logger
    */
   virtual void setRefreshLoggerHandler(std::function<void()> handler) = 0;
-
-};  // class TapeserverProxy
+};
 
 }  // namespace cta::tape::daemon

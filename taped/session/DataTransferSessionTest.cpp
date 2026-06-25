@@ -8,7 +8,7 @@
 #include "DataTransferSession.hpp"
 
 #include "CleanerSession.hpp"
-#include "TapeserverProxyMock.hpp"
+#include "TapedProxyMock.hpp"
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/CreateMountPolicyAttributes.hpp"
 #include "catalogue/CreateTapeAttributes.hpp"
@@ -66,8 +66,8 @@
 #include "common/log/DummyLogger.hpp"
 #endif
 
-using namespace castor::tape::tapeserver;
-using namespace castor::tape::tapeserver::daemon;
+using namespace cta::tape;
+using namespace cta::tape::daemon;
 
 namespace unitTests {
 
@@ -480,7 +480,7 @@ protected:
 
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -489,14 +489,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive;
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -533,23 +533,23 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
-    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+    cta::tape::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                                                               volInfo,
-                                                                               0,
-                                                                               true,
-                                                                               false);
+    auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+                                                                            volInfo,
+                                                                            0,
+                                                                            true,
+                                                                            false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
     bool doSleep = false;  // set to true to debug entrypoint with gdb
     size_t archiveFileSize = sizeof(data);
-    castor::tape::SCSI::Structures::zeroStruct(&data);
+    cta::tape::SCSI::Structures::zeroStruct(&data);
     for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -567,7 +567,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
+      cta::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -632,21 +632,21 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  castor::tape::tapeserver::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  cta::tape::daemon::DataTransferSession
+    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
   // 8) Run the data transfer session
   sess.execute();
 
@@ -721,7 +721,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayRecall) {
 // this test will issue several retrieve requests it seems
 TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -730,14 +730,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive;
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -774,22 +774,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
-    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+    cta::tape::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                                                               volInfo,
-                                                                               0,
-                                                                               true,
-                                                                               false);
+    auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+                                                                            volInfo,
+                                                                            0,
+                                                                            true,
+                                                                            false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
-    castor::tape::SCSI::Structures::zeroStruct(&data);
+    cta::tape::SCSI::Structures::zeroStruct(&data);
     for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -807,7 +807,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
+      cta::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -873,21 +873,21 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumRecall) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  castor::tape::tapeserver::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  cta::tape::daemon::DataTransferSession
+    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -976,7 +976,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // to recall the first file and cancel the second.
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -985,14 +985,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive;
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -1029,21 +1029,21 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
-    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+    cta::tape::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                                                               volInfo,
-                                                                               0,
-                                                                               true,
-                                                                               false);
+    auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+                                                                            volInfo,
+                                                                            0,
+                                                                            true,
+                                                                            false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
-    castor::tape::SCSI::Structures::zeroStruct(&data);
+    cta::tape::SCSI::Structures::zeroStruct(&data);
     int fseq = 1;
     {
       // Create a path to a remote destination file
@@ -1058,7 +1058,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = 1000 + fseq;
-      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
+      cta::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       // Write the data (one block)
       writer.write(data, sizeof(data));
       // Close the file
@@ -1148,20 +1148,20 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1211,7 +1211,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongRecall) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1220,14 +1220,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive;
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -1268,22 +1268,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
-    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+    cta::tape::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                                                               volInfo,
-                                                                               0,
-                                                                               true,
-                                                                               false);
+    auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+                                                                            volInfo,
+                                                                            0,
+                                                                            true,
+                                                                            false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
-    castor::tape::SCSI::Structures::zeroStruct(&data);
+    cta::tape::SCSI::Structures::zeroStruct(&data);
 
     for (int fseq = 1; fseq <= MAX_RECALLS; fseq++) {
       expectedRAOFseqOrder[fseq / MAX_BULK_RECALLS].push_back(std::to_string(fseq));
@@ -1303,7 +1303,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
+      cta::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -1368,22 +1368,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
-  castorConf.nbDiskThreads = 1;
-  castorConf.useRAO = true;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.useRAO = true;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  castor::tape::tapeserver::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  cta::tape::daemon::DataTransferSession
+    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1440,7 +1440,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecall) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1449,14 +1449,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeNonRAODrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeNonRAODrive;
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -1496,22 +1496,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
-    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+    cta::tape::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                                                               volInfo,
-                                                                               0,
-                                                                               true,
-                                                                               false);
+    auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+                                                                            volInfo,
+                                                                            0,
+                                                                            true,
+                                                                            false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
-    castor::tape::SCSI::Structures::zeroStruct(&data);
+    cta::tape::SCSI::Structures::zeroStruct(&data);
 
     // For the RAO orders we will have two rao calls : first with 30 files,
     // the second with 20 files
@@ -1533,7 +1533,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
+      cta::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -1594,23 +1594,23 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
-  castorConf.nbDiskThreads = 1;
-  castorConf.useRAO = true;
-  castorConf.raoLtoAlgorithm = "linear";
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.useRAO = true;
+  dataTransferConf.raoLtoAlgorithm = "linear";
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  castor::tape::tapeserver::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  cta::tape::daemon::DataTransferSession
+    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1667,7 +1667,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallLinearAlgorithm) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistShouldApplyLinear) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1676,14 +1676,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeNonRAODrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeNonRAODrive;
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -1723,22 +1723,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
-    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+    cta::tape::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                                                               volInfo,
-                                                                               0,
-                                                                               true,
-                                                                               false);
+    auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+                                                                            volInfo,
+                                                                            0,
+                                                                            true,
+                                                                            false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
-    castor::tape::SCSI::Structures::zeroStruct(&data);
+    cta::tape::SCSI::Structures::zeroStruct(&data);
 
     // For the RAO orders we will have two rao calls : first with 30 files,
     // the second with 20 files
@@ -1760,7 +1760,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
+      cta::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -1821,24 +1821,24 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
-  castorConf.nbDiskThreads = 1;
-  castorConf.useRAO = true;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.raoLtoAlgorithm = "DOES_NOT_EXIST";
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.useRAO = true;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.raoLtoAlgorithm = "DOES_NOT_EXIST";
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
 
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  castor::tape::tapeserver::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  cta::tape::daemon::DataTransferSession
+    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -1899,7 +1899,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallRAOAlgoDoesNotExistS
 
 TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -1908,14 +1908,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeNonRAODrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeNonRAODrive;
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -1955,22 +1955,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
-    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+    cta::tape::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                                                               volInfo,
-                                                                               0,
-                                                                               true,
-                                                                               false);
+    auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+                                                                            volInfo,
+                                                                            0,
+                                                                            true,
+                                                                            false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
-    castor::tape::SCSI::Structures::zeroStruct(&data);
+    cta::tape::SCSI::Structures::zeroStruct(&data);
 
     // For the RAO orders we will have two rao calls : first with 30 files,
     // the second with 20 files
@@ -1992,7 +1992,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
+      cta::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -2053,24 +2053,24 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 7) Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
-  castorConf.nbDiskThreads = 1;
-  castorConf.useRAO = true;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.raoLtoAlgorithm = "sltf";
-  castorConf.raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = MAX_BULK_RECALLS - 1;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.useRAO = true;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.raoLtoAlgorithm = "sltf";
+  dataTransferConf.raoLtoAlgorithmOptions = "cost_heuristic_name:cta";
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  castor::tape::tapeserver::daemon::DataTransferSession
-    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  cta::tape::daemon::DataTransferSession
+    sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
 
   // 8) Run the data transfer session
   sess.execute();
@@ -2130,7 +2130,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionRAORecallSLTFRAOAlgorithm) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2139,14 +2139,14 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive;
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive;
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -2183,22 +2183,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
-    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+    cta::tape::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                                                               volInfo,
-                                                                               0,
-                                                                               true,
-                                                                               false);
+    auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+                                                                            volInfo,
+                                                                            0,
+                                                                            true,
+                                                                            false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
-    castor::tape::SCSI::Structures::zeroStruct(&data);
+    cta::tape::SCSI::Structures::zeroStruct(&data);
     for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -2216,7 +2216,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
+      cta::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -2277,17 +2277,17 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 8) Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.nbBufs = 10;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Error looking for path to tape drive"));
@@ -2295,7 +2295,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionNoSuchDrive) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2304,7 +2304,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
@@ -2312,7 +2312,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   //pointer with ownership will be passed to the application,
   //which will do the delete
   const bool failOnMount = true;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(failOnMount);
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive(failOnMount);
 
   // 4) Create the scheduler
   auto& catalogue = getCatalogue();
@@ -2349,22 +2349,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   // 6) Prepare files for reading by writing them to the mock system
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
-    castor::tape::tapeserver::daemon::VolumeInfo volInfo;
+    cta::tape::daemon::VolumeInfo volInfo;
     volInfo.vid = s_vid;
-    auto writeSession = std::make_unique<castor::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-                                                                               volInfo,
-                                                                               0,
-                                                                               true,
-                                                                               false);
+    auto writeSession = std::make_unique<cta::tape::tapeFile::WriteSession>(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+                                                                            volInfo,
+                                                                            0,
+                                                                            true,
+                                                                            false);
 
     // Write a few files on the virtual tape and modify the archive name space
     // so that it is in sync
     uint8_t data[1000];
     size_t archiveFileSize = sizeof(data);
-    castor::tape::SCSI::Structures::zeroStruct(&data);
+    cta::tape::SCSI::Structures::zeroStruct(&data);
     for (int fseq = 1; fseq <= 10; fseq++) {
       // Create a path to a remote destination file
       std::ostringstream remoteFilePath;
@@ -2382,7 +2382,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
       std::unique_ptr<cta::ArchiveJob> aj(new cta::MockArchiveJob(&mam, catalogue));
       aj->tapeFile.fSeq = fseq;
       aj->archiveFile.archiveFileID = fseq;
-      castor::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
+      cta::tape::tapeFile::FileWriter writer(*writeSession, *aj, archiveFileSize);
       tapeFileWritten.blockId = writer.getBlockId();
       // Write the data (one block)
       writer.write(data, archiveFileSize);
@@ -2443,20 +2443,20 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // 8) Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.nbDiskThreads = 3;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 3;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
   ASSERT_NO_THROW(sess.execute());
   std::string temp = logger.getLog();
   ASSERT_NE(std::string::npos, logger.getLog().find("Failed to mount the tape"));
@@ -2499,7 +2499,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionFailtoMount) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2508,7 +2508,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
@@ -2559,7 +2559,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive();
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -2567,7 +2567,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2616,22 +2616,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionGooddayMigration) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -2687,7 +2687,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   // except the first should be written to tape and the catalogue
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2696,7 +2696,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
@@ -2747,7 +2747,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive();
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -2755,7 +2755,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -2805,22 +2805,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFileSizeMigration) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -2882,7 +2882,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // Behaviour is different from production due to  cta/CTA#1100
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -2891,7 +2891,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
@@ -2942,7 +2942,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive();
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -2951,7 +2951,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   const uint64_t problematicFileId = 5;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -3006,22 +3006,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongChecksumMigration) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3091,7 +3091,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   // except the fifth should be written to tape and the catalogue
 
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3100,7 +3100,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
@@ -3151,7 +3151,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive();
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -3160,7 +3160,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   const uint64_t problematicFseq = 5;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -3209,22 +3209,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string logToCheck = logger.getLog();
   ASSERT_EQ(s_vid, sess.getVid());
@@ -3287,7 +3287,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionWrongFilesizeInMiddleOfBatchM
 ///
 TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3296,7 +3296,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
@@ -3347,7 +3347,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   //delete is unnecessary
   //pointer with ownership will be passed to the application,
   //which will do the delete
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive();
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -3355,7 +3355,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -3409,24 +3409,24 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.maxBytesBeforeFlush = 9999999;
-  castorConf.maxFilesBeforeFlush = 9999999;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.maxBytesBeforeFlush = 9999999;
+  dataTransferConf.maxFilesBeforeFlush = 9999999;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3492,7 +3492,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionMissingFilesMigration) {
 //
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3501,7 +3501,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
@@ -3553,7 +3553,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   //pointer with ownership will be passed to the application,
   //which will do the delete
   const uint64_t tapeSize = 5000;
-  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::tapeserver::drive::FakeDrive(tapeSize);
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new cta::tape::drive::FakeDrive(tapeSize);
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -3561,7 +3561,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -3610,22 +3610,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3713,7 +3713,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullMigration) {
 
 TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3721,7 +3721,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
@@ -3774,7 +3774,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   //which will do the delete
   const uint64_t tapeSize = 5000;
   mockSys.fake.m_pathToDrive["/dev/nst0"] =
-    new castor::tape::tapeserver::drive::FakeDrive(tapeSize, castor::tape::tapeserver::drive::FakeDrive::OnFlush);
+    new cta::tape::drive::FakeDrive(tapeSize, cta::tape::drive::FakeDrive::OnFlush);
 
   // We can prepare files for writing on the drive.
   // Tempfiles are in this scope so they are kept alive
@@ -3782,7 +3782,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   std::list<uint64_t> archiveFileIds;
   {
     // Label the tape
-    castor::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
+    cta::tape::tapeFile::LabelSession::label(mockSys.fake.m_pathToDrive["/dev/nst0"], s_vid, false);
     catalogue.Tape()->tapeLabelled(s_vid, "T10D6116");
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
 
@@ -3831,22 +3831,22 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create the data transfer session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
-  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, castorConf, scheduler);
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
+  DataTransferSession sess("tapeHost", logger, mockSys, driveConfig, mc, initialProcess, dataTransferConf, scheduler);
   sess.execute();
   std::string temp = logger.getLog();
   temp += "";
@@ -3916,7 +3916,7 @@ TEST_P(DataTransferSessionTest, DataTransferSessionTapeFullOnFlushMigration) {
 
 TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   // 0) Prepare the logger for everyone
-  cta::log::StringLogger logger("dummy", "tapeServerUnitTest", cta::log::DEBUG);
+  cta::log::StringLogger logger("dummy", "tapedUnitTest", cta::log::DEBUG);
   cta::log::LogContext logContext(logger);
 
   setupDefaultCatalogue();
@@ -3924,7 +3924,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   // cta::MountType::Enum mountType = cta::MountType::RETRIEVE;
 
   // 3) Prepare the necessary environment (logger, plus system wrapper),
-  castor::tape::System::mockWrapper mockSys;
+  cta::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
@@ -3977,7 +3977,7 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   //which will do the delete
   const uint64_t tapeSize = 5000;
   mockSys.fake.m_pathToDrive["/dev/nst0"] =
-    new castor::tape::tapeserver::drive::FakeDrive(tapeSize, castor::tape::tapeserver::drive::FakeDrive::OnFlush);
+    new cta::tape::drive::FakeDrive(tapeSize, cta::tape::drive::FakeDrive::OnFlush);
 
   // Report the drive's existence and put it up in the drive register.
   cta::tape::daemon::DriveConfigEntry driveConfig("T10D6116", "TestLogicalLibrary", "/dev/tape_T10D6116", "dummy");
@@ -3996,28 +3996,28 @@ TEST_P(DataTransferSessionTest, CleanerSessionFailsShouldPutTheDriveDown) {
   scheduler.setDesiredDriveState(s_adminOnAdminHost, driveConfig.unitName, driveState, logContext);
 
   // Create cleaner session
-  DataTransferConfig castorConf;
-  castorConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
-  castorConf.nbBufs = 10;
-  castorConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestRecallMaxFiles = 1000;
-  castorConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
-  castorConf.bulkRequestMigrationMaxFiles = 1000;
-  castorConf.nbDiskThreads = 1;
-  castorConf.tapeLoadTimeout = 300;
-  castorConf.useEncryption = false;
-  castorConf.wdNoBlockMoveMaxSecs = 600;
+  DataTransferConfig dataTransferConf;
+  dataTransferConf.bufsz = 1024 * 1024;  // 1 MB memory buffers
+  dataTransferConf.nbBufs = 10;
+  dataTransferConf.bulkRequestRecallMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestRecallMaxFiles = 1000;
+  dataTransferConf.bulkRequestMigrationMaxBytes = UINT64_C(100) * 1000 * 1000 * 1000;
+  dataTransferConf.bulkRequestMigrationMaxFiles = 1000;
+  dataTransferConf.nbDiskThreads = 1;
+  dataTransferConf.tapeLoadTimeout = 300;
+  dataTransferConf.useEncryption = false;
+  dataTransferConf.wdNoBlockMoveMaxSecs = 600;
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   CleanerSession cleanerSession(mc, logger, driveConfig, mockSys, s_vid, false, 0, "", catalogue, scheduler);
   auto endOfSessionAction = cleanerSession.execute();
   //the tape has not been labeled so the cleanerSession should have failed and put the drive down.
   cta::common::dataStructures::DesiredDriveState newDriveState =
     scheduler.getDesiredDriveState(driveConfig.unitName, logContext);
   ASSERT_FALSE(newDriveState.up);
-  ASSERT_EQ(castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN, endOfSessionAction);
+  ASSERT_EQ(cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN, endOfSessionAction);
 }
 
 #undef TEST_MOCK_DB

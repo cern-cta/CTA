@@ -13,7 +13,7 @@
 #include "common/telemetry/metrics/instruments/TapedInstruments.hpp"
 #include "common/utils/Timer.hpp"
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -279,4 +279,4 @@ void DiskWriteTask::logWithStat(int level, std::string_view msg, cta::log::LogCo
   lc.log(level, msg);
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

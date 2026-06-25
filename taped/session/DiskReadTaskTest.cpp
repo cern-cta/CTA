@@ -8,7 +8,7 @@
 #include "MemBlock.hpp"
 #include "MigrationMemoryManager.hpp"
 #include "MigrationReportPacker.hpp"
-#include "TapeserverProxyMock.hpp"
+#include "TapedProxyMock.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/StringLogger.hpp"
 #include "scheduler/ArchiveMount.hpp"
@@ -31,7 +31,7 @@ public:
                         cta::common::dataStructures::TapeFile()) {}
 };
 
-using namespace castor::tape::tapeserver::daemon;
+using namespace cta::tape::daemon;
 using namespace cta::disk;
 
 struct MockMigrationReportPacker : public MigrationReportPacker {
@@ -99,21 +99,21 @@ private:
   virtual void run() {}
 };
 
-TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest) {
+TEST(cta_tape_daemon, DiskReadTaskTest) {
   char path[] = "/tmp/testDRT-XXXXXX";
   ::close(::mkstemp(path));
   std::string url("file://");
   url += path;
   std::ofstream out(path, std::ios::out | std::ios::binary);
   cta::threading::AtomicFlag flag;
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_DiskReadTaskTest", cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_DiskReadTaskTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
   const int blockSize = 1500;
   const int fileSize(1024 * 2000);
 
   const unsigned long original_checksum = mycopy(out, fileSize);
-  castor::tape::tapeserver::daemon::MigrationMemoryManager mm(1, blockSize, lc);
+  cta::tape::daemon::MigrationMemoryManager mm(1, blockSize, lc);
 
   TestingArchiveJob file;
 
@@ -126,10 +126,10 @@ TEST(castor_tape_tapeserver_daemon, DiskReadTaskTest) {
 
   FakeTapeWriteTask ftwt;
   ftwt.pushDataBlock(new MemBlock(1, blockSize));
-  castor::tape::tapeserver::daemon::DiskReadTask drt(ftwt, &file, blockNeeded, flag);
+  cta::tape::daemon::DiskReadTask drt(ftwt, &file, blockNeeded, flag);
   DiskFileFactory fileFactory(0);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
   cta::TapeMountDummy tmd;
   MockMigrationWatchDog mmwd(1.0, 1.0, tspd, tmd, "", lc);
   drt.execute(lc, fileFactory, mmwd, 0);
