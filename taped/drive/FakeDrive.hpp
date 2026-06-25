@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-namespace castor::tape::tapeserver::drive {
+namespace cta::tape::drive {
 
 /**
  * Fake drive class used for unit testing
@@ -101,14 +101,14 @@ public:
   bool isTapeBlank() final;
   lbpToUse getLbpToUse() final;
   bool hasTapeInPlace() final;
-  castor::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() override;
+  cta::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() override;
   void queryRAO(std::list<SCSI::Structures::RAO::blockLims>& files, int maxSupported) final;
 };
 
 class FakeNonRAODrive : public FakeDrive {
 public:
   FakeNonRAODrive();
-  castor::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() final;
+  cta::tape::SCSI::Structures::RAO::udsLimits getLimitUDS() final;
 };
 
-}  // namespace castor::tape::tapeserver::drive
+}  // namespace cta::tape::drive

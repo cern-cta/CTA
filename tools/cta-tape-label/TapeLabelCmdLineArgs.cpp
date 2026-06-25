@@ -13,7 +13,7 @@
 #include <ostream>
 #include <string.h>
 
-namespace cta::tapeserver::tapelabel {
+namespace cta::tape::tapelabel {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -153,4 +153,4 @@ void TapeLabelCmdLineArgs::printUsage(std::ostream& os) {
      << std::endl;
 }
 
-}  // namespace cta::tapeserver::tapelabel
+}  // namespace cta::tape::tapelabel

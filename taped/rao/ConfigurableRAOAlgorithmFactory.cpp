@@ -7,7 +7,7 @@
 
 #include "SLTFRAOAlgorithm.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 ConfigurableRAOAlgorithmFactory::ConfigurableRAOAlgorithmFactory(const RAOParams& raoParams) : m_raoParams(raoParams) {}
 
@@ -43,4 +43,4 @@ std::unique_ptr<ConfigurableRAOAlgorithmFactory> ConfigurableRAOAlgorithmFactory
   return std::move(m_configurableRAOAlgoFactory);
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

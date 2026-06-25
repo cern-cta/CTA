@@ -11,7 +11,7 @@
 
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 class CPIO {
 public:
@@ -56,4 +56,4 @@ private:
   CPIO& operator=(CPIO const&) = default;
 };
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

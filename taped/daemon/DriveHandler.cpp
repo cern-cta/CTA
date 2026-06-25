@@ -645,17 +645,16 @@ int DriveHandler::runChild() {
     m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to instantiate scheduler. Reporting fatal error.");
     driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
     sleep(1);
-    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+    return cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
   // Needs to be done after the catalogue initialization
-  [[maybe_unused]] castor::tape::tapeserver::daemon::DriveSessionTracker driveSessionTracker(m_catalogue,
-                                                                                             driveInfo.driveName);
+  [[maybe_unused]] cta::tape::daemon::DriveSessionTracker driveSessionTracker(m_catalogue, driveInfo.driveName);
 
   // Before launching the transfer session, we validate that the scheduler is reachable.
   m_lc.log(log::DEBUG, "In DriveHandler::runChild(): will ping scheduler.");
   if (!schedulerPing(scheduler.get(), driveHandlerProxy.get())) {
     // failed to do ping
-    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+    return cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
 
   // 1) Special case first, if we crashed in a cleaner session, we put the drive down
@@ -663,7 +662,7 @@ int DriveHandler::runChild() {
     std::string errorMsg = "In DriveHandler::runChild(): the cleaner session crashed. Putting the drive down.";
     // Get hold of the scheduler
     puttingDriveDown(scheduler.get(), driveHandlerProxy.get(), errorMsg, driveInfo);
-    return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+    return cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN;
   }
 
   // 2) If the previous session crashed, we might want to run a cleaner session, depending
@@ -678,7 +677,7 @@ int DriveHandler::runChild() {
       std::string errorMsg =
         "In DriveHandler::runChild(): Should run cleaner but VID is missing. Putting the drive down.";
       puttingDriveDown(scheduler.get(), driveHandlerProxy.get(), errorMsg, driveInfo);
-      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+      return cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
     // Log the decision
     {
@@ -695,7 +694,7 @@ int DriveHandler::runChild() {
     }
     if (!schedulerPing(scheduler.get(), driveHandlerProxy.get())) {
       // failed to do ping
-      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+      return cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
 
     m_lc.log(log::DEBUG, "In DriveHandler::runChild(): will create cleaner session.");
@@ -733,7 +732,7 @@ int DriveHandler::runChild() {
         driveHandlerProxy->reportState(tape::session::SessionState::Fatal,
                                        tape::session::SessionType::Undetermined,
                                        "");
-        return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+        return cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN;
       }
 
       cta::common::dataStructures::DesiredDriveState currentDesiredDriveState;
@@ -756,7 +755,7 @@ int DriveHandler::runChild() {
                                        m_lc);
 
       // Get the drive state to see if there is a reason or not, we don't want to change the reason
-      // why a drive is down at the startup of the tapeserver. If it's setted up a previous Reason From Log
+      // why a drive is down at the startup of taped. If it's setted up a previous Reason From Log
       // it will be change for this one.
       if (!currentDesiredDriveState.reason) {
         driveState.setReasonFromLogMsg(logLevel, msg);
@@ -773,7 +772,7 @@ int DriveHandler::runChild() {
       m_lc.log(log::CRIT, "In DriveHandler::runChild(): failed to set drive down");
       // This is a fatal error (failure to access the scheduler). Shut daemon down.
       driveHandlerProxy->reportState(tape::session::SessionState::Fatal, tape::session::SessionType::Undetermined, "");
-      return castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN;
+      return cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN;
     }
   }
 
@@ -866,7 +865,7 @@ SubprocessHandler::ProcessingStatus DriveHandler::shutdown() {
         .add("sessionType", session::toString(m_sessionType));
       m_lc.log(log::INFO, "In DriveHandler::shutdown(): starting cleaner.");
 
-      if (executeCleanerSession(scheduler.get()) == castor::tape::tapeserver::daemon::Session::MARK_DRIVE_AS_DOWN) {
+      if (executeCleanerSession(scheduler.get()) == cta::tape::daemon::Session::MARK_DRIVE_AS_DOWN) {
         return exitShutdown();
       }
     }
@@ -895,7 +894,7 @@ void DriveHandler::setDriveDownForShutdown(const std::string& reason) {
   desiredDriveState.forceDown = false;
 
   // Get the drive state to see if there is a reason or not, we don't want to change the reason
-  // why a drive is down at the shutdown of the tapeserver. If it's setted up a previous Reason From Log
+  // why a drive is down at the shutdown of taped. If it's setted up a previous Reason From Log
   // it will be change for this new one.
   if (!driveState.value().reasonUpDown) {
     desiredDriveState.setReasonFromLogMsg(cta::log::INFO, reason);
@@ -962,26 +961,25 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
   }
 }
 
-castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
+cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
   // Mounting management.
   cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
                                        m_tapedConfig.rmcPort.value(),
                                        m_tapedConfig.rmcNetTimeout.value(),
                                        m_tapedConfig.rmcRequestAttempts.value());
   cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc.logger());
-  castor::tape::System::realWrapper sWrapper;
+  cta::tape::System::realWrapper sWrapper;
   const auto cleanerSession =
-    std::make_unique<castor::tape::tapeserver::daemon::CleanerSession>(mediaChangerFacade,
-                                                                       m_lc.logger(),
-                                                                       m_driveConfig,
-                                                                       sWrapper,
-                                                                       m_sessionVid,
-                                                                       true,
-                                                                       m_tapedConfig.tapeLoadTimeout.value(),
-                                                                       "",
-                                                                       *m_catalogue,
-                                                                       *(dynamic_cast<cta::Scheduler*>(scheduler)));
+    std::make_unique<cta::tape::daemon::CleanerSession>(mediaChangerFacade,
+                                                        m_lc.logger(),
+                                                        m_driveConfig,
+                                                        sWrapper,
+                                                        m_sessionVid,
+                                                        true,
+                                                        m_tapedConfig.tapeLoadTimeout.value(),
+                                                        "",
+                                                        *m_catalogue,
+                                                        *(dynamic_cast<cta::Scheduler*>(scheduler)));
 
   return cleanerSession->execute();
 }
@@ -1057,11 +1055,11 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
                                      minBytesToWarrantAMount);
 }
 
-castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+cta::tape::daemon::Session::EndOfSessionAction
 DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::TapedProxy* driveHandlerProxy) const {
   // Passing values from taped config to data transfer session config
   // When adding new config variables, be careful not to forget to pass them here
-  castor::tape::tapeserver::daemon::DataTransferConfig dataTransferConfig;
+  cta::tape::daemon::DataTransferConfig dataTransferConfig;
   dataTransferConfig.bufsz = m_tapedConfig.bufferSizeBytes.value();
   dataTransferConfig.bulkRequestMigrationMaxBytes = m_tapedConfig.archiveFetchBytesFiles.value().maxBytes;
   dataTransferConfig.bulkRequestMigrationMaxFiles = m_tapedConfig.archiveFetchBytesFiles.value().maxFiles;
@@ -1090,17 +1088,17 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
                                        m_tapedConfig.rmcNetTimeout.value(),
                                        m_tapedConfig.rmcRequestAttempts.value());
   cta::mediachanger::MediaChangerFacade mediaChangerFacade(rmcProxy, m_lc.logger());
-  castor::tape::System::realWrapper sWrapper;
+  cta::tape::System::realWrapper sWrapper;
 
-  const auto dataTransferSession = std::make_unique<castor::tape::tapeserver::daemon::DataTransferSession>(
-    cta::utils::getShortHostname(),
-    m_lc.logger(),
-    sWrapper,
-    m_driveConfig,
-    mediaChangerFacade,
-    *driveHandlerProxy,
-    dataTransferConfig,
-    *(dynamic_cast<cta::Scheduler*>(scheduler)));
+  const auto dataTransferSession =
+    std::make_unique<cta::tape::daemon::DataTransferSession>(cta::utils::getShortHostname(),
+                                                             m_lc.logger(),
+                                                             sWrapper,
+                                                             m_driveConfig,
+                                                             mediaChangerFacade,
+                                                             *driveHandlerProxy,
+                                                             dataTransferConfig,
+                                                             *(dynamic_cast<cta::Scheduler*>(scheduler)));
 
   return dataTransferSession->execute();
 }

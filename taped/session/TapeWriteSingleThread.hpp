@@ -21,7 +21,7 @@
 #include <iostream>
 #include <stdio.h>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 // forward declaration
 class TapeSessionReporter;
@@ -37,7 +37,7 @@ public:
   /**
    * Constructor
    */
-  TapeWriteSingleThread(castor::tape::tapeserver::drive::DriveInterface& drive,
+  TapeWriteSingleThread(cta::tape::drive::DriveInterface& drive,
                         cta::mediachanger::MediaChangerFacade& mediaChanger,
                         TapeSessionReporter& reporter,
                         MigrationWatchDog& watchdog,
@@ -107,7 +107,7 @@ private:
    * copy constructor, which has a move semantic)
    * @return the WriteSession we need to write on tape
    */
-  std::unique_ptr<castor::tape::tapeFile::WriteSession> openWriteSession();
+  std::unique_ptr<cta::tape::tapeFile::WriteSession> openWriteSession();
 
   /**
    * Execute flush on tape, do some log and report the flush to the client
@@ -200,4 +200,4 @@ private:
 
 };  // class TapeWriteSingleThread
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

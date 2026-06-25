@@ -11,17 +11,17 @@
 #include <charconv>
 #include <list>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 std::vector<uint64_t> EnterpriseRAOAlgorithm::performRAO(const std::vector<std::unique_ptr<cta::RetrieveJob>>& jobs) {
   cta::utils::Timer totalTimer;
   std::vector<uint64_t> raoOrder;
   uint64_t njobs = jobs.size();
   uint32_t block_size = c_blockSize;
-  std::list<castor::tape::SCSI::Structures::RAO::blockLims> files;
+  std::list<cta::tape::SCSI::Structures::RAO::blockLims> files;
   for (uint32_t i = 0; i < njobs; i++) {
     cta::RetrieveJob* job = jobs.at(i).get();
-    castor::tape::SCSI::Structures::RAO::blockLims lims;
+    cta::tape::SCSI::Structures::RAO::blockLims lims;
     int n = std::snprintf(reinterpret_cast<char*>(lims.fseq), sizeof(lims.fseq), "%u", i);
     if (n < 0 || static_cast<size_t>(n) >= sizeof(lims.fseq)) {
       throw cta::exception::Exception("In EnterpriseRAOAlgorithm::performRAO: fSeq " + std::to_string(i)
@@ -74,4 +74,4 @@ std::string EnterpriseRAOAlgorithm::getName() const {
   return "enterprise";
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

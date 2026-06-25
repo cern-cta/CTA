@@ -14,7 +14,7 @@ namespace exception {
 class Exception;
 }
 
-namespace tape::tapeserver::daemon {
+namespace tape::daemon {
 
 class MemBlock;
 
@@ -94,5 +94,5 @@ private:
   cta::log::LogContext& m_lc;
 };
 
-}  // namespace tape::tapeserver::daemon
+}  // namespace tape::daemon
 }  // namespace castor

@@ -11,11 +11,9 @@
 
 namespace cta {
 class RetrieveJob;
-}
 
-namespace castor::tape {
+namespace tape {
 
-namespace tapeserver {
 namespace daemon {
 class VolumeInfo;
 }
@@ -23,7 +21,6 @@ class VolumeInfo;
 namespace drive {
 class DriveInterface;
 }
-}  // namespace tapeserver
 
 namespace tapeFile {
 
@@ -44,9 +41,7 @@ public:
     * @param filetoRecall: the Information structure of the current file
     * @param volId: the volume id of the tape in the drive
     */
-  static void checkHDR1(const HDR1& hdr1,
-                        const cta::RetrieveJob& filetoRecall,
-                        const tape::tapeserver::daemon::VolumeInfo& volInfo);
+  static void checkHDR1(const HDR1& hdr1, const cta::RetrieveJob& filetoRecall, const daemon::VolumeInfo& volInfo);
 
   /**
     * Checks the uhl1
@@ -77,7 +72,7 @@ public:
   static void checkOSM(const osm::LABEL& osmLabel, const std::string& volId);
 
   using LabelFormat = cta::common::dataStructures::Label::Format;
-  static std::string checkVolumeLabel(tapeserver::drive::DriveInterface& drive, LabelFormat labelFormat);
+  static std::string checkVolumeLabel(drive::DriveInterface& drive, LabelFormat labelFormat);
 
 private:
   enum class HeaderBase { octal, decimal, hexadecimal };
@@ -96,4 +91,5 @@ private:
 };
 
 }  // namespace tapeFile
-}  // namespace castor::tape
+}  // namespace tape
+}  // namespace cta

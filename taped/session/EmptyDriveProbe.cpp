@@ -8,10 +8,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::EmptyDriveProbe::EmptyDriveProbe(
-  cta::log::Logger& log,
-  const cta::tape::daemon::DriveConfigEntry& driveConfig,
-  System::virtualWrapper& sysWrapper)
+cta::tape::daemon::EmptyDriveProbe::EmptyDriveProbe(cta::log::Logger& log,
+                                                    const cta::tape::daemon::DriveConfigEntry& driveConfig,
+                                                    System::virtualWrapper& sysWrapper)
     : m_log(log),
       m_driveConfig(driveConfig),
       m_sysWrapper(sysWrapper) {}
@@ -19,7 +18,7 @@ castor::tape::tapeserver::daemon::EmptyDriveProbe::EmptyDriveProbe(
 //------------------------------------------------------------------------------
 // driveIsEmpty()
 //------------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() noexcept {
+bool cta::tape::daemon::EmptyDriveProbe::driveIsEmpty() noexcept {
   std::string errorMessage;
 
   try {
@@ -43,14 +42,14 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::driveIsEmpty() noexcept 
 //------------------------------------------------------------------------------
 // getProbeErrorMsg()
 //------------------------------------------------------------------------------
-std::optional<std::string> castor::tape::tapeserver::daemon::EmptyDriveProbe::getProbeErrorMsg() {
+std::optional<std::string> cta::tape::daemon::EmptyDriveProbe::getProbeErrorMsg() {
   return m_probeErrorMsg;
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingDriveIsEmpty
 //------------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::EmptyDriveProbe::exceptionThrowingDriveIsEmpty() {
+bool cta::tape::daemon::EmptyDriveProbe::exceptionThrowingDriveIsEmpty() {
   std::vector<cta::log::Param> params;
   params.emplace_back("tapeDrive", m_driveConfig.unitName);
 
@@ -69,13 +68,12 @@ bool castor::tape::tapeserver::daemon::EmptyDriveProbe::exceptionThrowingDriveIs
 //------------------------------------------------------------------------------
 // createDrive
 //------------------------------------------------------------------------------
-std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface>
-castor::tape::tapeserver::daemon::EmptyDriveProbe::createDrive() {
+std::unique_ptr<cta::tape::drive::DriveInterface> cta::tape::daemon::EmptyDriveProbe::createDrive() {
   SCSI::DeviceVector dv(m_sysWrapper);
   SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_driveConfig.devFilename);
 
   // Instantiate the drive object
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(drive::createDrive(driveInfo, m_sysWrapper));
+  std::unique_ptr<cta::tape::drive::DriveInterface> drive(drive::createDrive(driveInfo, m_sysWrapper));
 
   if (nullptr == drive.get()) {
     cta::exception::Exception ex;

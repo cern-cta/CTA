@@ -33,7 +33,7 @@ namespace common::dataStructures {
 class Tape;
 }
 
-namespace tapeserver::readtp {
+namespace tape::readtp {
 
 /**
  * Command-line tool for reading files from a CTA tape.
@@ -101,15 +101,14 @@ private:
   * @param volInfo The volume info of the tape to be mounted.
   * @param drive The tape drive.
   */
-  void configureEncryption(castor::tape::tapeserver::daemon::VolumeInfo& volInfo,
-                           castor::tape::tapeserver::drive::DriveInterface& drive);
+  void configureEncryption(cta::tape::daemon::VolumeInfo& volInfo, cta::tape::drive::DriveInterface& drive);
 
   /**
   * Disable encryption
   *
   * @param drive The tape drive.
   */
-  void disableEncryption(castor::tape::tapeserver::drive::DriveInterface& drive);
+  void disableEncryption(cta::tape::drive::DriveInterface& drive);
 
   /**
    * Reads a file line by line, strips comments and returns a list of the file lines.
@@ -132,7 +131,7 @@ private:
    *
    * @return The drive object.
    */
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> createDrive();
+  std::unique_ptr<cta::tape::drive::DriveInterface> createDrive();
 
   /**
    * Detects if the drive supports the logical block protection.
@@ -140,7 +139,7 @@ private:
    * @param drive The tape drive.
    * @return The boolean value true if the drive supports LBP or false otherwise.
    */
-  bool isDriveSupportLbp(castor::tape::tapeserver::drive::DriveInterface& drive) const;
+  bool isDriveSupportLbp(cta::tape::drive::DriveInterface& drive) const;
 
   /**
    * Sets the logical block protection mode on the drive
@@ -149,7 +148,7 @@ private:
    *
    * @param drive The tape drive.
    */
-  void setLbpMode(castor::tape::tapeserver::drive::DriveInterface& drive);
+  void setLbpMode(cta::tape::drive::DriveInterface& drive);
 
   /**
    * Mounts the tape to be read.
@@ -164,24 +163,24 @@ private:
    * @param timeoutSecond The number of seconds to wait for the tape to be
    * loaded into the tape drive.
    */
-  void waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface& drive, const int timeoutSecond);
+  void waitUntilTapeLoaded(cta::tape::drive::DriveInterface& drive, const int timeoutSecond);
 
   /**
    * Read the files requested from tape
    *
    * @param drive Object representing the drive hardware.
    */
-  void readTapeFiles(castor::tape::tapeserver::drive::DriveInterface& drive);
+  void readTapeFiles(cta::tape::drive::DriveInterface& drive);
 
   /**
    * Read a specific file from tape
    * @param drive Object representing the drive hardware.
    * @param fSeq The tape file fSeq.
    */
-  void readTapeFile(castor::tape::tapeserver::drive::DriveInterface& drive,
+  void readTapeFile(cta::tape::drive::DriveInterface& drive,
                     const uint64_t& fSeq,
                     cta::disk::WriteFile& wf,
-                    const castor::tape::tapeserver::daemon::VolumeInfo& volInfo);
+                    const cta::tape::daemon::VolumeInfo& volInfo);
 
   /**
    * Unloads the specified tape from the specified tape drive.
@@ -190,7 +189,7 @@ private:
    * that the value of this field is only used for logging purposes.
    * @param drive The tape drive.
    */
-  void unloadTape(const std::string& vid, castor::tape::tapeserver::drive::DriveInterface& drive);
+  void unloadTape(const std::string& vid, cta::tape::drive::DriveInterface& drive);
 
   /**
    * Dismounts the specified tape.
@@ -204,7 +203,7 @@ private:
    *
    * @param drive The tape drive.
    */
-  void rewindDrive(castor::tape::tapeserver::drive::DriveInterface& drive);
+  void rewindDrive(cta::tape::drive::DriveInterface& drive);
 
   /**
    * Returns the string representation of the specified boolean value.
@@ -237,7 +236,7 @@ private:
   /**
    * The system wrapper used to find the device and instantiate the drive object.
    */
-  castor::tape::System::realWrapper m_sysWrapper;
+  cta::tape::System::realWrapper m_sysWrapper;
 
   /**
    * The filename of the device file of the tape drive.
@@ -312,7 +311,7 @@ private:
   /**
   * Encryption helper object
   */
-  std::unique_ptr<castor::tape::tapeserver::daemon::EncryptionControl> m_encryptionControl;
+  std::unique_ptr<cta::tape::daemon::EncryptionControl> m_encryptionControl;
 
   /**
    * Encryption on/off
@@ -323,5 +322,5 @@ private:
 
 CTA_GENERATE_EXCEPTION_CLASS(NoSuchFSeqException);
 
-}  // namespace tapeserver::readtp
+}  // namespace tape::readtp
 }  // namespace cta

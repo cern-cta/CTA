@@ -18,7 +18,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 class TapeSessionReporter : private cta::threading::Thread {
 public:
@@ -50,7 +50,7 @@ public:
    */
   void reportState(cta::tape::session::SessionState state, cta::tape::session::SessionType type);
 
-  void setVolInfo(const castor::tape::tapeserver::daemon::VolumeInfo& volumeInfo) { m_volume = volumeInfo; };
+  void setVolInfo(const cta::tape::daemon::VolumeInfo& volumeInfo) { m_volume = volumeInfo; };
 
   /**
    * Start and wait for thread to finish
@@ -116,8 +116,8 @@ private:
   const std::string m_server;
   const std::string m_unitName;
   const std::string m_logicalLibrary;
-  castor::tape::tapeserver::daemon::VolumeInfo m_volume {};
+  cta::tape::daemon::VolumeInfo m_volume {};
   const pid_t m_sessionPid = getpid();
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

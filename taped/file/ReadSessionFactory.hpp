@@ -10,9 +10,9 @@
 
 #include <memory>
 
-namespace castor::tape {
+namespace cta::tape {
 
-namespace tapeserver::drive {
+namespace drive {
 class DriveInterface;
 }
 
@@ -23,8 +23,8 @@ class ReadSession;
 class ReadSessionFactory {
 public:
   static std::unique_ptr<ReadSession>
-  create(tapeserver::drive::DriveInterface& drive, const tapeserver::daemon::VolumeInfo& volInfo, const bool useLbp);
+  create(drive::DriveInterface& drive, const daemon::VolumeInfo& volInfo, const bool useLbp);
 };
 
 }  // namespace tapeFile
-}  // namespace castor::tape
+}  // namespace cta::tape

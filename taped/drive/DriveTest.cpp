@@ -21,9 +21,9 @@ using ::testing::Return;
 
 namespace unitTests {
 
-TEST(castor_tape_drive_Drive, OpensCorrectly) {
+TEST(cta_tape_drive_Drive, OpensCorrectly) {
   /* Prepare the test harness */
-  castor::tape::System::mockWrapper sysWrapper;
+  cta::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
 
@@ -42,7 +42,7 @@ TEST(castor_tape_drive_Drive, OpensCorrectly) {
   EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(4);
 
   /* Test: detect devices, then open the device files */
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
   /* Check we detected things properly */
   ASSERT_EQ("VL32STK1", dl[0].product);
   ASSERT_EQ("STK", dl[0].vendor);
@@ -50,15 +50,14 @@ TEST(castor_tape_drive_Drive, OpensCorrectly) {
   ASSERT_EQ("T10000B", dl[1].product);
   ASSERT_EQ("STK", dl[1].vendor);
   ASSERT_EQ("0104", dl[1].productRevisionLevel);
-  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-    if (castor::tape::SCSI::Types::tape == i->type) {
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+  for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+    if (cta::tape::SCSI::Types::tape == i->type) {
+      std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
       std::string expected_classid;
-      if (dynamic_cast<castor::tape::tapeserver::drive::DriveIBM3592*>(drive.get())) {
-        expected_classid = std::string(typeid(castor::tape::tapeserver::drive::DriveIBM3592).name());
-      } else if (dynamic_cast<castor::tape::tapeserver::drive::DriveT10000*>(drive.get())) {
-        expected_classid = std::string(typeid(castor::tape::tapeserver::drive::DriveT10000).name());
+      if (dynamic_cast<cta::tape::drive::DriveIBM3592*>(drive.get())) {
+        expected_classid = std::string(typeid(cta::tape::drive::DriveIBM3592).name());
+      } else if (dynamic_cast<cta::tape::drive::DriveT10000*>(drive.get())) {
+        expected_classid = std::string(typeid(cta::tape::drive::DriveT10000).name());
       } else { /* Fill in other vendors in the future here. */
       }
       std::string found_classid(typeid(*drive).name());
@@ -67,9 +66,9 @@ TEST(castor_tape_drive_Drive, OpensCorrectly) {
   }
 }
 
-TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
+TEST(cta_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
   /* Prepare the test harness */
-  castor::tape::System::mockWrapper sysWrapper;
+  cta::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
 
@@ -87,14 +86,13 @@ TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
   EXPECT_CALL(sysWrapper, stat(_, _)).Times(14);
 
   /* Test: detect devices, then open the device files */
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-    if (castor::tape::SCSI::Types::tape == i->type) {
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+    if (cta::tape::SCSI::Types::tape == i->type) {
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
-      castor::tape::tapeserver::drive::positionInfo posInfo;
-      castor::tape::tapeserver::drive::physicalPositionInfo physicalPosInfo;
+      std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
+      cta::tape::drive::positionInfo posInfo;
+      cta::tape::drive::physicalPositionInfo physicalPosInfo;
 
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
       posInfo = drive->getPositionInfo();
@@ -108,7 +106,7 @@ TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
       physicalPosInfo = drive->getPhysicalPositionInfo();
       ASSERT_EQ(0x0, physicalPosInfo.wrap);
       ASSERT_EQ(0x0, physicalPosInfo.lpos);
-      ASSERT_EQ(castor::tape::tapeserver::drive::physicalPositionInfo::FORWARD, physicalPosInfo.direction());
+      ASSERT_EQ(cta::tape::drive::physicalPositionInfo::FORWARD, physicalPosInfo.direction());
 
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
       drive->positionToLogicalObject(0xABCDEF0);
@@ -124,9 +122,9 @@ TEST(castor_tape_drive_Drive, getPositionInfoAndPositionToLogicalObject) {
   }
 }
 
-TEST(castor_tape_drive_Drive, setDensityAndCompression) {
+TEST(cta_tape_drive_Drive, setDensityAndCompression) {
   /* Prepare the test harness */
-  castor::tape::System::mockWrapper sysWrapper;
+  cta::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
 
@@ -144,12 +142,11 @@ TEST(castor_tape_drive_Drive, setDensityAndCompression) {
   EXPECT_CALL(sysWrapper, stat(_, _)).Times(14);
 
   /* Test: detect devices, then open the device files */
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-    if (castor::tape::SCSI::Types::tape == i->type) {
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+    if (cta::tape::SCSI::Types::tape == i->type) {
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
 
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(2);
       drive->setDensityAndCompression();
@@ -169,9 +166,9 @@ TEST(castor_tape_drive_Drive, setDensityAndCompression) {
   }
 }
 
-TEST(castor_tape_drive_Drive, setStDriverOptions) {
+TEST(cta_tape_drive_Drive, setStDriverOptions) {
   /* Prepare the test harness */
-  castor::tape::System::mockWrapper sysWrapper;
+  cta::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
 
@@ -189,12 +186,11 @@ TEST(castor_tape_drive_Drive, setStDriverOptions) {
   EXPECT_CALL(sysWrapper, stat(_, _)).Times(14);
 
   /* Test: detect devices, then open the device files */
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-    if (castor::tape::SCSI::Types::tape == i->type) {
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+    if (cta::tape::SCSI::Types::tape == i->type) {
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
 
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<struct mtop*>())).Times(1);
       drive->setSTBufferWrite(true);
@@ -205,9 +201,9 @@ TEST(castor_tape_drive_Drive, setStDriverOptions) {
   }
 }
 
-TEST(castor_tape_drive_Drive, getDeviceInfo) {
+TEST(cta_tape_drive_Drive, getDeviceInfo) {
   /* Prepare the test harness */
-  castor::tape::System::mockWrapper sysWrapper;
+  cta::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
 
@@ -225,23 +221,22 @@ TEST(castor_tape_drive_Drive, getDeviceInfo) {
   EXPECT_CALL(sysWrapper, stat(_, _)).Times(14);
 
   /* Test: detect devices, then open the device files */
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-    if (castor::tape::SCSI::Types::tape == i->type) {
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+    if (cta::tape::SCSI::Types::tape == i->type) {
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
-      castor::tape::tapeserver::drive::deviceInfo devInfo;
+      std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
+      cta::tape::drive::deviceInfo devInfo;
 
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(2);
       devInfo = drive->getDeviceInfo();
 
-      if (dynamic_cast<castor::tape::tapeserver::drive::DriveIBM3592*>(drive.get())) {
+      if (dynamic_cast<cta::tape::drive::DriveIBM3592*>(drive.get())) {
         ASSERT_EQ("IBM     ", devInfo.vendor);
         ASSERT_EQ("03592E08        ", devInfo.product);
         ASSERT_EQ("460E", devInfo.productRevisionLevel);
         ASSERT_EQ("XYZZY_A2  ", devInfo.serialNumber);
-      } else if (dynamic_cast<castor::tape::tapeserver::drive::DriveIBM3592*>(drive.get())) {
+      } else if (dynamic_cast<cta::tape::drive::DriveIBM3592*>(drive.get())) {
         ASSERT_EQ("STK     ", devInfo.vendor);
         ASSERT_EQ("T10000B         ", devInfo.product);
         ASSERT_EQ("0104", devInfo.productRevisionLevel);
@@ -252,9 +247,9 @@ TEST(castor_tape_drive_Drive, getDeviceInfo) {
   }
 }
 
-TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
+TEST(cta_tape_drive_Drive, getCompressionAndClearCompressionStats) {
   /* Prepare the test harness */
-  castor::tape::System::mockWrapper sysWrapper;
+  cta::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
 
@@ -272,20 +267,20 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
   EXPECT_CALL(sysWrapper, stat(_, _)).Times(14);
 
   /* Test: detect devices, then open the device files */
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
     /*
      * The second condition relates to the fact that LTO drives and IBM 3592 have the same
      * logSense page code for different metrics.
      * The current test is written in such a way that does not really use vfs files. So, there
      * is no need take into consideration the IBM tapes at all.
      */
-    if (castor::tape::SCSI::Types::tape == i->type && i->product != "03592E08") {
-      castor::tape::tapeserver::drive::DriveGeneric* drive;
-      castor::tape::tapeserver::drive::compressionStats comp;
+    if (cta::tape::SCSI::Types::tape == i->type && i->product != "03592E08") {
+      cta::tape::drive::DriveGeneric* drive;
+      cta::tape::drive::compressionStats comp;
 
       {
-        drive = new castor::tape::tapeserver::drive::DriveT10000(*i, sysWrapper);
+        drive = new cta::tape::drive::DriveT10000(*i, sysWrapper);
 
         EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
         comp = drive->getCompression();
@@ -307,7 +302,7 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
         delete drive;
       }
       {
-        drive = new castor::tape::tapeserver::drive::DriveIBM3592(*i, sysWrapper);
+        drive = new cta::tape::drive::DriveIBM3592(*i, sysWrapper);
 
         EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
         comp = drive->getCompression();
@@ -329,7 +324,7 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
         delete drive;
       }
       {
-        drive = new castor::tape::tapeserver::drive::DriveLTO(*i, sysWrapper);
+        drive = new cta::tape::drive::DriveLTO(*i, sysWrapper);
 
         EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
         comp = drive->getCompression();
@@ -354,9 +349,9 @@ TEST(castor_tape_drive_Drive, getCompressionAndClearCompressionStats) {
   }
 }
 
-TEST(castor_tape_drive_Drive, getLBPInfo) {
+TEST(cta_tape_drive_Drive, getLBPInfo) {
   /* Prepare the test harness */
-  castor::tape::System::mockWrapper sysWrapper;
+  cta::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
 
@@ -374,13 +369,12 @@ TEST(castor_tape_drive_Drive, getLBPInfo) {
   EXPECT_CALL(sysWrapper, stat(_, _)).Times(14);
 
   /* Test: detect devices, then open the device files */
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-    if (castor::tape::SCSI::Types::tape == i->type) {
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+    if (cta::tape::SCSI::Types::tape == i->type) {
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
-      castor::tape::tapeserver::drive::LBPInfo LBPdata;
+      std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
+      cta::tape::drive::LBPInfo LBPdata;
 
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
       LBPdata = drive->getLBPInfo();
@@ -393,9 +387,9 @@ TEST(castor_tape_drive_Drive, getLBPInfo) {
   }
 }
 
-TEST(castor_tape_drive_Drive, setLogicalBlockProtection) {
+TEST(cta_tape_drive_Drive, setLogicalBlockProtection) {
   /* Prepare the test harness */
-  castor::tape::System::mockWrapper sysWrapper;
+  cta::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
 
@@ -413,32 +407,31 @@ TEST(castor_tape_drive_Drive, setLogicalBlockProtection) {
   EXPECT_CALL(sysWrapper, stat(_, _)).Times(14);
 
   /* Test: detect devices, then open the device files */
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-    if (castor::tape::SCSI::Types::tape == i->type) {
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+    if (cta::tape::SCSI::Types::tape == i->type) {
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
-      castor::tape::tapeserver::drive::LBPInfo LBPdata;
+      std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
+      cta::tape::drive::LBPInfo LBPdata;
 
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(3);
-      drive->setLogicalBlockProtection(castor::tape::SCSI::logicBlockProtectionMethod::CRC32C,
-                                       castor::tape::SCSI::logicBlockProtectionMethod::CRC32CLength,
+      drive->setLogicalBlockProtection(cta::tape::SCSI::logicBlockProtectionMethod::CRC32C,
+                                       cta::tape::SCSI::logicBlockProtectionMethod::CRC32CLength,
                                        true,
                                        true);
       LBPdata = drive->getLBPInfo();
 
-      ASSERT_EQ(castor::tape::SCSI::logicBlockProtectionMethod::CRC32C, LBPdata.method);
-      ASSERT_EQ(castor::tape::SCSI::logicBlockProtectionMethod::CRC32CLength, LBPdata.methodLength);
+      ASSERT_EQ(cta::tape::SCSI::logicBlockProtectionMethod::CRC32C, LBPdata.method);
+      ASSERT_EQ(cta::tape::SCSI::logicBlockProtectionMethod::CRC32CLength, LBPdata.methodLength);
       ASSERT_TRUE(LBPdata.enableLBPforRead);
       ASSERT_TRUE(LBPdata.enableLBPforWrite);
     }
   }
 }
 
-TEST(castor_tape_drive_Drive, disableLogicalBlockProtection) {
+TEST(cta_tape_drive_Drive, disableLogicalBlockProtection) {
   /* Prepare the test harness */
-  castor::tape::System::mockWrapper sysWrapper;
+  cta::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
 
@@ -456,23 +449,22 @@ TEST(castor_tape_drive_Drive, disableLogicalBlockProtection) {
   EXPECT_CALL(sysWrapper, stat(_, _)).Times(14);
 
   /* Test: detect devices, then open the device files */
-  castor::tape::SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-    if (castor::tape::SCSI::Types::tape == i->type) {
+  cta::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+    if (cta::tape::SCSI::Types::tape == i->type) {
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-      std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-        castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
-      castor::tape::tapeserver::drive::LBPInfo LBPdata;
+      std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
+      cta::tape::drive::LBPInfo LBPdata;
 
       EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(5);
-      drive->setLogicalBlockProtection(castor::tape::SCSI::logicBlockProtectionMethod::CRC32C,
-                                       castor::tape::SCSI::logicBlockProtectionMethod::CRC32CLength,
+      drive->setLogicalBlockProtection(cta::tape::SCSI::logicBlockProtectionMethod::CRC32C,
+                                       cta::tape::SCSI::logicBlockProtectionMethod::CRC32CLength,
                                        true,
                                        true);
       drive->disableLogicalBlockProtection();
       LBPdata = drive->getLBPInfo();
 
-      ASSERT_EQ(castor::tape::SCSI::logicBlockProtectionMethod::DoNotUse, LBPdata.method);
+      ASSERT_EQ(cta::tape::SCSI::logicBlockProtectionMethod::DoNotUse, LBPdata.method);
       ASSERT_EQ(0, LBPdata.methodLength);
       ASSERT_FALSE(LBPdata.enableLBPforRead);
       ASSERT_FALSE(LBPdata.enableLBPforWrite);
@@ -480,9 +472,9 @@ TEST(castor_tape_drive_Drive, disableLogicalBlockProtection) {
   }
 }
 
-TEST(castor_tape_drive_Drive, getReadErrors) {
+TEST(cta_tape_drive_Drive, getReadErrors) {
   struct {
-    void operator()(castor::tape::System::mockWrapper& sysWrapper) {
+    void operator()(cta::tape::System::mockWrapper& sysWrapper) {
       EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(5));
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(68));
       EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(5));
@@ -497,11 +489,10 @@ TEST(castor_tape_drive_Drive, getReadErrors) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
 
       /* Test: detect devices, then open the device files */
-      castor::tape::SCSI::DeviceVector dl(sysWrapper);
-      for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-        if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      cta::tape::SCSI::DeviceVector dl(sysWrapper);
+      for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+        if (cta::tape::SCSI::Types::tape == i->type) {
+          std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
           std::map<std::string, uint64_t> readErrorsStats = drive->getTapeReadErrors();
           ASSERT_EQ(2, readErrorsStats["mountTotalCorrectedReadErrors"]);
           ASSERT_EQ(2048, readErrorsStats["mountTotalReadBytesProcessed"]);
@@ -511,8 +502,8 @@ TEST(castor_tape_drive_Drive, getReadErrors) {
     }
   } test_functor;
 
-  castor::tape::System::mockWrapper sysWrapperSLC5;
-  castor::tape::System::mockWrapper sysWrapperSLC6;
+  cta::tape::System::mockWrapper sysWrapperSLC5;
+  cta::tape::System::mockWrapper sysWrapperSLC6;
   sysWrapperSLC5.fake.setupSLC5();
   sysWrapperSLC6.fake.setupSLC6();
   sysWrapperSLC5.delegateToFake();
@@ -521,9 +512,9 @@ TEST(castor_tape_drive_Drive, getReadErrors) {
   test_functor(sysWrapperSLC6);
 }
 
-TEST(castor_tape_drive_Drive, getWriteErrors) {
+TEST(cta_tape_drive_Drive, getWriteErrors) {
   struct {
-    void operator()(castor::tape::System::mockWrapper& sysWrapper) {
+    void operator()(cta::tape::System::mockWrapper& sysWrapper) {
       EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(5));
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(68));
       EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(5));
@@ -538,11 +529,10 @@ TEST(castor_tape_drive_Drive, getWriteErrors) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
 
       /* Test: detect devices, then open the device files */
-      castor::tape::SCSI::DeviceVector dl(sysWrapper);
-      for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-        if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      cta::tape::SCSI::DeviceVector dl(sysWrapper);
+      for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+        if (cta::tape::SCSI::Types::tape == i->type) {
+          std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
           std::map<std::string, uint64_t> writeErrorsStats = drive->getTapeWriteErrors();
           ASSERT_EQ(2, writeErrorsStats["mountTotalCorrectedWriteErrors"]);
           ASSERT_EQ(2048, writeErrorsStats["mountTotalWriteBytesProcessed"]);
@@ -552,8 +542,8 @@ TEST(castor_tape_drive_Drive, getWriteErrors) {
     }
   } test_functor;
 
-  castor::tape::System::mockWrapper sysWrapperSLC5;
-  castor::tape::System::mockWrapper sysWrapperSLC6;
+  cta::tape::System::mockWrapper sysWrapperSLC5;
+  cta::tape::System::mockWrapper sysWrapperSLC6;
   sysWrapperSLC5.fake.setupSLC5();
   sysWrapperSLC6.fake.setupSLC6();
   sysWrapperSLC5.delegateToFake();
@@ -562,9 +552,9 @@ TEST(castor_tape_drive_Drive, getWriteErrors) {
   test_functor(sysWrapperSLC6);
 }
 
-TEST(castor_tape_drive_Drive, getNonMediumErrors) {
+TEST(cta_tape_drive_Drive, getNonMediumErrors) {
   struct {
-    void operator()(castor::tape::System::mockWrapper& sysWrapper) {
+    void operator()(cta::tape::System::mockWrapper& sysWrapper) {
       EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(5));
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(68));
       EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(5));
@@ -579,11 +569,10 @@ TEST(castor_tape_drive_Drive, getNonMediumErrors) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
 
       /* Test: detect devices, then open the device files */
-      castor::tape::SCSI::DeviceVector dl(sysWrapper);
-      for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-        if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      cta::tape::SCSI::DeviceVector dl(sysWrapper);
+      for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+        if (cta::tape::SCSI::Types::tape == i->type) {
+          std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
           std::map<std::string, uint32_t> nonMediumErrorsStats = drive->getTapeNonMediumErrors();
           ASSERT_EQ(3, nonMediumErrorsStats["mountTotalNonMediumErrorCounts"]);
         }
@@ -591,8 +580,8 @@ TEST(castor_tape_drive_Drive, getNonMediumErrors) {
     }
   } test_functor;
 
-  castor::tape::System::mockWrapper sysWrapperSLC5;
-  castor::tape::System::mockWrapper sysWrapperSLC6;
+  cta::tape::System::mockWrapper sysWrapperSLC5;
+  cta::tape::System::mockWrapper sysWrapperSLC6;
   sysWrapperSLC5.fake.setupSLC5();
   sysWrapperSLC6.fake.setupSLC6();
   sysWrapperSLC5.delegateToFake();
@@ -601,9 +590,9 @@ TEST(castor_tape_drive_Drive, getNonMediumErrors) {
   test_functor(sysWrapperSLC6);
 }
 
-TEST(castor_tape_drive_Drive, getVolumeStats) {
+TEST(cta_tape_drive_Drive, getVolumeStats) {
   struct {
-    void operator()(castor::tape::System::mockWrapper& sysWrapper) {
+    void operator()(cta::tape::System::mockWrapper& sysWrapper) {
       EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(5));
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(68));
       EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(5));
@@ -618,13 +607,11 @@ TEST(castor_tape_drive_Drive, getVolumeStats) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
 
       /* Test: detect devices, then open the device files */
-      castor::tape::SCSI::DeviceVector dl(sysWrapper);
-      for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-        if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
-          if (castor::tape::tapeserver::drive::DriveIBM3592* ibm_drive =
-                dynamic_cast<castor::tape::tapeserver::drive::DriveIBM3592*>(drive.get())) {
+      cta::tape::SCSI::DeviceVector dl(sysWrapper);
+      for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+        if (cta::tape::SCSI::Types::tape == i->type) {
+          std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
+          if (cta::tape::drive::DriveIBM3592* ibm_drive = dynamic_cast<cta::tape::drive::DriveIBM3592*>(drive.get())) {
             std::map<std::string, uint32_t> volumeStats = ibm_drive->getVolumeStats();
             ASSERT_EQ(true, volumeStats["validity"]);
             ASSERT_EQ(18886754, volumeStats["lifetimeVolumeMounts"]);
@@ -641,8 +628,8 @@ TEST(castor_tape_drive_Drive, getVolumeStats) {
     }
   } test_functor;
 
-  castor::tape::System::mockWrapper sysWrapperSLC5;
-  castor::tape::System::mockWrapper sysWrapperSLC6;
+  cta::tape::System::mockWrapper sysWrapperSLC5;
+  cta::tape::System::mockWrapper sysWrapperSLC6;
   sysWrapperSLC5.fake.setupSLC5();
   sysWrapperSLC6.fake.setupSLC6();
   sysWrapperSLC5.delegateToFake();
@@ -651,9 +638,9 @@ TEST(castor_tape_drive_Drive, getVolumeStats) {
   test_functor(sysWrapperSLC6);
 }
 
-TEST(castor_tape_drive_Drive, getQualityStats) {
+TEST(cta_tape_drive_Drive, getQualityStats) {
   struct {
-    void operator()(castor::tape::System::mockWrapper& sysWrapper) {
+    void operator()(cta::tape::System::mockWrapper& sysWrapper) {
       EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(5));
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(68));
       EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(5));
@@ -668,17 +655,16 @@ TEST(castor_tape_drive_Drive, getQualityStats) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
 
       /* Test: detect devices, then open the device files */
-      castor::tape::SCSI::DeviceVector dl(sysWrapper);
-      for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-        if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      cta::tape::SCSI::DeviceVector dl(sysWrapper);
+      for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+        if (cta::tape::SCSI::Types::tape == i->type) {
+          std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
           std::map<std::string, float> qualityStats = drive->getQualityStats();
           /*
            * Assertions for common metrics are moved inside the special cases
            * due to different scales and representation of the same quality metrics.
            */
-          if (dynamic_cast<castor::tape::tapeserver::drive::DriveIBM3592*>(drive.get())) {
+          if (dynamic_cast<cta::tape::drive::DriveIBM3592*>(drive.get())) {
             ASSERT_EQ(68, (int) qualityStats["lifetimeDriveEfficiencyPrct"]);
             ASSERT_EQ(68, (int) qualityStats["lifetimeInterfaceEfficiency0Prct"]);
             ASSERT_EQ(68, (int) qualityStats["lifetimeInterfaceEfficiency1Prct"]);
@@ -694,7 +680,7 @@ TEST(castor_tape_drive_Drive, getQualityStats) {
             ASSERT_EQ(96, (int) qualityStats["mountReadEfficiencyPrct"]);
             ASSERT_EQ(98, (int) qualityStats["mountWriteEfficiencyPrct"]);
             ASSERT_EQ(68, (int) qualityStats["mountMediumEfficiencyPrct"]);
-          } else if (dynamic_cast<castor::tape::tapeserver::drive::DriveT10000*>(drive.get())) {
+          } else if (dynamic_cast<cta::tape::drive::DriveT10000*>(drive.get())) {
             ASSERT_EQ(87, (int) qualityStats["mountReadEfficiencyPrct"]);
             ASSERT_EQ(100, (int) qualityStats["mountWriteEfficiencyPrct"]);
             ASSERT_EQ(99, (int) qualityStats["lifetimeMediumEfficiencyPrct"]);
@@ -707,8 +693,8 @@ TEST(castor_tape_drive_Drive, getQualityStats) {
     }
   } test_functor;
 
-  castor::tape::System::mockWrapper sysWrapperSLC5;
-  castor::tape::System::mockWrapper sysWrapperSLC6;
+  cta::tape::System::mockWrapper sysWrapperSLC5;
+  cta::tape::System::mockWrapper sysWrapperSLC6;
   sysWrapperSLC5.fake.setupSLC5();
   sysWrapperSLC6.fake.setupSLC6();
   sysWrapperSLC5.delegateToFake();
@@ -717,9 +703,9 @@ TEST(castor_tape_drive_Drive, getQualityStats) {
   test_functor(sysWrapperSLC6);
 }
 
-TEST(castor_tape_drive_Drive, getDriveStats) {
+TEST(cta_tape_drive_Drive, getDriveStats) {
   struct {
-    void operator()(castor::tape::System::mockWrapper& sysWrapper) {
+    void operator()(cta::tape::System::mockWrapper& sysWrapper) {
       EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(5));
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(68));
       EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(5));
@@ -734,11 +720,10 @@ TEST(castor_tape_drive_Drive, getDriveStats) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(14));
 
       /* Test: detect devices, then open the device files */
-      castor::tape::SCSI::DeviceVector dl(sysWrapper);
-      for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-        if (castor::tape::SCSI::Types::tape == i->type) {
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+      cta::tape::SCSI::DeviceVector dl(sysWrapper);
+      for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+        if (cta::tape::SCSI::Types::tape == i->type) {
+          std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
           std::map<std::string, uint32_t> driveStats = drive->getDriveStats();
 
           /*
@@ -748,7 +733,7 @@ TEST(castor_tape_drive_Drive, getDriveStats) {
            * drives in order for future changes to be easier to test.
            */
 
-          if (dynamic_cast<castor::tape::tapeserver::drive::DriveIBM3592*>(drive.get())) {
+          if (dynamic_cast<cta::tape::drive::DriveIBM3592*>(drive.get())) {
             ASSERT_EQ(687, driveStats["mountServoTemps"]);
             ASSERT_EQ(771, driveStats["mountServoTransients"]);
             ASSERT_EQ(753, driveStats["mountTemps"]);
@@ -756,7 +741,7 @@ TEST(castor_tape_drive_Drive, getDriveStats) {
             ASSERT_EQ(258, driveStats["mountWriteTransients"]);
             ASSERT_EQ(273, driveStats["mountTotalReadRetries"]);
             ASSERT_EQ(306, driveStats["mountTotalWriteRetries"]);
-          } else if (dynamic_cast<castor::tape::tapeserver::drive::DriveT10000*>(drive.get())) {
+          } else if (dynamic_cast<cta::tape::drive::DriveT10000*>(drive.get())) {
             ASSERT_EQ(531, driveStats["mountServoTemps"]);
             ASSERT_EQ(137743, driveStats["mountServoTransients"]);
             ASSERT_EQ(16777217, driveStats["mountTemps"]);
@@ -770,8 +755,8 @@ TEST(castor_tape_drive_Drive, getDriveStats) {
     }
   } test_functor;
 
-  castor::tape::System::mockWrapper sysWrapperSLC5;
-  castor::tape::System::mockWrapper sysWrapperSLC6;
+  cta::tape::System::mockWrapper sysWrapperSLC5;
+  cta::tape::System::mockWrapper sysWrapperSLC6;
   sysWrapperSLC5.fake.setupSLC5();
   sysWrapperSLC6.fake.setupSLC6();
   sysWrapperSLC5.delegateToFake();
@@ -780,13 +765,13 @@ TEST(castor_tape_drive_Drive, getDriveStats) {
   test_functor(sysWrapperSLC6);
 }
 
-TEST(castor_tape_drive_Drive, getTapeAlerts) {
+TEST(cta_tape_drive_Drive, getTapeAlerts) {
   /**
    * "Local function" allowing the test to be run twice (for SLC5 and then for
    * SLC6).
    */
   struct {
-    void operator()(castor::tape::System::mockWrapper& sysWrapper) {
+    void operator()(cta::tape::System::mockWrapper& sysWrapper) {
       /* We expect the following calls: */
       EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
@@ -801,12 +786,11 @@ TEST(castor_tape_drive_Drive, getTapeAlerts) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(7));
 
       /* Test: detect devices, then open the device files */
-      castor::tape::SCSI::DeviceVector dl(sysWrapper);
-      for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-        if (castor::tape::SCSI::Types::tape == i->type) {
+      cta::tape::SCSI::DeviceVector dl(sysWrapper);
+      for (std::vector<cta::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+        if (cta::tape::SCSI::Types::tape == i->type) {
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-          std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-            castor::tape::tapeserver::drive::createDrive(*i, sysWrapper));
+          std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(*i, sysWrapper));
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           std::vector<uint16_t> tapeAlertCodes = drive->getTapeAlertCodes();
           std::vector<std::string> alerts = drive->getTapeAlerts(tapeAlertCodes);
@@ -821,7 +805,7 @@ TEST(castor_tape_drive_Drive, getTapeAlerts) {
 
           for (std::vector<uint16_t>::const_iterator code = tapeAlertCodes.begin(); code != tapeAlertCodes.end();
                code++) {
-            if (castor::tape::SCSI::isTapeAlertCriticalForWrite(*code)) {
+            if (cta::tape::SCSI::isTapeAlertCriticalForWrite(*code)) {
               ASSERT_NE(0x32U, *code);
             } else {
               ASSERT_EQ(0x32U, *code);
@@ -833,8 +817,8 @@ TEST(castor_tape_drive_Drive, getTapeAlerts) {
   } test_functor;
 
   /* Prepare the test harness */
-  castor::tape::System::mockWrapper sysWrapperSLC5;
-  castor::tape::System::mockWrapper sysWrapperSLC6;
+  cta::tape::System::mockWrapper sysWrapperSLC5;
+  cta::tape::System::mockWrapper sysWrapperSLC6;
   sysWrapperSLC5.fake.setupSLC5();
   sysWrapperSLC6.fake.setupSLC6();
   sysWrapperSLC5.delegateToFake();

@@ -11,7 +11,7 @@
 #include <fstream>
 #include <memory>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 class UHL1;
 class UHL2;
@@ -52,4 +52,4 @@ private:
   void checkTrailers();
 };
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

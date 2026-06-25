@@ -163,9 +163,8 @@ private:
                                                            const uint64_t minFilesToWarrantAMount,
                                                            const uint64_t minBytesToWarrantAMount);
   virtual std::shared_ptr<cta::tape::daemon::TapedProxy> createDriveHandlerProxy() const;
-  virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction
-  executeCleanerSession(cta::IScheduler* scheduler) const;
-  virtual castor::tape::tapeserver::daemon::Session::EndOfSessionAction
+  virtual cta::tape::daemon::Session::EndOfSessionAction executeCleanerSession(cta::IScheduler* scheduler) const;
+  virtual cta::tape::daemon::Session::EndOfSessionAction
   executeDataTransferSession(cta::IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy) const;
 
 protected:

@@ -214,7 +214,7 @@ public:
                         cta::common::dataStructures::MountType mountType,
                         time_t completionTime,
                         const std::optional<std::string>& reason = std::nullopt) override;
-    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
+    void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override;
 
   public:
     uint64_t requeueJobBatch(const std::list<std::string>& jobIDsList, log::LogContext& logContext) const override {
@@ -316,7 +316,7 @@ public:
                         cta::common::dataStructures::MountType mountType,
                         time_t completionTime,
                         const std::optional<std::string>& reason = std::nullopt) override;
-    void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override;
+    void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override;
     void addDiskSystemToSkip(const SchedulerDatabase::RetrieveMount::DiskSystemToSkip& diskSystemToSkip) override;
     void flushAsyncSuccessReports(std::list<cta::SchedulerDatabase::RetrieveJob*>& jobsBatch,
                                   log::LogContext& lc) override;

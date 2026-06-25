@@ -17,13 +17,13 @@ using ::testing::AtLeast;
 using ::testing::Return;
 
 namespace unitTests {
-TEST(castor_tape_SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
+TEST(cta_tape_SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
   /* Validate the bit field behavior of the struct inquiryData_t,
      which represents the standard INQUIRY data format as defined in
      SPC-4. This test also validates the handling of multi-bytes numbers,
      as SCSI structures are big endian (and main development target is
      little endian.  */
-  castor::tape::SCSI::Structures::inquiryData_t inq;
+  cta::tape::SCSI::Structures::inquiryData_t inq;
   unsigned char* inqBuff = (unsigned char*) &inq;
   memset(inqBuff, 0, sizeof(inq));
   /* Peripheral device type */
@@ -47,7 +47,7 @@ TEST(castor_tape_SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
   ASSERT_EQ(1, inq.sync);
 
   /* Test of strings: empty/full/boundary effect with next record */
-  ASSERT_EQ("", castor::tape::SCSI::Structures::toString(inq.T10Vendor));
+  ASSERT_EQ("", cta::tape::SCSI::Structures::toString(inq.T10Vendor));
   inqBuff[8] = 'V';
   inqBuff[9] = 'i';
   inqBuff[10] = 'r';
@@ -56,14 +56,14 @@ TEST(castor_tape_SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
   inqBuff[13] = 'a';
   inqBuff[14] = 'l';
   inqBuff[15] = 's';
-  ASSERT_EQ("Virtuals", castor::tape::SCSI::Structures::toString(inq.T10Vendor));
+  ASSERT_EQ("Virtuals", cta::tape::SCSI::Structures::toString(inq.T10Vendor));
 
   /* Check there is no side effect from next record */
   inqBuff[16] = 'X';
   inqBuff[17] = 'Y';
   inqBuff[18] = 'Z';
-  ASSERT_EQ("Virtuals", castor::tape::SCSI::Structures::toString(inq.T10Vendor));
-  ASSERT_EQ("XYZ", castor::tape::SCSI::Structures::toString(inq.prodId));
+  ASSERT_EQ("Virtuals", cta::tape::SCSI::Structures::toString(inq.T10Vendor));
+  ASSERT_EQ("XYZ", cta::tape::SCSI::Structures::toString(inq.prodId));
 
   /* Check that non-full record does not yield too long a string */
   inqBuff[8] = 'T';
@@ -74,13 +74,13 @@ TEST(castor_tape_SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
   inqBuff[13] = '\0';
   inqBuff[14] = '\0';
   inqBuff[15] = '\0';
-  ASSERT_EQ("Tapes", castor::tape::SCSI::Structures::toString(inq.T10Vendor));
+  ASSERT_EQ("Tapes", cta::tape::SCSI::Structures::toString(inq.T10Vendor));
 
   /* Test of endian conversion */
-  ASSERT_EQ(0, castor::tape::SCSI::Structures::toU16(inq.versionDescriptor[7]));
+  ASSERT_EQ(0, cta::tape::SCSI::Structures::toU16(inq.versionDescriptor[7]));
   inqBuff[72] = 0xCA;
   inqBuff[73] = 0xFE;
-  ASSERT_EQ(0xCAFE, castor::tape::SCSI::Structures::toU16(inq.versionDescriptor[7]));
+  ASSERT_EQ(0xCAFE, cta::tape::SCSI::Structures::toU16(inq.versionDescriptor[7]));
 
   /* Test last element */
   ASSERT_EQ(0, *inq.vendorSpecific2);
@@ -88,8 +88,8 @@ TEST(castor_tape_SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
   ASSERT_EQ(0x12, *inq.vendorSpecific2);
 }
 
-TEST(castor_tape_SCSI_Structures, inquiryCDB_t) {
-  castor::tape::SCSI::Structures::inquiryCDB_t inqCDB;
+TEST(cta_tape_SCSI_Structures, inquiryCDB_t) {
+  cta::tape::SCSI::Structures::inquiryCDB_t inqCDB;
   unsigned char* buff = (unsigned char*) &inqCDB;
 
   /*
@@ -98,7 +98,7 @@ TEST(castor_tape_SCSI_Structures, inquiryCDB_t) {
      */
   ASSERT_EQ(6U, sizeof(inqCDB));
 
-  ASSERT_EQ(castor::tape::SCSI::Commands::INQUIRY, inqCDB.opCode);
+  ASSERT_EQ(cta::tape::SCSI::Commands::INQUIRY, inqCDB.opCode);
   buff[0] = 0;
   ASSERT_EQ(0, inqCDB.opCode);
 
@@ -111,8 +111,8 @@ TEST(castor_tape_SCSI_Structures, inquiryCDB_t) {
   ASSERT_EQ(0xCA, inqCDB.control);
 }
 
-TEST(castor_tape_SCSI_Structures, inquiryUnitSerialNumberData_t) {
-  castor::tape::SCSI::Structures::inquiryUnitSerialNumberData_t inqSerialNumber;
+TEST(cta_tape_SCSI_Structures, inquiryUnitSerialNumberData_t) {
+  cta::tape::SCSI::Structures::inquiryUnitSerialNumberData_t inqSerialNumber;
   unsigned char* buff = (unsigned char*) &inqSerialNumber;
 
   /*
@@ -138,14 +138,14 @@ TEST(castor_tape_SCSI_Structures, inquiryUnitSerialNumberData_t) {
   buff[3] |= 0xCD;
   ASSERT_EQ(0xCD, inqSerialNumber.pageLength);
 
-  ASSERT_EQ("", castor::tape::SCSI::Structures::toString(inqSerialNumber.productSerialNumber));
+  ASSERT_EQ("", cta::tape::SCSI::Structures::toString(inqSerialNumber.productSerialNumber));
   const char serialNumber[13] = "XYZZY_A2    ";
   memcpy(&buff[4], serialNumber, 12);
-  ASSERT_EQ("XYZZY_A2    ", castor::tape::SCSI::Structures::toString(inqSerialNumber.productSerialNumber));
+  ASSERT_EQ("XYZZY_A2    ", cta::tape::SCSI::Structures::toString(inqSerialNumber.productSerialNumber));
 }
 
-TEST(castor_tape_SCSI_Structures, logSelectCDB_t) {
-  castor::tape::SCSI::Structures::logSelectCDB_t logSelectCDB;
+TEST(cta_tape_SCSI_Structures, logSelectCDB_t) {
+  cta::tape::SCSI::Structures::logSelectCDB_t logSelectCDB;
   unsigned char* buff = (unsigned char*) &logSelectCDB;
 
   /*
@@ -154,7 +154,7 @@ TEST(castor_tape_SCSI_Structures, logSelectCDB_t) {
      */
   ASSERT_EQ(10U, sizeof(logSelectCDB));
 
-  ASSERT_EQ(castor::tape::SCSI::Commands::LOG_SELECT, logSelectCDB.opCode);
+  ASSERT_EQ(cta::tape::SCSI::Commands::LOG_SELECT, logSelectCDB.opCode);
   buff[0] = 0xAB;
   ASSERT_EQ(0xAB, logSelectCDB.opCode);
   buff[1] |= (0x1 & 0x7) << 0;
@@ -170,14 +170,14 @@ TEST(castor_tape_SCSI_Structures, logSelectCDB_t) {
   /* ... */
   buff[7] |= 0xAB;
   buff[8] |= 0xCD;
-  ASSERT_EQ(0xABCD, castor::tape::SCSI::Structures::toU16(logSelectCDB.parameterListLength));
+  ASSERT_EQ(0xABCD, cta::tape::SCSI::Structures::toU16(logSelectCDB.parameterListLength));
   buff[9] |= 0xBC;
   ASSERT_EQ(0xBC, logSelectCDB.control);
 }
 
-TEST(castor_tape_SCSI_Structures, LinuxSGIO_t) {
-  ASSERT_EQ(sizeof(sg_io_hdr_t), sizeof(castor::tape::SCSI::Structures::LinuxSGIO_t));
-  castor::tape::SCSI::Structures::LinuxSGIO_t lsg;
+TEST(cta_tape_SCSI_Structures, LinuxSGIO_t) {
+  ASSERT_EQ(sizeof(sg_io_hdr_t), sizeof(cta::tape::SCSI::Structures::LinuxSGIO_t));
+  cta::tape::SCSI::Structures::LinuxSGIO_t lsg;
   /* Most important part: check that the class does not add data
      to the original structure (virtual table, for example)*/
   sg_io_hdr_t& sgio_hdr = *(sg_io_hdr_t*) &lsg;
@@ -187,8 +187,8 @@ TEST(castor_tape_SCSI_Structures, LinuxSGIO_t) {
   /* The rest is safe. It's just a struct with added functions */
 }
 
-TEST(castor_tape_SCSI_Structures, logSenseCDB_t) {
-  castor::tape::SCSI::Structures::logSenseCDB_t logSenseCDB;
+TEST(cta_tape_SCSI_Structures, logSenseCDB_t) {
+  cta::tape::SCSI::Structures::logSenseCDB_t logSenseCDB;
   unsigned char* buff = (unsigned char*) &logSenseCDB;
 
   /*
@@ -199,7 +199,7 @@ TEST(castor_tape_SCSI_Structures, logSenseCDB_t) {
 
   /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
-  ASSERT_EQ(castor::tape::SCSI::Commands::LOG_SENSE, logSenseCDB.opCode);
+  ASSERT_EQ(cta::tape::SCSI::Commands::LOG_SENSE, logSenseCDB.opCode);
   buff[0] = 0xAB;
   ASSERT_EQ(0xAB, logSenseCDB.opCode);
 
@@ -223,23 +223,23 @@ TEST(castor_tape_SCSI_Structures, logSenseCDB_t) {
   buff[3] = 0xBC;
   ASSERT_EQ(0xBC, logSenseCDB.subPageCode);
 
-  ASSERT_EQ(0, castor::tape::SCSI::Structures::toU16(logSenseCDB.parameterPointer));
+  ASSERT_EQ(0, cta::tape::SCSI::Structures::toU16(logSenseCDB.parameterPointer));
   buff[5] = 0x12;
   buff[6] = 0x34;
-  ASSERT_EQ(0x1234, castor::tape::SCSI::Structures::toU16(logSenseCDB.parameterPointer));
+  ASSERT_EQ(0x1234, cta::tape::SCSI::Structures::toU16(logSenseCDB.parameterPointer));
 
-  ASSERT_EQ(0, castor::tape::SCSI::Structures::toU16(logSenseCDB.allocationLength));
+  ASSERT_EQ(0, cta::tape::SCSI::Structures::toU16(logSenseCDB.allocationLength));
   buff[7] |= 0xAB;
   buff[8] |= 0xCD;
-  ASSERT_EQ(0xABCD, castor::tape::SCSI::Structures::toU16(logSenseCDB.allocationLength));
+  ASSERT_EQ(0xABCD, cta::tape::SCSI::Structures::toU16(logSenseCDB.allocationLength));
 
   ASSERT_EQ(0, logSenseCDB.control);
   buff[9] |= 0xBC;
   ASSERT_EQ(0xBC, logSenseCDB.control);
 }
 
-TEST(castor_tape_SCSI_Structures, locate10CDB_t) {
-  castor::tape::SCSI::Structures::locate10CDB_t locate10CDB;
+TEST(cta_tape_SCSI_Structures, locate10CDB_t) {
+  cta::tape::SCSI::Structures::locate10CDB_t locate10CDB;
   unsigned char* buff = (unsigned char*) &locate10CDB;
 
   /*
@@ -250,7 +250,7 @@ TEST(castor_tape_SCSI_Structures, locate10CDB_t) {
 
   /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
-  ASSERT_EQ(castor::tape::SCSI::Commands::LOCATE_10, locate10CDB.opCode);
+  ASSERT_EQ(cta::tape::SCSI::Commands::LOCATE_10, locate10CDB.opCode);
   buff[0] = 0xAB;
   ASSERT_EQ(0xAB, locate10CDB.opCode);
 
@@ -266,12 +266,12 @@ TEST(castor_tape_SCSI_Structures, locate10CDB_t) {
   buff[1] |= (0x1 & 0xF) << 2;
   ASSERT_EQ(1, locate10CDB.BT);
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(locate10CDB.logicalObjectID));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(locate10CDB.logicalObjectID));
   buff[3] |= 0x0A;
   buff[4] |= 0xBC;
   buff[5] |= 0xDE;
   buff[6] |= 0xF0;
-  ASSERT_EQ(0x0ABCDEF0U, castor::tape::SCSI::Structures::toU32(locate10CDB.logicalObjectID));
+  ASSERT_EQ(0x0ABCDEF0U, cta::tape::SCSI::Structures::toU32(locate10CDB.logicalObjectID));
 
   ASSERT_EQ(0, locate10CDB.partition);
   buff[8] = 0xAB;
@@ -282,8 +282,8 @@ TEST(castor_tape_SCSI_Structures, locate10CDB_t) {
   ASSERT_EQ(0xBC, locate10CDB.control);
 }
 
-TEST(castor_tape_SCSI_Structures, readPositionCDB_t) {
-  castor::tape::SCSI::Structures::readPositionCDB_t readPositionCDB;
+TEST(cta_tape_SCSI_Structures, readPositionCDB_t) {
+  cta::tape::SCSI::Structures::readPositionCDB_t readPositionCDB;
   unsigned char* buff = (unsigned char*) &readPositionCDB;
   /*
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -293,7 +293,7 @@ TEST(castor_tape_SCSI_Structures, readPositionCDB_t) {
 
   /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
-  ASSERT_EQ(castor::tape::SCSI::Commands::READ_POSITION, readPositionCDB.opCode);
+  ASSERT_EQ(cta::tape::SCSI::Commands::READ_POSITION, readPositionCDB.opCode);
   buff[0] = 0xAB;
   ASSERT_EQ(0xAB, readPositionCDB.opCode);
 
@@ -307,18 +307,18 @@ TEST(castor_tape_SCSI_Structures, readPositionCDB_t) {
   buff[5] = 0xFF;
   buff[6] = 0xFF;
 
-  ASSERT_EQ(0, castor::tape::SCSI::Structures::toU16(readPositionCDB.allocationLength));
+  ASSERT_EQ(0, cta::tape::SCSI::Structures::toU16(readPositionCDB.allocationLength));
   buff[7] |= 0x0A;
   buff[8] |= 0xBC;
-  ASSERT_EQ(0x0ABC, castor::tape::SCSI::Structures::toU16(readPositionCDB.allocationLength));
+  ASSERT_EQ(0x0ABC, cta::tape::SCSI::Structures::toU16(readPositionCDB.allocationLength));
 
   ASSERT_EQ(0, readPositionCDB.control);
   buff[9] |= 0xBC;
   ASSERT_EQ(0xBC, readPositionCDB.control);
 }
 
-TEST(castor_tape_SCSI_Structures, readPositionDataShortForm_t) {
-  castor::tape::SCSI::Structures::readPositionDataShortForm_t readPositionData;
+TEST(cta_tape_SCSI_Structures, readPositionDataShortForm_t) {
+  cta::tape::SCSI::Structures::readPositionDataShortForm_t readPositionData;
   unsigned char* buff = (unsigned char*) &readPositionData;
 
   ASSERT_EQ(20U, sizeof(readPositionData));
@@ -352,36 +352,36 @@ TEST(castor_tape_SCSI_Structures, readPositionDataShortForm_t) {
   buff[2] |= 0xFF;
   buff[3] = 0xFF;
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(readPositionData.firstBlockLocation));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(readPositionData.firstBlockLocation));
   buff[4] |= 0x0A;
   buff[5] |= 0xBC;
   buff[6] |= 0xDE;
   buff[7] |= 0xF0;
-  ASSERT_EQ(0x0ABCDEF0U, castor::tape::SCSI::Structures::toU32(readPositionData.firstBlockLocation));
+  ASSERT_EQ(0x0ABCDEF0U, cta::tape::SCSI::Structures::toU32(readPositionData.firstBlockLocation));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(readPositionData.lastBlockLocation));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(readPositionData.lastBlockLocation));
   buff[8] |= 0x9A;
   buff[9] |= 0xBC;
   buff[10] |= 0xDE;
   buff[11] |= 0xF9;
-  ASSERT_EQ(0x9ABCDEF9U, castor::tape::SCSI::Structures::toU32(readPositionData.lastBlockLocation));
+  ASSERT_EQ(0x9ABCDEF9U, cta::tape::SCSI::Structures::toU32(readPositionData.lastBlockLocation));
   buff[12] |= 0xFF;
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(readPositionData.blocksInBuffer));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(readPositionData.blocksInBuffer));
   buff[13] |= 0x9A;
   buff[14] |= 0xBC;
   buff[15] |= 0xDE;
-  ASSERT_EQ(0x009ABCDEU, castor::tape::SCSI::Structures::toU32(readPositionData.blocksInBuffer));
+  ASSERT_EQ(0x009ABCDEU, cta::tape::SCSI::Structures::toU32(readPositionData.blocksInBuffer));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(readPositionData.bytesInBuffer));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(readPositionData.bytesInBuffer));
   buff[16] |= 0x7A;
   buff[17] |= 0xBC;
   buff[18] |= 0xDE;
   buff[19] |= 0xF7;
-  ASSERT_EQ(0x7ABCDEF7U, castor::tape::SCSI::Structures::toU32(readPositionData.bytesInBuffer));
+  ASSERT_EQ(0x7ABCDEF7U, cta::tape::SCSI::Structures::toU32(readPositionData.bytesInBuffer));
 }
 
-TEST(castor_tape_SCSI_Structures, modeSelect6CDB_t) {
-  castor::tape::SCSI::Structures::modeSelect6CDB_t modeSelect6CDB;
+TEST(cta_tape_SCSI_Structures, modeSelect6CDB_t) {
+  cta::tape::SCSI::Structures::modeSelect6CDB_t modeSelect6CDB;
   unsigned char* buff = (unsigned char*) &modeSelect6CDB;
   /*
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -391,7 +391,7 @@ TEST(castor_tape_SCSI_Structures, modeSelect6CDB_t) {
 
   /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
-  ASSERT_EQ(castor::tape::SCSI::Commands::MODE_SELECT_6, modeSelect6CDB.opCode);
+  ASSERT_EQ(cta::tape::SCSI::Commands::MODE_SELECT_6, modeSelect6CDB.opCode);
   buff[0] = 0xAB;
   ASSERT_EQ(0xABU, modeSelect6CDB.opCode);
 
@@ -415,8 +415,8 @@ TEST(castor_tape_SCSI_Structures, modeSelect6CDB_t) {
   ASSERT_EQ(0xAB, modeSelect6CDB.control);
 }
 
-TEST(castor_tape_SCSI_Structures, modeSense6CDB_t) {
-  castor::tape::SCSI::Structures::modeSense6CDB_t modeSense6CDB;
+TEST(cta_tape_SCSI_Structures, modeSense6CDB_t) {
+  cta::tape::SCSI::Structures::modeSense6CDB_t modeSense6CDB;
   unsigned char* buff = (unsigned char*) &modeSense6CDB;
   /*
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -426,7 +426,7 @@ TEST(castor_tape_SCSI_Structures, modeSense6CDB_t) {
 
   /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
-  ASSERT_EQ(castor::tape::SCSI::Commands::MODE_SENSE_6, modeSense6CDB.opCode);
+  ASSERT_EQ(cta::tape::SCSI::Commands::MODE_SENSE_6, modeSense6CDB.opCode);
   buff[0] = 0xAB;
   ASSERT_EQ(0xABU, modeSense6CDB.opCode);
 
@@ -455,8 +455,8 @@ TEST(castor_tape_SCSI_Structures, modeSense6CDB_t) {
   ASSERT_EQ(0xCDU, modeSense6CDB.control);
 }
 
-TEST(castor_tape_SCSI_Structures, modeSenseDeviceConfiguration_t) {
-  castor::tape::SCSI::Structures::modeSenseDeviceConfiguration_t devConfig;
+TEST(cta_tape_SCSI_Structures, modeSenseDeviceConfiguration_t) {
+  cta::tape::SCSI::Structures::modeSenseDeviceConfiguration_t devConfig;
   unsigned char* buff = (unsigned char*) &devConfig;
   /*
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -485,8 +485,8 @@ TEST(castor_tape_SCSI_Structures, modeSenseDeviceConfiguration_t) {
   ASSERT_EQ(0xEFU, devConfig.modePage.selectDataComprAlgorithm);
 }
 
-TEST(castor_tape_SCSI_Structures, modeSenseControlDataProtection_t) {
-  castor::tape::SCSI::Structures::modeSenseControlDataProtection_t dataProt;
+TEST(cta_tape_SCSI_Structures, modeSenseControlDataProtection_t) {
+  cta::tape::SCSI::Structures::modeSenseControlDataProtection_t dataProt;
   unsigned char* buff = (unsigned char*) &dataProt;
   /*
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -519,8 +519,8 @@ TEST(castor_tape_SCSI_Structures, modeSenseControlDataProtection_t) {
   ASSERT_EQ(0x1U, dataProt.modePage.LBP_R);
 }
 
-TEST(castor_tape_SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
-  castor::tape::SCSI::Structures::tapeAlertLogPage_t<12> tal;
+TEST(cta_tape_SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
+  cta::tape::SCSI::Structures::tapeAlertLogPage_t<12> tal;
   unsigned char* buff = (unsigned char*) &tal;
 
   /* Check the size of the structure (header is 4 bytes, array elements, 5.*/
@@ -536,25 +536,25 @@ TEST(castor_tape_SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
   ASSERT_EQ(0x34U, tal.subPageCode);
 
   /* Simulate 123 records = 600 bytes = 0x267 */
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(tal.pageLength));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(tal.pageLength));
   buff[2] = 0x2;
   buff[3] = 0x67;
-  ASSERT_EQ(0x267U, castor::tape::SCSI::Structures::toU16(tal.pageLength));
+  ASSERT_EQ(0x267U, cta::tape::SCSI::Structures::toU16(tal.pageLength));
   /* The page length is counted in bytes. We are interested in the number of parameters*/
   ASSERT_EQ(123U, tal.parameterNumber());
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(tal.parameters[0].parameterCode));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(tal.parameters[0].parameterCode));
   buff[4] = 0xCA;
   buff[5] = 0xFE;
-  ASSERT_EQ(0xCAFEU, castor::tape::SCSI::Structures::toU16(tal.parameters[0].parameterCode));
+  ASSERT_EQ(0xCAFEU, cta::tape::SCSI::Structures::toU16(tal.parameters[0].parameterCode));
 
   ASSERT_EQ(0U, tal.parameters[11].flag);
   buff[3 + 12 * 5] |= (0x1) << 0;
   ASSERT_EQ(1U, tal.parameters[11].flag);
 }
 
-TEST(castor_tape_SCSI_Structures, senseBuffer_t) {
-  castor::tape::SCSI::Structures::senseData_t<255> sense;
+TEST(cta_tape_SCSI_Structures, senseBuffer_t) {
+  cta::tape::SCSI::Structures::senseData_t<255> sense;
   unsigned char* buff = (unsigned char*) &sense;
 
   /* Check the total size of the structure, plus the one of each of the members
@@ -659,52 +659,52 @@ TEST(castor_tape_SCSI_Structures, senseBuffer_t) {
   }
 }
 
-TEST(castor_tape_SCSI_Structures, toU16) {
+TEST(cta_tape_SCSI_Structures, toU16) {
   unsigned char num[2] = {0x1, 0x2};
-  ASSERT_EQ(0x102, castor::tape::SCSI::Structures::toU16(num));
+  ASSERT_EQ(0x102, cta::tape::SCSI::Structures::toU16(num));
 }
 
-TEST(castor_tape_SCSI_Structures, toU32) {
+TEST(cta_tape_SCSI_Structures, toU32) {
   unsigned char num[4] = {0x1, 0x2, 0x3, 0x4};
-  ASSERT_EQ(0x1020304U, castor::tape::SCSI::Structures::toU32(num));
+  ASSERT_EQ(0x1020304U, cta::tape::SCSI::Structures::toU32(num));
 }
 
-TEST(castor_tape_SCSI_Structures, toU32_3byte) {
+TEST(cta_tape_SCSI_Structures, toU32_3byte) {
   unsigned char num[3] = {0xAA, 0xBB, 0xCC};
-  ASSERT_EQ(0x00AABBCCU, castor::tape::SCSI::Structures::toU32(num));
+  ASSERT_EQ(0x00AABBCCU, cta::tape::SCSI::Structures::toU32(num));
 }
 
-TEST(castor_tape_SCSI_Structures, toS32) {
+TEST(cta_tape_SCSI_Structures, toS32) {
   unsigned char num[4] = {0xE6, 0x29, 0x66, 0x5B};
-  ASSERT_EQ(-433494437, castor::tape::SCSI::Structures::toS32(num));
+  ASSERT_EQ(-433494437, cta::tape::SCSI::Structures::toS32(num));
 }
 
-TEST(castor_tape_SCSI_Structures, toU64_6byte) {
+TEST(cta_tape_SCSI_Structures, toU64_6byte) {
   unsigned char num[6] = {0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE};
-  ASSERT_EQ(0xDEADBEEFCAFEULL, castor::tape::SCSI::Structures::toU64(num));
+  ASSERT_EQ(0xDEADBEEFCAFEULL, cta::tape::SCSI::Structures::toU64(num));
 }
 
-TEST(castor_tape_SCSI_Structures, toU64) {
+TEST(cta_tape_SCSI_Structures, toU64) {
   unsigned char num[8] = {0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xFA, 0xDE};
-  ASSERT_EQ(0xDEADBEEFCAFEFADEULL, castor::tape::SCSI::Structures::toU64(num));
+  ASSERT_EQ(0xDEADBEEFCAFEFADEULL, cta::tape::SCSI::Structures::toU64(num));
 }
 
-TEST(castor_tape_SCSI_Structures, Exception) {
-  castor::tape::SCSI::Structures::senseData_t<255> sense;
-  castor::tape::SCSI::Structures::LinuxSGIO_t sgio;
+TEST(cta_tape_SCSI_Structures, Exception) {
+  cta::tape::SCSI::Structures::senseData_t<255> sense;
+  cta::tape::SCSI::Structures::LinuxSGIO_t sgio;
   sgio.setSenseBuffer(&sense);
-  sgio.status = castor::tape::SCSI::Status::GOOD;
-  ASSERT_NO_THROW(castor::tape::SCSI::ExceptionLauncher(sgio));
-  sgio.status = castor::tape::SCSI::Status::CHECK_CONDITION;
+  sgio.status = cta::tape::SCSI::Status::GOOD;
+  ASSERT_NO_THROW(cta::tape::SCSI::ExceptionLauncher(sgio));
+  sgio.status = cta::tape::SCSI::Status::CHECK_CONDITION;
   /* fill up the ASC part of the */
   sense.responseCode = 0x70;
   sense.fixedFormat.ASC = 0x14;
   sense.fixedFormat.ASCQ = 0x04;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::Exception);
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::Exception);
   try {
-    castor::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
+    cta::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
     ASSERT_TRUE(false);
-  } catch (castor::tape::SCSI::Exception& ex) {
+  } catch (cta::tape::SCSI::Exception& ex) {
     std::string what(ex.getMessageValue());
     ASSERT_NE(std::string::npos, what.find("Block sequence error"));
     /* We check here that the formatting is also done correctly (space added when context
@@ -713,39 +713,39 @@ TEST(castor_tape_SCSI_Structures, Exception) {
   }
 }
 
-TEST(castor_tape_SCSI_Structures, HostException) {
-  castor::tape::SCSI::Structures::LinuxSGIO_t sgio;
-  sgio.status = castor::tape::SCSI::Status::GOOD;
-  sgio.host_status = castor::tape::SCSI::HostStatus::OK;
-  ASSERT_NO_THROW(castor::tape::SCSI::ExceptionLauncher(sgio));
+TEST(cta_tape_SCSI_Structures, HostException) {
+  cta::tape::SCSI::Structures::LinuxSGIO_t sgio;
+  sgio.status = cta::tape::SCSI::Status::GOOD;
+  sgio.host_status = cta::tape::SCSI::HostStatus::OK;
+  ASSERT_NO_THROW(cta::tape::SCSI::ExceptionLauncher(sgio));
 
-  sgio.host_status = castor::tape::SCSI::HostStatus::NO_CONNECT;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
-  sgio.host_status = castor::tape::SCSI::HostStatus::BUS_BUSY;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
-  sgio.host_status = castor::tape::SCSI::HostStatus::TIME_OUT;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
-  sgio.host_status = castor::tape::SCSI::HostStatus::BAD_TARGET;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
-  sgio.host_status = castor::tape::SCSI::HostStatus::ABORT;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
-  sgio.host_status = castor::tape::SCSI::HostStatus::PARITY;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
-  sgio.host_status = castor::tape::SCSI::HostStatus::ERROR;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
-  sgio.host_status = castor::tape::SCSI::HostStatus::RESET;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
-  sgio.host_status = castor::tape::SCSI::HostStatus::BAD_INTR;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
-  sgio.host_status = castor::tape::SCSI::HostStatus::PASSTHROUGH;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
-  sgio.host_status = castor::tape::SCSI::HostStatus::SOFT_ERROR;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::NO_CONNECT;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::BUS_BUSY;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::TIME_OUT;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::BAD_TARGET;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::ABORT;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::PARITY;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::ERROR;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::RESET;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::BAD_INTR;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::PASSTHROUGH;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
+  sgio.host_status = cta::tape::SCSI::HostStatus::SOFT_ERROR;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::HostException);
 
   try {
-    castor::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
+    cta::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
     ASSERT_TRUE(false);
-  } catch (castor::tape::SCSI::HostException& ex) {
+  } catch (cta::tape::SCSI::HostException& ex) {
     std::string what(ex.getMessageValue());
     ASSERT_NE(std::string::npos, what.find("SOFT ERROR"));
     /* We check here that the formatting is also done correctly (space added
@@ -754,52 +754,52 @@ TEST(castor_tape_SCSI_Structures, HostException) {
   }
 }
 
-TEST(castor_tape_SCSI_Structures, DriverException) {
-  castor::tape::SCSI::Structures::LinuxSGIO_t sgio;
-  sgio.status = castor::tape::SCSI::Status::GOOD;
-  sgio.driver_status = castor::tape::SCSI::DriverStatus::OK;
-  ASSERT_NO_THROW(castor::tape::SCSI::ExceptionLauncher(sgio));
+TEST(cta_tape_SCSI_Structures, DriverException) {
+  cta::tape::SCSI::Structures::LinuxSGIO_t sgio;
+  sgio.status = cta::tape::SCSI::Status::GOOD;
+  sgio.driver_status = cta::tape::SCSI::DriverStatus::OK;
+  ASSERT_NO_THROW(cta::tape::SCSI::ExceptionLauncher(sgio));
 
-  sgio.driver_status = castor::tape::SCSI::DriverStatus::BUSY;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
-  sgio.driver_status = castor::tape::SCSI::DriverStatus::SOFT;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
-  sgio.driver_status = castor::tape::SCSI::DriverStatus::MEDIA;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
-  sgio.driver_status = castor::tape::SCSI::DriverStatus::ERROR;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
-  sgio.driver_status = castor::tape::SCSI::DriverStatus::INVALID;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
-  sgio.driver_status = castor::tape::SCSI::DriverStatus::TIMEOUT;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
-  sgio.driver_status = castor::tape::SCSI::DriverStatus::HARD;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
+  sgio.driver_status = cta::tape::SCSI::DriverStatus::BUSY;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
+  sgio.driver_status = cta::tape::SCSI::DriverStatus::SOFT;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
+  sgio.driver_status = cta::tape::SCSI::DriverStatus::MEDIA;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
+  sgio.driver_status = cta::tape::SCSI::DriverStatus::ERROR;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
+  sgio.driver_status = cta::tape::SCSI::DriverStatus::INVALID;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
+  sgio.driver_status = cta::tape::SCSI::DriverStatus::TIMEOUT;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
+  sgio.driver_status = cta::tape::SCSI::DriverStatus::HARD;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
 
   /* sense is a special case*/
-  castor::tape::SCSI::Structures::senseData_t<255> sense;
+  cta::tape::SCSI::Structures::senseData_t<255> sense;
   sgio.setSenseBuffer(&sense);
   /* fill up the ASC part of the */
   sense.responseCode = 0x70;
   sense.fixedFormat.ASC = 0x14;
   sense.fixedFormat.ASCQ = 0x04;
-  sgio.driver_status = castor::tape::SCSI::DriverStatus::SENSE;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
+  sgio.driver_status = cta::tape::SCSI::DriverStatus::SENSE;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
   /* add suggestions*/
-  sgio.driver_status |= castor::tape::SCSI::DriverStatusSuggest::RETRY;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
-  sgio.driver_status |= castor::tape::SCSI::DriverStatusSuggest::ABORT;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
-  sgio.driver_status |= castor::tape::SCSI::DriverStatusSuggest::REMAP;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
-  sgio.driver_status |= castor::tape::SCSI::DriverStatusSuggest::DIE;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
-  sgio.driver_status |= castor::tape::SCSI::DriverStatusSuggest::SENSE;
-  ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::DriverException);
+  sgio.driver_status |= cta::tape::SCSI::DriverStatusSuggest::RETRY;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
+  sgio.driver_status |= cta::tape::SCSI::DriverStatusSuggest::ABORT;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
+  sgio.driver_status |= cta::tape::SCSI::DriverStatusSuggest::REMAP;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
+  sgio.driver_status |= cta::tape::SCSI::DriverStatusSuggest::DIE;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
+  sgio.driver_status |= cta::tape::SCSI::DriverStatusSuggest::SENSE;
+  ASSERT_THROW(cta::tape::SCSI::ExceptionLauncher(sgio), cta::tape::SCSI::DriverException);
 
   try {
-    castor::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
+    cta::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
     ASSERT_TRUE(false);
-  } catch (castor::tape::SCSI::DriverException& ex) {
+  } catch (cta::tape::SCSI::DriverException& ex) {
     std::string what(ex.getMessageValue());
     ASSERT_NE(std::string::npos, what.find(": SENSE"));
     ASSERT_NE(std::string::npos, what.find("Driver suggestions:"));
@@ -811,10 +811,10 @@ TEST(castor_tape_SCSI_Structures, DriverException) {
   }
 
   try {
-    sgio.driver_status = castor::tape::SCSI::DriverStatus::TIMEOUT;
-    castor::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
+    sgio.driver_status = cta::tape::SCSI::DriverStatus::TIMEOUT;
+    cta::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:");
     ASSERT_TRUE(false);
-  } catch (castor::tape::SCSI::DriverException& ex) {
+  } catch (cta::tape::SCSI::DriverException& ex) {
     std::string what(ex.getMessageValue());
     ASSERT_NE(std::string::npos, what.find(": TIMEOUT"));
     ASSERT_EQ(std::string::npos, what.find("Driver suggestions:"));
@@ -826,61 +826,61 @@ TEST(castor_tape_SCSI_Structures, DriverException) {
   }
 }
 
-TEST(castor_tape_SCSI_Structures, logSenseParameter_t) {
+TEST(cta_tape_SCSI_Structures, logSenseParameter_t) {
   unsigned char dataBuff[128];
   memset(dataBuff, random(), sizeof(dataBuff));
 
-  castor::tape::SCSI::Structures::logSenseParameter_t& logParam =
-    *(castor::tape::SCSI::Structures::logSenseParameter_t*) dataBuff;
+  cta::tape::SCSI::Structures::logSenseParameter_t& logParam =
+    *(cta::tape::SCSI::Structures::logSenseParameter_t*) dataBuff;
 
   ASSERT_EQ(4U, sizeof(logParam.header));
-  ASSERT_LE(sizeof(castor::tape::SCSI::Structures::logSenseParameterHeader_t), sizeof(logParam));
+  ASSERT_LE(sizeof(cta::tape::SCSI::Structures::logSenseParameterHeader_t), sizeof(logParam));
 
   unsigned char test1[] = {0x00, 0x08, 0x43, 0x04, 0x11, 0x22, 0x33, 0x44, 0x55};
   memcpy(dataBuff, test1, sizeof(test1));
-  ASSERT_EQ(0x08U, castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+  ASSERT_EQ(0x08U, cta::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
   ASSERT_EQ(0x04U, logParam.header.parameterLength);
   ASSERT_EQ(0x11223344ULL, logParam.getU64Value());
   ASSERT_EQ(0x11223344LL, logParam.getS64Value());
 
   unsigned char test2[] = {0x00, 0x00, 0x43, 0x06, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77};
   memcpy(dataBuff, test2, sizeof(test2));
-  ASSERT_EQ(0x00U, castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+  ASSERT_EQ(0x00U, cta::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
   ASSERT_EQ(0x06U, logParam.header.parameterLength);
   ASSERT_EQ(0x112233445566ULL, logParam.getU64Value());
   ASSERT_EQ(0x112233445566LL, logParam.getS64Value());
 
   unsigned char test3[] = {0x0A, 0x0F, 0x43, 0x08, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99};
   memcpy(dataBuff, test3, sizeof(test3));
-  ASSERT_EQ(0xA0FU, castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+  ASSERT_EQ(0xA0FU, cta::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
   ASSERT_EQ(0x08U, logParam.header.parameterLength);
   ASSERT_EQ(0x1122334455667788ULL, logParam.getU64Value());
   ASSERT_EQ(0x1122334455667788LL, logParam.getS64Value());
 
   unsigned char test4[] = {0x0A, 0x0F, 0x43, 0x09, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99};
   memcpy(dataBuff, test4, sizeof(test4));
-  ASSERT_EQ(0xA0FU, castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+  ASSERT_EQ(0xA0FU, cta::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
   ASSERT_EQ(0x09U, logParam.header.parameterLength);
   ASSERT_NE(0x1122334455667788ULL, logParam.getU64Value());
   ASSERT_NE(0x1122334455667788LL, logParam.getS64Value());
 
   unsigned char test5[] = {0xBB, 0xEE, 0x43, 0x00, 0x11, 0x22};
   memcpy(dataBuff, test5, sizeof(test5));
-  ASSERT_EQ(0xBBEEU, castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+  ASSERT_EQ(0xBBEEU, cta::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
   ASSERT_EQ(0x00U, logParam.header.parameterLength);
   ASSERT_EQ(0ULL, logParam.getU64Value());
   ASSERT_EQ(0LL, logParam.getS64Value());
 
   unsigned char test6[] = {0xDD, 0xCC, 0x43, 0x04, 0xFF, 0x22, 0x33, 0x44, 0x55};
   memcpy(dataBuff, test6, sizeof(test6));
-  ASSERT_EQ(0xDDCCU, castor::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
+  ASSERT_EQ(0xDDCCU, cta::tape::SCSI::Structures::toU16(logParam.header.parameterCode));
   ASSERT_EQ(0x04U, logParam.header.parameterLength);
   ASSERT_EQ(4280431428ULL, logParam.getU64Value());
   ASSERT_EQ(-14535868LL, logParam.getS64Value());
 }
 
-TEST(castor_tape_SCSI_Structures, testUnitReadyCDB_t) {
-  castor::tape::SCSI::Structures::testUnitReadyCDB_t testUnitReadyCDB;
+TEST(cta_tape_SCSI_Structures, testUnitReadyCDB_t) {
+  cta::tape::SCSI::Structures::testUnitReadyCDB_t testUnitReadyCDB;
   unsigned char* buff = (unsigned char*) &testUnitReadyCDB;
   /*
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -890,7 +890,7 @@ TEST(castor_tape_SCSI_Structures, testUnitReadyCDB_t) {
 
   /* Check proper initialization an location of struct members match
      the bit/byte locations defined in SPC-4 */
-  ASSERT_EQ(castor::tape::SCSI::Commands::TEST_UNIT_READY, testUnitReadyCDB.opCode);
+  ASSERT_EQ(cta::tape::SCSI::Commands::TEST_UNIT_READY, testUnitReadyCDB.opCode);
   buff[0] = 0xAB;
   ASSERT_EQ(0xABU, testUnitReadyCDB.opCode);
 
@@ -907,8 +907,8 @@ TEST(castor_tape_SCSI_Structures, testUnitReadyCDB_t) {
   ASSERT_EQ(0xCDU, testUnitReadyCDB.control);
 }
 
-TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionCDB_t) {
-  castor::tape::SCSI::Structures::readEndOfWrapPositionCDB_t readEndOfWrapPositionCDB;
+TEST(cta_tape_SCSI_Structures, readEndOfWrapPositionCDB_t) {
+  cta::tape::SCSI::Structures::readEndOfWrapPositionCDB_t readEndOfWrapPositionCDB;
   unsigned char* buff = reinterpret_cast<unsigned char*>(&readEndOfWrapPositionCDB);
 
   // Make sure this struct is a POD (plain old data without virtual table) and has the right size
@@ -930,37 +930,37 @@ TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionCDB_t) {
   buff[5] = 0xAB;
   ASSERT_EQ(0xAB, readEndOfWrapPositionCDB.wrapNumber);
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(readEndOfWrapPositionCDB.allocationLength));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(readEndOfWrapPositionCDB.allocationLength));
   buff[6] = 0x0A;
   buff[7] = 0xBC;
   buff[8] = 0xDE;
   buff[9] = 0xF0;
-  ASSERT_EQ(0xABCDEF0, castor::tape::SCSI::Structures::toU32(readEndOfWrapPositionCDB.allocationLength));
+  ASSERT_EQ(0xABCDEF0, cta::tape::SCSI::Structures::toU32(readEndOfWrapPositionCDB.allocationLength));
 
   ASSERT_EQ(0U, readEndOfWrapPositionCDB.control);
   buff[11] = 0xBC;
   ASSERT_EQ(0xBC, readEndOfWrapPositionCDB.control);
 }
 
-TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionDataShortForm_t) {
-  castor::tape::SCSI::Structures::readEndOfWrapPositionDataShortForm_t readEndOfWrapPositionDataShortForm;
+TEST(cta_tape_SCSI_Structures, readEndOfWrapPositionDataShortForm_t) {
+  cta::tape::SCSI::Structures::readEndOfWrapPositionDataShortForm_t readEndOfWrapPositionDataShortForm;
   unsigned char* buff = reinterpret_cast<unsigned char*>(&readEndOfWrapPositionDataShortForm);
 
   // Make sure this struct is a POD (plain old data without virtual table) and has the right size
   ASSERT_EQ(10U, sizeof(readEndOfWrapPositionDataShortForm));
 
   // Check proper initialization and location of struct members match the bit/byte locations defined in LTO-8 reference
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataShortForm.responseDataLength));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataShortForm.responseDataLength));
   buff[0] = 0x0A;
   buff[1] = 0xB0;
-  ASSERT_EQ(0xAB0, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataShortForm.responseDataLength));
+  ASSERT_EQ(0xAB0, cta::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataShortForm.responseDataLength));
 
   // Reserved
   buff[2] = 0xFF;
   buff[3] = 0xFF;
 
   // In this record, the logical object identifier is 6 bytes (48 bits).
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU64(readEndOfWrapPositionDataShortForm.logicalObjectIdentifier));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU64(readEndOfWrapPositionDataShortForm.logicalObjectIdentifier));
   buff[4] = 0xAB;
   buff[5] = 0xCD;
   buff[6] = 0xEF;
@@ -968,39 +968,38 @@ TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionDataShortForm_t) {
   buff[8] = 0x34;
   buff[9] = 0x56;
   ASSERT_EQ(0xABCDEF123456,
-            castor::tape::SCSI::Structures::toU64(readEndOfWrapPositionDataShortForm.logicalObjectIdentifier));
+            cta::tape::SCSI::Structures::toU64(readEndOfWrapPositionDataShortForm.logicalObjectIdentifier));
 }
 
-TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionDataLongForm_t) {
-  castor::tape::SCSI::Structures::readEndOfWrapPositionDataLongForm_t readEndOfWrapPositionDataLongForm;
+TEST(cta_tape_SCSI_Structures, readEndOfWrapPositionDataLongForm_t) {
+  cta::tape::SCSI::Structures::readEndOfWrapPositionDataLongForm_t readEndOfWrapPositionDataLongForm;
   unsigned char* buff = reinterpret_cast<unsigned char*>(&readEndOfWrapPositionDataLongForm);
 
   // Make sure this struct is a POD (plain old data without virtual table) and has the right size
-  ASSERT_EQ(4 + (12 * castor::tape::SCSI::maxLTOTapeWraps), sizeof(readEndOfWrapPositionDataLongForm));
+  ASSERT_EQ(4 + (12 * cta::tape::SCSI::maxLTOTapeWraps), sizeof(readEndOfWrapPositionDataLongForm));
 
   // Check proper initialization and location of struct members match the bit/byte locations defined in LTO-8 reference
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.responseDataLength));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.responseDataLength));
   //Assume we have maxLTOTapeWraps returned * 12 bytes = 3362 = 0x0D22
   buff[0] = 0x0D;
   buff[1] = 0x22;
-  ASSERT_EQ(0x0D22, castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.responseDataLength));
+  ASSERT_EQ(0x0D22, cta::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.responseDataLength));
 
-  for (unsigned int wrap = 0; wrap < castor::tape::SCSI::maxLTOTapeWraps; ++wrap) {
+  for (unsigned int wrap = 0; wrap < cta::tape::SCSI::maxLTOTapeWraps; ++wrap) {
     int offset = 4 + (wrap * 12);
 
     ASSERT_EQ(0U,
-              castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].wrapNumber));
+              cta::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].wrapNumber));
     buff[offset + 0] = 0xAB;
     buff[offset + 1] = 0xCD;
     ASSERT_EQ(0xABCD,
-              castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].wrapNumber));
+              cta::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].wrapNumber));
 
-    ASSERT_EQ(0U,
-              castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].partition));
+    ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].partition));
     buff[offset + 2] = 0xEF;
     buff[offset + 3] = 0x01;
     ASSERT_EQ(0xEF01,
-              castor::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].partition));
+              cta::tape::SCSI::Structures::toU16(readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].partition));
 
     // Reserved
     buff[offset + 4] = 0xFF;
@@ -1008,7 +1007,7 @@ TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionDataLongForm_t) {
 
     // In this record, the logical object identifier is 6 bytes (48 bits).
     ASSERT_EQ(0U,
-              castor::tape::SCSI::Structures::toU64(
+              cta::tape::SCSI::Structures::toU64(
                 readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].logicalObjectIdentifier));
     buff[offset + 6] = 0xAB;
     buff[offset + 7] = 0xCD;
@@ -1017,15 +1016,15 @@ TEST(castor_tape_SCSI_Structures, readEndOfWrapPositionDataLongForm_t) {
     buff[offset + 10] = 0x34;
     buff[offset + 11] = 0x56;
     ASSERT_EQ(0xABCDEF123456,
-              castor::tape::SCSI::Structures::toU64(
+              cta::tape::SCSI::Structures::toU64(
                 readEndOfWrapPositionDataLongForm.wrapDescriptor[wrap].logicalObjectIdentifier));
   }
 
-  ASSERT_EQ(castor::tape::SCSI::maxLTOTapeWraps, readEndOfWrapPositionDataLongForm.getNbWrapsReturned());
+  ASSERT_EQ(cta::tape::SCSI::maxLTOTapeWraps, readEndOfWrapPositionDataLongForm.getNbWrapsReturned());
 }
 
-TEST(castor_tape_SCSI_Structures, requestSenseCDB_t) {
-  castor::tape::SCSI::Structures::requestSenseCDB_t requestSenseCDB;
+TEST(cta_tape_SCSI_Structures, requestSenseCDB_t) {
+  cta::tape::SCSI::Structures::requestSenseCDB_t requestSenseCDB;
   unsigned char* buff = reinterpret_cast<unsigned char*>(&requestSenseCDB);
 
   // Make sure this struct is a POD (plain old data without virtual table) and has the right size
@@ -1036,7 +1035,7 @@ TEST(castor_tape_SCSI_Structures, requestSenseCDB_t) {
   buff[2] = 0xFF;
   buff[3] = 0xFF;
 
-  ASSERT_EQ(castor::tape::SCSI::Commands::REQUEST_SENSE, requestSenseCDB.opCode);
+  ASSERT_EQ(cta::tape::SCSI::Commands::REQUEST_SENSE, requestSenseCDB.opCode);
 
   buff[0] = 0xAB;
   ASSERT_EQ(0xAB, requestSenseCDB.opCode);
@@ -1050,8 +1049,8 @@ TEST(castor_tape_SCSI_Structures, requestSenseCDB_t) {
   ASSERT_EQ(0xBC, requestSenseCDB.control);
 }
 
-TEST(castor_tape_SCSI_Structures, requestSenseData_t) {
-  castor::tape::SCSI::Structures::requestSenseData_t requestSenseData;
+TEST(cta_tape_SCSI_Structures, requestSenseData_t) {
+  cta::tape::SCSI::Structures::requestSenseData_t requestSenseData;
   unsigned char* buff = reinterpret_cast<unsigned char*>(&requestSenseData);
 
   // Make sure this struct is a POD (plain old data without virtual table) and has the right size
@@ -1081,23 +1080,23 @@ TEST(castor_tape_SCSI_Structures, requestSenseData_t) {
   buff[2] |= 1 << 7;
   ASSERT_EQ(0x1, requestSenseData.FILEMARK);
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.information));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(requestSenseData.information));
   buff[3] = 0x0A;
   buff[4] = 0xBC;
   buff[5] = 0xDE;
   buff[6] = 0xF0;
-  ASSERT_EQ(0x0ABCDEF0U, castor::tape::SCSI::Structures::toU32(requestSenseData.information));
+  ASSERT_EQ(0x0ABCDEF0U, cta::tape::SCSI::Structures::toU32(requestSenseData.information));
 
   ASSERT_EQ(0, requestSenseData.additionalSenseLength);
   buff[7] = 0x58;
   ASSERT_EQ(0x58, requestSenseData.additionalSenseLength);
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.commandSpecificInformation));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(requestSenseData.commandSpecificInformation));
   buff[8] = 0x12;
   buff[9] = 0x34;
   buff[10] = 0x56;
   buff[11] = 0x78;
-  ASSERT_EQ(0x12345678, castor::tape::SCSI::Structures::toU32(requestSenseData.commandSpecificInformation));
+  ASSERT_EQ(0x12345678, cta::tape::SCSI::Structures::toU32(requestSenseData.commandSpecificInformation));
 
   ASSERT_EQ(0, requestSenseData.additionalSenseCode);
   buff[12] = 0x1A;
@@ -1124,15 +1123,15 @@ TEST(castor_tape_SCSI_Structures, requestSenseData_t) {
   buff[15] |= 1 << 7;
   ASSERT_EQ(0x1, requestSenseData.SKSV_BIT);
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.SKSV));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.SKSV));
   buff[16] = 0x45;
   buff[17] = 0x67;
-  ASSERT_EQ(0x4567, castor::tape::SCSI::Structures::toU16(requestSenseData.SKSV));
+  ASSERT_EQ(0x4567, cta::tape::SCSI::Structures::toU16(requestSenseData.SKSV));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.reportingErrorFlagData));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.reportingErrorFlagData));
   buff[18] = 0x89;
   buff[19] = 0x0A;
-  ASSERT_EQ(0x890A, castor::tape::SCSI::Structures::toU16(requestSenseData.reportingErrorFlagData));
+  ASSERT_EQ(0x890A, cta::tape::SCSI::Structures::toU16(requestSenseData.reportingErrorFlagData));
 
   ASSERT_EQ(0, requestSenseData.VOLVALID);
   buff[21] = 0x1;
@@ -1147,7 +1146,7 @@ TEST(castor_tape_SCSI_Structures, requestSenseData_t) {
   buff[21] |= 1 << 4;
   ASSERT_EQ(0x1, requestSenseData.DRVSRVC);
 
-  ASSERT_EQ("", castor::tape::SCSI::Structures::toString(requestSenseData.volumeLabel));
+  ASSERT_EQ("", cta::tape::SCSI::Structures::toString(requestSenseData.volumeLabel));
   buff[22] = 'V';
   buff[23] = 'O';
   buff[24] = 'L';
@@ -1155,18 +1154,18 @@ TEST(castor_tape_SCSI_Structures, requestSenseData_t) {
   buff[26] = 'M';
   buff[27] = 'E';
   buff[28] = '1';
-  ASSERT_EQ("VOLUME1", castor::tape::SCSI::Structures::toString(requestSenseData.volumeLabel));
+  ASSERT_EQ("VOLUME1", cta::tape::SCSI::Structures::toString(requestSenseData.volumeLabel));
 
   ASSERT_EQ(0, requestSenseData.physicalWrap);
   buff[29] = 0x4A;
   ASSERT_EQ(0x4A, requestSenseData.physicalWrap);
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.relativeLPOSValue));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(requestSenseData.relativeLPOSValue));
   buff[30] = 0x5A;
   buff[31] = 0x6B;
   buff[32] = 0x7C;
   buff[33] = 0x8D;
-  ASSERT_EQ(0x5A6B7C8D, castor::tape::SCSI::Structures::toU32(requestSenseData.relativeLPOSValue));
+  ASSERT_EQ(0x5A6B7C8D, cta::tape::SCSI::Structures::toU32(requestSenseData.relativeLPOSValue));
 
   ASSERT_EQ(0, requestSenseData.SCSIAddress);
   buff[34] = 0x6A;
@@ -1180,11 +1179,11 @@ TEST(castor_tape_SCSI_Structures, requestSenseData_t) {
   buff[36] = 0x7;
   ASSERT_EQ(0x7, requestSenseData.activePartition);
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.portIdentifier));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(requestSenseData.portIdentifier));
   buff[37] = 0xF3;
   buff[38] = 0x2A;
   buff[39] = 0x94;
-  ASSERT_EQ(0xF32A94, castor::tape::SCSI::Structures::toU32(requestSenseData.portIdentifier));
+  ASSERT_EQ(0xF32A94, cta::tape::SCSI::Structures::toU32(requestSenseData.portIdentifier));
 
   ASSERT_EQ(0, requestSenseData.relativeTgtPort);
   buff[40] = 0x7;
@@ -1207,70 +1206,70 @@ TEST(castor_tape_SCSI_Structures, requestSenseData_t) {
   buff[42] |= 0xC << 4;
   ASSERT_EQ(0xC, requestSenseData.cartridgeGenType);
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.volumeLabelCartridgeType));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.volumeLabelCartridgeType));
   buff[43] = 0x8A;
   buff[44] = 0x9B;
-  ASSERT_EQ(0x8A9B, castor::tape::SCSI::Structures::toU16(requestSenseData.volumeLabelCartridgeType));
+  ASSERT_EQ(0x8A9B, cta::tape::SCSI::Structures::toU16(requestSenseData.volumeLabelCartridgeType));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.logicalBlockNumber));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(requestSenseData.logicalBlockNumber));
   buff[45] = 0x1B;
   buff[46] = 0x2C;
   buff[47] = 0x3D;
   buff[48] = 0x4E;
-  ASSERT_EQ(0x1B2C3D4E, castor::tape::SCSI::Structures::toU32(requestSenseData.logicalBlockNumber));
+  ASSERT_EQ(0x1B2C3D4E, cta::tape::SCSI::Structures::toU32(requestSenseData.logicalBlockNumber));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU32(requestSenseData.datasetNumber));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU32(requestSenseData.datasetNumber));
   buff[49] = 0x5F;
   buff[50] = 0x6A;
   buff[51] = 0x7B;
   buff[52] = 0x8C;
-  ASSERT_EQ(0x5F6A7B8C, castor::tape::SCSI::Structures::toU32(requestSenseData.datasetNumber));
+  ASSERT_EQ(0x5F6A7B8C, cta::tape::SCSI::Structures::toU32(requestSenseData.datasetNumber));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFSC));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFSC));
   buff[53] = 0x9A;
   buff[54] = 0x9B;
-  ASSERT_EQ(0x9A9B, castor::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFSC));
+  ASSERT_EQ(0x9A9B, cta::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFSC));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFlagData));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFlagData));
   buff[55] = 0x9C;
   buff[56] = 0x9D;
-  ASSERT_EQ(0x9C9D, castor::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFlagData));
+  ASSERT_EQ(0x9C9D, cta::tape::SCSI::Structures::toU16(requestSenseData.firstErrorFlagData));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFSC));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFSC));
   buff[57] = 0x9E;
   buff[58] = 0x9F;
-  ASSERT_EQ(0x9E9F, castor::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFSC));
+  ASSERT_EQ(0x9E9F, cta::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFSC));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFlagData));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFlagData));
   buff[59] = 0x5A;
   buff[60] = 0x5B;
-  ASSERT_EQ(0x5A5B, castor::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFlagData));
+  ASSERT_EQ(0x5A5B, cta::tape::SCSI::Structures::toU16(requestSenseData.secondErrorFlagData));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFSC));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFSC));
   buff[61] = 0x5C;
   buff[62] = 0x5D;
-  ASSERT_EQ(0x5C5D, castor::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFSC));
+  ASSERT_EQ(0x5C5D, cta::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFSC));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFlagData));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFlagData));
   buff[63] = 0x5E;
   buff[64] = 0x5F;
-  ASSERT_EQ(0x5E5F, castor::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFlagData));
+  ASSERT_EQ(0x5E5F, cta::tape::SCSI::Structures::toU16(requestSenseData.nextToLastErrorFlagData));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFSC));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFSC));
   buff[65] = 0x6A;
   buff[66] = 0x6B;
-  ASSERT_EQ(0x6A6B, castor::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFSC));
+  ASSERT_EQ(0x6A6B, cta::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFSC));
 
-  ASSERT_EQ(0U, castor::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFlagData));
+  ASSERT_EQ(0U, cta::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFlagData));
   buff[67] = 0x6C;
   buff[68] = 0x6D;
-  ASSERT_EQ(0x6C6D, castor::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFlagData));
+  ASSERT_EQ(0x6C6D, cta::tape::SCSI::Structures::toU16(requestSenseData.lastErrorFlagData));
 
   ASSERT_EQ(0, requestSenseData.LPOSRegion);
   buff[69] = 0x6E;
   ASSERT_EQ(0x6E, requestSenseData.LPOSRegion);
 
-  ASSERT_EQ("", castor::tape::SCSI::Structures::toString(requestSenseData.ERPSummaryInformation));
+  ASSERT_EQ("", cta::tape::SCSI::Structures::toString(requestSenseData.ERPSummaryInformation));
   buff[70] = 'E';
   buff[71] = 'R';
   buff[72] = 'P';
@@ -1287,9 +1286,9 @@ TEST(castor_tape_SCSI_Structures, requestSenseData_t) {
   buff[83] = 'O';
   buff[84] = 'R';
   buff[85] = 'M';
-  ASSERT_EQ("ERPSUMMARYINFORM", castor::tape::SCSI::Structures::toString(requestSenseData.ERPSummaryInformation));
+  ASSERT_EQ("ERPSUMMARYINFORM", cta::tape::SCSI::Structures::toString(requestSenseData.ERPSummaryInformation));
 
-  ASSERT_EQ("", castor::tape::SCSI::Structures::toString(requestSenseData.cartridgeSerialNumber));
+  ASSERT_EQ("", cta::tape::SCSI::Structures::toString(requestSenseData.cartridgeSerialNumber));
   buff[86] = 'C';
   buff[87] = 'A';
   buff[88] = 'R';
@@ -1300,6 +1299,6 @@ TEST(castor_tape_SCSI_Structures, requestSenseData_t) {
   buff[93] = 'G';
   buff[94] = 'E';
   buff[95] = '1';
-  ASSERT_EQ("CARTRIDGE1", castor::tape::SCSI::Structures::toString(requestSenseData.cartridgeSerialNumber));
+  ASSERT_EQ("CARTRIDGE1", cta::tape::SCSI::Structures::toString(requestSenseData.cartridgeSerialNumber));
 }
 }  // namespace unitTests

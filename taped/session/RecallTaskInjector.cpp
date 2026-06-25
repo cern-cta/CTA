@@ -20,7 +20,7 @@
 using cta::log::LogContext;
 using cta::log::Param;
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 //finish
@@ -56,16 +56,15 @@ void RecallTaskInjector::startThreads() {
 //------------------------------------------------------------------------------
 //setDriveInterface
 //------------------------------------------------------------------------------
-void RecallTaskInjector::setDriveInterface(castor::tape::tapeserver::drive::DriveInterface* di) {
+void RecallTaskInjector::setDriveInterface(cta::tape::drive::DriveInterface* di) {
   m_drive = di;
 }
 
 //------------------------------------------------------------------------------
 //initRAO
 //------------------------------------------------------------------------------
-void RecallTaskInjector::initRAO(const castor::tape::tapeserver::rao::RAOParams& dataConfig,
-                                 cta::catalogue::Catalogue* catalogue) {
-  m_raoManager = castor::tape::tapeserver::rao::RAOManager(dataConfig, m_drive, catalogue);
+void RecallTaskInjector::initRAO(const cta::tape::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue) {
+  m_raoManager = cta::tape::rao::RAOManager(dataConfig, m_drive, catalogue);
   m_raoFuture = m_raoPromise.get_future();
 }
 
@@ -408,12 +407,12 @@ void RecallTaskInjector::WorkerThread::run() {
       LogContext::ScopedParam sp(m_parent.m_lc,
                                  Param("maxSupportedUDS", m_parent.m_raoManager.getMaxFilesSupported().value()));
       m_parent.m_lc.log(cta::log::INFO, "Query getLimitUDS for RAO Enterprise completed");
-    } catch (castor::tape::SCSI::Exception& e) {
+    } catch (cta::tape::SCSI::Exception& e) {
       cta::log::ScopedParamContainer spc(m_parent.m_lc);
       spc.add(cta::semconv::log::exceptionMessage, e.getMessageValue());
       m_parent.m_lc.log(cta::log::INFO,
                         "Error while fetching the limitUDS for RAO enterprise drive. Will run a CTA RAO.");
-    } catch (const castor::tape::tapeserver::drive::DriveDoesNotSupportRAOException&) {
+    } catch (const cta::tape::drive::DriveDoesNotSupportRAOException&) {
       m_parent.m_lc.log(cta::log::INFO, "The drive does not support RAO Enterprise, will run a CTA RAO.");
     }
     std::optional<uint64_t> maxFilesSupportedByRAO = m_parent.m_raoManager.getMaxFilesSupported();
@@ -464,4 +463,4 @@ void RecallTaskInjector::WorkerThread::run() {
   }
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

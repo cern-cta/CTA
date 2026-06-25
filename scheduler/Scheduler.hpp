@@ -337,8 +337,7 @@ private:
   void deleteRepackBuffer(std::unique_ptr<cta::disk::Directory> repackBuffer, cta::log::LogContext& lc) const;
 
   /**
-   * Checks that the environment variables needed by the tapeserver to work
-   * are set correctly.
+   * Checks that the environment variables needed for taped to work are set correctly.
    */
   void checkNeededEnvironmentVariables() const;
 

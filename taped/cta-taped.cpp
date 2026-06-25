@@ -79,10 +79,10 @@ static int exceptionThrowingMain(const cta::common::CmdLineParams& commandLine, 
     log(log::INFO, "Set log mask", params);
   }
 
-  // Create the main tapeserverd object
+  // Create the main taped object
   cta::tape::daemon::TapeDaemon daemon(commandLine, log, globalConfig);
 
-  // Run the tapeserverd daemon
+  // Run the tape daemon
   return daemon.mainImpl();
 }
 

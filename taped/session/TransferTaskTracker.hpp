@@ -10,7 +10,7 @@
 #include <optional>
 #include <string>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 // Used to track the number of active transfer tasks (e.g. DiskReadTask, TapeReadTask, etc..)
 class TransferTaskTracker {
@@ -25,4 +25,4 @@ private:
   std::string m_ioMedium;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

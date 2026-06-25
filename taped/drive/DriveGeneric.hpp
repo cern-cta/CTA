@@ -7,7 +7,7 @@
 #include "DriveInterface.hpp"
 #include "common/exception/NotImplementedException.hpp"
 
-namespace castor::tape::tapeserver::drive {
+namespace cta::tape::drive {
 
 CTA_GENERATE_EXCEPTION_CLASS(DriveDoesNotSupportRAOException);
 
@@ -462,7 +462,7 @@ public:
 protected:
   SCSI::DeviceInfo m_SCSIInfo;
   int m_tapeFD = -1;
-  castor::tape::System::virtualWrapper& m_sysWrapper;
+  cta::tape::System::virtualWrapper& m_sysWrapper;
   lbpToUse m_lbpToUse = lbpToUse::disabled;
 
   /**
@@ -518,7 +518,7 @@ protected:
 
 public:
   DriveT10000(const SCSI::DeviceInfo& di, System::virtualWrapper& sw) : DriveGeneric(di, sw) {
-    castor::tape::SCSI::Structures::zeroStruct(&m_compressionStatsBase);
+    cta::tape::SCSI::Structures::zeroStruct(&m_compressionStatsBase);
   }
 
   compressionStats getCompression() override;
@@ -570,7 +570,7 @@ public:
 
   compressionStats getCompression() override;
   void clearCompressionStats() override;
-  std::vector<castor::tape::tapeserver::drive::endOfWrapPosition> getEndOfWrapPositions() override;
+  std::vector<cta::tape::drive::endOfWrapPosition> getEndOfWrapPositions() override;
   bool isEncryptionCapEnabled() override;
   std::map<std::string, uint32_t> getVolumeStats() override;
   std::map<std::string, float> getQualityStats() override;
@@ -591,4 +591,4 @@ public:
   bool isEncryptionCapEnabled() override;
 };
 
-}  // namespace castor::tape::tapeserver::drive
+}  // namespace cta::tape::drive

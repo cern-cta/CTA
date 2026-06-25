@@ -11,7 +11,7 @@
 #include <fstream>
 #include <memory>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
 class EnstoreFileReader : public FileReader {
 public:
@@ -45,4 +45,4 @@ private:
   void setBlockSize(const size_t uiBlockSize);
 };
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

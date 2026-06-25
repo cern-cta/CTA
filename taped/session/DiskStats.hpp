@@ -8,7 +8,7 @@
 #include <cstdint>
 #include <string>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
    * Structure holding the timers and stats for the tape session. We use doubles,
@@ -81,4 +81,4 @@ struct DiskStats {
   }
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

@@ -12,10 +12,10 @@
 #include <algorithm>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
-WriteSession::WriteSession(tapeserver::drive::DriveInterface& drive,
-                           const tapeserver::daemon::VolumeInfo& volInfo,
+WriteSession::WriteSession(drive::DriveInterface& drive,
+                           const daemon::VolumeInfo& volInfo,
                            const uint32_t last_fSeq,
                            const bool compression,
                            const bool useLbp)
@@ -164,4 +164,4 @@ void WriteSession::setSiteName() {
   }
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

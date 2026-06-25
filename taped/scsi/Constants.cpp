@@ -7,7 +7,7 @@
 
 #include <sstream>
 
-std::string castor::tape::SCSI::tapeAlertToString(uint16_t parameterCode) {
+std::string cta::tape::SCSI::tapeAlertToString(uint16_t parameterCode) {
   std::stringstream ret;
   ret << std::hex << std::nouppercase << std::showbase;
   if (parameterCode < 1 || parameterCode > 64) {
@@ -145,7 +145,7 @@ std::string castor::tape::SCSI::tapeAlertToString(uint16_t parameterCode) {
   }
 }
 
-std::string castor::tape::SCSI::tapeAlertToCompactString(uint16_t parameterCode) {
+std::string cta::tape::SCSI::tapeAlertToCompactString(uint16_t parameterCode) {
   std::stringstream ret;
   ret << std::hex << std::nouppercase << std::showbase;
   ret << "tapeAlert";
@@ -157,7 +157,7 @@ std::string castor::tape::SCSI::tapeAlertToCompactString(uint16_t parameterCode)
     return ret.str();
   }
   switch (parameterCode) {
-    /* This list is hand compacted from the one in castor::tape::SCSI::tapeAlertToString
+    /* This list is hand compacted from the one in cta::tape::SCSI::tapeAlertToString
        */
     case 0x01:
       return "tapeAlertReadWarning";
@@ -274,7 +274,7 @@ std::string castor::tape::SCSI::tapeAlertToCompactString(uint16_t parameterCode)
 //------------------------------------------------------------------------------
 // isTapeAlertCriticalForWrite
 //------------------------------------------------------------------------------
-bool castor::tape::SCSI::isTapeAlertCriticalForWrite(const uint16_t code) {
+bool cta::tape::SCSI::isTapeAlertCriticalForWrite(const uint16_t code) {
   switch (code) {
     case 0x32:  // tapeAlertLostStatistics
       return false;
@@ -288,7 +288,7 @@ bool castor::tape::SCSI::isTapeAlertCriticalForWrite(const uint16_t code) {
  * @param status
  * @return
  */
-std::string castor::tape::SCSI::statusToString(unsigned char status) {
+std::string cta::tape::SCSI::statusToString(unsigned char status) {
   switch (status) {
     case 0x00:
       return "GOOD";
@@ -316,31 +316,31 @@ std::string castor::tape::SCSI::statusToString(unsigned char status) {
 //------------------------------------------------------------------------------
 // hostStatusToString
 //------------------------------------------------------------------------------
-std::string castor::tape::SCSI::hostStatusToString(const unsigned short int hostStatus) {
+std::string cta::tape::SCSI::hostStatusToString(const unsigned short int hostStatus) {
   switch (hostStatus) {
-    case castor::tape::SCSI::HostStatus::OK:
+    case cta::tape::SCSI::HostStatus::OK:
       return "OK";
-    case castor::tape::SCSI::HostStatus::NO_CONNECT:
+    case cta::tape::SCSI::HostStatus::NO_CONNECT:
       return "NO CONNECT";
-    case castor::tape::SCSI::HostStatus::BUS_BUSY:
+    case cta::tape::SCSI::HostStatus::BUS_BUSY:
       return "BUS BUSY";
-    case castor::tape::SCSI::HostStatus::TIME_OUT:
+    case cta::tape::SCSI::HostStatus::TIME_OUT:
       return "TIME OUT";
-    case castor::tape::SCSI::HostStatus::BAD_TARGET:
+    case cta::tape::SCSI::HostStatus::BAD_TARGET:
       return "BAD TARGET";
-    case castor::tape::SCSI::HostStatus::ABORT:
+    case cta::tape::SCSI::HostStatus::ABORT:
       return "ABORT";
-    case castor::tape::SCSI::HostStatus::PARITY:
+    case cta::tape::SCSI::HostStatus::PARITY:
       return "PARITY";
-    case castor::tape::SCSI::HostStatus::ERROR:
+    case cta::tape::SCSI::HostStatus::ERROR:
       return "ERROR";
-    case castor::tape::SCSI::HostStatus::RESET:
+    case cta::tape::SCSI::HostStatus::RESET:
       return "RESET";
-    case castor::tape::SCSI::HostStatus::BAD_INTR:
+    case cta::tape::SCSI::HostStatus::BAD_INTR:
       return "BAD INTR";
-    case castor::tape::SCSI::HostStatus::PASSTHROUGH:
+    case cta::tape::SCSI::HostStatus::PASSTHROUGH:
       return "PASSTHROUGH";
-    case castor::tape::SCSI::HostStatus::SOFT_ERROR:
+    case cta::tape::SCSI::HostStatus::SOFT_ERROR:
       return "SOFT ERROR";
     default:
       std::stringstream ret;
@@ -352,25 +352,25 @@ std::string castor::tape::SCSI::hostStatusToString(const unsigned short int host
 //------------------------------------------------------------------------------
 // driverStatusToString
 //------------------------------------------------------------------------------
-std::string castor::tape::SCSI::driverStatusToString(const unsigned short int driverStatus) {
-  switch (driverStatus & castor::tape::SCSI::DriverStatus::MASK) {
-    case castor::tape::SCSI::DriverStatus::OK:
+std::string cta::tape::SCSI::driverStatusToString(const unsigned short int driverStatus) {
+  switch (driverStatus & cta::tape::SCSI::DriverStatus::MASK) {
+    case cta::tape::SCSI::DriverStatus::OK:
       return "OK";
-    case castor::tape::SCSI::DriverStatus::BUSY:
+    case cta::tape::SCSI::DriverStatus::BUSY:
       return "BUSY";
-    case castor::tape::SCSI::DriverStatus::SOFT:
+    case cta::tape::SCSI::DriverStatus::SOFT:
       return "SOFT";
-    case castor::tape::SCSI::DriverStatus::MEDIA:
+    case cta::tape::SCSI::DriverStatus::MEDIA:
       return "MEDIA";
-    case castor::tape::SCSI::DriverStatus::ERROR:
+    case cta::tape::SCSI::DriverStatus::ERROR:
       return "ERROR";
-    case castor::tape::SCSI::DriverStatus::INVALID:
+    case cta::tape::SCSI::DriverStatus::INVALID:
       return "INVALID";
-    case castor::tape::SCSI::DriverStatus::TIMEOUT:
+    case cta::tape::SCSI::DriverStatus::TIMEOUT:
       return "TIMEOUT";
-    case castor::tape::SCSI::DriverStatus::HARD:
+    case cta::tape::SCSI::DriverStatus::HARD:
       return "HARD";
-    case castor::tape::SCSI::DriverStatus::SENSE:
+    case cta::tape::SCSI::DriverStatus::SENSE:
       return "SENSE";
     default:
       std::stringstream ret;
@@ -382,21 +382,21 @@ std::string castor::tape::SCSI::driverStatusToString(const unsigned short int dr
 //------------------------------------------------------------------------------
 // driverStatusSuggestionsToString
 //------------------------------------------------------------------------------
-std::string castor::tape::SCSI::driverStatusSuggestionsToString(const unsigned short int driverStatus) {
+std::string cta::tape::SCSI::driverStatusSuggestionsToString(const unsigned short int driverStatus) {
   std::stringstream ret;
-  if (driverStatus & castor::tape::SCSI::DriverStatusSuggest::RETRY) {
+  if (driverStatus & cta::tape::SCSI::DriverStatusSuggest::RETRY) {
     ret << " RETRY";
   }
-  if (driverStatus & castor::tape::SCSI::DriverStatusSuggest::ABORT) {
+  if (driverStatus & cta::tape::SCSI::DriverStatusSuggest::ABORT) {
     ret << " ABORT";
   }
-  if (driverStatus & castor::tape::SCSI::DriverStatusSuggest::REMAP) {
+  if (driverStatus & cta::tape::SCSI::DriverStatusSuggest::REMAP) {
     ret << " REMAP";
   }
-  if (driverStatus & castor::tape::SCSI::DriverStatusSuggest::DIE) {
+  if (driverStatus & cta::tape::SCSI::DriverStatusSuggest::DIE) {
     ret << " DIE";
   }
-  if (driverStatus & castor::tape::SCSI::DriverStatusSuggest::SENSE) {
+  if (driverStatus & cta::tape::SCSI::DriverStatusSuggest::SENSE) {
     ret << " SENSE";
   }
   return ret.str();
@@ -405,7 +405,7 @@ std::string castor::tape::SCSI::driverStatusSuggestionsToString(const unsigned s
 //------------------------------------------------------------------------------
 // SCSI::senseConstants
 //------------------------------------------------------------------------------
-std::string castor::tape::SCSI::senseConstants::getASCString(uint8_t asc, uint8_t ascq) {
+std::string cta::tape::SCSI::senseConstants::getASCString(uint8_t asc, uint8_t ascq) {
   uint16_t code = (asc << 8) | ascq;
   for (int i = 0; ascStrings[i].text; i++) {
     if (ascStrings[i].code12 == code) {
@@ -425,7 +425,7 @@ std::string castor::tape::SCSI::senseConstants::getASCString(uint8_t asc, uint8_
   return std::string(buff);
 }
 
-const castor::tape::SCSI::senseConstants::error_info castor::tape::SCSI::senseConstants::ascStrings[] = {
+const cta::tape::SCSI::senseConstants::error_info cta::tape::SCSI::senseConstants::ascStrings[] = {
   {0x0000, "No additional sense information"                           },
   {0x0001, "Filemark detected"                                         },
   {0x0002, "End-of-partition/medium detected"                          },
@@ -1175,7 +1175,7 @@ const castor::tape::SCSI::senseConstants::error_info castor::tape::SCSI::senseCo
   {0,      nullptr                                                     }
 };
 
-const castor::tape::SCSI::senseConstants::error_range_info castor::tape::SCSI::senseConstants::ascRangesStrings[] = {
+const cta::tape::SCSI::senseConstants::error_range_info cta::tape::SCSI::senseConstants::ascRangesStrings[] = {
   {0x40, 0x00, 0x7f, "Ram failure (%02x)"                                },
   {0x40, 0x80, 0xff, "Diagnostic failure on component (%02x)"            },
   {0x41, 0x00, 0xff, "Data path failure (%02x)"                          },
@@ -1186,7 +1186,7 @@ const castor::tape::SCSI::senseConstants::error_range_info castor::tape::SCSI::s
 };
 
 /* description of the sense key values */
-const char* const castor::tape::SCSI::senseKeys::senseKeysText[] = {
+const char* const cta::tape::SCSI::senseKeys::senseKeysText[] = {
   "No Sense",        /* 0: There is no sense information */
   "Recovered Error", /* 1: The last command completed successfully
                             but used error correction */
@@ -1211,7 +1211,7 @@ const char* const castor::tape::SCSI::senseKeys::senseKeysText[] = {
 //------------------------------------------------------------------------------
 // LBPMethodToString
 //------------------------------------------------------------------------------
-std::string castor::tape::SCSI::LBPMethodToString(const unsigned char LBPMethod) {
+std::string cta::tape::SCSI::LBPMethodToString(const unsigned char LBPMethod) {
   switch (LBPMethod) {
     case logicBlockProtectionMethod::DoNotUse:
       return "DoNotUse";

@@ -353,7 +353,7 @@ void cta::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveStatus 
 //------------------------------------------------------------------------------
 // setTapeSessionStats()
 //------------------------------------------------------------------------------
-void cta::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {
+void cta::ArchiveMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
   m_dbMount->setTapeSessionStats(stats);
 }
 

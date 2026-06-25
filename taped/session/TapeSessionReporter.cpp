@@ -11,7 +11,7 @@
 
 #include <unistd.h>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //-----------------------------------------------------------------------------
 //constructor
@@ -111,4 +111,4 @@ void TapeSessionReporter::ReportStateChange::execute(TapeSessionReporter& parent
   parent.m_tapeserverProxy.reportState(m_state, m_type, parent.m_volume.vid);
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

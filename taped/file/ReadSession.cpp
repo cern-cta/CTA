@@ -11,11 +11,9 @@
 
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
-ReadSession::ReadSession(tapeserver::drive::DriveInterface& drive,
-                         const tapeserver::daemon::VolumeInfo& volInfo,
-                         const bool useLbp)
+ReadSession::ReadSession(drive::DriveInterface& drive, const daemon::VolumeInfo& volInfo, const bool useLbp)
     : m_drive(drive),
       m_vid(volInfo.vid),
       m_useLbp(useLbp),
@@ -31,4 +29,4 @@ ReadSession::ReadSession(tapeserver::drive::DriveInterface& drive,
   }
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

@@ -14,11 +14,9 @@
 #include <memory>
 #include <string>
 
-namespace castor::tape::tapeFile {
+namespace cta::tape::tapeFile {
 
-OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
-                               const tapeserver::daemon::VolumeInfo& volInfo,
-                               const bool useLbp)
+OsmReadSession::OsmReadSession(drive::DriveInterface& drive, const daemon::VolumeInfo& volInfo, const bool useLbp)
     : ReadSession(drive, volInfo, useLbp) {
   m_drive.rewind();
   m_drive.disableLogicalBlockProtection();
@@ -91,4 +89,4 @@ OsmReadSession::OsmReadSession(tapeserver::drive::DriveInterface& drive,
   }
 }
 
-}  // namespace castor::tape::tapeFile
+}  // namespace cta::tape::tapeFile

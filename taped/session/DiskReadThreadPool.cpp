@@ -11,7 +11,7 @@
 #include <memory>
 #include <sstream>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // DiskReadThreadPool constructor
@@ -19,7 +19,7 @@ namespace castor::tape::tapeserver::daemon {
 DiskReadThreadPool::DiskReadThreadPool(int nbThread,
                                        uint64_t maxFilesReq,
                                        uint64_t maxBytesReq,
-                                       castor::tape::tapeserver::daemon::MigrationWatchDog& migrationWatchDog,
+                                       cta::tape::daemon::MigrationWatchDog& migrationWatchDog,
                                        const cta::log::LogContext& lc,
                                        uint16_t xrootTimeout)
     : m_xrootTimeout(xrootTimeout),
@@ -196,4 +196,4 @@ void DiskReadThreadPool::DiskReadWorkerThread::logWithStat(int level, const std:
                                      0.0);
   m_lc.log(level, message);
 }
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

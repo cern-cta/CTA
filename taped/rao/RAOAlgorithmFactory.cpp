@@ -7,7 +7,7 @@
 
 #include "LinearRAOAlgorithm.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 std::unique_ptr<RAOAlgorithm> RAOAlgorithmFactory::createDefaultLinearAlgorithm() {
   std::unique_ptr<RAOAlgorithm> ret;
@@ -15,4 +15,4 @@ std::unique_ptr<RAOAlgorithm> RAOAlgorithmFactory::createDefaultLinearAlgorithm(
   return ret;
 }
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

@@ -10,7 +10,7 @@
 #include <sstream>
 #include <string>
 
-namespace castor::tape::SCSI {
+namespace cta::tape::SCSI {
 
 /**
  * An exception class turning SCSI sense data into a loggable string
@@ -24,13 +24,13 @@ public:
 /**
  * Failed with NotReady error.
  */
-class NotReadyException : public castor::tape::SCSI::Exception {
+class NotReadyException : public cta::tape::SCSI::Exception {
 public:
   /**
    * Constructor
    */
   NotReadyException(unsigned char status,
-                    castor::tape::SCSI::Structures::senseData_t<255>* sense,
+                    cta::tape::SCSI::Structures::senseData_t<255>* sense,
                     const std::string& context = "")
       : Exception(status, sense, context) {}
 };  // class NotReadyException
@@ -38,13 +38,13 @@ public:
 /**
  * Failed with UnitAttention error.
  */
-class UnitAttentionException : public castor::tape::SCSI::Exception {
+class UnitAttentionException : public cta::tape::SCSI::Exception {
 public:
   /**
    * Constructor
    */
   UnitAttentionException(unsigned char status,
-                         castor::tape::SCSI::Structures::senseData_t<255>* sense,
+                         cta::tape::SCSI::Structures::senseData_t<255>* sense,
                          const std::string& context = "")
       : Exception(status, sense, context) {}
 };  // class UnitAttentionException
@@ -102,4 +102,4 @@ void checkAndThrowSgHostStatus(const SCSI::Structures::LinuxSGIO_t& sgio, const 
  *                message.
  */
 void checkAndThrowSgDriverStatus(const SCSI::Structures::LinuxSGIO_t& sgio, const std::string& context);
-}  // namespace castor::tape::SCSI
+}  // namespace cta::tape::SCSI

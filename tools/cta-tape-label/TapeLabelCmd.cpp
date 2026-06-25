@@ -18,7 +18,7 @@
 #include "taped/file/LabelSession.hpp"
 #include "taped/file/Structures.hpp"
 
-namespace cta::tapeserver::tapelabel {
+namespace cta::tape::tapelabel {
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
@@ -54,8 +54,8 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char* const* const argv)
 
   m_catalogue->Tape()->checkTapeForLabel(m_vid);
 
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drivePtr = createDrive();
-  castor::tape::tapeserver::drive::DriveInterface& drive = *drivePtr.get();
+  std::unique_ptr<cta::tape::drive::DriveInterface> drivePtr = createDrive();
+  cta::tape::drive::DriveInterface& drive = *drivePtr.get();
 
   // The label to be written without encryption
   m_encryptionControl.disable(drive);
@@ -118,8 +118,8 @@ int TapeLabelCmd::exceptionThrowingMain(const int argc, char* const* const argv)
 //------------------------------------------------------------------------------
 // isDriveSupportLbp
 //------------------------------------------------------------------------------
-bool TapeLabelCmd::isDriveSupportLbp(castor::tape::tapeserver::drive::DriveInterface& drive) const {
-  castor::tape::tapeserver::drive::deviceInfo devInfo = drive.getDeviceInfo();
+bool TapeLabelCmd::isDriveSupportLbp(cta::tape::drive::DriveInterface& drive) const {
+  cta::tape::drive::deviceInfo devInfo = drive.getDeviceInfo();
   if (devInfo.isPIsupported) {  //drive supports LBP
     return true;
   } else {
@@ -130,9 +130,7 @@ bool TapeLabelCmd::isDriveSupportLbp(castor::tape::tapeserver::drive::DriveInter
 //------------------------------------------------------------------------------
 // setLbpMode
 //------------------------------------------------------------------------------
-void TapeLabelCmd::setLbpMode(castor::tape::tapeserver::drive::DriveInterface& drive,
-                              const bool useLbp,
-                              const bool driveSupportLbp) {
+void TapeLabelCmd::setLbpMode(cta::tape::drive::DriveInterface& drive, const bool useLbp, const bool driveSupportLbp) {
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
@@ -161,7 +159,7 @@ void TapeLabelCmd::setLbpMode(castor::tape::tapeserver::drive::DriveInterface& d
 //------------------------------------------------------------------------------
 // writeTapeLabel
 //------------------------------------------------------------------------------
-void TapeLabelCmd::writeTapeLabel(castor::tape::tapeserver::drive::DriveInterface& drive,
+void TapeLabelCmd::writeTapeLabel(cta::tape::drive::DriveInterface& drive,
                                   const bool useLbp,
                                   const bool driveSupportLbp) {
   if (useLbp && driveSupportLbp) {
@@ -174,8 +172,7 @@ void TapeLabelCmd::writeTapeLabel(castor::tape::tapeserver::drive::DriveInterfac
 //------------------------------------------------------------------------------
 // checkTapeLabel
 //------------------------------------------------------------------------------
-void TapeLabelCmd::checkTapeLabel(castor::tape::tapeserver::drive::DriveInterface& drive,
-                                  const std::string& labelToCheck) {
+void TapeLabelCmd::checkTapeLabel(cta::tape::drive::DriveInterface& drive, const std::string& labelToCheck) {
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
@@ -196,10 +193,10 @@ void TapeLabelCmd::checkTapeLabel(castor::tape::tapeserver::drive::DriveInterfac
 
   drive.disableLogicalBlockProtection();
   {
-    castor::tape::tapeFile::VOL1 vol1;
+    cta::tape::tapeFile::VOL1 vol1;
     drive.readExactBlock((void*) &vol1, sizeof(vol1), "[TapeLabelCmd::checkTapeLabel] - Reading VOL1");
     switch (vol1.getLBPMethod()) {
-      case castor::tape::SCSI::logicBlockProtectionMethod::CRC32C:
+      case cta::tape::SCSI::logicBlockProtectionMethod::CRC32C:
         if (m_useLbp) {
           setLbpMode(drive, m_useLbp, m_driveSupportLbp);
         } else {
@@ -210,10 +207,10 @@ void TapeLabelCmd::checkTapeLabel(castor::tape::tapeserver::drive::DriveInterfac
           throw ex;
         }
         break;
-      case castor::tape::SCSI::logicBlockProtectionMethod::ReedSolomon:
+      case cta::tape::SCSI::logicBlockProtectionMethod::ReedSolomon:
         throw cta::exception::Exception("In TapeLabelCmd::checkTapeLabel(): "
                                         "ReedSolomon LBP method not supported");
-      case castor::tape::SCSI::logicBlockProtectionMethod::DoNotUse:
+      case cta::tape::SCSI::logicBlockProtectionMethod::DoNotUse:
         drive.disableLogicalBlockProtection();
         break;
       default:
@@ -223,14 +220,14 @@ void TapeLabelCmd::checkTapeLabel(castor::tape::tapeserver::drive::DriveInterfac
   // from this point the right LBP mode should be set or not set
   drive.rewind();
   {
-    castor::tape::tapeFile::VOL1 vol1;
+    cta::tape::tapeFile::VOL1 vol1;
     drive.readExactBlock((void*) &vol1, sizeof(vol1), "[TapeLabelCmd::checkTapeLabel()] - Reading VOL1");
     try {
       vol1.verify();
     } catch (std::exception& e) {
-      throw castor::tape::tapeFile::TapeFormatError(e.what());
+      throw cta::tape::tapeFile::TapeFormatError(e.what());
     }
-    castor::tape::tapeFile::HeaderChecker::checkVOL1(
+    cta::tape::tapeFile::HeaderChecker::checkVOL1(
       vol1,
       labelToCheck);  // now we know that we are going to check the correct tape
   }
@@ -272,7 +269,7 @@ void TapeLabelCmd::dismountTape(const std::string& vid) {
 //------------------------------------------------------------------------------
 // writeLabelWithLbpToTape
 //------------------------------------------------------------------------------
-void TapeLabelCmd::writeLabelWithLbpToTape(castor::tape::tapeserver::drive::DriveInterface& drive) {
+void TapeLabelCmd::writeLabelWithLbpToTape(cta::tape::drive::DriveInterface& drive) {
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
@@ -287,14 +284,14 @@ void TapeLabelCmd::writeLabelWithLbpToTape(castor::tape::tapeserver::drive::Driv
     m_log(cta::log::WARNING, "LBP mode mismatch. Force labeling with LBP.", params);
   }
   m_log(cta::log::INFO, "Label session is writing label with LBP to tape", params);
-  castor::tape::tapeFile::LabelSession::label(&drive, m_vid, true);
+  cta::tape::tapeFile::LabelSession::label(&drive, m_vid, true);
   m_log(cta::log::INFO, "Label session has written label with LBP to tape", params);
 }
 
 //------------------------------------------------------------------------------
 // writeLabelToTape
 //------------------------------------------------------------------------------
-void TapeLabelCmd::writeLabelToTape(castor::tape::tapeserver::drive::DriveInterface& drive) {
+void TapeLabelCmd::writeLabelToTape(cta::tape::drive::DriveInterface& drive) {
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
@@ -309,15 +306,14 @@ void TapeLabelCmd::writeLabelToTape(castor::tape::tapeserver::drive::DriveInterf
     m_log(cta::log::WARNING, "LBP mode mismatch. Force labeling without LBP.", params);
   }
   m_log(cta::log::INFO, "Label session is writing label to tape", params);
-  castor::tape::tapeFile::LabelSession::label(&drive, m_vid, false);
+  cta::tape::tapeFile::LabelSession::label(&drive, m_vid, false);
   m_log(cta::log::INFO, "Label session has written label to tape", params);
 }
 
 //------------------------------------------------------------------------------
 // unloadTape
 //------------------------------------------------------------------------------
-void TapeLabelCmd::unloadTape([[maybe_unused]] const std::string& vid,
-                              castor::tape::tapeserver::drive::DriveInterface& drive) {
+void TapeLabelCmd::unloadTape([[maybe_unused]] const std::string& vid, cta::tape::drive::DriveInterface& drive) {
   std::unique_ptr<cta::mediachanger::LibrarySlot> librarySlotPtr;
   librarySlotPtr.reset(cta::mediachanger::LibrarySlotParser::parse(m_rawLibrarySlot));
   const cta::mediachanger::LibrarySlot& librarySlot = *librarySlotPtr;
@@ -347,7 +343,7 @@ void TapeLabelCmd::unloadTape([[maybe_unused]] const std::string& vid,
 //------------------------------------------------------------------------------
 // rewindDrive
 //------------------------------------------------------------------------------
-void TapeLabelCmd::rewindDrive(castor::tape::tapeserver::drive::DriveInterface& drive) {
+void TapeLabelCmd::rewindDrive(cta::tape::drive::DriveInterface& drive) {
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
@@ -446,13 +442,12 @@ void TapeLabelCmd::mountTape(const std::string& vid) {
 //------------------------------------------------------------------------------
 // createDrive
 //------------------------------------------------------------------------------
-std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> TapeLabelCmd::createDrive() {
-  castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
-  castor::tape::SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_devFilename);
+std::unique_ptr<cta::tape::drive::DriveInterface> TapeLabelCmd::createDrive() {
+  cta::tape::SCSI::DeviceVector dv(m_sysWrapper);
+  cta::tape::SCSI::DeviceInfo driveInfo = dv.findBySymlink(m_devFilename);
 
   // Instantiate the drive object
-  std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> drive(
-    castor::tape::tapeserver::drive::createDrive(driveInfo, m_sysWrapper));
+  std::unique_ptr<cta::tape::drive::DriveInterface> drive(cta::tape::drive::createDrive(driveInfo, m_sysWrapper));
 
   if (nullptr == drive.get()) {
     cta::exception::Exception ex;
@@ -466,8 +461,7 @@ std::unique_ptr<castor::tape::tapeserver::drive::DriveInterface> TapeLabelCmd::c
 //------------------------------------------------------------------------------
 // waitUntilTapeLoaded
 //------------------------------------------------------------------------------
-void TapeLabelCmd::waitUntilTapeLoaded(castor::tape::tapeserver::drive::DriveInterface& drive,
-                                       const int timeoutSecond) {
+void TapeLabelCmd::waitUntilTapeLoaded(cta::tape::drive::DriveInterface& drive, const int timeoutSecond) {
   std::vector<cta::log::Param> params;
   params.emplace_back("userName", m_userName);
   params.emplace_back("tapeVid", m_vid);
@@ -503,4 +497,4 @@ void TapeLabelCmd::printUsage(std::ostream& os) {
   TapeLabelCmdLineArgs::printUsage(os);
 }
 
-}  // namespace cta::tapeserver::tapelabel
+}  // namespace cta::tape::tapelabel

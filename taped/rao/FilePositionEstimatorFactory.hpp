@@ -17,7 +17,7 @@ namespace cta::catalogue {
 class Catalogue;
 }
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * This class gathen static factory method to instanciate FilePositionEstimator
@@ -34,4 +34,4 @@ public:
                                            cta::catalogue::MediaType& mediaType);
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

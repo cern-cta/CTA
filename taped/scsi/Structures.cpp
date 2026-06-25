@@ -8,7 +8,7 @@
 #include <cstdio>
 #include <sstream>
 
-std::string castor::tape::SCSI::Structures::toString(const inquiryData_t& inq) {
+std::string cta::tape::SCSI::Structures::toString(const inquiryData_t& inq) {
   std::stringstream inqDump;
   inqDump << std::hex << std::showbase << std::nouppercase << "inq.perifDevType=" << (int) inq.perifDevType << std::endl
           << "inq.perifQualifyer=" << (int) inq.perifQualifyer << std::endl

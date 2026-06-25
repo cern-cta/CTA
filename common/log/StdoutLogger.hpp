@@ -10,7 +10,7 @@
 namespace cta::log {
 
 /**
- * Class implementaing the API of the CASTOR logging system.
+ * Class implementaing the API of the CTA logging system.
  */
 class StdoutLogger : public Logger {
 public:

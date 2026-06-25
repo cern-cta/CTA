@@ -19,13 +19,11 @@
 #include <future>
 #include <stdint.h>
 
-namespace castor::tape {
+namespace cta::tape {
 
 namespace tapegateway {
 class FileToRecallStruct;
 }
-
-namespace tapeserver {
 
 namespace client {
 class ClientInterface;
@@ -127,12 +125,12 @@ public:
    * Set the drive interface in use
    * @param di - Drive interface
    */
-  void setDriveInterface(castor::tape::tapeserver::drive::DriveInterface* di);
+  void setDriveInterface(cta::tape::drive::DriveInterface* di);
 
   /**
    * Initialize Recommended Access Order parameters
    */
-  void initRAO(const castor::tape::tapeserver::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue);
+  void initRAO(const cta::tape::rao::RAOParams& dataConfig, cta::catalogue::Catalogue* catalogue);
 
   void waitForPromise() const;
 
@@ -237,7 +235,7 @@ private:
   cta::RetrieveMount& m_retrieveMount;
 
   /// Drive interface needed for performing Recommended Access Order query
-  castor::tape::tapeserver::drive::DriveInterface* m_drive {};
+  cta::tape::drive::DriveInterface* m_drive {};
 
   std::vector<std::unique_ptr<cta::RetrieveJob>> m_jobs;
 
@@ -264,7 +262,7 @@ private:
   /**
    * The RAO manager to perofrm RAO operations
    */
-  castor::tape::tapeserver::rao::RAOManager m_raoManager;
+  cta::tape::rao::RAOManager m_raoManager;
 
   /** Number of jobs to be fetched before the tape is mounted.
    *  The desired number is m_raoLimits.maxSupported
@@ -295,5 +293,4 @@ private:
 };
 
 }  // namespace daemon
-}  // namespace tapeserver
-}  // namespace castor::tape
+}  // namespace cta::tape

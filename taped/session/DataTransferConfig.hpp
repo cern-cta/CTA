@@ -8,7 +8,7 @@
 #include <stdint.h>
 #include <string>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * The contents of the cta.conf file to be used by a DataTransferSession
@@ -123,4 +123,4 @@ struct DataTransferConfig {
   time_t wdGetNextMountMaxSecs = 900;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

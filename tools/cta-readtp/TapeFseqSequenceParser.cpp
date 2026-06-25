@@ -12,7 +12,7 @@
 #include <string>
 #include <vector>
 
-namespace cta::tapeserver::readtp {
+namespace cta::tape::readtp {
 
 //------------------------------------------------------------------------------
 // parseTapeFileSequence
@@ -122,4 +122,4 @@ TapeFseqRangeList TapeFileSequenceParser::parse(char* const str) {
   return tapeFseqRanges;
 }
 
-}  // namespace cta::tapeserver::readtp
+}  // namespace cta::tape::readtp

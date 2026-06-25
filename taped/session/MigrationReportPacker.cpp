@@ -19,7 +19,7 @@
 using cta::log::LogContext;
 using cta::log::Param;
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -576,4 +576,4 @@ void MigrationReportPacker::WorkerThread::run() {
   }
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

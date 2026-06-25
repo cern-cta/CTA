@@ -11,7 +11,7 @@
 #include <ostream>
 #include <string.h>
 
-namespace cta::tapeserver::readtp {
+namespace cta::tape::readtp {
 
 //------------------------------------------------------------------------------
 // constructor
@@ -92,12 +92,12 @@ uint32_t TapeFseqRange::size() const noexcept {
   return m_isEmpty || m_upper == 0 ? 0 : m_upper - m_lower + 1;
 }
 
-}  // namespace cta::tapeserver::readtp
+}  // namespace cta::tape::readtp
 
 //------------------------------------------------------------------------------
-// ostream << operator for cta::tapeserver::readtp::TapeFseqRange
+// ostream << operator for cta::tape::readtp::TapeFseqRange
 //------------------------------------------------------------------------------
-std::ostream& operator<<(std::ostream& os, const cta::tapeserver::readtp::TapeFseqRange& value) {
+std::ostream& operator<<(std::ostream& os, const cta::tape::readtp::TapeFseqRange& value) {
   if (value.isEmpty()) {
     os << "EMPTY";
   } else {

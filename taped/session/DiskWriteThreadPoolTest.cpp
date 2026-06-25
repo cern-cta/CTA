@@ -9,7 +9,7 @@
 #include "RecallReportPacker.hpp"
 #include "RecallTaskInjector.hpp"
 #include "ReportPackerInterface.hpp"
-#include "TapeserverProxyMock.hpp"
+#include "TapedProxyMock.hpp"
 #include "catalogue/dummy/DummyCatalogue.hpp"
 #include "common/exception/NotImplementedException.hpp"
 #include "common/log/LogContext.hpp"
@@ -35,7 +35,7 @@ class TestingDatabaseRetrieveMount : public cta::SchedulerDatabase::RetrieveMoun
     throw cta::exception::NotImplementedException();
   }
 
-  void setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) override {
+  void setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) override {
     throw cta::exception::NotImplementedException();
   }
 
@@ -86,8 +86,8 @@ public:
                          cta::PositioningMethod::ByBlock) {}
 };
 
-using namespace castor::tape::tapeserver::daemon;
-using namespace castor::tape::tapeserver::client;
+using namespace cta::tape::daemon;
+using namespace cta::tape::client;
 
 struct MockRecallReportPacker : public RecallReportPacker {
   void reportCompletedJob(std::unique_ptr<cta::RetrieveJob> successfulRetrieveJob, cta::log::LogContext& lc) override {
@@ -149,10 +149,10 @@ struct MockTaskInjector : public RecallTaskInjector {
   MOCK_METHOD3(requestInjection, void(int maxFiles, int maxBlocks, bool lastCall));
 };
 
-TEST(castor_tape_tapeserver_daemon, DiskWriteThreadPoolTest) {
+TEST(cta_tape_daemon, DiskWriteThreadPoolTest) {
   using ::testing::_;
 
-  cta::log::StringLogger log("dummy", "castor_tape_tapeserver_daemon_DiskWriteThreadPoolTest", cta::log::DEBUG);
+  cta::log::StringLogger log("dummy", "cta_tape_daemon_DiskWriteThreadPoolTest", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount);

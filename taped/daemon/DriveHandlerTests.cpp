@@ -46,12 +46,10 @@ public:
                                                 const uint64_t minFilesToWarrantAMount,
                                                 const uint64_t minBytesToWarrantAMount));
   MOCK_CONST_METHOD0(createDriveHandlerProxy, std::shared_ptr<cta::tape::daemon::TapedProxy>());
-  MOCK_CONST_METHOD1(executeCleanerSession,
-                     castor::tape::tapeserver::daemon::Session::EndOfSessionAction(cta::IScheduler* scheduler));
-  MOCK_CONST_METHOD2(
-    executeDataTransferSession,
-    castor::tape::tapeserver::daemon::Session::EndOfSessionAction(cta::IScheduler* scheduler,
-                                                                  cta::tape::daemon::TapedProxy* driveHandlerProxy));
+  MOCK_CONST_METHOD1(executeCleanerSession, cta::tape::daemon::Session::EndOfSessionAction(cta::IScheduler* scheduler));
+  MOCK_CONST_METHOD2(executeDataTransferSession,
+                     cta::tape::daemon::Session::EndOfSessionAction(cta::IScheduler* scheduler,
+                                                                    cta::tape::daemon::TapedProxy* driveHandlerProxy));
   MOCK_METHOD1(resetToDefault, void(const std::string& methodCaller));
 
   // expose protected members of the base class for the unit tests
@@ -142,9 +140,9 @@ public:
     ON_CALL(*m_driveHandler, createCatalogue(_)).WillByDefault(Return(m_catalogue));
     ON_CALL(*m_driveHandler, createScheduler(_, _, _)).WillByDefault(Return(m_scheduler));
     ON_CALL(*m_driveHandler, executeCleanerSession(_))
-      .WillByDefault(Return(castor::tape::tapeserver::daemon::Session::EndOfSessionAction::MARK_DRIVE_AS_DOWN));
+      .WillByDefault(Return(cta::tape::daemon::Session::EndOfSessionAction::MARK_DRIVE_AS_DOWN));
     ON_CALL(*m_driveHandler, executeDataTransferSession(_, _))
-      .WillByDefault(Return(castor::tape::tapeserver::daemon::Session::EndOfSessionAction::MARK_DRIVE_AS_UP));
+      .WillByDefault(Return(cta::tape::daemon::Session::EndOfSessionAction::MARK_DRIVE_AS_UP));
   }
 
   void TearDown() override {
@@ -229,7 +227,7 @@ TEST_F(DriveHandlerTests, runSigChild) {
 }
 
 TEST_F(DriveHandlerTests, runSigChildAfterCrash) {
-  using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
+  using EndOfSessionAction = cta::tape::daemon::Session::EndOfSessionAction;
   m_driveHandler->setPreviousSession(cta::tape::daemon::DriveHandler::PreviousSession::Crashed,
                                      cta::tape::session::SessionState::Running,
                                      cta::tape::session::SessionType::Undetermined,
@@ -265,7 +263,7 @@ TEST_F(DriveHandlerTests, runSigChildAfterCrash) {
 }
 
 TEST_F(DriveHandlerTests, childTimeOut) {
-  using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
+  using EndOfSessionAction = cta::tape::daemon::Session::EndOfSessionAction;
   m_driveHandler->setSessionState(cta::tape::session::SessionState::Running);
   auto status = m_driveHandler->processTimeout();
   // Check that the status is correct
@@ -364,7 +362,7 @@ TEST_F(DriveHandlerTests, shutdownWithoutForking) {
 }
 
 TEST_F(DriveHandlerTests, runChildAndExecuteDataTransferSession) {
-  using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
+  using EndOfSessionAction = cta::tape::daemon::Session::EndOfSessionAction;
   EXPECT_CALL(*m_driveHandler, executeDataTransferSession(_, _))
     .WillOnce(Invoke([this](cta::IScheduler*, cta::tape::daemon::TapedProxy*) {
       m_lc.log(cta::log::DEBUG,
@@ -384,7 +382,7 @@ TEST_F(DriveHandlerTests, runChildAndExecuteDataTransferSession) {
 }
 
 TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
-  using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
+  using EndOfSessionAction = cta::tape::daemon::Session::EndOfSessionAction;
 
   // Methods to check the outputs of the tests
   std::string logToCheck;
@@ -516,7 +514,7 @@ TEST_F(DriveHandlerTests, runChildAndFailSchedulerMethods) {
 }
 
 TEST_F(DriveHandlerTests, runChildAfterCrashedSessionWhenRunning) {
-  using EndOfSessionAction = castor::tape::tapeserver::daemon::Session::EndOfSessionAction;
+  using EndOfSessionAction = cta::tape::daemon::Session::EndOfSessionAction;
 
   std::string logToCheck;
 

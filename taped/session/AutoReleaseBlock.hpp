@@ -8,7 +8,7 @@
 
 #include <memory>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /*
  * Use RAII to make sure the memory block is released
@@ -44,4 +44,4 @@ public:
   ~AutoReleaseBlock() { memManager.releaseBlock(m_block); }
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

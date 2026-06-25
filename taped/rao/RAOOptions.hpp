@@ -9,11 +9,11 @@
 #include <string>
 #include <vector>
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 /**
  * This class allows to manage the RAO options given
- * by the tapeserver configuration RAOLTOAlgorithmOptions
+ * by the taped configuration RAOLTOAlgorithmOptions
  */
 class RAOOptions {
 public:
@@ -88,4 +88,4 @@ private:
   static std::map<std::string, CostHeuristicType> c_mapStringCostHeuristicType;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

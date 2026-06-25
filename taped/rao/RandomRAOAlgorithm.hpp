@@ -8,7 +8,7 @@
 #include "NonConfigurableRAOAlgorithmFactory.hpp"
 #include "RAOAlgorithm.hpp"
 
-namespace castor::tape::tapeserver::rao {
+namespace cta::tape::rao {
 
 class NonConfigurableRAOAlgorithmFactory;
 
@@ -34,4 +34,4 @@ private:
   RandomRAOAlgorithm() = default;
 };
 
-}  // namespace castor::tape::tapeserver::rao
+}  // namespace cta::tape::rao

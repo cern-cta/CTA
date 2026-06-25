@@ -11,7 +11,7 @@
 #include <memory>
 #include <optional>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 /**
  * Individual memory block with metadata
@@ -142,7 +142,7 @@ public:
   /** handle to the raw data to be migrated/recalled */
   Payload m_payload;
 
-  /** CASTOR NsFileId file concerned */
+  /** NsFileId file concerned */
   std::optional<uint64_t> m_fileid;
 
   /** number of the memory-chunk of the current file we are manipulating */
@@ -158,4 +158,4 @@ public:
   std::optional<size_t> m_tapeBlockSize;
 };
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon

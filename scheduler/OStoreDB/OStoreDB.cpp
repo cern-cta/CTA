@@ -3836,7 +3836,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
 //------------------------------------------------------------------------------
 // OStoreDB::RetrieveMount::setTapeSessionStats()
 //------------------------------------------------------------------------------
-void OStoreDB::RetrieveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {
+void OStoreDB::RetrieveMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
   // We just report tthe tape session statistics as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
@@ -4179,7 +4179,7 @@ void OStoreDB::ArchiveMount::setDriveStatus(cta::common::dataStructures::DriveSt
 //------------------------------------------------------------------------------
 // OStoreDB::ArchiveMount::setTapeSessionStats()
 //------------------------------------------------------------------------------
-void OStoreDB::ArchiveMount::setTapeSessionStats(const castor::tape::tapeserver::daemon::TapeSessionStats& stats) {
+void OStoreDB::ArchiveMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
   // We just report the tape session statistics as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;

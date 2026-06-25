@@ -10,7 +10,7 @@
 
 #include <opentelemetry/context/runtime_context.h>
 
-namespace castor::tape::tapeserver::daemon {
+namespace cta::tape::daemon {
 
 TransferTaskTracker::TransferTaskTracker(std::string_view ioDirection, std::string_view ioMedium)
     : m_ioDirection(ioDirection),
@@ -30,4 +30,4 @@ TransferTaskTracker::~TransferTaskTracker() {
   });
 }
 
-}  // namespace castor::tape::tapeserver::daemon
+}  // namespace cta::tape::daemon
