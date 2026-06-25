@@ -25,7 +25,7 @@ TEST(cta_tape_daemon, WatchdogTestStuckWithNothing) {
   cta::log::StringLogger log("dummy", "cta_tape_daemon_WatchdogTestStuck", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
   daemon::RecallWatchDog
@@ -47,7 +47,7 @@ TEST(cta_tape_daemon, MigrationWatchdogTestStuck) {
   cta::log::StringLogger log("dummy", "cta_tape_daemon_WatchdogTestStuck", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
   // We will poll for a
@@ -70,7 +70,7 @@ TEST(cta_tape_daemon, MigrationWatchdog_DoNotReportParamsAddedAndDeleted) {
   cta::log::StringLogger log("dummy", "cta_tape_daemon_DoNotReportParamsAddedAndDeleted", cta::log::DEBUG);
   cta::log::LogContext lc(log);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> dummyInitialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> dummyInitialProcess;
   cta::TapeMountDummy dummyTapeMount;
 
   daemon::RecallWatchDog

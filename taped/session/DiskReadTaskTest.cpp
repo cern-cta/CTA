@@ -129,7 +129,7 @@ TEST(cta_tape_daemon, DiskReadTaskTest) {
   cta::tape::daemon::DiskReadTask drt(ftwt, &file, blockNeeded, flag);
   DiskFileFactory fileFactory(0);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
   cta::TapeMountDummy tmd;
   MockMigrationWatchDog mmwd(1.0, 1.0, tspd, tmd, "", lc);
   drt.execute(lc, fileFactory, mmwd, 0);

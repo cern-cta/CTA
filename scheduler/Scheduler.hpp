@@ -266,7 +266,7 @@ public:
    * @param tapedConfig the config of the drive to report to the objectstore.
    */
   void reportDriveConfig(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-                         const cta::tape::daemon::common::TapedConfiguration& tapedConfig,
+                         const cta::tape::daemon::TapedConfiguration& tapedConfig,
                          log::LogContext& lc) override;
 
   /**

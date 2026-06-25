@@ -24,12 +24,12 @@ class TapeSessionReporter : private cta::threading::Thread {
 public:
   /**
    * Constructor
-   * @param tapeserverProxy
+   * @param tapedProxy
    * @param driveConfig The configuration of the tape drive we are using.
    * @param hostname The host name of the computer
    * @param lc
    */
-  TapeSessionReporter(cta::tape::daemon::TapedProxy& tapeserverProxy,
+  TapeSessionReporter(cta::tape::daemon::TapedProxy& tapedProxy,
                       const cta::tape::daemon::DriveConfigEntry& driveConfig,
                       std::string_view hostname,
                       const cta::log::LogContext& lc);
@@ -66,7 +66,7 @@ private:
   This internal mechanism could (should ?) be easily changed to a queue
    * of {std/boost}::function coupled with bind. For instance, tapeMountedForWrite
    * should look like
-   *   m_fifo.push(bind(m_tapeserverProxy,&tapeMountedForWrite,args...))
+   *   m_fifo.push(bind(m_tapedProxy,&tapeMountedForWrite,args...))
    * and execute
    *  while(1)
    *   (m_fifo.push())();
@@ -106,7 +106,7 @@ private:
    A bunch of references to proxies to send messages to the
    * outside world when we have to
    */
-  cta::tape::daemon::TapedProxy& m_tapeserverProxy;
+  cta::tape::daemon::TapedProxy& m_tapedProxy;
 
   /**
    * Log context, copied because it is in a separated thread

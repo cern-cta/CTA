@@ -116,7 +116,7 @@ public:
                log::LogContext& lc));
   MOCK_METHOD3(reportDriveConfig,
                void(const cta::tape::daemon::DriveConfigEntry& driveConfigEntry,
-                    const cta::tape::daemon::common::TapedConfiguration& tapedConfig,
+                    const cta::tape::daemon::TapedConfiguration& tapedConfig,
                     log::LogContext& lc));
 };
 
@@ -187,7 +187,7 @@ protected:
   cta::log::StringLogger m_logger {"dummy", "driveHandlerTests", cta::log::DEBUG};
   cta::log::LogContext m_lc;
   NiceMock<cta::tape::daemon::ProcessManagerMock> m_processManager;
-  cta::tape::daemon::common::TapedConfiguration m_tapedConfig;
+  cta::tape::daemon::TapedConfiguration m_tapedConfig;
   cta::tape::daemon::DriveConfigEntry m_driveConfig {"drive0", "lib0", "/dev/tape0", "smc0"};
 };
 

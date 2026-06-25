@@ -182,7 +182,7 @@ TEST(cta_tape_daemon, DiskWriteTaskFailedBlock) {
 
   t.pushDataBlock(mb);
   t.pushDataBlock(nullptr);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
   cta::TapeMountDummy tmd;
   RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
   t.execute(report, lc, fileFactory, rwd, 0);

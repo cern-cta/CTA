@@ -176,7 +176,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNominal) {
   trm.createRetrieveJobs(nbJobs);
   //EXPECT_CALL(trm, internalGetNextJob()).Times(nbJobs+1);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
   cta::TapeMountDummy tmd;
   RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
@@ -185,7 +185,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNominal) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   cta::tape::daemon::VolumeInfo volume;
   volume.vid = "V12345";
   volume.mountType = cta::common::dataStructures::MountType::Retrieve;
@@ -239,7 +239,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNoFiles) {
   trm.createRetrieveJobs(0);
   //EXPECT_CALL(trm, internalGetNextJob()).Times(1); //no work: single call to getnextjob
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
   cta::TapeMountDummy tmd;
   RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
   std::unique_ptr<cta::SchedulerDatabase::RetrieveMount> dbrm(new TestingDatabaseRetrieveMount());
@@ -248,7 +248,7 @@ TEST_F(cta_tape_daemonTest, RecallTaskInjectorNoFiles) {
   cta::log::DummyLogger dummyLog("dummy", "dummy");
   cta::mediachanger::RmcProxy rmcProxy;
   cta::mediachanger::MediaChangerFacade mc(rmcProxy, dummyLog);
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> initialProcess;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> initialProcess;
   cta::tape::daemon::VolumeInfo volume;
   volume.vid = "V12345";
   volume.mountType = cta::common::dataStructures::MountType::Retrieve;

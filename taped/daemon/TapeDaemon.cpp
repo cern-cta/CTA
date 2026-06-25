@@ -22,10 +22,10 @@
 
 namespace cta::tape::daemon {
 
-TapeDaemon::TapeDaemon(const cta::common::CmdLineParams& commandLine,
+TapeDaemon::TapeDaemon(const common::CmdLineParams& commandLine,
                        log::Logger& log,
-                       const common::TapedConfiguration& globalConfig)
-    : cta::server::Daemon(log),
+                       const TapedConfiguration& globalConfig)
+    : server::Daemon(log),
       m_globalConfiguration(globalConfig) {
   setCommandLineHasBeenParsed(commandLine.foreground);
 }

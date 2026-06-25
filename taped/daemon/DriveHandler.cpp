@@ -43,7 +43,7 @@ CTA_GENERATE_EXCEPTION_CLASS(DriveAlreadyExistException);
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-DriveHandler::DriveHandler(const common::TapedConfiguration& tapedConfig,
+DriveHandler::DriveHandler(const TapedConfiguration& tapedConfig,
                            const cta::tape::daemon::DriveConfigEntry& driveConfig,
                            ProcessManager& pm)
     : SubprocessHandler(std::string("drive:") + driveConfig.unitName),

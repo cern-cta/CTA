@@ -162,7 +162,7 @@ TEST(cta_tape_daemon, DiskWriteThreadPoolTest) {
 
   RecallMemoryManager mm(10, 100, lc);
 
-  ::testing::NiceMock<cta::tape::daemon::TapeserverProxyMock> tspd;
+  ::testing::NiceMock<cta::tape::daemon::TapedProxyMock> tspd;
   cta::TapeMountDummy tmd;
   RecallWatchDog rwd(1, 1, tspd, tmd, "", lc);
 

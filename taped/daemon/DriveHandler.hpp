@@ -54,7 +54,7 @@ public:
     Crashed      ///< The previous process was killed or crashed. The next session will be a cleanup.
   };
 
-  DriveHandler(const common::TapedConfiguration& tapedConfig, const DriveConfigEntry& driveConfig, ProcessManager& pm);
+  DriveHandler(const TapedConfiguration& tapedConfig, const DriveConfigEntry& driveConfig, ProcessManager& pm);
   ~DriveHandler() override = default;
 
   ProcessingStatus getInitialStatus() override;
@@ -71,9 +71,9 @@ public:
 
 private:
   // Reference to the process manager
-  cta::tape::daemon::ProcessManager& m_processManager;
+  ProcessManager& m_processManager;
   // The parameters
-  const common::TapedConfiguration& m_tapedConfig;
+  const TapedConfiguration& m_tapedConfig;
   // This drive's parameters
   const DriveConfigEntry& m_driveConfig;
   // The log context
