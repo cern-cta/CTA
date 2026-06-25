@@ -3837,7 +3837,7 @@ void OStoreDB::RetrieveMount::setDriveStatus(cta::common::dataStructures::DriveS
 // OStoreDB::RetrieveMount::setTapeSessionStats()
 //------------------------------------------------------------------------------
 void OStoreDB::RetrieveMount::setTapeSessionStats(const cta::tape::daemon::TapeSessionStats& stats) {
-  // We just report tthe tape session statistics as instructed by the tape thread.
+  // We just report the tape session statistics as instructed by the tape thread.
   // Reset the drive state.
   common::dataStructures::DriveInfo driveInfo;
   driveInfo.driveName = mountInfo.drive;

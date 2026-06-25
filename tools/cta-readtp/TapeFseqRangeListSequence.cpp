@@ -119,7 +119,7 @@ uint32_t TapeFseqRangeListSequence::totalSize() const noexcept {
 }  // namespace cta::tape::readtp
 
 //------------------------------------------------------------------------------
-// ostream << operator for cta::tape::tpcp::TapeFseqRangeList
+// ostream << operator for cta::tape::readtp::TapeFseqRangeList
 //------------------------------------------------------------------------------
 std::ostream& operator<<(std::ostream& os, const cta::tape::readtp::TapeFseqRangeList& value) {
   os << '{';

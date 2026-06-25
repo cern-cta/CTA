@@ -1361,7 +1361,7 @@ The following manual pages have been updated:
 
 - cta/CTA#1255 - Resolve "VID is missing in DriveHandler when session is killed"
 - cta/CTA#1256 - Catch and fix EOS regressions in tape specific xrootd API introduced in eos 4.8.79-1 with eos 4.8.87-1
-- cta/CTA#1247 - Fix improper initialization of the variable m_lastFseq of type uint64_t with -1 value in the constructor of cta::tape::daemon::TapeWriteSingleThread
+- cta/CTA#1247 - Fix improper initialization of the variable m_lastFseq of type uint64_t with -1 value in the constructor of castor::tape::tapeserver::daemon::TapeWriteSingleThread
 
 ### Building and Packaging
 
