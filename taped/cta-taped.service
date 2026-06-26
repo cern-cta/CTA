@@ -12,6 +12,10 @@ LimitCORE=infinity
 OOMScoreAdjust=-1000
 Type=forking
 Restart=no
+User=cta
+Group=tape
+AmbientCapabilities=CAP_SYS_RAWIO
+CapabilityBoundingSet=CAP_SYS_RAWIO
 
 [Install]
 WantedBy=default.target

@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Union
+from _pytest.fixtures import SubRequest
 
 import pytest
 from jsonschema import Draft202012Validator
@@ -319,13 +320,18 @@ def test_eosdf(
 ## Both times we should get a success, because when the script is the problem, we allow staging to continue
 
 
+<<<<<<< HEAD
 def test_eosdf_with_nonexistent_script(cta_taped: CtaTapedHost, eos_client: EosClientHost, test_dir: Path) -> None:
     cta_taped.exec("mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
+=======
+def test_eosdf_with_nonexistent_script(cta_taped, eos_client, test_dir):
+    cta_taped.exec("sudo mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
+>>>>>>> 6b2c3014a3 (Remove rawio and user/group)
     try:
         eos_client.exec(f". /tmp/client_env && /tmp/test_eosdf.sh {test_dir}")
         cta_taped.exec(f"grep -q 'No such file or directory' {cta_taped.log_file_path}")
     finally:
-        cta_taped.exec("mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh")
+        cta_taped.exec("sudo mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh")
 
 
 def test_eosdf_without_executable_permissions(
@@ -344,15 +350,20 @@ def test_eosdf_without_executable_permissions(
 # grep for 'could not be used to get the FreeSpace'
 
 
+<<<<<<< HEAD
 def test_eosdf_with_script_that_throws_exception(
     cta_taped: CtaTapedHost, eos_client: EosClientHost, cta_cli: CtaCliHost, test_dir: Path
 ) -> None:
     cta_taped.exec("sed -i 's|root://$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
+=======
+def test_eosdf_with_script_that_throws_exception(cta_taped, eos_client, cta_cli, test_dir):
+    cta_taped.exec("sudo sed -i 's|root://$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
+>>>>>>> 6b2c3014a3 (Remove rawio and user/group)
     try:
         eos_client.exec(f". /tmp/client_env && /tmp/test_eosdf.sh {test_dir}")
         cta_taped.exec(f"grep -q 'could not be used to get the FreeSpace' {cta_taped.log_file_path}")
     finally:
-        cta_taped.exec("sed -i 's|root://nonexistentinstance|root://$diskInstance|g' /usr/bin/cta-eosdf.sh")
+        cta_taped.exec("sudo sed -i 's|root://nonexistentinstance|root://$diskInstance|g' /usr/bin/cta-eosdf.sh")
     # Done with the eosdf tests; set all drives up again
     cta_cli.set_all_drives_up()
 
@@ -433,31 +444,85 @@ def test_taped_config_dr_ls_consistency(cta_cli: CtaCliHost, cta_taped: CtaTaped
         assert (cat, key, val) in indexed
 
 
-def test_example_config_file_correctness_maintd(cta_maintd: CtaMaintdHost) -> None:
-    cta_maintd.exec("cta-maintd --config-strict --config /etc/cta/cta-maintd.example.toml --config-check")
+# The following are standard for all services using the CTA runtime library
+# For now only cta_maintd is supported, but eventually the frontend and taped should be added here
+
+@pytest.mark.parametrize(
+    "daemon_fixture",
+    [
+        "cta_maintd",
+    ],
+)
+def test_example_config_file_correctness(request: SubRequest, daemon_fixture: str):
+    daemon = request.getfixturevalue(daemon_fixture)
+    daemon.exec(
+        f"cta-{daemon.process_name} --config-strict --config /etc/cta/cta-{daemon.process_name}.example.toml --config-check"
+    )
 
 
-def test_runtime_directory_correctness_maintd(cta_maintd: CtaMaintdHost) -> None:
-    cta_maintd.exec("comm /etc/cta/cta-maintd.toml /run/cta/config.toml -3")
-    cta_maintd.exec("comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3")
-    cta_maintd.exec("comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3")
-    cta_maintd.exec("jq -e -r '.service == \"cta-maintd\"' /run/cta/version.json >/dev/null")
+@pytest.mark.parametrize(
+    "daemon_fixture",
+    [
+        "cta_maintd",
+    ],
+)
+def test_runtime_directory_correctness(request: SubRequest, daemon_fixture: str):
+    daemon = request.getfixturevalue(daemon_fixture)
+    daemon.exec(f"comm /etc/cta/cta-{daemon.process_name}.toml /run/cta/config.toml -3")
+    daemon.exec("comm /etc/cta/cta-catalogue.conf /run/cta/catalogue.config_file -3")
+    daemon.exec("comm /etc/cta/cta-otel.yaml /run/cta/telemetry.config_file -3")
+    daemon.exec(f"jq -e -r '.service == \"cta-{daemon.process_name}\"' /run/cta/version.json >/dev/null")
 
 
-def test_log_rotation_maintd(cta_maintd: CtaMaintdHost, remote_scripts_dir: Path) -> None:
-    cta_maintd.copy_to(remote_scripts_dir / "cta_maintd" / "test_refresh_log_fd.sh", Path("/tmp"), permissions="+x")
-    cta_maintd.exec("bash /tmp/test_refresh_log_fd.sh")
+@pytest.mark.parametrize(
+    "daemon_fixture",
+    [
+        "cta_maintd",
+    ],
+)
+def test_reopens_logfile_on_usr1(request: SubRequest, daemon_fixture: str):
+    daemon = request.getfixturevalue(daemon_fixture)
+
+    log_file = daemon.log_file_path
+    pid = daemon.exec_with_output(f"pgrep -u cta {daemon.process_name}")
+
+    fd = daemon.exec_with_output(f"find /proc/{pid}/fd -maxdepth 1 -lname '{log_file}' -printf '%f\n'")
+    assert fd
+
+    rotated = f"{log_file}.pytest"
+
+    # Move the log file; the CTA daemon should keep writing to this moved location as the file descriptor has not been refreshed
+    daemon.exec(f"sudo mv {log_file} {rotated}")
+    # Create a new log file in the original location
+    daemon.exec(f"sudo install -o cta -g tape -m 0644 /dev/null {log_file}")
+    new_inode = daemon.exec_with_output(f"stat -Lc '%d:%i' {log_file}")
+
+    # Send signal to refresh file descriptor
+    daemon.exec(f"pkill -USR1 -u cta {daemon.process_name}")
+    # Wait until it starts writing to the new file
+    current_inode = None
+
+    max_iter = 50
+    sleep_time_sec = 0.1
+    for _ in range(max_iter):
+        current_inode = daemon.exec_with_output(f"stat -Lc '%d:%i' /proc/{pid}/fd/{fd}")
+        if current_inode == new_inode:
+            break
+        time.sleep(sleep_time_sec)
+
+    assert current_inode == new_inode
 
 
+# Should be deleted once taped uses the new runtime library
 def test_log_rotation_taped(cta_taped: CtaTapedHost, remote_scripts_dir: Path) -> None:
     cta_taped.copy_to(remote_scripts_dir / "cta_taped" / "test_refresh_log_fd.sh", Path("/tmp"), permissions="+x")
-    cta_taped.exec("bash /tmp/test_refresh_log_fd.sh")
+    cta_taped.exec("sudo bash /tmp/test_refresh_log_fd.sh")
 
 
 def test_log_schema_correctness(env: TestEnv, tmp_path: Path, cta_maintd: CtaMaintdHost) -> None:
     hosts = [*env.cta_admin_api, *env.cta_workflow_api, *env.cta_taped]
     logging_schema_path = tmp_path / "cta-logging.schema.json"
-    # Maintd already populates the logging schema in the runtime directory
+    # Maintd already populates the logging schema in the runtime directory so we just grab it from there
     cta_maintd.copy_from(Path("/run/cta/cta-logging.schema.json"), logging_schema_path)
 
     fail_fast = True

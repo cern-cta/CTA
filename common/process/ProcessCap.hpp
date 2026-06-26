@@ -25,4 +25,6 @@ std::string getProcText();
    * process should have.
    */
 void setProcText(const std::string& text);
+
+bool hasRawIoCap();
 }  // namespace cta::server::ProcessCap

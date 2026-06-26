@@ -14,7 +14,7 @@ metadata:
   labels:
     {{-  include "common.labels.standard" $ | nindent 4 }}
 data:
-  cta-maintd.conf: |-
+  cta-maintd.toml: |-
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
@@ -30,7 +30,7 @@ data:
       {{- end }}
       tape_cache_max_age_secs = {{ $.Values.scheduler.tapeCacheMaxAgeSecs }}
       retrieve_queue_cache_max_age_secs = {{ $.Values.scheduler.retrieveQueueCacheMaxAgeSecs }}
-      
+
     [logging]
       level = {{ $.Values.logging.level | quote }}
       format = "json"
@@ -52,7 +52,7 @@ data:
       # Overrides XrdSecPROTOCOL
       security_protocol = "sss"
       # Overrides XrdSecSSSKT
-      sss_keytab_path = "/etc/cta/cta-maintd.sss.keytab"
+      sss_keytab_path = "/etc/cta/cta-maintd.sss.keytab.grp"
 
     [routines]
       cycle_sleep_interval_secs = {{ int64 $routineConf.sleepIntervalSecs | toString }}

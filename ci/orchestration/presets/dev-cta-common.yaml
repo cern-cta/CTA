@@ -3,9 +3,9 @@
 
 global:
   securityContext:
-    # These are set to True to allow attaching with gdb to the grpc frontend.
+    # We need privilege escalation for the tests and debugging
     allowPrivilegeEscalation: True
-    privileged: True
+    privileged: False
 
 frontend-wfe:
   port: 10956
