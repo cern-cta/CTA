@@ -37,7 +37,7 @@ microdnf remove -y cta-release
 
 # Nothing in CTA requires python and it adds a lot to the final image size, so we remove it here explicitly
 # TODO: handle this gracefully. Basically we try to remove python but if there are packages requiring it, we don't
-microdnf remove -y python* || true
+microdnf remove -y python* > /dev/null || true
 
 if [ "$USE_INTERNAL_REPOS" = "1" ]; then
     while IFS= read -r filename; do

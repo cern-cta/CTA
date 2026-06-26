@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+replicaCount: 1
+
+users:
+  - user1
+  - eosadmin1
+  - poweruser1
+  - ctaadmin2
+
+pod:
+  extraSpec:
+    terminationGracePeriodSeconds: 1

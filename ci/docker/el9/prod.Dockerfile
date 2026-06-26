@@ -42,6 +42,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
     # Ensure consistent group and user ID for CTA services
     # cta-common adds this user already, but it gives no guarantees on its ID, which we need to be stable for Kubernetes
+    groupadd -g 2000 tape \
     useradd -m -u 1000 -g tape cta && \
     # Ensure cta-versionlock can update the versionlock file (file needs to exist)
     mkdir -p /etc/yum/pluginconf.d && \
@@ -104,8 +105,8 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-maintd \
     /usr/local/bin/build-service.sh "cta-maintd"
 
-# USER cta
-CMD ["/usr/bin/cta-maintd", "--foreground", "--log-to-file=/var/log/cta/cta-maintd.log", "--log-format", "json", "--config", "/etc/cta/cta-maintd.conf"]
+USER cta
+CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-strict", "--config /etc/cta/cta-maintd.toml", "--runtime-dir /run/cta"]
 
 ###############################################
 # SERVICE cta-frontend-grpc
@@ -121,7 +122,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-frontend-grpc cta-catalogue-utils krb5-workstation"
 # TODO: remove the catalogue utils once the tests have been updated
 
-# USER cta
+USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
 
 ###############################################
@@ -138,7 +139,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     /usr/local/bin/build-service.sh "cta-frontend cta-catalogue-utils krb5-workstation"
 # TODO: remove the catalogue utils once the tests have been updated
 
-# USER cta
+USER cta
 WORKDIR /home/cta
 CMD ["xrootd", "-l", "/var/log/cta-frontend-xrootd.log", "-k", "fifo", "-n", "cta", "-c", "/etc/cta/cta-frontend-xrootd.conf", "-I", "v4"]
 

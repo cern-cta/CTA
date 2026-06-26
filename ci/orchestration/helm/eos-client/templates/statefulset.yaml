@@ -3,14 +3,13 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- $name := include "client.fullname" . }}
+{{- $podName := default .Chart.Name .Values.nameOverride -}}
+{{- $name := printf "%s-%s" .Release.Name $podName | trunc 63 | trimSuffix "-" -}}
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: {{ $name }}
   namespace: {{ .Release.Namespace | quote }}
-  labels:
-    {{- include "common.labels.standard" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
@@ -20,19 +19,14 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $name }}
-        {{- include "common.labels.withoutname" $ | nindent 8 }}
     spec:
-      imagePullSecrets:
-      {{ include "client.imagePullSecrets" . | nindent 6 }}
       {{- if .Values.pod.extraSpec }}
       {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
       initContainers:
       - name: init1-get-krb5-keytabs
-        image: {{ include "client.image" . }}
-        imagePullPolicy: {{ include "client.imagePullPolicy" . }}
-        securityContext:
-          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+        image: gitlab-registry.cern.ch/dss/eos/eos-ci:5.3.36.el9 # TODO
+        imagePullPolicy: IfNotPresent
         command: ["/bin/bash", "-c"]
         args:
         - |
@@ -51,13 +45,11 @@ spec:
         {{ end }}
       containers:
       - name: client
-        image: {{ include "client.image" . }}
-        imagePullPolicy: {{ include "client.imagePullPolicy" . }}
+        image: gitlab-registry.cern.ch/dss/eos/eos-ci:5.3.36.el9 # TODO
+        imagePullPolicy: IfNotPresent
         stdin: true
-        command: ["/bin/bash", "/scripts/client.sh"]
-        securityContext:
-          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
-          privileged: {{ include "common.securityContext.privileged" . }}
+        command: ["/bin/bash"]
+        args: ["-c", "trap : TERM INT; sleep infinity & wait"]
         {{- if $.Values.resources }}
         resources:
           {{-  toYaml $.Values.resources | nindent 10 }}
@@ -71,23 +63,11 @@ spec:
           value: {{ .Release.Namespace | quote }}
         - name: TERM
           value: "xterm"
+        - name: XrdSecPROTOCOL
+          value: "krb5,unix"
         {{- with .Values.extraEnv }}
-        {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
         volumeMounts:
-        - name: scripts-volume
-          mountPath: /scripts
-        - name: xrootd-client-conf
-          mountPath: /etc/xrootd/client.conf
-          subPath: client.conf
-        - name: etc-cta-client
-          mountPath: /etc/cta/cta-cli.conf
-          subPath: cta-cli.conf
-        {{- if .Values.useGrpc }}
-        - name: ctaadmin1-jwt
-          mountPath: /etc/cta/ctaadmin1.jwt
-          subPath: ctaadmin1.jwt
-        {{- end }}
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
@@ -96,23 +76,7 @@ spec:
           mountPath: "/root/{{ $user }}.keytab"
           subPath: "{{ $user }}.keytab"
         {{ end }}
-        {{ include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
-      - name: scripts-volume
-        configMap:
-          name: scripts-client
-          defaultMode: 0777
-      - name: etc-cta-client
-        configMap:
-          name: etc-cta-client
-      {{- if .Values.useGrpc }}
-      - name: ctaadmin1-jwt
-        secret:
-          secretName: ctaadmin1-jwt
-      {{- end }}
-      - name: xrootd-client-conf
-        configMap:
-          name: xrootd-client-conf
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
@@ -120,4 +84,3 @@ spec:
       - name: "{{ $user }}-keytab"
         emptyDir: {}
       {{ end }}
-      {{ include "common.extraVolumes" . | nindent 6 }}

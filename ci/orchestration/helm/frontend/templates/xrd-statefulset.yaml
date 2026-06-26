@@ -83,6 +83,8 @@ spec:
           successThreshold: 1
           failureThreshold: 60
         securityContext:
+          runAsUser: 1000 # cta
+          runAsGroup: 2000 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
         env:

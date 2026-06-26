@@ -104,7 +104,7 @@ update_local_cta_chart_dependencies() {
     "auth"
     "catalogue"
     "scheduler"
-    "client"
+    "eos-client"
     "cli"
     "frontend"
     "taped"

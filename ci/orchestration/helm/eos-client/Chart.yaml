@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+apiVersion: v2
+name: eos-client
+description: Sets up an EOS client for a CTA + EOS instance.
+type: application
+version: 0.3.0
+appVersion: "5.3.36.el9"

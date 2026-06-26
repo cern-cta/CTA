@@ -80,10 +80,10 @@ spec:
           periodSeconds: 60
           failureThreshold: 2
         securityContext:
+          runAsUser: 1000 # cta
+          runAsGroup: 2000 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
-          capabilities:
-            add: ["SYS_PTRACE"]
         env:
         - name: MY_NAME
           value: {{ $podName }}

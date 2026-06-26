@@ -55,6 +55,9 @@ spec:
         image: {{ include "taped.image" $ }}
         imagePullPolicy: {{ include "taped.imagePullPolicy" $ }}
         securityContext:
+          # Can uncommented after https://gitlab.cern.ch/cta/CTA/-/work_items/1652 is solved
+          # runAsUser: 1000 # cta
+          # runAsGroup: 2000 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
           capabilities:
