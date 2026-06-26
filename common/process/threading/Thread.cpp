@@ -1,45 +1,61 @@
 /*
- * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2021 CERN, 2026 DESY
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "Thread.hpp"
 
 #include <cxxabi.h>
-#include <errno.h>
 #include <iostream>
-#include <stdlib.h>
 #include <typeinfo>
 
 namespace cta::threading {
 
-/* Implmentations of the threading primitives */
+/* Implementations of the threading primitives */
 //------------------------------------------------------------------------------
-//start
+// start
 //------------------------------------------------------------------------------
 void Thread::start() {
-  pthread_attr_t attr;
-  cta::exception::Errnum::throwOnReturnedErrno(pthread_attr_init(&attr),
-                                               "Error from pthread_attr_init in cta::threading::Thread::start()");
-
+  // Note: std::jthread does not support custom stack size.
+  // The m_stackSize parameter is kept for API compatibility but is not used.
   if (m_stackSize.has_value()) {
-    cta::exception::Errnum::throwOnReturnedErrno(
-      pthread_attr_setstacksize(&attr, m_stackSize.value()),
-      "Error from pthread_attr_setstacksize in cta::threading::Thread::start()");
+    // Log a warning if stack size was specified but cannot be applied
+    std::cerr << "Warning: Custom stack size is not supported with std::jthread. "
+              << "The stack size parameter will be ignored." << std::endl;
   }
-  cta::exception::Errnum::throwOnReturnedErrno(pthread_create(&m_thread, &attr, pthread_runner, this),
-                                               "Error from pthread_create in cta::threading::Thread::start()");
-  m_started = true;
+
+  m_thread = std::jthread([this](std::stop_token stop_token) {
+    try {
+      run();
+    } catch (std::exception& e) {
+      m_hadException = true;
+      int status = -1;
+      char* demangled = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &status);
+      if (!status) {
+        m_type += demangled;
+      } else {
+        m_type = typeid(e).name();
+      }
+      free(demangled);
+      m_what = e.what();
+    } catch (...) {
+      m_hadException = true;
+      m_type = "unknown";
+      m_what = "uncaught non-standard exception";
+      throw;
+    }
+  });
 }
 
 //------------------------------------------------------------------------------
-//wait
+// wait
 //------------------------------------------------------------------------------
 void Thread::wait() const {
-  void* res;
-  cta::exception::Errnum::throwOnReturnedErrno(pthread_join(m_thread, &res),
-                                               "Error from pthread_join in cta::threading::Thread::wait()");
-  if (m_hadException && res != PTHREAD_CANCELED) {
+  if (m_thread.joinable()) {
+    m_thread.join();
+  }
+
+  if (m_hadException) {
     std::string w = "Uncaught exception of type \"";
     w += m_type;
     w += "\" in Thread.run(): >>>>";
@@ -50,53 +66,13 @@ void Thread::wait() const {
 }
 
 //------------------------------------------------------------------------------
-//cancel
+// kill
 //------------------------------------------------------------------------------
 void Thread::kill() const {
-  if (!m_started) {
-    throw cta::exception::Exception("Trying to kill a non-started thread!");
+  if (m_thread.joinable()) {
+    std::cout << "Requesting stop for thread" << std::endl;
+    m_thread.request_stop();
   }
-  std::cout << "About to kill thread:" << m_thread << " (0x" << std::hex << m_thread << std::dec << ")" << std::endl;
-  cta::exception::Errnum::throwOnReturnedErrno(pthread_cancel(m_thread),
-                                               "Error from pthread_cancel in cta::threading::Thread::cancel()");
-}
-
-//------------------------------------------------------------------------------
-//pthread_runner
-//------------------------------------------------------------------------------
-void* Thread::pthread_runner(void* arg) {
-  /* static_casting a pointer to and from void* preserves the address.
-   * See https://stackoverflow.com/questions/573294/when-to-use-reinterpret-cast
-   */
-  Thread* _this = static_cast<Thread*>(arg);
-
-  // Set the thread cancellation type to immediate, for use in the tapeResourceManager tests
-  cta::exception::Errnum::throwOnReturnedErrno(
-    ::pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, nullptr),
-    "Error from pthread_setcancelstate in cta::threading::Thread::pthread_runner");
-  cta::exception::Errnum::throwOnReturnedErrno(
-    ::pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, nullptr),
-    "Error from pthread_setcanceltype in cta::threading::Thread::pthread_runner");
-  try {
-    _this->run();
-  } catch (std::exception& e) {
-    _this->m_hadException = true;
-    int status = -1;
-    char* demangled = abi::__cxa_demangle(typeid(e).name(), nullptr, nullptr, &status);
-    if (!status) {
-      _this->m_type += demangled;
-    } else {
-      _this->m_type = typeid(e).name();
-    }
-    free(demangled);
-    _this->m_what = e.what();
-  } catch (...) {
-    _this->m_hadException = true;
-    _this->m_type = "unknown";
-    _this->m_what = "uncaught non-standard exception";
-    throw;
-  }
-  return nullptr;
 }
 
 }  // namespace cta::threading

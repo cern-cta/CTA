@@ -68,9 +68,8 @@ public:
   /**
    * Atomically pop the element of the top of the pile AND return it with the
    * number of remaining elements in the queue
-   * @return a struct holding the popped element (into ret.value) and the number of elements
-   * remaining (into ret.remaining)
-   *
+   * @return a struct holding the popped element (into ret.value) and the
+   * number of elements remaining (into ret.remaining)
    */
   valueRemainingPair popGetSize() {
     m_sem.acquire();

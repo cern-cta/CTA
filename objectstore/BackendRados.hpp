@@ -6,6 +6,7 @@
 #pragma once
 
 #include "Backend.hpp"
+#include "common/exception/Errnum.hpp"
 #include "common/log/LogContext.hpp"
 #include "common/log/Logger.hpp"
 #include "common/process/threading/BlockingQueue.hpp"

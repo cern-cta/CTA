@@ -1,40 +1,22 @@
 /*
- * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2021 CERN, 2026 DESY
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #include "common/process/threading/RWLock.hpp"
 
 #include "common/exception/Exception.hpp"
-#include "common/utils/utils.hpp"
 
 namespace cta::threading {
-
-//------------------------------------------------------------------------------
-//constructor
-//------------------------------------------------------------------------------
-RWLock::RWLock() {
-  const int rc = pthread_rwlock_init(&m_lock, nullptr);
-  if (0 != rc) {
-    throw exception::Exception("Failed to initialise underlying pthread read-write lock: " + utils::errnoToString(rc));
-  }
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-RWLock::~RWLock() {
-  pthread_rwlock_destroy(&m_lock);
-}
 
 //------------------------------------------------------------------------------
 // rdlock
 //------------------------------------------------------------------------------
 void RWLock::rdlock() {
-  const int rc = pthread_rwlock_rdlock(&m_lock);
-  if (0 != rc) {
-    throw exception::Exception("Failed to take read lock on underlying pthread read-write lock: "
-                               + utils::errnoToString(rc));
+  try {
+    m_lock.lock_shared();
+  } catch (const std::exception& e) {
+    throw exception::Exception(std::string("Failed to take read lock on shared_mutex: ") + e.what());
   }
 }
 
@@ -42,20 +24,22 @@ void RWLock::rdlock() {
 // wrlock
 //------------------------------------------------------------------------------
 void RWLock::wrlock() {
-  const int rc = pthread_rwlock_wrlock(&m_lock);
-  if (0 != rc) {
-    throw exception::Exception("Failed to take write lock on underlying pthread read-write lock: "
-                               + utils::errnoToString(rc));
+  try {
+    m_lock.lock();
+  } catch (const std::exception& e) {
+    throw exception::Exception(std::string("Failed to take write lock on shared_mutex: ") + e.what());
   }
 }
 
 //------------------------------------------------------------------------------
-//unlock
+// unlock
 //------------------------------------------------------------------------------
 void RWLock::unlock() {
-  const int rc = pthread_rwlock_unlock(&m_lock);
-  if (0 != rc) {
-    throw exception::Exception("Failed to unlock underlying pthread read-write lock: " + utils::errnoToString(rc));
+  // Note: std::shared_mutex::unlock() works for both read and write locks
+  try {
+    m_lock.unlock();
+  } catch (const std::exception& e) {
+    throw exception::Exception(std::string("Failed to unlock shared_mutex: ") + e.what());
   }
 }
 

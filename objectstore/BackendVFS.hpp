@@ -6,6 +6,7 @@
 #pragma once
 
 #include "Backend.hpp"
+#include "common/process/threading/Mutex.hpp"
 #include "common/process/threading/Thread.hpp"
 
 #include <functional>
