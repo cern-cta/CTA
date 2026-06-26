@@ -121,45 +121,6 @@ int main(const int argc, char** const argv) {
     return EXIT_FAILURE;
   }
 
-  // Change process capabilities.
-  // process must be able to change user and group now.
-  // rawio cap must be permitted now to be able to perform raw IO once we are no longer root.
-  try {
-    cta::server::ProcessCap::setProcText("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
-    (*logPtr)(log::INFO,
-              "Set process capabilities",
-              {
-                {"capabilites", cta::server::ProcessCap::getProcText()}
-    });
-  } catch (const cta::exception::Exception& ex) {
-    std::vector<cta::log::Param> params = {cta::log::Param(semconv::log::exceptionMessage, ex.getMessage().str())};
-    (*logPtr)(log::ERR, "Caught an unexpected CTA exception, cta-taped cannot start", params);
-    return EXIT_FAILURE;
-  }
-
-  // Change user and group
-  const std::string userName = globalConfig.daemonUserName.value();
-  const std::string groupName = globalConfig.daemonGroupName.value();
-
-  try {
-    (*logPtr)(log::INFO,
-              "Setting user name and group name of current process",
-              {
-                {"userName",  userName },
-                {"groupName", groupName}
-    });
-    cta::System::setUserAndGroup(userName, groupName);
-    // There is no longer any need for the process to be able to change user,
-    // however the process should still be permitted to make the raw IO
-    // capability effective in the future when needed.
-    cta::server::ProcessCap::setProcText("cap_sys_rawio+p");
-
-  } catch (exception::Exception& ex) {
-    std::vector<log::Param> params = {log::Param(semconv::log::exceptionMessage, ex.getMessage().str())};
-    (*logPtr)(log::ERR, "Caught an unexpected CTA, cta-taped cannot start", params);
-    return EXIT_FAILURE;
-  }
-
   // Try to instantiate the logging system API
   try {
     if (commandLine->logToStdout) {
@@ -175,6 +136,11 @@ int main(const int argc, char** const argv) {
     return EXIT_FAILURE;
   }
   cta::log::Logger& log = *logPtr;
+
+  if (!server::ProcessCap::hasRawIoCap) {
+    log(log::ERR, "Missing CAP_SYS_RAWIO capability. Unable to use raw tape drive I/O.");
+    return EXIT_FAILURE;
+  }
 
   // Instantiate telemetry
   if (globalConfig.telemetryEnabled.value()) {

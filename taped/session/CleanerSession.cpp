@@ -100,11 +100,8 @@ void cta::tape::daemon::CleanerSession::setDriveDownAfterCleanerFailed(const std
 // exceptionThrowingExecute
 //------------------------------------------------------------------------------
 cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession::exceptionThrowingExecute() {
-  // Make effective the raw I/O process capability.
-  {
-    cta::server::ProcessCap::setProcText("cap_sys_rawio+ep");
-    std::vector<cta::log::Param> params = {cta::log::Param("capabilities", cta::server::ProcessCap::getProcText())};
-    m_log(cta::log::INFO, "CleanerSession made effective raw I/O capability to use tape", params);
+  if (!server::ProcessCap::hasRawIoCap) {
+    m_log(cta::log::ERR, "Missing CAP_SYS_RAWIO capability. Unable to use raw tape drive I/O.");
   }
 
   std::unique_ptr<drive::DriveInterface> drivePtr = createDrive();
