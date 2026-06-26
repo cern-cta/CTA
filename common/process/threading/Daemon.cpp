@@ -4,6 +4,7 @@
  */
 
 #include "common/process/threading/Daemon.hpp"
+
 #include "common/System.hpp"
 #include "common/exception/Errnum.hpp"
 

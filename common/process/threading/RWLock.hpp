@@ -5,24 +5,24 @@
 
 #pragma once
 
-#include <pthread.h>
+#include <shared_mutex>
 
 namespace cta::threading {
 
 /**
- * A C++ wrapper around a pthdead read-write lock.
- * variable.
+ * A C++ wrapper around a read-write lock.
+ * Now uses std::shared_mutex instead of pthread_rwlock_t.
  */
 class RWLock {
 public:
-  RWLock();
-  ~RWLock();
+  RWLock() = default;
+  ~RWLock() = default;
   void rdlock();
   void wrlock();
   void unlock();
 
 private:
-  pthread_rwlock_t m_lock;
+  mutable std::shared_mutex m_lock;
 };
 
 }  // namespace cta::threading

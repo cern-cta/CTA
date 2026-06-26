@@ -70,15 +70,9 @@ private:
 
   class EnqueueingWorkerThread : private cta::threading::Thread {
   public:
-    explicit EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*>& etq)
-        : m_enqueueingTasksQueue(etq) {}
-
-    EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*>& etq, std::optional<size_t> stackSize)
-        : cta::threading::Thread(stackSize),
-          m_enqueueingTasksQueue(etq) {}
+    EnqueueingWorkerThread(cta::threading::BlockingQueue<EnqueueingTask*>& etq) : m_enqueueingTasksQueue(etq) {}
 
     void start() { cta::threading::Thread::start(); }
-
     void wait() const { cta::threading::Thread::wait(); }
 
   private:
@@ -91,7 +85,7 @@ private:
     0;  // < This counter ensures destruction happens after the last thread completed.
   /// Delay introduced before posting to the task queue when it becomes too long.
   void delayIfNecessary(log::LogContext& lc);
-  cta::threading::Semaphore m_taskPostingSemaphore {5};
+  cta::threading::CountingSemaphore m_taskPostingSemaphore {5};
 
 public:
   void waitSubthreadsComplete() override;
@@ -100,18 +94,16 @@ public:
    * Initialise and start the OStoreDB threads
    *
    * @param osThreadPoolSize number of threads to start
-   * @param osThreadStackSize the thread stack size in MB
    */
-  void initConfig(const std::optional<int>& osThreadPoolSize, const std::optional<int>& osThreadStackSize) override;
+  void initConfig(const std::optional<int>& osThreadPoolSize);
 
 private:
   /**
    * Start the OStoreDB threads
    *
    * @param threadNumber number of threads to start
-   * @param stackSize the thread stack size in bytes
    */
-  void setThreadNumber(uint64_t threadNumber, const std::optional<size_t>& stackSize = std::nullopt);
+  void setThreadNumber(uint64_t threadNumber);
   void setBottomHalfQueueSize(uint64_t tasksNumber);
 
 public:

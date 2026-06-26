@@ -5,31 +5,28 @@
 
 #pragma once
 
-#include <pthread.h>
-#include <semaphore.h>
+#include <mutex>
 
 namespace cta::threading {
 
 /**
- * Forward declaration of the friend class that represents a pthread condition
- * variable.
+ * Forward declaration of the friend class that represents a condition variable.
  */
 class CondVar;
 
 /**
-* A simple exception throwing wrapper for pthread mutexes.
-* Inspired from the interface of Qt.
-*/
+ * A simple exception throwing wrapper for std::mutex
+ */
 class Mutex {
 public:
-  Mutex();
-  ~Mutex();
+  Mutex() = default;
+  ~Mutex() = default;
   void lock();
   void unlock();
 
 private:
   friend CondVar;
-  pthread_mutex_t m_mutex;
+  std::mutex m_mutex;
 };
 
 }  // namespace cta::threading

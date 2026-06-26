@@ -5,7 +5,6 @@
 
 #include "BackendRados.hpp"
 
-#include "common/exception/Errnum.hpp"
 #include "common/exception/NoSuchObject.hpp"
 #include "common/exception/TimeoutException.hpp"
 #include "common/log/LogContext.hpp"

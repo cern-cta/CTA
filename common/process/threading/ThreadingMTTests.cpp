@@ -66,8 +66,8 @@ private:
   }
 };
 
-TEST(cta_threading, PosixSemaphore_ping_pong) {
-  Semaphore_ping_pong<cta::threading::PosixSemaphore> spp;
+TEST(cta_threading, CountingSemaphore_ping_pong) {
+  Semaphore_ping_pong<cta::threading::CountingSemaphore> spp;
   spp.start();
   spp.thread0();
   spp.wait();

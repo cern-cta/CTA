@@ -243,10 +243,8 @@ FrontendService::FrontendService(const std::string& configFilename) {
   m_scheddb->setStatisticsCacheConfig(statisticsCacheConfig);
 
   /** [[OStoreDB specific]]
-   * The osThreadStackSize and osThreadPoolSize variables
-   * shall be removed once we decommission OStoreDB
+   * The osThreadPoolSize variables shall be removed once we decommission OStoreDB
    */
-  auto osThreadStackSize = config.getOptionValueInt("cta.schedulerdb.threadstacksize_mb");
   auto osThreadPoolSize = config.getOptionValueInt("cta.schedulerdb.numberofthreads");
 
   // Log cta.schedulerdb.numberofthreads
@@ -259,17 +257,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
     log(log::INFO, "Configuration entry", params);
   }
 
-  // Log cta.schedulerdb.threadstacksize_mb
-  if (osThreadStackSize.has_value()) {
-    std::vector<log::Param> params;
-    params.emplace_back("source", configFilename);
-    params.emplace_back("category", "cta.schedulerdb");
-    params.emplace_back("key", "threadstacksize_mb");
-    params.emplace_back("value", std::to_string(osThreadStackSize.value()));
-    log(log::INFO, "Configuration entry", params);
-  }
-
-  m_scheddb->initConfig(osThreadPoolSize, osThreadStackSize);
+  m_scheddb->initConfig(osThreadPoolSize);
   // Initialise the Scheduler
   m_scheduler = std::make_unique<cta::Scheduler>(*m_catalogue, *m_scheddb, m_schedulerBackendName);
 
