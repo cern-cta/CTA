@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2026 DESY
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 #pragma once
@@ -7,13 +8,10 @@
 #include "Mutex.hpp"
 #include "common/exception/Exception.hpp"
 
-#include <pthread.h>
-
 namespace cta::threading {
 
 /**
- * Forward declaration of the friend class representing a pthread condition
- * variable.
+ * Forward declaration of the friend class representing a condition variable.
  */
 class CondVar;
 
@@ -27,7 +25,7 @@ public:
   /**
    * Constructor
    *
-   * @param m pointer to Mutex to be owned
+   * @param m reference to Mutex to be locked
    */
   explicit MutexLocker(Mutex& m) : m_mutex(m) { m.lock(); }
 
@@ -47,7 +45,7 @@ public:
    */
   void lock() {
     if (m_locked) {
-      throw exception::Exception("In MutexLocker::lock(): trying to relock an locked mutex");
+      throw exception::Exception("In MutexLocker::lock(): trying to relock a locked mutex");
     }
     m_mutex.lock();
     m_locked = true;
@@ -70,7 +68,7 @@ private:
   friend CondVar;
 
   /**
-   * The mutex owened by this MutexLocker.
+   * The mutex owned by this MutexLocker.
    */
   Mutex& m_mutex;
 

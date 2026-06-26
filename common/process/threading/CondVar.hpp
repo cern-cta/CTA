@@ -1,12 +1,12 @@
 /*
  * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2026 DESY
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
 #pragma once
 
-#include <memory>
-#include <pthread.h>
+#include <condition_variable>
 
 namespace cta::threading {
 
@@ -16,19 +16,20 @@ namespace cta::threading {
 class MutexLocker;
 
 /**
- * Class representing a POSIX thread conditional variable.
+ * Class representing a condition variable.
+ * Now uses std::condition_variable instead of pthread_cond_t.
  */
 class CondVar {
 public:
   /**
    * Constructor.
    */
-  CondVar();
+  CondVar() = default;
 
   /**
    * Destructor.
    */
-  ~CondVar();
+  ~CondVar() = default;
 
   /**
    * Delete the copy constructor.
@@ -67,9 +68,9 @@ public:
 
 private:
   /**
-   * The underlying POSIX thread condition variable.
+   * The underlying condition variable.
    */
-  pthread_cond_t m_cond;
+  std::condition_variable m_cond;
 };  // class CondVar
 
 }  // namespace cta::threading

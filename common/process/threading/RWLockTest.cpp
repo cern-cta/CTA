@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2026 DESY
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -24,7 +25,7 @@ protected:
   public:
     RdLockerThread(cta::threading::RWLock& lock, uint32_t& counter) : m_lock(lock), m_counter(counter) {}
 
-    void run() {
+    void run() override {
       cta::threading::RWLockRdLocker rdLocker(m_lock);
 
       // Just read the counter - do not write to it
@@ -42,7 +43,7 @@ protected:
   public:
     WrLockerThread(cta::threading::RWLock& lock, uint32_t& counter) : m_lock(lock), m_counter(counter) {}
 
-    void run() {
+    void run() override {
       cta::threading::RWLockWrLocker wrLocker(m_lock);
       m_counter++;
     }

@@ -1,5 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2021 CERN
+ * SPDX-FileCopyrightText: 2026 DESY
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
@@ -7,26 +8,8 @@
 
 #include "common/exception/Exception.hpp"
 #include "common/process/threading/MutexLocker.hpp"
-#include "common/utils/utils.hpp"
 
 namespace cta::threading {
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-CondVar::CondVar() {
-  const int initRc = pthread_cond_init(&m_cond, nullptr);
-  if (0 != initRc) {
-    throw exception::Exception("Failed to initialise condition variable");
-  }
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-CondVar::~CondVar() {
-  pthread_cond_destroy(&m_cond);
-}
 
 //------------------------------------------------------------------------------
 // wait
@@ -36,9 +19,13 @@ void CondVar::wait(MutexLocker& locker) {
     throw exception::Exception("Underlying mutex is not locked.");
   }
 
-  const int waitRc = pthread_cond_wait(&m_cond, &locker.m_mutex.m_mutex);
-  if (0 != waitRc) {
-    throw exception::Exception("pthread_cond_wait failed:" + utils::errnoToString(waitRc));
+  try {
+    std::unique_lock<std::mutex> lock(locker.m_mutex.m_mutex, std::adopt_lock);
+    m_cond.wait(lock);
+    // Release the lock without destroying it (the MutexLocker still owns it)
+    lock.release();
+  } catch (const std::exception& e) {
+    throw exception::Exception(std::string("std::condition_variable::wait failed: ") + e.what());
   }
 }
 
@@ -46,9 +33,10 @@ void CondVar::wait(MutexLocker& locker) {
 // signal
 //------------------------------------------------------------------------------
 void CondVar::signal() {
-  const int signalRc = pthread_cond_signal(&m_cond);
-  if (0 != signalRc) {
-    throw exception::Exception("pthread_cond_signal failed:" + utils::errnoToString(signalRc));
+  try {
+    m_cond.notify_one();
+  } catch (const std::exception& e) {
+    throw exception::Exception(std::string("std::condition_variable::notify_one failed: ") + e.what());
   }
 }
 
@@ -56,9 +44,10 @@ void CondVar::signal() {
 // broadcast
 //------------------------------------------------------------------------------
 void CondVar::broadcast() {
-  const int broadcastRc = pthread_cond_broadcast(&m_cond);
-  if (0 != broadcastRc) {
-    throw exception::Exception("pthread_cond_broadcast failed:" + utils::errnoToString(broadcastRc));
+  try {
+    m_cond.notify_all();
+  } catch (const std::exception& e) {
+    throw exception::Exception(std::string("std::condition_variable::notify_all failed: ") + e.what());
   }
 }
 

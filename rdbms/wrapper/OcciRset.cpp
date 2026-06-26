@@ -8,6 +8,7 @@
 #include "common/exception/Exception.hpp"
 #include "common/exception/LostDatabaseConnection.hpp"
 #include "common/exception/NotImplementedException.hpp"
+#include "common/process/threading/MutexLocker.hpp"
 #include "common/utils/utils.hpp"
 #include "rdbms/DBException.hpp"
 #include "rdbms/wrapper/OcciStmt.hpp"
@@ -90,7 +91,7 @@ bool OcciRset::columnIsNull(const std::string& colName) const {
 // close
 //------------------------------------------------------------------------------
 void OcciRset::close() {
-  threading::Mutex locker(m_mutex);
+  threading::MutexLocker locker(m_mutex);
 
   if (nullptr != m_rset) {
     m_stmt->closeResultSet(m_rset);
@@ -147,7 +148,7 @@ std::optional<std::string> OcciRset::columnOptionalString(const std::string& col
 //------------------------------------------------------------------------------
 std::optional<uint8_t> OcciRset::columnOptionalUint8(const std::string& colName) const {
   try {
-    threading::Mutex locker(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
@@ -171,7 +172,7 @@ std::optional<uint8_t> OcciRset::columnOptionalUint8(const std::string& colName)
 //------------------------------------------------------------------------------
 std::optional<uint16_t> OcciRset::columnOptionalUint16(const std::string& colName) const {
   try {
-    threading::Mutex locker(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
@@ -195,7 +196,7 @@ std::optional<uint16_t> OcciRset::columnOptionalUint16(const std::string& colNam
 //------------------------------------------------------------------------------
 std::optional<uint32_t> OcciRset::columnOptionalUint32(const std::string& colName) const {
   try {
-    threading::Mutex locker(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
@@ -219,7 +220,7 @@ std::optional<uint32_t> OcciRset::columnOptionalUint32(const std::string& colNam
 //------------------------------------------------------------------------------
 std::optional<uint64_t> OcciRset::columnOptionalUint64(const std::string& colName) const {
   try {
-    threading::Mutex locker(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     const std::string stringValue = m_rset->getString(colIdx);
@@ -243,7 +244,7 @@ std::optional<uint64_t> OcciRset::columnOptionalUint64(const std::string& colNam
 //------------------------------------------------------------------------------
 std::optional<double> OcciRset::columnOptionalDouble(const std::string& colName) const {
   try {
-    threading::Mutex locker(m_mutex);
+    threading::MutexLocker locker(m_mutex);
 
     const int colIdx = m_colNameToIdx.getIdx(colName);
     if (m_rset->isNull(colIdx)) {

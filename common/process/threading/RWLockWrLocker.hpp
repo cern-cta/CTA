@@ -9,7 +9,7 @@ namespace cta::threading {
 class RWLock;
 
 /**
- * A scoped read lock on an RWLock
+ * A scoped write lock on an RWLock
  */
 class RWLockWrLocker {
 public:
@@ -18,7 +18,7 @@ public:
    *
    * Takes a write lock on the specified read-write lock
    *
-   * @param lock The read-write lock on which to take a read-lock
+   * @param lock The read-write lock on which to take a write-lock
    */
   explicit RWLockWrLocker(RWLock& lock);
 

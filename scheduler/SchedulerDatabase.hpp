@@ -98,9 +98,8 @@ public:
   /*============ Initialising the scheduler DB threads [[OStoreDB specific]] =================*/
   /**
    * @param osThreadPoolSize number of threads to start
-   * @param osThreadStackSize the thread stack size in MB
    */
-  virtual void initConfig(const std::optional<int>& osThreadPoolSize, const std::optional<int>& osThreadStackSize) {
+  virtual void initConfig(const std::optional<int>& osThreadPoolSize) {
     // intentionally empty, it is overriden in OStoreDB and shall have no implementation for RelationalDB
   }
 
