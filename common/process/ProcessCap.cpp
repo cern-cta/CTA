@@ -97,19 +97,20 @@ std::string getProcText() {
 }
 
 //------------------------------------------------------------------------------
-// setProcText
+// hasRawIoCap
 //------------------------------------------------------------------------------
-void setProcText(const std::string& text) {
-  cap_t cap = nullptr;
-  try {
-    cap = fromText(text);
-    setProc(cap);
-    cap_free(cap);
-  } catch (cta::exception::Exception& ne) {
-    cap_free(cap);
-    cta::exception::Exception ex;
-    ex.getMessage() << "Failed to set capabilities of process: " << ne.getMessage().str();
-    throw ex;
+bool hasRawIoCap() {
+  cap_t caps = cap_get_proc();
+  if (caps == NULL) {
+    return false;
   }
+  cap_flag_value_t value;
+  if (cap_get_flag(caps, CAP_SYS_RAWIO, CAP_EFFECTIVE, &value) == -1) {
+    cap_free(caps);
+    return false;
+  }
+  cap_free(caps);
+  return (value == CAP_SET);
 }
+
 }  //namespace cta::server::ProcessCap

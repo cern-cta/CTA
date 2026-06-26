@@ -72,13 +72,8 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
   lc.push(cta::log::Param("thread", "MainThread"));
   lc.push(cta::log::Param("tapeDrive", m_driveConfig.unitName));
 
-  // Make effective the raw I/O process capability.
-  try {
-    cta::server::ProcessCap::setProcText("cap_sys_rawio+ep");
-    cta::log::LogContext::ScopedParam sp(lc, cta::log::Param("capabilities", cta::server::ProcessCap::getProcText()));
-    lc.log(cta::log::INFO, "DataTransferSession made effective raw I/O capabilty to the tape");
-  } catch (const cta::exception::Exception&) {
-    lc.log(cta::log::ERR, "DataTransferSession failed to make effective raw I/O capabilty to use tape");
+  if (!server::ProcessCap::hasRawIoCap) {
+    lc.log(cta::log::ERR, "Missing CAP_SYS_RAWIO capability. Unable to use raw tape drive I/O.");
   }
 
   TapeSessionReporter tapeSessionReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
