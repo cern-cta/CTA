@@ -13,7 +13,7 @@ class CtaTapedHost(RemoteHost):
 
     @cached_property
     def log_file_path(self) -> Path:
-        return Path("/var" / "log" / "cta" / "cta-taped.log"
+        return Path("/var" / "log" / "cta" / "cta-taped.log")
 
     @cached_property
     def drive_name(self) -> str:

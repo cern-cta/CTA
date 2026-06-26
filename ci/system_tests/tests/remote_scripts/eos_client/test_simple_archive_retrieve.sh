@@ -24,9 +24,9 @@ eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
 echo
 echo "Information about the testing file:"
 echo "********"
-  eos root://${EOS_MGM_HOST} attr ls ${TEST_DIR}/${TEST_FILE_NAME}
-  eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
-  eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} attr ls ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
 
 echo
 echo "Removing disk replica as poweruser1:powerusers (12001:1200)"
@@ -35,8 +35,8 @@ KRB5CCNAME=/tmp/${EOS_POWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 eos -r 0 0 root:/
 
 echo
 echo "Information about the testing file without disk replica"
-  eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
-  eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
 
 
 echo
@@ -52,9 +52,9 @@ echo "FILE RETRIEVED FROM DISK"
 echo
 echo "Information about the testing file:"
 echo "********"
-  eos root://${EOS_MGM_HOST} attr ls ${TEST_DIR}/${TEST_FILE_NAME}
-  eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
-  eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} attr ls ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} ls -l ${TEST_DIR}/${TEST_FILE_NAME}
+eos root://${EOS_MGM_HOST} info ${TEST_DIR}/${TEST_FILE_NAME}
 
 # Delete the file so it doesn't interfere with tests in client_ar.sh
 echo "eos root://${EOS_MGM_HOST} rm ${TEST_DIR}/${TEST_FILE_NAME}"

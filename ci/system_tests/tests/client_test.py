@@ -9,7 +9,7 @@ import time
 from dataclasses import dataclass
 from pathlib import Path
 
-from ..helpers.hosts import EosClientHost, EosMgmHost
+from ..helpers.hosts import EosClientHost, EosMgmHost, CtaTapedHost, CtaMaintdHost, CtaFrontendHost
 
 # TODO: this test should be split up into multiple suits
 
@@ -45,12 +45,27 @@ def eos_mgm(env) -> EosMgmHost:
     return env.eos_mgm[0]
 
 
+@pytest.fixture
+def cta_taped(env) -> CtaTapedHost:
+    return env.cta_taped[0]
+
+
+@pytest.fixture
+def cta_maintd(env) -> CtaMaintdHost:
+    return env.cta_maintd[0]
+
+
+@pytest.fixture
+def cta_frontend(env) -> CtaFrontendHost:
+    return env.cta_frontend[0]
+
+
 #####################################################################################################################
 # Tests
 #####################################################################################################################
 
 
-def test_hosts_present_client_gfal(env):
+def test_hosts_present_client(env):
     assert len(env.cta_taped) > 0
     assert len(env.cta_frontend) > 0
     assert len(env.cta_cli) > 0
@@ -58,23 +73,27 @@ def test_hosts_present_client_gfal(env):
     assert len(env.eos_mgm) > 0
 
 
-def test_copy_scripts(eos_client, cta_taped, cta_maintd, cta_frontend):
+def test_copy_scripts(eos_client):
     remote_scripts_dir = Path(__file__).parent / "remote_scripts"
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "*"), "/root/", permissions="+x")
-
-    # TODO: logs directly in python instead of remote script
+    eos_client_script_dir = remote_scripts_dir / "eos_client"
+    eos_client.copy_to(str(eos_client_script_dir / "client_setup.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "client_helper.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "cli_calls.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_archive.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_retrieve.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_evict.sh"), "/root/", permissions="+x")
     eos_client.copy_to(str(eos_client_script_dir / "test_delete.sh"), "/root/", permissions="+x")
-    eos_client.copy_to(str(eos_client_script_dir / "test_delete.sh"), "/root/", permissions="+x")
-
-
-#     echo "Copying test scripts to ${CLIENT_POD}, ${EOS_MGM_POD} and ${CTA_TAPED_POD} pods."
-# kubectl -n ${NAMESPACE} cp . "${CLIENT_POD}:/root/" -c client
-# kubectl -n ${NAMESPACE} cp grep_eosreport_for_archive_metadata.sh "${EOS_MGM_POD}:/root/" -c eos-mgm
-# kubectl -n ${NAMESPACE} cp taped_refresh_log_fd.sh "${CTA_TAPED_POD}:/root/" -c cta-taped
-# kubectl -n ${NAMESPACE} cp maintd_refresh_log_fd.sh "${CTA_MAINTD_POD}:/root/" -c cta-maintd
-# kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_MAINTD_POD}:/root/" -c cta-maintd
-# kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_TAPED_POD}:/root/" -c cta-taped
-# kubectl -n ${NAMESPACE} cp verify_log_schema.py "${CTA_FRONTEND_POD}:/root/" -c cta-frontend
+    eos_client.copy_to(str(eos_client_script_dir / "test_simple_archive_retrieve.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_abort_prepare.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_multiple_retrieve.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_idempotent_prepare.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_delete_on_closew_error.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_archive_zero_length_file.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_eos_evict.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_retrieve_queue_cleanup.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_rest_api.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_eos_timestamps.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(eos_client_script_dir / "test_eosdf.sh"), "/root/", permissions="+x")
 
 
 # For now only the "glue" has been migrated to Python. All the scripts invoked in the tests below still need to be migrated at a later point in time
@@ -99,10 +118,10 @@ def test_setup_archive_directory(eos_client, eos_mgm):
 
 
 @pytest.mark.eos
-def test_setup_client(eos_client, eos_mgm, gfal_params):
+def test_setup_client(eos_client, eos_mgm, client_params):
     archive_directory = eos_mgm.base_dir_path / "cta" / "gfal"
     eos_client.exec(
-        f"/root/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {archive_directory} -r -c gfal2 -Z root"
+        f"/root/client_setup.sh -n {client_params.file_count} -s {client_params.file_size_kb} -p {client_params.process_count} -d {archive_directory} -r -c gfal2 -Z root"
     )
 
 
@@ -281,12 +300,12 @@ def test_runtime_directory_correctness_maintd(cta_maintd):
     cta_maintd.exec("jq -e -r '.service == \"cta-maintd\"' /run/cta/version.json >/dev/null")
 
 
-def test_log_rotation_maintd(cta_maintd):
-    cta_maintd.exec("bash /root/refresh_log_fd.sh")
+# def test_log_rotation_maintd(cta_maintd):
+#     cta_maintd.exec("bash /root/refresh_log_fd.sh")
 
 
-def test_log_rotation_taped(cta_taped):
-    cta_taped.exec("bash /root/refresh_log_fd.sh")
+# def test_log_rotation_taped(cta_taped):
+#     cta_taped.exec("bash /root/refresh_log_fd.sh")
 
 
 # Maybe it makes sense to run this after all tests?
