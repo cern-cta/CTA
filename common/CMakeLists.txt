@@ -103,7 +103,6 @@ set (COMMON_LIB_SRC_FILES
   runtime/health/HealthServer.cpp
   runtime/config/parsing/ParseResult.cpp
   process/ProcessCap.cpp
-  process/threading/ChildProcess.cpp
   process/threading/CondVar.cpp
   process/threading/Daemon.cpp
   process/threading/Mutex.cpp
