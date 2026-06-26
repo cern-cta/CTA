@@ -137,7 +137,7 @@ int main(const int argc, char** const argv) {
   }
   cta::log::Logger& log = *logPtr;
 
-  if (!server::ProcessCap::hasRawIoCap) {
+  if (!server::ProcessCap::hasRawIoCap()) {
     log(log::ERR, "Missing CAP_SYS_RAWIO capability. Unable to use raw tape drive I/O.");
     return EXIT_FAILURE;
   }

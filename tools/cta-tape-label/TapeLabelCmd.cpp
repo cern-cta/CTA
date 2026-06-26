@@ -360,6 +360,16 @@ void TapeLabelCmd::rewindDrive(cta::tape::drive::DriveInterface& drive) {
 }
 
 //------------------------------------------------------------------------------
+// setProcessCapabilities
+//------------------------------------------------------------------------------
+void TapeLabelCmd::setProcessCapabilities(const std::string& capabilities) {
+  cta::server::ProcessCap::setProcText(capabilities);
+  std::vector<cta::log::Param> params;
+  params.emplace_back("capabilities", capabilities);
+  m_log(cta::log::INFO, "Label session set process capabilities", params);
+}
+
+//------------------------------------------------------------------------------
 // readConfiguration
 //------------------------------------------------------------------------------
 void TapeLabelCmd::readAndSetConfiguration(const std::string& userName,

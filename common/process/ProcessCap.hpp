@@ -18,6 +18,13 @@ namespace cta::server::ProcessCap {
    */
 std::string getProcText();
 
-bool hasRawIoCap();
+/**
+   * C++ wrapper around the C functions cap_from_text() and cap_set_proc().
+   *
+   * @text The string representation the capabilities that the current
+   * process should have.
+   */
+void setProcText(const std::string& text);
 
+bool hasRawIoCap();
 }  // namespace cta::server::ProcessCap
