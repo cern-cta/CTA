@@ -72,7 +72,7 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
   lc.push(cta::log::Param("thread", "MainThread"));
   lc.push(cta::log::Param("tapeDrive", m_driveConfig.unitName));
 
-  if (!server::ProcessCap::hasRawIoCap) {
+  if (!server::ProcessCap::hasRawIoCap()) {
     lc.log(cta::log::ERR, "Missing CAP_SYS_RAWIO capability. Unable to use raw tape drive I/O.");
   }
 

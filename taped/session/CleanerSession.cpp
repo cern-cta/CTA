@@ -100,7 +100,7 @@ void cta::tape::daemon::CleanerSession::setDriveDownAfterCleanerFailed(const std
 // exceptionThrowingExecute
 //------------------------------------------------------------------------------
 cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::CleanerSession::exceptionThrowingExecute() {
-  if (!server::ProcessCap::hasRawIoCap) {
+  if (!server::ProcessCap::hasRawIoCap()) {
     m_log(cta::log::ERR, "Missing CAP_SYS_RAWIO capability. Unable to use raw tape drive I/O.");
   }
 
