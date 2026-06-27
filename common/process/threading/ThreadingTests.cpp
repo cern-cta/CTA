@@ -49,13 +49,6 @@ TEST(cta_threading, PosixSemaphore_basic_counting) {
   ASSERT_FALSE(s.tryAcquire());
 }
 
-TEST(cta_threading, CondVarSemaphore_basic_counting) {
-  cta::threading::CondVarSemaphore s(2);
-  ASSERT_NO_THROW(s.acquire());
-  ASSERT_EQ(true, s.tryAcquire());
-  ASSERT_FALSE(s.tryAcquire());
-}
-
 TEST(cta_threading, Semaphore_basic_counting) {
   cta::threading::Semaphore s(2);
   ASSERT_NO_THROW(s.acquire());

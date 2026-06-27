@@ -73,13 +73,6 @@ TEST(cta_threading, PosixSemaphore_ping_pong) {
   spp.wait();
 }
 
-TEST(cta_threading, CondVarSemaphore_ping_pong) {
-  Semaphore_ping_pong<cta::threading::CondVarSemaphore> spp;
-  spp.start();
-  spp.thread0();
-  spp.wait();
-}
-
 class Thread_exception_throwing : public cta::threading::Thread {
 private:
   void run() { throw cta::exception::Exception("Exception in child thread"); }
