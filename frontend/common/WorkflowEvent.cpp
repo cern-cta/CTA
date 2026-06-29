@@ -151,7 +151,7 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
 
   utils::Timer t;
   uint64_t archiveFileId;
-  // check also the standalone storage class attribute, if not set, fallback to xattr
+  // Check the standalone storage class attribute
   std::string storageClassStr = m_event.file().storage_class();
   if (!storageClassStr.empty()) {
     if (storageClassStr == "fail_on_closew_test") {
@@ -161,26 +161,7 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
         m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClassStr, requester, m_lc);
     }
   } else {
-    // fallback to xattr
-    auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
-    if (m_event.file().xattr().end() == storageClassItor) {
-      // Fall back to old xattr format
-      storageClassItor = m_event.file().xattr().find("CTA_StorageClass");
-      if (m_event.file().xattr().end() == storageClassItor) {
-        throw exception::PbException("CREATE: sys.archive.storage_class extended attribute is not set");
-      }
-    }
-    const std::string storageClass = storageClassItor->second;
-    if (storageClass.empty()) {
-      throw exception::PbException("CREATE: sys.archive.storage_class extended attribute is set to an empty string");
-    }
-    // For testing, this storage class will always fail on CLOSEW. Allow it to pass CREATE and don't allocate an archive Id from the pool.
-    if (storageClassItor->second == "fail_on_closew_test") {
-      archiveFileId = std::numeric_limits<uint64_t>::max();
-    } else {
-      archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClass, requester, m_lc);
-    }
-    storageClassStr = storageClass;
+    throw exception::PbException("CREATE: storage class is not set.");
   }
 
   // Create a log entry
@@ -195,10 +176,6 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
   response.mutable_xattr()->insert(
     google::protobuf::MapPair<std::string, std::string>("sys.archive.file_id", std::to_string(archiveFileId)));
   response.set_archive_file_id(std::to_string(archiveFileId));
-  // Set the storage class
-  response.mutable_xattr()->insert(
-    google::protobuf::MapPair<std::string, std::string>("sys.archive.storage_class", storageClassStr));
-  response.set_storage_class(storageClassStr);
 
   // Set response type
   response.set_type(xrd::Response::RSP_SUCCESS);
@@ -213,16 +190,10 @@ void WorkflowEvent::processCLOSEW(xrd::Response& response) {
   checkIsNotEmptyString(m_event.transport().report_url(), "m_event.transport.report_url");
   checkIsNotEmptyString(m_event.wf().instance().name(), "m_event.wf.instance.name");
 
-  // check storage class attribute in the first-class attributes, then fall back to checking the xattrs
-  // if it is not set
+  // Check storage class attribute in the first-class attributes
   std::string storageClassStr = m_event.file().storage_class();
   if (storageClassStr.empty()) {
-    // Unpack message
-    const auto storageClassItor = m_event.file().xattr().find("sys.archive.storage_class");
-    if (m_event.file().xattr().end() == storageClassItor) {
-      throw exception::PbException("CLOSEW: Failed to find the extended attribute named sys.archive.storage_class");
-    }
-    storageClassStr = storageClassItor->second;
+    throw exception::PbException("CLOSEW: storage class is not set.");
   }
 
   // For testing: this storage class will always fail
