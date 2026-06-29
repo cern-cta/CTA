@@ -4,6 +4,7 @@
 mgm:
   xrd:
     extraConfig: |
+      mgmofs.reportstorepath /var/log/eos/report
       xrootd.chksum  adler32
       mgmofs.archivedir /var/eos/archive
       mgmofs.prepare.dest.space default
@@ -11,8 +12,6 @@ mgm:
       mgmofs.wfendpoint grpcs://cta-frontend-wfe:10956
       mgmofs.wfresource /ctafrontend
       mgmofs.wfjwttokenpath /etc/cta/ctaeos.jwt
-      # mgmofs.wftlscertpath /etc/grid-security/certificates/ctaeos-self-signed.crt.pem
-      # mgmofs.wftlskeypath /etc/grid-security/certificates/ctaeos-self-signed.key.pem
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
@@ -72,37 +71,15 @@ mgm:
           secretName: ctaeos-self-signed-key-pem
 
 fst:
-  podManagementPolicy: Parallel
-
-  persistence:
-    enabled: true
-    storageClass: "fast-ssd"
-    annotations: {}
-    accessModes:
-      - ReadWriteOnce
-    size: 40Gi
-
   xrd:
     # Increasing 2x the thread pool size w.r.t. the minimal default 256.
-    sched: "mint 16 maxt 512 idle 64"
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
       fstofs.wfendpoint grpcs://cta-frontend-wfe:10956
       fstofs.wfresource /ctafrontend
       fstofs.filemd_handler  attr
       fstofs.wfjwttokenpath /etc/cta/ctaeos.jwt
-      # fstofs.wftlscertpath /etc/grid-security/certificates/ctaeos-self-signed.crt.pem
-      # fstofs.wftlskeypath /etc/grid-security/certificates/ctaeos-self-signed.key.pem
       tpc.trace  all
 
   initContainer: *init-container
   extraVolumes: *extra-volumes
-
-qdb:
-  persistence:
-    enabled: true
-    storageClass: "fast-ssd"
-    annotations: {}
-    accessModes:
-      - ReadWriteOnce
-    size: 40Gi

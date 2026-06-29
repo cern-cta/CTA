@@ -52,9 +52,11 @@ preRun:
     #!/usr/bin/bash
 
 postRun:
-  enabled: false
+  enabled: true
   script: |
     #!/usr/bin/bash
+    echo "Process crashed. Sleeping..."
+    sleep infinity
 
 pod:
   extraSpec:

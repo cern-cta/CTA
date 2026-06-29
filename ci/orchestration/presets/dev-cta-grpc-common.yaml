@@ -1,0 +1,67 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+global:
+  securityContext:
+    # These are set to True to allow attaching with gdb to the grpc frontend.
+    allowPrivilegeEscalation: True
+    privileged: True
+
+frontend-wfe:
+  port: 10956
+  conf:
+    # set by more specific config
+
+frontend-admin:
+  # Enabled to allow debugging after a crash
+  port: 10956
+  conf:
+    # set by more specific config
+
+cli:
+  useGrpc: true
+  conf:
+    # set by more specific config
+
+  extraEnv:
+    - name: GRPC_SETUP_JWT
+      value: "true"
+
+  extraVolumes:
+    volumeMounts:
+      - name: grid-security
+        mountPath: /etc/grid-security
+        readOnly: false
+      - name: grpc-certs
+        mountPath: /etc/grpc-certs
+        readOnly: true
+    volumes:
+      - name: grid-security
+        emptyDir: {}
+      - name: grpc-certs
+        secret:
+          secretName: ca-crt-pem
+
+client:
+  useGrpc: true
+  conf:
+    # set by more specific config
+
+  extraEnv:
+    - name: GRPC_SETUP_JWT
+      value: "true"
+
+  extraVolumes:
+    volumeMounts:
+      - name: grid-security
+        mountPath: /etc/grid-security
+        readOnly: false
+      - name: grpc-certs
+        mountPath: /etc/grpc-certs
+        readOnly: true
+    volumes:
+      - name: grid-security
+        emptyDir: {}
+      - name: grpc-certs
+        secret:
+          secretName: ca-crt-pem

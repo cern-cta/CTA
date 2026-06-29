@@ -77,9 +77,11 @@ preRun:
 
 # Script to execute in the main container after frontend exited
 postRun:
-  enabled: false
+  enabled: true
   script: |
     #!/usr/bin/bash
+    echo "Process crashed. Sleeping..."
+    sleep infinity
 
 pod:
   extraSpec:

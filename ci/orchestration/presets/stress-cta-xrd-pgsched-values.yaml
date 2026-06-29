@@ -13,7 +13,7 @@ global:
       - name: coredumps
         mountPath: /var/log/tmp
 
-frontend:
+frontend-wfe:
   grpc:
     enabled: false
   xrd:
@@ -23,6 +23,18 @@ frontend:
         numberOfConnections: 50
       logger:
         logLevel: "WARNING"
+
+frontend-admin:
+  grpc:
+    enabled: false
+  xrd:
+    enabled: true
+    conf:
+      catalogue:
+        numberOfConnections: 50
+      logger:
+        logLevel: "WARNING"
+
 taped:
   conf:
     taped:

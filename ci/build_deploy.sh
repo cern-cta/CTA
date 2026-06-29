@@ -46,7 +46,7 @@ usage() {
   echo "      --upgrade-cta:                    Upgrades the existing CTA instance with a new image instead of spawning an instance from scratch."
   echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
   echo "      --eos-image-tag <tag>:            Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
-  echo "      --cta-config <path>:              Custom Values file to pass to the CTA Helm chart. Defaults to: presets/dev-cta-xrd-values.yaml"
+  echo "      --cta-config <paths>:             Custom Values file(s) to pass to the CTA Helm chart. Comma-separated for composition. Defaults to: presets/dev-cta-xrd-values.yaml"
   echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart. Defaults to: presets/dev-eos-xrd-values.yaml"
   echo "      --use-public-repos:               Use the public yum repos instead of the internal yum repos. Use when you do not have access to the CERN network."
   echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
@@ -109,6 +109,7 @@ build_deploy() {
   local eos_enabled=true
   local dcache_enabled=false
   local enable_address_sanitizer=false
+  local -a cta_configs=()
 
 
   # Parse command line arguments
@@ -231,7 +232,10 @@ build_deploy() {
       ;;
     --cta-config)
       if [[ $# -gt 1 ]]; then
-        cta_config="$2"
+        IFS=',' read -ra configs <<< "$2"
+        for config in "${configs[@]}"; do
+          cta_configs+=("${config}")
+        done
         shift
       else
         error_usage "--cta-config requires an argument"
@@ -482,9 +486,11 @@ build_deploy() {
         extra_spawn_options+=" --eos-config ${eos_config}"
       fi
 
-      if [[ -n "${cta_config}" ]]; then
-        extra_spawn_options+=" --cta-config ${cta_config}"
+      if [[ ${#cta_configs[@]} -gt 0 ]]; then
+        cta_config_str=$(IFS=,; echo "${cta_configs[*]}")
+        extra_spawn_options+=" --cta-config ${cta_config_str}"
       fi
+
       if [[ "$local_telemetry" = true ]]; then
         extra_spawn_options+=" --local-telemetry"
       fi
