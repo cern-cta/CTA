@@ -184,14 +184,17 @@ int main(const int argc, char* const* const argv) {
   grpc_ssl_client_certificate_request_type cert_request_type = GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE;
 
   if (useTLS) {
+    using namespace grpc::experimental;
+
     lc.log(log::INFO, "Using gRPC over TLS");
     if (frontendService->getOperationMode() == cta::frontend::OperationMode::WFE
         && frontendService->getWfeAuthMethod() == cta::frontend::AuthMethod::MTLS) {
+      // mTLS requires a check on the client certificate
       cert_request_type = GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY;
       lc.log(log::INFO, "Using mutual TLS to authenticate WFE client requests");
     }
-    grpc::SslServerCredentialsOptions tls_options(cert_request_type);
-    grpc::SslServerCredentialsOptions::PemKeyCertPair cert;
+
+    IdentityKeyCertPair cert;
 
     if (!frontendService->getTlsKey().has_value()) {
       throw exception::UserError("TLS specified but TLS key is not defined");  // cppcheck-suppress throwInEntryPoint
@@ -205,20 +208,26 @@ int main(const int argc, char* const* const argv) {
 
       auto cert_file = frontendService->getTlsCert().value();
       logMsg << " | cert: " + cert_file;
-      cert.cert_chain = cta::utils::file2string(cert_file);
+      cert.certificate_chain = cta::utils::file2string(cert_file);
 
+      std::shared_ptr<StaticDataCertificateProvider> provider;
+
+      // if we have a CA certificate chain, use it
       if (auto ca_chain = frontendService->getTlsChain(); ca_chain.has_value()) {
         logMsg << " | chain: " + ca_chain.value();
-        tls_options.pem_root_certs = cta::utils::file2string(ca_chain.value());
+        provider = std::make_shared<StaticDataCertificateProvider>(cta::utils::file2string(ca_chain.value()),
+                                                                   std::vector {cert});
       } else {
         logMsg << " | <no chain file>";
-        tls_options.pem_root_certs = "";
+        provider = std::make_shared<StaticDataCertificateProvider>(std::vector {cert});
       }
-      tls_options.pem_key_cert_pairs.emplace_back(std::move(cert));
-
       lc.log(log::INFO, logMsg.str());
 
-      creds = grpc::SslServerCredentials(tls_options);
+      TlsServerCredentialsOptions tls_options {provider};
+      tls_options.set_cert_request_type(cert_request_type);
+      tls_options.watch_root_certs();
+      tls_options.watch_identity_key_cert_pairs();
+      creds = TlsServerCredentials(tls_options);
     }
   } else {
     lc.log(log::INFO, "Using gRPC over plaintext socket");
