@@ -8,6 +8,9 @@ global:
     privileged: True
 
 frontend-wfe:
+  conf:
+    auth:
+      method: mtls
   # Enabled to allow debugging after a crash
   postRun:
     enabled: true
