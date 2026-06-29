@@ -14,15 +14,6 @@ pod:
   extraSpec:
     terminationGracePeriodSeconds: 1
 
-# Additional Extra environment variables
-extraEnv:
-
 extraVolumes:
-  volumes:
-    - name: grpc-certs
-      secret:
-        secretName: ca-crt-pem
   volumeMounts:
-    - name: grpc-certs
-      mountPath: /etc/grpc-certs
-      readOnly: true
+  volumes:

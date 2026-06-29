@@ -20,8 +20,8 @@ trigger-grpc-frontend-pipeline:
   extends:
     - .trigger-child-pipeline
   variables:
-    DEFAULT_CTA_VALUES_FILE: "presets/dev-cta-grpc-values.yaml"
-    DEFAULT_EOS_VALUES_FILE: "presets/dev-eos-grpc-values.yaml"
+    DEFAULT_CTA_VALUES_CHAIN: "presets/dev-cta-grpc-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
+    DEFAULT_EOS_VALUES_FILE: "presets/eos/auth-jwt.yaml"
 
 trigger-postgres-scheduler-pipeline:
   extends:

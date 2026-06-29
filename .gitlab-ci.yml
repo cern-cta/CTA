@@ -157,19 +157,22 @@ variables:
       - "TRUE"
       - "FALSE"
 
-  # Pass a file here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
-  DEFAULT_CTA_VALUES_FILE:
+  # Pass a file (or comma-separated list) here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
+  DEFAULT_CTA_VALUES_CHAIN:
     description: "Path to a values.yaml file to be passed to the CTA Helm chart."
     value: "presets/dev-cta-xrd-values.yaml"
     options:
       - "presets/dev-cta-xrd-values.yaml"
-      - "presets/dev-cta-grpc-values.yaml"
+      - "presets/dev-cta-grpc-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
+      - "presets/dev-cta-grpc-common.yaml,presets/frontend-wfe/auth-mtls.yaml,presets/frontend-admin/auth-jwt.yaml"
+
   DEFAULT_EOS_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the EOS Helm chart."
     value: "presets/dev-eos-xrd-values.yaml"
     options:
       - "presets/dev-eos-xrd-values.yaml"
-      - "presets/dev-eos-grpc-values.yaml"
+      - "presets/eos/auth-jwt.yaml"
+      - "presets/eos/auth-mtls.yaml"
 
   STRESS_CTA_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the CTA Helm chart for the stress test."

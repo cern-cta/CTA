@@ -16,6 +16,7 @@ conf:
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
     rmcHost: "cta-rmcd" # override with localhost if using hostnetwork
+    schedulerNumberOfConnections: 3
   telemetry:
     enabled: false
     retainInstanceIdOnRestart: false
@@ -46,9 +47,11 @@ preRun:
 
 # Script to execute in the main container after the taped process exited
 postRun:
-  enabled: false
+  enabled: true
   script: |
     #!/usr/bin/bash
+    echo "Process crashed. Sleeping..."
+    sleep infinity
 
 # The following is an example format of drives
 #

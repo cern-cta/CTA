@@ -1,0 +1,33 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+frontend-admin:
+  # Enabled to allow debugging after a crash
+  conf:
+    auth:
+      methods:
+        - jwt
+
+cli:
+  useGrpc: true
+  conf:
+    cta:
+      endpoint: cta-frontend-admin:10956
+      grpc:
+        cta_admin_auth_method: jwt
+        jwt_token_path: /etc/grid-security/jwt-token-grpc
+        tls:
+          chain_cert_path: /etc/grpc-certs/ca.crt.pem
+          enabled: true
+
+client:
+  useGrpc: true
+  conf:
+    cta:
+      endpoint: cta-frontend-admin:10956
+      grpc:
+        cta_admin_auth_method: jwt
+        jwt_token_path: /etc/grid-security/jwt-token-grpc
+        tls:
+          chain_cert_path: /etc/grpc-certs/ca.crt.pem
+          enabled: true

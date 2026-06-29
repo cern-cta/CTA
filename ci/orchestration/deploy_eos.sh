@@ -89,7 +89,7 @@ deploy() {
     helm_flags+=" --set global.tag=${eos_image_tag}"
   fi
   if [[ -n "$eos_image_tag" ]]; then
-    helm_flags+=" --values ${eos_config}"
+    helm_flags+=" --values presets/dev-eos-common.yaml --values ${eos_config}"
   fi
 
   log_run helm upgrade --install eos oci://registry.cern.ch/eos/charts/server --version ${eos_server_chart_version} \
