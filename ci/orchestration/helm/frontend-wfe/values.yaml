@@ -44,7 +44,7 @@ conf:
     caCert: /etc/grpc-certs/ca/ca.crt.pem
 
   auth:
-    method: mtls
+    method: jwt
     config:
       kerberos:
         secretName: cta-frontend-keytab

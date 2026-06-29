@@ -58,9 +58,8 @@ mgm:
       mgmofs.archivedir /var/eos/archive
       mgmofs.prepare.dest.space default
       mgmofs.tapeenabled true
-      mgmofs.protowfendpoint cta-frontend-wfe:10955
-      mgmofs.protowfresource /ctafrontend
-      mgmofs.protowfusegrpc false
+      mgmofs.wfendpoint root://cta-frontend-wfe:10955
+      mgmofs.wfresource /ctafrontend
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
@@ -128,9 +127,8 @@ fst:
     sched: "mint 16 maxt 512 idle 64"
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
-      fstofs.protowfendpoint cta-frontend-wfe:10955
-      fstofs.protowfresource /ctafrontend
-      fstofs.protowfusegrpc false
+      fstofs.wfendpoint root://cta-frontend-wfe:10955
+      fstofs.wfresource /ctafrontend
       fstofs.filemd_handler  attr
       tpc.trace  all
 
