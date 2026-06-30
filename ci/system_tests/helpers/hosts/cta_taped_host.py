@@ -26,6 +26,18 @@ class CtaTapedHost(RemoteHost):
         return device
 
     @cached_property
+    def drive_control_path(self) -> str:
+        return self.exec_with_output("printenv DRIVE_CONTROL_PATH")
+
+    @cached_property
+    def drive_index(self) -> int:
+        control_path = self.drive_control_path
+        index = control_path.removeprefix("smc")
+        if control_path.startswith("smc") and index.isdigit():
+            return int(index)
+        raise RuntimeError(f"Could not determine drive index from DRIVE_CONTROL_PATH={control_path}")
+
+    @cached_property
     def library_device(self) -> str:
         device: str = self.exec_with_output("printenv LIBRARY_DEVICE")
         if not device.startswith("/dev/"):

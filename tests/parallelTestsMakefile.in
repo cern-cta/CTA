@@ -10,14 +10,14 @@ valgrind: valgrindMultiprocess helgrindMultiprocess baretests
 	valgrind -q @VALGRIND_OPTS_STR@                                               \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr           \
 	/usr/bin/cta-unitTests                                                        \
-	--gtest_filter="-OSMTapeFileTest.*" 2>&1 | ts "vg: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	--gtest_filter="-OSMTapeFileTest.*:EnstoreTapeFileTest.*" 2>&1 | ts "vg: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
 valgrindOsmTape: valgrindMultiprocess helgrindMultiprocess baretests
 	valgrind -q @VALGRIND_OPTS_STR@                                               \
 	--show-mismatched-frees=no                                                    \
 	--suppressions=/usr/share/cta-@CTA_VERSION@/unittest/valgrind.suppr           \
   /usr/bin/cta-unitTests                                                        \
-	--gtest_filter="OSMTapeFileTest.*" 2>&1 | ts "vgot: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
+	--gtest_filter="OSMTapeFileTest.*:EnstoreTapeFileTest.*" 2>&1 | ts "vgot: %b %d %H:%M:%S"; (exit $${PIPESTATUS[0]})
 
 valgrindMultiprocess: baretests
 	valgrind -q @VALGRIND_OPTS_STR@ --child-silent-after-fork=yes                 \
