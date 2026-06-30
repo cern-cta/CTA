@@ -92,6 +92,8 @@ spec:
           value: {{ .logicalLibraryName }}
         - name: DRIVE_DEVICE
           value: {{ .device }}
+        - name: DRIVE_CONTROL_PATH
+          value: {{ .controlPath }}
         - name: SCHEDULER_BACKEND
           value: {{ $schedulerConfig.backend | quote }}
         - name: XrdSecPROTOCOL
