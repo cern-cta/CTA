@@ -2,30 +2,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Note that this values can be used in combination with other values files
-frontend:
-  xrd:
-    conf:
-      telemetry:
-        enabled: true
-        retainInstanceIdOnRestart: false
-        metrics:
-          backend: "OTLP_HTTP"
-          exportInterval: 1000
-          exportTimeout: 500
-          otlp:
-            endpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
+frontend-wfe: &frontend
+  conf:
+    telemetry:
+      enabled: true
+      retainInstanceIdOnRestart: false
+      metrics:
+        backend: "OTLP_HTTP"
+        exportInterval: 1000
+        exportTimeout: 500
+        otlp:
+          endpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
 
-  grpc:
-    conf:
-      telemetry:
-        enabled: true
-        retainInstanceIdOnRestart: false
-        metrics:
-          backend: "OTLP_HTTP"
-          exportInterval: 1000
-          exportTimeout: 500
-          otlp:
-            endpoint: "http://otel-opentelemetry-collector:4318/v1/metrics"
+frontend-admin: *frontend
 
 taped:
   conf:
