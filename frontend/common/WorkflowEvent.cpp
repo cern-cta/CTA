@@ -153,15 +153,13 @@ void WorkflowEvent::processCREATE(xrd::Response& response) {
   uint64_t archiveFileId;
   // Check the standalone storage class attribute
   std::string storageClassStr = m_event.file().storage_class();
-  if (!storageClassStr.empty()) {
-    if (storageClassStr == "fail_on_closew_test") {
-      archiveFileId = std::numeric_limits<uint64_t>::max();
-    } else {
-      archiveFileId =
-        m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClassStr, requester, m_lc);
-    }
-  } else {
+  if (storageClassStr.empty()) {
     throw exception::PbException("CREATE: storage class is not set.");
+  }
+  if (storageClassStr == "fail_on_closew_test") {
+    archiveFileId = std::numeric_limits<uint64_t>::max();
+  } else {
+    archiveFileId = m_scheduler.checkAndGetNextArchiveFileId(m_cliIdentity.username, storageClassStr, requester, m_lc);
   }
 
   // Create a log entry
