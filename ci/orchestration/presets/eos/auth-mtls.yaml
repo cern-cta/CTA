@@ -10,7 +10,6 @@ mgm:
       mgmofs.prepare.dest.space default
       mgmofs.tapeenabled true
       mgmofs.wfendpoint grpcs://cta-frontend-wfe:10956
-      mgmofs.wfresource /ctafrontend
       mgmofs.wftlscertpath /etc/grid-security/certificates/ctaeos-self-signed.crt.pem
       mgmofs.wftlskeypath /etc/grid-security/certificates/ctaeos-self-signed.key.pem
       tpc.trace  all
@@ -77,7 +76,6 @@ fst:
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
       fstofs.wfendpoint grpcs://cta-frontend-wfe:10956
-      fstofs.wfresource /ctafrontend
       fstofs.filemd_handler  attr
       fstofs.wftlscertpath /etc/grid-security/certificates/ctaeos-self-signed.crt.pem
       fstofs.wftlskeypath /etc/grid-security/certificates/ctaeos-self-signed.key.pem

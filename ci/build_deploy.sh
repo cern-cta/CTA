@@ -109,7 +109,6 @@ build_deploy() {
   local eos_enabled=true
   local dcache_enabled=false
   local enable_address_sanitizer=false
-  local -a cta_configs=()
 
 
   # Parse command line arguments
@@ -232,10 +231,7 @@ build_deploy() {
       ;;
     --cta-config)
       if [[ $# -gt 1 ]]; then
-        IFS=',' read -ra configs <<< "$2"
-        for config in "${configs[@]}"; do
-          cta_configs+=("${config}")
-        done
+        cta_config=" $2"
         shift
       else
         error_usage "--cta-config requires an argument"
@@ -486,9 +482,8 @@ build_deploy() {
         extra_spawn_options+=" --eos-config ${eos_config}"
       fi
 
-      if [[ ${#cta_configs[@]} -gt 0 ]]; then
-        cta_config_str=$(IFS=,; echo "${cta_configs[*]}")
-        extra_spawn_options+=" --cta-config ${cta_config_str}"
+      if [[ -n "${cta_config}" ]]; then
+        extra_spawn_options+=" --cta-config ${cta_config}"
       fi
 
       if [[ "$local_telemetry" = true ]]; then
