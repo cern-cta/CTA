@@ -624,7 +624,7 @@ uint64_t RestoreFilesCmd::restoreDeletedFileEos(const cta::admin::RecycleTapeFil
   // 1. Archive File ID
   std::string archiveId(std::to_string(rtfls_item.archive_file_id()));
   file.mutable_xattrs()->insert(google::protobuf::MapPair<std::string, std::string>("sys.archive.file_id", archiveId));
-  
+
   // 2. Birth Time
   // POSIX ATIME (Access Time) is used by CASTOR to store the file creation time. EOS calls this "birth time",
   // but there is no place in the namespace to store it, so it is stored as an extended attribute.
