@@ -626,7 +626,8 @@ def test_cta_admin_recycle_tape_file_ls(cta_cli, disk_client, disk_instance, dis
     assert rtf_created["diskInstance"] == disk_instance_name
     assert int(rtf_created["diskFileUid"]) == int(file_info_json["uid"])
     assert int(rtf_created["diskFileGid"]) == int(file_info_json["gid"])
-    assert rtf_created["storageClass"] == file_info_json["xattr"]["sys.archive.storage_class"]
+    assert rtf_created["storageClass"] == "ctaStorageClass"
+    assert "sys.archive.storage_class" not in file_info_json["xattr"]
 
 
 # -------------------------------------------------------------------------------------------------
