@@ -106,7 +106,6 @@ public:
                 std::string_view eventName,
                 const std::source_location location = std::source_location::current()) noexcept;
 
-
   /**
    * Logs a multiline backtrace as multiple entries in the logs, without
    * the context

@@ -21,7 +21,6 @@ static constexpr const char* exceptionType = "exception_type";
 // Note that error_messages is deprecated and the recommendation is to use domain-specific error messages
 static constexpr const char* errorMessage = "error_message";
 
-
 // https://opentelemetry.io/docs/specs/semconv/registry/attributes/event/#event-name
 static constexpr const char* eventName = "event_name";
 
@@ -32,6 +31,5 @@ static constexpr const char* kTapeSessionFinished = "tape_session_finished";
 static constexpr const char* kPuttingTapeDriveDown = "putting_tape_drive_down";
 static constexpr const char* kPuttingTapeDriveUp = "putting_tape_drive_up";
 }  // namespace EventNameValues
-
 
 }  // namespace cta::semconv::log

@@ -76,8 +76,6 @@ public:
       m_value.emplace(std::in_place_type<std::string>, std::forward<T>(value));
     } else if constexpr (std::is_same_v<U, bool>) {
       m_value.emplace(std::in_place_type<bool>, static_cast<bool>(value));
-    } else if constexpr (std::is_same_v<U, char>) {
-      m_value.emplace(std::in_place_type<std::string>, 1, value);
     } else if constexpr (std::is_integral_v<U>) {
       if constexpr (std::is_signed_v<U>) {
         m_value.emplace(std::in_place_type<int64_t>, static_cast<int64_t>(value));
