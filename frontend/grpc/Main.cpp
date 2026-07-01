@@ -124,32 +124,32 @@ int main(const int argc, char* const* const argv) {
   std::promise<void> shouldStopThreadPromise;
 
   if (jwtConfig.has_value()) {
-    // Build the shared JWK cache here even if JWT is disabled, in this case it will never be populated
+    // Build the shared JWK cache
     auto jwksFetcher {std::make_unique<cta::auth::CurlJwksFetcher>(jwtConfig->m_jwksTotalTimeout)};
     jwkCache = std::make_shared<cta::auth::JwkCache>(std::move(jwksFetcher),
                                                      jwtConfig->m_jwksUri,
                                                      jwtConfig->m_pubkeyTimeout,
                                                      frontendService->getLogContext());
 
-    lc.log(log::INFO,
-           "JWT authentication enabled. JWKs URI: " + jwtConfig->m_jwksUri
-             + " | total_timeout: " + std::to_string(jwtConfig->m_jwksTotalTimeout)
-             + " | key_timeout: " + std::to_string(jwtConfig->m_pubkeyTimeout)
-             + " | cache_refresh_interval: " + std::to_string(jwtConfig->m_cacheRefreshInterval));
+    {
+      log::ScopedParamContainer spc(lc);
+      spc.add("jwks_uri", jwtConfig->m_jwksUri)
+        .add("total_timeout", std::to_string(jwtConfig->m_jwksTotalTimeout))
+        .add("key_timeout", std::to_string(jwtConfig->m_pubkeyTimeout))
+        .add("cache_refresh_interval", std::to_string(jwtConfig->m_cacheRefreshInterval));
+      lc.log(log::INFO, std::string("JWT authentication enabled"));
+    }
 
     std::weak_ptr<cta::auth::JwkCache> weakCache {jwkCache};
     std::future<void> shouldStopThreadFuture {shouldStopThreadPromise.get_future()};
 
-    // if JWT authentication is specified, then also start the refresh thread
-    if (frontendService->usesAdminAuthMethod(cta::frontend::AuthMethod::JWT)
-        || frontendService->getWfeAuthMethod() == cta::frontend::AuthMethod::JWT) {
-      lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
-      cacheRefreshThread = std::jthread(JwksCacheRefreshLoop,
-                                        weakCache,
-                                        std::move(shouldStopThreadFuture),
-                                        jwtConfig->m_cacheRefreshInterval,
-                                        std::cref(lc));
-    }
+    // Set up the refresh thread
+    lc.log(log::INFO, "Starting the cache refresh thread for JWKS cache");
+    cacheRefreshThread = std::jthread(JwksCacheRefreshLoop,
+                                      weakCache,
+                                      std::move(shouldStopThreadFuture),
+                                      jwtConfig->m_cacheRefreshInterval,
+                                      std::cref(lc));
   }
 
   // Setup TokenStorage for Kerberos authentication
@@ -201,27 +201,28 @@ int main(const int argc, char* const* const argv) {
     } else if (!frontendService->getTlsCert().has_value()) {
       throw exception::UserError("TLS specified but TLS cert is not defined.");  // cppcheck-suppress throwInEntryPoint
     } else {
-      std::stringstream logMsg;
       auto key_file = frontendService->getTlsKey().value();
-      logMsg << "TLS key: " << key_file;
       cert.private_key = cta::utils::file2string(key_file);
 
       auto cert_file = frontendService->getTlsCert().value();
-      logMsg << " | cert: " + cert_file;
       cert.certificate_chain = cta::utils::file2string(cert_file);
 
       std::shared_ptr<StaticDataCertificateProvider> provider;
+      {
+        log::ScopedParamContainer spc(lc);
+        spc.add("tls_key", key_file).add("tls_cert", cert_file);
 
-      // if we have a CA certificate chain, use it
-      if (auto ca_chain = frontendService->getTlsChain(); ca_chain.has_value()) {
-        logMsg << " | chain: " + ca_chain.value();
-        provider = std::make_shared<StaticDataCertificateProvider>(cta::utils::file2string(ca_chain.value()),
-                                                                   std::vector {cert});
-      } else {
-        logMsg << " | <no chain file>";
-        provider = std::make_shared<StaticDataCertificateProvider>(std::vector {cert});
+        // if we have a CA certificate chain, use it
+        if (auto ca_chain = frontendService->getTlsChain(); ca_chain.has_value()) {
+          spc.add("tls_chain", ca_chain.value());
+          provider = std::make_shared<StaticDataCertificateProvider>(cta::utils::file2string(ca_chain.value()),
+                                                                     std::vector {cert});
+        } else {
+          spc.add("tls_chain", "<no chain file>");
+          provider = std::make_shared<StaticDataCertificateProvider>(std::vector {cert});
+        }
+        lc.log(log::INFO, "TLS configuration loaded");
       }
-      lc.log(log::INFO, logMsg.str());
 
       TlsServerCredentialsOptions tls_options {provider};
       tls_options.set_cert_request_type(cert_request_type);

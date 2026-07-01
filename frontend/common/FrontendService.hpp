@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include "AuthMethod.hpp"
 #include "OperationModes.hpp"
 #include "common/config/Config.hpp"
 #include "scheduler/Scheduler.hpp"
@@ -19,11 +20,6 @@
 namespace cta::frontend {
 
 using MapOfSets = std::map<std::string, std::set<std::string, std::less<>>, std::less<>>;
-
-/**
- * @brief Authentication methods supported by the CTA frontend
- */
-enum class AuthMethod { JWT, KERBEROS, MTLS };
 
 /**
  * @brief Convert an AuthMethod to its string representation
@@ -298,19 +294,3 @@ private:
 };
 
 }  // namespace cta::frontend
-
-template<>
-struct cta::common::FromString<cta::frontend::AuthMethod> {
-  static std::optional<cta::frontend::AuthMethod> tryFrom(std::string_view text) {
-    using enum cta::frontend::AuthMethod;
-    if (text == "jwt") {
-      return JWT;
-    } else if (text == "kerberos") {
-      return KERBEROS;
-    } else if (text == "mtls") {
-      return MTLS;
-    } else {
-      return std::nullopt;
-    }
-  }
-};

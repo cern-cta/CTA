@@ -60,21 +60,3 @@ struct cta::common::FromString<cta::frontend::OperationMode> {
     }
   }
 };
-
-template<>
-struct cta::common::FromString<cta::frontend::AdminCmdMode> {
-  static std::optional<cta::frontend::AdminCmdMode> tryFrom(std::string_view text) {
-    using enum cta::frontend::AdminCmdMode;
-    if (text == "all") {
-      return ALL;
-    } else if (text == "repack") {
-      return REPACK;
-    } else if (text == "norepack") {
-      return NO_REPACK;
-    } else if (text == "version") {
-      return VERSION;
-    } else {
-      return std::nullopt;
-    }
-  }
-};

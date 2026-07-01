@@ -10,7 +10,6 @@ mgm:
       mgmofs.prepare.dest.space default
       mgmofs.tapeenabled true
       mgmofs.wfendpoint grpcs://cta-frontend-wfe:10956
-      mgmofs.wfresource /ctafrontend
       mgmofs.wfjwttokenpath /etc/cta/ctaeos.jwt
       tpc.trace  all
       tpc.header2cgi  ArchiveMetadata archivemetadata
@@ -76,7 +75,6 @@ fst:
     extraConfig: |
       xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
       fstofs.wfendpoint grpcs://cta-frontend-wfe:10956
-      fstofs.wfresource /ctafrontend
       fstofs.filemd_handler  attr
       fstofs.wfjwttokenpath /etc/cta/ctaeos.jwt
       tpc.trace  all

@@ -127,7 +127,7 @@ create_instance() {
   secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
-  declare -a cta_configs=()
+  cta_config="-f presets/dev-cta-xrd-values.yaml"
   prometheus_config="presets/dev-prometheus-values.yaml"
   opentelemetry_collector_config="presets/dev-otel-collector-values.yaml"
   # By default keep Database and keep Scheduler datastore data
@@ -203,13 +203,13 @@ create_instance() {
         dcache_enabled="$2"
         shift ;;
       --cta-config)
+        cta_config=""
         IFS=',' read -ra configs <<< "$2"
         for config in "${configs[@]}"; do
           # Trim whitespace from config path
           config="${config#"${config%%[![:space:]]*}"}"
           config="${config%"${config##*[![:space:]]}"}"
-          test -f "${config}" || die "CTA config file ${config} does not exist"
-          cta_configs+=("${config}")
+          cta_config+=" -f ${config}"
         done
         shift ;;
       --extra-cta-values)
@@ -412,13 +412,9 @@ create_instance() {
 
 
   echo "Installing CTA chart..."
-  declare -a cta_values_flags=()
-  for config in "${cta_configs[@]}"; do
-    cta_values_flags+=("-f" "${config}")
-  done
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \
-                                "${cta_values_flags[@]}" \
+                                ${cta_config} \
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
