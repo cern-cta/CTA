@@ -89,6 +89,11 @@ struct TapeSearchCriteria {
   std::optional<bool> checkMissingFileCopies;
 
   /**
+   * Get file statistics per storage class for each tape.
+   */
+  std::optional<bool> getStorageClassStatistics;
+
+  /**
    * Missing tape file copies minimum age in secs
    */
   uint64_t missingFileCopiesMinAgeSecs;
