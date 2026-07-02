@@ -37,27 +37,27 @@ using namespace cta::frontend::grpc;
 
 constexpr std::string_view defaultPort = "17017";
 
-std::string help = "Usage: cta-frontend-grpc [options]\n"
-                   "\n"
-                   "where options can be:\n"
-                   "\n"
-                   "\t--config <config-file>, -c   \tConfiguration file\n"
-                   "\t--version, -v                \tprint version and exit\n"
-                   "\t--help, -h                   \tprint this help and exit\n";
+const std::string help = "Usage: cta-frontend-grpc [options]\n"
+                         "\n"
+                         "where options can be:\n"
+                         "\n"
+                         "\t--config <config-file>, -c   \tConfiguration file\n"
+                         "\t--version, -v                \tprint version and exit\n"
+                         "\t--help, -h                   \tprint this help and exit\n";
 
-static struct option long_options[] = {
+const static struct option long_options[] = {
   {"config",  required_argument, nullptr, 'c'},
   {"help",    no_argument,       nullptr, 'h'},
   {"version", no_argument,       nullptr, 'v'},
   {nullptr,   0,                 nullptr, 0  }
 };
 
-void printHelpAndExit(int rc) {
+[[noreturn]] void printHelpAndExit(int rc) {
   std::cout << help << std::endl;
   exit(rc);
 }
 
-void printVersionAndExit() {
+[[noreturn]] void printVersionAndExit() {
   std::cout << "cta-frontend-grpc version: " << CTA_VERSION << std::endl;
   exit(0);
 }
