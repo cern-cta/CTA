@@ -61,6 +61,10 @@ archiveroute (ar)
 :   Add, change, remove or list the archive routes. Archive routes are the policies linking namespace
     entries to tape pools.
 
+archivefile (af)
+
+:   Change the storage class of existing archive files.
+
 diskinstance (di)
 
 :   Add, change, remove or list the disk instances. A disk instance is a separate namespace. A CTA

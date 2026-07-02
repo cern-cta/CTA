@@ -90,6 +90,8 @@ bool cta::frontend::grpc::server::TapeLsRequestHandler::next(const bool bOk) {
           m_searchCriteria.diskFileIds = requestMsg.getOptional(cta::admin::OptionStrList::FILE_ID, &bHasAny);
           m_searchCriteria.checkMissingFileCopies =
             requestMsg.getOptional(cta::admin::OptionBoolean::MISSING_FILE_COPIES, &bHasAny);
+          m_searchCriteria.getStorageClassStatistics =
+            requestMsg.getOptional(cta::admin::OptionBoolean::GET_STORAGE_CLASS_STATISTICS, &bHasAny);
           auto stateOpt = requestMsg.getOptional(cta::admin::OptionString::STATE, &bHasAny);
           if (stateOpt) {
             m_searchCriteria.state = common::dataStructures::Tape::stringToState(stateOpt.value());
