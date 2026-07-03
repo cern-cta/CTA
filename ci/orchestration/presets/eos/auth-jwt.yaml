@@ -15,6 +15,14 @@ mgm:
       tpc.header2cgi  ArchiveMetadata archivemetadata
       taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
 
+      # TODO: remove this once the EOS PR gets merged
+      mgmofs.protowfusegrpc true
+      mgmofs.protowfusegrpctls true
+      mgmofs.protowfendpoint cta-frontend-wfe:10956
+      mgmofs.protowfresource /ctafrontend
+      mgmofs.jwttokenpath /etc/cta/ctaeos.jwt
+      # END
+
   # Generate the self-signed certificates for http
   initContainer: &init-container
     enabled: true
@@ -78,6 +86,14 @@ fst:
       fstofs.filemd_handler  attr
       fstofs.wfjwttokenpath /etc/cta/ctaeos.jwt
       tpc.trace  all
+
+      # TODO: remove this once the EOS PR gets merged
+      fstofs.protowfusegrpc true
+      fstofs.protowfusegrpctls true
+      fstofs.protowfendpoint cta-frontend-wfe:10956
+      fstofs.protowfresource /ctafrontend
+      fstofs.jwttokenpath /etc/cta/ctaeos.jwt
+      # END
 
   initContainer: *init-container
   extraVolumes: *extra-volumes
