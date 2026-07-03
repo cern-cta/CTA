@@ -43,7 +43,7 @@ private:
 
   /**
    * Returns true if the table with the specified name exists in the database
-   * schema of teh specified database connection.
+   * schema of the specified database connection.
    *
    * @param tableName The name of the database table.
    * @param conn The database connection.
