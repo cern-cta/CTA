@@ -21,7 +21,7 @@ uint64_t RepackRequestTrackingRow::cancelRepack(Transaction& txn, const std::str
     DELETE FROM REPACK_REQUEST_TRACKING
     WHERE
       VID = :VID
-      AND STATUS = ANY(ARRAY['RRS_Pending','RRS_ToExpand','RRS_Starting','RRS_Complete','RRS_Failed']::REPACK_REQ_STATUS[])
+      AND STATUS = ANY(ARRAY['RRS_Pending','RRS_ToExpand','RRS_Starting','RRS_Running','RRS_Complete','RRS_Failed']::REPACK_REQ_STATUS[])
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":VID", vid);

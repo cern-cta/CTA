@@ -753,6 +753,18 @@ common::dataStructures::RepackInfo RelationalDB::getRepackInfo(const std::string
 void RelationalDB::cancelRepack(const std::string& vid, log::LogContext& lc) {
   schedulerdb::Transaction txn(m_connPool, lc);
   try {
+    // we are deleting all jobs in all REPACK_* tables in a cascade deletion using foreign key, this means that
+    // for running repack the taped will be trying to report jobs which do not exist anymore
+    // in the ACTIVE table and fail to do so ! For the moment we let these failures proceed.
+    // RetrieveMount reporting successful Retrieve will not update the corresponding job IDs in the ACTIVE table
+    // as they will not exist anymore. The RepackReportRoutine will not be able to pick these up
+    // and transform them to archival jobs, which is good.
+    // For RetrieveMount or ArchiveMount which requeueJobBatch due to failures/end of tape,
+    // this is no problem as these deleted jobs will get ignored (prints error in log, error
+    // we print error as it could be also due to disk space problems).
+    // For RetrieveMount or ArchiveMount which report transferFailed and execute
+    // updateFailedJobStatus per non-existing job, this will also get ignored (prints warning in the log)
+    // as there is no such job id.
     uint64_t cancelledRepackRequests = schedulerdb::postgres::RepackRequestTrackingRow::cancelRepack(txn, vid);
     log::ScopedParamContainer(lc).add("VID", vid);
     if (cancelledRepackRequests > 1) {
