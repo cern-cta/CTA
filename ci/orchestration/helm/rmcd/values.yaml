@@ -9,9 +9,11 @@ preRun:
 
 # Script to execute in the main container after the taped process exited
 postRun:
-  enabled: false
+  enabled: true
   script: |
     #!/usr/bin/bash
+    echo "Process crashed. Sleeping..."
+    sleep infinity
 
 # We need to be privileged to handle the tape drives
 securityContext:

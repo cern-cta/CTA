@@ -1,0 +1,85 @@
+# SPDX-FileCopyrightText: 2025 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+mgm:
+  xrd:
+    extraConfig: |
+      mgmofs.reportstorepath /var/log/eos/report
+      xrootd.chksum  adler32
+      mgmofs.archivedir /var/eos/archive
+      mgmofs.prepare.dest.space default
+      mgmofs.tapeenabled true
+      mgmofs.wfendpoint grpcs://cta-frontend-wfe:10956
+      mgmofs.wftlscertpath /etc/grid-security/certificates/ctaeos-self-signed.crt.pem
+      mgmofs.wftlskeypath /etc/grid-security/certificates/ctaeos-self-signed.key.pem
+      tpc.trace  all
+      tpc.header2cgi  ArchiveMetadata archivemetadata
+      taperestapi.sitename  cern-tape-archive-{{ include "mgm.instancename" . }}
+
+  # Generate the self-signed certificates for http
+  initContainer: &init-container
+    enabled: true
+    script: |
+      #!/usr/bin/bash
+      /mkcert-ssl.sh
+      chown -R daemon:daemon /etc/grid-security/certificates
+      cp /etc/grpc-certs/ca.crt.pem /etc/grid-security/certificates
+      cp /etc/grpc-certs-client/ctaeos-self-signed.crt.pem /etc/grid-security/certificates/
+      cp /etc/grpc-certs-client/ctaeos-self-signed.key.pem /etc/grid-security/certificates/
+      chmod 0600 /etc/grid-security/certificates/ctaeos-self-signed.key.pem
+      chown daemon:daemon /etc/grid-security/certificates/ctaeos-self-signed.{key,crt}.pem
+
+    volumeMounts:
+      - name: grid-security
+        mountPath: /etc/grid-security
+      - name: grpc-certs
+        mountPath: /etc/grpc-certs
+      - name: ctaeos-self-signed-crt
+        mountPath: /etc/grpc-certs-client/ctaeos-self-signed.crt.pem
+        subPath: ctaeos-self-signed.crt.pem
+      - name: ctaeos-self-signed-key
+        mountPath: /etc/grpc-certs-client/ctaeos-self-signed.key.pem
+        subPath: ctaeos-self-signed.key.pem
+
+  extraVolumes: &extra-volumes
+    volumeMounts:
+      # varlog-tmp is the location where core dumps will end up
+      - name: varlog-tmp
+        mountPath: /var/log/tmp
+      - name: grid-security
+        mountPath: /etc/grid-security
+        readOnly: true
+      - name: ctaeos-jwt
+        mountPath: /etc/cta
+        readOnly: true
+    volumes:
+      - name: varlog-tmp
+        emptyDir: {}
+      - name: grid-security
+        emptyDir: {}
+      - name: grpc-certs
+        secret:
+          secretName: ca-crt-pem
+      - name: ctaeos-jwt
+        secret:
+          secretName: ctaeos-jwt
+      - name: ctaeos-self-signed-crt
+        secret:
+          secretName: ctaeos-self-signed-crt-pem
+      - name: ctaeos-self-signed-key
+        secret:
+          secretName: ctaeos-self-signed-key-pem
+
+fst:
+  xrd:
+    # Increasing 2x the thread pool size w.r.t. the minimal default 256.
+    extraConfig: |
+      xrootd.redirect {{ include "utils.mgm_address" . }}:1094 chksum
+      fstofs.wfendpoint grpcs://cta-frontend-wfe:10956
+      fstofs.filemd_handler  attr
+      fstofs.wftlscertpath /etc/grid-security/certificates/ctaeos-self-signed.crt.pem
+      fstofs.wftlskeypath /etc/grid-security/certificates/ctaeos-self-signed.key.pem
+      tpc.trace  all
+
+  initContainer: *init-container
+  extraVolumes: *extra-volumes

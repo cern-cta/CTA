@@ -11,46 +11,10 @@
 namespace cta::common::dataStructures {
 
 //------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-SecurityIdentity::SecurityIdentity() {}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-SecurityIdentity::SecurityIdentity(const std::string& username, const std::string& host)
-    : username(username),
-      host(host) {}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-SecurityIdentity::SecurityIdentity(const std::string& username,
-                                   const std::string& host,
-                                   const std::string& clientHost,
-                                   const std::string& auth)
-    : username(username),
-      host(host),
-      clientHost(clientHost) {
-  if (!auth.empty()) {
-    // Map the client protocol string to enum value
-    auto proto_it = m_authProtoMap.find(auth);
-    authProtocol = proto_it != m_authProtoMap.end() ? proto_it->second : Protocol::OTHER;
-  }
-}
-
-//------------------------------------------------------------------------------
 // operator==
 //------------------------------------------------------------------------------
 bool SecurityIdentity::operator==(const SecurityIdentity& rhs) const {
   return username == rhs.username && host == rhs.host && clientHost == rhs.clientHost;
-}
-
-//------------------------------------------------------------------------------
-// operator!=
-//------------------------------------------------------------------------------
-bool SecurityIdentity::operator!=(const SecurityIdentity& rhs) const {
-  return !operator==(rhs);
 }
 
 //------------------------------------------------------------------------------

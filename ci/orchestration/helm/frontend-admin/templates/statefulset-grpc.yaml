@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- if .Values.xrd.enabled }}
+{{- if and .Values.enabled (not .Values.legacy_xrootd_mode) }}
 {{- $name := include "ctafrontend.fullname" . }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 apiVersion: apps/v1
@@ -24,7 +24,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $name }}
-        {{- include "common.labels.withoutname" $ | nindent 8 }}
+        {{- include "common.labels.withoutname" . | nindent 8 }}
     spec:
       imagePullSecrets:
       {{ include "ctafrontend.imagePullSecrets" . | nindent 6 }}
@@ -32,6 +32,7 @@ spec:
       {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
       initContainers:
+      {{- if has "kerberos" .Values.conf.auth.methods }}
       - name: init1-get-krb5-keytab
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
@@ -50,39 +51,40 @@ spec:
           subPath: krb5.conf
         - name: cta-frontend-krb5-keytab
           mountPath: /root/ctafrontend_keytab/output
-      # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
-      - name: init2-fix-sss-keytab-ownership
+      {{- end }}
+      - name: init2-download-grpc-health-probe
         image: {{ include "common.images.busybox" . }}
-        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
         command: ["sh", "-c"]
         args:
-        - |
-          cp /root/sss_keytab/input/diskbuffer.sss.keytab /root/sss_keytab/output/diskbuffer.sss.keytab;
-          chmod 400 /root/sss_keytab/output/diskbuffer.sss.keytab;
-          # Make CTA user owner (group 33 is tape)
-          chown -R 1000:33 /root/sss_keytab/output/diskbuffer.sss.keytab
+          - |
+            mkdir -p /grpc-health-probe && \
+            wget -qO/grpc-health-probe/grpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.13/grpc_health_probe-linux-amd64 && \
+            chmod +x /grpc-health-probe/grpc-health-probe
         volumeMounts:
-        - name: diskbuffer-sss-keytab
-          mountPath: /root/sss_keytab/input/diskbuffer.sss.keytab
-          subPath: {{ .Values.xrd.keytab.subPath }}
-        - name: diskbuffer-sss-keytab-fixedownership
-          mountPath: /root/sss_keytab/output
+          - name: grpc-health-probe-bin
+            mountPath: /grpc-health-probe
+            subPath: grpc-health-probe
       containers:
       - name: cta-frontend
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
         command: ["/bin/bash", "-c"]
-        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-xrd.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-grpc.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
         startupProbe:
           exec:
-            command: ["rpm", "-q", "cta-frontend"]
+            command: ["rpm", "-q", "cta-frontend-grpc"]
           initialDelaySeconds: 0
           periodSeconds: 5
           failureThreshold: 60
         readinessProbe:
-          tcpSocket:
-            port: {{ .Values.xrd.port }}
+          exec:
+            command:
+              - /grpc-health-probe/grpc-health-probe
+              - -addr=localhost:{{ .Values.port }}
+              - -tls
+              - -tls-ca-cert={{ .Values.conf.tls.caCert }}
+              - -tls-server-name={{ $name }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -136,36 +138,50 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
-        - name: xrootd-config
-          mountPath: /etc/cta/cta-frontend-xrootd.conf
-          subPath: cta-frontend-xrootd.conf
+        {{- if eq $schedulerConfig.backend "vfs" }}
+        - name: vfs-storage-volume
+          mountPath: /objectstore
+        {{- end }}
+        - name: frontend-config
+          mountPath: /etc/cta/cta-frontend.conf
+          subPath: cta-frontend.conf
+        - name: jwks-json
+          mountPath: /etc/cta/jwks.json
+          subPath: jwks.json
+        - name: grpc-server-crt
+          mountPath: /etc/grpc-certs/cert
+        - name: grpc-server-key
+          mountPath: /etc/grpc-certs/key
+        - name: grpc-ca-crt
+          mountPath: /etc/grpc-certs/ca
+        {{- if has "kerberos" .Values.conf.auth.methods }}
         - name: cta-frontend-krb5-keytab
           mountPath: /etc/cta/cta-frontend.krb5.keytab
           subPath: cta-frontend.krb5.keytab
-        - name: diskbuffer-sss-keytab-fixedownership
-          mountPath: /etc/cta/diskbuffer.sss.keytab
-          subPath: diskbuffer.sss.keytab
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
-      {{- if .Values.xrd.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+        {{- end }}
+        - name: grpc-health-probe-bin
+          mountPath: /grpc-health-probe
+          subPath: grpc-health-probe
+        {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
         - name: otlp-basic-auth-pwd
           mountPath: /etc/cta/otlp-basic-auth-pwd.conf
           subPath: otlp-basic-auth-pwd.conf
-      {{- end }}
-      {{- if eq $schedulerConfig.backend "vfs" }}
-        - name: vfs-storage-volume
-          mountPath: /objectstore
-      {{- end }}
-        {{ include "common.extraVolumeMounts" . | nindent 8 }}
+        {{- end }}
+        {{- include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
         configMap:
-          name: scripts-ctafrontend
+          name: cta-frontend-admin-scripts
           defaultMode: 0777
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
+      - name: jwks-json
+        secret:
+          secretName: jwks-json
       {{- if eq $schedulerConfig.backend "postgres" }}
       - name: scheduler-config
         configMap:
@@ -185,23 +201,33 @@ spec:
         persistentVolumeClaim:
           claimName: scheduler-vfs-pvc
       {{- end }}
-      - name: xrootd-config
+      - name: frontend-config
         configMap:
-          name: cta-frontend-xrootd-conf
+          name: cta-frontend-admin-conf
+      - name: grpc-server-crt
+        secret:
+          secretName: server-admin-crt-pem
+      - name: grpc-server-key
+        secret:
+          secretName: server-admin-key-pem
+      - name: grpc-ca-crt
+        secret:
+          secretName: ca-crt-pem
+      {{- if has "kerberos" .Values.conf.auth.methods }}
       - name: cta-frontend-krb5-keytab
         emptyDir: {}
-      - name: diskbuffer-sss-keytab
-        secret:
-          secretName: {{ .Values.xrd.keytab.secretName }}
-      - name: diskbuffer-sss-keytab-fixedownership
+      - name: eos-sss-keytab-fixedownership
         emptyDir: {}
       - name: krb5-conf
         configMap:
           name: {{ .Values.global.kerberos.clientConfig.configMap }}
-      {{- if .Values.xrd.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+      {{- end }}
+      - name: grpc-health-probe-bin
+        emptyDir: {}
+      {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       - name: otlp-basic-auth-pwd
         secret:
-          secretName: {{ .Values.xrd.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+          secretName: {{ .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       {{- end }}
       {{ include "common.extraVolumes" . | nindent 6 }}
 {{- end }}

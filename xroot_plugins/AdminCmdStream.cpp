@@ -46,18 +46,17 @@ AdminCmdStream::AdminCmdStream(const frontend::FrontendService& frontendService,
       m_schedDb(frontendService.getSchedDb()),
       m_catalogueConnString(frontendService.getCatalogueConnString()),
       m_instanceName(frontendService.getInstanceName()),
-      m_adminCommandMode(frontendService.getAdminCommandMode()) {}
+      m_adminCommandMode(toAdminCmdMode(frontendService.getOperationMode())) {}
 
 xrd::Response AdminCmdStream::process() {
-  cta::frontend::RequestTracker requestTracker("ADMIN_STREAMING", "admin");
+  RequestTracker requestTracker("ADMIN_STREAMING", "admin");
   xrd::Response response;
 
   utils::Timer t;
 
   try {
     // Check if admin command is explicitly disabled
-    if ((m_adminCommandMode == common::AdminCmdMode::VERSION && m_adminCmd.cmd() != admin::AdminCmd::CMD_VERSION)
-        || (m_adminCommandMode == common::AdminCmdMode::NO_REPACK && m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK)) {
+    if (m_adminCommandMode == AdminCmdMode::NO_REPACK && m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK) {
       throw cta::exception::UserError(c_disabledAdminCmdMsg);
     }
 

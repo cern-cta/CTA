@@ -44,9 +44,8 @@ create_config_file() {
     local auth_method=$1
     cat > "${TEST_CONFIG_FILE}" <<EOF
 # Test configuration file for cta-admin-grpc
-cta.endpoint cta-frontend-grpc:10956
-grpc.tls.chain_cert_path /etc/grpc-certs/ca.crt
-grpc.tls.enabled true
+cta.endpoint cta-frontend-admin:10956
+grpc.tls.chain_cert_path /etc/grpc-certs/ca.crt.pem
 grpc.cta_admin_auth_method $auth_method
 grpc.jwt_token_path /etc/grid-security/jwt-token-grpc
 EOF
@@ -146,9 +145,8 @@ test_version_command "Invalid auth method via env variable" "failure"
 # ============================================
 log_header "Test 10: Empty auth method in config file"
 cat > "${TEST_CONFIG_FILE}" <<EOF
-cta.endpoint cta-frontend-grpc:10956
-grpc.tls.chain_cert_path /etc/grpc-certs/ca.crt
-grpc.tls.enabled true
+cta.endpoint cta-frontend-admin:10956
+grpc.tls.chain_cert_path /etc/grpc-certs/ca.crt.pem
 grpc.cta_admin_auth_method
 EOF
 export CTA_CLI_GRPC_CONFIG="${TEST_CONFIG_FILE}"

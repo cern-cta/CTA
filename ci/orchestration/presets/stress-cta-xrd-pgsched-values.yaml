@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 global:
-
   # It should be noted that many logs also go to stdout which is still written to /var/log on the node itself
   # So this means not all log-related writes go to an SSD
   extraVolumes:
@@ -13,16 +12,26 @@ global:
       - name: coredumps
         mountPath: /var/log/tmp
 
-frontend:
-  grpc:
-    enabled: false
-  xrd:
-    enabled: true
-    conf:
-      catalogue:
-        numberOfConnections: 50
-      logger:
-        logLevel: "WARNING"
+frontend-wfe:
+  port: 10955
+  legacy_xrootd_mode: true
+
+  conf:
+    catalogue:
+      numberOfConnections: 50
+    logger:
+      logLevel: "WARNING"
+
+frontend-admin:
+  port: 10955
+  legacy_xrootd_mode: true
+
+  conf:
+    catalogue:
+      numberOfConnections: 50
+    logger:
+      logLevel: "WARNING"
+
 taped:
   conf:
     taped:

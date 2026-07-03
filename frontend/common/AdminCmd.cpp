@@ -33,7 +33,7 @@ AdminCmd::AdminCmd(const frontend::FrontendService& frontendService,
       m_repackMaxFilesToSelect(frontendService.getRepackMaxFilesToSelect()),
       m_missingFileCopiesMinAgeSecs(frontendService.getMissingFileCopiesMinAgeSecs()),
       m_schedulerBackendName(m_scheduler.getSchedulerBackendName()),
-      m_adminCommandMode(frontendService.getAdminCommandMode()) {
+      m_adminCommandMode(toAdminCmdMode(frontendService.getOperationMode())) {
   m_lc.push({"user", m_cliIdentity.username});
 
   m_scheduler.authorizeAdmin(m_cliIdentity, m_lc);
@@ -46,8 +46,7 @@ xrd::Response AdminCmd::process() {
 
   try {
     // Check if admin command is explicitly disabled
-    if (m_adminCommandMode == common::AdminCmdMode::VERSION
-        || (m_adminCommandMode == common::AdminCmdMode::NO_REPACK && m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK)) {
+    if (m_adminCommandMode == AdminCmdMode::NO_REPACK && m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK) {
       throw cta::exception::UserError(c_disabledAdminCmdMsg);
     }
 
@@ -352,7 +351,7 @@ void AdminCmd::logAdminCmd(const AdminCmdStatus status, const std::string& reaso
   }  // end for
   params.add("adminTime", t.secs());
   params.add("user", m_cliIdentity.username);
-  m_lc.log(cta::log::INFO, "Admin command succeeded");
+  m_lc.log(cta::log::INFO, "Admin command was processed");
 }
 
 void AdminCmd::processAdmin_Add(xrd::Response& response) const {
@@ -1187,10 +1186,10 @@ void AdminCmd::processTape_Ch(xrd::Response& response) {
     auto operatingMode = Scheduler::OperatingMode::ALL;
 
     // Modes NONE/VERSION were already handled before the current function call
-    if (m_adminCommandMode == common::AdminCmdMode::REPACK) {
+    if (m_adminCommandMode == AdminCmdMode::REPACK) {
       operatingMode = Scheduler::OperatingMode::REPACK;
     }
-    if (m_adminCommandMode == common::AdminCmdMode::NO_REPACK) {
+    if (m_adminCommandMode == AdminCmdMode::NO_REPACK) {
       operatingMode = Scheduler::OperatingMode::USER;
     }
 

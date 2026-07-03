@@ -39,7 +39,7 @@ bool XrdSsiCtaServiceProvider::Init(XrdSsiLogger* logP,
     }
 
     // Initialise the Frontend Service object from the config file
-    m_frontendService = std::make_unique<cta::frontend::FrontendService>(cfgFn);
+    m_frontendService = std::make_unique<cta::frontend::FrontendService>(cfgFn, false, std::nullopt);
     return true;
   } catch (XrdSsiPb::XrdSsiException& ex) {
     XrdSsiPb::Log::Msg(XrdSsiPb::Log::ERROR,

@@ -5,6 +5,7 @@
 
 #include "FrontendService.hpp"
 
+#include "OperationModes.hpp"
 #include "catalogue/Catalogue.hpp"
 #include "catalogue/CatalogueFactory.hpp"
 #include "catalogue/CatalogueFactoryFactory.hpp"
@@ -12,9 +13,11 @@
 #include "common/log/FileLogger.hpp"
 #include "common/log/LogLevel.hpp"
 #include "common/log/StdoutLogger.hpp"
+#include "common/runtime/config/parsing/TomlParser.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/telemetry/config/TelemetryConfig.hpp"
+#include "common/utils/utils.hpp"
 #include "rdbms/Login.hpp"
 #include "version.hpp"
 
@@ -23,7 +26,183 @@
 
 namespace cta::frontend {
 
-FrontendService::FrontendService(const std::string& configFilename) {
+std::string toString(AuthMethod method) {
+  using enum AuthMethod;
+  switch (method) {
+    case JWT:
+      return "jwt";
+    case KERBEROS:
+      return "kerberos";
+    case MTLS:
+      return "mtls";
+  }
+  throw std::invalid_argument("Invalid AuthMethod value");
+}
+
+void FrontendService::loadAdminAuthConfigParams(const std::string& configFileName,
+                                                const cta::common::Config& config,
+                                                log::Logger& log) {
+  auto adminAuthMethods = config.getOptionValue<std::vector<AuthMethod>>("grpc.admin.auth_methods");
+  auto authMethods = adminAuthMethods.value_or(std::vector<AuthMethod> {});
+  m_adminAuthMethods = std::set<AuthMethod, std::less<>>(authMethods.begin(), authMethods.end());
+
+  if (m_adminAuthMethods.empty()) {
+    log(log::WARNING, "Admin API authentication methods not explicitly set. Defaulting to JWT.");
+    m_adminAuthMethods.emplace(AuthMethod::JWT);
+  }
+
+  auto methodsStr =
+    cta::utils::joinWithMap(m_adminAuthMethods, ", ", [](AuthMethod method) { return toString(method); });
+
+  log(log::INFO, "Using auth methods: " + methodsStr);
+}
+
+void FrontendService::loadWFEAuthConfigParams(const std::string& configFileName,
+                                              const std::optional<std::string>& mtlsMappingFilename,
+                                              const cta::common::Config& config,
+                                              log::Logger& log) {
+  auto optAuthMethod = config.getOptionValue<AuthMethod>("grpc.wfe.auth_method");
+
+  if (!optAuthMethod.has_value()) {
+    log(log::WARNING, "WFE authentication method not explicitly set. Defaulting to JWT.");
+  } else if (optAuthMethod.value() == AuthMethod::KERBEROS) {
+    throw exception::UserError("Kerberos is not allowed in WFE mode (" + configFileName + ")");
+  }
+
+  m_wfeAuthMethod = optAuthMethod.value_or(AuthMethod::JWT);
+
+  if (m_wfeAuthMethod == AuthMethod::MTLS) {
+    if (mtlsMappingFilename.has_value()) {
+      // Read MTLS mapping table
+      loadMtlsMappingTable(mtlsMappingFilename.value());
+    } else {
+      throw exception::UserError("WFE authentication method is set to MTLS but no MTLS mapping file path is provided.");
+    }
+  }
+}
+
+void FrontendService::loadMtlsMappingTable(const std::string& filePath) {
+  toml::table tbl;
+  try {
+    tbl = toml::parse_file(filePath);
+  } catch (const toml::parse_error& e) {
+    std::ostringstream oss;
+    oss << e;
+    throw cta::exception::UserError("Failed to parse toml file '" + filePath + "': " + oss.str(), false);
+  }
+
+  // get `[aliases]`
+  auto aliases = tbl.get("aliases");
+
+  if (!aliases) {
+    throw cta::exception::UserError("Invalid config in '" + filePath + "': missing [aliases] section", false);
+  }
+
+  // go over each (key, string|array<string>) pair and add them to the table
+  aliases->as_table()->for_each([&](const toml::key& key, const auto& val_node) {
+    std::set<std::string, std::less<>> elems {};
+
+    if constexpr (toml::is_string<decltype(val_node)>) {
+      elems.emplace(val_node);
+    } else if constexpr (toml::is_array<decltype(val_node)>) {
+      val_node.as_array()->for_each([&elems, filePath](auto& elem) {
+        if constexpr (toml::is_string<decltype(elem)>) {
+          elems.emplace(*elem.as_string());
+        } else {
+          throw cta::exception::UserError("Invalid config in '" + filePath + "': alias identities should be strings");
+        }
+      });
+      m_mtlsMappingTable.try_emplace(std::string {key.str()}, elems);
+    } else {
+      throw cta::exception::UserError("Invalid config in '" + filePath
+                                      + "': alias value should be either a string or an array");
+    }
+  });
+}
+
+void FrontendService::loadGrpcConfigParams(const std::string& configFileName,
+                                           const cta::common::Config& config,
+                                           log::Logger& log) {
+  config.getOptionValueInto("grpc.tls.server_key_path", m_tlsKey);
+  config.getOptionValueInto("grpc.tls.server_cert_path", m_tlsCert);
+  config.getOptionValueInto("grpc.tls.chain_cert_path", m_tlsChain);
+  config.getOptionValueInto("grpc.keytab", m_keytab);
+  config.getOptionValueInto("grpc.service_principal", m_servicePrincipal);
+  config.getOptionValueInto("grpc.port", m_port);
+
+  if (auto threads = config.getOptionValue<int>("grpc.numberofthreads"); threads.has_value()) {
+    if (threads.value() < 1) {
+      throw exception::UserError("value of grpc.numberofthreads must be at least 1");
+    }
+    m_threads = threads.value();
+  }
+}
+
+void FrontendService::loadJWTConfigParams(const std::string& configFileName,
+                                          const cta::common::Config& config,
+                                          log::Logger& log) {
+  auto jwksUri = config.getOptionValue<std::string>("grpc.jwks.uri");
+
+  if (!jwksUri.has_value()) {
+    throw exception::UserError("JWT is being setup but no endpoint is provided in grpc.jwks.uri in configuration file "
+                               + configFileName);
+  }
+
+  // helper function to deal with default/negative values
+  auto readJwtTimeout = [&](const std::string& key, int defaultValue, const std::string& warningMessage) {
+    auto opt = config.getOptionValue<int>(key, [&key, &configFileName](const std::optional<int>& value) {
+      if (*value < 0) {
+        throw exception::UserError(key + " is set to a negative value in configuration file " + configFileName);
+      }
+    });
+
+    if (!opt.has_value()) {
+      log(log::WARNING, warningMessage);
+    }
+
+    return opt.value_or(defaultValue);
+  };
+
+  // fill in a temporary JWTConfig
+  JWTConfig jwtConfig;
+  jwtConfig.m_jwksUri = jwksUri.value();
+  jwtConfig.m_cacheRefreshInterval =
+    readJwtTimeout("grpc.jwks.cache.refresh_interval_secs",
+                   600,
+                   "No value set for grpc.jwks.cache.refresh_interval_secs, using default value (600s)");
+  jwtConfig.m_pubkeyTimeout =
+    readJwtTimeout("grpc.jwks.cache.timeout_secs",
+                   0,
+                   "No value set for grpc.jwks.cache.timeout_secs, cached public keys will not expire");
+  jwtConfig.m_jwksTotalTimeout = readJwtTimeout("grpc.jwks.total_timeout",
+                                                60,
+                                                "No value set for grpc.jwks.total_timeout, using default value (60s)");
+
+  if (jwtConfig.m_pubkeyTimeout != 0 && jwtConfig.m_pubkeyTimeout < jwtConfig.m_cacheRefreshInterval) {
+    log(log::WARNING,
+        "Cannot use a value for grpc.jwks.cache.timeout_secs that is less than grpc.jwks.cache.refresh_interval_secs. "
+        "Setting timeout_secs equal to cache_refresh_interval_secs.");
+    jwtConfig.m_pubkeyTimeout = jwtConfig.m_cacheRefreshInterval;
+  }
+
+  m_jwtConfig = std::move(jwtConfig);
+}
+
+std::set<std::string, std::less<>>
+FrontendService::getMtlsCertIdentitiesForInstance(const std::string& instance) const {
+  std::set<std::string, std::less<>> cert_identities;
+  if (const auto& search = m_mtlsMappingTable.find(instance); search != m_mtlsMappingTable.end()) {
+    for (const auto& ident : search->second) {
+      cert_identities.insert(ident);
+    }
+  }
+
+  return cert_identities;
+}
+
+FrontendService::FrontendService(const std::string& configFilename,
+                                 const bool inGrpcMode,
+                                 const std::optional<std::string>& mtlsMappingFileName) {
   int logToStdout = 0;
   int logtoFile = 0;
   std::string logFilePath = "";
@@ -162,7 +341,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
     params.emplace_back("source", missingFileCopiesMinAgeSecs.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.catalogue");
     params.emplace_back("key", "missingFileCopiesMinAgeSecs");
-    params.push_back(log::Param("value", std::to_string(missingFileCopiesMinAgeSecs.value_or(0))));
+    params.emplace_back("value", std::to_string(missingFileCopiesMinAgeSecs.value_or(0)));
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -285,7 +464,7 @@ FrontendService::FrontendService(const std::string& configFilename) {
     params.emplace_back("source", archiveFileMaxSize.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.archivefile");
     params.emplace_back("key", "max_size_gb");
-    params.push_back(log::Param("value", std::to_string(archiveFileMaxSize.value_or(0))));
+    params.emplace_back("value", std::to_string(archiveFileMaxSize.value_or(0)));
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -298,8 +477,8 @@ FrontendService::FrontendService(const std::string& configFilename) {
     params.emplace_back("source", zeroLengthFilesForbidden.has_value() ? configFilename : "Compile time default");
     params.emplace_back("category", "cta.archivefile");
     params.emplace_back("key", "zero_length_files_forbidden");
-    params.push_back(
-      log::Param("value", config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("true")));
+    params.emplace_back("value",
+                        config.getOptionValueStr("cta.archivefile.zero_length_files_forbidden").value_or("true"));
     log(log::INFO, "Configuration entry", params);
   }
 
@@ -308,13 +487,13 @@ FrontendService::FrontendService(const std::string& configFilename) {
   {
     // Log cta.archivefile.zero_length_files_forbidden_vo_exception_list
     std::vector<log::Param> params;
-    params.push_back(
-      log::Param("source", m_zeroLengthFilesForbidden_voExceptions.empty() ? "Compile time default" : configFilename));
+    params.emplace_back("source",
+                        m_zeroLengthFilesForbidden_voExceptions.empty() ? "Compile time default" : configFilename);
     params.emplace_back("category", "cta.archivefile");
     params.emplace_back("key", "zero_length_files_forbidden_vo_exception_list");
     std::ostringstream oss;
     bool is_first = true;
-    for (auto& val : m_zeroLengthFilesForbidden_voExceptions) {
+    for (const auto& val : m_zeroLengthFilesForbidden_voExceptions) {
       if (!is_first) {
         oss << ",";
       }
@@ -354,151 +533,62 @@ FrontendService::FrontendService(const std::string& configFilename) {
     }
   }
 
-  // Configure admin commands allowed
-  {
-    std::optional<std::string> adminCmdMode = config.getOptionValueStr("cta.admin_commands.mode");
-    m_adminCommandMode = common::toAdminCmdMode(adminCmdMode.value_or("all"));
+  auto operationMode = config.getOptionValue<OperationMode>("cta.operation_mode");
 
+  if (!operationMode.has_value()) {
+    throw exception::UserError("cta.operation_mode is not set in configuration file " + configFilename);
+  }
+  m_operationMode = operationMode.value();
+
+  std::vector<log::Param> params;
+  params.emplace_back("category", "cta.operation_mode");
+  params.emplace_back("key", "mode");
+  params.emplace_back("value", toString(m_operationMode));
+  log(log::INFO, "Configuration entry", params);
+
+  log(log::INFO, "Working in " + toString(m_operationMode) + " mode.");
+
+  if (inGrpcMode) {
+    // We're in Grpc mode, so authentication matters
+    if (m_operationMode == OperationMode::WFE) {
+      loadWFEAuthConfigParams(configFilename, mtlsMappingFileName, config, log);
+    } else {
+      loadAdminAuthConfigParams(configFilename, config, log);
+    }
+
+    loadGrpcConfigParams(configFilename, config, log);
+
+    if ((m_operationMode != OperationMode::WFE && usesAdminAuthMethod(AuthMethod::JWT))
+        || m_wfeAuthMethod == AuthMethod::JWT) {
+      // JWT has been enabled
+      loadJWTConfigParams(configFilename, config, log);
+    }
+  }
+
+  if (auto tapeCacheMaxAgeSecsConf = config.getOptionValueUInt("cta.schedulerdb.tape_cache_max_age_secs");
+      tapeCacheMaxAgeSecsConf.has_value()) {
+    m_tapeCacheMaxAgeSecs = tapeCacheMaxAgeSecsConf.value();
     std::vector<log::Param> params;
-    params.emplace_back("source", adminCmdMode.has_value() ? configFilename : "Compile time default");
-    params.emplace_back("category", "cta.admin_commands");
-    params.emplace_back("key", "mode");
-    params.emplace_back("value", adminCmdMode.value_or("all"));
+    params.emplace_back("source", configFilename);
+    params.emplace_back("category", "cta.schedulerdb");
+    params.emplace_back("key", "tape_cache_max_age_secs");
+    params.emplace_back("value", tapeCacheMaxAgeSecsConf.value());
     log(log::INFO, "Configuration entry", params);
   }
 
-  // Configure workflow events enabled
-  {
-    std::optional<bool> workflowEventsEnabled = config.getOptionValueBool("cta.workflow_events.enabled");
-    m_workflowEventsEnabled = workflowEventsEnabled.value_or(true);
-
+  if (auto retrieveQueueCacheMaxAgeSecsConf =
+        config.getOptionValueUInt("cta.schedulerdb.retrieve_queue_cache_max_age_secs");
+      retrieveQueueCacheMaxAgeSecsConf.has_value()) {
+    m_retrieveQueueCacheMaxAgeSecs = retrieveQueueCacheMaxAgeSecsConf.value();
     std::vector<log::Param> params;
-    params.emplace_back("source", workflowEventsEnabled.has_value() ? configFilename : "Compile time default");
-    params.emplace_back("category", "cta.workflow_events");
-    params.emplace_back("key", "enabled");
-    params.emplace_back("value", m_workflowEventsEnabled ? "true" : "false");
+    params.emplace_back("source", configFilename);
+    params.emplace_back("category", "cta.schedulerdb");
+    params.emplace_back("key", "retrieve_queue_cache_max_age_secs");
+    params.emplace_back("value", retrieveQueueCacheMaxAgeSecsConf.value());
     log(log::INFO, "Configuration entry", params);
-  }
-
-  {
-    auto tapeCacheMaxAgeSecsConf = config.getOptionValueUInt("cta.schedulerdb.tape_cache_max_age_secs");
-    if (tapeCacheMaxAgeSecsConf.has_value()) {
-      m_tapeCacheMaxAgeSecs = tapeCacheMaxAgeSecsConf.value();
-      std::vector<log::Param> params;
-      params.emplace_back("source", configFilename);
-      params.emplace_back("category", "cta.schedulerdb");
-      params.emplace_back("key", "tape_cache_max_age_secs");
-      params.emplace_back("value", tapeCacheMaxAgeSecsConf.value());
-      log(log::INFO, "Configuration entry", params);
-    }
-  }
-
-  {
-    auto retrieveQueueCacheMaxAgeSecsConf =
-      config.getOptionValueUInt("cta.schedulerdb.retrieve_queue_cache_max_age_secs");
-    if (retrieveQueueCacheMaxAgeSecsConf.has_value()) {
-      m_retrieveQueueCacheMaxAgeSecs = retrieveQueueCacheMaxAgeSecsConf.value();
-      std::vector<log::Param> params;
-      params.emplace_back("source", configFilename);
-      params.emplace_back("category", "cta.schedulerdb");
-      params.emplace_back("key", "retrieve_queue_cache_max_age_secs");
-      params.emplace_back("value", retrieveQueueCacheMaxAgeSecsConf.value());
-      log(log::INFO, "Configuration entry", params);
-    }
-  }
-
-  // Get the mount policy name for verification requests
-
-  // Get the gRPC-specific values, if they are set (getOptionValue returns an std::optional)
-  std::optional<bool> tls = config.getOptionValueBool("grpc.tls.enabled");
-  m_tls = tls.value_or(false);  // default value is false
-  if (auto TlsKey = config.getOptionValueStr("grpc.tls.server_key_path"); TlsKey.has_value()) {
-    m_tlsKey = TlsKey.value();
-  }
-  if (auto TlsCert = config.getOptionValueStr("grpc.tls.server_cert_path"); TlsCert.has_value()) {
-    m_tlsCert = TlsCert.value();
-  }
-  if (auto TlsChain = config.getOptionValueStr("grpc.tls.chain_cert_path"); TlsChain.has_value()) {
-    m_tlsChain = TlsChain.value();
-  }
-  if (auto keytab = config.getOptionValueStr("grpc.keytab"); keytab.has_value()) {
-    m_keytab = keytab.value();
-  }
-  if (auto servicePrincipal = config.getOptionValueStr("grpc.service_principal"); servicePrincipal.has_value()) {
-    m_servicePrincipal = servicePrincipal.value();
-  }
-  if (auto port = config.getOptionValueStr("grpc.port"); port.has_value()) {
-    m_port = port.value();
-  }
-  if (auto threads = config.getOptionValueInt("grpc.numberofthreads"); threads.has_value()) {
-    if (threads.value() < 1) {
-      throw exception::UserError("value of grpc.numberofthreads must be at least 1");
-    }
-    m_threads = threads.value();
-  }
-
-  if (auto jwksUri = config.getOptionValueStr("grpc.jwks.uri"); jwksUri.has_value()) {
-    m_jwksUri = jwksUri.value();
-  }
-
-  std::optional<bool> jwtAuth = config.getOptionValueBool("grpc.jwt.enabled");
-  m_jwtAuth = jwtAuth.value_or(false);  // default value is false
-
-  if (!m_tls && m_jwtAuth) {
-    throw exception::UserError("grpc.jwt.auth is set to true when grpc.tls is set to false in configuration file "
-                               + configFilename + ". Cannot use tokens over unencrypted channel, tls must be enabled.");
-  }
-
-  if (m_jwtAuth && !m_jwksUri.has_value()) {
-    throw exception::UserError(
-      "grpc.jwt.auth is set to true but no endpoint is provided in grpc.jwks.uri in configuration file "
-      + configFilename);
-  }
-
-  auto cacheRefreshInterval = config.getOptionValueInt("grpc.jwks.cache.refresh_interval_secs");
-  if (cacheRefreshInterval.has_value() && cacheRefreshInterval.value() < 0) {
-    throw exception::UserError("grpc.jwks.cache.refresh_interval_secs is set to a negative value in configuration file "
-                               + configFilename);
-  }
-  m_cacheRefreshInterval = cacheRefreshInterval;
-
-  auto pubkeyTimeout = config.getOptionValueInt("grpc.jwks.cache.timeout_secs");
-  if (pubkeyTimeout.has_value() && pubkeyTimeout.value() < 0) {
-    throw exception::UserError("grpc.jwks.cache.timeout_secs is set to a negative value in configuration file "
-                               + configFilename);
-  }
-  m_pubkeyTimeout = pubkeyTimeout;
-
-  auto jwksTotalTimeout = config.getOptionValueInt("grpc.jwks.total_timeout");
-  if (jwksTotalTimeout.has_value() && jwksTotalTimeout.value() < 0) {
-    throw exception::UserError("grpc.jwks.total_timeout is set to a negative value in configuration file "
-                               + configFilename);
-  }
-  m_jwksTotalTimeout = jwksTotalTimeout;
-
-  if (m_jwtAuth) {
-    if (!m_cacheRefreshInterval.has_value()) {
-      log(log::WARNING, "No value set for grpc.jwks.cache.refresh_interval_secs, using default value");
-      m_cacheRefreshInterval = 600;
-    }
-    if (!m_pubkeyTimeout.has_value()) {
-      log(log::WARNING, "No value set for grpc.jwks.cache.timeout_secs, cached public keys will not expire");
-      m_pubkeyTimeout = 0;
-    }
-    if (m_pubkeyTimeout.value() != 0 && m_pubkeyTimeout.value() < m_cacheRefreshInterval.value()) {
-      log(log::WARNING,
-          "Cannot use a value for grpc.jwks.cache.timeout_secs that is less than grpc.jwks.cache.refresh_interval_secs."
-          "Setting timeout_secs equal to cache_refresh_interval_secs.");
-      m_pubkeyTimeout = std::optional<int>(m_cacheRefreshInterval.value());
-    }
-    if (!m_jwksTotalTimeout.has_value()) {
-      log(log::INFO, "No value set for grpc.jwks.total_timeout, using default value of 60 seconds");
-      m_jwksTotalTimeout = 60;
-    }
   }
 
   // All done
   log(log::INFO, std::string("cta-frontend started"), {log::Param("version", CTA_VERSION)});
 }
-
 }  // namespace cta::frontend

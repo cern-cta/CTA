@@ -1,0 +1,221 @@
+{{- /*
+SPDX-FileCopyrightText: 2025 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- if and .Values.enabled (not .Values.legacy_xrootd_mode) }}
+{{- $name := include "ctafrontend.fullname" . }}
+{{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "common.labels.standard" . | nindent 4 }}
+spec:
+  serviceName: {{ $name }}
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ $name }}
+  podManagementPolicy: Parallel
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ $name }}
+        {{- include "common.labels.withoutname" . | nindent 8 }}
+    spec:
+      imagePullSecrets:
+      {{ include "ctafrontend.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.pod.extraSpec }}
+      {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
+      {{- end }}
+      initContainers:
+      - name: init1-download-grpc-health-probe
+        image: {{ include "common.images.busybox" . }}
+        command: ["sh", "-c"]
+        args:
+          - |
+            mkdir -p /grpc-health-probe && \
+            wget -qO/grpc-health-probe/grpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.13/grpc_health_probe-linux-amd64 && \
+            chmod +x /grpc-health-probe/grpc-health-probe
+        volumeMounts:
+          - name: grpc-health-probe-bin
+            mountPath: /grpc-health-probe
+            subPath: grpc-health-probe
+      containers:
+      - name: cta-frontend
+        image: {{ include "ctafrontend.image" . }}
+        imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
+        stdin: true
+        command: ["/bin/bash", "-c"]
+        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-grpc.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        startupProbe:
+          exec:
+            command: ["rpm", "-q", "cta-frontend-grpc"]
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 60
+        readinessProbe:
+          exec:
+            command:
+              - /grpc-health-probe/grpc-health-probe
+              - -addr=localhost:{{ .Values.port }}
+              - -tls
+              - -tls-ca-cert=/etc/grpc-certs/ca/ca.crt.pem
+              - -tls-server-name={{ $name }}
+              {{- if eq .Values.conf.auth.method "mtls" }}
+              - -tls-client-cert=/etc/grpc-certs/client/ctaeos-self-signed.crt.pem
+              - -tls-client-key=/etc/grpc-certs/client/ctaeos-self-signed.key.pem
+              {{- end }}
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 60
+        securityContext:
+          allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
+          privileged: {{ include "common.securityContext.privileged" . }}
+        env:
+        - name: MY_NAME
+          value: {{ $name }}
+        - name: MY_NAMESPACE
+          value: {{ .Release.Namespace | quote }}
+        - name: INSTANCE_NAME
+          value: {{ .Release.Namespace | quote }}
+        - name: SCHEDULER_BACKEND
+          value: {{ $schedulerConfig.backend | quote }}
+        {{- if eq $schedulerConfig.backend "ceph" }}
+        - name: SCHEDULER_CEPH_NAMESPACE
+          value: {{ $schedulerConfig.cephConfig.namespace | quote }}
+        - name: SCHEDULER_CEPH_ID
+          value: {{ $schedulerConfig.cephConfig.id | quote }}
+        - name: SCHEDULER_CEPH_POOL
+          value: {{ $schedulerConfig.cephConfig.pool | quote }}
+        {{- end }}
+        - name: TERM
+          value: "xterm"
+        {{- with .Values.extraEnv }}
+        {{- include "common.extraEnv" . | nindent 8 }}
+        {{- end }}
+        volumeMounts:
+        - name: scripts-volume
+          mountPath: /scripts
+        - name: catalogue-config
+          mountPath: /etc/cta/cta-catalogue.conf
+          subPath: cta-catalogue.conf
+        {{- if eq $schedulerConfig.backend "postgres" }}
+        - name: scheduler-config
+          mountPath: /etc/cta/cta-scheduler.conf
+          subPath: cta-scheduler.conf
+        {{- else }}
+        - name: scheduler-config
+          mountPath: /etc/cta/cta-objectstore-tools.conf
+          subPath: cta-objectstore-tools.conf
+        {{- end }}
+        {{- if eq $schedulerConfig.backend "ceph" }}
+        - name: cta-ceph-volume
+          mountPath: /etc/ceph/ceph.conf
+          subPath: ceph.conf
+        - name: cta-ceph-volume
+          mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+          subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
+        {{- end }}
+        {{- if eq $schedulerConfig.backend "vfs" }}
+        - name: vfs-storage-volume
+          mountPath: /objectstore
+        {{- end }}
+        - name: frontend-config
+          mountPath: /etc/cta/cta-frontend.conf
+          subPath: cta-frontend.conf
+        {{- if eq .Values.conf.auth.method "mtls" }}
+        - name: frontend-config
+          mountPath: /etc/cta/mtls-map.toml
+          subPath: mtls-map.toml
+        {{- end }}
+        - name: jwks-json
+          mountPath: /etc/cta/jwks.json
+          subPath: jwks.json
+        - name: grpc-server-crt
+          mountPath: /etc/grpc-certs/cert
+        - name: grpc-server-key
+          mountPath: /etc/grpc-certs/key
+        - name: grpc-ca-crt
+          mountPath: /etc/grpc-certs/ca
+        {{- if eq .Values.conf.auth.method "mtls" }}
+        - name: grpc-client-crt
+          mountPath: /etc/grpc-certs/client/ctaeos-self-signed.crt.pem
+          subPath: ctaeos-self-signed.crt.pem
+        - name: grpc-client-key
+          mountPath: /etc/grpc-certs/client/ctaeos-self-signed.key.pem
+          subPath: ctaeos-self-signed.key.pem
+        {{- end }}
+        - name: grpc-health-probe-bin
+          mountPath: /grpc-health-probe
+          subPath: grpc-health-probe
+        {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+        - name: otlp-basic-auth-pwd
+          mountPath: /etc/cta/otlp-basic-auth-pwd.conf
+          subPath: otlp-basic-auth-pwd.conf
+        {{- end }}
+        {{- include "common.extraVolumeMounts" . | nindent 8 }}
+      volumes:
+      - name: scripts-volume
+        configMap:
+          name: cta-frontend-wfe-scripts
+          defaultMode: 0777
+      - name: catalogue-config
+        configMap:
+          name: cta-catalogue-conf
+      - name: jwks-json
+        secret:
+          secretName: jwks-json
+      {{- if eq $schedulerConfig.backend "postgres" }}
+      - name: scheduler-config
+        configMap:
+          name: cta-scheduler-conf
+      {{- else }}
+      - name: scheduler-config
+        configMap:
+          name: cta-objectstore-conf
+      {{- end }}
+      {{- if eq $schedulerConfig.backend "ceph" }}
+      - name: cta-ceph-volume
+        configMap:
+          name: ceph-conf
+      {{- end }}
+      {{- if eq $schedulerConfig.backend "vfs" }}
+      - name: vfs-storage-volume
+        persistentVolumeClaim:
+          claimName: scheduler-vfs-pvc
+      {{- end }}
+      - name: frontend-config
+        configMap:
+          name: cta-frontend-wfe-conf
+      - name: grpc-server-crt
+        secret:
+          secretName: server-wfe-crt-pem
+      - name: grpc-server-key
+        secret:
+          secretName: server-wfe-key-pem
+      - name: grpc-ca-crt
+        secret:
+          secretName: ca-crt-pem
+      {{- if eq .Values.conf.auth.method "mtls" }}
+      - name: grpc-client-crt
+        secret:
+          secretName: ctaeos-self-signed-crt-pem
+      - name: grpc-client-key
+        secret:
+          secretName: ctaeos-self-signed-key-pem
+      {{- end }}
+      - name: grpc-health-probe-bin
+        emptyDir: {}
+      {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+      - name: otlp-basic-auth-pwd
+        secret:
+          secretName: {{ .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+      {{- end }}
+      {{ include "common.extraVolumes" . | nindent 6 }}
+{{- end }}

@@ -11,8 +11,11 @@
 #include <mutex>
 
 namespace cta::auth {
-JwkCache::JwkCache(JwksFetcher& fetcher, const std::string& jwkUri, int pubkeyTimeout, const log::LogContext& lc)
-    : m_jwksFetcher(fetcher),
+JwkCache::JwkCache(std::unique_ptr<JwksFetcher> fetcher,
+                   const std::string& jwkUri,
+                   int pubkeyTimeout,
+                   const log::LogContext& lc)
+    : m_jwksFetcher(std::move(fetcher)),
       m_jwksUri(jwkUri),
       m_pubkeyTimeout(pubkeyTimeout),
       m_lc(lc) {};
@@ -79,7 +82,7 @@ void JwkCache::updateCache(time_t now) {
   lc.log(log::DEBUG, "In function updateCache");
   std::string raw_jwks;
   try {
-    raw_jwks = m_jwksFetcher.fetchJWKS(m_jwksUri);
+    raw_jwks = m_jwksFetcher->fetchJWKS(m_jwksUri);
   } catch (CurlException& ex) {
     lc.log(log::ERR, ex.getMessageValue());
     return;

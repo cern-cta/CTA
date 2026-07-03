@@ -77,7 +77,7 @@ private:
   cta::SchedulerDB_t&        m_schedDb;                //!< Reference to CTA SchedulerDB
   const std::string          m_catalogueConnString;    //!< CTA Catalogue DB connection string
   const std::string          m_instanceName;           //!< name of the CTA instance as specified in the server configuration file
-  const common::AdminCmdMode m_adminCommandMode;       //!< Option to select which admin command mode will be used
+  const AdminCmdMode m_adminCommandMode;       //!< Option to select which admin command mode will be used
   // clang-format on
 };
 

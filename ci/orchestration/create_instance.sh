@@ -34,7 +34,7 @@ usage() {
   echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-xrd-values.yaml."
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
   echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
-  echo "      --cta-config <file>:            Values file to use for the CTA chart. Defaults to presets/dev-cta-xrd-values.yaml."
+  echo "      --cta-config <files>:           Values file(s) to use for the CTA chart. Comma-separated for composition. Defaults to presets/dev-cta-xrd-values.yaml."
   echo "      --chart-install-timeout <min>:  CTA Helm chart installation timeout in minutes."
   echo "      --one-logical-library           Will use only one logical library name for all drives except the default creating one library name for each drive."
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
@@ -106,7 +106,8 @@ update_local_cta_chart_dependencies() {
     "scheduler"
     "client"
     "cli"
-    "frontend"
+    "frontend-wfe"
+    "frontend-admin"
     "taped"
     "rmcd"
     "maintd"
@@ -126,7 +127,7 @@ create_instance() {
   secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
-  cta_config="presets/dev-cta-xrd-values.yaml"
+  cta_config="-f presets/dev-cta-xrd-values.yaml"
   prometheus_config="presets/dev-prometheus-values.yaml"
   opentelemetry_collector_config="presets/dev-otel-collector-values.yaml"
   # By default keep Database and keep Scheduler datastore data
@@ -202,8 +203,14 @@ create_instance() {
         dcache_enabled="$2"
         shift ;;
       --cta-config)
-        cta_config="$2"
-        test -f "${cta_config}" || die "CTA config file ${cta_config} does not exist"
+        cta_config=""
+        IFS=',' read -ra configs <<< "$2"
+        for config in "${configs[@]}"; do
+          # Trim whitespace from config path
+          config="${config#"${config%%[![:space:]]*}"}"
+          config="${config%"${config##*[![:space:]]}"}"
+          cta_config+=" -f ${config}"
+        done
         shift ;;
       --extra-cta-values)
         extra_cta_values="$2"
@@ -407,7 +414,7 @@ create_instance() {
   echo "Installing CTA chart..."
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \
-                                -f "${cta_config}" \
+                                ${cta_config} \
                                 --set global.image.repository="${cta_image_repository}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \

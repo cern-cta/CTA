@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 apiVersion: v2
-name: frontend
-description: Spawns a frontend for CTA.
+name: frontend-wfe
+description: Spawns a WFE frontend for CTA.
 type: application
 version: 0.2.0
 appVersion: "5.11.10.1"
