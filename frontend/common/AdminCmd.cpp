@@ -46,8 +46,7 @@ xrd::Response AdminCmd::process() {
 
   try {
     // Check if admin command is explicitly disabled
-    if (m_adminCommandMode == AdminCmdMode::VERSION
-        || (m_adminCommandMode == AdminCmdMode::NO_REPACK && m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK)) {
+    if (m_adminCommandMode == AdminCmdMode::NO_REPACK && m_adminCmd.cmd() == admin::AdminCmd::CMD_REPACK) {
       throw cta::exception::UserError(c_disabledAdminCmdMsg);
     }
 

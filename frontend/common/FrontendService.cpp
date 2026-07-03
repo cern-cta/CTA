@@ -52,7 +52,7 @@ void FrontendService::loadAdminAuthConfigParams(const std::string& configFileNam
   }
 
   auto methodsStr =
-    cta::utils::joinWithMap(m_adminAuthMethods, std::string {", "}, [](AuthMethod method) { return toString(method); });
+    cta::utils::joinWithMap(m_adminAuthMethods, ", ", [](AuthMethod method) { return toString(method); });
 
   log(log::INFO, "Using auth methods: " + methodsStr);
 }

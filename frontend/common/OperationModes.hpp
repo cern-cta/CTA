@@ -26,7 +26,6 @@ enum class AdminCmdMode {
   ALL,        //!< All admin commands are allowed
   REPACK,     //!< Only repack (and version) admin commands are allowed
   NO_REPACK,  //!< No repack admin commands are allowed; all other commands allowed
-  VERSION,    //!< Only version admin command is allowed
 };
 
 /**
