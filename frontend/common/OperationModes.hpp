@@ -12,7 +12,7 @@
 
 namespace cta::frontend {
 
-enum class OperationMode { WFE, ADMIN_ALL, ADMIN_REPACK, ADMIN_NO_REPACK, ADMIN_VERSION };
+enum class OperationMode { WFE, ADMIN_ALL, ADMIN_REPACK, ADMIN_NO_REPACK };
 
 /**
  * @brief Convert an OperationMode to a string
@@ -53,8 +53,6 @@ struct cta::common::FromString<cta::frontend::OperationMode> {
       return ADMIN_REPACK;
     } else if (text == "admin_no_repack") {
       return ADMIN_NO_REPACK;
-    } else if (text == "admin_version") {
-      return ADMIN_VERSION;
     } else {
       return std::nullopt;
     }

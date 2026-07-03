@@ -20,8 +20,6 @@ std::string toString(OperationMode mode) {
       return "admin_repack";
     case ADMIN_NO_REPACK:
       return "admin_no_repack";
-    case ADMIN_VERSION:
-      return "admin_version";
   }
   throw std::invalid_argument("Invalid AppRunMode value");
 }
@@ -35,8 +33,6 @@ AdminCmdMode toAdminCmdMode(OperationMode mode) {
       return AdminCmdMode::REPACK;
     case ADMIN_NO_REPACK:
       return AdminCmdMode::NO_REPACK;
-    case ADMIN_VERSION:
-      return AdminCmdMode::VERSION;
     case WFE:
       throw std::invalid_argument("OperationMode::WFE can't be converted to an AdminCmdMode");
   }
