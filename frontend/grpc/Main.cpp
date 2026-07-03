@@ -89,7 +89,6 @@ int main(const int argc, char* const* const argv) {
   char c;
   int option_index = 0;
   const std::string shortHostName = utils::getShortHostname();
-  bool useTLS = false;
   std::string port;
 
   while ((c = getopt_long(argc, argv, "c:m:hv", long_options, &option_index)) != EOF) {
@@ -176,63 +175,55 @@ int main(const int argc, char* const* const argv) {
 
   std::shared_ptr<grpc::ServerCredentials> creds;
 
-  // read TLS value from config
-  useTLS = frontendService->getTls();
-
   // get number of threads
   int threads = frontendService->getThreads().value_or(8 * std::thread::hardware_concurrency());
   grpc_ssl_client_certificate_request_type cert_request_type = GRPC_SSL_DONT_REQUEST_CLIENT_CERTIFICATE;
 
-  if (useTLS) {
-    using namespace grpc::experimental;
+  using namespace grpc::experimental;
 
-    lc.log(log::INFO, "Using gRPC over TLS");
-    if (frontendService->getOperationMode() == cta::frontend::OperationMode::WFE
-        && frontendService->getWfeAuthMethod() == cta::frontend::AuthMethod::MTLS) {
-      // mTLS requires a check on the client certificate
-      cert_request_type = GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY;
-      lc.log(log::INFO, "Using mutual TLS to authenticate WFE client requests");
-    }
+  lc.log(log::INFO, "Using gRPC over TLS");
+  if (frontendService->getOperationMode() == cta::frontend::OperationMode::WFE
+      && frontendService->getWfeAuthMethod() == cta::frontend::AuthMethod::MTLS) {
+    // mTLS requires a check on the client certificate
+    cert_request_type = GRPC_SSL_REQUEST_AND_REQUIRE_CLIENT_CERTIFICATE_AND_VERIFY;
+    lc.log(log::INFO, "Using mutual TLS to authenticate WFE client requests");
+  }
 
-    IdentityKeyCertPair cert;
+  IdentityKeyCertPair cert;
 
-    if (!frontendService->getTlsKey().has_value()) {
-      throw exception::UserError("TLS specified but TLS key is not defined");  // cppcheck-suppress throwInEntryPoint
-    } else if (!frontendService->getTlsCert().has_value()) {
-      throw exception::UserError("TLS specified but TLS cert is not defined.");  // cppcheck-suppress throwInEntryPoint
-    } else {
-      auto key_file = frontendService->getTlsKey().value();
-      cert.private_key = cta::utils::file2string(key_file);
-
-      auto cert_file = frontendService->getTlsCert().value();
-      cert.certificate_chain = cta::utils::file2string(cert_file);
-
-      std::shared_ptr<StaticDataCertificateProvider> provider;
-      {
-        log::ScopedParamContainer spc(lc);
-        spc.add("tls_key", key_file).add("tls_cert", cert_file);
-
-        // if we have a CA certificate chain, use it
-        if (auto ca_chain = frontendService->getTlsChain(); ca_chain.has_value()) {
-          spc.add("tls_chain", ca_chain.value());
-          provider = std::make_shared<StaticDataCertificateProvider>(cta::utils::file2string(ca_chain.value()),
-                                                                     std::vector {cert});
-        } else {
-          spc.add("tls_chain", "<no chain file>");
-          provider = std::make_shared<StaticDataCertificateProvider>(std::vector {cert});
-        }
-        lc.log(log::INFO, "TLS configuration loaded");
-      }
-
-      TlsServerCredentialsOptions tls_options {provider};
-      tls_options.set_cert_request_type(cert_request_type);
-      tls_options.watch_root_certs();
-      tls_options.watch_identity_key_cert_pairs();
-      creds = TlsServerCredentials(tls_options);
-    }
+  if (!frontendService->getTlsKey().has_value()) {
+    throw exception::UserError("TLS specified but TLS key is not defined");  // cppcheck-suppress throwInEntryPoint
+  } else if (!frontendService->getTlsCert().has_value()) {
+    throw exception::UserError("TLS specified but TLS cert is not defined.");  // cppcheck-suppress throwInEntryPoint
   } else {
-    lc.log(log::INFO, "Using gRPC over plaintext socket");
-    creds = grpc::InsecureServerCredentials();
+    auto key_file = frontendService->getTlsKey().value();
+    cert.private_key = cta::utils::file2string(key_file);
+
+    auto cert_file = frontendService->getTlsCert().value();
+    cert.certificate_chain = cta::utils::file2string(cert_file);
+
+    std::shared_ptr<StaticDataCertificateProvider> provider;
+    {
+      log::ScopedParamContainer spc(lc);
+      spc.add("tls_key", key_file).add("tls_cert", cert_file);
+
+      // if we have a CA certificate chain, use it
+      if (auto ca_chain = frontendService->getTlsChain(); ca_chain.has_value()) {
+        spc.add("tls_chain", ca_chain.value());
+        provider = std::make_shared<StaticDataCertificateProvider>(cta::utils::file2string(ca_chain.value()),
+                                                                   std::vector {cert});
+      } else {
+        spc.add("tls_chain", "<no chain file>");
+        provider = std::make_shared<StaticDataCertificateProvider>(std::vector {cert});
+      }
+      lc.log(log::INFO, "TLS configuration loaded");
+    }
+
+    TlsServerCredentialsOptions tls_options {provider};
+    tls_options.set_cert_request_type(cert_request_type);
+    tls_options.watch_root_certs();
+    tls_options.watch_identity_key_cert_pairs();
+    creds = TlsServerCredentials(tls_options);
   }
 
   // enable health checking, needed by CI

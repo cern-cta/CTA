@@ -62,7 +62,6 @@ spec:
             command:
               - /grpc-health-probe/grpc-health-probe
               - -addr=localhost:{{ .Values.port }}
-            {{- if .Values.conf.tls.enabled }}
               - -tls
               - -tls-ca-cert=/etc/grpc-certs/ca/ca.crt.pem
               - -tls-server-name={{ $name }}
@@ -70,7 +69,6 @@ spec:
               - -tls-client-cert=/etc/grpc-certs/client/ctaeos-self-signed.crt.pem
               - -tls-client-key=/etc/grpc-certs/client/ctaeos-self-signed.key.pem
               {{- end }}
-            {{- end }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3

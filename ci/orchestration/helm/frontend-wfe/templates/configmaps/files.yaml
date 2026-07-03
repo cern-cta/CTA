@@ -123,7 +123,6 @@ data:
     grpc.wfe.auth_method {{ .Values.conf.auth.method }}
 
     # TLS related variables
-    grpc.tls.enabled {{ .Values.conf.tls.enabled }}
     grpc.tls.server_key_path {{ .Values.conf.tls.serverKey }}
     grpc.tls.server_cert_path {{ .Values.conf.tls.serverCert }}
     grpc.jwks.uri file:///etc/cta/jwks.json

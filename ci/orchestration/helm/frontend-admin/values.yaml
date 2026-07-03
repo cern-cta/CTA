@@ -38,7 +38,6 @@ conf:
     ssiLogLevel: "warning"
 
   tls:
-    enabled: true
     serverKey: /etc/grpc-certs/key/server-admin.key.pem
     serverCert: /etc/grpc-certs/cert/server-admin.crt.pem
     caCert: /etc/grpc-certs/ca/ca.crt.pem

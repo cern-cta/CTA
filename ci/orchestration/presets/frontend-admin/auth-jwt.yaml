@@ -18,7 +18,6 @@ cli:
         jwt_token_path: /etc/grid-security/jwt-token-grpc
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt.pem
-          enabled: true
 
 client:
   useGrpc: true
@@ -30,4 +29,3 @@ client:
         jwt_token_path: /etc/grid-security/jwt-token-grpc
         tls:
           chain_cert_path: /etc/grpc-certs/ca.crt.pem
-          enabled: true

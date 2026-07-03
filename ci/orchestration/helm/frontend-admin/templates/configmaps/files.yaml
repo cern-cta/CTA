@@ -120,7 +120,6 @@ data:
     grpc.admin.auth_methods {{ join " " .Values.conf.auth.methods }}
 
     # TLS related variables
-    grpc.tls.enabled {{ .Values.conf.tls.enabled }}
     grpc.tls.server_key_path {{ .Values.conf.tls.serverKey }}
     grpc.tls.server_cert_path {{ .Values.conf.tls.serverCert }}
     grpc.jwks.uri file:///etc/cta/jwks.json

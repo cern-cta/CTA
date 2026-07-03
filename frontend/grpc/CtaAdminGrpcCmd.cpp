@@ -87,20 +87,14 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
     std::cout << "Configuration error: cta.endpoint missing from " + config_file << std::endl;
     throw std::runtime_error("Configuration error: cta.endpoint missing from " + config_file);
   }
-  auto tls = config.getOptionValueBool("grpc.tls.enabled").value_or(true);
-  auto caCert = config.getOptionValueStr("grpc.tls.chain_cert_path");
 
-  if (tls) {
-    if (caCert) {
-      std::string caCertContents = cta::utils::file2string(caCert.value());
-      ssl_options.pem_root_certs = caCertContents;
-    } else {
-      ssl_options.pem_root_certs = "";
-    }
-    credentials = grpc::SslCredentials(ssl_options);
+  if (auto caCert = config.getOptionValueStr("grpc.tls.chain_cert_path"); caCert) {
+    std::string caCertContents = cta::utils::file2string(caCert.value());
+    ssl_options.pem_root_certs = caCertContents;
   } else {
-    credentials = grpc::InsecureChannelCredentials();
+    ssl_options.pem_root_certs = "";
   }
+  credentials = grpc::SslCredentials(ssl_options);
 
   // gRPC stream server
   const std::string GRPC_SERVER = endpoint.value();
@@ -112,8 +106,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
 
   // Determine authentication method: env variable overrides config, default to krb5
   std::string auth_method;
-  const char* auth_method_env = std::getenv("CTA_ADMIN_GRPC_AUTH_METHOD");
-  if (auth_method_env != nullptr) {
+  if (const char* auth_method_env = std::getenv("CTA_ADMIN_GRPC_AUTH_METHOD"); auth_method_env != nullptr) {
     // Environment variable takes precedence
     auth_method = auth_method_env;
   } else {
@@ -128,20 +121,18 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
   }
 
   // Validate and process the authentication method
-  if (tls) {
-    if (auth_method == "jwt") {
-      // Read JWT token path from config, with default fallback
-      std::string token_path = config.getOptionValueStr("grpc.jwt_token_path").value_or("");
-      if (token_path.empty()) {
-        throw cta::exception::UserError("jwt authentication specified but no token provided");
-      }
-      setupJwtAuthenticatedAdminCall(context, token_path);
-    } else if (auth_method == "krb5") {
-      setupKrb5AuthenticatedAdminCall(spChannel, context, log);
-    } else {
-      throw cta::exception::UserError("Unrecognized authentication method '" + auth_method + "' specified");
+  if (auth_method == "jwt") {
+    // Read JWT token path from config, with default fallback
+    std::string token_path = config.getOptionValueStr("grpc.jwt_token_path").value_or("");
+    if (token_path.empty()) {
+      throw cta::exception::UserError("jwt authentication specified but no token provided");
     }
-  }  // do not attach call credentials if using unencrypted connection
+    setupJwtAuthenticatedAdminCall(context, token_path);
+  } else if (auth_method == "krb5") {
+    setupKrb5AuthenticatedAdminCall(spChannel, context, log);
+  } else {
+    throw cta::exception::UserError("Unrecognized authentication method '" + auth_method + "' specified");
+  }
 
   if (!isStreamCmd(request.admincmd())) {
     cta::xrd::Response response;
@@ -176,7 +167,7 @@ void CtaAdminGrpcCmd::send(const CtaAdminParsedCmd& parsedCmd, const std::string
                   << std::endl;
       }
       // close the json delimiter, open is done inside command execution
-      if (parsedCmd.isJson()) {
+      if (CtaAdminParsedCmd::isJson()) {
         std::cout << CtaAdminParsedCmd::jsonCloseDelim();
       }
     } catch (std::exception& ex) {

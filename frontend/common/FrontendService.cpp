@@ -123,7 +123,6 @@ void FrontendService::loadMtlsMappingTable(const std::string& filePath) {
 void FrontendService::loadGrpcConfigParams(const std::string& configFileName,
                                            const cta::common::Config& config,
                                            log::Logger& log) {
-  config.getOptionValueInto("grpc.tls.enabled", m_tls, false);
   config.getOptionValueInto("grpc.tls.server_key_path", m_tlsKey);
   config.getOptionValueInto("grpc.tls.server_cert_path", m_tlsCert);
   config.getOptionValueInto("grpc.tls.chain_cert_path", m_tlsChain);
@@ -142,11 +141,6 @@ void FrontendService::loadGrpcConfigParams(const std::string& configFileName,
 void FrontendService::loadJWTConfigParams(const std::string& configFileName,
                                           const cta::common::Config& config,
                                           log::Logger& log) {
-  if (!m_tls) {
-    throw exception::UserError("JWT is being set up when grpc.tls is set to false in configuration file "
-                               + configFileName + ". Cannot use tokens over unencrypted channel, tls must be enabled.");
-  }
-
   auto jwksUri = config.getOptionValue<std::string>("grpc.jwks.uri");
 
   if (!jwksUri.has_value()) {

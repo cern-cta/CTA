@@ -82,11 +82,9 @@ spec:
             command:
               - /grpc-health-probe/grpc-health-probe
               - -addr=localhost:{{ .Values.port }}
-            {{- if .Values.conf.tls.enabled }}
               - -tls
               - -tls-ca-cert={{ .Values.conf.tls.caCert }}
               - -tls-server-name={{ $name }}
-            {{- end }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3

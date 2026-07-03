@@ -180,11 +180,6 @@ public:
   const std::string& getVerificationMountPolicy() const { return m_verificationMountPolicy; }
 
   /*
-   * Get the TLS value
-   */
-  bool getTls() const { return m_tls; }
-
-  /*
    * Get the TlsKey
    */
   std::optional<std::string> getTlsKey() const { return m_tlsKey; }
@@ -278,7 +273,6 @@ private:
   std::optional<std::string>                    m_keytab;                       //!< The keytab file to be used for Kerberos authentication by the gRPC server
   std::optional<std::string>                    m_servicePrincipal;             //!< The service principal to be used for Kerberos authentication by the gRPC server
   std::optional<int>                            m_threads;                      //!< The number of threads used by the gRPC server
-  bool                                          m_tls;                          //!< Use TLS encryption for gRPC
   std::optional<std::string>                    m_certMap;                      //!< The file that maps certificates to clients for authorization purposes
   std::optional<std::string>                    m_tlsKey;                       //!< The TLS service key file
   std::optional<std::string>                    m_tlsCert;                      //!< The TLS service certificate file

@@ -46,7 +46,6 @@ create_config_file() {
 # Test configuration file for cta-admin-grpc
 cta.endpoint cta-frontend-admin:10956
 grpc.tls.chain_cert_path /etc/grpc-certs/ca.crt.pem
-grpc.tls.enabled true
 grpc.cta_admin_auth_method $auth_method
 grpc.jwt_token_path /etc/grid-security/jwt-token-grpc
 EOF
@@ -148,7 +147,6 @@ log_header "Test 10: Empty auth method in config file"
 cat > "${TEST_CONFIG_FILE}" <<EOF
 cta.endpoint cta-frontend-admin:10956
 grpc.tls.chain_cert_path /etc/grpc-certs/ca.crt.pem
-grpc.tls.enabled true
 grpc.cta_admin_auth_method
 EOF
 export CTA_CLI_GRPC_CONFIG="${TEST_CONFIG_FILE}"
