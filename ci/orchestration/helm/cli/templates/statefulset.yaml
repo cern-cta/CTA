@@ -12,7 +12,7 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ $name }}
@@ -47,27 +47,16 @@ spec:
           mountPath: /root/{{ .Values.krb5PrincName }}_keytab/output
       containers:
       - name: cta-cli
-        # need to update this with an if-else for grpc frontend
         image: {{ include "ctacli.image" . }}
         imagePullPolicy: {{ include "ctacli.imagePullPolicy" . }}
         stdin: true
-        {{- if .Values.useGrpc }}
-        command: ["/bin/bash", "/scripts/ctacli-grpc.sh"]
+        command: ["/bin/bash", "/scripts/ctacli.sh"]
         readinessProbe:
           exec:
             command: ["sh", "-c", "rpm -q cta-admin-grpc"]
           initialDelaySeconds: 5
           periodSeconds: 2
           failureThreshold: 60
-        {{- else }}
-        command: ["/bin/bash", "/scripts/ctacli.sh"]
-        readinessProbe:
-          exec:
-            command: ["sh", "-c", "rpm -q cta-cli"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          failureThreshold: 60
-        {{- end }}
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
@@ -94,11 +83,9 @@ spec:
         - name: cta-conf-volume
           mountPath: /etc/cta/cta-cli.conf
           subPath: cta-cli.conf
-        {{- if .Values.useGrpc }}
         - name: ctaadmin1-jwt
           mountPath: /etc/cta/ctaadmin1.jwt
           subPath: ctaadmin1.jwt
-        {{- end }}
         - name: "{{ .Values.krb5PrincName }}-keytab"
           mountPath: /root/{{ .Values.krb5PrincName }}.keytab
           subPath: "{{ .Values.krb5PrincName }}.keytab"
@@ -111,11 +98,9 @@ spec:
         configMap:
           name: scripts-ctacli
           defaultMode: 0777
-      {{- if .Values.useGrpc }}
       - name: ctaadmin1-jwt
         secret:
           secretName: ctaadmin1-jwt
-      {{- end }}
       - name: cta-conf-volume
         configMap:
           name: etc-cta-ctacli

@@ -195,18 +195,12 @@ def skip_tests_if_necessary(config, items, present_disk_instances):
     SKIP_REASONS = {
         "eos": "Requires EOS",
         "dcache": "Requires dCache",
-        "grpc_frontend": "Requires a gRPC CTA Frontend",
     }
 
     skip_marks: set[str] = set()
 
     # Skip all disk-instances which we didn't find in the deployment
     skip_marks.update([e.label for e in (set(DiskInstanceImplementation) - set(present_disk_instances))])
-
-    # Skip gRPC tests if there is no gRPC frontend
-    grpc_frontend_present: bool = any(frontend.is_grpc for frontend in config.env.cta_frontend)
-    if not grpc_frontend_present:
-        skip_marks.add("grpc_frontend")
 
     # Modify the items collection by adding the "skip" mark to the relevant tests
     for item in items:

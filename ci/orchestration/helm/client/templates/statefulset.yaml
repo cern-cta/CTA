@@ -12,7 +12,7 @@ metadata:
   labels:
     {{- include "common.labels.standard" . | nindent 4 }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ $name }}
@@ -54,23 +54,13 @@ spec:
         image: {{ include "client.image" . }}
         imagePullPolicy: {{ include "client.imagePullPolicy" . }}
         stdin: true
-        {{- if .Values.useGrpc }}
-        command: ["/bin/bash", "/scripts/client-grpc.sh"]
+        command: ["/bin/bash", "/scripts/client.sh"]
         readinessProbe:
           exec:
             command: ["sh", "-c", "rpm -q cta-admin-grpc cta-immutable-file-test xrootd-client eos-client"]
           initialDelaySeconds: 5
           periodSeconds: 2
           failureThreshold: 60
-        {{- else }}
-        command: ["/bin/bash", "/scripts/client.sh"]
-        readinessProbe:
-          exec:
-            command: ["sh", "-c", "rpm -q cta-cli cta-immutable-file-test xrootd-client eos-client"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          failureThreshold: 60
-        {{- end }}
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
@@ -99,11 +89,9 @@ spec:
         - name: etc-cta-client
           mountPath: /etc/cta/cta-cli.conf
           subPath: cta-cli.conf
-        {{- if .Values.useGrpc }}
         - name: ctaadmin1-jwt
           mountPath: /etc/cta/ctaadmin1.jwt
           subPath: ctaadmin1.jwt
-        {{- end }}
         - name: krb5-conf
           mountPath: /etc/krb5.conf
           subPath: krb5.conf
@@ -121,11 +109,9 @@ spec:
       - name: etc-cta-client
         configMap:
           name: etc-cta-client
-      {{- if .Values.useGrpc }}
       - name: ctaadmin1-jwt
         secret:
           secretName: ctaadmin1-jwt
-      {{- end }}
       - name: xrootd-client-conf
         configMap:
           name: xrootd-client-conf

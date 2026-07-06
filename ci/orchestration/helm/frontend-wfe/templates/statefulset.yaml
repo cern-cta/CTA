@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- if and .Values.enabled .Values.legacy_xrootd_mode }}
+{{- if and .Values.enabled }}
 {{- $name := include "ctafrontend.fullname" . }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 apiVersion: apps/v1
@@ -24,7 +24,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: {{ $name }}
-        {{- include "common.labels.withoutname" $ | nindent 8 }}
+        {{- include "common.labels.withoutname" . | nindent 8 }}
     spec:
       imagePullSecrets:
       {{ include "ctafrontend.imagePullSecrets" . | nindent 6 }}
@@ -32,57 +32,43 @@ spec:
       {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
       initContainers:
-      - name: init1-get-krb5-keytab
-        image: {{ include "ctafrontend.image" . }}
-        imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
-        command: ["/bin/bash", "-c"]
-        args:
-        - |
-          sukadmin() { echo {{ .Values.global.kerberos.adminPrinc.password }} | kadmin -r {{ .Values.global.kerberos.defaultRealm | upper }} -p {{ .Values.global.kerberos.adminPrinc.name }}/admin $@; };
-          sukadmin addprinc -randkey cta/{{ $name }};
-          sukadmin ktadd -k /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab cta/{{ $name }};
-          chmod 400 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
-          # Make CTA user owner (group 33 is tape)
-          chown -R 1000:33 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
-        volumeMounts:
-        - name: krb5-conf
-          mountPath: /etc/krb5.conf
-          subPath: krb5.conf
-        - name: cta-frontend-krb5-keytab
-          mountPath: /root/ctafrontend_keytab/output
-      # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
-      - name: init2-fix-sss-keytab-ownership
+      - name: init1-download-grpc-health-probe
         image: {{ include "common.images.busybox" . }}
-        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
         command: ["sh", "-c"]
         args:
-        - |
-          cp /root/sss_keytab/input/diskbuffer.sss.keytab /root/sss_keytab/output/diskbuffer.sss.keytab;
-          chmod 400 /root/sss_keytab/output/diskbuffer.sss.keytab;
-          # Make CTA user owner (group 33 is tape)
-          chown -R 1000:33 /root/sss_keytab/output/diskbuffer.sss.keytab
+          - |
+            mkdir -p /grpc-health-probe && \
+            wget -qO/grpc-health-probe/grpc-health-probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.13/grpc_health_probe-linux-amd64 && \
+            chmod +x /grpc-health-probe/grpc-health-probe
         volumeMounts:
-        - name: diskbuffer-sss-keytab
-          mountPath: /root/sss_keytab/input/diskbuffer.sss.keytab
-          subPath: {{ .Values.conf.auth.config.kerberos.subPath }}
-        - name: diskbuffer-sss-keytab-fixedownership
-          mountPath: /root/sss_keytab/output
+          - name: grpc-health-probe-bin
+            mountPath: /grpc-health-probe
+            subPath: grpc-health-probe
       containers:
       - name: cta-frontend
         image: {{ include "ctafrontend.image" . }}
         imagePullPolicy: {{ include "ctafrontend.imagePullPolicy" . }}
         stdin: true
         command: ["/bin/bash", "-c"]
-        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-xrd.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
+        args: ["{{- if .Values.preRun.enabled }}/scripts/pre_run.sh;{{- end }} /scripts/ctafrontend-grpc.sh; {{- if .Values.postRun.enabled }}/scripts/post_run.sh;{{- end }}"]
         startupProbe:
           exec:
-            command: ["rpm", "-q", "cta-frontend"]
+            command: ["rpm", "-q", "cta-frontend-grpc"]
           initialDelaySeconds: 0
           periodSeconds: 5
           failureThreshold: 60
         readinessProbe:
-          tcpSocket:
-            port: {{ .Values.port }}
+          exec:
+            command:
+              - /grpc-health-probe/grpc-health-probe
+              - -addr=localhost:{{ .Values.port }}
+              - -tls
+              - -tls-ca-cert=/etc/grpc-certs/ca/ca.crt.pem
+              - -tls-server-name={{ $name }}
+              {{- if eq .Values.conf.auth.method "mtls" }}
+              - -tls-client-cert=/etc/grpc-certs/client/ctaeos-self-signed.crt.pem
+              - -tls-client-key=/etc/grpc-certs/client/ctaeos-self-signed.key.pem
+              {{- end }}
           initialDelaySeconds: 5
           periodSeconds: 5
           timeoutSeconds: 3
@@ -136,36 +122,55 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
+        {{- if eq $schedulerConfig.backend "vfs" }}
+        - name: vfs-storage-volume
+          mountPath: /objectstore
+        {{- end }}
         - name: frontend-config
           mountPath: /etc/cta/cta-frontend.conf
           subPath: cta-frontend.conf
-        - name: cta-frontend-krb5-keytab
-          mountPath: /etc/cta/cta-frontend.krb5.keytab
-          subPath: cta-frontend.krb5.keytab
-        - name: diskbuffer-sss-keytab-fixedownership
-          mountPath: /etc/cta/diskbuffer.sss.keytab
-          subPath: diskbuffer.sss.keytab
-        - name: krb5-conf
-          mountPath: /etc/krb5.conf
-          subPath: krb5.conf
-      {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
+        {{- if eq .Values.conf.auth.method "mtls" }}
+        - name: frontend-config
+          mountPath: /etc/cta/mtls-map.toml
+          subPath: mtls-map.toml
+        {{- end }}
+        - name: jwks-json
+          mountPath: /etc/cta/jwks.json
+          subPath: jwks.json
+        - name: grpc-server-crt
+          mountPath: /etc/grpc-certs/cert
+        - name: grpc-server-key
+          mountPath: /etc/grpc-certs/key
+        - name: grpc-ca-crt
+          mountPath: /etc/grpc-certs/ca
+        {{- if eq .Values.conf.auth.method "mtls" }}
+        - name: grpc-client-crt
+          mountPath: /etc/grpc-certs/client/ctaeos-self-signed.crt.pem
+          subPath: ctaeos-self-signed.crt.pem
+        - name: grpc-client-key
+          mountPath: /etc/grpc-certs/client/ctaeos-self-signed.key.pem
+          subPath: ctaeos-self-signed.key.pem
+        {{- end }}
+        - name: grpc-health-probe-bin
+          mountPath: /grpc-health-probe
+          subPath: grpc-health-probe
+        {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
         - name: otlp-basic-auth-pwd
           mountPath: /etc/cta/otlp-basic-auth-pwd.conf
           subPath: otlp-basic-auth-pwd.conf
-      {{- end }}
-      {{- if eq $schedulerConfig.backend "vfs" }}
-        - name: vfs-storage-volume
-          mountPath: /objectstore
-      {{- end }}
-        {{ include "common.extraVolumeMounts" . | nindent 8 }}
+        {{- end }}
+        {{- include "common.extraVolumeMounts" . | nindent 8 }}
       volumes:
       - name: scripts-volume
         configMap:
-          name: cta-frontend-admin-scripts
+          name: cta-frontend-wfe-scripts
           defaultMode: 0777
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
+      - name: jwks-json
+        secret:
+          secretName: jwks-json
       {{- if eq $schedulerConfig.backend "postgres" }}
       - name: scheduler-config
         configMap:
@@ -187,17 +192,26 @@ spec:
       {{- end }}
       - name: frontend-config
         configMap:
-          name: cta-frontend-admin-conf
-      - name: cta-frontend-krb5-keytab
-        emptyDir: {}
-      - name: diskbuffer-sss-keytab
+          name: cta-frontend-wfe-conf
+      - name: grpc-server-crt
         secret:
-          secretName: {{ .Values.conf.auth.config.kerberos.secretName }}
-      - name: diskbuffer-sss-keytab-fixedownership
+          secretName: server-wfe-crt-pem
+      - name: grpc-server-key
+        secret:
+          secretName: server-wfe-key-pem
+      - name: grpc-ca-crt
+        secret:
+          secretName: ca-crt-pem
+      {{- if eq .Values.conf.auth.method "mtls" }}
+      - name: grpc-client-crt
+        secret:
+          secretName: ctaeos-self-signed-crt-pem
+      - name: grpc-client-key
+        secret:
+          secretName: ctaeos-self-signed-key-pem
+      {{- end }}
+      - name: grpc-health-probe-bin
         emptyDir: {}
-      - name: krb5-conf
-        configMap:
-          name: {{ .Values.global.kerberos.clientConfig.configMap }}
       {{- if .Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       - name: otlp-basic-auth-pwd
         secret:

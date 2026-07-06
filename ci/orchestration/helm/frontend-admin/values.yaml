@@ -3,11 +3,9 @@
 
 # Take care with increasing this number, as CTA has not been tested with multiple frontend replicas
 # Increasing this will most likely not work as expected
-replicaCount: 1
+replicas: 1
 enabled: true
 port: 10956
-
-legacy_xrootd_mode: false
 
 conf:
   numberOfThreads: 512

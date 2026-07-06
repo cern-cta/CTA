@@ -76,42 +76,6 @@ data:
     # CTA Verification Mount Policy
     cta.verification.mount_policy verification
 
-    {{- if .Values.legacy_xrootd_mode }}
-    #
-    # XRootD/SSI options
-    #
-
-    # Load the CTA SSI plugin
-    xrootd.fslib -2 libXrdSsi.so
-
-    # Load the SSI module
-    ssi.svclib libXrdSsiCta.so
-
-    # Use the security module
-    xrootd.seclib libXrdSec.so
-
-    # Security protocol specification
-    #
-    # Note: the XRootD process needs to be able to read the keytab file
-    sec.protocol krb5 /etc/cta/cta-frontend.krb5.keytab cta/{{ $name }}@{{ .Values.global.kerberos.defaultRealm }}
-    sec.protocol sss -s /etc/cta/diskbuffer.sss.keytab
-
-    # Only Kerberos 5 and sss are allowed
-    sec.protbind * only sss krb5
-
-    # Turn off asynchronous I/O
-    xrootd.async off
-
-    # Use a port other than 1094, already in use
-    xrd.port {{ .Values.port }}
-
-    # Export the SSI resource
-    all.export /ctafrontend nolock r/w
-
-    # CTA XRootD SSI Protobuf log level
-    cta.log.ssi {{ .Values.conf.logger.ssiLogLevel }}
-
-    {{- else }}
     #
     # gRPC options
     #
@@ -128,8 +92,6 @@ data:
     grpc.jwks.uri file:///etc/cta/jwks.json
     {{- if .Values.conf.tls.caCert }}
     grpc.tls.chain_cert_path {{ .Values.conf.tls.caCert }}
-    {{- end }}
-
     {{- end }}
 
     # Telemetry

@@ -27,7 +27,7 @@ usage() {
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -r, --eos-image-repository <repo>:  The EOS Docker image name."
   echo "  -i, --eos-image-tag <tag>:          The EOS Docker image tag."
-  echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-xrd-values.yaml."
+  echo "      --eos-config <file>:            Values file to use for the EOS chart."
   echo "      --setup-enabled <true|false>:   Whether to run the setup scripts or not."
   echo
   exit 1
@@ -44,7 +44,7 @@ deploy() {
   project_json_path="../../project.json"
   eos_server_chart_version=$(jq -r .dev.eosServerChartVersion ${project_json_path})
   setup_enabled=true
-  eos_config="presets/dev-eos-xrd-values.yaml"
+  eos_config="presets/eos/auth-jwt.yaml"
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
