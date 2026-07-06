@@ -563,7 +563,9 @@ def test_cta_admin_media_type(cta_cli):
 
 
 @pytest.mark.eos
-def test_cta_admin_recycle_tape_file_ls(cta_cli, disk_client, disk_instance, disk_instance_name, test_dir):
+def test_cta_admin_recycle_tape_file_ls(
+    cta_cli, disk_client, disk_instance, disk_instance_name, test_dir, cta_storage_class
+):
     vids: list[str] = cta_cli.list_all_tape_vids()
     assert vids, "Need at least one VID for rtf ls test."
 
@@ -591,7 +593,7 @@ def test_cta_admin_recycle_tape_file_ls(cta_cli, disk_client, disk_instance, dis
     assert rtf_created["diskInstance"] == disk_instance_name
     assert int(rtf_created["diskFileUid"]) == int(file_info_json["uid"])
     assert int(rtf_created["diskFileGid"]) == int(file_info_json["gid"])
-    assert rtf_created["storageClass"] == "ctaStorageClass"
+    assert rtf_created["storageClass"] == cta_storage_class
     assert "sys.archive.storage_class" not in file_info_json["xattr"]
 
 
