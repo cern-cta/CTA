@@ -514,7 +514,7 @@ const Option opt_archive_route_type {
     + R"(" or ")" + cta::common::dataStructures::toString(cta::common::dataStructures::ArchiveRouteType::REPACK)
     + R"(">)"};
 const Option opt_missingfilecopies {Option::OPT_FLAG, "--missingfilecopies", "--mfc", ""};
-const Option opt_getstorageclassstatistics {Option::OPT_FLAG, "--getstorageclassstatistics", "--gscs", ""};
+const Option opt_getstorageclassstatistics {Option::OPT_FLAG, "--getstorageclassstatistics", "", ""};
 
 /*!
  * Subset of commands that return streaming output

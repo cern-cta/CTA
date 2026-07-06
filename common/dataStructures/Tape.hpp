@@ -8,6 +8,7 @@
 #include "common/dataStructures/EntryLog.hpp"
 #include "common/dataStructures/LabelFormat.hpp"
 #include "common/dataStructures/TapeLog.hpp"
+#include "common/dataStructures/TapeStorageClassStatistics.hpp"
 
 #include <list>
 #include <map>
@@ -78,6 +79,7 @@ struct Tape {
   uint64_t dataOnTapeInBytes = 0;
   uint64_t nbMasterFiles = 0;
   uint64_t masterDataInBytes = 0;
+  std::vector<TapeStorageClassStatistics> storageClassStatistics;
 
   cta::common::dataStructures::Label::Format labelFormat;
 
