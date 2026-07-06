@@ -31,11 +31,11 @@ Once all steps have been completed, this issue can be closed.
 
 ## Stress Test
 
+<!-- Use the dashboard at https://monit-grafana.cern.ch/goto/dfrahun8hqolcb?orgId=165 -->
+
 Screenshot of the stress test results:
 
 Link to the CI `stress-test` job:
-
-Link to the monitoring dashboard (with the correct timeframe):
 
 <!-- If everything goes well for the stress test, create the Deployment ticket in the Operations repo. Otherwise, iterate in the comments to solve any problems. -->
 
