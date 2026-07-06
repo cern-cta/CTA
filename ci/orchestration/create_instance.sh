@@ -31,10 +31,10 @@ usage() {
   echo "      --no-setup:                     Skip the setup scripts for EOS and tape resets."
   echo "      --eos-image-tag <tag>:          Docker image tag for the EOS chart."
   echo "      --eos-image-repository <repo>:  Docker image for EOS chart. Should be the full image name, e.g. \"gitlab-registry.cern.ch/dss/eos/eos-ci\"."
-  echo "      --eos-config <file>:            Values file to use for the EOS chart. Defaults to presets/dev-eos-xrd-values.yaml."
+  echo "      --eos-config <file>:            Values file to use for the EOS chart."
   echo "      --eos-enabled <true|false>:     Whether to spawn an EOS instance or not. Defaults to true."
   echo "      --dcache-enabled <true|false>:  Whether to spawn a dCache instance or not. Defaults to false."
-  echo "      --cta-config <files>:           Values file(s) to use for the CTA chart. Comma-separated for composition. Defaults to presets/dev-cta-xrd-values.yaml."
+  echo "      --cta-config <files>:           Values file(s) to use for the CTA chart. Comma-separated for composition."
   echo "      --chart-install-timeout <min>:  CTA Helm chart installation timeout in minutes."
   echo "      --one-logical-library           Will use only one logical library name for all drives except the default creating one library name for each drive."
   echo "      --local-telemetry:              Spawns an OpenTelemetry and Collector and Prometheus scraper. Changes the default cta-config to presets/dev-cta-telemetry-values.yaml"
@@ -127,7 +127,7 @@ create_instance() {
   secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
   scheduler_config=presets/dev-scheduler-vfs-values.yaml
-  cta_config="-f presets/dev-cta-xrd-values.yaml"
+  cta_config="-f presets/dev-cta-common.yaml -f presets/frontend-wfe/auth-jwt.yaml -f presets/frontend-admin/auth-jwt.yaml"
   prometheus_config="presets/dev-prometheus-values.yaml"
   opentelemetry_collector_config="presets/dev-otel-collector-values.yaml"
   # By default keep Database and keep Scheduler datastore data
@@ -141,7 +141,7 @@ create_instance() {
   # EOS related
   eos_image_tag=$(jq -r .dev.eosImageTag ${project_json_path})
   eos_image_repository=$(jq -r .dev.eosImageRepository ${project_json_path})
-  eos_config=presets/dev-eos-xrd-values.yaml
+  eos_config=presets/eos/auth-jwt.yaml
   eos_enabled=true
   # dCache
   dcache_image_tag=$(jq -r .dev.dCacheImageTag ${project_json_path})

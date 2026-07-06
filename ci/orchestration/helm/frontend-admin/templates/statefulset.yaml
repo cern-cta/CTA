@@ -3,7 +3,7 @@ SPDX-FileCopyrightText: 2025 CERN
 SPDX-License-Identifier: GPL-3.0-or-later
 */ -}}
 
-{{- if and .Values.enabled (not .Values.legacy_xrootd_mode) }}
+{{- if and .Values.enabled }}
 {{- $name := include "ctafrontend.fullname" . }}
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 apiVersion: apps/v1

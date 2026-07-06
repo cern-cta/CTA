@@ -10,5 +10,3 @@ metadata:
 data:
   ctacli.sh: |
     {{ .Files.Get "scripts/ctacli.sh" | nindent 4 }}
-  ctacli-grpc.sh: |
-    {{ .Files.Get "scripts/ctacli-grpc.sh" | nindent 4 }}

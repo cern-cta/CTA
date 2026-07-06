@@ -123,24 +123,6 @@ RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
 USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
 
-
-###############################################
-# SERVICE cta-frontend-xrd
-###############################################
-FROM base AS cta-frontend-xrd
-
-RUN dnf install -y \
-      cta-frontend \
-      cta-frontend-debuginfo && \
-    dnf clean all
-
-# Remove the local RPMs to reduce size
-RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
-
-USER cta
-CMD ["/bin/bash", "-c", "cd ~cta; xrootd -l /var/log/cta-frontend-xrootd.log -k fifo -n cta -c /etc/cta/cta-frontend-xrootd.conf -I v4"]
-
-
 ###############################################
 # TOOLS cta-tools-grpc
 ###############################################
@@ -148,23 +130,6 @@ FROM base AS cta-tools-grpc
 
 RUN dnf install -y \
       cta-admin-grpc \
-      cta-catalogue-utils \
-      cta-scheduler-utils && \
-    dnf clean all
-
-# Remove the local RPMs to reduce size
-RUN rm -rf "${CTA_REPO_DIR}" && dnf clean all --enablerepo=\*
-
-USER cta
-ENTRYPOINT ["/bin/bash"]
-
-###############################################
-# TOOLS cta-tools-xrd
-###############################################
-FROM base AS cta-tools-xrd
-
-RUN dnf install -y \
-      cta-cli \
       cta-catalogue-utils \
       cta-scheduler-utils && \
     dnf clean all

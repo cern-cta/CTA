@@ -160,34 +160,29 @@ variables:
   # Pass a file (or comma-separated list) here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
   DEFAULT_CTA_VALUES_CHAIN:
     description: "Path to a values.yaml file to be passed to the CTA Helm chart."
-    value: "presets/dev-cta-xrd-values.yaml"
+    value: "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
     options:
-      - "presets/dev-cta-xrd-values.yaml"
-      - "presets/dev-cta-grpc-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
-      - "presets/dev-cta-grpc-common.yaml,presets/frontend-wfe/auth-mtls.yaml,presets/frontend-admin/auth-jwt.yaml"
+      - "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
+      - "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-mtls.yaml,presets/frontend-admin/auth-jwt.yaml"
 
   DEFAULT_EOS_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the EOS Helm chart."
-    value: "presets/dev-eos-xrd-values.yaml"
+    value: "presets/eos/auth-jwt.yaml"
     options:
-      - "presets/dev-eos-xrd-values.yaml"
       - "presets/eos/auth-jwt.yaml"
       - "presets/eos/auth-mtls.yaml"
 
   STRESS_CTA_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the CTA Helm chart for the stress test."
-    value: "presets/stress-cta-xrd-values.yaml"
+    value: "presets/stress-cta-values.yaml"
     options:
-      - "presets/stress-cta-xrd-values.yaml"
-      - "presets/stress-cta-grpc-values.yaml"
-      - "presets/stress-cta-xrd-pgsched-values.yaml"
-      - "presets/stress-cta-grpc-pgsched-values.yaml"
+      - "presets/stress-cta-values.yaml"
+      - "presets/stress-cta-pgsched-values.yaml"
   STRESS_EOS_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the EOS Helm chart for the stress test."
-    value: "presets/stress-eos-xrd-values.yaml"
+    value: "presets/stress-eos-values.yaml"
     options:
-      - "presets/stress-eos-xrd-values.yaml"
-      - "presets/stress-eos-grpc-values.yaml"
+      - "presets/stress-eos-values.yaml"
 
 
   # Git CI Configuration
