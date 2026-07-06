@@ -4,6 +4,22 @@
 
 - [Misc] Update required runtime version of opentelemetry-cpp to v1.26.0 (cta/CTA!1370)
 
+## 5.11.19.0-1 (2026-07-06)
+
+### Changes
+
+- [frontend] Split Admin/WFE frontends, add mTLS (cta/CTA!1367)
+
+
+### Deprecations
+
+- [frontend] Deprecate storage class field in EOS-CTA xattrs (cta/CTA!1424)
+
+
+### Other
+
+- [CI] Add Enstore and EnstoreLarge tape tests (cta/CTA!1412)
+
 ## 5.11.18.0-1
 
 ### New Features
