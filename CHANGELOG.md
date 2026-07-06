@@ -1,3 +1,18 @@
+## 5.11.19.0-1
+
+### Changes
+
+- [frontend] Split Admin/WFE frontends, add mTLS (cta/CTA!1367)
+- [catalogue] Forbid adding or changing encryption key of non-empty tapes (cta/CTA!1414)
+
+### Deprecations
+
+- [frontend] Deprecate storage class field in EOS-CTA xattrs (cta/CTA!1424)
+
+### Other
+
+- [CI] Add Enstore and EnstoreLarge tape tests (cta/CTA!1412)
+
 ## 5.11.18.0-2
 
 ### Bug Fixes
