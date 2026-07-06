@@ -1,0 +1,93 @@
+
+MAINTAINER:
+
+    Michael Davis <michael.davis@cern.ch>
+    Joao Afonso <joao.afonso@cern.ch>
+    Niels Alexander Buegel <niels.alexander.bugel@cern.ch>
+
+
+CONTRIBUTORS:
+
+    Akos Frohner <szamsu@cern.ch>
+    Alasdair David Earl <aearl@cern.ch>
+    Anastasia Karachaliou <anastasia.karachaliou@cern.ch>
+    Andrea Ieri <aieri@cern.ch>
+    Andreas Joachim Peters <apeters@cern.ch>
+    Arne Wiebalck <wiebalck@cern.ch>
+    Aurélien Gounon <aurelien.gounon@cern.ch>
+    baran <baran@cern.ch>
+    Benjamin Couturier <bcouturi@cern.ch>
+    Benjamin Fiorini <bfiorini@cern.ch>
+    Cedric CAFFY <cedric.caffy@cern.ch>
+    Cristina Moraru <cristina-gabriela.moraru@cern.ch>
+    Damian Jaroslaw Raczkowski <damian.jaroslaw.raczkowski@cern.ch>
+    Daniele Francesco Kruse <Daniele.Francesco.Kruse@cern.ch>
+    Daniele Kruse <dkruse@cern.ch>
+    David COME <david.come@cern.ch>
+    David Fernandez Alvarez <david.fernandez.alvarez@cern.ch>
+    David Jericho <davidj@diskpig.org>
+    David Smith <David.Smith@cern.ch>
+    Denis Sergeevich Lujanski <denis.lujanski@aarnet.edu.au>
+    Dennis Waldron <waldron@cern.ch>
+    Elvin Alin Sindrilaru <esindril@cern.ch>
+    Eric Cano <canoc3@cern.ch>
+    Eric Wayne Vaandering <ewv@fnal.gov>
+    Fabien Colin <fabien@cern.ch>
+    Felix Ehm <felixehm@cern.ch>
+    Fons Rademakers <fons.rademakers@cern.ch>
+    Georgios Koloventzos <georgios.koloventzos@cern.ch>
+    German Cancio Melia <gcancio@cern.ch>
+    Giulia Taurelli <gtaur@cern.ch>
+    Giuseppe Lo Presti <Giuseppe.LoPresti@cern.ch>
+    Hugo Cacote <hcacote@cern.ch>
+    Ignacio Reguero <reguero@cern.ch>
+    Jacek Chodak <jacek.chodak@desy.de>
+    Jacek Maksymilian Chodak <jacek.maksymilian.chodak@cern.ch>
+    Jan Iven <iven@cern.ch>
+    Jan Van Eldik <jveldik@cern.ch>
+    Jaroslav Guenther <Jaroslav.Guenther@cern.ch>
+    Jean-Damien Durand <jdurand@cern.ch>
+    Jean-Philippe Baud <baud@cern.ch>
+    jmakai <jmakai@cern.ch>
+    Joao Afonso <joao.afonso@cern.ch>
+    Jorge Camarero Vera <jorge.camarero@cern.ch>
+    Jozsef Makai <jozsef.makai@cern.ch>
+    Julien Leduc <julien.leduc@cern.ch>
+    Konstantina Skovola <konstantina.skovola@cern.ch>
+    Krzysztof Blaszczyk <kblaszcz@cern.ch>
+    Lasse Tjernaes Wardenaer <lasse.tjernaes.wardenaer@cern.ch>
+    Lukasz Janyst <ljanyst@cern.ch>
+    Manuel Servais <mservais@cern.ch>
+    Maria Isabel Martin <mmartins@cern.ch>
+    Mario Vitale <mario.vitale@cern.ch>
+    Matthias Braeger <mbraeger@cern.ch>
+    Michael Davis <michael.davis@cern.ch>
+    Miguel Barros <miguel.veloso.barros@cern.ch>
+    Miguel Coelho dos Santos <mmarques@cern.ch>
+    Nicola Bessone <nbessone@cern.ch>
+    Niels Alexander Buegel <niels.alexander.bugel@cern.ch>
+    Oliver Keeble <oliver.keeble@cern.ch>
+    Olof Barring <obarring@cern.ch>
+    Ozlem Kilickiran <ozlem.kilickiran@cern.ch>
+    Pablo Oliver Cortes <pablo.oliver.cortes@cern.ch>
+    Pedro Ferreira <pedro.ferreira@cern.ch>
+    Peter Kelemen <fuji@cern.ch>
+    Ren Bauer <renbauer@fnal.gov>
+    Richard Bachmann <richard.bachmann@cern.ch>
+    Rosa Maria Garcia Rioja <riojac3@cern.ch>
+    Sebastian Lopienski <lopic3@cern.ch>
+    Sebastien Ponce <Sebastien.Ponce@cern.ch>
+    Stefano Alberto Russo <sarusso@cern.ch>
+    Steven Murray <murrayc3@cern.ch>
+    Svenja Meyer <svenja.meyer@cern.ch>
+    Tao Lin <lintao@ihep.ac.cn>
+    Theodoros Rekatsinas <trekas@cern.ch>
+    Tigran Mkrtchyan <tigran.mkrtchyan@desy.de>
+    Tim Bell <timbell@cern.ch>
+    Tino Reichardt <tino.reichardt@desy.de>
+    Victor.Kotlyar <kotlyar@cern.ch>
+    Victor Zhiltsov <jiltsov@cern.ch>
+    Vitali Motyakov <motiakov@cern.ch>
+    Vladimir Bahyl <Vladimir.Bahyl@cern.ch>
+    Vladimir Trofimov <vtrofim@cern.ch>
+    Volodymyr Yurchenko <volodymyr.yurchenko@cern.ch>
