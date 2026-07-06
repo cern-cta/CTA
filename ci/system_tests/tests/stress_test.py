@@ -109,10 +109,6 @@ def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
 async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_params, test_dir):
     # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
     mgm_ip = eos_mgm.get_ip()
-
-    # Create an archive directory on eos
-    eos_client.exec(f"eos root://{mgm_ip} mkdir {test_dir}")
-
     total_file_count = stress_params.num_files_per_dir * stress_params.num_dirs
 
     print("Using the following parameters:")

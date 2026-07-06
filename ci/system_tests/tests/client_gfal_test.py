@@ -4,11 +4,10 @@
 
 import pytest
 
-import datetime
 import json
 import time
 from dataclasses import dataclass
-from pathlib import Path
+from ..helpers.utils import find_line
 
 
 #####################################################################################################################
@@ -33,27 +32,11 @@ def gfal_params(request) -> GfalParams:
     )
 
 
-def _get_report_file_path() -> Path:
-    now = datetime.datetime.now()
-    base_path = Path("/var") / "log" / "eos" / "report" / f"{now:%Y}" / f"{now:%m}"
-    file_name = f"{now:%Y}{now:%m}{now:%d}.eosreport"
-    return base_path / file_name
-
-
-def _find_line(content, *filters) -> str:
-    return next((line for line in content.splitlines() if all(f in line for f in filters)), "")
-
-
 #####################################################################################################################
 # Tests
 #####################################################################################################################
 
 # For now only the "glue" has been migrated to Python. All the scripts invoked in the tests below still need to be migrated at a later point in time
-
-
-@pytest.mark.eos
-def test_setup_archive_directory(eos_client, eos_mgm, test_dir):
-    eos_client.exec(f"eos root://{eos_mgm.instance_name} mkdir -p {test_dir}")
 
 
 @pytest.mark.eos
@@ -132,7 +115,7 @@ def test_delete_gfal_https(eos_client, remote_scripts_dir):
 
 
 @pytest.mark.eos
-def test_gfal_activity(eos_client, eos_mgm, disk_instance_name, test_dir):
+def test_gfal_activity_ends_up_in_eos_report(eos_client, eos_mgm, disk_instance_name, test_dir):
     valid_instance_file = test_dir / "test_gfal_activity_valid_instance"
     invalid_instance_file = test_dir / "test_gfal_activity_invalid_instance"
     valid_instance_file = eos_client.generate_and_archive_file(
@@ -185,14 +168,14 @@ def test_gfal_activity(eos_client, eos_mgm, disk_instance_name, test_dir):
         f"BEARER_TOKEN={token_eospower1} gfal-evict https://{disk_instance_name}:8443/{invalid_instance_file}"
     )
 
-    report_file = _get_report_file_path()
+    report_file = eos_mgm.get_report_file_path()
     print(f"Report file: {report_file}")
 
     # Arguably not the most efficient. If this becomes a problem, just replace by grep
     content = eos_mgm.exec_with_output(f"cat {report_file}")
 
     # Check that activity is set for staging of file with valid instance name
-    valid_line = _find_line(content, "event=stage", valid_instance_file)
+    valid_line = find_line(content, "event=stage", valid_instance_file)
 
     assert valid_line, f"Missing log line for {valid_instance_file}"
 
@@ -201,7 +184,7 @@ def test_gfal_activity(eos_client, eos_mgm, disk_instance_name, test_dir):
     ), f"Activity not set correctly for valid instance: {valid_line}"
 
     # Check that activity is NOT set for staging of file with invalid instance name
-    invalid_line = _find_line(content, "event=stage", invalid_instance_file)
+    invalid_line = find_line(content, "event=stage", invalid_instance_file)
 
     assert invalid_line, f"Missing log line for {invalid_instance_file}"
 
@@ -209,7 +192,7 @@ def test_gfal_activity(eos_client, eos_mgm, disk_instance_name, test_dir):
 
 
 @pytest.mark.eos
-def test_xrootd_activity(eos_client, eos_mgm, test_dir):
+def test_xrootd_activity_ends_up_in_eos_report(eos_client, eos_mgm, test_dir):
     disk_instance_name = eos_mgm.instance_name
     test_file = test_dir / "test_xrootd_activity"
     test_file = eos_client.generate_and_archive_file(disk_instance_name, test_file, wait=True)
@@ -228,57 +211,15 @@ def test_xrootd_activity(eos_client, eos_mgm, test_dir):
     )
 
     # Check activity is set for XRootD staging request through xrdfs
-    report_file = _get_report_file_path()
+    report_file = eos_mgm.get_report_file_path()
     print(f"Report file: {report_file}")
     content = eos_mgm.exec_with_output(f"cat {report_file}")
 
-    xrd_line = _find_line(content, "event=stage", "XRootD_Act")
+    xrd_line = find_line(content, "event=stage", "XRootD_Act")
 
     assert xrd_line, "Missing log line for XRootD activity"
 
     assert "&activity=XRootD_Act&" in xrd_line, f"Activity not set correctly for XRootD: {xrd_line}"
-
-
-# Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
-# This test should eventually be moved outside of the gfal test, but because the eos report functionality is here, we keep it
-
-
-@pytest.mark.eos
-def test_archive_metadata_activity(eos_client, eos_mgm, test_dir):
-    disk_instance_name = eos_mgm.instance_name
-    test_file = test_dir / "test_xrootd_activity"
-    test_file = eos_client.generate_and_archive_file(disk_instance_name, test_file, wait=True)
-
-    # TODO: eventually move definitions like this to a central place
-    EOSPOWER_USER = "poweruser1"
-
-    # Retrieve with activity
-    eos_client.exec(
-        f"KRB5CCNAME=/tmp/{EOSPOWER_USER}/krb5cc_0 XrdSecPROTOCOL=krb5 xrdfs {disk_instance_name} prepare -s {test_file}?activity=XRootD_Act"
-    )
-
-    # Evict
-    eos_client.exec(
-        f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{EOSPOWER_USER}/krb5cc_0 xrdfs {disk_instance_name} prepare -e {test_file}"
-    )
-
-    # Check activity is set for XRootD staging request through xrdfs
-    report_file = _get_report_file_path()
-    print(f"Report file: {report_file}")
-    content = eos_mgm.exec_with_output(f"cat {report_file}")
-
-    xrd_line = _find_line(content, "event=stage", "XRootD_Act")
-
-    assert xrd_line, "Missing log line for XRootD activity"
-
-    assert "&activity=XRootD_Act&" in xrd_line, f"Activity not set correctly for XRootD: {xrd_line}"
-
-
-# TEST_METADATA=$(echo "{\"scheduling_hints\": \"test 4\"}" | base64)
-# echo " Launching client_archive_metadata.sh on client pod"
-# kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/client_archive_metadata.sh ${TEST_METADATA} || exit 1
-# echo " Launching grep_eosreport_for_archive_metadata.sh on ${EOS_MGM_POD} pod"
-# kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- bash /root/grep_eosreport_for_archive_metadata.sh ${TEST_METADATA} || exit 1
 
 
 def test_add_errors_to_whitelist(error_whitelist):

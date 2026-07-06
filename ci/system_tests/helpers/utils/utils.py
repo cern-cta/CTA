@@ -37,3 +37,7 @@ def canonicalize(obj: Any) -> Any:
 
 def _sort_key(x: Any):
     return json.dumps(x, sort_keys=True, separators=(",", ":"))
+
+
+def find_line(content, *filters) -> str:
+    return next((line for line in content.splitlines() if all(f in line for f in filters)), "")

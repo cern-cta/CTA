@@ -5,8 +5,12 @@
 import pytest
 
 import json
+import uuid
+import base64
+from datetime import datetime, timedelta
 import time
 from dataclasses import dataclass
+from ..helpers.utils import find_line
 
 #####################################################################################################################
 # Helpers
@@ -39,13 +43,6 @@ def client_params(request) -> ClientParams:
 # For now only the "glue" has been migrated to Python. Most of the scripts invoked in the tests below still need to be migrated at a later point in time
 # Some scripts probably deserve to be their own test module instead of cramming everything in this file
 
-# workflow tests
-
-
-@pytest.mark.eos
-def test_setup_archive_directory(eos_client, eos_mgm, test_dir):
-    eos_client.exec(f"eos root://{eos_mgm.instance_name} mkdir -p {test_dir}")
-
 
 @pytest.mark.eos
 def test_setup_client(eos_client, client_params, test_dir, remote_scripts_dir):
@@ -55,6 +52,97 @@ def test_setup_client(eos_client, client_params, test_dir, remote_scripts_dir):
     eos_client.exec(
         f"/root/client_setup.sh -n {client_params.file_count} -s {client_params.file_size_kb} -p {client_params.process_count} -d {test_dir} -r -c xrd"
     )
+
+
+###
+# TPC capabilities
+#
+# if the installed xrootd version is not the same as the one used to compile eos
+# Third Party Copy can be broken
+#
+# Valid check:
+# [root@eosctafst0017 ~]# xrdfs
+# root://pps-ngtztag6p5ht-minion-2.cern.ch:1101 query config tpc
+# 1
+#
+# invalid check:
+# [root@ctaeos /]# xrdfs root://ctaeos.toto.svc.cluster.local:1095 query config tpc
+# tpc
+@pytest.mark.eos
+def test_eos_xrootd_third_party_copy_capabilities(eos_mgm, disk_instance_name):
+    """Verifies that all online EOS FST nodes have xrootd TPC capabilities enabled."""
+
+    # Fetch nodes
+    node_ls_raw = eos_mgm.exec_with_output("eos -j root://localhost node ls")
+    node_envelope = json.loads(node_ls_raw)
+    node_data = node_envelope.get("result", [])
+
+    # Filter for online nodes and extract their hostport addresses
+    online_hostports = []
+    for node in node_data:
+        if node.get("status") == "online" and "hostport" in node:
+            online_hostports.append(node["hostport"])
+
+    assert online_hostports, "No online FST nodes were found to test!"
+
+    failed_nodes = []
+    print(f"Checking xrootd TPC capabilities on {len(online_hostports)} online FSTs...")
+
+    for hostport in online_hostports:
+        # Querying the node config for tpc capability (returns '1' if enabled)
+        tpc_query_cmd = f"xrdfs root://{hostport} query config tpc"
+
+        result = eos_mgm.exec_with_output(tpc_query_cmd, throw_on_failure=False)
+        if "1" in result:
+            print(f"{hostport}: OK")
+        else:
+            print(f"{hostport}: KO (Result: {result.strip()})")
+            failed_nodes.append(hostport)
+
+    assert not failed_nodes, f"TPC capabilities validation FAILED for the following nodes: {failed_nodes}"
+
+
+@pytest.mark.eos
+def test_eos_xrootd_api_fts_compliance(eos_mgm):
+    """Verifies that xrdfs query prepare preserves the exact requested sequence order and duplicates.
+    Write 3 files and xrdfs query them in reverse order with duplicates.
+    `xrdfs query prepare 3 2 1 3` must answer 3 2 1 3
+    """
+    tmp_dir = eos_mgm.base_dir_path / f"tmp_xrd_fts_compliance_{str(uuid.uuid4())[:8]}"
+
+    eos_mgm.exec(f"eos mkdir -p {tmp_dir}")
+    eos_mgm.exec(f"eos chmod 777 {tmp_dir}")
+
+    # Define the exact tracking order payload (including intentional duplicate sequence)
+    file_sequence = ["3", "2", "1", "3"]
+    input_paths = [f"{tmp_dir}/{name}" for name in file_sequence]
+
+    unique_paths = set(input_paths)
+    for path in unique_paths:
+        eos_mgm.exec(f"eos touch {path}")
+
+    # Request prepare configuration via xrdfs in the original sequence layout
+    paths_payload = " ".join(input_paths)
+    print(f"Checking xrootd API FTS compliance querying: {paths_payload}")
+
+    # xrdfs query prepare 0 <paths...> returns JSON detailing the responses arrays
+    query_output = eos_mgm.exec_with_output(f"xrdfs root://localhost query prepare 0 {paths_payload}")
+
+    try:
+        response_data = json.loads(query_output)
+        # Safely extract paths from the JSON response items mapping
+        output_paths = [item["path"] for item in response_data.get("responses", [])]
+    except (json.JSONDecodeError, KeyError) as e:
+        pytest.fail(f"Failed to parse compliant JSON out of xrdfs output. Error: {e}. Output: {query_output}")
+
+    # Both the order and elements must match exactly
+    assert (
+        input_paths == output_paths
+    ), "FTS Compliance Failed! The xrdfs query prepare did not maintain the original request sequence."
+
+    print("xrootd_API capabilities: SUCCESS")
+
+    eos_mgm.force_remove_directory(tmp_dir)
 
 
 @pytest.mark.eos
@@ -172,6 +260,41 @@ def test_eos_immutable_file(eos_client, eos_mgm, test_dir):
 def test_eos_timestamps_correctness(eos_client, test_dir, remote_scripts_dir):
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_eos_timestamps.sh"), "/root/", permissions="+x")
     eos_client.exec(f". /root/client_env && /root/test_eos_timestamps.sh {test_dir}")
+
+
+# Note that this test simply tests whether the base64 encoded string ends up in the eos report logs verbatim
+@pytest.mark.eos
+def test_eos_archive_metadata_ends_up_in_eos_report(eos_client, eos_mgm, test_dir):
+    disk_instance_name = eos_mgm.instance_name
+    file_loc = test_dir / "archive_metadata_file"
+
+    archive_metadata = {"scheduling_hints": f"test_{str(uuid.uuid4())[:8]}"}
+    archive_metadata_b64 = base64.b64encode(json.dumps(archive_metadata, separators=(",", ":")).encode()).decode()
+
+    now = datetime.now()
+    later_timestamp = int((now + timedelta(days=1)).timestamp())
+
+    EOSADMIN_USER = "eosadmin1"
+    token_eosuser1 = eos_client.exec_with_output(
+        f"XrdSecPROTOCOL=krb5 KRB5CCNAME=/tmp/{EOSADMIN_USER}/krb5cc_0 eos -r 0 0 root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires {later_timestamp} --owner user1 --group eosusers --permission rwx"
+    )
+
+    print("Printing eosuser token dump")
+    eos_client.exec(f'eos root://"{disk_instance_name}" token --token "{token_eosuser1}" | jq .')
+
+    print("Archiving file with archive metadata")
+    eos_client.exec(
+        f'curl -X PUT -L --insecure -H "Accept: application/json" -H "ArchiveMetadata: {archive_metadata_b64}" -H "Authorization: Bearer {token_eosuser1}" "https://{disk_instance_name}:8443/{file_loc}" --upload-file "/etc/group"'
+    )
+
+    # Check the archive metadata appears in the mgm log file
+    report_file = eos_mgm.get_report_file_path()
+    print(f"Report file: {report_file}")
+    content = eos_mgm.exec_with_output(f"cat {report_file}")
+
+    xrd_line = find_line(content, f"archivemetadata={archive_metadata_b64}")
+
+    assert xrd_line, f'Missing EOS report entry for Archive Metadata string: "{archive_metadata_b64}"'
 
 
 # Tests for eosdf

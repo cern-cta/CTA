@@ -112,6 +112,7 @@ class TestEnv:
             # Something to be changed once we move them over....
             eos_client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
             cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"),
+            # TODO: this should also be split into WFE/ADMIN
             cta_frontend_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-frontend", allow_partial_label_value_match=True
             ),

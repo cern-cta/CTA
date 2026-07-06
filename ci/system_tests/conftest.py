@@ -1,26 +1,11 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import shutil
 import sys
-import json
 from pathlib import Path
 
 import pytest
-from datetime import datetime
-import uuid
 
-from .helpers.hosts import (
-    CtaCliHost,
-    CtaFrontendHost,
-    CtaMaintdHost,
-    CtaRmcdHost,
-    CtaTapedHost,
-    EosClientHost,
-    EosMgmHost,
-    DiskInstanceHost,
-    DiskClientHost,
-)
 from .helpers.hosts.disk.disk_instance_host import DiskInstanceImplementation
 from .helpers.test_env import TestEnv
 
@@ -29,141 +14,10 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
-#####################################################################################################################
-# General/common fixtures
-#####################################################################################################################
-
-
-@pytest.fixture(autouse=True)
-def make_tests_look_pretty(request):
-    """The only purpose of this fixture is to make the test output easier to read
-    in particular by more clearly visually separating different test cases
-    """
-    terminal_writer = request.config.get_terminal_writer()
-    terminal_width = shutil.get_terminal_size().columns
-
-    # construct the magic separators
-    test_name = request.node.name
-    test_title = f" {test_name} "  # leave 2 spaces around the name
-    side = (terminal_width - len(test_title)) // 2
-    line = "=" * side + test_title + "=" * (terminal_width - side - len(test_title))
-    separator: str = "—" * terminal_width
-
-    terminal_writer.write("\n" + line + "\n\n", cyan=True, bold=True)
-    yield
-    terminal_writer.write(f"\n\n{separator}", cyan=True)
-
-
-@pytest.fixture(scope="session")
-def env(request) -> TestEnv:
-    """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
-    return request.config.env
-
-
-@pytest.fixture(scope="session")
-def error_whitelist() -> set[str]:
-    """Mutable whitelist that individual test cases can add errors to"""
-    whitelist = set()  # mutable whitelist shared between all tests
-    return whitelist
-
-
-@pytest.fixture(scope="session")
-def krb5_realm(request) -> str:
-    """Kerberos realm used in the tests"""
-    return request.config.test_config["tests"]["krb5_realm"]
-
-
-@pytest.fixture(scope="session")
-def project_json():
-    project_json_path = (Path(__file__).resolve().parent / ".." / ".." / "project.json").resolve()
-    return json.loads(project_json_path.read_text(encoding="utf-8"))
-
-
-@pytest.fixture(scope="session")
-def namespace(request):
-    return request.config.getoption("--namespace", default=None)
-
-
-@pytest.fixture(scope="session")
-def cta_storage_class():
-    return "cta_storage_class"
-
-
-@pytest.fixture(scope="session")
-def eos_workflow_dir(eos_mgm):
-    return eos_mgm.base_dir_path / "proc" / "cta" / "workflow"
-
-
-@pytest.fixture(scope="session")
-def cta_dir(disk_instance):
-    return disk_instance.base_dir_path / "cta"
-
-
-# Very important that this is module scoped to ensure each test module gets it's own unique test directory
-@pytest.fixture(scope="module")
-def test_dir(cta_dir, request):
-    module_name = Path(request.module.__file__).stem
-    # Put the time in there so that it's easy from multiple runs to identify which one was last
-    return cta_dir / "tests" / f"{module_name}_{datetime.now():%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:6]}"
-
-
-@pytest.fixture(scope="session")
-def remote_scripts_dir():
-    return Path(__file__).parent / "tests" / "remote_scripts"
-
-
-# These are just convenience fixtures to easily access one of the hosts
-
-
-@pytest.fixture(scope="session")
-def eos_client(env) -> EosClientHost:
-    return env.eos_client[0]
-
-
-@pytest.fixture(scope="session")
-def disk_client(env) -> DiskClientHost:
-    return env.disk_client[0]
-
-
-@pytest.fixture(scope="session")
-def eos_mgm(env) -> EosMgmHost:
-    return env.eos_mgm[0]
-
-
-@pytest.fixture(scope="session")
-def disk_instance(env) -> DiskInstanceHost:
-    return env.disk_instance[0]
-
-
-@pytest.fixture(scope="session")
-def cta_taped(env) -> CtaTapedHost:
-    return env.cta_taped[0]
-
-
-@pytest.fixture(scope="session")
-def cta_rmcd(env) -> CtaRmcdHost:
-    return env.cta_rmcd[0]
-
-
-@pytest.fixture(scope="session")
-def cta_maintd(env) -> CtaMaintdHost:
-    return env.cta_maintd[0]
-
-
-@pytest.fixture(scope="session")
-def cta_frontend(env) -> CtaFrontendHost:
-    return env.cta_frontend[0]
-
-
-@pytest.fixture(scope="session")
-def cta_cli(env) -> CtaCliHost:
-    return env.cta_cli[0]
-
-
-@pytest.fixture(scope="session")
-def disk_instance_name(disk_instance) -> str:
-    return disk_instance.instance_name
-
+# Ensure pytest knows about the fixtures
+pytest_plugins = [
+    "ci.system_tests.fixtures.fixtures",
+]
 
 #####################################################################################################################
 # Commandline options

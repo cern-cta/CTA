@@ -7,28 +7,6 @@ from concurrent.futures import ThreadPoolExecutor
 from ...helpers.hosts.cta_rmcd_host import CtaRmcdHost
 
 #####################################################################################################################
-# Prerequisites
-#####################################################################################################################
-
-
-def test_hosts_present_cta_setup(env):
-    assert len(env.disk_instance) > 0, "To setup CTA, there must be at least one disk instance"
-    assert len(env.cta_frontend) > 0, "To setup CTA, there must be at least one cta-frontend instance"
-    assert len(env.cta_taped) > 0, "To setup CTA, there must be at least one cta-taped instance"
-    assert len(env.cta_cli) > 0, "To setup CTA, there must be at least one cta-cli instance"
-
-
-#####################################################################################################################
-# Script copying
-#####################################################################################################################
-
-
-def test_copy_scripts_to_ctacli(env):
-    for cta_cli in env.cta_cli:
-        cta_cli.copy_to("tests/remote_scripts/cta_cli/", "/test", permissions="+x")
-
-
-#####################################################################################################################
 # Authentication
 #####################################################################################################################
 
@@ -36,13 +14,17 @@ def test_copy_scripts_to_ctacli(env):
 def test_kinit_clients(env, krb5_realm):
     # This whole kerberos thing needs to be revised in the future
     # We are relying too much on the default principal in many cases
+    # We also need a clean way to manage the different users in a more flexible way instead of hardcoding this everywhere
+    # Finally, various tests assume that they have a kerberos ticket for the relevant principal. This may not be the case
+    # Instead of doing this before all tests, the relevant tests should kinit (or rather, a fixture should)
     for cta_cli in env.cta_cli:
         cta_cli.exec(f"kinit -kt /root/ctaadmin1.keytab ctaadmin1@{krb5_realm}")
 
     for eos_client in env.eos_client:
-        eos_client.exec("mkdir -p /tmp/ctaadmin2")
         eos_client.exec("mkdir -p /tmp/eosadmin1")
+        eos_client.exec("mkdir -p /tmp/ctaadmin2")
         eos_client.exec("mkdir -p /tmp/poweruser1")
+        eos_client.exec(f"kinit -kt /root/eosadmin1.keytab eosadmin1@{krb5_realm}")
         eos_client.exec(f"kinit -kt /root/ctaadmin2.keytab ctaadmin2@{krb5_realm}")
         eos_client.exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
 
@@ -71,8 +53,9 @@ def test_version_info(cta_cli):
 
 
 def test_populate_catalogue(cta_cli, disk_instance_name, cta_storage_class):
+    cta_cli.copy_to("tests/remote_scripts/cta_cli/populate_catalogue.sh", "/root/", permissions="+x")
     print("Populating catalogue")
-    cta_cli.exec(f"./test/populate_catalogue.sh {disk_instance_name} {cta_storage_class}")
+    cta_cli.exec(f"./root/populate_catalogue.sh {disk_instance_name} {cta_storage_class}")
 
 
 def test_register_logical_libraries_in_catalogue(env, cta_cli):

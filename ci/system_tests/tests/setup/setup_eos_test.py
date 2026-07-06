@@ -35,7 +35,6 @@ def test_general_settings(eos_mgm):
     eos_mgm.exec("eos space config default space.token.generation=1")
     eos_mgm.exec("eos attr -r set default=replica /eos")
     eos_mgm.exec("eos attr -r set sys.forced.nstripes=1 /eos")
-    # TODO: figure out why this is necessary
     TAPE_FS_ID = 65535
     eos_mgm.exec("eos space define tape")
     eos_mgm.exec(f"eos fs add -m {TAPE_FS_ID} tape localhost:1234 /does_not_exist tape")
@@ -79,6 +78,7 @@ def test_create_wf_directory(eos_mgm, eos_workflow_dir):
 
 @pytest.mark.eos
 def test_delete_cta_directory(eos_mgm, cta_dir) -> None:
+    # Cleanup a possibly existing directory
     eos_mgm.force_remove_directory(cta_dir)
 
 
@@ -93,9 +93,3 @@ def test_create_cta_directory(eos_mgm, cta_dir, eos_workflow_dir, cta_storage_cl
     eos_mgm.exec(f"eos attr set sys.acl=g:eosusers:rwx!d,u:poweruser1:rwx+dp,u:poweruser2:rwx+dp,z:'!'u'!'d {cta_dir}")
     eos_mgm.exec(f"eos attr set sys.archive.storage_class={cta_storage_class} {cta_dir}")
     eos_mgm.exec(f"eos attr link {eos_workflow_dir} {cta_dir}")
-
-
-@pytest.mark.eos
-def test_kinit_eos_client(env, krb5_realm):
-    for eos_client in env.eos_client:
-        eos_client.exec(f"kinit -kt /root/user1.keytab user1@{krb5_realm}")
