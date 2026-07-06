@@ -16,7 +16,7 @@ else:
 
 # Ensure pytest knows about the fixtures
 pytest_plugins = [
-    "ci.system_tests.fixtures.fixtures",
+    "system_tests.fixtures.fixtures",
 ]
 
 #####################################################################################################################
