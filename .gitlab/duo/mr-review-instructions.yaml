@@ -26,6 +26,10 @@ instructions:
       - Public interfaces remain backwards compatible unless the merge request explicitly intends otherwise.
       - Complex code is documented where necessary, but obvious code is not over-commented.
       - Tests are added or updated when behaviour changes or bugs are fixed.
+      - The merge request title follows the CTA merge request title conventions, including the required scope prefix and remains concise (ideally 72 characters or fewer).
+      - If the merge request is expected to appear in the release changelog, the title follows the CTA changelog conventions:
+        it should describe the user-visible change rather than the implementation, and should be suitable for inclusion in the release notes without modification.
+      - If the merge request title does not accurately describe the changes according to the rules above, provide a suggestion for improvement (ignoring the scope prefix)
 
   - name: C++
     fileFilters:
