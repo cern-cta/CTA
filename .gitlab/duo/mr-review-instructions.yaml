@@ -1,0 +1,96 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+instructions:
+  - name: General
+    instructions: |
+      Review the merge request against the CTA coding conventions.
+
+      Only report issues that are likely to affect:
+      - correctness
+      - reliability
+      - security
+      - maintainability
+      - readability
+      - long-term operability
+
+      Do not comment on purely subjective style preferences unless they violate the project conventions.
+
+      Check that:
+      - Changes are small, focused and solve a single problem.
+      - New code follows the style and architecture of the surrounding code.
+      - Existing abstractions are reused instead of introducing unnecessary duplication.
+      - Error handling is consistent and failures produce meaningful diagnostics.
+      - Resource cleanup is performed correctly.
+      - New files include the required SPDX copyright and license headers.
+      - Public interfaces remain backwards compatible unless the merge request explicitly intends otherwise.
+      - Complex code is documented where necessary, but obvious code is not over-commented.
+      - Tests are added or updated when behaviour changes or bugs are fixed.
+      - The merge request title follows the CTA merge request title conventions, including the required scope prefix and remains concise (ideally 72 characters or fewer).
+      - If the merge request is expected to appear in the release changelog, the title follows the CTA changelog conventions:
+        it should describe the user-visible change rather than the implementation, and should be suitable for inclusion in the release notes without modification.
+      - If the merge request title does not accurately describe the changes according to the rules above, provide a suggestion for improvement (ignoring the scope prefix)
+
+  - name: C++
+    fileFilters:
+      - "**/*.cpp"
+      - "**/*.hpp"
+    instructions: |
+      Review according to the CTA C++ coding conventions.
+
+      In particular check for:
+      - Correct ownership semantics. Prefer RAII and standard library facilities over manual resource management.
+      - Exception safety and correct cleanup on all execution paths.
+      - Appropriate use of const correctness.
+      - Avoid unnecessary copying; prefer references or move semantics where appropriate.
+      - Avoid undefined behaviour, lifetime bugs and dangling references.
+      - Avoid raw owning pointers unless ownership is clearly justified.
+      - Prefer standard library algorithms and containers over handwritten implementations.
+      - Validate thread-safety when shared state or concurrency is involved.
+      - Ensure interfaces remain simple and cohesive.
+      - Flag unnecessarily complex code or deeply nested control flow.
+      - Verify logging and error messages provide actionable information.
+      - Check for missing validation of external inputs.
+      - Ensure includes are necessary and minimise unnecessary dependencies.
+
+  - name: Python
+    fileFilters:
+      - "**/*.py"
+    instructions: |
+      Review Python code for correctness and maintainability.
+
+      In particular check for:
+      - Clear and idiomatic Python.
+      - Appropriate exception handling.
+      - Proper use of context managers for resources.
+      - Avoid duplicated logic.
+      - Avoid mutable default arguments.
+      - Validate external input before use.
+      - Use pathlib where appropriate instead of manual path manipulation.
+      - Ensure subprocess usage is safe and avoids shell injection.
+      - Prefer standard library functionality over custom implementations.
+      - Ensure logging is appropriate and exceptions are not silently ignored.
+      - Verify tests cover behavioural changes.
+
+  - name: Bash
+    fileFilters:
+      - "**/*.sh"
+      - "**/*.bash"
+    instructions: |
+      Review Bash scripts according to the CTA Bash conventions.
+
+      In particular check that:
+      - Scripts begin with a shebang.
+      - Scripts validate required input arguments.
+      - Long-form command-line options are provided.
+      - A --help or usage function is available for scripts accepting input.
+      - Scripts do not depend on the current working directory.
+      - Environment variables are validated before use.
+      - Error handling is robust, preferably using `set -euo pipefail` or an equivalent strategy.
+      - Temporary files are cleaned up, preferably using trap.
+      - Exit codes are meaningful.
+      - Errors are written to stderr and normal output to stdout.
+      - Shell variables are quoted unless word splitting is explicitly intended.
+      - Command substitution and parameter expansion are safely quoted.
+      - External commands are checked for failure where appropriate.
+      - Scripts remain focused on a single responsibility.
