@@ -424,7 +424,7 @@ def test_log_rotation_taped(cta_taped, remote_scripts_dir):
 def test_install_jsonschema(env):
     hosts = env.cta_maintd + env.cta_taped + env.cta_admin_api + env.cta_workflow_api
     for host in hosts:
-        host.exec("dnf install -y python3-pip && python3 -m pip install jsonschema")
+        host.exec("microdnf install -y python3-pip && python3 -m pip install jsonschema")
 
 
 def test_log_schema_correctness_maintd(cta_maintd, remote_scripts_dir):
