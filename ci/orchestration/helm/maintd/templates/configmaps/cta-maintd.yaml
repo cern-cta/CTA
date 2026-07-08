@@ -6,7 +6,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $allRoutines := .Values.routines -}}
 {{- /* Routines without a settings section in cta-maintd.toml */ -}}
-{{- $routinesWithoutSettings := list "garbageCollect" "mountDecisionLoopCounter" -}}
+{{- $routinesWithoutSettings := list "garbageCollect" "mountDecisionLoop" -}}
 {{- range $routineName, $routineConf := $allRoutines }}
 {{- $routineNameSlug := include "common.slugify" $routineName }}
 apiVersion: v1
