@@ -119,6 +119,10 @@ Overridden by **xrootd.sss_keytab_path**.
 
 :   Default scheduler connection file, selected by `scheduler.config_file`.
 
+`/etc/cta/cta-mount-decision.conf`
+
+:   Default Mount Decision DB connection file, selected by `mount_decision.config_file`.
+
 `/etc/cta/cta-otel.yaml`
 
 :   Telemetry configuration path used by the example when telemetry is enabled.

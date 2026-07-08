@@ -203,4 +203,14 @@ struct XRootDConfig final {
   }
 };
 
+/**
+ * @brief Mount Decision DB config.
+ */
+struct MountDecisionConfig final {
+  std::string config_file = "/etc/cta/cta-mount-decision.conf";
+  int number_of_connections = 1;
+
+  static constexpr std::size_t memberCount() { return 2; }
+};
+
 }  // namespace cta::runtime

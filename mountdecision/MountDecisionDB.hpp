@@ -28,6 +28,8 @@ public:
 
   std::optional<std::string> getValue(const std::string& key);
 
+  void incrementCounter(const std::string& key);
+
 private:
   std::string m_ownerId;
   rdbms::ConnPool m_connPool;

@@ -35,6 +35,7 @@ add_library(ctatapedsession
 
 target_link_libraries(ctatapedsession
   ctacommon
+  ctamountdecision
   ctaruntime
   ctatapedscheduler
   ctatapedsessionstate

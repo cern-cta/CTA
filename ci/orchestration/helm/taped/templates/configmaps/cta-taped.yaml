@@ -23,6 +23,10 @@ data:
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
 
+    [mount_decision]
+      config_file = "/etc/cta/cta-mount-decision.conf"
+      number_of_connections = {{ $.Values.mountDecision.numberOfConnections }}
+
     [scheduler]
       backend_name = {{ $schedulerConfig.backend | quote }}
 
