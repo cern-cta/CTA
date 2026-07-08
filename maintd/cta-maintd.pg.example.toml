@@ -21,15 +21,17 @@ enabled_experimental_features = ["telemetry"]
 # All routines are enabled by default; an empty list disables maintenance.
 [routines]
   # Optional features to enable. Remove a feature and its section to disable it.
+  # "mount_decision_loop_counter" increments the Mount Decision DB maintd loop counter and has no settings section.
   # Type: array of strings; default: all routines listed below.
   # Allowed: "disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report",
-  # "user_active_queue_cleanup", "repack_active_queue_cleanup", "user_pending_queue_cleanup",
-  # "repack_pending_queue_cleanup", "scheduler_maintenance_cleanup" (no duplicates).
+  # "mount_decision_loop_counter", "user_active_queue_cleanup", "repack_active_queue_cleanup",
+  # "user_pending_queue_cleanup", "repack_pending_queue_cleanup", "scheduler_maintenance_cleanup" (no duplicates).
   enabled_routines = [
     "disk_report_archive",
     "disk_report_retrieve",
     "repack_expand",
     "repack_report",
+    "mount_decision_loop_counter",
     "user_active_queue_cleanup",
     "repack_active_queue_cleanup",
     "user_pending_queue_cleanup",
@@ -137,6 +139,15 @@ enabled_experimental_features = ["telemetry"]
   # See /usr/share/doc/cta-lib-catalogue/examples/cta-catalogue.example.conf for further details.
   # Type: string; default: "/etc/cta/cta-catalogue.conf".
   config_file = "/etc/cta/cta-catalogue.conf"
+
+[mount_decision]
+  # Path to the file containing the Mount Decision DB connection string, which must select postgresql.
+  # Type: string; default: "/etc/cta/cta-mount-decision.conf".
+  config_file = "/etc/cta/cta-mount-decision.conf"
+
+  # Number of database connections in the Mount Decision DB pool.
+  # Type: integer; default: 1.
+  number_of_connections = 1
 
 [scheduler]
   # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".

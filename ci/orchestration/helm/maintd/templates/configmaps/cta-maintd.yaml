@@ -5,6 +5,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $allRoutines := .Values.routines -}}
+{{- /* Routines without a settings section in cta-maintd.toml */ -}}
+{{- $routinesWithoutSettings := list "garbageCollect" "mountDecisionLoopCounter" -}}
 {{- range $routineName, $routineConf := $allRoutines }}
 {{- $routineNameSlug := include "common.slugify" $routineName }}
 apiVersion: v1
@@ -20,6 +22,10 @@ data:
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
+
+    [mount_decision]
+      config_file = "/etc/cta/cta-mount-decision.conf"
+      number_of_connections = {{ $.Values.mountDecision.numberOfConnections }}
 
     [scheduler]
       backend_name = {{ $schedulerConfig.backend | quote }}
@@ -60,7 +66,7 @@ data:
 
 
       enabled_routines = [{{ include "common.toSnakeCase" $routineName | quote }}]
-      {{- if ne $routineName "garbageCollect" }}
+      {{- if not (has $routineName $routinesWithoutSettings) }}
       [routines.{{ include "common.toSnakeCase" $routineName }}]
       {{- range $k, $v := (omit $routineConf "replicas" "sleepIntervalSecs") }}
       {{ include "common.toSnakeCase" $k }} = {{ include "common.stringOrNumber" $v }}
@@ -69,4 +75,3 @@ data:
 
 ---
 {{- end }}
-

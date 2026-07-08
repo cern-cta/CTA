@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 add_subdirectory(routines/disk)
+add_subdirectory(routines/mountdecision)
 add_subdirectory(routines/repack)
 
 add_library(ctamaintd
@@ -24,10 +25,12 @@ target_link_libraries(ctamaintd
 	ctaruntime
 	ctatelemetrymaintd
 	ctacatalogue
+	ctamountdecision
 	ctascheduler
 	cta-service-resources
 	${SCHEDROUTINES}
 	ctadiskroutines
+	ctamountdecisionroutines
 	ctarepackroutines
 )
 

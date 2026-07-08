@@ -11,6 +11,7 @@
 #include "common/semconv/Attributes.hpp"
 #include "routines/disk/DiskReportArchiveRoutine.hpp"
 #include "routines/disk/DiskReportRetrieveRoutine.hpp"
+#include "routines/mountdecision/MountDecisionRoutine.hpp"
 #include "routines/repack/RepackExpandRoutine.hpp"
 #include "routines/repack/RepackReportRoutine.hpp"
 #ifndef CTA_PGSCHED
@@ -83,6 +84,12 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
     const auto& config = routinesConfig.repack_report;
     routines.push_back(
       std::make_unique<RepackReportRoutine>(m_lc, m_resources.getScheduler(), config->soft_timeout_secs));
+  }
+
+  // Add Mount Decision loop
+  // The Mount Decision loop counter has no settings section; check its declared selector.
+  if (routinesConfig.routineEnabled(Routine::MountDecisionLoopCounter)) {
+    routines.push_back(std::make_unique<MountDecisionRoutine>(m_lc, m_config.mount_decision));
   }
 
 /*
