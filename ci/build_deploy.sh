@@ -64,6 +64,7 @@ echo
   echo "      --no-setup                        Skip setup scripts in create_instance.sh (required for Python tests)."
   echo "      --scheduler-config <path>         Path to scheduler values yaml file."
   echo "      --catalogue-config <path>         Path to catalogue values yaml file."
+  echo "      --mount-decision-config <path>:   Path to the yaml file containing the type and credentials to configure the Mount Decision DB."
   echo "      --cta-config <paths>              Custom Values yaml file(s) for CTA Helm chart (comma-separated)."
   echo "      --eos-config <path>               Custom Values yaml file to pass to the EOS Helm chart."
   echo "      --eos-image-repository <repo>     Image repository URL/namespace path to use for spawning EOS."
@@ -121,6 +122,7 @@ build_deploy() {
   local extra_image_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
   local scheduler_config=""
+  local mount_decision_config="presets/dev-mount-decision-postgres-values.yaml"
   local eos_image_repository=""
   local eos_image_tag=""
   local cta_image_tag=""
@@ -182,6 +184,7 @@ build_deploy() {
       --spawn-options)              extra_spawn_options+=" $2"; shift ;;
       --image-build-options)        extra_image_build_options+=" $2"; shift ;;
       --deploy-namespace)           deploy_namespace="$2"; shift ;;
+      --mount-decision-config)      mount_decision_config="$2"; shift ;;
       --platform)
         if [[ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]]; then
             error_usage "platform $2 not supported. Please check the project.json for supported platforms."
@@ -420,6 +423,7 @@ build_deploy() {
         --cta-image-tag "${image_tag}" \
         --catalogue-config "${catalogue_config}" \
         --scheduler-config "${scheduler_config}" \
+        --mount-decision-config "${mount_decision_config}" \
         --reset-catalogue \
         --reset-scheduler \
         --eos-enabled ${eos_enabled} \

@@ -23,6 +23,7 @@ usage() {
   echo "  -s, --test-script <script>:         Path to the system test script."
   echo "  -o, --scheduler-config <file>:      Path to the scheduler config file."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue config file."
+  echo "      --mount-decision-config <file>: Path to the Mount Decision DB config file."
   echo "  -r, --cta-image-repository <repo>:  The CTA Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
   echo "  -i, --cta-image-tag <tag>:          The CTA Docker image tag."
   echo "      --eos-image-repository <repo>:  The EOS Docker image name. Defaults to \"gitlab-registry.cern.ch/cta/ctageneric\"."
@@ -91,7 +92,7 @@ run_systemtest() {
   systemtestscript_timeout=3600 # default systemtest timeout is 1 hour
   char_install_timeout=5 # default for CTA chart installation timeout of 5 minutes
   cleanup_namespaces=0 # by default do not cleanup leftover namespaces
-  spawn_options=" --reset-catalogue --reset-scheduler"
+  spawn_options=" --reset-catalogue --reset-scheduler --reset-mount-decision"
   extra_test_options=""
 
   # Parse command line arguments
@@ -132,6 +133,11 @@ run_systemtest() {
         catalogue_config="$2"
         test -f "${catalogue_config}" || die "ERROR: catalogue config file ${catalogue_config} does not exist"
         spawn_options+=" --catalogue-config ${catalogue_config}"
+        shift ;;
+      --mount-decision-config)
+        mount_decision_config="$2"
+        test -f "${mount_decision_config}" || die "ERROR: Mount Decision DB config file ${mount_decision_config} does not exist"
+        spawn_options+=" --mount-decision-config ${mount_decision_config}"
         shift ;;
       --spawn-options)
         extra_spawn_options="$2"

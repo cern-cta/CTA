@@ -406,6 +406,7 @@ The shared libraries
 %defattr(0755,root,root,-)
 #TODO: merge util and common
 %{_libdir}/libctascheduler.so*
+%{_libdir}/libctamountdecision.so*
 %if "%{usingObjectstore}" != "0"
 %{_libdir}/libctaobjectstore.so*
 %else
@@ -576,6 +577,19 @@ Scripts and utilities to faciliate working with the CTA scheduler database
 %attr(0755,root,root) %{_bindir}/cta-scheduler-schema-create
 %attr(0755,root,root) %{_bindir}/cta-scheduler-schema-drop
 %endif
+
+%package -n cta-mount-decision-utils
+Summary: Utilities to faciliate working with the CTA Mount Decision DB
+Group: Application/CTA
+Requires: cta-lib = %{version}-%{release}
+Requires: cta-lib-catalogue-postgres = %{version}-%{release}
+Requires: postgresql-libs
+%description -n cta-mount-decision-utils
+CERN Tape Archive:
+Scripts and utilities to faciliate working with the CTA Mount Decision DB.
+%files -n cta-mount-decision-utils
+%attr(0755,root,root) %{_bindir}/cta-mount-decision-schema-create
+%attr(0755,root,root) %{_bindir}/cta-mount-decision-schema-drop
 
 %package -n cta-rmcd
 Summary: The Remote Media Changer daemon (rmcd)

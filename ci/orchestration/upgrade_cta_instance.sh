@@ -54,6 +54,7 @@ update_local_cta_chart_dependencies() {
     "auth"
     "catalogue"
     "scheduler"
+    "mountdecision"
     "client"
     "cli"
     "frontend"
