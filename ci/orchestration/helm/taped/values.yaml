@@ -70,7 +70,7 @@ postRun:
 #     device: "/dev/nst0"
 #     logicalLibraryName: lib2
 #     controlPath smc1
-drives: {}
+drives: []
 
 # We need to be privileged to handle the tape drives
 securityContext:

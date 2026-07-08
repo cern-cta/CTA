@@ -31,7 +31,7 @@ routines:
     replicas: 1
     sleepIntervalSecs: 1
     softTimeoutSecs: 30
-  mountDecisionLoopCounter:
+  mountDecisionLoop:
     replicas: 1
     sleepIntervalSecs: 1
 
