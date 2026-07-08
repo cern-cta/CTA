@@ -119,7 +119,7 @@ class TestEnv:
             cta_rmcd_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-rmcd", "cta-rmcd", allow_partial_label_value_match=True
             ),
-            # maintd has many routines, so we select by component
+            # Note that we rely on /component instead of /name as maintd has many routines (which each get their own name)
             cta_maintd_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/component", "maintd"),
             cta_taped_conns=TestEnv.get_k8s_connections_by_label(
                 namespace, "app.kubernetes.io/name", "cta-taped", "cta-taped", allow_partial_label_value_match=True

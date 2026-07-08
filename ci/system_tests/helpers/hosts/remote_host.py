@@ -63,7 +63,7 @@ class RemoteHost:
         print(f"Waiting for {self.name} to be up...")
         with Timeout(wait_timeout_secs) as t:
             while not self.is_host_up() and not t.expired:
-                time.sleep(1)
+                time.sleep(0.5)
             if t.expired:
                 raise TimeoutError(f"Host failed to come up within timeout of {wait_timeout_secs} seconds")
         print(f"{self.name} is up")

@@ -104,8 +104,9 @@ class K8sConnection(RemoteConnection):
                 namespace=self.namespace,
             )
             # Wait until the pod is no longer ready to ensure a restart has been triggered
+            # Otherwise if we immediately start waiting for it, said wait might succeed because the process hasn't terminated yet
             while self.is_up():
-                time.sleep(1)
+                time.sleep(0.5)
         except ApiException as e:
             if throw_on_failure:
                 raise RuntimeError(f"Pod deletion failed: {e}")
@@ -119,7 +120,8 @@ class K8sConnection(RemoteConnection):
                     namespace=self.namespace,
                 ),
             )
-        except ApiException:
+        except ApiException as e:
+            print(e)
             return False
 
         if pod is None or pod.status is None:

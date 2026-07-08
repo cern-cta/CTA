@@ -125,8 +125,7 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend \
-    /usr/local/bin/build-service.sh "cta-frontend-grpc cta-catalogue-utils krb5-workstation"
-# TODO: remove the catalogue utils once the tests have been updated
+    /usr/local/bin/build-service.sh "cta-frontend-grpc krb5-workstation"
 
 USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
@@ -145,7 +144,7 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
-    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common cta-immutable-file-test eos-client xrootd-client bc" && \
+    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common cta-immutable-file-test cta-integrationtests eos-client xrootd-client bc" && \
     ln -sf /usr/bin/cta-admin-grpc /usr/bin/cta-admin
 
 ENTRYPOINT ["/bin/bash"]
