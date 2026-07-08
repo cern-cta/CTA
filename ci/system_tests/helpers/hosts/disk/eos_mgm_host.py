@@ -3,6 +3,7 @@
 
 from functools import cached_property
 from pathlib import Path
+import datetime
 
 from .disk_instance_host import DiskInstanceHost, DiskInstanceImplementation
 
@@ -59,3 +60,15 @@ class EosMgmHost(DiskInstanceHost):
 
     def num_files_on_disk_only(self, directory: str) -> int:
         return int(self.exec_with_output(f'eos ls {directory} -y | grep "d1::t0" | wc -l'))
+
+    def get_report_file_path(self) -> Path:
+        now = datetime.datetime.now()
+        base_path = Path("/var") / "log" / "eos" / "report" / f"{now:%Y}" / f"{now:%m}"
+        file_name = f"{now:%Y}{now:%m}{now:%d}.eosreport"
+        return base_path / file_name
+
+    def mkdir(self, directory: str, parent: bool = True) -> None:
+        flags = ""
+        if parent:
+            flags += "-p"
+        self.exec(f'eos mkdir {flags} "{directory}"')

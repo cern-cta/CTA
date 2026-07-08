@@ -1,9 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import shutil
 import sys
-import json
 from pathlib import Path
 
 import pytest
@@ -16,55 +14,10 @@ if sys.version_info >= (3, 11):
 else:
     import tomli as tomllib
 
-#####################################################################################################################
-# General/common fixtures
-#####################################################################################################################
-
-
-@pytest.fixture(autouse=True)
-def make_tests_look_pretty(request):
-    """The only purpose of this fixture is to make the test output easier to read
-    in particular by more clearly visually separating different test cases
-    """
-    terminal_writer = request.config.get_terminal_writer()
-    terminal_width = shutil.get_terminal_size().columns
-
-    # construct the magic separators
-    test_name = request.node.name
-    test_title = f" {test_name} "  # leave 2 spaces around the name
-    side = (terminal_width - len(test_title)) // 2
-    line = "=" * side + test_title + "=" * (terminal_width - side - len(test_title))
-    separator: str = "—" * terminal_width
-
-    terminal_writer.write("\n" + line + "\n\n", cyan=True, bold=True)
-    yield
-    terminal_writer.write(f"\n\n{separator}", cyan=True)
-
-
-@pytest.fixture(scope="session")
-def env(request) -> TestEnv:
-    """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
-    return request.config.env
-
-
-@pytest.fixture(scope="session")
-def error_whitelist() -> set[str]:
-    """Mutable whitelist that individual test cases can add errors to"""
-    whitelist = set()  # mutable whitelist shared between all tests
-    return whitelist
-
-
-@pytest.fixture(scope="session")
-def krb5_realm(request) -> str:
-    """Kerberos realm used in the tests"""
-    return request.config.test_config["tests"]["krb5_realm"]
-
-
-@pytest.fixture(scope="session")
-def project_json():
-    project_json_path = (Path(__file__).resolve().parent / ".." / ".." / "project.json").resolve()
-    return json.loads(project_json_path.read_text(encoding="utf-8"))
-
+# Ensure pytest knows about the fixtures
+pytest_plugins = [
+    "system_tests.fixtures.fixtures",
+]
 
 #####################################################################################################################
 # Commandline options
@@ -160,7 +113,6 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--no-modify"):
         return
-    # TODO: figure out how to do all this cleanly when you do something like --ff
     # Always check for errors after the run
     add_test_into_existing_collection("tests/cleanup/error_test.py", items, prepend=False)
 
@@ -168,7 +120,8 @@ def pytest_collection_modifyitems(config, items):
     # any marked tests for disk instances not in our environment
     present_disk_instances: list[DiskInstanceImplementation] = [di.implementation for di in config.env.disk_instance]
 
-    if not config.getoption("--no-setup"):
+    # For now a solution not to run the setup when we do things like --ff, but this should be cleaner in the future
+    if not config.getoption("--no-setup") and not config.getoption("--ff") and not config.getoption("--lf"):
         add_test_into_existing_collection("tests/setup/setup_cta_test.py", items, prepend=True)
         if DiskInstanceImplementation.EOS in present_disk_instances:
             add_test_into_existing_collection("tests/setup/setup_eos_test.py", items, prepend=True)

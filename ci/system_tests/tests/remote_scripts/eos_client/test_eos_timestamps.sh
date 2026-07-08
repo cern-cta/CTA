@@ -26,10 +26,14 @@ compare_timestamps() {
   fi
 }
 
+if [ "$#" -ne 1 ]; then
+    echo "Please provide an EOS base directory"
+    exit 1
+fi
 
 EOS_MGM_HOST="ctaeos"
-TEST_FILE_NAME=$(uuidgen | sed 's/-//g')
-TEST_DIR=/eos/ctaeos/cta
+TEST_FILE_NAME=test_eos_timestamps_$(uuidgen | sed 's/-//g')
+TEST_DIR="$1"
 
 # get some common useful helpers for krb5
 eospower_kdestroy

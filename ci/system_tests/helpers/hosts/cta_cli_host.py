@@ -24,7 +24,7 @@ class CtaCliHost(RemoteHost):
 
         raise RuntimeError(f"Failing to find drive status for drive: {drive_name}")
 
-    def wait_for_drive_status(self, drive_name: str, desired_status: str, timeout: int = 10) -> None:
+    def wait_for_drive_status(self, drive_name: str, desired_status: str, *, timeout: int = 10) -> None:
         print(f"Waiting for drives {drive_name} to be {desired_status}")
         for _ in range(timeout):
             drives_info = json.loads(self.exec_with_output(f"cta-admin --json drive ls '{drive_name}'"))
@@ -34,20 +34,20 @@ class CtaCliHost(RemoteHost):
             time.sleep(1)
         raise RuntimeError(f"Timeout reached while trying to put drives to: {desired_status}")
 
-    def set_drive_up(self, drive_name: str, wait: bool = True) -> None:
+    def set_drive_up(self, drive_name: str, *, wait: bool = True) -> None:
         self.exec(f"cta-admin dr up '{drive_name}' --reason 'Setting drive up'")
         if wait:
             self.wait_for_drive_status(drive_name, "UP")
 
-    def set_drive_down(self, drive_name: str, wait: bool = True) -> None:
+    def set_drive_down(self, drive_name: str, *, wait: bool = True) -> None:
         self.exec(f"cta-admin dr down '{drive_name}' --reason 'Setting drive down'")
         if wait:
             self.wait_for_drive_status(drive_name, "DOWN")
 
-    def set_all_drives_up(self, wait: bool = True) -> None:
+    def set_all_drives_up(self, *, wait: bool = True) -> None:
         self.set_drive_up(".*", wait=wait)
 
-    def set_all_drives_down(self, wait: bool = True) -> None:
+    def set_all_drives_down(self, *, wait: bool = True) -> None:
         self.set_drive_down(".*", wait=wait)
 
     def list_all_tape_vids(self) -> list[str]:
@@ -66,3 +66,7 @@ class CtaCliHost(RemoteHost):
         filtered_list = list(filter(filter_func, ls_json))
         assert len(filtered_list) == 1
         return filtered_list[0]
+
+    def writable_tapes(self) -> list[dict]:
+        tape_ls_json = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
+        return [tape for tape in tape_ls_json if not tape.get("full", False)]

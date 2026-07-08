@@ -3,6 +3,7 @@
 
 from functools import cached_property
 
+from pathlib import Path
 from .remote_host import RemoteHost
 
 
@@ -11,8 +12,8 @@ class CtaFrontendHost(RemoteHost):
         super().__init__(conn)
 
     @cached_property
-    def log_file_location(self) -> str:
-        return "/var/log/cta/cta-frontend.log"
+    def log_file_path(self) -> Path:
+        return Path("/var") / "log" / "cta" / "cta-frontend.log"
 
     def get_schema_version(self) -> str:
         return self.exec_with_output(

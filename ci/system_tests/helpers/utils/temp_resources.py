@@ -95,14 +95,17 @@ class TempVirtualOrganization:
 
 
 class TempStorageClass:
-    def __init__(self, cta_cli, sc_name, vo_name):
+    def __init__(self, cta_cli, sc_name, vo_name, copies=1):
         self.cta_cli = cta_cli
         self.sc_name = sc_name
         self.vo_name = vo_name
+        self.copies = copies
 
     def __enter__(self):
         self.ls_before = self.cta_cli.exec_with_output("cta-admin --json sc ls")
-        self.cta_cli.exec(f"cta-admin sc add -n {self.sc_name} -c 1 --vo {self.vo_name} -m 'Add temp storage class'")
+        self.cta_cli.exec(
+            f"cta-admin sc add -n {self.sc_name} -c {self.copies} --vo {self.vo_name} -m 'Add temp storage class'"
+        )
         return self
 
     def __exit__(self, exc_type, exc, tb):
@@ -125,6 +128,28 @@ class TempTapePool:
     def __exit__(self, exc_type, exc, tb):
         self.cta_cli.exec(f"cta-admin tp rm --name {self.tp_name}")
         assert self.ls_before == self.cta_cli.exec_with_output("cta-admin --json tp ls")
+        return False
+
+
+class TempArchiveRoute:
+    def __init__(self, cta_cli, sc_name, tp_name, copynb):
+        self.cta_cli = cta_cli
+        self.tp_name = tp_name
+        self.sc_name = sc_name
+        self.copynb = copynb
+
+    def __enter__(self):
+        self.ls_before = self.cta_cli.exec_with_output("cta-admin --json archiveroute ls")
+        self.cta_cli.exec(
+            f"cta-admin archiveroute add --storageclass '{self.sc_name}' --tapepool {self.tp_name} --copynb {self.copynb} -m 'Add temp archive route'"
+        )
+        return self
+
+    def __exit__(self, exc_type, exc, tb):
+        self.cta_cli.exec(
+            f"cta-admin archiveroute rm --storageclass '{self.sc_name}' --copynb {self.copynb} --archiveroutetype DEFAULT"
+        )
+        assert self.ls_before == self.cta_cli.exec_with_output("cta-admin --json archiveroute ls")
         return False
 
 

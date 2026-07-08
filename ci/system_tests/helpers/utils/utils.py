@@ -17,7 +17,7 @@ def assert_dict_equals(actual: dict, expected: dict, ignore_keys: list[str]):
         assert k2 in ignored or k2 in actual
 
 
-def wait_for_condition(cond_func: Callable[[], bool], timeout_secs: float = 10, interval_secs: float = 0.5) -> None:
+def wait_for_condition(cond_func: Callable[[], bool], *, timeout_secs: float = 10, interval_secs: float = 0.5) -> None:
     with Timeout(timeout_secs) as t:
         while not cond_func() and not t.expired:
             time.sleep(interval_secs)
@@ -37,3 +37,7 @@ def canonicalize(obj: Any) -> Any:
 
 def _sort_key(x: Any):
     return json.dumps(x, sort_keys=True, separators=(",", ":"))
+
+
+def find_line(content, *filters) -> str:
+    return next((line for line in content.splitlines() if all(f in line for f in filters)), "")

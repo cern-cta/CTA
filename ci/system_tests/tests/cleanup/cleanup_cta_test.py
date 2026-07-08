@@ -6,10 +6,10 @@
 #####################################################################################################################
 
 
-def test_cleanup_catalogue(env):
-    schema_version = env.cta_frontend[0].get_schema_version()
-    env.cta_frontend[0].exec("echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf")
-    env.cta_frontend[0].exec(f"cta-catalogue-schema-create -v {schema_version} /etc/cta/cta-catalogue.conf")
+def test_cleanup_catalogue(cta_frontend):
+    schema_version = cta_frontend.get_schema_version()
+    cta_frontend.exec("echo yes | cta-catalogue-schema-drop /etc/cta/cta-catalogue.conf")
+    cta_frontend.exec(f"cta-catalogue-schema-create -v {schema_version} /etc/cta/cta-catalogue.conf")
 
 
 def test_restart_cta_taped(env):

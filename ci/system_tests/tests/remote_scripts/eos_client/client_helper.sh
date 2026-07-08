@@ -96,19 +96,30 @@ eosadmin_kdestroy() {
 ################################################################
 
 # Pass list of files waiting for archival
-# This sciprt fails if there are files stored in the target directory as it just counts the lines.
 wait_for_archive () {
 
   EOS_MGM_HOST=$1
+  shift # Removes $1, so now $@ contains ONLY the file paths
+  TOTAL_FILES=$#
   SECONDS_PASSED=0
   WAIT_FOR_ARCHIVED_FILE_TIMEOUT=90
 
-  while test $(($# - 1)) != $(echo "${@:2}" | tr " " "\n" | xargs -iFILE eos root://${EOS_MGM_HOST} info FILE | awk '{print $4;}' | grep tape | wc -l); do
-    echo "$(date +%s) Waiting for files to be archived to tape: seconds passed = ${SECONDS_PASSED}"
+  while true; do
+    TAPE_COUNT=0
+    for FILE in "$@"; do
+      # Run eos info and check if 'tape' appears in the 4th column of the output
+      if eos root://${EOS_MGM_HOST} info "$FILE" 2>/dev/null | awk '{print $4}' | grep -q "tape"; then
+        ((TAPE_COUNT++))
+      fi
+    done
+    if [ "$TAPE_COUNT" -eq "$TOTAL_FILES" ]; then
+      echo "$(date +%s) Success: All $TOTAL_FILES files successfully archived to tape."
+      break
+    fi
+    echo "$(date +%s) Waiting for files to be archived to tape: $TAPE_COUNT/$TOTAL_FILES archived. Seconds passed = ${SECONDS_PASSED}"
     sleep 1
-    let SECONDS_PASSED=SECONDS_PASSED+1
-
-    if test ${SECONDS_PASSED} == ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}; then
+    ((SECONDS_PASSED++))
+    if [ "${SECONDS_PASSED}" -ge "${WAIT_FOR_ARCHIVED_FILE_TIMEOUT}" ]; then
       echo "$(date +%s) ERROR: Timed out after ${WAIT_FOR_ARCHIVED_FILE_TIMEOUT} seconds waiting for files to be archived to tape"
       exit 1
     fi

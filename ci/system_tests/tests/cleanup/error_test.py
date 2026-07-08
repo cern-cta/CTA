@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 import json
-import re
 from collections import Counter
 
 
@@ -18,16 +17,12 @@ def test_no_coredumps(env):
     assert total_core_dumps_found == 0, "core dumps were found"
 
 
-# Perhaps this should be done after each test
-# That gives us more insight into where exactly the error messages were produced
-# Only if this can be executed fast enough...
-# Something to test at some point
-def test_no_uncaught_exceptions(env, error_whitelist):
+def test_no_uncaught_exceptions_and_errors(env, error_whitelist):
     hosts = env.cta_frontend + env.cta_taped + env.cta_rmcd
     error_messages = []  # for summaries
     for host in hosts:
         # collect logs
-        cmd = f"""grep -aE '\\"log_level\\": *\\"(ERROR|CRITICAL)\\"' {host.log_file_location} || true"""
+        cmd = f"""grep -aE '\\"log_level\\": *\\"(ERROR|CRITICAL)\\"' {host.log_file_path} || true"""
         output = host.exec_with_output(cmd).splitlines()
         if not output:
             # Nothing found, happy :D
@@ -58,7 +53,7 @@ def test_no_uncaught_exceptions(env, error_whitelist):
         whitelist_prefix = "(whitelisted)"
         prefix = " " * len(whitelist_prefix)
         # Check if we can pattern match the message based on a pattern in the whitelist
-        if any(re.search(pattern, msg) for pattern in error_whitelist):
+        if any(pattern in msg for pattern in error_whitelist):
             prefix = whitelist_prefix
         else:
             total_non_whitelisted_errors += count

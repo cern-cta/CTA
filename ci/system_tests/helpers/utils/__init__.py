@@ -10,15 +10,17 @@ from .temp_resources import (
     TempTape,
     TempTapePool,
     TempVirtualOrganization,
+    TempArchiveRoute,
 )
 from .timeout import Timeout
-from .utils import assert_dict_equals, wait_for_condition, canonicalize
+from .utils import assert_dict_equals, wait_for_condition, canonicalize, find_line
 
 __all__ = [
     "Timeout",
     "assert_dict_equals",
     "wait_for_condition",
     "canonicalize",
+    "find_line",
     "TempDiskInstanceSpace",
     "TempLogicalLibrary",
     "TempPhysicalLibrary",
@@ -27,4 +29,5 @@ __all__ = [
     "TempStorageClass",
     "TempTapePool",
     "TempTape",
+    "TempArchiveRoute",
 ]

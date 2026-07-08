@@ -4,10 +4,6 @@
 import uuid
 import time
 
-import pytest
-
-from ..helpers.hosts import CtaRmcdHost, CtaTapedHost
-
 ENSTORE_LABEL_BLOCK_SIZE = 80
 OSM_HEADER_BLOCK_SIZE = 32768
 TAPE_PAYLOAD_BLOCK_SIZE = 262144
@@ -21,26 +17,6 @@ ENSTORE_LARGE_TAPE_SLOT = 3
 #####################################################################################################################
 # Helpers
 #####################################################################################################################
-
-
-@pytest.fixture(scope="session")
-def cta_rmcd(env) -> CtaRmcdHost:
-    return env.cta_rmcd[0]
-
-
-@pytest.fixture(scope="session")
-def cta_taped(env) -> CtaTapedHost:
-    return env.cta_taped[0]
-
-
-@pytest.fixture(scope="session")
-def drive_name(cta_taped) -> str:
-    return cta_taped.drive_name
-
-
-@pytest.fixture(scope="session")
-def drive_device(cta_taped) -> str:
-    return cta_taped.drive_device
 
 
 def wait_for_device_ready(host, drive_device: str, timeout_seconds: int = 60):
@@ -202,11 +178,6 @@ def clone_enstore_samples(cta_rmcd) -> str:
 #####################################################################################################################
 
 
-def test_hosts_present_external_tape_formats(env):
-    assert len(env.cta_taped) > 0
-    assert len(env.cta_rmcd) > 0
-
-
 def test_install_required(cta_rmcd, cta_taped):
     cta_rmcd.exec("dnf install -y git git-lfs")
     cta_taped.exec("dnf -y install cta-integrationtests")
@@ -219,7 +190,8 @@ def test_load_tape(cta_rmcd):
     cta_rmcd.exec("mtx -f /dev/smc status")
 
 
-def test_read_osm_tape(cta_rmcd, drive_device):
+def test_read_osm_tape(cta_rmcd, cta_taped):
+    drive_device = cta_taped.drive_device
     osm_dir = "/osm_mhvtl_" + str(uuid.uuid4())[:8]
 
     # Download OSM sample tape
@@ -251,9 +223,9 @@ def test_read_osm_tape(cta_rmcd, drive_device):
     cta_rmcd.exec(f"mt -f {drive_device} rewind")
 
 
-def test_osm_reader(cta_taped, drive_name, drive_device):
-    print(f"Using drive: {drive_name}, device: {drive_device}")
-    cta_taped.exec(f"cta-osmReaderTest {drive_name} {drive_device}")
+def test_osm_reader(cta_taped):
+    print(f"Using drive: {cta_taped.drive_name}, device: {cta_taped.drive_device}")
+    cta_taped.exec(f"cta-osmReaderTest {cta_taped.drive_name} {cta_taped.drive_device}")
 
 
 def test_unload_tape(cta_rmcd):
@@ -267,7 +239,8 @@ def test_load_enstore_tape(cta_rmcd, cta_taped):
     load_tape(cta_rmcd, ENSTORE_TAPE_SLOT, cta_taped.drive_index)
 
 
-def test_read_write_enstore_tape(cta_rmcd, drive_device):
+def test_read_write_enstore_tape(cta_rmcd, cta_taped):
+    drive_device = cta_taped.drive_device
     sample_dir = clone_enstore_samples(cta_rmcd)
     layout_dir = f"{sample_dir}/enstore/FL1212_f1"
     readback_dir = f"/enstore_readback_{str(uuid.uuid4())[:8]}"
@@ -339,7 +312,8 @@ def test_load_enstore_large_tape(cta_rmcd, cta_taped):
     load_tape(cta_rmcd, ENSTORE_LARGE_TAPE_SLOT, cta_taped.drive_index)
 
 
-def test_write_enstore_large_tape(cta_rmcd, drive_device):
+def test_write_enstore_large_tape(cta_rmcd, cta_taped):
+    drive_device = cta_taped.drive_device
     sample_dir = clone_enstore_samples(cta_rmcd)
     layout_dir = f"{sample_dir}/enstorelarge/FL1587_f1"
 
@@ -388,12 +362,12 @@ def test_write_enstore_large_tape(cta_rmcd, drive_device):
         cta_rmcd.exec(f"rm -rf {sample_dir}")
 
 
-def test_enstore_large_reader(cta_rmcd, cta_taped, drive_name, drive_device):
+def test_enstore_large_reader(cta_rmcd, cta_taped):
     reload_tape(cta_rmcd, ENSTORE_LARGE_TAPE_SLOT, cta_taped.drive_index)
-    wait_for_drive_readable(cta_taped, drive_device)
+    wait_for_drive_readable(cta_taped, cta_taped.drive_device)
 
-    print(f"Using drive: {drive_name}, device: {drive_device}")
-    cta_taped.exec(f"cta-enstoreLargeReaderTest {drive_name} {drive_device}")
+    print(f"Using drive: {cta_taped.drive_name}, device: {cta_taped.drive_device}")
+    cta_taped.exec(f"cta-enstoreLargeReaderTest {cta_taped.drive_name} {cta_taped.drive_device}")
 
 
 def test_unload_enstore_large_tape(cta_rmcd, cta_taped):
