@@ -221,6 +221,7 @@ if(CTA_BUILD_MODE STREQUAL "compile")
   endif()
 
   add_subdirectory(rdbms)
+  add_subdirectory(mountdecision)
   add_subdirectory(scheduler)
   add_subdirectory(taped)
   add_subdirectory(maintd)

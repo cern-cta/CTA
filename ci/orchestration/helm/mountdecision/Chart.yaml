@@ -1,0 +1,14 @@
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+apiVersion: v2
+name: mountdecision
+version: 0.1.0
+description: A chart that sets up the CTA Mount Decision DB and optionally a postgres pod.
+type: application
+appVersion: "5.11.10.1"
+
+dependencies:
+  - name: common
+    version: 0.1.1
+    repository: "file://../common"

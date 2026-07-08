@@ -1,0 +1,23 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+{{- $mountDecisionConfig := include "mountDecision.config" . | fromYaml }}
+{{- if and (eq $mountDecisionConfig.backend "postgres") (not $mountDecisionConfig.postgresConfig.remote) }}
+{{- $name := include "mountDecisionPostgres.fullname" . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    app.kubernetes.io/name: {{ $name }}
+spec:
+  selector:
+    app.kubernetes.io/name: {{ $name }}
+  clusterIP: None
+  ports:
+    - name: {{ $name }}
+      port: 5432
+      protocol: TCP
+{{- end }}
