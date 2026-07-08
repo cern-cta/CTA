@@ -19,10 +19,10 @@ class EosClientHost(DiskClientHost):
     def count_files_in_namespace(self, eos_host: str, dest_dir: str, num_dirs: int, count_procs: int) -> int:
         """Count files in namespace using parallel queries on the remote host.
 
-        Requires count_files.py to be deployed to /root/count_files.py first.
+        Requires count_files.py to be deployed to /tmp/count_files.py first.
         """
         cmd = (
-            f"python3 /root/count_files.py "
+            f"python3 /tmp/count_files.py "
             f"--eos-host {eos_host} "
             f"--dest-dir {dest_dir} "
             f"--num-dirs {num_dirs} "
@@ -49,7 +49,7 @@ class EosClientHost(DiskClientHost):
     ) -> asyncio.Future[ExecResult]:
         """Start archival asynchronously. Returns a future that can be awaited."""
         cmd = (
-            f"python3 -u /root/xrootd_archive.py "
+            f"python3 -u /tmp/xrootd_archive.py "
             f"--eos-host {eos_host} "
             f"--dest-dir {dest_dir} "
             f"--num-files {num_files} "
@@ -128,7 +128,7 @@ class EosClientHost(DiskClientHost):
     ) -> asyncio.Future[ExecResult]:
         """Start retrieve (prepare/stage-in) asynchronously. Returns a future that can be awaited."""
         cmd = (
-            f"python3 -u /root/xrootd_retrieve.py "
+            f"python3 -u /tmp/xrootd_retrieve.py "
             f"--eos-host {eos_host} "
             f"--dest-dir {dest_dir} "
             f"--num-dirs {num_dirs} "

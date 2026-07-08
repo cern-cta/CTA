@@ -7,7 +7,7 @@ from pathlib import Path
 from .remote_host import RemoteHost
 
 
-class CtaFrontendHost(RemoteHost):
+class CtaAdminApiHost(RemoteHost):
     def __init__(self, conn):
         super().__init__(conn)
 

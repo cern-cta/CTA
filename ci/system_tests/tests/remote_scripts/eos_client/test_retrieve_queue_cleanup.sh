@@ -49,7 +49,7 @@ MULTICOPY_DIR_2="${EOS_BASEDIR}/dir_2_copy"
 MULTICOPY_DIR_3="${EOS_BASEDIR}/dir_3_copy"
 
 # get some common useful helpers for krb5
-. /root/client_helper.sh
+. /tmp/client_helper.sh
 
 eospower_kdestroy &>/dev/null
 eospower_kinit &>/dev/null

@@ -11,7 +11,8 @@ from .connections.k8s_connection import K8sConnection
 from .connections.remote_connection import RemoteConnection
 from .connections.ssh_connection import SSHConnection
 from .hosts.cta_cli_host import CtaCliHost
-from .hosts.cta_frontend_host import CtaFrontendHost
+from .hosts.cta_workflow_api_host import CtaWorkflowApiHost
+from .hosts.cta_admin_api_host import CtaAdminApiHost
 from .hosts.cta_maintd_host import CtaMaintdHost
 from .hosts.cta_rmcd_host import CtaRmcdHost
 from .hosts.cta_taped_host import CtaTapedHost
@@ -25,7 +26,8 @@ class TestEnv:
     def __init__(
         self,
         cta_cli_conns: Sequence[RemoteConnection] = [],
-        cta_frontend_conns: Sequence[RemoteConnection] = [],
+        cta_admin_api_conns: Sequence[RemoteConnection] = [],
+        cta_workflow_api_conns: Sequence[RemoteConnection] = [],
         cta_rmcd_conns: Sequence[RemoteConnection] = [],
         cta_taped_conns: Sequence[RemoteConnection] = [],
         cta_maintd_conns: Sequence[RemoteConnection] = [],
@@ -33,7 +35,10 @@ class TestEnv:
         eos_mgm_conns: Sequence[RemoteConnection] = [],
     ):
         self.cta_cli: Sequence[CtaCliHost] = [CtaCliHost(conn) for conn in cta_cli_conns]
-        self.cta_frontend: Sequence[CtaFrontendHost] = [CtaFrontendHost(conn) for conn in cta_frontend_conns]
+        self.cta_admin_api: Sequence[CtaAdminApiHost] = [CtaAdminApiHost(conn) for conn in cta_admin_api_conns]
+        self.cta_workflow_api: Sequence[CtaWorkflowApiHost] = [
+            CtaWorkflowApiHost(conn) for conn in cta_workflow_api_conns
+        ]
         self.cta_rmcd: Sequence[CtaRmcdHost] = [CtaRmcdHost(conn) for conn in cta_rmcd_conns]
         self.cta_maintd: Sequence[CtaMaintdHost] = [CtaMaintdHost(conn) for conn in cta_maintd_conns]
         self.cta_taped: Sequence[CtaTapedHost] = [CtaTapedHost(conn) for conn in cta_taped_conns]
@@ -55,47 +60,26 @@ class TestEnv:
         return result
 
     @staticmethod
-    def get_k8s_connections_by_label(
-        namespace: str,
-        label_key: str,
-        label_value: str,
-        container_value: str = "",
-        allow_partial_label_value_match: bool = False,
-    ):
+    def get_k8s_connections_by_selector(namespace: str, selector: str, container_value: str):
         """
         Returns a list of K8sConnection objects.
-        label_value and container_value can be exact matches or partial matches.
         """
         core = client.CoreV1Api()
 
-        if allow_partial_label_value_match:
-            pods = core.list_namespaced_pod(namespace=namespace)
-        else:
-            label_selector = f"{label_key}={label_value}"
-            pods = core.list_namespaced_pod(
-                namespace=namespace,
-                label_selector=label_selector,
-            )
+        pods = core.list_namespaced_pod(
+            namespace=namespace,
+            label_selector=selector,
+        )
+        pods.items.sort(key=lambda p: p.metadata.name)
 
         connections: List[K8sConnection] = []
-
-        for pod in pods.items:
-            labels = pod.metadata.labels or {}
-            v = labels.get(label_key)
-            if not v:
-                continue
-
-            if allow_partial_label_value_match:
-                if label_value not in v:
-                    continue
-            else:
-                if v != label_value:
-                    continue
-
+        for ordinal, pod in enumerate(pods.items):
             for c in pod.spec.containers or []:
                 cname = c.name or ""
                 if container_value in cname or not container_value:
-                    connections.append(K8sConnection(namespace, pod.metadata.name, cname))
+                    connections.append(K8sConnection(namespace, selector, cname, ordinal))
+
+        print(f"K8s {selector}: {len(connections)}")
 
         return connections
 
@@ -110,21 +94,28 @@ class TestEnv:
         return TestEnv(
             # Our "cta-client" should actually be an eos-client. However, the current bash test suite mixes these concepts
             # Something to be changed once we move them over....
-            eos_client_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-client"),
-            cta_cli_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "cta-cli"),
-            # TODO: this should also be split into WFE/ADMIN
-            cta_frontend_conns=TestEnv.get_k8s_connections_by_label(
-                namespace, "app.kubernetes.io/name", "cta-frontend", allow_partial_label_value_match=True
+            cta_cli_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/component=cli", "cta-cli"
             ),
-            cta_rmcd_conns=TestEnv.get_k8s_connections_by_label(
-                namespace, "app.kubernetes.io/name", "cta-rmcd", "cta-rmcd", allow_partial_label_value_match=True
+            cta_admin_api_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/component=frontend-admin", "cta-frontend"
             ),
-            # Note that we rely on /component instead of /name as maintd has many routines (which each get their own name)
-            cta_maintd_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/component", "maintd"),
-            cta_taped_conns=TestEnv.get_k8s_connections_by_label(
-                namespace, "app.kubernetes.io/name", "cta-taped", "cta-taped", allow_partial_label_value_match=True
+            cta_workflow_api_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/component=frontend-wfe", "cta-frontend"
             ),
-            eos_mgm_conns=TestEnv.get_k8s_connections_by_label(namespace, "app.kubernetes.io/name", "mgm", "mgm"),
+            cta_rmcd_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/component=rmcd", "cta-rmcd"
+            ),
+            cta_maintd_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/component=maintd", "cta-maintd"
+            ),
+            cta_taped_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/component=taped", "cta-taped"
+            ),
+            eos_client_conns=TestEnv.get_k8s_connections_by_selector(
+                namespace, "app.kubernetes.io/component=client", "client"
+            ),
+            eos_mgm_conns=TestEnv.get_k8s_connections_by_selector(namespace, "app.kubernetes.io/name=mgm", "mgm"),
         )
 
     @staticmethod
@@ -132,15 +123,15 @@ class TestEnv:
         """
         Expects a path to a yaml file containing for each host how to connect. For example:
 
-        eosclient:
+        eos_client:
           - k8s:
               namespace: dev
               pod: cta-eos-client-0
               container: client
-        ctafrontend:
+        cta_taped:
           - ssh:
               user: root
-              host: ctapreproductionfrontend
+              host: tpsrv420
         """
         try:
             import yaml
@@ -170,10 +161,11 @@ class TestEnv:
             return connections
 
         return TestEnv(
-            cta_cli_conns=create_connections(config, "ctacli"),
-            cta_frontend_conns=create_connections(config, "ctafrontend"),
-            cta_rmcd_conns=create_connections(config, "ctarmcd"),
-            cta_taped_conns=create_connections(config, "ctataped"),
-            eos_client_conns=create_connections(config, "eosclient"),
-            eos_mgm_conns=create_connections(config, "eosmgm"),
+            cta_cli_conns=create_connections(config, "cta_cli"),
+            cta_admin_api_conns=create_connections(config, "cta_admin_api"),
+            cta_workflow_api_conns=create_connections(config, "cta_workflow_api"),
+            cta_rmcd_conns=create_connections(config, "cta_rmcd"),
+            cta_taped_conns=create_connections(config, "cta_taped"),
+            eos_client_conns=create_connections(config, "eos_client"),
+            eos_mgm_conns=create_connections(config, "eos_mgm"),
         )

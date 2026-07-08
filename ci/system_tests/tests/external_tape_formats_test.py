@@ -178,7 +178,7 @@ def clone_enstore_samples(cta_rmcd) -> str:
 #####################################################################################################################
 
 
-def test_install_required(cta_rmcd, cta_taped):
+def test_install_required(cta_rmcd):
     cta_rmcd.exec("sudo microdnf install -y git git-lfs")
 
 

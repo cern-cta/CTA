@@ -59,7 +59,7 @@ kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/${CTA_CLI_POD}:/etc/cta/cta-cli.
 ############## ARCHIVE FILES ##############
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash -c "mkdir -p ${TMP_DIR}"
 kubectl -n ${NAMESPACE} cp common/archive_file.sh ${CLIENT_POD}:${TMP_DIR}/
-kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/ -c client
+kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/tmp/ -c client
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash ${TMP_DIR}/archive_file.sh -f ${FILE_1} || exit 1
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash ${TMP_DIR}/archive_file.sh -f ${FILE_2} || exit 1
 

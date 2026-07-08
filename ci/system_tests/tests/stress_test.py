@@ -74,18 +74,16 @@ def stress_params(request):
 #####################################################################################################################
 
 
-@pytest.mark.eos
 def test_setup_xrootd_client(eos_client):
     """Install XRootD Python bindings and deploy scripts to the client pod."""
     eos_client.install_xrootd_python()
 
     script_dir = Path(__file__).parent / "remote_scripts" / "eos_client"
-    eos_client.copy_to(str(script_dir / "xrootd_archive.py"), "/root/xrootd_archive.py")
-    eos_client.copy_to(str(script_dir / "count_files.py"), "/root/count_files.py")
-    eos_client.copy_to(str(script_dir / "xrootd_retrieve.py"), "/root/xrootd_retrieve.py")
+    eos_client.copy_to(str(script_dir / "xrootd_archive.py"), "/tmp/xrootd_archive.py")
+    eos_client.copy_to(str(script_dir / "count_files.py"), "/tmp/count_files.py")
+    eos_client.copy_to(str(script_dir / "xrootd_retrieve.py"), "/tmp/xrootd_retrieve.py")
 
 
-@pytest.mark.eos
 def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
     num_drives: int = len(env.cta_taped)
     cta_cli.exec(f"cta-admin vo ch --vo vo --writemaxdrives {num_drives} --readmaxdrives {num_drives}")
@@ -104,7 +102,6 @@ def test_update_setup_for_max_powerrrr(env, cta_cli, eos_mgm):
         eos_mgm.exec(f"eos fs config {i} scaninterval=0")
 
 
-@pytest.mark.eos
 @pytest.mark.asyncio
 async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_params, test_dir):
     # Get the IP of EOS MGM pod and use instead of disk instance name to save DNS lookups
@@ -234,7 +231,8 @@ async def test_generate_and_copy_files(cta_cli, eos_client, eos_mgm, stress_para
 
 # After everything has been moved, wait for the archival to complete
 # We execute this directly on the mgm to bypass some networking between pods (should be negligible though)
-@pytest.mark.eos
+
+
 def test_wait_for_archival(eos_mgm, stress_params, test_dir):
     num_missing_files, loss_percent = eos_mgm.wait_for_archival_in_directory(
         archive_dir_path=test_dir,
@@ -248,14 +246,12 @@ def test_wait_for_archival(eos_mgm, stress_params, test_dir):
     assert loss_acceptable, f"Too many files lost during archival: {num_missing_files} files missing"
 
 
-@pytest.mark.eos
 def test_kinit_poweruser(eos_client, krb5_realm):
     """Initialize Kerberos credentials for poweruser1 (needed for retrieve)."""
     eos_client.exec("mkdir -p /tmp/poweruser1")
     eos_client.exec(f"KRB5CCNAME=/tmp/poweruser1/krb5cc_0 kinit -kt /root/poweruser1.keytab poweruser1@{krb5_realm}")
 
 
-@pytest.mark.eos
 @pytest.mark.asyncio
 async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_params):
     archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
@@ -338,7 +334,6 @@ async def test_request_files_for_retrieve(cta_cli, eos_client, eos_mgm, stress_p
     print(f"Retrieve request queueing completed in {duration_seconds:.1f}s, files/s: {avg_fps:.2f}")
 
 
-@pytest.mark.eos
 def test_wait_for_retrieval(eos_mgm, stress_params):
     archive_directory = eos_mgm.base_dir_path / "cta" / "stress"
 

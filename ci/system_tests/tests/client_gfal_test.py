@@ -39,82 +39,71 @@ def gfal_params(request) -> GfalParams:
 # For now only the "glue" has been migrated to Python. All the scripts invoked in the tests below still need to be migrated at a later point in time
 
 
-@pytest.mark.eos
 def test_setup_client_gfal_xrootd(eos_client, test_dir, gfal_params, remote_scripts_dir):
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_setup.sh"), "/root/", permissions="+x")
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_helper.sh"), "/root/", permissions="+x")
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "cli_calls.sh"), "/root/", permissions="+x")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_setup.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_helper.sh"), "/tmp/", permissions="+x")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "cli_calls.sh"), "/tmp/", permissions="+x")
     eos_client.exec("microdnf install -y python3-gfal2-util gfal2-plugin-xrootd")
     eos_client.exec(
-        f"/root/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z root"
+        f"/tmp/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z root"
     )
 
 
-@pytest.mark.eos
 def test_archive_gfal_xrootd(eos_client, remote_scripts_dir):
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_archive.sh"), "/root/", permissions="+x")
-    eos_client.exec(". /root/client_env && /root/test_archive.sh")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_archive.sh"), "/tmp/", permissions="+x")
+    eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
     print("Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion.")
     time.sleep(10)
 
 
-@pytest.mark.eos
 def test_retrieve_gfal_xrootd(eos_client, remote_scripts_dir):
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_retrieve.sh"), "/root/", permissions="+x")
-    eos_client.exec(". /root/client_env && /root/test_retrieve.sh")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_retrieve.sh"), "/tmp/", permissions="+x")
+    eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
 
 
-@pytest.mark.eos
 def test_evict_gfal_xrootd(eos_client, remote_scripts_dir):
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_evict.sh"), "/root/", permissions="+x")
-    eos_client.exec(". /root/client_env && /root/test_evict.sh")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_evict.sh"), "/tmp/", permissions="+x")
+    eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
 
 
-@pytest.mark.eos
 def test_delete_gfal_xrootd(eos_client, remote_scripts_dir):
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_delete.sh"), "/root/", permissions="+x")
-    eos_client.exec(". /root/client_env && /root/test_delete.sh")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_delete.sh"), "/tmp/", permissions="+x")
+    eos_client.exec(". /tmp/client_env && /tmp/test_delete.sh")
 
 
-@pytest.mark.eos
 def test_setup_client_gfal_https(eos_client, test_dir, gfal_params):
     eos_client.exec("microdnf install -y  gfal2-plugin-http")
     eos_client.exec(
-        f"/root/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z https"
+        f"/tmp/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z https"
     )
     # Enable insecure certs for gfal2
     eos_client.exec("sed -i 's/INSECURE=false/INSECURE=true/g' /etc/gfal2.d/http_plugin.conf")
 
 
-@pytest.mark.eos
 def test_archive_gfal_https(eos_client, remote_scripts_dir):
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_archive.sh"), "/root/", permissions="+x")
-    eos_client.exec(". /root/client_env && /root/test_archive.sh")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_archive.sh"), "/tmp/", permissions="+x")
+    eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
     # TODO: replace by something more deterministic. Is this even necessary?
     print("Sleeping 10 seconds to allow MGM-FST communication to settle after disk copy deletion.")
     time.sleep(10)
 
 
-@pytest.mark.eos
 def test_retrieve_gfal_https(eos_client, remote_scripts_dir):
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_retrieve.sh"), "/root/", permissions="+x")
-    eos_client.exec(". /root/client_env && /root/test_retrieve.sh")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_retrieve.sh"), "/tmp/", permissions="+x")
+    eos_client.exec(". /tmp/client_env && /tmp/test_retrieve.sh")
 
 
-@pytest.mark.eos
 def test_evict_gfal_https(eos_client, remote_scripts_dir):
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_evict.sh"), "/root/", permissions="+x")
-    eos_client.exec(". /root/client_env && /root/test_evict.sh")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_evict.sh"), "/tmp/", permissions="+x")
+    eos_client.exec(". /tmp/client_env && /tmp/test_evict.sh")
 
 
-@pytest.mark.eos
 def test_delete_gfal_https(eos_client, remote_scripts_dir):
-    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_delete.sh"), "/root/", permissions="+x")
-    eos_client.exec(". /root/client_env && /root/test_delete.sh")
+    eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "test_delete.sh"), "/tmp/", permissions="+x")
+    eos_client.exec(". /tmp/client_env && /tmp/test_delete.sh")
 
 
-@pytest.mark.eos
 def test_gfal_activity_ends_up_in_eos_report(eos_client, eos_mgm, disk_instance_name, test_dir):
     valid_instance_file = test_dir / "test_gfal_activity_valid_instance"
     invalid_instance_file = test_dir / "test_gfal_activity_invalid_instance"
@@ -138,7 +127,7 @@ def test_gfal_activity_ends_up_in_eos_report(eos_client, eos_mgm, disk_instance_
     now = int(time.time())
     later = now + TOKEN_TIMEOUT
     token_eospower1 = eos_client.exec_with_output(
-        f". /root/client_env && eosadmin_eos root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires \"{later}\" --owner poweruser1 --group powerusers --permission prwx"
+        f". /tmp/client_env && eosadmin_eos root://{disk_instance_name} token --tree --path '/eos/ctaeos/://:/api/' --expires \"{later}\" --owner poweruser1 --group powerusers --permission prwx"
     )
 
     # Generate metadata string with correct site name
@@ -191,7 +180,6 @@ def test_gfal_activity_ends_up_in_eos_report(eos_client, eos_mgm, disk_instance_
     assert "&activity=&" in invalid_line, f"Activity unexpectedly set for invalid instance: {invalid_line}"
 
 
-@pytest.mark.eos
 def test_xrootd_activity_ends_up_in_eos_report(eos_client, eos_mgm, test_dir):
     disk_instance_name = eos_mgm.instance_name
     test_file = test_dir / "test_xrootd_activity"

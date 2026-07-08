@@ -6,7 +6,7 @@ from collections import Counter
 
 
 def test_no_coredumps(env):
-    hosts = env.disk_client + env.cta_cli + env.cta_frontend + env.cta_taped + env.cta_rmcd
+    hosts = env.disk_client + env.cta_cli + env.cta_admin_api + env.cta_workflow_api + env.cta_taped + env.cta_rmcd
     total_core_dumps_found = 0
     for host in hosts:
         core_dump_files = host.exec_with_output("find /var/log/tmp/ -type f -name '*.core' 2>/dev/null").splitlines()
@@ -18,7 +18,7 @@ def test_no_coredumps(env):
 
 
 def test_no_uncaught_exceptions_and_errors(env, error_whitelist):
-    hosts = env.cta_frontend + env.cta_taped + env.cta_rmcd
+    hosts = env.cta_admin_api + env.cta_workflow_api + env.cta_taped + env.cta_rmcd
     error_messages = []  # for summaries
     for host in hosts:
         # collect logs

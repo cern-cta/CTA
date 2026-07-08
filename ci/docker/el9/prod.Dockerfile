@@ -117,6 +117,7 @@ CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-
 ###############################################
 # SERVICE cta-frontend
 ###############################################
+# TODO: once we split the RPMs, we should explicitly build the workflow-api and admin-api images here
 FROM base AS cta-frontend
 
 ARG USE_INTERNAL_REPOS
@@ -125,7 +126,8 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend \
-    /usr/local/bin/build-service.sh "cta-frontend-grpc krb5-workstation"
+    # TODO: remove the catalogue utils once the tests have been updated
+    /usr/local/bin/build-service.sh "cta-frontend-grpc cta-catalogue-utils krb5-workstation"
 
 USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
@@ -137,6 +139,7 @@ FROM base AS cta-tools
 
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
+# This image is gigantic... Find a way to reduce it..
 
 # Sadly we need eos-client and cta-immutable-file-test here for the CI, which bloat the image by quite a bit.
 # Ideally the client chart uses the EOS image so that we don't need eos-client here. However, that requires

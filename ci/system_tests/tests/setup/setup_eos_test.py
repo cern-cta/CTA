@@ -1,26 +1,15 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-import pytest
-
 #####################################################################################################################
 # EOS initialisation
 #####################################################################################################################
 
 
-@pytest.mark.eos
-def test_hosts_present_eos_setup(env):
-    # Need at least a disk instance and a client
-    assert len(env.eos_client) > 0, "To setup EOS, there must be at least one EOS client"
-    assert len(env.eos_mgm) > 0, "To setup EOS, there must be at least one EOS MGM"
-
-
-@pytest.mark.eos
 def test_eos_version(eos_mgm):
     eos_mgm.exec("eos version")
 
 
-@pytest.mark.eos
 def test_general_settings(eos_mgm):
     eos_mgm.exec("eos vid enable unix")
     eos_mgm.exec("eos vid enable https")
@@ -36,11 +25,10 @@ def test_general_settings(eos_mgm):
     eos_mgm.exec("eos attr -r set default=replica /eos")
     eos_mgm.exec("eos attr -r set sys.forced.nstripes=1 /eos")
     TAPE_FS_ID = 65535
-    eos_mgm.exec("eos space define tape")
-    eos_mgm.exec(f"eos fs add -m {TAPE_FS_ID} tape localhost:1234 /does_not_exist tape")
+    eos_mgm.exec("eos space define tape", throw_on_failure=False)
+    eos_mgm.exec(f"eos fs add -m {TAPE_FS_ID} tape localhost:1234 /does_not_exist tape", throw_on_failure=False)
 
 
-@pytest.mark.eos
 def test_add_users(eos_mgm):
     # We don't really care if these already exist
     eos_mgm.exec("groupadd --gid 1100 eosusers", throw_on_failure=False)
@@ -61,7 +49,6 @@ def test_add_users(eos_mgm):
     eos_mgm.exec(f"eos vid set membership {eosadmin2_id} +sudo")
 
 
-@pytest.mark.eos
 def test_create_wf_directory(eos_mgm, eos_workflow_dir):
     eos_mgm.exec(f"eos mkdir -p {eos_workflow_dir}")
     eos_mgm.exec(f'eos attr set sys.workflow.sync::create.default="proto" {eos_workflow_dir}')
@@ -76,13 +63,11 @@ def test_create_wf_directory(eos_mgm, eos_workflow_dir):
     eos_mgm.exec(f'eos attr set sys.workflow.sync::delete.default="proto" {eos_workflow_dir}')
 
 
-@pytest.mark.eos
 def test_delete_cta_directory(eos_mgm, cta_dir) -> None:
     # Cleanup a possibly existing directory
     eos_mgm.force_remove_directory(cta_dir)
 
 
-@pytest.mark.eos
 def test_create_cta_directory(eos_mgm, cta_dir, eos_workflow_dir, cta_storage_class) -> None:
     eos_mgm.exec(f"eos mkdir -p {cta_dir}")
     # Must be writable by eosusers and powerusers

@@ -26,7 +26,7 @@ FSID_NOT_SET_VALUE=200
 FSID_TAPE=65535
 
 # get some common useful helpers for krb5
-. /root/client_helper.sh
+. /tmp/client_helper.sh
 
 error()
 {

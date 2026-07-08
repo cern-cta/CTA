@@ -34,12 +34,12 @@ def test_kinit_clients(env, krb5_realm):
 #####################################################################################################################
 
 
-def test_verify_catalogue(cta_frontend):
-    cta_frontend.exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
+def test_verify_catalogue(cta_admin_api):
+    cta_admin_api.exec("cta-catalogue-schema-verify /etc/cta/cta-catalogue.conf")
 
 
-def test_add_admins(cta_frontend, cta_cli):
-    cta_frontend.exec(
+def test_add_admins(cta_admin_api, cta_cli):
+    cta_admin_api.exec(
         "cta-catalogue-admin-user-create /etc/cta/cta-catalogue.conf --username ctaadmin1 --comment ctaadmin1"
     )
     print("Adding user ctaadmin2 as CTA admin")
@@ -53,9 +53,9 @@ def test_version_info(cta_cli):
 
 
 def test_populate_catalogue(cta_cli, disk_instance_name, cta_storage_class):
-    cta_cli.copy_to("tests/remote_scripts/cta_cli/populate_catalogue.sh", "/root/", permissions="+x")
+    cta_cli.copy_to("tests/remote_scripts/cta_cli/populate_catalogue.sh", "/tmp/", permissions="+x")
     print("Populating catalogue")
-    cta_cli.exec(f"./root/populate_catalogue.sh {disk_instance_name} {cta_storage_class}")
+    cta_cli.exec(f"./tmp/populate_catalogue.sh {disk_instance_name} {cta_storage_class}")
 
 
 def test_register_logical_libraries_in_catalogue(env, cta_cli):

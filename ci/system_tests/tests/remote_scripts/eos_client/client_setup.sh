@@ -103,11 +103,11 @@ fi
 
 case "${CLI_TARGET}" in
   xrd)
-    . /root/cli_calls.sh
+    . /tmp/cli_calls.sh
     ;;
   gfal2)
     CLI_TARGET="gfal2-${GFAL2_PROTOCOL}"
-    . /root/cli_calls.sh
+    . /tmp/cli_calls.sh
     ;;
   *)
     echo "ERROR: CLI target ${CLI_TARGET} not supported. Valid options: xrd, gfal2"
@@ -135,7 +135,7 @@ mkdir ${ERROR_DIR}
 echo "$(date +%s): ERROR_DIR=${ERROR_DIR}"
 
 # get some common useful helpers for krb5
-. /root/client_helper.sh
+. /tmp/client_helper.sh
 
 
 # Get kerberos credentials for user1
@@ -163,5 +163,5 @@ set +a
 # Store the setup environment into a file and
 # source it every time we spawn a shell in the
 # pod.
-export -p > /root/client_env
-export -f -p >> /root/client_env
+export -p > /tmp/client_env
+export -f -p >> /tmp/client_env

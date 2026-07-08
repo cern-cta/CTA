@@ -12,7 +12,8 @@ import uuid
 from ..helpers.test_env import TestEnv
 from ..helpers.hosts import (
     CtaCliHost,
-    CtaFrontendHost,
+    CtaAdminApiHost,
+    CtaWorkflowApiHost,
     CtaMaintdHost,
     CtaRmcdHost,
     CtaTapedHost,
@@ -23,6 +24,10 @@ from ..helpers.hosts import (
 )
 
 # This file could be split into multiple files eventually when necessary
+
+#####################################################################################################################
+# General
+#####################################################################################################################
 
 
 @pytest.fixture(autouse=True)
@@ -46,22 +51,10 @@ def make_tests_look_pretty(request):
 
 
 @pytest.fixture(scope="session")
-def env(request) -> TestEnv:
-    """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
-    return request.config.env
-
-
-@pytest.fixture(scope="session")
 def error_whitelist() -> set[str]:
     """Mutable whitelist that individual test cases can add errors to"""
     whitelist = set()  # mutable whitelist shared between all tests
     return whitelist
-
-
-@pytest.fixture(scope="session")
-def krb5_realm(request) -> str:
-    """Kerberos realm used in the tests"""
-    return request.config.test_config["tests"]["krb5_realm"]
 
 
 @pytest.fixture(scope="session")
@@ -70,9 +63,15 @@ def project_json():
     return json.loads(project_json_path.read_text(encoding="utf-8"))
 
 
+#####################################################################################################################
+# Test-specific
+#####################################################################################################################
+
+
 @pytest.fixture(scope="session")
-def namespace(request):
-    return request.config.getoption("--namespace", default=None)
+def krb5_realm(request) -> str:
+    """Kerberos realm used in the tests"""
+    return request.config.test_config["tests"]["krb5_realm"]
 
 
 @pytest.fixture(scope="session")
@@ -106,11 +105,50 @@ def remote_scripts_dir():
     return Path(__file__).parents[1] / "tests" / "remote_scripts"
 
 
-# These are just convenience fixtures to easily access one of the hosts
+#####################################################################################################################
+# Hosts Initialisation
+#####################################################################################################################
+
+
+@pytest.fixture(scope="session")
+def namespace(request):
+    return request.config.getoption("--namespace", default=None)
+
+
+@pytest.fixture(scope="session")
+def connection_config(request):
+    return request.config.getoption("--connection-config", default=None)
+
+
+@pytest.fixture(scope="session")
+def env(connection_config, namespace) -> TestEnv:
+    """Gives all the tests access to the different hosts (cli, frontend, taped, etc)"""
+    if namespace and connection_config:
+        raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")
+
+    if namespace is None and connection_config is None:
+        raise pytest.UsageError(
+            "Missing mandatory argument: one of --namespace or --connection-config must be provided"
+        )
+
+    if namespace is not None:
+        # No connection configuration provided, so assume everything is running in a cluster
+        return TestEnv.from_namespace(namespace)
+    else:
+        return TestEnv.from_config(connection_config)
+
+
+#####################################################################################################################
+# Hosts
+#####################################################################################################################
+
+# Some tests we skip, others we fail if the hosts are not present
 
 
 @pytest.fixture(scope="session")
 def eos_client(env) -> EosClientHost:
+    if not env.eos_client:
+        pytest.skip("This test requires at least one EOS client")
     return env.eos_client[0]
 
 
@@ -121,6 +159,8 @@ def disk_client(env) -> DiskClientHost:
 
 @pytest.fixture(scope="session")
 def eos_mgm(env) -> EosMgmHost:
+    if not env.eos_mgm:
+        pytest.skip("This test requires an EOS deployment")
     return env.eos_mgm[0]
 
 
@@ -145,8 +185,13 @@ def cta_maintd(env) -> CtaMaintdHost:
 
 
 @pytest.fixture(scope="session")
-def cta_frontend(env) -> CtaFrontendHost:
-    return env.cta_frontend[0]
+def cta_admin_api(env) -> CtaAdminApiHost:
+    return env.cta_admin_api[0]
+
+
+@pytest.fixture(scope="session")
+def cta_workflow_api(env) -> CtaWorkflowApiHost:
+    return env.cta_workflow_api[0]
 
 
 @pytest.fixture(scope="session")

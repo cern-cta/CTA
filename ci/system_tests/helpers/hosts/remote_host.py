@@ -3,7 +3,6 @@
 
 import asyncio
 import time
-from functools import cached_property
 from typing import Optional
 
 from ..connections.remote_connection import ExecResult, RemoteConnection
@@ -14,11 +13,11 @@ class RemoteHost:
     def __init__(self, conn: RemoteConnection):
         self.conn = conn
 
-    @cached_property
+    @property
     def name(self) -> str:
         return self.conn.name
 
-    @cached_property
+    @property
     def description(self) -> str:
         return self.conn.description
 
@@ -60,7 +59,6 @@ class RemoteHost:
         return self.conn.is_up()
 
     def wait_for_host_up(self, *, wait_timeout_secs: int = 120) -> None:
-        print(f"Waiting for {self.name} to be up...")
         with Timeout(wait_timeout_secs) as t:
             while not self.is_host_up() and not t.expired:
                 time.sleep(0.5)

@@ -5,7 +5,7 @@
 
 # Test CTA Tape Rest API compliance.
 
-. /root/client_helper.sh
+. /tmp/client_helper.sh
 
 admin_kdestroy &>/dev/null
 admin_kinit &>/dev/null
