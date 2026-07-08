@@ -38,6 +38,8 @@
   repack_expand        = { enabled = true, max_to_expand = 2 }
   # Routine that handles the reporting of the requests created by repack requests.
   repack_report        = { enabled = true, soft_timeout_secs = 30 }
+  # Routine that increments the Mount Decision DB maintd loop counter.
+  mount_decision_loop_counter  = { enabled = true }
   # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests to other queues.
   queue_cleanup        = { enabled = true, batch_size = 500 }
   # Objectstore routine that garbage collects stale agents and objects.
@@ -53,6 +55,12 @@
   # See /usr/share/doc/cta-lib-catalogue/examples/cta-catalogue.example.conf for further details.
   # This setting is required.
   config_file = "/etc/cta/cta-catalogue.conf"
+
+[mount_decision]
+  # Path to the CTA Mount Decision DB configuration file.
+  config_file = "/etc/cta/cta-mount-decision.conf"
+  # The number of DB connections to the Mount Decision DB in the pool.
+  number_of_connections = 1
 
 
 [scheduler]

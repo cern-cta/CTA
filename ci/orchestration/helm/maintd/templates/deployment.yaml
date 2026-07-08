@@ -93,6 +93,9 @@ spec:
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
+        - name: mount-decision-config
+          mountPath: /etc/cta/cta-mount-decision.conf
+          subPath: cta-mount-decision.conf
         - name: maintd-sss-keytab
           mountPath: /etc/cta/cta-maintd.sss.keytab.grp # note the .grp to make it group readable
           subPath: {{ $.Values.keytab.subPath }}
@@ -125,6 +128,9 @@ spec:
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
+      - name: mount-decision-config
+        configMap:
+          name: cta-mount-decision-conf
       - name: scheduler-config
         configMap:
           name: cta-scheduler-conf
