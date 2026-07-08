@@ -101,6 +101,14 @@ taped CatalogueConfigFile */etc/cta/cta-catalogue.conf*
 
 :   Path to the CTA Catalogue configuration file. See **FILES**, below.
 
+taped MountDecisionDbConfigFile */etc/cta/cta-mount-decision.conf*
+
+:   Path to the CTA Mount Decision DB configuration file. See **FILES**, below.
+
+taped MountDecisionDbNumberOfConnections *1*
+
+:   Number of database connections in the Mount Decision DB pool.
+
 ObjectStore BackendPath (no default)
 
 :   URL of the objectstore (CTA Scheduler Database). Usually this will
@@ -330,6 +338,11 @@ XrdSecSSSKT
 
 :   Usual location for the CTA Catalogue configuration file. See **taped CatalogueConfigFile**
     option under **CONFIGURATION**, and */usr/share/doc/cta-lib-catalogue/examples/cta-catalogue.example.conf*.
+
+*/etc/cta/cta-mount-decision.conf*
+
+:   Usual location for the CTA Mount Decision DB configuration file. See
+    **taped MountDecisionDbConfigFile** option under **CONFIGURATION**.
 
 */var/log/cta/cta-taped.log*
 

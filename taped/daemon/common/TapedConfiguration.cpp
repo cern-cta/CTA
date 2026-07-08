@@ -257,6 +257,8 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   // The central storage access configuration
   ret.backendPath.setFromConfigurationFile(cf, driveTapedConfigPath);
   ret.fileCatalogConfigFile.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.mountDecisionDbConfigFile.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.mountDecisionDbNumberOfConnections.setFromConfigurationFile(cf, driveTapedConfigPath);
   // External free disk space script configuration
   ret.externalFreeDiskSpaceScript.setFromConfigurationFile(cf, driveTapedConfigPath);
   // Timeout for tape load action
@@ -325,6 +327,8 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
 
   ret.backendPath.log(log);
   ret.fileCatalogConfigFile.log(log);
+  ret.mountDecisionDbConfigFile.log(log);
+  ret.mountDecisionDbNumberOfConnections.log(log);
 
   ret.externalFreeDiskSpaceScript.log(log);
 

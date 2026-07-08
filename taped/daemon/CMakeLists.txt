@@ -27,6 +27,7 @@ target_link_libraries(ctatapedaemon
   ctatelemetry
   ctatapedsession
   ctatapedaemoncommon
+  ctamountdecision
   ctascsi
   ctatapeddrive
   ctatapedfile)

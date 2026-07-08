@@ -149,6 +149,7 @@ private:
   void processBytes(serializers::WatchdogMessage& message);
 
   bool schedulerPing(IScheduler* scheduler, cta::tape::daemon::TapedProxy* driveHandlerProxy);
+  void incrementMountDecisionSessionCounter() const;
   void puttingDriveDown(IScheduler* scheduler,
                         cta::tape::daemon::TapedProxy* driveHandlerProxy,
                         std::string_view errorMsg,
