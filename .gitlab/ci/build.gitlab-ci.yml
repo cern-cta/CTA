@@ -126,7 +126,7 @@ build-cta-rpms-no-cache:
   rules:
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
       when: never
-    - !reference [.build-image, rules]
+    - !reference [build-cta-rpms, rules]
   variables:
     ENABLE_CCACHE: "FALSE"
     ENABLE_DEBUG_INFO: "FALSE"

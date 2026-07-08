@@ -180,6 +180,7 @@ def clone_enstore_samples(cta_rmcd) -> str:
 
 def test_install_required(cta_rmcd, cta_taped):
     cta_rmcd.exec("sudo microdnf install -y git git-lfs")
+    # TODO: remove; do with kubectl debug using test image?
     cta_taped.exec("sudo microdnf -y install cta-integrationtests")
 
 
