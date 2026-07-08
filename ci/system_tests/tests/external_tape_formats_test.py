@@ -179,8 +179,8 @@ def clone_enstore_samples(cta_rmcd) -> str:
 
 
 def test_install_required(cta_rmcd, cta_taped):
-    cta_rmcd.exec("dnf install -y git git-lfs")
-    cta_taped.exec("dnf -y install cta-integrationtests")
+    cta_rmcd.exec("sudo microdnf install -y git git-lfs")
+    cta_taped.exec("sudo microdnf -y install cta-integrationtests")
 
 
 def test_load_tape(cta_rmcd):

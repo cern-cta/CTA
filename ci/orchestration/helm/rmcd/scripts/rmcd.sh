@@ -5,4 +5,4 @@
 
 # to get rmcd logs to stdout
 tail -F /var/log/cta/cta-rmcd.log 2>/dev/null &
-runuser --user cta -- /usr/bin/cta-rmcd -f /dev/smc
+/usr/bin/cta-rmcd -f /dev/smc

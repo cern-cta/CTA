@@ -44,7 +44,7 @@ def test_setup_client_gfal_xrootd(eos_client, test_dir, gfal_params, remote_scri
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_setup.sh"), "/root/", permissions="+x")
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "client_helper.sh"), "/root/", permissions="+x")
     eos_client.copy_to(str(remote_scripts_dir / "eos_client" / "cli_calls.sh"), "/root/", permissions="+x")
-    eos_client.exec("dnf install -y python3-gfal2-util gfal2-plugin-xrootd")
+    eos_client.exec("microdnf install -y python3-gfal2-util gfal2-plugin-xrootd")
     eos_client.exec(
         f"/root/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z root"
     )
@@ -79,7 +79,7 @@ def test_delete_gfal_xrootd(eos_client, remote_scripts_dir):
 
 @pytest.mark.eos
 def test_setup_client_gfal_https(eos_client, test_dir, gfal_params):
-    eos_client.exec("dnf install -y gfal2-plugin-http")
+    eos_client.exec("microdnf install -y  gfal2-plugin-http")
     eos_client.exec(
         f"/root/client_setup.sh -n {gfal_params.file_count} -s {gfal_params.file_size_kb} -p {gfal_params.process_count} -d {test_dir} -r -c gfal2 -Z https"
     )

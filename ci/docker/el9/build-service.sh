@@ -1,7 +1,7 @@
 #!/bin/bash
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
-set -e
+set -eo pipefail
 
 # Script for installing an arbitrary number of RPMs packages through (micro)dnf while also cleaning up everything nicely.
 # While all of this logic could be executed directly in the Dockerfile, it causes a significant amount of code duplication and

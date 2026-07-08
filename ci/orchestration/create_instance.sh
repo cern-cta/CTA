@@ -414,7 +414,7 @@ create_instance() {
   echo "Installing CTA chart..."
   log_run helm ${helm_command} cta helm/cta \
                                 --namespace "${namespace}" \
-                                -f "${cta_config}" \
+                                ${cta_config} \
                                 --set global.image.registry="${cta_image_registry}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \

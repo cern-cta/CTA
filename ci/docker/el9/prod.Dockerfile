@@ -42,7 +42,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
     # Ensure consistent group and user ID for CTA services
     # cta-common adds this user already, but it gives no guarantees on its ID, which we need to be stable for Kubernetes
-    groupadd -g 2000 tape \
+    # Tape group already exists by default with gid 33
     useradd -m -u 1000 -g tape cta && \
     # Ensure cta-versionlock can update the versionlock file (file needs to exist)
     mkdir -p /etc/yum/pluginconf.d && \
@@ -53,10 +53,15 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     echo -e "[cta]\nname=Repo containing CTA RPMS\nbaseurl=file:///mnt/rpms\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta.repo && \
     # Add some basic flags to all (micro)dnf commands to improve speed and reduce image size
     echo -e "[main]\ntsflags=nodocs\ninstall_weak_deps=False" > /etc/dnf/dnf.conf && \
-    # Some basic utils (tar for kubectl cp and jq for many of the tests and convenience)
+    # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience, sudo so that we can install in the tests)
+    # Requiring sudo is not ideal, but as far as I can tell there is no clean way (without creating dedicated test images) that we can make the tests work otherwise
+    # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is useless
     microdnf install -y \
       tar \
+      sudo \
       jq && \
+    echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
+    chmod 0440 /etc/sudoers.d/cta && \
     # Cleanup
     rm -rf /var/lib/dnf/history.*
 
@@ -73,6 +78,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-taped \
     /usr/local/bin/build-service.sh "cta-taped cta-tape-label cta-eosdf mt-st lsscsi sg3_utils"
 
+# Can be uncommented once we remove cta-taped setting its own process capabilities
 # USER cta
 CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--log-to-file=/var/log/cta/cta-taped.log"]
 
@@ -89,7 +95,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-rmcd \
     /usr/local/bin/build-service.sh "cta-rmcd cta-smc sg3_utils lsscsi mtx mt-st"
 
-# USER cta
+USER cta
 CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
 
 ###############################################
@@ -109,100 +115,37 @@ USER cta
 CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-strict", "--config /etc/cta/cta-maintd.toml", "--runtime-dir /run/cta"]
 
 ###############################################
-# SERVICE cta-frontend-grpc
+# SERVICE cta-frontend
 ###############################################
-FROM base AS cta-frontend-grpc
+FROM base AS cta-frontend
 
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend-grpc \
-    --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend-grpc \
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend \
     /usr/local/bin/build-service.sh "cta-frontend-grpc cta-catalogue-utils krb5-workstation"
 # TODO: remove the catalogue utils once the tests have been updated
 
 USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
 
-<<<<<<< HEAD
-=======
 ###############################################
-# SERVICE cta-frontend-xrd
+# TOOLS cta-tools
 ###############################################
-FROM base AS cta-frontend-xrd
+FROM base AS cta-tools
 
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 
+# Sadly we need eos-client and cta-immutable-file-test here for the CI, which bloat the image by quite a bit.
+# Ideally the client chart uses the EOS image so that we don't need eos-client here. However, that requires
+# the completion of the system test migration to ensure we remove the assumption that the eos-client and cta-admin RPMs exist in the same container.
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend-xrd \
-    --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend-xrd \
-    /usr/local/bin/build-service.sh "cta-frontend cta-catalogue-utils krb5-workstation"
-# TODO: remove the catalogue utils once the tests have been updated
-
-USER cta
-WORKDIR /home/cta
-CMD ["xrootd", "-l", "/var/log/cta-frontend-xrootd.log", "-k", "fifo", "-n", "cta", "-c", "/etc/cta/cta-frontend-xrootd.conf", "-I", "v4"]
-
->>>>>>> 4bc948819c (Initial usage of prod image)
-###############################################
-# TOOLS cta-tools-grpc
-###############################################
-FROM base AS cta-tools-grpc
-
-ARG USE_INTERNAL_REPOS
-ARG USE_ORACLE_CATALOGUE
-
-RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools-grpc \
-    --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools-grpc \
-    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common"
-
-# USER cta
-ENTRYPOINT ["/bin/bash"]
-<<<<<<< HEAD
-=======
-
-###############################################
-# TOOLS cta-tools-xrd
-###############################################
-FROM base AS cta-tools-xrd
-
-ARG USE_INTERNAL_REPOS
-ARG USE_ORACLE_CATALOGUE
-
-RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools-xrd \
-    --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools-xrd \
-    /usr/local/bin/build-service.sh "cta-cli cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common"
-
-# USER cta
-ENTRYPOINT ["/bin/bash"]
-
-###############################################
-# TOOLS cta-debug
-###############################################
-FROM base AS cta-debug
-
-# The debug wildcard is a bit hacky. Should be replaced with something a bit more robust to ensure we only install actual CTA packages
-# Also the repo to which this Dockerfile points in a local dev environment may not be accessible from the Kubernetes
-# As such, there is not much point in keeping cta-release around (except wasting space), because downloads would fail anyway
-RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-debug \
-    --mount=type=cache,target=/var/cache/yum,id=yum-cta-debug \
-    microdnf install -y \
-      cta-release && \
-    cta-versionlock apply && \
-    microdnf install -y --enablerepo crb \
-      gdb \
-      strace \
-      valgrind \
-      cta*debuginfo* \
-    microdnf remove -y \
-      cta-release && \
-    rpm -e systemd-* --nodeps && \
-    rm -rf /var/lib/dnf/history.*
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
+    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common cta-immutable-file-test eos-client xrootd-client bc" && \
+    ln -sf /usr/bin/cta-admin-grpc /usr/bin/cta-admin
 
 ENTRYPOINT ["/bin/bash"]
->>>>>>> 4bc948819c (Initial usage of prod image)
