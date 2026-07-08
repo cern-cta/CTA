@@ -126,8 +126,8 @@
   repack_expand        = { enabled = true, max_to_expand = 2 }
   # Routine that handles the reporting of the requests created by repack requests.
   repack_report        = { enabled = true, soft_timeout_secs = 30 }
-  # Routine that increments the Mount Decision DB maintd loop counter.
-  mount_decision_loop_counter  = { enabled = true }
+  # Routine that handles the Mount Decision loop.
+  mount_decision_loop  = { enabled = true }
   # Objectstore routine that finds queues marked for cleanup, takes ownership of these queues and moves the requests to other queues.
   queue_cleanup        = { enabled = true, batch_size = 500 }
   # Objectstore routine that garbage collects stale agents and objects.

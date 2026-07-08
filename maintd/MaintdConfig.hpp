@@ -36,7 +36,7 @@ struct RepackReportRoutineConfig final {
   static constexpr std::size_t memberCount() { return 2; }
 };
 
-struct MountDecisionLoopCounterRoutineConfig final {
+struct MountDecisionLoopRoutineConfig final {
   bool enabled = true;
 
   static constexpr std::size_t memberCount() { return 1; }
@@ -86,7 +86,7 @@ struct RoutinesConfig final {
 
   RepackExpandRoutineConfig repack_expand;
   RepackReportRoutineConfig repack_report;
-  MountDecisionLoopCounterRoutineConfig mount_decision_loop_counter;
+  MountDecisionLoopRoutineConfig mount_decision_loop;
 
 #ifndef CTA_PGSCHED
   GarbageCollectRoutineConfig garbage_collect;

@@ -111,7 +111,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   }
 
   // Add Mount Decision loop
-  if (m_config.routines.mount_decision_loop_counter.enabled) {
+  if (m_config.routines.mount_decision_loop.enabled) {
     routines.push_back(std::make_unique<MountDecisionRoutine>(m_lc, m_config.mount_decision));
   }
 

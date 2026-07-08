@@ -86,9 +86,9 @@ repack_report
 
 :   Handles reporting for repack-generated requests.
 
-mount_decision_loop_counter
+mount_decision_loop
 
-:   Increments the Mount Decision DB maintd loop counter.
+:   Handles the Mount Decision loop.
 
 ## Objectstore-specific routines
 
@@ -238,7 +238,7 @@ Each routine can be individually configured and enabled/disabled, for example:
 * disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
 * repack_expand = { enabled = true, max_to_expand = 2 }
 * repack_report = { enabled = true, soft_timeout_secs = 30 }
-* mount_decision_loop_counter = { enabled = true }
+* mount_decision_loop = { enabled = true }
 * queue_cleanup = { enabled = true, batch_size = 500 }
 * garbage_collect = { enabled = true }
 
