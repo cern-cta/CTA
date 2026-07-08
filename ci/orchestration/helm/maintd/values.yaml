@@ -31,6 +31,9 @@ routines:
     replicas: 1
     sleepIntervalSecs: 1
     softTimeoutSecs: 30
+  mountDecisionLoopCounter:
+    replicas: 1
+    sleepIntervalSecs: 1
 
 logging:
   level: "INFO"
@@ -39,6 +42,9 @@ scheduler:
   tapeCacheMaxAgeSecs: 600
   retrieveQueueCacheMaxAgeSecs: 10
   numberOfConnections: 3
+
+mountDecision:
+  numberOfConnections: 1
 
 # OpenTelemetry is entirely configured through declarative configuration
 # Simply put the config verbatim here under telemetryConfig:

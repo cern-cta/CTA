@@ -3,6 +3,7 @@
 cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory(routines/disk)
+add_subdirectory(routines/mountdecision)
 add_subdirectory(routines/repack)
 
 add_library(ctamaintd
@@ -23,9 +24,11 @@ endif()
 target_link_libraries(ctamaintd
 	ctacommon
 	ctacatalogue
+	ctamountdecision
 	ctascheduler
 	${SCHEDROUTINES}
 	ctadiskroutines
+	ctamountdecisionroutines
 	ctarepackroutines
 )
 

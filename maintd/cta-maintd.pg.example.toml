@@ -12,6 +12,12 @@
   # Path to the CTA Catalogue configuration file.
   config_file = "/etc/cta/cta-catalogue.conf"
 
+[mount_decision]
+  # Path to the CTA Mount Decision DB configuration file.
+  config_file = "/etc/cta/cta-mount-decision.conf"
+  # The number of DB connections to the Mount Decision DB in the pool.
+  number_of_connections = 1
+
 
 [scheduler]
   # The unique string to identify the backend scheduler resources. As an example, it can be structured as:
@@ -120,6 +126,8 @@
   repack_expand        = { enabled = true, max_to_expand = 2 }
   # Routine that handles the reporting of the requests created by repack requests.
   repack_report        = { enabled = true, soft_timeout_secs = 30 }
+  # Routine that increments the Mount Decision DB maintd loop counter.
+  mount_decision_loop_counter = { enabled = true }
 
   user_active_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
   repack_active_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }

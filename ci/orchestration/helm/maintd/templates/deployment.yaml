@@ -107,6 +107,9 @@ spec:
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
+        - name: mount-decision-config
+          mountPath: /etc/cta/cta-mount-decision.conf
+          subPath: cta-mount-decision.conf
         - name: maintd-sss-keytab-fixedownership
           mountPath: /etc/cta/cta-maintd.sss.keytab
           subPath: cta-maintd.sss.keytab
@@ -143,6 +146,9 @@ spec:
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
+      - name: mount-decision-config
+        configMap:
+          name: cta-mount-decision-conf
       {{- if eq $schedulerConfig.backend "postgres" }}
       - name: scheduler-config
         configMap:

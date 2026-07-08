@@ -14,6 +14,7 @@
 #include "rdbms/Login.hpp"
 #include "routines/disk/DiskReportArchiveRoutine.hpp"
 #include "routines/disk/DiskReportRetrieveRoutine.hpp"
+#include "routines/mountdecision/MountDecisionRoutine.hpp"
 #include "routines/repack/RepackExpandRoutine.hpp"
 #include "routines/repack/RepackReportRoutine.hpp"
 #ifndef CTA_PGSCHED
@@ -107,6 +108,11 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   if (m_config.routines.repack_report.enabled) {
     routines.push_back(
       std::make_unique<RepackReportRoutine>(m_lc, *m_scheduler, m_config.routines.repack_report.soft_timeout_secs));
+  }
+
+  // Add Mount Decision loop
+  if (m_config.routines.mount_decision_loop_counter.enabled) {
+    routines.push_back(std::make_unique<MountDecisionRoutine>(m_lc, m_config.mount_decision));
   }
 
 /*
