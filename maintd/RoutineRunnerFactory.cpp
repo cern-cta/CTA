@@ -87,8 +87,8 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
   }
 
   // Add Mount Decision loop
-  // The Mount Decision loop counter has no settings section; check its declared selector.
-  if (routinesConfig.routineEnabled(Routine::MountDecisionLoopCounter)) {
+  // The Mount Decision loop has no settings section; check its declared selector.
+  if (routinesConfig.routineEnabled(Routine::MountDecisionLoop)) {
     routines.push_back(std::make_unique<MountDecisionRoutine>(m_lc, m_config.mount_decision));
   }
 

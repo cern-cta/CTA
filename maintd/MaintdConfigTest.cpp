@@ -164,7 +164,7 @@ TEST(MaintdConfig, AllSupportedRoutinesAreEnabledByDefault) {
   ASSERT_TRUE(config.repack_report);
   EXPECT_EQ(config.disk_report_archive->batch_size, 500);
   EXPECT_EQ(config.repack_report->soft_timeout_secs, 900);
-  EXPECT_TRUE(config.routineEnabled(cta::maintd::Routine::MountDecisionLoopCounter));
+  EXPECT_TRUE(config.routineEnabled(cta::maintd::Routine::MountDecisionLoop));
 #ifndef CTA_PGSCHED
   EXPECT_EQ(config.enabled_routines.size(), 7);
   EXPECT_TRUE(config.queue_cleanup);
@@ -188,14 +188,14 @@ TEST(MaintdConfig, RoutineEnabledReflectsSelection) {
   using cta::maintd::Routine;
   cta::maintd::RoutinesConfig config;
   const std::pair<Routine, std::string> routines[] = {
-    {Routine::DiskReportArchive,        "disk_report_archive"        },
-    {Routine::DiskReportRetrieve,       "disk_report_retrieve"       },
-    {Routine::RepackExpand,             "repack_expand"              },
-    {Routine::RepackReport,             "repack_report"              },
-    {Routine::MountDecisionLoopCounter, "mount_decision_loop_counter"},
+    {Routine::DiskReportArchive,  "disk_report_archive" },
+    {Routine::DiskReportRetrieve, "disk_report_retrieve"},
+    {Routine::RepackExpand,       "repack_expand"       },
+    {Routine::RepackReport,       "repack_report"       },
+    {Routine::MountDecisionLoop,  "mount_decision_loop" },
 #ifndef CTA_PGSCHED
-    {Routine::GarbageCollect,           "garbage_collect"            },
-    {Routine::QueueCleanup,             "queue_cleanup"              },
+    {Routine::GarbageCollect,     "garbage_collect"     },
+    {Routine::QueueCleanup,       "queue_cleanup"       },
 #else
     {Routine::UserActiveQueueCleanup, "user_active_queue_cleanup"},
     {Routine::RepackActiveQueueCleanup, "repack_active_queue_cleanup"},

@@ -21,17 +21,17 @@ enabled_experimental_features = ["telemetry"]
 # All routines are enabled by default; an empty list disables maintenance.
 [routines]
   # Optional features to enable. Remove a feature and its section to disable it.
-  # "mount_decision_loop_counter" increments the Mount Decision DB maintd loop counter and has no settings section.
+  # "mount_decision_loop" handles the Mount Decision loop and has no settings section.
   # Type: array of strings; default: all routines listed below.
   # Allowed: "disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report",
-  # "mount_decision_loop_counter", "user_active_queue_cleanup", "repack_active_queue_cleanup",
+  # "mount_decision_loop", "user_active_queue_cleanup", "repack_active_queue_cleanup",
   # "user_pending_queue_cleanup", "repack_pending_queue_cleanup", "scheduler_maintenance_cleanup" (no duplicates).
   enabled_routines = [
     "disk_report_archive",
     "disk_report_retrieve",
     "repack_expand",
     "repack_report",
-    "mount_decision_loop_counter",
+    "mount_decision_loop",
     "user_active_queue_cleanup",
     "repack_active_queue_cleanup",
     "user_pending_queue_cleanup",

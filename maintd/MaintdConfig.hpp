@@ -131,7 +131,7 @@ enum class Routine {
   DiskReportRetrieve,
   RepackExpand,
   RepackReport,
-  MountDecisionLoopCounter,
+  MountDecisionLoop,
 #ifndef CTA_PGSCHED
   GarbageCollect,
   QueueCleanup,
@@ -185,7 +185,7 @@ struct RoutinesConfig final {
                                 &RoutinesConfig::disk_report_retrieve),
     cta::runtime::stableFeature(Routine::RepackExpand, "repack_expand", &RoutinesConfig::repack_expand),
     cta::runtime::stableFeature(Routine::RepackReport, "repack_report", &RoutinesConfig::repack_report),
-    cta::runtime::stableFeature(Routine::MountDecisionLoopCounter, "mount_decision_loop_counter"),
+    cta::runtime::stableFeature(Routine::MountDecisionLoop, "mount_decision_loop"),
 #ifndef CTA_PGSCHED
     cta::runtime::stableFeature(Routine::GarbageCollect, "garbage_collect"),
     cta::runtime::stableFeature(Routine::QueueCleanup, "queue_cleanup", &RoutinesConfig::queue_cleanup),
