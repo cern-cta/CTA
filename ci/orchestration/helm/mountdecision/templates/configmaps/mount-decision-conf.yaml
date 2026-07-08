@@ -1,0 +1,12 @@
+{{- /*
+SPDX-FileCopyrightText: 2026 CERN
+SPDX-License-Identifier: GPL-3.0-or-later
+*/ -}}
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cta-mount-decision-conf
+data:
+  cta-mount-decision.conf: |-
+    {{ include "mountDecision.url" . }}
