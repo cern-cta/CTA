@@ -76,7 +76,7 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-taped \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-taped \
-    /usr/local/bin/build-service.sh "cta-taped cta-tape-label cta-eosdf mt-st lsscsi sg3_utils"
+    /usr/local/bin/build-service.sh "cta-taped cta-tape-label cta-external-tape-formats-test cta-eosdf mt-st lsscsi sg3_utils"
 
 # Can be uncommented once we remove cta-taped setting its own process capabilities
 # USER cta
@@ -141,13 +141,13 @@ ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
 # This image is gigantic... Find a way to reduce it..
 
-# Sadly we need eos-client and cta-immutable-file-test here for the CI, which bloat the image by quite a bit.
+# Sadly we need eos-client here for the CI, which bloat the image by quite a bit.
 # Ideally the client chart uses the EOS image so that we don't need eos-client here. However, that requires
 # the completion of the system test migration to ensure we remove the assumption that the eos-client and cta-admin RPMs exist in the same container.
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
-    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common cta-immutable-file-test cta-integrationtests eos-client xrootd-client bc" && \
+    /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common cta-immutable-file-test eos-client xrootd-client bc" && \
     ln -sf /usr/bin/cta-admin-grpc /usr/bin/cta-admin
 
 ENTRYPOINT ["/bin/bash"]
