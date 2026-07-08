@@ -22,7 +22,6 @@ conf:
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
     rmcHost: "cta-rmcd" # override with localhost if using hostnetwork
     schedulerNumberOfConnections: 3
-    mountDecisionDbConfigFile: "/etc/cta/cta-mount-decision.conf"
     mountDecisionDbNumberOfConnections: 1
   telemetry:
     enabled: false
