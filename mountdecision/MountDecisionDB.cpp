@@ -62,4 +62,22 @@ std::optional<std::string> MountDecisionDB::getValue(const std::string& key) {
   return rset.columnString("VALUE");
 }
 
+void MountDecisionDB::incrementCounter(const std::string& key) {
+  auto conn = m_connPool.getConn();
+  const char* const sql = R"SQL(
+    INSERT INTO MOUNT_DECISION_KV(
+      KEY_NAME,
+      VALUE
+    ) VALUES (
+      :KEY_NAME,
+      '1'
+    )
+    ON CONFLICT(KEY_NAME) DO UPDATE SET
+      VALUE = CAST((CAST(MOUNT_DECISION_KV.VALUE AS BIGINT) + 1) AS VARCHAR(255))
+  )SQL";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":KEY_NAME", key);
+  stmt.executeNonQuery();
+}
+
 }  // namespace cta::mountdecision

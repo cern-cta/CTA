@@ -16,6 +16,8 @@
 #include "common/log/LogContext.hpp"
 #include "common/process/ProcessCap.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
+#include "common/utils/utils.hpp"
+#include "mountdecision/MountDecisionDBInit.hpp"
 #include "rdbms/Login.hpp"
 #include "taped/session/CleanerSession.hpp"
 #include "taped/session/DataTransferSession.hpp"
@@ -23,10 +25,13 @@
 #include "taped/session/Session.hpp"
 
 #include <chrono>
+#include <exception>
+#include <filesystem>
 #include <set>
 #include <signal.h>
 #include <sys/prctl.h>
 #include <sys/wait.h>
+#include <system_error>
 #include <unistd.h>
 
 #ifdef CTA_PGSCHED
@@ -962,6 +967,8 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
 }
 
 cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
+  incrementMountDecisionSessionCounter();
+
   // Mounting management.
   cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
                                        m_tapedConfig.rmcPort.value(),
@@ -982,6 +989,55 @@ cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSessi
                                                         *(dynamic_cast<cta::Scheduler*>(scheduler)));
 
   return cleanerSession->execute();
+}
+
+void DriveHandler::incrementMountDecisionSessionCounter() const {
+  const auto configFile = m_tapedConfig.mountDecisionDbConfigFile.value();
+  std::error_code existsError;
+  const bool configFileExists = !configFile.empty() && std::filesystem::exists(configFile, existsError);
+  if (!configFileExists) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("mountDecisionDbConfigFile", configFile);
+    if (existsError) {
+      params.add(semconv::log::exceptionMessage, existsError.message());
+    }
+    m_lc.log(log::WARNING,
+             "In DriveHandler::incrementMountDecisionSessionCounter(): Mount Decision DB config file is missing. "
+             "Skipping session counter update.");
+    return;
+  }
+
+  const auto tapeServerName = cta::utils::getShortHostname();
+  try {
+    cta::mountdecision::MountDecisionDBInit mountDecisionDbInit(
+      "DriveProcess-" + m_driveConfig.unitName,
+      cta::utils::file2string(configFile),
+      m_tapedConfig.mountDecisionDbNumberOfConnections.value(),
+      m_lc.logger());
+    auto mountDecisionDb = mountDecisionDbInit.getDB(m_lc.logger());
+    mountDecisionDb->incrementCounter(tapeServerName);
+
+    log::ScopedParamContainer params(m_lc);
+    params.add("tapeServerName", tapeServerName);
+    m_lc.log(log::INFO,
+             "In DriveHandler::incrementMountDecisionSessionCounter(): Incremented Mount Decision DB session counter.");
+  } catch (cta::exception::Exception& ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("tapeServerName", tapeServerName)
+      .add("mountDecisionDbConfigFile", configFile)
+      .add(semconv::log::exceptionMessage, ex.getMessageValue());
+    m_lc.log(log::ERR,
+             "In DriveHandler::incrementMountDecisionSessionCounter(): Failed to increment Mount Decision DB session "
+             "counter. Continuing session startup.");
+  } catch (std::exception& ex) {
+    log::ScopedParamContainer params(m_lc);
+    params.add("tapeServerName", tapeServerName)
+      .add("mountDecisionDbConfigFile", configFile)
+      .add(semconv::log::exceptionMessage, ex.what());
+    m_lc.log(log::ERR,
+             "In DriveHandler::incrementMountDecisionSessionCounter(): Failed to increment Mount Decision DB session "
+             "counter. Continuing session startup.");
+  }
 }
 
 std::shared_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string& processName) const {
@@ -1057,6 +1113,10 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
 
 cta::tape::daemon::Session::EndOfSessionAction
 DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::TapedProxy* driveHandlerProxy) const {
+  /** For testing purposes **/
+  incrementMountDecisionSessionCounter();
+  /****/
+
   // Passing values from taped config to data transfer session config
   // When adding new config variables, be careful not to forget to pass them here
   cta::tape::daemon::DataTransferConfig dataTransferConfig;

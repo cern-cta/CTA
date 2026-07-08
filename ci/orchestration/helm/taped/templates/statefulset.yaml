@@ -103,6 +103,9 @@ spec:
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
+        - name: mount-decision-config
+          mountPath: {{ $.Values.conf.taped.mountDecisionDbConfigFile }}
+          subPath: cta-mount-decision.conf
         {{- if eq $schedulerConfig.backend "postgres" }}
         - name: scheduler-config
           mountPath: /etc/cta/cta-scheduler.conf
@@ -141,6 +144,9 @@ spec:
       - name: catalogue-config
         configMap:
           name: cta-catalogue-conf
+      - name: mount-decision-config
+        configMap:
+          name: cta-mount-decision-conf
       {{- if eq $schedulerConfig.backend "postgres" }}
       - name: scheduler-config
         configMap:
