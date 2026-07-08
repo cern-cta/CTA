@@ -8,9 +8,8 @@
 #include "common/log/LogContext.hpp"
 #include "maintd/IRoutine.hpp"
 #include "maintd/MaintdConfig.hpp"
-#include "mountdecision/MountDecisionDB.hpp"
+#include "mountdecision/MountDecision.hpp"
 
-#include <memory>
 #include <string>
 
 namespace cta::maintd {
@@ -23,12 +22,9 @@ public:
   std::string getName() const final;
 
 private:
-  std::unique_ptr<cta::mountdecision::MountDecisionDB>
-  createMountDecisionDb(const cta::runtime::MountDecisionConfig& mountDecisionConfig) const;
-
   cta::log::LogContext& m_lc;
-  std::unique_ptr<cta::mountdecision::MountDecisionDB> m_mountDecisionDb;
   std::string m_counterKey;
+  cta::mountdecision::MountDecision m_mountDecision;
 };
 
 }  // namespace cta::maintd

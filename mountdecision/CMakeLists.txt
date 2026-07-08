@@ -9,6 +9,7 @@ include_directories (${CMAKE_CURRENT_SOURCE_DIR}
 add_subdirectory(schema)
 
 add_library (ctamountdecision SHARED
+  MountDecision.cpp
   MountDecisionDB.cpp)
 
 target_link_libraries (ctamountdecision

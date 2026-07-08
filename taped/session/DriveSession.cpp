@@ -14,7 +14,7 @@
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
-#include "mountdecision/MountDecisionDBInit.hpp"
+#include "mountdecision/MountDecision.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "taped/SchedulerContext.hpp"
@@ -25,9 +25,7 @@
 #include <algorithm>
 #include <chrono>
 #include <exception>
-#include <filesystem>
 #include <optional>
-#include <system_error>
 #include <unistd.h>
 
 namespace cta::tape::daemon {
@@ -65,36 +63,19 @@ DriveSession::~DriveSession() noexcept {
 }
 
 void DriveSession::incrementMountDecisionSessionCounter() noexcept {
-  const auto& configFile = m_config.mount_decision.config_file;
-  std::error_code existsError;
-  if (configFile.empty() || !std::filesystem::exists(configFile, existsError)) {
-    log::ScopedParamContainer params(m_lc);
-    params.add("mountDecisionDbConfigFile", configFile);
-    if (existsError) {
-      params.add(semconv::log::exceptionMessage, existsError.message());
-    }
-    m_lc.log(log::WARNING, "Mount Decision DB config file is missing. Skipping session counter update.");
-    return;
-  }
-
   try {
-    mountdecision::MountDecisionDBInit mountDecisionDbInit(
-      "DriveProcess-" + m_driveInfo.driveName,
-      utils::readSingleLineConfigFile(configFile),
-      static_cast<uint16_t>(m_config.mount_decision.number_of_connections),
-      m_lc.logger());
-    auto mountDecisionDb = mountDecisionDbInit.getDB(m_lc.logger());
-    mountDecisionDb->incrementCounter(m_driveInfo.host);
-
-    log::ScopedParamContainer params(m_lc);
-    params.add("tapeServerName", m_driveInfo.host);
-    m_lc.log(log::INFO, "Incremented Mount Decision DB session counter.");
+    mountdecision::MountDecision mountDecision("DriveProcess-" + m_driveInfo.driveName,
+                                               m_config.mount_decision.config_file,
+                                               m_config.mount_decision.number_of_connections,
+                                               m_lc);
+    if (mountDecision.incrementCounter(m_driveInfo.host, m_lc, "tapeServerSession")) {
+      log::ScopedParamContainer params(m_lc);
+      params.add("tapeServerName", m_driveInfo.host);
+      m_lc.log(log::INFO, "Incremented Mount Decision DB session counter.");
+    }
   } catch (...) {
-    log::ScopedParamContainer params(m_lc);
-    params.add("tapeServerName", m_driveInfo.host).add("mountDecisionDbConfigFile", configFile);
-    log::logCurrentExceptionNoThrow(
-      m_lc,
-      "Failed to increment Mount Decision DB session counter. Continuing session startup.");
+    // MountDecision logs its own failures; this only guards against failures in logging itself.
+    log::logCurrentExceptionNoThrow(m_lc, "Failed to update Mount Decision DB session counter.");
   }
 }
 

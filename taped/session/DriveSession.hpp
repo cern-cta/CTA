@@ -131,7 +131,7 @@ private:
 
   /// @brief Increment this tape server's session counter in the Mount Decision DB.
   ///
-  /// Skipped with a warning when the connection file is missing; failures are logged and never thrown.
+  /// Skipped when the Mount Decision DB is unavailable; failures are logged and never thrown.
   void incrementMountDecisionSessionCounter() noexcept;
 
   /// Publish drive readiness and optional tape activity using this session's identity and log context.
