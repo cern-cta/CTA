@@ -15,8 +15,7 @@ namespace cta::maintd {
 
 class MountDecisionRoutine final : public IRoutine {
 public:
-  MountDecisionRoutine(cta::log::LogContext& lc,
-                       cta::mountdecision::MountDecision::ConnectionProvider connectionProvider);
+  MountDecisionRoutine(cta::log::LogContext& lc, cta::ConnProvider& connectionProvider);
 
   void execute() final;
   std::string getName() const final;

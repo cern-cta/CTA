@@ -9,13 +9,12 @@
 #include "common/semconv/Logging.hpp"
 
 #include <exception>
-#include <utility>
 
 namespace cta::mountdecision {
 
-MountDecision::MountDecision(ConnectionProvider connectionProvider, log::LogContext& lc) {
+MountDecision::MountDecision(ConnProvider& connectionProvider, log::LogContext& lc) {
   try {
-    m_db = std::make_unique<MountDecisionDB>(std::move(connectionProvider));
+    m_db = std::make_unique<MountDecisionDB>(connectionProvider);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer params(lc);
     params.add(semconv::log::exceptionMessage, ex.getMessageValue());

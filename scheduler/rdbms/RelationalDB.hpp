@@ -25,6 +25,7 @@
 #include "rdbms/Login.hpp"
 #include "scheduler/RetrieveJob.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
+#include "scheduler/rdbms/ConnProvider.hpp"
 #include "scheduler/rdbms/postgres/Transaction.hpp"
 
 #include <cstdint>
@@ -52,7 +53,7 @@ class RetrieveRdbJob;
 class TapeMountDecisionInfo;
 }  // namespace schedulerdb
 
-class RelationalDB : public SchedulerDatabase {
+class RelationalDB : public SchedulerDatabase, public ConnProvider {
 public:
   RelationalDB(const std::string& ownerId,
                log::Logger& logger,
