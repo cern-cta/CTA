@@ -3,7 +3,6 @@
 cmake_minimum_required (VERSION 3.17)
 
 add_subdirectory(routines/disk)
-add_subdirectory(routines/mountdecision)
 add_subdirectory(routines/repack)
 
 add_library(ctamaintd
@@ -17,18 +16,21 @@ if(NOT CTA_USE_PGSCHED)
     add_subdirectory(routines/scheduler/objectstore)
     set(SCHEDROUTINES ctaosdbroutines)
 else()
+    add_subdirectory(routines/mountdecision)
     add_subdirectory(routines/scheduler/rdbms)
     set(SCHEDROUTINES ctardbroutines)
+    set(MOUNTDECISIONROUTINES ctamountdecisionroutines)
+    set(MOUNTDECISIONLIB ctamountdecision)
 endif()
 
 target_link_libraries(ctamaintd
 	ctacommon
 	ctacatalogue
-	ctamountdecision
 	ctascheduler
 	${SCHEDROUTINES}
 	ctadiskroutines
-	ctamountdecisionroutines
+	${MOUNTDECISIONLIB}
+	${MOUNTDECISIONROUTINES}
 	ctarepackroutines
 )
 

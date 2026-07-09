@@ -7,7 +7,6 @@
 
 #include "common/log/LogContext.hpp"
 #include "maintd/IRoutine.hpp"
-#include "maintd/MaintdConfig.hpp"
 #include "mountdecision/MountDecision.hpp"
 
 #include <string>
@@ -16,7 +15,8 @@ namespace cta::maintd {
 
 class MountDecisionRoutine final : public IRoutine {
 public:
-  MountDecisionRoutine(cta::log::LogContext& lc, const cta::runtime::MountDecisionConfig& mountDecisionConfig);
+  MountDecisionRoutine(cta::log::LogContext& lc,
+                       cta::mountdecision::MountDecision::ConnectionProvider connectionProvider);
 
   void execute() final;
   std::string getName() const final;

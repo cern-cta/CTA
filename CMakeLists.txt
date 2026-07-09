@@ -25,10 +25,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -pedantic -Wall -Wextra -Werror -W
 
 set (BUILD_CMDLINE_ONLY FALSE)
 
-# By default the objectstore based scheduler is used.
-# A postgres scheduler may be enabled and the objectstore one disabled by
-# giving -DCTA_USE_PGSCHED:Bool=true on the cmake command line.
-set (CTA_USE_PGSCHED FALSE CACHE BOOL "Build with the postgres scheduler")
+# By default the Postgres scheduler is used.
+# The objectstore scheduler may be enabled by giving
+# -DCTA_USE_PGSCHED:Bool=false on the cmake command line.
+set (CTA_USE_PGSCHED TRUE CACHE BOOL "Build with the postgres scheduler")
 
 execute_process(
   COMMAND ${CMAKE_C_COMPILER} -dumpversion
@@ -188,7 +188,9 @@ ELSE(DEFINED PackageOnly)
   endif()
 
   add_subdirectory(rdbms)
-  add_subdirectory(mountdecision)
+  if (CTA_USE_PGSCHED)
+    add_subdirectory(mountdecision)
+  endif()
   add_subdirectory(scheduler)
   add_subdirectory(taped)
   add_subdirectory(maintd)

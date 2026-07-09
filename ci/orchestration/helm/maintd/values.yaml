@@ -43,9 +43,6 @@ scheduler:
   retrieveQueueCacheMaxAgeSecs: 10
   numberOfConnections: 3
 
-mountDecision:
-  numberOfConnections: 1
-
 # OpenTelemetry is entirely configured through declarative configuration
 # Simply put the config verbatim here under telemetryConfig:
 telemetryConfig: |

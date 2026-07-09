@@ -29,7 +29,6 @@ data:
     taped NbDiskThreads {{ $.Values.conf.taped.nbDiskThreads }}
     taped TapeCacheMaxAgeSecs {{ $.Values.conf.taped.tapeCacheMaxAgeSecs }}
     taped RetrieveQueueCacheMaxAgeSecs {{ $.Values.conf.taped.retrieveQueueCacheMaxAgeSecs }}
-    taped MountDecisionDbNumberOfConnections {{ $.Values.conf.taped.mountDecisionDbNumberOfConnections }}
     # Objectstore
     ObjectStore BackendPath {{ include "global.schedulerUrl" $ }}
     # General

@@ -112,7 +112,7 @@ build_deploy() {
   local build_generator="Ninja"
   local cmake_build_type
   cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
-  local scheduler_type="objectstore"
+  local scheduler_type="pgsched"
   local oracle_support="TRUE"
   local enable_ccache=true
   local upgrade_cta=false
@@ -423,7 +423,6 @@ build_deploy() {
         --cta-image-tag "${image_tag}" \
         --catalogue-config "${catalogue_config}" \
         --scheduler-config "${scheduler_config}" \
-        --mount-decision-config "${mount_decision_config}" \
         --reset-catalogue \
         --reset-scheduler \
         --eos-enabled ${eos_enabled} \

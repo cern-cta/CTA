@@ -13,7 +13,7 @@ usage() {
   echo "Builds the srpms."
   echo "  --build-dir <build-dir>:              Sets the build directory for the SRPMs. Can be absolute or relative to where the script is being executed from."
   echo "  --build-generator <generator>:        Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
-  echo "  --scheduler-type <type>:              The scheduler type. Must be one of [objectstore, pgsched]."
+  echo "  --scheduler-type <type>:              The scheduler type. Must be one of [pgsched, objectstore]."
   echo "  --cta-version <cta-version>:          Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:          Sets the VCS_VERSION variable in cmake."
   echo "  --cmake-build-type <type>:            Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."

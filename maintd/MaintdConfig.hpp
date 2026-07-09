@@ -36,12 +36,6 @@ struct RepackReportRoutineConfig final {
   static constexpr std::size_t memberCount() { return 2; }
 };
 
-struct MountDecisionLoopRoutineConfig final {
-  bool enabled = true;
-
-  static constexpr std::size_t memberCount() { return 1; }
-};
-
 #ifndef CTA_PGSCHED
 
 struct QueueCleanupRoutineConfig final {
@@ -58,6 +52,12 @@ struct GarbageCollectRoutineConfig final {
 };
 
 #else
+
+struct MountDecisionLoopRoutineConfig final {
+  bool enabled = true;
+
+  static constexpr std::size_t memberCount() { return 1; }
+};
 
 struct ActivePendingQueueCleanupRoutineConfig final {
   bool enabled = true;
@@ -86,14 +86,14 @@ struct RoutinesConfig final {
 
   RepackExpandRoutineConfig repack_expand;
   RepackReportRoutineConfig repack_report;
-  MountDecisionLoopRoutineConfig mount_decision_loop;
 
 #ifndef CTA_PGSCHED
   GarbageCollectRoutineConfig garbage_collect;
   QueueCleanupRoutineConfig queue_cleanup;
 
-  static constexpr std::size_t memberCount() { return 9; }
+  static constexpr std::size_t memberCount() { return 8; }
 #else
+  MountDecisionLoopRoutineConfig mount_decision_loop;
   ActivePendingQueueCleanupRoutineConfig user_active_queue_cleanup;
   ActivePendingQueueCleanupRoutineConfig repack_active_queue_cleanup;
   ActivePendingQueueCleanupRoutineConfig user_pending_queue_cleanup;
@@ -106,7 +106,6 @@ struct RoutinesConfig final {
 
 struct MaintdConfig final {
   cta::runtime::CatalogueConfig catalogue;
-  cta::runtime::MountDecisionConfig mount_decision;
   cta::runtime::SchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
   cta::runtime::TelemetryConfig telemetry;
@@ -115,7 +114,7 @@ struct MaintdConfig final {
   cta::runtime::XRootDConfig xrootd;
   RoutinesConfig routines;
 
-  static constexpr std::size_t memberCount() { return 9; }
+  static constexpr std::size_t memberCount() { return 8; }
 };
 
 }  // namespace cta::maintd

@@ -26,7 +26,7 @@ usage() {
   echo "      --skip-unit-tests:                Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --skip-srpms:                     Skips the building of the SRPMs."
   echo "      --install <platform>:             Installs the required yum packages for the given platform."
-  echo "      --scheduler-type <type>:          The scheduler type. Ex: objectstore."
+  echo "      --scheduler-type <type>:          The scheduler type. Must be one of [pgsched, objectstore]. Defaults to pgsched."
   echo
   exit 1
 }
@@ -42,7 +42,7 @@ build_local() {
   local skip_srpms=false
   local build_generator="Ninja"
   local cmake_build_type=""
-  local scheduler_type="objectstore"
+  local scheduler_type="pgsched"
   local oracle_support="TRUE"
   local enable_ccache=true
   local install=false

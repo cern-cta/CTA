@@ -20,9 +20,8 @@ conf:
     tapeCacheMaxAgeSecs: 1
     retrieveQueueCacheMaxAgeSecs: 1
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
-    rmcHost: "cta-rmcd" # override with localhost if using hostnetwork
+    rmcHost: "cta-rmcd"  # override with localhost if using hostnetwork
     schedulerNumberOfConnections: 3
-    mountDecisionDbNumberOfConnections: 1
   telemetry:
     enabled: false
     retainInstanceIdOnRestart: false
@@ -70,7 +69,7 @@ postRun:
 #     device: "/dev/nst0"
 #     logicalLibraryName: lib2
 #     controlPath smc1
-drives: []
+drives: {}
 
 # We need to be privileged to handle the tape drives
 securityContext:

@@ -29,10 +29,13 @@ add_library(ctatapedaemon
 target_link_libraries(ctatapedaemon
   ctatapedsession
   ctatapedaemoncommon
-  ctamountdecision
   ctascsi
   ctatapeddrive
   ctatapedfile)
+
+if(CTA_USE_PGSCHED)
+  target_link_libraries(ctatapedaemon ctamountdecision)
+endif()
 
 add_library(ctadaemonunittests SHARED
   DriveHandlerTests.cpp

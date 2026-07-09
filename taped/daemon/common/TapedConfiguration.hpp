@@ -180,18 +180,6 @@ struct TapedConfiguration {
                                                             "/etc/cta/cta-catalogue.conf",
                                                             "Compile time default"};
 
-  /// Path to the CTA Mount Decision DB config file
-  cta::SourcedParameter<std::string> mountDecisionDbConfigFile {"taped",
-                                                                "MountDecisionDbConfigFile",
-                                                                "/etc/cta/cta-mount-decision.conf",
-                                                                "Compile time default"};
-
-  /// Number of DB connections to the Mount Decision DB
-  cta::SourcedParameter<uint16_t> mountDecisionDbNumberOfConnections {"taped",
-                                                                      "MountDecisionDbNumberOfConnections",
-                                                                      1,
-                                                                      "Compile time default"};
-
   //----------------------------------------------------------------------------
   // The authentication configuration
   //----------------------------------------------------------------------------

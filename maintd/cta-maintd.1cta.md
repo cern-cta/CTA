@@ -86,10 +86,6 @@ repack_report
 
 :   Handles reporting for repack-generated requests.
 
-mount_decision_loop
-
-:   Handles the Mount Decision loop.
-
 ## Objectstore-specific routines
 
 queue_cleanup
@@ -109,6 +105,7 @@ Additional queue cleanup routines may be enabled when using the Postgres schedul
 * user_pending_queue_cleanup
 * repack_pending_queue_cleanup
 * scheduler_maintenance_cleanup
+* mount_decision_loop, using the Postgres scheduler database
 
 # CONFIGURATION
 
@@ -123,17 +120,6 @@ config_file
 
 :   Path to the CTA catalogue configuration file
 (commonly */etc/cta/cta-catalogue.conf*).
-
-## [mount_decision]
-
-config_file
-
-:   Path to the CTA Mount Decision DB configuration file
-(commonly */etc/cta/cta-mount-decision.conf*).
-
-number_of_connections *(default: 1)*
-
-:   Number of database connections in the Mount Decision DB pool.
 
 ## [scheduler]
 
@@ -238,7 +224,6 @@ Each routine can be individually configured and enabled/disabled, for example:
 * disk_report_retrieve = { enabled = true, batch_size = 500, soft_timeout_secs = 30 }
 * repack_expand = { enabled = true, max_to_expand = 2 }
 * repack_report = { enabled = true, soft_timeout_secs = 30 }
-* mount_decision_loop = { enabled = true }
 * queue_cleanup = { enabled = true, batch_size = 500 }
 * garbage_collect = { enabled = true }
 
@@ -257,10 +242,6 @@ telemetry_enabled *(default: false)*
 */etc/cta/cta-catalogue.conf*
 
 :   CTA catalogue configuration file.
-
-*/etc/cta/cta-mount-decision.conf*
-
-:   CTA Mount Decision DB configuration file.
 
 /etc/cta/cta-otel.yaml
 

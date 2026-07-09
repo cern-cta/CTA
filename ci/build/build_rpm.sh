@@ -14,7 +14,7 @@ usage() {
   echo "  --build-dir <build-directory>:                Sets the build directory for the RPMs. Can be absolute or relative to where the script is being executed from. Ex: build_rpm"
   echo "  --build-generator <generator>:                Specifies the build generator for cmake. Ex: [\"Unix Makefiles\", \"Ninja\"]."
   echo "  --srpm-dir <srpm-directory>:                  The directory where the source rpms are located. Can be absolute or relative to where the script is being executed from."
-  echo "  --scheduler-type <type>:                      The scheduler type. Must be one of [objectstore, pgsched]."
+  echo "  --scheduler-type <type>:                      The scheduler type. Must be one of [pgsched, objectstore]."
   echo "  --cta-version <cta-version>:                  Sets the CTA_VERSION."
   echo "  --vcs-version <vcs-version>:                  Sets the VCS_VERSION variable in cmake."
   echo "  --xrootd-ssi-version <xrootd-ssi-version>:    Sets the XROOTD_SSI_PROTOBUF_INTERFACE_VERSION variable in cmake."

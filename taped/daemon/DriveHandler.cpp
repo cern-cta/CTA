@@ -17,7 +17,6 @@
 #include "common/process/ProcessCap.hpp"
 #include "common/telemetry/TelemetryInit.hpp"
 #include "common/utils/utils.hpp"
-#include "mountdecision/MountDecision.hpp"
 #include "rdbms/Login.hpp"
 #include "taped/session/CleanerSession.hpp"
 #include "taped/session/DataTransferSession.hpp"
@@ -32,6 +31,7 @@
 #include <unistd.h>
 
 #ifdef CTA_PGSCHED
+#include "mountdecision/MountDecision.hpp"
 #include "scheduler/rdbms/RelationalDBInit.hpp"
 #else
 #include "scheduler/OStoreDB/OStoreDBInit.hpp"
@@ -964,7 +964,9 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
 }
 
 cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
+#ifdef CTA_PGSCHED
   incrementMountDecisionSessionCounter();
+#endif
 
   // Mounting management.
   cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
@@ -988,12 +990,10 @@ cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSessi
   return cleanerSession->execute();
 }
 
+#ifdef CTA_PGSCHED
 void DriveHandler::incrementMountDecisionSessionCounter() const {
   const auto tapeServerName = cta::utils::getShortHostname();
-  cta::mountdecision::MountDecision mountDecision("DriveProcess-" + m_driveConfig.unitName,
-                                                  m_tapedConfig.mountDecisionDbConfigFile.value(),
-                                                  m_tapedConfig.mountDecisionDbNumberOfConnections.value(),
-                                                  m_lc);
+  cta::mountdecision::MountDecision mountDecision([this]() { return m_sched_db->getConn(); }, m_lc);
   if (mountDecision.incrementCounter(tapeServerName, m_lc, "tapeServerSession")) {
     log::ScopedParamContainer params(m_lc);
     params.add("tapeServerName", tapeServerName);
@@ -1001,6 +1001,7 @@ void DriveHandler::incrementMountDecisionSessionCounter() const {
              "In DriveHandler::incrementMountDecisionSessionCounter(): Incremented Mount Decision DB session counter.");
   }
 }
+#endif
 
 std::shared_ptr<cta::catalogue::Catalogue> DriveHandler::createCatalogue(const std::string& processName) const {
   log::ScopedParamContainer params(m_lc);
@@ -1075,9 +1076,9 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
 
 cta::tape::daemon::Session::EndOfSessionAction
 DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::TapedProxy* driveHandlerProxy) const {
-  /** For testing purposes **/
+#ifdef CTA_PGSCHED
   incrementMountDecisionSessionCounter();
-  /****/
+#endif
 
   // Passing values from taped config to data transfer session config
   // When adding new config variables, be careful not to forget to pass them here

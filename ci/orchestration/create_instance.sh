@@ -19,7 +19,7 @@ usage() {
   echo "options:"
   echo "  -h, --help:                         Shows help output."
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
-  echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the VFS preset."
+  echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the Postgres preset."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
   echo "      --mount-decision-config <file>: Path to the Mount Decision DB configuration values file. Defaults to the Postgres preset"
   echo "  -r, --cta-image-registry <repo>:    Registry to find the CTA images in. Defaults to \"gitlab-registry.cern.ch\"."
@@ -127,8 +127,7 @@ create_instance() {
   # Note that it is fine for not all of these secrets to exist
   secrets="reg-eoscta-operations reg-ctageneric monit-it-sd-tab-ci-pwd monit-it-sd-tab-ci-credentials" # Secrets to be copied to the namespace (space separated)
   catalogue_config=presets/dev-catalogue-postgres-values.yaml
-  scheduler_config=presets/dev-scheduler-vfs-values.yaml
-  mount_decision_config=presets/dev-mount-decision-postgres-values.yaml
+  scheduler_config=presets/dev-scheduler-postgres-values.yaml
   cta_config="-f presets/dev-cta-common.yaml -f presets/frontend-wfe/auth-jwt.yaml -f presets/frontend-admin/auth-jwt.yaml"
   prometheus_config="presets/dev-prometheus-values.yaml"
   opentelemetry_collector_config="presets/dev-otel-collector-values.yaml"
@@ -167,10 +166,6 @@ create_instance() {
       -d|--catalogue-config)
         catalogue_config="$2"
         test -f "${catalogue_config}" || die "catalogue config file ${catalogue_config} does not exist"
-        shift ;;
-      --mount-decision-config)
-        mount_decision_config="$2"
-        test -f "${mount_decision_config}" || die "Mount Decision DB config file ${mount_decision_config} does not exist"
         shift ;;
       -n|--namespace)
         namespace="$2"
@@ -424,7 +419,6 @@ create_instance() {
                                 --set global.image.registry="${cta_image_registry}" \
                                 --set global.image.tag="${cta_image_tag}" \
                                 --set-file global.configuration.scheduler="${scheduler_config}" \
-                                --set-file global.configuration.mountDecision="${mount_decision_config}" \
                                 -f "${taped_config}" \
                                 -f "${rmcd_config}" \
                                 --wait --timeout "${chart_install_timeout}"m ${extra_cta_chart_flags}
