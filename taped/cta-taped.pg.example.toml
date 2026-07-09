@@ -299,16 +299,6 @@ enabled_experimental_features = ["telemetry"]
   # Type: string; default: "/etc/cta/cta-catalogue.conf".
   config_file = "/etc/cta/cta-catalogue.conf"
 
-[mount_decision]
-  # Path to the file containing the Mount Decision DB connection string, which must select postgresql.
-  # If the file is missing, tape sessions start without updating the Mount Decision DB session counter.
-  # Type: string; default: "/etc/cta/cta-mount-decision.conf".
-  config_file = "/etc/cta/cta-mount-decision.conf"
-
-  # Number of database connections in the Mount Decision DB pool.
-  # Type: integer; default: 1.
-  number_of_connections = 1
-
 [scheduler]
   # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".
   # Type: string; default: none; required.

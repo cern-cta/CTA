@@ -399,8 +399,6 @@ struct TapedConfig final {
   cta::runtime::CatalogueConfig catalogue;
   /// Scheduler backend connection and queue-statistics cache settings.
   cta::runtime::SchedulerConfig scheduler;
-  /// Mount Decision DB connection settings; a missing connection file disables session counter updates.
-  cta::runtime::MountDecisionConfig mount_decision;
   /// Log severity, format and monitoring attributes.
   cta::runtime::LoggingConfig logging;
   /// OpenTelemetry settings, present only when telemetry is enabled.
@@ -422,7 +420,7 @@ struct TapedConfig final {
   /// Shared pipeline resources and archive/retrieve transfer policies.
   TransfersConfig transfers;
 
-  static constexpr std::size_t memberCount() { return 13; }
+  static constexpr std::size_t memberCount() { return 12; }
 
   static constexpr auto features = std::tuple {
     cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &TapedConfig::telemetry),

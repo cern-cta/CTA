@@ -22,16 +22,14 @@ enabled_experimental_features = ["telemetry"]
 [routines]
   # Routines to enable; include matching sections below.
   # "garbage_collect" cleans up stale agents and objects in the objectstore and has no settings section.
-  # "mount_decision_loop" handles the Mount Decision loop and has no settings section.
   # Type: array of strings; default: all routines listed below.
-  # Allowed: "disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report",
-  # "mount_decision_loop", "queue_cleanup", "garbage_collect" (no duplicates).
+  # Allowed: "disk_report_archive", "disk_report_retrieve", "repack_expand", "repack_report", "queue_cleanup",
+  # "garbage_collect" (no duplicates).
   enabled_routines = [
     "disk_report_archive",
     "disk_report_retrieve",
     "repack_expand",
     "repack_report",
-    "mount_decision_loop",
     "garbage_collect",
     "queue_cleanup",
   ]
@@ -100,15 +98,6 @@ enabled_experimental_features = ["telemetry"]
   # See /usr/share/doc/cta-lib-catalogue/examples/cta-catalogue.example.conf for further details.
   # Type: string; default: "/etc/cta/cta-catalogue.conf".
   config_file = "/etc/cta/cta-catalogue.conf"
-
-[mount_decision]
-  # Path to the file containing the Mount Decision DB connection string, which must select postgresql.
-  # Type: string; default: "/etc/cta/cta-mount-decision.conf".
-  config_file = "/etc/cta/cta-mount-decision.conf"
-
-  # Number of database connections in the Mount Decision DB pool.
-  # Type: integer; default: 1.
-  number_of_connections = 1
 
 [scheduler]
   # Name identifying this scheduler backend in logs and scheduler resources, such as "cephUser" or "postgresUser".

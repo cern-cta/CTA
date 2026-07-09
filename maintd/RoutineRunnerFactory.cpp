@@ -11,13 +11,13 @@
 #include "common/semconv/Attributes.hpp"
 #include "routines/disk/DiskReportArchiveRoutine.hpp"
 #include "routines/disk/DiskReportRetrieveRoutine.hpp"
-#include "routines/mountdecision/MountDecisionRoutine.hpp"
 #include "routines/repack/RepackExpandRoutine.hpp"
 #include "routines/repack/RepackReportRoutine.hpp"
 #ifndef CTA_PGSCHED
 #include "routines/scheduler/objectstore/GarbageCollectRoutine.hpp"
 #include "routines/scheduler/objectstore/QueueCleanupRoutine.hpp"
 #else
+#include "routines/mountdecision/MountDecisionRoutine.hpp"
 #include "routines/scheduler/rdbms/AncientRowRoutines.hpp"
 #include "routines/scheduler/rdbms/DiskSystemSleepRoutines.hpp"
 #include "routines/scheduler/rdbms/InactiveMountQueueRoutines.hpp"
@@ -86,11 +86,14 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       std::make_unique<RepackReportRoutine>(m_lc, m_resources.getScheduler(), config->soft_timeout_secs));
   }
 
+#ifdef CTA_PGSCHED
   // Add Mount Decision loop
   // The Mount Decision loop has no settings section; check its declared selector.
   if (routinesConfig.routineEnabled(Routine::MountDecisionLoop)) {
-    routines.push_back(std::make_unique<MountDecisionRoutine>(m_lc, m_config.mount_decision));
+    routines.push_back(
+      std::make_unique<MountDecisionRoutine>(m_lc, [this]() { return m_resources.getSchedDb().getConn(); }));
   }
+#endif
 
 /*
  * If we enable all routines in 1 process they will all be running sequentially

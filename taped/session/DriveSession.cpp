@@ -14,7 +14,6 @@
 #include "common/utils/ScopeExit.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
-#include "mountdecision/MountDecision.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/TapeMount.hpp"
 #include "taped/SchedulerContext.hpp"
@@ -27,6 +26,10 @@
 #include <exception>
 #include <optional>
 #include <unistd.h>
+
+#ifdef CTA_PGSCHED
+#include "mountdecision/MountDecision.hpp"
+#endif
 
 namespace cta::tape::daemon {
 using common::dataStructures::DriveReport;
@@ -62,12 +65,10 @@ DriveSession::~DriveSession() noexcept {
   }
 }
 
+#ifdef CTA_PGSCHED
 void DriveSession::incrementMountDecisionSessionCounter() noexcept {
   try {
-    mountdecision::MountDecision mountDecision("DriveProcess-" + m_driveInfo.driveName,
-                                               m_config.mount_decision.config_file,
-                                               m_config.mount_decision.number_of_connections,
-                                               m_lc);
+    mountdecision::MountDecision mountDecision([this]() { return m_schedulerContext.getSchedulerDbConn(); }, m_lc);
     if (mountDecision.incrementCounter(m_driveInfo.host, m_lc, "tapeServerSession")) {
       log::ScopedParamContainer params(m_lc);
       params.add("tapeServerName", m_driveInfo.host);
@@ -78,6 +79,7 @@ void DriveSession::incrementMountDecisionSessionCounter() noexcept {
     log::logCurrentExceptionNoThrow(m_lc, "Failed to update Mount Decision DB session counter.");
   }
 }
+#endif
 
 void DriveSession::reportDriveState(const DriveReport& report) {
   m_driveState.reportDriveState(m_driveInfo, report, m_lc);
@@ -280,7 +282,9 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
   const auto vid = tapeMount.getVid();
   log::ScopedParamContainer mountParams(m_lc);
   mountParams.add("tapeVid", vid);
+#ifdef CTA_PGSCHED
   incrementMountDecisionSessionCounter();
+#endif
   std::optional<TapeSessionResult> transferResult;
   try {
     TapeSession session(m_lc.logger(),
@@ -466,7 +470,9 @@ bool DriveSession::cleanDriveForSessionRecovery(const std::string& vid) {
 }
 
 bool DriveSession::cleanDrive(const std::string& vid, TapeSessionTracker& tracker) {
+#ifdef CTA_PGSCHED
   incrementMountDecisionSessionCounter();
+#endif
   bool reusable = false;
   std::string error;
   try {

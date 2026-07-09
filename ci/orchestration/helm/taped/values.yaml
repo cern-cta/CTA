@@ -27,9 +27,6 @@ scheduler:
   retrieveQueueCacheMaxAgeSecs: 1
   numberOfConnections: 3
 
-mountDecision:
-  numberOfConnections: 1
-
 mounts:
   minimumQueuedBytes: 2000000
   minimumQueuedFiles: 100

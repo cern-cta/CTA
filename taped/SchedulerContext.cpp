@@ -5,6 +5,7 @@
 
 #include "SchedulerContext.hpp"
 
+#include "common/exception/Exception.hpp"
 #include "common/utils/utils.hpp"
 
 namespace cta::tape::daemon {
@@ -34,6 +35,15 @@ void SchedulerContext::renewObjectStoreAgent() {
   initialise();
 #endif
 }
+
+#ifdef CTA_PGSCHED
+rdbms::Conn SchedulerContext::getSchedulerDbConn() {
+  if (!m_schedDb) {
+    throw exception::Exception("Scheduler database connections are unavailable for a borrowed scheduler");
+  }
+  return m_schedDb->getConn();
+}
+#endif
 
 void SchedulerContext::initialise() {
   m_lc.log(log::DEBUG, "Initialising scheduler");

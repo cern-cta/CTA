@@ -7,5 +7,4 @@ add_library(ctamountdecisionroutines
 
 target_link_libraries(ctamountdecisionroutines
   ctacommon
-  ctamountdecision
-  ctaruntime)
+  ctamountdecision)

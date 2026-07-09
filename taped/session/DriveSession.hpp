@@ -129,10 +129,12 @@ private:
   /// Request Down, logging catalogue update failures without throwing.
   void requestDownNoThrow(common::dataStructures::DriveDownReason reason, std::string_view detail) noexcept;
 
-  /// @brief Increment this tape server's session counter in the Mount Decision DB.
+#ifdef CTA_PGSCHED
+  /// @brief Increment this tape server's session counter in the scheduler database's Mount Decision table.
   ///
-  /// Skipped when the Mount Decision DB is unavailable; failures are logged and never thrown.
+  /// Failures are logged and never thrown.
   void incrementMountDecisionSessionCounter() noexcept;
+#endif
 
   /// Publish drive readiness and optional tape activity using this session's identity and log context.
   void reportDriveState(const common::dataStructures::DriveReport& report);

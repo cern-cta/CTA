@@ -5,6 +5,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $allRoutines := .Values.routines -}}
+{{- if ne $schedulerConfig.backend "postgres" -}}
+{{- $allRoutines = omit $allRoutines "mountDecisionLoop" -}}
+{{- end -}}
 {{- /* Routines without a settings section in cta-maintd.toml */ -}}
 {{- $routinesWithoutSettings := list "garbageCollect" "mountDecisionLoop" -}}
 {{- range $routineName, $routineConf := $allRoutines }}
@@ -22,10 +25,6 @@ data:
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
-
-    [mount_decision]
-      config_file = "/etc/cta/cta-mount-decision.conf"
-      number_of_connections = {{ $.Values.mountDecision.numberOfConnections }}
 
     [scheduler]
       backend_name = {{ $schedulerConfig.backend | quote }}

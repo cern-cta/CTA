@@ -5,11 +5,9 @@
 
 #pragma once
 
-#include "common/log/Logger.hpp"
-#include "rdbms/ConnPool.hpp"
-#include "rdbms/Login.hpp"
+#include "rdbms/Conn.hpp"
 
-#include <cstdint>
+#include <functional>
 #include <optional>
 #include <string>
 
@@ -20,7 +18,9 @@ namespace cta::mountdecision {
  */
 class MountDecisionDB {
 public:
-  MountDecisionDB(const std::string& ownerId, log::Logger&, const rdbms::Login& login, uint64_t nbConns);
+  using ConnectionProvider = std::function<rdbms::Conn()>;
+
+  explicit MountDecisionDB(ConnectionProvider connectionProvider);
 
   void ping();
 
@@ -31,8 +31,7 @@ public:
   void incrementCounter(const std::string& key);
 
 private:
-  std::string m_ownerId;
-  rdbms::ConnPool m_connPool;
+  ConnectionProvider m_connectionProvider;
 };
 
 }  // namespace cta::mountdecision

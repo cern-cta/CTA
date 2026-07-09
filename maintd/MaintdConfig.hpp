@@ -131,11 +131,11 @@ enum class Routine {
   DiskReportRetrieve,
   RepackExpand,
   RepackReport,
-  MountDecisionLoop,
 #ifndef CTA_PGSCHED
   GarbageCollect,
   QueueCleanup,
 #else
+  MountDecisionLoop,
   UserActiveQueueCleanup,
   RepackActiveQueueCleanup,
   UserPendingQueueCleanup,
@@ -185,11 +185,11 @@ struct RoutinesConfig final {
                                 &RoutinesConfig::disk_report_retrieve),
     cta::runtime::stableFeature(Routine::RepackExpand, "repack_expand", &RoutinesConfig::repack_expand),
     cta::runtime::stableFeature(Routine::RepackReport, "repack_report", &RoutinesConfig::repack_report),
-    cta::runtime::stableFeature(Routine::MountDecisionLoop, "mount_decision_loop"),
 #ifndef CTA_PGSCHED
     cta::runtime::stableFeature(Routine::GarbageCollect, "garbage_collect"),
     cta::runtime::stableFeature(Routine::QueueCleanup, "queue_cleanup", &RoutinesConfig::queue_cleanup),
 #else
+    cta::runtime::stableFeature(Routine::MountDecisionLoop, "mount_decision_loop"),
     cta::runtime::stableFeature(Routine::UserActiveQueueCleanup,
                                 "user_active_queue_cleanup",
                                 &RoutinesConfig::user_active_queue_cleanup),
@@ -233,7 +233,6 @@ struct MaintdConfig final {
   };
 
   cta::runtime::CatalogueConfig catalogue;
-  cta::runtime::MountDecisionConfig mount_decision;
   cta::runtime::SchedulerConfig scheduler;
   cta::runtime::LoggingConfig logging;
   std::optional<cta::runtime::TelemetryConfig> telemetry = std::nullopt;
@@ -243,7 +242,7 @@ struct MaintdConfig final {
   cta::runtime::XRootDConfig xrootd;
   RoutinesConfig routines;
 
-  static constexpr std::size_t memberCount() { return 10; }
+  static constexpr std::size_t memberCount() { return 9; }
 
   static constexpr auto features = std::tuple {
     cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &MaintdConfig::telemetry),

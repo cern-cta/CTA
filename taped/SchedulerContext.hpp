@@ -52,6 +52,13 @@ public:
   /// Does nothing for PostgreSQL or a scheduler owned by the caller.
   void renewObjectStoreAgent();
 
+#ifdef CTA_PGSCHED
+  /// @brief Borrow a connection from the owned PostgreSQL scheduler backend's pool.
+  ///
+  /// Throws if the scheduler is borrowed, because its backend is not accessible here.
+  rdbms::Conn getSchedulerDbConn();
+#endif
+
 private:
   /// @brief Construct a complete scheduler/backend pair before replacing the current pair.
   ///

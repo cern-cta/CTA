@@ -164,13 +164,13 @@ TEST(MaintdConfig, AllSupportedRoutinesAreEnabledByDefault) {
   ASSERT_TRUE(config.repack_report);
   EXPECT_EQ(config.disk_report_archive->batch_size, 500);
   EXPECT_EQ(config.repack_report->soft_timeout_secs, 900);
-  EXPECT_TRUE(config.routineEnabled(cta::maintd::Routine::MountDecisionLoop));
 #ifndef CTA_PGSCHED
-  EXPECT_EQ(config.enabled_routines.size(), 7);
+  EXPECT_EQ(config.enabled_routines.size(), 6);
   EXPECT_TRUE(config.queue_cleanup);
   EXPECT_TRUE(config.routineEnabled(cta::maintd::Routine::GarbageCollect));
 #else
   EXPECT_EQ(config.enabled_routines.size(), 10);
+  EXPECT_TRUE(config.routineEnabled(cta::maintd::Routine::MountDecisionLoop));
   EXPECT_TRUE(config.user_active_queue_cleanup);
   EXPECT_TRUE(config.repack_active_queue_cleanup);
   EXPECT_TRUE(config.user_pending_queue_cleanup);
@@ -192,11 +192,11 @@ TEST(MaintdConfig, RoutineEnabledReflectsSelection) {
     {Routine::DiskReportRetrieve, "disk_report_retrieve"},
     {Routine::RepackExpand,       "repack_expand"       },
     {Routine::RepackReport,       "repack_report"       },
-    {Routine::MountDecisionLoop,  "mount_decision_loop" },
 #ifndef CTA_PGSCHED
     {Routine::GarbageCollect,     "garbage_collect"     },
     {Routine::QueueCleanup,       "queue_cleanup"       },
 #else
+    {Routine::MountDecisionLoop, "mount_decision_loop"},
     {Routine::UserActiveQueueCleanup, "user_active_queue_cleanup"},
     {Routine::RepackActiveQueueCleanup, "repack_active_queue_cleanup"},
     {Routine::UserPendingQueueCleanup, "user_pending_queue_cleanup"},
