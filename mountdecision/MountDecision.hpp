@@ -7,8 +7,8 @@
 
 #include "common/log/LogContext.hpp"
 #include "mountdecision/MountDecisionDB.hpp"
+#include "scheduler/rdbms/ConnProvider.hpp"
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -18,14 +18,12 @@ namespace cta::mountdecision {
 /**
  * High-level Mount Decision component interface.
  *
- * This class owns the backend connection setup and exposes Mount Decision
- * operations without forcing callers to know how the backend is initialized.
+ * This class owns the Mount Decision backend wrapper and uses the supplied
+ * connection provider to access the scheduler DB.
  */
 class MountDecision final {
 public:
-  using ConnectionProvider = MountDecisionDB::ConnectionProvider;
-
-  MountDecision(ConnectionProvider connectionProvider, log::LogContext& lc);
+  MountDecision(ConnProvider& connectionProvider, log::LogContext& lc);
 
   bool isAvailable() const;
 

@@ -113,7 +113,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
 #ifdef CTA_PGSCHED
   // Add Mount Decision loop
   if (m_config.routines.mount_decision_loop.enabled) {
-    routines.push_back(std::make_unique<MountDecisionRoutine>(m_lc, [this]() { return m_schedDb->getConn(); }));
+    routines.push_back(std::make_unique<MountDecisionRoutine>(m_lc, *m_schedDb));
   }
 #endif
 

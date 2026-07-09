@@ -7,19 +7,12 @@
 
 #include "common/exception/Exception.hpp"
 
-#include <utility>
-
 namespace cta::mountdecision {
 
-MountDecisionDB::MountDecisionDB(ConnectionProvider connectionProvider)
-    : m_connectionProvider(std::move(connectionProvider)) {
-  if (!m_connectionProvider) {
-    throw exception::Exception("Mount Decision DB connection provider is empty.");
-  }
-}
+MountDecisionDB::MountDecisionDB(ConnProvider& connectionProvider) : m_connectionProvider(connectionProvider) {}
 
 void MountDecisionDB::ping() {
-  auto conn = m_connectionProvider();
+  auto conn = m_connectionProvider.getConn();
   const auto tableNames = conn.getTableNames();
   for (const auto& tableName : tableNames) {
     if (tableName == "MOUNT_DECISION_KV") {
@@ -30,7 +23,7 @@ void MountDecisionDB::ping() {
 }
 
 void MountDecisionDB::setValue(const std::string& key, const std::string& value) {
-  auto conn = m_connectionProvider();
+  auto conn = m_connectionProvider.getConn();
   const char* const sql = R"SQL(
     INSERT INTO MOUNT_DECISION_KV(
       KEY_NAME,
@@ -49,7 +42,7 @@ void MountDecisionDB::setValue(const std::string& key, const std::string& value)
 }
 
 std::optional<std::string> MountDecisionDB::getValue(const std::string& key) {
-  auto conn = m_connectionProvider();
+  auto conn = m_connectionProvider.getConn();
   const char* const sql = R"SQL(
     SELECT
       VALUE AS VALUE
@@ -68,7 +61,7 @@ std::optional<std::string> MountDecisionDB::getValue(const std::string& key) {
 }
 
 void MountDecisionDB::incrementCounter(const std::string& key) {
-  auto conn = m_connectionProvider();
+  auto conn = m_connectionProvider.getConn();
   const char* const sql = R"SQL(
     INSERT INTO MOUNT_DECISION_KV(
       KEY_NAME,
