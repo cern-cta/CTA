@@ -5,9 +5,8 @@
 
 #pragma once
 
-#include "rdbms/Conn.hpp"
+#include "scheduler/rdbms/ConnProvider.hpp"
 
-#include <functional>
 #include <optional>
 #include <string>
 
@@ -18,9 +17,7 @@ namespace cta::mountdecision {
  */
 class MountDecisionDB {
 public:
-  using ConnectionProvider = std::function<rdbms::Conn()>;
-
-  explicit MountDecisionDB(ConnectionProvider connectionProvider);
+  explicit MountDecisionDB(ConnProvider& connectionProvider);
 
   void ping();
 
@@ -31,7 +28,7 @@ public:
   void incrementCounter(const std::string& key);
 
 private:
-  ConnectionProvider m_connectionProvider;
+  ConnProvider& m_connectionProvider;
 };
 
 }  // namespace cta::mountdecision

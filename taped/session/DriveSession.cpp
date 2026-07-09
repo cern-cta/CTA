@@ -68,14 +68,14 @@ DriveSession::~DriveSession() noexcept {
 #ifdef CTA_PGSCHED
 void DriveSession::incrementMountDecisionSessionCounter() noexcept {
   try {
-    mountdecision::MountDecision mountDecision([this]() { return m_schedulerContext.getSchedulerDbConn(); }, m_lc);
+    mountdecision::MountDecision mountDecision(m_schedulerContext.schedulerDbConnProvider(), m_lc);
     if (mountDecision.incrementCounter(m_driveInfo.host, m_lc, "tapeServerSession")) {
       log::ScopedParamContainer params(m_lc);
       params.add("tapeServerName", m_driveInfo.host);
       m_lc.log(log::INFO, "Incremented Mount Decision DB session counter.");
     }
   } catch (...) {
-    // MountDecision logs its own failures; this only guards against failures in logging itself.
+    // MountDecision logs its own database failures; this also covers a borrowed scheduler without a backend.
     log::logCurrentExceptionNoThrow(m_lc, "Failed to update Mount Decision DB session counter.");
   }
 }

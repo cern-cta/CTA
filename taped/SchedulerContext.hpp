@@ -53,10 +53,10 @@ public:
   void renewObjectStoreAgent();
 
 #ifdef CTA_PGSCHED
-  /// @brief Borrow a connection from the owned PostgreSQL scheduler backend's pool.
+  /// @brief Return the owned PostgreSQL scheduler backend as a connection provider.
   ///
   /// Throws if the scheduler is borrowed, because its backend is not accessible here.
-  rdbms::Conn getSchedulerDbConn();
+  ConnProvider& schedulerDbConnProvider();
 #endif
 
 private:

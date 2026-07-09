@@ -37,11 +37,11 @@ void SchedulerContext::renewObjectStoreAgent() {
 }
 
 #ifdef CTA_PGSCHED
-rdbms::Conn SchedulerContext::getSchedulerDbConn() {
+ConnProvider& SchedulerContext::schedulerDbConnProvider() {
   if (!m_schedDb) {
     throw exception::Exception("Scheduler database connections are unavailable for a borrowed scheduler");
   }
-  return m_schedDb->getConn();
+  return *m_schedDb;
 }
 #endif
 
