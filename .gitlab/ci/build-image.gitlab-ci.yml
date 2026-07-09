@@ -32,7 +32,7 @@
     # That is to ensure we don't accidentally push an image containing Oracle RPMs to a public registry
     - |
       case "$IMAGE_REF" in
-          registry.gitlab.cern.ch/cta/ctageneric/*) ;;
+          gitlab-registry.cern.ch/cta/ctageneric/*) ;;
           *)
               echo "Refusing to push image to non-whitelisted registry: $IMAGE_REF"
               exit 1
