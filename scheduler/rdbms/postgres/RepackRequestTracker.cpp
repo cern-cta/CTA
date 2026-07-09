@@ -225,18 +225,16 @@ rdbms::Rset RepackRequestTrackingRow::updateRepackRequestsProgress(Transaction& 
   return stmt.executeQuery();
 }
 
-uint64_t RepackRequestTrackingRow::updateRepackRequestFailures(Transaction& txn,
-                                                               uint64_t reqId,
-                                                               uint64_t failedFilesToRetrieve,
-                                                               uint64_t failedBytesToRetrieve,
-                                                               uint64_t failedToCreateArchiveReq,
-                                                               RepackJobStatus newStatus) {
+uint64_t RepackRequestTrackingRow::updateRRRetrieveCreationFailures(Transaction& txn,
+                                                                    uint64_t reqId,
+                                                                    uint64_t failedFilesToRetrieve,
+                                                                    uint64_t failedBytesToRetrieve,
+                                                                    uint64_t failedToCreateArchiveReq) {
   std::string sql = R"SQL(
         UPDATE REPACK_REQUEST_TRACKING
         SET FAILED_TO_RETRIEVE_FILES     = COALESCE(FAILED_TO_RETRIEVE_FILES, 0) + :FAILED_FILES,
             FAILED_TO_RETRIEVE_BYTES     = COALESCE(FAILED_TO_RETRIEVE_BYTES, 0) + :FAILED_BYTES,
-            FAILED_TO_CREATE_ARCHIVE_REQ = COALESCE(FAILED_TO_CREATE_ARCHIVE_REQ, 0) + :FAILED_ARCH_REQS,
-            STATUS                     = :STATUS::REPACK_REQ_STATUS
+            FAILED_TO_CREATE_ARCHIVE_REQ = COALESCE(FAILED_TO_CREATE_ARCHIVE_REQ, 0) + :FAILED_ARCH_REQS
         WHERE REPACK_REQUEST_ID = :REQID
     )SQL";
 
@@ -244,7 +242,6 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailures(Transaction& txn,
   stmt.bindUint64(":FAILED_FILES", failedFilesToRetrieve);
   stmt.bindUint64(":FAILED_BYTES", failedBytesToRetrieve);
   stmt.bindUint64(":FAILED_ARCH_REQS", failedToCreateArchiveReq);
-  stmt.bindString(":STATUS", to_string(newStatus));
   stmt.bindUint64(":REQID", reqId);
 
   stmt.executeNonQuery();
@@ -256,6 +253,7 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
                                                                     const std::vector<uint64_t>& failedFiles,
                                                                     const std::vector<uint64_t>& failedBytes,
                                                                     bool isRetrieve) {
+  // This method, on the contrary of updateRepackRequestsProgress
   if (reqIds.empty()) {
     return 0;
   }
@@ -297,7 +295,6 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestFailuresBatch(Transaction&
           )SQL";
   }
   sql += R"SQL(
-            STATUS = 'RRS_Failed'
             FROM FAILURE_TABLE ft
             WHERE trk.REPACK_REQUEST_ID = ft.REPACK_REQUEST_ID
           )SQL";

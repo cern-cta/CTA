@@ -497,12 +497,11 @@ struct RepackRequestTrackingRow {
                                       const RepackJobStatus& newStatus);
 
   // Update failure counters and status (overwrite values)
-  static uint64_t updateRepackRequestFailures(Transaction& txn,
+  static uint64_t updateRRRetrieveCreationFailures(Transaction& txn,
                                               const uint64_t reqId,
                                               const uint64_t failedFilesToRetrieve,
                                               const uint64_t failedBytesToRetrieve,
-                                              const uint64_t failedToCreateArchiveReq,
-                                              const RepackJobStatus newStatus);
+                                              const uint64_t failedToCreateArchiveReq);
 
   static uint64_t updateRepackRequestFailuresBatch(Transaction& txn,
                                                    const std::vector<uint64_t>& reqIds,
