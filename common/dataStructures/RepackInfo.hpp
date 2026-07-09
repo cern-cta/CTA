@@ -57,6 +57,7 @@ struct RepackInfo {
   uint64_t archivedFiles;
   uint64_t archivedBytes;
   uint64_t maxFilesToSelect;
+  uint64_t failedToCreateArchiveReq = 0;
   std::string storageClass;
   bool isExpandFinished;
   bool isExpandStarted;
@@ -67,6 +68,7 @@ struct RepackInfo {
   std::string mountPolicy;
 
   RepackQueueType getQueueType() const;
+  Status getCurrentStatus() const;
 };  // struct RepackInfo
 
 std::string toString(RepackInfo::Type type);

@@ -38,30 +38,29 @@ void RepackRequest::setTotalStats(const cta::SchedulerDatabase::RepackRequest::T
 void RepackRequest::reportRetrieveCreationFailures(const uint64_t failedToRetrieveFiles,
                                                    const uint64_t failedToRetrieveBytes,
                                                    const uint64_t failedArchiveReq) {
-  m_failedToCreateArchiveReq += failedArchiveReq;
+  repackInfo.failedToCreateArchiveReq += failedArchiveReq;
   repackInfo.failedFilesToRetrieve += failedToRetrieveFiles;
   repackInfo.failedBytesToRetrieve += failedToRetrieveBytes;
-  auto newStatus = getCurrentStatus();
-  repackInfo.status = newStatus;
+  // As this method is called from addSubrequestsAndUpdateStats during expansion,
+  // we are not checking/updating the status of the request at all.
+  // This will happen after expansion is marked as done.
   cta::schedulerdb::Transaction txn(m_connPool, m_lc);
   try {
-    uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequestFailures(
-      txn,
-      repackInfo.repackReqId,
-      failedToRetrieveFiles,
-      failedToRetrieveBytes,
-      failedArchiveReq,
-      mapRepackInfoStatusToJobStatus(repackInfo.status));
+    uint64_t nrows = postgres::RepackRequestTrackingRow::updateRRRetrieveCreationFailures(txn,
+                                                                                          repackInfo.repackReqId,
+                                                                                          failedToRetrieveFiles,
+                                                                                          failedToRetrieveBytes,
+                                                                                          failedArchiveReq);
     log::ScopedParamContainer(m_lc)
       .add("nrows", nrows)
       .log(log::INFO,
-           "In RepackRequest::reportRetrieveCreationFailures(): updateRepackRequestFailures() called successfully "
+           "In RepackRequest::reportRetrieveCreationFailures(): updateRRRetrieveCreationFailures() called successfully "
            "after expansion.");
     txn.commit();
   } catch (cta::exception::Exception& e) {
     std::string bt = e.backtrace();
     m_lc.log(log::ERR,
-             "In RepackRequest::reportRetrieveCreationFailures(): updateRepackRequestFailures() Exception thrown: "
+             "In RepackRequest::reportRetrieveCreationFailures(): updateRRRetrieveCreationFailures() Exception thrown: "
                + bt);
     txn.abort();
   }
@@ -402,13 +401,18 @@ void RepackRequest::requeueInToExpandQueue(log::LogContext& lc) {
 }
 
 void RepackRequest::setExpandStartedAndChangeStatus() {
+  // This method shall be called changeStatus only for the PGSCHED
+  // naming issue due to objectstore implementation.
+  // The markStartOfExpansion() picked up and marked this request with
+  // isExpandedStarted = true in the DB already
+  // This method is called in the PGSCHED implementation also from expandDone()
   if (!repackInfo.isExpandStarted) {
     throw exception::Exception("In RepackRequest::setExpandStartedAndChangeStatus(): "
                                "should not attempt to run, IS_EXPAND_STARTED is false.");
   }
 
   // Evaluate new status
-  auto newStatus = getCurrentStatus();
+  auto newStatus = repackInfo.getCurrentStatus();
   repackInfo.status = newStatus;
 
   cta::schedulerdb::Transaction txn(m_connPool, m_lc);
@@ -453,29 +457,6 @@ void RepackRequest::setExpandStartedAndChangeStatus() {
       .log(log::ERR, "Exception updating status: " + e.backtrace());
     txn.abort();
   }
-}
-
-common::dataStructures::RepackInfo::Status RepackRequest::getCurrentStatus() const {
-  {
-    bool finishedExpansion = repackInfo.isExpandFinished;
-    bool allRetrieveDone =
-      (repackInfo.retrievedFiles + repackInfo.failedFilesToRetrieve) >= repackInfo.totalFilesToRetrieve;
-    bool allArchiveDone = (repackInfo.archivedFiles + repackInfo.failedFilesToArchive + m_failedToCreateArchiveReq)
-                          >= repackInfo.totalFilesToArchive;
-    if (finishedExpansion && allRetrieveDone && allArchiveDone) {
-      if (repackInfo.failedFilesToRetrieve > 0 || repackInfo.failedFilesToArchive > 0) {
-        return common::dataStructures::RepackInfo::Status::Failed;
-      } else {
-        return common::dataStructures::RepackInfo::Status::Complete;
-      }
-    }
-  }
-  if (repackInfo.retrievedFiles > 0 || repackInfo.failedFilesToRetrieve > 0 || repackInfo.archivedFiles > 0
-      || repackInfo.failedFilesToArchive > 0) {
-    return common::dataStructures::RepackInfo::Status::Running;
-  }
-
-  return common::dataStructures::RepackInfo::Status::Starting;
 }
 
 void RepackRequest::fillLastExpandedFSeqAndTotalStatsFile(uint64_t& fSeq, TotalStatsFiles& totalStatsFiles) {
@@ -623,7 +604,7 @@ RepackRequest::mapRepackInfoStatusToJobStatus(const common::dataStructures::Repa
 }
 
 RepackRequest& RepackRequest::operator=(const schedulerdb::postgres::RepackRequestTrackingRow& row) {
-  m_failedToCreateArchiveReq = row.failedToCreateArchiveReq;
+  repackInfo.failedToCreateArchiveReq = row.failedToCreateArchiveReq;
   repackInfo.repackReqId = row.repackReqId;
   repackInfo.mountPolicy = row.mountPolicyName;
   repackInfo.vid = row.vid;
@@ -679,7 +660,6 @@ RepackRequest& RepackRequest::operator=(const schedulerdb::postgres::RepackReque
   m_isComplete = row.isComplete;
   m_maxFilesToSelect = row.maxFilesToSelect;
   m_storageClass = row.storageClass;
-  m_failedToCreateArchiveReq = row.failedToCreateArchiveReq;
   return *this;
 }
 
