@@ -126,7 +126,7 @@ class TestEnv:
         eos_client:
           - k8s:
               namespace: dev
-              pod: cta-eos-client-0
+              selector: app.kubernetes.io/component=client
               container: client
         cta_taped:
           - ssh:
@@ -150,7 +150,7 @@ class TestEnv:
                 if "k8s" in connection:
                     k8s = connection["k8s"]
                     connections.append(
-                        K8sConnection(namespace=k8s["namespace"], pod=k8s["pod"], container=k8s["container"])
+                        TestEnv.get_k8s_connections_by_selector(k8s["namespace"], k8s["selector"], k8s["container"]),
                     )
                 elif "ssh" in connection:
                     ssh = connection["ssh"]

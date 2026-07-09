@@ -42,7 +42,7 @@ def catalogue_to_version(project_json):
 
 @pytest.fixture(scope="module")
 def catalogue_updater(namespace):
-    return RemoteHost(K8sConnection(namespace, "liquibase-update", "liquibase-update"))
+    return RemoteHost(K8sConnection(namespace, "app.kubernetes.io/name=liquibase-update", 0))
 
 
 #####################################################################################################################

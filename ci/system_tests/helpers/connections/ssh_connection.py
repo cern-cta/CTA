@@ -4,7 +4,6 @@
 import shlex
 import socket
 import subprocess
-from functools import cached_property
 from typing import Optional
 
 from .remote_connection import ExecResult, RemoteConnection
@@ -17,11 +16,11 @@ class SSHConnection(RemoteConnection):
         self.host = host
         self.user = user
 
-    @cached_property
+    @property
     def name(self) -> str:
         return f"{self.host}"
 
-    @cached_property
+    @property
     def description(self) -> str:
         return f"SSH connection {self.name}"
 
