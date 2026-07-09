@@ -8,6 +8,7 @@
 #include "common/utils/utils.hpp"
 
 #include <cstdlib>
+#include <utility>
 
 namespace cta::maintd {
 
@@ -25,10 +26,10 @@ std::string getMountDecisionCounterKey() {
 }  // namespace
 
 MountDecisionRoutine::MountDecisionRoutine(cta::log::LogContext& lc,
-                                           const cta::runtime::MountDecisionConfig& mountDecisionConfig)
+                                           cta::mountdecision::MountDecision::ConnectionProvider connectionProvider)
     : m_lc(lc),
       m_counterKey(getMountDecisionCounterKey()),
-      m_mountDecision(m_counterKey, mountDecisionConfig.config_file, mountDecisionConfig.number_of_connections, lc) {
+      m_mountDecision(std::move(connectionProvider), lc) {
   log::ScopedParamContainer params(m_lc);
   params.add("mountDecisionCounterKey", m_counterKey);
   m_lc.log(cta::log::INFO, "In MountDecisionRoutine: Created MountDecisionRoutine");

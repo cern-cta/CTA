@@ -63,13 +63,6 @@
   # This setting is required.
   config_file = "/etc/cta/cta-catalogue.conf"
 
-[mount_decision]
-  # Path to the CTA Mount Decision DB configuration file.
-  config_file = "/etc/cta/cta-mount-decision.conf"
-  # The number of DB connections to the Mount Decision DB in the pool.
-  number_of_connections = 1
-
-
 [scheduler]
   # Unique name used to identify this scheduler backend in logs and scheduler resources. A conventional
   # format is "[ceph|postgres|vfs][User|Repack]", for example "cephUser". This setting is required.

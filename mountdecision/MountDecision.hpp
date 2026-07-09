@@ -23,14 +23,15 @@ namespace cta::mountdecision {
  */
 class MountDecision final {
 public:
-  MountDecision(std::string ownerId, std::string configFile, uint64_t nbConns, log::LogContext& lc);
+  using ConnectionProvider = MountDecisionDB::ConnectionProvider;
+
+  MountDecision(ConnectionProvider connectionProvider, log::LogContext& lc);
 
   bool isAvailable() const;
 
   bool incrementCounter(const std::string& key, log::LogContext& lc, std::string_view operation);
 
 private:
-  std::string m_configFile;
   std::unique_ptr<MountDecisionDB> m_db;
 };
 
