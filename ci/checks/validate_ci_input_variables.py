@@ -24,7 +24,7 @@ SUPPORTED = {
 SUPPORTED_ENV_VARS = [
     "PIPELINE_TYPE",
     "CUSTOM_XROOTD_VERSION",
-    "CUSTOM_CTA_VERSION",
+    "CUSTOM_CTA_IMAGE_TAG",
     "CUSTOM_EOS_IMAGE_TAG",
     "PLATFORM",
 ]
@@ -99,7 +99,7 @@ def validate_default(ci_input_vars):
     """
     Validation for the DEFAULT pipeline type.
     """
-    exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
@@ -109,7 +109,7 @@ def validate_regr_against_cta_main(ci_input_vars):
     """
     Validation for the pipeline type `REGR_AGAINST_CTA_MAIN`.
     """
-    exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
+    exit_if_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
 
 
@@ -118,15 +118,6 @@ def validate_regr_against_cta_version(ci_input_vars):
     Validation for the pipeline type `EOS_REGR_AGAINST_CTA_VERSION`.
     """
     exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
-
-
-def validate_system_test_only(ci_input_vars):
-    """
-    Validation for the pipeline type `SYSTEM_TEST_ONLY`.
-    """
-    exit_if_defined("CUSTOM_CTA_VERSION", ci_input_vars)
-    exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
-    exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
 
 
 def main():
@@ -155,8 +146,10 @@ def main():
     globals()[validate_func_name](ci_input_vars)
 
     # Ensure availability of any custom provided versions
-    if env_var_defined("CUSTOM_CTA_VERSION", ci_input_vars):
-        check_rpm_available("cta-frontend", ci_input_vars["CUSTOM_CTA_VERSION"])
+    if env_var_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars):
+        cta_image_tag = ci_input_vars["CUSTOM_CTA_IMAGE_TAG"]
+        # TODO: define registry in project json?
+        check_image_tag_available(cta_image_tag, project_json["dev"]["eosImageRepository"])
 
     if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         xrootd_version = ci_input_vars["CUSTOM_XROOTD_VERSION"]
@@ -176,7 +169,7 @@ def main():
     project_eos_image_tag = project_json["dev"]["eosImageTag"]
     if env_var_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars):
         eos_image_tag = ci_input_vars["CUSTOM_EOS_IMAGE_TAG"]
-        check_image_tag_available(ci_input_vars["CUSTOM_EOS_IMAGE_TAG"], project_json["dev"]["eosImageRepository"])
+        check_image_tag_available(eos_image_tag, project_json["dev"]["eosImageRepository"])
         # Check that at this point the project.json contains the same version
         if eos_image_tag != project_eos_image_tag:
             sys.exit(

@@ -7,8 +7,6 @@ build-cta-rpms:
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
-      when: never
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
     # These rules serve to prevent the rest of the pipeline from triggering when only trivial files such as the CHANGELOG have been modified

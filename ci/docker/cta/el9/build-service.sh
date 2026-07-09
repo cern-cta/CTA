@@ -13,7 +13,8 @@ exec 1> /dev/null
 TARGET_PACKAGES=$1
 
 # Install cta-release
-microdnf install -y cta-release
+# We install need to install regular dnf, because microdnf has no versionlocking functionality
+microdnf install -y cta-release dnf
 cta-versionlock apply
 
 # Conditionally overwrite public repos
@@ -28,15 +29,22 @@ if [ "$USE_ORACLE_CATALOGUE" = "1" ]; then
     TARGET_PACKAGES="$TARGET_PACKAGES cta-lib-catalogue-occi"
 fi
 
+# By default dnf looks at /etc/dnf for the versionlock; not /etc/yum
+ln -sf /etc/yum/pluginconf.d/versionlock.list /etc/dnf/plugins/versionlock.list
+
 # Install the target-specific packages
-microdnf install -y --enablerepo crb $TARGET_PACKAGES
+# Using dnf instead of microdnf! microdnf does not support versionlocking
+dnf install -y --enablerepo crb $TARGET_PACKAGES
 
 # Cleanup to reduce image size
 # cta-release brings in Python, but uninstalling it for some reason does not remove it
 microdnf remove -y cta-release
+rpm -e dnf # dnf is protected; microdnf does not want to delete it
 
+# cta-release pulls in python, but microdnf does not autoremove it when uninstalling cta-release.
 # Nothing in CTA requires python and it adds a lot to the final image size, so we remove it here explicitly
-# TODO: handle this gracefully. Basically we try to remove python but if there are packages requiring it, we don't
+# Future improvement: handle this gracefully. Basically we try to remove python but if there are packages requiring it, we don't
+# It produces some potentially misleading error messages though
 microdnf remove -y python* > /dev/null || true
 
 if [ "$USE_INTERNAL_REPOS" = "1" ]; then
@@ -49,7 +57,8 @@ if [ "$USE_INTERNAL_REPOS" = "1" ]; then
 fi
 
 # Remove systemd stuff because we don't rely on systemd in containers
-rpm -q systemd-* > /dev/null && rpm -e systemd-* --nodeps || true
+# Ideally the base image doesn't contain systemd in the first place, but the layer in which we install the majority of the packages still pull in quite some systemd specific stuff
+rpm -q systemd > /dev/null && rpm -e systemd systemd-* --nodeps || true
 # Clean up history and internal repos
 rm -rf /var/lib/dnf/history.* /tmp/internal-repos /etc/yum.repos.d/cta.repo
 # Do not "microdnf clean all", because /var/yum is mounted as a cache, so that would not affect final image size

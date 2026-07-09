@@ -78,7 +78,7 @@ std::string TapedConfiguration::getDriveConfigFile(const std::optional<std::stri
     for (const auto& entry : std::filesystem::directory_iterator("/etc/cta/")) {
       if (std::regex_match(entry.path().filename().string(), CTA_CONF_REGEX)) {
         if (entry.path().filename().string() == "cta-taped.example.conf") {
-          continue;  // Hacky but for some reason it's grabbing the example conf
+          continue;  // Hacky but we want to avoid it grabbing the example conf
         }
         return entry.path().string();
       }

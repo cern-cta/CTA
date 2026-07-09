@@ -9,8 +9,6 @@
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
-      when: never
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
     - when: on_success
@@ -19,17 +17,28 @@
     entrypoint: [""]
   variables:
     CONTAINER_STORAGE: "/builds/container-storage"
+    METRICS_FILE: "${CI_PROJECT_DIR}/metrics.txt"
     TARGET_NAME: # Should be overwritten by one of the child jobs
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for these jobs
-    DOCKERFILE: ci/docker/${PLATFORM}/prod.Dockerfile
+    DOCKERFILE: ci/docker/cta/${PLATFORM}/prod.Dockerfile
     IMAGE_NAME: ctageneric/${TARGET_NAME} # ctageneric is important because that's the private repo.
     IMAGE_REF: ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}
     # Important that this matches the artifact path from the build job
     RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
     EXTRA_BUILD_ARGS: ""
   before_script:
-    # Configure storage
+    # We have an explicit whitelist of registries here.
+    # That is to ensure we don't accidentally push an image containing Oracle RPMs to a public registry
+    - |
+      case "$IMAGE_REF" in
+          registry.gitlab.cern.ch/cta/ctageneric/*) ;;
+          *)
+              echo "Refusing to push image to non-whitelisted registry: $IMAGE_REF"
+              exit 1
+              ;;
+      esac
+    # Configure storage. See https://gitlab.cern.ch/gitlabci-examples/build_docker_image/-/blob/fce98393aab8f3ffca3b8449036ccb02275c8a46/.gitlab-ci.yml#L19
     - mkdir -p ${CONTAINER_STORAGE}
     - mkdir -p ~/.config/containers/
     - |
@@ -47,27 +56,29 @@
     - echo "$DOCKER_LOGIN_PASSWORD" | buildah login -u "$DOCKER_LOGIN_USERNAME" --password-stdin $CI_REGISTRY
   script:
     - echo "Building target ${TARGET_NAME}"
-    # TODO: dnf caching
-    # TODO: internal repo and oracle flag
-    # ensure build context is correct
     - cd "$(dirname "${DOCKERFILE}")"
     - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"
+    - (( USE_ORACLE_CATALOGUE = ORACLE_SUPPORT == "TRUE" ))
+    - (( USE_INTERNAL_REPOS_01 = USE_INTERNAL_REPOS == "TRUE" ))
     - BUILDAH_ARGS=(
         --target "${TARGET_NAME}"
         --file "${DOCKERFILE_NAME}"
         --tag "${IMAGE_REF}"
         --build-context rpm_context="${RPM_CONTEXT}"
-        --build-arg USE_INTERNAL_REPOS=1
-        --build-arg USE_ORACLE_CATALOGUE=1
+        --build-arg USE_INTERNAL_REPOS="${USE_INTERNAL_REPOS_01}"
+        --build-arg USE_ORACLE_CATALOGUE="${USE_ORACLE_CATALOGUE}"
       )
-    # TODO: check if caching makes sense. Not many layers to cache though so it may just hurt speed and caching /var/cache/dnf may be enough
     - if [ -n "$EXTRA_BUILD_ARGS" ]; then BUILDAH_ARGS+=($EXTRA_BUILD_ARGS); fi
     - buildah bud "${BUILDAH_ARGS[@]}" .
-    # TODO: add a sanity check here if oracle is in the image and if the registry is public
-    # if so, fail the job so that we prevent accidentally pushing oracle rpms somewhere public
-    # TODO: image size metric?
     - echo "Pushing to ${IMAGE_REF}"
     - buildah push "${IMAGE_REF}"
+    - echo $(buildah images --filter reference="$IMAGE_REF" --format '{{.Size}}')
+    - echo "docker_image_size_${TARGET_NAME//-/_} $(( $(buildah images --filter reference="$IMAGE_REF" --format '{{.Size}}') / 1024 / 1024 ))" >> "$METRICS_FILE"
+  artifacts:
+    when: always
+    expire_in: 30 days
+    reports:
+      metrics: $METRICS_FILE
 
 ###############################################
 # Image Targets
@@ -107,5 +118,6 @@ build-image-tools:
 # Publishing
 ###############################################
 
-# TODO: add job that uses buildah to retag images. This way we can publish them
-# We'll need the usual checks
+# A few TODOs to improve the image building
+# - Add ability to publish images by retagging them. In that case, we must add some checks on whether Oracle RPMs are in the image or not
+# - Add dnf caching to improve image build speed. Layer caching doesn't do much as the majority of the size comes from a single layer

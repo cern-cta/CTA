@@ -2,14 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Few notes on decisions that may seem strange at first sight:
-# - Alma9-minimal vs alma. dnf vs microdnf
+# - Alma9-minimal vs alma. The minimal image is significantly smaller. The main difference is that it comes with microdnf instead of dnf
 # - We install and remove cta-release in the same layer to minimise image size. Putting it in the base image would increase the image size substantially
-# - cta-release pulls in python, but microdnf does not autoremove it when uninstalling cta-release. Hence we remove python3* separately. Must happen in a separate remove as it complains otherwise (cta-release still needs it)
-# - We don't care about systemd, so we remove it using rpm -e systemd-* --nodeps at the end. Ideally the base image doesn't contain systemd in the first place, but the layer in which we install the majority of the packages still pull in quite some systemd specific stuff
-# - note on installing RPMs and multiple build contexts
-# - no microdnf clean all because cache is mounted
-# - note sharing=locked and id for concurrency
-# - At some point the USER should be uncommented. However, this can only happen after cta-taped and all tests have been updated to not rely on root-specific functionality.
+# - note sharing=locked and id for concurrency (dnf caching is not thread safe)
 
 ###############################################
 # 1. REPO BUILDER
@@ -40,7 +35,7 @@ COPY etc/yum.repos.d-internal/ /tmp/internal-repos/
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,sharing=locked \
     --mount=type=cache,target=/var/cache/yum,sharing=locked \
-    # Ensure consistent group and user ID for CTA services
+    # Ensure consistent user ID for CTA services
     # cta-common adds this user already, but it gives no guarantees on its ID, which we need to be stable for Kubernetes
     # Tape group already exists by default with gid 33
     useradd -m -u 1000 -g tape cta && \
@@ -53,15 +48,10 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     echo -e "[cta]\nname=Repo containing CTA RPMS\nbaseurl=file:///mnt/rpms\ngpgcheck=0\nenabled=1\npriority=2" > /etc/yum.repos.d/cta.repo && \
     # Add some basic flags to all (micro)dnf commands to improve speed and reduce image size
     echo -e "[main]\ntsflags=nodocs\ninstall_weak_deps=False" > /etc/dnf/dnf.conf && \
-    # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience, sudo so that we can install in the tests)
-    # Requiring sudo is not ideal, but as far as I can tell there is no clean way (without creating dedicated test images) that we can make the tests work otherwise
-    # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is useless
+    # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience)
     microdnf install -y \
       tar \
-      sudo \
       jq && \
-    echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
-    chmod 0440 /etc/sudoers.d/cta && \
     # Cleanup
     rm -rf /var/lib/dnf/history.*
 
@@ -93,7 +83,11 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-rmcd \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-rmcd \
-    /usr/local/bin/build-service.sh "cta-rmcd cta-smc sg3_utils lsscsi mtx mt-st"
+    # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
+    # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is useless
+    /usr/local/bin/build-service.sh "cta-rmcd cta-smc sg3_utils lsscsi mtx mt-st sudo" && \
+    echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
+    chmod 0440 /etc/sudoers.d/cta
 
 USER cta
 CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
@@ -126,7 +120,7 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-frontend \
-    # TODO: remove the catalogue utils once the tests have been updated
+    # Remove the catalogue utils once the tests have been updated. For now, only the admin-api requires it
     /usr/local/bin/build-service.sh "cta-frontend-grpc cta-catalogue-utils krb5-workstation"
 
 USER cta

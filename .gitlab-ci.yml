@@ -19,7 +19,6 @@ variables:
 
   # Pipeline Type. Supported types:
   #   - DEFAULT: runs static analysis, compiles the software and tests it.
-  #   - SYSTEM_TEST_ONLY: runs the system tests against the latest (or a provided) ctageneric image.
   #   - REGR_AGAINST_CTA_MAIN: test custom dependency versions (EOS/XRootD) against CTA main.
   #   - REGR_AGAINST_CTA_VERSION: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
   PIPELINE_TYPE:
@@ -27,7 +26,6 @@ variables:
     value: "DEFAULT"
     options:
       - "DEFAULT"
-      - "SYSTEM_TEST_ONLY"
       - "REGR_AGAINST_CTA_MAIN"
       - "REGR_AGAINST_CTA_VERSION"
 
@@ -38,11 +36,8 @@ variables:
   CUSTOM_XROOTD_VERSION:
     description: "Custom XRootD version to use for building and running."
     value: ""
-  CUSTOM_CTA_VERSION:
-    description: "Custom CTA version to build a docker image from and test with. Must exist in the CTA testing repo. Should only be used when PIPELINE_TYPE != DEFAULT."
-    value: ""
-  CUSTOM_SYSTEM_TEST_IMAGE_TAG:
-    description: "Custom image tag to run the systemtests against. If left empty, the latest image tag from main will be used. Should only be used when PIPELINE_TYPE = SYSTEM_TEST_ONLY."
+  CUSTOM_CTA_IMAGE_TAG:
+    description: "Custom CTA version to build a docker image from and test with. Should only be used when PIPELINE_TYPE != DEFAULT."
     value: ""
 
   PLATFORM:

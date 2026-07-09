@@ -13,7 +13,7 @@ python3 -m venv venv
 Install the project to get all necessary dependencies:
 
 ```sh
-pip install pytest pytest-asyncio
+pip install -r requirements.txt
 ```
 
 ## Useful commands:
@@ -30,16 +30,16 @@ To skip the setup (e.g. initialization of the catalogue), add the `--no-setup` f
 pytest tests/stress_test.py --namespace dev --no-setup
 ```
 
-To skip the teardown (e.g. cleaning of EOS, wiping catalogue -> not necessary if the namespace is deleted anyway), add the `--no-teardown` flag:
+To skip the teardown (e.g. cleaning of EOS, wiping catalogue -> not necessary if the namespace is deleted anyway), add the `--no-cleanup` flag:
 
 ```sh
-pytest tests/stress_test.py --namespace dev --no-teardown
+pytest tests/stress_test.py --namespace dev --no-cleanup
 ```
 
-To do the teardown at the start (to ensure you can rerun tests without redeploying everything), add the `--clean-start` flag:
+To do the teardown at the start (to ensure you can rerun tests without redeploying everything), add the `--ccleanup-first` flag:
 
 ```sh
-pytest tests/stress_test.py --namespace dev --clean-start
+pytest tests/stress_test.py --namespace dev --cleanup-first
 ```
 
 Rerun only the failed tests (`--lf, --last-failed`):

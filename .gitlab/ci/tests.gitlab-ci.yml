@@ -10,7 +10,7 @@
   - cta-versionlock apply
   - |
     if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
-      cp -f ci/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+      cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     fi
   - dnf -y --nogpgcheck install cta-integrationtests cta-integrationtests-debuginfo
 
