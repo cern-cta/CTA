@@ -300,7 +300,7 @@ build_deploy() {
       print_header "SETTING UP BUILD CONTAINER"
       restarted=true
       echo "Rebuilding build container image"
-      ${container_runtime} build --no-cache -t "${build_image_name}" -f ci/docker/"${platform}"/build.Dockerfile .
+      ${container_runtime} build --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
       echo "Starting new build container: ${build_container_name}"
       ${container_runtime} run -dit --rm --name "${build_container_name}" \
         -v "${project_root}:/shared/CTA:z" \

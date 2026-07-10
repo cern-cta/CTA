@@ -244,6 +244,12 @@ build_rpm() {
     if [[ ${use_internal_repos} = true ]]; then
       cp -f ci/docker/cta/${platform}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     fi
+
+    # Validate DNF_CACHE_DIR is set
+    if [[ -z "${DNF_CACHE_DIR}" ]]; then
+      DNF_CACHE_DIR=/var/cache/dnf
+    fi
+
     # Create the directory
     mkdir -p "${DNF_CACHE_DIR}"
 

@@ -98,7 +98,7 @@ The script is only a wrapper around the container build command. A manual build 
 Example:
 
 ```bash
-cd ci/docker/alma9
+cd ci/docker/cta/el9
 
 podman build \
   -f prod.Dockerfile \
