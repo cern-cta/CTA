@@ -12,7 +12,8 @@ add_library (ctamountdecision SHARED
 
 target_link_libraries (ctamountdecision
   ctacommon
-  ctardbms)
+  ctardbms
+  ctascheduler)
 
 set_property(TARGET ctamountdecision PROPERTY SOVERSION "${CTA_SOVERSION}")
 set_property(TARGET ctamountdecision PROPERTY   VERSION "${CTA_LIBVERSION}")

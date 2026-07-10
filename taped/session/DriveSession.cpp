@@ -68,7 +68,8 @@ DriveSession::~DriveSession() noexcept {
 #ifdef CTA_PGSCHED
 void DriveSession::incrementMountDecisionSessionCounter() noexcept {
   try {
-    mountdecision::MountDecision mountDecision(m_schedulerContext.schedulerDbConnProvider(), m_lc);
+    auto& schedulerDb = m_schedulerContext.schedulerDb();
+    mountdecision::MountDecision mountDecision(schedulerDb, schedulerDb, m_lc);
     if (mountDecision.incrementCounter(m_driveInfo.host, m_lc, "tapeServerSession")) {
       log::ScopedParamContainer params(m_lc);
       params.add("tapeServerName", m_driveInfo.host);

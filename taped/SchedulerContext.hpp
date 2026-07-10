@@ -53,10 +53,10 @@ public:
   void renewObjectStoreAgent();
 
 #ifdef CTA_PGSCHED
-  /// @brief Return the owned PostgreSQL scheduler backend as a connection provider.
+  /// @brief Return the owned PostgreSQL scheduler backend, which also provides database connections.
   ///
   /// Throws if the scheduler is borrowed, because its backend is not accessible here.
-  ConnProvider& schedulerDbConnProvider();
+  SchedulerDB_t& schedulerDb();
 #endif
 
 private:
