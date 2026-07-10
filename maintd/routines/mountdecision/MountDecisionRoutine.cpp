@@ -24,10 +24,14 @@ std::string getMountDecisionCounterKey() {
 
 }  // namespace
 
-MountDecisionRoutine::MountDecisionRoutine(cta::log::LogContext& lc, cta::ConnProvider& connectionProvider)
+MountDecisionRoutine::MountDecisionRoutine(cta::log::LogContext& lc,
+                                           cta::ConnProvider& connectionProvider,
+                                           cta::SchedulerDatabase& schedulerDb,
+                                           cta::Scheduler& scheduler)
     : m_lc(lc),
+      m_scheduler(scheduler),
       m_counterKey(getMountDecisionCounterKey()),
-      m_mountDecision(connectionProvider, lc) {
+      m_mountDecision(connectionProvider, schedulerDb, lc) {
   log::ScopedParamContainer params(m_lc);
   params.add("mountDecisionCounterKey", m_counterKey);
   m_lc.log(cta::log::INFO, "In MountDecisionRoutine: Created MountDecisionRoutine");
@@ -39,6 +43,7 @@ void MountDecisionRoutine::execute() {
     params.add("mountDecisionCounterKey", m_counterKey);
     m_lc.log(log::DEBUG, "In MountDecisionRoutine::execute(): Incremented loop counter.");
   }
+  m_mountDecision.refreshMountCandidates(m_counterKey, m_scheduler, m_lc);
 }
 
 std::string MountDecisionRoutine::getName() const {

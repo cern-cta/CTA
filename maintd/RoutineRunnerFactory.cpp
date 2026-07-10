@@ -118,7 +118,7 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
       throw exception::UserError(
         "Mount Decision loop routine is enabled, but experimental.mount_decision_enabled is false.");
     }
-    routines.push_back(std::make_unique<MountDecisionRoutine>(m_lc, *m_schedDb));
+    routines.push_back(std::make_unique<MountDecisionRoutine>(m_lc, *m_schedDb, *m_schedDb, *m_scheduler));
   }
 #endif
 

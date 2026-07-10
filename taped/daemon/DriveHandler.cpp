@@ -995,7 +995,7 @@ cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSessi
 #ifdef CTA_PGSCHED
 void DriveHandler::incrementMountDecisionSessionCounter() const {
   const auto tapeServerName = cta::utils::getShortHostname();
-  cta::mountdecision::MountDecision mountDecision(*m_sched_db, m_lc);
+  cta::mountdecision::MountDecision mountDecision(*m_sched_db, *m_sched_db, m_lc);
   if (mountDecision.incrementCounter(tapeServerName, m_lc, "tapeServerSession")) {
     log::ScopedParamContainer params(m_lc);
     params.add("tapeServerName", tapeServerName);
