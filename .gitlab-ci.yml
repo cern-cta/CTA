@@ -19,14 +19,14 @@ variables:
 
   # Pipeline Type. Supported types:
   #   - DEFAULT: runs static analysis, compiles the software and tests it.
-  #   - REGR_AGAINST_CTA_MAIN: test custom dependency versions (EOS/XRootD) against CTA main.
+  #   - REGR_AGAINST_CTA_BRANCH: test custom dependency versions (EOS/XRootD) against CTA main.
   #   - REGR_AGAINST_CTA_VERSION: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
   PIPELINE_TYPE:
     description: "What kind of pipeline to run"
     value: "DEFAULT"
     options:
       - "DEFAULT"
-      - "REGR_AGAINST_CTA_MAIN"
+      - "REGR_AGAINST_CTA_BRANCH"
       - "REGR_AGAINST_CTA_VERSION"
 
   # Custom variables for image building and run environment packages

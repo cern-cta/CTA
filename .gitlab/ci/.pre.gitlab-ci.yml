@@ -4,7 +4,7 @@
 modify-project-json:
   stage: .pre
   rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_MAIN"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
   script:
     - project_json_file="project.json"

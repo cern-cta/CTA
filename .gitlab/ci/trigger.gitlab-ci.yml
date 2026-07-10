@@ -28,6 +28,18 @@ trigger-oracle-disabled-pipeline:
   variables:
     ORACLE_SUPPORT: "FALSE"
 
+trigger-regression-test-against-cta-version:
+  extends:
+    - .trigger-child-pipeline
+  variables:
+    PIPELINE_TYPE: "REGR_AGAINST_CTA_VERSION"
+
+trigger-regression-test-against-cta-branch:
+  extends:
+    - .trigger-child-pipeline
+  variables:
+    PIPELINE_TYPE: "REGR_AGAINST_CTA_BRANCH"
+
 trigger-sonarcloud-pipeline:
   allow_failure: true
   stage: trigger
