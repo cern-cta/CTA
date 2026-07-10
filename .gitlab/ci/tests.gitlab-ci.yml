@@ -9,7 +9,7 @@
   - dnf -y --nogpgcheck install cta-release
   - cta-versionlock apply
   - |
-    if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
+    if [[ "$ENABLE_INTERNAL_REPOS" == "TRUE" ]]; then
       cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     fi
   - dnf -y --nogpgcheck install cta-integrationtests cta-integrationtests-debuginfo
@@ -69,8 +69,6 @@ unit-test-cta:
     - if: $CI_COMMIT_TAG
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
-      when: never
-    - if: $SKIP_UNIT_TESTS == "TRUE"
       when: never
     - when: on_success
   image: $IMAGE_TEST
@@ -140,7 +138,7 @@ unit-test-oracle:
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $ORACLE_SUPPORT == "FALSE"
+    - if: $ENABLE_ORACLE_SUPPORT == "FALSE"
       when: never
     - if: $PIPELINE_TYPE != "DEFAULT"
       when: never
@@ -212,7 +210,7 @@ test-cta-release:
                                   eos-server
                                   eos-client
     - |
-      if [[ $ORACLE_SUPPORT == "TRUE" ]]; then
+      if [[ $ENABLE_ORACLE_SUPPORT == "TRUE" ]]; then
         dnf install --nogpgcheck -y cta-lib-catalogue-occi
       fi
     # Check that everything was installed properly

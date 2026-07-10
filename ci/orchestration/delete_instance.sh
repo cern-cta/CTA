@@ -3,6 +3,8 @@
 # SPDX-FileCopyrightText: 2021 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+set -eo pipefail
+
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
 local_die() {

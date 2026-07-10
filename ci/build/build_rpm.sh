@@ -32,7 +32,7 @@ usage() {
   echo "      --skip-debug-packages                     Skips the building of the debug RPM packages."
   echo "      --skip-unit-tests                         Skips the unit tests. Speeds up the build time by not running the unit tests."
   echo "      --oracle-support <ON/OFF>:                When set to OFF, will disable Oracle support. Oracle support is enabled by default."
-  echo "      --use-internal-repos                      Use the internal yum repos instead of the public yum repos."
+  echo "      --enable-internal-repos                      Use the internal yum repos instead of the public yum repos."
   echo
   exit 1
 }
@@ -146,7 +146,7 @@ build_rpm() {
       fi
       ;;
     --install-srpms) install_srpms=true ;;
-    --use-internal-repos) use_internal_repos=true ;;
+    --enable-internal-repos) use_internal_repos=true ;;
     -j | --jobs)
       if [[ $# -gt 1 ]]; then
         num_jobs="$2"

@@ -70,7 +70,7 @@ build-cta-rpms:
                                --cta-version ${BUILD_CTA_VERSION}
                                --vcs-version ${VCS_VERSION}
                                --scheduler-type ${SCHEDULER_TYPE}
-                               --oracle-support ${ORACLE_SUPPORT}
+                               --oracle-support ${ENABLE_ORACLE_SUPPORT}
                                --cmake-build-type "${CMAKE_BUILD_TYPE}"
                                --jobs $(nproc --ignore=1)
     # RPMS
@@ -83,7 +83,7 @@ build-cta-rpms:
         # debugsource packages are not happy with the cxxflags above, so skip for now
         RPMDEFS="--define '_debugsource_packages 0'"
       fi
-    - if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then BUILD_OPTIONS+=" --use-internal-repos"; fi
+    - if [[ "$ENABLE_INTERNAL_REPOS" == "TRUE" ]]; then BUILD_OPTIONS+=" --enable-internal-repos"; fi
     - if [[ "$ENABLE_ADDRESS_SANITIZER" == "TRUE" ]]; then BUILD_OPTIONS+=" --enable-address-sanitizer"; fi
     - ./ci/build/build_rpm.sh --build-dir build_rpm
                               --build-generator "${BUILD_GENERATOR}"
@@ -93,7 +93,7 @@ build-cta-rpms:
                               --vcs-version ${VCS_VERSION}
                               --xrootd-ssi-version ${XRD_SSI_VERSION}
                               --scheduler-type ${SCHEDULER_TYPE}
-                              --oracle-support ${ORACLE_SUPPORT}
+                              --oracle-support ${ENABLE_ORACLE_SUPPORT}
                               --cmake-build-type "${CMAKE_BUILD_TYPE}"
                               --jobs $(nproc --ignore=1)
                               --install-srpms
@@ -141,7 +141,6 @@ build-cta-rpms-pgsched:
     # We don't have a way of separating what the user entered and what the actual value is,
     # so this will always run, even if the pipeline type was already postgres
     SCHEDULER_TYPE: "pgsched"
-    SKIP_UNIT_TESTS: "TRUE"
     ENABLE_CCACHE: "FALSE"
     RPM_SIZE_METRICS_ID: "relwithdebinfo_pgsched_no_cache"
   # Disable artifacts

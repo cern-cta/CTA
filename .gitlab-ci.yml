@@ -16,8 +16,10 @@ stages:
   - .post
 
 variables:
-
-  # Pipeline Type. Supported types:
+  # =========================================================================
+  # 1. Pipeline Execution Control
+  # =========================================================================
+  # Supported types:
   #   - DEFAULT: runs static analysis, compiles the software and tests it.
   #   - REGR_AGAINST_CTA_BRANCH: test custom dependency versions (EOS/XRootD) against CTA main.
   #   - REGR_AGAINST_CTA_VERSION: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
@@ -29,38 +31,38 @@ variables:
       - "REGR_AGAINST_CTA_BRANCH"
       - "REGR_AGAINST_CTA_VERSION"
 
-  # Custom variables for image building and run environment packages
-  CUSTOM_EOS_IMAGE_TAG:
-    description: "Custom EOS image tag to use running. Note that this does not affect the EOS client version"
-    value: ""
-  CUSTOM_XROOTD_VERSION:
-    description: "Custom XRootD version to use for building and running."
-    value: ""
   CUSTOM_CTA_IMAGE_TAG:
     description: "Custom CTA version to build a docker image from and test with. Should only be used when PIPELINE_TYPE != DEFAULT."
     value: ""
 
+  CUSTOM_EOS_IMAGE_TAG:
+    description: "Custom EOS image tag to use running. Note that this does not affect the EOS client version"
+    value: ""
+
+  CUSTOM_XROOTD_VERSION:
+    description: "Custom XRootD version to use for building and running."
+    value: ""
+
+  # =========================================================================
+  # 2. Base Build & Compilation Configuration
+  # =========================================================================
   PLATFORM:
     description: "Specifies the platform to build, test and (possibly) release on"
     value: "el9"
     options:
       - "el9"
 
-  USE_INTERNAL_REPOS:
+  ENABLE_INTERNAL_REPOS:
     description: "Whether to use the internal yum repos instead of the public yum repos."
     value: "TRUE"
     options:
       - "TRUE"
       - "FALSE"
 
-  # Building Configuration
-  DOCKER_IMAGE_REGISTRY: gitlab-registry.cern.ch
-  DOCKER_PRIVATE_REGISTRY_PREFIX: cta/ctageneric
-  DOCKER_PUBLIC_REGISTRY_PREFIX: cta/public_registry
-  BUILD_CTA_VERSION: 5
+  BUILD_CTA_VERSION: "5"
 
   BUILD_GENERATOR:
-    description: "Specifies the build generated for building the CTA RPMs"
+    description: "Specifies the build generator used for building the CTA RPMs"
     value: "Unix Makefiles"
     options:
       - "Unix Makefiles"
@@ -83,7 +85,7 @@ variables:
       - "FALSE"
 
   ENABLE_CCACHE:
-    description: "Whether to the enable ccache during the RPM building"
+    description: "Whether to enable ccache during the RPM building"
     value: "FALSE"
     options:
       - "TRUE"
@@ -97,14 +99,16 @@ variables:
       - "push"
       - "pull-push"
 
-  GENERATE_SBOM:
+  ENABLE_SBOM_GENERATION:
     description: "Whether to generate a Software Bill of Materials in the pipeline"
     value: "FALSE"
     options:
       - "TRUE"
       - "FALSE"
 
-  # CTA Configuration
+  # =========================================================================
+  # 3. Component & Subsystem Architecture
+  # =========================================================================
   SCHEDULER_TYPE:
     description: "Specifies what scheduler should be used to build CTA and run the tests"
     value: "objectstore"
@@ -112,21 +116,39 @@ variables:
       - "pgsched"
       - "objectstore"
 
-  ORACLE_SUPPORT:
+  ENABLE_ORACLE_SUPPORT:
     description: "Whether to build the CTA RPMs with Oracle support or not"
     value: "TRUE"
     options:
       - "TRUE"
       - "FALSE"
 
-  # Tests
-  SKIP_UNIT_TESTS:
-    description: "Skips the CTA unit tests. Should only be disabled if there is a very good reason to do so."
-    value: "FALSE"
+  # =========================================================================
+  # 4. Deployment Orchestration & Helm Profiles
+  # =========================================================================
+  DEFAULT_CTA_VALUES_CHAIN:
+    description: "Path to a values.yaml file to be passed to the CTA Helm chart."
+    value: "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
     options:
-      - "TRUE"
-      - "FALSE"
+      - "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
+      - "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-mtls.yaml,presets/frontend-admin/auth-jwt.yaml"
 
+  DEFAULT_EOS_VALUES_FILE:
+    description: "Path to a values.yaml file to be passed to the EOS Helm chart."
+    value: "presets/eos/auth-jwt.yaml"
+    options:
+      - "presets/eos/auth-jwt.yaml"
+      - "presets/eos/auth-mtls.yaml"
+
+  STRESS_EOS_VALUES_FILE:
+    description: "Path to a values.yaml file to be passed to the EOS Helm chart for the stress test."
+    value: "presets/stress-eos-values.yaml"
+    options:
+      - "presets/stress-eos-values.yaml"
+
+  # =========================================================================
+  # 5. Testing
+  # =========================================================================
   VALGRIND_UNIT_TESTS:
     description: "Whether to run the unit tests with valgrind."
     value: "FALSE"
@@ -155,62 +177,53 @@ variables:
       - "TRUE"
       - "FALSE"
 
-  # Pass a file (or comma-separated list) here (must be absolute or relative to the orchestration directory, e.g. presets/dev...)
-  DEFAULT_CTA_VALUES_CHAIN:
-    description: "Path to a values.yaml file to be passed to the CTA Helm chart."
-    value: "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
-    options:
-      - "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-jwt.yaml,presets/frontend-admin/auth-jwt.yaml"
-      - "presets/dev-cta-common.yaml,presets/frontend-wfe/auth-mtls.yaml,presets/frontend-admin/auth-jwt.yaml"
+  # =========================================================================
+  # 6. Docker Registry
+  # =========================================================================
+  DOCKER_IMAGE_REGISTRY: "gitlab-registry.cern.ch"
+  DOCKER_PRIVATE_REGISTRY_PREFIX: "cta/ctageneric"
+  DOCKER_PUBLIC_REGISTRY_PREFIX: "cta/public_registry"
 
-  DEFAULT_EOS_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the EOS Helm chart."
-    value: "presets/eos/auth-jwt.yaml"
-    options:
-      - "presets/eos/auth-jwt.yaml"
-      - "presets/eos/auth-mtls.yaml"
+  # =========================================================================
+  # 7. CI Base Target Images
+  # =========================================================================
+  IMAGE_DEFAULT: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2026-07-07-15213892.el9"
+  IMAGE_LINT: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2026-07-07-15213892.el9"
+  IMAGE_BUILD: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2026-07-07-15213892.el9"
+  IMAGE_TEST: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2026-07-07-15213892.el9"
+  IMAGE_RELEASE: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2026-07-07-15213892.el9"
+  IMAGE_DANGER: "gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2026-07-07-15213892.el9"
+  IMAGE_DOCKER_IMAGE_BUILDER: "registry.cern.ch/quay.io/buildah/stable:v1.43-immutable"
+  IMAGE_LICENSE_CHECK: "registry.cern.ch/docker.io/fsfe/reuse:6.2"
 
-  STRESS_EOS_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the EOS Helm chart for the stress test."
-    value: "presets/stress-eos-values.yaml"
-    options:
-      - "presets/stress-eos-values.yaml"
-
-
-  # Git CI Configuration
-  GIT_STRATEGY: fetch
-  GIT_SUBMODULE_STRATEGY: recursive
-  GIT_DEPTH: 1  # Enforce a shallow clone of the main repo
-  GIT_SUBMODULE_DEPTH: 1  # Shallow clone of the submodules
+  # =========================================================================
+  # 8. Git CI Strategy & Performance Tuning
+  # =========================================================================
+  GIT_STRATEGY: "fetch"
+  GIT_SUBMODULE_STRATEGY: "recursive"
+  GIT_DEPTH: "1"
+  GIT_SUBMODULE_DEPTH: "1"
   SAST_EXCLUDED_PATHS: "ci,tests,*Test.cpp"
-  # Faster GitLab cache performance
+
   FF_USE_FASTZIP: "true"
   ARTIFACT_COMPRESSION_LEVEL: "fastest"
   CACHE_COMPRESSION_LEVEL: "fastest"
 
-  # Job output configuration
-  FF_TIMESTAMPS: true
+  # =========================================================================
+  # 9. Runner Engine & Test Report Terminal Hook Output
+  # =========================================================================
+  FF_TIMESTAMPS: "true"
   TERM: "xterm-color"
   GTEST_COLOR: "yes"
   GTEST_REPORT_FILE: "$CI_PROJECT_DIR/test_report.xml"
   GTEST_OUTPUT: "xml:$GTEST_REPORT_FILE"
-
-  # Images
-  IMAGE_DEFAULT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-default:2026-07-07-15213892.el9
-  IMAGE_LINT: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-lint:2026-07-07-15213892.el9
-  IMAGE_BUILD: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-build:2026-07-07-15213892.el9
-  IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2026-07-07-15213892.el9
-  IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2026-07-07-15213892.el9
-  IMAGE_DANGER: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2026-07-07-15213892.el9
-  IMAGE_DOCKER_IMAGE_BUILDER: registry.cern.ch/quay.io/buildah/stable:v1.43-immutable
-  IMAGE_LICENSE_CHECK: registry.cern.ch/docker.io/fsfe/reuse:6.2
 
 default:
   image: $IMAGE_DEFAULT
   interruptible: true
 
 workflow:
-  name: "$CI_COMMIT_TITLE -- Pipeline: $PIPELINE_TYPE, Scheduler: $SCHEDULER_TYPE, Oracle support: $ORACLE_SUPPORT"
+  name: "$CI_COMMIT_TITLE -- Pipeline: $PIPELINE_TYPE, Scheduler: $SCHEDULER_TYPE, Oracle support: $ENABLE_ORACLE_SUPPORT"
   auto_cancel:
     on_new_commit: interruptible
   rules:

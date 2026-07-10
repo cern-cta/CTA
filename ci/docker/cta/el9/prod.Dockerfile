@@ -6,10 +6,10 @@
 # - We install and remove cta-release in the same layer to minimise image size. Putting it in the base image would increase the image size substantially
 # - note sharing=locked and id for concurrency (dnf caching is not thread safe)
 
-###############################################
+# =========================================================================
 # 1. REPO BUILDER
 # Used to feed the RPMs to the other stages
-###############################################
+# =========================================================================
 FROM registry.cern.ch/docker.io/almalinux/9-minimal:latest AS repo-builder
 
 RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
@@ -22,9 +22,9 @@ COPY --from=rpm_context . /rpms
 
 RUN createrepo_c /rpms
 
-###############################################
+# =========================================================================
 # 2. BASE IMAGE
-###############################################
+# =========================================================================
 FROM registry.cern.ch/docker.io/almalinux/9-minimal:latest AS base
 
 COPY build-service.sh /usr/local/bin/build-service.sh
@@ -57,13 +57,13 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     # Cleanup
     rm -rf /var/lib/dnf/history.*
 
-###############################################
+# =========================================================================
 # SERVICE cta-taped
-###############################################
+# =========================================================================
 FROM base AS cta-taped
 
-ARG USE_INTERNAL_REPOS
-ARG USE_ORACLE_CATALOGUE
+ARG ENABLE_INTERNAL_REPOS
+ARG ENABLE_ORACLE_CATALOGUE
 
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-taped \
@@ -74,13 +74,13 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
 # USER cta
 CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--log-to-file=/var/log/cta/cta-taped.log"]
 
-###############################################
+# =========================================================================
 # SERVICE cta-rmcd
-###############################################
+# =========================================================================
 FROM base AS cta-rmcd
 
-ARG USE_INTERNAL_REPOS
-ARG USE_ORACLE_CATALOGUE
+ARG ENABLE_INTERNAL_REPOS
+ARG ENABLE_ORACLE_CATALOGUE
 
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-rmcd \
@@ -90,13 +90,13 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
 USER cta
 CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
 
-###############################################
+# =========================================================================
 # SERVICE cta-maintd
-###############################################
+# =========================================================================
 FROM base AS cta-maintd
 
-ARG USE_INTERNAL_REPOS
-ARG USE_ORACLE_CATALOGUE
+ARG ENABLE_INTERNAL_REPOS
+ARG ENABLE_ORACLE_CATALOGUE
 
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-maintd \
@@ -106,14 +106,14 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
 USER cta
 CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-strict", "--config /etc/cta/cta-maintd.toml", "--runtime-dir /run/cta"]
 
-###############################################
+# =========================================================================
 # SERVICE cta-frontend
-###############################################
+# =========================================================================
 # TODO: once we split the RPMs, we should explicitly build the workflow-api and admin-api images here
 FROM base AS cta-frontend
 
-ARG USE_INTERNAL_REPOS
-ARG USE_ORACLE_CATALOGUE
+ARG ENABLE_INTERNAL_REPOS
+ARG ENABLE_ORACLE_CATALOGUE
 
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend \
@@ -124,13 +124,13 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
 USER cta
 CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend.log"]
 
-###############################################
+# =========================================================================
 # TOOLS cta-tools
-###############################################
+# =========================================================================
 FROM base AS cta-tools
 
-ARG USE_INTERNAL_REPOS
-ARG USE_ORACLE_CATALOGUE
+ARG ENABLE_INTERNAL_REPOS
+ARG ENABLE_ORACLE_CATALOGUE
 
 # This image is gigantic... Find a way to reduce it..
 # Sadly we need eos-client here for the CI, which bloat the image by quite a bit.
@@ -141,5 +141,21 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
     /usr/local/bin/build-service.sh "cta-admin-grpc cta-catalogue-utils cta-scheduler-utils krb5-workstation ceph-common cta-immutable-file-test eos-client xrootd-client bc" && \
     ln -sf /usr/bin/cta-admin-grpc /usr/bin/cta-admin
+
+ENTRYPOINT ["/bin/bash"]
+
+# =========================================================================
+# TOOLS cta-debug
+# =========================================================================
+FROM base AS cta-debug
+
+ARG ENABLE_INTERNAL_REPOS
+ARG ENABLE_ORACLE_CATALOGUE
+
+# This image is also gigantic, so we don't build it by default. Build this using the --enable-debug-image in build_deploy.sh
+RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
+    /usr/local/bin/build-service.sh "cta-* cta-debuginfo-* gdb"
 
 ENTRYPOINT ["/bin/bash"]

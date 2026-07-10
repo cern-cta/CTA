@@ -19,7 +19,8 @@ usage() {
   echo "  -l, --load-into-k8s:                Takes the image from the podman registry and ensures that it is present in the image registry used by the local K8s setup."
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
   echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/cta/{defaultplatform}/prod.Dockerfile')."
-  echo "      --use-internal-repos:           Use the internal yum repos instead of the public repos."
+  echo "      --enable-internal-repos:        Use the internal yum repos instead of the public repos."
+  echo "      --enable-oracle-support:        Build the images for use with the Oracle catalogue."
   echo
   exit 1
 }
@@ -33,8 +34,9 @@ container_runtime="podman"
 default_platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
 dockerfile_path="ci/docker/cta/${default_platform}/prod.Dockerfile"
 load_into_k8s=false
-use_internal_repos="0"
-use_oracle_catalogue="0"
+enable_debug_image=false
+enable_internal_repos="0"
+enable_oracle_support="0"
 
 while [[ "$#" -gt 0 ]]; do
   case "$1" in
@@ -66,15 +68,10 @@ while [[ "$#" -gt 0 ]]; do
       error_usage "-t|--tag requires an argument"
     fi
     ;;
-  -l | --load-into-k8s)
-    load_into_k8s=true
-    ;;
-  --use-internal-repos)
-    use_internal_repos="1"
-    ;;
-  --use-oracle-catalogue)
-    use_oracle_catalogue="1"
-    ;;
+  -l | --load-into-k8s) load_into_k8s=true ;;
+  --enable-debug-image) enable_debug_image=true ;;
+  --enable-internal-repos) enable_internal_repos="1" ;;
+  --enable-oracle-support) enable_oracle_support="1" ;;
   --dockerfile)
     if [[ $# -gt 1 ]]; then
       dockerfile_path="$2"
@@ -115,6 +112,10 @@ targets=(
   "cta-frontend"
   "cta-tools"
 )
+if [[ "$enable_debug_image" == "true" ]]; then
+  targets+=( "cta-debug" )
+fi
+
 BUILD_ID=$(date +%Y%m%d-%H%M%S)
 SECONDS=0
 
@@ -132,8 +133,8 @@ for target in "${targets[@]}"; do
       ${container_runtime} build . -f ${dockerfile} \
         -t ${image_ref} \
         --build-context rpm_context="${rpm_src}" \
-        --build-arg USE_INTERNAL_REPOS=${use_internal_repos} \
-        --build-arg USE_ORACLE_CATALOGUE=0 \
+        --build-arg enable_internal_repos=${enable_internal_repos} \
+        --build-arg enable_oracle_support=${enable_oracle_support} \
         --network host \
         --label build.id="$BUILD_ID" \
         --target $target

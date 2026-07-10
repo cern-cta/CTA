@@ -26,7 +26,7 @@ trigger-oracle-disabled-pipeline:
   extends:
     - .trigger-child-pipeline
   variables:
-    ORACLE_SUPPORT: "FALSE"
+    ENABLE_ORACLE_SUPPORT: "FALSE"
 
 trigger-sonarcloud-pipeline:
   allow_failure: true
