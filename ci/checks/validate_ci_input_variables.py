@@ -146,7 +146,8 @@ def main():
     # Ensure availability of any custom provided versions
     if env_var_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars):
         cta_image_tag = ci_input_vars["CUSTOM_CTA_IMAGE_TAG"]
-        check_image_tag_available(cta_image_tag, project_json["dev"]["ctaImageRepository"])
+        image_to_check = f"{project_json['dev']['ctaImageRegistry']}/cta/ctageneric/cta-taped"  # This is semi-hardcoded. Maybe we should extract some of this into a common place at some point
+        check_image_tag_available(cta_image_tag, image_to_check)
 
     if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         xrootd_version = ci_input_vars["CUSTOM_XROOTD_VERSION"]
