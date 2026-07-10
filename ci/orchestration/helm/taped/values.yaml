@@ -22,6 +22,8 @@ conf:
     externalFreeDiskSpaceScript: "/usr/bin/cta-eosdf.sh"
     rmcHost: "cta-rmcd"  # override with localhost if using hostnetwork
     schedulerNumberOfConnections: 3
+  experimental:
+    mountDecisionEnabled: true
   telemetry:
     enabled: false
     retainInstanceIdOnRestart: false

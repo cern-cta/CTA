@@ -967,7 +967,9 @@ void DriveHandler::puttingDriveDown(IScheduler* scheduler,
 
 cta::tape::daemon::Session::EndOfSessionAction DriveHandler::executeCleanerSession(cta::IScheduler* scheduler) const {
 #ifdef CTA_PGSCHED
-  incrementMountDecisionSessionCounter();
+  if (m_tapedConfig.mountDecisionEnabled.value()) {
+    incrementMountDecisionSessionCounter();
+  }
 #endif
 
   // Mounting management.
@@ -1078,7 +1080,9 @@ std::shared_ptr<cta::IScheduler> DriveHandler::createScheduler(const std::string
 cta::tape::daemon::Session::EndOfSessionAction
 DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::TapedProxy* driveHandlerProxy) const {
 #ifdef CTA_PGSCHED
-  incrementMountDecisionSessionCounter();
+  if (m_tapedConfig.mountDecisionEnabled.value()) {
+    incrementMountDecisionSessionCounter();
+  }
 #endif
 
   // Passing values from taped config to data transfer session config

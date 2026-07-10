@@ -152,3 +152,4 @@
   # change incompatibly and should be evaluated before production use.
   # If omitted, false is used.
   telemetry_enabled = false
+  mount_decision_enabled = false

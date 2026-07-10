@@ -221,6 +221,7 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
 
   // Experimental features
   ret.telemetryEnabled.setFromConfigurationFile(cf, driveTapedConfigPath);
+  ret.mountDecisionEnabled.setFromConfigurationFile(cf, driveTapedConfigPath);
 
   // Extract configuration from parsed config file
   ret.daemonUserName.setFromConfigurationFile(cf, driveTapedConfigPath);
@@ -295,6 +296,9 @@ TapedConfiguration TapedConfiguration::createFromConfigPath(const std::string& d
   ret.metricsExportTimeout.setFromConfigurationFile(cf, driveTapedConfigPath);
 
   // If we get here, the configuration file is good enough to be logged.
+  ret.telemetryEnabled.log(log);
+  ret.mountDecisionEnabled.log(log);
+
   ret.daemonUserName.log(log);
   ret.daemonGroupName.log(log);
   ret.logMask.log(log);

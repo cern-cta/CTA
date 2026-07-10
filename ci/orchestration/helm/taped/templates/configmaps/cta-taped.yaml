@@ -44,6 +44,7 @@ data:
 
     # Telemetry
     experimental telemetryEnabled {{ $.Values.conf.telemetry.enabled }}
+    experimental MountDecisionEnabled {{ $.Values.conf.experimental.mountDecisionEnabled }}
 
     telemetry retainInstanceIdOnRestart {{ $.Values.conf.telemetry.retainInstanceIdOnRestart }}
     telemetry metricsBackend {{ $.Values.conf.telemetry.metrics.backend }}
