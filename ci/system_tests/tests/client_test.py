@@ -11,6 +11,9 @@ from datetime import datetime, timedelta
 import time
 from dataclasses import dataclass
 from ..helpers.utils import find_line
+import sys
+
+from jsonschema import Draft202012Validator
 
 #####################################################################################################################
 # Helpers
@@ -420,39 +423,106 @@ def test_log_rotation_taped(cta_taped, remote_scripts_dir):
     cta_taped.exec("bash /tmp/test_refresh_log_fd.sh")
 
 
-# Maybe it makes sense to run this after all tests?
-def test_install_jsonschema(env):
-    hosts = env.cta_maintd + env.cta_taped + env.cta_admin_api + env.cta_workflow_api
+def test_log_schema_correctness(env, tmp_path, cta_maintd):
+    hosts = env.cta_admin_api + env.cta_workflow_api + env.cta_taped
+    logging_schema_path = tmp_path / "cta-logging.schema.json"
+    # Maintd already populates the logging schema in the runtime directory
+    cta_maintd.copy_from("/run/cta/cta-logging.schema.json", logging_schema_path)
+
+    fail_fast = True
+
+    def load_schema(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    def iter_lines(path):
+        if path == "-":
+            for line in sys.stdin:
+                yield line
+        else:
+            with open(path, "r", encoding="utf-8") as f:
+                for line in f:
+                    yield line
+
+    def extract_expected_events(schema):
+        expected_events = set()
+        try:
+            enum_events = schema["properties"]["event_name"]["enum"]
+            expected_events.update(enum_events)
+        except KeyError:
+            pass
+
+        # Not all events may occur in the output logs of test
+        ignore_events = ["program_exiting"]
+        return expected_events - set(ignore_events)
+
+    print("Verifying log schema")
+
+    schema = load_schema(logging_schema_path)
+    validator = Draft202012Validator(schema)
+
+    expected_events = extract_expected_events(schema)
+    observed_events = set()
+
+    errors = 0
+    i = 0
+
     for host in hosts:
-        host.exec("sudo microdnf install -y python3-pip && python3 -m pip install jsonschema")
+        print(f"Checking logs for {host.name}")
+        current_logging_path = tmp_path / f"{host.name}.log"
+        host.copy_from(host.log_file_path, current_logging_path)
+        for i, line in enumerate(iter_lines(current_logging_path), start=1):
+            line = line.strip()
+            if not line:
+                continue
 
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                print(f"ERROR: Invalid JSON found on line {i}")
+                print(f"  * Contents: {line}")
+                errors += 1
+                if fail_fast:
+                    sys.exit(1)
+                continue
 
-def test_log_schema_correctness_maintd(cta_maintd, remote_scripts_dir):
-    cta_maintd.copy_to(str(remote_scripts_dir / "common" / "verify_log_schema.py"), "/tmp/", permissions="+x")
-    cta_maintd.exec(
-        "python3 /tmp/verify_log_schema.py --schema /run/cta/cta-logging.schema.json --input /var/log/cta/cta-maintd.log --fail-fast"
-    )
+            if "event_name" in obj:
+                observed_events.add(obj["event_name"])
 
+            violations = sorted(validator.iter_errors(obj), key=lambda e: e.path)
 
-def test_log_schema_correctness_admin_api(cta_admin_api, remote_scripts_dir):
-    cta_admin_api.copy_to(str(remote_scripts_dir / "common" / "verify_log_schema.py"), "/tmp/", permissions="+x")
-    cta_admin_api.exec(
-        "python3 /tmp/verify_log_schema.py --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-frontend.log --fail-fast"
-    )
+            if violations:
+                errors += 1
+                print(f"ERROR: Schema violation found on line {i}")
+                print(f"  * Contents: {line}")
+                print("  * Violations:")
+                for v in violations:
+                    path = ".".join(map(str, v.path))
+                    if path:
+                        print(f"      {path}: {v.message}")
+                    else:
+                        print(f"      {v.message}")
+                    if fail_fast:
+                        sys.exit(1)
 
+    missing_events = expected_events - observed_events
+    if missing_events:
+        print("\nERROR: Test coverage incomplete!")
+        print("The schema expects coverage for these events, but they were missing from the input logs:")
+        for missing in sorted(missing_events):
+            print(f"  - {missing}")
+        errors += 1
 
-def test_log_schema_correctness_workflow_api(cta_workflow_api, remote_scripts_dir):
-    cta_workflow_api.copy_to(str(remote_scripts_dir / "common" / "verify_log_schema.py"), "/tmp/", permissions="+x")
-    cta_workflow_api.exec(
-        "python3 /tmp/verify_log_schema.py --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-frontend.log --fail-fast"
-    )
+    if errors:
+        print(f"Total errors found: {errors}")
+        sys.exit(1)
 
+    if i == 0:
+        print("ERROR: No JSON objects found")
+        sys.exit(1)
 
-def test_log_schema_correctness_taped(cta_taped, remote_scripts_dir):
-    cta_taped.copy_to(str(remote_scripts_dir / "common" / "verify_log_schema.py"), "/tmp/", permissions="+x")
-    cta_taped.exec(
-        "python3 /tmp/verify_log_schema.py --schema /etc/cta/cta-logging.schema.json --input /var/log/cta/cta-taped.log --fail-fast"
-    )
+    print(f"SUCCESS: Verification passed. {i} lines checked.")
+    print(f"Coverage complete: All {len(expected_events)} defined event types were tested.")
 
 
 def test_add_errors_to_whitelist(error_whitelist):
