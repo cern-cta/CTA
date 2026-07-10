@@ -40,14 +40,19 @@ modify-project-json:
           "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
     # Populate the latest CTA image tag if necessary in a dotenv file so that we can use this later on
     # The image tag should be identical to the version, so we simply grab the latest stable relase and assume that is our image tag
+    # Note that dotenv reports have lower precedence than pipeline variables (even empty ones), so any variables MUST have a different name
     - |
       if [[ "$PIPELINE_TYPE" == "REGR_AGAINST_CTA_VERSION" ]] && [[ -z "$CUSTOM_CTA_IMAGE_TAG" ]]; then
         CTA_REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/${PLATFORM}/cta/x86_64/"
         echo "No CUSTOM_CTA_IMAGE_TAG provided. Getting latest release from: $CTA_REPO_URL"
-        CUSTOM_CTA_IMAGE_TAG=$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)
+        CUSTOM_CTA_IMAGE_TAG="v$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)"
+        # This stable version did not yet have Docker images available, so this is for backward compatibility. Can be removed as soon as we have a later stable release
+        if [[ $CUSTOM_CTA_IMAGE_TAG == "v5.11.18.0-2.el9" ]]; then
+          CUSTOM_CTA_IMAGE_TAG="v5.11.19.0-2.el9"
+        fi
         echo "Using latest stable release: $CUSTOM_CTA_IMAGE_TAG"
         # Note the slightly different name. This is due to CI variable precedence
-        echo "CUSTOM_CTA_IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG" >> pipeline.env
+        echo "CUSTOM_CTA_IMAGE_TAG_ENV=$CUSTOM_CTA_IMAGE_TAG" >> pipeline.env
       fi
     # Done
     - echo "File content after replacement"
