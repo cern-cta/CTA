@@ -3,6 +3,7 @@
 
 import subprocess
 import time
+import os
 from typing import Optional, cast
 
 from kubernetes import client, config
@@ -97,7 +98,10 @@ class K8sConnection(RemoteConnection):
         if throw_on_failure and result.returncode != 0:
             raise RuntimeError(f'"{cmd}" failed with exit code {result.returncode}: {result.stderr}')
         if permissions:
-            self.exec(f"chmod -R {permissions} {dst_path}")
+            target = dst_path
+            if dst_path.endswith("/"):
+                target = os.path.join(dst_path, os.path.basename(src_path))
+            self.exec(f"chmod {permissions} {target}")
 
     def copy_from(self, src_path: str, dst_path: str, throw_on_failure=True) -> None:
         cmd = f"kubectl cp {self.namespace}/{self._pod.metadata.name}:{src_path} {dst_path} -c {self.container}"
