@@ -1,11 +1,25 @@
 # SPDX-FileCopyrightText: 2025 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+###############################################
+# Image build / publish configuration
+###############################################
+
+.image-targets: &image-targets
+  - cta-taped
+  - cta-rmcd
+  - cta-maintd
+  - cta-frontend
+  - cta-tools
+
+###############################################
+# Build Images
+###############################################
+
 .build-cta-image:
   stage: build:image
   needs:
     - job: build-cta-rpms
-      optional: true # We don't need this in every pipeline type
     - job: modify-project-json
       optional: true
   rules:
@@ -17,18 +31,14 @@
     entrypoint: [""]
   variables:
     CONTAINER_STORAGE: "/builds/container-storage"
-    METRICS_FILE: "${CI_PROJECT_DIR}/metrics.txt"
-    TARGET_NAME: # Should be overwritten by one of the child jobs
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
-    GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for these jobs
+    GIT_SUBMODULE_STRATEGY: "none"  # Don't need submodules for these jobs
     DOCKERFILE: ci/docker/cta/${PLATFORM}/prod.Dockerfile
-    IMAGE_NAME: ctageneric/${TARGET_NAME} # ctageneric is important because that's the private repo.
-    IMAGE_REF: ${CI_REGISTRY}/cta/${IMAGE_NAME}:${CTA_BUILD_ID}
-    # Important that this matches the artifact path from the build job
-    RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64
+    IMAGE_REF: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
+    RPM_CONTEXT: ${CI_PROJECT_DIR}/build_rpm/RPM/RPMS/x86_64  # Important that this matches the artifact path from the build job
     EXTRA_BUILD_ARGS: ""
   before_script:
-    # We have an explicit whitelist of registries here.
+    # We have an explicit whitelist of registries here as a safety-net
     # That is to ensure we don't accidentally push an image containing Oracle RPMs to a public registry
     - |
       case "$IMAGE_REF" in
@@ -48,19 +58,25 @@
        runroot = "${CONTAINER_STORAGE}/run/containers/storage"
        graphroot = "${CONTAINER_STORAGE}/.local/share/containers/storage"
        rootless_storage_path = "${CONTAINER_STORAGE}/.local/share/containers/storage"
+
        [storage.options]
        pull_options = {enable_partial_images = "true", use_hard_links = "false", ostree_repos=""}
+
        [storage.options.overlay]
       EOF
     - cp ~/.config/containers/storage.conf /etc/containers/storage.conf || true
-    - echo "$DOCKER_LOGIN_PASSWORD" | buildah login -u "$DOCKER_LOGIN_USERNAME" --password-stdin $CI_REGISTRY
+    - echo "$DOCKER_LOGIN_PASSWORD" | buildah login \
+        -u "$DOCKER_LOGIN_USERNAME" \
+        --password-stdin \
+        "$CI_REGISTRY"
   script:
-    - echo "Building target ${TARGET_NAME}"
+    - echo "Building ${TARGET_NAME}"
     - cd "$(dirname "${DOCKERFILE}")"
     - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"
     - (( USE_ORACLE_CATALOGUE = ORACLE_SUPPORT == "TRUE" ))
     - (( USE_INTERNAL_REPOS_01 = USE_INTERNAL_REPOS == "TRUE" ))
-    - BUILDAH_ARGS=(
+    - |
+      BUILDAH_ARGS=(
         --target "${TARGET_NAME}"
         --file "${DOCKERFILE_NAME}"
         --tag "${IMAGE_REF}"
@@ -68,55 +84,18 @@
         --build-arg USE_INTERNAL_REPOS="${USE_INTERNAL_REPOS_01}"
         --build-arg USE_ORACLE_CATALOGUE="${USE_ORACLE_CATALOGUE}"
       )
-    - if [ -n "$EXTRA_BUILD_ARGS" ]; then BUILDAH_ARGS+=($EXTRA_BUILD_ARGS); fi
+    - |
+      if [ -n "$EXTRA_BUILD_ARGS" ]; then
+        BUILDAH_ARGS+=($EXTRA_BUILD_ARGS)
+      fi
     - buildah bud "${BUILDAH_ARGS[@]}" .
-    - echo "Pushing to ${IMAGE_REF}"
     - buildah push "${IMAGE_REF}"
-    # - echo "docker_image_size_${TARGET_NAME//-/_} $(( $(buildah inspect --type image --format '{{.Size}}' $IMAGE_REF) / 1024 / 1024 ))" >> "$METRICS_FILE"
-  artifacts:
-    when: always
-    expire_in: 30 days
-    reports:
-      metrics: $METRICS_FILE
-
-###############################################
-# Image Targets
-###############################################
-
-build-image-taped:
-  extends:
-    - .build-cta-image
-  variables:
-    TARGET_NAME: "cta-taped"
-
-build-image-rmcd:
-  extends:
-    - .build-cta-image
-  variables:
-    TARGET_NAME: "cta-rmcd"
-
-build-image-maintd:
-  extends:
-    - .build-cta-image
-  variables:
-    TARGET_NAME: "cta-maintd"
-
-build-image-frontend:
-  extends:
-    - .build-cta-image
-  variables:
-    TARGET_NAME: "cta-frontend"
-
-build-image-tools:
-  extends:
-    - .build-cta-image
-  variables:
-    TARGET_NAME: "cta-tools"
-
-###############################################
-# Publishing
-###############################################
-
-# A few TODOs to improve the image building
-# - Add ability to publish images by retagging them. In that case, we must add some checks on whether Oracle RPMs are in the image or not
-# - Add dnf caching to improve image build speed. Layer caching doesn't do much as the majority of the size comes from a single layer
+build-images:
+  extends: .build-cta-image
+  parallel:
+    matrix:
+      - TARGET_NAME: cta-taped
+      - TARGET_NAME: cta-rmcd
+      - TARGET_NAME: cta-maintd
+      - TARGET_NAME: cta-frontend
+      - TARGET_NAME: cta-tools

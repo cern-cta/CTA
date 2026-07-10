@@ -49,9 +49,11 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     # Add some basic flags to all (micro)dnf commands to improve speed and reduce image size
     echo -e "[main]\ntsflags=nodocs\ninstall_weak_deps=False" > /etc/dnf/dnf.conf && \
     # Some basic utils (tar for kubectl cp, jq for many of the tests and convenience)
-    microdnf install -y \
-      tar \
-      jq && \
+    # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
+    # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is unusable anyway
+    microdnf install -y tar jq sudo && \
+    echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
+    chmod 0440 /etc/sudoers.d/cta && \
     # Cleanup
     rm -rf /var/lib/dnf/history.*
 
@@ -83,11 +85,7 @@ ARG USE_ORACLE_CATALOGUE
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-rmcd \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-rmcd \
-    # Requiring sudo is not ideal, but we need an update of the tests to be able to do without it.
-    # Anyway, by setting allowPrivilegeEscalation: false in Kubernetes, sudo is useless
-    /usr/local/bin/build-service.sh "cta-rmcd cta-smc sg3_utils lsscsi mtx mt-st sudo" && \
-    echo 'cta ALL=(ALL) NOPASSWD: ALL' > /etc/sudoers.d/cta && \
-    chmod 0440 /etc/sudoers.d/cta
+    /usr/local/bin/build-service.sh "cta-rmcd cta-smc sg3_utils lsscsi mtx mt-st"
 
 USER cta
 CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
@@ -133,8 +131,8 @@ FROM base AS cta-tools
 
 ARG USE_INTERNAL_REPOS
 ARG USE_ORACLE_CATALOGUE
-# This image is gigantic... Find a way to reduce it..
 
+# This image is gigantic... Find a way to reduce it..
 # Sadly we need eos-client here for the CI, which bloat the image by quite a bit.
 # Ideally the client chart uses the EOS image so that we don't need eos-client here. However, that requires
 # the completion of the system test migration to ensure we remove the assumption that the eos-client and cta-admin RPMs exist in the same container.
