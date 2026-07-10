@@ -16,10 +16,10 @@ fi
 log_file=$(find ${log_dir} -type f)
 
 # Install dependencies required for testing log rotation inside the tape server"
-sudo microdnf -y install strace lsof
+sudo microdnf -y install strace lsof procps-ng
 
 
-# Get PID of maintd process
+# Get PID of the process
 pid=$(pgrep "$process_name" -u cta)
 
 if [ -z "${pid}" ]; then

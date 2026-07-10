@@ -16,8 +16,6 @@ SUPPORTED = {
         "DEFAULT",
         "REGR_AGAINST_CTA_MAIN",
         "REGR_AGAINST_CTA_VERSION",
-        "SYSTEM_TEST_ONLY",
-        "CUSTOM_SYSTEM_TEST_IMAGE_TAG",
     ]
 }
 
@@ -102,7 +100,6 @@ def validate_default(ci_input_vars):
     exit_if_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars)
     exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
-    exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
 
 
 def validate_regr_against_cta_main(ci_input_vars):
@@ -110,14 +107,13 @@ def validate_regr_against_cta_main(ci_input_vars):
     Validation for the pipeline type `REGR_AGAINST_CTA_MAIN`.
     """
     exit_if_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars)
-    exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
 
 
 def validate_regr_against_cta_version(ci_input_vars):
     """
     Validation for the pipeline type `EOS_REGR_AGAINST_CTA_VERSION`.
     """
-    exit_if_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars)
+    ...
 
 
 def main():
@@ -148,8 +144,7 @@ def main():
     # Ensure availability of any custom provided versions
     if env_var_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars):
         cta_image_tag = ci_input_vars["CUSTOM_CTA_IMAGE_TAG"]
-        # TODO: define registry in project json?
-        check_image_tag_available(cta_image_tag, project_json["dev"]["eosImageRepository"])
+        check_image_tag_available(cta_image_tag, project_json["dev"]["ctaImageRepository"])
 
     if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         xrootd_version = ci_input_vars["CUSTOM_XROOTD_VERSION"]
@@ -160,11 +155,6 @@ def main():
             sys.exit(
                 f"ERROR: CUSTOM_XROOTD_VERSION must be equal to value in project.json ({xrootd_version} != {project_xrootd_version}). Please verify the logic in the modify-project-json job."
             )
-
-    if env_var_defined("CUSTOM_SYSTEM_TEST_IMAGE_TAG", ci_input_vars):
-        check_image_tag_available(
-            ci_input_vars["CUSTOM_SYSTEM_TEST_IMAGE_TAG"], project_json["dev"]["ctaImageRepository"]
-        )
 
     project_eos_image_tag = project_json["dev"]["eosImageTag"]
     if env_var_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars):
