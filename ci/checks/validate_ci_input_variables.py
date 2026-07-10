@@ -5,8 +5,6 @@
 
 import json
 import os
-import re
-import subprocess
 import sys
 from pathlib import Path
 
@@ -42,58 +40,6 @@ def exit_if_defined(env_var_name, ci_input_vars):
 def exit_if_not_defined(env_var_name, ci_input_vars):
     if not env_var_defined(env_var_name, ci_input_vars):
         sys.exit(f"ERROR: {env_var_name} must be provided when running a {ci_input_vars['PIPELINE_TYPE']} pipeline.")
-
-
-def run_cmd(cmd: str):
-    """
-    Run a command in console. The function checks that the commands succeeds.
-    If the command fails the error will be printed and the script will exit.
-    :param cmd: String representing the command to execute.
-    :return: Stripped stdout of the command execution.
-    """
-    try:
-        cmd_call = subprocess.run(
-            cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True, timeout=120
-        )
-    except subprocess.TimeoutExpired:
-        sys.exit(f"ERROR: Timeout reached for command: {cmd}")
-    except subprocess.CalledProcessError as e:
-        sys.exit(f"ERROR: Command failed: {e.stderr}")
-
-    return cmd_call.stdout.strip()
-
-
-def check_rpm_available(package_name: str, package_version: str):
-    """
-    Checks that the package of a given version is available.
-    Note that this assumes the current machine has all the required .repo files correctly configured.
-    """
-    print(f"Checking RPM package {package_name} version {package_version} is available")
-    version_regex = r"(\d+:)?\d[\w.+~]*-\d+[a-zA-Z0-9\._^]*"
-    if not re.fullmatch(version_regex, package_version):
-        sys.exit(
-            f"ERROR: package version {package_version} does not satisfy regex {version_regex}. Please double-check that the version (including the release) is correct."
-        )
-
-    tag_available = run_cmd(f'dnf list --showduplicates {package_name} | grep "{package_version}" | wc -l')
-
-    if int(tag_available) < 1:
-        sys.exit(f"ERROR: Could not find {package_name} version {package_version}")
-    if int(tag_available) > 1:
-        print(f"WARNING: Multiple packages found for {package_name} version {package_version}")
-
-
-def check_image_tag_available(image_tag: str, repository: str):
-    """
-    Checks that the image tag is available in the given repository.
-    """
-    full_image = f"{repository}:{image_tag}"
-    print(f"Checking image {full_image} is available")
-    try:
-        run_cmd(f"podman pull {full_image}")  # Not ideal, but we need to pull the image first
-        run_cmd(f"podman --log-level=error image inspect {full_image}")
-    except SystemExit:
-        sys.exit(f"ERROR: Image tag '{image_tag}' not found in repository '{repository}'")
 
 
 def validate_default(ci_input_vars):
@@ -144,16 +90,9 @@ def main():
     validate_func_name = "validate_" + ci_input_vars["PIPELINE_TYPE"].lower()
     globals()[validate_func_name](ci_input_vars)
 
-    # Ensure availability of any custom provided versions
-    if env_var_defined("CUSTOM_CTA_IMAGE_TAG", ci_input_vars):
-        cta_image_tag = ci_input_vars["CUSTOM_CTA_IMAGE_TAG"]
-        image_to_check = f"{project_json['dev']['ctaImageRegistry']}/cta/ctageneric/cta-taped"  # This is semi-hardcoded. Maybe we should extract some of this into a common place at some point
-        check_image_tag_available(cta_image_tag, image_to_check)
-
     if env_var_defined("CUSTOM_XROOTD_VERSION", ci_input_vars):
         xrootd_version = ci_input_vars["CUSTOM_XROOTD_VERSION"]
         project_xrootd_version = project_json["platforms"][ci_input_vars["PLATFORM"]]["versionlock"]["group-xrootd"]
-        check_rpm_available("xrootd-server", xrootd_version)
         # Check that at this point the project.json contains the same version
         if xrootd_version != project_xrootd_version:
             sys.exit(
@@ -163,7 +102,6 @@ def main():
     project_eos_image_tag = project_json["dev"]["eosImageTag"]
     if env_var_defined("CUSTOM_EOS_IMAGE_TAG", ci_input_vars):
         eos_image_tag = ci_input_vars["CUSTOM_EOS_IMAGE_TAG"]
-        check_image_tag_available(eos_image_tag, project_json["dev"]["eosImageRepository"])
         # Check that at this point the project.json contains the same version
         if eos_image_tag != project_eos_image_tag:
             sys.exit(

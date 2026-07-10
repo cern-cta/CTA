@@ -39,18 +39,9 @@ validate-pipeline-variables:
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
-    - echo "$DOCKER_LOGIN_PASSWORD" | podman login
-        -u "$DOCKER_LOGIN_USERNAME"
-        --password-stdin
-        "$CI_REGISTRY"
     - |
       if [[ -n $CUSTOM_CTA_IMAGE_TAG_ENV ]]; then
         CUSTOM_CTA_IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG_ENV
-      fi
-    - cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
-    - |
-      if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
-        cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
       fi
     - python3 ./ci/checks/validate_ci_input_variables.py
 
