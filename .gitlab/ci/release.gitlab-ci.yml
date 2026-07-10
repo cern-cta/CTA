@@ -212,7 +212,7 @@ public-release-cta-stable:
         --password-stdin
         "$DEST_REGISTRY"
   script:
-    - DST_IMAGE="${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}/${TARGET_NAME}:${CI_COMMIT_TAG}"
+    - DST_IMAGE="${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}/${TARGET_NAME}:${CI_COMMIT_TAG}.${PLATFORM}"
     - echo "Publishing ${SRC_IMAGE} -> ${DST_IMAGE}"
     - buildah pull "$SRC_IMAGE"
     - buildah tag "$SRC_IMAGE" "$DST_IMAGE"
