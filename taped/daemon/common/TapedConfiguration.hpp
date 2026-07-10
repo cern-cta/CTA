@@ -61,6 +61,10 @@ struct TapedConfiguration {
   // Experimental features
   //---------------------------------------------------------------------------
   cta::SourcedParameter<bool> telemetryEnabled {"experimental", "telemetryEnabled", false, "Compile time default"};
+  cta::SourcedParameter<bool> mountDecisionEnabled {"experimental",
+                                                    "MountDecisionEnabled",
+                                                    false,
+                                                    "Compile time default"};
   //----------------------------------------------------------------------------
   // Basics: tape daemon config
   //----------------------------------------------------------------------------

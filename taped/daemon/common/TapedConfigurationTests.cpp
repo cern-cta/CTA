@@ -35,12 +35,14 @@ TEST(cta_Daemon, TapedConfiguration) {
   auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromConfigPath(completeConfFile.path());
   ASSERT_EQ(completeConfFile.path() + ":2", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
+  ASSERT_FALSE(completeConfig.mountDecisionEnabled.value());
 }
 
 TEST(cta_Daemon, TapedConfigurationFull) {
   cta::log::StdoutLogger log("dummy", "unitTests");
   TempFile completeConfFile;
   completeConfFile.stringFill("#A good enough configuration file for taped\n"
+                              "experimental MountDecisionEnabled true\n"
                               "ObjectStore BackendPath vfsObjectStore:///tmp/dir\n"
                               "taped CatalogueConfigFile /etc/cta/catalog.conf\n"
                               "taped ArchiveFetchBytesFiles 1,2\n"
@@ -61,9 +63,10 @@ TEST(cta_Daemon, TapedConfigurationFull) {
 
   // The log parameter can be uncommented to inspect the result on the output.
   auto completeConfig = cta::tape::daemon::TapedConfiguration::createFromConfigPath(completeConfFile.path() /*, log*/);
-  ASSERT_EQ(completeConfFile.path() + ":2", completeConfig.backendPath.source());
+  ASSERT_TRUE(completeConfig.mountDecisionEnabled.value());
+  ASSERT_EQ(completeConfFile.path() + ":3", completeConfig.backendPath.source());
   ASSERT_EQ("vfsObjectStore:///tmp/dir", completeConfig.backendPath.value());
-  ASSERT_EQ(completeConfFile.path() + ":3", completeConfig.fileCatalogConfigFile.source());
+  ASSERT_EQ(completeConfFile.path() + ":4", completeConfig.fileCatalogConfigFile.source());
   ASSERT_EQ("/etc/cta/catalog.conf", completeConfig.fileCatalogConfigFile.value());
   ASSERT_EQ(1, completeConfig.archiveFetchBytesFiles.value().maxBytes);
   ASSERT_EQ(2, completeConfig.archiveFetchBytesFiles.value().maxFiles);

@@ -233,6 +233,10 @@ telemetry_enabled *(default: false)*
 
 :   Enables experimental telemetry support.
 
+mount_decision_enabled *(default: false)*
+
+:   Enables the experimental Mount Decision component. When this is disabled, enabling the Mount Decision routine is a configuration error.
+
 # FILES
 
 */etc/cta/cta-maintd.toml*

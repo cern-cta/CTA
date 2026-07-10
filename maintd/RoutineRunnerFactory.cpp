@@ -10,6 +10,7 @@
 #include "catalogue/CatalogueFactoryFactory.hpp"
 #include "common/exception/Errnum.hpp"
 #include "common/exception/Exception.hpp"
+#include "common/exception/UserError.hpp"
 #include "common/semconv/Attributes.hpp"
 #include "rdbms/Login.hpp"
 #include "routines/disk/DiskReportArchiveRoutine.hpp"
@@ -113,6 +114,10 @@ std::unique_ptr<RoutineRunner> RoutineRunnerFactory::create() {
 #ifdef CTA_PGSCHED
   // Add Mount Decision loop
   if (m_config.routines.mount_decision_loop.enabled) {
+    if (!m_config.experimental.mount_decision_enabled) {
+      throw exception::UserError(
+        "Mount Decision loop routine is enabled, but experimental.mount_decision_enabled is false.");
+    }
     routines.push_back(std::make_unique<MountDecisionRoutine>(m_lc, *m_schedDb));
   }
 #endif

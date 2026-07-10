@@ -72,6 +72,7 @@ data:
 
     [experimental]
       telemetry_enabled = true
+      mount_decision_enabled = {{ $.Values.experimental.mountDecisionEnabled }}
 
 ---
 {{- end }}

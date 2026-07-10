@@ -32,8 +32,9 @@ namespace cta::runtime {
  */
 struct ExperimentalConfig final {
   bool telemetry_enabled = false;
+  bool mount_decision_enabled = false;
 
-  static constexpr std::size_t memberCount() { return 1; }
+  static constexpr std::size_t memberCount() { return 2; }
 };
 
 /**

@@ -126,3 +126,4 @@
 
 [experimental]
   telemetry_enabled = false
+  mount_decision_enabled = false

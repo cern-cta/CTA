@@ -119,8 +119,8 @@
   repack_expand        = { enabled = true, max_to_expand = 2 }
   # Routine that handles the reporting of the requests created by repack requests.
   repack_report        = { enabled = true, soft_timeout_secs = 30 }
-  # Routine that handles the Mount Decision loop.
-  mount_decision_loop = { enabled = true }
+  # Routine that handles the Mount Decision loop. Requires experimental.mount_decision_enabled = true.
+  mount_decision_loop = { enabled = false }
 
   user_active_queue_cleanup   = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
   repack_active_queue_cleanup = { enabled = true, batch_size = 1000, age_for_collection_secs = 900 }
@@ -130,3 +130,4 @@
 
 [experimental]
   telemetry_enabled = false
+  mount_decision_enabled = false

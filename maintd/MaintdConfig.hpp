@@ -54,7 +54,7 @@ struct GarbageCollectRoutineConfig final {
 #else
 
 struct MountDecisionLoopRoutineConfig final {
-  bool enabled = true;
+  bool enabled = false;
 
   static constexpr std::size_t memberCount() { return 1; }
 };
