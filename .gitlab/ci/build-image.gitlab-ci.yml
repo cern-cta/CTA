@@ -88,6 +88,11 @@
       fi
     - buildah bud "${BUILDAH_ARGS[@]}" .
     - buildah push "${IMAGE_REF}"
+  cache:
+    # Will be able to cache e.g. the DNF cache for faster builds
+    key: "docker-cache:${PLATFORM}:${TARGET_NAME}"
+    paths:
+      - /builds/container-storage/
 
 build-cta-images:
   extends: .build-cta-image
