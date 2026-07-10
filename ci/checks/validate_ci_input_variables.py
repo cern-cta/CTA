@@ -90,6 +90,7 @@ def check_image_tag_available(image_tag: str, repository: str):
     full_image = f"{repository}:{image_tag}"
     print(f"Checking image {full_image} is available")
     try:
+        run_cmd(f"podman pull {full_image}")  # Not ideal, but we need to pull the image first
         run_cmd(f"podman --log-level=error image inspect {full_image}")
     except SystemExit:
         sys.exit(f"ERROR: Image tag '{image_tag}' not found in repository '{repository}'")
