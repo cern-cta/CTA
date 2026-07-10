@@ -58,24 +58,4 @@ RepackQueueType RepackInfo::getQueueType() const {
   }
 }
 
-RepackInfo::Status RepackInfo::getCurrentStatus() const {
-  {
-    bool finishedExpansion = isExpandFinished;
-    bool allRetrieveDone = (retrievedFiles + failedFilesToRetrieve) >= totalFilesToRetrieve;
-    bool allArchiveDone = (archivedFiles + failedFilesToArchive + failedToCreateArchiveReq) >= totalFilesToArchive;
-    if (finishedExpansion && allRetrieveDone && allArchiveDone) {
-      if (failedFilesToRetrieve > 0 || failedFilesToArchive > 0) {
-        return common::dataStructures::RepackInfo::Status::Failed;
-      } else {
-        return common::dataStructures::RepackInfo::Status::Complete;
-      }
-    }
-  }
-  if (retrievedFiles > 0 || failedFilesToRetrieve > 0 || archivedFiles > 0 || failedFilesToArchive > 0) {
-    return common::dataStructures::RepackInfo::Status::Running;
-  }
-
-  return common::dataStructures::RepackInfo::Status::Starting;
-}
-
 }  // namespace cta::common::dataStructures

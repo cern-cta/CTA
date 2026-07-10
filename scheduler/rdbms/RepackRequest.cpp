@@ -343,23 +343,26 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
   setLastExpandedFSeq(fSeq);
   cta::schedulerdb::Transaction txn(m_connPool, m_lc);
   try {
-    uint64_t nrows =
-      postgres::RepackRequestTrackingRow::updateRepackRequest(txn,
-                                                              repackInfo.repackReqId,
-                                                              totalStatsFiles,
-                                                              nbRetrieveSubrequestsCreated,
-                                                              fSeq,
-                                                              mapRepackInfoStatusToJobStatus(repackInfo.status));
+    // The repack request status here could be either Starting or Running.
+    uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequestWithExpansionStats(
+      txn,
+      repackInfo.repackReqId,
+      totalStatsFiles,
+      nbRetrieveSubrequestsCreated,
+      fSeq,
+      mapRepackInfoStatusToJobStatus(repackInfo.status));
     log::ScopedParamContainer(m_lc)
       .add("nrows", nrows)
-      .log(
-        log::INFO,
-        "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequest() called successfully after expansion.");
+      .log(log::INFO,
+           "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequestWithExpansionStats() called "
+           "successfully after expansion.");
     txn.commit();
   } catch (cta::exception::Exception& e) {
     std::string bt = e.backtrace();
-    m_lc.log(log::ERR,
-             "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequest() Exception thrown: " + bt);
+    m_lc.log(
+      log::ERR,
+      "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequestWithExpansionStats() Exception thrown: "
+        + bt);
     txn.abort();
   }
   return nbRetrieveSubrequestsCreated;
@@ -374,11 +377,10 @@ void RepackRequest::fail() {
   cta::schedulerdb::Transaction txn(m_connPool, m_lc);
   try {
     repackInfo.status = common::dataStructures::RepackInfo::Status::Failed;
-    uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequestStatusAndFinishTime(
+    uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequestExpansionFailure(
       txn,
       repackInfo.repackReqId,
       repackInfo.isExpandFinished,
-      RepackJobStatus::RRS_Failed,
       std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
 
     log::ScopedParamContainer(m_lc)
@@ -411,46 +413,21 @@ void RepackRequest::setExpandStartedAndChangeStatus() {
                                "should not attempt to run, IS_EXPAND_STARTED is false.");
   }
 
-  // Evaluate new status
-  auto newStatus = repackInfo.getCurrentStatus();
-  repackInfo.status = newStatus;
-
   cta::schedulerdb::Transaction txn(m_connPool, m_lc);
 
   try {
-    if (newStatus == common::dataStructures::RepackInfo::Status::Complete
-        || newStatus == common::dataStructures::RepackInfo::Status::Failed) {
-      repackInfo.repackFinishedTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-      log::ScopedParamContainer(m_lc)
-        .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus)))
-        .log(
-          log::DEBUG,
-          "RepackRequest::setExpandStartedAndChangeStatus(): updateRepackRequestStatusAndFinishTime() before update");
+    // As this method is called at start and end of expension only, we set status to Starting
+    uint64_t nrows =
+      postgres::RepackRequestTrackingRow::updateRepackRequestExpansionStatus(txn,
+                                                                             repackInfo.repackReqId,
+                                                                             repackInfo.isExpandFinished);
 
-      uint64_t nrows = postgres::RepackRequestTrackingRow::updateRepackRequestStatusAndFinishTime(
-        txn,
-        repackInfo.repackReqId,
-        repackInfo.isExpandFinished,
-        mapRepackInfoStatusToJobStatus(newStatus),
-        repackInfo.repackFinishedTime);
+    log::ScopedParamContainer(m_lc).add("nrows", nrows).log(log::INFO, "updateRepackRequestExpansionStatus finished");
 
-      log::ScopedParamContainer(m_lc)
-        .add("nrows", nrows)
-        .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus)))
-        .log(log::INFO, "updateRepackRequestStatusAndFinishTime finished");
-    } else {
-      uint64_t nrows =
-        postgres::RepackRequestTrackingRow::updateRepackRequestStatus(txn,
-                                                                      repackInfo.repackReqId,
-                                                                      repackInfo.isExpandFinished,
-                                                                      mapRepackInfoStatusToJobStatus(newStatus));
-
-      log::ScopedParamContainer(m_lc).add("nrows", nrows).log(log::INFO, "updateRepackRequestStatus finished");
-    }
     txn.commit();
   } catch (cta::exception::Exception& e) {
     log::ScopedParamContainer(m_lc)
-      .add("newStatus", to_string(mapRepackInfoStatusToJobStatus(newStatus)))
+      .add("newStatus", to_string(RepackJobStatus::RRS_Starting))
       .add("repackInfo.repackReqId", repackInfo.repackReqId)
       .add("repackInfo.isExpandFinished", repackInfo.isExpandFinished)
       .add("repackInfo.repackFinishedTime", repackInfo.repackFinishedTime)

@@ -68,7 +68,7 @@ struct RepackInfo {
   std::string mountPolicy;
 
   RepackQueueType getQueueType() const;
-  Status getCurrentStatus() const;
+
 };  // struct RepackInfo
 
 std::string toString(RepackInfo::Type type);

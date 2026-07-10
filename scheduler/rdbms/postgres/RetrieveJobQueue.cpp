@@ -265,7 +265,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatus(Transaction& txn,
   // }
   std::string sql = "UPDATE ";
   sql += repack_table_name_prefix + "RETRIEVE_ACTIVE_QUEUE ";
-  sql += " SET STATUS = :STATUS, LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER WHERE JOB_ID IN ("
+  sql += " SET STATUS = :STATUS, LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT WHERE JOB_ID IN ("
          + sqlpart + ")";
   auto stmt1 = txn.getConn().createStmt(sql);
   stmt1.bindString(":STATUS", to_string(newStatus));
@@ -290,7 +290,7 @@ uint64_t RetrieveJobQueueRow::updateFailedJobStatus(Transaction& txn, bool isRep
         RETRIES_WITHIN_MOUNT = :RETRIES_WITHIN_MOUNT,
         LAST_MOUNT_WITH_FAILURE = :LAST_MOUNT_WITH_FAILURE,
         FAILURE_LOG = FAILURE_LOG || :FAILURE_LOG,
-        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
         WHERE JOB_ID = :JOB_ID
     )SQL";
   auto stmt = txn.getConn().createStmt(sql);
@@ -369,7 +369,7 @@ uint64_t RetrieveJobQueueRow::requeueFailedJob(Transaction& txn,
        INSERT INTO MOUNT_QUEUE_LAST_FETCH (MOUNT_ID, LAST_UPDATE_TIME, QUEUE_TYPE)
          SELECT DISTINCT
            M.MOUNT_ID,
-           EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
+           EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT,
            :QUEUE_TYPE
          FROM MOVED_ROWS M
        ON CONFLICT (MOUNT_ID, QUEUE_TYPE)
@@ -1143,7 +1143,7 @@ uint64_t RetrieveJobQueueRow::updateJobStatusForFailedReport(Transaction& txn, R
         TOTAL_REPORT_RETRIES = :TOTAL_REPORT_RETRIES,
         IS_REPORTING =:IS_REPORTING,
         REPORT_FAILURE_LOG = :REPORT_FAILURE_LOG,
-        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
       WHERE JOB_ID = :JOB_ID
     )SQL";
 
@@ -1205,7 +1205,7 @@ rdbms::Rset RetrieveJobQueueRow::flagReportingJobsByStatus(Transaction& txn,
         LIMIT :LIMIT FOR UPDATE SKIP LOCKED)
       UPDATE RETRIEVE_ACTIVE_QUEUE SET
         IS_REPORTING = TRUE,
-        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::BIGINT
       FROM SET_SELECTION
       WHERE RETRIEVE_ACTIVE_QUEUE.JOB_ID = SET_SELECTION.JOB_ID
       RETURNING RETRIEVE_ACTIVE_QUEUE.*

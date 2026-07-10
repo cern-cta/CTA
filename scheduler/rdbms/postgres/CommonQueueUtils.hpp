@@ -34,4 +34,67 @@ namespace cta::schedulerdb::postgres {
 */
 uint64_t updateMountQueueLastFetch(Transaction& txn, uint64_t mountId, bool isActive, bool isRepack, bool isArchive);
 
+// The status of repack request is being changed by two progress update methods
+// one for failures and one for successes (both used for retrieve as well as archive)
+// To make sure there is one source of truth, we here are the helper objects for
+// building the status related SQL used in these two methods.
+
+/**
+ * SQL expression inputs used to build the status and completion expressions for
+ * REPACK_REQUEST_TRACKING updates.
+ *
+ * Each field shall contain a valid SQL expression representing either an
+ * existing column or an updated counter expression (e.g.
+ * "trk.RETRIEVED_FILES + agg.RETRIEVED_FILES_INC").
+ */
+
+struct RepackRequestStatusSqlInputs {
+  std::string isExpandFinished;
+  std::string retrievedFiles;
+  std::string failedRetrieveFiles;
+  std::string totalRetrieveFiles;
+  std::string archivedFiles;
+  std::string failedArchiveFiles;
+  std::string failedCreateArchiveReq;
+  std::string totalArchiveFiles;
+};
+
+/**
+ * Builds the SQL boolean expression determining whether a repack request has
+ * reached a terminal state.
+ *
+ * The returned string is a valid PostgreSQL boolean expression that evaluates
+ * to TRUE when:
+ *   - expansion has finished,
+ *   - all files have either been successfully retrieved or failed retrieval,
+ *   - all files have either been successfully archived, failed
+ *     archiving, or failed during archive request creation.
+ *
+ * The returned expression is intended to be embedded directly into SQL
+ * statements (e.g. CASE expressions or assignments) and does not include any
+ * surrounding SQL keywords.
+ *
+ * @param i SQL expressions representing the current or updated counter values.
+ * @return A PostgreSQL boolean expression.
+ */
+std::string repackRequestIsCompleteSql(const RepackRequestStatusSqlInputs& i);
+
+/**
+ * Builds the SQL CASE expression computing the REPACK_REQUEST_TRACKING.STATUS
+ * value from the supplied counter expressions.
+ *
+ * The generated expression implements the repack request status policy:
+ *   - Failed    : terminal state with at least one retrieval or archive failure.
+ *   - Complete  : terminal state with no retrieval or archive failures.
+ *   - Running   : any retrieval/archive progress or failure has been observed.
+ *   - Starting  : no progress has been made yet.
+ *
+ * The returned SQL is intended to be used directly as the right-hand side of a
+ * STATUS assignment within an UPDATE statement.
+ *
+ * @param i SQL expressions representing the current or updated counter values.
+ * @return A PostgreSQL CASE expression yielding a REPACK_REQ_STATUS value.
+ */
+std::string repackRequestStatusSql(const RepackRequestStatusSqlInputs& i);
+
 };  // namespace cta::schedulerdb::postgres
