@@ -73,16 +73,14 @@
     - echo "Building ${TARGET_NAME}"
     - cd "$(dirname "${DOCKERFILE}")"
     - DOCKERFILE_NAME="$(basename "${DOCKERFILE}")"
-    - (( USE_ORACLE_CATALOGUE = ORACLE_SUPPORT == "TRUE" ))
-    - (( USE_INTERNAL_REPOS_01 = USE_INTERNAL_REPOS == "TRUE" ))
     - |
       BUILDAH_ARGS=(
         --target "${TARGET_NAME}"
         --file "${DOCKERFILE_NAME}"
         --tag "${IMAGE_REF}"
         --build-context rpm_context="${RPM_CONTEXT}"
-        --build-arg USE_INTERNAL_REPOS="${USE_INTERNAL_REPOS_01}"
-        --build-arg USE_ORACLE_CATALOGUE="${USE_ORACLE_CATALOGUE}"
+        --build-arg USE_INTERNAL_REPOS="${USE_INTERNAL_REPOS}"
+        --build-arg USE_ORACLE_CATALOGUE="${ORACLE_SUPPORT}"
       )
     - |
       if [ -n "$EXTRA_BUILD_ARGS" ]; then

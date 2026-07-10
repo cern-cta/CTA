@@ -209,9 +209,12 @@ test-cta-release:
                                   cta-readtp
                                   cta-rmcd
                                   cta-smc
-                                  cta-lib-catalogue-occi
                                   eos-server
                                   eos-client
+    - |
+      if [[ $ORACLE_SUPPORT == "TRUE" ]]; then
+        dnf install --nogpgcheck -y cta-lib-catalogue-occi
+      fi
     # Check that everything was installed properly
     - cta-versionlock --json check-installed > checkpkg-output.json
   artifacts:

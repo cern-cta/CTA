@@ -18,14 +18,14 @@ microdnf install -y cta-release dnf
 cta-versionlock apply
 
 # Conditionally overwrite public repos
-if [ "$USE_INTERNAL_REPOS" = "1" ]; then
+if [[ "$USE_INTERNAL_REPOS" == "1" ]] || [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
     cp -f /tmp/internal-repos/* /etc/yum.repos.d/
     # Track which repo files were added so that we can delete them later
     ls /tmp/internal-repos/ > /tmp/internal-repo-list.txt
 fi
 
 # Conditionally add Oracle support
-if [ "$USE_ORACLE_CATALOGUE" = "1" ]; then
+if [[ "$USE_ORACLE_CATALOGUE" == "1" ]] || [[ "$USE_ORACLE_CATALOGUE" == "TRUE" ]]; then
     TARGET_PACKAGES="$TARGET_PACKAGES cta-lib-catalogue-occi"
 fi
 
