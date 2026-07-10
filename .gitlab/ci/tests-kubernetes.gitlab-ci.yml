@@ -20,6 +20,8 @@
   - | # Which image tag to use
     if [[ -n "$CUSTOM_CTA_IMAGE_TAG" ]]; then
       IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG
+    elif [[ -n "$CUSTOM_CTA_IMAGE_TAG_ENV" ]]; then
+      IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG_ENV
     else
       IMAGE_TAG=${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     fi

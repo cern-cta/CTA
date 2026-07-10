@@ -40,6 +40,7 @@ modify-project-json:
           "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
     # Populate the latest CTA image tag if necessary in a dotenv file so that we can use this later on
     # The image tag should be identical to the version, so we simply grab the latest stable relase and assume that is our image tag
+    # Note that dotenv reports have lower precedence than pipeline variables (even empty ones), so any variables MUST have a different name
     - |
       if [[ "$PIPELINE_TYPE" == "REGR_AGAINST_CTA_VERSION" ]] && [[ -z "$CUSTOM_CTA_IMAGE_TAG" ]]; then
         CTA_REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/${PLATFORM}/cta/x86_64/"
