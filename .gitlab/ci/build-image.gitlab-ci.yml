@@ -98,3 +98,13 @@ build-cta-images:
       - TARGET_NAME: cta-maintd
       - TARGET_NAME: cta-frontend
       - TARGET_NAME: cta-tools
+
+build-cta-debug-image:
+  extends: .build-cta-image
+  rules:
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
+      when: never
+    - when: manual
+      allow_failure: true
+  variables:
+    TARGET_NAME: cta-debug
