@@ -238,7 +238,7 @@ publish-images-public:
   rules:
     - if: $ORACLE_SUPPORT == "TRUE"
       when: never
-    - !reference [.build-cta-image, rules]
+    - !reference [.publish-image, rules]
   variables:
     DEST_REGISTRY: $DOCKER_IMAGE_REGISTRY
     DEST_IMAGE_PREFIX: $DOCKER_PUBLIC_REGISTRY_PREFIX
