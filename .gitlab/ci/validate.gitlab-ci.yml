@@ -39,7 +39,10 @@ validate-pipeline-variables:
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
-    - echo $CUSTOM_CTA_IMAGE_TAG
+    - |
+      if [[ -n $CUSTOM_CTA_IMAGE_TAG_ENV ]]; then
+        CUSTOM_CTA_IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG_ENV
+      fi
     - cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     - |
       if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then

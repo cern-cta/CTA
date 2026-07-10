@@ -47,12 +47,11 @@ modify-project-json:
         CUSTOM_CTA_IMAGE_TAG=$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)
         echo "Using latest stable release: $CUSTOM_CTA_IMAGE_TAG"
         # Note the slightly different name. This is due to CI variable precedence
-        echo "CUSTOM_CTA_IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG" >> pipeline.env
+        echo "CUSTOM_CTA_IMAGE_TAG_ENV=$CUSTOM_CTA_IMAGE_TAG" >> pipeline.env
       fi
     # Done
     - echo "File content after replacement"
     - cat "${project_json_file}" | jq
-    - cat pipeline.env
   artifacts:
     paths:
       - project.json
