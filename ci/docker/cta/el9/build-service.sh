@@ -25,7 +25,7 @@ if [[ "$ENABLE_INTERNAL_REPOS" == "1" ]] || [[ "$ENABLE_INTERNAL_REPOS" == "TRUE
 fi
 
 # Conditionally add Oracle support
-if [[ "$ENABLE_ORACLE_CATALOGUE" == "1" ]] || [[ "$ENABLE_ORACLE_CATALOGUE" == "TRUE" ]]; then
+if [[ "$ENABLE_ORACLE_SUPPORT" == "1" ]] || [[ "$ENABLE_ORACLE_SUPPORT" == "TRUE" ]]; then
     TARGET_PACKAGES="$TARGET_PACKAGES cta-lib-catalogue-occi"
 fi
 

@@ -133,8 +133,8 @@ for target in "${targets[@]}"; do
       ${container_runtime} build . -f ${dockerfile} \
         -t ${image_ref} \
         --build-context rpm_context="${rpm_src}" \
-        --build-arg enable_internal_repos=${enable_internal_repos} \
-        --build-arg enable_oracle_support=${enable_oracle_support} \
+        --build-arg ENABLE_INTERNAL_REPOS=${enable_internal_repos} \
+        --build-arg ENABLE_ORACLE_SUPPORT=${enable_oracle_support} \
         --network host \
         --label build.id="$BUILD_ID" \
         --target $target

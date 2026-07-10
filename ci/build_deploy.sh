@@ -165,7 +165,7 @@ build_deploy() {
       --upgrade-cta)                upgrade_cta=true ;;
       --upgrade-eos)                upgrade_eos=true ;;
       --use-public-repos)           enable_internal_repos=false ;;
-      --enable-debug-image)         enable_debug_image=false ;;
+      --enable-debug-image)         enable_debug_image=true ;;
       --local-telemetry)            local_telemetry=true ;;
       --publish-telemetry)          publish_telemetry=true ;;
       --no-setup)                   no_setup=true ;;

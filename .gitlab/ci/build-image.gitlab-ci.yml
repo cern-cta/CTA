@@ -80,7 +80,7 @@
         --tag "${IMAGE_REF}"
         --build-context rpm_context="${RPM_CONTEXT}"
         --build-arg ENABLE_INTERNAL_REPOS="${ENABLE_INTERNAL_REPOS}"
-        --build-arg ENABLE_ORACLE_CATALOGUE="${ENABLE_ORACLE_SUPPORT}"
+        --build-arg ENABLE_ORACLE_SUPPORT="${ENABLE_ORACLE_SUPPORT}"
       )
     - |
       if [ -n "$EXTRA_BUILD_ARGS" ]; then

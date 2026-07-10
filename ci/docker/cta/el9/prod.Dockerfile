@@ -63,7 +63,7 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
 FROM base AS cta-taped
 
 ARG ENABLE_INTERNAL_REPOS
-ARG ENABLE_ORACLE_CATALOGUE
+ARG ENABLE_ORACLE_SUPPORT
 
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-taped \
@@ -80,7 +80,7 @@ CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--l
 FROM base AS cta-rmcd
 
 ARG ENABLE_INTERNAL_REPOS
-ARG ENABLE_ORACLE_CATALOGUE
+ARG ENABLE_ORACLE_SUPPORT
 
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-rmcd \
@@ -96,7 +96,7 @@ CMD ["/usr/bin/cta-rmcd", "-f", "/dev/smc"]
 FROM base AS cta-maintd
 
 ARG ENABLE_INTERNAL_REPOS
-ARG ENABLE_ORACLE_CATALOGUE
+ARG ENABLE_ORACLE_SUPPORT
 
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-maintd \
@@ -113,7 +113,7 @@ CMD ["/usr/bin/cta-maintd", "--log-file=/var/log/cta/cta-maintd.log", "--config-
 FROM base AS cta-frontend
 
 ARG ENABLE_INTERNAL_REPOS
-ARG ENABLE_ORACLE_CATALOGUE
+ARG ENABLE_ORACLE_SUPPORT
 
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-frontend \
@@ -130,7 +130,7 @@ CMD ["/bin/bash", "-c", "/usr/bin/cta-frontend-grpc >> /var/log/cta/cta-frontend
 FROM base AS cta-tools
 
 ARG ENABLE_INTERNAL_REPOS
-ARG ENABLE_ORACLE_CATALOGUE
+ARG ENABLE_ORACLE_SUPPORT
 
 # This image is gigantic... Find a way to reduce it..
 # Sadly we need eos-client here for the CI, which bloat the image by quite a bit.
@@ -150,12 +150,12 @@ ENTRYPOINT ["/bin/bash"]
 FROM base AS cta-debug
 
 ARG ENABLE_INTERNAL_REPOS
-ARG ENABLE_ORACLE_CATALOGUE
+ARG ENABLE_ORACLE_SUPPORT
 
 # This image is also gigantic, so we don't build it by default. Build this using the --enable-debug-image in build_deploy.sh
 RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
-    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-tools \
-    --mount=type=cache,target=/var/cache/yum,id=yum-cta-tools \
-    /usr/local/bin/build-service.sh "cta-* cta-debuginfo-* gdb"
+    --mount=type=cache,target=/var/cache/dnf,id=dnf-cta-debug \
+    --mount=type=cache,target=/var/cache/yum,id=yum-cta-debug \
+    /usr/local/bin/build-service.sh "cta-* cta-*-debuginfo* gdb"
 
 ENTRYPOINT ["/bin/bash"]
