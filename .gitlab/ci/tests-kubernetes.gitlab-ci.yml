@@ -32,7 +32,7 @@
     - job: modify-project-json
       optional: true
     # Image jobs are optional because we may want run with existing docker images
-    - job: build-images
+    - job: build-cta-images
       optional: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -91,7 +91,7 @@
     - job: modify-project-json
       optional: true
     # Image jobs are optional because we may want run with existing docker images
-    - job: build-images
+    - job: build-cta-images
       optional: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -288,7 +288,7 @@ stress-test:
     - job: modify-project-json
       optional: true
     # Image jobs are optional because we may want run with existing docker images
-    - job: build-images
+    - job: build-cta-images
       optional: true
   rules:
     - if: $CI_COMMIT_TAG
@@ -363,7 +363,7 @@ stress-test-python:
     - job: modify-project-json
       optional: true
     # Image jobs are optional because we may want run with existing docker images
-    - job: build-images
+    - job: build-cta-images
       optional: true
   rules:
     - when: manual

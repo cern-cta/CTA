@@ -65,9 +65,9 @@
        [storage.options.overlay]
       EOF
     - cp ~/.config/containers/storage.conf /etc/containers/storage.conf || true
-    - echo "$DOCKER_LOGIN_PASSWORD" | buildah login \
-        -u "$DOCKER_LOGIN_USERNAME" \
-        --password-stdin \
+    - echo "$DOCKER_LOGIN_PASSWORD" | buildah login
+        -u "$DOCKER_LOGIN_USERNAME"
+        --password-stdin
         "$CI_REGISTRY"
   script:
     - echo "Building ${TARGET_NAME}"
@@ -90,7 +90,8 @@
       fi
     - buildah bud "${BUILDAH_ARGS[@]}" .
     - buildah push "${IMAGE_REF}"
-build-images:
+
+build-cta-images:
   extends: .build-cta-image
   parallel:
     matrix:

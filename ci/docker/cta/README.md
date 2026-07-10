@@ -30,7 +30,7 @@ The helper script builds all image targets in parallel.
 Example:
 
 ```bash
-./ci/docker/build-images.sh \
+./ci/build/build_image.sh \
   --tag dev \
   --rpm-src build_rpm/RPM/RPMS/x86_64
 ```
@@ -48,7 +48,7 @@ cta/ctageneric/cta-tools:dev
 ### Using Docker instead of Podman
 
 ```bash
-./ci/docker/build-images.sh \
+./ci/build/build_image.sh \
   --container-runtime docker \
   --tag dev \
   --rpm-src build_rpm/RPM/RPMS/x86_64
@@ -59,7 +59,7 @@ cta/ctageneric/cta-tools:dev
 For local Kubernetes setups:
 
 ```bash
-./ci/docker/build-images.sh \
+./ci/build/build_image.sh \
   --tag dev \
   --rpm-src build_rpm/RPM/RPMS/x86_64 \
   --load-into-k8s
@@ -77,7 +77,7 @@ and imports the generated images into the corresponding image store.
 To enable internal CERN repositories:
 
 ```bash
-./ci/docker/build-images.sh \
+./ci/build/build_image.sh \
   --tag dev \
   --rpm-src build_rpm/RPM/RPMS/x86_64 \
   --use-internal-repos

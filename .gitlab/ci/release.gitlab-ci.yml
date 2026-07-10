@@ -186,6 +186,15 @@ public-release-cta-stable:
 
 .publish-image:
   stage: release
+  needs:
+    - job: build-cta-images
+      parallel:
+        matrix:
+          - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
+  rules:
+    - if: $CI_COMMIT_TAG
+      when: manual
+      allow_failure: true
   image:
     name: $IMAGE_DOCKER_IMAGE_BUILDER
     entrypoint: [""]
@@ -193,23 +202,14 @@ public-release-cta-stable:
     CTA_BUILD_ID: ${CI_PIPELINE_ID}git${CI_COMMIT_SHORT_SHA}
     SRC_IMAGE: ${DOCKER_IMAGE_REGISTRY}/${DOCKER_PRIVATE_REGISTRY_PREFIX}/${TARGET_NAME}:${CTA_BUILD_ID}
     GIT_SUBMODULE_STRATEGY: none
-  rules:
-    - if: $CI_COMMIT_TAG
-      when: manual
-      allow_failure: true
-  needs:
-    - job: build-images
-      parallel:
-        matrix:
-          - TARGET_NAME: ['$[[ matrix.TARGET_NAME ]]']
   before_script:
-    - echo "$SOURCE_REGISTRY_PASSWORD" | buildah login \
-        -u "$SOURCE_REGISTRY_USERNAME" \
-        --password-stdin \
+    - echo "$SOURCE_REGISTRY_PASSWORD" | buildah login
+        -u "$SOURCE_REGISTRY_USERNAME"
+        --password-stdin
         "$CI_REGISTRY"
-    - echo "$DEST_REGISTRY_PASSWORD" | buildah login \
-        -u "$DEST_REGISTRY_USERNAME" \
-        --password-stdin \
+    - echo "$DEST_REGISTRY_PASSWORD" | buildah login
+        -u "$DEST_REGISTRY_USERNAME"
+        --password-stdin
         "$DEST_REGISTRY"
   script:
     - DST_IMAGE="${DEST_REGISTRY}/${DEST_IMAGE_PREFIX}/${TARGET_NAME}:${CI_COMMIT_TAG}"
@@ -220,9 +220,6 @@ public-release-cta-stable:
 
 publish-images-private:
   extends: .publish-image
-  parallel:
-    matrix:
-      - TARGET_NAME: *image-targets
   variables:
     DEST_REGISTRY: $DOCKER_IMAGE_REGISTRY
     DEST_IMAGE_PREFIX: $DOCKER_PRIVATE_REGISTRY_PREFIX
@@ -232,6 +229,9 @@ publish-images-private:
 
     DEST_REGISTRY_USERNAME: $DOCKER_LOGIN_USERNAME
     DEST_REGISTRY_PASSWORD: $DOCKER_LOGIN_PASSWORD
+  parallel:
+    matrix:
+      - TARGET_NAME: *image-targets
 
 publish-images-public:
   extends: .publish-image
@@ -239,16 +239,6 @@ publish-images-public:
     - if: $ORACLE_SUPPORT == "TRUE"
       when: never
     - !reference [.build-cta-image, rules]
-  parallel:
-    matrix:
-      - TARGET_NAME: *image-targets
-  before_script:
-    - |
-      if [[ "$ORACLE_SUPPORT" == "TRUE" ]]; then
-        echo "Oracle-enabled images cannot be published publicly."
-        exit 1
-      fi
-    - !reference [.publish-image, before_script]
   variables:
     DEST_REGISTRY: $DOCKER_IMAGE_REGISTRY
     DEST_IMAGE_PREFIX: $DOCKER_PUBLIC_REGISTRY_PREFIX
@@ -259,3 +249,13 @@ publish-images-public:
     # If this does not work, we may need different credentials for the public registry
     DEST_REGISTRY_USERNAME: $DOCKER_LOGIN_USERNAME
     DEST_REGISTRY_PASSWORD: $DOCKER_LOGIN_PASSWORD
+  before_script:
+    - |
+      if [[ "$ORACLE_SUPPORT" == "TRUE" ]]; then
+        echo "Oracle-enabled images cannot be published publicly."
+        exit 1
+      fi
+    - !reference [.publish-image, before_script]
+  parallel:
+    matrix:
+      - TARGET_NAME: *image-targets
