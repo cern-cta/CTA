@@ -35,6 +35,7 @@ build-cta-rpms:
     BUILD_PATH: "build_rpm/RPM/RPMS"
     XRD_SSI_PATH: "xrootd-ssi-protobuf-interface"
     RPM_SIZE_METRICS_ID: "relwithdebinfo" # Default build is a relwithdebinfo build
+    DNF_CACHE_DIR: "$CI_PROJECT_DIR/.dnf_cache"
     # Will only be used if ccache is enabled
     CCACHE_BASEDIR: "/builds/cta"
     CCACHE_NOHASHDIR: "true"
@@ -107,12 +108,13 @@ build-cta-rpms:
       - ${BUILD_PATH}
 
   cache:
-    - key: "build-cache:${CI_PROJECT_ID}:${CACHE_BRANCH}"
+    - key: "build-cache-${PLATFORM}-${CACHE_BRANCH}"
       fallback_keys:
-        - "build-cache:${CI_PROJECT_ID}:${CI_DEFAULT_BRANCH}"
+        - "build-cache-${PLATFORM}-${CI_DEFAULT_BRANCH}"
       policy: $BUILD_CACHE_POLICY
       paths:
         - .ccache/
+        - .dnf_cache/
 
 # These build jobs are not (and ideally should not) be used further down the pipeline; just compilation checks
 # All builds below don't use the cache as they are not on the critical part anyway (and they may pollute the cache)

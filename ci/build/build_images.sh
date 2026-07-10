@@ -18,7 +18,7 @@ usage() {
   echo "  -h, --help:                         Shows help output."
   echo "  -l, --load-into-k8s:                Takes the image from the podman registry and ensures that it is present in the image registry used by the local K8s setup."
   echo "  -c, --container-runtime <runtime>:  The container runtime to use for the build container. Defaults to podman."
-  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/{defaultplatform}/prod.Dockerfile')."
+  echo "      --dockerfile <path>:            Path to the Dockerfile (default: 'ci/docker/cta/{defaultplatform}/prod.Dockerfile')."
   echo "      --use-internal-repos:           Use the internal yum repos instead of the public repos."
   echo
   exit 1
