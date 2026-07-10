@@ -100,7 +100,14 @@ fi
 
 cd "$(dirname ${dockerfile_path})"
 dockerfile="$(basename ${dockerfile_path})"
-
+colors=(
+  $'\e[31m' # red
+  $'\e[32m' # green
+  $'\e[33m' # yellow
+  $'\e[34m' # blue
+  $'\e[35m' # magenta
+  $'\e[36m' # cyan
+)
 targets=(
   "cta-taped"
   "cta-maintd"
@@ -109,40 +116,50 @@ targets=(
   "cta-tools"
 )
 BUILD_ID=$(date +%Y%m%d-%H%M%S)
-
 SECONDS=0
 
 pids=()
 
 # Build and load all targets
+i=0
 for target in "${targets[@]}"; do
+  color="${colors[$((i % ${#colors[@]}))]}"
+  (( ++i ))
   image_ref="cta/ctageneric/${target}:${image_tag}"
   (
-    set -e
-    ${container_runtime} build . -f ${dockerfile} \
-      -t ${image_ref} \
-      --build-context rpm_context="${rpm_src}" \
-      --build-arg USE_INTERNAL_REPOS=${use_internal_repos} \
-      --build-arg USE_ORACLE_CATALOGUE=0 \
-      --network host \
-      --label build.id="$BUILD_ID" \
-      --target $target
-    set +x
-    # Note that the below checks are rather crude (for speed)
-    if [[ "$load_into_k8s" == "true" ]]; then
-      # Load into minikube (use stdin to avoid a temp file)
-      if command -v minikube >/dev/null 2>&1; then
-        echo "Minikube detected -> loading $image_ref into minikube"
-        ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
-      fi
+    set -eo pipefail
+    build() {
+      ${container_runtime} build . -f ${dockerfile} \
+        -t ${image_ref} \
+        --build-context rpm_context="${rpm_src}" \
+        --build-arg USE_INTERNAL_REPOS=${use_internal_repos} \
+        --build-arg USE_ORACLE_CATALOGUE=0 \
+        --network host \
+        --label build.id="$BUILD_ID" \
+        --target $target
+      # Note that the below checks are rather crude (for speed)
+      if [[ "$load_into_k8s" == "true" ]]; then
+        # Load into minikube (use stdin to avoid a temp file)
+        if command -v minikube >/dev/null 2>&1; then
+          echo "Minikube detected -> loading $image_ref into minikube"
+          ${container_runtime} save "${image_ref}" | minikube image load --overwrite -
+        fi
 
-      # Load into k3s (stream into containerd)
-      if command -v k3s >/dev/null 2>&1; then
-        echo "k3s detected -> loading $image_ref into k3s/containerd"
-        ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
+        # Load into k3s (stream into containerd)
+        if command -v k3s >/dev/null 2>&1; then
+          echo "k3s detected -> loading $image_ref into k3s/containerd"
+          ${container_runtime} save "${image_ref}" | sudo /usr/local/bin/k3s ctr images import -
+        fi
       fi
-    fi
-  ) &
+    }
+    build
+  ) 2>&1 | # some magic to get color output
+    awk -v prefix="[$target]:" -v color="$color" '
+      {
+        printf "%s%s\033[0m %s\n", color, prefix, $0
+        fflush()
+      }
+    ' & # execute as background process so that we can build in parallel
   pids+=($!)
 done
 
