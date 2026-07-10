@@ -108,9 +108,9 @@ build-cta-rpms:
       - ${BUILD_PATH}
 
   cache:
-    - key: "build-cache:${PLATFORM}:${CI_PROJECT_ID}:${CACHE_BRANCH}"
+    - key: "build-cache:${PLATFORM}:${CACHE_BRANCH}"
       fallback_keys:
-        - "build-cache:${PLATFORM}:${CI_PROJECT_ID}:${CI_DEFAULT_BRANCH}"
+        - "build-cache:${PLATFORM}:${CI_DEFAULT_BRANCH}"
       policy: $BUILD_CACHE_POLICY
       paths:
         - .ccache/
