@@ -10,6 +10,7 @@
 #include "catalogue/CatalogueItor.hpp"
 #include "catalogue/TapeSearchCriteria.hpp"
 #include "common/dataStructures/Tape.hpp"
+#include "common/dataStructures/TapeStorageClassStatistics.hpp"
 #include "common/log/Logger.hpp"
 #include "rdbms/ConnPool.hpp"
 #include "rdbms/Rset.hpp"
@@ -98,6 +99,18 @@ private:
    * As we may be splitting the query in several parts, we want to ensure that each VID is only returned once
    */
   std::set<std::string, std::less<>> m_vidsInList;
+
+  /**
+   * Storage class statistics grouped by tape VID.
+   *
+   * This map is populated only when --getstorageclassstatistics is requested.
+   */
+  std::map<std::string, std::vector<common::dataStructures::TapeStorageClassStatistics>> m_storageClassStatisticsByVid;
+
+  /**
+    * Loads per tape storage class statistics with file counts and total data size, grouped by tape VID.
+   */
+  void loadStorageClassStatistics();
 
   /**
    * Releases the database resources.

@@ -102,6 +102,68 @@ common::dataStructures::Tape populateTape(const rdbms::Rset& rset) {
 }  // anonymous namespace
 
 //------------------------------------------------------------------------------
+// loadStorageClassStatistics
+//------------------------------------------------------------------------------
+void RdbmsCatalogueGetTapesItor::loadStorageClassStatistics() {
+  std::map<uint64_t, std::string> storageClassNames;
+
+  // Load the mapping from storage class ID to storage class name.
+  {
+    const std::string sql = R"SQL(
+      SELECT
+        STORAGE_CLASS_ID AS STORAGE_CLASS_ID,
+        STORAGE_CLASS_NAME AS STORAGE_CLASS_NAME
+      FROM
+        STORAGE_CLASS
+    )SQL";
+
+    auto stmt = m_conn.createStmt(sql);
+    auto rset = stmt.executeQuery();
+
+    while (rset.next()) {
+      storageClassNames.emplace(rset.columnUint64("STORAGE_CLASS_ID"), rset.columnString("STORAGE_CLASS_NAME"));
+    }
+  }
+
+  // Load the file distribution per storage class, per tape.
+  const std::string sql = R"SQL(
+    SELECT
+      TF.VID AS VID,
+      AF.STORAGE_CLASS_ID AS STORAGE_CLASS_ID,
+      COUNT(*) AS NB_FILES,
+      SUM(TF.LOGICAL_SIZE_IN_BYTES) AS TOTAL_SIZE_IN_BYTES
+    FROM
+      TAPE_FILE TF
+    INNER JOIN ARCHIVE_FILE AF ON
+      AF.ARCHIVE_FILE_ID = TF.ARCHIVE_FILE_ID
+    GROUP BY
+      TF.VID,
+      AF.STORAGE_CLASS_ID
+  )SQL";
+
+  auto stmt = m_conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+
+  while (rset.next()) {
+    const auto vid = rset.columnString("VID");
+    const auto storageClassId = rset.columnUint64("STORAGE_CLASS_ID");
+
+    const auto storageClassNameIt = storageClassNames.find(storageClassId);
+    if (storageClassNameIt == storageClassNames.end()) {
+      throw exception::Exception("Could not find storage class name for storage class ID "
+                                 + std::to_string(storageClassId));
+    }
+
+    common::dataStructures::TapeStorageClassStatistics statistics;
+    statistics.storageClassName = storageClassNameIt->second;
+    statistics.nbMasterFiles = rset.columnUint64("NB_FILES");
+    statistics.masterDataInBytes = rset.columnUint64("TOTAL_SIZE_IN_BYTES");
+
+    m_storageClassStatisticsByVid[vid].push_back(std::move(statistics));
+  }
+}
+
+//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 RdbmsCatalogueGetTapesItor::RdbmsCatalogueGetTapesItor(log::Logger& log,
@@ -111,6 +173,9 @@ RdbmsCatalogueGetTapesItor::RdbmsCatalogueGetTapesItor(log::Logger& log,
       m_searchCriteria(searchCriteria),
       m_conn(std::move(conn)),
       m_splitByDiskFileId(searchCriteria.diskFileIds.has_value()) {
+  if (m_searchCriteria.getStorageClassStatistics.value_or(false)) {
+    loadStorageClassStatistics();
+  }
   std::vector<common::dataStructures::Tape> tapes;
   std::string sql = R"SQL(
     SELECT
@@ -467,6 +532,12 @@ common::dataStructures::Tape RdbmsCatalogueGetTapesItor::next() {
   m_hasMoreHasBeenCalled = false;
 
   auto tape = populateTape(m_rset);
+
+  const auto statisticsIt = m_storageClassStatisticsByVid.find(tape.vid);
+  if (statisticsIt != m_storageClassStatisticsByVid.end()) {
+    tape.storageClassStatistics = statisticsIt->second;
+  }
+
   m_rsetIsEmpty = !nextValidRset();
 
   if (m_splitByDiskFileId) {
