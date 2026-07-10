@@ -18,14 +18,14 @@ microdnf install -y cta-release dnf
 cta-versionlock apply
 
 # Conditionally overwrite public repos
-if [[ "$USE_INTERNAL_REPOS" == "1" ]] || [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
+if [[ "$ENABLE_INTERNAL_REPOS" == "1" ]] || [[ "$ENABLE_INTERNAL_REPOS" == "TRUE" ]]; then
     cp -f /tmp/internal-repos/* /etc/yum.repos.d/
     # Track which repo files were added so that we can delete them later
     ls /tmp/internal-repos/ > /tmp/internal-repo-list.txt
 fi
 
 # Conditionally add Oracle support
-if [[ "$USE_ORACLE_CATALOGUE" == "1" ]] || [[ "$USE_ORACLE_CATALOGUE" == "TRUE" ]]; then
+if [[ "$ENABLE_ORACLE_SUPPORT" == "1" ]] || [[ "$ENABLE_ORACLE_SUPPORT" == "TRUE" ]]; then
     TARGET_PACKAGES="$TARGET_PACKAGES cta-lib-catalogue-occi"
 fi
 
@@ -47,7 +47,7 @@ rpm -e dnf # dnf is protected; microdnf does not want to delete it
 # It produces some potentially misleading error messages though
 microdnf remove -y python* > /dev/null || true
 
-if [ "$USE_INTERNAL_REPOS" = "1" ]; then
+if [ "$ENABLE_INTERNAL_REPOS" = "1" ]; then
     while IFS= read -r filename; do
         if [ -n "$filename" ]; then
             rm -f "/etc/yum.repos.d/$filename"

@@ -236,7 +236,7 @@ publish-images-private:
 publish-images-public:
   extends: .publish-image
   rules:
-    - if: $ORACLE_SUPPORT == "TRUE"
+    - if: $ENABLE_ORACLE_SUPPORT == "TRUE"
       when: never
     - !reference [.publish-image, rules]
   variables:
@@ -251,7 +251,7 @@ publish-images-public:
     DEST_REGISTRY_PASSWORD: $DOCKER_LOGIN_PASSWORD
   before_script:
     - |
-      if [[ "$ORACLE_SUPPORT" == "TRUE" ]]; then
+      if [[ "$ENABLE_ORACLE_SUPPORT" == "TRUE" ]]; then
         echo "Oracle-enabled images cannot be published publicly."
         exit 1
       fi

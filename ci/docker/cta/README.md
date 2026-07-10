@@ -80,7 +80,7 @@ To enable internal CERN repositories:
 ./ci/build/build_image.sh \
   --tag dev \
   --rpm-src build_rpm/RPM/RPMS/x86_64 \
-  --use-internal-repos
+  --enable-internal-repos
 ```
 
 Local images will not install the Oracle-related RPMs

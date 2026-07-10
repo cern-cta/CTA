@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-set -e
+set -eo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../utils/log_wrapper.sh"
 
 log_run() {

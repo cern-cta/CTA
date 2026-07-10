@@ -3,59 +3,79 @@
 # SPDX-FileCopyrightText: 2024 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-set -e
+set -eo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/utils/log_wrapper.sh"
 
 # Help message
 usage() {
+echo
+  echo "Orchestrates the continuous integration lifecycle for CTA."
+  echo "The script executes a multi-stage delivery pipeline sequentially:"
   echo
-  echo "Performs the build of CTA through a dedicated build container."
-  echo "The container persists between runs of this script (unless the --reset flag is specified), which ensures that the build does not need to happen from scratch."
-  echo "It is also able to deploy the built rpms on a kubernetes cluster for a basic testing setup."
-  echo ""
-  echo "Important prerequisite: to run the tests, your machine will need to have access to a kubernetes cluster setup with nodes that have mhvtl installed."
-  echo ""
+  echo "  [1. BUILD RPMS]             [2. BUILD IMAGES]             [3. DEPLOY SETUP]"
+  echo "  +--------------------+      +----------------------+      +------------------------+"
+  echo "  | Compiles source    |      | Takes the built RPMs |      | Tears down old env and |"
+  echo "  | inside a persistent| ---> | and uses them to     | ---> | spawns a k8s instance  |"
+  echo "  | build container    |      | build docker images  |      | with the built images  |"
+  echo "  +--------------------+      +----------------------+      +------------------------+"
+  echo
+  echo "The build container persists between runs (unless --reset is specified) to ensure"
+  echo "incremental compilation speeds rather than compiling from scratch every time."
+  echo
+  echo "Important prerequisite: to run system tests, your machine must have cluster access"
+  echo "to a Kubernetes setup containing worker nodes with 'mhvtl' (virtual tape library) installed."
+  echo
   echo "Usage: $0 [options]"
   echo
-  echo "options:"
-  echo "  -h, --help:                           Shows help output."
-  echo "  -r, --reset:                          Shut down the build container and start a new one to ensure a fresh build. Also cleans the build directories."
-  echo "  -c, --container-runtime <runtime>     The container runtime to use for the build container. Defaults to podman."
-  echo "  -b, --build-image <image>             Base image to use for the build container. Defaults to the image specified in project.json."
-  echo "      --build-generator <generator>:    Specifies the build generator for cmake. Supported: [\"Unix Makefiles\", \"Ninja\"]."
-  echo "      --clean-build-dir:                Empties the RPM build directory (build_rpm/ by default), ensuring a fresh build from scratch."
-  echo "      --clean-build-dirs:               Empties both the SRPM and RPM build directories (build_srpm/ and build_rpm/ by default), ensuring a fresh build from scratch."
-  echo "      --cmake-build-type <type>:        Specifies the build type for cmake. Must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
-  echo "      --disable-oracle-support:         Disables support for oracle."
-  echo "      --disable-ccache:                 Disables ccache for the building of the rpms."
-  echo "      --enable-address-sanitizer:       Compile with address sanitizer enabled."
-  echo "      --force-install:                  Adds the --install-srpm flag to the build_rpm step, regardless of whether the container was reset or not."
-  echo "      --skip-build:                     Skips the build step."
-  echo "      --skip-deploy:                    Skips the deploy step."
-  echo "      --skip-cmake:                     Skips the cmake step of the build_rpm stage during the build process."
+  echo "General Options:"
+  echo "  -h, --help                            Shows help output."
+  echo "  -r, --reset                           Shut down the build container, clear directories, and start fresh."
+  echo "  -c, --container-runtime <runtime>     Container runtime to use [docker, podman]. Defaults to podman."
+  echo "      --platform <platform>             Which platform to build for. Defaults to project.json."
+  echo "      --scheduler-type <type>           The scheduler backend type [objectstore, pgsched]."
+  echo "      --use-public-repos                Use public yum repos instead of CERN internal network repos."
+  echo
+  echo "Build Configuration:"
+  echo "      --build-generator <generator>     Specifies the build generator for cmake [\"Unix Makefiles\", \"Ninja\"]."
+  echo "      --cmake-build-type <type>         Specifies cmake build type [Release, Debug, RelWithDebInfo, MinSizeRel]."
+  echo "      --clean-build-dir                 Empties the RPM build directory (build_rpm/)."
+  echo "      --clean-build-dirs                Empties both the SRPM (build_srpm/) and RPM (build_rpm/) directories."
+  echo "      --disable-oracle-support          Disables support for Oracle."
+  echo "      --disable-ccache                  Disables ccache for building the RPMs."
+  echo "      --enable-address-sanitizer        Compile with address sanitizer enabled."
+  echo "      --force-install                   Adds --install-srpms flag to build_rpm step even if not reset."
+  echo "      --skip-build                      Skips the build step completely."
+  echo "      --skip-cmake                      Skips the cmake step of the build_rpm stage."
   echo "      --skip-debug-packages             Skips the building of the debug RPM packages."
-  echo "      --skip-unit-tests:                Skips the unit tests. Speeds up the build time by not running the unit tests."
-  echo "      --skip-image-reload:              Skips the step where the image is reloaded into Kubernetes cluster. This allows easy redeployment with the image that is already loaded."
-  echo "      --skip-image-cleanup:             Skip the cleanup of the ctageneric images in both the container runtime and the cluster before deploying a new instance."
-  echo "      --scheduler-type <type>:          The scheduler type. Must be one of [objectstore, pgsched]."
-  echo "      --spawn-options <options>:        Additional options to pass for the deployment. These are passed verbatim to the create/upgrade instance scripts."
-  echo "      --image-build-options <options>:  Additional options to pass for the image building. These are passed verbatim to the build_image.sh script."
-  echo "      --scheduler-config <path>:        Path to the yaml file containing the type and credentials to configure the Scheduler. Defaults to: presets/dev-scheduler-vfs-values.yaml"
-  echo "      --catalogue-config <path>:        Path to the yaml file containing the type and credentials to configure the Catalogue. Defaults to: presets/dev-catalogue-postgres-values.yaml"
-  echo "      --tapeservers-config <path>:      Path to the yaml file containing the tapeservers config. If not provided, this will be auto-generated."
-  echo "      --upgrade-cta:                    Upgrades the existing CTA instance with a new image instead of spawning an instance from scratch."
-  echo "      --upgrade-eos:                    Upgrades the existing EOS instance with a new image instead of spawning an instance from scratch."
-  echo "      --eos-image-tag <tag>:            Image to use for spawning EOS. If not provided, will default to the image specified in the create_instance script."
-  echo "      --cta-config <paths>:             Custom Values file(s) to pass to the CTA Helm chart. Comma-separated for composition."
-  echo "      --eos-config <path>:              Custom Values file to pass to the EOS Helm chart"
-  echo "      --use-public-repos:               Use the public yum repos instead of the internal yum repos. Use when you do not have access to the CERN network."
-  echo "      --platform <platform>:            Which platform to build for. Defaults to the default platform in the project.json."
-  echo "      --disable-eos:                    Skips spawning EOS in the system tests."
-  echo "      --enable-dcache:                  Spawns dCache in the system tests."
-  echo "      --local-telemetry:                Spawns a local collector and Prometheus backends to which metrics will be sent."
-  echo "      --publish-telemetry:              Publishes telemetry to a pre-configured central observability backend."
-  echo "      --deploy-namespace <namespace>:   Deploy the CTA instance in a given namespace. Defaults to dev."
-  echo "      --no-setup:                       Skip the setup scripts in create_instance.sh (required for the new Python tests)."
+  echo "      --enable-unit-tests               Runs the unit tests after the RPMs have been built."
+  echo
+  echo "Image Building & Packaging:"
+  echo "      --skip-image-build                Skips building of the Docker images and loading them into the Kubernetes cluster."
+  echo "      --skip-image-cleanup              Skips cleanup of ctageneric images in runtime and cluster before deploy."
+  echo "      --enable-debug-image             Builds an additional image containing all CTA RPMs, their debuginfo RPMs and gdb."
+  echo "      --image-build-options <options>   Additional options passed verbatim to the build_images.sh script."
+  echo
+  echo "Deployment & Orchestration Configuration:"
+  echo "      --skip-deploy                     Skips the deployment step completely."
+  echo "      --deploy-namespace <namespace>    Deploy the CTA instance in a given namespace. Defaults to dev."
+  echo "      --upgrade-cta                     Upgrades the existing CTA instance instead of spawning from scratch."
+  echo "      --upgrade-eos                     Upgrades the existing EOS instance instead of spawning from scratch."
+  echo "      --spawn-options <options>         Additional options passed verbatim to create/upgrade instance scripts."
+  echo "      --no-setup                        Skip setup scripts in create_instance.sh (required for Python tests)."
+  echo "      --scheduler-config <path>         Path to scheduler values yaml file."
+  echo "      --catalogue-config <path>         Path to catalogue values yaml file."
+  echo "      --cta-config <paths>              Custom Values yaml file(s) for CTA Helm chart (comma-separated)."
+  echo "      --eos-config <path>               Custom Values yaml file to pass to the EOS Helm chart."
+  echo "      --eos-image-repository <repo>     Image repository URL/namespace path to use for spawning EOS."
+  echo "      --eos-image-tag <tag>             Image tag to use for spawning EOS."
+  echo "      --cta-image-tag <tag>             Image tag to use for spawning CTA. Will skip both build stages."
+  echo "      --disable-eos                     Skips spawning EOS in the system tests."
+  echo "      --enable-dcache                   Spawns dCache in the system tests."
+  echo
+  echo "Telemetry & Observability:"
+  echo "      --local-telemetry                 Spawns a local collector and Prometheus backends for metrics."
+  echo "      --publish-telemetry               Publishes telemetry to a pre-configured central backend."
+  echo
   exit 1
 }
 
@@ -63,18 +83,18 @@ build_deploy() {
 
   local project_root
   project_root=$(git rev-parse --show-toplevel)
+
   # Defaults
   local num_jobs
   num_jobs=$(nproc --ignore=2)
   local restarted=false
   local deploy_namespace="dev"
-  # These versions don't affect anything functionality wise
   local cta_version="5"
   local vcs_version="dev"
   local xrootd_ssi_version
   xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
 
-  # Input args
+  # Input flag values
   local clean_build_dir=false
   local clean_build_dirs=false
   local force_install=false
@@ -82,9 +102,9 @@ build_deploy() {
   local skip_build=false
   local skip_deploy=false
   local skip_cmake=false
-  local skip_unit_tests=false
+  local skip_unit_tests=true
   local skip_debug_packages=false
-  local skip_image_reload=false
+  local skip_image_build=false
   local local_telemetry=false
   local publish_telemetry=false
   local no_setup=false
@@ -100,178 +120,89 @@ build_deploy() {
   local extra_spawn_options=""
   local extra_image_build_options=""
   local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
+  local scheduler_config=""
   local eos_image_repository=""
   local eos_image_tag=""
+  local cta_image_tag=""
   local container_runtime="podman"
   local platform
   platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
-  local use_internal_repos=true
+  local enable_internal_repos=true
+  local enable_debug_image=false
   local eos_enabled=true
   local dcache_enabled=false
   local enable_address_sanitizer=false
+  local cta_config=""
+  local eos_config=""
 
 
   # Parse command line arguments
   while [[ "$#" -gt 0 ]]; do
+    # Helper to validate options requiring an argument
+    if [[ "$1" =~ ^--(eos-image-repository|eos-image-tag|cta-image-tag|platform|build-generator|cmake-build-type|container-runtime|scheduler-type|catalogue-config|scheduler-config|tapeservers-config|cta-config|eos-config|spawn-options|image-build-options|deploy-namespace)$ || "$1" == "-c" ]]; then
+      if [[ -z "$2" || "$2" =~ ^- ]]; then
+        error_usage "$1 requires an argument"
+      fi
+    fi
+
     case "$1" in
-    -h | --help) usage ;;
-    -r | --reset)
-      reset=true
-      clean_build_dirs=true
-      ;;
-    --clean-build-dir) clean_build_dir=true ;;
-    --clean-build-dirs) clean_build_dirs=true ;;
-    --disable-oracle-support) oracle_support="FALSE" ;;
-    --disable-ccache) enable_ccache=false ;;
-    --skip-build) skip_build=true ;;
-    --skip-deploy) skip_deploy=true ;;
-    --skip-cmake) skip_cmake=true ;;
-    --skip-unit-tests) skip_unit_tests=true ;;
-    --skip-debug-packages) skip_debug_packages=true ;;
-    --skip-image-reload) skip_image_reload=true ;;
-    --skip-image-cleanup) image_cleanup=false ;;
-    --force-install) force_install=true ;;
-    --enable-dcache) dcache_enabled=true ;;
-    --disable-eos) eos_enabled=false ;;
-    --upgrade-cta) upgrade_cta=true ;;
-    --upgrade-eos) upgrade_eos=true ;;
-    --use-public-repos) use_internal_repos=false ;;
-    --local-telemetry) local_telemetry=true ;;
-    --publish-telemetry) publish_telemetry=true ;;
-    --no-setup) no_setup=true ;;
-    --enable-address-sanitizer) enable_address_sanitizer=true ;;
-    --eos-image-repository)
-      if [[ $# -gt 1 ]]; then
-        eos_image_repository="$2"
-        shift
-      else
-        error_usage "--eos-image-repository requires an argument"
-      fi
-      ;;
-    --eos-image-tag)
-      if [[ $# -gt 1 ]]; then
-        eos_image_tag="$2"
-        shift
-      else
-        error_usage "--eos-image-tag requires an argument"
-      fi
-      ;;
-    --platform)
-      if [[ $# -gt 1 ]]; then
+      -h | --help)                  usage ;;
+      -r | --reset)                 reset=true; clean_build_dirs=true ;;
+      --clean-build-dir)            clean_build_dir=true ;;
+      --clean-build-dirs)           clean_build_dirs=true ;;
+      --disable-oracle-support)     oracle_support="FALSE" ;;
+      --disable-ccache)             enable_ccache=false ;;
+      --skip-build)                 skip_build=true ;;
+      --skip-deploy)                skip_deploy=true ;;
+      --skip-cmake)                 skip_cmake=true ;;
+      --skip-debug-packages)        skip_debug_packages=true ;;
+      --skip-image-build)           skip_image_build=true ;;
+      --skip-image-cleanup)         image_cleanup=false ;;
+      --enable-unit-tests)          skip_unit_tests=false ;;
+      --force-install)              force_install=true ;;
+      --enable-dcache)              dcache_enabled=true ;;
+      --disable-eos)                eos_enabled=false ;;
+      --upgrade-cta)                upgrade_cta=true ;;
+      --upgrade-eos)                upgrade_eos=true ;;
+      --use-public-repos)           enable_internal_repos=false ;;
+      --enable-debug-image)         enable_debug_image=true ;;
+      --local-telemetry)            local_telemetry=true ;;
+      --publish-telemetry)          publish_telemetry=true ;;
+      --no-setup)                   no_setup=true ;;
+      --enable-address-sanitizer)   enable_address_sanitizer=true ;;
+      --eos-image-repository)       eos_image_repository="$2"; shift ;;
+      --eos-image-tag)              eos_image_tag="$2"; shift ;;
+      --cta-image-tag)              cta_image_tag="$2"; shift ;;
+      --build-generator)            build_generator="$2"; shift ;;
+      --scheduler-type)             scheduler_type="$2"; shift ;;
+      --catalogue-config)           catalogue_config="$2"; shift ;;
+      --scheduler-config)           scheduler_config="$2"; shift ;;
+      --cta-config)                 cta_config="$2"; shift ;;
+      --eos-config)                 eos_config="$2"; shift ;;
+      --spawn-options)              extra_spawn_options+=" $2"; shift ;;
+      --image-build-options)        extra_image_build_options+=" $2"; shift ;;
+      --deploy-namespace)           deploy_namespace="$2"; shift ;;
+      --platform)
         if [[ "$(jq --arg platform "$2" '.platforms | has($platform)' "$project_root/project.json")" != "true" ]]; then
             error_usage "platform $2 not supported. Please check the project.json for supported platforms."
         fi
-        platform="$2"
-        shift
-      else
-        error_usage "--platform requires an argument"
-      fi
-      ;;
-    --build-generator)
-      if [[ $# -gt 1 ]]; then
-        build_generator="$2"
-        shift
-      else
-        error_usage "--build-generator requires an argument"
-      fi
-      ;;
-    --cmake-build-type)
-      if [[ $# -gt 1 ]]; then
-        if [[ "$2" != "Release" ]] && [[ "$2" != "Debug" ]] && [[ "$2" != "RelWithDebInfo" ]] && [[ "$2" != "MinSizeRel" ]]; then
+        platform="$2"; shift
+        ;;
+      --cmake-build-type)
+        if [[ "$2" != "Release" && "$2" != "Debug" && "$2" != "RelWithDebInfo" && "$2" != "MinSizeRel" ]]; then
           die "--cmake-build-type is \"$2\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
         fi
-        cmake_build_type="$2"
-        shift
-      else
-        error_usage "--cmake-build-type requires an argument"
-      fi
-      ;;
-    -c | --container-runtime)
-      if [[ $# -gt 1 ]]; then
-        if [[ "$2" != "docker" ]] && [[ "$2" != "podman" ]]; then
+        cmake_build_type="$2"; shift
+        ;;
+      -c | --container-runtime)
+        if [[ "$2" != "docker" && "$2" != "podman" ]]; then
           die "-c | --container-runtime is \"$2\" but must be one of [docker, podman]."
         fi
-        container_runtime="$2"
-        shift
-      else
-        error_usage "-c | --container-runtime requires an argument"
-      fi
-      ;;
-    --scheduler-type)
-      if [[ $# -gt 1 ]]; then
-        scheduler_type="$2"
-        shift
-      else
-        error_usage "--scheduler-type requires an argument"
-      fi
-      ;;
-    --catalogue-config)
-      if [[ $# -gt 1 ]]; then
-        catalogue_config="$2"
-        shift
-      else
-        error_usage "--catalogue-config requires an argument"
-      fi
-      ;;
-    --scheduler-config)
-      if [[ $# -gt 1 ]]; then
-        scheduler_config="$2"
-        shift
-      else
-        error_usage "--scheduler-config requires an argument"
-      fi
-      ;;
-    --tapeservers-config)
-      if [[ $# -gt 1 ]]; then
-        tapeservers_config="$2"
-        shift
-      else
-        error_usage "--tapeservers-config requires an argument"
-      fi
-      ;;
-    --cta-config)
-      if [[ $# -gt 1 ]]; then
-        cta_config="$2"
-        shift
-      else
-        error_usage "--cta-config requires an argument"
-      fi
-      ;;
-    --eos-config)
-      if [[ $# -gt 1 ]]; then
-        eos_config="$2"
-        shift
-      else
-        error_usage "--eos-config requires an argument"
-      fi
-      ;;
-    --spawn-options)
-      if [[ $# -gt 1 ]]; then
-        extra_spawn_options+=" $2"
-        shift
-      else
-        error_usage "--spawn-options requires an argument"
-      fi
-      ;;
-    --image-build-options)
-      if [[ $# -gt 1 ]]; then
-        extra_image_build_options+=" $2"
-        shift
-      else
-        error_usage "---imagebuild-options requires an argument"
-      fi
-      ;;
-    --deploy-namespace)
-      if [[ $# -gt 1 ]]; then
-        deploy_namespace="$2"
-        shift
-      else
-        error_usage "---deploy-namespace requires an argument"
-      fi
-      ;;
-    *)
-      die_usage "Unsupported argument: $1"
-      ;;
+        container_runtime="$2"; shift
+        ;;
+      *)
+        die_usage "Unsupported argument: $1"
+        ;;
     esac
     shift
   done
@@ -279,18 +210,24 @@ build_deploy() {
   # navigate to root project directory
   cd "${project_root}"
 
-  #####################################################################################################################
+  if [[ -n "$cta_image_tag" ]]; then
+    skip_build=true
+    skip_image_build=true
+    image_tag=$cta_image_tag
+  fi
+
+  # =========================================================================
   # Build binaries/RPMs
-  #####################################################################################################################
+  # =========================================================================
   if [[ "${skip_build}" = false ]]; then
     build_image_name="cta-build-image-${platform}"
     build_container_name="cta-build${project_root//\//-}-${platform}"
     # Stop and remove existing container if reset is requested
-    echo "Total CTA build containers found: $(podman ps | grep -c cta-build)"
+    echo "Total CTA build containers found: $(${container_runtime} ps | grep -c cta-build)"
     if [[ "${reset}" = true ]]; then
       echo "Shutting down existing build container..."
       ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
-      podman rmi "${build_image_name}" > /dev/null 2>&1 || true
+      ${container_runtime} rmi "${build_image_name}" > /dev/null 2>&1 || true
     fi
 
     # Start container if not already running
@@ -332,8 +269,8 @@ build_deploy() {
 
     local build_rpm_flags=""
 
+    # Only install srpms if it is the first time running this or if the install is forced
     if [[ ${restarted} = true ]] || [[ ${force_install} = true ]]; then
-      # Only install srpms if it is the first time running this or if the install is forced
       build_rpm_flags+=" --install-srpms"
     elif [[ ${skip_cmake} = true ]]; then
       # It should only be possible to skip cmake if the pod was not restarted
@@ -354,8 +291,8 @@ build_deploy() {
       build_rpm_flags+=" --enable-ccache"
     fi
 
-    if [[ ${use_internal_repos} = true ]]; then
-      build_rpm_flags+=" --use-internal-repos"
+    if [[ ${enable_internal_repos} = true ]]; then
+      build_rpm_flags+=" --enable-internal-repos"
     fi
 
     if [[ ${enable_address_sanitizer} = true ]]; then
@@ -384,11 +321,11 @@ build_deploy() {
   fi
 
 
-  #####################################################################################################################
+  # =========================================================================
   # Build image
-  #####################################################################################################################
+  # =========================================================================
   build_iteration_file=/tmp/.build_iteration
-  if [[ "$skip_image_reload" == "false" ]]; then
+  if [[ "$skip_image_build" == "false" ]]; then
     print_header "BUILDING CONTAINER IMAGE"
     # Cleanup
     if [[ ${image_cleanup} = true ]]; then
@@ -422,9 +359,8 @@ build_deploy() {
     # Build
     local rpm_src="build_rpm/RPM/RPMS/x86_64"
     echo "Building image from ${rpm_src}"
-    if [[ ${use_internal_repos} = true ]]; then
-      extra_image_build_options+=" --use-internal-repos"
-    fi
+    if [[ ${enable_internal_repos} = true ]]; then extra_image_build_options+=" --enable-internal-repos"; fi
+    if [[ ${enable_debug_image} = true ]]; then extra_image_build_options+=" --enable-debug-image"; fi
     # shellcheck disable=SC2086
     ./ci/build/build_images.sh \
       --tag ${image_tag} \
@@ -440,57 +376,33 @@ build_deploy() {
     image_tag=dev-$(cat "$build_iteration_file")
   fi
 
-  #####################################################################################################################
+  # =========================================================================
   # Deploy CTA instance
-  #####################################################################################################################
+  # =========================================================================
   if [[ ${skip_deploy} = false ]]; then
     if [[ "$upgrade_cta" = true ]]; then
       print_header "UPGRADING CTA INSTANCE"
-      cd ci/orchestration
-      upgrade_options=""
-      if [[ "$skip_image_reload" == "false" ]]; then
+      local upgrade_options=""
+      if [[ "$skip_image_build" == "false" ]]; then
         upgrade_options+=" --cta-image-registry localhost --cta-image-tag ${image_tag}"
       fi
        # shellcheck disable=SC2086
-      ./upgrade_cta_instance.sh --namespace "${deploy_namespace}" "${upgrade_options}" ${extra_spawn_options}
+      (cd ci/orchestration && ./upgrade_cta_instance.sh --namespace "${deploy_namespace}" ${upgrade_options} ${extra_spawn_options})
     elif [[ "$upgrade_eos" = true ]]; then
       print_header "UPGRADING EOS INSTANCE"
-      cd ci/orchestration
-      ./deploy_eos.sh --namespace "${deploy_namespace}" --eos-image-repository "${eos_image_repository}" --eos-image-tag "${eos_image_tag}"
+      (cd ci/orchestration && ./deploy_eos.sh --namespace "${deploy_namespace}" --eos-image-repository "${eos_image_repository}" --eos-image-tag "${eos_image_tag}")
     else
       print_header "DELETING OLD CTA INSTANCES"
       # By default we discard the logs from deletion as this is not very useful during development and pollutes the dev machine
       ./ci/orchestration/delete_instance.sh -n "${deploy_namespace}" --discard-logs
       print_header "DEPLOYING CTA INSTANCE"
-      if [[ -n "${tapeservers_config}" ]]; then
-        extra_spawn_options+=" --tapeservers-config ${tapeservers_config}"
-      fi
-
-      if [[ -n "${eos_image_repository}" ]]; then
-        extra_spawn_options+=" --eos-image-repository ${eos_image_repository}"
-      fi
-
-      if [[ -n "${eos_image_tag}" ]]; then
-        extra_spawn_options+=" --eos-image-tag ${eos_image_tag}"
-      fi
-
-      if [[ -n "${eos_config}" ]]; then
-        extra_spawn_options+=" --eos-config ${eos_config}"
-      fi
-
-      if [[ -n "${cta_config}" ]]; then
-        extra_spawn_options+=" --cta-config ${cta_config}"
-      fi
-
-      if [[ "$local_telemetry" = true ]]; then
-        extra_spawn_options+=" --local-telemetry"
-      fi
-      if [[ "$publish_telemetry" = true ]]; then
-        extra_spawn_options+=" --publish-telemetry"
-      fi
-      if [[ "$no_setup" = true ]]; then
-        extra_spawn_options+=" --no-setup"
-      fi
+      if [[ -n "${eos_image_repository}" ]]; then extra_spawn_options+=" --eos-image-repository ${eos_image_repository}"; fi
+      if [[ -n "${eos_image_tag}" ]]; then extra_spawn_options+=" --eos-image-tag ${eos_image_tag}"; fi
+      if [[ -n "${eos_config}" ]]; then extra_spawn_options+=" --eos-config ${eos_config}"; fi
+      if [[ -n "${cta_config}" ]]; then extra_spawn_options+=" --cta-config ${cta_config}"; fi
+      if [[ "${local_telemetry}" = true ]]; then extra_spawn_options+=" --local-telemetry"; fi
+      if [[ "${publish_telemetry}" = true ]]; then extra_spawn_options+=" --publish-telemetry"; fi
+      if [[ "${no_setup}" = true ]]; then extra_spawn_options+=" --no-setup"; fi
 
       if [[ -z "${scheduler_config}" ]]; then
         if [[ "${scheduler_type}" == "pgsched" ]]; then

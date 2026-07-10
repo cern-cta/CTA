@@ -12,7 +12,7 @@
       SCHEDULER_CONFIG=presets/dev-scheduler-postgres-values.yaml
     fi
   - | # Which catalogue config to use
-    if [[ $ORACLE_SUPPORT == "TRUE" ]]; then
+    if [[ $ENABLE_ORACLE_SUPPORT == "TRUE" ]]; then
       CATALOGUE_CONFIG=/opt/kubernetes/CTA/catalogue/ci-oracle-values.yaml
     else
       CATALOGUE_CONFIG=presets/dev-catalogue-postgres-values.yaml
@@ -274,7 +274,7 @@ test-regression-dCache:
   rules:
     - when: manual
       allow_failure: true
-    - if: $DCACHE_REGRESSION_TESTS == "TRUE"
+    - if: $ENABLE_DCACHE_TESTS == "TRUE"
       when: on_success
   variables:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"

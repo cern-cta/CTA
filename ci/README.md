@@ -6,14 +6,13 @@ This directory contains all the files necessary for development and automation w
 * `checks/`: Collection of scripts that perform validation checks within the CI pipeline
 * `danger/`: Configuration for the Danger bot that runs on Merge Requests
 * `docker/`: Docker files and content to build the docker images
-* `orchestration/`: Files to set up a local development cluster and all the tests that can run on this
+* `orchestration/`: Files to set up a local development cluster
 * `project-json/`: Files related to the project.json in the root of the repository
 * `release/`: Scripts used by the CI pipeline when doing a new release of the CTA software
 * `sbom/`: Utility scripts used during the generating of a Software Bill of Materials for CTA
 * `system_tests/`: Pytest based system test for CTA
 * `utils/`: Collection of utility scripts
 * `build_deploy.sh`: The main script used for development: builds the project, the corresponding Docker image and deploys a local CTA test instance. See [the docs on Build & Deploy](https://cta.docs.cern.ch/latest/dev/setup/build-deploy/) for more details
-* `deploy.sh`: Convenience script for deploying a custom CTA image
 
 # Typical helper functions and their meaning
 
