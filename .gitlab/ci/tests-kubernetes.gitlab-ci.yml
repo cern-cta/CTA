@@ -274,7 +274,7 @@ test-regression-dCache:
   rules:
     - when: manual
       allow_failure: true
-    - if: $DCACHE_REGRESSION_TESTS == "TRUE"
+    - if: $ENABLE_DCACHE_TESTS == "TRUE"
       when: on_success
   variables:
     TEST_SCRIPT: "tests/test_regression_dCache.sh"

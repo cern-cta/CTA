@@ -149,14 +149,14 @@ variables:
   # =========================================================================
   # 5. Testing
   # =========================================================================
-  VALGRIND_UNIT_TESTS:
+  ENABLE_VALGRIND:
     description: "Whether to run the unit tests with valgrind."
     value: "FALSE"
     options:
       - "TRUE"
       - "FALSE"
 
-  DCACHE_REGRESSION_TESTS:
+  ENABLE_DCACHE_TESTS:
     description: "Whether to run the dCache regression tests."
     value: "FALSE"
     options:
