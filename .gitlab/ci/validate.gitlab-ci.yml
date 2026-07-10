@@ -39,13 +39,12 @@ validate-pipeline-variables:
   variables:
     GIT_SUBMODULE_STRATEGY: "none" # Don't need submodules for this job
   script:
+    - echo $CUSTOM_CTA_IMAGE_TAG
     - cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-public/*.repo /etc/yum.repos.d/
     - |
       if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
         cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
       fi
-    # This repo is a special case as it provides CTA itself
-    - cp -f ci/docker/cta/${PLATFORM}/cta-public-testing.repo /etc/yum.repos.d/
     - python3 ./ci/checks/validate_ci_input_variables.py
 
 validate-project-json:
