@@ -305,21 +305,23 @@ stress-test:
     - bash ./ci/checks/check_runner_healthy.sh
     - *setup-k8s-test-variables
   script:
+    - EXTRA_STRESS_TEST_OPTIONS=""
     - |
-      EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_CHAIN} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
       if [[ $PUBLISH_TELEMETRY_METRICS == "TRUE" ]]; then
         EXTRA_SPAWN_ARGS+=" --publish-telemetry"
       fi
-      extra_args=($EXTRA_ARGS)
-      if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
-      EXTRA_STRESS_TEST_OPTIONS=""
+    - |
       if [[ "${SCHEDULER_TYPE}" == "pgsched" ]]; then
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
-        EXTRA_STRESS_TEST_OPTIONS+=" -Q"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
+        EXTRA_STRESS_TEST_OPTIONS+=" -Q"
+        STRESS_CTA_VALUES_CHAIN="${DEFAULT_CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
+      else
+        STRESS_CTA_VALUES_CHAIN="${DEFAULT_CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
-      if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
-
+    - EXTRA_SPAWN_ARGS="--cta-config ${STRESS_CTA_VALUES_CHAIN} --eos-config ${STRESS_EOS_VALUES_FILE} ${EXTRA_SPAWN_ARGS}"
+    - extra_args=($EXTRA_ARGS)
+    - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
     # Set up stress test
     - cd ci/orchestration/
     # We don't clean up old namespace so this will fail (deliberately) when another test is running there
@@ -392,12 +394,11 @@ stress-test-python:
         SCHEDULER_CONFIG=/opt/kubernetes/CTA/scheduler/stresstest-scheduler-postgres-values.yaml
         EXTRA_PYTEST_ARGS+=" --test-config config/test_pgsched_params.toml"
         EXTRA_SPAWN_ARGS+=" --one-logical-library"
-        STRESS_CTA_VALUES_CHAIN="${DEFAULT_CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
-      else
         STRESS_CTA_VALUES_CHAIN="${DEFAULT_CTA_VALUES_CHAIN},presets/stress-cta-pgsched-values.yaml"
+      else
+        STRESS_CTA_VALUES_CHAIN="${DEFAULT_CTA_VALUES_CHAIN},presets/stress-cta-values.yaml"
       fi
     - if [[ -n "${EXTRA_SPAWN_ARGS}" ]]; then extra_args+=(--spawn-options "${EXTRA_SPAWN_ARGS}"); fi
-
     # Set up stress test
     - cd ci/orchestration/
     # We don't clean up old namespace so this will fail (deliberately) when another namespace still exist

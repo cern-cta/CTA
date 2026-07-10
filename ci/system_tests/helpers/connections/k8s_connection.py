@@ -11,6 +11,7 @@ from kubernetes.client import ApiException, V1Pod
 from kubernetes.stream import stream
 
 from .remote_connection import ExecResult, RemoteConnection
+from ..utils.timeout import Timeout
 
 
 class K8sConnection(RemoteConnection):
@@ -120,16 +121,20 @@ class K8sConnection(RemoteConnection):
             )
             # Wait until the pod no longer exists to ensure a restart has been triggered
             # Otherwise if we immediately start waiting for it, said wait might succeed because the process hasn't terminated yet
-            while True:
-                pods = self.core.list_namespaced_pod(
-                    namespace=self.namespace,
-                    label_selector=self.label_selector,
-                ).items
+            max_pod_disappear_secs = 60  # 1 minute should be more than enough for the pod to be deleted
+            with Timeout(max_pod_disappear_secs) as t:
+                while True:
+                    pods = self.core.list_namespaced_pod(
+                        namespace=self.namespace,
+                        label_selector=self.label_selector,
+                    ).items
 
-                if all(p.metadata.uid != uid for p in pods):
-                    break
+                    if all(p.metadata.uid != uid for p in pods):
+                        break
 
-                time.sleep(0.5)
+                    time.sleep(0.5)
+                if t.expired:
+                    raise TimeoutError(f"Failed to delete pod within timeout of {max_pod_disappear_secs} seconds")
             self._cached_pod = (
                 None  # We may get a different pod (name) after restart, so ensure that we resolve it again
             )
@@ -140,7 +145,7 @@ class K8sConnection(RemoteConnection):
     def is_up(self) -> bool:
         try:
             pod = self._resolve_pod()
-        except ApiException:
+        except (ApiException, RuntimeError):
             return False
 
         if pod is None or pod.status is None:
