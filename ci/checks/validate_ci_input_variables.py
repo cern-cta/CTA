@@ -68,6 +68,7 @@ def check_rpm_available(package_name: str, package_version: str):
     Checks that the package of a given version is available.
     Note that this assumes the current machine has all the required .repo files correctly configured.
     """
+    print(f"Checking RPM package {package_name} version {package_version} is available")
     version_regex = r"(\d+:)?\d[\w.+~]*-\d+[a-zA-Z0-9\._^]*"
     if not re.fullmatch(version_regex, package_version):
         sys.exit(
@@ -87,6 +88,7 @@ def check_image_tag_available(image_tag: str, repository: str):
     Checks that the image tag is available in the given repository.
     """
     full_image = f"{repository}:{image_tag}"
+    print(f"Checking image {full_image} is available")
     try:
         run_cmd(f"podman --log-level=error manifest inspect {full_image}")
     except SystemExit:
@@ -118,7 +120,7 @@ def validate_regr_against_cta_version(ci_input_vars):
 
 def main():
     """
-    Validate the varaibles received by the GitLab CI pipeline
+    Validate the variables received by the GitLab CI pipeline
     """
     project_json_path = Path(__file__).resolve().parents[2] / "project.json"
     with open(project_json_path, "r") as f:
