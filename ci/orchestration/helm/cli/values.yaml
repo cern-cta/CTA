@@ -3,6 +3,12 @@
 
 replicas: 1
 
+image:
+  registry: gitlab-registry.cern.ch
+  repository: cta/ctageneric/cta-tools
+  tag: latest
+
+
 conf:
   cta:
     endpoint: cta-frontend-admin:10955

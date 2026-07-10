@@ -4,7 +4,7 @@
 modify-project-json:
   stage: .pre
   rules:
-    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_MAIN"
+    - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_BRANCH"
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
   script:
     - project_json_file="project.json"
@@ -38,15 +38,16 @@ modify-project-json:
     - jq --arg new_eos_image_tag "$trimmed_eos_image_tag"
           '.dev.eosImageTag = $new_eos_image_tag'
           "$project_json_file" > "$tmp_file" && mv "$tmp_file" "$project_json_file"
-    # Populate the latest CTA version if necessary in a dotenv file so that we can use this later on
+    # Populate the latest CTA image tag if necessary in a dotenv file so that we can use this later on
+    # The image tag should be identical to the version, so we simply grab the latest stable relase and assume that is our image tag
     - |
-      if [[ "$PIPELINE_TYPE" == "REGR_AGAINST_CTA_VERSION" ]] && [[ -z "$CUSTOM_CTA_VERSION" ]]; then
+      if [[ "$PIPELINE_TYPE" == "REGR_AGAINST_CTA_VERSION" ]] && [[ -z "$CUSTOM_CTA_IMAGE_TAG" ]]; then
         CTA_REPO_URL="https://cta-public-repo.web.cern.ch/stable/cta-5/${PLATFORM}/cta/x86_64/"
-        echo "No CUSTOM_CTA_VERSION provided. Getting latest release from: $CTA_REPO_URL"
-        CUSTOM_CTA_VERSION=$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)
-        echo "Using latest stable release: $CUSTOM_CTA_VERSION"
+        echo "No CUSTOM_CTA_IMAGE_TAG provided. Getting latest release from: $CTA_REPO_URL"
+        CUSTOM_CTA_IMAGE_TAG=$(dnf -q --repofrompath=temprepo,$CTA_REPO_URL --repo=temprepo repoquery --latest-limit=1 --qf "%{version}-%{release}" cta-taped)
+        echo "Using latest stable release: $CUSTOM_CTA_IMAGE_TAG"
         # Note the slightly different name. This is due to CI variable precedence
-        echo "CUSTOM_CTA_VERSION_ENV=$CUSTOM_CTA_VERSION" >> pipeline.env
+        echo "CUSTOM_CTA_IMAGE_TAG=$CUSTOM_CTA_IMAGE_TAG" >> pipeline.env
       fi
     # Done
     - echo "File content after replacement"

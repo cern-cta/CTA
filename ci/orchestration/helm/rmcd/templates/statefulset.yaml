@@ -38,26 +38,16 @@ spec:
         image: {{ include "rmcd.image" . }}
         imagePullPolicy: {{ include "rmcd.imagePullPolicy" . }}
         securityContext:
+          runAsUser: 1000 # cta
+          runAsGroup: 33 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
           capabilities:
             add:
               - SYS_RAWIO
         stdin: true
-        command: ["bash", "/scripts/rmcd.sh"]
+        command: ["bash", "/scripts/rmcd.sh"] # TODO: remove script
         args: []
-        startupProbe:
-          exec:
-            command: ["rpm", "-q", "cta-rmcd"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          failureThreshold: 60
-        readinessProbe:
-          exec:
-            command: ["pgrep", "-f", "/usr/bin/cta-rmcd"]
-          initialDelaySeconds: 2
-          periodSeconds: 5
-          failureThreshold: 10
         env:
         - name: MY_NAME
           value: {{ $rmcdName }}

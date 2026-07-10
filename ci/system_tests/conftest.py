@@ -6,8 +6,6 @@ from pathlib import Path
 
 import pytest
 
-from .helpers.hosts.disk.disk_instance_host import DiskInstanceImplementation
-from .helpers.test_env import TestEnv
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -22,25 +20,6 @@ pytest_plugins = [
 #####################################################################################################################
 # Commandline options
 #####################################################################################################################
-
-
-def create_test_env_from_commandline_options(config):
-    namespace = config.getoption("--namespace", default=None)
-    connection_config = config.getoption("--connection-config", default=None)
-
-    if namespace and connection_config:
-        raise pytest.UsageError("Only one of --namespace or --connection-config can be provided, not both")
-
-    if namespace is None and connection_config is None:
-        raise pytest.UsageError(
-            "Missing mandatory argument: one of --namespace or --connection-config must be provided"
-        )
-
-    if namespace is not None:
-        # No connection configuration provided, so assume everything is running in a cluster
-        return TestEnv.from_namespace(namespace)
-    else:
-        return TestEnv.from_config(connection_config)
 
 
 def pytest_addoption(parser):
@@ -76,10 +55,6 @@ def pytest_configure(config):
             config.test_config = tomllib.load(f)
     except FileNotFoundError:
         raise pytest.UsageError(f"--test-config file not found: {config_path}")
-    try:
-        config.env = create_test_env_from_commandline_options(config)
-    except Exception as e:
-        raise pytest.UsageError(f"Failed to create test environment: {e}")
 
 
 #####################################################################################################################
@@ -116,48 +91,16 @@ def pytest_collection_modifyitems(config, items):
     # Always check for errors after the run
     add_test_into_existing_collection("tests/cleanup/error_test.py", items, prepend=False)
 
-    # Now figure out which disk instance are present in the test setup, so that we can skip
-    # any marked tests for disk instances not in our environment
-    present_disk_instances: list[DiskInstanceImplementation] = [di.implementation for di in config.env.disk_instance]
-
     # For now a solution not to run the setup when we do things like --ff, but this should be cleaner in the future
     if not config.getoption("--no-setup") and not config.getoption("--ff") and not config.getoption("--lf"):
         add_test_into_existing_collection("tests/setup/setup_cta_test.py", items, prepend=True)
-        if DiskInstanceImplementation.EOS in present_disk_instances:
-            add_test_into_existing_collection("tests/setup/setup_eos_test.py", items, prepend=True)
-        if DiskInstanceImplementation.DCACHE in present_disk_instances:
-            add_test_into_existing_collection("tests/setup/setup_dcache_test.py", items, prepend=True)
+        add_test_into_existing_collection("tests/setup/setup_eos_test.py", items, prepend=True)
+        add_test_into_existing_collection("tests/setup/setup_dcache_test.py", items, prepend=True)
 
     if not config.getoption("--no-cleanup"):
         # Do the reset before the tests start.
         # Useful when rerunning the tests multiple times on the same instance and it wasn't properly cleaned up
         prepend = bool(config.getoption("--cleanup-first"))
         add_test_into_existing_collection("tests/cleanup/cleanup_cta_test.py", items, prepend=prepend)
-        if DiskInstanceImplementation.EOS in present_disk_instances:
-            add_test_into_existing_collection("tests/cleanup/cleanup_eos_test.py", items, prepend=prepend)
-        if DiskInstanceImplementation.DCACHE in present_disk_instances:
-            add_test_into_existing_collection("tests/cleanup/cleanup_dcache_test.py", items, prepend=prepend)
-
-    skip_tests_if_necessary(config, items, present_disk_instances=present_disk_instances)
-
-
-def skip_tests_if_necessary(config, items, present_disk_instances):
-    """Modifies the items collection to skip tests with certain marks when relevant.
-    For example, all tests marked as EOS will be skipped if EOS is not found in the deployment.
-    """
-    SKIP_REASONS = {
-        "eos": "Requires EOS",
-        "dcache": "Requires dCache",
-    }
-
-    skip_marks: set[str] = set()
-
-    # Skip all disk-instances which we didn't find in the deployment
-    skip_marks.update([e.label for e in (set(DiskInstanceImplementation) - set(present_disk_instances))])
-
-    # Modify the items collection by adding the "skip" mark to the relevant tests
-    for item in items:
-        matched_marks = [mark for mark in skip_marks if mark in item.keywords]
-        if matched_marks:
-            reasons = [SKIP_REASONS[m] for m in matched_marks]
-            item.add_marker(pytest.mark.skip(reason="; ".join(reasons)))
+        add_test_into_existing_collection("tests/cleanup/cleanup_eos_test.py", items, prepend=prepend)
+        add_test_into_existing_collection("tests/cleanup/cleanup_dcache_test.py", items, prepend=prepend)

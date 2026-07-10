@@ -12,7 +12,7 @@
 # Helper functions for tests running on client pod.
 #
 # to use in your tests symply source this file:
-# . /root/client_helper.sh on the client pod
+# . /tmp/client_helper.sh on the client pod
 #
 # admin_kinit: kinit for CTAADMIN_USER
 # admin_klist: klist for CTAADMIN_USER

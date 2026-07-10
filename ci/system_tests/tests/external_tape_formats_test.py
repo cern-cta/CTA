@@ -167,7 +167,7 @@ def reload_tape(cta_rmcd, slot: int, drive: int):
 
 
 def clone_enstore_samples(cta_rmcd) -> str:
-    sample_dir = "/ens_mhvtl_" + str(uuid.uuid4())[:8]
+    sample_dir = "/tmp/ens_mhvtl_" + str(uuid.uuid4())[:8]
     cta_rmcd.exec("git lfs install --skip-repo")
     cta_rmcd.exec(f"git clone https://github.com/LTrestka/ens-mhvtl.git {sample_dir}")
     return sample_dir
@@ -178,9 +178,8 @@ def clone_enstore_samples(cta_rmcd) -> str:
 #####################################################################################################################
 
 
-def test_install_required(cta_rmcd, cta_taped):
-    cta_rmcd.exec("dnf install -y git git-lfs")
-    cta_taped.exec("dnf -y install cta-integrationtests")
+def test_install_required(cta_rmcd):
+    cta_rmcd.exec("sudo microdnf install -y git git-lfs")
 
 
 def test_load_tape(cta_rmcd):
@@ -192,7 +191,7 @@ def test_load_tape(cta_rmcd):
 
 def test_read_osm_tape(cta_rmcd, cta_taped):
     drive_device = cta_taped.drive_device
-    osm_dir = "/osm_mhvtl_" + str(uuid.uuid4())[:8]
+    osm_dir = "/tmp/osm_mhvtl_" + str(uuid.uuid4())[:8]
 
     # Download OSM sample tape
     cta_rmcd.exec("git lfs install --skip-repo")
@@ -243,7 +242,7 @@ def test_read_write_enstore_tape(cta_rmcd, cta_taped):
     drive_device = cta_taped.drive_device
     sample_dir = clone_enstore_samples(cta_rmcd)
     layout_dir = f"{sample_dir}/enstore/FL1212_f1"
-    readback_dir = f"/enstore_readback_{str(uuid.uuid4())[:8]}"
+    readback_dir = f"/tmp/enstore_readback_{str(uuid.uuid4())[:8]}"
 
     cta_rmcd.exec(f"mkdir -p {readback_dir}")
     try:

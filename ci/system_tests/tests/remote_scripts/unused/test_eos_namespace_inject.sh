@@ -59,7 +59,7 @@ echo
 echo "Creating files: ${FILE_1} ${FILE_2}"
 
 kubectl -n ${NAMESPACE} cp common/archive_file.sh ${CLIENT_POD}:/usr/bin/ -c client
-kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/ -c client
+kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/tmp/ -c client
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /usr/bin/archive_file.sh -f ${FILE_1} || exit 1
 kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /usr/bin/archive_file.sh -f ${FILE_2} || exit 1
 

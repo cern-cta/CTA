@@ -48,7 +48,7 @@ EOS_NO_P_BASEDIR=$EOS_TAPE_BASEDIR/no_prepare  # Exists on tape but without prep
 EOS_NONE_BASEDIR=$EOS_TAPE_BASEDIR/none        # Does not exist: for testing non-existing files
 
 # get some common useful helpers for krb5
-. /root/client_helper.sh
+. /tmp/client_helper.sh
 
 eospower_kdestroy &>/dev/null
 eospower_kinit &>/dev/null

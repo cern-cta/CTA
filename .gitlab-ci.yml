@@ -19,16 +19,14 @@ variables:
 
   # Pipeline Type. Supported types:
   #   - DEFAULT: runs static analysis, compiles the software and tests it.
-  #   - SYSTEM_TEST_ONLY: runs the system tests against the latest (or a provided) ctageneric image.
-  #   - REGR_AGAINST_CTA_MAIN: test custom dependency versions (EOS/XRootD) against CTA main.
+  #   - REGR_AGAINST_CTA_BRANCH: test custom dependency versions (EOS/XRootD) against CTA main.
   #   - REGR_AGAINST_CTA_VERSION: test custom dependency versions (EOS/XRootD) against the latest tagged CTA version.
   PIPELINE_TYPE:
     description: "What kind of pipeline to run"
     value: "DEFAULT"
     options:
       - "DEFAULT"
-      - "SYSTEM_TEST_ONLY"
-      - "REGR_AGAINST_CTA_MAIN"
+      - "REGR_AGAINST_CTA_BRANCH"
       - "REGR_AGAINST_CTA_VERSION"
 
   # Custom variables for image building and run environment packages
@@ -38,11 +36,8 @@ variables:
   CUSTOM_XROOTD_VERSION:
     description: "Custom XRootD version to use for building and running."
     value: ""
-  CUSTOM_CTA_VERSION:
-    description: "Custom CTA version to build a docker image from and test with. Must exist in the CTA testing repo. Should only be used when PIPELINE_TYPE != DEFAULT."
-    value: ""
-  CUSTOM_SYSTEM_TEST_IMAGE_TAG:
-    description: "Custom image tag to run the systemtests against. If left empty, the latest image tag from main will be used. Should only be used when PIPELINE_TYPE = SYSTEM_TEST_ONLY."
+  CUSTOM_CTA_IMAGE_TAG:
+    description: "Custom CTA version to build a docker image from and test with. Should only be used when PIPELINE_TYPE != DEFAULT."
     value: ""
 
   PLATFORM:
@@ -59,6 +54,9 @@ variables:
       - "FALSE"
 
   # Building Configuration
+  DOCKER_IMAGE_REGISTRY: gitlab-registry.cern.ch
+  DOCKER_PRIVATE_REGISTRY_PREFIX: cta/ctageneric
+  DOCKER_PUBLIC_REGISTRY_PREFIX: cta/public_registry
   BUILD_CTA_VERSION: 5
 
   BUILD_GENERATOR:
@@ -172,12 +170,6 @@ variables:
       - "presets/eos/auth-jwt.yaml"
       - "presets/eos/auth-mtls.yaml"
 
-  STRESS_CTA_VALUES_FILE:
-    description: "Path to a values.yaml file to be passed to the CTA Helm chart for the stress test."
-    value: "presets/stress-cta-values.yaml"
-    options:
-      - "presets/stress-cta-values.yaml"
-      - "presets/stress-cta-pgsched-values.yaml"
   STRESS_EOS_VALUES_FILE:
     description: "Path to a values.yaml file to be passed to the EOS Helm chart for the stress test."
     value: "presets/stress-eos-values.yaml"
@@ -210,7 +202,7 @@ variables:
   IMAGE_TEST: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-test:2026-07-07-15213892.el9
   IMAGE_RELEASE: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-release:2026-07-07-15213892.el9
   IMAGE_DANGER: gitlab-registry.cern.ch/cta/public_registry/container_registry/cta-ci-danger:2026-07-07-15213892.el9
-  IMAGE_DOCKER_IMAGE_BUILDER: registry.cern.ch/gcr.io/kaniko-project/executor:debug
+  IMAGE_DOCKER_IMAGE_BUILDER: registry.cern.ch/quay.io/buildah/stable:v1.43-immutable
   IMAGE_LICENSE_CHECK: registry.cern.ch/docker.io/fsfe/reuse:6.2
 
 default:
@@ -237,7 +229,7 @@ workflow:
         on_new_commit: none
       variables:
         ENABLE_CCACHE: "TRUE"
-        BUILD_CACHE_POLICY: push # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
+        BUILD_CACHE_POLICY: push  # Ensure clean build and we only rebuild the cache for push events to prevent other pipeline types from screwing with it
         CACHE_BRANCH: '$CI_COMMIT_BRANCH'
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH || $CI_COMMIT_TAG || $CI_PIPELINE_SOURCE == "trigger"
       auto_cancel:

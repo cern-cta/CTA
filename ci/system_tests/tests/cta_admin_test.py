@@ -291,7 +291,6 @@ def test_cta_admin_tape(cta_cli):
     assert ls_before == cta_cli.exec_with_output("cta-admin --json ta ls --all")
 
 
-@pytest.mark.eos
 def test_cta_admin_tape_file(cta_cli, disk_client, disk_instance, disk_instance_name, test_dir):
     vids: list[str] = cta_cli.list_all_tape_vids()
     assert vids, "No tape VIDs available to test tape file commands."
@@ -562,7 +561,6 @@ def test_cta_admin_media_type(cta_cli):
     assert ls_before == cta_cli.exec_with_output("cta-admin --json mt ls")
 
 
-@pytest.mark.eos
 def test_cta_admin_recycle_tape_file_ls(
     cta_cli, disk_client, disk_instance, disk_instance_name, test_dir, cta_storage_class
 ):
@@ -737,7 +735,6 @@ def test_cta_admin_archive_route(cta_cli, disk_instance_name):
     assert ls_before == cta_cli.exec_with_output("cta-admin --json ar ls")
 
 
-@pytest.mark.eos
 def test_cta_admin_archive_file_ch(
     cta_cli, disk_client, disk_instance, disk_instance_name, test_dir, cta_storage_class
 ):
@@ -866,7 +863,6 @@ def test_cta_admin_storage_class(cta_cli, disk_instance_name):
 # -------------------------------------------------------------------------------------------------
 
 
-@pytest.mark.eos
 def test_cta_admin_show_queue(cta_cli, disk_client, disk_instance_name, test_dir):
 
     ls_before = cta_cli.exec_with_output("cta-admin --json sq")
@@ -907,7 +903,6 @@ def test_cta_admin_show_queue(cta_cli, disk_client, disk_instance_name, test_dir
     disk_client.delete_file(disk_instance_name, path=file_path)
 
 
-@pytest.mark.eos
 def test_cta_admin_repack(cta_cli, disk_instance_name):
 
     vo_name = "vo_repack"

@@ -10,7 +10,7 @@
   - cta-versionlock apply
   - |
     if [[ "$USE_INTERNAL_REPOS" == "TRUE" ]]; then
-      cp -f ci/docker/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
+      cp -f ci/docker/cta/${PLATFORM}/etc/yum.repos.d-internal/*.repo /etc/yum.repos.d/
     fi
   - dnf -y --nogpgcheck install cta-integrationtests cta-integrationtests-debuginfo
 
@@ -209,9 +209,12 @@ test-cta-release:
                                   cta-readtp
                                   cta-rmcd
                                   cta-smc
-                                  cta-lib-catalogue-occi
                                   eos-server
                                   eos-client
+    - |
+      if [[ $ORACLE_SUPPORT == "TRUE" ]]; then
+        dnf install --nogpgcheck -y cta-lib-catalogue-occi
+      fi
     # Check that everything was installed properly
     - cta-versionlock --json check-installed > checkpkg-output.json
   artifacts:

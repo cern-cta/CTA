@@ -97,9 +97,9 @@ kubectl -n ${NAMESPACE} exec ${EOS_MGM_POD} -c eos-mgm -- eos vid ls
 echo
 echo "Launching restore_files_client.sh on client pod"
 echo " Archiving file: xrdcp as user1"
-kubectl -n ${NAMESPACE} cp common/archive_file.sh ${CLIENT_POD}:/root/archive_file.sh -c client
-kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/root/client_helper.sh -c client
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/archive_file.sh -f ${TEST_FILE_NAME} || exit 1
+kubectl -n ${NAMESPACE} cp common/archive_file.sh ${CLIENT_POD}:/tmp/archive_file.sh -c client
+kubectl -n ${NAMESPACE} cp client_helper.sh ${CLIENT_POD}:/tmp/client_helper.sh -c client
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /tmp/archive_file.sh -f ${TEST_FILE_NAME} || exit 1
 
 echo
 METADATA_FILE_PATH=$(mktemp -d).json
@@ -115,8 +115,8 @@ CHECKSUM=$(jq -r '.checksumvalue' ${METADATA_FILE_PATH})
 
 echo
 echo "DELETE ARCHIVED FILE"
-kubectl -n ${NAMESPACE} cp common/delete_file.sh ${CLIENT_POD}:/root/delete_file.sh -c client
-kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /root/delete_file.sh -i ${EOS_MGM_HOST} -f ${TEST_FILE_NAME}
+kubectl -n ${NAMESPACE} cp common/delete_file.sh ${CLIENT_POD}:/tmp/delete_file.sh -c client
+kubectl -n ${NAMESPACE} exec ${CLIENT_POD} -c client -- bash /tmp/delete_file.sh -i ${EOS_MGM_HOST} -f ${TEST_FILE_NAME}
 
 echo
 echo "VALIDATE THAT THE FILE IS IN THE RECYCLE BIN"
@@ -139,9 +139,9 @@ kubectl cp ${TMP_DIR}/cta-cli.conf ${NAMESPACE}/${CTA_FRONTEND_POD}:/etc/cta/cta
 echo
 echo "ENABLE ${CTA_FRONTEND_POD} TO EXECUTE CTA ADMIN COMMANDS"
 kubectl --namespace ${NAMESPACE} exec ${CLIENT_POD} -- cat /root/ctaadmin2.keytab | kubectl --namespace ${NAMESPACE} exec -i ${CTA_FRONTEND_POD} --  bash -c "cat > /root/ctaadmin2.keytab; mkdir -p /tmp/ctaadmin2"
-kubectl -n ${NAMESPACE} cp client_helper.sh ${CTA_FRONTEND_POD}:/root/client_helper.sh
+kubectl -n ${NAMESPACE} cp client_helper.sh ${CTA_FRONTEND_POD}:/tmp/client_helper.sh
 touch ${TMP_DIR}/init_kerb.sh
-echo '. /root/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
+echo '. /tmp/client_helper.sh; admin_kinit' >> ${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} cp ${TMP_DIR}/init_kerb.sh ${CTA_FRONTEND_POD}:${TMP_DIR}/init_kerb.sh
 kubectl -n ${NAMESPACE} exec ${CTA_FRONTEND_POD} -c cta-frontend -- bash ${TMP_DIR}/init_kerb.sh
 # install cta-cli that provides `cta-restore-deleted-files`

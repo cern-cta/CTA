@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 from .cta_cli_host import CtaCliHost
-from .cta_frontend_host import CtaFrontendHost
+from .cta_workflow_api_host import CtaWorkflowApiHost
+from .cta_admin_api_host import CtaAdminApiHost
 from .cta_maintd_host import CtaMaintdHost
 from .cta_rmcd_host import CtaRmcdHost
 from .cta_taped_host import CtaTapedHost
@@ -14,7 +15,8 @@ from .remote_host import RemoteHost
 
 __all__ = [
     "CtaCliHost",
-    "CtaFrontendHost",
+    "CtaWorkflowApiHost",
+    "CtaAdminApiHost",
     "CtaMaintdHost",
     "CtaRmcdHost",
     "CtaTapedHost",

@@ -455,8 +455,6 @@ Unit tests and integration tests with virtual tape drives
 %{_bindir}/cta-unitTests-multiProcess
 %{_bindir}/cta-valgrindUnitTests.sh
 %{_bindir}/cta-unitPlusIntegrationTests.sh
-%{_bindir}/cta-osmReaderTest
-%{_bindir}/cta-enstoreLargeReaderTest
 %{_libdir}/libctacataloguecmdlineunittests.so*
 %{_libdir}/libctacommonunittests.so*
 %{_libdir}/libctatapedaemoncommonunittests.so*
@@ -488,6 +486,18 @@ Unit tests and integration tests with virtual tape drives
 %{_libdir}/libctadaemonunittests-multiprocess.so*
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/*.suppr
 %attr(0644,root,root) %{_datadir}/%{name}-%{ctaVersion}/unittest/parallelTestsMakefile
+
+%package -n cta-external-tape-formats-test
+Summary: CERN Tape Archive: command-line tool for testing external tape formats
+Group: Application/CTA
+Requires: cta-lib-common = %{version}-%{release}
+%description -n cta-external-tape-formats-test
+CERN Tape Archive:
+Command-line tool for testing external tape formats
+%files -n cta-external-tape-formats-test
+%defattr(0755,root,root,-)
+%{_bindir}/cta-osmReaderTest
+%{_bindir}/cta-enstoreLargeReaderTest
 
 %package -n cta-immutable-file-test
 Summary: CERN Tape Archive: command-line tool for testing immutable files
@@ -672,6 +682,7 @@ Summary: Repository configuration for CTA and its dependencies
 Group: Application/CTA
 Requires: python3-dnf-plugin-versionlock
 Requires: python
+Requires: epel-release
 Requires: jq
 %description -n cta-release
 Repository configuration for CTA and its dependencies

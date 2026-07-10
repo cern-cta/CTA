@@ -7,8 +7,6 @@ build-cta-rpms:
     - job: modify-project-json
       optional: true
   rules:
-    - if: $PIPELINE_TYPE == "SYSTEM_TEST_ONLY"
-      when: never
     - if: $PIPELINE_TYPE == "REGR_AGAINST_CTA_VERSION"
       when: never
     # These rules serve to prevent the rest of the pipeline from triggering when only trivial files such as the CHANGELOG have been modified
@@ -101,15 +99,12 @@ build-cta-rpms:
                               --platform ${PLATFORM}
                               --skip-unit-tests
                               ${BUILD_OPTIONS}
-    - echo "rpm_${RPM_SIZE_METRICS_ID}_packages_total_mb $(find ${BUILD_PATH} -type f -name '*.rpm' -printf '%s\n' | awk '{s+=$1} END {printf "%.0f\n", s/1000000}' | cut -f1)" > metrics.txt
   after_script:
     - if [[ "$ENABLE_CCACHE" == "TRUE" ]]; then ccache --show-stats --verbose; fi
   artifacts:
     expire_in: 30 days
     paths:
       - ${BUILD_PATH}
-    reports:
-      metrics: metrics.txt
 
   cache:
     - key: "build-cache:${CI_PROJECT_ID}:${CACHE_BRANCH}"
@@ -129,7 +124,7 @@ build-cta-rpms-no-cache:
   rules:
     - if: $CI_PIPELINE_SOURCE != "merge_request_event"
       when: never
-    - !reference [.build-image, rules]
+    - !reference [build-cta-rpms, rules]
   variables:
     ENABLE_CCACHE: "FALSE"
     ENABLE_DEBUG_INFO: "FALSE"

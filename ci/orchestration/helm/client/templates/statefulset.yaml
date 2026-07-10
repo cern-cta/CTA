@@ -55,12 +55,6 @@ spec:
         imagePullPolicy: {{ include "client.imagePullPolicy" . }}
         stdin: true
         command: ["/bin/bash", "/scripts/client.sh"]
-        readinessProbe:
-          exec:
-            command: ["sh", "-c", "rpm -q cta-admin-grpc cta-immutable-file-test xrootd-client eos-client"]
-          initialDelaySeconds: 5
-          periodSeconds: 2
-          failureThreshold: 60
         securityContext:
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}

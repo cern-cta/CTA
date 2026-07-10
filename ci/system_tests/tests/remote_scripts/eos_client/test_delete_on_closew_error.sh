@@ -34,7 +34,7 @@ error()
 }
 
 # get Krb5 credentials
-. /root/client_helper.sh
+. /tmp/client_helper.sh
 eosadmin_kdestroy
 eosadmin_kinit
 

@@ -8,7 +8,7 @@ STRACE_SLEEP_SECS=2
 log_file="/var/log/cta/cta-taped.log"
 
 # Install dependencies required for testing log rotation inside the tape server"
-dnf -y install strace lsof
+sudo microdnf -y install strace lsof procps-ng
 
 # Get PID of all taped processes
 tpd_parent_pid=$(pgrep "parent" -u cta)

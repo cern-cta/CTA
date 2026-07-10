@@ -17,7 +17,7 @@ EOSDF_BUFFER_BASEDIR="$1"
 EOSDF_BUFFER_URL=${EOSDF_BUFFER_BASEDIR}
 
 # get some common useful helpers for krb5
-. /root/client_helper.sh ## wait_for_archive is defined in this file
+. /tmp/client_helper.sh ## wait_for_archive is defined in this file
 
 # get some common useful helpers for krb5
 eospower_kdestroy
@@ -46,10 +46,10 @@ file_exists_on_tape=$(eos root://${EOS_MGM_HOST} fileinfo ${EOSDF_BUFFER_URL}/${
 if [[ $? -ne 0 ]]; then
     echo "Archiving a file: $TEST_FILE_NAME"
     echo
-    echo "foo" > /root/${TEST_FILE_NAME}
+    echo "foo" > /tmp/${TEST_FILE_NAME}
     echo
     echo "Doing xrdcp of ${TEST_FILE_NAME} in the path root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
-    xrdcp /root/${TEST_FILE_NAME} root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}
+    xrdcp /tmp/${TEST_FILE_NAME} root://${EOS_INSTANCE_NAME}/${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}
     wait_for_archive ${EOS_INSTANCE_NAME} "${EOSDF_BUFFER_URL}/${TEST_FILE_NAME}"
 
     echo "File ${TEST_FILE_NAME} archived to tape"

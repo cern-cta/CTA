@@ -43,7 +43,7 @@ NB_RETRIEVES_EXTRA=2
 NB_FILES=4
 
 # get some common useful helpers for krb5
-. /root/client_helper.sh
+. /tmp/client_helper.sh
 
 eospower_kdestroy
 eospower_kinit
