@@ -169,8 +169,8 @@ TEST(MaintdConfig, AllSupportedRoutinesAreEnabledByDefault) {
   EXPECT_TRUE(config.queue_cleanup);
   EXPECT_TRUE(config.routineEnabled(cta::maintd::Routine::GarbageCollect));
 #else
-  EXPECT_EQ(config.enabled_routines.size(), 10);
-  EXPECT_TRUE(config.routineEnabled(cta::maintd::Routine::MountDecisionLoop));
+  EXPECT_EQ(config.enabled_routines.size(), 9);
+  EXPECT_FALSE(config.routineEnabled(cta::maintd::Routine::MountDecisionLoop));
   EXPECT_TRUE(config.user_active_queue_cleanup);
   EXPECT_TRUE(config.repack_active_queue_cleanup);
   EXPECT_TRUE(config.user_pending_queue_cleanup);
@@ -184,6 +184,26 @@ TEST(MaintdConfig, AllSupportedRoutinesAreEnabledByDefault) {
   EXPECT_TRUE(app.routines.repack_report);
 }
 
+#ifdef CTA_PGSCHED
+TEST(MaintdConfig, MountDecisionLoopRequiresExperimentalFeature) {
+  using cta::maintd::Routine;
+  cta::maintd::MaintdConfig config;
+  config.scheduler.backend_name = "postgresTest";
+  config.routines.enabled_routines = {"mount_decision_loop"};
+  EXPECT_TRUE(config.routines.routineEnabled(Routine::MountDecisionLoop));
+  EXPECT_FALSE(config.validate().ok());
+
+  config.enabled_experimental_features = {"mount_decision"};
+  EXPECT_TRUE(config.featureEnabled(cta::maintd::MaintdConfig::Feature::MountDecision));
+  EXPECT_TRUE(config.validate().ok());
+
+  // The feature alone does not select the routine.
+  config.routines.enabled_routines = cta::maintd::RoutinesConfig::defaultEnabledRoutines();
+  EXPECT_FALSE(config.routines.routineEnabled(Routine::MountDecisionLoop));
+  EXPECT_TRUE(config.validate().ok());
+}
+#endif
+
 TEST(MaintdConfig, RoutineEnabledReflectsSelection) {
   using cta::maintd::Routine;
   cta::maintd::RoutinesConfig config;
@@ -196,7 +216,6 @@ TEST(MaintdConfig, RoutineEnabledReflectsSelection) {
     {Routine::GarbageCollect,     "garbage_collect"     },
     {Routine::QueueCleanup,       "queue_cleanup"       },
 #else
-    {Routine::MountDecisionLoop, "mount_decision_loop"},
     {Routine::UserActiveQueueCleanup, "user_active_queue_cleanup"},
     {Routine::RepackActiveQueueCleanup, "repack_active_queue_cleanup"},
     {Routine::UserPendingQueueCleanup, "user_pending_queue_cleanup"},

@@ -393,6 +393,9 @@ struct TapedConfig final {
   enum class Feature {
     Telemetry,
     HealthServer,
+#ifdef CTA_PGSCHED
+    MountDecision,
+#endif
   };
 
   /// Catalogue database connection configuration.
@@ -425,6 +428,9 @@ struct TapedConfig final {
   static constexpr auto features = std::tuple {
     cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &TapedConfig::telemetry),
     cta::runtime::stableFeature(Feature::HealthServer, "health_server", &TapedConfig::health_server),
+#ifdef CTA_PGSCHED
+    cta::runtime::experimentalFeature(Feature::MountDecision, "mount_decision", nullptr),
+#endif
   };
 
   /// Query selection using the feature's stable or experimental list.

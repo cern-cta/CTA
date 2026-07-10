@@ -27,6 +27,10 @@ scheduler:
   retrieveQueueCacheMaxAgeSecs: 1
   numberOfConnections: 3
 
+# Experimental features enabled on PostgreSQL scheduler deployments.
+experimental:
+  mountDecisionEnabled: true
+
 mounts:
   minimumQueuedBytes: 2000000
   minimumQueuedFiles: 100

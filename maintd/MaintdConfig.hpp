@@ -146,8 +146,8 @@ enum class Routine {
 
 /// Maintenance routine selection, cycle timing and per-routine settings.
 struct RoutinesConfig final {
-  // All declared routines run unless explicitly deselected.
-  std::vector<std::string> enabled_routines = cta::runtime::featureNames(routines);
+  // All declared routines run unless explicitly deselected, except experimental ones.
+  std::vector<std::string> enabled_routines = defaultEnabledRoutines();
   uint32_t cycle_sleep_interval_secs = 10;
   uint32_t max_cycle_duration_secs = 900;
 
@@ -208,6 +208,16 @@ struct RoutinesConfig final {
 #endif
   };
 
+  /// Return the routines selected when enabled_routines is omitted.
+  static std::vector<std::string> defaultEnabledRoutines() {
+    auto names = cta::runtime::featureNames(routines);
+#ifdef CTA_PGSCHED
+    // The Mount Decision loop also requires the experimental mount_decision feature, so it is opt-in.
+    std::erase(names, "mount_decision_loop");
+#endif
+    return names;
+  }
+
   /// Return whether the routine is selected, independently of its settings section.
   bool routineEnabled(Routine routine) const {
     return cta::runtime::featureEnabled(enabled_routines, routine, routines);
@@ -230,6 +240,9 @@ struct MaintdConfig final {
   enum class Feature {
     Telemetry,
     HealthServer,
+#ifdef CTA_PGSCHED
+    MountDecision,
+#endif
   };
 
   cta::runtime::CatalogueConfig catalogue;
@@ -247,6 +260,9 @@ struct MaintdConfig final {
   static constexpr auto features = std::tuple {
     cta::runtime::experimentalFeature(Feature::Telemetry, "telemetry", &MaintdConfig::telemetry),
     cta::runtime::stableFeature(Feature::HealthServer, "health_server", &MaintdConfig::health_server),
+#ifdef CTA_PGSCHED
+    cta::runtime::experimentalFeature(Feature::MountDecision, "mount_decision", nullptr),
+#endif
   };
 
   /// Query selection using the feature's stable or experimental list.
@@ -259,6 +275,12 @@ struct MaintdConfig final {
     result.merge("logging", logging.validate());
     result.merge("xrootd", xrootd.validate());
     result.merge("routines", routines.validate());
+#ifdef CTA_PGSCHED
+    if (routines.routineEnabled(Routine::MountDecisionLoop) && !featureEnabled(Feature::MountDecision)) {
+      result.addError("routines.enabled_routines",
+                      "mount_decision_loop requires \"mount_decision\" in enabled_experimental_features");
+    }
+#endif
     return result;
   }
 };

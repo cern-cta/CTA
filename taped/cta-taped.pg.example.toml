@@ -12,8 +12,9 @@
 enabled_features = ["health_server"]
 
 # Experimental features to enable. These may change or be removed in future releases.
+# "mount_decision" updates the Mount Decision session counter in the scheduler database for each tape session.
 # Type: array of strings; default: [].
-# Allowed: "telemetry" (no duplicates).
+# Allowed: "telemetry", "mount_decision" (no duplicates).
 enabled_experimental_features = ["telemetry"]
 
 [drive]

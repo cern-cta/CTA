@@ -283,7 +283,9 @@ TapeSessionResult DriveSession::runTapeSession(TapeMount& tapeMount) {
   log::ScopedParamContainer mountParams(m_lc);
   mountParams.add("tapeVid", vid);
 #ifdef CTA_PGSCHED
-  incrementMountDecisionSessionCounter();
+  if (m_config.featureEnabled(TapedConfig::Feature::MountDecision)) {
+    incrementMountDecisionSessionCounter();
+  }
 #endif
   std::optional<TapeSessionResult> transferResult;
   try {
@@ -471,7 +473,9 @@ bool DriveSession::cleanDriveForSessionRecovery(const std::string& vid) {
 
 bool DriveSession::cleanDrive(const std::string& vid, TapeSessionTracker& tracker) {
 #ifdef CTA_PGSCHED
-  incrementMountDecisionSessionCounter();
+  if (m_config.featureEnabled(TapedConfig::Feature::MountDecision)) {
+    incrementMountDecisionSessionCounter();
+  }
 #endif
   bool reusable = false;
   std::string error;

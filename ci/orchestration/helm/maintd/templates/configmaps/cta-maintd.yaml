@@ -5,8 +5,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 {{- $schedulerConfig := include "scheduler.config" . | fromYaml -}}
 {{- $allRoutines := .Values.routines -}}
-{{- if ne $schedulerConfig.backend "postgres" -}}
+{{- $mountDecisionEnabled := and (eq $schedulerConfig.backend "postgres") .Values.experimental.mountDecisionEnabled -}}
+{{- if not $mountDecisionEnabled -}}
 {{- $allRoutines = omit $allRoutines "mountDecisionLoop" -}}
+{{- end -}}
+{{- $experimentalFeatures := list "telemetry" -}}
+{{- if $mountDecisionEnabled -}}
+{{- $experimentalFeatures = append $experimentalFeatures "mount_decision" -}}
 {{- end -}}
 {{- /* Routines without a settings section in cta-maintd.toml */ -}}
 {{- $routinesWithoutSettings := list "garbageCollect" "mountDecisionLoop" -}}
@@ -21,7 +26,7 @@ metadata:
 data:
   cta-maintd.toml: |-
     enabled_features = ["health_server"]
-    enabled_experimental_features = ["telemetry"]
+    enabled_experimental_features = {{ $experimentalFeatures | toJson }}
 
     [catalogue]
       config_file = "/etc/cta/cta-catalogue.conf"
