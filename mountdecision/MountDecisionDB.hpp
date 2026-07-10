@@ -5,12 +5,39 @@
 
 #pragma once
 
+#include "common/dataStructures/MountType.hpp"
 #include "scheduler/rdbms/ConnProvider.hpp"
 
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace cta::mountdecision {
+
+struct MountCandidate {
+  cta::common::dataStructures::MountType mountType;
+  std::string logicalLibrary;
+  std::string tapePool;
+  std::optional<std::string> vo;
+  std::optional<std::string> vid;
+  std::optional<std::string> activity;
+  std::optional<uint64_t> priority;
+  std::optional<uint64_t> minRequestAge;
+  std::optional<uint64_t> filesQueued;
+  std::optional<uint64_t> bytesQueued;
+  std::optional<uint64_t> oldestJobStartTime;
+  std::optional<uint64_t> youngestJobStartTime;
+  std::optional<double> ratioOfMountQuotaUsed;
+  uint64_t candidateRank;
+  std::optional<std::string> mediaType;
+  std::optional<uint64_t> labelFormat;
+  std::optional<std::string> vendor;
+  std::optional<uint64_t> capacityInBytes;
+  std::optional<std::string> encryptionKeyName;
+  std::string state;
+  std::optional<std::string> stateReason;
+  std::optional<std::string> createdBy;
+};
 
 /**
  * Relational backend for the Mount Decision DB.
@@ -26,6 +53,15 @@ public:
   std::optional<std::string> getValue(const std::string& key);
 
   void incrementCounter(const std::string& key);
+
+  bool tryAcquireRefreshLock(const std::string& workKey,
+                             const std::string& host,
+                             std::optional<uint64_t> pid,
+                             uint64_t leaseSeconds);
+
+  void releaseRefreshLock(const std::string& workKey, const std::string& host, std::optional<uint64_t> pid);
+
+  void replaceMountCandidates(const std::vector<MountCandidate>& candidates, uint64_t reservationTimeoutSeconds);
 
 private:
   ConnProvider& m_connectionProvider;

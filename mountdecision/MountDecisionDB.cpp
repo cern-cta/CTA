@@ -7,7 +7,44 @@
 
 #include "common/exception/Exception.hpp"
 
+#include <set>
+
 namespace cta::mountdecision {
+
+namespace {
+
+std::optional<std::string> nonEmptyOptional(std::optional<std::string> value) {
+  if (value.has_value() && value->empty()) {
+    return std::nullopt;
+  }
+  return value;
+}
+
+template<typename Stmt>
+void bindCommonMountCandidateFields(Stmt& stmt, const MountCandidate& candidate) {
+  stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(candidate.mountType));
+  stmt.bindString(":LOGICAL_LIBRARY", candidate.logicalLibrary);
+  stmt.bindString(":TAPE_POOL", candidate.tapePool);
+  stmt.bindString(":VO", nonEmptyOptional(candidate.vo));
+  stmt.bindString(":VID", nonEmptyOptional(candidate.vid));
+  stmt.bindString(":ACTIVITY", nonEmptyOptional(candidate.activity));
+  stmt.bindUint64(":PRIORITY", candidate.priority);
+  stmt.bindUint64(":MIN_REQUEST_AGE", candidate.minRequestAge);
+  stmt.bindUint64(":FILES_QUEUED", candidate.filesQueued);
+  stmt.bindUint64(":BYTES_QUEUED", candidate.bytesQueued);
+  stmt.bindUint64(":OLDEST_JOB_START_TIME", candidate.oldestJobStartTime);
+  stmt.bindUint64(":YOUNGEST_JOB_START_TIME", candidate.youngestJobStartTime);
+  stmt.bindDouble(":RATIO_OF_MOUNT_QUOTA_USED", candidate.ratioOfMountQuotaUsed);
+  stmt.bindUint64(":CANDIDATE_RANK", candidate.candidateRank);
+  stmt.bindString(":MEDIA_TYPE", nonEmptyOptional(candidate.mediaType));
+  stmt.bindUint64(":LABEL_FORMAT", candidate.labelFormat);
+  stmt.bindString(":VENDOR", nonEmptyOptional(candidate.vendor));
+  stmt.bindUint64(":CAPACITY_IN_BYTES", candidate.capacityInBytes);
+  stmt.bindString(":ENCRYPTION_KEY_NAME", nonEmptyOptional(candidate.encryptionKeyName));
+  stmt.bindString(":CREATED_BY", nonEmptyOptional(candidate.createdBy));
+}
+
+}  // namespace
 
 MountDecisionDB::MountDecisionDB(ConnProvider& connectionProvider) : m_connectionProvider(connectionProvider) {}
 
@@ -76,6 +113,193 @@ void MountDecisionDB::incrementCounter(const std::string& key) {
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":KEY_NAME", key);
   stmt.executeNonQuery();
+}
+
+bool MountDecisionDB::tryAcquireRefreshLock(const std::string& workKey,
+                                            const std::string& host,
+                                            std::optional<uint64_t> pid,
+                                            uint64_t leaseSeconds) {
+  auto conn = m_connectionProvider.getConn();
+  const char* const sql = R"SQL(
+    INSERT INTO SCHEDULER_MOUNT_WORK_LOCK(
+      WORK_KEY,
+      LOCKED_BY_HOST,
+      LOCKED_BY_PID,
+      LOCK_EXPIRES_TIME
+    ) VALUES (
+      :WORK_KEY,
+      :LOCKED_BY_HOST,
+      :LOCKED_BY_PID,
+      EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER + :LEASE_SECONDS
+    )
+    ON CONFLICT(WORK_KEY) DO UPDATE SET
+      LOCKED_BY_HOST = EXCLUDED.LOCKED_BY_HOST,
+      LOCKED_BY_PID = EXCLUDED.LOCKED_BY_PID,
+      LOCKED_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
+      LOCK_HEARTBEAT_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
+      LOCK_EXPIRES_TIME = EXCLUDED.LOCK_EXPIRES_TIME
+    WHERE SCHEDULER_MOUNT_WORK_LOCK.LOCK_EXPIRES_TIME < EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+    RETURNING WORK_KEY
+  )SQL";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":WORK_KEY", workKey);
+  stmt.bindString(":LOCKED_BY_HOST", host);
+  stmt.bindUint64(":LOCKED_BY_PID", pid);
+  stmt.bindUint64(":LEASE_SECONDS", leaseSeconds);
+  auto rset = stmt.executeQuery();
+  return rset.next();
+}
+
+void MountDecisionDB::releaseRefreshLock(const std::string& workKey,
+                                         const std::string& host,
+                                         std::optional<uint64_t> pid) {
+  auto conn = m_connectionProvider.getConn();
+  const char* const sql = R"SQL(
+    DELETE FROM SCHEDULER_MOUNT_WORK_LOCK
+    WHERE
+      WORK_KEY = :WORK_KEY
+      AND LOCKED_BY_HOST = :LOCKED_BY_HOST
+      AND ((:LOCKED_BY_PID::bigint IS NULL AND LOCKED_BY_PID IS NULL) OR LOCKED_BY_PID = :LOCKED_BY_PID::bigint)
+  )SQL";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":WORK_KEY", workKey);
+  stmt.bindString(":LOCKED_BY_HOST", host);
+  stmt.bindUint64(":LOCKED_BY_PID", pid);
+  stmt.executeNonQuery();
+}
+
+void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& candidates,
+                                             const uint64_t reservationTimeoutSeconds) {
+  auto conn = m_connectionProvider.getConn();
+  try {
+    conn.executeNonQuery("BEGIN");
+    {
+      const char* const sql = R"SQL(
+        DELETE FROM SCHEDULER_MOUNT_CANDIDATES
+        WHERE
+          STATE <> 'Reserved'
+          OR COALESCE(RESERVATION_HEARTBEAT_TIME, RESERVED_TIME, 0)
+             < EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER - :RESERVATION_TIMEOUT_SECONDS
+      )SQL";
+      auto stmt = conn.createStmt(sql);
+      stmt.bindUint64(":RESERVATION_TIMEOUT_SECONDS", reservationTimeoutSeconds);
+      stmt.executeNonQuery();
+    }
+
+    const char* const updateReservedSql = R"SQL(
+      UPDATE SCHEDULER_MOUNT_CANDIDATES SET
+        MOUNT_TYPE = :MOUNT_TYPE,
+        LOGICAL_LIBRARY = :LOGICAL_LIBRARY,
+        TAPE_POOL = :TAPE_POOL,
+        VO = :VO,
+        ACTIVITY = :ACTIVITY,
+        PRIORITY = :PRIORITY,
+        MIN_REQUEST_AGE = :MIN_REQUEST_AGE,
+        FILES_QUEUED = :FILES_QUEUED,
+        BYTES_QUEUED = :BYTES_QUEUED,
+        OLDEST_JOB_START_TIME = :OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME = :YOUNGEST_JOB_START_TIME,
+        RATIO_OF_MOUNT_QUOTA_USED = :RATIO_OF_MOUNT_QUOTA_USED,
+        CANDIDATE_RANK = :CANDIDATE_RANK,
+        MEDIA_TYPE = :MEDIA_TYPE,
+        LABEL_FORMAT = :LABEL_FORMAT,
+        VENDOR = :VENDOR,
+        CAPACITY_IN_BYTES = :CAPACITY_IN_BYTES,
+        ENCRYPTION_KEY_NAME = :ENCRYPTION_KEY_NAME,
+        CREATED_BY = :CREATED_BY,
+        LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+      WHERE
+        STATE = 'Reserved'
+        AND VID = :VID
+        AND COALESCE(RESERVATION_HEARTBEAT_TIME, RESERVED_TIME, 0)
+            >= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER - :RESERVATION_TIMEOUT_SECONDS
+    )SQL";
+
+    const char* const insertSql = R"SQL(
+      INSERT INTO SCHEDULER_MOUNT_CANDIDATES(
+        MOUNT_TYPE,
+        LOGICAL_LIBRARY,
+        TAPE_POOL,
+        VO,
+        VID,
+        ACTIVITY,
+        PRIORITY,
+        MIN_REQUEST_AGE,
+        FILES_QUEUED,
+        BYTES_QUEUED,
+        OLDEST_JOB_START_TIME,
+        YOUNGEST_JOB_START_TIME,
+        RATIO_OF_MOUNT_QUOTA_USED,
+        CANDIDATE_RANK,
+        MEDIA_TYPE,
+        LABEL_FORMAT,
+        VENDOR,
+        CAPACITY_IN_BYTES,
+        ENCRYPTION_KEY_NAME,
+        STATE,
+        STATE_REASON,
+        CREATED_BY
+      ) VALUES (
+        :MOUNT_TYPE,
+        :LOGICAL_LIBRARY,
+        :TAPE_POOL,
+        :VO,
+        :VID,
+        :ACTIVITY,
+        :PRIORITY,
+        :MIN_REQUEST_AGE,
+        :FILES_QUEUED,
+        :BYTES_QUEUED,
+        :OLDEST_JOB_START_TIME,
+        :YOUNGEST_JOB_START_TIME,
+        :RATIO_OF_MOUNT_QUOTA_USED,
+        :CANDIDATE_RANK,
+        :MEDIA_TYPE,
+        :LABEL_FORMAT,
+        :VENDOR,
+        :CAPACITY_IN_BYTES,
+        :ENCRYPTION_KEY_NAME,
+        :STATE,
+        :STATE_REASON,
+        :CREATED_BY
+      )
+    )SQL";
+
+    std::set<std::string, std::less<>> updatedReservedVids;
+    for (const auto& candidate : candidates) {
+      if (candidate.vid.has_value() && !updatedReservedVids.contains(candidate.vid.value())) {
+        auto updateStmt = conn.createStmt(updateReservedSql);
+        bindCommonMountCandidateFields(updateStmt, candidate);
+        updateStmt.bindUint64(":RESERVATION_TIMEOUT_SECONDS", reservationTimeoutSeconds);
+        updateStmt.executeNonQuery();
+        if (updateStmt.getNbAffectedRows() > 0) {
+          updatedReservedVids.insert(candidate.vid.value());
+          continue;
+        }
+      }
+
+      std::optional<MountCandidate> blockedCandidate;
+      const MountCandidate* candidateToInsert = &candidate;
+      if (candidate.vid.has_value() && updatedReservedVids.contains(candidate.vid.value())
+          && candidate.state != "Blocked") {
+        blockedCandidate = candidate;
+        blockedCandidate->state = "Blocked";
+        blockedCandidate->stateReason = "Tape already reserved by higher-ranked candidate";
+        candidateToInsert = &blockedCandidate.value();
+      }
+
+      auto stmt = conn.createStmt(insertSql);
+      bindCommonMountCandidateFields(stmt, *candidateToInsert);
+      stmt.bindString(":STATE", candidateToInsert->state);
+      stmt.bindString(":STATE_REASON", nonEmptyOptional(candidateToInsert->stateReason));
+      stmt.executeNonQuery();
+    }
+
+    conn.commit();
+  } catch (...) {
+    conn.rollback();
+    throw;
+  }
 }
 
 }  // namespace cta::mountdecision
