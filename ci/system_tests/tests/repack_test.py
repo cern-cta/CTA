@@ -404,7 +404,7 @@ def test_repack_just_add_copies(cta_cli, eos_client, repack_buffer_url, repack_r
     repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
     repack_request = repack_ls_json[0]
     archived_files = repack_request["archivedFiles"]
-    retrieved_files = repack_request["retrieved_files"]
+    retrieved_files = repack_request["retrievedFiles"]
 
     assert archived_files == 0
     assert retrieved_files == 0
