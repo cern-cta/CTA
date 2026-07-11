@@ -53,7 +53,8 @@ def repack_report_dir(request, repack_base_dir):
 
 @pytest.fixture(scope="module")
 def repack_buffer_url(eos_mgm) -> str:
-    path = eos_mgm.base_dir_path / f"repack_{uuid.uuid4().hex[:6]}"
+    # Needs to be a different dir than test_dir
+    path = eos_mgm.base_dir_path / "tests" / f"repack_{uuid.uuid4().hex[:6]}"
     eos_mgm.exec(f"eos mkdir -p {path}")
     eos_mgm.exec(f"eos chmod 1777 {path}")
     return path
@@ -403,8 +404,8 @@ def test_repack_just_add_copies(cta_cli, eos_client, repack_buffer_url, repack_r
 
     repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
     repack_request = repack_ls_json[0]
-    archived_files = repack_request["archivedFiles"]
-    retrieved_files = repack_request["retrievedFiles"]
+    archived_files = int(repack_request["archivedFiles"])
+    retrieved_files = int(repack_request["retrievedFiles"])
 
     assert archived_files == 0
     assert retrieved_files == 0

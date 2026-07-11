@@ -77,7 +77,7 @@ def krb5_realm(request) -> str:
 @pytest.fixture(scope="session")
 def postgres_scheduler_enabled(cta_cli) -> str:
     # Not very robust; something to improve in the future. Maybe with a label on the entire cluster
-    return json.loads(cta_cli.exec_with_output("cta-admin --json version"))["schedulerBackendName"] == "postgres"
+    return json.loads(cta_cli.exec_with_output("cta-admin --json version"))[0]["schedulerBackendName"] == "postgres"
 
 
 @pytest.fixture(scope="session")
