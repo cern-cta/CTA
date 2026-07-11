@@ -261,8 +261,7 @@ if [[ ! -z $MAX_FILES_TO_SELECT ]]; then
       echo "Partial repack selected the full subset of files, as expected"
     else
       echo "Partial repack failed to select the full subset files"
-      admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq -r '[.[0]'
-      admin_cta --json tf ls --vid ${VID_TO_REPACK} | jq -r '. | length'
+      admin_cta --json repack ls --vid ${VID_TO_REPACK} | jq
       exit 1
     fi
   fi
