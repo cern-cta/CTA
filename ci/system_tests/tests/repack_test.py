@@ -376,11 +376,11 @@ def test_repack_tape_repair(
 
     repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
     repack_request = repack_ls_json[0]
-    user_provided_files = repack_request["userProvidedFiles"]
-    archived_files = repack_request["archivedFiles"]
-    retrieved_files = repack_request["retrievedFiles"]
-    total_files_to_retrieve = repack_request["totalFilesToRetrieve"]
-    total_files_to_archive = repack_request["totalFilesToArchive"]
+    user_provided_files = int(repack_request["userProvidedFiles"])
+    archived_files = int(repack_request["archivedFiles"])
+    retrieved_files = int(repack_request["retrievedFiles"])
+    total_files_to_retrieve = int(repack_request["totalFilesToRetrieve"])
+    total_files_to_archive = int(repack_request["totalFilesToArchive"])
 
     assert total_files_to_retrieve == total_files_to_archive - user_provided_files
     assert retrieved_files == total_files_to_retrieve
@@ -396,7 +396,7 @@ def test_repack_tape_repair(
 def test_repack_just_add_copies(cta_cli, eos_client, repack_buffer_url, repack_report_dir, repack_mp_name):
     vid_to_repack = _get_first_vid_containing_files(cta_cli)
     _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
-    print(f'Launching the repack test "just add copiese" on VID {vid_to_repack} with all copies already on CTA')
+    print(f'Launching the repack test "just add copies" on VID {vid_to_repack} with all copies already on CTA')
     eos_client.exec(
         f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -a -r {repack_report_dir} -n {repack_mp_name}"
     )
@@ -488,11 +488,11 @@ def test_repack_tape_repair_no_recall(
 
     repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
     repack_request = repack_ls_json[0]
-    user_provided_files = repack_request["userProvidedFiles"]
-    archived_files = repack_request["archivedFiles"]
-    retrieved_files = repack_request["retrievedFiles"]
-    total_files_to_retrieve = repack_request["totalFilesToRetrieve"]
-    total_files_to_archive = repack_request["totalFilesToArchive"]
+    user_provided_files = int(repack_request["userProvidedFiles"])
+    archived_files = int(repack_request["archivedFiles"])
+    retrieved_files = int(repack_request["retrievedFiles"])
+    total_files_to_retrieve = int(repack_request["totalFilesToRetrieve"])
+    total_files_to_archive = int(repack_request["totalFilesToArchive"])
 
     assert total_files_to_retrieve == total_files_to_archive - user_provided_files
     assert retrieved_files == total_files_to_retrieve
@@ -595,10 +595,10 @@ def test_repack_move_and_add_copies(
 
     repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
     repack_request = repack_ls_json[0]
-    archived_files = repack_request["archivedFiles"]
-    retrieved_files = repack_request["retrievedFiles"]
-    total_files_to_retrieve = repack_request["totalFilesToRetrieve"]
-    total_files_to_archive = repack_request["totalFilesToArchive"]
+    archived_files = int(repack_request["archivedFiles"])
+    retrieved_files = int(repack_request["retrievedFiles"])
+    total_files_to_retrieve = int(repack_request["totalFilesToRetrieve"])
+    total_files_to_archive = int(repack_request["totalFilesToArchive"])
 
     assert retrieved_files == total_files_to_retrieve
     assert archived_files == total_files_to_archive
