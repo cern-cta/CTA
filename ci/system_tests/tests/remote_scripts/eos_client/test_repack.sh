@@ -125,7 +125,7 @@ fi
 [[ "x${ADD_COPIES_ONLY}" == "x" ]] && REPACK_OPTION=${MOVE_ONLY} || REPACK_OPTION=${ADD_COPIES_ONLY}
 
 # get some common useful helpers for krb5
-. /root/client_helper.sh
+. /tmp/client_helper.sh
 
 # Get kerberos credentials for user1
 admin_kinit

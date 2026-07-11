@@ -21,7 +21,6 @@ from ..helpers.utils import find_line
 class ClientParams:
     file_count: int
     file_size_kb: int
-    directory_count: int
     process_count: int
 
 
@@ -31,7 +30,6 @@ def client_params(request) -> ClientParams:
     return ClientParams(
         file_count=client_config["file_count"],
         file_size_kb=client_config["file_size_kb"],
-        directory_count=client_config["directory_count"],
         process_count=client_config["process_count"],
     )
 
