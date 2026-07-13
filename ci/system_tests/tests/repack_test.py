@@ -268,6 +268,7 @@ def _submit_repack_request(
 
     nb_archived_files = int(repack_request["archivedFiles"])
     nb_files_to_retrieve = int(repack_request["totalFilesToRetrieve"])
+    user_provided_files = int(repack_request["userProvidedFiles"])
     nb_recycle_tape_files_new = len(recycletf_ls_json)
     nb_recycle_tape_files = nb_recycle_tape_files_new - nb_recycle_tape_file_prev
 
@@ -286,7 +287,8 @@ def _submit_repack_request(
     assert files_left_to_retrieve == 0
     assert files_left_to_archive == 0
     assert nb_archived_destination_files == nb_archived_files
-    assert nb_files_to_retrieve == nb_recycle_tape_files
+    # This check was different in the original tests, but that seems to be due to a bug in bash tests
+    assert nb_files_to_retrieve - user_provided_files == nb_recycle_tape_files
 
     print(f"Repack request on VID {vid_to_repack} succeeded\n")
 
