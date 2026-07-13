@@ -43,8 +43,7 @@ TapeLsResponseStream::TapeLsResponseStream(cta::catalogue::Catalogue& catalogue,
   }
 
   // Handle storage class statistics request
-  m_searchCriteria.getStorageClassStatistics =
-    request.getOptional(OptionBoolean::GET_STORAGE_CLASS_STATISTICS, &has_any);
+  m_searchCriteria.getStorageClassStatistics = request.getOptional(OptionBoolean::GET_STORAGE_CLASS_STATISTICS);
 
   // Handle state option
   if (auto stateOpt = request.getOptional(OptionString::STATE, &has_any); stateOpt) {
