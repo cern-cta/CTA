@@ -132,7 +132,7 @@ class CtaCliHost(RemoteHost):
         print(f"Waiting for the launch of the repack request on VID {vid}...")
         wait_timeout_secs = 20
         with Timeout(wait_timeout_secs) as t:
-            while not self.has_repack_request(self, vid) and not t.expired:
+            while not self.has_repack_request(vid) and not t.expired:
                 time.sleep(1)
             if t.expired:
                 raise TimeoutError(
@@ -164,7 +164,7 @@ class CtaCliHost(RemoteHost):
         print(f"Waiting for retrieve queue of {vid} to be empty...")
         wait_timeout_secs = 20
         with Timeout(wait_timeout_secs) as t:
-            while not self.retrieve_queue_empty(self, vid) and not t.expired:
+            while not self.retrieve_queue_empty(vid) and not t.expired:
                 time.sleep(1)
             if t.expired:
                 raise TimeoutError(

@@ -276,7 +276,9 @@ def _submit_repack_request(
     nb_destination_vids = len(destination_infos)
     nb_archived_destination_files = sum(int(dest["files"]) for dest in destination_infos)
 
+    assert nb_destination_vids > 0
     print(f"Number of archived files = {nb_archived_files} (spread over {nb_destination_vids} tapes)")
+    print(f"Number of files to retrieve = {nb_files_to_retrieve}")
     print(f"Number of new recycled tape files = {nb_recycle_tape_files}")
     print(f"Number of files left to retrieve = {files_left_to_retrieve}")
     print(f"Number of files left to archive = {files_left_to_archive}")
