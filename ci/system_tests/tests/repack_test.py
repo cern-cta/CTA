@@ -4,6 +4,7 @@
 
 import json
 import time
+import multiprocessing
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
@@ -47,16 +48,23 @@ def repack_base_dir() -> Path:
 
 
 @pytest.fixture(scope="function")
-def repack_report_dir(request, repack_base_dir):
-    return repack_base_dir / f"{request.function.__name__}_{uuid.uuid4().hex[:6]}"
-
-
-@pytest.fixture(scope="function")
-def repack_buffer_url(eos_mgm, request):
+def repack_buffer_dir(eos_mgm, eos_client, disk_instance_name, request):
     # Needs to be a different dir than test_dir
     path = eos_mgm.base_dir_path / "repack" / f"{request.function.__name__}_{uuid.uuid4().hex[:6]}"
     eos_mgm.exec(f"eos mkdir -p {path}")
     eos_mgm.exec(f"eos chmod 1777 {path}")
+
+    print(f"Testing the repack buffer URL at root://{disk_instance_name}/{path}")
+    eos_client.exec(f"eos root://{path} ls -d {path} 1> /dev/null")
+    print("Testing the insertion of a test file in the buffer URL")
+    tmp_file_path = eos_client.exec_with_output("mktemp /tmp/repack_buffer_test_file.XXXX")
+    tmp_file_name = Path(tmp_file_path).name
+    eos_client.exec(f"xrdcp {tmp_file_path} root://{disk_instance_name}/{path}/{tmp_file_path}")
+    print(f"File {tmp_file_path} written in root://{disk_instance_name}/{path}/{tmp_file_name}")
+    print("Deleting test file from the test directory")
+    eos_client.exec(f"eos root://{disk_instance_name} rm {path}/{tmp_file_name}")
+    print("Test repack buffer URL OK, returning the path")
+
     return path  # Technically we could yield and cleanup after, but keeping them around makes for easier debugging
 
 
@@ -174,6 +182,223 @@ def _wait_for_queue_to_empty(cta_cli, vid, wait_timeout_secs=30) -> None:
 
 
 #####################################################################################################################
+# Internal Test (called from the tests below)
+#####################################################################################################################
+
+
+def submit_repack_request(
+    cta_cli,
+    vid_to_repack: str,
+    disk_instance_name: str,
+    repack_buffer_dir: Path,
+    mount_policy_name: str,
+    add_copies_only: bool = False,
+    move_only: bool = False,
+    with_back_pressure: bool = False,
+    no_recall: bool = False,
+    max_files_to_select: int | None = None,
+):
+    repack_timeout_secs = 120
+
+    config_str = ", ".join(f"{k}={v}" for k, v in locals().items() if k != "cta_cli")
+    print(f"Testing with the following options: {config_str}")
+    print("")
+
+    # Mutually exclusive options. Split into tests?
+    assert not (add_copies_only and move_only)
+    assert not (add_copies_only and no_recall)
+    assert not (move_only and no_recall)
+
+    print(f"Deleting existing repack request for VID {vid_to_repack}")
+    cta_cli.exec(f"cta-admin repack rm --vid {vid_to_repack}")
+
+    print(f"Marking the tape {vid_to_repack} as full before Repacking it")
+    cta_cli.exec(f"cta-admin tape ch --vid {vid_to_repack} --full true")
+
+    if with_back_pressure:
+        print("Backpressure test: setting too high free space requirements")
+        ds_ls_json = json.loads(cta_cli.exec_with_output("admin_cta --json ds ls"))
+        if not any(item.get("name") == "repackBuffer" for item in ds_ls_json):
+            dis_name = "repackDiskInstanceSpace"
+            cta_cli.exec(
+                f"cta-admin dis add -n {dis_name} --di {disk_instance_name} -u 'eosSpace:default' -i 5 -m 'Repack test dis'"
+            )
+            cta_cli.exec(
+                f"cta-admin ds add -n repackBuffer --di {disk_instance_name} --dis {dis_name} -r 'root://{disk_instance_name}/{repack_buffer_dir}' -f 111222333444555 -s 20 -m 'Repack test buffer ds'"
+            )
+        else:
+            print("Disk system repackBuffer already defined. Ensuring too high free space requirements.")
+            cta_cli.exec("cta-admin ds ch -n repackBuffer -f 111222333444555")
+
+        cta_cli.exec("cta-admin ds ls")
+
+    recycle_tape_file_json = json.loads(
+        cta_cli.exec_with_output(f"cta-admin --json recycletf ls --vid {vid_to_repack}")
+    )
+    nb_recycle_tape_file_prev = len(recycle_tape_file_json)
+
+    # Construct and submit repack request
+    print(f"Launching repack request for VID {vid_to_repack}, buffer directory: {repack_buffer_dir}")
+
+    extra_repack_options: list[str] = []
+    if max_files_to_select is not None:
+        total_files_on_tape = _get_number_of_files_on_tape(cta_cli, vid_to_repack)
+        assert max_files_to_select < total_files_on_tape
+        print(f"Partial repack covering {max_files_to_select}/{total_files_on_tape} files from tape {vid_to_repack}")
+        extra_repack_options.append(f"--maxfilestoselect {max_files_to_select}")
+    if move_only:
+        extra_repack_options.append("-m")
+    if add_copies_only:
+        extra_repack_options.append("-a")
+    if no_recall:
+        extra_repack_options.append("--nr")
+
+    full_buffer_url = f"root://{disk_instance_name}/{repack_buffer_dir}"
+    repack_options_str: str = " ".join(extra_repack_options)
+    cta_cli.exec(
+        f"cta-admin repack add --mountpolicy {mount_policy_name} --vid {vid_to_repack} --bufferurl {full_buffer_url} {repack_options_str}"
+    )
+
+    # Now we wait
+
+    if with_back_pressure:
+        print("Backpressure test: waiting to see a report of sleeping retrieve queue.")
+
+        with Timeout(repack_timeout_secs) as t:
+            is_sleeping = False
+            while not is_sleeping and not t.expired:
+                try:
+                    queues = json.loads(cta_cli.exec_with_output("cta-admin --json sq"))
+                    # Check if our target VID is currently sleeping for space
+                    is_sleeping = any(
+                        q.get("vid") == vid_to_repack and q.get("sleepingForSpace") is True for q in queues
+                    )
+                except (json.JSONDecodeError, KeyError, TypeError):
+                    pass
+
+                if not is_sleeping:
+                    print(
+                        f"Waiting for retrieve queue for tape {vid_to_repack} to be sleeping: Seconds passed = {int(time.time() - t.start)}"
+                    )
+                    time.sleep(1)
+
+            if t.expired:
+                raise TimeoutError(
+                    f"Retrieve queue for tape {vid_to_repack} failed to sleep within {repack_timeout_secs} seconds"
+                )
+
+        print("Turning free space requirement to one byte (zero is not allowed).")
+        cta_cli.exec_with_output("cta-admin ds ch -n repackBuffer -f 1")
+        print(cta_cli.exec_with_output("cta-admin ds ls"))
+
+    print("Now waiting for repack to proceed.")
+    with Timeout(repack_timeout_secs) as t:
+        is_finished = False
+        while not is_finished and not t.expired:
+            try:
+                repack_ls_json = json.loads(
+                    cta_cli.exec_with_output(f"admin_cta --json repack ls --vid {vid_to_repack}")
+                )
+                if repack_ls_json and len(repack_ls_json) > 0:
+                    status = repack_ls_json[0].get("status")
+                    is_finished = status in ["Complete", "Failed"]
+            except (json.JSONDecodeError, IndexError, KeyError):
+                pass
+
+            if not is_finished:
+                print(
+                    f"Waiting for repack request on tape {vid_to_repack} to be sleeping: Seconds passed = {int(time.time() - t.start)}"
+                )
+                time.sleep(1)
+
+        if t.expired:
+            print(f"Timed out after {repack_timeout_secs} seconds waiting for tape {vid_to_repack} to be repacked")
+            print("Result of show queues")
+            print(cta_cli.exec_with_output("admin_cta sq"))
+            print("Result of dr ls")
+            print(cta_cli.exec_with_output("admin_cta dr ls"))
+            print("Result of Repack ls")
+            print(cta_cli.exec_with_output(f"admin_cta repack ls --vid {vid_to_repack}"))
+
+            try:
+                repack_ls_json = json.loads(
+                    cta_cli.exec_with_output(f"admin_cta --json repack ls --vid {vid_to_repack}")
+                )
+                destination_infos = repack_ls_json[0].get("destinationInfos", [])
+                if len(destination_infos) != 0:
+                    print(f"{'DestinationVID':<15}\t{'NbFiles':<10}\t{'totalSize'}")
+                    for dest in destination_infos:
+                        print(f"{dest['vid']:<15}\t{dest['files']:<10}\t{dest['bytes']}")
+            except Exception:
+                pass  # Prevent parsing crash from hiding the main failure logs above
+
+            raise TimeoutError(
+                f"Retrieve queue for tape {vid_to_repack} failed to sleep within {repack_timeout_secs} seconds"
+            )
+
+    # Summary
+
+    repack_ls_json = json.loads(cta_cli.exec_with_output(f"admin_cta --json repack ls --vid {vid_to_repack}"))
+    repack_request = repack_ls_json[0]
+
+    recycletf_ls_json = json.loads(cta_cli.exec_with_output(f"admin_cta --json recycletf ls --vid {vid_to_repack}"))
+    destination_infos = repack_request.get("destinationInfos", [])
+    # Check for Repack Failure status
+    if repack_request.get("status") == "Failed":
+        print(f"Repack failed for tape {vid_to_repack}.")
+        print(json.dumps(repack_ls_json, indent=4))
+        # Print destination table if data exists
+        if len(destination_infos) != 0:
+            print(f"{'DestinationVID':<15}\t{'NbFiles':<10}\t{'totalSize'}")
+            for dest in destination_infos:
+                print(f"{dest['vid']:<15}\t{dest['files']:<10}\t{dest['bytes']}")
+
+        raise SystemExit(1)
+
+    # Check for Max Files Selection (Partial Repack Logic)
+    if max_files_to_select is not None:
+        # Fetch tape file list from cta-admin
+        tf_ls_json = json.loads(cta_cli.exec_with_output(f"admin_cta --json tf ls --vid {vid_to_repack}"))
+        total_files_on_tape = len(tf_ls_json)
+
+        all_files_selected = bool(repack_request.get("allFilesSelectedAtStart"))
+
+        if total_files_on_tape > max_files_to_select:
+            # Expecting partial selection (allFilesSelectedAtStart == False) AND tape is not completely empty
+            assert not all_files_selected and total_files_on_tape != 0
+        else:
+            # Expecting full selection (allFilesSelectedAtStart == True) AND tape is empty
+            assert all_files_selected and total_files_on_tape == 0
+
+    if len(destination_infos) != 0:
+        print(f"{'DestinationVID':<15}\t{'NbFiles':<10}\t{'totalSize'}")
+        for dest in destination_infos:
+            print(f"{dest['vid']:<15}\t{dest['files']:<10}\t{dest['bytes']}")
+
+    nb_archived_files = int(repack_request["archivedFiles"])
+    nb_files_to_retrieve = int(repack_request["totalFilesToRetrieve"])
+    nb_recycle_tape_files_new = len(recycletf_ls_json)
+    nb_recycle_tape_files = nb_recycle_tape_files_new - nb_recycle_tape_file_prev
+
+    files_left_to_retrieve = int(repack_request["filesLeftToRetrieve"])
+    files_left_to_archive = int(repack_request["filesLeftToArchive"])
+    nb_destination_vids = len(destination_infos)
+    nb_archived_destination_files = sum(int(dest["files"]) for dest in destination_infos)
+    avg_files_per_vid = nb_archived_files // nb_destination_vids if nb_destination_vids > 0 else 0
+
+    print(f"Number of archived files = {nb_archived_files} ({nb_destination_vids}x{avg_files_per_vid})")
+    print(f"Number of new recycled tape files = {nb_recycle_tape_files}")
+    print(f"Number of files left to retrieve = {files_left_to_retrieve}")
+    print(f"Number of files left to archive = {files_left_to_archive}")
+
+    assert files_left_to_retrieve == 0 and files_left_to_archive == 0
+    assert nb_archived_destination_files == nb_archived_files
+    assert nb_files_to_retrieve == nb_recycle_tape_files
+
+    print(f"Repack request on VID {vid_to_repack} succeeded.")
+
+
+#####################################################################################################################
 # Tests
 #####################################################################################################################
 
@@ -218,13 +443,19 @@ def test_archive_1_file(
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
 
 
-def test_roundtrip_repack_with_backpressure(cta_cli, eos_client, repack_buffer_url, repack_report_dir, repack_mp_name):
+def test_roundtrip_repack_with_backpressure(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
     vid_to_repack = _get_first_vid_containing_files(cta_cli)
     _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
 
     print(f'Launching the repack "just move" test on VID {vid_to_repack} (with backpressure)')
-    eos_client.exec(
-        f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -m -r {repack_report_dir} -p -n {repack_mp_name}"
+    submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+        move_only=True,
+        with_back_pressure=True,
     )
 
     _remove_repack_request(cta_cli, vid_to_repack)
@@ -232,14 +463,19 @@ def test_roundtrip_repack_with_backpressure(cta_cli, eos_client, repack_buffer_u
     _reclaim_tape(cta_cli, vid_to_repack)
 
 
-def test_roundtrip_repack_no_backpressure(cta_cli, eos_client, repack_buffer_url, repack_report_dir, repack_mp_name):
+def test_roundtrip_repack_no_backpressure(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
     vid_to_repack = _get_first_vid_containing_files(cta_cli)
     _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
 
     print(f'Launching the repack "just move" test on VID {vid_to_repack}')
-    # Note the missing -p flag
-    eos_client.exec(
-        f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -m -r {repack_report_dir} -n {repack_mp_name}"
+    submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+        move_only=True,
+        with_back_pressure=False,
     )
 
     _remove_repack_request(cta_cli, vid_to_repack)
@@ -247,46 +483,66 @@ def test_roundtrip_repack_no_backpressure(cta_cli, eos_client, repack_buffer_url
     _reclaim_tape(cta_cli, vid_to_repack)
 
 
-def test_repack_non_repacking_tape(cta_cli, eos_client, repack_buffer_url, repack_report_dir, repack_mp_name):
+def test_repack_non_repacking_tape(cta_cli, eos_client, repack_buffer_dir, repack_mp_name, disk_instance_name):
     vid_to_repack = _get_first_vid_containing_files(cta_cli)
 
     # TODO: we may want to parameterize this test in the future to remove some of this duplication and improve test granularity
     _modify_tape_state(cta_cli, vid_to_repack, "DISABLED")
     print(f"Launching the repack request test on VID {vid_to_repack} with DISABLED state")
     with pytest.raises(RuntimeError):
-        eos_client.exec(
-            f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -r {repack_report_dir} -n {repack_mp_name}"
+        submit_repack_request(
+            cta_cli,
+            vid_to_repack=vid_to_repack,
+            disk_instance_name=disk_instance_name,
+            repack_buffer_dir=repack_buffer_dir,
+            mount_policy_name=repack_mp_name,
         )
         print("The repack command should have failed as the tape is DISABLED")
 
     _modify_tape_state(cta_cli, vid_to_repack, "BROKEN")
     print(f"Launching the repack request test on VID {vid_to_repack} with BROKEN state")
     with pytest.raises(RuntimeError):
-        eos_client.exec(
-            f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -r {repack_report_dir} -n {repack_mp_name}"
+        submit_repack_request(
+            cta_cli,
+            vid_to_repack=vid_to_repack,
+            disk_instance_name=disk_instance_name,
+            repack_buffer_dir=repack_buffer_dir,
+            mount_policy_name=repack_mp_name,
         )
         print("The repack command should have failed as the tape is BROKEN")
 
     _modify_tape_state(cta_cli, vid_to_repack, "EXPORTED")
     print(f"Launching the repack request test on VID {vid_to_repack} with EXPORTED state")
     with pytest.raises(RuntimeError):
-        eos_client.exec(
-            f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -r {repack_report_dir} -n {repack_mp_name}"
+        submit_repack_request(
+            cta_cli,
+            vid_to_repack=vid_to_repack,
+            disk_instance_name=disk_instance_name,
+            repack_buffer_dir=repack_buffer_dir,
+            mount_policy_name=repack_mp_name,
         )
         print("The repack command should have failed as the tape is EXPORTED")
 
     _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
     print(f"Launching the repack request test on VID {vid_to_repack} with ACTIVE state")
     with pytest.raises(RuntimeError):
-        eos_client.exec(
-            f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -r {repack_report_dir} -n {repack_mp_name}"
+        submit_repack_request(
+            cta_cli,
+            vid_to_repack=vid_to_repack,
+            disk_instance_name=disk_instance_name,
+            repack_buffer_dir=repack_buffer_dir,
+            mount_policy_name=repack_mp_name,
         )
         print("The repack command should have failed as the tape is ACTIVE")
 
     _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
     print(f"Launching the repack request test on VID {vid_to_repack} with REPACKING state")
-    eos_client.exec(
-        f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -r {repack_report_dir} -n {repack_mp_name}"
+    submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
     )
 
     _remove_repack_request(cta_cli, vid_to_repack)
@@ -302,7 +558,7 @@ def test_archive_1000_files(eos_client, repack_params, test_dir):
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
 
 
-def test_repack_just_move_subset_of_files(cta_cli, eos_client, repack_buffer_url, repack_report_dir, repack_mp_name):
+def test_repack_move_only_subset_of_files(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
     vid_to_repack = _get_first_vid_containing_files(cta_cli)
     total_files_on_tape = _get_number_of_files_on_tape(cta_cli, vid_to_repack)
     number_of_files_to_repack = int(total_files_on_tape / 2)  # Number that covers only some of the files on tape (half)
@@ -311,8 +567,14 @@ def test_repack_just_move_subset_of_files(cta_cli, eos_client, repack_buffer_url
     print(
         f'Launching the repack test "just move", with {number_of_files_to_repack}/{total_files_on_tape} files, on VID {vid_to_repack}'
     )
-    eos_client.exec(
-        f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -m -r {repack_report_dir} -n {repack_mp_name} -f {number_of_files_to_repack}"
+    submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+        move_only=True,
+        max_files_to_select=number_of_files_to_repack,
     )
 
     _remove_repack_request(cta_cli, vid_to_repack)
@@ -326,8 +588,14 @@ def test_repack_just_move_subset_of_files(cta_cli, eos_client, repack_buffer_url
     print(
         f'Launching the repack test "just move", with the remainder {total_files_on_tape} files, on VID {vid_to_repack}'
     )
-    eos_client.exec(
-        f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -m -r {repack_report_dir} -n {repack_mp_name} -f {total_files_on_tape}"
+    submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+        move_only=True,
+        max_files_to_select=total_files_on_tape,
     )
 
     _remove_repack_request(cta_cli, vid_to_repack)
@@ -348,12 +616,17 @@ def test_archive_1152_files(
     eos_client.exec(". /tmp/client_env && /tmp/test_archive.sh")
 
 
-def test_repack_just_move(cta_cli, eos_client, repack_buffer_url, repack_report_dir, repack_mp_name):
+def test_repack_move_only(cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name):
     vid_to_repack = _get_first_vid_containing_files(cta_cli)
     _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
     print(f'Launching the repack test "just move" on VID {vid_to_repack}')
-    eos_client.exec(
-        f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -m -r {repack_report_dir} -n {repack_mp_name}"
+    submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+        move_only=True,
     )
 
     _remove_repack_request(cta_cli, vid_to_repack)
@@ -361,12 +634,10 @@ def test_repack_just_move(cta_cli, eos_client, repack_buffer_url, repack_report_
     _reclaim_tape(cta_cli, vid_to_repack)
 
 
-def test_repack_tape_repair(
-    cta_cli, eos_client, eos_mgm, repack_buffer_url, repack_report_dir, repack_mp_name, disk_instance_name
-):
+def test_repack_tape_repair(cta_cli, eos_client, eos_mgm, repack_buffer_dir, repack_mp_name, disk_instance_name):
     vid_to_repack = _get_first_vid_containing_files(cta_cli)
     number_of_files_to_inject = 10
-    repack_sub_dir = f"{repack_buffer_url}/{vid_to_repack}"
+    repack_sub_dir = f"{repack_buffer_dir}/{vid_to_repack}"
     eos_mgm.exec(f"eos mkdir -p {repack_sub_dir}")
     eos_mgm.exec(f"eos chmod 1777 {repack_sub_dir}")
     print(f"Will inject {number_of_files_to_inject} files into the repack buffer directory")
@@ -385,8 +656,13 @@ def test_repack_tape_repair(
 
     _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
     print(f"Launching a repack request on VID {vid_to_repack}")
-    eos_client.exec(
-        f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_sub_dir} -m -r {repack_report_dir} -n {repack_mp_name}"
+    submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+        move_only=True,
     )
 
     repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
@@ -406,12 +682,17 @@ def test_repack_tape_repair(
     _reclaim_tape(cta_cli, vid_to_repack)
 
 
-def test_repack_just_add_copies(cta_cli, eos_client, repack_buffer_url, repack_report_dir, repack_mp_name):
+def test_repack_just_add_copies(cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name):
     vid_to_repack = _get_first_vid_containing_files(cta_cli)
     _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
     print(f'Launching the repack test "just add copies" on VID {vid_to_repack} with all copies already on CTA')
-    eos_client.exec(
-        f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -a -r {repack_report_dir} -n {repack_mp_name}"
+    submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+        add_copies_only=True,
     )
 
     repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
@@ -427,17 +708,19 @@ def test_repack_just_add_copies(cta_cli, eos_client, repack_buffer_url, repack_r
 
 
 def test_repack_cancellation(
-    cta_cli, eos_client, repack_buffer_url, repack_report_dir, repack_mp_name, postgres_scheduler_enabled
+    cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name, postgres_scheduler_enabled
 ):
     cta_cli.set_all_drives_down()
 
     vid_to_repack = _get_first_vid_containing_files(cta_cli)
     _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
     print(f"Launching the repack request test on VID {vid_to_repack}")
-    # Note this process starts in the background. We cannot use exec_async because futures are not cancellable when running
-    background_repack_test_pid = eos_client.exec_with_output(
-        f"nohup /tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -m -r {repack_report_dir} -n {repack_mp_name} >/tmp/repack.log 2>&1 & echo $!"
+    repack_process = multiprocessing.Process(
+        target=submit_repack_request,
+        args=(cta_cli, vid_to_repack, disk_instance_name, repack_buffer_dir, repack_mp_name),
+        kwargs={"move_only": True},
     )
+    repack_process.start()
 
     _wait_for_repack_request_launch(cta_cli, vid_to_repack)
     _wait_for_repack_request_expansion(cta_cli, vid_to_repack)
@@ -447,7 +730,9 @@ def test_repack_cancellation(
     if postgres_scheduler_enabled:
         assert nb_files_in_queue > 0
 
-    eos_client.exec(f"kill {background_repack_test_pid}")
+    repack_process.terminate()
+    repack_process.join()
+    print("Background process safely terminated.")
     _remove_repack_request(cta_cli, vid_to_repack)
 
     print(
@@ -473,12 +758,12 @@ def test_repack_cancellation(
 
 
 def test_repack_tape_repair_no_recall(
-    cta_cli, eos_client, eos_mgm, repack_buffer_url, repack_report_dir, repack_mp_name, disk_instance_name
+    cta_cli, eos_client, eos_mgm, repack_buffer_dir, repack_mp_name, disk_instance_name
 ):
     vid_to_repack = _get_first_vid_containing_files(cta_cli)
     number_of_files_to_inject = 10
     print(f"Will inject {number_of_files_to_inject} files into the repack buffer directory")
-    repack_sub_dir = f"{repack_buffer_url}/{vid_to_repack}"
+    repack_sub_dir = f"{repack_buffer_dir}/{vid_to_repack}"
     eos_mgm.exec(f"eos mkdir -p {repack_sub_dir}")
     eos_mgm.exec(f"eos chmod 1777 {repack_sub_dir}")
 
@@ -497,8 +782,14 @@ def test_repack_tape_repair_no_recall(
 
     _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
     print(f"Launching a repack request on VID {vid_to_repack}")
-    eos_client.exec(
-        f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_sub_dir} -m -r {repack_report_dir} -n {repack_mp_name} -u"
+    submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+        move_only=True,
+        no_recall=True,
     )
 
     repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
@@ -521,9 +812,8 @@ def test_repack_tape_repair_no_recall(
 # Keep this test for last - it adds new tapepools and archive routes
 def test_repack_move_and_add_copies(
     cta_cli,
-    eos_client,
-    repack_buffer_url,
-    repack_report_dir,
+    disk_instance_name,
+    repack_buffer_dir,
     repack_mp_name,
     postgres_scheduler_enabled,
     cta_storage_class,
@@ -598,10 +888,14 @@ def test_repack_move_and_add_copies(
     _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
     print(f'Launching the repack "Move and add copies" test on VID {vid_to_repack}')
     # Note this process starts in the background. We cannot use exec_async because futures are not cancellable when running
-    eos_client.exec(
-        f"/tmp/test_repack.sh -v {vid_to_repack} -b {repack_buffer_url} -r {repack_report_dir} -n {repack_mp_name}"
-    )
 
+    submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+    )
     repack_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json repack ls --vid {vid_to_repack}"))
     repack_request = repack_ls_json[0]
     archived_files = int(repack_request["archivedFiles"])
