@@ -1,5 +1,5 @@
 ---
-date: 2025-05-21
+date: 2026-07-13
 section: 1cta
 title: CTA-ADMIN
 header: The CERN Tape Archive (CTA)
@@ -269,6 +269,9 @@ tape (ta)
 
 :   Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical
     tape cartridges in each library.
+
+    **\-\-getstorageclassstatistics** includes file counts and total data size per storage class for
+    each tape. This is an expensive operation and delays output until all statistics are loaded.
 
 tapefile (tf)
 

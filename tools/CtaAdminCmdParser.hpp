@@ -1008,6 +1008,9 @@ tape (ta)
 
 :   Add, change, remove, reclaim, list or label tapes. This command is used to manage the physical
     tape cartridges in each library.
+
+    **\-\-getstorageclassstatistics** includes file counts and total data size per storage class for
+    each tape. This is an expensive operation and delays output until all statistics are loaded.
   */
   {{AdminCmd::CMD_TAPE, AdminCmd::SUBCMD_ADD},
    {opt_vid,
