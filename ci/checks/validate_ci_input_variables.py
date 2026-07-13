@@ -51,7 +51,7 @@ def validate_default(ci_input_vars):
     exit_if_defined("CUSTOM_XROOTD_VERSION", ci_input_vars)
 
 
-def validate_REGR_AGAINST_CTA_BRANCH(ci_input_vars):
+def validate_regr_against_cta_branch(ci_input_vars):
     """
     Validation for the pipeline type `REGR_AGAINST_CTA_BRANCH`.
     """
