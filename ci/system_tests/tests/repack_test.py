@@ -288,7 +288,7 @@ def _submit_repack_request(
     assert files_left_to_archive == 0
     assert nb_archived_destination_files == nb_archived_files
     # This check was different in the original tests, but that seems to be due to a bug in bash tests
-    assert nb_files_to_retrieve - user_provided_files == nb_recycle_tape_files
+    assert nb_recycle_tape_files - user_provided_files == nb_files_to_retrieve
 
     print(f"Repack request on VID {vid_to_repack} succeeded\n")
 
