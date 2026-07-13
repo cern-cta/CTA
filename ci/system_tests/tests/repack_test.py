@@ -4,14 +4,16 @@
 
 import json
 import time
-import multiprocessing
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from ..helpers.utils import Timeout
-from typing import Optional
+from typing import Optional, Annotated
+from ..helpers.hosts import CtaCliHost
 
 import pytest
+
+Fixture = Annotated
 
 #####################################################################################################################
 # Helpers
@@ -69,126 +71,13 @@ def repack_buffer_dir(eos_mgm, eos_client, disk_instance_name, request):
     return path  # Technically we could yield and cleanup after, but keeping them around makes for easier debugging
 
 
-def _get_first_vid_containing_files(cta_cli) -> str:
-    tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
-    for tape in tapes:
-        occupancy = tape.get("occupancy", 0)
-        last_fseq = tape.get("lastFseq", 0)
-        if occupancy not in (None, "0", 0) and last_fseq not in (None, "0", 0):
-            return tape["vid"]
-    pytest.fail("Failed to find a VID to repack")
-    return None
-
-
-def _get_number_of_files_on_tape(cta_cli, vid: str) -> int:
-    tapefile_json = cta_cli.exec_with_output(f"cta-admin --json tf ls --vid {vid}")
-    return len(json.loads(tapefile_json))
-
-
-def _wait_for_tape_state(cta_cli, vid: str, expected_state: str, *, timeout_secs: int = 60) -> None:
-    deadline = time.time() + timeout_secs
-    while time.time() < deadline:
-        tape_json = json.loads(
-            cta_cli.exec_with_output(f"cta-admin --json tape ls --state {expected_state} --vid {vid}")
-        )
-        if any(tape.get("vid") == vid for tape in tape_json):
-            return
-        time.sleep(1)
-    raise TimeoutError(f"Tape {vid} did not reach state {expected_state} within {timeout_secs} seconds")
-
-
-def _modify_tape_state(cta_cli, vid: str, state: str, reason: str = "Testing", wait=True) -> None:
-    print(f"Marking tape {vid} as {state}")
-    cta_cli.exec(f"cta-admin tape ch --state {state} --reason '{reason}' --vid {vid}")
-    if wait:
-        _wait_for_tape_state(cta_cli, vid, state)
-
-
-def _remove_repack_request(cta_cli, vid: str, throw_on_failure: bool = True) -> None:
-    print(f"Removing repack request for {vid}")
-    cta_cli.exec(f"cta-admin repack rm --vid {vid}", throw_on_failure=throw_on_failure)
-
-
-def _reclaim_tape(cta_cli, vid: str) -> None:
-    print(f"Reclaiming tape {vid}")
-    cta_cli.exec(f"cta-admin tape reclaim --vid {vid}")
-
-
-def _has_repack_request(cta_cli, vid) -> bool:
-    try:
-        re_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json re ls --vid {vid}"))
-        return len(re_ls_json) > 0
-    except json.JSONDecodeError:
-        return False
-
-
-def _retrieve_queue_empty(cta_cli, vid) -> int:
-    queues = json.loads(cta_cli.exec_with_output("cta-admin --json showqueues"))
-    return not any(q["vid"] == vid for q in queues)
-
-
-def _count_files_in_queue(cta_cli, vid) -> int:
-    queues = json.loads(cta_cli.exec_with_output("cta-admin --json showqueues"))
-    for queue in queues:
-        if queue["vid"] == vid:
-            return int(queue["queuedFiles"])
-    return 0
-
-
-def _wait_for_repack_request_launch(cta_cli, vid, wait_timeout_secs=30) -> None:
-    print(f"Waiting for the launch of the repack request on VID {vid}...")
-    wait_timeout_secs = 20
-    with Timeout(wait_timeout_secs) as t:
-        while not _has_repack_request(cta_cli, vid) and not t.expired:
-            time.sleep(1)
-        if t.expired:
-            raise TimeoutError(
-                f"No repack request appeared for VID {vid} within timeout of {wait_timeout_secs} seconds"
-            )
-    print("Repack request launched")
-
-
-def _wait_for_repack_request_expansion(cta_cli, vid, wait_timeout_secs=30) -> None:
-    print(f"Waiting for repack request expansion on VID {vid}...")
-    tape_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json tape ls --vid {vid}"))
-    lastFSeq = tape_json[0]["lastFseq"]
-    wait_timeout_secs = 20
-    with Timeout(wait_timeout_secs) as t:
-        lastExpandedFSeq = 0
-        while lastExpandedFSeq != lastFSeq and not t.expired:
-            try:
-                repack_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json re ls --vid {vid}"))
-                lastExpandedFSeq = repack_json[0]["lastExpandedFseq"]
-            except json.JSONDecodeError:
-                ...  # In this case re ls just didn't found anything
-            time.sleep(1)
-        if t.expired:
-            raise TimeoutError(
-                f"Repack request for VID {vid} failed to expand within timeout of {wait_timeout_secs} seconds. Last fSeq on tape: {lastFSeq}, last expanded fSeq: {lastExpandedFSeq}"
-            )
-    print("Repack request expanded")
-
-
-def _wait_for_queue_to_empty(cta_cli, vid, wait_timeout_secs=30) -> None:
-    print(f"Waiting for retrieve queue of {vid} to be empty...")
-    wait_timeout_secs = 20
-    with Timeout(wait_timeout_secs) as t:
-        while not _retrieve_queue_empty(cta_cli, vid) and not t.expired:
-            time.sleep(1)
-        if t.expired:
-            raise TimeoutError(
-                f"Retrieve queue for VID {vid} failed to empty within timeout of {wait_timeout_secs} seconds."
-            )
-    print("Retrieve queue empty")
-
-
 #####################################################################################################################
 # Internal Test (called from the tests below)
 #####################################################################################################################
 
 
-def submit_repack_request(
-    cta_cli,
+def _submit_repack_request(
+    cta_cli: CtaCliHost,
     vid_to_repack: str,
     disk_instance_name: str,
     repack_buffer_dir: Path,
@@ -198,6 +87,7 @@ def submit_repack_request(
     with_back_pressure: bool = False,
     no_recall: bool = False,
     max_files_to_select: Optional[int] = None,
+    submit_only: bool = False,
 ):
     repack_timeout_secs = 120
 
@@ -205,6 +95,7 @@ def submit_repack_request(
     print(f"\nTesting with the following options: {config_str}\n")
 
     assert not (add_copies_only and move_only)  # Mutually exclusive
+    assert not (with_back_pressure and submit_only)  # Mutually exclusive
 
     print(f"Deleting existing repack request for VID {vid_to_repack}")
     cta_cli.exec(f"cta-admin repack rm --vid {vid_to_repack}", throw_on_failure=False)
@@ -235,7 +126,7 @@ def submit_repack_request(
     nb_recycle_tape_file_prev = len(recycle_tape_file_json)
 
     # Construct and submit repack request
-    total_files_on_tape = _get_number_of_files_on_tape(cta_cli, vid_to_repack)
+    total_files_on_tape = cta_cli.get_number_of_files_on_tape(vid_to_repack)
     print(f"Submitting repack request for VID {vid_to_repack}, buffer directory: {repack_buffer_dir}")
     print(f"Number of files currently on VID {vid_to_repack}: {total_files_on_tape}")
 
@@ -256,6 +147,9 @@ def submit_repack_request(
     cta_cli.exec(
         f"cta-admin repack add --mountpolicy {mount_policy_name} --vid {vid_to_repack} --bufferurl {full_buffer_url} {repack_options_str}"
     )
+
+    if submit_only:
+        return
 
     # Now we wait
     if with_back_pressure:
@@ -350,7 +244,7 @@ def submit_repack_request(
             for dest in destination_infos:
                 print(f"{dest['vid']:<15}\t{dest['files']:<10}\t{dest['bytes']}")
 
-        raise SystemExit(1)
+        pytest.fail("Repack request failed")
 
     # Check for Max Files Selection (Partial Repack Logic)
     if max_files_to_select is not None:
@@ -390,7 +284,7 @@ def submit_repack_request(
     assert files_left_to_retrieve == 0
     assert files_left_to_archive == 0
     assert nb_archived_destination_files == nb_archived_files
-    # assert nb_files_to_retrieve == nb_recycle_tape_files
+    assert nb_files_to_retrieve == nb_recycle_tape_files
 
     print(f"Repack request on VID {vid_to_repack} succeeded\n")
 
@@ -419,7 +313,8 @@ def test_create_repack_mount_policy(cta_cli, repack_mp_name):
     )
 
 
-# Apparently the tests flip out if you have multiple drives doing work, so for now we keep it as before: only a single drive doing work
+# Apparently the tests flip out if you have multiple drives doing work, so for now we keep a single drive doing the work
+# In a similar vein, be careful changing the order of the tests, because thing may break unexpectedly
 def test_set_single_drive_up(cta_cli, cta_taped):
     cta_cli.set_all_drives_down()
     cta_cli.set_drive_up(cta_taped.drive_name)
@@ -440,11 +335,11 @@ def test_archive_1_file(
 
 
 def test_repack_move_only_with_backpressure(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
-    vid_to_repack = _get_first_vid_containing_files(cta_cli)
-    _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
 
     print(f'Launching the repack "move only" test on VID {vid_to_repack} (with backpressure)')
-    submit_repack_request(
+    _submit_repack_request(
         cta_cli,
         vid_to_repack=vid_to_repack,
         disk_instance_name=disk_instance_name,
@@ -454,19 +349,19 @@ def test_repack_move_only_with_backpressure(cta_cli, repack_buffer_dir, repack_m
         with_back_pressure=True,
     )
 
-    _remove_repack_request(cta_cli, vid_to_repack)
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
-    _reclaim_tape(cta_cli, vid_to_repack)
+    cta_cli.remove_repack_request(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
+    cta_cli.reclaim_tape(vid_to_repack)
 
 
 def test_repack_non_repacking_tape(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
-    vid_to_repack = _get_first_vid_containing_files(cta_cli)
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
 
     # TODO: we may want to parameterize this test in the future to remove some of this duplication and improve test granularity
-    _modify_tape_state(cta_cli, vid_to_repack, "DISABLED")
+    cta_cli.modify_tape_state(vid_to_repack, "DISABLED")
     print(f"Launching the repack request test on VID {vid_to_repack} with DISABLED state")
     with pytest.raises(RuntimeError):
-        submit_repack_request(
+        _submit_repack_request(
             cta_cli,
             vid_to_repack=vid_to_repack,
             disk_instance_name=disk_instance_name,
@@ -475,10 +370,10 @@ def test_repack_non_repacking_tape(cta_cli, repack_buffer_dir, repack_mp_name, d
         )
         print("The repack command should have failed as the tape is DISABLED")
 
-    _modify_tape_state(cta_cli, vid_to_repack, "BROKEN")
+    cta_cli.modify_tape_state(vid_to_repack, "BROKEN")
     print(f"Launching the repack request test on VID {vid_to_repack} with BROKEN state")
     with pytest.raises(RuntimeError):
-        submit_repack_request(
+        _submit_repack_request(
             cta_cli,
             vid_to_repack=vid_to_repack,
             disk_instance_name=disk_instance_name,
@@ -487,10 +382,10 @@ def test_repack_non_repacking_tape(cta_cli, repack_buffer_dir, repack_mp_name, d
         )
         print("The repack command should have failed as the tape is BROKEN")
 
-    _modify_tape_state(cta_cli, vid_to_repack, "EXPORTED")
+    cta_cli.modify_tape_state(vid_to_repack, "EXPORTED")
     print(f"Launching the repack request test on VID {vid_to_repack} with EXPORTED state")
     with pytest.raises(RuntimeError):
-        submit_repack_request(
+        _submit_repack_request(
             cta_cli,
             vid_to_repack=vid_to_repack,
             disk_instance_name=disk_instance_name,
@@ -499,10 +394,10 @@ def test_repack_non_repacking_tape(cta_cli, repack_buffer_dir, repack_mp_name, d
         )
         print("The repack command should have failed as the tape is EXPORTED")
 
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
     print(f"Launching the repack request test on VID {vid_to_repack} with ACTIVE state")
     with pytest.raises(RuntimeError):
-        submit_repack_request(
+        _submit_repack_request(
             cta_cli,
             vid_to_repack=vid_to_repack,
             disk_instance_name=disk_instance_name,
@@ -511,9 +406,9 @@ def test_repack_non_repacking_tape(cta_cli, repack_buffer_dir, repack_mp_name, d
         )
         print("The repack command should have failed as the tape is ACTIVE")
 
-    _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f"Launching the repack request test on VID {vid_to_repack} with REPACKING state")
-    submit_repack_request(
+    _submit_repack_request(
         cta_cli,
         vid_to_repack=vid_to_repack,
         disk_instance_name=disk_instance_name,
@@ -521,9 +416,9 @@ def test_repack_non_repacking_tape(cta_cli, repack_buffer_dir, repack_mp_name, d
         mount_policy_name=repack_mp_name,
     )
 
-    _remove_repack_request(cta_cli, vid_to_repack)
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
-    _reclaim_tape(cta_cli, vid_to_repack)
+    cta_cli.remove_repack_request(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
+    cta_cli.reclaim_tape(vid_to_repack)
 
 
 def test_archive_1000_files(eos_client, repack_params, test_dir):
@@ -535,15 +430,15 @@ def test_archive_1000_files(eos_client, repack_params, test_dir):
 
 
 def test_repack_move_only_subset_of_files(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
-    vid_to_repack = _get_first_vid_containing_files(cta_cli)
-    total_files_on_tape = _get_number_of_files_on_tape(cta_cli, vid_to_repack)
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
+    total_files_on_tape = cta_cli.get_number_of_files_on_tape(vid_to_repack)
     number_of_files_to_repack = int(total_files_on_tape / 2)  # Number that covers only some of the files on tape (half)
 
-    _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(
         f'Launching the repack test "just move", with {number_of_files_to_repack}/{total_files_on_tape} files, on VID {vid_to_repack}'
     )
-    submit_repack_request(
+    _submit_repack_request(
         cta_cli,
         vid_to_repack=vid_to_repack,
         disk_instance_name=disk_instance_name,
@@ -553,18 +448,18 @@ def test_repack_move_only_subset_of_files(cta_cli, repack_buffer_dir, repack_mp_
         max_files_to_select=number_of_files_to_repack,
     )
 
-    _remove_repack_request(cta_cli, vid_to_repack)
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
+    cta_cli.remove_repack_request(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
     with pytest.raises(RuntimeError):
-        _reclaim_tape(cta_cli, vid_to_repack)
+        cta_cli.reclaim_tape(vid_to_repack)
         print("The reclaim command should have failed because the tape should still contain files")
 
-    total_files_on_tape = _get_number_of_files_on_tape(cta_cli, vid_to_repack)
-    _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
+    total_files_on_tape = cta_cli.get_number_of_files_on_tape(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(
         f'Launching the repack test "just move", with the remainder {total_files_on_tape} files, on VID {vid_to_repack}'
     )
-    submit_repack_request(
+    _submit_repack_request(
         cta_cli,
         vid_to_repack=vid_to_repack,
         disk_instance_name=disk_instance_name,
@@ -574,9 +469,9 @@ def test_repack_move_only_subset_of_files(cta_cli, repack_buffer_dir, repack_mp_
         max_files_to_select=total_files_on_tape,
     )
 
-    _remove_repack_request(cta_cli, vid_to_repack)
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
-    _reclaim_tape(cta_cli, vid_to_repack)
+    cta_cli.remove_repack_request(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
+    cta_cli.reclaim_tape(vid_to_repack)
 
 
 # Why 1152? No one knows...
@@ -593,10 +488,10 @@ def test_archive_1152_files(
 
 
 def test_repack_move_only(cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name):
-    vid_to_repack = _get_first_vid_containing_files(cta_cli)
-    _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f'Launching the repack test "just move" on VID {vid_to_repack}')
-    submit_repack_request(
+    _submit_repack_request(
         cta_cli,
         vid_to_repack=vid_to_repack,
         disk_instance_name=disk_instance_name,
@@ -605,23 +500,26 @@ def test_repack_move_only(cta_cli, disk_instance_name, repack_buffer_dir, repack
         move_only=True,
     )
 
-    _remove_repack_request(cta_cli, vid_to_repack)
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
-    _reclaim_tape(cta_cli, vid_to_repack)
+    cta_cli.remove_repack_request(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
+    cta_cli.reclaim_tape(vid_to_repack)
 
 
 def test_repack_tape_repair(cta_cli, eos_client, eos_mgm, repack_buffer_dir, repack_mp_name, disk_instance_name):
-    vid_to_repack = _get_first_vid_containing_files(cta_cli)
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
     number_of_files_to_inject = 10
     repack_sub_dir = f"{repack_buffer_dir}/{vid_to_repack}"
     eos_mgm.exec(f"eos mkdir -p {repack_sub_dir}")
     eos_mgm.exec(f"eos chmod 1777 {repack_sub_dir}")
-    print(f"Will inject {number_of_files_to_inject} files into the repack buffer directory")
+    print(
+        f"Will inject {number_of_files_to_inject} files into the repack buffer directory to simulate user provided files"
+    )
 
-    assert number_of_files_to_inject < _get_number_of_files_on_tape(cta_cli, vid_to_repack)
+    assert number_of_files_to_inject < cta_cli.get_number_of_files_on_tape(vid_to_repack)
 
     tape_file_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json tapefile ls --vid {vid_to_repack}"))
 
+    # number_of_files_to_inject user provided files
     for tape_file in tape_file_ls_json[:number_of_files_to_inject]:
         disk_id = tape_file["df"]["diskId"]
         file_path_to_inject = eos_mgm.exec_with_output(f"eos fileinfo fid:{disk_id} --path | cut -d':' -f2 | tr -d ' '")
@@ -630,9 +528,9 @@ def test_repack_tape_repair(cta_cli, eos_client, eos_mgm, repack_buffer_dir, rep
         file_fseq = int(tape_file["tf"]["fSeq"])
         eos_mgm.exec(f"eos cp {file_path_to_inject} {repack_sub_dir}/{file_fseq:09d}")
 
-    _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f"Launching a repack request on VID {vid_to_repack}")
-    submit_repack_request(
+    _submit_repack_request(
         cta_cli,
         vid_to_repack=vid_to_repack,
         disk_instance_name=disk_instance_name,
@@ -653,16 +551,16 @@ def test_repack_tape_repair(cta_cli, eos_client, eos_mgm, repack_buffer_dir, rep
     assert retrieved_files == total_files_to_retrieve
     assert archived_files == total_files_to_archive
 
-    _remove_repack_request(cta_cli, vid_to_repack)
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
-    _reclaim_tape(cta_cli, vid_to_repack)
+    cta_cli.remove_repack_request(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
+    cta_cli.reclaim_tape(vid_to_repack)
 
 
 def test_repack_just_add_copies(cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name):
-    vid_to_repack = _get_first_vid_containing_files(cta_cli)
-    _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f'Launching the repack test "just add copies" on VID {vid_to_repack} with all copies already on CTA')
-    submit_repack_request(
+    _submit_repack_request(
         cta_cli,
         vid_to_repack=vid_to_repack,
         disk_instance_name=disk_instance_name,
@@ -679,8 +577,8 @@ def test_repack_just_add_copies(cta_cli, disk_instance_name, repack_buffer_dir, 
     assert archived_files == 0
     assert retrieved_files == 0
 
-    _remove_repack_request(cta_cli, vid_to_repack)
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
+    cta_cli.remove_repack_request(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
 
 
 def test_repack_cancellation(
@@ -688,28 +586,28 @@ def test_repack_cancellation(
 ):
     cta_cli.set_all_drives_down()
 
-    vid_to_repack = _get_first_vid_containing_files(cta_cli)
-    _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f"Launching the repack request test on VID {vid_to_repack}")
-    repack_process = multiprocessing.Process(
-        target=submit_repack_request,
-        args=(cta_cli, vid_to_repack, disk_instance_name, repack_buffer_dir, repack_mp_name),
-        kwargs={"move_only": True},
+    _submit_repack_request(
+        cta_cli,
+        vid_to_repack=vid_to_repack,
+        disk_instance_name=disk_instance_name,
+        repack_buffer_dir=repack_buffer_dir,
+        mount_policy_name=repack_mp_name,
+        move_only=True,
+        submit_only=True,  # immediately return after repack request has been submitted
     )
-    repack_process.start()
 
-    _wait_for_repack_request_launch(cta_cli, vid_to_repack)
-    _wait_for_repack_request_expansion(cta_cli, vid_to_repack)
+    cta_cli.wait_for_repack_request_launch(vid_to_repack)
+    cta_cli.wait_for_repack_request_expansion(vid_to_repack)
 
-    nb_files_in_queue = _count_files_in_queue(cta_cli, vid_to_repack)
+    nb_files_in_queue = cta_cli.count_files_in_queue(vid_to_repack)
     print(f"Expansion finished with the following number of files in the retrieve queue: {nb_files_in_queue}")
     if postgres_scheduler_enabled:
         assert nb_files_in_queue > 0
 
-    repack_process.terminate()
-    repack_process.join()
-    print("Background process safely terminated.")
-    _remove_repack_request(cta_cli, vid_to_repack)
+    cta_cli.remove_repack_request(vid_to_repack)
 
     print(
         f"Checking if the Retrieve queue of the VID {vid_to_repack} contains the Retrieve Requests created from the Repack Request expansion"
@@ -719,7 +617,7 @@ def test_repack_cancellation(
     )
     print(f"Number of files on tape {vid_to_repack}: {nb_files_on_tape_to_repack}")
 
-    nb_files_in_queue = _count_files_in_queue(cta_cli, vid_to_repack)
+    nb_files_in_queue = cta_cli.count_files_in_queue(vid_to_repack)
     print(f"After repack request deletion, number of files in the retrieve queue: {nb_files_in_queue}")
     if postgres_scheduler_enabled:
         assert nb_files_in_queue == 0
@@ -728,15 +626,15 @@ def test_repack_cancellation(
         assert nb_files_in_queue == nb_files_on_tape_to_repack
 
     cta_cli.set_all_drives_up(wait=False)
-    _wait_for_queue_to_empty(cta_cli, vid_to_repack)
-    _remove_repack_request(cta_cli, vid_to_repack, throw_on_failure=False)
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
+    cta_cli.wait_for_queue_to_empty(vid_to_repack)
+    cta_cli.remove_repack_request(vid_to_repack, throw_on_failure=False)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
 
 
 def test_repack_tape_repair_no_recall(
     cta_cli, eos_client, eos_mgm, repack_buffer_dir, repack_mp_name, disk_instance_name
 ):
-    vid_to_repack = _get_first_vid_containing_files(cta_cli)
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
     number_of_files_to_inject = 10
     print(f"Will inject {number_of_files_to_inject} files into the repack buffer directory")
     repack_sub_dir = f"{repack_buffer_dir}/{vid_to_repack}"
@@ -745,7 +643,7 @@ def test_repack_tape_repair_no_recall(
 
     tape_file_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json tapefile ls --vid {vid_to_repack}"))
 
-    assert number_of_files_to_inject < _get_number_of_files_on_tape(cta_cli, vid_to_repack)
+    assert number_of_files_to_inject < cta_cli.get_number_of_files_on_tape(vid_to_repack)
 
     for i in range(number_of_files_to_inject):
         tape_file = tape_file_ls_json[i + 1]
@@ -756,9 +654,9 @@ def test_repack_tape_repair_no_recall(
         file_fseq = int(tape_file["tf"]["fSeq"])
         eos_mgm.exec(f"eos cp {file_path_to_inject} {repack_sub_dir}/{file_fseq:09d}")
 
-    _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f"Launching a repack request on VID {vid_to_repack}")
-    submit_repack_request(
+    _submit_repack_request(
         cta_cli,
         vid_to_repack=vid_to_repack,
         disk_instance_name=disk_instance_name,
@@ -781,8 +679,8 @@ def test_repack_tape_repair_no_recall(
     assert archived_files == total_files_to_archive
     assert archived_files == user_provided_files
 
-    _remove_repack_request(cta_cli, vid_to_repack)
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
+    cta_cli.remove_repack_request(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
 
 
 # Keep this test for last - it adds new tapepools and archive routes
@@ -804,7 +702,7 @@ def test_repack_move_and_add_copies(
         #     - https://gitlab.cern.ch/cta/CTA/-/issues/990
         #     - https://gitlab.cern.ch/cta/CTA/-/issues/1114#note_9462287
 
-        pytest.skip("Test does not work reliably with the objectstore")
+        pytest.skip("Test test_repack_move_and_add_copies does not work reliably with the objectstore")
 
     tp_dest1_default = "systest2_default"
     tp_dest2_default = "systest3_default"
@@ -859,13 +757,11 @@ def test_repack_move_and_add_copies(
     cta_cli.exec(f"cta-admin storageclass ch --name {cta_storage_class} --numberofcopies 3")
 
     cta_cli.set_all_drives_up(wait=False)
-    vid_to_repack = _get_first_vid_containing_files(cta_cli)
+    vid_to_repack = cta_cli.get_first_vid_containing_files()
 
-    _modify_tape_state(cta_cli, vid_to_repack, "REPACKING")
+    cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f'Launching the repack "Move and add copies" test on VID {vid_to_repack}')
-    # Note this process starts in the background. We cannot use exec_async because futures are not cancellable when running
-
-    submit_repack_request(
+    _submit_repack_request(
         cta_cli,
         vid_to_repack=vid_to_repack,
         disk_instance_name=disk_instance_name,
@@ -898,9 +794,9 @@ def test_repack_move_and_add_copies(
     assert tp_dest1_default in tape_pool_list
     assert tp_dest2_repack in tape_pool_list
 
-    _remove_repack_request(cta_cli, vid_to_repack)
-    _modify_tape_state(cta_cli, vid_to_repack, "ACTIVE")
-    _reclaim_tape(cta_cli, vid_to_repack)
+    cta_cli.remove_repack_request(vid_to_repack)
+    cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
+    cta_cli.reclaim_tape(vid_to_repack)
 
 
 def test_add_errors_to_whitelist(error_whitelist):

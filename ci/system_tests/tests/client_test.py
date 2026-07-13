@@ -340,7 +340,7 @@ def test_retrieve_queue_cleanup(eos_mgm, eos_client, cta_cli, test_dir, cta_stor
     )
     nb_copies = 3
 
-    non_full_tapes = cta_cli.writable_tapes()
+    non_full_tapes = cta_cli.list_writable_tapes()
     assert len(non_full_tapes) >= 3
     vo_name = "vo"  # get this from somewhere?
 
