@@ -40,6 +40,9 @@ target_link_libraries(ctatapedsession
   ctatapedrao
   ctatelemetrytaped
   ZLIB::ZLIB)
+if (CTA_USE_PGSCHED)
+  target_link_libraries(ctatapedsession ctamountdecision)
+endif()
 
 add_library(ctatapedsessionunittests SHARED
   CleanerSessionTest.cpp

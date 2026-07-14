@@ -20,6 +20,10 @@
 
 namespace cta {
 
+namespace mountdecision {
+class MountDecision;
+}
+
 namespace catalogue {
 class Catalogue;
 class TapeItemWritten;
@@ -33,6 +37,7 @@ class TapeItemWrittenPointer;
  */
 class ArchiveMount : public TapeMount {
   friend class Scheduler;
+  friend class mountdecision::MountDecision;
 
 protected:
   /**

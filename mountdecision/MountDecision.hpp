@@ -16,9 +16,15 @@
 namespace cta {
 class Scheduler;
 class SchedulerDatabase;
+class TapeMount;
 }  // namespace cta
 
 namespace cta::mountdecision {
+
+struct ReservedTapeMount {
+  uint64_t candidateId = 0;
+  std::unique_ptr<TapeMount> mount;
+};
 
 /**
  * High-level Mount Decision component interface.
@@ -35,6 +41,23 @@ public:
   bool incrementCounter(const std::string& key, log::LogContext& lc, std::string_view operation);
 
   bool refreshMountCandidates(const std::string& owner, Scheduler& scheduler, log::LogContext& lc);
+
+  std::optional<ReservedTapeMount> getNextMount(const std::string& logicalLibraryName,
+                                                const std::string& driveName,
+                                                Scheduler& scheduler,
+                                                log::LogContext& lc,
+                                                uint64_t timeout_us);
+
+  void releaseMountCandidate(uint64_t candidateId,
+                             const std::string& host,
+                             const std::string& drive,
+                             std::optional<uint64_t> pid,
+                             log::LogContext& lc) noexcept;
+
+  void heartbeatMountCandidate(uint64_t candidateId,
+                               const std::string& host,
+                               const std::string& drive,
+                               std::optional<uint64_t> pid) noexcept;
 
 private:
   std::unique_ptr<MountDecisionDB> m_db;
