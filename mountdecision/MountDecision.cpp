@@ -44,41 +44,6 @@ constexpr uint64_t c_refreshLockLeaseSeconds = 300;
 constexpr uint64_t c_reservationTimeoutSeconds = 300;
 const std::string c_refreshWorkKey = "mount-candidate-refresh";
 
-class RefreshLockGuard {
-public:
-  RefreshLockGuard(MountDecisionDB& db,
-                   std::string workKey,
-                   std::string host,
-                   std::optional<uint64_t> pid,
-                   const bool ownsLock)
-      : m_db(db),
-        m_workKey(std::move(workKey)),
-        m_host(std::move(host)),
-        m_pid(pid),
-        m_ownsLock(ownsLock) {}
-
-  RefreshLockGuard(const RefreshLockGuard&) = delete;
-  RefreshLockGuard& operator=(const RefreshLockGuard&) = delete;
-
-  ~RefreshLockGuard() {
-    if (!m_ownsLock) {
-      return;
-    }
-    try {
-      m_db.releaseRefreshLock(m_workKey, m_host, m_pid);
-    } catch (...) {}
-  }
-
-  bool ownsLock() const { return m_ownsLock; }
-
-private:
-  MountDecisionDB& m_db;
-  std::string m_workKey;
-  std::string m_host;
-  std::optional<uint64_t> m_pid;
-  bool m_ownsLock = false;
-};
-
 using TapePoolMountPair = std::pair<std::string, common::dataStructures::MountType>;
 using VirtualOrganizationMountPair = std::pair<std::string, common::dataStructures::MountType>;
 
@@ -716,16 +681,10 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
   const auto pid = static_cast<uint64_t>(getpid());
 
   try {
-    // TODO: One maintd will keep the lock and use it always.
-    //       It will only be picked by another maintd if it times out.
-    //       This avoids multiple maintd processes hammering the refresh one after the other.
-    RefreshLockGuard refreshLock(*m_db,
-                                 c_refreshWorkKey,
-                                 host,
-                                 pid,
-                                 m_db->tryAcquireRefreshLock(c_refreshWorkKey, host, pid, c_refreshLockLeaseSeconds));
-
-    if (!refreshLock.ownsLock()) {
+    // One maintd keeps renewing this lease while it is alive. Another maintd
+    // takes over only after the lease expires, so the routine interval remains
+    // controlled by the selected maintd's configured cycle sleep.
+    if (!m_db->tryAcquireRefreshLock(c_refreshWorkKey, host, pid, c_refreshLockLeaseSeconds)) {
       lc.log(log::DEBUG, "In MountDecision::refreshMountCandidates(): Mount decision refresh lock is held elsewhere.");
       return false;
     }
