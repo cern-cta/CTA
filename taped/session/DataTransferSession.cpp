@@ -23,15 +23,103 @@
 #include "common/log/Logger.hpp"
 #include "common/process/ProcessCap.hpp"
 #include "common/process/threading/System.hpp"
+#include "common/utils/utils.hpp"
 #include "scheduler/RetrieveMount.hpp"
 #include "taped/drive/DriveInterface.hpp"
 #include "taped/rao/RAOParams.hpp"
 #include "taped/scsi/Device.hpp"
 #include "taped/session/VolumeInfo.hpp"
 
+#include <chrono>
+#include <condition_variable>
 #include <google/protobuf/stubs/common.h>
 #include <memory>
+#include <mutex>
+#include <optional>
 #include <string>
+#include <sys/types.h>
+#include <thread>
+#include <unistd.h>
+#include <utility>
+
+#ifdef CTA_PGSCHED
+#include "mountdecision/MountDecision.hpp"
+#endif
+
+namespace {
+
+#ifdef CTA_PGSCHED
+class MountCandidateReservationGuard {
+public:
+  MountCandidateReservationGuard(cta::mountdecision::MountDecision& mountDecision,
+                                 std::string host,
+                                 std::string drive,
+                                 const uint64_t pid,
+                                 cta::log::LogContext& lc)
+      : m_mountDecision(mountDecision),
+        m_host(std::move(host)),
+        m_drive(std::move(drive)),
+        m_pid(pid),
+        m_lc(lc) {}
+
+  MountCandidateReservationGuard(const MountCandidateReservationGuard&) = delete;
+  MountCandidateReservationGuard& operator=(const MountCandidateReservationGuard&) = delete;
+
+  ~MountCandidateReservationGuard() {
+    stopHeartbeat();
+    if (!m_candidateId.has_value()) {
+      return;
+    }
+    m_mountDecision.releaseMountCandidate(m_candidateId.value(), m_host, m_drive, m_pid, m_lc);
+  }
+
+  void setCandidateId(const uint64_t candidateId) {
+    m_candidateId = candidateId;
+    startHeartbeat();
+  }
+
+private:
+  void startHeartbeat() {
+    m_heartbeatThread = std::thread([this] {
+      while (true) {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        if (m_stopHeartbeat.wait_for(lock, std::chrono::seconds(60), [this] { return m_stopping; })) {
+          return;
+        }
+        const auto candidateId = m_candidateId;
+        lock.unlock();
+        if (candidateId.has_value()) {
+          m_mountDecision.heartbeatMountCandidate(candidateId.value(), m_host, m_drive, m_pid);
+        }
+      }
+    });
+  }
+
+  void stopHeartbeat() {
+    {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_stopping = true;
+    }
+    m_stopHeartbeat.notify_all();
+    if (m_heartbeatThread.joinable()) {
+      m_heartbeatThread.join();
+    }
+  }
+
+  cta::mountdecision::MountDecision& m_mountDecision;
+  std::string m_host;
+  std::string m_drive;
+  std::optional<uint64_t> m_pid;
+  cta::log::LogContext& m_lc;
+  std::optional<uint64_t> m_candidateId;
+  std::mutex m_mutex;
+  std::condition_variable m_stopHeartbeat;
+  bool m_stopping = false;
+  std::thread m_heartbeatThread;
+};
+#endif
+
+}  // namespace
 
 //------------------------------------------------------------------------------
 //Constructor
@@ -44,7 +132,13 @@ cta::tape::daemon::DataTransferSession::DataTransferSession([[maybe_unused]] con
                                                             cta::tape::daemon::TapedProxy& initialProcess,
 
                                                             const DataTransferConfig& dataTransferConfig,
-                                                            cta::Scheduler& scheduler)
+                                                            cta::Scheduler& scheduler
+#ifdef CTA_PGSCHED
+                                                            ,
+                                                            cta::ConnProvider* mountDecisionConnectionProvider,
+                                                            cta::SchedulerDatabase* mountDecisionSchedulerDb
+#endif
+                                                            )
     : m_log(log),
       m_sysWrapper(sysWrapper),
       m_driveConfig(driveConfig),
@@ -52,7 +146,14 @@ cta::tape::daemon::DataTransferSession::DataTransferSession([[maybe_unused]] con
       m_driveInfo({driveConfig.unitName, cta::utils::getShortHostname(), driveConfig.logicalLibrary}),
       m_mediaChanger(mc),
       m_initialProcess(initialProcess),
-      m_scheduler(scheduler) {}
+      m_scheduler(scheduler)
+#ifdef CTA_PGSCHED
+      ,
+      m_mountDecisionConnectionProvider(mountDecisionConnectionProvider),
+      m_mountDecisionSchedulerDb(mountDecisionSchedulerDb)
+#endif
+{
+}
 
 //------------------------------------------------------------------------------
 //DataTransferSession::execute
@@ -82,6 +183,25 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
   }
 
   TapeSessionReporter tapeSessionReporter(m_initialProcess, m_driveConfig, m_hostname, lc);
+
+#ifdef CTA_PGSCHED
+  std::unique_ptr<cta::mountdecision::MountDecision> mountDecision;
+  std::unique_ptr<MountCandidateReservationGuard> mountCandidateReservationGuard;
+  if (m_dataTransferConfig.mountDecisionEnabled) {
+    if (m_mountDecisionConnectionProvider == nullptr || m_mountDecisionSchedulerDb == nullptr) {
+      throw cta::exception::Exception(
+        "In DataTransferSession::execute(): mount decision is enabled without a scheduler DB connection.");
+    }
+    mountDecision = std::make_unique<cta::mountdecision::MountDecision>(*m_mountDecisionConnectionProvider,
+                                                                        *m_mountDecisionSchedulerDb,
+                                                                        lc);
+    mountCandidateReservationGuard = std::make_unique<MountCandidateReservationGuard>(*mountDecision,
+                                                                                      cta::utils::getShortHostname(),
+                                                                                      m_driveConfig.unitName,
+                                                                                      static_cast<uint64_t>(getpid()),
+                                                                                      lc);
+  }
+#endif
 
   std::unique_ptr<cta::TapeMount> tapeMount;
   cta::utils::Timer t;
@@ -158,7 +278,20 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
 
     nextMountTimeout = false;
     try {
-      if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
+#ifdef CTA_PGSCHED
+      if (m_dataTransferConfig.mountDecisionEnabled) {
+        auto reservedMount = mountDecision->getNextMount(m_driveConfig.logicalLibrary,
+                                                         m_driveConfig.unitName,
+                                                         m_scheduler,
+                                                         lc,
+                                                         m_dataTransferConfig.wdGetNextMountMaxSecs * 1000000);
+        if (reservedMount.has_value()) {
+          mountCandidateReservationGuard->setCandidateId(reservedMount->candidateId);
+          tapeMount = std::move(reservedMount->mount);
+        }
+      } else
+#endif
+        if (m_scheduler.getNextMountDryRun(m_driveConfig.logicalLibrary, m_driveConfig.unitName, lc)) {
         tapeMount = m_scheduler.getNextMount(m_driveConfig.logicalLibrary,
                                              m_driveConfig.unitName,
                                              lc,

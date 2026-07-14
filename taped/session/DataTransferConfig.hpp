@@ -121,6 +121,11 @@ struct DataTransferConfig {
    * Timeout after which the tape server stops trying to get the next mount
    */
   time_t wdGetNextMountMaxSecs = 900;
+
+  /**
+   * Whether taped should reserve mounts from the precomputed mount decision table.
+   */
+  bool mountDecisionEnabled = false;
 };
 
 }  // namespace cta::tape::daemon

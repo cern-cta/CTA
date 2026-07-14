@@ -37,6 +37,9 @@ add_library(ctatapedsession
   ${CTATAPEDSESSION_LIBRARY_SRCS})
 
 target_link_libraries(ctatapedsession ctacommon ctascheduler ctacatalogue ctamediachanger ctatapeddrive ctatapedrao ZLIB::ZLIB)
+if (CTA_USE_PGSCHED)
+  target_link_libraries(ctatapedsession ctamountdecision)
+endif()
 
 add_library(ctatapedsessionunittests SHARED
   DataTransferSessionTest.cpp

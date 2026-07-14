@@ -20,6 +20,14 @@
 #include "taped/daemon/TapedProxy.hpp"
 #include "taped/system/Wrapper.hpp"
 
+#ifdef CTA_PGSCHED
+#include "scheduler/rdbms/ConnProvider.hpp"
+#endif
+
+namespace cta {
+class SchedulerDatabase;
+}
+
 namespace cta::tape::daemon {
 
 /**
@@ -41,7 +49,13 @@ public:
                       cta::mediachanger::MediaChangerFacade& mc,
                       cta::tape::daemon::TapedProxy& initialProcess,
                       const DataTransferConfig& dataTransferConfig,
-                      cta::Scheduler& scheduler);
+                      cta::Scheduler& scheduler
+#ifdef CTA_PGSCHED
+                      ,
+                      cta::ConnProvider* mountDecisionConnectionProvider = nullptr,
+                      cta::SchedulerDatabase* mountDecisionSchedulerDb = nullptr
+#endif
+  );
 
   /**
    * Execute the session and return the type of action to be performed
@@ -125,6 +139,10 @@ private:
    * The scheduler, i.e. the local interface to the Objectstore DB
    */
   cta::Scheduler& m_scheduler;
+#ifdef CTA_PGSCHED
+  cta::ConnProvider* m_mountDecisionConnectionProvider = nullptr;
+  cta::SchedulerDatabase* m_mountDecisionSchedulerDb = nullptr;
+#endif
 };
 
 }  // namespace cta::tape::daemon

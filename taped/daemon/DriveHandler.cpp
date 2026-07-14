@@ -1108,6 +1108,9 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
   dataTransferConfig.wdIdleSessionTimer = m_tapedConfig.wdIdleSessionTimer.value();
   dataTransferConfig.wdGetNextMountMaxSecs = m_tapedConfig.wdGetNextMountMaxSecs.value();
   dataTransferConfig.wdNoBlockMoveMaxSecs = m_tapedConfig.wdNoBlockMoveMaxSecs.value();
+#ifdef CTA_PGSCHED
+  dataTransferConfig.mountDecisionEnabled = m_tapedConfig.mountDecisionEnabled.value();
+#endif
 
   // Mounting management.
   cta::mediachanger::RmcProxy rmcProxy(m_tapedConfig.rmcHost.value(),
@@ -1125,7 +1128,13 @@ DriveHandler::executeDataTransferSession(IScheduler* scheduler, tape::daemon::Ta
                                                              mediaChangerFacade,
                                                              *driveHandlerProxy,
                                                              dataTransferConfig,
-                                                             *(dynamic_cast<cta::Scheduler*>(scheduler)));
+                                                             *(dynamic_cast<cta::Scheduler*>(scheduler))
+#ifdef CTA_PGSCHED
+                                                               ,
+                                                             m_sched_db.get(),
+                                                             m_sched_db.get()
+#endif
+    );
 
   return dataTransferSession->execute();
 }

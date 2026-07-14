@@ -16,6 +16,8 @@
 #include "common/semconv/Logging.hpp"
 #include "common/utils/Timer.hpp"
 #include "common/utils/utils.hpp"
+#include "scheduler/ArchiveMount.hpp"
+#include "scheduler/RetrieveMount.hpp"
 #include "scheduler/Scheduler.hpp"
 #include "scheduler/SchedulerDatabase.hpp"
 
@@ -26,6 +28,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <sstream>
 #include <sys/types.h>
 #include <unistd.h>
 #include <utility>
@@ -101,14 +104,112 @@ struct MountInfoForDecision {
   std::vector<CandidatePotential> potentialMounts;
   std::set<std::string, std::less<>> tapesInUse;
   std::vector<catalogue::TapeForWriting> tapesForWriting;
+  ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
+  ExistingMountSummaryPerVo existingMountsBasicTypeSummaryPerVo;
+  std::map<std::string, common::dataStructures::VirtualOrganization, std::less<>> voNameVoMap;
 };
 
 struct CandidateRow {
+  // Intermediate row before the final global ranking. Archive potentials can
+  // expand into several rows, one per writable tape that still fits the
+  // simulated mount limits.
   CandidatePotential potential;
   std::string logicalLibrary;
   std::optional<catalogue::TapeForWriting> tape;
   std::optional<std::string> blockedReason;
 };
+
+std::optional<std::string> getMountBlockReason(const SchedulerDatabase::PotentialMount& mount,
+                                               const ExistingMountSummaryPerTapepool& existingMountsPerTapepool,
+                                               const ExistingMountSummaryPerVo& existingMountsPerVo,
+                                               const common::dataStructures::VirtualOrganization& vo) {
+  // This mirrors the "can this mount start now?" checks from the existing
+  // scheduler path. The caller may pass real mount counts or simulated counts
+  // that already include candidates emitted earlier in the same refresh.
+  uint32_t existingMountsDistinctTypesForThisTapepool = 0;
+  uint32_t existingMountsBasicTypeForThisVo = 0;
+  const auto basicMountType = common::dataStructures::getMountBasicType(mount.type);
+  try {
+    existingMountsDistinctTypesForThisTapepool =
+      existingMountsPerTapepool.at(TapePoolMountPair(mount.tapePool, mount.type)).totalMounts;
+  } catch (std::out_of_range&) {}
+  try {
+    existingMountsBasicTypeForThisVo =
+      existingMountsPerVo.at(VirtualOrganizationMountPair(vo.name, basicMountType)).totalMounts;
+  } catch (std::out_of_range&) {}
+
+  uint32_t effectiveExistingMountsForThisTapepool = 0;
+  if (basicMountType == common::dataStructures::MountType::ArchiveAllTypes) {
+    effectiveExistingMountsForThisTapepool = existingMountsDistinctTypesForThisTapepool;
+  }
+
+  bool mountPassesACriteria = false;
+  uint64_t minBytesToWarrantAMount = c_minBytesToWarrantAMount;
+  uint64_t minFilesToWarrantAMount = c_minFilesToWarrantAMount;
+  if (mount.type == common::dataStructures::MountType::ArchiveForRepack) {
+    minBytesToWarrantAMount *= 2;
+    minFilesToWarrantAMount *= 2;
+  }
+  if (mount.bytesQueued / (1 + effectiveExistingMountsForThisTapepool) >= minBytesToWarrantAMount) {
+    mountPassesACriteria = true;
+  }
+  if (mount.filesQueued / (1 + effectiveExistingMountsForThisTapepool) >= minFilesToWarrantAMount) {
+    mountPassesACriteria = true;
+  }
+  if (!effectiveExistingMountsForThisTapepool
+      && ((std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - mount.oldestJobStartTime)
+          > mount.minRequestAge)) {
+    mountPassesACriteria = true;
+  }
+
+  uint64_t maxDrives = 0;
+  if (basicMountType == common::dataStructures::MountType::Retrieve) {
+    maxDrives = vo.readMaxDrives;
+  } else if (basicMountType == common::dataStructures::MountType::ArchiveAllTypes) {
+    maxDrives = vo.writeMaxDrives;
+  }
+
+  if (!mountPassesACriteria) {
+    return "Mount criteria not met";
+  }
+  if (existingMountsBasicTypeForThisVo >= maxDrives) {
+    return "VO mount drive limit reached";
+  }
+  if (mount.sleepingMount) {
+    return "Sleeping mount";
+  }
+  return std::nullopt;
+}
+
+void incrementSimulatedMountCounts(const SchedulerDatabase::PotentialMount& mount,
+                                   ExistingMountSummaryPerTapepool& existingMountsPerTapepool,
+                                   ExistingMountSummaryPerVo& existingMountsPerVo) {
+  // Once an archive candidate is emitted, later candidates in the same refresh
+  // must see that slot as already consumed so VO and tape-pool limits are not
+  // over-allocated.
+  const auto basicMountType = common::dataStructures::getMountBasicType(mount.type);
+  existingMountsPerTapepool[TapePoolMountPair(mount.tapePool, mount.type)].totalMounts++;
+  existingMountsPerVo[VirtualOrganizationMountPair(mount.vo, basicMountType)].totalMounts++;
+  if (mount.activity.has_value()) {
+    existingMountsPerTapepool[TapePoolMountPair(mount.tapePool, mount.type)]
+      .activityMounts[mount.activity.value()]
+      .value++;
+  }
+}
+
+std::optional<catalogue::TapeForWriting> takeNextTapeForWriting(std::vector<catalogue::TapeForWriting>& tapesForWriting,
+                                                                const std::string& tapePool) {
+  auto tapeIt = std::find_if(tapesForWriting.begin(), tapesForWriting.end(), [&tapePool](const auto& tape) {
+    return tape.tapePool == tapePool;
+  });
+  if (tapeIt == tapesForWriting.end()) {
+    return std::nullopt;
+  }
+
+  auto ret = *tapeIt;
+  tapesForWriting.erase(tapeIt);
+  return ret;
+}
 
 bool candidateLess(const CandidatePotential& lhs, const CandidatePotential& rhs) {
   return lhs.mount < rhs.mount;
@@ -147,8 +248,62 @@ optionalLabelFormat(const std::optional<cta::common::dataStructures::Label::Form
   return static_cast<uint64_t>(static_cast<uint8_t>(labelFormat.value()));
 }
 
-std::optional<uint64_t> optionalLabelFormat(cta::common::dataStructures::Label::Format labelFormat) {
+uint64_t labelFormatValue(const std::optional<cta::common::dataStructures::Label::Format>& labelFormat) {
+  return optionalLabelFormat(labelFormat)
+    .value_or(static_cast<uint64_t>(static_cast<uint8_t>(cta::common::dataStructures::Label::Format::CTA)));
+}
+
+uint64_t labelFormatValue(cta::common::dataStructures::Label::Format labelFormat) {
   return static_cast<uint64_t>(static_cast<uint8_t>(labelFormat));
+}
+
+template<typename T>
+T requireValue(const std::optional<T>& value, const std::string& fieldName) {
+  if (!value.has_value()) {
+    throw exception::Exception("In MountDecision::getNextMount(): reserved candidate is missing " + fieldName);
+  }
+  return value.value();
+}
+
+common::dataStructures::Label::Format labelFormatFromDbValue(const uint64_t value) {
+  return static_cast<common::dataStructures::Label::Format>(static_cast<uint8_t>(value));
+}
+
+SchedulerDatabase::PotentialMount toPotentialMount(const MountCandidate& candidate) {
+  SchedulerDatabase::PotentialMount ret;
+  ret.type = candidate.mountType;
+  ret.vid = requireValue(candidate.vid, "VID");
+  ret.tapePool = candidate.tapePool;
+  ret.vo = candidate.vo;
+  ret.mediaType = candidate.mediaType;
+  ret.vendor = candidate.vendor;
+  ret.capacityInBytes = candidate.capacityInBytes;
+  ret.labelFormat = labelFormatFromDbValue(candidate.labelFormat);
+  ret.priority = candidate.priority;
+  ret.minRequestAge = static_cast<time_t>(candidate.minRequestAge);
+  ret.filesQueued = candidate.filesQueued;
+  ret.bytesQueued = candidate.bytesQueued;
+  ret.oldestJobStartTime = static_cast<time_t>(candidate.oldestJobStartTime);
+  ret.youngestJobStartTime = static_cast<time_t>(candidate.youngestJobStartTime);
+  ret.logicalLibrary = candidate.logicalLibrary;
+  ret.ratioOfMountQuotaUsed = candidate.ratioOfMountQuotaUsed;
+  ret.activity = candidate.activity;
+  ret.encryptionKeyName = candidate.encryptionKeyName;
+  return ret;
+}
+
+catalogue::TapeForWriting toTapeForWriting(const MountCandidate& candidate) {
+  catalogue::TapeForWriting ret;
+  ret.vid = requireValue(candidate.vid, "VID");
+  ret.mediaType = candidate.mediaType;
+  ret.vendor = candidate.vendor;
+  ret.tapePool = candidate.tapePool;
+  ret.vo = candidate.vo;
+  ret.lastFSeq = requireValue(candidate.lastFSeq, "LAST_FSEQ");
+  ret.capacityInBytes = candidate.capacityInBytes;
+  ret.labelFormat = labelFormatFromDbValue(candidate.labelFormat);
+  ret.encryptionKeyName = candidate.encryptionKeyName;
+  return ret;
 }
 
 std::vector<common::dataStructures::LogicalLibrary> getEnabledLogicalLibraries(catalogue::Catalogue& catalogue) {
@@ -186,47 +341,49 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
   auto workingPotentialMounts = potentialMounts;
   auto workingExistingMounts = existingMounts;
 
-  bool anyRetr;
-  {
-    auto& v = workingPotentialMounts;
-    anyRetr = std::any_of(v.begin(), v.end(), [](const SchedulerDatabase::PotentialMount& pm) {
-      return pm.type == common::dataStructures::MountType::Retrieve;
-    });
-  }
+  bool anyRetrieve = std::ranges::any_of(workingPotentialMounts, [](const SchedulerDatabase::PotentialMount& pm) {
+    return pm.type == common::dataStructures::MountType::Retrieve;
+  });
 
   std::set<std::string> repackingTapeVids;
-  if (anyRetr) {
+  if (anyRetrieve) {
     std::map<std::string, common::dataStructures::Tape, std::less<>> eligibleTapeMap;
+
     {
-      catalogue::TapeSearchCriteria searchCriteria;
-      searchCriteria.logicalLibrary = logicalLibraryName;
-      searchCriteria.state = common::dataStructures::Tape::ACTIVE;
-      auto eligibleTapesList = catalogue.Tape()->getTapes(searchCriteria);
-      for (auto& t : eligibleTapesList) {
-        eligibleTapeMap[t.vid] = t;
-      }
-      searchCriteria.state = common::dataStructures::Tape::REPACKING;
-      searchCriteria.logicalLibrary = std::nullopt;
-      eligibleTapesList = catalogue.Tape()->getTapes(searchCriteria);
-      for (auto& t : eligibleTapesList) {
-        if (t.logicalLibraryName == logicalLibraryName) {
+      {
+        catalogue::TapeSearchCriteria searchCriteria;
+        searchCriteria.logicalLibrary = logicalLibraryName;
+        searchCriteria.state = common::dataStructures::Tape::ACTIVE;
+        auto eligibleTapesList = catalogue.Tape()->getTapes(searchCriteria);
+        for (auto& t : eligibleTapesList) {
           eligibleTapeMap[t.vid] = t;
         }
+      }
+      {
+        catalogue::TapeSearchCriteria searchCriteria;
+        searchCriteria.logicalLibrary = std::nullopt;
+        searchCriteria.state = common::dataStructures::Tape::REPACKING;
+        auto repackingTapesList = catalogue.Tape()->getTapes(searchCriteria);
+        for (auto& t : repackingTapesList) {
+          if (t.logicalLibraryName == logicalLibraryName) {
+            eligibleTapeMap[t.vid] = t;
+          }
 
-        repackingTapeVids.insert(t.vid);
+          repackingTapeVids.insert(t.vid);
+        }
       }
     }
 
     auto& v = workingPotentialMounts;
-    v.erase(std::remove_if(v.begin(),
-                           v.end(),
-                           [&eligibleTapeMap](const SchedulerDatabase::PotentialMount& pm) {
-                             return (pm.type == common::dataStructures::MountType::Retrieve
-                                     && !eligibleTapeMap.contains(pm.vid));
-                           }),
-            v.end());
+
+    // Remove mounts from unavailable tapes (not in same logical library, disabled, etc.)
+    std::erase_if(v, [&eligibleTapeMap](const SchedulerDatabase::PotentialMount& pm) {
+      return (pm.type == common::dataStructures::MountType::Retrieve && !eligibleTapeMap.contains(pm.vid));
+    });
 
     static_cast<void>(timer.secs(utils::Timer::resetCounter));
+
+    // Enrich potential mount entry
     for (auto& m : workingPotentialMounts) {
       if (m.type == common::dataStructures::MountType::Retrieve) {
         const auto& tp = eligibleTapeMap.at(m.vid);
@@ -244,18 +401,18 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
   }
 
   {
+    // TODO: This block may no longer be necessary when using the Postgres Scheduler DB.
+    //       References:
+    //         - https://gitlab.cern.ch/cta/CTA/-/work_items/1164
     std::set<std::string> vidsWithEmptyTapePoolString;
-    workingPotentialMounts.erase(
-      std::remove_if(workingPotentialMounts.begin(),
-                     workingPotentialMounts.end(),
-                     [&vidsWithEmptyTapePoolString](const SchedulerDatabase::PotentialMount& mount) {
-                       if (mount.tapePool.empty()) {
-                         vidsWithEmptyTapePoolString.insert(mount.vid);
-                         return true;
-                       }
-                       return false;
-                     }),
-      workingPotentialMounts.end());
+    std::erase_if(workingPotentialMounts,
+                  [&vidsWithEmptyTapePoolString](const SchedulerDatabase::PotentialMount& mount) {
+                    if (mount.tapePool.empty()) {
+                      vidsWithEmptyTapePoolString.insert(mount.vid);
+                      return true;
+                    }
+                    return false;
+                  });
     for (const auto& vid : vidsWithEmptyTapePoolString) {
       log::ScopedParamContainer params(lc);
       params.add("tapeVid", vid);
@@ -265,38 +422,38 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
   }
 
   {
+    // TODO: This block may no longer be necessary when using the Postgres Scheduler DB.
+    //       References:
+    //         - https://gitlab.cern.ch/cta/CTA/-/work_items/1164
     std::set<std::string> drivesWithEmptyTapePoolString;
-    workingExistingMounts.erase(
-      std::remove_if(workingExistingMounts.begin(),
-                     workingExistingMounts.end(),
-                     [&drivesWithEmptyTapePoolString](const SchedulerDatabase::ExistingMount& mount) {
-                       if (mount.tapePool.empty()) {
-                         drivesWithEmptyTapePoolString.insert(mount.driveName);
-                         return true;
-                       }
-                       return false;
-                     }),
-      workingExistingMounts.end());
+    std::erase_if(workingExistingMounts,
+                  [&drivesWithEmptyTapePoolString](const SchedulerDatabase::ExistingMount& mount) {
+                    if (mount.tapePool.empty()) {
+                      drivesWithEmptyTapePoolString.insert(mount.driveName);
+                      return true;
+                    }
+                    return false;
+                  });
     for (const auto& drive : drivesWithEmptyTapePoolString) {
       log::ScopedParamContainer params(lc);
       params.add("drive", drive);
       lc.log(log::ERR,
              "In MountDecision::sortAndGetTapesForMountInfo(): empty tape pool string found on existing mount.");
     }
+  }
 
+  {
+    // Remove drives connected to different scheduler backend instances
     auto schedulerBackendName = scheduler.getSchedulerBackendName();
     std::list<std::string> ignoredDrives;
-    workingExistingMounts.erase(
-      std::remove_if(workingExistingMounts.begin(),
-                     workingExistingMounts.end(),
-                     [&ignoredDrives, &schedulerBackendName](const SchedulerDatabase::ExistingMount& mount) {
-                       if (!mount.schedulerBackendName.has_value()) {
-                         ignoredDrives.emplace_back(mount.driveName);
-                         return true;
-                       }
-                       return mount.schedulerBackendName != schedulerBackendName;
-                     }),
-      workingExistingMounts.end());
+    std::erase_if(workingExistingMounts,
+                  [&ignoredDrives, &schedulerBackendName](const SchedulerDatabase::ExistingMount& mount) {
+                    if (!mount.schedulerBackendName.has_value()) {
+                      ignoredDrives.emplace_back(mount.driveName);
+                      return true;
+                    }
+                    return mount.schedulerBackendName != schedulerBackendName;
+                  });
     for (const auto& ignoredDriveName : ignoredDrives) {
       log::ScopedParamContainer params(lc);
       params.add("ignoredDrive", ignoredDriveName);
@@ -315,14 +472,16 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
   }
 
   std::map<std::string, std::string> tapepoolVoNameMap;
-  std::map<std::string, common::dataStructures::VirtualOrganization> voNameVoMap;
+  std::map<std::string, common::dataStructures::VirtualOrganization, std::less<>> voNameVoMap;
   for (auto& tapepool : tapepoolsPotentialOrExistingMounts) {
     try {
       auto vo = catalogue.VO()->getCachedVirtualOrganizationOfTapepool(tapepool);
       tapepoolVoNameMap[tapepool] = vo.name;
       voNameVoMap[vo.name] = vo;
     } catch (cta::exception::Exception& ex) {
-      ex.getMessage() << " Aborting mount decision." << std::endl;
+      // The VO of this tapepool does not exist.
+      // Abort the scheduling as we need it to know the number of allocated drives the VO is allowed to use.
+      ex.getMessage() << " Aborting mount decision. VO does not exist." << std::endl;
       throw ex;
     }
   }
@@ -333,8 +492,6 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
     voNameVoMap[defaultRepackVo->name] = defaultRepackVo.value();
   }
 
-  ExistingMountSummaryPerTapepool existingMountsDistinctTypeSummaryPerTapepool;
-  ExistingMountSummaryPerVo existingMountsBasicTypeSummaryPerVo;
   for (auto& em : workingExistingMounts) {
     bool isRepackingMount = false;
     if (em.type == common::dataStructures::MountType::ArchiveForRepack) {
@@ -353,12 +510,13 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
       continue;
     }
     auto voName = isRepackingMount ? defaultRepackVo->name : tapepoolVoNameMap.at(em.tapePool);
-    existingMountsDistinctTypeSummaryPerTapepool[TapePoolMountPair(em.tapePool, em.type)].totalMounts++;
-    existingMountsBasicTypeSummaryPerVo
-      [VirtualOrganizationMountPair(voName, common::dataStructures::getMountBasicType(em.type))]
-        .totalMounts++;
+    ret.existingMountsDistinctTypeSummaryPerTapepool[TapePoolMountPair(em.tapePool, em.type)].totalMounts++;
+    ret
+      .existingMountsBasicTypeSummaryPerVo
+        [VirtualOrganizationMountPair(voName, common::dataStructures::getMountBasicType(em.type))]
+      .totalMounts++;
     if (em.activity) {
-      existingMountsDistinctTypeSummaryPerTapepool[TapePoolMountPair(em.tapePool, em.type)]
+      ret.existingMountsDistinctTypeSummaryPerTapepool[TapePoolMountPair(em.tapePool, em.type)]
         .activityMounts[em.activity.value()]
         .value++;
     }
@@ -378,6 +536,7 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
     } else if (candidate.mount.type == common::dataStructures::MountType::Retrieve) {
       isRepackingMount = repackingTapeVids.contains(candidate.mount.vid);
     }
+
     if (isRepackingMount) {
       if (defaultRepackVo.has_value()) {
         candidate.mount.vo = defaultRepackVo->name;
@@ -397,61 +556,18 @@ MountInfoForDecision sortAndGetTapesForMountInfo(const std::vector<SchedulerData
     }
 
     auto& m = candidate.mount;
-    uint32_t existingMountsDistinctTypesForThisTapepool = 0;
-    uint32_t existingMountsBasicTypeForThisVo = 0;
-    common::dataStructures::MountType basicTypeOfThisPotentialMount = common::dataStructures::getMountBasicType(m.type);
-    common::dataStructures::VirtualOrganization voOfThisPotentialMount = voNameVoMap.at(m.vo);
-    try {
-      existingMountsDistinctTypesForThisTapepool =
-        existingMountsDistinctTypeSummaryPerTapepool.at(TapePoolMountPair(m.tapePool, m.type)).totalMounts;
-    } catch (std::out_of_range&) {}
-    try {
-      existingMountsBasicTypeForThisVo =
-        existingMountsBasicTypeSummaryPerVo
-          .at(VirtualOrganizationMountPair(voOfThisPotentialMount.name, basicTypeOfThisPotentialMount))
-          .totalMounts;
-    } catch (std::out_of_range&) {}
-
-    uint32_t effectiveExistingMountsForThisTapepool = 0;
-    if (basicTypeOfThisPotentialMount == common::dataStructures::MountType::ArchiveAllTypes) {
-      effectiveExistingMountsForThisTapepool = existingMountsDistinctTypesForThisTapepool;
-    }
-    bool mountPassesACriteria = false;
-    uint64_t minBytesToWarrantAMount = c_minBytesToWarrantAMount;
-    uint64_t minFilesToWarrantAMount = c_minFilesToWarrantAMount;
-    if (m.type == common::dataStructures::MountType::ArchiveForRepack) {
-      minBytesToWarrantAMount *= 2;
-      minFilesToWarrantAMount *= 2;
-    }
-    if (m.bytesQueued / (1 + effectiveExistingMountsForThisTapepool) >= minBytesToWarrantAMount) {
-      mountPassesACriteria = true;
-    }
-    if (m.filesQueued / (1 + effectiveExistingMountsForThisTapepool) >= minFilesToWarrantAMount) {
-      mountPassesACriteria = true;
-    }
-    if (!effectiveExistingMountsForThisTapepool
-        && ((std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()) - m.oldestJobStartTime)
-            > m.minRequestAge)) {
-      mountPassesACriteria = true;
-    }
-
-    uint64_t maxDrives = 0;
-    if (basicTypeOfThisPotentialMount == common::dataStructures::MountType::Retrieve) {
-      maxDrives = voOfThisPotentialMount.readMaxDrives;
-    } else if (basicTypeOfThisPotentialMount == common::dataStructures::MountType::ArchiveAllTypes) {
-      maxDrives = voOfThisPotentialMount.writeMaxDrives;
-    }
-
-    if (!mountPassesACriteria) {
-      candidate.blockedReason = "Mount criteria not met";
-    } else if (existingMountsBasicTypeForThisVo >= maxDrives) {
-      candidate.blockedReason = "VO mount drive limit reached";
-    } else if (m.sleepingMount) {
-      candidate.blockedReason = "Sleeping mount";
+    auto blockReason = getMountBlockReason(m,
+                                           ret.existingMountsDistinctTypeSummaryPerTapepool,
+                                           ret.existingMountsBasicTypeSummaryPerVo,
+                                           voNameVoMap.at(m.vo));
+    if (blockReason.has_value()) {
+      candidate.blockedReason = blockReason;
     } else {
       m.ratioOfMountQuotaUsed = 0.0L;
     }
   }
+
+  ret.voNameVoMap = std::move(voNameVoMap);
 
   std::sort(ret.potentialMounts.begin(), ret.potentialMounts.end(), candidateLess);
   std::reverse(ret.potentialMounts.begin(), ret.potentialMounts.end());
@@ -485,7 +601,7 @@ MountCandidate makeRetrieveCandidate(const CandidatePotential& potential,
   candidate.mountType = m.type;
   candidate.logicalLibrary = m.logicalLibrary;
   candidate.tapePool = m.tapePool;
-  candidate.vo = optionalNonEmpty(m.vo);
+  candidate.vo = m.vo;
   candidate.vid = optionalNonEmpty(m.vid);
   candidate.activity = m.activity;
   candidate.priority = m.priority;
@@ -496,10 +612,11 @@ MountCandidate makeRetrieveCandidate(const CandidatePotential& potential,
   candidate.youngestJobStartTime = static_cast<uint64_t>(m.youngestJobStartTime);
   candidate.ratioOfMountQuotaUsed = m.ratioOfMountQuotaUsed;
   candidate.candidateRank = rank;
-  candidate.mediaType = optionalNonEmpty(m.mediaType);
-  candidate.labelFormat = optionalLabelFormat(m.labelFormat);
-  candidate.vendor = optionalNonEmpty(m.vendor);
+  candidate.mediaType = m.mediaType;
+  candidate.labelFormat = labelFormatValue(m.labelFormat);
+  candidate.vendor = m.vendor;
   candidate.capacityInBytes = m.capacityInBytes;
+  candidate.lastFSeq = std::nullopt;
   candidate.encryptionKeyName = m.encryptionKeyName;
   candidate.state = blockedReason.has_value() ? "Blocked" : "Available";
   candidate.stateReason = blockedReason;
@@ -518,7 +635,7 @@ MountCandidate makeArchiveCandidate(const CandidatePotential& potential,
   candidate.mountType = m.type;
   candidate.logicalLibrary = logicalLibrary;
   candidate.tapePool = m.tapePool;
-  candidate.vo = tape != nullptr ? optionalNonEmpty(tape->vo) : optionalNonEmpty(m.vo);
+  candidate.vo = tape != nullptr ? tape->vo : m.vo;
   candidate.vid = tape != nullptr ? optionalNonEmpty(tape->vid) : std::nullopt;
   candidate.activity = m.activity;
   candidate.priority = m.priority;
@@ -529,10 +646,11 @@ MountCandidate makeArchiveCandidate(const CandidatePotential& potential,
   candidate.youngestJobStartTime = static_cast<uint64_t>(m.youngestJobStartTime);
   candidate.ratioOfMountQuotaUsed = m.ratioOfMountQuotaUsed;
   candidate.candidateRank = rank;
-  candidate.mediaType = tape != nullptr ? optionalNonEmpty(tape->mediaType) : optionalNonEmpty(m.mediaType);
-  candidate.labelFormat = tape != nullptr ? optionalLabelFormat(tape->labelFormat) : optionalLabelFormat(m.labelFormat);
-  candidate.vendor = tape != nullptr ? optionalNonEmpty(tape->vendor) : optionalNonEmpty(m.vendor);
+  candidate.mediaType = tape != nullptr ? tape->mediaType : m.mediaType;
+  candidate.labelFormat = tape != nullptr ? labelFormatValue(tape->labelFormat) : labelFormatValue(m.labelFormat);
+  candidate.vendor = tape != nullptr ? tape->vendor : m.vendor;
   candidate.capacityInBytes = tape != nullptr ? tape->capacityInBytes : m.capacityInBytes;
+  candidate.lastFSeq = tape != nullptr ? std::optional<uint64_t>(tape->lastFSeq) : std::nullopt;
   candidate.encryptionKeyName = tape != nullptr ? tape->encryptionKeyName : m.encryptionKeyName;
   candidate.state = blockedReason.has_value() ? "Blocked" : "Available";
   candidate.stateReason = blockedReason;
@@ -597,31 +715,44 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
   const auto host = utils::getShortHostname();
   const auto pid = static_cast<uint64_t>(getpid());
 
-  try {
-    const bool lockAcquired = m_db->tryAcquireRefreshLock(c_refreshWorkKey, host, pid, c_refreshLockLeaseSeconds);
-    RefreshLockGuard refreshLock(*m_db, c_refreshWorkKey, host, pid, lockAcquired);
-    if (!refreshLock.ownsLock()) {
-      lc.log(log::DEBUG, "In MountDecision::refreshMountCandidates(): Mount decision refresh lock is held elsewhere.");
-      return false;
-    }
+  // TODO: One maintd will keep the lock and use it always.
+  //       It will only be picked by another maintd if it times out. This way we ensure that the routine is not hammered
+  //       By multiple maintd one after the other.
+  RefreshLockGuard refreshLock(*m_db,
+                               c_refreshWorkKey,
+                               host,
+                               pid,
+                               m_db->tryAcquireRefreshLock(c_refreshWorkKey, host, pid, c_refreshLockLeaseSeconds));
 
+  if (!refreshLock.ownsLock()) {
+    lc.log(log::DEBUG, "In MountDecision::refreshMountCandidates(): Mount decision refresh lock is held elsewhere.");
+    return false;
+  }
+
+  try {
     utils::Timer timer;
     auto mountInfo = m_schedulerDb.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, lc);
     scheduler.fillMountPolicyNamesForPotentialMounts(*mountInfo, lc);
     scheduler.getExistingAndNextMounts(*mountInfo, lc);
 
-    const auto basePotentialMounts = mountInfo->potentialMounts;
-    const auto baseExistingMounts = mountInfo->existingOrNextMounts;
     std::vector<CandidateRow> candidateRows;
 
     auto& catalogue = scheduler.getCatalogue();
     for (const auto& logicalLibrary : getEnabledLogicalLibraries(catalogue)) {
-      auto prepared = sortAndGetTapesForMountInfo(basePotentialMounts,
-                                                  baseExistingMounts,
+      // The old getNextMount() logic evaluates one logical library at a time.
+      // Keep that separation here, then merge all rows into a single ranked list for
+      // taped processes to reserve from.
+      // TODO: Physical resources are not shared between logical libraries.
+      //       Therefore, an easy way to parallelize this algorithm is by splitting it by logical library.
+      auto prepared = sortAndGetTapesForMountInfo(mountInfo->potentialMounts,
+                                                  mountInfo->existingOrNextMounts,
                                                   logicalLibrary.name,
                                                   scheduler,
                                                   catalogue,
                                                   lc);
+      auto simulatedExistingMountsPerTapepool = prepared.existingMountsDistinctTypeSummaryPerTapepool;
+      auto simulatedExistingMountsPerVo = prepared.existingMountsBasicTypeSummaryPerVo;
+      auto tapesForWriting = prepared.tapesForWriting;
       for (const auto& potential : prepared.potentialMounts) {
         std::optional<std::string> blockedReason = potential.blockedReason;
         const auto basicType = common::dataStructures::getMountBasicType(potential.mount.type);
@@ -631,22 +762,42 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
           }
           candidateRows.push_back(CandidateRow {potential, logicalLibrary.name, std::nullopt, blockedReason});
         } else if (basicType == common::dataStructures::MountType::ArchiveAllTypes) {
-          const catalogue::TapeForWriting* selectedTape = nullptr;
-          for (const auto& tape : prepared.tapesForWriting) {
-            if (tape.tapePool == potential.mount.tapePool) {
-              selectedTape = &tape;
+          // Archive potentials do not name a VID.
+          // We materialize as many concrete tape choices as the current simulated limits allow.
+          // A blocked row is useful only if no available row was emitted for this potential mount,
+          // otherwise taped already has something actionable.
+          bool emittedAvailableCandidate = false;
+          while (true) {
+            auto slotBlockedReason = blockedReason;
+            if (!slotBlockedReason.has_value()) {
+              slotBlockedReason = getMountBlockReason(potential.mount,
+                                                      simulatedExistingMountsPerTapepool,
+                                                      simulatedExistingMountsPerVo,
+                                                      prepared.voNameVoMap.at(potential.mount.vo));
+            }
+
+            if (slotBlockedReason.has_value()) {
+              if (!emittedAvailableCandidate) {
+                candidateRows.push_back(CandidateRow {potential, logicalLibrary.name, std::nullopt, slotBlockedReason});
+              }
               break;
             }
-          }
 
-          if (!blockedReason.has_value() && selectedTape == nullptr) {
-            blockedReason = "No tape available for writing";
+            auto selectedTape = takeNextTapeForWriting(tapesForWriting, potential.mount.tapePool);
+            if (!selectedTape.has_value()) {
+              if (!emittedAvailableCandidate) {
+                candidateRows.push_back(
+                  CandidateRow {potential, logicalLibrary.name, std::nullopt, "No tape available for writing"});
+              }
+              break;
+            }
+
+            candidateRows.push_back(CandidateRow {potential, logicalLibrary.name, selectedTape, std::nullopt});
+            emittedAvailableCandidate = true;
+            incrementSimulatedMountCounts(potential.mount,
+                                          simulatedExistingMountsPerTapepool,
+                                          simulatedExistingMountsPerVo);
           }
-          candidateRows.push_back(CandidateRow {
-            potential,
-            logicalLibrary.name,
-            selectedTape != nullptr ? std::optional<catalogue::TapeForWriting>(*selectedTape) : std::nullopt,
-            blockedReason});
         }
       }
     }
@@ -669,6 +820,10 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
       }
 
       if (!blockedReason.has_value() && candidateVid.has_value() && selectedVids.contains(candidateVid.value())) {
+        // A single VID can appear through multiple potential rows, especially
+        // when retrieve and archive opportunities compete. Keep the lower
+        // ranked row visible for diagnostics, but prevent taped from reserving
+        // the same tape twice.
         blockedReason = "Tape already selected by higher-ranked candidate";
       }
 
@@ -709,6 +864,96 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
   }
 
   return false;
+}
+
+std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& logicalLibraryName,
+                                                             const std::string& driveName,
+                                                             Scheduler& scheduler,
+                                                             log::LogContext& lc,
+                                                             const uint64_t timeout_us) {
+  if (!m_db) {
+    return std::nullopt;
+  }
+
+  const auto host = utils::getShortHostname();
+  const auto pid = static_cast<uint64_t>(getpid());
+  auto reservedCandidate = m_db->tryReserveNextMountCandidate(logicalLibraryName, host, driveName, pid);
+  if (!reservedCandidate.has_value()) {
+    lc.log(log::DEBUG, "In MountDecision::getNextMount(): No available mount candidate found.");
+    return std::nullopt;
+  }
+
+  try {
+    auto mountInfo = m_schedulerDb.getMountInfo(std::optional<std::string_view>(logicalLibraryName), lc, timeout_us);
+    auto potentialMount = toPotentialMount(reservedCandidate->candidate);
+
+    ReservedTapeMount ret;
+    ret.candidateId = reservedCandidate->candidateId;
+
+    if (common::dataStructures::getMountBasicType(potentialMount.type)
+        == common::dataStructures::MountType::ArchiveAllTypes) {
+      auto tape = toTapeForWriting(reservedCandidate->candidate);
+      std::unique_ptr<ArchiveMount> archiveMount(
+        new ArchiveMount(scheduler.getCatalogue(),
+                         mountInfo->createArchiveMount(potentialMount, tape, driveName, logicalLibraryName, host)));
+      archiveMount->m_sessionRunning = true;
+      ret.mount = std::move(archiveMount);
+    } else if (potentialMount.type == common::dataStructures::MountType::Retrieve) {
+      std::unique_ptr<RetrieveMount> retrieveMount(
+        new RetrieveMount(scheduler.getCatalogue(),
+                          mountInfo->createRetrieveMount(potentialMount, driveName, logicalLibraryName, host)));
+      retrieveMount->m_sessionRunning = true;
+      retrieveMount->m_diskRunning = true;
+      retrieveMount->m_tapeRunning = true;
+      ret.mount = std::move(retrieveMount);
+    } else {
+      throw exception::Exception("In MountDecision::getNextMount(): unexpected mount type.");
+    }
+
+    log::ScopedParamContainer params(lc);
+    params.add("mountDecisionCandidateId", reservedCandidate->candidateId)
+      .add("tapeVid", ret.mount->getVid())
+      .add("mountType", common::dataStructures::toCamelCaseString(ret.mount->getMountType()))
+      .add("mountDecisionCandidateRank", reservedCandidate->candidate.candidateRank);
+    lc.log(log::INFO, "In MountDecision::getNextMount(): Reserved mount candidate.");
+    return ret;
+  } catch (...) {
+    m_db->releaseMountCandidate(reservedCandidate->candidateId, host, driveName, pid);
+    throw;
+  }
+}
+
+void MountDecision::releaseMountCandidate(const uint64_t candidateId,
+                                          const std::string& host,
+                                          const std::string& drive,
+                                          std::optional<uint64_t> pid,
+                                          log::LogContext& lc) noexcept {
+  if (!m_db) {
+    return;
+  }
+  try {
+    m_db->releaseMountCandidate(candidateId, host, drive, pid);
+  } catch (cta::exception::Exception& ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("mountDecisionCandidateId", candidateId).add(semconv::log::exceptionMessage, ex.getMessageValue());
+    lc.log(log::ERR, "In MountDecision::releaseMountCandidate(): Failed to release mount candidate.");
+  } catch (std::exception& ex) {
+    log::ScopedParamContainer params(lc);
+    params.add("mountDecisionCandidateId", candidateId).add(semconv::log::exceptionMessage, ex.what());
+    lc.log(log::ERR, "In MountDecision::releaseMountCandidate(): Failed to release mount candidate.");
+  }
+}
+
+void MountDecision::heartbeatMountCandidate(const uint64_t candidateId,
+                                            const std::string& host,
+                                            const std::string& drive,
+                                            std::optional<uint64_t> pid) noexcept {
+  if (!m_db) {
+    return;
+  }
+  try {
+    m_db->heartbeatMountCandidate(candidateId, host, drive, pid);
+  } catch (...) {}
 }
 
 }  // namespace cta::mountdecision

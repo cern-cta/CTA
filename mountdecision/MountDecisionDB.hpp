@@ -18,25 +18,31 @@ struct MountCandidate {
   cta::common::dataStructures::MountType mountType;
   std::string logicalLibrary;
   std::string tapePool;
-  std::optional<std::string> vo;
+  std::string vo;
   std::optional<std::string> vid;
   std::optional<std::string> activity;
-  std::optional<uint64_t> priority;
-  std::optional<uint64_t> minRequestAge;
-  std::optional<uint64_t> filesQueued;
-  std::optional<uint64_t> bytesQueued;
-  std::optional<uint64_t> oldestJobStartTime;
-  std::optional<uint64_t> youngestJobStartTime;
-  std::optional<double> ratioOfMountQuotaUsed;
+  uint64_t priority = 0;
+  uint64_t minRequestAge = 0;
+  uint64_t filesQueued = 0;
+  uint64_t bytesQueued = 0;
+  uint64_t oldestJobStartTime = 0;
+  uint64_t youngestJobStartTime = 0;
+  double ratioOfMountQuotaUsed = 0.0;
   uint64_t candidateRank;
-  std::optional<std::string> mediaType;
-  std::optional<uint64_t> labelFormat;
-  std::optional<std::string> vendor;
-  std::optional<uint64_t> capacityInBytes;
+  std::string mediaType;
+  uint64_t labelFormat = 0;
+  std::string vendor;
+  uint64_t capacityInBytes = 0;
+  std::optional<uint64_t> lastFSeq;
   std::optional<std::string> encryptionKeyName;
   std::string state;
   std::optional<std::string> stateReason;
   std::optional<std::string> createdBy;
+};
+
+struct ReservedMountCandidate {
+  uint64_t candidateId = 0;
+  MountCandidate candidate;
 };
 
 /**
@@ -62,6 +68,21 @@ public:
   void releaseRefreshLock(const std::string& workKey, const std::string& host, std::optional<uint64_t> pid);
 
   void replaceMountCandidates(const std::vector<MountCandidate>& candidates, uint64_t reservationTimeoutSeconds);
+
+  std::optional<ReservedMountCandidate> tryReserveNextMountCandidate(const std::string& logicalLibrary,
+                                                                     const std::string& host,
+                                                                     const std::string& drive,
+                                                                     std::optional<uint64_t> pid);
+
+  void releaseMountCandidate(uint64_t candidateId,
+                             const std::string& host,
+                             const std::string& drive,
+                             std::optional<uint64_t> pid);
+
+  void heartbeatMountCandidate(uint64_t candidateId,
+                               const std::string& host,
+                               const std::string& drive,
+                               std::optional<uint64_t> pid);
 
 private:
   ConnProvider& m_connectionProvider;
