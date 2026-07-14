@@ -715,21 +715,21 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
   const auto host = utils::getShortHostname();
   const auto pid = static_cast<uint64_t>(getpid());
 
-  // TODO: One maintd will keep the lock and use it always.
-  //       It will only be picked by another maintd if it times out. This way we ensure that the routine is not hammered
-  //       By multiple maintd one after the other.
-  RefreshLockGuard refreshLock(*m_db,
-                               c_refreshWorkKey,
-                               host,
-                               pid,
-                               m_db->tryAcquireRefreshLock(c_refreshWorkKey, host, pid, c_refreshLockLeaseSeconds));
-
-  if (!refreshLock.ownsLock()) {
-    lc.log(log::DEBUG, "In MountDecision::refreshMountCandidates(): Mount decision refresh lock is held elsewhere.");
-    return false;
-  }
-
   try {
+    // TODO: One maintd will keep the lock and use it always.
+    //       It will only be picked by another maintd if it times out.
+    //       This avoids multiple maintd processes hammering the refresh one after the other.
+    RefreshLockGuard refreshLock(*m_db,
+                                 c_refreshWorkKey,
+                                 host,
+                                 pid,
+                                 m_db->tryAcquireRefreshLock(c_refreshWorkKey, host, pid, c_refreshLockLeaseSeconds));
+
+    if (!refreshLock.ownsLock()) {
+      lc.log(log::DEBUG, "In MountDecision::refreshMountCandidates(): Mount decision refresh lock is held elsewhere.");
+      return false;
+    }
+
     utils::Timer timer;
     auto mountInfo = m_schedulerDb.getMountInfoNoLock(SchedulerDatabase::PurposeGetMountInfo::GET_NEXT_MOUNT, lc);
     scheduler.fillMountPolicyNamesForPotentialMounts(*mountInfo, lc);
