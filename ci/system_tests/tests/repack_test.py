@@ -52,7 +52,7 @@ def repack_base_dir() -> Path:
 
 @pytest.fixture(scope="function")
 def repack_buffer_dir(eos_mgm, eos_client, disk_instance_name, request):
-    # Needs to be a different dir than test_dir
+    # Needs to be a different dir than test_dir. It must live outside of the workflow configured directories
     path = eos_mgm.base_dir_path / "repack" / f"{request.function.__name__}_{uuid.uuid4().hex[:6]}"
     eos_mgm.exec(f"eos mkdir -p {path}")
     eos_mgm.exec(f"eos chmod 1777 {path}")
@@ -142,10 +142,9 @@ def _submit_repack_request(
     if no_recall:
         extra_repack_options.append("--nr")
 
-    full_buffer_url = f"root://{disk_instance_name}/{repack_buffer_dir}"
     repack_options_str: str = " ".join(extra_repack_options)
     cta_cli.exec(
-        f"cta-admin repack add --mountpolicy {mount_policy_name} --vid {vid_to_repack} --bufferurl {full_buffer_url} {repack_options_str}"
+        f"cta-admin repack add --mountpolicy {mount_policy_name} --vid {vid_to_repack} --bufferurl root://{disk_instance_name}/{repack_buffer_dir} {repack_options_str}"
     )
 
     if submit_only:
@@ -246,19 +245,16 @@ def _submit_repack_request(
 
         pytest.fail("Repack request failed")
 
-    # Check for Max Files Selection (Partial Repack Logic)
+    # Check for Max Files Selection (partial repack)
     if max_files_to_select is not None:
-        # Fetch tape file list from cta-admin
         tf_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json tf ls --vid {vid_to_repack}"))
         total_files_on_tape = len(tf_ls_json)
 
         all_files_selected = bool(repack_request.get("allFilesSelectedAtStart"))
 
         if total_files_on_tape > max_files_to_select:
-            # Expecting partial selection (allFilesSelectedAtStart == False) AND tape is not completely empty
             assert not all_files_selected and total_files_on_tape != 0
         else:
-            # Expecting full selection (allFilesSelectedAtStart == True) AND tape is empty
             assert all_files_selected and total_files_on_tape == 0
 
     if len(destination_infos) != 0:
@@ -286,7 +282,6 @@ def _submit_repack_request(
     assert files_left_to_retrieve == 0
     assert files_left_to_archive == 0
     assert nb_archived_destination_files == nb_archived_files
-    # This check was different in the original tests, but that seems to be due to a bug in bash tests
     assert nb_recycle_tape_files - user_provided_files == nb_files_to_retrieve
 
     print(f"Repack request on VID {vid_to_repack} succeeded\n")
@@ -360,7 +355,8 @@ def test_repack_move_only_with_backpressure(cta_cli, repack_buffer_dir, repack_m
 def test_repack_non_repacking_tape(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
     vid_to_repack = cta_cli.get_first_vid_containing_files()
 
-    # TODO: we may want to parameterize this test in the future to remove some of this duplication and improve test granularity
+    # We may want to parameterize this test in the future to remove some of this duplication and improve test granularity
+    # However, we need to ensure that we reuse the same tape in that case
     cta_cli.modify_tape_state(vid_to_repack, "DISABLED")
     print(f"Launching the repack request test on VID {vid_to_repack} with DISABLED state")
     with pytest.raises(RuntimeError):
@@ -435,7 +431,7 @@ def test_archive_1000_files(eos_client, repack_params, test_dir):
 def test_repack_move_only_subset_of_files(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
     vid_to_repack = cta_cli.get_first_vid_containing_files()
     total_files_on_tape = cta_cli.get_number_of_files_on_tape(vid_to_repack)
-    number_of_files_to_repack = int(total_files_on_tape / 2)  # Number that covers only some of the files on tape (half)
+    number_of_files_to_repack = int(total_files_on_tape / 2)  # Number that covers only some of the files on tape
 
     cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(
@@ -508,28 +504,39 @@ def test_repack_move_only(cta_cli, disk_instance_name, repack_buffer_dir, repack
     cta_cli.reclaim_tape(vid_to_repack)
 
 
-def test_repack_tape_repair(cta_cli, eos_client, eos_mgm, repack_buffer_dir, repack_mp_name, disk_instance_name):
+def test_repack_with_user_provided_files(
+    cta_cli, eos_client, eos_mgm, repack_buffer_dir, repack_mp_name, disk_instance_name
+):
     vid_to_repack = cta_cli.get_first_vid_containing_files()
-    number_of_files_to_inject = 10
+    number_of_user_provided_files = 10
+    # For CTA to find user provided files, it needs two things:
+    # 1. The directory name is the VID of the tape the user provided files are on
+    # 2. The file name is the fseq of the file
+    # Here we create the directory with the VID name
     repack_sub_dir = f"{repack_buffer_dir}/{vid_to_repack}"
     eos_mgm.exec(f"eos mkdir -p {repack_sub_dir}")
     eos_mgm.exec(f"eos chmod 1777 {repack_sub_dir}")
     print(
-        f"Will inject {number_of_files_to_inject} files into the repack buffer directory to simulate user provided files"
+        f"Will inject {number_of_user_provided_files} files into the repack buffer directory to simulate user provided files"
     )
 
-    assert number_of_files_to_inject < cta_cli.get_number_of_files_on_tape(vid_to_repack)
+    assert number_of_user_provided_files < cta_cli.get_number_of_files_on_tape(vid_to_repack)
 
     tape_file_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json tapefile ls --vid {vid_to_repack}"))
 
-    # number_of_files_to_inject user provided files
-    for tape_file in tape_file_ls_json[:number_of_files_to_inject]:
+    # Create some user provided files by retrieving them manually and copying them onto the right path in the repack buffer
+    for tape_file in tape_file_ls_json[:number_of_user_provided_files]:
         disk_id = tape_file["df"]["diskId"]
-        file_path_to_inject = eos_mgm.exec_with_output(f"eos fileinfo fid:{disk_id} --path | cut -d':' -f2 | tr -d ' '")
-        eos_client.retrieve_file(disk_instance_name, file_path_to_inject)
-        print(f"Copying the retrieved file {file_path_to_inject} into the repack buffer {repack_sub_dir}")
+        # Figure out the path on EOS from where we should copy
+        eos_file_path_to_copy_from = eos_mgm.exec_with_output(
+            f"eos fileinfo fid:{disk_id} --path | cut -d':' -f2 | tr -d ' '"
+        )
+        # Retrieve the file so that it's on disk
+        eos_client.retrieve_file(disk_instance_name, eos_file_path_to_copy_from)
+        print(f"Copying the retrieved file {eos_file_path_to_copy_from} into the repack buffer {repack_sub_dir}")
         file_fseq = int(tape_file["tf"]["fSeq"])
-        eos_mgm.exec(f"eos cp {file_path_to_inject} {repack_sub_dir}/{file_fseq:09d}")
+        # Copy the file into the repack buffer. Note the file name MUST match the fseq of the file
+        eos_mgm.exec(f"eos cp {eos_file_path_to_copy_from} {repack_sub_dir}/{file_fseq:09d}")
 
     cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f"Launching a repack request on VID {vid_to_repack}")
@@ -550,6 +557,7 @@ def test_repack_tape_repair(cta_cli, eos_client, eos_mgm, repack_buffer_dir, rep
     total_files_to_retrieve = int(repack_request["totalFilesToRetrieve"])
     total_files_to_archive = int(repack_request["totalFilesToArchive"])
 
+    # The repack process should only retrieve the files not already present in the repack buffer
     assert total_files_to_retrieve == total_files_to_archive - user_provided_files
     assert retrieved_files == total_files_to_retrieve
     assert archived_files == total_files_to_archive
@@ -559,7 +567,9 @@ def test_repack_tape_repair(cta_cli, eos_client, eos_mgm, repack_buffer_dir, rep
     cta_cli.reclaim_tape(vid_to_repack)
 
 
-def test_repack_just_add_copies(cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name):
+def test_repack_just_add_copies_when_all_copies_already_present(
+    cta_cli, disk_instance_name, repack_buffer_dir, repack_mp_name
+):
     vid_to_repack = cta_cli.get_first_vid_containing_files()
     cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f'Launching the repack test "just add copies" on VID {vid_to_repack} with all copies already on CTA')
@@ -578,9 +588,11 @@ def test_repack_just_add_copies(cta_cli, disk_instance_name, repack_buffer_dir, 
     retrieved_files = int(repack_request["retrievedFiles"])
     nb_destination_vids = len(repack_request.get("destinationInfos", []))
 
+    # This tests works on files that already have the correct number of copies
+    # That is why we expect the repack not to do anything
     assert archived_files == 0
     assert retrieved_files == 0
-    assert nb_destination_vids == 0  # All copies already exist so nothing to do
+    assert nb_destination_vids == 0
 
     cta_cli.remove_repack_request(vid_to_repack)
     cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
@@ -601,7 +613,7 @@ def test_repack_cancellation(
         repack_buffer_dir=repack_buffer_dir,
         mount_policy_name=repack_mp_name,
         move_only=True,
-        submit_only=True,  # immediately return after repack request has been submitted
+        submit_only=True,  # immediately return after repack request has been submitted; no waiting
     )
 
     cta_cli.wait_for_repack_request_launch(vid_to_repack)
@@ -636,28 +648,31 @@ def test_repack_cancellation(
     cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
 
 
-def test_repack_tape_repair_no_recall(
+def test_repack_with_user_provided_files_no_recall(
     cta_cli, eos_client, eos_mgm, repack_buffer_dir, repack_mp_name, disk_instance_name
 ):
+    # See the comments in test_repack_with_user_provided_files
     vid_to_repack = cta_cli.get_first_vid_containing_files()
-    number_of_files_to_inject = 10
-    print(f"Will inject {number_of_files_to_inject} files into the repack buffer directory")
+    number_of_user_provided_files = 10
+    print(f"Will inject {number_of_user_provided_files} files into the repack buffer directory")
     repack_sub_dir = f"{repack_buffer_dir}/{vid_to_repack}"
     eos_mgm.exec(f"eos mkdir -p {repack_sub_dir}")
     eos_mgm.exec(f"eos chmod 1777 {repack_sub_dir}")
 
     tape_file_ls_json = json.loads(cta_cli.exec_with_output(f"cta-admin --json tapefile ls --vid {vid_to_repack}"))
 
-    assert number_of_files_to_inject < cta_cli.get_number_of_files_on_tape(vid_to_repack)
+    assert number_of_user_provided_files < cta_cli.get_number_of_files_on_tape(vid_to_repack)
 
-    for i in range(number_of_files_to_inject):
+    for i in range(number_of_user_provided_files):
         tape_file = tape_file_ls_json[i + 1]
         disk_id = tape_file["df"]["diskId"]
-        file_path_to_inject = eos_mgm.exec_with_output(f"eos fileinfo fid:{disk_id} --path | cut -d':' -f2 | tr -d ' '")
-        eos_client.retrieve_file(disk_instance_name, file_path_to_inject)
-        print(f"Copying the retrieved file {file_path_to_inject} into the repack buffer {repack_sub_dir}")
+        eos_file_path_to_copy_from = eos_mgm.exec_with_output(
+            f"eos fileinfo fid:{disk_id} --path | cut -d':' -f2 | tr -d ' '"
+        )
+        eos_client.retrieve_file(disk_instance_name, eos_file_path_to_copy_from)
+        print(f"Copying the retrieved file {eos_file_path_to_copy_from} into the repack buffer {repack_sub_dir}")
         file_fseq = int(tape_file["tf"]["fSeq"])
-        eos_mgm.exec(f"eos cp {file_path_to_inject} {repack_sub_dir}/{file_fseq:09d}")
+        eos_mgm.exec(f"eos cp {eos_file_path_to_copy_from} {repack_sub_dir}/{file_fseq:09d}")
 
     cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
     print(f"Launching a repack request on VID {vid_to_repack}")
@@ -683,6 +698,10 @@ def test_repack_tape_repair_no_recall(
     assert retrieved_files == total_files_to_retrieve
     assert archived_files == total_files_to_archive
     assert archived_files == user_provided_files
+    # Here lies the main difference with the test_repack_with_user_provided_files test:
+    # Without recall, we skip the retrieval step, which means the only files archived will be the user provided ones
+    assert total_files_to_archive == number_of_user_provided_files
+    assert total_files_to_retrieve == 0
 
     cta_cli.remove_repack_request(vid_to_repack)
     cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
