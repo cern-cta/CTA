@@ -277,7 +277,6 @@ def _submit_repack_request(
     nb_destination_vids = len(destination_infos)
     nb_archived_destination_files = sum(int(dest["files"]) for dest in destination_infos)
 
-    assert nb_destination_vids > 0
     print(f"Number of archived files = {nb_archived_files} (spread over {nb_destination_vids} tapes)")
     print(f"Number of files to retrieve = {nb_files_to_retrieve}")
     print(f"Number of new recycled tape files = {nb_recycle_tape_files}")
@@ -577,9 +576,11 @@ def test_repack_just_add_copies(cta_cli, disk_instance_name, repack_buffer_dir, 
     repack_request = repack_ls_json[0]
     archived_files = int(repack_request["archivedFiles"])
     retrieved_files = int(repack_request["retrievedFiles"])
+    nb_destination_vids = len(repack_request.get("destinationInfos", []))
 
     assert archived_files == 0
     assert retrieved_files == 0
+    assert nb_destination_vids == 0  # All copies already exist so nothing to do
 
     cta_cli.remove_repack_request(vid_to_repack)
     cta_cli.modify_tape_state(vid_to_repack, "ACTIVE")
