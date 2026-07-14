@@ -190,7 +190,8 @@ bool MountDecisionDB::tryAcquireRefreshLock(const std::string& workKey,
   auto conn = m_connectionProvider.getConn();
   // Maintd refresh is a single-writer operation, for now.
   // A maintd process can acquire the lock in order to execute the refresh operation.
-  // This works only when it does not exist yet, or when the previous lease has expired.
+  // This works when the lock does not exist yet, when the previous lease has expired,
+  // or when the same process already owns the lock and is renewing it.
   // TODO: Allow maintd to analyse each mount and give it a score, row-by-row.
   //       This will allow rows to be processed in parallel and remove the need for this lock.
   //       At the moment, the lock is needed because we are assigning the score based on the position of the mount in
@@ -213,7 +214,15 @@ bool MountDecisionDB::tryAcquireRefreshLock(const std::string& workKey,
       LOCKED_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
       LOCK_HEARTBEAT_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
       LOCK_EXPIRES_TIME = EXCLUDED.LOCK_EXPIRES_TIME
-    WHERE SCHEDULER_MOUNT_WORK_LOCK.LOCK_EXPIRES_TIME < EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+    WHERE
+      SCHEDULER_MOUNT_WORK_LOCK.LOCK_EXPIRES_TIME < EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
+      OR (
+        SCHEDULER_MOUNT_WORK_LOCK.LOCKED_BY_HOST = EXCLUDED.LOCKED_BY_HOST
+        AND (
+          (EXCLUDED.LOCKED_BY_PID IS NULL AND SCHEDULER_MOUNT_WORK_LOCK.LOCKED_BY_PID IS NULL)
+          OR SCHEDULER_MOUNT_WORK_LOCK.LOCKED_BY_PID = EXCLUDED.LOCKED_BY_PID
+        )
+      )
     RETURNING WORK_KEY
   )SQL";
   auto stmt = conn.createStmt(sql);
