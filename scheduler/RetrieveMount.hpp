@@ -21,6 +21,10 @@
 
 namespace cta {
 
+namespace mountdecision {
+class MountDecision;
+}
+
 namespace catalogue {
 class Catalogue;
 }
@@ -32,6 +36,7 @@ class Catalogue;
   */
 class RetrieveMount : public TapeMount {
   friend class Scheduler;
+  friend class mountdecision::MountDecision;
 
 protected:
   /**

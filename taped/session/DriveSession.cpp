@@ -29,9 +29,91 @@
 
 #ifdef CTA_PGSCHED
 #include "mountdecision/MountDecision.hpp"
+
+#include <condition_variable>
+#include <mutex>
+#include <thread>
+#include <utility>
 #endif
 
 namespace cta::tape::daemon {
+
+#ifdef CTA_PGSCHED
+namespace {
+
+/// Keep a reserved Mount Decision candidate alive with periodic heartbeats and release it on destruction.
+class MountCandidateReservationGuard {
+public:
+  MountCandidateReservationGuard(mountdecision::MountDecision& mountDecision,
+                                 std::string host,
+                                 std::string drive,
+                                 const uint64_t pid,
+                                 log::LogContext& lc)
+      : m_mountDecision(mountDecision),
+        m_host(std::move(host)),
+        m_drive(std::move(drive)),
+        m_pid(pid),
+        m_lc(lc) {}
+
+  MountCandidateReservationGuard(const MountCandidateReservationGuard&) = delete;
+  MountCandidateReservationGuard& operator=(const MountCandidateReservationGuard&) = delete;
+
+  ~MountCandidateReservationGuard() {
+    stopHeartbeat();
+    if (!m_candidateId.has_value()) {
+      return;
+    }
+    m_mountDecision.releaseMountCandidate(m_candidateId.value(), m_host, m_drive, m_pid, m_lc);
+  }
+
+  void setCandidateId(const uint64_t candidateId) {
+    m_candidateId = candidateId;
+    startHeartbeat();
+  }
+
+private:
+  void startHeartbeat() {
+    m_heartbeatThread = std::thread([this] {
+      while (true) {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        if (m_stopHeartbeat.wait_for(lock, std::chrono::seconds(60), [this] { return m_stopping; })) {
+          return;
+        }
+        const auto candidateId = m_candidateId;
+        lock.unlock();
+        if (candidateId.has_value()) {
+          m_mountDecision.heartbeatMountCandidate(candidateId.value(), m_host, m_drive, m_pid);
+        }
+      }
+    });
+  }
+
+  void stopHeartbeat() {
+    {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_stopping = true;
+    }
+    m_stopHeartbeat.notify_all();
+    if (m_heartbeatThread.joinable()) {
+      m_heartbeatThread.join();
+    }
+  }
+
+  mountdecision::MountDecision& m_mountDecision;
+  std::string m_host;
+  std::string m_drive;
+  std::optional<uint64_t> m_pid;
+  log::LogContext& m_lc;
+  std::optional<uint64_t> m_candidateId;
+  std::mutex m_mutex;
+  std::condition_variable m_stopHeartbeat;
+  bool m_stopping = false;
+  std::thread m_heartbeatThread;
+};
+
+}  // namespace
+#endif
+
 using common::dataStructures::DriveReport;
 using common::dataStructures::ReportedDriveState;
 using common::dataStructures::TapeSessionReport;
@@ -214,14 +296,44 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
   // Report that we are Up without a mount
   reportDriveState({.state = ReportedDriveState::Up});
 
+#ifdef CTA_PGSCHED
+  // Declared before the mount so a reserved candidate is released only after the tape session and its mount end.
+  std::optional<mountdecision::MountDecision> mountDecision;
+  std::optional<MountCandidateReservationGuard> mountCandidateReservation;
+#endif
   std::unique_ptr<TapeMount> mountCandidate;
 
   // Try to get a mount candidate. A scheduling timeout is recoverable by waiting and trying again.
   utils::Timer t;
   try {
     auto& scheduler = m_schedulerContext.scheduler();
+#ifdef CTA_PGSCHED
+    const bool useMountDecision = m_config.featureEnabled(TapedConfig::Feature::MountDecision);
+    if (useMountDecision) {
+      // Reserve a precomputed candidate from the Mount Decision table instead of computing the mount here.
+      auto& schedulerDb = m_schedulerContext.schedulerDb();
+      mountDecision.emplace(schedulerDb, schedulerDb, m_lc);
+      mountCandidateReservation.emplace(*mountDecision,
+                                        m_driveInfo.host,
+                                        m_driveInfo.driveName,
+                                        static_cast<uint64_t>(getpid()),
+                                        m_lc);
+      auto reservedMount =
+        mountDecision->getNextMount(m_driveInfo.logicalLibrary,
+                                    m_driveInfo.driveName,
+                                    scheduler,
+                                    m_lc,
+                                    static_cast<uint64_t>(m_config.mounts.get_next_mount_timeout_secs) * 1000000);
+      if (reservedMount.has_value()) {
+        mountCandidateReservation->setCandidateId(reservedMount->candidateId);
+        mountCandidate = std::move(reservedMount->mount);
+      }
+    }
+#else
+    constexpr bool useMountDecision = false;
+#endif
     // The dry run avoids constructing an assignment when no work is eligible.
-    if (scheduler.getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, m_lc)) {
+    if (!useMountDecision && scheduler.getNextMountDryRun(m_driveInfo.logicalLibrary, m_driveInfo.driveName, m_lc)) {
       mountCandidate =
         scheduler.getNextMount(m_driveInfo.logicalLibrary,
                                m_driveInfo.driveName,
