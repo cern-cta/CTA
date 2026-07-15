@@ -51,13 +51,9 @@ public:
   void releaseMountCandidate(uint64_t candidateId,
                              const std::string& host,
                              const std::string& drive,
-                             std::optional<uint64_t> pid,
                              log::LogContext& lc) noexcept;
 
-  void heartbeatMountCandidate(uint64_t candidateId,
-                               const std::string& host,
-                               const std::string& drive,
-                               std::optional<uint64_t> pid) noexcept;
+  void heartbeatMountCandidate(uint64_t candidateId, const std::string& host, const std::string& drive) noexcept;
 
 private:
   std::unique_ptr<MountDecisionDB> m_db;

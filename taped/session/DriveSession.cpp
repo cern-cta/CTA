@@ -47,12 +47,10 @@ public:
   MountCandidateReservationGuard(mountdecision::MountDecision& mountDecision,
                                  std::string host,
                                  std::string drive,
-                                 const uint64_t pid,
                                  log::LogContext& lc)
       : m_mountDecision(mountDecision),
         m_host(std::move(host)),
         m_drive(std::move(drive)),
-        m_pid(pid),
         m_lc(lc) {}
 
   MountCandidateReservationGuard(const MountCandidateReservationGuard&) = delete;
@@ -63,7 +61,7 @@ public:
     if (!m_candidateId.has_value()) {
       return;
     }
-    m_mountDecision.releaseMountCandidate(m_candidateId.value(), m_host, m_drive, m_pid, m_lc);
+    m_mountDecision.releaseMountCandidate(m_candidateId.value(), m_host, m_drive, m_lc);
   }
 
   void setCandidateId(const uint64_t candidateId) {
@@ -82,7 +80,7 @@ private:
         const auto candidateId = m_candidateId;
         lock.unlock();
         if (candidateId.has_value()) {
-          m_mountDecision.heartbeatMountCandidate(candidateId.value(), m_host, m_drive, m_pid);
+          m_mountDecision.heartbeatMountCandidate(candidateId.value(), m_host, m_drive);
         }
       }
     });
@@ -102,7 +100,6 @@ private:
   mountdecision::MountDecision& m_mountDecision;
   std::string m_host;
   std::string m_drive;
-  std::optional<uint64_t> m_pid;
   log::LogContext& m_lc;
   std::optional<uint64_t> m_candidateId;
   std::mutex m_mutex;
@@ -313,11 +310,7 @@ DriveSession::IterationResult DriveSession::runIteration(std::stop_token stopTok
       // Reserve a precomputed candidate from the Mount Decision table instead of computing the mount here.
       auto& schedulerDb = m_schedulerContext.schedulerDb();
       mountDecision.emplace(schedulerDb, schedulerDb, m_lc);
-      mountCandidateReservation.emplace(*mountDecision,
-                                        m_driveInfo.host,
-                                        m_driveInfo.driveName,
-                                        static_cast<uint64_t>(getpid()),
-                                        m_lc);
+      mountCandidateReservation.emplace(*mountDecision, m_driveInfo.host, m_driveInfo.driveName, m_lc);
       auto reservedMount =
         mountDecision->getNextMount(m_driveInfo.logicalLibrary,
                                     m_driveInfo.driveName,
