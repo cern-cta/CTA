@@ -11,17 +11,11 @@ set -eo pipefail
 ###############################################################################
 
 # Constants
-readonly script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
-readonly project_root=$(git rev-parse --show-toplevel)
-readonly cta_image_build_iteration_path=/tmp/.cta_image_build_iteration
-readonly available_tests=(
-  catalogue_schema_update
-  client_gfal
-  client
-  cta_admin
-  external_tape_formats
-  stress
-)
+script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+readonly script_dir
+project_root=$(git rev-parse --show-toplevel)
+readonly project_root
+readonly available_tests=( $(for f in system_tests/tests/*_test.py; do basename "$f" _test.py; done) )
 
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
@@ -679,7 +673,7 @@ main() {
     exit 1
   fi
 
-  local command="$1"
+  local -r command="$1"
   shift
 
   if [[ "$command" == "help" || "$command" == "-h" || "$command" == "--help" ]]; then
