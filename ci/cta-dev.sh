@@ -401,7 +401,7 @@ parse_options() {
         shift
         ;;
       --cta-image-tag)
-        require_command "$1" "$command" deploy up all
+        require_command "$1" "$command" deploy
         cta_image_tag="$2"
         shift
         ;;

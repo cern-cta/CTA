@@ -13,6 +13,7 @@ This directory contains all the files necessary for development and automation w
 * `system_tests/`: Pytest based system test for CTA
 * `utils/`: Collection of utility scripts
 * `build_deploy.sh`: The main script used for development: builds the project, the corresponding Docker image and deploys a local CTA test instance. See [the docs on Build & Deploy](https://cta.docs.cern.ch/latest/dev/setup/build-deploy/) for more details
+* `cta-dev.sh`: Future replacement of `build_deploy.sh`. See `./cta-dev.sh --help` for more details.
 
 # Typical helper functions and their meaning
 
