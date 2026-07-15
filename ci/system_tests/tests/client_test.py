@@ -21,7 +21,6 @@ from ..helpers.utils import find_line
 class ClientParams:
     file_count: int
     file_size_kb: int
-    directory_count: int
     process_count: int
 
 
@@ -31,7 +30,6 @@ def client_params(request) -> ClientParams:
     return ClientParams(
         file_count=client_config["file_count"],
         file_size_kb=client_config["file_size_kb"],
-        directory_count=client_config["directory_count"],
         process_count=client_config["process_count"],
     )
 
@@ -342,7 +340,7 @@ def test_retrieve_queue_cleanup(eos_mgm, eos_client, cta_cli, test_dir, cta_stor
     )
     nb_copies = 3
 
-    non_full_tapes = cta_cli.writable_tapes()
+    non_full_tapes = cta_cli.list_writable_tapes()
     assert len(non_full_tapes) >= 3
     vo_name = "vo"  # get this from somewhere?
 

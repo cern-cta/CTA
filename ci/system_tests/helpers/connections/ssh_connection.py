@@ -24,7 +24,11 @@ class SSHConnection(RemoteConnection):
     def description(self) -> str:
         return f"SSH connection {self.name}"
 
-    def exec(self, command: str, capture_output=False, throw_on_failure=True) -> ExecResult:
+    def exec(
+        self, command: str, capture_output: bool = False, throw_on_failure: bool = True, print_command: bool = False
+    ) -> ExecResult:
+        if print_command:
+            print(command)
         remote = f"{self.user}@{self.host}"
         full_command = f"ssh {shlex.quote(remote)} {shlex.quote(command)}"
         result = subprocess.run(full_command, shell=True, capture_output=capture_output)

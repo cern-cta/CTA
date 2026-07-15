@@ -4,6 +4,7 @@
 import json
 import time
 
+from ..utils.timeout import Timeout
 from .remote_host import RemoteHost
 
 
@@ -67,6 +68,107 @@ class CtaCliHost(RemoteHost):
         assert len(filtered_list) == 1
         return filtered_list[0]
 
-    def writable_tapes(self) -> list[dict]:
+    def list_writable_tapes(self) -> list[dict]:
         tape_ls_json = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
         return [tape for tape in tape_ls_json if not tape.get("full", False)]
+
+    def get_first_vid_containing_files(self) -> str:
+        tapes = json.loads(self.exec_with_output("cta-admin --json tape ls --all"))
+        for tape in tapes:
+            occupancy = tape.get("occupancy", 0)
+            last_fseq = tape.get("lastFseq", 0)
+            if occupancy not in (None, "0", 0) and last_fseq not in (None, "0", 0):
+                return tape["vid"]
+        raise RuntimeError("Failed to find a VID to repack")
+
+    def get_number_of_files_on_tape(self, vid: str) -> int:
+        tapefile_json = self.exec_with_output(f"cta-admin --json tf ls --vid {vid}")
+        return len(json.loads(tapefile_json))
+
+    def wait_for_tape_state(self, vid: str, expected_state: str, *, timeout_secs: int = 60) -> None:
+        deadline = time.time() + timeout_secs
+        while time.time() < deadline:
+            tape_json = json.loads(
+                self.exec_with_output(f"cta-admin --json tape ls --state {expected_state} --vid {vid}")
+            )
+            if any(tape.get("vid") == vid for tape in tape_json):
+                return
+            time.sleep(1)
+        raise TimeoutError(f"Tape {vid} did not reach state {expected_state} within {timeout_secs} seconds")
+
+    def modify_tape_state(self, vid: str, state: str, reason: str = "Testing", wait=True) -> None:
+        print(f"Marking tape {vid} as {state}")
+        self.exec(f"cta-admin tape ch --state {state} --reason '{reason}' --vid {vid}")
+        if wait:
+            self.wait_for_tape_state(vid, state)
+
+    def remove_repack_request(self, vid: str, throw_on_failure: bool = True) -> None:
+        print(f"Removing repack request for {vid}")
+        self.exec(f"cta-admin repack rm --vid {vid}", throw_on_failure=throw_on_failure)
+
+    def reclaim_tape(self, vid: str) -> None:
+        print(f"Reclaiming tape {vid}")
+        self.exec(f"cta-admin tape reclaim --vid {vid}")
+
+    def has_repack_request(self, vid) -> bool:
+        try:
+            re_ls_json = json.loads(self.exec_with_output(f"cta-admin --json re ls --vid {vid}"))
+            return len(re_ls_json) > 0
+        except json.JSONDecodeError:
+            return False
+
+    def retrieve_queue_empty(self, vid) -> bool:
+        queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
+        return not any(q["vid"] == vid for q in queues)
+
+    def count_files_in_queue(self, vid) -> int:
+        queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
+        for queue in queues:
+            if queue["vid"] == vid:
+                return int(queue["queuedFiles"])
+        return 0
+
+    def wait_for_repack_request_launch(self, vid, wait_timeout_secs=30) -> None:
+        print(f"Waiting for the launch of the repack request on VID {vid}...")
+        with Timeout(wait_timeout_secs) as t:
+            while not self.has_repack_request(vid) and not t.expired:
+                time.sleep(1)
+            if t.expired:
+                raise TimeoutError(
+                    f"No repack request appeared for VID {vid} within timeout of {wait_timeout_secs} seconds"
+                )
+        print("Repack request launched")
+
+    def wait_for_repack_request_expansion(self, vid, wait_timeout_secs=30) -> None:
+        print(f"Waiting for repack request expansion on VID {vid}...")
+        tape_json = json.loads(self.exec_with_output(f"cta-admin --json tape ls --vid {vid}"))
+        lastFSeq = tape_json[0]["lastFseq"]
+        wait_timeout_secs = 20
+        with Timeout(wait_timeout_secs) as t:
+            lastExpandedFSeq = 0
+            while lastExpandedFSeq != lastFSeq and not t.expired:
+                try:
+                    repack_json = json.loads(self.exec_with_output(f"cta-admin --json re ls --vid {vid}"))
+                    if not repack_json:
+                        continue
+                    lastExpandedFSeq = repack_json[0]["lastExpandedFseq"]
+                except json.JSONDecodeError:
+                    ...  # In this case re ls just didn't found anything
+                time.sleep(1)
+            if t.expired:
+                raise TimeoutError(
+                    f"Repack request for VID {vid} failed to expand within timeout of {wait_timeout_secs} seconds. Last fSeq on tape: {lastFSeq}, last expanded fSeq: {lastExpandedFSeq}"
+                )
+        print("Repack request expanded")
+
+    def wait_for_queue_to_empty(self, vid, wait_timeout_secs=30) -> None:
+        print(f"Waiting for retrieve queue of {vid} to be empty...")
+        wait_timeout_secs = 20
+        with Timeout(wait_timeout_secs) as t:
+            while not self.retrieve_queue_empty(vid) and not t.expired:
+                time.sleep(1)
+            if t.expired:
+                raise TimeoutError(
+                    f"Retrieve queue for VID {vid} failed to empty within timeout of {wait_timeout_secs} seconds."
+                )
+        print("Retrieve queue empty")

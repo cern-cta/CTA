@@ -21,7 +21,11 @@
 
     file_count    = 2000
     file_size_kb  = 10
-    directory_count = 3
+    process_count = 20
+
+  [tests.repack]
+
+    file_size_kb  = 15
     process_count = 20
 
   [tests.stress]

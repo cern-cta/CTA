@@ -70,8 +70,6 @@ def is_test_in_items(test_path: str, items):
 
 
 def add_test_into_existing_collection(test_path: str, items, prepend: bool = False, allow_duplicate: bool = False):
-    if not items:
-        raise RuntimeError("No tests found")
     resolved_test_path = Path(test_path).resolve()
     if not resolved_test_path.exists():
         raise FileNotFoundError(f"Required test suite '{resolved_test_path}' not found!")
@@ -86,6 +84,8 @@ def add_test_into_existing_collection(test_path: str, items, prepend: bool = Fal
 
 # Pytest hook that allows us to dynamically modify the set of tests being run
 def pytest_collection_modifyitems(config, items):
+    if not items:
+        return
     if config.getoption("--no-modify"):
         return
     # Always check for errors after the run

@@ -75,8 +75,20 @@ def krb5_realm(request) -> str:
 
 
 @pytest.fixture(scope="session")
+def postgres_scheduler_enabled(cta_cli) -> bool:
+    # Not very robust; something to improve in the future. Maybe with a label on the entire cluster
+    return json.loads(cta_cli.exec_with_output("cta-admin --json version"))[0]["schedulerBackendName"] == "postgres"
+
+
+@pytest.fixture(scope="session")
 def cta_storage_class():
     return "cta_storage_class"
+
+
+@pytest.fixture(scope="session")
+def cta_default_tape_pool():
+    # For now; don't change, because the populate_catalogue.sh script does not use this value (yet)
+    return "ctasystest"
 
 
 @pytest.fixture(scope="session")

@@ -41,7 +41,11 @@ class K8sConnection(RemoteConnection):
             self._cached_pod = self._resolve_pod()
         return self._cached_pod
 
-    def exec(self, command: str, capture_output=False, throw_on_failure=True) -> ExecResult:
+    def exec(
+        self, command: str, capture_output: bool = False, throw_on_failure: bool = True, print_command: bool = False
+    ) -> ExecResult:
+        if print_command:
+            print(command)
         full_command = ["/bin/sh", "-c", command]
 
         resp = stream(

@@ -186,14 +186,11 @@ test-client-gfal2:
     EXTRA_SPAWN_ARGS: "--local-telemetry"
 
 test-repack:
-  # test is flaky and we want to prevent cancelling everything
   extends:
-    - .kubernetes-test
-  retry: 1
+    - .kubernetes-test-python
   stage: system-test
   variables:
-    TEST_SCRIPT: "tests/test_repack.sh"
-    EXTRA_RUN_ARGS: "--test-timeout 2400"
+    PYTESTS: "tests/repack_test.py"
 
 test-cta-tools:
   extends:

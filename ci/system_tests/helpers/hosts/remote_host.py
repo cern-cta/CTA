@@ -21,13 +21,21 @@ class RemoteHost:
     def description(self) -> str:
         return self.conn.description
 
-    def exec(self, command: str, capture_output=False, throw_on_failure=True) -> ExecResult:
-        return self.conn.exec(command, capture_output=capture_output, throw_on_failure=throw_on_failure)
+    def exec(
+        self, command: str, capture_output: bool = False, throw_on_failure: bool = True, print_command: bool = False
+    ) -> ExecResult:
+        return self.conn.exec(
+            command, capture_output=capture_output, throw_on_failure=throw_on_failure, print_command=print_command
+        )
 
-    def exec_with_output(self, command: str, throw_on_failure=True) -> str:
-        return self.conn.exec(command, capture_output=True, throw_on_failure=throw_on_failure).stdout.strip()
+    def exec_with_output(self, command: str, throw_on_failure: bool = True, print_command: bool = False) -> str:
+        return self.conn.exec(
+            command, capture_output=True, throw_on_failure=throw_on_failure, print_command=print_command
+        ).stdout.strip()
 
-    def exec_async(self, command: str, throw_on_failure=True) -> asyncio.Future[ExecResult]:
+    def exec_async(
+        self, command: str, throw_on_failure: bool = True, print_command: bool = False
+    ) -> asyncio.Future[ExecResult]:
         """Start a command asynchronously and return a future that can be awaited.
 
         This allows concurrent monitoring while the process runs.
@@ -39,6 +47,7 @@ class RemoteHost:
             command,
             True,
             throw_on_failure,
+            print_command,
         )
 
     def copy_to(
