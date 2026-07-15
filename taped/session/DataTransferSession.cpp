@@ -54,12 +54,10 @@ public:
   MountCandidateReservationGuard(cta::mountdecision::MountDecision& mountDecision,
                                  std::string host,
                                  std::string drive,
-                                 const uint64_t pid,
                                  cta::log::LogContext& lc)
       : m_mountDecision(mountDecision),
         m_host(std::move(host)),
         m_drive(std::move(drive)),
-        m_pid(pid),
         m_lc(lc) {}
 
   MountCandidateReservationGuard(const MountCandidateReservationGuard&) = delete;
@@ -70,7 +68,7 @@ public:
     if (!m_candidateId.has_value()) {
       return;
     }
-    m_mountDecision.releaseMountCandidate(m_candidateId.value(), m_host, m_drive, m_pid, m_lc);
+    m_mountDecision.releaseMountCandidate(m_candidateId.value(), m_host, m_drive, m_lc);
   }
 
   void setCandidateId(const uint64_t candidateId) {
@@ -89,7 +87,7 @@ private:
         const auto candidateId = m_candidateId;
         lock.unlock();
         if (candidateId.has_value()) {
-          m_mountDecision.heartbeatMountCandidate(candidateId.value(), m_host, m_drive, m_pid);
+          m_mountDecision.heartbeatMountCandidate(candidateId.value(), m_host, m_drive);
         }
       }
     });
@@ -109,7 +107,6 @@ private:
   cta::mountdecision::MountDecision& m_mountDecision;
   std::string m_host;
   std::string m_drive;
-  std::optional<uint64_t> m_pid;
   cta::log::LogContext& m_lc;
   std::optional<uint64_t> m_candidateId;
   std::mutex m_mutex;
@@ -198,7 +195,6 @@ cta::tape::daemon::Session::EndOfSessionAction cta::tape::daemon::DataTransferSe
     mountCandidateReservationGuard = std::make_unique<MountCandidateReservationGuard>(*mountDecision,
                                                                                       cta::utils::getShortHostname(),
                                                                                       m_driveConfig.unitName,
-                                                                                      static_cast<uint64_t>(getpid()),
                                                                                       lc);
   }
 #endif
