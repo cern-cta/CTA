@@ -17,6 +17,7 @@ project_root=$(git rev-parse --show-toplevel)
 readonly project_root
 # shellcheck disable=SC2207
 readonly available_tests=( $(for f in system_tests/tests/*_test.py; do basename "$f" _test.py; done) )
+readonly venv_dir="${project_root}/ci/system_tests/.venv"
 
 # Global
 platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
@@ -53,7 +54,6 @@ local_telemetry=false
 publish_telemetry=false
 eos_image_repository=""
 eos_image_tag=""
-cta_image_tag=""
 catalogue_config="presets/dev-catalogue-postgres-values.yaml"
 scheduler_config=""
 cta_config=""
@@ -618,6 +618,8 @@ deploy() {
 test() {
   print_header "RUNNING TESTS"
 
+  source $venv_dir/bin/activate || (echo "Failed to activate Python virtual environment. Run \"$(basename "$0") install\" to create it." && exit 1)
+
   if [[ -z "${selected_test}" ]]; then
     PS3="Select test: "
     select selected_test in "${available_tests[@]}"; do
@@ -632,6 +634,8 @@ test() {
     "tests/${selected_test}_test.py" \
     --namespace "${deploy_namespace}" \
     "${pytest_args[@]}"
+
+  deactivate
 }
 
 up() {
@@ -648,20 +652,31 @@ all() {
 }
 
 install() {
+  local -r program_name="cta-dev"
   local -r bin_dir="$HOME/.local/bin"
-  local -r link_path="$bin_dir/cta-dev"
+  local -r link_path="$bin_dir/$program_name"
+  local -r script_path="$(readlink -f "$0")"
+  local -r requirements_path="${project_root}/ci/system_tests/requirements.txt"
 
-  echo "Running install"
-  # Check if the shortcut already exists and points to this script
-  if [ ! -L "$LINK_PATH" ] || [ "$(readlink "$LINK_PATH")" != "$(readlink -f "$0")" ]; then
-      # Ensure the destination directory exists
-      mkdir -p "$bin_dir"
-      # Create the symlink
-      ln -sf "$(readlink -f "$0")" "$link_path"
-      echo "Done! You can now run 'cta-dev' from any directory."
+  echo "This will:"
+  echo "  - Install the $program_name command symlink to $link_path"
+  echo "  - Create a Python virtual environment in $venv_dir"
+  echo "  - Install dependencies from $requirements_path"
+  read -r -p "Continue? [y/N] " confirm
+  [[ "$confirm" =~ ^[Yy]$ ]] || return 1
+
+  mkdir -p "$bin_dir"
+  ln -sf "$script_path" "$link_path"
+
+  if command -v uv >/dev/null 2>&1; then
+    uv venv "$venv_dir"
+    uv pip install --python "$venv_dir/bin/python" -r $requirements_path
   else
-      echo "Symlink already exists"
+    python3 -m venv "$venv_dir"
+    "$venv_dir/bin/pip" install -r $requirements_path
   fi
+
+  echo "Done! You can now run '$program_name' from any directory."
 }
 
 ###############################################################################

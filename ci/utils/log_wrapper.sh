@@ -109,7 +109,7 @@ fi
 
 print_header() {
   local term_width=${COLUMNS:-$(tput cols)}  # Get terminal width (default to tput)
-  local msg="$1"
+  local msg="$(basename "$0"): $1"
   local border_char="="
   local separator=$(printf "%-${term_width}s" | tr ' ' "${border_char}")
   # Calculate padding for centering
