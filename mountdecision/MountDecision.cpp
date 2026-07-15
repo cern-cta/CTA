@@ -29,8 +29,6 @@
 #include <optional>
 #include <set>
 #include <sstream>
-#include <sys/types.h>
-#include <unistd.h>
 #include <utility>
 #include <vector>
 
@@ -678,13 +676,12 @@ bool MountDecision::refreshMountCandidates(const std::string& owner, Scheduler& 
   }
 
   const auto host = utils::getShortHostname();
-  const auto pid = static_cast<uint64_t>(getpid());
 
   try {
     // One maintd keeps renewing this lease while it is alive. Another maintd
     // takes over only after the lease expires, so the routine interval remains
     // controlled by the selected maintd's configured cycle sleep.
-    if (!m_db->tryAcquireRefreshLock(c_refreshWorkKey, host, pid, c_refreshLockLeaseSeconds)) {
+    if (!m_db->tryAcquireRefreshLock(c_refreshWorkKey, host, c_refreshLockLeaseSeconds)) {
       lc.log(log::DEBUG, "In MountDecision::refreshMountCandidates(): Mount decision refresh lock is held elsewhere.");
       return false;
     }
@@ -835,7 +832,6 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
   }
 
   const auto host = utils::getShortHostname();
-  const auto pid = static_cast<uint64_t>(getpid());
 
   // Check in advance that there is an available mount, before fetching the mount info data.
   if (!m_db->hasAvailableMountCandidate(logicalLibraryName)) {
@@ -845,7 +841,7 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
 
   auto mountInfo = m_schedulerDb.getMountInfo(std::optional<std::string_view>(logicalLibraryName), lc, timeout_us);
 
-  auto reservedCandidate = m_db->tryReserveNextMountCandidate(logicalLibraryName, host, driveName, pid);
+  auto reservedCandidate = m_db->tryReserveNextMountCandidate(logicalLibraryName, host, driveName);
   if (!reservedCandidate.has_value()) {
     lc.log(log::DEBUG, "In MountDecision::getNextMount(): No available mount candidate found.");
     return std::nullopt;
@@ -885,7 +881,7 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
     lc.log(log::INFO, "In MountDecision::getNextMount(): Reserved mount candidate.");
     return ret;
   } catch (...) {
-    m_db->releaseMountCandidate(reservedCandidate->candidateId, host, driveName, pid);
+    m_db->releaseMountCandidate(reservedCandidate->candidateId, host, driveName);
     throw;
   }
 }
@@ -893,13 +889,12 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
 void MountDecision::releaseMountCandidate(const uint64_t candidateId,
                                           const std::string& host,
                                           const std::string& drive,
-                                          std::optional<uint64_t> pid,
                                           log::LogContext& lc) noexcept {
   if (!m_db) {
     return;
   }
   try {
-    m_db->releaseMountCandidate(candidateId, host, drive, pid);
+    m_db->releaseMountCandidate(candidateId, host, drive);
   } catch (cta::exception::Exception& ex) {
     log::ScopedParamContainer params(lc);
     params.add("mountDecisionCandidateId", candidateId).add(semconv::log::exceptionMessage, ex.getMessageValue());
@@ -913,13 +908,12 @@ void MountDecision::releaseMountCandidate(const uint64_t candidateId,
 
 void MountDecision::heartbeatMountCandidate(const uint64_t candidateId,
                                             const std::string& host,
-                                            const std::string& drive,
-                                            std::optional<uint64_t> pid) noexcept {
+                                            const std::string& drive) noexcept {
   if (!m_db) {
     return;
   }
   try {
-    m_db->heartbeatMountCandidate(candidateId, host, drive, pid);
+    m_db->heartbeatMountCandidate(candidateId, host, drive);
   } catch (...) {}
 }
 

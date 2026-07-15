@@ -240,13 +240,12 @@ void MountDecisionDB::incrementCounter(const std::string& key) {
 
 bool MountDecisionDB::tryAcquireRefreshLock(const std::string& workKey,
                                             const std::string& host,
-                                            std::optional<uint64_t> pid,
                                             uint64_t leaseSeconds) {
   auto conn = m_connectionProvider.getConn();
   // Maintd refresh is a single-writer operation, for now.
   // A maintd process can acquire the lock in order to execute the refresh operation.
   // This works when the lock does not exist yet, when the previous lease has expired,
-  // or when the same process already owns the lock and is renewing it.
+  // or when the same host already owns the lock and is renewing it.
   // TODO: Allow maintd to analyse each mount and give it a score, row-by-row.
   //       This will allow rows to be processed in parallel and remove the need for this lock.
   //       At the moment, the lock is needed because we are assigning the score based on the position of the mount in
@@ -255,56 +254,28 @@ bool MountDecisionDB::tryAcquireRefreshLock(const std::string& workKey,
     INSERT INTO SCHEDULER_MOUNT_WORK_LOCK(
       WORK_KEY,
       LOCKED_BY_HOST,
-      LOCKED_BY_PID,
       LOCK_EXPIRES_TIME
     ) VALUES (
       :WORK_KEY,
       :LOCKED_BY_HOST,
-      :LOCKED_BY_PID,
       EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER + :LEASE_SECONDS
     )
     ON CONFLICT(WORK_KEY) DO UPDATE SET
       LOCKED_BY_HOST = EXCLUDED.LOCKED_BY_HOST,
-      LOCKED_BY_PID = EXCLUDED.LOCKED_BY_PID,
       LOCKED_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
       LOCK_HEARTBEAT_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
       LOCK_EXPIRES_TIME = EXCLUDED.LOCK_EXPIRES_TIME
     WHERE
       SCHEDULER_MOUNT_WORK_LOCK.LOCK_EXPIRES_TIME < EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
-      OR (
-        SCHEDULER_MOUNT_WORK_LOCK.LOCKED_BY_HOST = EXCLUDED.LOCKED_BY_HOST
-        AND (
-          (EXCLUDED.LOCKED_BY_PID IS NULL AND SCHEDULER_MOUNT_WORK_LOCK.LOCKED_BY_PID IS NULL)
-          OR SCHEDULER_MOUNT_WORK_LOCK.LOCKED_BY_PID = EXCLUDED.LOCKED_BY_PID
-        )
-      )
+      OR SCHEDULER_MOUNT_WORK_LOCK.LOCKED_BY_HOST = EXCLUDED.LOCKED_BY_HOST
     RETURNING WORK_KEY
   )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":WORK_KEY", workKey);
   stmt.bindString(":LOCKED_BY_HOST", host);
-  stmt.bindUint64(":LOCKED_BY_PID", pid);
   stmt.bindUint64(":LEASE_SECONDS", leaseSeconds);
   auto rset = stmt.executeQuery();
   return rset.next();
-}
-
-void MountDecisionDB::releaseRefreshLock(const std::string& workKey,
-                                         const std::string& host,
-                                         std::optional<uint64_t> pid) {
-  auto conn = m_connectionProvider.getConn();
-  const char* const sql = R"SQL(
-    DELETE FROM SCHEDULER_MOUNT_WORK_LOCK
-    WHERE
-      WORK_KEY = :WORK_KEY
-      AND LOCKED_BY_HOST = :LOCKED_BY_HOST
-      AND ((:LOCKED_BY_PID::bigint IS NULL AND LOCKED_BY_PID IS NULL) OR LOCKED_BY_PID = :LOCKED_BY_PID::bigint)
-  )SQL";
-  auto stmt = conn.createStmt(sql);
-  stmt.bindString(":WORK_KEY", workKey);
-  stmt.bindString(":LOCKED_BY_HOST", host);
-  stmt.bindUint64(":LOCKED_BY_PID", pid);
-  stmt.executeNonQuery();
 }
 
 void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& candidates,
@@ -353,6 +324,10 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
       WHERE
         STATE = 'Reserved'
+        AND MOUNT_TYPE = :RESERVED_MOUNT_TYPE
+        AND LOGICAL_LIBRARY = :RESERVED_LOGICAL_LIBRARY
+        AND TAPE_POOL = :RESERVED_TAPE_POOL
+        AND VO = :RESERVED_VO
         AND VID = :VID
         AND COALESCE(RESERVATION_HEARTBEAT_TIME, RESERVED_TIME, 0)
             >= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER - :RESERVATION_TIMEOUT_SECONDS
@@ -420,6 +395,10 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         // remain untouched.
         auto updateStmt = conn.createStmt(updateReservedSql);
         bindCommonMountCandidateFields(updateStmt, candidate);
+        updateStmt.bindString(":RESERVED_MOUNT_TYPE", cta::common::dataStructures::toString(candidate.mountType));
+        updateStmt.bindString(":RESERVED_LOGICAL_LIBRARY", candidate.logicalLibrary);
+        updateStmt.bindString(":RESERVED_TAPE_POOL", candidate.tapePool);
+        updateStmt.bindString(":RESERVED_VO", candidate.vo);
         updateStmt.bindUint64(":RESERVATION_TIMEOUT_SECONDS", reservationTimeoutSeconds);
         updateStmt.executeNonQuery();
         if (updateStmt.getNbAffectedRows() > 0) {
@@ -484,8 +463,7 @@ bool MountDecisionDB::hasAvailableMountCandidate(const std::string& logicalLibra
 
 std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandidate(const std::string& logicalLibrary,
                                                                                     const std::string& host,
-                                                                                    const std::string& drive,
-                                                                                    std::optional<uint64_t> pid) {
+                                                                                    const std::string& drive) {
   auto conn = m_connectionProvider.getConn();
   // Tape servers race on this single UPDATE. FOR UPDATE SKIP LOCKED lets
   // concurrent callers ignore rows another transaction is already reserving,
@@ -496,7 +474,6 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
       STATE_REASON = NULL,
       RESERVED_BY_HOST = :RESERVED_BY_HOST,
       RESERVED_BY_DRIVE = :RESERVED_BY_DRIVE,
-      RESERVED_BY_PID = :RESERVED_BY_PID,
       RESERVED_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
       RESERVATION_HEARTBEAT_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER,
       LAST_UPDATE_TIME = EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER
@@ -539,7 +516,6 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
   auto stmt = conn.createStmt(sql);
   stmt.bindString(":RESERVED_BY_HOST", host);
   stmt.bindString(":RESERVED_BY_DRIVE", drive);
-  stmt.bindUint64(":RESERVED_BY_PID", pid);
   stmt.bindString(":LOGICAL_LIBRARY", logicalLibrary);
   auto rset = stmt.executeQuery();
   if (!rset.next()) {
@@ -554,8 +530,7 @@ std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandid
 
 void MountDecisionDB::releaseMountCandidate(const uint64_t candidateId,
                                             const std::string& host,
-                                            const std::string& drive,
-                                            std::optional<uint64_t> pid) {
+                                            const std::string& drive) {
   auto conn = m_connectionProvider.getConn();
   const char* const sql = R"SQL(
     DELETE FROM SCHEDULER_MOUNT_CANDIDATES
@@ -564,20 +539,17 @@ void MountDecisionDB::releaseMountCandidate(const uint64_t candidateId,
       AND STATE = 'Reserved'
       AND RESERVED_BY_HOST = :RESERVED_BY_HOST
       AND RESERVED_BY_DRIVE = :RESERVED_BY_DRIVE
-      AND ((:RESERVED_BY_PID::bigint IS NULL AND RESERVED_BY_PID IS NULL) OR RESERVED_BY_PID = :RESERVED_BY_PID::bigint)
   )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":CANDIDATE_ID", candidateId);
   stmt.bindString(":RESERVED_BY_HOST", host);
   stmt.bindString(":RESERVED_BY_DRIVE", drive);
-  stmt.bindUint64(":RESERVED_BY_PID", pid);
   stmt.executeNonQuery();
 }
 
 void MountDecisionDB::heartbeatMountCandidate(const uint64_t candidateId,
                                               const std::string& host,
-                                              const std::string& drive,
-                                              std::optional<uint64_t> pid) {
+                                              const std::string& drive) {
   auto conn = m_connectionProvider.getConn();
   const char* const sql = R"SQL(
     UPDATE SCHEDULER_MOUNT_CANDIDATES SET
@@ -588,13 +560,11 @@ void MountDecisionDB::heartbeatMountCandidate(const uint64_t candidateId,
       AND STATE = 'Reserved'
       AND RESERVED_BY_HOST = :RESERVED_BY_HOST
       AND RESERVED_BY_DRIVE = :RESERVED_BY_DRIVE
-      AND ((:RESERVED_BY_PID::bigint IS NULL AND RESERVED_BY_PID IS NULL) OR RESERVED_BY_PID = :RESERVED_BY_PID::bigint)
   )SQL";
   auto stmt = conn.createStmt(sql);
   stmt.bindUint64(":CANDIDATE_ID", candidateId);
   stmt.bindString(":RESERVED_BY_HOST", host);
   stmt.bindString(":RESERVED_BY_DRIVE", drive);
-  stmt.bindUint64(":RESERVED_BY_PID", pid);
   stmt.executeNonQuery();
 }
 

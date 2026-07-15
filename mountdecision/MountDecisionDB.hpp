@@ -60,31 +60,18 @@ public:
 
   void incrementCounter(const std::string& key);
 
-  bool tryAcquireRefreshLock(const std::string& workKey,
-                             const std::string& host,
-                             std::optional<uint64_t> pid,
-                             uint64_t leaseSeconds);
-
-  void releaseRefreshLock(const std::string& workKey, const std::string& host, std::optional<uint64_t> pid);
+  bool tryAcquireRefreshLock(const std::string& workKey, const std::string& host, uint64_t leaseSeconds);
 
   void replaceMountCandidates(const std::vector<MountCandidate>& candidates, uint64_t reservationTimeoutSeconds);
 
   bool hasAvailableMountCandidate(const std::string& logicalLibrary);
 
-  std::optional<ReservedMountCandidate> tryReserveNextMountCandidate(const std::string& logicalLibrary,
-                                                                     const std::string& host,
-                                                                     const std::string& drive,
-                                                                     std::optional<uint64_t> pid);
+  std::optional<ReservedMountCandidate>
+  tryReserveNextMountCandidate(const std::string& logicalLibrary, const std::string& host, const std::string& drive);
 
-  void releaseMountCandidate(uint64_t candidateId,
-                             const std::string& host,
-                             const std::string& drive,
-                             std::optional<uint64_t> pid);
+  void releaseMountCandidate(uint64_t candidateId, const std::string& host, const std::string& drive);
 
-  void heartbeatMountCandidate(uint64_t candidateId,
-                               const std::string& host,
-                               const std::string& drive,
-                               std::optional<uint64_t> pid);
+  void heartbeatMountCandidate(uint64_t candidateId, const std::string& host, const std::string& drive);
 
 private:
   ConnProvider& m_connectionProvider;
