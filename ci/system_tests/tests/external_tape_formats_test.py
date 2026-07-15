@@ -19,6 +19,9 @@ ENSTORE_LARGE_TAPE_SLOT = 3
 # Helpers
 #####################################################################################################################
 
+@pytest.fixture(scope="module")
+def external_tape_formats_path() -> Path:
+    return Path("/tmp") / "external-tape-formats"
 
 def wait_for_device_ready(host, drive_device: str, timeout_seconds: int = 60):
     deadline = time.monotonic() + timeout_seconds
@@ -165,10 +168,6 @@ def reload_tape(cta_rmcd, slot: int, drive: int):
     unload_tape(cta_rmcd, slot, drive)
     load_tape(cta_rmcd, slot, drive)
     time.sleep(2)
-
-
-def external_tape_formats_path() -> Path:
-    return Path("/tmp") / "external-tape-formats"
 
 
 #####################################################################################################################
