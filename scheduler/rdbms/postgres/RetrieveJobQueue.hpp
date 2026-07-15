@@ -537,6 +537,7 @@ public:
     bool hasDiskSystemName = false;
     bool hasActivity = false;
     bool hasSrrActivity = false;
+    bool isNoRecallRepack = false;
     for (const auto& row : rows) {
       if (row->diskSystemName.has_value()) {
         hasDiskSystemName = true;
@@ -547,10 +548,19 @@ public:
       if (!row->srrActivity.empty()) {
         hasSrrActivity = true;
       }
+      if (row->status == RetrieveJobStatus::RJS_ToReportToRepackForSuccess){
+        isNoRecallRepack = true;
+      }
     }
-
+    // For NO RECALL repack type, we are inserting the jobs directly to the
+    // ACTIVE table with a special status so that they get picked up by
+    // reporter and transformed to archive jobs
+    std::string destinationTableName = "RETRIEVE_PENDING_QUEUE";
+    if (isNoRecallRepack){
+      destinationTableName = "RETRIEVE_ACTIVE_QUEUE";
+    }
     std::string prefix = isRepack ? "REPACK_" : "";
-    std::string sql = "INSERT INTO " + prefix + "RETRIEVE_PENDING_QUEUE ( ";
+    std::string sql = "INSERT INTO " + prefix + destinationTableName + " ( ";
     if (isRepack) {
       sql += " REPACK_REQUEST_ID,";
       sql += " REPACK_REARCHIVE_COPY_NBS,";
