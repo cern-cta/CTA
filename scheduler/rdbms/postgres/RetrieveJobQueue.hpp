@@ -548,7 +548,7 @@ public:
       if (!row->srrActivity.empty()) {
         hasSrrActivity = true;
       }
-      if (row->status == RetrieveJobStatus::RJS_ToReportToRepackForSuccess){
+      if (row->status == RetrieveJobStatus::RJS_ToReportToRepackForSuccess) {
         isNoRecallRepack = true;
       }
     }
@@ -556,7 +556,7 @@ public:
     // ACTIVE table with a special status so that they get picked up by
     // reporter and transformed to archive jobs
     std::string destinationTableName = "RETRIEVE_PENDING_QUEUE";
-    if (isNoRecallRepack){
+    if (isNoRecallRepack) {
       destinationTableName = "RETRIEVE_ACTIVE_QUEUE";
     }
     std::string prefix = isRepack ? "REPACK_" : "";
