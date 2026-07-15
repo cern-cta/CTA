@@ -9,7 +9,9 @@
 #include "rdbms/Conn.hpp"
 #include "rdbms/Rset.hpp"
 
+#include <map>
 #include <set>
+#include <tuple>
 
 namespace cta::mountdecision {
 
@@ -47,6 +49,29 @@ void bindCommonMountCandidateFields(Stmt& stmt, const MountCandidate& candidate)
   stmt.bindString(":CREATED_BY", nonEmptyOptional(candidate.createdBy));
 }
 
+using ReservationSlotKey = std::tuple<std::string, std::string, std::string, std::string, std::optional<std::string>>;
+using ReservationSlotCounts = std::map<ReservationSlotKey, uint64_t>;
+
+ReservationSlotKey getReservationSlotKey(const MountCandidate& candidate) {
+  std::optional<std::string> vid;
+  if (cta::common::dataStructures::getMountBasicType(candidate.mountType)
+      == cta::common::dataStructures::MountType::Retrieve) {
+    vid = candidate.vid;
+  }
+  return {cta::common::dataStructures::toString(candidate.mountType),
+          candidate.logicalLibrary,
+          candidate.tapePool,
+          candidate.vo,
+          vid};
+}
+
+MountCandidate makeBlockedCandidate(const MountCandidate& candidate, const std::string& reason) {
+  auto blockedCandidate = candidate;
+  blockedCandidate.state = "Blocked";
+  blockedCandidate.stateReason = reason;
+  return blockedCandidate;
+}
+
 MountCandidate mountCandidateFromRset(const rdbms::Rset& rset) {
   MountCandidate candidate;
   candidate.mountType = common::dataStructures::strToMountType(rset.columnString("MOUNT_TYPE"));
@@ -75,30 +100,60 @@ MountCandidate mountCandidateFromRset(const rdbms::Rset& rset) {
   return candidate;
 }
 
-bool hasReservedMountCandidateForGroup(rdbms::Conn& conn, const MountCandidate& candidate) {
+ReservationSlotCounts getLiveReservationSlotCounts(rdbms::Conn& conn, const uint64_t reservationTimeoutSeconds) {
   const char* const sql = R"SQL(
     SELECT
-      CANDIDATE_ID AS CANDIDATE_ID
+      MOUNT_TYPE AS MOUNT_TYPE,
+      LOGICAL_LIBRARY AS LOGICAL_LIBRARY,
+      TAPE_POOL AS TAPE_POOL,
+      VO AS VO,
+      VID AS VID,
+      COUNT(*) AS RESERVED_COUNT
     FROM
       SCHEDULER_MOUNT_CANDIDATES
     WHERE
       STATE = 'Reserved'
-      AND MOUNT_TYPE = :MOUNT_TYPE
-      AND LOGICAL_LIBRARY = :LOGICAL_LIBRARY
-      AND TAPE_POOL = :TAPE_POOL
-      AND VO = :VO
-    LIMIT 1
+      AND COALESCE(RESERVATION_HEARTBEAT_TIME, RESERVED_TIME, 0)
+          >= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::INTEGER - :RESERVATION_TIMEOUT_SECONDS
+    GROUP BY
+      MOUNT_TYPE,
+      LOGICAL_LIBRARY,
+      TAPE_POOL,
+      VO,
+      VID
   )SQL";
   auto stmt = conn.createStmt(sql);
-  stmt.bindString(":MOUNT_TYPE", cta::common::dataStructures::toString(candidate.mountType));
-  stmt.bindString(":LOGICAL_LIBRARY", candidate.logicalLibrary);
-  stmt.bindString(":TAPE_POOL", candidate.tapePool);
-  stmt.bindString(":VO", candidate.vo);
+  stmt.bindUint64(":RESERVATION_TIMEOUT_SECONDS", reservationTimeoutSeconds);
   auto rset = stmt.executeQuery();
-  return rset.next();
+
+  ReservationSlotCounts ret;
+  while (rset.next()) {
+    MountCandidate reservedCandidate;
+    reservedCandidate.mountType = common::dataStructures::strToMountType(rset.columnString("MOUNT_TYPE"));
+    reservedCandidate.logicalLibrary = rset.columnString("LOGICAL_LIBRARY");
+    reservedCandidate.tapePool = rset.columnString("TAPE_POOL");
+    reservedCandidate.vo = rset.columnString("VO");
+    reservedCandidate.vid = rset.columnOptionalString("VID");
+    ret[getReservationSlotKey(reservedCandidate)] += rset.columnUint64("RESERVED_COUNT");
+  }
+  return ret;
 }
 
-bool shouldSkipBlockedMountCandidate(rdbms::Conn& conn, const MountCandidate& candidate) {
+bool hasLiveReservationSlot(const ReservationSlotCounts& liveReservationSlotCounts, const MountCandidate& candidate) {
+  return liveReservationSlotCounts.contains(getReservationSlotKey(candidate));
+}
+
+bool tryMatchReservedSlot(ReservationSlotCounts& unmatchedReservationSlotCounts, const MountCandidate& candidate) {
+  auto it = unmatchedReservationSlotCounts.find(getReservationSlotKey(candidate));
+  if (it == unmatchedReservationSlotCounts.end() || it->second == 0) {
+    return false;
+  }
+  it->second--;
+  return true;
+}
+
+bool shouldSkipBlockedMountCandidate(const ReservationSlotCounts& liveReservationSlotCounts,
+                                     const MountCandidate& candidate) {
   // Blocked archive rows without a VID describe capacity for a tape pool, not a
   // concrete tape. If a live reservation already owns that same group, keeping
   // another blocked row would add noise without giving taped a reservable row.
@@ -109,7 +164,7 @@ bool shouldSkipBlockedMountCandidate(rdbms::Conn& conn, const MountCandidate& ca
       != cta::common::dataStructures::MountType::ArchiveAllTypes) {
     return false;
   }
-  return hasReservedMountCandidateForGroup(conn, candidate);
+  return hasLiveReservationSlot(liveReservationSlotCounts, candidate);
 }
 
 }  // namespace
@@ -356,6 +411,8 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
     )SQL";
 
     std::set<std::string, std::less<>> updatedReservedVids;
+    const auto liveReservationSlotCounts = getLiveReservationSlotCounts(conn, reservationTimeoutSeconds);
+    auto unmatchedReservationSlotCounts = liveReservationSlotCounts;
     for (const auto& candidate : candidates) {
       if (candidate.vid.has_value() && !updatedReservedVids.contains(candidate.vid.value())) {
         // Preserve taped ownership for a live Reserved row. The scheduling
@@ -367,24 +424,29 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
         updateStmt.executeNonQuery();
         if (updateStmt.getNbAffectedRows() > 0) {
           updatedReservedVids.insert(candidate.vid.value());
+          tryMatchReservedSlot(unmatchedReservationSlotCounts, candidate);
           continue;
         }
       }
 
-      std::optional<MountCandidate> blockedCandidate;
       const MountCandidate* candidateToInsert = &candidate;
+      std::optional<MountCandidate> blockedCandidate;
       if (candidate.vid.has_value() && updatedReservedVids.contains(candidate.vid.value())
           && candidate.state != "Blocked") {
         // A refreshed reserved row already owns this VID. Any lower-ranked row
         // for the same tape is kept as Blocked so the table still explains why
         // it was not pickable.
-        blockedCandidate = candidate;
-        blockedCandidate->state = "Blocked";
-        blockedCandidate->stateReason = "Tape already reserved by higher-ranked candidate";
+        blockedCandidate = makeBlockedCandidate(candidate, "Tape already reserved by higher-ranked candidate");
+        candidateToInsert = &blockedCandidate.value();
+      } else if (candidate.state == "Available" && tryMatchReservedSlot(unmatchedReservationSlotCounts, candidate)) {
+        // Live reservations consume scheduling slots. If the refreshed ranking
+        // still contains more rows for this slot, only the surplus remains
+        // Available.
+        blockedCandidate = makeBlockedCandidate(candidate, "Reservation slot already reserved");
         candidateToInsert = &blockedCandidate.value();
       }
 
-      if (shouldSkipBlockedMountCandidate(conn, *candidateToInsert)) {
+      if (shouldSkipBlockedMountCandidate(liveReservationSlotCounts, *candidateToInsert)) {
         continue;
       }
 
@@ -400,6 +462,24 @@ void MountDecisionDB::replaceMountCandidates(const std::vector<MountCandidate>& 
     conn.rollback();
     throw;
   }
+}
+
+bool MountDecisionDB::hasAvailableMountCandidate(const std::string& logicalLibrary) {
+  auto conn = m_connectionProvider.getConn();
+  const char* const sql = R"SQL(
+    SELECT
+      CANDIDATE_ID AS CANDIDATE_ID
+    FROM
+      SCHEDULER_MOUNT_CANDIDATES
+    WHERE
+      STATE = 'Available'
+      AND LOGICAL_LIBRARY = :LOGICAL_LIBRARY
+    LIMIT 1
+  )SQL";
+  auto stmt = conn.createStmt(sql);
+  stmt.bindString(":LOGICAL_LIBRARY", logicalLibrary);
+  auto rset = stmt.executeQuery();
+  return rset.next();
 }
 
 std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandidate(const std::string& logicalLibrary,
