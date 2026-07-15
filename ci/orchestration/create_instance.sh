@@ -21,7 +21,6 @@ usage() {
   echo "  -n, --namespace <namespace>:        Specify the Kubernetes namespace."
   echo "  -o, --scheduler-config <file>:      Path to the scheduler configuration values file. Defaults to the Postgres preset."
   echo "  -d, --catalogue-config <file>:      Path to the catalogue configuration values file. Defaults to the Postgres preset"
-  echo "      --mount-decision-config <file>: Path to the Mount Decision DB configuration values file. Defaults to the Postgres preset"
   echo "  -r, --cta-image-registry <repo>:    Registry to find the CTA images in. Defaults to \"gitlab-registry.cern.ch\"."
   echo "  -i, --cta-image-tag <tag>:          Docker image tag for the CTA chart."
   echo "  -c, --catalogue-version <version>:  Set the catalogue schema version. Defaults to the latest version."
