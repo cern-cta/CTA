@@ -836,6 +836,15 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
 
   const auto host = utils::getShortHostname();
   const auto pid = static_cast<uint64_t>(getpid());
+
+  // Check in advance that there is an available mount, before fetching the mount info data.
+  if (!m_db->hasAvailableMountCandidate(logicalLibraryName)) {
+    lc.log(log::DEBUG, "In MountDecision::getNextMount(): No available mount candidate found.");
+    return std::nullopt;
+  }
+
+  auto mountInfo = m_schedulerDb.getMountInfo(std::optional<std::string_view>(logicalLibraryName), lc, timeout_us);
+
   auto reservedCandidate = m_db->tryReserveNextMountCandidate(logicalLibraryName, host, driveName, pid);
   if (!reservedCandidate.has_value()) {
     lc.log(log::DEBUG, "In MountDecision::getNextMount(): No available mount candidate found.");
@@ -843,7 +852,6 @@ std::optional<ReservedTapeMount> MountDecision::getNextMount(const std::string& 
   }
 
   try {
-    auto mountInfo = m_schedulerDb.getMountInfo(std::optional<std::string_view>(logicalLibraryName), lc, timeout_us);
     auto potentialMount = toPotentialMount(reservedCandidate->candidate);
 
     ReservedTapeMount ret;

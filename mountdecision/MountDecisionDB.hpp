@@ -69,6 +69,8 @@ public:
 
   void replaceMountCandidates(const std::vector<MountCandidate>& candidates, uint64_t reservationTimeoutSeconds);
 
+  bool hasAvailableMountCandidate(const std::string& logicalLibrary);
+
   std::optional<ReservedMountCandidate> tryReserveNextMountCandidate(const std::string& logicalLibrary,
                                                                      const std::string& host,
                                                                      const std::string& drive,
