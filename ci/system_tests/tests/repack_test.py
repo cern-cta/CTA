@@ -431,6 +431,7 @@ def test_archive_1000_files(eos_client, repack_params, test_dir):
 def test_repack_move_only_subset_of_files(cta_cli, repack_buffer_dir, repack_mp_name, disk_instance_name):
     vid_to_repack = cta_cli.get_first_vid_containing_files()
     total_files_on_tape = cta_cli.get_number_of_files_on_tape(vid_to_repack)
+    assert total_files_on_tape > 2
     number_of_files_to_repack = int(total_files_on_tape / 2)  # Number that covers only some of the files on tape
 
     cta_cli.modify_tape_state(vid_to_repack, "REPACKING")
@@ -734,33 +735,33 @@ def test_repack_move_and_add_copies(
 
     print(f"Creating 2 destination tapepools: {tp_dest1_default} and {tp_dest2_default}")
     cta_cli.exec(
-        f"cta-cli -- cta-admin tapepool add --name {tp_dest1_default} --vo vo --partialtapesnumber 2 --comment 'Temp {tp_dest1_default} tapepool'"
+        f"cta-admin tapepool add --name {tp_dest1_default} --vo vo --partialtapesnumber 2 --comment 'Temp {tp_dest1_default} tapepool'"
     )
     cta_cli.exec(
-        f"cta-cli -- cta-admin tapepool add --name {tp_dest2_default} --vo vo --partialtapesnumber 2 --comment 'Temp {tp_dest2_default} tapepool'"
+        f"cta-admin tapepool add --name {tp_dest2_default} --vo vo --partialtapesnumber 2 --comment 'Temp {tp_dest2_default} tapepool'"
     )
     print(f"Creating 1 destination tapepool for repack: {tp_dest2_repack} (will override {tp_dest2_default})")
     cta_cli.exec(
-        f"cta-cli -- cta-admin tapepool add --name {tp_dest2_repack} --vo vo --partialtapesnumber 2 --comment 'Temp {tp_dest2_repack} repack tapepool'"
+        f"cta-admin tapepool add --name {tp_dest2_repack} --vo vo --partialtapesnumber 2 --comment 'Temp {tp_dest2_repack} repack tapepool'"
     )
 
-    print("Creating archive routes for adding two copies of the file")
+    print("Creating archive routes for adding additional file copies")
     cta_cli.exec(
         f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 2 --tapepool {tp_dest1_default} --comment 'ArchiveRoute2_default'"
     )
     cta_cli.exec(
-        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 3 --tapepool --archiveroutetype DEFAULT {tp_dest2_default} --comment 'ArchiveRoute3_default'"
+        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 3 --tapepool {tp_dest2_default} --archiveroutetype DEFAULT --comment 'ArchiveRoute3_default'"
     )
     cta_cli.exec(
-        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 3 --tapepool --archiveroutetype REPACK {tp_dest2_repack} --comment 'ArchiveRoute3_repack'"
+        f"cta-admin archiveroute add --storageclass {cta_storage_class} --copynb 3 --tapepool {tp_dest2_repack} --archiveroutetype REPACK --comment 'ArchiveRoute3_repack'"
     )
 
     print("Changing the tapepool of tapes")
-    all_tapes = json.loads(cta_cli.exec_with_output("cta-cli -- cta-admin --json tape ls --all"))
-    all_vids = [tape.vid for tape in all_tapes]
+    all_tapes = json.loads(cta_cli.exec_with_output("cta-admin --json tape ls --all"))
+    all_vids = [tape["vid"] for tape in all_tapes]
     assert len(all_vids) > 0
 
-    all_tape_pools = json.loads(cta_cli.exec_with_output("cta-cli -- cta-admin --json tapepool ls --all"))
+    all_tape_pools = json.loads(cta_cli.exec_with_output("cta-admin --json tapepool ls"))
     assert len(all_tape_pools) > 0
 
     nb_tapes_per_tape_pool = int(len(all_vids) / len(all_tape_pools))
@@ -770,8 +771,8 @@ def test_repack_move_and_add_copies(
     tape_pool_index = 1
     start = nb_tapes_per_tape_pool + (len(all_vids) % len(all_tape_pools))
     for vid in all_vids[start:]:
-        tape_pool = all_tape_pools[tape_pool_index].name
-        cta_cli.exec(f"cta-cli -- cta-admin tape ch --vid {vid} --tapepool {tape_pool}")
+        tape_pool = all_tape_pools[tape_pool_index]["name"]
+        cta_cli.exec(f"cta-admin tape ch --vid {vid} --tapepool {tape_pool}")
 
         count_changing += 1
         if count_changing % nb_tapes_per_tape_pool == 0:

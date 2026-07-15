@@ -117,7 +117,7 @@ class CtaCliHost(RemoteHost):
         except json.JSONDecodeError:
             return False
 
-    def retrieve_queue_empty(self, vid) -> int:
+    def retrieve_queue_empty(self, vid) -> bool:
         queues = json.loads(self.exec_with_output("cta-admin --json showqueues"))
         return not any(q["vid"] == vid for q in queues)
 
@@ -130,7 +130,6 @@ class CtaCliHost(RemoteHost):
 
     def wait_for_repack_request_launch(self, vid, wait_timeout_secs=30) -> None:
         print(f"Waiting for the launch of the repack request on VID {vid}...")
-        wait_timeout_secs = 20
         with Timeout(wait_timeout_secs) as t:
             while not self.has_repack_request(vid) and not t.expired:
                 time.sleep(1)
@@ -150,6 +149,8 @@ class CtaCliHost(RemoteHost):
             while lastExpandedFSeq != lastFSeq and not t.expired:
                 try:
                     repack_json = json.loads(self.exec_with_output(f"cta-admin --json re ls --vid {vid}"))
+                    if not repack_json:
+                        continue
                     lastExpandedFSeq = repack_json[0]["lastExpandedFseq"]
                 except json.JSONDecodeError:
                     ...  # In this case re ls just didn't found anything
