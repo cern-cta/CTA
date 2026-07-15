@@ -312,42 +312,42 @@ def test_write_enstore_large_tape(cta_rmcd, cta_taped, external_tape_formats_pat
     osm_dir = external_tape_formats_path / "osm"
     layout_dir = f"{osm_dir}/enstorelarge/FL1587_f1"
     try:
-      for segment in ["vol1_FL1587.bin", "fseq1_header.bin", "fseq1_payload.bin", "fseq1_trailer.bin"]:
-          cta_rmcd.exec(f"test -f {layout_dir}/{segment}")
+        for segment in ["vol1_FL1587.bin", "fseq1_header.bin", "fseq1_payload.bin", "fseq1_trailer.bin"]:
+            cta_rmcd.exec(f"test -f {layout_dir}/{segment}")
 
-      cta_rmcd.exec(f"mt -f {drive_device} status")
-      wait_for_device_ready(cta_rmcd, drive_device)
-      cta_rmcd.exec(f"mt -f {drive_device} rewind")
-      wait_for_device_ready(cta_rmcd, drive_device)
+        cta_rmcd.exec(f"mt -f {drive_device} status")
+        wait_for_device_ready(cta_rmcd, drive_device)
+        cta_rmcd.exec(f"mt -f {drive_device} rewind")
+        wait_for_device_ready(cta_rmcd, drive_device)
 
-      write_tape_file(
-          cta_rmcd,
-          drive_device,
-          f"{layout_dir}/vol1_FL1587.bin",
-          ENSTORE_LABEL_BLOCK_SIZE,
-          "EnstoreLarge VOL1 label",
-      )
-      write_tape_file(
-          cta_rmcd,
-          drive_device,
-          f"{layout_dir}/fseq1_header.bin",
-          TAPE_PAYLOAD_BLOCK_SIZE,
-          "EnstoreLarge file header",
-      )
-      write_tape_file(
-          cta_rmcd,
-          drive_device,
-          f"{layout_dir}/fseq1_payload.bin",
-          TAPE_PAYLOAD_BLOCK_SIZE,
-          "EnstoreLarge payload",
-      )
-      write_tape_file(
-          cta_rmcd,
-          drive_device,
-          f"{layout_dir}/fseq1_trailer.bin",
-          TAPE_PAYLOAD_BLOCK_SIZE,
-          "EnstoreLarge trailer",
-      )
+        write_tape_file(
+            cta_rmcd,
+            drive_device,
+            f"{layout_dir}/vol1_FL1587.bin",
+            ENSTORE_LABEL_BLOCK_SIZE,
+            "EnstoreLarge VOL1 label",
+        )
+        write_tape_file(
+            cta_rmcd,
+            drive_device,
+            f"{layout_dir}/fseq1_header.bin",
+            TAPE_PAYLOAD_BLOCK_SIZE,
+            "EnstoreLarge file header",
+        )
+        write_tape_file(
+            cta_rmcd,
+            drive_device,
+            f"{layout_dir}/fseq1_payload.bin",
+            TAPE_PAYLOAD_BLOCK_SIZE,
+            "EnstoreLarge payload",
+        )
+        write_tape_file(
+            cta_rmcd,
+            drive_device,
+            f"{layout_dir}/fseq1_trailer.bin",
+            TAPE_PAYLOAD_BLOCK_SIZE,
+            "EnstoreLarge trailer",
+        )
 
     finally:
         cta_rmcd.exec(f"rm -rf {layout_dir}")
