@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 CERN
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from pathlib import Path
 import uuid
 import time
 
@@ -166,11 +167,8 @@ def reload_tape(cta_rmcd, slot: int, drive: int):
     time.sleep(2)
 
 
-def clone_enstore_samples(cta_rmcd) -> str:
-    sample_dir = "/tmp/ens_mhvtl_" + str(uuid.uuid4())[:8]
-    cta_rmcd.exec("git lfs install --skip-repo")
-    cta_rmcd.exec(f"git clone https://github.com/LTrestka/ens-mhvtl.git {sample_dir}")
-    return sample_dir
+def external_tape_formats_path() -> Path:
+    return Path("/tmp") / "external-tape-formats"
 
 
 #####################################################################################################################
@@ -183,19 +181,21 @@ def test_install_required(cta_rmcd):
 
 
 def test_load_tape(cta_rmcd):
-    # Load tape in a tapedrive
+    # Load tape in a drive
     cta_rmcd.exec("mtx -f /dev/smc status")
     cta_rmcd.exec("mtx -f /dev/smc load 1 0")
     cta_rmcd.exec("mtx -f /dev/smc status")
 
 
-def test_read_osm_tape(cta_rmcd, cta_taped):
-    drive_device = cta_taped.drive_device
-    osm_dir = "/tmp/osm_mhvtl_" + str(uuid.uuid4())[:8]
-
-    # Download OSM sample tape
+def test_clone_enstore_samples(cta_rmcd, external_tape_formats_path):
+    # Note that the cleanup of the system tests will restart all pods and therefore wipe this directory again between runs
     cta_rmcd.exec("git lfs install --skip-repo")
-    cta_rmcd.exec(f"git clone https://gitlab.desy.de/mwai.karimi/osm-mhvtl.git {osm_dir}")
+    cta_rmcd.exec(f"git clone https://gitlab.cern.ch/cta/ci/external-tape-formats {external_tape_formats_path}")
+
+
+def test_read_osm_tape(cta_rmcd, cta_taped, external_tape_formats_path):
+    drive_device = cta_taped.drive_device
+    osm_dir = external_tape_formats_path / "osm"
 
     # Get the device status where the tape is loaded and rewind it.
     cta_rmcd.exec(f"mt -f {drive_device} status")
@@ -240,8 +240,8 @@ def test_load_enstore_tape(cta_rmcd, cta_taped):
 
 def test_read_write_enstore_tape(cta_rmcd, cta_taped):
     drive_device = cta_taped.drive_device
-    sample_dir = clone_enstore_samples(cta_rmcd)
-    layout_dir = f"{sample_dir}/enstore/FL1212_f1"
+    osm_dir = external_tape_formats_path / "osm"
+    layout_dir = f"{osm_dir}/enstore/FL1212_f1"
     readback_dir = f"/tmp/enstore_readback_{str(uuid.uuid4())[:8]}"
 
     cta_rmcd.exec(f"mkdir -p {readback_dir}")
@@ -300,7 +300,7 @@ def test_read_write_enstore_tape(cta_rmcd, cta_taped):
         cta_rmcd.exec(f"mt -f {drive_device} rewind")
         wait_for_device_ready(cta_rmcd, drive_device)
     finally:
-        cta_rmcd.exec(f"rm -rf {sample_dir} {readback_dir}")
+        cta_rmcd.exec(f"rm -rf {readback_dir}")
 
 
 def test_unload_enstore_tape(cta_rmcd, cta_taped):
@@ -313,52 +313,49 @@ def test_load_enstore_large_tape(cta_rmcd, cta_taped):
 
 def test_write_enstore_large_tape(cta_rmcd, cta_taped):
     drive_device = cta_taped.drive_device
-    sample_dir = clone_enstore_samples(cta_rmcd)
-    layout_dir = f"{sample_dir}/enstorelarge/FL1587_f1"
+    osm_dir = external_tape_formats_path / "osm"
+    layout_dir = f"{osm_dir}/enstorelarge/FL1587_f1"
 
-    try:
-        for segment in ["vol1_FL1587.bin", "fseq1_header.bin", "fseq1_payload.bin", "fseq1_trailer.bin"]:
-            cta_rmcd.exec(f"test -f {layout_dir}/{segment}")
+    for segment in ["vol1_FL1587.bin", "fseq1_header.bin", "fseq1_payload.bin", "fseq1_trailer.bin"]:
+        cta_rmcd.exec(f"test -f {layout_dir}/{segment}")
 
-        cta_rmcd.exec(f"mt -f {drive_device} status")
-        wait_for_device_ready(cta_rmcd, drive_device)
-        cta_rmcd.exec(f"mt -f {drive_device} rewind")
-        wait_for_device_ready(cta_rmcd, drive_device)
+    cta_rmcd.exec(f"mt -f {drive_device} status")
+    wait_for_device_ready(cta_rmcd, drive_device)
+    cta_rmcd.exec(f"mt -f {drive_device} rewind")
+    wait_for_device_ready(cta_rmcd, drive_device)
 
-        write_tape_file(
-            cta_rmcd,
-            drive_device,
-            f"{layout_dir}/vol1_FL1587.bin",
-            ENSTORE_LABEL_BLOCK_SIZE,
-            "EnstoreLarge VOL1 label",
-        )
-        write_tape_file(
-            cta_rmcd,
-            drive_device,
-            f"{layout_dir}/fseq1_header.bin",
-            TAPE_PAYLOAD_BLOCK_SIZE,
-            "EnstoreLarge file header",
-        )
-        write_tape_file(
-            cta_rmcd,
-            drive_device,
-            f"{layout_dir}/fseq1_payload.bin",
-            TAPE_PAYLOAD_BLOCK_SIZE,
-            "EnstoreLarge payload",
-        )
-        write_tape_file(
-            cta_rmcd,
-            drive_device,
-            f"{layout_dir}/fseq1_trailer.bin",
-            TAPE_PAYLOAD_BLOCK_SIZE,
-            "EnstoreLarge trailer",
-        )
+    write_tape_file(
+        cta_rmcd,
+        drive_device,
+        f"{layout_dir}/vol1_FL1587.bin",
+        ENSTORE_LABEL_BLOCK_SIZE,
+        "EnstoreLarge VOL1 label",
+    )
+    write_tape_file(
+        cta_rmcd,
+        drive_device,
+        f"{layout_dir}/fseq1_header.bin",
+        TAPE_PAYLOAD_BLOCK_SIZE,
+        "EnstoreLarge file header",
+    )
+    write_tape_file(
+        cta_rmcd,
+        drive_device,
+        f"{layout_dir}/fseq1_payload.bin",
+        TAPE_PAYLOAD_BLOCK_SIZE,
+        "EnstoreLarge payload",
+    )
+    write_tape_file(
+        cta_rmcd,
+        drive_device,
+        f"{layout_dir}/fseq1_trailer.bin",
+        TAPE_PAYLOAD_BLOCK_SIZE,
+        "EnstoreLarge trailer",
+    )
 
-        cta_rmcd.exec(f"mt -f {drive_device} rewind")
-        time.sleep(2)
-        wait_for_device_ready(cta_rmcd, drive_device)
-    finally:
-        cta_rmcd.exec(f"rm -rf {sample_dir}")
+    cta_rmcd.exec(f"mt -f {drive_device} rewind")
+    time.sleep(2)
+    wait_for_device_ready(cta_rmcd, drive_device)
 
 
 def test_enstore_large_reader(cta_rmcd, cta_taped):
