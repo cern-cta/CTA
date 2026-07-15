@@ -15,6 +15,7 @@ script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
 readonly script_dir
 project_root=$(git rev-parse --show-toplevel)
 readonly project_root
+# shellcheck disable=SC2207
 readonly available_tests=( $(for f in system_tests/tests/*_test.py; do basename "$f" _test.py; done) )
 
 # Global
