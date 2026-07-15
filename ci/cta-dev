@@ -1,0 +1,621 @@
+#!/bin/bash
+
+# SPDX-FileCopyrightText: 2026 CERN
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+set -eo pipefail
+
+
+###############################################################################
+# Global configuration
+###############################################################################
+
+# Constants
+readonly script_dir="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
+readonly project_root=$(git rev-parse --show-toplevel)
+readonly cta_image_build_iteration_path=/tmp/.cta_image_build_iteration
+readonly available_tests=(
+  catalogue_schema_update
+  client_gfal
+  client
+  cta_admin
+  external_tape_formats
+  stress
+)
+
+# Configurable
+platform=$(jq -r .dev.defaultPlatform "${project_root}/project.json")
+scheduler_type="objectstore"
+oracle_support="TRUE"
+enable_internal_repos=true
+container_runtime="podman"
+cta_image_tag=dev-0
+deploy_namespace="dev"
+
+
+source "${script_dir}/utils/log_wrapper.sh"
+
+###############################################################################
+# Help
+###############################################################################
+
+usage() {
+  cat <<EOF
+
+Developer workflow utility for CTA.
+
+This script orchestrates the local development workflow for CTA.
+
+Commands can be executed independently or combined into a complete
+development pipeline.
+
+Usage:
+  $(basename "$0") <command> [global-options] [command-options]
+
+Commands:
+  build      Build the CTA RPMs inside a persistent build container.
+  images     Build container images from the generated RPMs.
+  deploy     Deploy a local CTA development instance.
+  test       Run a system test.
+  up         Equivalent to: build > images > deploy.
+  all        Equivalent to: build > images > deploy > test.
+  install    Creates a symlink to invoke the script using 'cta-dev'.
+  help       Show this help.
+
+Global options:
+  -h, --help                         Show this help.
+  -c, --container-runtime <runtime>  Container runtime [docker, podman].
+                                     Defaults to podman.
+      --platform <platform>          Platform to build for.
+                                     Defaults to project.json.
+      --scheduler-type <type>        Scheduler backend
+                                     [objectstore, pgsched].
+      --disable-oracle-support       Build without Oracle support.
+      --use-public-repos             Use public YUM repositories instead of
+                                     CERN internal repositories.
+
+Run:
+
+  $(basename "$0") <command> --help
+
+for command-specific options.
+
+Prerequisites:
+  Running system tests requires access to a Kubernetes cluster with worker
+  nodes running mhvtl.
+
+EOF
+}
+
+usage_build() {
+  cat <<EOF
+
+Build the CTA RPMs inside a persistent build container.
+
+The build container is reused across invocations to speed up incremental
+development. Use --reset to recreate it from scratch.
+
+Usage:
+  $(basename "$0") build [options]
+
+Options:
+  -r, --reset                       Recreate the persistent build container
+                                    and rebuild the SRPMs.
+      --clean-build-dir             Remove build_rpm/.
+      --clean-build-dirs            Remove build_rpm/ and build_srpm/.
+      --build-generator <generator> CMake generator
+                                    ["Unix Makefiles", "Ninja"].
+      --cmake-build-type <type>     Release, Debug, RelWithDebInfo,
+                                    or MinSizeRel.
+      --disable-ccache              Disable ccache.
+      --enable-unit-tests           Run unit tests after building.
+      --enable-address-sanitizer    Enable AddressSanitizer.
+      --skip-cmake                  Skip the CMake configure step.
+      --skip-debug-packages         Do not build debuginfo RPMs.
+      --force-install               Force SRPM installation.
+
+EOF
+}
+
+usage_images() {
+  cat <<EOF
+
+Build CTA container images from the locally generated RPMs.
+
+Usage:
+  $(basename "$0") images [options]
+
+Options:
+      --enable-debug-image      Build an additional debug image containing
+                                debuginfo packages and gdb.
+      --skip-image-cleanup      Skip cleanup of unused container images
+                                before building.
+
+EOF
+}
+
+usage_deploy() {
+  cat <<EOF
+
+Deploy a local CTA development instance.
+
+The existing deployment is removed before creating a new one.
+
+Usage:
+  $(basename "$0") deploy [options]
+
+Options:
+      --deploy-namespace <ns>      Kubernetes namespace.
+                                   Defaults to dev.
+      --catalogue-config <path>    Catalogue values file.
+      --scheduler-config <path>    Scheduler values file.
+      --cta-config <paths>         Additional CTA Helm values.
+                                   Comma-separated list.
+      --eos-config <path>          EOS Helm values.
+      --eos-image-repository <r>   EOS image repository.
+      --eos-image-tag <tag>        EOS image tag.
+      --cta-image-tag <tag>        CTA image tag.
+      --spawn-options <options>    Additional options forwarded to
+                                   create_instance.sh.
+      --with-dcache                Deploy dCache instead of EOS.
+      --local-telemetry            Deploy a local telemetry stack.
+      --publish-telemetry          Publish telemetry to the configured backend.
+
+EOF
+}
+
+usage_test() {
+  cat <<EOF
+
+Usage:
+  $(basename "$0") test [test] [pytest-options...]
+
+Run a system test.
+
+If no test is specified, an interactive menu is displayed.
+
+Available tests:
+$(printf "  %s\n" "${available_tests[@]}")
+
+Examples:
+  $(basename "$0") test
+  $(basename "$0") test client
+  $(basename "$0") test client --cleanup-first
+  $(basename "$0") test client --no-setup
+  $(basename "$0") test client --ff # Run all test, but failed tests first
+  $(basename "$0") test client --lf # Run only the failed tests again
+  $(basename "$0") test client -k test_simple_archive_retrieve
+
+Any additional arguments are passed directly to pytest.
+For additional pytest help, navigate to ci/system_tests and run pytest --help
+
+EOF
+}
+
+###############################################################################
+# Global option parsing
+###############################################################################
+
+parse_global_options() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --disable-oracle-support)     oracle_support="FALSE" ;;
+      --use-public-repos)           enable_internal_repos=false ;;
+      --platform)                   platform="$2"; shift ;;
+      --scheduler-type)             scheduler_type="$2"; shift ;;
+      -c | --container-runtime)     container_runtime="$2"; shift ;;
+      *)
+        break
+        ;;
+    esac
+    shift
+  done
+
+  if [[ "$container_runtime" != "docker" && "$container_runtime" != "podman" ]]; then
+    die "-c | --container-runtime is \"$container_runtime\" but must be one of [docker, podman]."
+  fi
+
+  REMAINING_ARGS=("$@")
+}
+
+###############################################################################
+# Commands
+###############################################################################
+
+build() {
+  # Constants
+  local -r cta_version="5"
+  local -r vcs_version="dev"
+  local -r xrootd_ssi_version=$(cd "$project_root/xrootd-ssi-protobuf-interface" && git describe --tags --exact-match)
+  local -r build_image_name="cta-build-image-${platform}"
+  local -r build_container_name="cta-build${project_root//\//-}-${platform}"
+  local -r mount_basedir="/shared/CTA"
+  local -r num_jobs=$(nproc --ignore=2)
+
+  # Configurable
+  local build_container_restarted=false
+  local reset=false
+  local clean_build_dir=false
+  local clean_build_dirs=false
+  local enable_ccache=true
+  local skip_cmake=false
+  local skip_debug_packages=false
+  local skip_unit_tests=true
+  local force_install=false
+  local enable_address_sanitizer=false
+  local build_generator="Ninja"
+  local cmake_build_type=""
+  cmake_build_type=$(jq -r .dev.defaultBuildType "${project_root}/project.json")
+
+  # build-specific argument parsing
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      -r | --reset)                 reset=true; clean_build_dirs=true ;;
+      --clean-build-dir)            clean_build_dir=true ;;
+      --clean-build-dirs)           clean_build_dirs=true ;;
+      --disable-ccache)             enable_ccache=false ;;
+      --skip-cmake)                 skip_cmake=true ;;
+      --skip-debug-packages)        skip_debug_packages=true ;;
+      --enable-unit-tests)          skip_unit_tests=false ;;
+      --force-install)              force_install=true ;;
+      --enable-address-sanitizer)   enable_address_sanitizer=true ;;
+      --build-generator)            build_generator="$2"; shift ;;
+      --cmake-build-type)           cmake_build_type="$2"; shift ;;
+      *)
+        die_usage "Unsupported argument: $1"
+        ;;
+    esac
+    shift
+  done
+
+  if [[ "$cmake_build_type" != "Release" && "$cmake_build_type" != "Debug" && "$cmake_build_type" != "RelWithDebInfo" && "$cmake_build_type" != "MinSizeRel" ]]; then
+    die "--cmake-build-type is \"$cmake_build_type\" but must be one of [Release, Debug, RelWithDebInfo, or MinSizeRel]."
+  fi
+
+  # Stop and remove existing container if reset is requested
+  echo "Total CTA build containers found: $(${container_runtime} ps | grep -c cta-build)"
+  if [[ "${reset}" = true ]]; then
+    echo "Shutting down existing build container..."
+    ${container_runtime} rm -f "${build_container_name}" >/dev/null 2>&1 || true
+    ${container_runtime} rmi "${build_image_name}" > /dev/null 2>&1 || true
+  fi
+
+  # Start container if not already running
+  if ${container_runtime} ps -a --format '{{.Names}}' | grep -wq "${build_container_name}"; then
+    echo "Found existing build container: ${build_container_name}"
+  else
+    print_header "SETTING UP BUILD CONTAINER"
+    build_container_restarted=true
+    echo "Rebuilding build container image"
+    ${container_runtime} build --no-cache -t "${build_image_name}" -f ci/docker/cta/"${platform}"/build.Dockerfile .
+    echo "Starting new build container: ${build_container_name}"
+    ${container_runtime} run -dit --rm --name "${build_container_name}" \
+      -v "${project_root}:${mount_basedir}:z" \
+      "${build_image_name}" \
+      /bin/bash
+
+    print_header "BUILDING SRPMS"
+    build_srpm_flags=""
+    if [[ "${clean_build_dirs}" = true ]]; then
+      build_srpm_flags+=" --clean-build-dir"
+    fi
+
+    # shellcheck disable=SC2086
+    ${container_runtime} exec -it "${build_container_name}" \
+      .${mount_basedir}/ci/build/build_srpm.sh \
+      --build-dir ${mount_basedir}/build_srpm \
+      --build-generator "${build_generator}" \
+      --create-build-dir \
+      --cta-version "${cta_version}" \
+      --vcs-version "${vcs_version}" \
+      --scheduler-type "${scheduler_type}" \
+      --oracle-support "${oracle_support}" \
+      --cmake-build-type "${cmake_build_type}" \
+      --jobs "${num_jobs}" \
+      ${build_srpm_flags}
+  fi
+
+  echo "Compiling the CTA project from source directory"
+
+  local build_rpm_flags=""
+
+  # Only install srpms if it is the first time running this or if the install is forced
+  if [[ ${build_container_restarted} = true ]] || [[ ${force_install} = true ]]; then
+    build_rpm_flags+=" --install-srpms"
+  elif [[ ${skip_cmake} = true ]]; then
+    # It should only be possible to skip cmake if the pod was not restarted
+    build_rpm_flags+=" --skip-cmake"
+  fi
+  if [[ ${skip_unit_tests} = true ]]; then
+    build_rpm_flags+=" --skip-unit-tests"
+  fi
+  if [[ ${clean_build_dir} = true || ${clean_build_dirs} = true ]]; then
+    build_rpm_flags+=" --clean-build-dir"
+  fi
+
+  if [[ ${skip_debug_packages} = true ]]; then
+    build_rpm_flags+=" --skip-debug-packages"
+  fi
+
+  if [[ ${enable_ccache} = true ]]; then
+    build_rpm_flags+=" --enable-ccache"
+  fi
+
+  if [[ ${enable_internal_repos} = true ]]; then
+    build_rpm_flags+=" --enable-internal-repos"
+  fi
+
+  if [[ ${enable_address_sanitizer} = true ]]; then
+    build_rpm_flags+=" --enable-address-sanitizer"
+  fi
+
+  print_header "BUILDING RPMS"
+  # shellcheck disable=SC2086
+  ${container_runtime} exec -it "${build_container_name}" \
+    .${mount_basedir}/ci/build/build_rpm.sh \
+    --build-dir ${mount_basedir}/build_rpm \
+    --build-generator "${build_generator}" \
+    --create-build-dir \
+    --srpm-dir ${mount_basedir}/build_srpm/RPM/SRPMS \
+    --cta-version ${cta_version} \
+    --vcs-version ${vcs_version} \
+    --xrootd-ssi-version "${xrootd_ssi_version}" \
+    --scheduler-type "${scheduler_type}" \
+    --oracle-support ${oracle_support} \
+    --cmake-build-type "${cmake_build_type}" \
+    --jobs "${num_jobs}" \
+    --platform "${platform}" \
+    ${build_rpm_flags}
+
+  echo "Build successful"
+}
+
+images() {
+  # Constants
+  local -r rpm_src="build_rpm/RPM/RPMS/x86_64" # note relative to project root
+
+  # Configurable
+  local image_cleanup=true
+  local enable_debug_image=false
+
+  # container-build-specific argument parsing
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --skip-image-cleanup)         image_cleanup=false ;;
+      --enable-debug-image)         enable_debug_image=true ;;
+      *)
+        die_usage "Unsupported argument: $1"
+        ;;
+    esac
+    shift
+  done
+
+
+  print_header "BUILDING CONTAINER IMAGES"
+  # Cleanup
+  if [[ ${image_cleanup} = true ]]; then
+    echo "Cleaning up unused images..."
+    ${container_runtime} image prune -f
+    if command -v minikube >/dev/null 2>&1; then
+      minikube ssh -- "${container_runtime} image prune -f" || true
+    fi
+    if command -v k3s >/dev/null 2>&1; then
+      sudo /usr/local/bin/k3s crictl rmi --prune || true
+    fi
+  fi
+
+  # Build
+  echo "Building image from ${rpm_src}"
+  local extra_image_build_options=""
+  if [[ ${enable_internal_repos} = true ]]; then extra_image_build_options+=" --enable-internal-repos"; fi
+  if [[ ${enable_debug_image} = true ]]; then extra_image_build_options+=" --enable-debug-image"; fi
+  # shellcheck disable=SC2086
+  cd "${project_root}"
+  ./ci/build/build_images.sh \
+    --tag "${cta_image_tag}" \
+    --rpm-src "${rpm_src}" \
+    --container-runtime "${container_runtime}" \
+    --load-into-k8s \
+    ${extra_image_build_options}
+}
+
+deploy() {
+  local dcache_enabled=false
+  local eos_enabled=true
+  local local_telemetry=false
+  local publish_telemetry=false
+  local eos_image_repository=""
+  local eos_image_tag=""
+  local cta_image_tag=""
+  local catalogue_config="presets/dev-catalogue-postgres-values.yaml"
+  local scheduler_config=""
+  local cta_config=""
+  local eos_config=""
+  local extra_spawn_options="--no-setup"
+  # deploy-specific argument parsing
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --with-dcache)                dcache_enabled=true; eos_enabled=false ;;
+      --local-telemetry)            local_telemetry=true ;;
+      --publish-telemetry)          publish_telemetry=true ;;
+      --eos-image-repository)       eos_image_repository="$2"; shift ;;
+      --eos-image-tag)              eos_image_tag="$2"; shift ;;
+      --cta-image-tag)              cta_image_tag="$2"; shift ;;
+      --catalogue-config)           catalogue_config="$2"; shift ;;
+      --scheduler-config)           scheduler_config="$2"; shift ;;
+      --cta-config)                 cta_config="$2"; shift ;;
+      --eos-config)                 eos_config="$2"; shift ;;
+      --spawn-options)              extra_spawn_options+=" $2"; shift ;;
+      --deploy-namespace)           deploy_namespace="$2"; shift ;;
+      *)
+        die_usage "Unsupported argument: $1"
+        ;;
+    esac
+    shift
+  done
+
+
+  print_header "DELETING OLD CTA DEPLOYMENTS"
+
+  cd "${project_root}/ci/orchestration"
+  # By default we discard the logs from deletion as this is not very useful during development and pollutes the dev machine
+  ./delete_instance.sh -n "${deploy_namespace}" --discard-logs
+  print_header "DEPLOYING CTA"
+  if [[ -n "${eos_image_repository}" ]]; then extra_spawn_options+=" --eos-image-repository ${eos_image_repository}"; fi
+  if [[ -n "${eos_image_tag}" ]]; then extra_spawn_options+=" --eos-image-tag ${eos_image_tag}"; fi
+  if [[ -n "${eos_config}" ]]; then extra_spawn_options+=" --eos-config ${eos_config}"; fi
+  if [[ -n "${cta_config}" ]]; then extra_spawn_options+=" --cta-config ${cta_config}"; fi
+  if [[ "${local_telemetry}" = true ]]; then extra_spawn_options+=" --local-telemetry"; fi
+  if [[ "${publish_telemetry}" = true ]]; then extra_spawn_options+=" --publish-telemetry"; fi
+  if [[ -z "${scheduler_config}" ]]; then
+    if [[ "${scheduler_type}" == "pgsched" ]]; then
+      scheduler_config="presets/dev-scheduler-postgres-values.yaml"
+    else
+      scheduler_config="presets/dev-scheduler-vfs-values.yaml"
+    fi
+  fi
+  # shellcheck disable=SC2086
+  ./create_instance.sh --namespace "${deploy_namespace}" \
+    --cta-image-registry localhost \
+    --cta-image-tag "${cta_image_tag}" \
+    --catalogue-config "${catalogue_config}" \
+    --scheduler-config "${scheduler_config}" \
+    --eos-enabled ${eos_enabled} \
+    --dcache-enabled ${dcache_enabled} \
+    --reset-catalogue \
+    --reset-scheduler \
+    ${extra_spawn_options}
+}
+
+test() {
+  print_header "RUNNING TESTS"
+  local selected_test
+  local pytest_args=()
+
+  if [[ $# -gt 0 ]]; then
+    selected_test="$1"
+
+    local test_found=false
+    for test in "${available_tests[@]}"; do
+        [[ "$test" == "$selected_test" ]] && test_found=true
+    done
+
+    if [[ $test_found == false ]]; then
+      echo "Unknown test: ${selected_test}"
+      echo
+      print_available_tests
+      echo
+      echo "Run '$(basename "$0") test' to choose a test interactively."
+      exit 1
+    fi
+    shift
+  else
+    PS3="Select test: "
+    select selected_test in "${available_tests[@]}"; do
+      [[ -n "${selected_test}" ]] && break
+      echo "Invalid selection."
+    done
+  fi
+
+  pytest_args=("$@")
+
+  cd "${project_root}/ci/system_tests"
+
+  pytest \
+    "tests/${selected_test}_test.py" \
+    --namespace "${deploy_namespace}" \
+    "${pytest_args[@]}"
+}
+
+up() {
+  build "$@"
+  images "$@"
+  deploy "$@"
+}
+
+all() {
+  build "$@"
+  images "$@"
+  deploy "$@"
+  test "$@"
+}
+
+install() {
+  local -r bin_dir="$HOME/.local/bin"
+  local -r link_path="$bin_dir/cta-dev"
+
+  # Check if the shortcut already exists and points to this script
+  if [ ! -L "$LINK_PATH" ] || [ "$(readlink "$LINK_PATH")" != "$(readlink -f "$0")" ]; then
+      # Ensure the destination directory exists
+      mkdir -p "$bin_dir"
+      # Create the symlink
+      ln -sf "$(readlink -f "$0")" "$link_path"
+      echo "Done! You can now run 'cta-dev' from any directory."
+  fi
+}
+
+###############################################################################
+# Main
+###############################################################################
+
+main() {
+  if [[ $# -eq 0 ]]; then
+    usage
+    exit 1
+  fi
+
+  local command="$1"
+  shift
+
+  if [[ "$command" == "help" || "$command" == "-h" || "$command" == "--help" ]]; then
+    usage
+    exit 0
+  fi
+
+  parse_global_options "$@"
+
+  case "$command" in
+    build)
+      if [[ "${REMAINING_ARGS[0]:-}" == "-h" || "${REMAINING_ARGS[0]:-}" == "--help" ]]; then
+        usage_build
+        exit 0
+      fi
+      build "${REMAINING_ARGS[@]}"
+      ;;
+    images)
+      if [[ "${REMAINING_ARGS[0]:-}" == "-h" || "${REMAINING_ARGS[0]:-}" == "--help" ]]; then
+        usage_images
+        exit 0
+      fi
+      images "${REMAINING_ARGS[@]}"
+      ;;
+    deploy)
+      if [[ "${REMAINING_ARGS[0]:-}" == "-h" || "${REMAINING_ARGS[0]:-}" == "--help" ]]; then
+        usage_deploy
+        exit 0
+      fi
+      deploy "${REMAINING_ARGS[@]}"
+      ;;
+    test)
+      if [[ "${REMAINING_ARGS[0]:-}" == "-h" || "${REMAINING_ARGS[0]:-}" == "--help" ]]; then
+        usage_test
+        exit 0
+      fi
+      test "${REMAINING_ARGS[@]}"
+      ;;
+    up)
+      up "${REMAINING_ARGS[@]}"
+      ;;
+    all)
+      all "${REMAINING_ARGS[@]}"
+      ;;
+    install)
+      install
+      ;;
+    *)
+      die_usage "Unknown command: ${command}"
+      ;;
+  esac
+}
+
+main "$@"

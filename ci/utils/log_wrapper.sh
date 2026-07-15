@@ -33,6 +33,7 @@ die() {
 die_usage() {
   echo "$@" >&2
   usage
+  exit 1
 }
 
 # Like die_usage() but with "Error: " prefix in the message.
