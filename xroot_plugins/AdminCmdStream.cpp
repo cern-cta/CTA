@@ -17,8 +17,8 @@
 #include "XrdCtaGroupMountRuleLs.hpp"
 #include "XrdCtaLogicalLibraryLs.hpp"
 #include "XrdCtaMediaTypeLs.hpp"
+#include "XrdCtaMountCandidateLs.hpp"
 #include "XrdCtaMountPolicyLs.hpp"
-#include "XrdCtaMountSlotLs.hpp"
 #include "XrdCtaPhysicalLibraryLs.hpp"
 #include "XrdCtaRecycleTapeFileLs.hpp"
 #include "XrdCtaRepackLs.hpp"
@@ -92,8 +92,8 @@ xrd::Response AdminCmdStream::process() {
       case cmd_pair(admin::AdminCmd::CMD_MOUNTPOLICY, admin::AdminCmd::SUBCMD_LS):
         processMountPolicy_Ls(response);
         break;
-      case cmd_pair(admin::AdminCmd::CMD_MOUNTSLOT, admin::AdminCmd::SUBCMD_LS):
-        processMountSlot_Ls(response);
+      case cmd_pair(admin::AdminCmd::CMD_MOUNTCANDIDATE, admin::AdminCmd::SUBCMD_LS):
+        processMountCandidate_Ls(response);
         break;
       case cmd_pair(admin::AdminCmd::CMD_REPACK, admin::AdminCmd::SUBCMD_LS):
         processRepack_Ls(response);
@@ -259,10 +259,10 @@ void AdminCmdStream::processActivityMountRule_Ls(xrd::Response& response) {
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 
-void AdminCmdStream::processMountSlot_Ls(xrd::Response& response) {
-  m_stream = new xrd::MountSlotLsStream(*this, m_catalogue, m_scheduler, m_schedDb, m_lc);
+void AdminCmdStream::processMountCandidate_Ls(xrd::Response& response) {
+  m_stream = new xrd::MountCandidateLsStream(*this, m_catalogue, m_scheduler, m_schedDb, m_lc);
 
-  response.set_show_header(admin::HeaderType::MOUNTSLOT_LS);
+  response.set_show_header(admin::HeaderType::MOUNTCANDIDATE_LS);
   response.set_type(xrd::Response::RSP_SUCCESS);
 }
 

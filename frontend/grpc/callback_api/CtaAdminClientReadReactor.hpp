@@ -94,8 +94,8 @@ public:
               case cta::admin::HeaderType::LOGICALLIBRARY_LS:
                 m_textFormatter.printLogicalLibraryLsHeader();
                 break;
-              case cta::admin::HeaderType::MOUNTSLOT_LS:
-                m_textFormatter.printMountSlotLsHeader();
+              case cta::admin::HeaderType::MOUNTCANDIDATE_LS:
+                m_textFormatter.printMountCandidateLsHeader();
                 break;
               case cta::admin::HeaderType::MOUNTPOLICY_LS:
                 m_textFormatter.printMountPolicyLsHeader();
@@ -179,7 +179,7 @@ public:
                                      cta::admin::LogicalLibraryLsItem,
                                      cta::admin::PhysicalLibraryLsItem,
                                      cta::admin::MediaTypeLsItem,
-                                     cta::admin::MountSlotLsItem,
+                                     cta::admin::MountCandidateLsItem,
                                      cta::admin::MountPolicyLsItem,
                                      cta::admin::RepackLsItem,
                                      cta::admin::RequesterMountRuleLsItem,
@@ -215,7 +215,7 @@ public:
                     case cta::xrd::Data::kLllsItem:  std::visit(visitor, value_t{m_response.data().llls_item()});  break;
                     case cta::xrd::Data::kPllsItem:  std::visit(visitor, value_t{m_response.data().plls_item()});  break;
                     case cta::xrd::Data::kMtlsItem:  std::visit(visitor, value_t{m_response.data().mtls_item()});  break;
-                    case cta::xrd::Data::kMslsItem:  std::visit(visitor, value_t{m_response.data().msls_item()});  break;
+                    case cta::xrd::Data::kMclsItem:  std::visit(visitor, value_t{m_response.data().mcls_item()});  break;
                     case cta::xrd::Data::kMplsItem:  std::visit(visitor, value_t{m_response.data().mpls_item()});  break;
                     case cta::xrd::Data::kRelsItem:  std::visit(visitor, value_t{m_response.data().rels_item()});  break;
                     case cta::xrd::Data::kRmrlsItem: std::visit(visitor, value_t{m_response.data().rmrls_item()}); break;

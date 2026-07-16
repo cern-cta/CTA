@@ -709,7 +709,7 @@ void TextFormatter::printShowQueuesHeader() {
             "writable tapes");
 }
 
-void TextFormatter::printMountSlotLsHeader() {
+void TextFormatter::printMountCandidateLsHeader() {
   push_back("HEADER");
   push_back("rank",
             "state",
@@ -727,26 +727,26 @@ void TextFormatter::printMountSlotLsHeader() {
             "reason");
 }
 
-void TextFormatter::print(const MountSlotLsItem& msls_item) {
+void TextFormatter::print(const MountCandidateLsItem& mcls_item) {
   std::string reservedBy;
-  if (!msls_item.reserved_by_host().empty() || !msls_item.reserved_by_drive().empty()) {
-    reservedBy = msls_item.reserved_by_host() + ":" + msls_item.reserved_by_drive();
+  if (!mcls_item.reserved_by_host().empty() || !mcls_item.reserved_by_drive().empty()) {
+    reservedBy = mcls_item.reserved_by_host() + ":" + mcls_item.reserved_by_drive();
   }
 
-  push_back(msls_item.candidate_rank(),
-            msls_item.state(),
-            toCamelCaseString(ProtobufToMountType(msls_item.mount_type())),
-            msls_item.instance_name(),
-            msls_item.scheduler_backend_name(),
-            msls_item.tapepool(),
-            msls_item.vo(),
-            msls_item.logical_library(),
-            msls_item.vid(),
-            msls_item.activity(),
-            msls_item.files_queued(),
-            dataSizeToStr(msls_item.bytes_queued()),
+  push_back(mcls_item.candidate_rank(),
+            mcls_item.state(),
+            toCamelCaseString(ProtobufToMountType(mcls_item.mount_type())),
+            mcls_item.instance_name(),
+            mcls_item.scheduler_backend_name(),
+            mcls_item.tapepool(),
+            mcls_item.vo(),
+            mcls_item.logical_library(),
+            mcls_item.vid(),
+            mcls_item.activity(),
+            mcls_item.files_queued(),
+            dataSizeToStr(mcls_item.bytes_queued()),
             reservedBy,
-            msls_item.state_reason());
+            mcls_item.state_reason());
 }
 
 void TextFormatter::print(const ShowQueuesItem& sq_item) {

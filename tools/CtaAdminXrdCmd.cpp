@@ -75,7 +75,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
       case Data::kLprItem:       std::cout << Log::DumpProtobuf(&record.lpr_item());     break;
       case Data::kLprSummary:    std::cout << Log::DumpProtobuf(&record.lpr_summary());  break;
       case Data::kLllsItem:      std::cout << Log::DumpProtobuf(&record.llls_item());    break;
-      case Data::kMslsItem:      std::cout << Log::DumpProtobuf(&record.msls_item());    break;
+      case Data::kMclsItem:      std::cout << Log::DumpProtobuf(&record.mcls_item());    break;
       case Data::kMplsItem:      std::cout << Log::DumpProtobuf(&record.mpls_item());    break;
       case Data::kRelsItem:      std::cout << Log::DumpProtobuf(&record.rels_item());    break;
       case Data::kRmrlsItem:     std::cout << Log::DumpProtobuf(&record.rmrls_item());   break;
@@ -112,7 +112,7 @@ void IStreamBuffer<cta::xrd::Data>::DataCallback(cta::xrd::Data record) const {
       case Data::kLprItem:       formattedText.print(record.lpr_item());     break;
       case Data::kLprSummary:    formattedText.print(record.lpr_summary());  break;
       case Data::kLllsItem:      formattedText.print(record.llls_item());    break;
-      case Data::kMslsItem:      formattedText.print(record.msls_item());    break;
+      case Data::kMclsItem:      formattedText.print(record.mcls_item());    break;
       case Data::kMplsItem:      formattedText.print(record.mpls_item());    break;
       case Data::kRelsItem:      formattedText.print(record.rels_item());    break;
       case Data::kRmrlsItem:     formattedText.print(record.rmrls_item());   break;
@@ -216,7 +216,7 @@ void CtaAdminXrdCmd::send(const CtaAdminParsedCmd& parsedCmd) const {
        case HeaderType::LISTPENDINGRETRIEVES:         formattedText.printListPendingRetrievesHeader(); break;
        case HeaderType::LISTPENDINGRETRIEVES_SUMMARY: formattedText.printListPendingRetrievesSummaryHeader(); break;
        case HeaderType::LOGICALLIBRARY_LS:            formattedText.printLogicalLibraryLsHeader(); break;
-       case HeaderType::MOUNTSLOT_LS:                 formattedText.printMountSlotLsHeader(); break;
+       case HeaderType::MOUNTCANDIDATE_LS:                 formattedText.printMountCandidateLsHeader(); break;
        case HeaderType::MOUNTPOLICY_LS:               formattedText.printMountPolicyLsHeader(); break;
        case HeaderType::REPACK_LS:                    formattedText.printRepackLsHeader(); break;
        case HeaderType::REQUESTERMOUNTRULE_LS:        formattedText.printRequesterMountRuleLsHeader(); break;

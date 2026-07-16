@@ -247,9 +247,9 @@ requestermountrule (rmr)
 
 :   Add, change, remove or list the requester mount rules.
 
-mountslot (ms)
+mountcandidate (mc)
 
-:   List the read-only mount slots calculated by maintd for tape servers to reserve.
+:   List the read-only mount candidates calculated by maintd for tape servers to reserve.
 
 showqueues (sq)
 

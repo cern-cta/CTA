@@ -100,17 +100,17 @@ MountCandidate mountCandidateFromRset(const rdbms::Rset& rset) {
   return candidate;
 }
 
-MountSlot mountSlotFromRset(const rdbms::Rset& rset) {
-  MountSlot slot;
-  slot.candidateId = rset.columnUint64("CANDIDATE_ID");
-  slot.candidate = mountCandidateFromRset(rset);
-  slot.reservedByHost = rset.columnOptionalString("RESERVED_BY_HOST");
-  slot.reservedByDrive = rset.columnOptionalString("RESERVED_BY_DRIVE");
-  slot.reservedTime = rset.columnOptionalUint64("RESERVED_TIME");
-  slot.reservationHeartbeatTime = rset.columnOptionalUint64("RESERVATION_HEARTBEAT_TIME");
-  slot.creationTime = rset.columnUint64("CREATION_TIME");
-  slot.lastUpdateTime = rset.columnUint64("LAST_UPDATE_TIME");
-  return slot;
+MountCandidateRecord mountCandidateRecordFromRset(const rdbms::Rset& rset) {
+  MountCandidateRecord record;
+  record.candidateId = rset.columnUint64("CANDIDATE_ID");
+  record.candidate = mountCandidateFromRset(rset);
+  record.reservedByHost = rset.columnOptionalString("RESERVED_BY_HOST");
+  record.reservedByDrive = rset.columnOptionalString("RESERVED_BY_DRIVE");
+  record.reservedTime = rset.columnOptionalUint64("RESERVED_TIME");
+  record.reservationHeartbeatTime = rset.columnOptionalUint64("RESERVATION_HEARTBEAT_TIME");
+  record.creationTime = rset.columnUint64("CREATION_TIME");
+  record.lastUpdateTime = rset.columnUint64("LAST_UPDATE_TIME");
+  return record;
 }
 
 ReservationSlotCounts getLiveReservationSlotCounts(rdbms::Conn& conn, const uint64_t reservationTimeoutSeconds) {
@@ -474,7 +474,7 @@ bool MountDecisionDB::hasAvailableMountCandidate(const std::string& logicalLibra
   return rset.next();
 }
 
-std::vector<MountSlot> MountDecisionDB::listMountSlots() {
+std::vector<MountCandidateRecord> MountDecisionDB::listMountCandidates() {
   auto conn = m_connectionProvider.getConn();
   const char* const sql = R"SQL(
     SELECT
@@ -517,9 +517,9 @@ std::vector<MountSlot> MountDecisionDB::listMountSlots() {
   auto stmt = conn.createStmt(sql);
   auto rset = stmt.executeQuery();
 
-  std::vector<MountSlot> ret;
+  std::vector<MountCandidateRecord> ret;
   while (rset.next()) {
-    ret.push_back(mountSlotFromRset(rset));
+    ret.push_back(mountCandidateRecordFromRset(rset));
   }
   return ret;
 }

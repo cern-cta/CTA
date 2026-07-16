@@ -24,7 +24,7 @@ set(FRONTEND_COMMON_SRC_FILES
   GroupMountRuleLsResponseStream.cpp
   LogicalLibraryLsResponseStream.cpp
   MediaTypeLsResponseStream.cpp
-  MountSlotLsResponseStream.cpp
+  MountCandidateLsResponseStream.cpp
   MountPolicyLsResponseStream.cpp
   OperationModes.cpp
   PhysicalLibraryLsResponseStream.cpp
