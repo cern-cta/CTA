@@ -72,8 +72,10 @@ RUN --mount=type=bind,from=repo-builder,source=/rpms,target=/mnt/rpms \
     --mount=type=cache,target=/var/cache/yum,id=yum-cta-taped \
     /usr/local/bin/build-service.sh "cta-taped cta-tape-label cta-external-tape-formats-test cta-eosdf mt-st lsscsi sg3_utils"
 
-# Can be uncommented once we remove cta-taped setting its own process capabilities
-# USER cta
+# See https://github.com/kubernetes/enhancements/blob/master/keps/sig-security/2763-ambient-capabilities/README.md
+RUN setcap cap_sys_rawio=+ep /usr/bin/cta-taped
+
+USER cta
 CMD ["/usr/bin/cta-taped", "-c", "/etc/cta/cta-taped.conf", "--foreground", "--log-format=json", "--log-to-file=/var/log/cta/cta-taped.log"]
 
 # =========================================================================
