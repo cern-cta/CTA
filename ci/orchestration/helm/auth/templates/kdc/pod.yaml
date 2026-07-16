@@ -11,9 +11,9 @@ metadata:
   labels:
     app.kubernetes.io/name: {{ include "kdc.fullname" . }}
 spec:
-  automountServiceAccountToken: false
   restartPolicy: Never
   terminationGracePeriodSeconds: 1 # This is low on purpose as the current process has no gracefull shutdown process
+  automountServiceAccountToken: false
   containers:
   - name: auth-kdc
     image: {{ .Values.kerberos.image }}

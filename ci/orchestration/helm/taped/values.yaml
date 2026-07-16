@@ -71,6 +71,9 @@ postRun:
 #     controlPath smc1
 drives: {}
 
+securityContext:
+  privileged: true # To get access to /dev/
+
 pod:
   extraSpec:
     terminationGracePeriodSeconds: 1

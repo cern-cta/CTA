@@ -31,6 +31,11 @@ spec:
       {{- if .Values.pod.extraSpec }}
       {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000 # cta
+        runAsGroup: 33 # tape
+        fsGroup: 33 # tape
       initContainers:
       {{- if has "kerberos" .Values.conf.auth.methods }}
       - name: init1-get-krb5-keytab
@@ -43,7 +48,6 @@ spec:
           sukadmin addprinc -randkey cta/{{ $name }};
           sukadmin ktadd -k /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab cta/{{ $name }};
           chmod 400 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
-          # Make CTA user owner (group 33 is tape)
           chown -R 1000:33 /root/ctafrontend_keytab/output/cta-frontend.krb5.keytab
         volumeMounts:
         - name: krb5-conf
@@ -85,8 +89,6 @@ spec:
           successThreshold: 1
           failureThreshold: 60
         securityContext:
-          runAsUser: 1000 # cta
-          runAsGroup: 33 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" . }}
           privileged: {{ include "common.securityContext.privileged" . }}
         env:
@@ -211,8 +213,6 @@ spec:
           secretName: ca-crt-pem
       {{- if has "kerberos" .Values.conf.auth.methods }}
       - name: cta-frontend-krb5-keytab
-        emptyDir: {}
-      - name: eos-sss-keytab-fixedownership
         emptyDir: {}
       - name: krb5-conf
         configMap:

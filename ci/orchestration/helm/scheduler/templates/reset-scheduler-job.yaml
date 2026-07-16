@@ -27,6 +27,7 @@ spec:
       restartPolicy: Never
       imagePullSecrets:
       {{- include "schedulerReset.imagePullSecrets" . | nindent 6 }}
+      automountServiceAccountToken: false
       containers:
         - name: {{ $name }}
           image: {{ include "schedulerReset.image" . }}

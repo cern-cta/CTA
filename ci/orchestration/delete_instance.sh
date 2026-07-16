@@ -132,7 +132,13 @@ reclaim_released_pvs() {
   wipe_namespace="$1"
   released_pvs=$(kubectl get pv -o json | jq -r \
     --arg ns "$wipe_namespace" \
-    '.items[] | select(.status.phase == "Released" and .spec.claimRef.namespace == $ns) | .metadata.name')
+    '.items[]
+    | select(
+        .status.phase == "Released"
+        and .spec.claimRef.namespace == $ns
+        and .spec.storageClassName != "local-path"
+      )
+    | .metadata.name')
 
   for pv in $released_pvs; do
     echo "Processing PV: $pv"

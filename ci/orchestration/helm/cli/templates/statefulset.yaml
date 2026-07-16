@@ -27,6 +27,7 @@ spec:
       {{- if .Values.pod.extraSpec }}
       {{ .Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
+      automountServiceAccountToken: false
       initContainers:
       - name: init1-get-krb5-keytab
         image: {{ include "ctacli.image" . }}

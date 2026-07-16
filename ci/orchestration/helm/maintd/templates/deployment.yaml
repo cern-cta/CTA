@@ -34,23 +34,11 @@ spec:
       {{- if $.Values.pod.extraSpec }}
       {{ $.Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
-      initContainers:
-      - name: init1-fix-sss-keytab-ownership
-        image: {{ include "common.images.busybox" $ }}
-        imagePullPolicy: {{ include "common.images.defaultPullPolicy" $ }}
-        command: ["sh", "-c"]
-        args:
-        - |
-          cp /root/sss_keytab/input/maintd.keytab /root/sss_keytab/output/cta-maintd.sss.keytab;
-          chmod 400 /root/sss_keytab/output/cta-maintd.sss.keytab;
-          # Make CTA user owner (group 33 is tape)
-          chown -R 1000:33 /root/sss_keytab/output/cta-maintd.sss.keytab
-        volumeMounts:
-          - name: maintd-sss-keytab
-            mountPath: /root/sss_keytab/input/maintd.keytab
-            subPath: {{ $.Values.keytab.subPath }}
-          - name: maintd-sss-keytab-fixedownership
-            mountPath: /root/sss_keytab/output
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000 # cta
+        runAsGroup: 33 # tape
+        fsGroup: 33 # tape
       containers:
       - name: cta-maintd
         image: {{ include "maintd.image" $ }}
@@ -80,8 +68,6 @@ spec:
           periodSeconds: 60
           failureThreshold: 2
         securityContext:
-          runAsUser: 1000 # cta
-          runAsGroup: 33 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
         env:
@@ -103,13 +89,13 @@ spec:
           mountPath: /scripts
         - name: cta-maintd-config
           mountPath: /etc/cta/cta-maintd.toml
-          subPath: cta-maintd.conf
+          subPath: cta-maintd.toml
         - name: catalogue-config
           mountPath: /etc/cta/cta-catalogue.conf
           subPath: cta-catalogue.conf
-        - name: maintd-sss-keytab-fixedownership
-          mountPath: /etc/cta/cta-maintd.sss.keytab
-          subPath: cta-maintd.sss.keytab
+        - name: maintd-sss-keytab
+          mountPath: /etc/cta/cta-maintd.sss.keytab.grp # note the .grp to make it group readable
+          subPath: {{ $.Values.keytab.subPath }}
         {{- if eq $schedulerConfig.backend "postgres" }}
         - name: scheduler-config
           mountPath: /etc/cta/cta-scheduler.conf
@@ -122,16 +108,13 @@ spec:
           mountPath: /etc/ceph/ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
           subPath: ceph.client.{{ $schedulerConfig.cephConfig.id }}.keyring
         {{- end }}
-        {{- if $.Values.global.volumeMounts }}
-        {{ $.Values.global.volumeMounts | toYaml | nindent 8 }}
-        {{- end }}
         - name: opentelemetry-config
           mountPath: /etc/cta/cta-otel.yaml
           subPath: cta-otel.yaml
-      {{- if eq $schedulerConfig.backend "vfs" }}
+        {{- if eq $schedulerConfig.backend "vfs" }}
         - name: vfs-storage-volume
           mountPath: /objectstore
-      {{- end }}
+        {{- end }}
         - name: runtime-dir
           mountPath: /run/cta
         {{ include "common.extraVolumeMounts" $ | nindent 8 }}
@@ -173,11 +156,7 @@ spec:
       - name: maintd-sss-keytab
         secret:
           secretName: {{ $.Values.keytab.secretName }}
-      - name: maintd-sss-keytab-fixedownership
-        emptyDir: {}
-      {{- if $.Values.global.volumes }}
-      {{ $.Values.global.volumes | toYaml | nindent 6 }}
-      {{- end }}
+          defaultMode: 0400
       {{ include "common.extraVolumes" $ | nindent 6 }}
 ---
 {{- end }}

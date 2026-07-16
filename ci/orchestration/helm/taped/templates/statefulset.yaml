@@ -32,31 +32,16 @@ spec:
       {{- if $.Values.pod.extraSpec }}
       {{ $.Values.pod.extraSpec | toYaml | nindent 6 }}
       {{- end }}
-      initContainers:
-      # Required until https://github.com/kubernetes/kubernetes/issues/81089 is merged
-      - name: init1-fix-sss-keytab-ownership
-        image: {{ include "common.images.busybox" . }}
-        imagePullPolicy: {{ include "common.images.defaultPullPolicy" . }}
-        command: ["sh", "-c"]
-        args:
-        - |
-          cp /root/sss_keytab/input/taped.keytab /root/sss_keytab/output/cta-taped.sss.keytab;
-          chmod 400 /root/sss_keytab/output/cta-taped.sss.keytab;
-          # Make CTA user owner (group 33 is tape)
-          chown -R 1000:33 /root/sss_keytab/output/cta-taped.sss.keytab
-        volumeMounts:
-          - name: taped-sss-keytab
-            mountPath: /root/sss_keytab/input/taped.keytab
-            subPath: {{ $.Values.keytab.subPath }}
-          - name: taped-sss-keytab-fixedownership
-            mountPath: /root/sss_keytab/output
+      automountServiceAccountToken: false
+      securityContext:
+        runAsUser: 1000 # cta
+        runAsGroup: 33 # tape
+        fsGroup: 33
       containers:
       - name: "cta-taped"
         image: {{ include "taped.image" $ }}
         imagePullPolicy: {{ include "taped.imagePullPolicy" $ }}
         securityContext:
-          runAsUser: 1000 # cta
-          runAsGroup: 33 # tape
           allowPrivilegeEscalation: {{ include "common.securityContext.allowPrivilegeEscalation" $ }}
           privileged: {{ include "common.securityContext.privileged" $ }}
           capabilities:
@@ -89,7 +74,7 @@ spec:
         - name: XrdSecPROTOCOL
           value: sss
         - name: XrdSecSSSKT
-          value: /etc/cta/cta-taped.sss.keytab
+          value: /etc/cta/cta-taped.sss.keytab.grp
         {{- with $.Values.extraEnv }}
         {{- include "common.extraEnv" . | nindent 8 }}
         {{- end }}
@@ -111,9 +96,9 @@ spec:
           mountPath: /etc/cta/cta-objectstore-tools.conf
           subPath: cta-objectstore-tools.conf
         {{- end }}
-        - name: taped-sss-keytab-fixedownership
-          mountPath: /etc/cta/cta-taped.sss.keytab
-          subPath: cta-taped.sss.keytab
+        - name: taped-sss-keytab
+          mountPath: /etc/cta/cta-taped.sss.keytab.grp # note the .grp to make it group readable
+          subPath: {{ $.Values.keytab.subPath }}
         {{- if eq $schedulerConfig.backend "ceph" }}
         - name: cta-ceph-volume
           mountPath: /etc/ceph/ceph.conf
@@ -131,7 +116,6 @@ spec:
           mountPath: /etc/cta/otlp-basic-auth-pwd.conf
           subPath: otlp-basic-auth-pwd.conf
         {{- end }}
-        {{ include "common.extraVolumeMounts" $ | nindent 8 }}
       volumes:
       - name: scripts-volume
         configMap:
@@ -165,8 +149,7 @@ spec:
       - name: taped-sss-keytab
         secret:
           secretName: {{ $.Values.keytab.secretName }}
-      - name: taped-sss-keytab-fixedownership
-        emptyDir: {}
+          defaultMode: 0400
       {{- if $.Values.conf.telemetry.metrics.otlp.auth.basic.passwordSecret }}
       - name: otlp-basic-auth-pwd
         secret:
