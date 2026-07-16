@@ -58,10 +58,10 @@ void RepackRequest::reportRetrieveCreationFailures(const uint64_t failedToRetrie
            "after expansion.");
     txn.commit();
   } catch (cta::exception::Exception& e) {
-    std::string bt = e.backtrace();
-    m_lc.log(log::ERR,
-             "In RepackRequest::reportRetrieveCreationFailures(): updateRRRetrieveCreationFailures() Exception thrown: "
-               + bt);
+    log::ScopedParamContainer(m_lc)
+      .add(semconv::log::exceptionMessage, e.getMessageValue() + e.backtrace())
+      .log(log::ERR,
+             "In RepackRequest::reportRetrieveCreationFailures(): updateRRRetrieveCreationFailures() Exception thrown.");
     txn.abort();
   }
 }
@@ -358,11 +358,11 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
            "successfully after expansion.");
     txn.commit();
   } catch (cta::exception::Exception& e) {
-    std::string bt = e.backtrace();
+    log::ScopedParamContainer params(m_lc);
+    params.add(semconv::log::exceptionMessage, e.getMessageValue() + e.backtrace());
     m_lc.log(
       log::ERR,
-      "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequestWithExpansionStats() Exception thrown: "
-        + bt);
+      "In RepackRequest::addSubrequestsAndUpdateStats(): updateRepackRequestWithExpansionStats() Exception thrown.");
     txn.abort();
   }
   return nbRetrieveSubrequestsCreated;
@@ -393,7 +393,8 @@ void RepackRequest::fail() {
       .add("newStatus", to_string(RepackJobStatus::RRS_Failed))
       .add("repackInfo.repackReqId", repackInfo.repackReqId)
       .add("repackInfo.repackFinishedTime", repackInfo.repackFinishedTime)
-      .log(log::ERR, "Exception updating status: " + e.backtrace());
+      .add(semconv::log::exceptionMessage, e.getMessageValue() + e.backtrace())
+      .log(log::ERR, "Exception updating status.");
     txn.abort();
   }
 }
@@ -431,7 +432,8 @@ void RepackRequest::setExpandStartedAndChangeStatus() {
       .add("repackInfo.repackReqId", repackInfo.repackReqId)
       .add("repackInfo.isExpandFinished", repackInfo.isExpandFinished)
       .add("repackInfo.repackFinishedTime", repackInfo.repackFinishedTime)
-      .log(log::ERR, "Exception updating status: " + e.backtrace());
+      .add(semconv::log::exceptionMessage, e.getMessageValue() + e.backtrace())
+      .log(log::ERR, "Exception updating status.");
     txn.abort();
   }
 }
@@ -527,8 +529,9 @@ void RepackRequest::insert() {
     auto conn = m_connPool.getConn();
     rjr.insert(conn);
   } catch (exception::Exception& ex) {
-    params.add(semconv::log::exceptionMessage, ex.getMessageValue());
-    m_lc.log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
+    log::ScopedParamContainer(m_lc)
+      .add(semconv::log::exceptionMessage, ex.getMessageValue() + ex.backtrace())
+      .log(log::ERR, "In RepackRequest::insert(): failed to queue request.");
     throw;
   }
   m_lc.log(log::INFO, "In RepackRequest::insert(): added request to queue.");
