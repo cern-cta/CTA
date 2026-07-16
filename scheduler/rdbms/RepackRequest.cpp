@@ -61,7 +61,7 @@ void RepackRequest::reportRetrieveCreationFailures(const uint64_t failedToRetrie
     log::ScopedParamContainer(m_lc)
       .add(semconv::log::exceptionMessage, e.getMessageValue() + e.backtrace())
       .log(log::ERR,
-             "In RepackRequest::reportRetrieveCreationFailures(): updateRRRetrieveCreationFailures() Exception thrown.");
+           "In RepackRequest::reportRetrieveCreationFailures(): updateRRRetrieveCreationFailures() Exception thrown.");
     txn.abort();
   }
 }
