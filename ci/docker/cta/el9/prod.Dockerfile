@@ -20,7 +20,9 @@ RUN --mount=type=cache,target=/var/cache/dnf,sharing=locked \
 
 COPY --from=rpm_context . /rpms
 
-RUN createrepo_c /rpms
+# Ensure this is recreated correctly
+RUN find /rpms -type f -name '*.rpm' -print0 | sort -z | xargs -0 sha256sum > /rpms/.rpm-hash && \
+    createrepo_c /rpms
 
 # =========================================================================
 # 2. BASE IMAGE

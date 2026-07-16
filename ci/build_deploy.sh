@@ -332,7 +332,7 @@ build_deploy() {
       echo "Cleaning up unused images..."
       ${container_runtime} image prune -f
       if command -v minikube >/dev/null 2>&1; then
-        minikube ssh -- "${container_runtime} image prune -f"
+        minikube ssh -- "${container_runtime} image prune -f" || true
       fi
       if command -v k3s >/dev/null 2>&1; then
         sudo /usr/local/bin/k3s crictl rmi --prune || true
