@@ -71,10 +71,6 @@ postRun:
 #     controlPath smc1
 drives: {}
 
-securityContext:
-  privileged: false
-  allowPrivilegeEscalation: true
-
 pod:
   extraSpec:
     terminationGracePeriodSeconds: 1

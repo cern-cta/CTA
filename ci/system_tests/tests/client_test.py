@@ -410,12 +410,12 @@ def test_runtime_directory_correctness_maintd(cta_maintd):
 
 def test_log_rotation_maintd(cta_maintd, remote_scripts_dir):
     cta_maintd.copy_to(str(remote_scripts_dir / "cta_maintd" / "test_refresh_log_fd.sh"), "/tmp/", permissions="+x")
-    cta_maintd.exec("bash /tmp/test_refresh_log_fd.sh")
+    cta_maintd.exec("sudo bash /tmp/test_refresh_log_fd.sh")
 
 
 def test_log_rotation_taped(cta_taped, remote_scripts_dir):
     cta_taped.copy_to(str(remote_scripts_dir / "cta_taped" / "test_refresh_log_fd.sh"), "/tmp/", permissions="+x")
-    cta_taped.exec("bash /tmp/test_refresh_log_fd.sh")
+    cta_taped.exec("sudo bash /tmp/test_refresh_log_fd.sh")
 
 
 # Maybe it makes sense to run this after all tests?
