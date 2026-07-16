@@ -1036,10 +1036,15 @@ RelationalDB::getNextSuccessfulRetrieveRepackReportBatch(log::LogContext& lc) {
     while (count_rset.next()) {
       schedulerdb::postgres::RepackRequestProgress update;
       update.reqId = count_rset.columnUint64("REPACK_REQUEST_ID");
-      update.retrievedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT");
-      update.retrievedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES");
+      uint64_t notRetrievedFiles = count_rset.columnUint64("NOT_RETRIEVED_FILES");
+      uint64_t notRetrievedBytes = count_rset.columnUint64("NOT_RETRIEVED_BYTES");
+      // (to be improved) we count the retrieve job in active table with mount_id NULL which are there as a consequence
+      // of insertion of user provided files and are not actually being retrieved just transformed to archive jobs
+      update.retrievedFiles = count_rset.columnUint64("BASE_INSERTED_COUNT") - notRetrievedFiles;
+      update.retrievedBytes = count_rset.columnUint64("BASE_INSERTED_BYTES") - notRetrievedBytes;
       update.rearchiveCopyNbs = count_rset.columnUint64("ALTERNATE_INSERTED_COUNT");
       update.rearchiveBytes = count_rset.columnUint64("ALTERNATE_INSERTED_BYTES");
+
       log::ScopedParamContainer params(lc);
       params.add("repackRequestId", update.reqId);
       params.add("retrievedFiles", update.retrievedFiles);
@@ -1182,17 +1187,9 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     txn.abort();
     return ret;
   }
-  // ------------------------------------------
-  // calling the deletion for the jobSrcUrls
-  // ------------------------------------------
-  if (!deleteDiskFiles(jobSrcUrls, lc)) {
-    lc.log(cta::log::WARNING,
-           "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete files from disk, the files "
-           "will stay present until the operator removes them manually !");
-  }
   std::vector<schedulerdb::postgres::RepackRequestProgress> statUpdates;
-  if (!jobIDs.empty()) {
-    try {
+  try {
+    if (!jobIDs.empty()) {
       auto count_rset = schedulerdb::postgres::ArchiveJobQueueRow::deleteSuccessfulRepackArchiveJobBatch(txn, jobIDs);
       while (count_rset.next()) {
         schedulerdb::postgres::RepackRequestProgress update;
@@ -1209,17 +1206,17 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
           "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Successfully deleted finished archive jobs.");
         statUpdates.emplace_back(update);
       }
-      txn.commit();
       timings.insertAndReset("deletedArchiveRepackJobs", t);
-    } catch (exception::Exception& ex) {
-      log::ScopedParamContainer(lc)
-        .add(semconv::log::exceptionMessage, ex.getMessageValue())
-        .log(cta::log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: ");
-      txn.abort();
-      return ret;
     }
+    //txn.commit();
+  } catch (exception::Exception& ex) {
+    log::ScopedParamContainer(lc)
+      .add(semconv::log::exceptionMessage, ex.getMessageValue())
+      .log(cta::log::ERR, "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete jobs: ");
+    txn.abort();
+    return ret;
   }
-  txn.commit();
+
   if (statUpdates.empty()) {
     lc.log(cta::log::INFO,
            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): No Repack progress statistics collected.");
@@ -1227,12 +1224,21 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     return ret;
   }
 
-  schedulerdb::Transaction txn3(m_connPool, lc);
+  // ------------------------------------------
+  // calling the deletion for the jobSrcUrls
+  // ------------------------------------------
+  if (!deleteDiskFiles(jobSrcUrls, lc)) {
+    lc.log(cta::log::WARNING,
+           "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete files from disk, the files "
+           "will stay present until the operator removes them manually !");
+  }
+
+  //schedulerdb::Transaction txn3(m_connPool, lc);
   // report back to the REPACK_REQUEST_TRACKING table
   uint64_t nrepreq = 0;
   std::vector<std::string> repackBufferUrlsToDelete;
   try {
-    auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn3, statUpdates);
+    auto vidrset = schedulerdb::postgres::RepackRequestTrackingRow::updateRepackRequestsProgress(txn, statUpdates);
     while (vidrset.next()) {
       nrepreq++;
       // Get the repack request VID for which files were deleted !
@@ -1255,14 +1261,15 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     params.add("updatedRepackRequests", nrepreq);
     lc.log(cta::log::INFO,
            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Updated Repack progress statistics.");
-    txn3.commit();
+    txn.commit();
   } catch (exception::Exception& ex) {
     cta::log::ScopedParamContainer params(lc);
     params.add(semconv::log::exceptionMessage, ex.getMessageValue());
     lc.log(
       cta::log::ERR,
       "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): failed to update  Repack progress statistics.");
-    txn3.abort();
+    txn.abort();
+    return ret;
   }
   // check if status is Failed or Complete and delete the disk directory for this repack in such a case
   for (auto& bufferURL : repackBufferUrlsToDelete) {

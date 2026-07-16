@@ -95,6 +95,14 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
   }
 
   setTotalStats(totalStatsFiles);
+  log::ScopedParamContainer(lc)
+    .add("repackInfo.totalFilesToRetrieve ", repackInfo.totalFilesToRetrieve)
+    .add("repackInfo.userProvidedFiles", repackInfo.userProvidedFiles)
+    .add("repackInfo.totalFilesOnTapeAtStart", repackInfo.totalFilesOnTapeAtStart)
+    .add("repackInfo.allFilesSelectedAtStart ", repackInfo.allFilesSelectedAtStart)
+    .log(log::INFO, "In RepackRequest::addSubrequestsAndUpdateStats(): printing out stats.");
+
+  // "repackInfo.allFilesSelectedAtStart ":true,"repackInfo.totalFilesOnTapeAtStart":2153,"repackInfo.totalFilesToRetrieve ":2143,"repackInfo.userProvidedFiles":10,"routine":"RepackExpandRoutine"}
   uint64_t fSeq = std::max(maxFSeqLowBound + 1, maxAddedFSeq + 1);
   bool noRecall = repackInfo.noRecall;
 
@@ -318,6 +326,8 @@ RepackRequest::addSubrequestsAndUpdateStats(const std::list<Subrequest>& repackS
       auto conn = m_connPool.getConn();
       try {
         cta::schedulerdb::postgres::RetrieveJobQueueRow::insertBatch(conn, rrRowBatchNoRecall, true);
+        // here we inserted into the retrieve table, but directly with a status Success
+        // so that these jobs are picked up by reporting and transformed to archive jobs
         nbRetrieveSubrequestsCreated += rrRowBatchNoRecall.size();
         m_lc.log(log::INFO,
                  "In RepackRequest::addSubrequestsAndUpdateStats(): inserted bunch of 'NoRecall' retrieve jobs.");

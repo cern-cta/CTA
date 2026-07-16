@@ -71,14 +71,21 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestWithExpansionStats(
         TOTAL_BYTES_TO_ARCHIVE        = :TOTAL_BYTES_TO_ARCHIVE,
         USER_PROVIDED_FILES           = :USER_PROVIDED_FILES,
         LAST_EXPANDED_FSEQ            = :LAST_EXPANDED_FSEQ,
-        RETRIEVE_SUBREQUESTS_EXPANDED = :RETRIEVE_SUBREQUESTS_EXPANDED
+        RETRIEVE_SUBREQUESTS_EXPANDED = :RETRIEVE_SUBREQUESTS_EXPANDED,
+        IS_COMPLETE = :IS_COMPLETE
     WHERE REPACK_REQUEST_ID = :REQID
   )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
 
   // Bind job status
-  stmt.bindString(":STATUS", to_string(newStatus));
+  if (nbRetrieveSubrequestsCreated == 0) {
+    stmt.bindString(":STATUS", to_string(cta::schedulerdb::RepackJobStatus::RRS_Complete));
+    stmt.bindBool(":IS_COMPLETE", true);
+  } else {
+    stmt.bindString(":STATUS", to_string(newStatus));
+    stmt.bindBool(":IS_COMPLETE", false);
+  }
 
   // Bind TotalStatsFiles values
   stmt.bindUint64(":TOTAL_FILES_ON_TAPE_AT_START", totalStatsFiles.totalFilesOnTapeAtStart);
@@ -478,7 +485,10 @@ uint64_t RepackRequestTrackingRow::updateRepackRequestExpansionStatus(Transactio
   if (isExpandFinished) {
     sql += ", IS_EXPAND_FINISHED = '1' ";
   }
-  sql += " WHERE REPACK_REQUEST_ID = :REQID";
+  sql += R"SQL(
+    WHERE REPACK_REQUEST_ID = :REQID
+      AND IS_COMPLETE = FALSE
+  )SQL";
 
   auto stmt = txn.getConn().createStmt(sql);
   stmt.bindString(":STATUS", to_string(cta::schedulerdb::RepackJobStatus::RRS_Starting));
