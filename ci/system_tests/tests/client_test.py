@@ -298,21 +298,21 @@ def test_eosdf(eos_client, cta_cli, test_dir, remote_scripts_dir, cta_taped):
 
 
 def test_eosdf_with_nonexistent_script(cta_taped, eos_client, test_dir):
-    cta_taped.exec("mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
+    cta_taped.exec("sudo mv /usr/bin/cta-eosdf.sh /usr/bin/eosdf_newname.sh")
     try:
         eos_client.exec(f". /tmp/client_env && /tmp/test_eosdf.sh {test_dir}")
         cta_taped.exec(f"grep -q 'No such file or directory' {cta_taped.log_file_path}")
     finally:
-        cta_taped.exec("mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh")
+        cta_taped.exec("sudo mv /usr/bin/eosdf_newname.sh /usr/bin/cta-eosdf.sh")
 
 
 def test_eosdf_without_executable_permissions(cta_taped, eos_client, test_dir):
-    cta_taped.exec("chmod -x /usr/bin/cta-eosdf.sh")
+    cta_taped.exec("sudo chmod -x /usr/bin/cta-eosdf.sh")
     try:
         eos_client.exec(f". /tmp/client_env && /tmp/test_eosdf.sh {test_dir}")
         cta_taped.exec(f"grep -q 'Permission denied' {cta_taped.log_file_path}")
     finally:
-        cta_taped.exec("chmod +x /usr/bin/cta-eosdf.sh")
+        cta_taped.exec("sudo chmod +x /usr/bin/cta-eosdf.sh")
 
 
 # Test what happens when we get an error from the eos client (fake instance not reachable by specifying a nonexistent instance name in the script)
@@ -320,12 +320,12 @@ def test_eosdf_without_executable_permissions(cta_taped, eos_client, test_dir):
 
 
 def test_eosdf_with_script_that_throws_exception(cta_taped, eos_client, cta_cli, test_dir):
-    cta_taped.exec("sed -i 's|root://$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
+    cta_taped.exec("sudo sed -i 's|root://$diskInstance|root://nonexistentinstance|g' /usr/bin/cta-eosdf.sh")
     try:
         eos_client.exec(f". /tmp/client_env && /tmp/test_eosdf.sh {test_dir}")
         cta_taped.exec(f"grep -q 'could not be used to get the FreeSpace' {cta_taped.log_file_path}")
     finally:
-        cta_taped.exec("sed -i 's|root://nonexistentinstance|root://$diskInstance|g' /usr/bin/cta-eosdf.sh")
+        cta_taped.exec("sudo sed -i 's|root://nonexistentinstance|root://$diskInstance|g' /usr/bin/cta-eosdf.sh")
     # Done with the eosdf tests; set all drives up again
     cta_cli.set_all_drives_up()
 
