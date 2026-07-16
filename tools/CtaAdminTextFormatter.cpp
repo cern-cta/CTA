@@ -709,6 +709,46 @@ void TextFormatter::printShowQueuesHeader() {
             "writable tapes");
 }
 
+void TextFormatter::printMountSlotLsHeader() {
+  push_back("HEADER");
+  push_back("rank",
+            "state",
+            "type",
+            "instance",
+            "scheduler",
+            "tapepool",
+            "vo",
+            "library",
+            "vid",
+            "activity",
+            "files queued",
+            "data queued",
+            "reserved by",
+            "reason");
+}
+
+void TextFormatter::print(const MountSlotLsItem& msls_item) {
+  std::string reservedBy;
+  if (!msls_item.reserved_by_host().empty() || !msls_item.reserved_by_drive().empty()) {
+    reservedBy = msls_item.reserved_by_host() + ":" + msls_item.reserved_by_drive();
+  }
+
+  push_back(msls_item.candidate_rank(),
+            msls_item.state(),
+            toCamelCaseString(ProtobufToMountType(msls_item.mount_type())),
+            msls_item.instance_name(),
+            msls_item.scheduler_backend_name(),
+            msls_item.tapepool(),
+            msls_item.vo(),
+            msls_item.logical_library(),
+            msls_item.vid(),
+            msls_item.activity(),
+            msls_item.files_queued(),
+            dataSizeToStr(msls_item.bytes_queued()),
+            reservedBy,
+            msls_item.state_reason());
+}
+
 void TextFormatter::print(const ShowQueuesItem& sq_item) {
   std::string priority;
   std::string minAge;

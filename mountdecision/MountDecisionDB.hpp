@@ -45,6 +45,17 @@ struct ReservedMountCandidate {
   MountCandidate candidate;
 };
 
+struct MountSlot {
+  uint64_t candidateId = 0;
+  MountCandidate candidate;
+  std::optional<std::string> reservedByHost;
+  std::optional<std::string> reservedByDrive;
+  std::optional<uint64_t> reservedTime;
+  std::optional<uint64_t> reservationHeartbeatTime;
+  uint64_t creationTime = 0;
+  uint64_t lastUpdateTime = 0;
+};
+
 /**
  * Relational backend for the Mount Decision DB.
  */
@@ -65,6 +76,8 @@ public:
   void replaceMountCandidates(const std::vector<MountCandidate>& candidates, uint64_t reservationTimeoutSeconds);
 
   bool hasAvailableMountCandidate(const std::string& logicalLibrary);
+
+  std::vector<MountSlot> listMountSlots();
 
   std::optional<ReservedMountCandidate>
   tryReserveNextMountCandidate(const std::string& logicalLibrary, const std::string& host, const std::string& drive);

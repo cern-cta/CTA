@@ -21,6 +21,7 @@ set(FRONTEND_COMMON_SRC_FILES
   GroupMountRuleLsResponseStream.cpp
   LogicalLibraryLsResponseStream.cpp
   MediaTypeLsResponseStream.cpp
+  MountSlotLsResponseStream.cpp
   MountPolicyLsResponseStream.cpp
   OperationModes.cpp
   PhysicalLibraryLsResponseStream.cpp
@@ -39,7 +40,7 @@ add_library(ctafrontendcommon STATIC ${FRONTEND_COMMON_SRC_FILES})
 
 if(CTA_USE_PGSCHED)
     target_link_libraries(ctafrontendcommon PRIVATE
-      ctacommon ctaprotobufconversions ctacatalogue ctaruntime ctatelemetryfrontend)
+      ctacommon ctaprotobufconversions ctacatalogue ctaruntime ctatelemetryfrontend ctamountdecision)
 else()
     target_link_libraries(ctafrontendcommon PRIVATE
       ctacommon ctaprotobufconversions ctaobjectstore ctacatalogue ctaruntime ctatelemetryfrontend)
