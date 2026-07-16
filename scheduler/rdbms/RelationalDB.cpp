@@ -1189,8 +1189,6 @@ RelationalDB::getNextSuccessfulArchiveRepackReportBatch(log::LogContext& lc) {
     lc.log(cta::log::WARNING,
            "In RelationalDB::getNextSuccessfulArchiveRepackReportBatch(): Failed to delete files from disk, the files "
            "will stay present until the operator removes them manually !");
-    //txn.abort();
-    //return ret;
   }
   std::vector<schedulerdb::postgres::RepackRequestProgress> statUpdates;
   if (!jobIDs.empty()) {
