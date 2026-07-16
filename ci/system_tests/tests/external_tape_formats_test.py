@@ -27,13 +27,13 @@ def external_tape_formats_path(cta_rmcd) -> Path:
 
     # Note that the cleanup of the system tests will restart all pods and therefore wipe this directory again between runs
     # So we don't bother cleaning it up manually
+    cta_rmcd.exec("sudo microdnf install -y git git-lfs")
     cta_rmcd.exec("git lfs install --skip-repo")
     cta_rmcd.exec(f"git clone https://gitlab.cern.ch/cta/ci/external-tape-formats {external_tape_formats_path}")
     # TODO: remove this once https://gitlab.cern.ch/cta/ci/external-tape-formats/-/merge_requests/2 is merged
     cta_rmcd.exec(f"cd {external_tape_formats_path} && git checkout add-enstore-tapes")
 
     return external_tape_formats_path
-
 
 
 def wait_for_device_ready(host, drive_device: str, timeout_seconds: int = 60):
@@ -188,21 +188,11 @@ def reload_tape(cta_rmcd, slot: int, drive: int):
 #####################################################################################################################
 
 
-def test_install_required(cta_rmcd):
-    cta_rmcd.exec("sudo microdnf install -y git git-lfs")
-
-
 def test_load_tape(cta_rmcd):
     # Load tape in a drive
     cta_rmcd.exec("mtx -f /dev/smc status")
     cta_rmcd.exec("mtx -f /dev/smc load 1 0")
     cta_rmcd.exec("mtx -f /dev/smc status")
-
-
-def test_clone_external_tape_format_samples(cta_rmcd, external_tape_formats_path):
-    # Note that the cleanup of the system tests will restart all pods and therefore wipe this directory again between runs
-    cta_rmcd.exec("git lfs install --skip-repo")
-    cta_rmcd.exec(f"git clone https://gitlab.cern.ch/cta/ci/external-tape-formats {external_tape_formats_path}")
 
 
 def test_read_osm_tape(cta_rmcd, cta_taped, external_tape_formats_path):
