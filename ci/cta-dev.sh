@@ -16,7 +16,7 @@ readonly script_dir
 project_root=$(git rev-parse --show-toplevel)
 readonly project_root
 # shellcheck disable=SC2207
-readonly available_tests=( $(for f in system_tests/tests/*_test.py; do basename "$f" _test.py; done) )
+readonly available_tests=( $(for f in ${project_root}/ci/system_tests/tests/*_test.py; do basename "$f" _test.py; done) )
 readonly venv_dir="${project_root}/ci/system_tests/.venv"
 
 # Global
