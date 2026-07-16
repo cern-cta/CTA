@@ -100,6 +100,19 @@ MountCandidate mountCandidateFromRset(const rdbms::Rset& rset) {
   return candidate;
 }
 
+MountSlot mountSlotFromRset(const rdbms::Rset& rset) {
+  MountSlot slot;
+  slot.candidateId = rset.columnUint64("CANDIDATE_ID");
+  slot.candidate = mountCandidateFromRset(rset);
+  slot.reservedByHost = rset.columnOptionalString("RESERVED_BY_HOST");
+  slot.reservedByDrive = rset.columnOptionalString("RESERVED_BY_DRIVE");
+  slot.reservedTime = rset.columnOptionalUint64("RESERVED_TIME");
+  slot.reservationHeartbeatTime = rset.columnOptionalUint64("RESERVATION_HEARTBEAT_TIME");
+  slot.creationTime = rset.columnUint64("CREATION_TIME");
+  slot.lastUpdateTime = rset.columnUint64("LAST_UPDATE_TIME");
+  return slot;
+}
+
 ReservationSlotCounts getLiveReservationSlotCounts(rdbms::Conn& conn, const uint64_t reservationTimeoutSeconds) {
   const char* const sql = R"SQL(
     SELECT
@@ -459,6 +472,56 @@ bool MountDecisionDB::hasAvailableMountCandidate(const std::string& logicalLibra
   stmt.bindString(":LOGICAL_LIBRARY", logicalLibrary);
   auto rset = stmt.executeQuery();
   return rset.next();
+}
+
+std::vector<MountSlot> MountDecisionDB::listMountSlots() {
+  auto conn = m_connectionProvider.getConn();
+  const char* const sql = R"SQL(
+    SELECT
+      CANDIDATE_ID,
+      MOUNT_TYPE,
+      LOGICAL_LIBRARY,
+      TAPE_POOL,
+      VO,
+      VID,
+      ACTIVITY,
+      PRIORITY,
+      MIN_REQUEST_AGE,
+      FILES_QUEUED,
+      BYTES_QUEUED,
+      OLDEST_JOB_START_TIME,
+      YOUNGEST_JOB_START_TIME,
+      RATIO_OF_MOUNT_QUOTA_USED,
+      CANDIDATE_RANK,
+      MEDIA_TYPE,
+      LABEL_FORMAT,
+      VENDOR,
+      CAPACITY_IN_BYTES,
+      LAST_FSEQ,
+      ENCRYPTION_KEY_NAME,
+      STATE,
+      STATE_REASON,
+      RESERVED_BY_HOST,
+      RESERVED_BY_DRIVE,
+      RESERVED_TIME,
+      RESERVATION_HEARTBEAT_TIME,
+      CREATED_BY,
+      CREATION_TIME,
+      LAST_UPDATE_TIME
+    FROM
+      SCHEDULER_MOUNT_CANDIDATES
+    ORDER BY
+      CANDIDATE_RANK,
+      CANDIDATE_ID
+  )SQL";
+  auto stmt = conn.createStmt(sql);
+  auto rset = stmt.executeQuery();
+
+  std::vector<MountSlot> ret;
+  while (rset.next()) {
+    ret.push_back(mountSlotFromRset(rset));
+  }
+  return ret;
 }
 
 std::optional<ReservedMountCandidate> MountDecisionDB::tryReserveNextMountCandidate(const std::string& logicalLibrary,
